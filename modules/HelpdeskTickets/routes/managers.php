@@ -48,6 +48,23 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsCon
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 
+/*
+ * Los 15 permisos `helpdesk.tickets.*` se sembraban y se podían asignar desde
+ * el panel de roles, pero NINGUNA ruta los consultaba: quitarle
+ * `helpdesk.tickets.delete` a un rol no le impedía borrar nada. Servían solo
+ * para pintar el menú.
+ *
+ * Se cablean donde el daño es irreversible o el alcance excede el trabajo
+ * diario —borrar tickets, borrar correos, configurar el módulo— y NO como
+ * permiso único de entrada al grupo. Se probó lo segundo y bloquea un caso
+ * legítimo: quien tiene `helpdesk.tickets.update` pero no `.view` (462 y 498
+ * usuarios en esta base de datos, y no son los mismos) trabaja tickets sin
+ * tener marcado el permiso de verlos. Un permiso de acción implica poder
+ * entrar; exigir `.view` por encima les cerraría el módulo entero.
+ *
+ * Quién entra sigue decidiéndolo `role:super-admin|super-settings`, declarado
+ * al montar el grupo en HelpdeskTicketsServiceProvider.
+ */
 Route::group(['prefix' => ''], function () {
 
     // Advanced search
@@ -220,7 +237,7 @@ Route::group(['prefix' => ''], function () {
     Route::patch('/tickets/emails/{mail}/tags', [TicketMailsController::class, 'updateTags'])->name('manager.helpdesk.tickets.emails.tags');
     Route::post('/tickets/emails/{mail}/translate', [TicketMailsController::class, 'translate'])->name('manager.helpdesk.tickets.emails.translate');
     Route::get('/tickets/emails/{mail}/summary', [TicketMailsController::class, 'summary'])->name('manager.helpdesk.tickets.emails.summary');
-    Route::delete('/tickets/emails/{mail}', [TicketMailsController::class, 'destroy'])->name('manager.helpdesk.tickets.emails.destroy');
+    Route::delete('/tickets/emails/{mail}', [TicketMailsController::class, 'destroy'])->name('manager.helpdesk.tickets.emails.destroy')->middleware('can:helpdesk.tickets.emails.delete');
 
     // Tickets CRUD (listado de vuelta en /tickets — ver comentario arriba)
     Route::get('/tickets', [TicketsCrudController::class, 'index'])->name('manager.helpdesk.tickets.index');
@@ -254,9 +271,9 @@ Route::group(['prefix' => ''], function () {
     Route::patch('/tickets/{ticket}/tags', [TicketsCrudController::class, 'tags'])->name('manager.helpdesk.tickets.tags');
     Route::get('/tickets/{ticket}/edit', [TicketsCrudController::class, 'edit'])->name('manager.helpdesk.tickets.edit');
     Route::put('/tickets/{ticket}', [TicketsCrudController::class, 'update'])->name('manager.helpdesk.tickets.update');
-    Route::delete('/tickets/{ticket}', [TicketsCrudController::class, 'destroy'])->name('manager.helpdesk.tickets.destroy');
+    Route::delete('/tickets/{ticket}', [TicketsCrudController::class, 'destroy'])->name('manager.helpdesk.tickets.destroy')->middleware('can:helpdesk.tickets.delete');
     Route::post('/tickets/{ticket}/restore', [TicketsCrudController::class, 'restore'])->name('manager.helpdesk.tickets.restore')->withTrashed();
-    Route::delete('/tickets/{ticket}/force-delete', [TicketsCrudController::class, 'forceDelete'])->name('manager.helpdesk.tickets.force-delete')->withTrashed();
+    Route::delete('/tickets/{ticket}/force-delete', [TicketsCrudController::class, 'forceDelete'])->name('manager.helpdesk.tickets.force-delete')->withTrashed()->middleware('can:helpdesk.tickets.delete');
 
     // Ticket lifecycle
     Route::post('/tickets/{ticket}/close', [TicketLifecycleController::class, 'close'])->name('manager.helpdesk.tickets.close');
@@ -330,11 +347,16 @@ Route::group(['prefix' => ''], function () {
     Route::post('recurring-tickets/{recurringTicket}/toggle', [RecurringTicketsController::class, 'toggle'])->name('manager.helpdesk.recurring-tickets.toggle');
 
     // General ticket configuration
-    Route::get('settings/tickets/general', [TicketGeneralSettingsController::class, 'index'])->name('manager.helpdesk.settings.tickets.general');
-    Route::put('settings/tickets/general', [TicketGeneralSettingsController::class, 'update'])->name('manager.helpdesk.settings.tickets.general.update');
+    Route::get('settings/tickets/general', [TicketGeneralSettingsController::class, 'index'])->name('manager.helpdesk.settings.tickets.general')->middleware('can:helpdesk.tickets.settings');
+    Route::put('settings/tickets/general', [TicketGeneralSettingsController::class, 'update'])->name('manager.helpdesk.settings.tickets.general.update')->middleware('can:helpdesk.tickets.settings');
 
     // Ticket settings
-    Route::prefix('settings/tickets')->name('manager.helpdesk.settings.')->group(function () {
+    //
+    // Permiso propio: configurar categorías, estados, SLA, buzones o listas
+    // negras no es lo mismo que trabajar tickets, y ninguno de estos
+    // controladores autoriza por su cuenta — la única barrera era el rol de la
+    // ruta. `helpdesk.tickets.settings` ya existía sembrado y sin usar.
+    Route::prefix('settings/tickets')->middleware('can:helpdesk.tickets.settings')->name('manager.helpdesk.settings.')->group(function () {
 
         // Categories
         Route::prefix('categories')->name('ticket-categories.')->group(function () {

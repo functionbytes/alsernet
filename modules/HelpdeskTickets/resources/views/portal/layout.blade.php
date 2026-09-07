@@ -25,7 +25,11 @@
                 @if (session('portal_customer_id'))
                     <span class="text-light small me-2">
                         <i class="fas fa-user me-1"></i>
-                        {{ \Modules\Helpdesk\Models\Customer::find(session('portal_customer_id'))?->name }}
+                        {{-- De la sesión, no de la base de datos: esto se pinta en
+                             todas las páginas del portal y hacía un Customer::find()
+                             dentro de la vista en cada carga. El fallback cubre las
+                             sesiones abiertas antes de guardar el nombre. --}}
+                        {{ session('portal_customer_name') ?: \Modules\Helpdesk\Models\Customer::find(session('portal_customer_id'))?->name }}
                     </span>
                     <a href="{{ route('portal.tickets') }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-ticket-alt me-1"></i>Mis tickets

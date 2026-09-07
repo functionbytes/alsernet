@@ -134,7 +134,14 @@ class CustomerPortalController extends Controller
         // mano y faltaba.
         request()->session()->regenerate();
 
-        session(['portal_customer_id' => $customer->id]);
+        // El nombre va en la sesión junto al id porque la cabecera del portal
+        // lo pinta en TODAS las páginas: leerlo de aquí evita un
+        // Customer::find() dentro de la vista del layout, que era una consulta
+        // extra por cada carga del portal solo para escribir el nombre.
+        session([
+            'portal_customer_id' => $customer->id,
+            'portal_customer_name' => $customer->name,
+        ]);
 
         return redirect()->route('portal.tickets');
     }
@@ -142,7 +149,7 @@ class CustomerPortalController extends Controller
     /** POST /portal/logout */
     public function logout(Request $request): RedirectResponse
     {
-        $request->session()->forget('portal_customer_id');
+        $request->session()->forget(['portal_customer_id', 'portal_customer_name']);
 
         // invalidate() + regenerateToken(): forget() solo quita la clave y deja
         // viva la sesión y su token CSRF.
@@ -495,7 +502,7 @@ class CustomerPortalController extends Controller
         }
 
         if ($customer->banned_at !== null) {
-            session()->forget('portal_customer_id');
+            session()->forget(['portal_customer_id', 'portal_customer_name']);
 
             return redirect()->route('portal.login')
                 ->withErrors(['email' => __('helpdesktickets::helpdesktickets.portal.account_suspended')]);
