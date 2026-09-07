@@ -4,10 +4,13 @@ namespace Modules\Auth\Providers;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Auth\Console\Commands\PruneAuthLogsCommand;
@@ -84,6 +87,7 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerEvents();
         $this->registerGates();
         $this->registerMiddleware();
+        $this->registerRateLimiters();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerRoutes();
     }
@@ -177,15 +181,39 @@ class AuthServiceProvider extends ServiceProvider
 
     protected function registerGates(): void
     {
-        Gate::before(function ($user, $ability) {
-            if (! method_exists($user, 'hasRole')) {
-                return null;
-            }
-
-            return $user->hasRole('super-settings') ? true : null;
-        });
-
+        /*
+         * Aquí había un Gate::before que devolvía true para CUALQUIER permiso
+         * si el usuario tenía el rol `super-settings`. Con 1.141 usuarios en
+         * ese rol, los permisos y las Policies de los 40 módulos no decidían
+         * nada para la mayor parte del panel: se podía retirar un permiso desde
+         * la interfaz de roles y el acceso seguía abierto.
+         *
+         * Retirado el 7-sep-2026. El rol tenía 61 de 447 permisos asignados,
+         * así que antes de quitarlo se ejecutó
+         * SuperSettingsExplicitPermissionsSeeder, que le da los 447: el acceso
+         * del primer día es idéntico, pero ahora es el permiso quien manda y
+         * quitar uno surte efecto de verdad.
+         *
+         * Vuelve a ejecutar ese seeder cuando instales un módulo nuevo, o sus
+         * permisos recién sembrados no llegarán al rol.
+         *
+         * Un cambio de comportamiento que conviene conocer: las Policies con
+         * lógica propia (del tipo "solo el autor edita su nota") ahora también
+         * se aplican a este rol, que antes las saltaba.
+         */
         Gate::define('viewAudit', fn ($user) => $user->can('auth.audit.view'));
+    }
+
+    /**
+     * Named limiter para /forgot-password (throttle:password-reset en
+     * routes/web.php). Encontrado sin registrar por un barrido de
+     * route:list — sin él, ThrottleRequests trata el nombre como
+     * maxAttempts numérico crudo en vez de aplicar un límite real.
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('password-reset', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($request->ip()));
     }
 
     /**

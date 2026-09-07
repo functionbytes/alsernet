@@ -13,7 +13,6 @@ use Modules\Document\Console\Commands\CreateBlockedProductDocuments;
 use Modules\Document\Console\Commands\InitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\MigrateProductBlockades;
 use Modules\Document\Console\Commands\MonitorEmailJobs;
-use Modules\Document\Console\Commands\ProcessEmailBouncesCommand;
 use Modules\Document\Console\Commands\ReinitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\RetryFailedEmailJobs;
 use Modules\Document\Console\Commands\RevalidateDocumentTypes;
@@ -28,10 +27,10 @@ use Modules\Document\Entities\DocumentPermission;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Http\ViewComposers\NavigationComposer;
 use Modules\Document\Policies\DocumentPolicy;
-use Modules\Document\Services\DocumentEmailLogPanelRenderer;
 use Modules\Document\Policies\SettingsPolicy;
-use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
+use Modules\Document\Services\DocumentEmailLogPanelRenderer;
 use Modules\Document\Services\PermissionService;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -75,6 +74,7 @@ class DocumentsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         // Register routes directly (Laravel 12 compatible)
+        $this->registerRoutes();
 
         $this->registerEmailLogPanel();
     }
@@ -99,7 +99,6 @@ class DocumentsServiceProvider extends ServiceProvider
 
         $this->app->make(EntityPanelRegistry::class)
             ->register(new DocumentEmailLogPanelRenderer);
-        $this->registerRoutes();
     }
 
     /**
@@ -143,33 +142,40 @@ class DocumentsServiceProvider extends ServiceProvider
         // Register dynamic gates for document permissions
         // This allows using middleware('can:permission-name') with any permission from document_permissions table
         Gate::before(function ($user, $ability) {
-            // Super-admin bypass
+            // Este gancho existe para resolver los permisos que viven en la
+            // tabla `document_permissions`, que no son permisos de Spatie y por
+            // eso hay que comprobarlos a mano contra los grupos validadores.
+            //
+            // El atajo de super-admin estaba ANTES de esa comprobación y sin
+            // acotar por ability, así que concedía cualquier permiso de
+            // cualquiera de los 40 módulos —no solo los de Document— a los 212
+            // usuarios con ese rol: un Gate::before de un módulo satélite
+            // decidiendo sobre todo el sistema. Ahora se responde únicamente
+            // dentro del dominio propio, igual que hace Supplier con el suyo, y
+            // fuera de aquí manda el permiso asignado.
+            if (! class_exists('Modules\Document\Entities\DocumentPermission')) {
+                return null;
+            }
+
+            if (! DocumentPermission::where('name', $ability)->exists()) {
+                return null; // No es un permiso de Document: no opinamos.
+            }
+
             if ($user->hasRole('super-admin')) {
                 return true;
             }
 
-            // Check if this ability exists in document permissions
-            if (class_exists('Modules\Document\Entities\DocumentPermission')) {
-                $permission = DocumentPermission::where('name', $ability)->first();
+            $userGroups = DocumentValidatorGroup::whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->get();
 
-                if ($permission) {
-                    // Get user's validator groups
-                    $userGroups = DocumentValidatorGroup::whereHas('users', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    })->get();
-
-                    // Check if any of the user's groups have this permission
-                    foreach ($userGroups as $group) {
-                        if ($group->permissions()->where('name', $ability)->exists()) {
-                            return true;
-                        }
-                    }
-
-                    return false;
+            foreach ($userGroups as $group) {
+                if ($group->permissions()->where('name', $ability)->exists()) {
+                    return true;
                 }
             }
 
-            return null; // Let other gates/policies handle it
+            return false;
         });
     }
 
@@ -211,7 +217,6 @@ class DocumentsServiceProvider extends ServiceProvider
             MonitorEmailJobs::class,
             AnalyzeEmailJobErrors::class,
             RetryFailedEmailJobs::class,
-            ProcessEmailBouncesCommand::class,
         ]);
     }
 
@@ -243,26 +248,6 @@ class DocumentsServiceProvider extends ServiceProvider
             // Buzones de rebote) antes de desplegar este cambio — esos
             // Settings ya no los lee nadie.
         });
-    }
-
-    /**
-     * Register the bounce-checking schedule (every 10 minutes) if enabled via Settings.
-     */
-    protected function registerBounceProcessingSchedule(Schedule $schedule): void
-    {
-        try {
-            if (Setting::get('documents.bounce_imap_enabled', 'no') !== 'yes') {
-                return;
-            }
-
-            $schedule->command('documents:process-bounces')
-                ->everyTenMinutes()
-                ->withoutOverlapping()
-                ->runInBackground()
-                ->appendOutputTo(storage_path('logs/document-bounces.log'));
-        } catch (\Exception $e) {
-            // No interrumpir el boot si la tabla settings aún no existe
-        }
     }
 
     /**
@@ -407,6 +392,7 @@ class DocumentsServiceProvider extends ServiceProvider
         // Agregar configuraciones de documentos al sidebar genérico 'settings'
         NavService::registerSidebar('settings', [
             'title' => 'Documentos',
+            'order' => 110,
             'items' => [
                 ['label' => 'Configuración global', 'route' => 'settings.documents.configurations.global'],
                 ['label' => 'Almacenamiento', 'route' => 'settings.documents.configurations.storage'],
