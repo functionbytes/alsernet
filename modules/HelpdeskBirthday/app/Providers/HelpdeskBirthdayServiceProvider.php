@@ -13,9 +13,13 @@ use Modules\HelpdeskBirthday\Console\Commands\DispatchDueBirthdayEmails;
 use Modules\HelpdeskBirthday\Console\Commands\FinalizeBirthdayCampaigns;
 use Modules\HelpdeskBirthday\Console\Commands\PrepareBirthdayCampaign;
 use Modules\HelpdeskBirthday\Console\Commands\SendBirthdayTestEmail;
+use Modules\HelpdeskBirthday\Console\Commands\SyncBirthdayRedemptions;
 use Modules\HelpdeskBirthday\Listeners\AnonymizeBirthdayRecipients;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Policies\BirthdayCampaignPolicy;
+use Modules\HelpdeskBirthday\Services\Redemption\BirthdayRedemptionReader;
+use Modules\HelpdeskBirthday\Services\Redemption\BridgeRedemptionReader;
+use Modules\HelpdeskBirthday\Services\Redemption\SqlRedemptionReader;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -31,6 +35,40 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
             module_path($this->name, 'config/config.php'),
             $this->nameLower
         );
+
+        $this->registerRedemptionReader();
+    }
+
+    /**
+     * De dónde se leen los canjes de la tienda.
+     *
+     * Por defecto el bridge, que es la vía que funciona aunque PrestaShop viva
+     * en otra máquina. Si no está configurado —o si se pide explícitamente— se
+     * cae a la lectura SQL directa, que sirve mientras webadmin y la tienda
+     * compartan MariaDB y es lo que permite trabajar sin haber desplegado nada
+     * en PrestaShop.
+     *
+     * Se decide por configuración y NO por entorno: que en desarrollo funcione
+     * una vía distinta de la de producción es justo lo que hace que un fallo
+     * aparezca al desplegar y no antes.
+     */
+    protected function registerRedemptionReader(): void
+    {
+        $this->app->bind(BirthdayRedemptionReader::class, function (): BirthdayRedemptionReader {
+            $source = (string) config('helpdeskbirthday.redemption_source', 'auto');
+
+            if ($source === 'sql') {
+                return new SqlRedemptionReader;
+            }
+
+            $bridge = new BridgeRedemptionReader;
+
+            if ($source === 'bridge' || $bridge->isAvailable()) {
+                return $bridge;
+            }
+
+            return new SqlRedemptionReader;
+        });
     }
 
     public function boot(): void
@@ -112,6 +150,7 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
             FinalizeBirthdayCampaigns::class,
             SendBirthdayTestEmail::class,
             CheckUnmarkedBirthdayCoupons::class,
+            SyncBirthdayRedemptions::class,
         ]);
 
         $prepareAt = (string) config('helpdeskbirthday.prepare_at', '06:00');
@@ -156,7 +195,8 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
                 ->everyMinute()
                 ->withoutOverlapping(5)
                 ->onOneServer()
-                ->when(fn (): bool => helpdesk_birthday_enabled());
+                ->when(fn (): bool => helpdesk_birthday_enabled())
+                ->runInBackground();
 
             // Una vez al día basta: un cupón sin marcar no se arregla solo,
             // pero tampoco urge al minuto.
@@ -170,6 +210,27 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
             $schedule->command('helpdeskbirthday:finalize')
                 ->hourly()
                 ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_birthday_enabled());
+
+            // Los canjes de los últimos días, que es donde puede cambiar algo:
+            // un pedido pasa a válido, Gestión registra el consumo. El panel lee
+            // de la copia local, así que sin esto las cifras de dinero se quedan
+            // congeladas en la última sincronización.
+            $schedule->command('helpdeskbirthday:sync-redemptions --days=45')
+                ->hourly()
+                ->withoutOverlapping(30)
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_birthday_enabled());
+
+            // Y una pasada larga de madrugada: recoge lo que se haya movido más
+            // atrás y mantiene vivo el histórico, que es la línea base con la
+            // que se compara una campaña. De noche porque son ~1.100 filas y
+            // varias páginas contra la tienda.
+            $schedule->command('helpdeskbirthday:sync-redemptions --days=400')
+                ->dailyAt('04:30')
+                ->timezone($timezone)
+                ->withoutOverlapping(60)
                 ->onOneServer()
                 ->when(fn (): bool => helpdesk_birthday_enabled());
         });

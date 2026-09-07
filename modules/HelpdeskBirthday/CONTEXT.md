@@ -255,9 +255,35 @@ de ayer salían hoy mezclados con los de hoy y ninguna campaña cerraba.
 - **Envíos por día** y **motivos de omisión**, que explican la diferencia entre
   cumpleañeros encontrados y correos realmente enviados.
 
-En el detalle de una campaña, cada destinatario muestra su estado real de
-entrega (**Entregado / Abierto / Clic**), resuelto con `forRecipients()` en una
-sola consulta para toda la página, y un menú de acciones:
+### El detalle de una campaña
+
+`campaigns/{id}` **no es la lista de destinatarios**, es el cuadro de mando de
+esa campaña: para saber si funcionó no hay que leer 577 filas. Cuatro pestañas,
+con cabecera común (`campaigns/_header.blade.php`):
+
+| Pestaña | Qué contesta |
+|---|---|
+| **Resumen** | Bonos emitidos/usados/sin emitir, facturado, descontado, pedido medio, cuándo se gastó el bono y comparación con el histórico de la tienda |
+| **Destinatarios** | La tabla de siempre, con filtros y el menú por fila |
+| **Canjes** | Pedido a pedido: referencia, estado, importe y qué contestó gestión |
+| **Descuadre** | Bonos gastados que el ERP nunca descontó, con el importe en riesgo |
+
+Los números salen de `BirthdayCampaignDashboardService`, que lee la copia local
+y **no** consulta PrestaShop al pintar. Separado de `BirthdayDashboardService`,
+que agrega un periodo entero: son dos preguntas distintas («¿cómo va el mes?» y
+«¿cómo fue este día?»).
+
+Una acción destacada y el resto en el menú: la destacada es la que toca según el
+estado (Reanudar → generar los bonos que faltan → reintentar fallidos). Siete
+botones en fila no dejaban ver cuál era la importante.
+
+**Aviso de fallos**: cuando los envíos fallidos pasan del 20 % de los intentos,
+la pantalla lo dice arriba. Sin él, una tasa de apertura calculada sobre la
+mitad de la gente se lee como buena.
+
+En la pestaña de destinatarios, cada uno muestra su estado real de entrega
+(**Entregado / Abierto / Clic**), resuelto con `forRecipients()` en una sola
+consulta para toda la página, y un menú de acciones:
 
 | Acción | Qué hace |
 |---|---|
@@ -316,61 +342,139 @@ poder hablar con Redis.
 Es el fallo que más veces se ha repetido en este repo: un worker caído sin que
 nadie se entere.
 
+### El freno que se comía los correos
+
+Un caso real y nada evidente, el 7-sep-2026: **209 de 425 envíos** marcados como
+fallidos con `has been attempted too many times` y `attempts = 1` en el
+destinatario. Ninguno se había intentado enviar.
+
+El middleware de throttle no rechaza un job, lo **libera** para que vuelva a la
+cola — y cada liberación **gasta uno de los `$tries`**, igual que si hubiera
+reventado. `dispatch-due` encolaba 100 por minuto y el freno dejaba pasar 30:
+los 70 sobrantes agotaban sus tres vidas esperando turno. El día que se acumula
+trabajo —justo aquel para el que existe el freno— se perdía la mitad de las
+felicitaciones.
+
+Se arregla **caducando por tiempo y no por intentos**:
+
+```php
+public $tries = 0;                     // el límite lo pone retryUntil()
+public $maxExceptions = 3;             // los fallos DE VERDAD sí se cuentan
+public function retryUntil(): \DateTimeInterface
+{
+    return now()->addHours(config('helpdeskbirthday.expire_after_hours', 6));
+}
+```
+
+Una liberación del throttle no es una excepción, así que no toca
+`maxExceptions`: esperar sale gratis y un SMTP caído sigue matando el job.
+Laravel resuelve `retryUntil()` una vez y lo guarda en el payload — son horas
+desde que el correo entró en la cola, no desde cada reintento.
+
+Regla que se deriva: **`dispatch_batch_size` nunca por encima de
+`throttle.max_jobs`**. Aunque ya no se pierdan correos, encolar de más sólo
+sirve para llenar Redis.
+
 ---
 
 ## Métricas de negocio: el canje
 
-Abrir el correo no es comprar. `BirthdayRedemptionService` mide cuánta gente
-usó el cupón consultando **PrestaShop** (`order_cart_rule` × `cart_rule` ×
-`orders` × `customer`, con el mismo patrón de BD cualificada que
-`HelpdeskPrestashop\Services\PrestashopProductQueryService`, porque la conexión
-`prestashop` de `config/database.php` no está configurada en este entorno).
+Abrir el correo no es comprar. Lo que dice si la campaña sirve es cuánta gente
+gastó su bono, y eso vive en **PrestaShop**.
 
-Aparece como «Cupones usados» y «Facturado» en el panel, como columna
-**Canjeado** por destinatario, y con detalle completo en
-`panel/helpdeskbirthday/campaigns/{id}/redemptions`: por cada pedido, su
-referencia, estado, importe, descuento aplicado, si es de un destinatario y
-**qué contestó gestión al marcar el bono**.
+### El hallazgo que condiciona todo: la `cart_rule` no sobrevive al canje
 
-Esa última columna sale de `marcarbono`, la tabla que PrestaShop escribe al
-canjear un bono contra el ERP (ver `Marcarbono.php` del override). Su
-`erp_response` es lo que permite detectar el caso feo: un cupón consumido en la
-tienda que **no** llegó a descontarse en gestión. Tres estados posibles:
-«Marcado» (respuesta `ok`), «Revisar» (gestión contestó otra cosa) y «Sin
-registro» (el pedido no pasó por ese flujo).
+PrestaShop **borra la regla del cupón cuando se consume**. Medido sobre la
+tienda real: de los **1.116** cheques de cumpleaños canjeados desde 2023, sólo
+**4** conservan su fila en `cart_rule`. Cualquier consulta que una con INNER
+JOIN a esa tabla —o que busque por `cart_rule.code`— ve el **0,4 %** de los
+canjes. Es exactamente lo que hacía la primera versión de este módulo.
 
-`HELPDESK_BIRTHDAY_PS_ADMIN_URL` habilita el enlace al pedido en el back-office
-de PrestaShop. Ojo: PrestaShop exige un token por controlador y usuario que no
-se puede generar desde aquí, así que el enlace lleva al pedido pero pedirá
-confirmar el token.
+El patrón correcto, y el que usan hoy las dos implementaciones:
 
-**Qué se busca en PrestaShop:** los códigos de los DESTINATARIOS
-(`BirthdayRedemptionService::codesFor()`), porque el bono es de cada cliente. El
-código de campaña se sigue incluyendo para las promociones antiguas de código
-único. Buscar solo por el de la campaña dejaba todas las cifras de canje a cero
-—«Cupones usados», «Facturado», el paso «Compraron» del embudo y
-`check-unmarked`— sin que nada avisara de que estaban midiendo un campo vacío.
+- el ancla es **`order_cart_rule`**, que no se borra nunca, con `orders` como
+  único INNER JOIN;
+- `cart_rule` y `marcarbono` van con **LEFT JOIN**;
+- el código se reconstruye de donde haya sobrevivido:
+  `COALESCE(cr.code, CONCAT(mb.bono, '-', mb.codigo_verificacion))` — 4 casos
+  de la regla viva, 749 del registro de gestión, **363 de ningún sitio**;
+- el tipo de cupón se reconoce por `order_cart_rule.name`
+  («Cheque cumpleaños generado desde la web»), **no** por listas de códigos:
+  90 días son más de 50.000 códigos, y filtrar por nombre además saca los
+  canjes que no se logra atribuir, que son información y no ruido;
+- la identidad de un canje es **`ocr.id_order_cart_rule`** (la LÍNEA de
+  descuento), no el pedido ni la regla: un pedido puede llevar dos bonos, y
+  sin id de regla los dos colapsan — 11 canjes se machacaban entre sí;
+- **`marcarbono` se une por `id_cart_rule`, NUNCA por `id_order`**: por pedido,
+  cada línea se cruza con cada registro de gestión e infla 1.116 canjes a 1.132,
+  con su importe.
 
-Con un bono por cliente la lista de códigos es larga (577 en un día cualquiera,
-más de 50.000 en 90 días), así que se consulta por bloques de 2.000.
+### De dónde se leen: dos implementaciones tras una interfaz
 
-La atribución sigue cruzando el email del pedido con los destinatarios: quien
-reenvíe su código a un amigo cuenta como canje del bono pero no como canje
-atribuido.
+`Services\Redemption\BirthdayRedemptionReader` con dos implementaciones, que se
+elige con `helpdeskbirthday.redemption_source` (`auto` | `bridge` | `sql`):
 
-Si `HELPDESK_PS_DB` no está configurada, las tarjetas de canje **se ocultan** en
-vez de mostrar 0: un cero ahí parecería un mal resultado cuando en realidad es
-«no lo sabemos».
+- **`BridgeRedemptionReader`** — habla con el módulo `alsernetbridge` de
+  PrestaShop (acción `voucher.redemptions`, HTTP firmado con HMAC). Es la vía de
+  producción: no exige que webadmin alcance la base de la tienda. Existe también
+  `voucher.status` para consultar códigos concretos.
+- **`SqlRedemptionReader`** — lee la BD directamente. Vale mientras webadmin y
+  PrestaShop compartan MariaDB, y es la red de seguridad si el bridge se cae.
 
-`helpdeskbirthday:check-unmarked` corre a diario (07:30) y avisa de los cupones
-que el cliente gastó en la tienda pero que **no se descontaron en gestión**: el
-descuento ya está hecho y el bono sigue vivo, así que se puede volver a usar.
-Desde la pantalla de canjes se puede reintentar el marcado, que llama a
-`ErpService::marcarBono()` con `operacion = 2` (consumir), el mismo valor que
-usa el override de PrestaShop. **Eso escribe en el ERP.**
+**Lo que NO se puede preguntar a la tienda:** si un bono recién emitido es
+válido. La `cart_rule` no existe hasta que el cliente teclea el código, y nace
+con `date_from` = ese día. El estado de un bono sin canjear sólo lo sabe el ERP
+(`GET /api-gestion/bono/{id}/`).
 
-El panel también muestra el embudo completo: cumpleañeros → enviados → abiertos
-→ con clic → compraron, con la caída porcentual entre pasos.
+### La copia local
+
+El panel **no consulta PrestaShop al pintar**: lee
+`helpdesk_birthday_redemptions`, que rellena
+`BirthdayRedemptionSyncService` vía `helpdeskbirthday:sync-redemptions`
+(cada hora los últimos 45 días, de madrugada 400). Es idempotente.
+
+Tres razones para la copia, y la tercera es la que manda: un JOIN de cinco
+tablas sobre 181.000 pedidos no se puede pedir por carga; la tienda puede no
+responder; y **lo que no se guarde aquí se pierde**, porque PrestaShop borra la
+regla al consumirla.
+
+`campaign_id` es nullable a propósito: el histórico anterior al módulo son
+canjes reales sin campaña que los reclame, y es la única línea base contra la
+que comparar (1.116 canjes · 5.575,24 € descontados · 149.308,80 € facturados,
+cuadrados al céntimo con la fuente).
+
+**Atribución**, en `matchRecipient()`: primero por código —exacta— y si no por
+email del pedido, necesario porque en 363 canjes el código ya no consta. La
+ventana se acota con `campaign_date` y **no** con el `created_at` del
+destinatario: en un backfill todas las filas tienen la misma hora. Y
+`attributed` sólo se marca si además se le envió el correo: quien compró con un
+código reenviado canjeó el bono pero no es conversión de la campaña.
+
+### El descuadre con gestión
+
+`marcarbono` es la tabla que PrestaShop escribía al consumir un bono contra el
+ERP. **Dejó de escribirse entera el 28-may-2025**, y la causa está confirmada:
+el código que lo hacía **ya no existe** — la clase `Marcarbono.php` sigue en el
+override y `AdminMarcarbonoController` la administra, pero no la instancia
+nadie, ni hay INSERT directo. `AlvarezERP::marcarbono()` tampoco tiene
+llamadores.
+
+Consecuencia: 381 bonos gastados en la tienda que el ERP nunca descontó, ~1.900 €
+que siguen vivos y se pueden volver a gastar. Y una implicación práctica —
+**marcar desde webadmin no puede producir un consumo doble**, porque PrestaShop
+ya no tiene con qué marcarlos.
+
+`campaigns/{id}/reconciliation` los lista con el importe en riesgo y permite
+marcarlos en el ERP. **Escribe en el ERP y no se deshace**, así que: lo lanza
+una persona, sobre una selección explícita, nunca el scheduler, y jamás hay un
+«marcar todo». Sin código conocido no se puede marcar (363 canjes están en ese
+caso). Cada bono se valida igualmente en gestión: si estaba caducado, ya
+consumido o su pedido acabó devuelto, el ERP lo rechaza y el motivo queda en la
+fila.
+
+`HELPDESK_BIRTHDAY_PS_ADMIN_URL` habilita el enlace al pedido en el back-office.
+Ojo: PrestaShop exige un token por controlador y usuario que no se puede generar
+desde aquí, así que el enlace lleva al pedido pero pedirá confirmarlo.
 
 ---
 
@@ -404,6 +508,33 @@ KPIs con `statsForModule()`.
 prueba» en Ajustes) manda la felicitación a direcciones internas con el cupón
 configurado, **sin tocar la campaña ni sus destinatarios**: el destinatario de
 prueba es un modelo en memoria. El asunto lleva el prefijo `[PRUEBA]`.
+
+### `HELPDESK_BIRTHDAY_SHOP_URL` — lo primero que hay que comprobar
+
+Es el destino del botón principal del correo, el que lleva al cliente a gastar
+su bono. **Sin configurar, cae a `APP_URL`, que es el panel de administración.**
+
+Fue un fallo silencioso de manual: el botón funcionaba, sólo que llevaba al
+backoffice. Los 574 correos del 7-sep-2026 salieron apuntando a
+`http://localhost:8092` y nadie lo habría notado si no se miran los enlaces
+—fueron a Mailpit, no a clientes—. El respaldo sigue existiendo (un `href`
+vacío rompe el botón en algunos clientes de correo) pero ahora deja un
+`Log::warning`.
+
+Valor correcto: la tienda, la misma que `PS_SHOP_DOMAIN` en PrestaShop
+(`https://www.a-alvarez.com`).
+
+### Lista de comprobación
+
+| Comprobar | Por qué |
+|---|---|
+| `HELPDESK_BIRTHDAY_SHOP_URL` | Sin ella el regalo lleva al panel, no a la tienda |
+| Cola `birthdays` en el `--queue=` del worker | Si no, los correos se encolan y no sale ninguno, en silencio |
+| `dispatch_batch_size` ≤ `throttle.max_jobs` | Encolar de más sólo llena Redis |
+| `retry_after` > `--timeout` del worker | Al revés, un job lento se ejecuta dos veces: correo duplicado |
+| Bridge `alsernetbridge` ≥ 1.2.4 desplegado | `voucher.redemptions` no existe antes de esa versión |
+| `helpdeskbirthday:sync-redemptions --all` una vez | Carga el histórico, que es la línea base de comparación |
+| `erp_language_map` | Vacío = todos reciben en `fallback_language` |
 
 ---
 

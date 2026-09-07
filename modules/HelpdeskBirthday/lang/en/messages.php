@@ -58,4 +58,8 @@ return [
         'manual' => 'Set manually',
         'erp' => 'Validated with ERP',
     ],
+    'redemptions_unavailable' => 'The shop cannot be queried right now: check the PrestaShop bridge.',
+    'redemptions_synced' => 'Redemptions updated: :count.',
+    'reconcile_done' => 'Marked in the ERP: :ok. Rejected: :failed.',
+    'reconcile_nothing' => 'No pending voucher with a known code to mark.',
 ];

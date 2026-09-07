@@ -4,6 +4,7 @@ namespace Modules\HelpdeskBirthday\Services;
 
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -532,16 +533,48 @@ class BirthdayCampaignService
      * Avisa a quien pueda gestionar campañas. Sin esto el fallo es mudo:
      * `prepare` corre de madrugada y nadie se entera hasta abrir el panel.
      *
+     * DOS FRENOS, y los dos hicieron falta de verdad
+     * ----------------------------------------------
+     * En esta base hay 1.412 usuarios con rol de administrador (fixtures que
+     * se colaron), y `prepare` se reintenta cada hora hasta el fin de la
+     * ventana. Sin freno, cada campaña que fallaba generaba 1.412 avisos por
+     * intento: el 7-sep-2026 había **182.951 notificaciones acumuladas** y la
+     * cola `notifications-high` —la misma que sirve los broadcasts del panel de
+     * tickets— llevaba 92.148 trabajos de retraso. Un aviso de que la campaña
+     * de cumpleaños falló dejaba sin tiempo real a todo el helpdesk.
+     *
+     * 1. Se avisa UNA vez por campaña, no una por reintento.
+     * 2. Y a un número acotado de personas: un fallo operativo se arregla igual
+     *    con diez avisos que con mil cuatrocientos.
+     *
      * Nunca deja que un fallo de notificación tape el fallo original: si algo
      * revienta aquí, se loguea y se sigue.
      */
     private function notifyFailure(BirthdayCampaign $campaign, string $message): void
     {
         try {
+            // Un aviso por campaña. `prepare` se reintenta cada hora y el
+            // segundo aviso no añade nada que el primero no dijera.
+            $alreadyWarned = Cache::add(
+                'helpdeskbirthday:failure-notified:'.$campaign->id,
+                true,
+                now()->addDay(),
+            ) === false;
+
+            if ($alreadyWarned) {
+                return;
+            }
+
+            $limit = max(1, (int) config('helpdeskbirthday.failure_notification_limit', 10));
+
             $recipients = User::query()
                 ->whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'super-admin', 'super-administrador', 'super-settings']))
+                // Sin este tope se cargaban 1.412 usuarios en memoria para
+                // comprobarles el permiso uno a uno.
+                ->limit($limit * 5)
                 ->get()
-                ->filter(fn (User $user): bool => $user->can('helpdeskbirthday.manage'));
+                ->filter(fn (User $user): bool => $user->can('helpdeskbirthday.manage'))
+                ->take($limit);
 
             if ($recipients->isEmpty()) {
                 return;

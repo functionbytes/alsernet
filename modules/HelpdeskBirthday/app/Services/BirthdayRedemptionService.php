@@ -37,6 +37,17 @@ class BirthdayRedemptionService
 
     private string $prefix;
 
+    /**
+     * Filas de canje ya leídas en esta petición, por campaña.
+     *
+     * El detalle de campaña pedía redeemersFor() y forCampaign(), y cada uno
+     * lanzaba el mismo JOIN de cuatro tablas contra PrestaShop con los mismos
+     * códigos: dos veces la consulta más cara de la pantalla para pintarla una.
+     *
+     * @var array<int, array<int, object>>
+     */
+    private array $rowsByCampaign = [];
+
     public function __construct()
     {
         $this->db = (string) config('helpdeskprestashop.ps_db', '');
@@ -115,7 +126,7 @@ class BirthdayRedemptionService
         }
 
         try {
-            $rows = $this->redemptionRowsForCodes($codes, $this->since($campaign));
+            $rows = $this->rowsFor($campaign, $codes);
         } catch (Throwable $e) {
             Log::warning('[HelpdeskBirthday] No se pudieron leer los canjes en PrestaShop', [
                 'campaign_id' => $campaign->id,
@@ -262,7 +273,7 @@ class BirthdayRedemptionService
         }
 
         try {
-            $rows = $this->redemptionRowsForCodes($codes, $this->since($campaign));
+            $rows = $this->rowsFor($campaign, $codes);
         } catch (Throwable) {
             return [];
         }
@@ -305,33 +316,45 @@ class BirthdayRedemptionService
         $since = $this->since($campaign);
 
         try {
-            $rows = DB::table("{$db}.{$pfx}order_cart_rule as ocr")
-                ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
-                ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
-                ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
-                ->leftJoin("{$db}.{$pfx}order_state_lang as osl", function ($j): void {
-                    $j->on('osl.id_order_state', '=', 'o.current_state')->where('osl.id_lang', '=', 1);
-                })
-                // El canje del bono contra gestión: puede no existir si el
-                // cupón se aplicó sin pasar por el flujo del ERP.
-                ->leftJoin("{$db}.{$pfx}marcarbono as mb", function ($j): void {
-                    $j->on('mb.id_order', '=', 'o.id_order')->where('mb.deleted', '=', 0);
-                })
-                ->whereIn('cr.code', $codes)
-                ->where('ocr.deleted', 0)
-                ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
-                ->orderByDesc('o.date_add')
-                ->select([
-                    'cr.code as coupon_code',
-                    'c.email', 'c.id_customer',
-                    'o.id_order', 'o.reference', 'o.total_paid', 'o.date_add', 'o.valid',
-                    'osl.name as order_state',
-                    'ocr.value as discount',
-                    'mb.operacion as erp_operation',
-                    'mb.erp_response',
-                    'mb.date_add as erp_marked_at',
-                ])
-                ->get();
+            // Por bloques, igual que redemptionRowsForCodes(): era el único
+            // sitio que montaba el IN entero, y con un bono por cliente esta
+            // lista ya no son 30 códigos sino uno por cumpleañero.
+            $rows = collect();
+
+            foreach (array_chunk($codes, self::CODES_PER_QUERY) as $chunk) {
+                $batch = DB::table("{$db}.{$pfx}order_cart_rule as ocr")
+                    ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
+                    ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
+                    ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
+                    ->leftJoin("{$db}.{$pfx}order_state_lang as osl", function ($j): void {
+                        $j->on('osl.id_order_state', '=', 'o.current_state')->where('osl.id_lang', '=', 1);
+                    })
+                    // El canje del bono contra gestión: puede no existir si el
+                    // cupón se aplicó sin pasar por el flujo del ERP.
+                    ->leftJoin("{$db}.{$pfx}marcarbono as mb", function ($j): void {
+                        $j->on('mb.id_order', '=', 'o.id_order')->where('mb.deleted', '=', 0);
+                    })
+                    ->whereIn('cr.code', $chunk)
+                    ->where('ocr.deleted', 0)
+                    ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
+                    ->select([
+                        'cr.code as coupon_code',
+                        'c.email', 'c.id_customer',
+                        'o.id_order', 'o.reference', 'o.total_paid', 'o.date_add', 'o.valid',
+                        'osl.name as order_state',
+                        'ocr.value as discount',
+                        'mb.operacion as erp_operation',
+                        'mb.erp_response',
+                        'mb.date_add as erp_marked_at',
+                    ])
+                    ->get();
+
+                $rows = $rows->concat($batch);
+            }
+
+            // El orden se aplica sobre el total: ordenar cada bloque dejaba la
+            // tabla agrupada por bloque, no por fecha.
+            $rows = $rows->sortByDesc('date_add')->values();
         } catch (Throwable $e) {
             Log::warning('[HelpdeskBirthday] No se pudo leer el detalle de canjes', [
                 'campaign_id' => $campaign->id,
@@ -375,6 +398,24 @@ class BirthdayRedemptionService
                 'erp_ok' => $row->erp_response !== null && mb_strtolower(trim((string) $row->erp_response)) === 'ok',
             ];
         })->all();
+    }
+
+    /**
+     * Las filas de canje de una campaña, leídas UNA vez por petición.
+     *
+     * forCampaign() y redeemersFor() necesitan exactamente lo mismo y el
+     * detalle de campaña llama a los dos, así que sin esto la pantalla lanzaba
+     * dos veces el JOIN más caro que tiene contra PrestaShop.
+     *
+     * La memoria vive lo que vive la instancia del servicio —una petición—, así
+     * que no hay riesgo de servir un canje viejo en la siguiente carga.
+     *
+     * @param  array<int, string>  $codes
+     * @return array<int, object>
+     */
+    private function rowsFor(BirthdayCampaign $campaign, array $codes): array
+    {
+        return $this->rowsByCampaign[$campaign->id] ??= $this->redemptionRowsForCodes($codes, $this->since($campaign));
     }
 
     /**

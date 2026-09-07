@@ -234,6 +234,15 @@ class BirthdayCouponLifecycleTest extends TestCase
 
         BirthdayCampaign::query()->whereDate('campaign_date', $date->toDateString())->delete();
 
+        // dispatch-due recorre TODAS las campañas activas, y en esta base hay
+        // campañas reales del día en curso con destinatarios vencidos: sin esto
+        // el comando encolaba también los suyos y las cuentas del test salían
+        // infladas. Se pausan dentro de la transacción, así que la base real no
+        // se entera.
+        BirthdayCampaign::query()
+            ->active()
+            ->update(['status' => BirthdayCampaign::STATUS_PAUSED]);
+
         $campaign = BirthdayCampaign::query()->create([
             'campaign_date' => $date->toDateString(),
             'status' => BirthdayCampaign::STATUS_SCHEDULED,

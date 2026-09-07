@@ -19,7 +19,11 @@ Route::name('helpdeskbirthday.')
         Route::get('campaigns', [BirthdayCampaignsController::class, 'index'])->name('campaigns.index');
         Route::get('campaigns/{campaign}', [BirthdayCampaignsController::class, 'show'])->name('campaigns.show');
         Route::get('campaigns/{campaign}/preview', [BirthdayCampaignsController::class, 'preview'])->name('campaigns.preview');
+        // Los destinatarios ya no son la portada de la campaña: viven en su
+        // pestaña y {campaign} abre el cuadro de mando.
+        Route::get('campaigns/{campaign}/recipients', [BirthdayCampaignsController::class, 'recipients'])->name('campaigns.recipients');
         Route::get('campaigns/{campaign}/redemptions', [BirthdayCampaignsController::class, 'redemptions'])->name('campaigns.redemptions');
+        Route::get('campaigns/{campaign}/reconciliation', [BirthdayCampaignsController::class, 'reconciliation'])->name('campaigns.reconciliation');
 
         // El correo concreto que recibió un destinatario, para verlo desde su
         // fila. Se sirve como documento HTML aparte (lo carga un iframe) y no
@@ -45,6 +49,18 @@ Route::name('helpdeskbirthday.')
             Route::post('campaigns/{campaign}/retry-bonos', [BirthdayCampaignsController::class, 'retryBonos'])
                 ->middleware('throttle:10,1')
                 ->name('campaigns.retry-bonos');
+
+            // Habla con PrestaShop: throttle bajo para que el botón de
+            // «actualizar» no se convierta en una forma de martillear la tienda.
+            Route::post('campaigns/{campaign}/sync-redemptions', [BirthdayCampaignsController::class, 'syncRedemptions'])
+                ->middleware('throttle:10,1')
+                ->name('campaigns.sync-redemptions');
+
+            // Marca en el ERP, en lote, los bonos que la tienda descontó y
+            // gestión nunca registró. ESCRIBE EN EL ERP: throttle muy bajo.
+            Route::post('campaigns/{campaign}/reconcile', [BirthdayCampaignsController::class, 'reconcile'])
+                ->middleware('throttle:5,1')
+                ->name('campaigns.reconcile');
 
             // Escribe en el ERP (marca el bono como consumido): throttle bajo.
             Route::post('campaigns/{campaign}/mark-coupon-used', [BirthdayCampaignsController::class, 'markCouponUsed'])

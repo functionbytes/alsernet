@@ -26,12 +26,44 @@ use Throwable;
  */
 class SendBirthdayEmailJob extends BaseJob
 {
-    public $tries = 3;
+    /**
+     * Ilimitado a propósito: quien pone el límite es retryUntil().
+     *
+     * Con $tries = 3 esto se comía las felicitaciones. El throttle de abajo no
+     * rechaza un job, lo LIBERA para que vuelva a la cola más tarde, y cada
+     * liberación gasta un intento igual que si hubiera reventado. Así que el
+     * día que se acumula trabajo —justo aquel para el que existe el freno— el
+     * correo agotaba sus tres vidas esperando turno y se marcaba como fallido
+     * sin haberse intentado enviar ni una sola vez. Pasó el 7-sep-2026: 209 de
+     * 425 con «has been attempted too many times» y attempts = 1.
+     *
+     * Contando tiempo en vez de intentos, esperar sale gratis y lo que caduca
+     * es la felicitación, que es lo que de verdad tiene fecha.
+     */
+    public $tries = 0;
 
+    /**
+     * Los fallos de verdad sí se cuentan: tres excepciones y el job muere. Una
+     * liberación del throttle no es una excepción, así que no toca este límite.
+     */
     public $maxExceptions = 3;
 
     /** Sin tipo: BaseJob la declara sin él y PHP no deja añadirlo al heredar. */
     public $backoff = [60, 300, 900];
+
+    /**
+     * Hasta cuándo tiene sentido seguir intentándolo.
+     *
+     * Laravel lo resuelve una vez, en el primer intento, y lo guarda en el
+     * payload: son horas desde que el correo entró en la cola, no desde cada
+     * reintento. Se usa la misma gracia que caduca la campaña (expire_after_hours),
+     * porque el criterio es el mismo: pasado ese plazo, felicitar con retraso
+     * es peor que no felicitar.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(max(1, (int) config('helpdeskbirthday.expire_after_hours', 6)));
+    }
 
     public function __construct(
         public readonly int $recipientId,

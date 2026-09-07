@@ -10,23 +10,11 @@
 
 @section('content')
 
-<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-    <h1 class="h4 mb-0 fw-bold">
-        <i class="fas fa-receipt text-primary me-2"></i>Canjes de los bonos
-        @if($campaign->coupon_code)
-            <span class="bd-coupon-code ms-2">{{ $campaign->coupon_code }}</span>
-        @endif
-    </h1>
-    <p class="text-muted small mb-0 w-100 order-3 mt-1">
-        Pedidos de PrestaShop que usaron un bono de esta campaña y qué contestó gestión al marcarlo.
-        Campaña del {{ $campaign->campaign_date->format('d/m/Y') }}, {{ $couponCount }} bonos emitidos.
-    </p>
-    <div class="ms-auto order-2">
-        <a href="{{ route('helpdeskbirthday.campaigns.show', $campaign) }}" class="btn btn-outline-secondary btn-sm">Volver a la campaña</a>
-    </div>
-</div>
+{{-- .bd-panel lleva la paleta y los estados del módulo. Sin él, .bd-badge--live
+     y .bd-coupon-code no aplican: están definidos bajo .bd-panel. --}}
+<div class="bd-panel">
 
-@include('core::components.alerts')
+@include('helpdeskbirthday::campaigns._header')
 
 @if(! $available)
     <div class="alert alert-warning">
@@ -69,6 +57,8 @@
                 alguien que compró con el código que le reenviaron.
             </p>
 
+            <p class="text-muted small bd-table-hint">Desliza la tabla para ver el resto de columnas.</p>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead>
@@ -103,7 +93,7 @@
                                     <small class="text-muted d-block">PS #{{ $row['order_id'] }}</small>
                                 </td>
                                 <td>
-                                    <span class="badge {{ $row['order_valid'] ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' }}">
+                                    <span class="badge {{ $row['order_valid'] ? 'bd-badge bd-badge--live' : 'bd-badge bd-badge--done' }}">
                                         {{ $row['order_state'] ?: '—' }}
                                     </span>
                                 </td>
@@ -111,21 +101,21 @@
                                 <td class="text-end text-nowrap">{{ number_format($row['discount'], 2, ',', '.') }} €</td>
                                 <td>
                                     @if($row['attributed'])
-                                        <span class="badge bg-primary-subtle text-primary">Sí</span>
+                                        <span class="badge bd-badge bd-badge--live">Sí</span>
                                     @else
                                         <span class="text-muted">No</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($row['erp_ok'])
-                                        <span class="badge bg-primary-subtle text-primary">Marcado</span>
+                                        <span class="badge bd-badge bd-badge--live">Marcado</span>
                                         @if($row['erp_marked_at'])
                                             <small class="text-muted d-block">{{ \Illuminate\Support\Carbon::parse($row['erp_marked_at'])->format('d/m H:i') }}</small>
                                         @endif
                                     @elseif($row['erp_response'] !== null)
                                         {{-- Se intentó marcar y gestión contestó otra cosa: es lo que hay
                                              que revisar a mano, un cupón consumido sin descontar en el ERP. --}}
-                                        <span class="badge bg-secondary-subtle text-secondary">Revisar</span>
+                                        <span class="badge bd-badge bd-badge--done">Revisar</span>
                                         <small class="text-muted d-block">{{ \Illuminate\Support\Str::limit($row['erp_response'], 40) }}</small>
                                     @else
                                         <span class="text-muted">Sin registro</span>
@@ -198,5 +188,9 @@
         </div>
     </div>
 @endif
+
+@include('helpdeskbirthday::campaigns._cancel-modal')
+
+</div>
 
 @endsection

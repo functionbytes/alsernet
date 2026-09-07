@@ -10,10 +10,14 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Models\BirthdayRedemption;
+use Modules\HelpdeskBirthday\Services\BirthdayCampaignDashboardService;
 use Modules\HelpdeskBirthday\Services\BirthdayCampaignService;
 use Modules\HelpdeskBirthday\Services\BirthdayCouponService;
 use Modules\HelpdeskBirthday\Services\BirthdayDashboardService;
+use Modules\HelpdeskBirthday\Services\BirthdayReconciliationService;
 use Modules\HelpdeskBirthday\Services\BirthdayRedemptionService;
+use Modules\HelpdeskBirthday\Services\BirthdayRedemptionSyncService;
 use Modules\HelpdeskBirthday\Support\BirthdayMailRenderer;
 use Modules\HelpdeskEmailActivity\Enums\SuppressionReason;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
@@ -50,11 +54,35 @@ class BirthdayCampaignsController extends Controller
         ]);
     }
 
+    /**
+     * El cuadro de mando de la campaña: sus bonos, su dinero y su descuadre.
+     *
+     * Antes esta ruta abría directamente la lista de destinatarios, que es el
+     * detalle y no el resumen: para saber si la campaña había funcionado había
+     * que leer 577 filas. Los destinatarios siguen a un clic, en su pestaña.
+     */
     public function show(
+        BirthdayCampaign $campaign,
+        BirthdayCampaignDashboardService $dashboard,
+    ): View {
+        return view('helpdeskbirthday::campaigns.dashboard', [
+            'campaign' => $campaign,
+            'tab' => 'summary',
+            'stats' => $dashboard->forCampaign($campaign),
+            'skipReasons' => $dashboard->skipReasons($campaign),
+            'baseline' => $dashboard->historicalBaseline(),
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
+        ]);
+    }
+
+    /**
+     * La lista de destinatarios, con su estado de envío y su bono.
+     */
+    public function recipients(
         Request $request,
         BirthdayCampaign $campaign,
         EmailDeliveryLookupService $lookup,
-        BirthdayRedemptionService $redemptions,
+        BirthdayCampaignDashboardService $dashboard,
     ): View {
         $recipients = $campaign->recipients()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
@@ -72,39 +100,21 @@ class BirthdayCampaignsController extends Controller
             BirthdayDashboardService::MODULE,
         );
 
-        // Los bonos de la campaña, en una sola consulta agregada: cuántos se
-        // emitieron, cuántos faltan y qué concedió Gestión. Pedir cada cifra por
-        // separado eran cinco consultas para pintar una tarjeta.
-        $coupons = $campaign->recipients()
-            ->selectRaw('COUNT(coupon_code) as issued')
-            ->selectRaw('SUM(CASE WHEN coupon_code IS NULL AND status IN (?, ?) THEN 1 ELSE 0 END) as `without`', [
-                BirthdayRecipient::STATUS_PENDING,
-                BirthdayRecipient::STATUS_SKIPPED,
-            ])
-            ->selectRaw('MAX(coupon_amount) as amount')
-            ->selectRaw('MAX(coupon_min_purchase) as min_purchase')
-            ->selectRaw('MAX(coupon_valid_to) as valid_to')
-            ->first();
+        // Quién gastó su bono, de la copia local: ya no se consulta PrestaShop
+        // al pintar la tabla.
+        $redeemers = BirthdayRedemption::query()
+            ->where('campaign_id', $campaign->id)
+            ->whereIn('customer_email', array_map('mb_strtolower', $recipients->pluck('email')->all()))
+            ->get()
+            ->keyBy(fn (BirthdayRedemption $r): string => (string) $r->customer_email);
 
-        return view('helpdeskbirthday::campaigns.show', [
+        return view('helpdeskbirthday::campaigns.recipients', [
             'campaign' => $campaign,
+            'tab' => 'recipients',
             'recipients' => $recipients,
             'delivery' => $delivery,
-            // Cuántos se quedaron sin bono: es lo que hay que resolver para que
-            // la campaña pueda enviar, así que se cuenta aparte de los fallidos.
-            'withoutCoupon' => (int) $coupons->without,
-            // Resumen de los bonos emitidos: con uno por cliente, la tarjeta del
-            // cupón único ya no dice nada.
-            'coupons' => [
-                'issued' => (int) $coupons->issued,
-                'amount' => $coupons->amount,
-                'valid_to' => $coupons->valid_to,
-                'min_purchase' => $coupons->min_purchase,
-            ],
-            // Quién usó el cupón de verdad (PrestaShop). Vacío si esa BD no
-            // está configurada: la columna se oculta en ese caso.
-            'redeemers' => $redemptions->redeemersFor($campaign),
-            'redemption' => $redemptions->forCampaign($campaign),
+            'redeemers' => $redeemers,
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
             'statuses' => [
                 BirthdayRecipient::STATUS_PENDING,
                 BirthdayRecipient::STATUS_SENDING,
@@ -113,6 +123,29 @@ class BirthdayCampaignsController extends Controller
                 BirthdayRecipient::STATUS_SKIPPED,
             ],
         ]);
+    }
+
+    /**
+     * Trae de la tienda los canjes de esta campaña, ahora.
+     *
+     * El scheduler ya lo hace cada hora; esto es para cuando alguien acaba de
+     * mirar un pedido en PrestaShop y quiere verlo reflejado sin esperar.
+     */
+    public function syncRedemptions(
+        BirthdayCampaign $campaign,
+        BirthdayRedemptionSyncService $sync,
+    ): RedirectResponse {
+        if (! $sync->isAvailable()) {
+            return back()->with('error', __('helpdeskbirthday::messages.redemptions_unavailable'));
+        }
+
+        // Desde el día de la campaña: el bono no se puede gastar antes de que
+        // exista, y acotar evita releer tres años en cada clic.
+        $result = $sync->sync(CarbonImmutable::parse($campaign->campaign_date));
+
+        return back()->with('success', __('helpdeskbirthday::messages.redemptions_synced', [
+            'count' => $result['saved'],
+        ]));
     }
 
     /**
@@ -225,6 +258,8 @@ class BirthdayCampaignsController extends Controller
     {
         return view('helpdeskbirthday::campaigns.redemptions', [
             'campaign' => $campaign,
+            'tab' => 'redemptions',
+            'withoutCoupon' => $campaign->recipients()->whereNull('coupon_code')->whereIn('status', ['pending', 'skipped'])->count(),
             'available' => $redemptions->isAvailable(),
             'summary' => $redemptions->forCampaign($campaign),
             'rows' => $redemptions->detailFor($campaign),
@@ -235,6 +270,58 @@ class BirthdayCampaignsController extends Controller
             // puede gestionar campañas.
             'canManage' => request()->user()?->can('helpdeskbirthday.manage') ?? false,
         ]);
+    }
+
+    /**
+     * El descuadre con gestión: bonos que la tienda descontó y el ERP no restó.
+     */
+    public function reconciliation(
+        BirthdayCampaign $campaign,
+        BirthdayReconciliationService $reconciliation,
+        BirthdayCampaignDashboardService $dashboard,
+    ): View {
+        return view('helpdeskbirthday::campaigns.reconciliation', [
+            'campaign' => $campaign,
+            'tab' => 'reconciliation',
+            'rows' => $reconciliation->pending($campaign)->paginate(50)->withQueryString(),
+            'summary' => $reconciliation->summary($campaign),
+            // El agujero de toda la tienda, no solo de esta campaña: el corte de
+            // `marcarbono` afecta a todos los bonos, y verlo aquí evita creer
+            // que es un problema de este día.
+            'global' => $reconciliation->summary(),
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
+        ]);
+    }
+
+    /**
+     * Marca en gestión los bonos seleccionados.
+     *
+     * ESCRIBE EN EL ERP y no se puede deshacer: por eso llega una selección
+     * explícita y no un «marcar todo».
+     */
+    public function reconcile(
+        Request $request,
+        BirthdayCampaign $campaign,
+        BirthdayReconciliationService $reconciliation,
+    ): RedirectResponse {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $result = $reconciliation->markInErp($data['ids'], $campaign);
+
+        if ($result['ok'] === 0 && $result['failed'] === 0) {
+            return back()->with('error', __('helpdeskbirthday::messages.reconcile_nothing'));
+        }
+
+        return back()->with(
+            $result['ok'] > 0 ? 'success' : 'error',
+            __('helpdeskbirthday::messages.reconcile_done', [
+                'ok' => $result['ok'],
+                'failed' => $result['failed'],
+            ])
+        );
     }
 
     /**

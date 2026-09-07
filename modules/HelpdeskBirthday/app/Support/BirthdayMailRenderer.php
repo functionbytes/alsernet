@@ -107,14 +107,30 @@ class BirthdayMailRenderer
     }
 
     /**
-     * Destino del botón principal. Si no hay tienda configurada cae a la app,
-     * para no dejar un href vacío que en algunos clientes rompe el botón.
+     * Destino del botón principal del correo.
+     *
+     * El respaldo a `app.url` era un fallo silencioso: `app.url` es el PANEL DE
+     * ADMINISTRACIÓN, no la tienda. Con `shop_url` sin configurar, cada cliente
+     * recibía su regalo con un botón que llevaba al backoffice — y nadie se
+     * enteraba, porque el botón funcionaba. Pasó de verdad: los 574 correos del
+     * 7-sep-2026 salieron apuntando a http://localhost:8092.
+     *
+     * Se mantiene el respaldo —un href vacío rompe el botón en algunos clientes
+     * de correo— pero ahora deja rastro para que se pueda arreglar.
      */
     private static function shopUrl(): string
     {
         $url = trim((string) config('helpdeskbirthday.shop_url', ''));
 
-        return $url !== '' ? $url : (string) config('app.url');
+        if ($url !== '') {
+            return $url;
+        }
+
+        Log::warning(
+            '[HelpdeskBirthday] HELPDESK_BIRTHDAY_SHOP_URL sin configurar: el botón del correo apunta al panel, no a la tienda.'
+        );
+
+        return (string) config('app.url');
     }
 
     /**

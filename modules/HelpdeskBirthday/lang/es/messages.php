@@ -58,4 +58,8 @@ return [
         'manual' => 'Configurado a mano',
         'erp' => 'Validado con gestión',
     ],
+    'redemptions_unavailable' => 'No se puede consultar la tienda ahora mismo: revisa el bridge de PrestaShop.',
+    'redemptions_synced' => 'Canjes actualizados: :count.',
+    'reconcile_done' => 'Marcados en gestión: :ok. Rechazados: :failed.',
+    'reconcile_nothing' => 'No hay ningún bono pendiente de marcar con código conocido.',
 ];

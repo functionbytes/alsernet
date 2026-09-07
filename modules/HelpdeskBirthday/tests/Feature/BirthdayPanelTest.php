@@ -54,19 +54,47 @@ class BirthdayPanelTest extends TestCase
             ->assertSee('Bonos');
     }
 
-    public function test_el_detalle_muestra_el_bono_de_cada_uno_el_ritmo_y_los_destinatarios(): void
+    public function test_el_cuadro_de_mando_resume_bonos_dinero_y_envio(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        // La portada de la campaña es el resumen, no la lista de destinatarios:
+        // para saber si funcionó no hay que leer 577 filas.
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('Bonos emitidos')
+            ->assertSee('Facturado')
+            ->assertSee('Pedido medio')
+            ->assertSee('09:00–14:00')
+            // Y las cuatro pestañas para bajar al detalle.
+            ->assertSee('Destinatarios')
+            ->assertSee('Descuadre');
+    }
+
+    public function test_los_destinatarios_viven_en_su_pestana(): void
     {
         $campaign = $this->campaign();
         $this->recipient($campaign, 'ana@ejemplo.test');
 
         $this->actingAs($this->admin)
-            ->get(route('helpdeskbirthday.campaigns.show', $campaign))
+            ->get(route('helpdeskbirthday.campaigns.recipients', $campaign))
             ->assertOk()
             ->assertSee('ana@ejemplo.test')
             // El bono es de esa persona, no de la campaña.
-            ->assertSee('910001-AAA')
-            ->assertSee('Bonos emitidos')
-            ->assertSee('09:00–14:00');
+            ->assertSee('910001-AAA');
+    }
+
+    public function test_la_pantalla_de_descuadre_carga(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.reconciliation', $campaign))
+            ->assertOk()
+            ->assertSee('Importe en riesgo');
     }
 
     public function test_la_previsualizacion_devuelve_el_correo_renderizado(): void
