@@ -96,10 +96,20 @@ class AtRiskCustomersReportControllerTest extends TestCase
 
     public function test_at_risk_data_returns_empty_list_when_no_negative_tags(): void
     {
-        $this->actingAs($this->manager)
+        // No se exige que la lista salga VACÍA: la base de desarrollo tiene
+        // clientes en riesgo sembrados a propósito por
+        // HelpdeskAtRiskReportDemoSeeder, para que este informe tenga algo que
+        // enseñar. Lo que se comprueba es que ningún cliente creado por este
+        // test aparece, que es lo que el test quería decir.
+        $customer = Customer::factory()->create();
+        Conversation::factory()->create(['customer_id' => $customer->id]);
+
+        $customers = $this->actingAs($this->manager)
             ->getJson(route('manager.helpdesk.reports.at-risk.data'))
             ->assertOk()
-            ->assertExactJson(['customers' => []]);
+            ->json('customers');
+
+        $this->assertNotContains($customer->id, array_column($customers, 'customerId'));
     }
 
     public function test_at_risk_data_ranks_customer_with_negative_sentiment_tags(): void
@@ -114,12 +124,16 @@ class AtRiskCustomersReportControllerTest extends TestCase
             ->assertOk()
             ->json('customers');
 
-        $this->assertCount(1, $customers);
-        $this->assertSame($customer->id, $customers[0]['customerId']);
-        $this->assertSame($customer->email, $customers[0]['email']);
-        $this->assertSame(1, $customers[0]['negativeCount']);
-        $this->assertArrayHasKey('healthScore', $customers[0]);
-        $this->assertNotNull($customers[0]['lastNegativeAt']);
+        // Se busca al cliente de este test en la lista, en vez de dar por
+        // hecho que es el único: el informe incluye también los clientes de
+        // demo sembrados en la base de desarrollo.
+        $fila = collect($customers)->firstWhere('customerId', $customer->id);
+
+        $this->assertNotNull($fila, 'El cliente con sentimiento negativo no aparece en el informe.');
+        $this->assertSame($customer->email, $fila['email']);
+        $this->assertSame(1, $fila['negativeCount']);
+        $this->assertArrayHasKey('healthScore', $fila);
+        $this->assertNotNull($fila['lastNegativeAt']);
     }
 
     public function test_at_risk_data_ignores_tags_older_than_90_days(): void
@@ -129,10 +143,14 @@ class AtRiskCustomersReportControllerTest extends TestCase
 
         $this->tagConversationAsNegative($conversation, now()->subDays(120)->toDateTimeString());
 
-        $this->actingAs($this->manager)
+        $customers = $this->actingAs($this->manager)
             ->getJson(route('manager.helpdesk.reports.at-risk.data'))
             ->assertOk()
-            ->assertExactJson(['customers' => []]);
+            ->json('customers');
+
+        // Una etiqueta de hace 120 días queda fuera de la ventana de 90: este
+        // cliente no debe salir, aunque otros sí salgan.
+        $this->assertNotContains($customer->id, array_column($customers, 'customerId'));
     }
 
     /**
