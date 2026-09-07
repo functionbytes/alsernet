@@ -32,6 +32,10 @@ class StoreTicketRequest extends BaseTicketRequest
             'sla_policy_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_sla_policies,id'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'group_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
+            // Origen del ticket (modal 35 "Nuevo ticket"). Lista cerrada: es
+            // el mismo valor que pinta la fila del listado y el Kanban, y un
+            // valor libre saldría ahí sin traducir.
+            'source' => ['nullable', 'string', 'in:manual,agent,email,widget,wa,fb,ig,form,formulario,prestashop,phone,api'],
             'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => [
                 'file',

@@ -6,8 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Modules\Document\Entities\Document;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\Mailer\Models\MailerTemplate;
 
 class DocumentCustomMail extends Mailable implements TracksEmailLog
@@ -36,7 +36,7 @@ class DocumentCustomMail extends Mailable implements TracksEmailLog
     }
 
     /**
-     * Correlación con el log central de emails (modules/HelpdeskEmailLog).
+     * Correlación con el log central de emails (modules/HelpdeskEmailActivity).
      * Permite filtrar/ver desde EmailLog todos los correos enviados por un documento
      * concreto (module=Document, entity_id=document->id), sin depender de document_mails.
      */

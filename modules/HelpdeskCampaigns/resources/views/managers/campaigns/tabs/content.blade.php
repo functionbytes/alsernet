@@ -3,7 +3,7 @@
     @csrf
     @method('PUT')
 
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Bloques de contenido</h6>
+    <h6 class="fw-semibold mb-1">Bloques de contenido</h6>
     <p class="text-muted small mb-3">Componentes visuales que forman el cuerpo de la campana</p>
 
     @php $content = old('content', $campaign->content ?? []); @endphp

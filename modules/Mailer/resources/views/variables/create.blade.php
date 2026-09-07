@@ -29,7 +29,7 @@
                         <!-- Basic Information -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <h6 class="fw-bold mb-3">
                                     <i class="fas fa-cog me-2"></i>Información Básica
                                 </h6>
                             </div>
@@ -128,7 +128,7 @@
                         <!-- Translations -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <h6 class="fw-bold mb-3">
                                     <i class="fas fa-language me-2"></i>Traducciones
                                 </h6>
                             </div>

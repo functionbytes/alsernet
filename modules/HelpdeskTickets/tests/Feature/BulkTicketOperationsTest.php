@@ -367,6 +367,82 @@ class BulkTicketOperationsTest extends TestCase
             ])->assertJsonValidationErrors(['ticket_ids']);
     }
 
+    // ─── link_to_ticket ("Vincular a un ticket", modal 13 del mockup) ──────
+
+    public function test_bulk_link_to_ticket_moves_the_thread_to_the_target(): void
+    {
+        $target = $this->createTestTicket(['subject' => 'Destino']);
+        $sourceA = $this->createTestTicket(['subject' => 'Origen A']);
+        $sourceB = $this->createTestTicket(['subject' => 'Origen B']);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$sourceA->id, $sourceB->id],
+                'action' => 'link_to_ticket',
+                'merge_into_id' => $target->id,
+            ])->assertOk()->assertJson(['success' => true, 'updated_count' => 2]);
+
+        $this->assertSoftDeleted('helpdesk_tickets', ['id' => $sourceA->id], 'helpdesk');
+        $this->assertSoftDeleted('helpdesk_tickets', ['id' => $sourceB->id], 'helpdesk');
+        $this->assertNotNull(Ticket::find($target->id));
+    }
+
+    public function test_bulk_link_to_ticket_excludes_the_target_from_its_own_selection(): void
+    {
+        $target = $this->createTestTicket(['subject' => 'Destino']);
+        $source = $this->createTestTicket(['subject' => 'Origen']);
+
+        // El propio destino viene incluido en la selección por error del
+        // usuario -- no debe fusionarse consigo mismo ni contarse.
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$source->id, $target->id],
+                'action' => 'link_to_ticket',
+                'merge_into_id' => $target->id,
+            ])->assertOk();
+
+        $response->assertJson(['success' => true, 'updated_count' => 1]);
+        $this->assertNotNull(Ticket::find($target->id));
+    }
+
+    public function test_bulk_link_to_ticket_requires_the_target(): void
+    {
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'link_to_ticket',
+            ])->assertJsonValidationErrors(['merge_into_id']);
+    }
+
+    // ─── retry_failed_mail ("Reintentar envío", modal 13 del mockup) ───────
+
+    public function test_bulk_retry_failed_mail_only_counts_tickets_with_a_failed_outbound_mail(): void
+    {
+        $withFailure = $this->createTestTicket(['subject' => 'Con fallo']);
+        $withFailure->mails()->create([
+            'direction' => 'outbound',
+            'from' => 'soporte@example.invalid',
+            'to' => 'cliente@example.invalid',
+            'subject' => 'Respuesta',
+            'status' => 'failed',
+            'delivery_error' => 'Connection timed out',
+        ]);
+        $withoutFailure = $this->createTestTicket(['subject' => 'Sin fallo']);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$withFailure->id, $withoutFailure->id],
+                'action' => 'retry_failed_mail',
+            ])->assertOk();
+
+        // El reintento real (TicketMailsController::resend -> dispatcher de
+        // correo) no se prueba aquí, ya lo cubre el propio test del endpoint
+        // individual -- esto solo confirma el filtro por ticket con fallo.
+        $response->assertJson(['success' => true, 'updated_count' => 1]);
+    }
+
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
     /**

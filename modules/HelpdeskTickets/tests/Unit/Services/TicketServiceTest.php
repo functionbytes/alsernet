@@ -6,13 +6,14 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
+use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
-use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Tests\TestCase;
 
@@ -35,7 +36,7 @@ class TicketServiceTest extends TestCase
 
     private function makeService(): TicketService
     {
-        return new TicketService($this->createMock(SlaService::class));
+        return new TicketService;
     }
 
     private function ticketData(array $overrides = []): array
@@ -81,7 +82,13 @@ class TicketServiceTest extends TestCase
             'source' => 'email',
         ]));
 
-        $this->assertStringStartsWith('TKT-'.now()->year.'-', $ticket->ticket_number);
+        // El prefijo es TCK-, no TKT-. TicketService tenía su propio generador
+        // de números con un prefijo distinto al del resto del módulo, y este
+        // test fijaba ese comportamiento: los tickets del widget y del
+        // formulario público salían con TKT- y el hilado del correo entrante,
+        // que busca /#(TCK-\d{4}-\d{5})/, nunca los reconocía. Ahora delega en
+        // Ticket::generateTicketNumber(), que es la única implementación.
+        $this->assertStringStartsWith('TCK-'.now()->year.'-', $ticket->ticket_number);
         $this->assertEquals($status->id, $ticket->status_id);
     }
 
@@ -288,5 +295,105 @@ class TicketServiceTest extends TestCase
         $this->expectExceptionMessage('Ticket is not closed');
 
         $service->reopenTicket($ticket);
+    }
+
+    // ─── reopenIfCustomerCanReopen ──────────────────────────────────────────────
+    //
+    // tickets.user_reopen_issue/user_reopen_time existían en Settings → General
+    // desde antes de esta sesión, pero sin ningún efecto real (bug real
+    // encontrado 4-sep-2026, TCK-2026-00093): un cliente respondiendo a un
+    // ticket cerrado (por email o portal) nunca lo reabría.
+
+    private function makeClosedTicket(): Ticket
+    {
+        $this->ensureStatusExists('new');
+        $this->ensureStatusExists('closed');
+
+        $service = $this->makeService();
+        $ticket = $service->createTicket($this->ticketData([
+            'subject' => 'Reopen eligibility test',
+            'priority' => 'normal',
+            'source' => 'web',
+        ]));
+
+        $service->closeTicket($ticket);
+
+        return $ticket->refresh();
+    }
+
+    public function test_reopen_if_eligible_no_hace_nada_si_el_ticket_no_esta_cerrado(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        Event::fake();
+        $this->ensureStatusExists('new');
+
+        $service = $this->makeService();
+        $ticket = $service->createTicket($this->ticketData(['subject' => 'Open ticket', 'priority' => 'normal', 'source' => 'web']));
+
+        Event::fake([TicketReopened::class]);
+        $service->reopenIfCustomerCanReopen($ticket);
+
+        Event::assertNotDispatched(TicketReopened::class);
+    }
+
+    public function test_reopen_if_eligible_reabre_dentro_de_la_ventana(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        Event::fake();
+        HelpdeskGeneralSetting::set('tickets.user_reopen_issue', true, 'tickets');
+        HelpdeskGeneralSetting::set('tickets.user_reopen_time', 7, 'tickets');
+
+        $ticket = $this->makeClosedTicket();
+
+        Event::fake([TicketReopened::class]);
+        $this->makeService()->reopenIfCustomerCanReopen($ticket);
+
+        $this->assertNull($ticket->fresh()->closed_at);
+        Event::assertDispatched(TicketReopened::class);
+    }
+
+    public function test_reopen_if_eligible_respeta_el_interruptor_apagado(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        Event::fake();
+        HelpdeskGeneralSetting::set('tickets.user_reopen_issue', false, 'tickets');
+
+        $ticket = $this->makeClosedTicket();
+
+        Event::fake([TicketReopened::class]);
+        $this->makeService()->reopenIfCustomerCanReopen($ticket);
+
+        $this->assertNotNull($ticket->fresh()->closed_at);
+        Event::assertNotDispatched(TicketReopened::class);
+    }
+
+    public function test_reopen_if_eligible_respeta_la_ventana_de_dias(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        Event::fake();
+        HelpdeskGeneralSetting::set('tickets.user_reopen_issue', true, 'tickets');
+        HelpdeskGeneralSetting::set('tickets.user_reopen_time', 7, 'tickets');
+
+        $ticket = $this->makeClosedTicket();
+        // Cerrado hace 10 días: fuera de la ventana de 7.
+        $ticket->forceFill(['closed_at' => now()->subDays(10)])->save();
+
+        Event::fake([TicketReopened::class]);
+        $this->makeService()->reopenIfCustomerCanReopen($ticket);
+
+        $this->assertNotNull($ticket->fresh()->closed_at);
+        Event::assertNotDispatched(TicketReopened::class);
     }
 }

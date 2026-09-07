@@ -48,8 +48,22 @@ return [
     /*
      | Circuit breaker: segundos que permanece abierto (se saltan las llamadas y
      | se devuelve contexto vacío) antes de reintentar contra el manager.
+     |
+     | Debe cubrir con margen el peor caso para ACUMULAR el umbral de fallos:
+     | Cache::add() fija el TTL de la ventana solo en el primer fallo, y los
+     | incrementos posteriores NO lo renuevan (HasCircuitBreaker::recordFailure()).
+     | Con http_timeout=15s y circuit_failure_threshold=5, el manager caído tarda
+     | hasta 5×15=75s en generar los 5 fallos que abren el breaker — con una
+     | ventana de 30s (el valor anterior) la clave de caché expiraba y el
+     | contador volvía a cero antes de llegar al umbral, así que el breaker
+     | JAMÁS llegaba a abrirse de verdad con una caída real (solo en los tests,
+     | que fallan al instante con Http::fake() en vez de colgar 15s). Bug real
+     | encontrado 4-sep-2026: WarmErpCacheJob (5 emails secuenciales, timeout
+     | 60s) llevaba media hora reventando su propio timeout sin que el breaker
+     | interviniera nunca, monopolizando el único worker que atiende
+     | 'notifications' (ver reference_helpdesk_erp_warmcache_infinite_loop).
      */
-    'circuit_open_seconds' => env('HELPDESK_ERP_CIRCUIT_OPEN_SECONDS', 30),
+    'circuit_open_seconds' => env('HELPDESK_ERP_CIRCUIT_OPEN_SECONDS', 120),
 
     /*
      | TTL en segundos para la línea temporal agregada del cliente (ERP + PrestaShop + Helpdesk).

@@ -13,7 +13,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\CustomerStatsService;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 
 class CustomersController extends Controller
 {
@@ -444,7 +444,7 @@ class CustomersController extends Controller
                 'status_label' => $log->status_label,
                 'status_color' => $log->status_color,
                 'time' => $log->created_at->diffForHumans(),
-                'preview_url' => route('helpdeskemaillog.show', $log->uid),
+                'preview_url' => route('helpdeskemailactivity.show', $log->uid),
             ]);
 
         return response()->json(['success' => true, 'data' => $data]);

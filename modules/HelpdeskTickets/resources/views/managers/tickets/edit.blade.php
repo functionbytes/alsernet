@@ -92,7 +92,7 @@
                                     <input type="text" class="form-control" value="{{ $ticket->category?->name ?? "Sin categoría" }}" disabled>
                                 @else
                                     <select name="category_id"
-                                            class="form-select @error('category_id') is-invalid @enderror"
+                                            class="form-select select2 @error('category_id') is-invalid @enderror"
                                             required
                                             id="categorySelect">
                                         @foreach($categories as $category)
@@ -115,7 +115,7 @@
                                 @if($ticket->isClosed())
                                     <input type="text" class="form-control" value="{{ ucfirst($ticket->priority) }}" disabled>
                                 @else
-                                    <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
+                                    <select name="priority" class="form-select select2 @error('priority') is-invalid @enderror" required>
                                         <option value="low" {{ old('priority', $ticket->priority) == 'low' ? 'selected' : '' }}>Baja</option>
                                         {{-- value="normal": mismo bug real que create.blade.php — "medium" no
                                              coincide ni con el valor validado (in:low,normal,high,urgent) ni
@@ -134,7 +134,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Estado</label>
-                                <select name="status_id" class="form-select @error('status_id') is-invalid @enderror">
+                                <select name="status_id" class="form-select select2 @error('status_id') is-invalid @enderror">
                                     @foreach($statuses as $status)
                                         <option value="{{ $status->id }}" {{ old('status_id', $ticket->status_id) == $status->id ? 'selected' : '' }}>
                                             {{ $status->name }}
@@ -148,7 +148,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Política SLA</label>
-                                <select name="sla_policy_id" class="form-select">
+                                <select name="sla_policy_id" class="form-select select2">
                                     <option value="">Sin política SLA</option>
                                     @foreach($slaPolicies as $policy)
                                         <option value="{{ $policy->id }}" {{ old('sla_policy_id', $ticket->sla_policy_id) == $policy->id ? 'selected' : '' }}>
@@ -171,7 +171,7 @@
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Asignar a</label>
-                                <select name="assignee_id" class="form-select">
+                                <select name="assignee_id" class="form-select select2">
                                     <option value="">Sin asignar</option>
                                     @foreach($agents as $agent)
                                         <option value="{{ $agent->id }}" {{ old('assignee_id', $ticket->assignee_id) == $agent->id ? 'selected' : '' }}>
@@ -183,7 +183,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Grupo</label>
-                                <select name="group_id" class="form-select">
+                                <select name="group_id" class="form-select select2">
                                     <option value="">Sin grupo</option>
                                     @foreach($groups as $group)
                                         <option value="{{ $group->id }}" {{ old('group_id', $ticket->group_id) == $group->id ? 'selected' : '' }}>
@@ -212,9 +212,9 @@
                             </div>
 
                             @if($ticket->isClosed())
-                                <div class="col-12 col-md-6">
+                                <div class="col-12">
                                     <label class="form-label">Archivado</label>
-                                    <select name="is_archived" class="form-select">
+                                    <select name="is_archived" class="form-select select2">
                                         <option value="0" {{ old('is_archived', $ticket->is_archived ? 1 : 0) == 0 ? 'selected' : '' }}>No archivado</option>
                                         <option value="1" {{ old('is_archived', $ticket->is_archived ? 1 : 0) == 1 ? 'selected' : '' }}>Archivado</option>
                                     </select>
@@ -233,9 +233,11 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card mb-3">
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Estado actual</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Estado actual</h6>
                     <div class="mb-2">
                         <small class="text-muted d-block">Estado</small>
                         <span class="badge" style="background-color: {{ $ticket->status?->color ?? "#6c757d" }}">
@@ -264,13 +266,15 @@
             </div>
 
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre la edición</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre la edición</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> El cliente recibirá notificación si cambias el estado</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> Cambiar categoría puede alterar el SLA aplicable</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> El cliente recibirá notificación si cambias el estado</li>
+                        <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> Cambiar categoría puede alterar el SLA aplicable</li>
                         @if($ticket->isClosed())
-                            <li class="text-muted small"><i class="fas fa-lock text-warning me-2"></i> Ticket cerrado: algunos campos están bloqueados</li>
+                            <li class="mb-0"><i class="fas fa-lock text-warning me-2"></i> Ticket cerrado: algunos campos están bloqueados</li>
                         @endif
                     </ul>
                 </div>
@@ -284,6 +288,8 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+
     const existingCustomFields = @json($ticket->custom_fields ?? []);
     const $categorySelect = $('#categorySelect');
     const $customFieldsContainer = $('#customFieldsContainer');
@@ -300,7 +306,7 @@ $(document).ready(function () {
         if (fields.length === 0) return;
 
         $customFieldsContainer.append(
-            '<div class="col-12"><h6 class="fw-semibold mb-1 border-bottom pb-2">Campos personalizados</h6></div>'
+            '<div class="col-12"><h6 class="fw-semibold mb-1">Campos personalizados</h6></div>'
         );
 
         fields.forEach(function (field) {
@@ -316,7 +322,7 @@ $(document).ready(function () {
             } else if (field.type === 'textarea') {
                 $input = $('<textarea class="form-control" rows="3">').attr('name', fieldName).val(currentValue);
             } else if (field.type === 'select') {
-                $input = $('<select class="form-select">').attr('name', fieldName);
+                $input = $('<select class="form-select select2">').attr('name', fieldName);
                 $input.append($('<option value="">').text('Seleccione...'));
                 (field.options || []).forEach(function (opt) {
                     $input.append($('<option>').val(opt).text(opt).prop('selected', currentValue === opt));
@@ -343,6 +349,12 @@ $(document).ready(function () {
             }
 
             $customFieldsContainer.append($col);
+
+            // El <select> del campo personalizado se crea después del init
+            // genérico de arriba: necesita su propia llamada a select2().
+            if ($input.is('select')) {
+                $input.select2({ width: '100%' });
+            }
         });
     }
 

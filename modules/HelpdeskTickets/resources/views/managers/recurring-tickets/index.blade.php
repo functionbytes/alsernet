@@ -71,6 +71,55 @@
                 </div>
             </div>
 
+            {{-- Busqueda y filtros --}}
+            <div class="card-body border-bottom">
+                @php
+                    $rtActiveFilterCount = collect(['frequency', 'category_id', 'status'])->filter(fn ($k) => request()->filled($k))->count();
+                    $rtHasAnyFilter = $rtActiveFilterCount > 0 || request()->filled('search');
+                    $rtFrequencyLabels = ['daily' => 'Diario', 'weekly' => 'Semanal', 'monthly' => 'Mensual', 'custom' => 'Personalizado'];
+                @endphp
+
+                <form method="GET" action="{{ route('manager.helpdesk.recurring-tickets.index') }}" id="rt-filter-form">
+                    <input type="hidden" name="frequency" id="rt-filter-frequency" value="{{ request('frequency') }}">
+                    <input type="hidden" name="category_id" id="rt-filter-category" value="{{ request('category_id') }}">
+                    <input type="hidden" name="status" id="rt-filter-status" value="{{ request('status') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por nombre o asunto..."
+                               value="{{ request('search') }}">
+
+                        <x-filter-button target="rt-filter-modal" :count="$rtActiveFilterCount" />
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
+                            </button>
+                            @if($rtHasAnyFilter)
+                                <a href="{{ route('manager.helpdesk.recurring-tickets.index') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($rtActiveFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if(request('frequency'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Frecuencia: {{ $rtFrequencyLabels[request('frequency')] ?? request('frequency') }}</span>
+                            @endif
+                            @if(request('category_id'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Categoría: {{ $categories->firstWhere('id', (int) request('category_id'))?->name ?? request('category_id') }}</span>
+                            @endif
+                            @if(request('status'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Estado: {{ request('status') === 'active' ? 'Activos' : 'Inactivos' }}</span>
+                            @endif
+                        </div>
+                    @endif
+                </form>
+            </div>
+
             {{-- Table --}}
             <div class="card-body">
                 @if($recurringTickets->count() > 0)
@@ -78,6 +127,7 @@
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Asunto</th>
                                     <th>Frecuencia</th>
@@ -98,6 +148,7 @@
                                         $freq = $frequencyMap[$recurring->frequency] ?? ['label' => $recurring->frequency, 'class' => 'bg-secondary-subtle text-secondary'];
                                     @endphp
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $recurring->id }}"></td>
                                         <td>
                                             <div class="fw-semibold">{{ $recurring->name }}</div>
                                         </td>
@@ -194,9 +245,85 @@
 
     @include('core::components.delete')
 
+    {{-- Filtros avanzados --}}
+    <x-filter-shell id="rt-filter-modal"
+                    :count="$rtActiveFilterCount"
+                    apply-id="rt-filter-apply-btn"
+                    clear-id="rt-filter-clear-btn">
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Frecuencia</label>
+            <select id="modal-frequency" class="form-control select2-filter-modal">
+                <option value="">Todas las frecuencias</option>
+                <option value="daily" @selected(request('frequency') === 'daily')>Diario</option>
+                <option value="weekly" @selected(request('frequency') === 'weekly')>Semanal</option>
+                <option value="monthly" @selected(request('frequency') === 'monthly')>Mensual</option>
+                <option value="custom" @selected(request('frequency') === 'custom')>Personalizado</option>
+            </select>
+        </div>
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Categoría</label>
+            <select id="modal-category" class="form-control select2-filter-modal">
+                <option value="">Todas las categorías</option>
+                @foreach($categories as $rtCategory)
+                    <option value="{{ $rtCategory->id }}" @selected(request('category_id') == $rtCategory->id)>{{ $rtCategory->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Estado</label>
+            <select id="modal-status" class="form-control select2-filter-modal">
+                <option value="">Activos e inactivos</option>
+                <option value="active" @selected(request('status') === 'active')>Solo activos</option>
+                <option value="inactive" @selected(request('status') === 'inactive')>Solo inactivos</option>
+            </select>
+        </div>
+    </x-filter-shell>
+
+    {{-- Barra flotante de seleccion --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none rt-bulk-toolbar">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Accion masiva --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara sobre <strong><span data-bulk-count>0</span> ticket(s) recurrente(s)</strong>.</p>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2-bulk">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
+@push('styles')
+<style>
+    .rt-bulk-toolbar { z-index: 1050; }
+</style>
+@endpush
+
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function () {
     @if(session('success'))
@@ -210,6 +337,65 @@ $(document).ready(function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
     });
+
+    // ── Filtros avanzados ────────────────────────────────────────────
+    $('.select2-filter-modal').select2({
+        dropdownParent: window.FilterShell.el('rt-filter-modal'),
+        width: '100%',
+    });
+
+    $('#rt-filter-apply-btn').on('click', function () {
+        $('#rt-filter-frequency').val($('#modal-frequency').val());
+        $('#rt-filter-category').val($('#modal-category').val());
+        $('#rt-filter-status').val($('#modal-status').val());
+        window.FilterShell.close('rt-filter-modal');
+        $('#rt-filter-form').submit();
+    });
+
+    $('#rt-filter-clear-btn').on('click', function () {
+        $('#modal-frequency, #modal-category, #modal-status').val(null).trigger('change');
+    });
+
+    // ── Acciones masivas ─────────────────────────────────────────────────
+    if (document.querySelector('.bulk-checkbox')) {
+        $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+        var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+        $('#bulk-modal').on('hide.bs.modal', function () {
+            $('#bulk-action-select').val('').trigger('change');
+            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            bulk.reset();
+        });
+
+        $('#bulk-apply-btn').on('click', function () {
+            var action = $('#bulk-action-select').val();
+            var ids = bulk.getIds();
+
+            if (! action) { toastr.warning('Selecciona una accion.'); return; }
+            if (! ids.length) { toastr.warning('Selecciona al menos un ticket recurrente.'); return; }
+            if (action === 'delete' && ! confirm('¿Eliminar los ' + ids.length + ' ticket(s) recurrente(s) seleccionado(s)? No se puede deshacer.')) return;
+
+            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+            $.ajax({
+                url: '{{ route('manager.helpdesk.recurring-tickets.bulk-action') }}',
+                method: 'POST',
+                data: JSON.stringify({ action: action, ids: ids }),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $('#bulk-modal').modal('hide');
+                    toastr.success(res.message);
+                    setTimeout(function () { location.reload(); }, 800);
+                },
+                error: function (xhr) {
+                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
+                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+                },
+            });
+        });
+    }
 });
 </script>
 @endpush

@@ -4,8 +4,10 @@ namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Entities\DocumentValidatorGroupConfiguration;
 use Modules\Document\Entities\DocumentValidatorGroupConfigurationHistory;
@@ -172,6 +174,51 @@ class DocumentGroupsController extends Controller
         $group->update(['is_active' => ! $group->is_active]);
 
         return back()->with('success', 'Estado del grupo actualizado exitosamente.');
+    }
+
+    /**
+     * Perform a bulk action on selected groups.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', Rule::in(['activate', 'deactivate', 'delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['string'],
+        ]);
+
+        $groups = DocumentValidatorGroup::whereIn('uid', $validated['ids'])->get();
+
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($groups as $group) {
+            if ($validated['action'] === 'delete' && $group->is_default) {
+                $skipped++;
+
+                continue;
+            }
+
+            match ($validated['action']) {
+                'activate' => $group->update(['is_active' => true]),
+                'deactivate' => $group->update(['is_active' => false]),
+                'delete' => $group->delete(),
+            };
+
+            $count++;
+        }
+
+        $message = match ($validated['action']) {
+            'activate' => "{$count} grupo(s) activado(s).",
+            'deactivate' => "{$count} grupo(s) desactivado(s).",
+            'delete' => "{$count} grupo(s) eliminado(s).",
+        };
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} grupo(s) predeterminado(s) no se pudieron eliminar.";
+        }
+
+        return response()->json(['success' => true, 'message' => $message, 'count' => $count]);
     }
 
     /**

@@ -110,42 +110,76 @@
 @push('scripts')
 <script>
 $(function () {
+    // Deflexión: artículos que podrían resolver la duda antes de crear el
+    // ticket. Antes esto llamaba directamente al buscador del centro de ayuda
+    // con lo tecleado en el asunto; ahora pasa por el endpoint del portal, que
+    // además considera la descripción y descarta lo que no responde de verdad
+    // a la consulta (ver TicketDeflectionService).
+    const $subject = $('input[name="subject"]');
+    const $description = $('textarea[name="description"]');
+    const $container = $('#kb-suggestions');
+
     let kbTimer;
-    $(document).on('input', 'input[name="subject"]', function () {
-        clearTimeout(kbTimer);
-        const q = $(this).val().trim();
-        if (q.length < 3) {
-            $('#kb-suggestions').empty();
+    let lastQuery = '';
+
+    function suggest() {
+        const subject = $subject.val().trim();
+        const description = $description.val().trim();
+        const signature = subject + '|' + description;
+
+        if ((subject + ' ' + description).trim().length < 12) {
+            $container.empty();
+            lastQuery = '';
             return;
         }
-        kbTimer = setTimeout(function () {
-            $.get('/helpcenter/search', { q: q }).done(function (res) {
-                const $container = $('#kb-suggestions');
-                $container.empty();
 
-                if (!res.articles || !res.articles.length) return;
+        // Sin cambios reales desde la última consulta, no se repite: cada
+        // llamada cuesta, y el cliente sigue escribiendo mucho después de
+        // haber dicho ya de qué va su problema.
+        if (signature === lastQuery) return;
+        lastQuery = signature;
 
-                const $list = $('<div class="list-group mt-2">');
-                res.articles.forEach(function (a) {
-                    $list.append(
-                        $('<a target="_blank" class="list-group-item list-group-item-action small py-2">')
-                            .attr('href', '/helpcenter/articles/' + encodeURIComponent(a.slug))
-                            .append($('<i class="fas fa-book me-2 text-muted">'))
-                            .append(document.createTextNode(a.title))
-                    );
-                });
+        $.ajax({
+            url: '{{ route('portal.tickets.suggest-articles') }}',
+            method: 'POST',
+            dataType: 'json',
+            data: { subject: subject, description: description },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (res) {
+            $container.empty();
 
-                const $alert = $('<div class="alert alert-info p-2 mb-0">').append(
+            if (!res.articles || !res.articles.length) return;
+
+            const $list = $('<div class="list-group mt-2">');
+
+            res.articles.forEach(function (a) {
+                $list.append(
+                    $('<a target="_blank" class="list-group-item list-group-item-action small py-2">')
+                        .attr('href', a.url)
+                        .append($('<i class="fas fa-book me-2 text-muted">'))
+                        .append(document.createTextNode(a.title))
+                );
+            });
+
+            $container.append(
+                $('<div class="alert alert-info p-2 mb-0">').append(
                     $('<strong class="small">').append(
                         $('<i class="fas fa-lightbulb me-1">'),
                         document.createTextNode(' Could this solve it?')
                     ),
-                    $list
-                );
+                    $list,
+                    $('<div class="small text-muted mt-2">').text(
+                        'If not, just carry on — your ticket will be created normally.'
+                    )
+                )
+            );
+        });
+    }
 
-                $container.append($alert);
-            });
-        }, 500);
+    // 1200 ms, no 500: detrás hay una llamada con coste, no una búsqueda local.
+    $subject.add($description).on('input', function () {
+        clearTimeout(kbTimer);
+        kbTimer = setTimeout(suggest, 1200);
     });
 });
 </script>

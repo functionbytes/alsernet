@@ -223,7 +223,8 @@ class TeamController extends Controller
         ', ['round_robin', 'load_balance', 'priority'])->first();
 
         $memberStats = Group::query()
-            ->leftJoin('helpdesk_group_user', 'helpdesk_groups.id', '=', 'helpdesk_group_user.helpdesk_group_id')
+            // 'group_id' y no 'helpdesk_group_id' — ver Group::users().
+            ->leftJoin('helpdesk_group_user', 'helpdesk_groups.id', '=', 'helpdesk_group_user.group_id')
             ->selectRaw('
                 SUM(CASE WHEN helpdesk_group_user.user_id IS NOT NULL THEN 1 ELSE 0 END) as total_members,
                 SUM(CASE WHEN helpdesk_group_user.conversation_priority = ? THEN 1 ELSE 0 END) as primary_members,

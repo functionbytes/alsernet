@@ -301,12 +301,12 @@ if (! function_exists('helpdesk_helpcenter_enabled')) {
 
 if (! function_exists('helpdesk_emaillog_enabled')) {
     /**
-     * Check whether the HelpdeskEmailLog integration is active: module
+     * Check whether the HelpdeskEmailActivity integration is active: module
      * installed+enabled and the admin toggle in Settings → Integraciones.
      */
     function helpdesk_emaillog_enabled(): bool
     {
-        if (! (Module::find('HelpdeskEmailLog')?->isEnabled() ?? false)) {
+        if (! (Module::find('HelpdeskEmailActivity')?->isEnabled() ?? false)) {
             return false;
         }
 

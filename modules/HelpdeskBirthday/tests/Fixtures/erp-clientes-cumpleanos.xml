@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+    <resource>
+        <idcliente>101578688</idcliente>
+        <fcreacion>2019-03-02</fcreacion>
+        <fbaja></fbaja>
+        <nombre>ANA</nombre>
+        <apellidos>GARCIA LOPEZ</apellidos>
+        <email>ana.garcia@example.com</email>
+        <faceptacion_lopd>2019-03-02</faceptacion_lopd>
+        <no_informacion_comercial_lopd>0</no_informacion_comercial_lopd>
+        <ididioma>1</ididioma>
+        <estado>1</estado>
+        <cliente_catalogo>
+            <resource>
+                <idcatalogo>5</idcatalogo>
+                <fsuscripcion>2019-03-02</fsuscripcion>
+            </resource>
+        </cliente_catalogo>
+    </resource>
+    <resource>
+        <idcliente>101569786</idcliente>
+        <fbaja></fbaja>
+        <nombre>LUIS</nombre>
+        <apellidos>MARTIN SANZ</apellidos>
+        <email>luis.martin@example.com</email>
+        <faceptacion_lopd>2020-06-11</faceptacion_lopd>
+        <no_informacion_comercial_lopd>1</no_informacion_comercial_lopd>
+        <ididioma>1</ididioma>
+        <estado>1</estado>
+    </resource>
+    <resource>
+        <idcliente>400065083</idcliente>
+        <fbaja></fbaja>
+        <nombre>SIN</nombre>
+        <apellidos>CORREO</apellidos>
+        <email></email>
+        <faceptacion_lopd>2021-01-01</faceptacion_lopd>
+        <no_informacion_comercial_lopd>0</no_informacion_comercial_lopd>
+        <estado>1</estado>
+    </resource>
+    <resource>
+        <idcliente>400065084</idcliente>
+        <fbaja>2024-05-05</fbaja>
+        <nombre>DADO</nombre>
+        <apellidos>DE BAJA</apellidos>
+        <email>baja@example.com</email>
+        <faceptacion_lopd>2021-01-01</faceptacion_lopd>
+        <no_informacion_comercial_lopd>0</no_informacion_comercial_lopd>
+        <estado>0</estado>
+    </resource>
+    <resource>
+        <idcliente>400065085</idcliente>
+        <fbaja></fbaja>
+        <nombre>SIN</nombre>
+        <apellidos>LOPD</apellidos>
+        <email>sinlopd@example.com</email>
+        <faceptacion_lopd></faceptacion_lopd>
+        <no_informacion_comercial_lopd>0</no_informacion_comercial_lopd>
+        <estado>1</estado>
+    </resource>
+</response>

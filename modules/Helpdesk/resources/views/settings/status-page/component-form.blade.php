@@ -28,7 +28,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion del componente</h6>
+                        <h6 class="fw-semibold mb-1">Informacion del componente</h6>
                         <p class="text-muted small mb-3">Nombre y descripcion visible en la pagina de estado</p>
                         <div class="row g-3 mb-4">
 
@@ -61,7 +61,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Estado y configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Estado y configuracion</h6>
                         <p class="text-muted small mb-3">Estado operativo actual y visibilidad en la pagina publica</p>
                         <div class="row g-3">
 
@@ -120,32 +120,35 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Estados disponibles</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Estados disponibles</h6>
-                    <ul class="list-unstyled mb-0">
+                    <ul class="text-muted mb-0">
                         @foreach(\Modules\Helpdesk\Models\StatusComponent::STATUSES as $key => $label)
                             @php $color = \Modules\Helpdesk\Models\StatusComponent::STATUS_COLORS[$key] ?? 'secondary'; @endphp
-                            <li class="mb-2 text-muted small">
+                            <li class="mb-2">
                                 <span class="badge bg-{{ $color }}-subtle text-{{ $color }} me-2">{{ $label }}</span>
                             </li>
                         @endforeach
                     </ul>
                 </div>
-                @if(isset($component))
-                    <hr class="my-0">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">Informacion del registro</h6>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2 text-muted small">
-                                <span class="fw-semibold">Creado:</span> {{ $component->created_at->format('d/m/Y H:i') }}
-                            </li>
-                            <li class="text-muted small">
-                                <span class="fw-semibold">Actualizado:</span> {{ $component->updated_at->format('d/m/Y H:i') }}
-                            </li>
-                        </ul>
-                    </div>
-                @endif
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">
+                            <span class="fw-semibold">Creado:</span> {{ $component->created_at->format('d/m/Y H:i') }}
+                        </li>
+                        <li class="mb-0">
+                            <span class="fw-semibold">Actualizado:</span> {{ $component->updated_at->format('d/m/Y H:i') }}
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 

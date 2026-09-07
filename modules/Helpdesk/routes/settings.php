@@ -77,6 +77,7 @@ Route::prefix('canned-replies')->name('canned-replies.')->group(function () {
     Route::get('{canned_reply}/edit', [CannedRepliesController::class, 'edit'])->name('edit');
     Route::put('{canned_reply}', [CannedRepliesController::class, 'update'])->name('update');
     Route::delete('{canned_reply}', [CannedRepliesController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [CannedRepliesController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Automation Rules
@@ -137,6 +138,7 @@ Route::prefix('tags')->name('tags.')->group(function () {
     Route::get('{tag}/edit', [TagsController::class, 'edit'])->name('edit');
     Route::put('{tag}', [TagsController::class, 'update'])->name('update');
     Route::delete('{tag}', [TagsController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [TagsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Conversation Statuses
@@ -149,6 +151,7 @@ Route::prefix('statuses')->name('statuses.')->group(function () {
     Route::delete('{status}', [StatusesController::class, 'destroy'])->name('destroy');
     Route::post('{status}/toggle', [StatusesController::class, 'toggle'])->name('toggle');
     Route::post('reorder', [StatusesController::class, 'reorder'])->name('reorder');
+    Route::post('bulk-action', [StatusesController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Inboxes (multi-canal)
@@ -203,18 +206,21 @@ Route::prefix('off-hours-responses')->name('off-hours-responses.')->group(functi
     Route::post('/', [OffHoursResponsesController::class, 'store'])->name('store');
     Route::put('{off_hours_response}', [OffHoursResponsesController::class, 'update'])->name('update');
     Route::delete('{off_hours_response}', [OffHoursResponsesController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [OffHoursResponsesController::class, 'bulkAction'])->name('bulk-action');
 });
 
 Route::prefix('conversation-greetings')->name('conversation-greetings.')->group(function () {
     Route::post('/', [ConversationGreetingsController::class, 'store'])->name('store');
     Route::put('{conversation_greeting}', [ConversationGreetingsController::class, 'update'])->name('update');
     Route::delete('{conversation_greeting}', [ConversationGreetingsController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [ConversationGreetingsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 Route::prefix('conversation-farewells')->name('conversation-farewells.')->group(function () {
     Route::post('/', [ConversationFarewellsController::class, 'store'])->name('store');
     Route::put('{conversation_farewell}', [ConversationFarewellsController::class, 'update'])->name('update');
     Route::delete('{conversation_farewell}', [ConversationFarewellsController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [ConversationFarewellsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // SLA Policies
@@ -243,6 +249,7 @@ Route::prefix('macros')->name('macros.')->group(function () {
     Route::get('{macro}/edit', [MacrosController::class, 'edit'])->name('edit');
     Route::put('{macro}', [MacrosController::class, 'update'])->name('update');
     Route::delete('{macro}', [MacrosController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [MacrosController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Email settings
@@ -283,6 +290,7 @@ Route::prefix('banners')->name('banners.')->group(function () {
     Route::get('{banner}/edit', [BannersController::class, 'edit'])->name('edit');
     Route::put('{banner}', [BannersController::class, 'update'])->name('update');
     Route::delete('{banner}', [BannersController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [BannersController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Surveys
@@ -294,6 +302,7 @@ Route::prefix('surveys')->name('surveys.')->group(function () {
     Route::put('{survey}', [SurveysController::class, 'update'])->name('update');
     Route::delete('{survey}', [SurveysController::class, 'destroy'])->name('destroy');
     Route::get('{survey}/responses', [SurveysController::class, 'responses'])->name('responses');
+    Route::post('bulk-action', [SurveysController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Settings root index — redirige al primer panel (tickets) por defecto
@@ -310,17 +319,27 @@ Route::prefix('routing-rules')->name('routing-rules.')->group(function () {
     Route::post('{routingRule}/toggle', [RoutingRulesController::class, 'toggle'])->name('toggle');
 });
 
-// Email accounts (IMAP/SMTP)
-Route::prefix('email-accounts')->name('email-accounts.')->group(function () {
-    Route::get('/', [EmailSettingsController::class, 'index'])->name('index');
-    Route::put('/', [EmailSettingsController::class, 'update'])->name('update');
-});
+/*
+ * Email accounts (IMAP/SMTP) — duplicado de 'email'.
+ *
+ * Estas rutas apuntaban a EmailSettingsController@index/@update, exactamente el
+ * mismo metodo que 'email' de mas arriba: dos URLs y dos entradas de menu para
+ * la misma pantalla. Encima estaban incompletas (sin test-imap/test-smtp), y el
+ * formulario de la vista hace PUT contra 'email', asi que guardar desde aqui
+ * cambiaba la URL a mitad de camino.
+ *
+ * Se quedan solo como redireccion permanente, para no romper enlaces guardados
+ * ni marcadores. Cuando se pueda dar por hecho que nadie los usa, se borran.
+ */
+Route::redirect('email-accounts', 'panel/settings/helpdesk/email', 301)
+    ->name('email-accounts.index');
 
 // Agent settings
 Route::prefix('agent-settings')->name('agent-settings.')->group(function () {
     Route::get('/', [AgentSettingsController::class, 'index'])->name('index');
     Route::get('{user}/edit', [AgentSettingsController::class, 'edit'])->name('edit');
     Route::put('{user}', [AgentSettingsController::class, 'update'])->name('update');
+    Route::post('bulk-action', [AgentSettingsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Skills
@@ -331,6 +350,7 @@ Route::prefix('skills')->name('skills.')->group(function () {
     Route::get('{skill}/edit', [SkillsController::class, 'edit'])->name('edit');
     Route::put('{skill}', [SkillsController::class, 'update'])->name('update');
     Route::delete('{skill}', [SkillsController::class, 'destroy'])->name('destroy');
+    Route::post('bulk-action', [SkillsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Companies
@@ -385,6 +405,7 @@ Route::prefix('brands')->name('brands.')->group(function () {
     Route::put('{brand}', [BrandsController::class, 'update'])->name('update');
     Route::delete('{brand}', [BrandsController::class, 'destroy'])->name('destroy');
     Route::post('{brand}/toggle', [BrandsController::class, 'toggle'])->name('toggle');
+    Route::post('bulk-action', [BrandsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // WhatsApp Templates
@@ -426,6 +447,7 @@ Route::prefix('slack-integrations')->name('slack-integrations.')->group(function
     Route::put('{slackIntegration}', [SlackIntegrationsController::class, 'update'])->name('update');
     Route::delete('{slackIntegration}', [SlackIntegrationsController::class, 'destroy'])->name('destroy');
     Route::post('{slackIntegration}/toggle', [SlackIntegrationsController::class, 'toggle'])->name('toggle');
+    Route::post('bulk-action', [SlackIntegrationsController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // Audit log viewer (también accesible desde /panel/helpdesk/audit)

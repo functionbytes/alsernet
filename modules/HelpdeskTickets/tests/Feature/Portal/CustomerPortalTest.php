@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Tests\Feature\Portal;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -67,7 +68,7 @@ class CustomerPortalTest extends TestCase
 
         // Same redirect back with the generic status message — no error about user not found
         $response->assertRedirect();
-        $response->assertSessionHas('status', 'If this email is registered, a login link has been sent.');
+        $response->assertSessionHas('status', __('helpdesktickets::helpdesktickets.portal.login_link_sent'));
 
         Mail::assertNothingQueued();
     }
@@ -120,7 +121,14 @@ class CustomerPortalTest extends TestCase
 
         $response->assertSessionHasErrors(['email']);
         $errors = $response->getSession()->get('errors')->getBag('default');
-        $this->assertStringContainsString('Too many attempts', $errors->first('email'));
+        // Se compara contra la parte fija del mensaje traducido, no contra el
+        // literal: los segundos que quedan varían entre ejecuciones, y fijar el
+        // texto en inglés obligaba a tocar el test cada vez que se reescribe.
+        $prefix = Str::before(
+            __('helpdesktickets::helpdesktickets.portal.login_throttled', ['seconds' => '__S__']),
+            '__S__',
+        );
+        $this->assertStringContainsString($prefix, $errors->first('email'));
     }
 
     public function test_authenticated_customer_sees_their_tickets(): void

@@ -41,15 +41,22 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los macros</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los macros</h6>
                     <p class="card-text text-muted small">
                         Los macros permiten a los agentes ejecutar multiples acciones sobre una conversacion con un solo clic, ahorrando tiempo en tareas repetitivas.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Tipos de acciones disponibles</h6>
-                    <ul class="list-unstyled mb-0">
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Tipos de acciones disponibles</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
                         @foreach($actionTypes as $key => $label)
                             <li class="small text-muted mb-1">
                                 <i class="fas fa-circle-dot hd-icon-dot me-1 text-primary"></i>
@@ -57,8 +64,13 @@
                             </li>
                         @endforeach
                     </ul>
-                    <hr>
-                    <h6 class="mb-2">Visibilidad</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Visibilidad</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Los macros <strong>globales</strong> son visibles para todos los agentes. Los macros <strong>personales</strong> solo los ve el agente que los crea.
                     </p>

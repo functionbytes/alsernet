@@ -4,10 +4,12 @@ namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Notifications\TicketCollisionNudge;
 use Modules\HelpdeskTickets\Services\TicketPresenceService;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
@@ -83,6 +85,70 @@ class TicketPresenceTest extends TestCase
         $others = $presence->heartbeat($ticket->id, 200, 'Nuevo', 'viewing', $t0 + 40);
 
         $this->assertCount(0, $others);
+    }
+
+    // ─── Modal 23 "Bandeja compartida": avisar a un agente presente ────────────
+
+    public function test_nudge_notifies_the_target_agent(): void
+    {
+        Notification::fake();
+
+        $ticket = $this->ticket();
+        $other = User::factory()->create();
+        $other->givePermissionTo('helpdesk.tickets.view');
+
+        $this->actingAs($this->agent)
+            ->postJson(route('manager.helpdesk.tickets.presence.nudge', $ticket), ['to_user_id' => $other->id])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        Notification::assertSentTo(
+            $other,
+            TicketCollisionNudge::class,
+            fn (TicketCollisionNudge $n) => $n->ticket->is($ticket) && $n->from->is($this->agent)
+        );
+    }
+
+    public function test_nudge_rejects_avisar_a_uno_mismo(): void
+    {
+        $ticket = $this->ticket();
+
+        $this->actingAs($this->agent)
+            ->postJson(route('manager.helpdesk.tickets.presence.nudge', $ticket), ['to_user_id' => $this->agent->id])
+            ->assertStatus(422);
+    }
+
+    public function test_nudge_rejects_a_un_agente_sin_acceso_al_ticket(): void
+    {
+        Notification::fake();
+
+        $ticket = $this->ticket();
+        $sinAcceso = User::factory()->create(); // sin permiso ni ser el asignado
+
+        $this->actingAs($this->agent)
+            ->postJson(route('manager.helpdesk.tickets.presence.nudge', $ticket), ['to_user_id' => $sinAcceso->id])
+            ->assertStatus(422);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_nudge_tiene_cooldown_para_no_spamear_al_mismo_agente(): void
+    {
+        Notification::fake();
+
+        $ticket = $this->ticket();
+        $other = User::factory()->create();
+        $other->givePermissionTo('helpdesk.tickets.view');
+
+        $this->actingAs($this->agent)
+            ->postJson(route('manager.helpdesk.tickets.presence.nudge', $ticket), ['to_user_id' => $other->id])
+            ->assertOk();
+
+        $this->actingAs($this->agent)
+            ->postJson(route('manager.helpdesk.tickets.presence.nudge', $ticket), ['to_user_id' => $other->id])
+            ->assertStatus(429);
+
+        Notification::assertSentTimes(TicketCollisionNudge::class, 1);
     }
 
     private function ticket(): Ticket

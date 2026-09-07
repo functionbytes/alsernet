@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,7 +18,7 @@ class CannedRepliesController extends Controller
         $this->middleware('can:helpdesk.canned-replies.view')->only(['index']);
         $this->middleware('can:helpdesk.canned-replies.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.canned-replies.update')->only(['edit', 'update']);
-        $this->middleware('can:helpdesk.canned-replies.delete')->only(['destroy']);
+        $this->middleware('can:helpdesk.canned-replies.delete')->only(['destroy', 'bulkAction']);
     }
 
     public function index(Request $request): View
@@ -107,5 +108,44 @@ class CannedRepliesController extends Controller
         return redirect()
             ->route('settings.helpdesk.canned-replies.index')
             ->with('success', 'Respuesta predefinida eliminada exitosamente.');
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'in:delete,set_global,set_personal'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $cannedReplies = CannedReply::whereIn('id', $request->ids)->get();
+        $count = 0;
+
+        if ($request->action === 'delete') {
+            foreach ($cannedReplies as $cannedReply) {
+                $cannedReply->delete();
+                $count++;
+            }
+        } else {
+            $isGlobal = $request->action === 'set_global';
+
+            foreach ($cannedReplies as $cannedReply) {
+                $cannedReply->is_global = $isGlobal;
+                if ($cannedReply->save()) {
+                    $count++;
+                }
+            }
+        }
+
+        $labels = [
+            'delete' => 'eliminada(s)',
+            'set_global' => 'marcada(s) como global',
+            'set_personal' => 'marcada(s) como personal',
+        ];
+
+        return response()->json([
+            'count' => $count,
+            'message' => "{$count} respuesta(s) predefinida(s) {$labels[$request->action]}.",
+        ]);
     }
 }

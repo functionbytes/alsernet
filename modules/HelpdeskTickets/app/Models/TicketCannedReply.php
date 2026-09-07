@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class TicketCannedReply extends Model
 {
@@ -157,6 +158,23 @@ class TicketCannedReply extends Model
     public function scopeRecent($query, $limit = 10)
     {
         return $query->latest()->limit($limit);
+    }
+
+    /**
+     * Canned replies available to a user for composing a reply (globals +
+     * the user's own, active only), ordered for a picker dropdown. Single
+     * point of truth for both the ticket list quick-reply picker
+     * (TicketsCrudController::index()) and the full ticket detail view
+     * (::showFull()) — they used to select a different column list, so the
+     * list view's picker was silently missing html_body.
+     */
+    public static function availableFor(int $userId): Collection
+    {
+        return static::query()
+            ->active()
+            ->forUser($userId)
+            ->orderBy('title')
+            ->get(['id', 'title', 'content', 'html_body', 'short_code']);
     }
 
     /**

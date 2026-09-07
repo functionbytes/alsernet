@@ -79,40 +79,59 @@
 
         {{-- Filters --}}
         <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('settings.helpdesk.whatsapp-templates.index') }}">
-                <div class="row align-items-center g-2">
-                    <div class="col-md-5">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="search" name="search" class="form-control"
-                                placeholder="Buscar por nombre, ID o contenido..."
-                                value="{{ request('search') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="status" class="form-select">
-                            <option value="">Cualquier estado</option>
-                            <option value="approved" @selected(request('status') === 'approved')>Aprobado</option>
-                            <option value="pending" @selected(request('status') === 'pending')>Pendiente</option>
-                            <option value="rejected" @selected(request('status') === 'rejected')>Rechazado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="category" class="form-select">
-                            <option value="">Cualquier categoria</option>
-                            <option value="utility" @selected(request('category') === 'utility')>Utilidad</option>
-                            <option value="marketing" @selected(request('category') === 'marketing')>Marketing</option>
-                            <option value="authentication" @selected(request('category') === 'authentication')>Autenticacion</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary w-100" aria-label="Filtrar">
-                            <i class="fas fa-filter"></i>
+            @php
+                $activeFilterCount = collect(['status', 'category'])->filter(fn ($k) => request($k))->count();
+                $hasAnyFilter = $activeFilterCount > 0 || request('search');
+                $statusLabels = ['approved' => 'Aprobado', 'pending' => 'Pendiente', 'rejected' => 'Rechazado'];
+                $categoryLabels = ['utility' => 'Utilidad', 'marketing' => 'Marketing', 'authentication' => 'Autenticacion'];
+            @endphp
+            <form id="whatsapp-templates-filter-form" method="GET" action="{{ route('settings.helpdesk.whatsapp-templates.index') }}">
+                <input type="hidden" name="status" id="filter-status" value="{{ request('status') }}">
+                <input type="hidden" name="category" id="filter-category" value="{{ request('category') }}">
+
+                <div class="d-flex align-items-center gap-2">
+                    <input type="search" name="search" class="form-control flex-grow-1"
+                           placeholder="Buscar por nombre, ID o contenido..."
+                           value="{{ request('search') }}">
+
+                    <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                            data-bs-toggle="modal" data-bs-target="#whatsapp-templates-filter-modal" title="Filtros avanzados">
+                        <i class="fas fa-filter"></i>
+                        @if($activeFilterCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary wa-filter-badge">{{ $activeFilterCount }}</span>
+                        @endif
+                    </button>
+
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button type="submit" class="btn btn-primary" title="Buscar">
+                            <i class="fas fa-magnifying-glass"></i>
                         </button>
+                        @if($hasAnyFilter)
+                            <a href="{{ route('settings.helpdesk.whatsapp-templates.index') }}"
+                               class="btn btn-secondary" title="Limpiar filtros">
+                                <i class="fas fa-xmark"></i>
+                            </a>
+                        @endif
                     </div>
                 </div>
+
+                @if($activeFilterCount > 0)
+                    <div class="d-flex gap-2 flex-wrap mt-4">
+                        <div>
+                            <h6 class="mb-1">Filtrados:</h6>
+                        </div>
+                        @if(request('status'))
+                            <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                Estado: {{ $statusLabels[request('status')] ?? request('status') }}
+                            </span>
+                        @endif
+                        @if(request('category'))
+                            <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                Categoria: {{ $categoryLabels[request('category')] ?? request('category') }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -235,7 +254,53 @@
 
     </div>
 
+    {{-- Filter modal --}}
+    <div class="modal fade" id="whatsapp-templates-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select id="modal-status" class="form-control select2-filter-modal">
+                            <option value="">Cualquier estado</option>
+                            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Aprobado</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pendiente</option>
+                            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rechazado</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Categoria</label>
+                        <select id="modal-category" class="form-control select2-filter-modal">
+                            <option value="">Cualquier categoria</option>
+                            <option value="utility" {{ request('category') === 'utility' ? 'selected' : '' }}>Utilidad</option>
+                            <option value="marketing" {{ request('category') === 'marketing' ? 'selected' : '' }}>Marketing</option>
+                            <option value="authentication" {{ request('category') === 'authentication' ? 'selected' : '' }}>Autenticacion</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="whatsapp-templates-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="whatsapp-templates-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
+
+@push('styles')
+<style>
+    .wa-filter-badge { font-size: .6rem; }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -247,6 +312,19 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    $('.select2-filter-modal').select2({ dropdownParent: $('#whatsapp-templates-filter-modal'), width: '100%' });
+
+    $('#whatsapp-templates-filter-apply-btn').on('click', function () {
+        $('#filter-status').val($('#modal-status').val());
+        $('#filter-category').val($('#modal-category').val());
+        $('#whatsapp-templates-filter-modal').modal('hide');
+        $('#whatsapp-templates-filter-form').submit();
+    });
+
+    $('#whatsapp-templates-filter-clear-btn').on('click', function () {
+        $('#modal-status, #modal-category').val(null).trigger('change');
+    });
 });
 </script>
 @endpush

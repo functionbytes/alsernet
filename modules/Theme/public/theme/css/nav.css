@@ -9,16 +9,25 @@
     height: var(--app-header-height);
     top: 0;
     border-bottom: 1px solid var(--bs-border-color);
-    width: 100%;
     display: flex;
     align-items: center;
     transition-duration: 0.3s;
-    transition-property: padding;
-    padding-left: var(--app-sidebar-width);
+    transition-property: left;
+    /* El header es `position: fixed` pero se renderiza dentro de `.app-wrapper`,
+       que ya lleva `margin-left: var(--app-menubar-tabs)`. Sin un `left`
+       explicito el navegador usaba la posicion estatica (ya desplazada por ese
+       margen) y encima se sumaba `padding-left: var(--app-menubar-tabs)`: el
+       ancho del menu contaba dos veces y el `.app-toggler` acababa a ~650px del
+       borde izquierdo en vez de pegado al menu. Anclamos left/right al viewport
+       y el padding se queda a 0. */
+    left: var(--app-menubar-tabs);
+    right: 0;
+    width: auto;
+    padding-left: 0;
 }
 @media (max-width: 1199.98px) {
     .app-header {
-        padding-left: 0;
+        left: 0;
     }
 }
 
@@ -169,44 +178,82 @@
     height: var(--app-header-height);
 }
 
+/* ── App toggler ─────────────────────────────────────────────────────────────
+   Boton unico que controla el menu lateral. Su comportamiento cambia por
+   breakpoint (ver `js/main.js#initAppToggler`):
+     · > 1480px  contrae/expande el panel (`html[data-app-sidebar]`)
+     · <= 1480px abre/cierra el panel como capa superpuesta (`.open`)
+   `aria-expanded` refleja siempre si el panel esta visible y es lo que gira
+   los chevrons; `.active` marca que hay una capa abierta y pinta el backdrop. */
 .app-toggler {
     padding: 0;
     height: 28px;
     width: 28px;
     margin: 24px 10px;
-    display: inline-block;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-heading-color, #1C274C);
     background: #FFFFFF;
     border: 1px solid var(--bs-border-color);
-    box-shadow: 0px 3px 10px rgba(var(--bs-heading-color), 0.05);
+    /* Antes: `rgba(var(--bs-heading-color), .05)`. `--bs-heading-color` es un
+       color (#000000), no un triplete RGB, asi que la declaracion entera era
+       invalida y el navegador la descartaba: el boton salia sin sombra. */
+    box-shadow: 0px 3px 10px rgba(28, 39, 76, 0.06);
     border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s linear, border-color 0.15s linear,
+                box-shadow 0.15s linear, transform 0.1s linear;
+}
+
+.app-toggler:hover {
+    background: var(--bs-gray-100, #f5f6f8);
+    border-color: #d9d9e3;
+}
+
+.app-toggler:focus-visible {
+    outline: 2px solid #90bb13;
+    outline-offset: 2px;
+}
+
+/* Sin `transform` aqui a proposito: el backdrop de abajo es un `::after` de
+   este mismo boton con `position: fixed`, y cualquier `transform` en el
+   elemento que lo genera crea un containing block nuevo para el -el backdrop
+   pasaria a anclarse al boton (encogido a su tamaño) en vez de al viewport
+   durante la pulsacion real (mousedown -> :active -> mouseup), rompiendo el
+   cierre al pulsar fuera del menu justo mientras se pulsa. */
+.app-toggler:active {
+    background: #ebebf1;
+    border-color: #c9c9d6;
 }
 
 .app-toggler svg {
-    margin: 5px;
+    width: 16px;
+    height: 16px;
+    display: block;
+    transition: transform 0.3s ease;
 }
 
-.app-toggler span {
-    width: 18px;
-    height: 2px;
-    display: block;
-    background-color: var(--bs-body-color);
-    border-radius: 12px;
-    margin: 4px auto;
-    transition: 0.1s all linear;
+/* Panel cerrado: los chevrons apuntan hacia fuera («  ->  ») para invitar a
+   abrirlo. Antes apuntaban siempre a la izquierda en los dos estados. */
+.app-toggler[aria-expanded="false"] svg {
+    transform: rotate(180deg);
 }
-.app-toggler.active span {
-    margin: -2px auto;
-}
-.app-toggler.active span:nth-child(1) {
-    transform: rotate(45deg);
-}
-.app-toggler.active span:nth-child(2) {
-    display: none;
-}
-.app-toggler.active span:nth-child(3) {
-    transform: rotate(-45deg);
-}
-@media (max-width: 1199.98px) {
+
+/* Backdrop de la capa superpuesta. Es un pseudo-elemento del propio boton, asi
+   que pulsar fuera cierra el menu sin JS extra. Vive en el contexto de apilado
+   del header (z-index 3), por debajo del menu (z-index 9), que sigue siendo
+   pulsable.
+   Solo por debajo de 576px: de 576px a 1480px el cajon YA NO flota encima del
+   contenido -lo empuja hacia la derecha (ver `:has(.app-menubar-tabs.open)
+   .app-wrapper` mas abajo)-, asi que ni hace falta oscurecer nada ni tiene
+   sentido cerrar solo con pulsar el contenido (el usuario podria estar
+   escribiendo en un formulario visible, no tapado). Por debajo de 576px
+   (movil estrecho) no cabe empujar sin dejar el contenido inutilizable, asi
+   que ahi se mantiene el patron de capa flotante + fondo oscuro + cierre al
+   pulsar fuera o con Esc. */
+@media (max-width: 575.98px) {
     .app-toggler::after {
         content: "";
         position: fixed;
@@ -215,8 +262,10 @@
         top: 0;
         left: 0;
         z-index: 99999;
-        background-color: var(--custom-modal-backdrop-bg);
-        opacity: 0.6;
+        /* `--custom-modal-backdrop-bg` no existe en ningun stylesheet del tema:
+           el backdrop se pintaba transparente y el menu se abria sin oscurecer
+           el fondo. */
+        background-color: rgba(12, 36, 60, 0.45);
         display: none;
     }
     .app-toggler.active::after {
@@ -270,6 +319,8 @@
 :root {
     --app-menubar-tabs: 320px;
     --app-sidebar-panel: 410px;
+    /* Ancho del cajon cuando se abre superpuesto (<=1480px): rail 80px + panel. */
+    --app-menubar-open: 320px;
 }
 
 @media (max-width: 1480px) {
@@ -333,7 +384,6 @@
 }
 :has(.app-sidebar-panel) .app-header {
     margin-right: var(--app-sidebar-panel);
-    width: -webkit-fill-available;
 }
 
 .app-menubar-tabs {
@@ -371,7 +421,7 @@
     margin-left: 80px;
 }
 :has(.app-menubar-tabs.no-sidebar-open) .app-header {
-    padding-left: 0px;
+    left: 80px;
 }
 :has(.app-menubar-tabs.no-sidebar-open) .footer-wrapper {
     margin-left: 80px;
@@ -459,7 +509,6 @@
         left: calc(-1 * var(--app-menubar-tabs));
     }
     .app-menubar-tabs .app-tab-content {
-        left: -200px;
         height: 100vh;
     }
     .app-menubar-tabs .app-tab-content .app-navbar {
@@ -468,8 +517,27 @@
     .app-menubar-tabs.open {
         left: 0;
     }
-    .app-menubar-tabs.open .app-tab-content {
-        left: 70px;
+    /* El `left` del panel cerrado/abierto se fija con el selector `#appMenubar`
+       de mas abajo (mayor especificidad), no aqui: esta regla y la del bloque
+       `@media max-width:1480px` (mas adelante en el fichero) coincidian en el
+       mismo rango <=1199.98px con igual especificidad (`-200px` aqui,
+       `-160px` alli) y, al tener igual peso, ganaba SIEMPRE la declarada mas
+       tarde en el fichero (-160px) -aun para este rango, mas especifico por
+       intencion pero no por CSS-. Con un ancho de panel de 240px eso dejaba
+       80px del panel "cerrado" invadiendo el viewport y tapando el propio
+       `.app-toggler` (x:10-38) en todo este rango: se podia abrir pero no
+       volver a cerrar con el mismo boton. */
+}
+
+@media (max-width: 1199.98px) {
+    /* Con especificidad de id para ganarle SIEMPRE al bloque `max-width:1480px`
+       de mas abajo (mismo rango, misma especificidad de clase, pero declarado
+       despues -> si no fuera por el id, ese -160px seguiria ganando aqui). */
+    #appMenubar.app-menubar-tabs .app-tab-content {
+        left: -260px; /* mayor que cualquier ancho de panel usado en este rango (220-240px): queda fuera del viewport de verdad */
+    }
+    #appMenubar.app-menubar-tabs.open .app-tab-content {
+        left: 80px;
     }
 }
 
@@ -477,7 +545,7 @@
     margin-left: var(--app-menubar-tabs);
 }
 :has(.app-menubar-tabs) .app-header {
-    padding-left: var(--app-menubar-tabs);
+    left: var(--app-menubar-tabs);
 }
 :has(.app-menubar-tabs) .footer-wrapper {
     margin-left: var(--app-menubar-tabs);
@@ -488,7 +556,7 @@
         margin-left: 0;
     }
     :has(.app-menubar-tabs) .app-header {
-        padding-left: 0;
+        left: 0;
     }
     :has(.app-menubar-tabs) .footer-wrapper {
         margin-left: 0;
@@ -564,6 +632,20 @@
     margin-left: 80px;
 }
 
+/* ── Rail contraido + hover ──────────────────────────────────────────────────
+   `main.js` pone `mini-hover` al entrar el raton en el rail contraido, pero no
+   habia ni una sola regla para ese estado: al no coincidir con nada, todo caia
+   al valor por defecto (320px) y el hover empujaba el contenido y el header de
+   la pagina entera. Ahora el panel se despliega ENCIMA (el menu tiene z-index 9
+   y el header 3) y la maquetacion no se mueve. */
+[data-app-sidebar=mini-hover] :has(.app-menubar-tabs) .app-wrapper,
+[data-app-sidebar=mini-hover] :has(.app-menubar-tabs) .footer-wrapper {
+    margin-left: 80px;
+}
+[data-app-sidebar=mini-hover] :has(.app-menubar-tabs) .app-header {
+    left: 80px;
+}
+
 @media (max-width: 1480px) {
     :root {
         --app-menubar-tabs: 80px;
@@ -576,25 +658,19 @@
     .app-menubar-tabs.open .app-tab-content {
         left: 80px;
     }
+}
+/* Solo el margen del contenido va acotado a 1200-1480: por debajo de 1200 el
+   rail deja de estar siempre visible (el propio `.app-menubar-tabs` se va
+   fuera de pantalla) y el bloque `max-width:1199.98px` de mas arriba ya deja
+   `margin-left:0` para paginas con submenu -misma especificidad que este
+   `80px` de aqui, pero declarado antes, asi que si este no fuera despues de
+   1200px tambien ganaria abajo por ir despues en el fichero: dejaba el
+   contenido indentado 80px con el header ya a ancho completo-. (Las paginas
+   sin submenu no se ven afectadas: su regla `.no-sidebar-open` tiene mas
+   especificidad -3 clases vs 2- y gana siempre, en cualquier ancho.) */
+@media (min-width: 1200px) and (max-width: 1480px) {
     :has(.app-menubar-tabs) .app-wrapper {
         margin-left: 80px;
-        /* padding-left: 15px; */
-        /* padding-right: 15px; */
-    }
-    :has(.app-menubar-tabs) .app-toggler::after {
-        content: "";
-        position: fixed;
-        height: 100%;
-        width: 100%;
-        top: 0;
-        left: 0;
-        z-index: 99999;
-        background-color: var(--custom-modal-backdrop-bg);
-        opacity: 0.6;
-        display: none;
-    }
-    :has(.app-menubar-tabs) .app-toggler.active::after {
-        display: block;
     }
 }
 @media (max-width: 1191px) {
@@ -603,9 +679,59 @@
         padding-left: 5px;
         padding-right: 5px;
     }
+    /* `left` ya no se fija aqui: lo decide el selector `#appMenubar`, mas
+       especifico, junto al resto del bloque <=1199.98px. Este `width` si
+       sigue siendo el que gana (240px -> 220px por debajo de 1192px). */
     .app-menubar-tabs .app-tab-content {
-        left: -250px;
         width: 220px;
+    }
+    :root {
+        /* Cajon mas estrecho en este rango (rail 80px + panel 220px). */
+        --app-menubar-open: 300px;
+    }
+}
+
+/* ── Cajon abierto: empuja el contenido, no flota encima ─────────────────────
+   De 576px a 1480px el cajon deja de comportarse como una capa flotante con
+   fondo oscuro (eso solo pasa por debajo de 576px, ver el backdrop de mas
+   arriba): aqui aparta tanto el header como el contenido/footer el mismo
+   ancho que ocupa el cajon abierto (`--app-menubar-open`), como si fuera una
+   version mas estrecha del modo escritorio (>1480px). De paso el boton queda
+   siempre accesible para volver a cerrar (antes, cuando el cajon SI flotaba,
+   se pintaba encima del header -z-index 9 vs 3- y tapaba su propia esquina).
+   `:not(:has(... .no-sidebar-open))` es obligatorio: en paginas sin submenu
+   `main.js` igual añade `.open` al pulsar el boton (asi se revela el riel de
+   iconos por debajo de 1200px, donde vive oculto fuera de pantalla), pero ese
+   riel nunca trae panel (`.no-sidebar-open .app-tab-content{display:none}`,
+   mas abajo) y ya tiene su propio `left:80px`/`margin-left:80px` fijos de
+   sobra (reglas de mas arriba). Sin este `:not()`, estas reglas -misma
+   especificidad y declaradas despues- se lo pisaban: el header y el
+   contenido saltaban 220-300px hacia un hueco vacio sin que se abriera ningun
+   cajon visible, en cualquier pagina de un solo item entre 576 y 1480px. */
+@media (min-width: 576px) and (max-width: 1480px) {
+    :has(.app-menubar-tabs.open):not(:has(.app-menubar-tabs.no-sidebar-open)) .app-header {
+        left: var(--app-menubar-open);
+    }
+    :has(.app-menubar-tabs.open):not(:has(.app-menubar-tabs.no-sidebar-open)) .app-wrapper,
+    :has(.app-menubar-tabs.open):not(:has(.app-menubar-tabs.no-sidebar-open)) .footer-wrapper {
+        margin-left: var(--app-menubar-open);
+    }
+}
+/* El buscador central (`#gs-trigger`, 600px fijos, centrado con `left:50%` en
+   `.app-header-inner`) solo cabe sin desbordar si al header le quedan al
+   menos ~600px libres tras el aparte de arriba. Eso se cumple siempre a
+   partir de 992px (991.98-320=671.98px libres de sobra) y por debajo de
+   768px el propio buscador ya esta oculto (`d-none d-md-flex` en el blade).
+   Queda un hueco de 768-991.98px donde SI se ve pero NO cabe -768-300=468px,
+   820-320=500px en la captura que motivo este cambio-: el buscador
+   desbordaba por encima del propio boton y le robaba los clics. Se oculta
+   solo ahi, y solo mientras el cajon esta realmente abierto. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    :has(.app-menubar-tabs.open):not(:has(.app-menubar-tabs.no-sidebar-open)) .app-header-start {
+        /* El `!important` es obligatorio: `.d-md-flex{display:flex!important}`
+           de Bootstrap tambien lo lleva, y sin igualarlo esta regla -aunque
+           mas especifica- pierde siempre frente a una utilidad `!important`. */
+        display: none !important;
     }
 }
 

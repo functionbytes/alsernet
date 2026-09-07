@@ -87,11 +87,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Slug</label>
-                        <input type="text" name="slug" class="form-control" required>
+                        @include('core::components.slug-field', [
+                            'value' => '',
+                            'from' => '#tagForm input[name=name]',
+                            'required' => true,
+                        ])
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Color</label>
-                        <input type="color" name="color" class="form-control form-control-color" value="#90bb13" required>
+                        @include('core::components.color-field', [
+                            'name' => 'color',
+                            'value' => '#90bb13',
+                            'preview' => 'Etiqueta',
+                            'previewFrom' => 'input[name=name]',
+                        ])
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Descripción</label>
@@ -128,8 +137,8 @@
             $('#tagForm').prepend('<input type="hidden" name="_method" value="PUT">');
         }
         $('#tagForm input[name="name"]').val(name);
-        $('#tagForm input[name="slug"]').val(slug);
-        $('#tagForm input[name="color"]').val(color);
+        $('#tagForm input[name="slug"]').val(slug).trigger('input');
+        $('#tagForm input[name="color"]').val(color).trigger('input');
         $('#tagForm textarea[name="description"]').val(description);
         $('#tagForm input[name="is_active"]').prop('checked', isActive === 1);
         $('#tagModalLabel').text('Editar etiqueta');

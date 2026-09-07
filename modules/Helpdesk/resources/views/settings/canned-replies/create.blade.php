@@ -38,19 +38,31 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las respuestas predefinidas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las respuestas predefinidas</h6>
                     <p class="card-text text-muted small">
                         Las respuestas predefinidas permiten a los agentes insertar textos habituales con un solo clic o escribiendo el atajo configurado.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Atajos de teclado</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Atajos de teclado</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Si configuras un atajo, los agentes podran escribir <code>/atajo</code> en el campo de respuesta para insertar el contenido automaticamente.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Alcance</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Alcance</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Las respuestas <strong>globales</strong> estan disponibles para todos los agentes. Las <strong>personales</strong> solo son visibles para quien las crea.
                     </p>

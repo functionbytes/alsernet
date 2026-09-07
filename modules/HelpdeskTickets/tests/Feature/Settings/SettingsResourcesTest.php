@@ -84,15 +84,18 @@ class SettingsResourcesTest extends TestCase
 
     public function test_store_category_creates_record(): void
     {
+        // Nombre distinto del seed real "Soporte Técnico" (id 1): mismo texto
+        // sin tilde generaba el mismo slug "soporte-tecnico" y chocaba con la
+        // fila ya sembrada (UniqueConstraintViolationException -> 500).
         $this->actingAs($this->admin)
             ->post(route('manager.helpdesk.settings.ticket-categories.store'), [
-                'name' => 'Soporte Tecnico',
+                'name' => 'Categoria de Prueba QA',
                 'active' => true,
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('helpdesk_ticket_categories', [
-            'name' => 'Soporte Tecnico',
+            'name' => 'Categoria de Prueba QA',
         ], 'helpdesk');
     }
 
@@ -126,7 +129,10 @@ class SettingsResourcesTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertDatabaseHas('helpdesk_ticket_groups', [
+        // helpdesk_groups, no helpdesk_ticket_groups: los grupos de Ajustes se
+        // unificaron con la tabla que referencia helpdesk_tickets.group_id
+        // (ver TicketGroupTableUnificationTest para el motivo).
+        $this->assertDatabaseHas('helpdesk_groups', [
             'name' => 'Equipo de Soporte',
             'assignment_mode' => 'manual',
         ], 'helpdesk');

@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Modules\Forms\Models\Form;
-use Modules\Forms\Models\FormChangeLog;
+use Modules\Forms\Models\AlsernetForm;
+use Modules\Forms\Models\AlsernetFormChangeLog;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
 /**
@@ -24,7 +24,7 @@ use Modules\HelpdeskTickets\Models\TicketCategory;
  * desde aquí porque vive en otro repositorio (Alvarez/PrestaShop).
  *
  * Toda mutación (crear/editar/activar/desactivar/eliminar/importar) queda
- * registrada en FormChangeLog: un category_id mal cambiado desvía tickets
+ * registrada en AlsernetFormChangeLog: un category_id mal cambiado desvía tickets
  * reales de clientes en silencio, así que el historial de quién-cuándo-qué
  * importa aquí más que en un CRUD de configuración típico.
  */
@@ -37,50 +37,82 @@ class FormsManagerController extends Controller
         $this->middleware('can:helpdesk.tickets.settings');
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $forms = Form::with('category')->orderBy('name')->get();
-        $categories = TicketCategory::where('active', true)->orderBy('order')->get();
-        $recentChanges = FormChangeLog::orderByDesc('created_at')->limit(20)->get();
+        // Los totales se calculan sobre TODOS los formularios, no sobre el
+        // resultado filtrado: son el estado del mapeo completo, y colarles el
+        // filtro haría que "Activos" cambiara al buscar.
+        $stats = [
+            'total' => AlsernetForm::count(),
+            'active' => AlsernetForm::where('active', true)->count(),
+            'inactive' => AlsernetForm::where('active', false)->count(),
+            'categories' => AlsernetForm::whereNotNull('category_id')->distinct()->count('category_id'),
+            'uncategorised' => AlsernetForm::whereNull('category_id')->count(),
+        ];
 
-        return view('forms::manage.index', compact('forms', 'categories', 'recentChanges'));
+        $forms = AlsernetForm::with('category')
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim((string) $request->input('search'));
+                // form_key es lo que se busca de verdad cuando llega un envío
+                // rechazado desde PrestaShop, así que entra en la búsqueda
+                // junto al nombre y la descripción.
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('form_key', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->input('status') === 'active', fn ($q) => $q->where('active', true))
+            ->when($request->input('status') === 'inactive', fn ($q) => $q->where('active', false))
+            ->when($request->input('category') === '__none__', fn ($q) => $q->whereNull('category_id'))
+            ->when(
+                $request->filled('category') && $request->input('category') !== '__none__',
+                fn ($q) => $q->where('category_id', $request->input('category'))
+            )
+            ->orderBy('name')
+            ->get();
+
+        $categories = TicketCategory::where('active', true)->orderBy('order')->get();
+        $recentChanges = AlsernetFormChangeLog::orderByDesc('created_at')->limit(20)->get();
+
+        return view('forms::manage.index', compact('forms', 'categories', 'recentChanges', 'stats'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validated($request);
 
-        $form = Form::create($validated);
+        $form = AlsernetForm::create($validated);
 
-        FormChangeLog::record($form->form_key, 'created', $form->id, FormChangeLog::diff([], $validated));
+        AlsernetFormChangeLog::record($form->form_key, 'created', $form->id, AlsernetFormChangeLog::diff([], $validated));
 
         return redirect()->route('forms.manage.index')
             ->with('success', 'Formulario creado correctamente.');
     }
 
-    public function update(Request $request, Form $form): RedirectResponse
+    public function update(Request $request, AlsernetForm $form): RedirectResponse
     {
         $before = $form->only(self::AUDITABLE_FIELDS);
         $validated = $this->validated($request, $form);
 
         $form->update($validated);
 
-        $changes = FormChangeLog::diff($before, $form->only(self::AUDITABLE_FIELDS));
+        $changes = AlsernetFormChangeLog::diff($before, $form->only(self::AUDITABLE_FIELDS));
 
         if ($changes !== []) {
-            FormChangeLog::record($form->form_key, 'updated', $form->id, $changes);
+            AlsernetFormChangeLog::record($form->form_key, 'updated', $form->id, $changes);
         }
 
         return redirect()->route('forms.manage.index')
             ->with('success', 'Formulario actualizado correctamente.');
     }
 
-    public function toggle(Form $form): RedirectResponse
+    public function toggle(AlsernetForm $form): RedirectResponse
     {
         $wasActive = $form->active;
         $form->update(['active' => ! $wasActive]);
 
-        FormChangeLog::record(
+        AlsernetFormChangeLog::record(
             $form->form_key,
             $wasActive ? 'deactivated' : 'activated',
             $form->id,
@@ -90,14 +122,20 @@ class FormsManagerController extends Controller
         return back()->with('success', 'Estado del formulario actualizado.');
     }
 
-    public function destroy(Form $form): RedirectResponse
+    public function destroy(AlsernetForm $form): RedirectResponse
     {
         $formKey = $form->form_key;
         $formId = $form->id;
 
-        $form->delete();
+        // El registro va ANTES del borrado: helpdesk_form_changes.form_id
+        // tiene una FK a helpdesk_forms, así que insertarlo después fallaba
+        // con "Cannot add or update a child row" y devolvía un 500 — con el
+        // formulario ya borrado y sin rastro en el historial. La FK es
+        // ON DELETE SET NULL, de modo que al borrar el formulario esta fila
+        // se queda con form_id NULL pero conserva form_key y los cambios.
+        AlsernetFormChangeLog::record($formKey, 'deleted', $formId);
 
-        FormChangeLog::record($formKey, 'deleted', $formId);
+        $form->delete();
 
         return redirect()->route('forms.manage.index')
             ->with('success', 'Formulario eliminado. Los envíos que lleguen con ese form_key se rechazarán hasta que se vuelva a crear.');
@@ -115,7 +153,7 @@ class FormsManagerController extends Controller
         ]);
 
         $active = $validated['bulk_action'] === 'activate';
-        $forms = Form::whereIn('id', $validated['ids'])->get();
+        $forms = AlsernetForm::whereIn('id', $validated['ids'])->get();
 
         foreach ($forms as $form) {
             if ($form->active === $active) {
@@ -125,7 +163,7 @@ class FormsManagerController extends Controller
             $wasActive = $form->active;
             $form->update(['active' => $active]);
 
-            FormChangeLog::record(
+            AlsernetFormChangeLog::record(
                 $form->form_key,
                 $active ? 'activated' : 'deactivated',
                 $form->id,
@@ -143,7 +181,7 @@ class FormsManagerController extends Controller
      */
     public function exportJson(): JsonResponse
     {
-        $forms = Form::with('category')->orderBy('name')->get()->map(fn (Form $form) => [
+        $forms = AlsernetForm::with('category')->orderBy('name')->get()->map(fn (AlsernetForm $form) => [
             'name' => $form->name,
             'form_key' => $form->form_key,
             'category_slug' => $form->category?->slug,
@@ -203,7 +241,7 @@ class FormsManagerController extends Controller
                 }
 
                 $formKey = (string) $row['form_key'];
-                $existing = Form::where('form_key', $formKey)->first();
+                $existing = AlsernetForm::where('form_key', $formKey)->first();
                 $before = $existing?->only(self::AUDITABLE_FIELDS) ?? [];
 
                 $attributes = [
@@ -213,12 +251,12 @@ class FormsManagerController extends Controller
                     'active' => (bool) ($row['active'] ?? true),
                 ];
 
-                $form = Form::updateOrCreate(['form_key' => $formKey], $attributes);
+                $form = AlsernetForm::updateOrCreate(['form_key' => $formKey], $attributes);
 
-                $changes = FormChangeLog::diff($before, $form->only(self::AUDITABLE_FIELDS));
+                $changes = AlsernetFormChangeLog::diff($before, $form->only(self::AUDITABLE_FIELDS));
 
                 if ($changes !== []) {
-                    FormChangeLog::record($formKey, 'imported', $form->id, $changes);
+                    AlsernetFormChangeLog::record($formKey, 'imported', $form->id, $changes);
                 }
 
                 $imported++;
@@ -237,10 +275,13 @@ class FormsManagerController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validated(Request $request, ?Form $form = null): array
+    private function validated(Request $request, ?AlsernetForm $form = null): array
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            // max:191, no 255: la columna es varchar(191) y con sql_mode
+            // STRICT_TRANS_TABLES un nombre más largo pasaba la validación y
+            // reventaba con "Data too long for column 'name'" (500).
+            'name' => ['required', 'string', 'max:191'],
             'form_key' => [
                 'required', 'string', 'max:100', 'alpha_dash',
                 Rule::unique('helpdesk.helpdesk_forms', 'form_key')->ignore($form?->id),

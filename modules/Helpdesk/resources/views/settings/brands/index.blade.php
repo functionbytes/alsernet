@@ -3,7 +3,11 @@
 @section('title', 'Marcas')
 
 @push('styles')
-<style>.hd-color-swatch { width: 24px; height: 24px; display: inline-block; }</style>
+<style>
+.hd-color-swatch { width: 24px; height: 24px; display: inline-block; }
+.hd-bulk-toolbar { z-index: 1050; }
+.hd-filter-badge { font-size: .6rem; }
+</style>
 @endpush
 
 @section('page_header')
@@ -66,31 +70,51 @@
 
         {{-- Search --}}
         <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('settings.helpdesk.brands.index') }}">
-                <div class="row align-items-center g-2">
-                    <div class="col-md-7">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="search" name="search" class="form-control"
-                                placeholder="Buscar por nombre, slug, dominio o correo..."
-                                value="{{ request('search') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="status" class="form-select">
-                            <option value="">Cualquier estado</option>
-                            <option value="active" @selected(request('status') === 'active')>Activas</option>
-                            <option value="inactive" @selected(request('status') === 'inactive')>Inactivas</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100" aria-label="Filtrar">
-                            <i class="fas fa-filter"></i>
+            @php
+                $activeFilterCount = collect(['status'])->filter(fn ($k) => request($k))->count();
+                $hasAnyFilter = $activeFilterCount > 0 || request('search');
+            @endphp
+            <form id="brands-filter-form" method="GET" action="{{ route('settings.helpdesk.brands.index') }}">
+                <input type="hidden" name="status" id="filter-status" value="{{ request('status') }}">
+
+                <div class="d-flex align-items-center gap-2">
+                    <input type="search" name="search" class="form-control flex-grow-1"
+                        placeholder="Buscar por nombre, slug, dominio o correo..."
+                        value="{{ request('search') }}">
+
+                    <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                        data-bs-toggle="modal" data-bs-target="#brands-filter-modal" title="Filtros avanzados">
+                        <i class="fas fa-filter"></i>
+                        @if($activeFilterCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary hd-filter-badge">{{ $activeFilterCount }}</span>
+                        @endif
+                    </button>
+
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button type="submit" class="btn btn-primary" title="Buscar">
+                            <i class="fas fa-magnifying-glass"></i>
                         </button>
+                        @if($hasAnyFilter)
+                            <a href="{{ route('settings.helpdesk.brands.index') }}"
+                                class="btn btn-secondary" title="Limpiar filtros">
+                                <i class="fas fa-xmark"></i>
+                            </a>
+                        @endif
                     </div>
                 </div>
+
+                @if($activeFilterCount > 0)
+                    <div class="d-flex gap-2 flex-wrap mt-4">
+                        <div>
+                            <h6 class="mb-1">Filtrados:</h6>
+                        </div>
+                        @if(request('status'))
+                            <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                Estado: {{ request('status') === 'active' ? 'Activas' : 'Inactivas' }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -101,6 +125,7 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
+                                <th scope="col" width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                 <th scope="col">Nombre</th>
                                 <th scope="col">Dominio</th>
                                 <th scope="col" class="text-center">Color</th>
@@ -113,6 +138,7 @@
                         <tbody>
                             @foreach($brands as $brand)
                                 <tr>
+                                    <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $brand->id }}"></td>
                                     <td>
                                         <strong>{{ $brand->name }}</strong>
                                         <div><small class="text-muted">{{ $brand->slug }}</small></div>
@@ -234,9 +260,75 @@
 
     @include('core::components.delete')
 
+    {{-- Filter modal --}}
+    <div class="modal fade" id="brands-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select id="modal-status" class="form-control select2-filter-modal">
+                            <option value="">Cualquier estado</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activas</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="brands-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="brands-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Bulk toolbar --}}
+    <div id="bulk-toolbar" class="hd-bulk-toolbar position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionada(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> marca(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function () {
     $('.hd-color-swatch[data-color]').each(function () {
@@ -258,6 +350,65 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    // ── Filtros avanzados ──────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#brands-filter-modal'), width: '100%' });
+
+    $('#brands-filter-apply-btn').on('click', function () {
+        $('#filter-status').val($('#modal-status').val());
+        $('#brands-filter-modal').modal('hide');
+        $('#brands-filter-form').submit();
+    });
+
+    $('#brands-filter-clear-btn').on('click', function () {
+        $('#modal-status').val(null).trigger('change');
+    });
+
+    // ── Bulk actions ─────────────────────────────────────────────────
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una marca.'); return; }
+
+        const applyBulkAction = function () {
+            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+            $.ajax({
+                url: '{{ route('settings.helpdesk.brands.bulk-action') }}',
+                method: 'POST',
+                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $('#bulk-modal').modal('hide');
+                    toastr.success(res.message);
+                    setTimeout(() => location.reload(), 800);
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+                },
+            });
+        };
+
+        if (action === 'delete') {
+            window.__confirm('¿Eliminar ' + ids.length + ' marca(s)? Esta acción no se puede deshacer.', applyBulkAction);
+        } else {
+            applyBulkAction();
+        }
+    });
 });
 </script>
 @endpush

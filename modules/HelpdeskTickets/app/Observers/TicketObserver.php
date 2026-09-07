@@ -31,14 +31,18 @@ class TicketObserver
         if (! $ticket->sla_policy_id) {
             $ticket->sla_policy_id = TicketSlaPolicy::resolveForChannel($ticket->source)?->id;
         }
+
+        // Los vencimientos de SLA se calculan AQUÍ, no en created(): dependen
+        // solo de la política y la prioridad, ambas ya conocidas, así que
+        // entran en el propio INSERT. Calcularlos después obligaba a un UPDATE
+        // extra (saveQuietly) por cada ticket creado.
+        if ($ticket->sla_policy_id) {
+            $ticket->calculateSlaDueDates(persist: false);
+        }
     }
 
     public function created(Ticket $ticket): void
     {
-        if ($ticket->sla_policy_id) {
-            $ticket->calculateSlaDueDates();
-        }
-
         TicketHistory::logTicketCreated($ticket, auth()->user());
     }
 

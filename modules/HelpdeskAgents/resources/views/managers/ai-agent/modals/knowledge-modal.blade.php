@@ -12,7 +12,7 @@
 
                     {{-- Informacion basica --}}
                     <div class="mb-4">
-                        <h6 class="fw-bold border-bottom pb-2 mb-3">Informacion basica</h6>
+                        <h6 class="fw-bold mb-3">Informacion basica</h6>
                         <p class="text-muted small mb-3">Titulo y contenido</p>
                         <div class="row g-3">
                             <div class="col-md-8">
@@ -44,7 +44,7 @@
 
                     {{-- Metadata --}}
                     <div class="mb-4">
-                        <h6 class="fw-bold border-bottom pb-2 mb-3">Metadata</h6>
+                        <h6 class="fw-bold mb-3">Metadata</h6>
                         <p class="text-muted small mb-3">Tags, categorias y fuente</p>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -80,10 +80,10 @@
 
                     {{-- Configuracion --}}
                     <div>
-                        <h6 class="fw-bold border-bottom pb-2 mb-3">Configuracion</h6>
+                        <h6 class="fw-bold mb-3">Configuracion</h6>
                         <p class="text-muted small mb-3">Visibilidad</p>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="form-label" for="knowledge_is_active">Estado</label>
                                 <select class="form-select" id="knowledge_is_active" name="is_active">
                                     <option value="1">Activo</option>

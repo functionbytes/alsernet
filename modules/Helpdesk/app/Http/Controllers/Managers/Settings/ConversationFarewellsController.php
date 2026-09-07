@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\Concerns\AutoReplySettingsController;
@@ -53,5 +54,10 @@ class ConversationFarewellsController extends AutoReplySettingsController
     public function destroy(ConversationFarewell $conversationFarewell): RedirectResponse
     {
         return $this->handleDestroy($conversationFarewell);
+    }
+
+    public function bulkAction(): JsonResponse
+    {
+        return $this->handleBulkAction();
     }
 }

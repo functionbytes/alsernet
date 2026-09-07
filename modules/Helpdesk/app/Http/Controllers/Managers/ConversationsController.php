@@ -22,6 +22,7 @@ use Illuminate\View\View;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 use Modules\Helpdesk\Events\ConversationClosed;
+use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationTagAdded;
 use Modules\Helpdesk\Events\MessageReceived;
@@ -2041,6 +2042,8 @@ class ConversationsController extends Controller
             'user_id' => auth()->id(),
             'reason' => $reason,
         ]);
+
+        event(new ConversationMarkedAsSpam($conversation, auth()->id()));
 
         return response()->json([
             'success' => true,

@@ -19,11 +19,14 @@ class BulkTicketRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
-            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,delete,add_tag,assign_group'],
+            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,delete,add_tag,assign_group,link_to_ticket,retry_failed_mail'],
             'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
             'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
             'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
             'tag' => ['required_if:action,add_tag', 'nullable', 'string', 'max:50'],
+            // "Vincular a un ticket" del mockup (modal 13, ve-mail-bulk):
+            // mueve el hilo completo de cada ticket seleccionado a este.
+            'merge_into_id' => ['required_if:action,link_to_ticket', 'nullable', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
         ];
     }
 
@@ -43,6 +46,8 @@ class BulkTicketRequest extends FormRequest
             'group_id.required_if' => 'El grupo es obligatorio cuando la accion es asignar grupo.',
             'group_id.exists' => 'El grupo seleccionado no existe.',
             'tag.required_if' => 'La etiqueta es obligatoria cuando la accion es anadir etiqueta.',
+            'merge_into_id.required_if' => 'El ticket destino es obligatorio para vincular la seleccion.',
+            'merge_into_id.exists' => 'El ticket destino no existe.',
         ];
     }
 
@@ -55,6 +60,7 @@ class BulkTicketRequest extends FormRequest
             'status_id' => 'estado',
             'group_id' => 'grupo',
             'tag' => 'etiqueta',
+            'merge_into_id' => 'ticket destino',
         ];
     }
 }

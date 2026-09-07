@@ -24,6 +24,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Causa raíz del cierre
+    |--------------------------------------------------------------------------
+    | Distinta de close_reasons: el motivo dice CÓMO acabó el ticket
+    | ("resuelto", "duplicado") y la causa raíz dice POR QUÉ existió. Es lo
+    | que se agrupa en los informes para ver qué genera trabajo repetido, así
+    | que va aparte y NO se comparte con Conversaciones.
+    */
+    'close_root_causes' => [
+        'documentation' => 'Documentación incompleta',
+        'configuration' => 'Error de configuración',
+        'pricing' => 'Precio o cotización',
+        'integration' => 'Incidencia de integración',
+        'informational' => 'Consulta informativa',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Motivos de cierre
     |--------------------------------------------------------------------------
     | Mismas claves/etiquetas que el modal "Cerrar conversación" del módulo
@@ -85,6 +102,131 @@ return [
     | queries del dashboard de reports (TicketReportsService) y el exporter CSV
     | compartido para el adjunto opcional.
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Lecturas en lenguaje natural (TicketInsightsService)
+    |--------------------------------------------------------------------------
+    | Redacta el "qué ha pasado" del periodo y agrupa por temas los comentarios
+    | de CSAT. No añade consultas: trabaja sobre lo que ya calcula
+    | TicketReportsService. Inerte sin un agente IA configurado.
+    */
+    'insights' => [
+        'enabled' => env('HELPDESKTICKETS_INSIGHTS', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Guardia de salida (ReplyGuardService)
+    |--------------------------------------------------------------------------
+    | Revisa el borrador antes de enviarlo al cliente y avisa de datos que no
+    | están en el hilo o promesas que no respalda ninguna plantilla. NUNCA
+    | bloquea el envío: si la revisión falla o no hay agente IA, la respuesta
+    | sale igual.
+    */
+    'reply_guard' => [
+        'enabled' => env('HELPDESKTICKETS_REPLY_GUARD', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deflexión en el portal (TicketDeflectionService)
+    |--------------------------------------------------------------------------
+    | Sugiere artículos del centro de ayuda mientras el cliente redacta, antes
+    | de crear el ticket. Nunca impide abrirlo. Sin centro de ayuda instalado
+    | no hace nada; sin agente IA, muestra los resultados del buscador sin
+    | filtrar.
+    */
+    'deflection' => [
+        'enabled' => env('HELPDESKTICKETS_DEFLECTION', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clasificador de spam (SpamClassifierService)
+    |--------------------------------------------------------------------------
+    | Complementa a la lista negra, que solo bloquea remitentes ya conocidos.
+    | RETIENE en cuarentena, nunca descarta, y solo mira remitentes SIN tickets
+    | previos — quien ya es cliente no es spam, y saltárselo elimina la mayor
+    | parte del coste.
+    |
+    | OFF por defecto y con umbral alto: un falso positivo es un cliente real
+    | cuyo correo se queda fuera. Es más barato cerrar un ticket basura que
+    | descubrir tarde que se retuvo un pedido grande.
+    */
+    /*
+    |--------------------------------------------------------------------------
+    | Escalado por riesgo (TicketRiskScoreService)
+    |--------------------------------------------------------------------------
+    | EscalationService escala por reloj: 48/24/12 horas según prioridad. Esto
+    | pondera señales que el sistema ya calcula —sentimiento del cliente,
+    | reaperturas, SLA, mensajes sin responder, valoraciones previas— y ACORTA
+    | ese plazo cuando el ticket lo pide. Nunca lo alarga: activarlo no puede
+    | retrasar ningún escalado que ya ocurría.
+    |
+    | No hace ninguna llamada al modelo: el sentimiento se lo dio el LLM cuando
+    | el ticket entró, y aquí solo se combina.
+    |
+    | min_score: por debajo de esto el plazo no se toca.
+    | max_reduction: plazo mínimo como fracción del original (0.25 = a un cuarto).
+    */
+    'risk' => [
+        'enabled' => env('HELPDESKTICKETS_RISK_ESCALATION', false),
+        'min_score' => (float) env('HELPDESKTICKETS_RISK_MIN_SCORE', 0.4),
+        'max_reduction' => (float) env('HELPDESKTICKETS_RISK_MAX_REDUCTION', 0.25),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Borradores de articulo (ArticleDraftService)
+    |--------------------------------------------------------------------------
+    | Convierte grupos de tickets YA RESUELTOS que se repiten en borradores de
+    | articulo del centro de ayuda, redactados a partir de las respuestas que
+    | de verdad funcionaron. Cierra el circulo con la deflexion del portal:
+    | cada articulo publicado evita los tickets siguientes.
+    |
+    | Siempre borrador, nunca publicado. category_id opcional: si se deja
+    | vacio, los borradores quedan sin categoria para que quien revise decida.
+    */
+    /*
+    |--------------------------------------------------------------------------
+    | Conclusión de los hilos laterales
+    |--------------------------------------------------------------------------
+    | Al cerrar una conversación lateral (consulta a un proveedor u otro
+    | departamento), deja su conclusión como nota interna en el ticket. La
+    | respuesta ya estaba escrita, solo que en un hilo aparte que nadie relee
+    | cuando el ticket cambia de manos.
+    */
+    'side_conversation_summary' => env('HELPDESKTICKETS_SIDE_SUMMARY', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Revision de calidad por muestreo (TicketQualityReviewService)
+    |--------------------------------------------------------------------------
+    | Muestrea tickets cerrados al azar y evalua la atencion dada. Da una medida
+    | de calidad que NO depende de que el cliente conteste al CSAT — hoy la
+    | unica que hay, y la responde una minoria.
+    |
+    | La muestra es pequena a proposito: el objetivo es una medida estable, no
+    | revisarlo todo. Cada revision es una llamada.
+    |
+    | Toda revision se puede disputar: una evaluacion automatica del trabajo de
+    | una persona sin derecho a replica no es una metrica, es un juicio.
+    */
+    'quality_review' => [
+        'enabled' => env('HELPDESKTICKETS_QUALITY_REVIEW', false),
+        'daily_sample' => (int) env('HELPDESKTICKETS_QUALITY_SAMPLE', 10),
+    ],
+
+    'article_drafts' => [
+        'enabled' => env('HELPDESKTICKETS_ARTICLE_DRAFTS', false),
+        'category_id' => env('HELPDESKTICKETS_ARTICLE_DRAFTS_CATEGORY'),
+    ],
+
+    'spam_classifier' => [
+        'enabled' => env('HELPDESKTICKETS_SPAM_CLASSIFIER', false),
+        'threshold' => (float) env('HELPDESKTICKETS_SPAM_THRESHOLD', 0.9),
+    ],
+
     'reports' => [
         'scheduled' => [
             'enabled' => env('HELPDESK_SCHEDULED_REPORTS_ENABLED', false),
@@ -101,6 +243,12 @@ return [
                 'tickets' => env('HELPDESK_SCHEDULED_REPORTS_TICKETS', true),
                 'csat' => env('HELPDESK_SCHEDULED_REPORTS_CSAT', true),
                 'ops' => env('HELPDESK_SCHEDULED_REPORTS_OPS', true),
+
+                // Comentario en lenguaje natural sobre las cifras del periodo
+                // y agrupación por temas de los comentarios de CSAT
+                // (TicketInsightsService). Sin agente IA configurado, ambos
+                // se omiten y el informe sale solo con los números.
+                'insights' => env('HELPDESK_SCHEDULED_REPORTS_INSIGHTS', true),
             ],
 
             // Adjuntar el CSV de tickets del periodo (TicketsExporter).
@@ -150,5 +298,19 @@ return [
             // Minutos mínimos entre dos mails de alerta.
             'cooldown_minutes' => (int) env('HELPDESK_OPS_ALERT_COOLDOWN', 60),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reputación del ticket mailer (modal "Reputación y autenticación")
+    |--------------------------------------------------------------------------
+    | ticket:check-reputation (cada hora) calcula la tasa de rebote de
+    | helpdesk_ticket_mails de los últimos 30 días (MailReputationService,
+    | mismo cálculo que ve el agente en el modal); si supera este umbral,
+    | avisa a los managers y/o pausa el envío saliente, según lo que se haya
+    | activado en el propio modal (ambos OFF por defecto, "do no harm").
+    */
+    'reputation' => [
+        'bounce_critical_pct' => (float) env('HELPDESK_REPUTATION_BOUNCE_CRITICAL_PCT', 5.0),
     ],
 ];

@@ -26,7 +26,7 @@
                     <p class="text-muted mb-3">Define el tamaño maximo de archivos que pueden subir los agentes y clientes en tickets y conversaciones.</p>
 
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label for="max_file_size_mb" class="form-label fw-semibold">
                                 Tamaño maximo por archivo (MB) <span class="text-danger">*</span>
                             </label>

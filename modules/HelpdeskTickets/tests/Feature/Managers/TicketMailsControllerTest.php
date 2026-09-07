@@ -5,10 +5,12 @@ namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Mail\SendQueuedMailable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Customer;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
@@ -31,7 +33,12 @@ class TicketMailsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' imprescindible: EmailLog vive en la conexión default de la app
+    // (mysql en este entorno, no mariadb/helpdesk) — sin declararla, cada
+    // EmailLog::create() de este archivo escribe una fila REAL sin rollback
+    // (mismo gotcha ya documentado y corregido en varios tests hermanos de
+    // Modules\HelpdeskEmailActivity, p. ej. EmailLogControllerTest).
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private TicketStatus $status;
 
@@ -98,6 +105,69 @@ class TicketMailsControllerTest extends TestCase
         $this->assertTrue($types->contains('opened'));
     }
 
+    /**
+     * Cubre TicketDetailDataController::data() (panel de detalle del ticket,
+     * distinto endpoint del que prueba test_data_includes_trace_from_matching_
+     * email_log de arriba, que es el modal de UN correo) — el widget lateral
+     * "Último correo del ticket" (renderCorreoSidePane en tickets-app.js)
+     * lee mail.clicks_count/last_clicked_human de aquí.
+     */
+    public function test_ticket_data_includes_clicks_summary_and_trace(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.view']);
+        $ticket = $this->createTicket();
+        $mail = $this->createMail($ticket, ['message_id' => '<ticketclick123@alvarez.mx>', 'status' => 'sent']);
+
+        $log = EmailLog::create([
+            'module' => 'HelpdeskTickets',
+            'from_address' => 'soporte@alvarez.mx',
+            'to_addresses' => ['cliente@example.com'],
+            'subject' => $mail->subject,
+            'message_id' => 'ticketclick123@alvarez.mx',
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+        $link = $log->links()->create(['token' => Str::random(40), 'url' => 'https://example.com/x', 'created_at' => now()]);
+        $link->clicks()->create(['ip' => '127.0.0.1', 'user_agent' => 'test', 'clicked_at' => now()]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertOk();
+
+        $response->assertJsonPath('mail.clicks_count', 1);
+        $this->assertNotNull($response->json('mail.last_clicked_human'));
+
+        $types = collect($response->json('trace'))->pluck('type');
+        $this->assertTrue($types->contains('clicked'));
+    }
+
+    public function test_data_includes_click_trace_from_matching_email_log(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+        $mail = $this->createMail($ticket, ['message_id' => '<click123@alvarez.mx>', 'status' => 'sent']);
+
+        $log = EmailLog::create([
+            'module' => 'HelpdeskTickets',
+            'from_address' => 'soporte@alvarez.mx',
+            'to_addresses' => ['cliente@example.com'],
+            'subject' => $mail->subject,
+            'message_id' => 'click123@alvarez.mx',
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+        $link = $log->links()->create(['token' => Str::random(40), 'url' => 'https://example.com/x', 'created_at' => now()]);
+        $link->clicks()->create(['ip' => '127.0.0.1', 'user_agent' => 'test', 'clicked_at' => now()]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.data', $mail))
+            ->assertOk();
+
+        $types = collect($response->json('data.trace'))->pluck('type');
+
+        $this->assertTrue($types->contains('clicked'));
+    }
+
     public function test_update_tags_adds_and_removes_a_tag(): void
     {
         $manager = $this->makeUser(['helpdesk.tickets.update']);
@@ -162,23 +232,137 @@ class TicketMailsControllerTest extends TestCase
         $this->assertFalse($names->contains('Sin reply'));
     }
 
+    /**
+     * El asunto es una clave opcional dentro de la acción 'reply' de una
+     * macro (Macro::actionSpecs()['reply']['optional']) — cuando está
+     * configurado se interpola con las mismas variables del ticket que ya
+     * usa 'body' (mismo TicketVariableInterpolator, ver también
+     * TicketVariableInterpolatorTest).
+     */
+    public function test_templates_includes_interpolated_subject_when_the_macro_has_one_configured(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket(['subject' => 'Factura duplicada']);
+
+        Macro::create([
+            'name' => 'Con asunto',
+            'actions' => [['type' => 'reply', 'subject' => 'Re: {{ticket_subject}}', 'body' => 'Hola {{customer_name}}']],
+            'is_shared' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.templates', ['ticket_id' => $ticket->id]))
+            ->assertOk();
+
+        $template = collect($response->json('templates'))->firstWhere('name', 'Con asunto');
+
+        $this->assertNotNull($template, 'la plantilla con asunto debe estar en la respuesta');
+        $this->assertSame('Re: Factura duplicada', $template['subject']);
+    }
+
+    /**
+     * Macros anteriores a este campo no tienen 'subject' en su acción
+     * 'reply' — el composer (ticket-detail.js) depende de que la API
+     * devuelva null (no que falte la clave) para saber que debe caer al
+     * nombre de la macro como aproximación.
+     */
+    public function test_templates_subject_is_null_when_the_macro_does_not_have_one_configured(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+
+        Macro::create([
+            'name' => 'Sin asunto',
+            'actions' => [['type' => 'reply', 'body' => 'Hola {{customer_name}}']],
+            'is_shared' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.templates'))
+            ->assertOk();
+
+        $template = collect($response->json('templates'))->firstWhere('name', 'Sin asunto');
+
+        $this->assertNotNull($template, 'la plantilla sin asunto también debe estar en la respuesta');
+        $this->assertArrayHasKey('subject', $template);
+        $this->assertNull($template['subject']);
+    }
+
     public function test_index_requires_authentication(): void
     {
         $this->getJson(route('manager.helpdesk.tickets.emails.index'))
             ->assertUnauthorized();
     }
 
-    public function test_index_renders_the_html_page(): void
+    /**
+     * openTrackingStats() cruza CONEXIONES en una sola query
+     * (DB::connection('helpdesk')->...->join('email_logs', ...), que vive en
+     * la conexión default/mysql) — bajo DatabaseTransactions cada conexión
+     * abre su PROPIA transacción/sesión, así que una fila insertada vía el
+     * modelo EmailLog (conexión mysql) nunca es visible desde la sesión
+     * 'helpdesk' que ejecuta el JOIN, aunque ambas apunten a la misma BD
+     * física — aislamiento de transacción estándar entre sesiones. Mismo
+     * motivo por el que opened_rate (idéntico patrón, preexistente) tampoco
+     * tenía ningún test sobre su valor real antes de este archivo. No hay
+     * forma honesta de afirmar aquí "clicked_rate refleja mi fixture" sin
+     * comprometer el rollback de la transacción — se prueba solo que el
+     * endpoint expone la clave con un valor numérico válido; la fórmula en
+     * sí (SUM(clicked)/matched) se verificó manualmente en Docker.
+     */
+    public function test_index_json_stats_include_clicked_rate_key(): void
     {
         $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
-        $ticket = $this->createTicket();
-        $this->createMail($ticket, ['subject' => 'Ticket de prueba renderizado']);
+
+        Cache::forget('helpdeskticketmails:stats');
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.index'))
+            ->assertOk();
+
+        // is_numeric (no assertIsFloat): json_encode() de un float entero
+        // (0.0) puede serializarse como "0" según serialize_precision, y
+        // json_decode() lo devolvería como int, no float — un detalle de
+        // codificación, no del contrato real de la clave.
+        $this->assertIsNumeric($response->json('stats.clicked_rate'));
+        $this->assertGreaterThanOrEqual(0.0, $response->json('stats.clicked_rate'));
+    }
+
+    /**
+     * La bandeja global propia (vista HTML) se retiró — una petición de
+     * NAVEGADOR (sin Accept: json) a este nombre de ruta ahora redirige al
+     * log de emails unificado, filtrado por módulo. Una petición JSON (la
+     * que sigue usando tickets-app.js/el composer del ticket) NO se ve
+     * afectada — ver los tests de arriba, todos con getJson().
+     */
+    public function test_index_redirects_browser_requests_to_the_unified_email_log(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
 
         $this->actingAs($manager)
             ->get(route('manager.helpdesk.tickets.emails.index'))
+            ->assertRedirect(route('helpdeskemailactivity.index', ['module' => 'HelpdeskTickets']));
+    }
+
+    public function test_scheduled_page_renders_and_wires_the_json_api(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+
+        $this->actingAs($manager)
+            ->get(route('manager.helpdesk.tickets.scheduled'))
             ->assertOk()
-            ->assertSee('Emails enviados')
-            ->assertSee('Ticket de prueba renderizado');
+            ->assertViewIs('helpdesktickets::managers.emails.scheduled')
+            ->assertViewHas('dataUrl', route('manager.helpdesk.tickets.emails.index', ['view' => 'scheduled']))
+            ->assertViewHas('bulkUrl', route('manager.helpdesk.tickets.emails.bulk'))
+            // Selector de modo de vista (Lista/Compacta/Kanban): opera sobre
+            // los datos ya cargados en el propio navegador (ver rows/render()
+            // en el JS inline), así que solo se puede comprobar aquí que el
+            // selector y sus 3 botones están en el HTML servido — el render
+            // de cada modo (incluido el Kanban por franja horaria) es
+            // responsabilidad del JS, no de este test de servidor.
+            ->assertSee('id="sched-mode-switch"', false)
+            ->assertSee('Compacta')
+            ->assertSee('Kanban');
     }
 
     public function test_index_lists_only_outbound_mails_by_default(): void
@@ -194,10 +378,15 @@ class TicketMailsControllerTest extends TestCase
             ->getJson(route('manager.helpdesk.tickets.emails.index'))
             ->assertOk();
 
-        $ids = collect($response->json('data'))->pluck('id');
+        // Se cuentan solo los correos de ESTE ticket. Antes se contaban todos
+        // los del listado y se esperaba 1, lo que hacía depender el test de que
+        // la tabla estuviese vacía: cualquier correo residual de otra ejecución
+        // en la base compartida lo tumbaba. Lo que se quiere comprobar es el
+        // filtro por dirección, no cuántas filas hay en total.
+        $mine = collect($response->json('data'))->where('ticket_id', $ticket->id);
 
-        $this->assertTrue($ids->contains($outbound->id));
-        $this->assertSame(1, $ids->count());
+        $this->assertTrue($mine->pluck('id')->contains($outbound->id));
+        $this->assertSame(1, $mine->count(), 'La vista por defecto solo lista los salientes ya enviados.');
     }
 
     public function test_index_view_scheduled_filters_by_status(): void
@@ -297,7 +486,10 @@ class TicketMailsControllerTest extends TestCase
     {
         Queue::fake();
 
-        $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view']);
+        // 'to' es una casilla interna de escalado (soporte-n2@...), no el
+        // cliente del ticket — SEC-07 item 5 exige el permiso explícito
+        // para poder fijar un destinatario distinto del cliente.
+        $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view', 'helpdesk.tickets.emails.send_to_any']);
         $ticket = $this->createTicket();
 
         $this->actingAs($manager)
@@ -324,10 +516,12 @@ class TicketMailsControllerTest extends TestCase
         $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view']);
         $ticket = $this->createTicket();
 
+        // 'to' por defecto se fija al cliente del ticket (SEC-07 item 5) —
+        // se usa el email real del cliente en vez de un literal arbitrario.
         $response = $this->actingAs($manager)
             ->postJson(route('manager.helpdesk.tickets.emails.store'), [
                 'ticket_id' => $ticket->id,
-                'to' => 'cliente@example.com',
+                'to' => $ticket->customer->email,
                 'subject' => 'Nuevo email de prueba',
                 'body' => '<p>Hola, este es un email de prueba.</p>',
             ])
@@ -338,7 +532,7 @@ class TicketMailsControllerTest extends TestCase
         $this->assertDatabaseHas('helpdesk_ticket_mails', [
             'ticket_id' => $ticket->id,
             'user_id' => $manager->id,
-            'to' => 'cliente@example.com',
+            'to' => $ticket->customer->email,
             'subject' => 'Nuevo email de prueba',
             'status' => 'sent',
         ], 'helpdesk');
@@ -356,7 +550,7 @@ class TicketMailsControllerTest extends TestCase
         $this->actingAs($manager)
             ->postJson(route('manager.helpdesk.tickets.emails.store'), [
                 'ticket_id' => $ticket->id,
-                'to' => 'cliente@example.com',
+                'to' => $ticket->customer->email,
                 'subject' => 'Seguimiento programado',
                 'body' => '<p>Este correo se enviará más tarde.</p>',
                 'scheduled_at' => now()->addDay()->toDateTimeString(),
@@ -402,7 +596,7 @@ class TicketMailsControllerTest extends TestCase
         $original = $this->createMail($ticket, [
             'subject' => 'Original',
             'body_html' => '<p>Cuerpo original</p>',
-            'to' => 'cliente@example.com',
+            'to' => $ticket->customer->email,
             'status' => 'sent',
         ]);
 
@@ -416,7 +610,7 @@ class TicketMailsControllerTest extends TestCase
             'ticket_id' => $ticket->id,
             'subject' => 'Original',
             'in_reply_to' => $original->message_id,
-            'to' => 'cliente@example.com',
+            'to' => $ticket->customer->email,
         ], 'helpdesk');
 
         // El original sigue existiendo tal cual — reenviar crea una fila nueva.

@@ -53,20 +53,24 @@ class NotificationSettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'notify_new_conversation' => ['nullable', 'boolean'],
-            'notify_conversation_assigned' => ['nullable', 'boolean'],
-            'notify_conversation_resolved' => ['nullable', 'boolean'],
-            'notify_new_message' => ['nullable', 'boolean'],
-            'notify_overdue_sla' => ['nullable', 'boolean'],
-            'email_notifications_enabled' => ['nullable', 'boolean'],
-            'browser_notifications_enabled' => ['nullable', 'boolean'],
-            'notification_sound_enabled' => ['nullable', 'boolean'],
-            'daily_digest_enabled' => ['nullable', 'boolean'],
+            'notify_new_conversation' => ['sometimes', 'boolean'],
+            'notify_conversation_assigned' => ['sometimes', 'boolean'],
+            'notify_conversation_resolved' => ['sometimes', 'boolean'],
+            'notify_new_message' => ['sometimes', 'boolean'],
+            'notify_overdue_sla' => ['sometimes', 'boolean'],
+            'email_notifications_enabled' => ['sometimes', 'boolean'],
+            'browser_notifications_enabled' => ['sometimes', 'boolean'],
+            'notification_sound_enabled' => ['sometimes', 'boolean'],
+            'daily_digest_enabled' => ['sometimes', 'boolean'],
             'daily_digest_time' => ['required', 'string', 'regex:/^\d{2}:\d{2}$/'],
         ]);
 
+        // boolean(), no has(): la vista usa <select> Activado/Desactivado
+        // (convención del proyecto, no checkboxes) — el campo SIEMPRE viene
+        // presente en el POST, así que has() daría true sin importar la
+        // opción elegida. boolean() interpreta correctamente "1"/"0".
         foreach (self::BOOL_KEYS as $key) {
-            $validated[$key] = $request->has($key);
+            $validated[$key] = $request->boolean($key);
         }
 
         foreach ($validated as $key => $value) {

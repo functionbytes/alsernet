@@ -42,7 +42,7 @@ class ContactAggregatorService
 
     private const REMARKETING_CART = 'Modules\\Remarketing\\Models\\Cart';
 
-    private const EMAIL_LOG = 'Modules\\HelpdeskEmailLog\\Models\\EmailLog';
+    private const EMAIL_LOG = 'Modules\\HelpdeskEmailActivity\\Models\\EmailLog';
 
     private const TICKET = 'Modules\\HelpdeskTickets\\Models\\Ticket';
 
@@ -819,7 +819,7 @@ class ContactAggregatorService
     private function emails(Customer $customer): array
     {
         if (! $customer->email
-            || ! $this->moduleEnabled('HelpdeskEmailLog')
+            || ! $this->moduleEnabled('HelpdeskEmailActivity')
             || ! class_exists(self::EMAIL_LOG)) {
             return [];
         }
@@ -827,10 +827,12 @@ class ContactAggregatorService
         $email = strtolower($customer->email);
         $model = app(self::EMAIL_LOG);
 
-        // MATCH AGAINST usa el indice FULLTEXT de recipients_index (ver
-        // EmailLogController::index()); el LIKE '%...%' puro forzaba un full
-        // table scan en cada carga del tab Actividad. Se mantiene el LIKE
-        // como fallback para el mismo caso (tokens cortos/parciales).
+        // MATCH AGAINST usa el indice FULLTEXT de recipients_index en modo
+        // BOOLEAN con el email entre comillas (frase exacta): el modo NATURAL
+        // LANGUAGE por defecto puntua coincidencias parciales de cualquier
+        // destinatario y el LIKE '%...%' que llevaba de fallback anulaba el
+        // indice por completo, degradando a listar los 20 email logs mas
+        // recientes de TODOS los clientes cuando no habia match exacto.
         return $model->newQuery()
             ->where(fn ($q) => $q
                 ->whereRaw('MATCH(recipients_index) AGAINST (?)', [$email])

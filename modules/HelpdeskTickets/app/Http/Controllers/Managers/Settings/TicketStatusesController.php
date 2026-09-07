@@ -3,8 +3,10 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketStatusRequest;
@@ -72,7 +74,7 @@ class TicketStatusesController extends Controller
         TicketStatus::create($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
-            ->with('success', 'Estado creado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.status.created'));
     }
 
     /**
@@ -80,7 +82,13 @@ class TicketStatusesController extends Controller
      */
     public function edit(TicketStatus $status)
     {
-        return view('theme.views.backups.helpdesk.ticket-statuses.edit', compact('status'));
+        return view('theme.views.backups.helpdesk.ticket-statuses.edit', [
+            'status' => $status,
+            // El panel lateral avisa de por que un estado no se puede borrar
+            // antes de que el usuario lo intente: destroy() protege tanto el
+            // estado por defecto como los que ya tienen tickets.
+            'ticketsCount' => $status->tickets()->count(),
+        ]);
     }
 
     /**
@@ -98,7 +106,7 @@ class TicketStatusesController extends Controller
         $status->update($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
-            ->with('success', 'Estado actualizado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.status.updated'));
     }
 
     /**
@@ -107,18 +115,54 @@ class TicketStatusesController extends Controller
     public function destroy(TicketStatus $status)
     {
         if ($status->is_default) {
-            return back()->with('error', 'No se puede eliminar el estado predeterminado.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.status.cannot_delete_default'));
         }
 
         // Check if status has tickets
         if ($status->tickets()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar un estado que tiene tickets asociados.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.status.cannot_delete_with_tickets'));
         }
 
         $status->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
-            ->with('success', 'Estado eliminado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.status.deleted'));
+    }
+
+    /**
+     * Propone un slug unico a partir del nombre, para el boton "generar" de los
+     * formularios. Sin esto el usuario solo descubre la colision al guardar, y
+     * es facil chocar: Str::slug() colapsa los acentos, asi que "Soporte
+     * Tecnico" y "Soporte Tecnico" (con tilde) producen el mismo slug.
+     */
+    public function ajaxSlug(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'ignoreId' => ['nullable', 'integer'],
+        ]);
+
+        $base = Str::slug($validated['name']);
+
+        if ($base === '') {
+            return response()->json(['slug' => '']);
+        }
+
+        $taken = TicketStatus::query()
+            ->when($validated['ignoreId'] ?? null, fn ($q, $id) => $q->whereKeyNot($id))
+            ->where('slug', 'like', $base.'%')
+            ->pluck('slug')
+            ->map(fn ($slug) => strtolower($slug))
+            ->all();
+
+        $slug = $base;
+        $suffix = 2;
+
+        while (in_array($slug, $taken, true)) {
+            $slug = $base.'-'.$suffix++;
+        }
+
+        return response()->json(['slug' => $slug]);
     }
 
     /**
@@ -131,5 +175,45 @@ class TicketStatusesController extends Controller
         TicketStatus::reorder($validated['ids']);
 
         return response()->json(['success' => true, 'message' => 'Orden actualizado exitosamente.']);
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several statuses.
+     */
+    public function bulkAction(BulkActionTicketStatusRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $statuses = TicketStatus::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($statuses as $status) {
+                if ($status->is_default || $status->tickets()->count() > 0) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $status->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($statuses as $status) {
+                $status->update(['active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminado(s)', 'activate' => 'activado(s)', 'deactivate' => 'desactivado(s)'];
+        $message = "{$count} estado(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitido(s) por estar protegido(s).";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

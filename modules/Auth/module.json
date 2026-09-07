@@ -1,9 +1,9 @@
 {
     "name": "Auth",
     "alias": "auth",
-    "description": "",
+    "description": "Updated",
     "keywords": [],
-    "priority": 0,
+    "priority": 5,
     "providers": [
         "Modules\\Auth\\Providers\\AuthServiceProvider"
     ],

@@ -3,7 +3,7 @@
 namespace Modules\Media\Tests\Feature\Media;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Storage;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
@@ -12,7 +12,12 @@ use Tests\TestCase;
 
 class TrashTest extends TestCase
 {
-    use MediaTestHelpers, RefreshDatabase;
+    use DatabaseTransactions, MediaTestHelpers;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {

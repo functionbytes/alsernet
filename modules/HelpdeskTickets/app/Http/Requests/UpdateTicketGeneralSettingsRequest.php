@@ -60,6 +60,7 @@ class UpdateTicketGeneralSettingsRequest extends FormRequest
             'customer_ticket' => ['nullable', 'boolean'],
             'ticket_rating' => ['nullable', 'boolean'],
             'cc_email' => ['nullable', 'boolean'],
+            'notify_agents_new_ticket' => ['nullable', 'boolean'],
         ];
     }
 

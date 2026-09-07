@@ -28,7 +28,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre e inbox al que aplica este formulario</p>
                         <div class="row g-3 mb-4">
 
@@ -65,7 +65,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-4">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="form-label">Estado</label>
                                     <select name="is_active" class="form-select">
@@ -77,7 +77,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Campos del formulario</h6>
+                        <h6 class="fw-semibold mb-1">Campos del formulario</h6>
                         <p class="text-muted small mb-3">Define los campos que se mostraran al cliente antes del chat</p>
 
                         <div id="fieldsContainer">

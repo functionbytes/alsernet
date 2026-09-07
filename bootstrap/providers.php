@@ -25,6 +25,7 @@ $allProviders = [
     'Modules\Erp\Providers\ErpServiceProvider' => 'Erp',
     'Modules\GiftMessage\Providers\GiftMessageServiceProvider' => 'GiftMessage',
     'Modules\Health\Providers\HealthServiceProvider' => 'Health',
+    'Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider' => 'HelpdeskTickets',
     'Modules\Mailer\Providers\MailerServiceProvider' => 'Mailer',
     'Modules\MailsSettings\Providers\MailsSettingsServiceProvider' => 'MailsSettings',
     'Modules\Media\Providers\MediaServiceProvider' => 'Media',

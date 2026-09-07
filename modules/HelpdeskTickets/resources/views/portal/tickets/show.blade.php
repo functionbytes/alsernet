@@ -44,11 +44,16 @@
 
     @if ($attachments->isNotEmpty())
         <div class="card mb-3">
-            <div class="card-header"><h6 class="mb-0"><i class="fas fa-paperclip me-2"></i>Attachments</h6></div>
+            <div class="card-header"><h6 class="mb-0"><i class="fas fa-paperclip me-2"></i>Archivos adjuntos</h6></div>
             <ul class="list-group list-group-flush">
                 @foreach ($attachments as $attachment)
+                    {{-- Antes esto era texto plano: el cliente veía el nombre de
+                         su fichero pero no podía volver a descargarlo, porque no
+                         existía ninguna ruta que sirviera TicketAttachment. --}}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-file me-2"></i>{{ $attachment->original_filename ?? $attachment->filename }}</span>
+                        <a href="{{ route('portal.tickets.attachments.download', [$ticket->ticket_number, $attachment->id]) }}">
+                            <i class="fas fa-file me-2"></i>{{ $attachment->original_filename ?? $attachment->filename }}
+                        </a>
                         <small class="text-muted">{{ number_format($attachment->size / 1024, 1) }} KB</small>
                     </li>
                 @endforeach
@@ -74,7 +79,11 @@
                 </strong>
                 <span class="text-muted">{{ $message->created_at->format('d M Y H:i') }}</span>
             </div>
-            <p class="mb-0 htk-pre-line">{{ $message->body }}</p>
+            {{-- Igual que managers/agents/tickets/show.blade.php: si hay html_body
+                 (respuesta del agente con formato, o email del cliente con
+                 negrita/enlaces) se usa purificado; si no, texto plano. Antes
+                 siempre era texto plano aquí aunque el mensaje SÍ tuviera html_body. --}}
+            <p class="mb-0 htk-pre-line">{!! $message->html_body ? $message->safeHtmlBody() : e($message->body) !!}</p>
         </div>
     @empty
         <p class="text-muted">No messages yet.</p>

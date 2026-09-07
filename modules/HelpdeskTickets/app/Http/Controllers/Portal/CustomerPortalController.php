@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Http\Controllers\Portal;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -10,8 +11,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Http\Requests\Portal\PortalLoginRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\RateTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\ReplyTicketRequest;
@@ -19,19 +23,32 @@ use Modules\HelpdeskTickets\Http\Requests\Portal\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\UpdateAccountRequest;
 use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketMessage;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\TicketDeflectionService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Support\TicketMailRenderer;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerPortalController extends Controller
 {
+    /**
+     * El interruptor del módulo se comprobaba solo en index(), así que con
+     * HelpdeskTickets desactivado seguían operativos /portal/login,
+     * /portal/tickets y el alta de tickets — solo dejaba de funcionar la
+     * redirección de la raíz. En el constructor cubre las catorce acciones,
+     * mismo patrón que Dev\EmailTestController.
+     */
+    public function __construct()
+    {
+        abort_if(! helpdesk_tickets_enabled(), 404);
+    }
+
     /** GET /portal — redirect to login or tickets */
     public function index(): RedirectResponse
     {
-        abort_if(! helpdesk_tickets_enabled(), 404);
-
         if ($this->getAuthenticatedCustomer()) {
             return redirect()->route('portal.tickets');
         }
@@ -55,7 +72,7 @@ class CustomerPortalController extends Controller
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
 
-            return back()->withErrors(['email' => "Too many attempts. Please try again in {$seconds} seconds."]);
+            return back()->withErrors(['email' => __('helpdesktickets::helpdesktickets.portal.login_throttled', ['seconds' => $seconds])]);
         }
 
         RateLimiter::hit($throttleKey, 300);
@@ -75,7 +92,7 @@ class CustomerPortalController extends Controller
             Mail::to($customer->email)->queue(new PortalMagicLinkMail($customer, $subject, $content));
         }
 
-        return back()->with('status', 'If this email is registered, a login link has been sent.');
+        return back()->with('status', __('helpdesktickets::helpdesktickets.portal.login_link_sent'));
     }
 
     /** GET /portal/auth/{token} — authenticate via magic link */
@@ -84,7 +101,7 @@ class CustomerPortalController extends Controller
         $throttleKey = 'portal-auth:'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
-            return redirect()->route('portal.login')->withErrors(['email' => 'Too many authentication attempts.']);
+            return redirect()->route('portal.login')->withErrors(['email' => __('helpdesktickets::helpdesktickets.portal.auth_throttled')]);
         }
 
         RateLimiter::hit($throttleKey, 600);
@@ -100,7 +117,7 @@ class CustomerPortalController extends Controller
                 'token_prefix' => substr($token, 0, 8).'...',
             ]);
 
-            return redirect()->route('portal.login')->with('error', 'The login link has expired or is invalid.');
+            return redirect()->route('portal.login')->with('error', __('helpdesktickets::helpdesktickets.portal.link_expired'));
         }
 
         RateLimiter::clear($throttleKey);
@@ -109,6 +126,13 @@ class CustomerPortalController extends Controller
             'portal_token' => null,
             'portal_token_expires_at' => null,
         ]);
+
+        // regenerate() antes de elevar la sesión a autenticada: sin cambiar el
+        // identificador de sesión, quien hubiera fijado previamente el de la
+        // víctima se queda dentro con ella (fijación de sesión). Es lo que hace
+        // el guard de Laravel en un login normal; aquí la sesión se eleva a
+        // mano y faltaba.
+        request()->session()->regenerate();
 
         session(['portal_customer_id' => $customer->id]);
 
@@ -119,6 +143,11 @@ class CustomerPortalController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         $request->session()->forget('portal_customer_id');
+
+        // invalidate() + regenerateToken(): forget() solo quita la clave y deja
+        // viva la sesión y su token CSRF.
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('portal.login');
     }
@@ -176,6 +205,40 @@ class CustomerPortalController extends Controller
         return view('helpdesktickets::portal.tickets.show', compact('customer', 'ticket', 'messages', 'attachments'));
     }
 
+    /**
+     * GET /portal/tickets/{ticketNumber}/attachments/{attachment}
+     *
+     * Descarga de un adjunto del propio ticket. El portal listaba los ficheros
+     * por nombre pero no había forma de recuperarlos: el disco es privado y no
+     * existía ninguna ruta que sirviera TicketAttachment.
+     */
+    public function downloadAttachment(string $ticketNumber, TicketAttachment $attachment): StreamedResponse|RedirectResponse
+    {
+        $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
+
+        if ($customerOrRedirect instanceof RedirectResponse) {
+            return $customerOrRedirect;
+        }
+
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->where('customer_id', $customerOrRedirect->id)
+            ->firstOrFail();
+
+        // Doble comprobación: el ticket es del cliente en sesión (arriba) y el
+        // adjunto cuelga de ese ticket (aquí). Sin la segunda, cambiar el id
+        // del adjunto en la URL serviría ficheros de otros clientes.
+        abort_if($attachment->message?->ticket_id !== $ticket->id, 404);
+
+        $disk = config('helpdesk.attachments.disk', 'local');
+
+        abort_unless(Storage::disk($disk)->exists((string) $attachment->path), 404);
+
+        return Storage::disk($disk)->download(
+            $attachment->path,
+            $attachment->original_filename ?: $attachment->filename ?: basename((string) $attachment->path),
+        );
+    }
+
     /** POST /portal/tickets/{ticketNumber}/reply */
     public function replyToTicket(ReplyTicketRequest $request, string $ticketNumber): RedirectResponse
     {
@@ -193,6 +256,8 @@ class CustomerPortalController extends Controller
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
+        app(TicketService::class)->reopenIfCustomerCanReopen($ticket);
+
         $item = $ticket->items()->create([
             'type' => 'message',
             'author_id' => $customer->id,
@@ -204,10 +269,26 @@ class CustomerPortalController extends Controller
             $this->storeAttachments($request->file('attachments'), $ticket->id);
         }
 
-        $ticket->updated_at = now();
-        $ticket->saveQuietly();
+        // Sin esto, una respuesta del cliente por el portal era invisible para
+        // el equipo: no corría ningún listener de MessageAdded
+        // (UpdateTicketLastActivity, RunAiSentimentAnalysis, aviso al agente
+        // asignado) y el saveQuietly() de antes se saltaba hasta el
+        // TicketObserver. La vía de correo (FetchTicketEmailsJob) sí lo hacía
+        // desde siempre; esta era la única entrada de cliente que no.
+        MessageAdded::dispatch($item);
 
-        return back()->with('status', 'Your reply has been sent.');
+        // El reloj de SLA se pausa al pasar el ticket a un estado con
+        // stops_sla_timer ("en espera del cliente"). Si el cliente ya ha
+        // respondido, la pelota vuelve al agente y el reloj tiene que correr —
+        // antes se quedaba pausado indefinidamente porque nadie lo reanudaba
+        // por esta vía.
+        if ($ticket->isSlaPaused()) {
+            $ticket->resumeSla();
+        }
+
+        $ticket->update(['last_message_at' => now()]);
+
+        return back()->with('status', __('helpdesktickets::helpdesktickets.portal.reply_sent'));
     }
 
     /** GET /portal/tickets/create */
@@ -228,6 +309,35 @@ class CustomerPortalController extends Controller
     }
 
     /** POST /portal/tickets */
+    /**
+     * Artículos de ayuda que podrían resolver la duda antes de abrir el ticket.
+     *
+     * Sugiere y se aparta: nunca impide crear el ticket, y una lista vacía —el
+     * caso normal cuando ninguno encaja— simplemente no muestra nada. Ver
+     * TicketDeflectionService.
+     */
+    public function suggestArticles(Request $request, TicketDeflectionService $deflection): JsonResponse
+    {
+        $customer = $this->getAuthenticatedCustomer();
+
+        if (! $customer) {
+            return response()->json(['success' => false, 'articles' => []], 401);
+        }
+
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'articles' => $deflection->suggest(
+                (string) ($validated['subject'] ?? ''),
+                (string) ($validated['description'] ?? ''),
+            ),
+        ]);
+    }
+
     public function storeTicket(StoreTicketRequest $request): RedirectResponse
     {
         $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
@@ -265,7 +375,7 @@ class CustomerPortalController extends Controller
         });
 
         return redirect()->route('portal.tickets.show', $ticket->ticket_number)
-            ->with('status', 'Your ticket has been created.');
+            ->with('status', __('helpdesktickets::helpdesktickets.portal.ticket_created'));
     }
 
     /** GET /portal/account — show account settings form */
@@ -291,7 +401,7 @@ class CustomerPortalController extends Controller
 
         $customer->update($request->validated());
 
-        return back()->with('success', 'Account updated successfully.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.portal.account_updated'));
     }
 
     /** POST /portal/tickets/{ticketNumber}/rate */
@@ -319,28 +429,34 @@ class CustomerPortalController extends Controller
             'rated_at' => now(),
         ]);
 
-        return back()->with('success', 'Thank you for your feedback!');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.portal.feedback_thanks'));
     }
 
     /** GET /portal/tickets/{ticketNumber}/rate/{rating} — rate from email link (no session required) */
     public function rateTicketFromEmail(Request $request, string $ticketNumber, int $rating): RedirectResponse
     {
-        if ($rating < 1 || $rating > 5) {
-            return redirect()->route('portal.login')->withErrors(['error' => 'Puntuacion invalida.']);
-        }
-
         $ticket = Ticket::where('ticket_number', $ticketNumber)
             ->whereNotNull('closed_at')
-            ->whereNull('rated_at')
             ->firstOrFail();
 
-        $ticket->update([
-            'rating' => $rating,
-            'rated_at' => now(),
-        ]);
+        // Un doble clic en el botón del correo (o el mismo enlace abierto dos
+        // veces) caía antes en whereNull('rated_at')->firstOrFail() -> 404
+        // crudo de Laravel. Ahora simplemente no reescribe una valoración ya
+        // guardada y sigue igual hacia la página de agradecimiento.
+        if (! $ticket->rated_at && $rating >= 1 && $rating <= 5) {
+            $ticket->update([
+                'rating' => $rating,
+                'rated_at' => now(),
+            ]);
+        }
 
-        return redirect()->route('portal.login')
-            ->with('status', 'Gracias por tu valoracion! Tu opinion nos ayuda a mejorar.');
+        // Antes redirigía a portal.login con un mensaje flash "gracias" --
+        // confuso: el cliente hacía clic en una puntuación y aterrizaba en un
+        // formulario de inicio de sesión (reportado por el usuario, 3-sep-2026).
+        // FeedbackController::show() ya tiene la pantalla de agradecimiento
+        // correcta (sin login) para cuando rated_at está seteado, así que se
+        // reusa en vez de duplicarla.
+        return redirect()->to(FeedbackController::signedShowUrl($ticket));
     }
 
     /**
@@ -382,7 +498,7 @@ class CustomerPortalController extends Controller
             session()->forget('portal_customer_id');
 
             return redirect()->route('portal.login')
-                ->withErrors(['email' => 'Your account has been suspended.']);
+                ->withErrors(['email' => __('helpdesktickets::helpdesktickets.portal.account_suspended')]);
         }
 
         return $customer;

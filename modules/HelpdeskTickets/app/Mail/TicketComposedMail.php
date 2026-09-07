@@ -11,8 +11,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -23,7 +23,7 @@ use Modules\HelpdeskTickets\Models\Ticket;
  *
  * getEmailLogEntityType() devuelve el FQCN (Ticket::class), no el string
  * literal 'ticket' de TracksTicketEmailLog — ese trait tiene un mismatch
- * conocido con la config de HelpdeskEmailLog (entity_labels indexa por FQCN)
+ * conocido con la config de HelpdeskEmailActivity (entity_labels indexa por FQCN)
  * que rompe el enlace de vuelta al ticket; se implementa la interfaz
  * directamente aquí para no arrastrar el mismo bug, igual que TicketReplyMail.
  */
@@ -64,6 +64,11 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
         // "Trazabilidad" cruza EmailLog por este valor exacto, así que tienen
         // que coincidir sí o sí.
         public readonly ?string $existingMessageId = null,
+        // Buzón del canal (p. ej. info@functionbytes.com) en vez del mailer
+        // global, e In-Reply-To hacia el último correo entrante del ticket —
+        // mismo criterio que TicketReplyMail, ver TicketChannelMailerService.
+        public readonly ?string $fromAddress = null,
+        public readonly ?string $inReplyTo = null,
     ) {
         $this->onQueue('emails');
     }
@@ -92,6 +97,7 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
     {
         return new Envelope(
             subject: $this->emailSubject,
+            from: $this->fromAddress ? new Address($this->fromAddress) : null,
             cc: array_map(fn (string $email) => new Address($email), $this->ccAddresses),
             bcc: array_map(fn (string $email) => new Address($email), $this->bccAddresses),
         );
@@ -106,6 +112,12 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
     {
         $headers = $this->emailLogHeaders();
         $headers->messageId = $this->existingMessageId ? trim($this->existingMessageId, '<>') : null;
+
+        if ($this->inReplyTo) {
+            $id = trim($this->inReplyTo, '<>');
+            $headers->references([$id]);
+            $headers->text(['In-Reply-To' => "<{$id}>"]);
+        }
 
         return $headers;
     }

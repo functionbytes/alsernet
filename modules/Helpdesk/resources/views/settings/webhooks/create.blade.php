@@ -37,19 +37,31 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los webhooks</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los webhooks</h6>
                     <p class="card-text text-muted small">
                         Los webhooks permiten que sistemas externos reciban notificaciones automaticas cuando ocurren eventos en Helpdesk, similar a como funciona Zapier o Zendesk.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Firma HMAC</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Firma HMAC</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Si configuras un secreto, cada peticion incluira la cabecera <code>X-Helpdesk-Signature</code> con un hash HMAC-SHA256 para validar la autenticidad.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Cabeceras personalizadas</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Cabeceras personalizadas</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Puedes enviar cabeceras adicionales en formato JSON. Ejemplo:
                     </p>

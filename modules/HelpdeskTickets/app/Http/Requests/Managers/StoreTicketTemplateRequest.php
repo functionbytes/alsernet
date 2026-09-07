@@ -3,12 +3,13 @@
 namespace Modules\HelpdeskTickets\Http\Requests\Managers;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\HelpdeskTickets\Models\TicketTemplate;
 
 class StoreTicketTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.tickets.create') ?? false;
+        return $this->user()?->can('create', TicketTemplate::class) ?? false;
     }
 
     public function rules(): array
@@ -19,8 +20,12 @@ class StoreTicketTemplateRequest extends FormRequest
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'category_id' => ['nullable', 'exists:helpdesk.helpdesk_ticket_categories,id'],
-            'priority_id' => ['nullable', 'exists:helpdesk.helpdesk_priorities,id'],
+            'priority' => ['nullable', 'in:low,normal,high,urgent'],
             'is_active' => ['nullable', 'boolean'],
+            // Solo tiene efecto si el usuario tiene helpdesk.tickets.manage —
+            // el controller ignora este campo para cualquier otro usuario y
+            // la plantilla siempre se guarda como personal (created_by = él).
+            'is_general' => ['nullable', 'boolean'],
         ];
     }
 
@@ -34,7 +39,7 @@ class StoreTicketTemplateRequest extends FormRequest
             'subject.max' => 'El asunto no puede superar los 255 caracteres.',
             'body.required' => 'El contenido es obligatorio.',
             'category_id.exists' => 'La categoria seleccionada no existe.',
-            'priority_id.exists' => 'La prioridad seleccionada no existe.',
+            'priority.in' => 'La prioridad seleccionada no es valida.',
         ];
     }
 
@@ -46,8 +51,9 @@ class StoreTicketTemplateRequest extends FormRequest
             'subject' => 'asunto',
             'body' => 'contenido',
             'category_id' => 'categoria',
-            'priority_id' => 'prioridad',
+            'priority' => 'prioridad',
             'is_active' => 'activo',
+            'is_general' => 'alcance',
         ];
     }
 }

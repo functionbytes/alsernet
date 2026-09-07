@@ -3,25 +3,43 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Http\Requests\Managers\StoreRecurringTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\UpdateRecurringTicketRequest;
 use Modules\HelpdeskTickets\Models\Priority;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class RecurringTicketsController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('helpdesk.tickets.view');
 
-        $recurringTickets = RecurringTicket::query()
-            ->with(['category', 'priority', 'assignee'])
-            ->orderBy('name')
-            ->paginate(20);
+        $query = RecurringTicket::query()->with(['category', 'priority', 'assignee']);
+
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('subject', 'like', "%{$search}%"));
+        }
+
+        if ($request->filled('frequency')) {
+            $query->where('frequency', $request->string('frequency'));
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->integer('category_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->string('status') === 'active');
+        }
+
+        $recurringTickets = $query->orderBy('name')->paginate(20)->withQueryString();
 
         $stats = [
             'total' => RecurringTicket::query()->count(),
@@ -30,9 +48,56 @@ class RecurringTicketsController extends Controller
             'upcoming' => RecurringTicket::query()->where('is_active', true)->whereNotNull('next_run_at')->where('next_run_at', '>', now())->count(),
         ];
 
+        $categories = TicketCategory::active()->ordered()->get();
+
         return view('helpdesktickets::managers.recurring-tickets.index', [
             'recurringTickets' => $recurringTickets,
             'stats' => $stats,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $recurringTickets = RecurringTicket::query()->whereIn('id', $validated['ids'])->get();
+
+        $count = 0;
+        foreach ($recurringTickets as $recurringTicket) {
+            if ($validated['action'] === 'delete') {
+                if ($request->user()->cannot('delete', $recurringTicket)) {
+                    continue;
+                }
+                $recurringTicket->delete();
+                $count++;
+
+                continue;
+            }
+
+            if ($request->user()->cannot('update', $recurringTicket)) {
+                continue;
+            }
+            $recurringTicket->is_active = $validated['action'] === 'activate';
+            $recurringTicket->save();
+            $count++;
+        }
+
+        $verb = match ($validated['action']) {
+            'activate' => 'activado(s)',
+            'deactivate' => 'desactivado(s)',
+            'delete' => 'eliminado(s)',
+        };
+
+        return response()->json([
+            'success' => true,
+            'message' => $count > 0
+                ? "{$count} ticket(s) recurrente(s) {$verb}."
+                : 'No se aplicó ningún cambio (sin permiso sobre los tickets recurrentes seleccionados).',
         ]);
     }
 
@@ -44,7 +109,7 @@ class RecurringTicketsController extends Controller
             'recurringTicket' => null,
             'categories' => TicketCategory::active()->ordered()->get(),
             'priorities' => Priority::where('is_active', true)->orderBy('level')->get(),
-            'agents' => User::select(['id', 'firstname', 'lastname'])->where('available', true)->where('verified', true)->orderBy('firstname')->get(),
+            'agents' => CatalogCacheService::agents(),
         ]);
     }
 
@@ -68,7 +133,7 @@ class RecurringTicketsController extends Controller
             'recurringTicket' => $recurringTicket,
             'categories' => TicketCategory::active()->ordered()->get(),
             'priorities' => Priority::where('is_active', true)->orderBy('level')->get(),
-            'agents' => User::select(['id', 'firstname', 'lastname'])->where('available', true)->where('verified', true)->orderBy('firstname')->get(),
+            'agents' => CatalogCacheService::agents(),
         ]);
     }
 

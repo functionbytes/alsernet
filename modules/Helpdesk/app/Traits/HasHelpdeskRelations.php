@@ -38,7 +38,8 @@ trait HasHelpdeskRelations
      */
     public function groups(): BelongsToMany
     {
-        return $this->belongsToMany(Group::class, 'helpdesk_group_user', 'user_id', 'helpdesk_group_id')
+        // 'group_id' y no 'helpdesk_group_id' — ver Group::users().
+        return $this->belongsToMany(Group::class, 'helpdesk_group_user', 'user_id', 'group_id')
             ->withPivot('conversation_priority')
             ->withTimestamps();
     }

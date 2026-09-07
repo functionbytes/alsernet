@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\Concerns\AutoReplySettingsController;
@@ -58,5 +59,10 @@ class OffHoursResponsesController extends AutoReplySettingsController
     public function destroy(OffHoursResponse $offHoursResponse): RedirectResponse
     {
         return $this->handleDestroy($offHoursResponse);
+    }
+
+    public function bulkAction(): JsonResponse
+    {
+        return $this->handleBulkAction();
     }
 }

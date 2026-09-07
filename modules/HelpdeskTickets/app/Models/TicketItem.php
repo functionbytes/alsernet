@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketItem extends Model
 {
+    use BelongsToHelpdeskUser;
+
     /** @use HasFactory<TicketItemFactory> */
     use HasFactory, SoftDeletes;
 
@@ -32,6 +35,15 @@ class TicketItem extends Model
         'metadata',
         'sentiment',
         'sentiment_score',
+        // Mismo par que helpdesk_conversation_items (HelpdeskTranslate): lo
+        // que escribió el cliente, traducido al idioma del agente
+        // (translated_body/source_locale), y lo que escribió el agente,
+        // traducido al idioma del cliente antes de enviarse
+        // (outgoing_translated_body/outgoing_target_locale).
+        'translated_body',
+        'source_locale',
+        'outgoing_translated_body',
+        'outgoing_target_locale',
     ];
 
     protected function casts(): array
@@ -70,16 +82,8 @@ class TicketItem extends Model
     public function user()
     {
         // Create instance with explicit mysql connection for cross-database relationship
-        $user = new User;
-        $user->setConnection('mysql');
 
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        );
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**
@@ -224,11 +228,16 @@ class TicketItem extends Model
     public function getSenderNameAttribute(): string
     {
         if ($this->isFromCustomer()) {
-            return $this->author?->name ?? 'Desconocido';
+            // El cliente (Modules\Helpdesk\Models\Customer) sí tiene 'name'.
+            return $this->author?->name ?: ($this->author?->email ?: 'Desconocido');
         }
 
         if ($this->isFromAgent()) {
-            return $this->user?->name ?? 'Agente';
+            // fullName(), no ->name: el modelo User de esta app guarda
+            // firstname/lastname y no tiene columna 'name', así que ->name era
+            // siempre null y TODOS los mensajes de agente del hilo salían
+            // como el literal "Agente" en vez del nombre de quien escribió.
+            return $this->user?->fullName() ?: ($this->user?->email ?: 'Agente');
         }
 
         return 'Sistema';
@@ -324,6 +333,35 @@ class TicketItem extends Model
     public function safeHtmlBody(): string
     {
         return TicketMail::purifyHtml($this->html_body);
+    }
+
+    /**
+     * Nombre legible del idioma detectado en source_locale (ej. 'en' ->
+     * 'inglés'). TranslateIncomingTicketMessage ya calcula y guarda
+     * translated_body/source_locale, pero ninguna vista del panel los
+     * mostraba -- el agente nunca veía la traducción, solo el mensaje
+     * original tal cual llegó (detectado 3-sep-2026 probando el flujo real).
+     * Sin ext-intl en este contenedor (Locale::getDisplayLanguage no
+     * disponible), de ahí el mapeo manual acotado a los idiomas reales que
+     * maneja HelpdeskTranslate/DeepL.
+     */
+    public function getSourceLanguageNameAttribute(): ?string
+    {
+        if (! $this->source_locale) {
+            return null;
+        }
+
+        $names = [
+            'es' => 'español', 'en' => 'inglés', 'fr' => 'francés',
+            'de' => 'alemán', 'it' => 'italiano', 'pt' => 'portugués',
+            'ca' => 'catalán', 'eu' => 'euskera', 'gl' => 'gallego',
+            'nl' => 'neerlandés', 'ru' => 'ruso', 'zh' => 'chino',
+            'ja' => 'japonés', 'ar' => 'árabe', 'pl' => 'polaco',
+        ];
+
+        $code = strtolower(substr($this->source_locale, 0, 2));
+
+        return $names[$code] ?? strtoupper($code);
     }
 
     /**

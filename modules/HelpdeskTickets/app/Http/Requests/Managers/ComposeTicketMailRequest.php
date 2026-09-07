@@ -18,6 +18,12 @@ class ComposeTicketMailRequest extends FormRequest
         return [
             'ticket_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
             'to' => ['required', 'email', 'max:255'],
+            // Remitente elegible. Se valida contra la lista cerrada de
+            // direcciones que el sistema tiene configuradas de verdad (ver
+            // TicketMailsController::availableSenders()): un campo libre
+            // dejaría a cualquier agente falsificar el From de un correo que
+            // sale con el SPF/DKIM del dominio corporativo.
+            'from' => ['nullable', 'email', 'max:255'],
             'cc' => ['nullable', 'array'],
             'cc.*' => ['email'],
             'bcc' => ['nullable', 'array'],
@@ -28,6 +34,7 @@ class ComposeTicketMailRequest extends FormRequest
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'cancel_if_customer_replies' => ['nullable', 'boolean'],
             'is_internal' => ['nullable', 'boolean'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip,rar'],

@@ -253,6 +253,12 @@
             },
             newFieldKey: @json(session('new_field_key')),
             sampleRow: @json($sampleRow ?? null),
+            // Sin esto, "Guardar posiciones" solo mandaba x/y: si
+            // redimensionabas un campo (arrastrando su esquina o desde la
+            // toolbar flotante) y pulsabas ese boton en vez de "Guardar
+            // cambios" (arriba del todo, facil de pasar por alto), el nuevo
+            // ancho/alto se perdia al recargar la pagina.
+            saveIncludesStyle: true,
         };
     </script>
 

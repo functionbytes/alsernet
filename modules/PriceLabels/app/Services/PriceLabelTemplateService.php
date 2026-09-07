@@ -251,7 +251,22 @@ class PriceLabelTemplateService
 
     public function fieldsWithDefaults(PriceLabelTemplate $template): array
     {
-        return array_replace_recursive($this->defaultFields($template->field_definitions), $template->fields ?? []);
+        $fields = array_replace_recursive($this->defaultFields($template->field_definitions), $template->fields ?? []);
+
+        // Plantillas anteriores a que la caja fuese por orientacion: heredan
+        // su propio tamano vertical (no el del default) para que el
+        // horizontal siga saliendo exactamente igual que hasta ahora.
+        $stored = $template->fields ?? [];
+        foreach ($fields as $key => &$style) {
+            if (! isset($stored[$key]['box_w_h']) && isset($stored[$key]['box_w'])) {
+                $style['box_w_h'] = $stored[$key]['box_w'];
+            }
+            if (! isset($stored[$key]['box_h_h']) && isset($stored[$key]['box_h'])) {
+                $style['box_h_h'] = $stored[$key]['box_h'];
+            }
+        }
+
+        return $fields;
     }
 
     public function positionsWithDefaults(PriceLabelTemplate $template, string $orientation): array
@@ -303,6 +318,8 @@ class PriceLabelTemplateService
 
         $defaults = [];
         foreach ($this->fieldKeys($fieldDefinitions) as $key) {
+            $box = $boxes[$key] ?? ['box_w' => 150, 'box_h' => 30];
+
             $defaults[$key] = array_merge([
                 'color' => '#000000',
                 'font_family' => 'helvetica',
@@ -314,7 +331,14 @@ class PriceLabelTemplateService
                 // Centrado como hasta ahora: era fijo en la plantilla del PDF y
                 // pasa a ser una opcion mas de cada campo.
                 'align' => 'center',
-            ], $boxes[$key] ?? ['box_w' => 150, 'box_h' => 30]);
+                // La caja es por orientacion, igual que la fuente y el tamano:
+                // las hojas vertical y horizontal tienen proporciones distintas
+                // y redimensionar en una no debe alterar la otra. Arrancan con
+                // el mismo valor que la vertical para no mover plantillas ya
+                // guardadas (fieldsWithDefaults rellena las que no lo tengan).
+                'box_w_h' => $box['box_w'],
+                'box_h_h' => $box['box_h'],
+            ], $box);
         }
 
         return $defaults;

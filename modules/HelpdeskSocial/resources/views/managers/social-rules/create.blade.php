@@ -21,7 +21,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">Información básica</h6>
+                        <h6 class="fw-bold mb-3">Información básica</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
                                 <label class="form-label">Nombre <span class="text-danger">*</span></label>
@@ -83,7 +83,7 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">Condiciones y acciones</h6>
+                        <h6 class="fw-bold mb-3">Condiciones y acciones</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
                                 <label class="form-label">Condiciones (JSON) <span class="text-danger">*</span></label>
@@ -113,7 +113,7 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">Vigencia y comportamiento</h6>
+                        <h6 class="fw-bold mb-3">Vigencia y comportamiento</h6>
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Válida desde</label>

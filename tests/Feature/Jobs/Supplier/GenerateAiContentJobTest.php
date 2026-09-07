@@ -11,14 +11,19 @@ use App\Models\Supplier\SupplierPrompt;
 use App\Models\Supplier\SupplierSource;
 use App\Services\Supplier\ContentGenerationService;
 use Exception;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class GenerateAiContentJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected Supplier $supplier;
 

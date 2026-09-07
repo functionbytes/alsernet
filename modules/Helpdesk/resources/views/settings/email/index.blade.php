@@ -45,7 +45,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label fw-semibold" for="email_reply_to">Responder a (reply-to)</label>
                             <input type="email" class="form-control @error('email_reply_to') is-invalid @enderror"
                                 id="email_reply_to" name="email_reply_to"
@@ -137,7 +137,7 @@
                                     <small class="text-muted">Dejar vacío para conservar la contraseña guardada.</small>
                                 @endif
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12">
                                 <label class="form-label fw-semibold" for="smtp_encryption">Cifrado</label>
                                 <select class="form-select @error('smtp_encryption') is-invalid @enderror"
                                     id="smtp_encryption" name="smtp_encryption">

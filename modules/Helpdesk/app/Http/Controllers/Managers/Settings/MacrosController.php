@@ -3,9 +3,11 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\BulkActionMacroRequest;
 use Modules\Helpdesk\Http\Requests\StoreMacroRequest;
 use Modules\Helpdesk\Http\Requests\UpdateMacroRequest;
 use Modules\Helpdesk\Models\Macro;
@@ -17,7 +19,7 @@ class MacrosController extends Controller
         $this->middleware('can:helpdesk.macros.view')->only(['index']);
         $this->middleware('can:helpdesk.macros.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.macros.update')->only(['edit', 'update']);
-        $this->middleware('can:helpdesk.macros.delete')->only(['destroy']);
+        $this->middleware('can:helpdesk.macros.delete')->only(['destroy', 'bulkAction']);
     }
 
     public function index(Request $request): View
@@ -31,6 +33,10 @@ class MacrosController extends Controller
 
         if ($request->filled('visibility')) {
             $query->where('is_shared', $request->visibility === 'shared' ? 1 : 0);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active' ? 1 : 0);
         }
 
         $macros = $query->latest()->paginate(20);
@@ -107,5 +113,41 @@ class MacrosController extends Controller
         return redirect()
             ->route('settings.helpdesk.macros.index')
             ->with('success', 'Macro eliminado exitosamente.');
+    }
+
+    public function bulkAction(BulkActionMacroRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+
+        $macros = Macro::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($macros as $macro) {
+                $macro->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+
+            foreach ($macros as $macro) {
+                $macro->is_active = $value;
+                if ($macro->save()) {
+                    $count++;
+                }
+            }
+        }
+
+        $labels = [
+            'delete' => 'eliminado(s)',
+            'activate' => 'activado(s)',
+            'deactivate' => 'desactivado(s)',
+        ];
+
+        return response()->json([
+            'message' => "{$count} macro(s) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 }

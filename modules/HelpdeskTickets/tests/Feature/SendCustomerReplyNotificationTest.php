@@ -11,6 +11,7 @@ use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Listeners\SendCustomerReplyNotification;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Modules\Mailer\Models\MailerLang;
@@ -29,7 +30,7 @@ class SendCustomerReplyNotificationTest extends TestCase
     {
         $this->assertInstanceOf(
             ShouldQueue::class,
-            new SendCustomerReplyNotification
+            app(SendCustomerReplyNotification::class)
         );
     }
 
@@ -52,7 +53,7 @@ class SendCustomerReplyNotificationTest extends TestCase
         $item->is_internal = true;
         $item->user_id = 1;
 
-        $listener = new SendCustomerReplyNotification;
+        $listener = app(SendCustomerReplyNotification::class);
         $listener->handle(new MessageAdded($item));
 
         Mail::assertNothingSent();
@@ -66,7 +67,7 @@ class SendCustomerReplyNotificationTest extends TestCase
         $item->is_internal = false;
         $item->user_id = null;
 
-        $listener = new SendCustomerReplyNotification;
+        $listener = app(SendCustomerReplyNotification::class);
         $listener->handle(new MessageAdded($item));
 
         Mail::assertNothingSent();
@@ -136,7 +137,7 @@ class SendCustomerReplyNotificationTest extends TestCase
             'is_internal' => false,
         ]);
 
-        (new SendCustomerReplyNotification)->handle(new MessageAdded($item));
+        (app(SendCustomerReplyNotification::class))->handle(new MessageAdded($item));
 
         $this->assertDatabaseHas('helpdesk_ticket_mails', [
             'ticket_id' => $ticket->id,
@@ -145,6 +146,77 @@ class SendCustomerReplyNotificationTest extends TestCase
             'direction' => 'outbound',
             'to' => $customer->email,
             'status' => 'sent',
+        ], 'helpdesk');
+    }
+
+    /**
+     * Bug real (4-sep-2026, TCK-2026-00093, correo real): la confirmación usa
+     * un asunto fijo de plantilla, distinto de ticket.subject — antes esta
+     * respuesta salía como "Re: {ticket.subject} — #..." y Gmail abría un
+     * hilo nuevo aunque In-Reply-To/References fueran correctos. Ver
+     * TicketChannelMailerService::threadSubject().
+     */
+    public function test_el_asunto_de_la_respuesta_se_ancla_al_de_la_confirmacion_no_al_de_ticket_subject(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        config(['mail.default' => 'array']);
+
+        $langId = MailerLang::resolveDefaultId();
+
+        $template = MailerTemplate::updateOrCreate(
+            ['key' => 'helpdesk.ticket_reply'],
+            ['name' => 'Ticket reply', 'module' => 'helpdesktickets', 'is_enabled' => true]
+        );
+        MailerTemplateLang::updateOrCreate(
+            ['mailer_template_id' => $template->id, 'lang_id' => $langId],
+            ['subject' => 'Re: {{SUBJECT}} — #{{TICKET_NUMBER}}', 'content' => 'Hola {{CUSTOMER_NAME}}, {{AGENT_NAME}} te responde.']
+        );
+
+        $status = TicketStatus::firstOrCreate(
+            ['slug' => 'open'],
+            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
+        );
+        $customer = Customer::factory()->create();
+        $agent = User::factory()->create();
+        $ticket = Ticket::create([
+            // Contacto general = el asunto real que se veía en la ficha del
+            // ticket cuando se detectó el bug, muy distinto del literal fijo
+            // que usa la confirmación.
+            'subject' => 'Contacto general',
+            'description' => 'x',
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+            'priority' => 'normal',
+            'source' => 'web',
+        ]);
+
+        TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'outbound',
+            'message_id' => '<confirmacion@example.com>',
+            'from' => 'info@example.com',
+            'to' => $customer->email,
+            'subject' => 'Hemos recibido tu solicitud — #'.$ticket->ticket_number,
+            'status' => 'sent',
+        ]);
+
+        $item = TicketItem::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $agent->id,
+            'type' => 'message',
+            'body' => 'Aquí tienes la respuesta.',
+            'is_internal' => false,
+        ]);
+
+        (app(SendCustomerReplyNotification::class))->handle(new MessageAdded($item));
+
+        $this->assertDatabaseHas('helpdesk_ticket_mails', [
+            'ticket_id' => $ticket->id,
+            'ticket_item_id' => $item->id,
+            'subject' => 'Re: Hemos recibido tu solicitud — #'.$ticket->ticket_number,
         ], 'helpdesk');
     }
 

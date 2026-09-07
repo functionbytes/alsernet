@@ -4,10 +4,11 @@ namespace Modules\Forms\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\TicketService;
@@ -35,6 +36,15 @@ class FormSubmissionReceiverController extends Controller
     private const DEDUP_TTL_SECONDS = 600;
 
     private const PROCESSING_TTL_SECONDS = 60;
+
+    /**
+     * Topes de los adjuntos que llegan en base64 dentro del payload. Los mismos
+     * que aplica alsernetforms al recogerlos, repetidos aquí porque un receptor
+     * no puede fiarse de que el emisor haya validado nada.
+     */
+    private const MAX_ATTACHMENT_SIZE = 5242880;
+
+    private const MAX_ATTACHMENTS = 10;
 
     public function __construct(
         private readonly TicketService $ticketService,
@@ -79,9 +89,21 @@ class FormSubmissionReceiverController extends Controller
         $formKey = (string) $request->input('type', '');
         $categorySlug = (string) $request->input('category', '');
         $data = (array) $request->input('data', []);
+        // Etiqueta legible por campo (ej. 'firstname' => 'Nombre'), tal cual
+        // el <label> real del .tpl del lado PrestaShop -- ver
+        // AlsernetFormFieldLabels. Ausente en payloads antiguos (antes de
+        // este campo) o de formularios sin mapeo todavía: buildDescription()
+        // cae al humanize genérico para esos.
+        $fieldLabels = (array) $request->input('field_labels', []);
 
         try {
-            $ticket = $this->createTicketFromSubmission($formKey, $categorySlug, $data);
+            $ticket = $this->createTicketFromSubmission(
+                $formKey,
+                $categorySlug,
+                $data,
+                $fieldLabels,
+                (array) $request->input('attachments', [])
+            );
         } catch (Throwable $e) {
             Log::error('Forms: error processing form submission', [
                 'form_key' => $formKey,
@@ -110,16 +132,19 @@ class FormSubmissionReceiverController extends Controller
         ]);
     }
 
-    private function createTicketFromSubmission(string $formKey, string $categorySlug, array $data): Ticket
+    /**
+     * @param  array<int, array<string, mixed>>  $attachments  Ficheros en base64 (ver FormAction::encodeAttachments).
+     */
+    private function createTicketFromSubmission(string $formKey, string $categorySlug, array $data, array $fieldLabels = [], array $attachments = []): Ticket
     {
-        // Form (tabla helpdesk_forms, gestionable desde panel/forms/manage) es
+        // AlsernetForm (tabla helpdesk_forms, gestionable desde el panel de tickets) es
         // la fuente de verdad de qué categoría corresponde a cada form_key --
         // reemplaza el mapeo hardcodeado que antes vivía en PHP. El 'category'
         // que manda el payload es solo un cross-check informativo: si diverge
-        // del category_id real del Form, se loguea un warning pero no bloquea
-        // (Form es quien manda; alsernetforms puede desincronizarse temporalmente
+        // del category_id real del AlsernetForm, se loguea un warning pero no bloquea
+        // (AlsernetForm es quien manda; alsernetforms puede desincronizarse temporalmente
         // si alguien reconfigura el formulario aquí sin tocar el otro lado).
-        $form = Form::where('form_key', $formKey)
+        $form = AlsernetForm::where('form_key', $formKey)
             ->where('active', true)
             ->with('category')
             ->first();
@@ -131,11 +156,11 @@ class FormSubmissionReceiverController extends Controller
         $category = $form->category;
 
         if (! $category || ! $category->active) {
-            throw new RuntimeException("Form '{$formKey}' has no active ticket category configured");
+            throw new RuntimeException("AlsernetForm '{$formKey}' has no active ticket category configured");
         }
 
         if ($categorySlug !== '' && $categorySlug !== $category->slug) {
-            Log::warning('Forms: category slug mismatch between payload and Form config', [
+            Log::warning('Forms: category slug mismatch between payload and AlsernetForm config', [
                 'form_key' => $formKey,
                 'payload_category' => $categorySlug,
                 'configured_category' => $category->slug,
@@ -154,14 +179,105 @@ class FormSubmissionReceiverController extends Controller
             ['name' => $name !== '' ? $name : $email]
         );
 
-        return $this->ticketService->createTicket([
+        $ticket = $this->ticketService->createTicket([
             'subject' => $category->name,
-            'description' => $this->buildDescription($data),
+            'description' => $this->buildDescription($data, $fieldLabels),
             'customer_id' => $customer->id,
             'category_id' => $category->id,
             'source' => 'formulario',
-            'custom_fields' => array_merge($data, ['form_key' => $formKey]),
+            // '_field_labels' es una clave reservada, no un campo del
+            // formulario: managers/tickets/show.blade.php la usa para
+            // traducir el display de las demás y la excluye de la lista
+            // al iterar. Ver AlsernetFormFieldLabels (lado PrestaShop).
+            'custom_fields' => array_merge($data, ['form_key' => $formKey, '_field_labels' => $fieldLabels]),
         ]);
+
+        $this->attachSubmissionFiles($ticket, $attachments, $formKey);
+
+        return $ticket;
+    }
+
+    /**
+     * Guarda como adjuntos del ticket los ficheros que el cliente subió en el
+     * formulario (CV en 'Trabaja con nosotros', fotos en 'Segunda mano'...).
+     *
+     * Hasta ahora se perdían: alsernetforms solo se los pasaba al correo de
+     * negocio, y todos los formularios entregan por este endpoint.
+     *
+     * Un fallo aquí NO tumba la petición: el ticket ya está creado y devolver
+     * un 500 haría que el reintento del outbox abriera un ticket duplicado. Se
+     * registra y se sigue; la descripción del ticket ya nombra los ficheros.
+     *
+     * @param  array<int, array<string, mixed>>  $attachments
+     */
+    private function attachSubmissionFiles(Ticket $ticket, array $attachments, string $formKey): void
+    {
+        if ($attachments === []) {
+            return;
+        }
+
+        $allowedMimes = (array) config('helpdesk.attachments.allowed_mime_types', []);
+        $files = [];
+        $temporales = [];
+
+        try {
+            foreach (array_slice($attachments, 0, self::MAX_ATTACHMENTS) as $attachment) {
+                $encoded = (string) ($attachment['content_b64'] ?? '');
+                $name = trim((string) ($attachment['name'] ?? ''));
+
+                if ($encoded === '' || $name === '') {
+                    continue;
+                }
+
+                $content = base64_decode($encoded, true);
+
+                if ($content === false || $content === '' || strlen($content) > self::MAX_ATTACHMENT_SIZE) {
+                    Log::warning('Forms: adjunto descartado por tamaño o base64 inválido', [
+                        'form_key' => $formKey,
+                        'ticket' => $ticket->ticket_number,
+                        'name' => $name,
+                    ]);
+
+                    continue;
+                }
+
+                $tmp = tempnam(sys_get_temp_dir(), 'forms_att_');
+                file_put_contents($tmp, $content);
+                $temporales[] = $tmp;
+
+                // El tipo real del contenido, no el que venga declarado.
+                $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($tmp);
+
+                if ($allowedMimes !== [] && ! in_array($mime, $allowedMimes, true)) {
+                    Log::warning('Forms: adjunto descartado por tipo no permitido', [
+                        'form_key' => $formKey,
+                        'ticket' => $ticket->ticket_number,
+                        'name' => $name,
+                        'mime' => $mime,
+                    ]);
+
+                    continue;
+                }
+
+                // $test = true: el fichero no viene de un upload de PHP, así que
+                // la comprobación is_uploaded_file() rechazaría el temporal.
+                $files[] = new UploadedFile($tmp, basename($name), $mime, null, true);
+            }
+
+            if ($files !== []) {
+                $this->ticketService->storeAttachments($files, $ticket->id, ['message' => '']);
+            }
+        } catch (Throwable $e) {
+            Log::error('Forms: no se pudieron guardar los adjuntos del formulario', [
+                'form_key' => $formKey,
+                'ticket' => $ticket->ticket_number,
+                'error' => $e->getMessage(),
+            ]);
+        } finally {
+            foreach ($temporales as $tmp) {
+                @unlink($tmp);
+            }
+        }
     }
 
     /**
@@ -169,8 +285,14 @@ class FormSubmissionReceiverController extends Controller
      * formulario -- los campos individuales quedan también en custom_fields
      * (tipados por categoría si el módulo Alvarez llega a declarar
      * TicketCategoryField para alguna, ver plan de Fase 3).
+     *
+     * @param  array<string, string>  $fieldLabels  Etiqueta real del <label> del
+     *                                              .tpl por campo (ver
+     *                                              AlsernetFormFieldLabels, lado
+     *                                              PrestaShop); un campo ausente
+     *                                              aquí cae al humanize genérico.
      */
-    private function buildDescription(array $data): string
+    private function buildDescription(array $data, array $fieldLabels = []): string
     {
         $lines = [];
 
@@ -179,7 +301,8 @@ class FormSubmissionReceiverController extends Controller
                 $value = json_encode($value, JSON_UNESCAPED_UNICODE);
             }
 
-            $lines[] = ucfirst(str_replace('_', ' ', (string) $key)).': '.$value;
+            $label = $fieldLabels[$key] ?? ucfirst(str_replace('_', ' ', (string) $key));
+            $lines[] = $label.': '.$value;
         }
 
         return $lines !== [] ? implode("\n", $lines) : 'Sin detalle adicional.';

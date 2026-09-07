@@ -30,7 +30,13 @@ class AutomationEngine
         }
     }
 
-    private function matchesConditions(array $conditions, Ticket $ticket): bool
+    /**
+     * Pública para que "Probar regla" (modal de escalado) pueda comprobar en
+     * seco unas condiciones contra tickets reales sin ejecutar acciones. Sin
+     * esto habría que duplicar la tabla de operadores en el controlador, que
+     * es justo la forma de que las dos se separen con el tiempo.
+     */
+    public function matchesConditions(array $conditions, Ticket $ticket): bool
     {
         foreach ($conditions as $condition) {
             $field = $condition['field'] ?? null;
@@ -41,8 +47,14 @@ class AutomationEngine
             $matches = match ($op) {
                 'equals' => $ticketValue == $value,
                 'not_equals' => $ticketValue != $value,
-                'contains' => is_string($ticketValue) && str_contains($ticketValue, $value),
-                'not_contains' => is_string($ticketValue) && ! str_contains($ticketValue, $value),
+                // contains/not_contains ignoran mayúsculas y minúsculas. Con
+                // str_contains a secas, una regla por la palabra "factura" no
+                // disparaba con el asunto "Problema con mi Factura" — es decir,
+                // fallaba justo con la forma en que la gente escribe, al
+                // empezar frase. Quien escribe una regla por palabra clave no
+                // espera tener que declinar cada variante.
+                'contains' => is_string($ticketValue) && str_contains(mb_strtolower($ticketValue), mb_strtolower((string) $value)),
+                'not_contains' => is_string($ticketValue) && ! str_contains(mb_strtolower($ticketValue), mb_strtolower((string) $value)),
                 'in' => is_array($value) && in_array($ticketValue, $value, false),
                 'greater_than' => $ticketValue > $value,
                 'less_than' => $ticketValue < $value,
@@ -94,6 +106,12 @@ class AutomationEngine
                     'is_internal' => true,
                 ]),
                 'notify_agent' => $this->notifyAgent($ticket),
+                // Enrutado asistido por IA: aplica la categoria que sugirio
+                // ClassifyTicketJob y reparte con AssignmentService. Se expone
+                // como accion de automatismo, y no como comportamiento
+                // implicito del modulo, para que quede visible y configurable
+                // en el panel como cualquier otra regla.
+                'ai_route' => $this->aiRoute($ticket),
                 default => null,
             };
         }
@@ -117,6 +135,20 @@ class AutomationEngine
         $ticket->close();
 
         TicketClosed::dispatch($ticket);
+    }
+
+    /**
+     * Dependencia suave con HelpdeskAgents: si el modulo de IA no esta
+     * disponible, la accion no hace nada en vez de romper el automatismo
+     * entero (que dejaria sin ejecutar las acciones siguientes de la regla).
+     */
+    private function aiRoute(Ticket $ticket): void
+    {
+        if (! class_exists(AiRoutingService::class)) {
+            return;
+        }
+
+        app(AiRoutingService::class)->route($ticket);
     }
 
     private function notifyAgent(Ticket $ticket): void

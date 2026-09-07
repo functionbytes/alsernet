@@ -249,7 +249,17 @@ class ConversationInboxMetricsService
                 'users.id', 'users.firstname', 'users.lastname', 'users.email', 'users.role',
                 'helpdesk_agent_settings.presence_state as helpdesk_status',
             ])
-            ->whereNull('users.deleted_at')
+            // Sin whereNull('users.deleted_at'): esa columna no existe en la
+            // tabla users (la crearia 2026_04_19_110003_add_soft_deletes_to_users_table
+            // del modulo Auth, que esta sin ejecutar), asi que el inbox entero
+            // moria con "Unknown column 'users.deleted_at' in 'WHERE'".
+            //
+            // Tampoco hace falta ponerla a mano: App\Models\User no usa el
+            // trait SoftDeletes, de modo que nadie marcaria un usuario como
+            // borrado y el filtro seria siempre cierto. Y si algun dia User lo
+            // adopta, Eloquent aplicara el scope global por su cuenta — un
+            // whereNull manual solo volveria a romperse cuando el esquema y el
+            // codigo se separen.
             ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
             ->get()
             ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))

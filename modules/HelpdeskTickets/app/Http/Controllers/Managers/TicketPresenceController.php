@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskTickets\Events\TicketViewing;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Notifications\TicketCollisionNudge;
 use Modules\HelpdeskTickets\Services\TicketPresenceService;
 
 /**
@@ -50,6 +52,42 @@ class TicketPresenceController extends Controller
         TicketViewing::dispatch($ticket->id, $user->id, $this->displayName($user), 'left');
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Modal 23 "Bandeja compartida": "Avisar a X" cuando dos agentes
+     * coinciden en el mismo ticket. Es un aviso puntual (notificación), no
+     * una asignación ni un mensaje del hilo -- el otro agente decide si
+     * cede el ticket o sigue. Cache::add() con TTL corto evita el spam de
+     * pulsar el botón varias veces seguidas al mismo agente.
+     */
+    public function nudge(Request $request, Ticket $ticket): JsonResponse
+    {
+        $to = User::find((int) $request->input('to_user_id'));
+        $from = $request->user();
+
+        if (! $to) {
+            return response()->json(['success' => false, 'message' => 'Agente no encontrado.'], 404);
+        }
+
+        if ($to->is($from)) {
+            return response()->json(['success' => false, 'message' => 'No puedes avisarte a ti mismo.'], 422);
+        }
+
+        // Mismo criterio que para verte el ticket: no tiene sentido avisar a
+        // alguien que ni siquiera podría abrirlo.
+        if (! $to->can('view', $ticket)) {
+            return response()->json(['success' => false, 'message' => 'Ese agente no tiene acceso a este ticket.'], 422);
+        }
+
+        $key = "helpdesk:ticket:{$ticket->id}:nudge:{$from->id}:{$to->id}";
+        if (! Cache::add($key, true, 60)) {
+            return response()->json(['success' => false, 'message' => 'Ya le has avisado hace un momento.'], 429);
+        }
+
+        $to->notify(new TicketCollisionNudge($ticket, $from));
+
+        return response()->json(['success' => true, 'message' => 'Aviso enviado a '.$this->displayName($to).'.']);
     }
 
     /**

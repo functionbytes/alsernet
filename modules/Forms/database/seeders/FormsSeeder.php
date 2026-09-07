@@ -3,11 +3,11 @@
 namespace Modules\Forms\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
 /**
- * Siembra los 13 formularios iniciales de alsernetforms como filas Form,
+ * Siembra los 13 formularios iniciales de alsernetforms como filas AlsernetForm,
  * vinculadas a la TicketCategory correspondiente (sembrada por
  * FormsTicketCategorySeeder). `form_key` DEBE coincidir exactamente con la
  * clave del array en FormCategoryRegistry del lado alsernetforms/PrestaShop.
@@ -34,15 +34,23 @@ class FormsSeeder extends Seeder
             ['form_key' => 'paymentandfinancing', 'name' => 'Métodos de pago y financiación', 'category_slug' => 'metodos-pago-financiacion'],
             [
                 'form_key' => 'workwithus', 'name' => 'Trabaja con nosotros', 'category_slug' => 'trabaja-con-nosotros',
-                'active' => false,
-                'description' => 'La plantilla workwithus.tpl no existe en disco del lado PrestaShop; el formulario no es alcanzable hasta recrearla.',
+                'description' => 'Sustituye id 15 de ets_contactform7 (bolsa de trabajo, con adjunto de CV/documentación).',
             ],
+            // Categoría C: sin equivalente previo en ets_contactform7, creados
+            // de cero en alsernetforms (ver secondhand.tpl, customerdefender.tpl,
+            // prestigechairs.tpl, productpriceinquiry.tpl).
+            ['form_key' => 'secondhand', 'name' => 'Segunda mano (venta de armas usadas)', 'category_slug' => 'segunda-mano'],
+            ['form_key' => 'customerdefender', 'name' => 'Defensor del cliente', 'category_slug' => 'defensor-del-cliente'],
+            ['form_key' => 'prestigechairs', 'name' => 'Condiciones Sillas Prestige', 'category_slug' => 'condiciones-sillas-prestige'],
+            ['form_key' => 'productpriceinquiry', 'name' => 'Consulta de precio en ficha de producto', 'category_slug' => 'consulta-precio-producto'],
+            ['form_key' => 'expertconsultation', 'name' => 'Consulta a un experto', 'category_slug' => 'consulta-experto'],
+            ['form_key' => 'interestfreefinancing', 'name' => 'Financiación sin intereses', 'category_slug' => 'financiacion-sin-intereses'],
         ];
 
         foreach ($forms as $form) {
             $category = TicketCategory::where('slug', $form['category_slug'])->first();
 
-            Form::firstOrCreate(
+            AlsernetForm::firstOrCreate(
                 ['form_key' => $form['form_key']],
                 [
                     'name' => $form['name'],

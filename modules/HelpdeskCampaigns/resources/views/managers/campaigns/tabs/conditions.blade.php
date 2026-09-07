@@ -3,7 +3,7 @@
     @csrf
     @method('PUT')
 
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Condiciones de visualizacion</h6>
+    <h6 class="fw-semibold mb-1">Condiciones de visualizacion</h6>
     <p class="text-muted small mb-3">Definen cuando y a quien se mostrara la campana. Sin condiciones, se muestra a todos los visitantes.</p>
 
     @php $conditions = old('conditions', $campaign->conditions ?? []); @endphp

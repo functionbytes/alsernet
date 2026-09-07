@@ -3,9 +3,10 @@
 namespace Modules\Forms\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 
@@ -22,7 +23,7 @@ class FormsReportController extends Controller
 
     public function index(): View
     {
-        $forms = Form::with('category')->orderBy('name')->get();
+        $forms = AlsernetForm::with('category')->orderBy('name')->get();
 
         $categoryIds = $forms->pluck('category_id')->filter()->unique();
 
@@ -42,7 +43,7 @@ class FormsReportController extends Controller
             ->groupBy('category_id')
             ->pluck('total', 'category_id');
 
-        $rows = $forms->map(function (Form $form) use ($totalsByCategory, $openByCategory) {
+        $rows = $forms->map(function (AlsernetForm $form) use ($totalsByCategory, $openByCategory) {
             $stat = $form->category_id ? $totalsByCategory->get($form->category_id) : null;
 
             return [
@@ -50,7 +51,15 @@ class FormsReportController extends Controller
                 'category' => $form->category,
                 'total' => $stat->total ?? 0,
                 'open' => $form->category_id ? $openByCategory->get($form->category_id, 0) : 0,
-                'last_submitted_at' => $stat?->last_submitted_at,
+                // max(created_at) llega como STRING: es una columna calculada
+                // del selectRaw, no un atributo del modelo, así que Eloquent no
+                // le aplica el cast a fecha. Sin este parse, el ?->format() de
+                // la vista reventaba con "Call to a member function format() on
+                // string" y el informe daba 500 en cuanto había un solo ticket
+                // de formulario en una categoría mapeada.
+                'last_submitted_at' => $stat?->last_submitted_at
+                    ? Carbon::parse($stat->last_submitted_at)
+                    : null,
             ];
         });
 

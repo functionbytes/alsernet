@@ -150,9 +150,14 @@ class AiAgentFlowEngineTest extends TestCase
         $executeWithRateLimit = (new \ReflectionClass($engine))->getMethod('executeWithRateLimit');
         $executeWithRateLimit->setAccessible(true);
 
-        config(['helpdesk.llm_rate_limits.per_user_per_minute' => 2]);
-        config(['helpdesk.llm_rate_limits.per_session_per_5min' => 100]);
-        config(['helpdesk.llm_rate_limits.per_user_per_day' => 10000]);
+        // helpdeskagents.*, no helpdesk.*: el engine dejo de leer el namespace
+        // viejo (ver AiAgentFlowEngine::executeWithRateLimit) y el test se
+        // quedo configurando una clave que ya nadie lee, asi que los limites
+        // reales seguian en 10/30/1000 y tres llamadas nunca los superaban.
+        // El test pasaba a verde sin ejercitar el limitador de gasto.
+        config(['helpdeskagents.llm_rate_limits.per_user_per_minute' => 2]);
+        config(['helpdeskagents.llm_rate_limits.per_session_per_5min' => 100]);
+        config(['helpdeskagents.llm_rate_limits.per_user_per_day' => 10000]);
 
         $userId = 'test-user-'.uniqid();
         $sessionId = 'test-session-'.uniqid();

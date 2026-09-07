@@ -4,8 +4,10 @@ namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Group;
+use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 
@@ -17,6 +19,12 @@ class CatalogCacheService
      * Short TTL: agent availability changes often, catalogs do not.
      */
     private const AGENTS_TTL = 60;
+
+    /**
+     * Las etiquetas cambian con cada guardado de ticket; TTL corto para que la
+     * lista no se quede vieja si alguna vía de escritura olvida invalidar.
+     */
+    private const TAGS_TTL = 300;
 
     public static function defaultStatus(): ?TicketStatus
     {
@@ -66,6 +74,33 @@ class CatalogCacheService
             ->get());
     }
 
+    /**
+     * Etiquetas distintas en uso, para el desplegable de filtro del listado.
+     *
+     * Antes se calculaba en TicketsCrudController::index() con un pluck('tags')
+     * sobre la tabla completa en cada carga de la página. Es la misma lista
+     * para todos los agentes y cambia poco: se cachea con TTL corto y se
+     * invalida explícitamente al guardar etiquetas.
+     *
+     * @return SupportCollection<int, string>
+     */
+    public static function ticketTags(): SupportCollection
+    {
+        return Cache::remember('helpdesk:catalogs:ticket-tags', self::TAGS_TTL, fn () => Ticket::query()
+            ->whereNotNull('tags')
+            ->pluck('tags')
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values());
+    }
+
+    public static function invalidateTags(): void
+    {
+        Cache::forget('helpdesk:catalogs:ticket-tags');
+    }
+
     public static function invalidate(): void
     {
         Cache::forget('helpdesk:catalogs:default-status');
@@ -73,5 +108,7 @@ class CatalogCacheService
         Cache::forget('helpdesk:catalogs:categories');
         Cache::forget('helpdesk:catalogs:groups');
         Cache::forget('helpdesk:catalogs:agents');
+        Cache::forget('helpdesk:catalogs:status-ids-by-slug');
+        self::invalidateTags();
     }
 }

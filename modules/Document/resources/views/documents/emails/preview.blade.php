@@ -194,7 +194,7 @@
                         <button type="button" class="btn btn-info" id="btnPrintEmail">
                             Imprimir
                         </button>
-                        <a href="{{ route('api.documents.emails', $document->uid) }}" class="btn btn-secondary">
+                        <a href="{{ route('documents.emails', $document->uid) }}" class="btn btn-secondary">
                             Volver a emails
                         </a>
                         <a href="{{ route('documents.manage', $document->uid) }}" class="btn btn-primary">

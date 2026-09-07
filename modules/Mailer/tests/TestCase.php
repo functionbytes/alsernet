@@ -3,7 +3,7 @@
 namespace Modules\Mailer\Tests;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -15,7 +15,12 @@ use Tests\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {

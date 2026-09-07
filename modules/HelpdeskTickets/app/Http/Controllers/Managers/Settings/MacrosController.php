@@ -3,9 +3,11 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionMacroRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreMacroRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateMacroRequest;
 use Modules\HelpdeskTickets\Models\Macro;
@@ -61,7 +63,7 @@ class MacrosController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.macros.index')
-            ->with('success', 'Macro creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.macro.created'));
     }
 
     public function edit(Macro $macro): View
@@ -84,7 +86,7 @@ class MacrosController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.macros.index')
-            ->with('success', 'Macro actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.macro.updated'));
     }
 
     public function destroy(Macro $macro): RedirectResponse
@@ -93,6 +95,38 @@ class MacrosController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.macros.index')
-            ->with('success', 'Macro eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.macro.deleted'));
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several macros.
+     */
+    public function bulkAction(BulkActionMacroRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+
+        $macros = Macro::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($macros as $macro) {
+                $macro->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($macros as $macro) {
+                $macro->update(['is_active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'activada(s)', 'deactivate' => 'desactivada(s)'];
+
+        return response()->json([
+            'message' => "{$count} macro(s) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 }

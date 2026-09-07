@@ -3,14 +3,19 @@
 namespace Modules\Document\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithFaker;
 use Modules\Document\Entities\Document;
 use Tests\TestCase;
 
 class DocumentValidationApiTest extends TestCase
 {
-    use RefreshDatabase, WithFaker;
+    use DatabaseTransactions, WithFaker;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected User $user;
 

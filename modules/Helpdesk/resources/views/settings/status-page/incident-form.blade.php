@@ -28,7 +28,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion del incidente</h6>
+                        <h6 class="fw-semibold mb-1">Informacion del incidente</h6>
                         <p class="text-muted small mb-3">Titulo y descripcion visible para los usuarios</p>
                         <div class="row g-3 mb-4">
 
@@ -58,7 +58,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Estado y severidad</h6>
+                        <h6 class="fw-semibold mb-1">Estado y severidad</h6>
                         <p class="text-muted small mb-3">Clasifica el impacto y estado actual del incidente</p>
                         <div class="row g-3 mb-4">
 
@@ -92,7 +92,7 @@
                         </div>
 
                         @if($components->count() > 0)
-                            <h6 class="fw-semibold mb-1 border-bottom pb-2">Componentes afectados</h6>
+                            <h6 class="fw-semibold mb-1">Componentes afectados</h6>
                             <p class="text-muted small mb-3">Selecciona los servicios impactados por este incidente</p>
                             <div class="row g-2 mb-3">
                                 @foreach($components as $component)
@@ -126,29 +126,32 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Niveles de severidad</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Niveles de severidad</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><span class="badge bg-warning-subtle text-warning me-2">Menor</span> Impacto limitado, sin interrupcion total</li>
-                        <li class="mb-2 text-muted small"><span class="badge bg-danger-subtle text-danger me-2">Mayor</span> Servicio degradado o parcialmente caido</li>
-                        <li class="mb-2 text-muted small"><span class="badge bg-dark-subtle text-dark me-2">Critico</span> Servicio completamente inaccesible</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><span class="badge bg-warning-subtle text-warning me-2">Menor</span> Impacto limitado, sin interrupcion total</li>
+                        <li class="mb-2"><span class="badge bg-danger-subtle text-danger me-2">Mayor</span> Servicio degradado o parcialmente caido</li>
+                        <li class="mb-2"><span class="badge bg-dark-subtle text-dark me-2">Critico</span> Servicio completamente inaccesible</li>
                     </ul>
                 </div>
-                @if(isset($incident))
-                    <hr class="my-0">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">Informacion del registro</h6>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2 text-muted small">
-                                <span class="fw-semibold">Iniciado:</span> {{ $incident->started_at?->format('d/m/Y H:i') ?? '—' }}
-                            </li>
-                            <li class="text-muted small">
-                                <span class="fw-semibold">Resuelto:</span> {{ $incident->resolved_at?->format('d/m/Y H:i') ?? 'Pendiente' }}
-                            </li>
-                        </ul>
-                    </div>
-                @endif
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">
+                            <span class="fw-semibold">Iniciado:</span> {{ $incident->started_at?->format('d/m/Y H:i') ?? '—' }}
+                        </li>
+                        <li class="mb-0">
+                            <span class="fw-semibold">Resuelto:</span> {{ $incident->resolved_at?->format('d/m/Y H:i') ?? 'Pendiente' }}
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 

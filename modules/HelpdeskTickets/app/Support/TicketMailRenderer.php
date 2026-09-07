@@ -31,6 +31,16 @@ class TicketMailRenderer
             return [$fallbackSubject, '<p>'.e($fallbackSubject).'</p>'];
         }
 
+        // COMPANY_NAME lo usa el pie de página estático de helpdesk_tickets_wrapper
+        // ({{ header }}/{{ footer }} son los únicos tags que el propio wrapper
+        // resuelve solo; este texto es contenido normal del layout y depende de
+        // que el caller lo pase como cualquier otra variable). 8 de los 9 callers
+        // de este método nunca lo pasaban -> el cliente veía el placeholder
+        // literal "{COMPANY_NAME}" en el correo (detectado revisando un envío
+        // real en Mailpit, 3-sep-2026). Se centraliza aquí en vez de tocar cada
+        // caller; explícito gana si alguno ya lo pasa.
+        $variables += ['COMPANY_NAME' => config('app.name', 'Soporte')];
+
         $subject = MailerTemplateRendererService::replaceVariables(
             $template->subject ?: $fallbackSubject,
             $variables

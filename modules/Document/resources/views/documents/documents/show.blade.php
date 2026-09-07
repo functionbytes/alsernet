@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-12">
             <!-- Order Details (Permission-Controlled) -->
             @if(auth()->user()->canDocument('order-details'))
             <div class="card mb-3">

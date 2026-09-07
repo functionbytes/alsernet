@@ -6,10 +6,11 @@ use App\Models\User;
 use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketAssignment extends Model
 {
-    use HasUid;
+    use BelongsToHelpdeskUser, HasUid;
 
     protected $connection = 'helpdesk';
 
@@ -46,7 +47,7 @@ class TicketAssignment extends Model
      */
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsToHelpdeskUser('assigned_to', 'assignedTo');
     }
 
     /**
@@ -54,7 +55,7 @@ class TicketAssignment extends Model
      */
     public function assignedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_by');
+        return $this->belongsToHelpdeskUser('assigned_by', 'assignedBy');
     }
 
     /**

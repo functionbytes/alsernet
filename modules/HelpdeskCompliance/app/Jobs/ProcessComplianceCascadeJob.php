@@ -10,7 +10,9 @@ use Modules\Helpdesk\Services\AuditLogService;
 use Modules\HelpdeskCompliance\Models\ComplianceRequest;
 use Modules\HelpdeskCompliance\Services\Handlers\ChatflowComplianceHandler;
 use Modules\HelpdeskCompliance\Services\Handlers\DocumentComplianceHandler;
+use Modules\HelpdeskCompliance\Services\Handlers\EmailLogComplianceHandler;
 use Modules\HelpdeskCompliance\Services\Handlers\TicketComplianceHandler;
+use Modules\HelpdeskDocument\Support\PhoneMatcher;
 use Nwidart\Modules\Facades\Module;
 
 /**
@@ -30,6 +32,12 @@ class ProcessComplianceCascadeJob implements ShouldQueue
     public int $backoff = 30;
 
     /**
+     * $requestId es el ComplianceRequest ('pending') creado SINCRONAMENTE por
+     * RunComplianceCascade en la misma request del borrado core — este job lo
+     * transiciona a 'completed'/'failed', nunca crea uno nuevo (eso dejaba una
+     * ventana sin rastro legal entre el borrado core y que el worker recogiera
+     * el job).
+     *
      * $customerEmail / $customerPhones vienen capturados ANTES del borrado core
      * (el Customer ya está anonimizado o eliminado cuando corre este job) y son
      * las claves de match de los expedientes de HelpdeskDocument. Opcionales
@@ -40,6 +48,7 @@ class ProcessComplianceCascadeJob implements ShouldQueue
      * @param  array<int, string>  $customerPhones
      */
     public function __construct(
+        private readonly int $requestId,
         private readonly int $customerId,
         private readonly bool $hard,
         private readonly array $conversationIds,
@@ -68,18 +77,30 @@ class ProcessComplianceCascadeJob implements ShouldQueue
 
             // Los expedientes viven en el módulo Document (los datos y adjuntos
             // KYC persisten aunque el puente HelpdeskDocument esté deshabilitado),
-            // por eso el guard comprueba 'Document' y no 'HelpdeskDocument'.
-            if ($this->moduleReady('Document', 'Modules\\Document\\Entities\\Document')) {
+            // por eso el guard comprueba 'Document' y no 'HelpdeskDocument'. Pero
+            // el propio matching de email/teléfono usa PhoneMatcher, que SÍ vive
+            // en el puente HelpdeskDocument — sin este class_exists() adicional,
+            // un HelpdeskDocument deshabilitado/desinstalado (con Document
+            // habilitado) provocaba un Error de clase no encontrada DENTRO de
+            // esta misma transacción, revirtiendo también el borrado de tickets
+            // y chatflow ya aplicado más arriba.
+            if ($this->moduleReady('Document', 'Modules\\Document\\Entities\\Document') && class_exists(PhoneMatcher::class)) {
                 $summaries[] = app(DocumentComplianceHandler::class)
                     ->handle($this->customerEmail, $this->customerPhones, $this->hard);
             }
         });
 
-        $request = ComplianceRequest::create([
-            'customer_id' => $this->customerId,
-            'type' => $this->hard ? ComplianceRequest::TYPE_DELETE_HARD : ComplianceRequest::TYPE_DELETE_SOFT,
+        // EmailLog vive en la conexión por defecto (no 'helpdesk'), igual que
+        // Document: fuera de la transacción de arriba a propósito, ver el
+        // docblock de EmailLogComplianceHandler.
+        if ($this->moduleReady('HelpdeskEmailActivity', 'Modules\\HelpdeskEmailActivity\\Models\\EmailLog')) {
+            $summaries[] = app(EmailLogComplianceHandler::class)
+                ->handle($this->customerEmail, $this->hard);
+        }
+
+        $request = ComplianceRequest::query()->findOrFail($this->requestId);
+        $request->update([
             'status' => 'completed',
-            'requested_by' => $this->requestedBy,
             'modules_affected' => array_values(array_map(fn (array $s): string => $s['module'], $summaries)),
             'result_summary' => [
                 'core' => $this->coreResult,
@@ -102,11 +123,9 @@ class ProcessComplianceCascadeJob implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
-        $request = ComplianceRequest::create([
-            'customer_id' => $this->customerId,
-            'type' => $this->hard ? ComplianceRequest::TYPE_DELETE_HARD : ComplianceRequest::TYPE_DELETE_SOFT,
+        $request = ComplianceRequest::query()->findOrFail($this->requestId);
+        $request->update([
             'status' => 'failed',
-            'requested_by' => $this->requestedBy,
             'modules_affected' => [],
             'result_summary' => [
                 'core' => $this->coreResult,

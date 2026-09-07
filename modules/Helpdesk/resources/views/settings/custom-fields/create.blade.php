@@ -37,20 +37,32 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los campos personalizados</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los campos personalizados</h6>
                     <p class="card-text text-muted small">
                         Los campos personalizados permiten extender la informacion de clientes y conversaciones con atributos propios de tu negocio.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Clave automatica</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Clave automatica</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         La clave se genera automaticamente desde la etiqueta. Usa letras minusculas y guiones bajos.
                         Ejemplo: "Numero de cuenta" → <code>numero_de_cuenta</code>
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Tipos disponibles</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Tipos disponibles</h6>
+                </div>
+                <div class="card-body">
                     <ul class="small text-muted ps-3 mb-0">
                         <li><strong>Texto</strong> — campo de texto libre</li>
                         <li><strong>Numero</strong> — solo valores numericos</li>

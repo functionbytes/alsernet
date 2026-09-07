@@ -2,13 +2,6 @@
 
 @section('title', 'Nuevo estado de ticket')
 
-@push('styles')
-<style>
-.hd-color-preview { width: 38px; height: 38px; }
-.hd-color-preset { width: 32px; height: 32px; }
-</style>
-@endpush
-
 @section('page_header')
     @include('core::components.card', ['title' => 'Nuevo estado de ticket'])
 @endsection
@@ -31,7 +24,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre, slug y descripcion visible del estado</p>
                         <div class="row g-3 mb-4">
 
@@ -52,11 +45,12 @@
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Slug</label>
-                                    <input type="text" name="slug"
-                                           class="form-control @error('slug') is-invalid @enderror"
-                                           value="{{ old('slug') }}"
-                                           placeholder="en-progreso">
-                                    <small class="form-text text-muted">Se genera automaticamente si se deja vacio</small>
+                                    @include('core::components.slug-field', [
+                                        'value' => old('slug', ''),
+                                        'from' => 'input[name=name]',
+                                        'placeholder' => 'en-progreso',
+                                    ])
+                                    <small class="form-text text-muted">Sigue al nombre mientras no lo edites a mano</small>
                                     @error('slug')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror
@@ -78,44 +72,27 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Color</h6>
+                        <h6 class="fw-semibold mb-1">Color</h6>
                         <p class="text-muted small mb-3">Color identificador del estado en listados y badges</p>
                         <div class="row g-3 mb-4">
 
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="form-label">Color <span class="text-danger">*</span></label>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <input type="color" name="color" id="colorPicker"
-                                               class="form-control form-control-color @error('color') is-invalid @enderror"
-                                               value="{{ old('color', '#90bb13') }}">
-                                        <input type="text" id="colorHex" class="form-control"
-                                               value="{{ old('color', '#90bb13') }}" readonly>
-                                        <div id="colorPreview" class="hd-color-preview border rounded flex-shrink-0"
-                                             data-color="{{ old('color', '#90bb13') }}"></div>
-                                    </div>
+                                    @include('core::components.color-field', [
+                                        'name' => 'color',
+                                        'value' => old('color', '#90bb13'),
+                                        'preview' => old('name', 'Estado'),
+                                        'previewFrom' => 'input[name=name]',
+                                    ])
                                     @error('color')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Colores sugeridos</label>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
-                                            <button type="button" class="btn btn-sm color-preset hd-color-preset rounded-circle border-0"
-                                                    data-color="{{ $c }}"
-                                                    title="{{ $c }}"></button>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Comportamiento</h6>
+                        <h6 class="fw-semibold mb-1">Comportamiento</h6>
                         <p class="text-muted small mb-3">Define como se comporta este estado dentro del flujo y SLA</p>
                         <div class="row g-3">
 
@@ -171,21 +148,26 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los estados</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los estados</h6>
                     <p class="card-text text-muted">
                         Los estados definen el ciclo de vida de un ticket y permiten controlar el flujo de trabajo y el cumplimiento del SLA.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas practicas</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres cortos que reflejen la etapa del ticket</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna colores distintos para facilitar la identificacion visual</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Solo un estado debe ser el predeterminado para tickets nuevos</li>
-                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa "Pausar SLA" en estados de espera por el cliente</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres cortos que reflejen la etapa del ticket</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Asigna colores distintos para facilitar la identificacion visual</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Solo un estado debe ser el predeterminado para tickets nuevos</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Usa "Pausar SLA" en estados de espera por el cliente</li>
                     </ul>
                 </div>
             </div>
@@ -194,41 +176,3 @@
     </div>
 
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function () {
-    // Init color presets and preview
-    $('.hd-color-preset[data-color]').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-    $('#colorPreview[data-color]').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-
-    // Auto-generate slug from name
-    $('input[name="name"]').on('input', function () {
-        if (!$('input[name="slug"]').val()) {
-            $('input[name="slug"]').val(
-                $(this).val().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-            );
-        }
-    });
-
-    // Color picker sync
-    $('#colorPicker').on('input', function () {
-        const color = $(this).val();
-        $('#colorHex').val(color);
-        $('#colorPreview').css('background-color', color);
-    });
-
-    // Color preset buttons
-    $(document).on('click', '.color-preset', function () {
-        const color = $(this).data('color');
-        $('#colorPicker').val(color);
-        $('#colorHex').val(color);
-        $('#colorPreview').css('background-color', color);
-    });
-});
-</script>
-@endpush

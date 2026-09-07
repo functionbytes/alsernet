@@ -1,4 +1,9 @@
-@extends('layouts.theme')
+{{-- Página pública sin login: layouts.theme asume Auth::user() (rompía con
+     un 500 "Attempt to read property firstname on null" para cualquier
+     cliente real, confirmado 30-ago-2026). layouts.auth no depende de sesión
+     y de paso arregla el @push('styles') de abajo, que con layouts.theme no
+     llegaba de forma fiable a <head> (ver reference_inbox_modal_push_styles_gotcha). --}}
+@extends('layouts.auth')
 
 @section('title', 'Ticket '.$ticket->ticket_number)
 

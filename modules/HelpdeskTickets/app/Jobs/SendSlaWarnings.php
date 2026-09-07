@@ -54,12 +54,18 @@ class SendSlaWarnings implements ShouldQueue
             $warningWindow = now()->addMinutes(30);
             $thresholdPercent = config('helpdesk.sla.warning_threshold_percent', 80);
 
+            // whereNull('sla_paused_at') por el mismo motivo que en
+            // CheckSlaBreaches: con el reloj pausado el vencimiento real se
+            // desplaza (Ticket::slaEffectiveDueDate()), así que avisar aquí
+            // sería un falso positivo. cursor() en vez de get() para no
+            // materializar toda la ventana de vencimientos en memoria.
             $approachingTickets = Ticket::query()
                 ->where('sla_resolution_breached', false)
                 ->whereBetween('sla_resolution_due_at', [now(), $warningWindow])
                 ->whereNotNull('sla_resolution_due_at')
+                ->whereNull('sla_paused_at')
                 ->whereNull('closed_at')
-                ->get();
+                ->cursor();
 
             $warningCount = 0;
 

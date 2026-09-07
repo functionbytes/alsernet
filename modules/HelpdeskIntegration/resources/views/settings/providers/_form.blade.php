@@ -33,7 +33,7 @@
     </div>
 
     {{-- Icon --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Icono (Font Awesome)</label>
         <div class="input-group">
             <span class="input-group-text" id="providerIconPreview">
@@ -51,23 +51,21 @@
     </div>
 
     {{-- Color --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Color</label>
-        <div class="input-group">
-            <input type="color" class="form-control form-control-color" id="providerColorPicker"
-                value="{{ old('color', $provider->color ?? '') ?: '#90bb13' }}" title="Elegir color">
-            <input type="text" name="color" id="providerColorInput"
-                class="form-control @error('color') is-invalid @enderror"
-                value="{{ old('color', $provider->color ?? '') }}"
-                placeholder="#90bb13">
-        </div>
+        @include('core::components.color-field', [
+            'name' => 'color',
+            'value' => old('color', $provider->color ?? '') ?: '#90bb13',
+            'preview' => old('label', $provider->label ?? 'Proveedor'),
+            'previewFrom' => 'input[name=label]',
+        ])
         @error('color')
             <div class="invalid-feedback d-block">{{ $message }}</div>
         @enderror
     </div>
 
     {{-- Sort order --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Orden</label>
         <input type="number" name="sort_order" min="0"
             class="form-control @error('sort_order') is-invalid @enderror"
@@ -157,18 +155,6 @@ $(document).ready(function () {
     $('#providerIconInput').on('input', function () {
         var value = $.trim($(this).val()) || 'fas fa-plug';
         $('#providerIconPreview i').attr('class', value);
-    });
-
-    $('#providerColorPicker').on('input', function () {
-        $('#providerColorInput').val($(this).val());
-    });
-
-    $('#providerColorInput').on('input', function () {
-        var value = $(this).val();
-        if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-            $('#providerColorPicker').val(value);
-        }
-    });
-});
+    });});
 </script>
 @endpush

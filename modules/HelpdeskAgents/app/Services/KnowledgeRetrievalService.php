@@ -4,6 +4,7 @@ namespace Modules\HelpdeskAgents\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Services\VectorMath;
 use Modules\HelpdeskAgents\Models\AiAgent;
 use Modules\HelpdeskAgents\Models\AiAgentKnowledgeBase;
 
@@ -94,8 +95,7 @@ class KnowledgeRetrievalService
                 continue;
             }
 
-            $dot = array_sum(array_map(fn ($x, $y) => $x * $y, $queryEmbedding, $embedding));
-            $score = $dot / ($queryNorm * $docNorm);
+            $score = VectorMath::cosine($queryEmbedding, $embedding, $queryNorm, $docNorm);
 
             if ($score >= $minSimilarity) {
                 $scores[$doc->id] = $score;
@@ -136,6 +136,6 @@ class KnowledgeRetrievalService
 
     private function norm(array $vector): float
     {
-        return sqrt(array_sum(array_map(fn ($v) => $v ** 2, $vector)));
+        return VectorMath::norm($vector);
     }
 }

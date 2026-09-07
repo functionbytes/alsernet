@@ -25,10 +25,18 @@
 
 <header class="app-header">
     <div class="app-header-inner">
-        <button class="app-toggler" type="button" aria-label="app toggler">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.66699 12.6668L3.66699 8.00016L7.66699 3.3335" stroke="#1C274C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                <path opacity="0.5" d="M12.667 12.6668L8.66699 8.00016L12.667 3.3335" stroke="#1C274C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        {{-- Menu lateral: contrae/expande en escritorio y abre la capa superpuesta
+             por debajo de 1480px. `main.js#initAppToggler` mantiene al dia
+             aria-expanded, aria-label y title segun el estado real. --}}
+        <button class="app-toggler" type="button"
+                aria-controls="appMenubar"
+                aria-expanded="true"
+                aria-label="Contraer menu lateral"
+                data-tooltip="Contraer menú"
+                data-tooltip-position="bottom">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <path d="M7.66699 12.6668L3.66699 8.00016L7.66699 3.3335" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                <path opacity="0.5" d="M12.667 12.6668L8.66699 8.00016L12.667 3.3335" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
 

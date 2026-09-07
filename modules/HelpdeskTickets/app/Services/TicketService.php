@@ -5,6 +5,11 @@ namespace Modules\HelpdeskTickets\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+// tickets.user_reopen_issue/user_reopen_time viven en helpdesk_settings
+// (Modules\Helpdesk\Models\Setting) — distinta de Modules\Core\Models\Setting
+// (tabla `settings`, usada por ejemplo para incoming_email). Alias explícito
+// para no confundir las dos clases "Setting".
+use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
@@ -18,9 +23,9 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 
 class TicketService
 {
-    public function __construct(
-        private SlaService $slaService
-    ) {}
+    // Antes recibía SlaService por inyección y no lo usaba en ningún método.
+    // El SLA se calcula en TicketObserver::created() vía
+    // Ticket::calculateSlaDueDates(), no desde aquí.
 
     /**
      * Create a new ticket
@@ -227,6 +232,50 @@ class TicketService
     }
 
     /**
+     * Reabre el ticket si está cerrado y el ajuste "Permitir que el cliente
+     * reabra tickets cerrados" (tickets.user_reopen_issue, default ON) lo
+     * permite, dentro de la ventana en días configurada
+     * (tickets.user_reopen_time, default 7) desde el cierre.
+     *
+     * Estos dos ajustes existían en Settings → General desde antes de esta
+     * sesión, pero sin ningún efecto real en el código (bug real encontrado
+     * 4-sep-2026, TCK-2026-00093): tanto FetchTicketEmailsJob como
+     * CustomerPortalController::replyToTicket() ya enganchaban la respuesta
+     * del cliente al ticket cerrado (por Message-ID/asunto o por
+     * ticket_number), pero el ticket se quedaba cerrado y el mensaje entraba
+     * en un hilo que nadie iba a revisar. Fuera de la ventana permitida el
+     * mensaje se añade al hilo igual, solo no se reabre el ticket.
+     *
+     * Un fallo al reabrir se registra pero no se relanza: no debe perder el
+     * mensaje del cliente, que ya está (o va a quedar) enganchado al hilo.
+     */
+    public function reopenIfCustomerCanReopen(Ticket $ticket): void
+    {
+        if ($ticket->closed_at === null) {
+            return;
+        }
+
+        if (! filter_var(HelpdeskGeneralSetting::get('tickets.user_reopen_issue', true), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        $days = (int) HelpdeskGeneralSetting::get('tickets.user_reopen_time', 7);
+
+        if ($ticket->closed_at->copy()->addDays($days)->isPast()) {
+            return;
+        }
+
+        try {
+            $this->reopenTicket($ticket, 'El cliente respondió a un ticket cerrado.');
+        } catch (\Throwable $e) {
+            Log::warning('TicketService: no se pudo reabrir el ticket tras la respuesta del cliente', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Reopen a closed ticket
      */
     public function reopenTicket(Ticket $ticket, ?string $reason = null): Ticket
@@ -274,33 +323,22 @@ class TicketService
 
     /**
      * Generate a unique ticket number
+     *
+     * Esto era una TERCERA implementación (además de Ticket::
+     * generateTicketNumber() y del TicketObserver) y, peor, con otro prefijo:
+     * emitía "TKT-2026-00001" mientras el resto del módulo emitía
+     * "TCK-2026-00001". Como cada una busca el último número por su propio
+     * prefijo, eran dos secuencias independientes; y el hilado del correo
+     * entrante solo reconoce TCK (`/#(TCK-\d{4}-\d{5})/`), así que un ticket
+     * nacido del widget o del formulario público jamás se enlazaba al
+     * responder citando su número: se abría uno nuevo cada vez.
+     *
+     * Ahora delega en la única implementación buena, que además lleva el
+     * lockForUpdate() dentro de su propia transacción.
      */
     public function generateTicketNumber(): string
     {
-        try {
-            return DB::transaction(function () {
-                $year = now()->year;
-                $prefix = "TKT-{$year}-";
-
-                $lastTicket = Ticket::where('ticket_number', 'LIKE', "{$prefix}%")
-                    ->lockForUpdate()
-                    ->orderByDesc('ticket_number')
-                    ->first();
-
-                if ($lastTicket) {
-                    $lastNumber = (int) substr($lastTicket->ticket_number, -5);
-                    $nextNumber = $lastNumber + 1;
-                } else {
-                    $nextNumber = 1;
-                }
-
-                return $prefix.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-            });
-        } catch (\Exception $e) {
-            Log::error('Error generating ticket number', ['error' => $e->getMessage()]);
-
-            return 'TKT-'.now()->year.'-'.uniqid();
-        }
+        return Ticket::generateTicketNumber();
     }
 
     /**

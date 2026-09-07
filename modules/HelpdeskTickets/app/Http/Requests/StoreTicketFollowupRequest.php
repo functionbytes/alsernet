@@ -14,15 +14,29 @@ class StoreTicketFollowupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'scheduled_at' => ['required', 'date', 'after:now'],
+            // Un paso suelto (compatibilidad con lo que ya llamaba a este
+            // endpoint) o una secuencia entera de pasos.
+            'scheduled_at' => ['required_without:steps', 'nullable', 'date', 'after:now'],
             'note' => ['nullable', 'string', 'max:1000'],
+            // Plantilla opcional del paso suelto: si se manda, al vencer se
+            // envía un correo real al cliente con su contenido (ver
+            // SendDueTicketFollowupsCommand), además del recordatorio interno
+            // de siempre.
+            'canned_reply_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_canned_replies,id'],
+            'cancel_if_customer_replies' => ['nullable', 'boolean'],
+            'steps' => ['nullable', 'array', 'max:6'],
+            'steps.*.scheduled_at' => ['required', 'date', 'after:now'],
+            'steps.*.note' => ['nullable', 'string', 'max:1000'],
+            'steps.*.canned_reply_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_canned_replies,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'scheduled_at.required' => 'La fecha del seguimiento es obligatoria.',
+            'scheduled_at.required_without' => 'La fecha del seguimiento es obligatoria.',
+            'steps.max' => 'Una secuencia admite como mucho 6 pasos.',
+            'steps.*.scheduled_at.after' => 'Cada paso de la secuencia debe tener una fecha futura.',
             'scheduled_at.after' => 'La fecha del seguimiento debe ser futura.',
             'note.max' => 'La nota no puede superar los 1000 caracteres.',
         ];

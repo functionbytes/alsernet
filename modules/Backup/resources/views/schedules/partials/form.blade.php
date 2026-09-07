@@ -151,7 +151,7 @@
                                 </div>
 
                                 <!-- Custom Interval -->
-                                <div class="col-md-6 mb-3" id="customOptions" style="display: none;">
+                                <div class="col-12 mb-3" id="customOptions" style="display: none;">
                                     <label for="custom_interval_hours" class="form-label fw-semibold">Intervalo
                                         (horas) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control"

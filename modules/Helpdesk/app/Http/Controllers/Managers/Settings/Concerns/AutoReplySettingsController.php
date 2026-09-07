@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\Helpdesk\Support\AutoReplyOptions;
@@ -24,7 +25,7 @@ abstract class AutoReplySettingsController extends Controller
     public function __construct()
     {
         $this->middleware('can:helpdesk.settings.view')->only('index');
-        $this->middleware('can:helpdesk.settings.update')->only(['store', 'update', 'destroy']);
+        $this->middleware('can:helpdesk.settings.update')->only(['store', 'update', 'destroy', 'bulkAction']);
     }
 
     abstract protected function modelClass(): string;
@@ -39,14 +40,87 @@ abstract class AutoReplySettingsController extends Controller
     protected function renderIndex(): View
     {
         $modelClass = $this->modelClass();
+        $request = request();
+
+        // Un mensaje activo sin canal ("Todos los canales", channel NULL) cubre
+        // todos: COUNT(DISTINCT channel) los ignoraria y diria 0 canales
+        // cubiertos justo cuando lo estan todos.
+        $active = $modelClass::where('is_active', true);
+        $coversAll = (clone $active)->whereNull('channel')->exists();
+
+        $channelsCovered = $coversAll
+            ? count(AutoReplyOptions::channelSlugs())
+            : (clone $active)->whereNotNull('channel')->distinct()->count('channel');
+
+        // Los contadores describen el total configurado, no la pagina que se
+        // esta viendo: filtrar no debe cambiar lo que dicen las tarjetas.
+        $stats = [
+            'total' => $modelClass::count(),
+            'active' => (clone $active)->count(),
+            'inactive' => $modelClass::where('is_active', false)->count(),
+            'channels' => $channelsCovered,
+            'channels_total' => count(AutoReplyOptions::channelSlugs()),
+        ];
+
+        $items = $modelClass::query()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $q->where('message', 'like', '%'.$request->string('search').'%');
+            })
+            ->when($request->filled('channel'), function ($q) use ($request) {
+                // "__none__" es la fila "Todos los canales" (channel NULL), que
+                // no se puede pedir por su valor porque en la URL seria vacio.
+                $channel = $request->string('channel')->toString();
+                $channel === '__none__' ? $q->whereNull('channel') : $q->where('channel', $channel);
+            })
+            ->when($request->filled('language'), function ($q) use ($request) {
+                $language = $request->string('language')->toString();
+                $language === '__none__' ? $q->whereNull('language') : $q->where('language', $language);
+            })
+            ->when($request->filled('status'), function ($q) use ($request) {
+                $q->where('is_active', $request->string('status')->toString() === 'active');
+            })
+            ->orderByRaw('channel IS NULL, channel')
+            ->orderByRaw('language IS NULL, language')
+            ->paginate(20)
+            ->withQueryString();
 
         return view($this->viewName(), [
-            'items' => $modelClass::query()
-                ->orderByRaw('channel IS NULL, channel')
-                ->orderByRaw('language IS NULL, language')
-                ->get(),
+            'items' => $items,
+            'stats' => $stats,
             'offHoursChannels' => AutoReplyOptions::channels(),
             'offHoursLanguages' => AutoReplyOptions::languages(),
+        ]);
+    }
+
+    /**
+     * Activar / desactivar / eliminar varios mensajes de una vez.
+     */
+    protected function handleBulkAction(): JsonResponse
+    {
+        $validated = request()->validate([
+            'action' => ['required', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $modelClass = $this->modelClass();
+        $items = $modelClass::whereIn('id', $validated['ids'])->get();
+
+        if ($validated['action'] === 'delete') {
+            foreach ($items as $item) {
+                $item->delete();
+            }
+        } else {
+            foreach ($items as $item) {
+                $item->update(['is_active' => $validated['action'] === 'activate']);
+            }
+        }
+
+        $labels = ['delete' => 'eliminado(s)', 'activate' => 'activado(s)', 'deactivate' => 'desactivado(s)'];
+
+        return response()->json([
+            'message' => $items->count()." mensaje(s) {$labels[$validated['action']]}.",
+            'count' => $items->count(),
         ]);
     }
 

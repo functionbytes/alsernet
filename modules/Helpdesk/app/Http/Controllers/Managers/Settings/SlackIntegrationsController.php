@@ -3,7 +3,9 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\Settings\StoreSlackIntegrationRequest;
 use Modules\Helpdesk\Http\Requests\Settings\UpdateSlackIntegrationRequest;
@@ -14,12 +16,22 @@ class SlackIntegrationsController extends Controller
     public function __construct()
     {
         $this->middleware('can:helpdesk.slack.view')->only(['index']);
-        $this->middleware('can:helpdesk.slack.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle']);
+        $this->middleware('can:helpdesk.slack.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle', 'bulkAction']);
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $integrations = SlackIntegration::query()->latest()->paginate(20);
+        $query = SlackIntegration::query();
+
+        if ($search = $request->get('search')) {
+            $query->where('channel_name', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->get('status') === '1');
+        }
+
+        $integrations = $query->latest()->paginate(20)->withQueryString();
 
         $statsRow = SlackIntegration::query()->selectRaw('
             COUNT(*) as total,
@@ -98,5 +110,40 @@ class SlackIntegrationsController extends Controller
         return redirect()
             ->route('settings.helpdesk.slack-integrations.index')
             ->with('success', "Integracion {$status} exitosamente.");
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $validated['action'];
+        $ids = $validated['ids'];
+        $count = 0;
+
+        $integrations = SlackIntegration::whereIn('id', $ids)->get();
+
+        foreach ($integrations as $integration) {
+            if ($action === 'delete') {
+                $integration->delete();
+            } else {
+                $integration->update(['is_active' => $action === 'activate']);
+            }
+            $count++;
+        }
+
+        $labels = [
+            'activate' => 'activada(s)',
+            'deactivate' => 'desactivada(s)',
+            'delete' => 'eliminada(s)',
+        ];
+
+        return response()->json([
+            'message' => "{$count} integracion(es) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 }

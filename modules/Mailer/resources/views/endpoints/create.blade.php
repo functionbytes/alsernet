@@ -58,10 +58,14 @@
                             <label class="control-label col-form-label">
                                 Slug (único) <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control @error('slug') is-invalid @enderror"
-                                   id="slug" name="slug" value="{{ old('slug') }}"
-                                   placeholder="prestashop_password_reset" required maxlength="255"
-                                   pattern="[a-z0-9\-]+">
+                            @include('core::components.slug-field', [
+                                'value' => old('slug', ''),
+                                'from' => '#name',
+                                'placeholder' => 'prestashop_password_reset',
+                                'pattern' => '[a-z0-9\-]+',
+                                'required' => true,
+                                'mirror' => '#slugPreview',
+                            ])
                             <small class="form-text text-muted">
                                 <i class="fas fa-link me-1"></i>
                                 URL: <code>/api/email-endpoints/<span id="slugPreview">slug</span>/send</code>
@@ -116,7 +120,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-md-6">
+                    <div class="col-12">
                         <div class="border rounded p-3 mb-3">
                             <div class="form-check form-switch">
                                 <input type="hidden" name="is_active" value="0">

@@ -20,6 +20,7 @@ class PriceLabelSettingsController extends Controller
         return view('pricelabels::admin.settings.index', [
             'pageTitle' => 'Configuracion de etiquetas de precio',
             'fonts' => $this->fontService->all(),
+            'fontFaceCss' => $this->fontService->fontFaceCss(forPdf: false),
         ]);
     }
 

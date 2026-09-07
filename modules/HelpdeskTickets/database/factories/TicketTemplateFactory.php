@@ -17,15 +17,21 @@ class TicketTemplateFactory extends Factory
             'subject' => fake()->sentence(5),
             'body' => fake()->paragraphs(2, true),
             'category_id' => null,
-            'priority_id' => null,
+            'priority' => null,
             'fields' => null,
             'is_active' => true,
+            'created_by' => null,
         ];
     }
 
     public function inactive(): static
     {
         return $this->state(['is_active' => false]);
+    }
+
+    public function ownedBy(int $userId): static
+    {
+        return $this->state(['created_by' => $userId]);
     }
 
     public function withFields(): static

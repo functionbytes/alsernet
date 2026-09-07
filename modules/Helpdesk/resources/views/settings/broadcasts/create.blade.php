@@ -41,7 +41,7 @@
 
                         {{-- Paso 1: Segmento --}}
                         <div class="step-content" id="step-1">
-                            <h6 class="fw-bold mb-1 border-bottom pb-2">Segmento y nombre</h6>
+                            <h6 class="fw-bold mb-1">Segmento y nombre</h6>
                             <p class="text-muted small mb-3">Define el nombre del broadcast y a qué audiencia va dirigido.</p>
 
                             <div class="row g-3">
@@ -108,7 +108,7 @@
 
                         {{-- Paso 2: Contenido --}}
                         <div class="step-content d-none" id="step-2">
-                            <h6 class="fw-bold mb-1 border-bottom pb-2">Contenido del mensaje</h6>
+                            <h6 class="fw-bold mb-1">Contenido del mensaje</h6>
                             <p class="text-muted small mb-3">Define el mensaje que recibirán tus contactos.</p>
 
                             <div class="row g-3">
@@ -181,7 +181,7 @@
 
                         {{-- Paso 3: Revision --}}
                         <div class="step-content d-none" id="step-3">
-                            <h6 class="fw-bold mb-1 border-bottom pb-2">Revision y programacion</h6>
+                            <h6 class="fw-bold mb-1">Revision y programacion</h6>
                             <p class="text-muted small mb-3">Revisa la configuracion y elige si enviar ahora o programar el broadcast.</p>
 
                             <div class="row g-3">
@@ -229,7 +229,7 @@
 
                         {{-- Paso 4: Confirmacion --}}
                         <div class="step-content d-none" id="step-4">
-                            <h6 class="fw-bold mb-1 border-bottom pb-2">Confirmacion</h6>
+                            <h6 class="fw-bold mb-1">Confirmacion</h6>
                             <p class="text-muted small mb-3">Confirma la creacion del broadcast. Quedara en estado borrador.</p>
 
                             <div class="text-center py-3">
@@ -275,22 +275,34 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los broadcasts</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los broadcasts</h6>
                     <p class="card-text text-muted small">
                         Un broadcast permite enviar un mensaje masivo a un segmento de contactos en un solo canal.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Canales soportados</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Canales soportados</h6>
+                </div>
+                <div class="card-body">
                     <ul class="list-unstyled small text-muted mb-0">
                         <li class="mb-1"><strong>WhatsApp</strong> — soporta texto libre y templates HSM aprobados</li>
                         <li class="mb-1"><strong>Facebook / Instagram</strong> — solo texto libre dentro de ventana de 24h</li>
                         <li class="mb-1"><strong>Email</strong> — requiere template configurado</li>
                         <li class="mb-1"><strong>Web</strong> — notificacion interna via widget web</li>
                     </ul>
-                    <hr>
-                    <h6 class="mb-2">Templates HSM</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Templates HSM</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small mb-0">
                         Los templates HSM deben estar aprobados previamente en Meta Business. Usa el ID exacto del template aprobado.
                     </p>

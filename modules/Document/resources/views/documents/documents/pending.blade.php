@@ -131,7 +131,12 @@
                                         <i class="fa-duotone fa-solid fa-ellipsis"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        @if($document->status->label = "pending")
+                                        {{-- Mismo arreglo que en index.blade.php: era una
+                                             asignacion (=) sobre una propiedad de la relacion, que
+                                             PHP rechaza con "Indirect modification of overloaded
+                                             property", y ademas comparaba contra `label` (el texto
+                                             visible, "Solicitado") en vez de `key`. --}}
+                                        @if($document->status?->key === 'pending')
                                             <li>
                                                 <a class="dropdown-item d-flex align-items-center gap-3 cursor-pointer"
                                                    data-document-id="{{ $document->id }}"

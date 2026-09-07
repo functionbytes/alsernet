@@ -117,7 +117,7 @@
                         </div>
 
                         <!-- Priority -->
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label for="priority" class="form-label fw-semibold">
                                 Prioridad <span class="text-danger">*</span>
                             </label>

@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Services;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Jobs\Documents\SendDocumentEmailJob;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
 use Modules\Document\Entities\Document;
 use Modules\Document\Services\DocumentEmailService;
@@ -11,7 +14,12 @@ use Tests\TestCase;
 
 class DocumentEmailServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected DocumentEmailService $emailService;
 
@@ -35,7 +43,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendInitialRequest($document);
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_send_initial_request_when_disabled(): void
@@ -52,7 +60,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendInitialRequest($document);
 
         // Assert: No job was dispatched
-        Queue::assertNotPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertNotPushed(SendDocumentEmailJob::class);
     }
 
     public function test_send_reminder_email(): void
@@ -69,7 +77,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendReminder($document);
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_reminder_email_replaces_days_since_request_variable(): void
@@ -91,7 +99,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendReminder($document);
 
         // Assert: Email was sent and variables are replaced
-        Mail::assertSent(\Illuminate\Mail\Message::class, function ($mail) {
+        Mail::assertSent(Message::class, function ($mail) {
             $html = $mail->getHtmlBody();
 
             // Check that DAYS_SINCE_REQUEST placeholder was replaced with actual number
@@ -124,7 +132,7 @@ class DocumentEmailServiceTest extends TestCase
         );
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_send_approval_email(): void
@@ -141,7 +149,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendApprovalEmail($document);
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_send_rejection_email(): void
@@ -161,7 +169,7 @@ class DocumentEmailServiceTest extends TestCase
         );
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_send_completion_email(): void
@@ -178,7 +186,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendCompletionEmail($document);
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_email_includes_customer_name(): void
@@ -196,7 +204,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendInitialRequest($document);
 
         // Assert: Queue has job with document containing customer data
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class, function ($job) use ($document) {
+        Queue::assertPushed(SendDocumentEmailJob::class, function ($job) use ($document) {
             return $job->document->id === $document->id;
         });
     }
@@ -214,7 +222,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendInitialRequest($document);
 
         // Assert: Job was dispatched
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class);
+        Queue::assertPushed(SendDocumentEmailJob::class);
     }
 
     public function test_email_includes_required_documents_list(): void
@@ -236,7 +244,7 @@ class DocumentEmailServiceTest extends TestCase
         $this->emailService->sendInitialRequest($document);
 
         // Assert: Job contains document with required documents
-        Queue::assertPushed(\App\Jobs\Documents\SendDocumentEmailJob::class, function ($job) {
+        Queue::assertPushed(SendDocumentEmailJob::class, function ($job) {
             return ! empty($job->document->required_documents);
         });
     }
@@ -244,7 +252,7 @@ class DocumentEmailServiceTest extends TestCase
     protected function createTestDocument(array $attributes = []): Document
     {
         return Document::create(array_merge([
-            'uid' => \Illuminate\Support\Str::uuid(),
+            'uid' => Str::uuid(),
             'order_id' => rand(1000000, 9999999),
             'order_reference' => 'TEST-'.rand(100000, 999999),
             'type' => 'corta',

@@ -25,10 +25,12 @@ class TicketCategoryFieldsControllerTest extends TestCase
     {
         parent::setUp();
 
-        DB::connection('helpdesk')->statement('SET FOREIGN_KEY_CHECKS=0');
-        DB::connection('helpdesk')->table('helpdesk_ticket_category_fields')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_ticket_categories')->truncate();
-        DB::connection('helpdesk')->statement('SET FOREIGN_KEY_CHECKS=1');
+        // delete(), NUNCA truncate(): truncate() es DDL con commit implícito,
+        // no lo revierte el rollback de DatabaseTransactions — un truncate()
+        // aquí borra de verdad estas tablas en la BD real compartida (pasó
+        // en producción/dev el 29-ago-2026, restaurado desde backup).
+        DB::connection('helpdesk')->table('helpdesk_ticket_category_fields')->delete();
+        DB::connection('helpdesk')->table('helpdesk_ticket_categories')->delete();
 
         Permission::firstOrCreate(['name' => 'helpdesk.tickets.settings', 'guard_name' => 'web']);
         $role = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);

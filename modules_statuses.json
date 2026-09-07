@@ -19,7 +19,7 @@
     "HelpdeskCompliance": true,
     "HelpdeskContacts": true,
     "HelpdeskDocument": true,
-    "HelpdeskEmailLog": true,
+    "HelpdeskEmailActivity": true,
     "HelpdeskErp": true,
     "HelpdeskHelpcenter": true,
     "HelpdeskIntegration": true,

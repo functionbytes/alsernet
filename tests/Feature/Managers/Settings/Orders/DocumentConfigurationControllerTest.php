@@ -2,13 +2,18 @@
 
 namespace Tests\Feature\Managers\Settings\Orders;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Mailer\Models\MailerTemplate;
 use Tests\TestCase;
 
 class DocumentConfigurationControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     /**
      * Test que la página de configuración global de documentos carga correctamente

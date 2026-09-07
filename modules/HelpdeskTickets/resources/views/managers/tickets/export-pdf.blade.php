@@ -31,7 +31,10 @@
             @foreach($tickets as $t)
                 <tr>
                     <td>{{ $t->ticket_number }}</td>
-                    <td>{{ \Str::limit($t->title, 40) }}</td>
+                    {{-- `title` no existe como columna: la tabla guarda el
+                         asunto en `subject`, así que esta celda salía vacía
+                         en todas las filas de todos los PDF exportados. --}}
+                    <td>{{ \Str::limit($t->subject, 40) }}</td>
                     <td>{{ $t->status?->name ?? '' }}</td>
                     <td>{{ $t->priority }}</td>
                     <td>{{ \Str::limit($t->customer?->name ?? '', 25) }}</td>

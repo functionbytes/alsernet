@@ -5,12 +5,15 @@ namespace Modules\Forms\Tests\Feature;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Database\Factories\TicketCategoryFactory;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketAttachment;
+use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Models\TicketMessage;
 use Tests\TestCase;
 
 class FormSubmissionReceiverTest extends TestCase
@@ -20,6 +23,19 @@ class FormSubmissionReceiverTest extends TestCase
     protected array $connectionsToTransact = ['helpdesk'];
 
     private string $url = '/api/forms/webhooks/submission';
+
+    /** Valor del interruptor de integración antes de que el test lo tocara. */
+    private mixed $restoreIntegrationToggle = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->restoreIntegrationToggle !== null) {
+            Setting::set('forms.integration_enabled', $this->restoreIntegrationToggle, 'integrations');
+            $this->restoreIntegrationToggle = null;
+        }
+
+        parent::tearDown();
+    }
 
     protected function setUp(): void
     {
@@ -40,10 +56,17 @@ class FormSubmissionReceiverTest extends TestCase
         array $data,
         ?string $idempotencyKey = 'submission-1',
         ?int $timestamp = null,
-        string $secret = 'test-secret'
+        string $secret = 'test-secret',
+        array $attachments = []
     ): TestResponse {
         $timestamp ??= time();
-        $body = json_encode(['action' => 'submit', 'type' => $formKey, 'category' => $categorySlug, 'data' => $data]);
+        $payload = ['action' => 'submit', 'type' => $formKey, 'category' => $categorySlug, 'data' => $data];
+
+        if ($attachments !== []) {
+            $payload['attachments'] = $attachments;
+        }
+
+        $body = json_encode($payload);
         $signature = hash_hmac('sha256', $timestamp.':'.$body, $secret);
 
         $server = [
@@ -60,20 +83,29 @@ class FormSubmissionReceiverTest extends TestCase
     }
 
     /**
-     * Crea la TicketCategory + el Form activo que la vincula a $formKey --
-     * FormSubmissionReceiverController resuelve por Form::form_key, no
+     * Crea la TicketCategory + el AlsernetForm activo que la vincula a $formKey --
+     * FormSubmissionReceiverController resuelve por AlsernetForm::form_key, no
      * directamente por el slug de categoría (ver tarea #20).
      */
-    private function makeForm(string $formKey, string $categorySlug, bool $active = true): Form
+    /**
+     * firstOrCreate/updateOrCreate en vez de create: aquí el form_key y el
+     * slug viajan dentro del payload firmado, así que no se les puede poner
+     * un sufijo único. Y ambos ('contact', 'contacto-general') existen ya
+     * como datos reales en la BD compartida de test, con lo que crearlos
+     * reventaba con UniqueConstraintViolationException. Reutilizarlos es
+     * seguro: DatabaseTransactions revierte los cambios al terminar.
+     */
+    private function makeForm(string $formKey, string $categorySlug, bool $active = true): AlsernetForm
     {
-        $category = TicketCategoryFactory::new()->create(['slug' => $categorySlug, 'active' => true]);
+        $category = TicketCategory::firstOrCreate(
+            ['slug' => $categorySlug],
+            TicketCategoryFactory::new()->make(['slug' => $categorySlug, 'active' => true])->getAttributes()
+        );
 
-        return Form::create([
-            'form_key' => $formKey,
-            'name' => $categorySlug,
-            'category_id' => $category->id,
-            'active' => $active,
-        ]);
+        return AlsernetForm::updateOrCreate(
+            ['form_key' => $formKey],
+            ['name' => $categorySlug, 'category_id' => $category->id, 'active' => $active]
+        );
     }
 
     // ─── Configuration guard ──────────────────────────────────────────────────
@@ -131,6 +163,27 @@ class FormSubmissionReceiverTest extends TestCase
         $response->assertStatus(400);
     }
 
+    /**
+     * La protección anti-replay real: reenviar la petición TAL CUAL (misma
+     * firma, que cubre timestamp+body) se rechaza en el middleware. Es lo que
+     * distingue un ataque de un reintento legítimo del cron, que llega con la
+     * misma idempotency key pero firma distinta — ver VerifyAlsernetFormsHmac.
+     */
+    public function test_replaying_the_exact_same_signature_is_rejected(): void
+    {
+        $this->makeForm('contact', 'contacto-general');
+
+        $timestamp = time();
+        $datos = ['email' => 'replay-firma@example.com', 'firstname' => 'Ana'];
+
+        $this->postSignedSubmission('contact', 'contacto-general', $datos,
+            idempotencyKey: 'firma-1', timestamp: $timestamp)->assertOk();
+
+        // Misma firma byte a byte: mismo timestamp, mismo cuerpo.
+        $this->postSignedSubmission('contact', 'contacto-general', $datos,
+            idempotencyKey: 'firma-1', timestamp: $timestamp)->assertStatus(401);
+    }
+
     public function test_replaying_the_same_idempotency_key_does_not_create_a_second_ticket(): void
     {
         $this->makeForm('contact', 'contacto-general');
@@ -159,20 +212,23 @@ class FormSubmissionReceiverTest extends TestCase
         );
     }
 
-    // ─── Resolución de Form / categoría / cliente / creación de ticket ────────
+    // ─── Resolución de AlsernetForm / categoría / cliente / creación de ticket ────────
 
     public function test_unknown_form_key_returns_500_and_creates_nothing(): void
     {
+        $ticketsAntes = Ticket::on('helpdesk')->count();
         $response = $this->postSignedSubmission('formulario-inexistente', 'contacto-general', [
             'email' => 'a@example.com',
         ]);
 
         $response->assertStatus(500);
-        $this->assertSame(0, Ticket::on('helpdesk')->count());
+        // Delta, no total: la BD de test es compartida y ya trae tickets reales.
+        $this->assertSame($ticketsAntes, Ticket::on('helpdesk')->count());
     }
 
     public function test_inactive_form_returns_500_and_creates_nothing(): void
     {
+        $ticketsAntes = Ticket::on('helpdesk')->count();
         $this->makeForm('workwithus', 'trabaja-con-nosotros', active: false);
 
         $response = $this->postSignedSubmission('workwithus', 'trabaja-con-nosotros', [
@@ -180,17 +236,20 @@ class FormSubmissionReceiverTest extends TestCase
         ]);
 
         $response->assertStatus(500);
-        $this->assertSame(0, Ticket::on('helpdesk')->count());
+        // Delta, no total: la BD de test es compartida y ya trae tickets reales.
+        $this->assertSame($ticketsAntes, Ticket::on('helpdesk')->count());
     }
 
     public function test_form_without_category_returns_500(): void
     {
-        Form::create(['form_key' => 'orphan', 'name' => 'Orphan', 'category_id' => null, 'active' => true]);
+        $ticketsAntes = Ticket::on('helpdesk')->count();
+        AlsernetForm::create(['form_key' => 'orphan', 'name' => 'Orphan', 'category_id' => null, 'active' => true]);
 
         $response = $this->postSignedSubmission('orphan', '', ['email' => 'a@example.com']);
 
         $response->assertStatus(500);
-        $this->assertSame(0, Ticket::on('helpdesk')->count());
+        // Delta, no total: la BD de test es compartida y ya trae tickets reales.
+        $this->assertSame($ticketsAntes, Ticket::on('helpdesk')->count());
     }
 
     public function test_missing_email_in_payload_returns_500(): void
@@ -255,8 +314,8 @@ class FormSubmissionReceiverTest extends TestCase
 
     public function test_mismatched_category_in_payload_does_not_block_creation(): void
     {
-        // El Form manda: el payload trae un 'category' distinto (desincronizado
-        // a propósito) y el ticket debe usar igualmente la categoría real del Form.
+        // El AlsernetForm manda: el payload trae un 'category' distinto (desincronizado
+        // a propósito) y el ticket debe usar igualmente la categoría real del AlsernetForm.
         $form = $this->makeForm('contact', 'contacto-general');
 
         $response = $this->postSignedSubmission('contact', 'categoria-vieja-en-prestashop', [
@@ -272,6 +331,15 @@ class FormSubmissionReceiverTest extends TestCase
 
     public function test_returns_503_and_creates_nothing_when_integration_disabled(): void
     {
+        $ticketsAntes = Ticket::on('helpdesk')->count();
+
+        /* Setting::set() escribe fuera de la transacción de DatabaseTransactions
+           (y además cachea), así que apagar el interruptor aquí lo deja apagado
+           en la base real al terminar: el sitio entero deja de crear tickets y
+           nadie se entera hasta que alguien envía un formulario. Se restaura en
+           tearDown pase lo que pase. */
+        $this->restoreIntegrationToggle = Setting::get('forms.integration_enabled');
+
         Setting::set('forms.integration_enabled', '0', 'integrations');
         $this->makeForm('contact', 'contacto-general');
 
@@ -280,6 +348,66 @@ class FormSubmissionReceiverTest extends TestCase
         ]);
 
         $response->assertStatus(503);
-        $this->assertSame(0, Ticket::on('helpdesk')->count());
+        // Delta, no total: la BD de test es compartida y ya trae tickets reales.
+        $this->assertSame($ticketsAntes, Ticket::on('helpdesk')->count());
+    }
+
+    // ─── Adjuntos ─────────────────────────────────────────────────────────────
+
+    /**
+     * El CV de "Trabaja con nosotros" y las fotos de "Segunda mano" viajan en
+     * base64 dentro del payload. Antes se perdían: alsernetforms solo se los
+     * pasaba al correo de negocio, y todos los formularios entregan por aquí.
+     */
+    public function test_base64_attachments_are_stored_on_the_ticket(): void
+    {
+        $this->makeForm('workwithus', 'trabaja-con-nosotros');
+
+        $response = $this->postSignedSubmission(
+            'workwithus',
+            'trabaja-con-nosotros',
+            ['email' => 'candidato@example.com', 'firstname' => 'Ana'],
+            'submission-att-1',
+            null,
+            'test-secret',
+            [[
+                'name' => 'cv.txt',
+                'mime' => 'text/plain',
+                'size' => 11,
+                'content_b64' => base64_encode('Curriculum'),
+            ]]
+        );
+
+        $response->assertOk();
+
+        $ticket = Ticket::on('helpdesk')->where('ticket_number', $response->json('data.ticket_number'))->firstOrFail();
+        $adjuntos = TicketAttachment::on('helpdesk')
+            ->whereIn('ticket_message_id', TicketMessage::on('helpdesk')->where('ticket_id', $ticket->id)->pluck('id'))
+            ->get();
+
+        $this->assertCount(1, $adjuntos);
+        $this->assertSame('cv.txt', $adjuntos->first()->original_filename);
+    }
+
+    /**
+     * Un base64 corrupto no debe tumbar la petición: devolver un 500 aquí haría
+     * que el reintento del outbox abriera un ticket duplicado.
+     */
+    public function test_a_broken_attachment_does_not_lose_the_ticket(): void
+    {
+        $this->makeForm('workwithus', 'trabaja-con-nosotros');
+
+        $response = $this->postSignedSubmission(
+            'workwithus',
+            'trabaja-con-nosotros',
+            ['email' => 'candidato2@example.com'],
+            'submission-att-2',
+            null,
+            'test-secret',
+            [['name' => 'roto.txt', 'mime' => 'text/plain', 'size' => 5, 'content_b64' => '!!!no-es-base64!!!']]
+        );
+
+        $response->assertOk();
+        $this->assertNotNull($response->json('data.ticket_number'));
     }
 }

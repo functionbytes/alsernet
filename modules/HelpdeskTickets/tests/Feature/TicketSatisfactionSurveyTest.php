@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -102,14 +103,45 @@ class TicketSatisfactionSurveyTest extends TestCase
             'closed_at' => now(),
         ]);
 
+        // Antes redirigía a portal.login con un flash "gracias" -- confuso,
+        // el cliente aterrizaba en un formulario de login (reportado por el
+        // usuario, 3-sep-2026). Ahora va a la página de agradecimiento del
+        // propio ticket (FeedbackController), sin login de por medio.
         $this->get(URL::signedRoute('portal.tickets.rate.email', [
             'ticketNumber' => $ticket->ticket_number,
             'rating' => 4,
-        ]))->assertRedirect(route('portal.login'));
+        ]))->assertRedirect(FeedbackController::signedShowUrl($ticket));
 
         $ticket->refresh();
         $this->assertEquals(4, $ticket->rating);
         $this->assertNotNull($ticket->rated_at);
+    }
+
+    public function test_customer_can_open_rating_link_twice_without_error(): void
+    {
+        // Antes un segundo clic (o el mismo enlace abierto dos veces) caía en
+        // whereNull('rated_at')->firstOrFail() -> 404 crudo de Laravel.
+        $ticket = Ticket::create([
+            'subject' => 'Double-click ticket',
+            'description' => 'Rate me twice.',
+            'customer_id' => $this->customer->id,
+            'status_id' => $this->closedStatus->id,
+            'priority' => 'normal',
+            'source' => 'portal',
+            'closed_at' => now(),
+        ]);
+
+        $url = URL::signedRoute('portal.tickets.rate.email', [
+            'ticketNumber' => $ticket->ticket_number,
+            'rating' => 4,
+        ]);
+
+        $this->get($url)->assertRedirect(FeedbackController::signedShowUrl($ticket));
+        $this->get($url)->assertRedirect(FeedbackController::signedShowUrl($ticket));
+
+        $ticket->refresh();
+        // El segundo clic no debe pisar la valoración ya guardada.
+        $this->assertEquals(4, $ticket->rating);
     }
 
     public function test_email_rating_link_with_invalid_rating_returns_error(): void
@@ -124,10 +156,13 @@ class TicketSatisfactionSurveyTest extends TestCase
             'closed_at' => now(),
         ]);
 
+        // Un rating fuera de 1-5 no se guarda, pero igual lleva a la página
+        // de feedback del ticket -- ahí, sin rated_at, se le muestra el
+        // formulario completo para que puntúe manualmente en vez de un error.
         $this->get(URL::signedRoute('portal.tickets.rate.email', [
             'ticketNumber' => $ticket->ticket_number,
             'rating' => 99,
-        ]))->assertRedirect(route('portal.login'));
+        ]))->assertRedirect(FeedbackController::signedShowUrl($ticket));
 
         // Rating should not have been saved
         $ticket->refresh();

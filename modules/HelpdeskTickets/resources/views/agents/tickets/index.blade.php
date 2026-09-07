@@ -17,7 +17,7 @@
     {{-- Filters --}}
     <form method="GET" class="row g-2 mb-3">
         <div class="col-auto">
-            <select name="status" class="form-select form-select-sm">
+            <select name="status" class="form-select form-select-sm select2">
                 <option value="">Todos los estados</option>
                 @foreach($statuses as $status)
                     <option value="{{ $status->slug }}" @selected(request('status') === $status->slug)>
@@ -83,3 +83,11 @@
 
     <div class="mt-3">{{ $tickets->links() }}</div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+});
+</script>
+@endpush

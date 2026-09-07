@@ -57,7 +57,7 @@
             <div class="frow">
                 <div class="field">
                     <div class="flabel">Categoría</div>
-                    <select class="fselect" id="bv-ticket-category">
+                    <select class="fselect select2" id="bv-ticket-category">
                         <option value="">Sin categoría</option>
                         @foreach(app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->getCategories() as $cat)
                             <option value="{{ $cat['id'] }}">{{ $cat['name'] }}</option>
@@ -66,7 +66,7 @@
                 </div>
                 <div class="field">
                     <div class="flabel">Agente</div>
-                    <select class="fselect" id="bv-ticket-assignee">
+                    <select class="fselect select2" id="bv-ticket-assignee">
                         <option value="">Sin asignar</option>
                         @foreach(app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->getAssignableAgents() as $agent)
                             <option value="{{ $agent['id'] }}" {{ $convo?->assignee_id == $agent['id'] ? 'selected' : '' }}>
@@ -104,3 +104,17 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+$(function () {
+    // dropdownParent: igual que el resto de selects dentro de un .bv-modal
+    // (z-index:1080) — sin esto, el desplegable de select2 (z-index:1051 por
+    // defecto) se renderiza detrás del propio modal.
+    $('#bv-ticket-category, #bv-ticket-assignee').select2({
+        width: '100%',
+        dropdownParent: $('[data-bv-modal-name="create-ticket"]'),
+    });
+});
+</script>
+@endpush

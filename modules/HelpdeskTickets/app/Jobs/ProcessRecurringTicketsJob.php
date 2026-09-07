@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class ProcessRecurringTicketsJob implements ShouldQueue
 {
@@ -48,11 +49,17 @@ class ProcessRecurringTicketsJob implements ShouldQueue
 
         foreach ($due as $recurring) {
             try {
+                // status_id explícito: sin él el ticket nace con estado NULL,
+                // que no es ningún estado del catálogo — no aparece en ningún
+                // tab del listado, la fila sale sin etiqueta y el SLA no
+                // arranca. Había tres tickets así generados por este job
+                // (TCK-2026-00033, 00034 y 00076).
                 Ticket::create([
                     'subject' => $recurring->subject,
                     'description' => $recurring->description,
                     'category_id' => $recurring->category_id,
                     'assignee_id' => $recurring->assignee_id,
+                    'status_id' => $this->defaultStatusId(),
                     'source' => 'recurring',
                 ]);
 
@@ -67,5 +74,16 @@ class ProcessRecurringTicketsJob implements ShouldQueue
                 Log::error("ProcessRecurringTicketsJob: failed for recurring [{$recurring->id}]: {$e->getMessage()}");
             }
         }
+    }
+
+    /**
+     * Estado inicial del catálogo: el marcado por defecto y, si no hay
+     * ninguno, el primero. Mismo criterio que TicketsCrudController::store().
+     */
+    private function defaultStatusId(): ?int
+    {
+        $statuses = CatalogCacheService::statuses();
+
+        return $statuses->firstWhere('is_default', true)?->id ?? $statuses->first()?->id;
     }
 }

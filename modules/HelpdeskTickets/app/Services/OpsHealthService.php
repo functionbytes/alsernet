@@ -34,6 +34,7 @@ class OpsHealthService
      *     queues: array<string, int>,
      *     queue_total: int,
      *     failed_jobs: int|null,
+     *     failed_jobs_sample: array<int, array<string, mixed>>,
      *     webhooks_failing: int|null,
      *     webhook_failed_deliveries_last_hour: int|null,
      *     sla_breaches_last_hour: int|null,
@@ -50,6 +51,7 @@ class OpsHealthService
             'queues' => $queues,
             'queue_total' => array_sum($queues),
             'failed_jobs' => $this->failedJobsCount(),
+            'failed_jobs_sample' => $this->failedJobsSample(),
             'webhooks_failing' => $this->failingWebhookEndpoints(),
             'webhook_failed_deliveries_last_hour' => $this->failedWebhookDeliveriesLastHour(),
             'sla_breaches_last_hour' => $this->slaBreachesLastHour(),
@@ -141,6 +143,41 @@ class OpsHealthService
             return (int) DB::table(config('queue.failed.table', 'failed_jobs'))->count();
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    /**
+     * Los últimos jobs en dead-letter, con lo justo para decidir si merece la
+     * pena reintentarlos: qué job era, sobre qué cola y con qué error.
+     *
+     * El payload es un JSON con la clase serializada; se saca solo el nombre
+     * corto de la clase. Del `exception` interesa la primera línea: el resto
+     * es el stack trace, que en un modal no cabe ni se lee.
+     *
+     * @return array<int, array{uuid: string, job: string, queue: string, error: string, failed_at: string|null}>
+     */
+    private function failedJobsSample(int $limit = 8): array
+    {
+        try {
+            return DB::table(config('queue.failed.table', 'failed_jobs'))
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->get(['uuid', 'queue', 'payload', 'exception', 'failed_at'])
+                ->map(function ($row) {
+                    $payload = json_decode((string) $row->payload, true);
+                    $name = $payload['displayName'] ?? ($payload['data']['commandName'] ?? 'Job');
+
+                    return [
+                        'uuid' => (string) $row->uuid,
+                        'job' => class_basename($name),
+                        'queue' => (string) $row->queue,
+                        'error' => trim(strtok((string) $row->exception, "\n") ?: ''),
+                        'failed_at' => $row->failed_at,
+                    ];
+                })
+                ->all();
+        } catch (\Throwable) {
+            return [];
         }
     }
 

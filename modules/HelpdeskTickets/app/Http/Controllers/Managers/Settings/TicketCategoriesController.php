@@ -3,8 +3,10 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketCategoryRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketCategoryRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCategoryRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketCategoryRequest;
@@ -107,7 +109,7 @@ class TicketCategoriesController extends Controller
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-categories.index')
-            ->with('success', 'Categoría creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.category.created'));
     }
 
     /**
@@ -167,7 +169,7 @@ class TicketCategoriesController extends Controller
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-categories.index')
-            ->with('success', 'Categoría actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.category.updated'));
     }
 
     /**
@@ -177,13 +179,13 @@ class TicketCategoriesController extends Controller
     {
         // Check if category has tickets
         if ($category->tickets()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar una categoría que tiene tickets asociados.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.category.cannot_delete_with_tickets'));
         }
 
         $category->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-categories.index')
-            ->with('success', 'Categoría eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.category.deleted'));
     }
 
     /**
@@ -193,7 +195,7 @@ class TicketCategoriesController extends Controller
     {
         $category->update(['active' => ! $category->active]);
 
-        return back()->with('success', 'Estado de la categoría actualizado exitosamente.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.category.toggled'));
     }
 
     /**
@@ -206,5 +208,45 @@ class TicketCategoriesController extends Controller
         TicketCategory::reorder($validated['ids']);
 
         return response()->json(['success' => true, 'message' => 'Orden actualizado exitosamente.']);
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several categories.
+     */
+    public function bulkAction(BulkActionTicketCategoryRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $categories = TicketCategory::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($categories as $category) {
+                if ($category->tickets()->count() > 0) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $category->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($categories as $category) {
+                $category->update(['active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'activada(s)', 'deactivate' => 'desactivada(s)'];
+        $message = "{$count} categoria(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitida(s) por tener tickets asociados.";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

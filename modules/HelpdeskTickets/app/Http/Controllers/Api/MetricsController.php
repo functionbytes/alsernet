@@ -84,7 +84,7 @@ class MetricsController extends Controller
         $users = User::whereIn('id', $agentIds)
             ->get(['id', 'firstname', 'lastname'])
             ->mapWithKeys(fn ($u) => [
-                $u->id => trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: 'Unknown',
+                $u->id => $u->fullName() ?: 'Unknown',
             ]);
 
         $openByAgent = $rows->pluck('open_tickets', 'assignee_id');

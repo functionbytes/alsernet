@@ -4,7 +4,7 @@ namespace Modules\User\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\Middleware\Authorize;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Schema;
 use Modules\Auth\Http\Middleware\Authenticate;
 use Modules\Auth\Http\Middleware\CheckSession;
@@ -24,7 +24,12 @@ use Tests\TestCase;
  */
 class UserManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     private Role $adminRole;
 

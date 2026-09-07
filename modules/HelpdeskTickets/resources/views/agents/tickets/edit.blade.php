@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Editar ticket ' . $ticket->ticket_number)
 
 @section('page_header')
@@ -14,7 +18,7 @@
         <h5 class="mb-0 fw-bold">Editar — {{ $ticket->ticket_number }}</h5>
     </div>
 
-    <div class="card shadow-sm" style="max-width: 700px;">
+    <div class="card shadow-sm hdt-form-narrow">
         <div class="card-body">
             <form action="{{ route('agent.helpdesk.tickets.update', $ticket) }}" method="POST">
                 @csrf
@@ -29,7 +33,7 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Estado</label>
-                        <select name="status_id" class="form-select">
+                        <select name="status_id" class="form-select select2">
                             @foreach($statuses as $status)
                                 <option value="{{ $status->id }}" @selected($ticket->status_id == $status->id)>
                                     {{ $status->name }}
@@ -39,7 +43,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Categoría</label>
-                        <select name="category_id" class="form-select">
+                        <select name="category_id" class="form-select select2">
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" @selected($ticket->category_id == $cat->id)>
                                     {{ $cat->name }}
@@ -49,7 +53,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Prioridad</label>
-                        <select name="priority" class="form-select">
+                        <select name="priority" class="form-select select2">
                             @foreach(['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'] as $val => $label)
                                 <option value="{{ $val }}" @selected($ticket->priority === $val)>{{ $label }}</option>
                             @endforeach
@@ -64,3 +68,11 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+});
+</script>
+@endpush

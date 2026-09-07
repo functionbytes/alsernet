@@ -13,44 +13,38 @@
     @endphp
 
     {{-- Colores --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Colores</h6>
+    <h6 class="fw-semibold mb-1">Colores</h6>
     <p class="text-muted small mb-3">Paleta de colores para el fondo, texto y elementos de accion</p>
     <div class="row g-3 mb-4">
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <label class="form-label">Color de fondo</label>
-            <div class="input-group">
-                <input type="color" name="appearance[background_color]"
-                       class="form-control form-control-color"
-                       value="{{ $bgColor }}" id="bg-color-input">
-                <input type="text" class="form-control" value="{{ $bgColor }}" id="bg-color-text" readonly>
-            </div>
+            @include('core::components.color-field', [
+                'name' => 'appearance[background_color]',
+                'value' => $bgColor,
+            ])
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <label class="form-label">Color de texto</label>
-            <div class="input-group">
-                <input type="color" name="appearance[text_color]"
-                       class="form-control form-control-color"
-                       value="{{ $textColor }}" id="text-color-input">
-                <input type="text" class="form-control" value="{{ $textColor }}" id="text-color-text" readonly>
-            </div>
+            @include('core::components.color-field', [
+                'name' => 'appearance[text_color]',
+                'value' => $textColor,
+            ])
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-4">
             <label class="form-label">Color primario (botones)</label>
-            <div class="input-group">
-                <input type="color" name="appearance[primary_color]"
-                       class="form-control form-control-color"
-                       value="{{ $primaryColor }}" id="primary-color-input">
-                <input type="text" class="form-control" value="{{ $primaryColor }}" id="primary-color-text" readonly>
-            </div>
+            @include('core::components.color-field', [
+                'name' => 'appearance[primary_color]',
+                'value' => $primaryColor,
+            ])
         </div>
 
     </div>
 
     {{-- Tipografia --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Tipografia</h6>
+    <h6 class="fw-semibold mb-1">Tipografia</h6>
     <p class="text-muted small mb-3">Tamano y familia de fuente del contenido</p>
     <div class="row g-3 mb-4">
 
@@ -77,7 +71,7 @@
     </div>
 
     {{-- Posicionamiento --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Posicionamiento</h6>
+    <h6 class="fw-semibold mb-1">Posicionamiento</h6>
     <p class="text-muted small mb-3">Ubicacion y tamano del contenedor de la campana</p>
     <div class="row g-3 mb-4">
 
@@ -107,7 +101,7 @@
     </div>
 
     {{-- Bordes y espaciado --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Bordes y espaciado</h6>
+    <h6 class="fw-semibold mb-1">Bordes y espaciado</h6>
     <p class="text-muted small mb-3">Curvatura de esquinas y espacio interno</p>
     <div class="row g-3">
 

@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +140,48 @@ class AgentSettingsController extends Controller
         return redirect()
             ->route('settings.helpdesk.agent-settings.index')
             ->with('success', "Configuracion de {$user->name} actualizada correctamente");
+    }
+
+    /**
+     * Bulk-set availability for a selection of agents.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('helpdesk.agents.manage');
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:available,unavailable'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $validated['action'];
+
+        // Only touch ids that actually belong to agents, same guard as index().
+        $agentIds = User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', self::AGENT_ROLES))
+            ->whereIn('id', $validated['ids'])
+            ->pluck('id');
+
+        $count = 0;
+
+        foreach ($agentIds as $agentId) {
+            AgentSettings::query()->updateOrCreate(
+                ['user_id' => $agentId],
+                ['is_available' => $action === 'available']
+            );
+            $count++;
+        }
+
+        $labels = [
+            'available' => 'marcado(s) como disponible(s)',
+            'unavailable' => 'marcado(s) como no disponible(s)',
+        ];
+
+        return response()->json([
+            'message' => "{$count} agente(s) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 
     /**

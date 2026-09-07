@@ -2,13 +2,15 @@
 
 namespace Modules\HelpdeskTickets\Listeners;
 
-use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerTemplateRendererService;
@@ -32,6 +34,21 @@ class NotifyAgentsOnNewTicket implements ShouldQueue
     {
         $ticket = $event->ticket;
 
+        // Apagado por defecto: hasta 3-sep-2026 esto avisaba a TODO usuario con
+        // el rol helpdesk-agent, y esa lista estaba contaminada con 61 usuarios
+        // de fixture de test en la BD compartida de dev (ver
+        // reference_helpdesk_agent_role_leaked_to_test_fixtures) — cada ticket
+        // nuevo mandaba ~20 correos, la mayoría a direcciones falsas. Se deja
+        // el ajuste apagado hasta que un admin lo valide explícitamente desde
+        // Ajustes → Tickets → General.
+        if (! filter_var(Setting::get('tickets.notify_agents_new_ticket', false), FILTER_VALIDATE_BOOLEAN)) {
+            Log::info('Notificación de nuevo ticket a agentes desactivada en ajustes — se omite', [
+                'ticket_id' => $ticket->id,
+            ]);
+
+            return;
+        }
+
         $template = MailerTemplate::where('key', 'helpdesk.new_ticket_agent')->first();
 
         if (! $template || ! $template->is_enabled) {
@@ -42,11 +59,13 @@ class NotifyAgentsOnNewTicket implements ShouldQueue
             return;
         }
 
-        $agents = $this->resolveAgents();
+        $agents = $this->resolveAgents($ticket);
 
         if ($agents->isEmpty()) {
-            Log::info('No active agents found — skipping new ticket agent notification', [
+            Log::info('Sin grupo resuelto para el ticket (ni group_id propio ni grupo por defecto de su categoría) — se omite la notificación', [
                 'ticket_id' => $ticket->id,
+                'category_id' => $ticket->category_id,
+                'group_id' => $ticket->group_id,
             ]);
 
             return;
@@ -97,17 +116,24 @@ class NotifyAgentsOnNewTicket implements ShouldQueue
         ]);
     }
 
-    private function resolveAgents()
+    /**
+     * Miembros del grupo responsable del ticket: el suyo propio si ya está
+     * asignado (group_id), si no el grupo por defecto de su categoría
+     * (TicketCategory::getDefaultGroup(), antes sin usar en ningún sitio).
+     * Ya NO se avisa a todo el rol helpdesk-agent ni se cae a un permiso
+     * genérico — sin categoría/grupo resuelto, no se notifica a nadie (ver
+     * el comentario en handle()).
+     */
+    private function resolveAgents(Ticket $ticket)
     {
-        $agents = User::whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
-            ->get();
+        $ticket->loadMissing('category');
 
-        if ($agents->isNotEmpty()) {
-            return $agents;
+        $groupId = $ticket->group_id ?: $ticket->category?->getDefaultGroup()?->id;
+
+        if (! $groupId) {
+            return collect();
         }
 
-        return User::permission('helpdesk.tickets.view')
-            ->limit(10)
-            ->get();
+        return TicketGroup::find($groupId)?->users()->get() ?? collect();
     }
 }

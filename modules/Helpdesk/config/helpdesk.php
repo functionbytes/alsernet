@@ -199,6 +199,25 @@ return [
         'password' => secret_env('HELPDESK_IMAP_PASSWORD', ''),
         'folder' => env('HELPDESK_IMAP_FOLDER', 'INBOX'),
         'batch_size' => env('HELPDESK_IMAP_BATCH_SIZE', 50),
+
+        /*
+         * Servidores de correo que solo hablan TLS 1.0/1.1.
+         *
+         * OpenSSL 3 los trae deshabilitados, asi que contra uno de estos buzones
+         * el handshake falla con "SSL routines::unsupported protocol" y el canal
+         * no llega a leerse nunca. Para los hosts de esta lista se rebaja el
+         * nivel de cifrado (SECLEVEL=0) y solo para ellos; el resto sigue
+         * exigiendo TLS moderno. La validacion del certificado NO se relaja en
+         * ningun caso.
+         *
+         * Es un apaño para servidores ajenos que van con TLS obsoleto (retirado
+         * por el RFC 8996 en 2021): lo correcto es que el proveedor actualice, y
+         * entonces basta con sacar el host de aqui.
+         */
+        'legacy_tls_hosts' => array_filter(array_map(
+            'trim',
+            explode(',', (string) env('HELPDESK_IMAP_LEGACY_TLS_HOSTS', 'correo.a-alvarez.com'))
+        )),
     ],
 
     'email_inbound' => [

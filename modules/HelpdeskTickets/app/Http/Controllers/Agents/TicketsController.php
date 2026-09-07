@@ -14,6 +14,8 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Models\TicketTemplate;
+use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 
 class TicketsController extends Controller
 {
@@ -51,9 +53,15 @@ class TicketsController extends Controller
         $this->authorize('create', Ticket::class);
 
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'email']);
+        // Mismo límite que TicketsCrudController::create() (lado manager): sin
+        // esto la query trae todos los clientes para un <select> HTML.
+        $customers = Customer::orderBy('name')->limit(500)->get(['id', 'name', 'email']);
+        $templates = TicketTemplate::active()
+            ->visibleTo(auth()->id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'subject', 'body', 'category_id', 'priority']);
 
-        return view('helpdesktickets::agents.tickets.create', compact('categories', 'customers'));
+        return view('helpdesktickets::agents.tickets.create', compact('categories', 'customers', 'templates'));
     }
 
     public function store(StoreTicketRequest $request): RedirectResponse
@@ -67,6 +75,17 @@ class TicketsController extends Controller
             'source' => 'agent',
         ]));
 
+        // Sustitucion de variables tipo {{ticket_number}}, {{customer_name}},
+        // {{erp_saldo_pendiente}}... — mismo TicketVariableInterpolator que
+        // Macros/canned replies (ver TicketsCrudController::store() para el
+        // mismo tratamiento del lado manager).
+        $interpolator = app(TicketVariableInterpolator::class);
+        $resolvedSubject = $interpolator->interpolate($ticket->subject, $ticket);
+        $resolvedDescription = $interpolator->interpolate($ticket->description, $ticket);
+        if ($resolvedSubject !== $ticket->subject || $resolvedDescription !== $ticket->description) {
+            $ticket->update(['subject' => $resolvedSubject, 'description' => $resolvedDescription]);
+        }
+
         return redirect()->route('agent.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesk::helpdesk.messages.ticket_created'));
     }
@@ -77,30 +96,7 @@ class TicketsController extends Controller
 
         $ticket->load(['customer', 'status', 'category', 'assignee', 'items.user', 'items.author']);
 
-        $userId = auth()->id();
-        $itemIds = $ticket->items->pluck('id');
-
-        if ($itemIds->isNotEmpty()) {
-            $alreadyRead = TicketRead::where('user_id', $userId)
-                ->whereIn('ticket_item_id', $itemIds)
-                ->pluck('ticket_item_id')
-                ->all();
-
-            $toInsert = $itemIds->diff($alreadyRead)
-                ->map(fn ($id) => [
-                    'ticket_item_id' => $id,
-                    'user_id' => $userId,
-                    'read_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-                ->values()
-                ->all();
-
-            if (! empty($toInsert)) {
-                TicketRead::insert($toInsert);
-            }
-        }
+        TicketRead::markAllReadFor($ticket, auth()->id());
 
         $statuses = TicketStatus::active()->ordered()->get(['id', 'name', 'slug', 'color']);
 

@@ -3,13 +3,15 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketGroupRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketGroupRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketGroupRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketGroupRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketGroup;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class TicketGroupsController extends Controller
 {
@@ -41,7 +43,7 @@ class TicketGroupsController extends Controller
             'total' => TicketGroup::count(),
             'active' => TicketGroup::where('is_active', true)->count(),
             'inactive' => TicketGroup::where('is_active', false)->count(),
-            'default' => TicketGroup::where('is_default', true)->count(),
+            'default' => TicketGroup::where('default', true)->count(),
             'total_members' => \DB::connection('helpdesk')->table('helpdesk_ticket_group_user')->distinct('user_id')->count('user_id'),
         ];
 
@@ -56,14 +58,8 @@ class TicketGroupsController extends Controller
      */
     public function create()
     {
-        $users = User::where('available', 1)
-            ->where('verified', 1)
-            ->orderBy('firstname')
-            ->orderBy('lastname')
-            ->get();
-
         return view('theme.views.backups.helpdesk.ticket-groups.create', [
-            'users' => $users,
+            'users' => CatalogCacheService::agents(),
         ]);
     }
 
@@ -83,15 +79,18 @@ class TicketGroupsController extends Controller
         if ($request->filled('users')) {
             $usersData = [];
             foreach ($request->users as $index => $userId) {
+                // conversation_priority: es como se llama la columna en el
+                // pivot helpdesk_group_user, compartido con el reparto de
+                // conversaciones. El formulario sigue enviando user_priorities.
                 $usersData[$userId] = [
-                    'priority' => $request->user_priorities[$index] ?? 'primary',
+                    'conversation_priority' => $request->user_priorities[$index] ?? 'primary',
                 ];
             }
             $group->users()->attach($usersData);
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-groups.index')
-            ->with('success', 'Grupo creado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.group.created'));
     }
 
     /**
@@ -100,15 +99,10 @@ class TicketGroupsController extends Controller
     public function edit(TicketGroup $group)
     {
         $group->load('users');
-        $users = User::where('available', 1)
-            ->where('verified', 1)
-            ->orderBy('firstname')
-            ->orderBy('lastname')
-            ->get();
 
         return view('theme.views.backups.helpdesk.ticket-groups.edit', [
             'group' => $group,
-            'users' => $users,
+            'users' => CatalogCacheService::agents(),
         ]);
     }
 
@@ -130,7 +124,7 @@ class TicketGroupsController extends Controller
             if ($request->filled('users')) {
                 foreach ($request->users as $index => $userId) {
                     $usersData[$userId] = [
-                        'priority' => $request->user_priorities[$index] ?? 'primary',
+                        'conversation_priority' => $request->user_priorities[$index] ?? 'primary',
                     ];
                 }
             }
@@ -138,7 +132,7 @@ class TicketGroupsController extends Controller
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-groups.index')
-            ->with('success', 'Grupo actualizado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.group.updated'));
     }
 
     /**
@@ -148,7 +142,7 @@ class TicketGroupsController extends Controller
     {
         $group->update(['is_active' => ! $group->is_active]);
 
-        return back()->with('success', 'Estado del grupo actualizado exitosamente.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.group.toggled'));
     }
 
     /**
@@ -158,19 +152,19 @@ class TicketGroupsController extends Controller
     {
         // Check if group is default
         if ($group->is_default) {
-            return back()->with('error', 'No se puede eliminar el grupo predeterminado.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.group.cannot_delete_default'));
         }
 
         // Check if group has tickets assigned
         $ticketsCount = Ticket::where('group_id', $group->id)->count();
         if ($ticketsCount > 0) {
-            return back()->with('error', 'No se puede eliminar un grupo que tiene tickets asignados.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.group.cannot_delete_with_tickets'));
         }
 
         $group->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-groups.index')
-            ->with('success', 'Grupo eliminado exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.group.deleted'));
     }
 
     /**
@@ -183,5 +177,46 @@ class TicketGroupsController extends Controller
         TicketGroup::reorder($validated['ids']);
 
         return response()->json(['success' => true, 'message' => 'Orden actualizado exitosamente.']);
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several groups.
+     */
+    public function bulkAction(BulkActionTicketGroupRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $groups = TicketGroup::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($groups as $group) {
+                $isProtected = $group->is_default || Ticket::where('group_id', $group->id)->count() > 0;
+                if ($isProtected) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $group->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($groups as $group) {
+                $group->update(['is_active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminado(s)', 'activate' => 'activado(s)', 'deactivate' => 'desactivado(s)'];
+        $message = "{$count} grupo(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitido(s) por estar protegido(s).";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

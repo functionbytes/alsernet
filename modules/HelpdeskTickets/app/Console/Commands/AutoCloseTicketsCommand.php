@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 
@@ -39,10 +40,26 @@ class AutoCloseTicketsCommand extends Command
 
             foreach ($query->cursor() as $ticket) {
                 try {
+                    // Se guarda ANTES del update — $ticket->status ya no
+                    // reflejaría el estado anterior después de update().
+                    $oldStatus = $ticket->status;
+
                     $ticket->update([
                         'closed_at' => now(),
                         'status_id' => $closedStatus->id,
                     ]);
+
+                    // Sin esto, el cliente nunca se enteraba de que su ticket
+                    // se cerró solo por inactividad: este comando actualizaba
+                    // status_id directo en el modelo, sin pasar por
+                    // TicketUpdateService::applyChanges(). Y aunque se
+                    // disparara, broadcast() (a diferencia de ::dispatch())
+                    // SOLO envía por websocket -- nunca pasaba por el
+                    // Dispatcher normal, así que SendCustomerStatusNotification
+                    // (y los otros 3 listeners de TicketStatusChanged) nunca
+                    // corrían para un auto-cierre (detectado 3-sep-2026).
+                    TicketStatusChanged::dispatch($ticket, $oldStatus, $closedStatus);
+
                     $count++;
                 } catch (\Throwable $e) {
                     Log::error('AutoClose failed for ticket', [

@@ -45,6 +45,15 @@ class CustomerController extends ApiController
      *
      * Filters: id, cif, email, surnames, phone, birth_date,
      * lopd_from, lopd_to, deleted_from, deleted_to
+     *
+     * Filtros de segmentación para envíos (usados por HelpdeskBirthday):
+     *   birthday=MM-DD[,MM-DD]  cumpleaños por día y mes, sin importar el año
+     *   commercial_optin=1      excluye NO_INFORMACION_COMERCIAL_LOPD
+     *   lopd_accepted=1         solo con FACEPTACION_LOPD informada
+     *   has_email=1             solo con email no vacío
+     *
+     * Los dados de baja (FBAJA) quedan siempre fuera.
+     *
      * Pagination: limit (max 100), offset
      */
     public function list(Request $request): JsonResponse
@@ -82,6 +91,41 @@ class CustomerController extends ApiController
                 $conditions[] = "TRUNC(t.FNACIMIENTO) = TO_DATE(?, 'YYYY-MM-DD')";
                 $bindings[] = $request->get('birth_date');
             }
+            // Cumpleaños: día y mes, sin importar el año. Acepta una o varias
+            // fechas 'MM-DD' separadas por coma (el 29-feb se consulta junto al
+            // 28-feb en años no bisiestos).
+            if ($request->filled('birthday')) {
+                $days = array_values(array_filter(
+                    array_map('trim', explode(',', (string) $request->get('birthday'))),
+                    static fn (string $d): bool => preg_match('/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/', $d) === 1
+                ));
+
+                if ($days === []) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => "El filtro 'birthday' espera una o más fechas con formato MM-DD.",
+                    ], 422);
+                }
+
+                $placeholders = implode(', ', array_fill(0, count($days), '?'));
+                $conditions[] = "TO_CHAR(t.FNACIMIENTO, 'MM-DD') IN ({$placeholders})";
+                $bindings = array_merge($bindings, $days);
+            }
+            // Solo quienes no han marcado "no quiero información comercial".
+            if ($request->boolean('commercial_optin')) {
+                $conditions[] = '(t.NO_INFORMACION_COMERCIAL_LOPD IS NULL OR t.NO_INFORMACION_COMERCIAL_LOPD = 0)';
+            }
+            if ($request->boolean('lopd_accepted')) {
+                $conditions[] = 't.FACEPTACION_LOPD IS NOT NULL';
+            }
+            if ($request->boolean('has_email')) {
+                // Nada de TRIM(t.EMAIL) <> '': en Oracle la cadena vacía ES
+                // NULL, así que esa comparación es siempre UNKNOWN y el filtro
+                // se llevaba por delante a TODOS los clientes (0 resultados con
+                // 666 que sí tienen correo). Basta con NOT NULL, y el INSTR
+                // descarta además lo que no es una dirección.
+                $conditions[] = "t.EMAIL IS NOT NULL AND INSTR(t.EMAIL, '@') > 0";
+            }
             if ($request->filled('lopd_from')) {
                 $conditions[] = 't.FACEPTACION_LOPD >= ?';
                 $bindings[] = $request->get('lopd_from');
@@ -104,6 +148,7 @@ class CustomerController extends ApiController
                     't.CODIGO_INTERNET, t.IDTARJETA, t.IDCATEGORIA_CLIENTE, t.IDIDIOMA, t.ESTADO, '.
                     "TO_CHAR(t.FACEPTACION_LOPD, 'YYYY-MM-DD') AS FACEPTACION_LOPD, ".
                     't.NO_INFORMACION_COMERCIAL_LOPD, t.NO_DATOS_A_TERCEROS_LOPD, t.TIENE_INTERES_LEGITIMO_LOPD, '.
+                    "TO_CHAR(t.FNACIMIENTO, 'YYYY-MM-DD') AS FNACIMIENTO, ".
                     "TO_CHAR(t.FCREACION, 'YYYY-MM-DD HH24:MI:SS') AS FCREACION, ".
                     "TO_CHAR(t.FMODIFICACION, 'YYYY-MM-DD HH24:MI:SS') AS FMODIFICACION, ".
                     "TO_CHAR(t.FBAJA, 'YYYY-MM-DD') AS FBAJA";
@@ -136,6 +181,7 @@ class CustomerController extends ApiController
                 'category' => $c->idcategoria_cliente,
                 'language' => $c->ididioma,
                 'available' => (bool) $c->estado,
+                'birth_date' => $c->fnacimiento,
                 'lopd' => [
                     'accepted' => $c->faceptacion_lopd !== null,
                     'accepted_at' => $c->faceptacion_lopd,
@@ -344,6 +390,120 @@ class CustomerController extends ApiController
      *
      * GET /api/erp/customer/search?q=...&limit=10
      */
+    /**
+     * Desglose de la audiencia de cumpleaños de un día.
+     *
+     * GET /api/erp/customer/birthday-stats?day=MM-DD[,MM-DD]
+     *
+     * Devuelve, en UNA sola consulta, cuántos cumplen años y cuántos quedan
+     * fuera por cada motivo. Existe porque el listado filtra en el WHERE: los
+     * descartados no llegan a viajar, así que sin esto una campaña solo puede
+     * decir "hoy escribo a 576" sin poder explicar qué pasó con los otros 151.
+     *
+     * Los motivos NO son excluyentes entre sí (alguien puede estar de baja y
+     * además no tener correo); cada uno cuenta su condición por separado y
+     * `writable` es quien pasa todas a la vez.
+     */
+    public function birthdayStats(Request $request): JsonResponse
+    {
+        $startTime = microtime(true);
+
+        $days = array_values(array_filter(
+            array_map('trim', explode(',', (string) $request->get('day', now()->format('m-d')))),
+            static fn (string $d): bool => preg_match('/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/', $d) === 1
+        ));
+
+        if ($days === []) {
+            return response()->json([
+                'success' => false,
+                'error' => "El parámetro 'day' espera una o más fechas con formato MM-DD.",
+            ], 422);
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($days), '?'));
+
+        // Cuatro COUNT condicionales sobre el mismo recorrido: pedirlos por
+        // separado serían cinco consultas de ~3 s cada una.
+        $sql = "SELECT
+                    COUNT(*) AS TOTAL,
+                    SUM(CASE WHEN t.FBAJA IS NOT NULL THEN 1 ELSE 0 END) AS UNSUBSCRIBED,
+                    SUM(CASE WHEN t.EMAIL IS NULL OR INSTR(t.EMAIL, '@') = 0 THEN 1 ELSE 0 END) AS NO_EMAIL,
+                    SUM(CASE WHEN t.FACEPTACION_LOPD IS NULL THEN 1 ELSE 0 END) AS NO_LOPD,
+                    SUM(CASE WHEN NVL(t.NO_INFORMACION_COMERCIAL_LOPD, 0) = 1 THEN 1 ELSE 0 END) AS NO_COMMERCIAL,
+                    SUM(CASE WHEN t.FBAJA IS NULL
+                              AND t.EMAIL IS NOT NULL AND INSTR(t.EMAIL, '@') > 0
+                              AND t.FACEPTACION_LOPD IS NOT NULL
+                              AND NVL(t.NO_INFORMACION_COMERCIAL_LOPD, 0) = 0
+                        THEN 1 ELSE 0 END) AS WRITABLE
+                FROM DEVELOPER.CLIENTE_CENT t
+                WHERE t.FNACIMIENTO IS NOT NULL
+                  AND TO_CHAR(t.FNACIMIENTO, 'MM-DD') IN ({$placeholders})";
+
+        try {
+            // DB::connection('oracle') y no OCI8Service: este último toma sus
+            // credenciales de otro sitio y aquí responde ORA-24415 (usuario
+            // vacío), mientras que la conexión de Laravel ya viene configurada
+            // por ErpServiceProvider::applyDynamicOracleConfig().
+            //
+            // Con reintento y reconexión: la conexión con Oracle se cae a ratos
+            // ("Lost connection and no reconnector available") y a la siguiente
+            // responde bien. Sin esto, un corte puntual deja la campaña sin
+            // poder explicar su audiencia.
+            $result = $this->selectFromOracleWithRetry($sql, $days);
+            $row = (array) ($result[0] ?? []);
+
+            $n = static fn (string $key): int => (int) ($row[$key] ?? $row[strtolower($key)] ?? 0);
+
+            return response()->json([
+                'success' => true,
+                'days' => $days,
+                'stats' => [
+                    'total' => $n('TOTAL'),
+                    'unsubscribed' => $n('UNSUBSCRIBED'),
+                    'no_email' => $n('NO_EMAIL'),
+                    'no_lopd' => $n('NO_LOPD'),
+                    'no_commercial_optin' => $n('NO_COMMERCIAL'),
+                    'writable' => $n('WRITABLE'),
+                ],
+                'took_ms' => (int) round((microtime(true) - $startTime) * 1000),
+            ], 200, [], JSON_UNESCAPED_UNICODE);
+        } catch (\Throwable $e) {
+            Log::error('[ERP] Fallo al contar la audiencia de cumpleaños', [
+                'days' => $days,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'No se pudo consultar la audiencia de cumpleaños.',
+            ], 502, [], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * Consulta Oracle reintentando cuando la conexión se ha caído.
+     *
+     * @param  array<int, mixed>  $bindings
+     * @return array<int, object>
+     */
+    private function selectFromOracleWithRetry(string $sql, array $bindings, int $attempts = 3): array
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return DB::connection('oracle')->select($sql, $bindings);
+            } catch (\Throwable $e) {
+                if ($attempt >= $attempts) {
+                    throw $e;
+                }
+
+                // Reconectar explícitamente: el driver no lo hace solo y sin
+                // esto los reintentos fallarían todos por la misma conexión rota.
+                DB::connection('oracle')->reconnect();
+                usleep(300_000);
+            }
+        }
+    }
+
     public function search(Request $request): JsonResponse
     {
         $startTime = microtime(true);

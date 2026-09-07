@@ -6,13 +6,13 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
-use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskAgents\Jobs\ClassifyTicketJob;
 use Modules\HelpdeskAgents\Jobs\DetectTicketLanguageJob;
 use Modules\HelpdeskAgents\Listeners\QueueTicketAiOnTicketCreated;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
+use Modules\HelpdeskTranslate\Services\CachedTranslator;
 use Tests\TestCase;
 
 class TicketLanguageDetectionTest extends TestCase
@@ -20,8 +20,6 @@ class TicketLanguageDetectionTest extends TestCase
     use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
-
-    private const ENDPOINT = 'https://libretranslate.test/translate';
 
     protected function setUp(): void
     {
@@ -44,21 +42,25 @@ class TicketLanguageDetectionTest extends TestCase
     }
 
     /**
-     * TranslationService reads the endpoint from the admin Setting first and
-     * only then from config. The pristine test DB has no libretranslate
-     * setting rows (asserted below), so pinning the config is deterministic.
-     * We deliberately do NOT insert into helpdesk_settings here: concurrent
-     * suites on the shared test DB hold gap locks on that table and the
-     * insert deadlocks.
+     * Sustituye el traductor del helpdesk por un doble.
+     *
+     * El job ya no habla con LibreTranslate directamente: pasa por
+     * CachedTranslator, que es donde viven el proveedor configurado (DeepL por
+     * defecto), el fallback entre proveedores, el circuit breaker, el cupo y la
+     * caché. Antes este test fijaba el endpoint de LibreTranslate por config y
+     * simulaba su HTTP; eso dejó de reflejar el camino real.
+     *
+     * De paso desaparece la dependencia de que la BD de test no tenga una fila
+     * de ajustes de LibreTranslate, que es lo que rompía el test en un entorno
+     * compartido donde alguien la había creado.
+     *
+     * @param  string|null  $detected  lo que devuelve el traductor, o null si ningún proveedor responde
      */
-    private function pinEndpoint(): void
+    private function fakeTranslator(?string $detected): void
     {
-        $this->assertNull(
-            Setting::get('helpdesktranslate.libretranslate.endpoint'),
-            'Unexpected libretranslate endpoint setting in the test DB — this test relies on the config fallback.'
-        );
-
-        config()->set('helpdesktranslate.libretranslate.endpoint', self::ENDPOINT);
+        $this->mock(CachedTranslator::class)
+            ->shouldReceive('detectLanguage')
+            ->andReturn($detected);
     }
 
     private function createTicket(string $firstMessage = 'Bonjour, je voudrais un remboursement s\'il vous plaît.'): Ticket
@@ -107,13 +109,7 @@ class TicketLanguageDetectionTest extends TestCase
 
     public function test_job_stamps_detected_language_on_ticket(): void
     {
-        $this->pinEndpoint();
-
-        Http::fake([
-            'libretranslate.test/detect' => Http::response([
-                ['language' => 'fr', 'confidence' => 93.0],
-            ]),
-        ]);
+        $this->fakeTranslator('fr');
 
         $ticket = $this->createTicket();
 
@@ -124,10 +120,11 @@ class TicketLanguageDetectionTest extends TestCase
 
     public function test_existing_detected_language_is_not_overwritten(): void
     {
-        $this->pinEndpoint();
-
         Http::fake();
 
+        // Sin doble del traductor a propósito: si el job llegara a consultarlo,
+        // el mock no existiría y el fallo sería evidente. El ticket ya tiene
+        // idioma, así que debe salir antes de preguntar nada.
         $ticket = $this->createTicket();
         $ticket->forceFill(['detected_language' => 'es'])->saveQuietly();
 
@@ -139,9 +136,10 @@ class TicketLanguageDetectionTest extends TestCase
 
     public function test_detection_failure_leaves_ticket_untouched(): void
     {
-        $this->pinEndpoint();
-
-        Http::fake(['libretranslate.test/*' => Http::response([], 500)]);
+        // Ningún proveedor de traducción responde. El LLM es el último recurso
+        // y aquí tampoco hay agente configurado, así que no hay idioma.
+        $this->fakeTranslator(null);
+        Http::fake();
 
         $ticket = $this->createTicket();
 
@@ -150,10 +148,24 @@ class TicketLanguageDetectionTest extends TestCase
         $this->assertNull($ticket->fresh()->detected_language);
     }
 
+    public function test_a_message_too_short_is_not_detected_at_all(): void
+    {
+        Http::fake();
+
+        // Por debajo de 12 caracteres no se detecta: un "Ok" se identifica como
+        // cualquier idioma, y un ticket mal etiquetado se enruta a quien no toca.
+        // Mismo suelo que aplica CachedTranslator.
+        $ticket = $this->createTicket('Ok');
+
+        (new DetectTicketLanguageJob($ticket->id))->handle();
+
+        Http::assertNothingSent();
+        $this->assertNull($ticket->fresh()->detected_language);
+    }
+
     public function test_feature_flag_disables_detection(): void
     {
         config()->set('helpdeskagents.ticket_ai.language_detection', false);
-        $this->pinEndpoint();
 
         Http::fake();
 

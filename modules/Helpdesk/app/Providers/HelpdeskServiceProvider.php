@@ -63,7 +63,9 @@ use Modules\Helpdesk\Services\Automation\Actions\SendWebhookAction;
 use Modules\Helpdesk\Services\Automation\Actions\SnoozeConversationAction;
 use Modules\Helpdesk\Services\Automation\AutomationActionRegistry;
 use Modules\Helpdesk\Services\CannedReplyService;
+use Modules\Helpdesk\Services\ConversationEmailLogPanelRenderer;
 use Modules\Helpdesk\Services\ConversationTagService;
+use Modules\Helpdesk\Services\CustomerEmailLogPanelRenderer;
 use Modules\Helpdesk\Services\CustomerStatsService;
 use Modules\Helpdesk\Services\EmailInboundService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
@@ -73,6 +75,7 @@ use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\Public\SimulatorOutboundMessageService;
 use Modules\Helpdesk\Services\Templates\LiquidRenderer;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -104,6 +107,32 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->registerAutomationListeners();
         $this->registerSimulatorOutboundGuard();
+        $this->registerEmailLogPanel();
+    }
+
+    /**
+     * Conecta el detalle de un email de HelpdeskEmailActivity con paneles propios
+     * de este módulo: registra CustomerEmailLogPanelRenderer y
+     * ConversationEmailLogPanelRenderer en el EntityPanelRegistry de ese
+     * módulo (mismo patrón que
+     * Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider::registerEmailLogPanel(),
+     * el primer registrador real de este punto de extensión) para que un
+     * email cuyo entity_type sea Customer::class o Conversation::class
+     * muestre un resumen propio sin que HelpdeskEmailActivity conozca este módulo.
+     */
+    protected function registerEmailLogPanel(): void
+    {
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
+        if (! class_exists(EntityPanelRegistry::class)) {
+            return;
+        }
+
+        $registry = $this->app->make(EntityPanelRegistry::class);
+        $registry->register(new CustomerEmailLogPanelRenderer);
+        $registry->register(new ConversationEmailLogPanelRenderer);
     }
 
     /**
@@ -257,8 +286,12 @@ class HelpdeskServiceProvider extends ServiceProvider
             'title' => 'Helpdesk — Canales',
             'items' => [
                 ['label' => 'Bandejas (multi-canal)', 'route' => 'settings.helpdesk.inboxes.index', 'permission' => 'helpdesk.settings.view'],
+                // Habia dos entradas —"Email" y "Cuentas de email"— apuntando a
+                // la MISMA pantalla: settings.helpdesk.email-accounts.index era
+                // otro nombre de ruta para EmailSettingsController@index, el
+                // mismo metodo. Se deja una sola; la URL duplicada sigue viva
+                // como redireccion para no romper enlaces guardados.
                 ['label' => 'Email', 'route' => 'settings.helpdesk.email', 'permission' => 'helpdesk.settings.view'],
-                ['label' => 'Cuentas de email', 'route' => 'settings.helpdesk.email-accounts.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'LiveChat', 'route' => 'settings.helpdesk-livechat.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones sociales', 'route' => 'settings.helpdesk.social-integrations.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Plantillas WhatsApp', 'route' => 'settings.helpdesk.whatsapp-templates.index', 'permission' => 'helpdesk.settings.view'],
@@ -312,6 +345,7 @@ class HelpdeskServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Configuración general', 'route' => 'manager.helpdesk.settings.tickets.general', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Categorías', 'route' => 'manager.helpdesk.settings.ticket-categories.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Prioridades', 'route' => 'manager.helpdesk.settings.ticket-priorities.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Estados', 'route' => 'manager.helpdesk.settings.ticket-statuses.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Grupos', 'route' => 'manager.helpdesk.settings.ticket-groups.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Macros', 'route' => 'manager.helpdesk.settings.macros.index', 'permission' => 'helpdesk.tickets.settings'],
@@ -319,6 +353,8 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Respuestas predefinidas', 'route' => 'manager.helpdesk.settings.ticket-canned-replies.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Políticas SLA', 'route' => 'manager.helpdesk.settings.ticket-sla-policies.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Vistas guardadas', 'route' => 'manager.helpdesk.settings.ticket-views.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Canales de correo', 'route' => 'manager.helpdesk.settings.email-channels.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Lista negra', 'route' => 'manager.helpdesk.settings.ticket-blacklist.index', 'permission' => 'helpdesk.tickets.settings'],
             ],
         ]);
 
@@ -346,6 +382,7 @@ class HelpdeskServiceProvider extends ServiceProvider
         NavService::registerSidebar('helpdesk', [
             'title' => 'Reportes',
             'items' => [
+                ['label' => 'Dashboard', 'route' => 'manager.helpdesk.reports.index', 'icon' => 'fas fa-chart-bar', 'permission' => 'helpdesk.metrics.view'],
                 ['label' => 'Satisfacción (CSAT)', 'route' => 'manager.helpdesk.reports.csat', 'permission' => 'helpdesk.reports.view'],
                 ['label' => 'Clientes en riesgo', 'route' => 'manager.helpdesk.reports.at-risk', 'icon' => 'fas fa-heart-crack', 'permission' => 'helpdesk.reports.view'],
                 ['label' => 'Incumplimientos SLA', 'route' => 'manager.helpdesk.reports.sla-breaches', 'icon' => 'fas fa-gauge-high', 'permission' => 'helpdesk.reports.view'],

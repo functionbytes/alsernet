@@ -136,7 +136,8 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::post('/', [DocumentSlaPoliciesController::class, 'store'])->name('store');
                 Route::patch('/{policy}', [DocumentSlaPoliciesController::class, 'update'])->name('update');
                 Route::delete('/{policy}', [DocumentSlaPoliciesController::class, 'destroy'])->name('destroy');
-                Route::post('/{policy}/toggle', [DocumentSlaPoliciesController::class, 'toggle'])->name('toggle');
+                Route::patch('/{policy}/toggle', [DocumentSlaPoliciesController::class, 'toggle'])->name('toggle');
+                Route::post('/bulk-action', [DocumentSlaPoliciesController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // Document Groups (Validator Groups)
@@ -153,6 +154,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::delete('/{group}', [DocumentGroupsController::class, 'destroy'])->name('destroy');
                 Route::post('/{group}/toggle', [DocumentGroupsController::class, 'toggle'])->name('toggle');
                 Route::post('/{group}/configuration', [DocumentGroupsController::class, 'updateConfiguration'])->name('update-configuration');
+                Route::post('/bulk-action', [DocumentGroupsController::class, 'bulkAction'])->name('bulk-action');
 
                 // Permissions management routes
                 Route::prefix('permissions')->name('permissions.')->group(function () {
@@ -164,7 +166,6 @@ Route::middleware(['web', 'auth'])->group(function () {
                     Route::post('/{sourceGroup}/clone', [DocumentGroupPermissionsController::class, 'clone'])->name('clone');
                 });
             });
-
 
             // Stage email action routes
             Route::prefix('stage-email-actions')->name('stage-email-actions.')->group(function () {
@@ -191,6 +192,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::post('/sync-product', [DocumentProductBlockadeController::class, 'syncProduct'])->name('sync-product');
             Route::post('/labels/add', [DocumentProductBlockadeController::class, 'addLabel'])->name('labels.add');
             Route::post('/labels/delete', [DocumentProductBlockadeController::class, 'deleteLabel'])->name('labels.delete');
+            Route::post('/bulk-action', [DocumentProductBlockadeController::class, 'bulkAction'])->name('bulk-action');
             Route::delete('/{id}', [DocumentProductBlockadeController::class, 'destroy'])->name('destroy');
         });
 

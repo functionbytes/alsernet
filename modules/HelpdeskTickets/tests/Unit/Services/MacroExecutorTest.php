@@ -3,7 +3,9 @@
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -209,6 +211,113 @@ class MacroExecutorTest extends TestCase
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * author_id es la FK a helpdesk_customers (quien escribe desde el lado del
+     * cliente). El executor lo rellenaba con el id del agente, asi que toda
+     * macro con reply o internal_note moria con un fallo de clave ajena.
+     */
+    public function test_reply_action_is_authored_by_the_agent_not_the_customer(): void
+    {
+        $ticket = $this->createTicket();
+
+        $macro = Macro::create([
+            'name' => 'Reply macro',
+            'actions' => [
+                ['type' => 'reply', 'body' => 'Hola {{customer_name}}'],
+            ],
+            'is_shared' => true,
+            'is_active' => true,
+            'usage_count' => 0,
+        ]);
+        $this->macroIds[] = $macro->id;
+
+        $this->executor->run($macro, $ticket);
+
+        $item = $ticket->items()->latest('id')->first();
+
+        $this->assertNotNull($item, 'la respuesta debe haberse creado');
+        $this->assertNull($item->author_id, 'author_id es del cliente, no del agente');
+        $this->assertFalse((bool) $item->is_internal);
+    }
+
+    public function test_internal_note_action_is_flagged_as_internal(): void
+    {
+        $ticket = $this->createTicket();
+
+        $macro = Macro::create([
+            'name' => 'Note macro',
+            'actions' => [
+                ['type' => 'internal_note', 'body' => 'Nota del equipo'],
+            ],
+            'is_shared' => true,
+            'is_active' => true,
+            'usage_count' => 0,
+        ]);
+        $this->macroIds[] = $macro->id;
+
+        $this->executor->run($macro, $ticket);
+
+        $item = $ticket->items()->latest('id')->first();
+
+        $this->assertNotNull($item);
+        $this->assertNull($item->author_id);
+        $this->assertTrue((bool) $item->is_internal);
+        $this->assertSame('Nota del equipo', $item->body);
+    }
+
+    /**
+     * BUG-04: reply era la única vía de creación de mensajes que no disparaba
+     * MessageAdded — el agente creía haber respondido y el cliente nunca
+     * recibía el correo (SendCustomerReplyNotification nunca corría).
+     */
+    public function test_reply_action_dispatches_message_added(): void
+    {
+        Event::fake([MessageAdded::class]);
+
+        $ticket = $this->createTicket();
+
+        $macro = Macro::create([
+            'name' => 'Reply macro',
+            'actions' => [
+                ['type' => 'reply', 'body' => 'Hola {{customer_name}}'],
+            ],
+            'is_shared' => true,
+            'is_active' => true,
+            'usage_count' => 0,
+        ]);
+        $this->macroIds[] = $macro->id;
+
+        $this->executor->run($macro, $ticket);
+
+        $item = $ticket->items()->latest('id')->first();
+
+        Event::assertDispatched(MessageAdded::class, fn (MessageAdded $event): bool => $event->item->is($item));
+    }
+
+    public function test_internal_note_action_dispatches_message_added(): void
+    {
+        Event::fake([MessageAdded::class]);
+
+        $ticket = $this->createTicket();
+
+        $macro = Macro::create([
+            'name' => 'Note macro',
+            'actions' => [
+                ['type' => 'internal_note', 'body' => 'Nota del equipo'],
+            ],
+            'is_shared' => true,
+            'is_active' => true,
+            'usage_count' => 0,
+        ]);
+        $this->macroIds[] = $macro->id;
+
+        $this->executor->run($macro, $ticket);
+
+        $item = $ticket->items()->latest('id')->first();
+
+        Event::assertDispatched(MessageAdded::class, fn (MessageAdded $event): bool => $event->item->is($item));
+    }
 
     private function createTicket(array $overrides = []): Ticket
     {

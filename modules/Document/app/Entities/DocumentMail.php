@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Document\Traits\HasUid;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\Mailer\Models\MailerTemplate;
 
 class DocumentMail extends Model
@@ -81,11 +81,11 @@ class DocumentMail extends Model
     }
 
     /**
-     * Fila correlacionada en el log central de emails (modules/HelpdeskEmailLog),
+     * Fila correlacionada en el log central de emails (modules/HelpdeskEmailActivity),
      * fuente de verdad del estado de entrega REAL (queued/sent/failed y, cuando exista,
      * bounced). Correlación exacta 1:1 vía external_id = this->uid, fijado por
      * DocumentCustomMail::getEmailLogExternalId(). Null en envíos previos a esta
-     * correlación (uid no coincide con ningún external_id) o si HelpdeskEmailLog
+     * correlación (uid no coincide con ningún external_id) o si HelpdeskEmailActivity
      * está desactivado (helpdesk_emaillog_enabled() = false, no se crea ninguna fila).
      */
     public function emailLog(): HasOne

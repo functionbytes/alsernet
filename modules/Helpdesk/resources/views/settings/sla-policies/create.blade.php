@@ -37,24 +37,41 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las politicas SLA</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las politicas SLA</h6>
                     <p class="card-text text-muted small">
                         Un SLA (Service Level Agreement) define los compromisos de tiempo de respuesta y resolucion que el equipo de soporte debe cumplir con los clientes.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Primera respuesta</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Primera respuesta</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Tiempo maximo desde que se crea una conversacion hasta que un agente responde por primera vez.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Resolucion</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Resolucion</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Tiempo maximo total para resolver completamente una conversacion desde su creacion.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Escalacion</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Escalacion</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Si se habilita, las conversaciones sin resolucion en el tiempo configurado seran marcadas para escalacion automatica.
                     </p>

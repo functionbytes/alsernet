@@ -72,7 +72,7 @@
                         <button type="submit" id="submitBtn" class="btn btn-primary w-100 mb-2">
                             Crear backup
                         </button>
-                        <a href="{{ route('settings.backups.index') }}" class="btn btn-black w-100">
+                        <a href="{{ route('settings.backups.index') }}" class="btn btn-secondary w-100">
                             Volver
                         </a>
                     </div>

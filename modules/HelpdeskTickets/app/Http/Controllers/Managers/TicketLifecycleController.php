@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
@@ -15,10 +14,10 @@ use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\SnoozeTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketLink;
-use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketWatcher;
+use Modules\HelpdeskTickets\Services\SlaService;
+use Modules\HelpdeskTickets\Services\TicketMergeService;
 
 class TicketLifecycleController extends Controller
 {
@@ -54,7 +53,20 @@ class TicketLifecycleController extends Controller
         // reason: key de close_reasons, o el texto libre del campo "Otro
         // motivo" del modal — se recorta a 100 (columna string(100)) para no
         // reventar en modo estricto si alguien pega texto largo.
-        $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null);
+        // La causa raíz se valida contra el catálogo: es un campo de informe,
+        // no texto libre, y una clave inventada lo estropearía en silencio.
+        $rootCause = $request->input('root_cause');
+        if ($rootCause !== null && ! array_key_exists($rootCause, config('helpdesktickets.close_root_causes', []))) {
+            $rootCause = null;
+        }
+
+        $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null, [
+            'root_cause' => $rootCause,
+            'summary' => Str::limit((string) $request->input('summary'), 2000, '') ?: null,
+            // Cerrar disparaba SIEMPRE la encuesta de satisfacción; en un
+            // cierre por spam o duplicado preguntar sobra.
+            'skip_survey' => $request->boolean('skip_survey'),
+        ]);
 
         // Bug real (ago-2026): este endpoint es la vía real del botón "Cerrar
         // ticket" de la UI y nunca disparaba TicketClosed, así que la encuesta
@@ -154,7 +166,7 @@ class TicketLifecycleController extends Controller
         return back()->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_unarchived'));
     }
 
-    public function merge(MergeTicketRequest $request, Ticket $ticket): RedirectResponse
+    public function merge(MergeTicketRequest $request, Ticket $ticket, TicketMergeService $merger): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -163,56 +175,7 @@ class TicketLifecycleController extends Controller
         $this->authorize('merge', $ticket);
         $this->authorize('update', $targetTicket);
 
-        DB::transaction(function () use ($ticket, $targetTicket) {
-            $ticket->items()->update(['ticket_id' => $targetTicket->id]);
-
-            // Migrar el resto de datos asociados para no perderlos al borrar el
-            // ticket origen: historial, emails, notas, comentarios y tiempos.
-            // history() se actualiza a nivel de query (los modelos TicketHistory
-            // son inmutables a nivel de instancia, pero aquí solo se reapunta
-            // la FK, no se reescribe el registro).
-            $ticket->history()->update(['ticket_id' => $targetTicket->id]);
-            $ticket->mails()->update(['ticket_id' => $targetTicket->id]);
-            $ticket->timeEntries()->update(['ticket_id' => $targetTicket->id]);
-            TicketNote::withTrashed()->where('ticket_id', $ticket->id)->update(['ticket_id' => $targetTicket->id]);
-            TicketComment::withTrashed()->where('ticket_id', $ticket->id)->update(['ticket_id' => $targetTicket->id]);
-
-            $ticket->watchers()->each(function (TicketWatcher $watcher) use ($targetTicket) {
-                TicketWatcher::firstOrCreate([
-                    'ticket_id' => $targetTicket->id,
-                    'user_id' => $watcher->user_id,
-                ]);
-            });
-
-            // Reapuntar enlaces del origen al destino, descartando los que
-            // quedarían auto-enlazados o duplicados en el destino.
-            $ticket->links()->get()->each(function (TicketLink $link) use ($targetTicket) {
-                $duplicate = $link->linked_ticket_id === $targetTicket->id
-                    || TicketLink::where('ticket_id', $targetTicket->id)
-                        ->where('linked_ticket_id', $link->linked_ticket_id)
-                        ->exists();
-
-                $duplicate ? $link->delete() : $link->update(['ticket_id' => $targetTicket->id]);
-            });
-
-            $ticket->linkedBy()->get()->each(function (TicketLink $link) use ($targetTicket) {
-                $duplicate = $link->ticket_id === $targetTicket->id
-                    || TicketLink::where('ticket_id', $link->ticket_id)
-                        ->where('linked_ticket_id', $targetTicket->id)
-                        ->exists();
-
-                $duplicate ? $link->delete() : $link->update(['linked_ticket_id' => $targetTicket->id]);
-            });
-
-            $targetTicket->items()->create([
-                'type' => 'system',
-                'body' => "Merged from #{$ticket->ticket_number}",
-                'metadata' => ['merged_from_ticket_id' => $ticket->id],
-            ]);
-
-            $ticket->close();
-            $ticket->delete();
-        });
+        $merger->merge($ticket, $targetTicket);
 
         // merge() solo se dispara desde el form de la ficha completa.
         return redirect()->route('manager.helpdesk.tickets.show-full', $targetTicket)
@@ -233,6 +196,20 @@ class TicketLifecycleController extends Controller
         }
 
         TicketWatcher::addWatcher($ticket->id, $userId);
+
+        // Preferencias de aviso del modal "Seguidores": qué quiere ver quien
+        // sigue el ticket. Solo se tocan si vienen en la petición, para que
+        // un "seguir" simple conserve los valores por defecto (todo activo).
+        if ($request->has('notify_customer_replies') || $request->has('notify_internal_notes')) {
+            TicketWatcher::where('ticket_id', $ticket->id)
+                ->where('user_id', $userId)
+                ->update(array_filter([
+                    'notify_customer_replies' => $request->has('notify_customer_replies')
+                        ? $request->boolean('notify_customer_replies') : null,
+                    'notify_internal_notes' => $request->has('notify_internal_notes')
+                        ? $request->boolean('notify_internal_notes') : null,
+                ], fn ($v) => $v !== null));
+        }
 
         return response()->json(['watching' => true, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_watched')]);
     }
@@ -258,10 +235,21 @@ class TicketLifecycleController extends Controller
         $until = $request->validated()['snoozed_until'];
         $ticket->update(['snoozed_until' => $until, 'snoozed_by' => auth()->id()]);
 
+        // "Pausar el SLA mientras está aplazado": sin esto, un ticket
+        // aplazado tres días seguía consumiendo su plazo de resolución y
+        // aparecía vencido al volver, aunque nadie pudiera trabajarlo.
+        // pauseSla() es idempotente, así que aplazar dos veces no acumula.
+        if ($request->boolean('pause_sla')) {
+            app(SlaService::class)->pauseSla($ticket);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Ticket pospuesto.',
-            'data' => ['snoozed_until' => $ticket->snoozed_until?->toIso8601String()],
+            'data' => [
+                'snoozed_until' => $ticket->snoozed_until?->toIso8601String(),
+                'sla_paused' => $ticket->fresh()->sla_paused_at !== null,
+            ],
         ]);
     }
 
@@ -271,17 +259,32 @@ class TicketLifecycleController extends Controller
 
         $ticket->update(['snoozed_until' => null, 'snoozed_by' => null]);
 
+        // Reanudar desplaza los vencimientos por el tiempo pausado, así que
+        // el ticket vuelve con el plazo que le quedaba, no con el consumido.
+        app(SlaService::class)->resumeSla($ticket);
+
         return response()->json(['success' => true, 'message' => 'Ticket reactivado.']);
     }
 
-    public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse
+    /**
+     * Devuelve JSON a quien lo pide (el modal 46 "Posible duplicado" y la
+     * pestaña de tickets del panel) y sigue redirigiendo para el formulario
+     * clásico. Sin esto, la llamada AJAX recibía un 302 hacia el referer, el
+     * navegador lo seguía y se descargaba la página entera: la petición no
+     * terminaba nunca y el modal se quedaba abierto sin decir nada.
+     */
+    public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $ticket);
 
         $validated = $request->validated();
 
         if ($validated['linked_ticket_id'] == $ticket->id) {
-            return back()->withErrors(['linked_ticket_id' => 'No puedes enlazar un ticket consigo mismo.']);
+            $message = 'No puedes enlazar un ticket consigo mismo.';
+
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $message], 422)
+                : back()->withErrors(['linked_ticket_id' => $message]);
         }
 
         // El usuario también debe poder ver el ticket destino que va a enlazar.
@@ -299,7 +302,11 @@ class TicketLifecycleController extends Controller
             ]
         );
 
-        return back()->with('success', 'Ticket enlazado correctamente.');
+        $message = __('helpdesktickets::helpdesktickets.settings.link.created');
+
+        return $request->expectsJson()
+            ? response()->json(['success' => true, 'message' => $message])
+            : back()->with('success', $message);
     }
 
     public function unlinkTicket(Ticket $ticket, int $linkId): RedirectResponse
@@ -310,6 +317,6 @@ class TicketLifecycleController extends Controller
             ->where('id', $linkId)
             ->delete();
 
-        return back()->with('success', 'Enlace eliminado.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.link.deleted'));
     }
 }

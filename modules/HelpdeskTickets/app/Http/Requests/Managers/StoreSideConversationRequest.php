@@ -20,7 +20,15 @@ class StoreSideConversationRequest extends FormRequest
         return [
             'subject' => ['required', 'string', 'max:255'],
             'participant_type' => ['required', 'in:team,external_email'],
-            'participant_user_id' => ['nullable', 'integer', 'exists:mariadb.users,id'],
+            // exists:users, no exists:mariadb.users. Fijar la conexión a mano
+            // es la misma trampa que había en los modelos con
+            // setConnection('mysql'): en runtime da igual porque 'mariadb' y la
+            // conexión por defecto apuntan a la misma base, pero son PDOs
+            // distintos, así que en tests la validación consultaba una conexión
+            // donde el usuario recién creado todavía no estaba commiteado y
+            // devolvía 422. Sin prefijo usa la conexión por defecto, que es
+            // donde vive User de verdad.
+            'participant_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'participant_email' => ['nullable', 'email', 'max:255'],
             'body' => ['required', 'string', 'max:20000'],
         ];

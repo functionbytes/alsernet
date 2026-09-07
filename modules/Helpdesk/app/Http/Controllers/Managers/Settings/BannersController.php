@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,6 +23,7 @@ class BannersController extends Controller
         $banners = Banner::query()
             ->when($request->filled('search'), fn ($q) => $q->where('title', 'like', "%{$request->search}%"))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->type))
+            ->when($request->filled('status'), fn ($q) => $q->where('is_active', $request->status === 'active'))
             ->latest()
             ->paginate(20);
 
@@ -74,5 +76,40 @@ class BannersController extends Controller
 
         return redirect()->route('settings.helpdesk.banners.index')
             ->with('success', 'Banner eliminado exitosamente.');
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $validated['action'];
+        $ids = $validated['ids'];
+        $count = 0;
+
+        $banners = Banner::whereIn('id', $ids)->get();
+
+        foreach ($banners as $banner) {
+            if ($action === 'delete') {
+                $banner->delete();
+            } else {
+                $banner->update(['is_active' => $action === 'activate']);
+            }
+            $count++;
+        }
+
+        $labels = [
+            'activate' => 'activado(s)',
+            'deactivate' => 'desactivado(s)',
+            'delete' => 'eliminado(s)',
+        ];
+
+        return response()->json([
+            'message' => "{$count} banner(s) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 }

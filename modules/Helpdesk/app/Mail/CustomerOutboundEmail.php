@@ -10,8 +10,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 
 class CustomerOutboundEmail extends Mailable implements ShouldQueue, TracksEmailLog
 {

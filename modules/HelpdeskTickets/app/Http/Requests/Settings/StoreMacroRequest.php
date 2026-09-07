@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\HelpdeskTickets\Rules\ValidMacroActions;
 
 class StoreMacroRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class StoreMacroRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'actions' => ['required', 'json'],
+            'actions' => ['required', 'json', new ValidMacroActions],
             'is_shared' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];

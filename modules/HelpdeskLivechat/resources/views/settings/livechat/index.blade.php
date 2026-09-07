@@ -502,21 +502,17 @@
                                         <div class="row g-3 mb-3">
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold" for="primary_color">Color primario</label>
-                                                <div class="input-group">
-                                                    <input type="color" class="form-control form-control-color lc-color-picker" id="primary_color" name="primary_color"
-                                                        value="{{ old('primary_color', $backups['primary_color'] ?? '#90bb13') }}" class="hd-color-input">
-                                                    <input type="text" class="form-control color-hex-input" id="primary_color_hex"
-                                                        value="{{ old('primary_color', $backups['primary_color'] ?? '#90bb13') }}" readonly>
-                                                </div>
+                                                @include('core::components.color-field', [
+                                                    'name' => 'primary_color',
+                                                    'value' => old('primary_color', $backups['primary_color'] ?? '#90bb13'),
+                                                ])
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold" for="secondary_color">Color secundario</label>
-                                                <div class="input-group">
-                                                    <input type="color" class="form-control form-control-color lc-color-picker" id="secondary_color" name="secondary_color"
-                                                        value="{{ old('secondary_color', $backups['secondary_color'] ?? '#ffffff') }}" class="hd-color-input">
-                                                    <input type="text" class="form-control color-hex-input" id="secondary_color_hex"
-                                                        value="{{ old('secondary_color', $backups['secondary_color'] ?? '#ffffff') }}" readonly>
-                                                </div>
+                                                @include('core::components.color-field', [
+                                                    'name' => 'secondary_color',
+                                                    'value' => old('secondary_color', $backups['secondary_color'] ?? '#ffffff'),
+                                                ])
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold" for="header_title">Título del chat <span class="text-danger">*</span></label>
@@ -1129,8 +1125,9 @@ $(document).ready(function () {
     }
 
     // ── Sync color pickers ─────────────────────────────────────────────────
-    $(document).on('input', '.lc-color-picker', function () {
-        $(this).closest('.input-group').find('.color-hex-input').val($(this).val());
+    // El componente de color ya mantiene muestra y hex en sintonia; aqui solo
+    // hace falta repintar la vista previa del widget.
+    $(document).on('input', '.ts-color .ts-color__hex', function () {
         syncPreview();
     });
 

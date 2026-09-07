@@ -27,6 +27,7 @@ class ApplyAiSuggestionController extends Controller
             $ticket->update([
                 'category_id' => $ticket->ai_suggested_category_id,
                 'ai_suggested_category_id' => null,
+                'ai_suggested_category_confidence' => null,
             ]);
         }
 
@@ -34,6 +35,7 @@ class ApplyAiSuggestionController extends Controller
             $ticket->update([
                 'priority' => $ticket->ai_suggested_priority,
                 'ai_suggested_priority' => null,
+                'ai_suggested_priority_confidence' => null,
             ]);
         }
 

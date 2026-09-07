@@ -3,14 +3,19 @@
 namespace Modules\Erp\Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Erp\Models\ErpCredential;
 use Modules\Erp\Models\ErpEndpoint;
 use Tests\TestCase;
 
 class ErpCredentialsApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    // mysql/mariadb/helpdesk apuntan a la MISMA BD real - RefreshDatabase la
+    // migro-fresh por un fallo de force="true" en phpunit.xml (incidente
+    // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected User $user;
 

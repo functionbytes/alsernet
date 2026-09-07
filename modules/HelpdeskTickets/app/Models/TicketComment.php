@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketComment extends Model
 {
-    use SoftDeletes;
+    use BelongsToHelpdeskUser, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -65,16 +66,8 @@ class TicketComment extends Model
         // ->addEagerConstraints() sobre el retorno y revienta con
         // "Call to a member function on null" si el primer modelo de la
         // colección tiene user_id NULL. Eloquent ya maneja FKs nulos.
-        $user = new User;
-        $user->setConnection('mysql');
 
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        );
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**
@@ -91,16 +84,8 @@ class TicketComment extends Model
     public function editor(): BelongsTo
     {
         // Igual que user(): sin null-check — ver comentario arriba.
-        $user = new User;
-        $user->setConnection('mysql');
 
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'edited_by',
-            'id',
-            'editor'
-        );
+        return $this->belongsToHelpdeskUser('edited_by', 'editor');
     }
 
     /**
@@ -119,9 +104,7 @@ class TicketComment extends Model
         // This uses a custom pivot, querying from the array
         $userIds = $this->mentioned_user_ids ?? [];
 
-        return User::query()
-            ->setConnection('mysql')
-            ->whereIn('id', $userIds);
+        return $this->helpdeskUserQuery()->whereIn('id', $userIds);
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -397,10 +380,7 @@ class TicketComment extends Model
         }
 
         // Load user models
-        $users = User::query()
-            ->setConnection('mysql')
-            ->whereIn('id', $userIds)
-            ->get();
+        $users = $this->helpdeskUserQuery()->whereIn('id', $userIds)->get();
 
         foreach ($users as $user) {
             // Send notification (implement based on your notification system)

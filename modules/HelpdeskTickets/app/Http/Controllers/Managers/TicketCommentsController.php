@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketCommentRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketCommentRequest;
 use Modules\HelpdeskTickets\Mail\TicketReplyMail;
@@ -12,10 +13,17 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketMail;
+use Modules\HelpdeskTickets\Services\TicketChannelMailerService;
+use Modules\HelpdeskTickets\Services\TicketOutboundTranslator;
 use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 class TicketCommentsController extends Controller
 {
+    public function __construct(
+        private readonly TicketChannelMailerService $channelMailer,
+        private readonly TicketOutboundTranslator $outboundTranslator,
+    ) {}
+
     /**
      * Display a listing of comments for a ticket.
      */
@@ -65,20 +73,40 @@ class TicketCommentsController extends Controller
         // seeded `helpdesk.ticket_reply` Mailer template (same as the TicketItem
         // path listener) so the design stays editable from the Mailer admin.
         if (! $comment->is_internal && $ticket->customer?->email) {
-            [$subject, $content] = TicketMailRenderer::render(
+            $messageBody = $this->outboundTranslator->translateForCustomer($ticket, (string) $comment->body);
+
+            [, $content] = TicketMailRenderer::render(
                 'helpdesk.ticket_reply',
                 [
                     'CUSTOMER_NAME' => $ticket->customer->name ?? 'Cliente',
                     'TICKET_NUMBER' => $ticket->ticket_number,
                     'SUBJECT' => $ticket->subject,
                     'AGENT_NAME' => auth()->user()?->name ?? 'Soporte',
+                    'MESSAGE_BODY' => nl2br(e($messageBody)),
                     'COMPANY_NAME' => config('app.name', 'Soporte'),
                 ],
                 'Nueva respuesta en tu ticket #'.$ticket->ticket_number,
             );
 
-            Mail::to($ticket->customer->email, $ticket->customer->name)
-                ->queue(new TicketReplyMail($ticket, $subject, $content));
+            // El asunto de la plantilla ("Re: {SUBJECT} — #...") se ignora a
+            // propósito: usa ticket.subject, que puede no tener nada que ver
+            // con el asunto real con el que arrancó el hilo. Anclarlo al de
+            // la primera fila real evita que Gmail abra un hilo nuevo en cada
+            // comentario externo — ver TicketChannelMailerService::threadSubject().
+            $subject = $this->channelMailer->threadSubject($ticket);
+
+            // Mismo canal/hilo que SendCustomerReplyNotification — ver
+            // TicketChannelMailerService.
+            $channel = $this->channelMailer->resolveChannelForTicket($ticket);
+            $mailerName = $channel ? $this->channelMailer->mailerNameFor($channel) : null;
+            $fromAddress = $channel['username'] ?? null;
+            $inReplyTo = $this->channelMailer->lastInboundMessageId($ticket);
+            // Sin '<' '>' al guardar — ver TicketMail::createOutbound().
+            $ownMessageId = Str::uuid().'@'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
+
+            ($mailerName ? Mail::mailer($mailerName) : Mail::mailer())
+                ->to($ticket->customer->email, $ticket->customer->name)
+                ->queue(new TicketReplyMail($ticket, $subject, $content, $fromAddress, $ownMessageId, $inReplyTo));
 
             // Registrar en TicketMail para trazabilidad — esta ruta (comentario
             // externo) enviaba el correo sin dejar rastro en la bandeja de
@@ -89,7 +117,9 @@ class TicketCommentsController extends Controller
                 'ticket_comment_id' => $comment->id,
                 'user_id' => auth()->id(),
                 'direction' => 'outbound',
-                'from' => config('mail.from.address'),
+                'message_id' => $ownMessageId,
+                'in_reply_to' => $inReplyTo,
+                'from' => $fromAddress ?: config('mail.from.address'),
                 'to' => $ticket->customer->email,
                 'subject' => $subject,
                 'body_html' => $content,

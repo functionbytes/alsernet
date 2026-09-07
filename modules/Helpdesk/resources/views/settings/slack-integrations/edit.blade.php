@@ -38,9 +38,11 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion de la integracion</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion de la integracion</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Estado</span>
                         @if($integration->is_active)
@@ -57,7 +59,10 @@
                         <span class="text-muted small">Creada</span>
                         <span class="small">{{ $integration->created_at->format('d/m/Y') }}</span>
                     </div>
-                    <hr>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
                     <p class="small text-muted mb-0">
                         <i class="fas fa-lock text-muted me-1"></i>
                         La URL del webhook esta cifrada. Haz clic en "Cambiar" para actualizarla.

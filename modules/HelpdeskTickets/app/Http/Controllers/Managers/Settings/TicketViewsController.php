@@ -3,10 +3,15 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketViewRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketViewRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketViewRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketViewRequest;
+use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Models\TicketGroup;
+use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketView;
 
 class TicketViewsController extends Controller
@@ -53,7 +58,7 @@ class TicketViewsController extends Controller
      */
     public function create()
     {
-        return view('theme.views.backups.helpdesk.ticket-views.create');
+        return view('theme.views.backups.helpdesk.ticket-views.create', $this->filterOptions());
     }
 
     /**
@@ -72,7 +77,7 @@ class TicketViewsController extends Controller
         TicketView::create($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-views.index')
-            ->with('success', 'Vista creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.view.created'));
     }
 
     /**
@@ -80,12 +85,19 @@ class TicketViewsController extends Controller
      */
     public function edit(TicketView $view)
     {
-        // Prevent editing system views
-        if ($view->is_system) {
-            return back()->with('error', 'No se pueden editar las vistas del sistema.');
-        }
+        return view('theme.views.backups.helpdesk.ticket-views.edit', ['view' => $view] + $this->filterOptions());
+    }
 
-        return view('theme.views.backups.helpdesk.ticket-views.edit', compact('view'));
+    /**
+     * Datos para los selects del constructor de filtros (create/edit).
+     */
+    protected function filterOptions(): array
+    {
+        return [
+            'statuses' => TicketStatus::ordered()->get(),
+            'categories' => TicketCategory::active()->ordered()->get(),
+            'groups' => TicketGroup::active()->ordered()->get(),
+        ];
     }
 
     /**
@@ -93,11 +105,6 @@ class TicketViewsController extends Controller
      */
     public function update(UpdateTicketViewRequest $request, TicketView $view)
     {
-        // Prevent editing system views
-        if ($view->is_system) {
-            return back()->with('error', 'No se pueden editar las vistas del sistema.');
-        }
-
         $validated = $request->validated();
 
         $validated['is_shared'] = $request->boolean('is_shared');
@@ -106,7 +113,7 @@ class TicketViewsController extends Controller
         $view->update($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-views.index')
-            ->with('success', 'Vista actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.view.updated'));
     }
 
     /**
@@ -116,13 +123,13 @@ class TicketViewsController extends Controller
     {
         // Prevent deleting system views
         if ($view->is_system) {
-            return back()->with('error', 'No se pueden eliminar las vistas del sistema.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.view.cannot_delete_system'));
         }
 
         $view->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-views.index')
-            ->with('success', 'Vista eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.view.deleted'));
     }
 
     /**
@@ -135,5 +142,46 @@ class TicketViewsController extends Controller
         TicketView::reorder($validated['ids']);
 
         return response()->json(['success' => true, 'message' => 'Orden actualizado exitosamente.']);
+    }
+
+    /**
+     * Apply a bulk action (share, unshare or delete) to several views.
+     */
+    public function bulkAction(BulkActionTicketViewRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $views = TicketView::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($views as $view) {
+                // Prevent deleting system views, same guard as destroy().
+                if ($view->is_system) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $view->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($views as $view) {
+                $view->update(['is_shared' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'compartida(s)', 'deactivate' => 'dejada(s) de compartir'];
+        $message = "{$count} vista(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitida(s) por ser del sistema.";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

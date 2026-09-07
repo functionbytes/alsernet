@@ -1,0 +1,1282 @@
+/* ============================================================
+   HelpdeskEmailLog — emaillog-extras.css
+   Estilos de las funcionalidades nuevas (modales, gráfica de
+   actividad, tarjetas de analítica, proveedores, toasts).
+
+   Aditivo: NO redefine nada de emaillog.css. Reutiliza sus
+   variables (--evx-*) y su primario #90bb13. Cargar después:
+
+     <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog.css') }}">
+     <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog-extras.css') }}">
+   ============================================================ */
+
+.emaillog-index,
+.emaillog-settings,
+.evx-modal,
+.evx-toast {
+    --evx-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --evx-ok-bg: #f0fdf4;
+    --evx-ok-fg: #166534;
+    --evx-ok-bd: #bbf7d0;
+    --evx-warn-bg: #fffbeb;
+    --evx-warn-fg: #92400e;
+    --evx-warn-bd: #fde68a;
+    --evx-err-bg: #fef2f2;
+    --evx-err-fg: #991b1b;
+    --evx-err-bd: #fecaca;
+    --evx-spam-bg: #fff7ed;
+    --evx-spam-fg: #9a3412;
+    --evx-info-fg: #075985;
+}
+
+/* ============================================================
+   1. Tarjetas de estadística — delta vs periodo anterior
+   ============================================================ */
+.evx-stat-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.evx-stat-delta.up {
+    color: var(--evx-ok-fg);
+}
+
+.evx-stat-delta.down {
+    color: var(--evx-err-fg);
+}
+
+.evx-stat-delta.flat {
+    color: var(--evx-text-muted);
+    font-weight: 500;
+}
+
+.evx-stat-delta.warn {
+    color: var(--evx-warn-fg);
+}
+
+/* ============================================================
+   2. Gráfica de actividad (14 días) — barras apiladas CSS
+   Marcado esperado:
+   .evx-activity > .evx-activity-plot > .evx-activity-col
+       > .evx-activity-stack > span.seg.sent|failed|bounced|spam|queued
+   ============================================================ */
+.evx-activity-plot {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding-left: 14px;
+    position: relative;
+}
+
+.evx-activity-plot::before {
+    content: '0';
+    position: absolute;
+    left: 0;
+    bottom: 20px;
+    font-family: var(--evx-mono);
+    font-size: 9px;
+    color: var(--evx-text-muted);
+}
+
+.evx-activity-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.evx-activity-stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 1px;
+    height: 56px;
+    border-bottom: 1px solid var(--evx-border-strong);
+}
+
+.evx-activity-stack .seg {
+    display: block;
+    border-radius: 1px;
+    min-height: 0;
+    transition: opacity .12s ease;
+}
+
+.evx-activity-stack .seg.sent {
+    background: var(--evx-primary);
+    border-radius: 2px 2px 0 0;
+}
+
+.evx-activity-stack .seg.failed {
+    background: #52525b;
+}
+
+.evx-activity-stack .seg.bounced {
+    background: #4d7c0f;
+}
+
+.evx-activity-stack .seg.spam {
+    background: #27272a;
+}
+
+.evx-activity-stack .seg.queued {
+    background: #e4e4e7;
+}
+
+.evx-activity-col:hover .seg {
+    opacity: .72;
+}
+
+.evx-activity-day {
+    font-family: var(--evx-mono);
+    font-size: 9.5px;
+    color: var(--evx-text-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.evx-activity-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 12px;
+    font-size: 10.5px;
+    color: var(--evx-text-soft);
+}
+
+.evx-activity-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.evx-activity-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.evx-activity-legend i.sent    { background: var(--evx-primary); }
+.evx-activity-legend i.failed  { background: #52525b; }
+.evx-activity-legend i.bounced { background: #4d7c0f; }
+.evx-activity-legend i.spam    { background: #27272a; }
+.evx-activity-legend i.queued  { background: #e4e4e7; }
+
+/* ============================================================
+   3. Modales
+   ============================================================ */
+.evx-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(24, 24, 27, .45);
+    animation: evx-fade .14s ease;
+}
+
+.evx-modal[hidden] {
+    display: none;
+}
+
+.evx-modal-panel {
+    width: 100%;
+    max-width: 430px;
+    max-height: 88vh;
+    overflow: auto;
+    background: var(--evx-panel);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+    animation: evx-rise .16s ease;
+}
+
+.evx-modal-panel.is-md { max-width: 470px; }
+.evx-modal-panel.is-lg { max-width: 560px; }
+
+.evx-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-modal-head .evx-modal-title {
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.evx-modal-head .evx-close {
+    margin-left: auto;
+}
+
+.evx-modal-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #3f3f46;
+}
+
+.evx-modal-foot {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 0 18px 16px;
+}
+
+.evx-modal-foot .evx-btn {
+    width: auto;
+}
+
+/* Icono del modal según severidad */
+.evx-modal-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: var(--evx-subtle);
+    color: var(--evx-text-soft);
+}
+
+.evx-modal-icon.danger {
+    background: #fee2e2;
+    color: var(--evx-err-fg);
+}
+
+.evx-modal-icon.warning {
+    background: #ffedd5;
+    color: var(--evx-spam-fg);
+}
+
+/* Contexto monoespaciado (asunto · uid) dentro del modal */
+.evx-modal-context {
+    font-family: var(--evx-mono);
+    font-size: 10.5px;
+    color: var(--evx-text-soft);
+    padding: 7px 10px;
+    background: var(--evx-bg-soft);
+    border: 1px solid var(--evx-border);
+    border-radius: 7px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Payload crudo del webhook */
+.evx-modal-code {
+    padding: 14px 16px;
+    background: #18181b;
+    border-radius: 9px;
+    font-family: var(--evx-mono);
+    font-size: 10.5px;
+    line-height: 1.8;
+    color: #d4d4d8;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 46vh;
+    overflow: auto;
+    margin: 0;
+}
+
+/* Campos de formulario dentro de modales */
+.evx-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.evx-form-row > label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--evx-text);
+}
+
+.evx-form-row .evx-hint {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    line-height: 1.6;
+}
+
+.evx-form-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.evx-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.evx-form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.evx-form-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.evx-form-grid input,
+.evx-form-grid select,
+.evx-form-row input,
+.evx-form-row select,
+.evx-form-row textarea {
+    width: 100%;
+    padding: 8px 11px;
+    background: #fff;
+    border: 1px solid var(--evx-border-strong);
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--evx-text);
+}
+
+.evx-form-row textarea {
+    font-family: var(--evx-mono);
+    font-size: 11px;
+    resize: vertical;
+}
+
+.evx-form-row input:focus,
+.evx-form-row select:focus,
+.evx-form-row textarea:focus {
+    outline: none;
+    border-color: var(--evx-text);
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, .06);
+}
+
+.evx-form-row input.num,
+.evx-form-grid input.num {
+    text-align: right;
+    font-family: var(--evx-mono);
+}
+
+/* Ajustes en dos columnas (etiqueta + control) */
+.evx-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 11px 14px;
+    align-items: center;
+    font-size: 11.5px;
+}
+
+.evx-settings-grid > label {
+    font-weight: 600;
+}
+
+@keyframes evx-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes evx-rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   4. Toast de confirmación
+   ============================================================ */
+.evx-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 16px;
+    background: #18181b;
+    color: #fff;
+    border-radius: 9px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    animation: evx-toast-in .18s ease;
+}
+
+.evx-toast[hidden] {
+    display: none;
+}
+
+.evx-toast i {
+    color: #a3e635;
+}
+
+.evx-toast.is-error i {
+    color: #fca5a5;
+}
+
+@keyframes evx-toast-in {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ============================================================
+   5. Filas de lista genéricas (supresiones, buzones,
+      proveedores, eventos, streams, inbound)
+   ============================================================ */
+.evx-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.evx-list-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--evx-subtle);
+}
+
+.evx-list-row:last-child {
+    border-bottom: none;
+}
+
+.evx-list-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.evx-list-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-list-title.mono {
+    font-family: var(--evx-mono);
+    font-size: 11px;
+}
+
+.evx-list-sub {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+.evx-list-date {
+    font-family: var(--evx-mono);
+    font-size: 10px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+.evx-list-link {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--evx-text-soft);
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.evx-list-link.danger {
+    color: var(--evx-err-fg);
+}
+
+.evx-card-foot {
+    padding: 10px 15px;
+    border-top: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+.evx-card-foot .evx-add {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.evx-card-foot .evx-add:hover {
+    color: var(--evx-text);
+}
+
+/* Punto de estado (activo / pausado / error) */
+.evx-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--evx-border-strong);
+}
+
+.evx-dot.ok    { background: #16a34a; }
+.evx-dot.error { background: var(--evx-danger); }
+.evx-dot.warn  { background: #d97706; }
+
+/* ============================================================
+   6. Badges de verificación / severidad
+   ============================================================ */
+.evx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.evx-badge.ok {
+    background: #dcfce7;
+    color: var(--evx-ok-fg);
+}
+
+.evx-badge.warn {
+    background: #fef3c7;
+    color: var(--evx-warn-fg);
+}
+
+.evx-badge.error {
+    background: #fee2e2;
+    color: var(--evx-err-fg);
+}
+
+.evx-badge.spam {
+    background: #ffedd5;
+    color: var(--evx-spam-fg);
+}
+
+.evx-badge.neutral {
+    background: var(--evx-subtle);
+    color: var(--evx-text-soft);
+}
+
+/* ============================================================
+   7. Analítica: mailables, dominios, latencia
+   ============================================================ */
+.evx-metric-table {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto;
+    gap: 8px 13px;
+    padding: 11px 15px;
+    align-items: center;
+    font-size: 11px;
+}
+
+.evx-metric-table .h {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.evx-metric-table .v {
+    font-family: var(--evx-mono);
+    font-size: 10.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-metric-table .v.good { color: var(--evx-ok-fg); }
+.evx-metric-table .v.bad  { color: var(--evx-err-fg); font-weight: 700; }
+.evx-metric-table .v.dim  { color: var(--evx-text-muted); }
+
+.evx-kpi-row {
+    display: flex;
+    gap: 22px;
+    padding: 14px 15px;
+    border-bottom: 1px solid var(--evx-subtle);
+    flex-wrap: wrap;
+}
+
+.evx-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-kpi-value {
+    font-size: 16px;
+    font-weight: 800;
+    font-family: var(--evx-mono);
+    line-height: 1.1;
+}
+
+.evx-kpi-value.warn { color: var(--evx-warn-fg); }
+
+.evx-kpi-label {
+    font-size: 10px;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+/* Aviso inline al pie de una tarjeta de analítica */
+.evx-card-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-top: 1px solid var(--evx-warn-bd);
+    background: var(--evx-warn-bg);
+    font-size: 10.5px;
+    color: var(--evx-warn-fg);
+}
+
+.evx-card-note .evx-list-link {
+    color: var(--evx-warn-fg);
+    margin-left: auto;
+}
+
+/* ============================================================
+   8. Traza de envío
+   ============================================================ */
+.evx-trace-step {
+    display: flex;
+    gap: 11px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--evx-subtle);
+}
+
+.evx-trace-step:last-child {
+    border-bottom: none;
+}
+
+.evx-trace-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    background: var(--evx-subtle);
+    color: var(--evx-text-muted);
+}
+
+.evx-trace-icon.ok    { background: #dcfce7; color: var(--evx-ok-fg); }
+.evx-trace-icon.err   { background: #fee2e2; color: var(--evx-err-fg); }
+.evx-trace-icon.warn  { background: #fef3c7; color: var(--evx-warn-fg); }
+.evx-trace-icon.spam  { background: #ffedd5; color: var(--evx-spam-fg); }
+.evx-trace-icon.open  { background: var(--evx-ok-bg); color: var(--evx-ok-fg); }
+
+.evx-trace-title {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.evx-trace-meta {
+    font-size: 11px;
+    color: #71717a;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   9. Cabecera del contenido del email (chips + toggle)
+   Debe envolver: los chips de adjunto/validación/spam crecen.
+   ============================================================ */
+.evx-content-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    row-gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 13px;
+    border-bottom: 1px solid var(--evx-border);
+    /* Mismo gris que las solapas de las pestañas en el mockup (#f5f6f8),
+       no el --evx-bg-soft general: comparten borde y deben leerse como
+       una sola banda de cabecera. */
+    background: #f5f6f8;
+}
+
+.evx-content-head .evx-attach-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 190px;
+    padding: 1px 7px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 4px;
+    font-size: 10.5px;
+    color: var(--evx-text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.evx-content-head .evx-attach-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.evx-content-head .evx-device-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Cuerpo del email en vista móvil */
+.evx-content-body {
+    padding: 18px 20px;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #3f3f46;
+    white-space: pre-line;
+}
+
+.evx-content-body.is-mobile {
+    background: var(--evx-subtle);
+}
+
+.evx-content-body.is-mobile > .inner {
+    max-width: 390px;
+    margin: 0 auto;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 12px;
+}
+
+/* ============================================================
+   10. Patrones reutilizables del catálogo de 47 modales
+   (compose, schedule, attach, delivery, bulk, provider, ai,
+   c360, portal, gdpr… todos comparten estas piezas)
+   ============================================================ */
+
+/* — Cabecera del modal con avatar/iniciales — */
+.evx-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--evx-text);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.evx-avatar.sq {
+    border-radius: 8px;
+}
+
+/* — Barra de herramientas del editor (compose, tplEdit, macros) — */
+.evx-editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+    flex-wrap: wrap;
+}
+
+.evx-editor-toolbar button {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--evx-text-soft);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.evx-editor-toolbar button:hover,
+.evx-editor-toolbar button.on {
+    background: var(--evx-subtle);
+    color: var(--evx-text);
+}
+
+.evx-editor-toolbar .sep {
+    width: 1px;
+    height: 16px;
+    background: var(--evx-border);
+    margin: 0 4px;
+}
+
+.evx-editor-area {
+    min-height: 130px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #3f3f46;
+    border: none;
+    resize: vertical;
+    width: 100%;
+}
+
+/* — Fila de destinatarios con “tokens” (compose, resend, link) — */
+.evx-recipients {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--evx-border);
+    font-size: 12px;
+}
+
+.evx-recipients .k {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+.evx-token {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    background: var(--evx-subtle);
+    border: 1px solid var(--evx-border);
+    border-radius: 20px;
+    font-size: 11px;
+    max-width: 100%;
+}
+
+.evx-token span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-token button {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--evx-text-muted);
+    cursor: pointer;
+    font-size: 9px;
+    flex-shrink: 0;
+}
+
+/* — Lista de opciones seleccionables (schedule, bulk, export, filter,
+     provider, notif, reports, gdpr…) — */
+.evx-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.evx-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--evx-border);
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: border-color .12s ease, background .12s ease;
+}
+
+.evx-option:hover {
+    border-color: var(--evx-border-strong);
+    background: var(--evx-bg-soft);
+}
+
+.evx-option.is-selected {
+    border-color: var(--evx-primary);
+    box-shadow: 0 0 0 1px var(--evx-primary);
+    background: #fff;
+}
+
+.evx-option.is-danger.is-selected {
+    border-color: var(--evx-danger);
+    box-shadow: 0 0 0 1px var(--evx-danger);
+}
+
+.evx-option-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    background: var(--evx-subtle);
+    color: var(--evx-text-soft);
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.evx-option-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.evx-option-title {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.evx-option-sub {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    line-height: 1.5;
+}
+
+.evx-option .evx-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--evx-border-strong);
+    display: grid;
+    place-items: center;
+    font-size: 8px;
+    color: transparent;
+    flex-shrink: 0;
+}
+
+.evx-option.is-selected .evx-check {
+    background: var(--evx-primary);
+    border-color: var(--evx-primary);
+    color: #fff;
+}
+
+/* — Zona de arrastre de adjuntos (attach, ingest, formdata) — */
+.evx-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 26px 18px;
+    border: 1px dashed var(--evx-border-strong);
+    border-radius: 10px;
+    background: var(--evx-bg-soft);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .12s ease, background .12s ease;
+}
+
+.evx-dropzone:hover,
+.evx-dropzone.is-over {
+    border-color: var(--evx-primary);
+    background: #fff;
+}
+
+.evx-dropzone i {
+    font-size: 20px;
+    color: var(--evx-text-muted);
+}
+
+.evx-dropzone .t {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.evx-dropzone .s {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+/* — Archivo adjunto con progreso — */
+.evx-file {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    border: 1px solid var(--evx-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.evx-progress {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--evx-subtle);
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.evx-progress > i {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--evx-primary);
+}
+
+/* — Timeline vertical (delivery, audit, escal, recur) — */
+.evx-timeline {
+    display: flex;
+    flex-direction: column;
+    padding-left: 8px;
+}
+
+.evx-timeline-item {
+    display: flex;
+    gap: 11px;
+    padding-bottom: 14px;
+    position: relative;
+}
+
+.evx-timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 24px;
+    bottom: 0;
+    width: 1px;
+    background: var(--evx-border);
+}
+
+.evx-timeline-item > .evx-trace-icon {
+    position: relative;
+    z-index: 1;
+}
+
+/* — Switch (notif, webhooks, perms, provider, alertas) — */
+.evx-switch {
+    position: relative;
+    width: 34px;
+    height: 19px;
+    border-radius: 20px;
+    background: var(--evx-border-strong);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .14s ease;
+}
+
+.evx-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    transition: transform .14s ease;
+}
+
+.evx-switch.on {
+    background: var(--evx-primary);
+}
+
+.evx-switch.on::after {
+    transform: translateX(15px);
+}
+
+/* — Panel de IA / resumen (ai, summary, translate, tagging, qa) — */
+.evx-ai-panel {
+    padding: 12px 14px;
+    border: 1px solid var(--evx-border);
+    border-radius: 10px;
+    background: var(--evx-bg-soft);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #3f3f46;
+}
+
+.evx-ai-panel .evx-ai-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    margin-right: 4px;
+}
+
+.evx-ai-panel .evx-ai-note {
+    display: block;
+    margin-top: 8px;
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+/* — Aviso de colisión / presencia (collision) — */
+.evx-presence {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: var(--evx-warn-bg);
+    border: 1px solid var(--evx-warn-bd);
+    font-size: 11.5px;
+    color: var(--evx-warn-fg);
+}
+
+/* — Tabs dentro de un modal (c360, portal, identity, reports) — */
+.evx-modal-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--evx-border);
+    background: #fff;
+    overflow-x: auto;
+}
+
+.evx-modal-tabs button {
+    padding: 9px 11px;
+    border: none;
+    background: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.evx-modal-tabs button.on {
+    color: var(--evx-text);
+    font-weight: 700;
+    box-shadow: inset 0 -2px 0 var(--evx-text);
+}
+
+/* — Estado vacío dentro de un modal — */
+.evx-modal-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 34px 20px;
+    text-align: center;
+    color: var(--evx-text-muted);
+}
+
+.evx-modal-empty i {
+    font-size: 20px;
+}
+
+.evx-modal-empty .t {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--evx-text);
+}
+
+/* — Pie con acciones a ancho completo (mailbox, cancel, trash) — */
+.evx-modal-foot.stacked {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+}
+
+.evx-modal-foot.stacked .evx-btn {
+    width: 100%;
+}
+
+/* — Marco de presentación del catálogo (solo para la galería de
+     especificaciones, no para producción) — */
+.evx-spec-frame {
+    padding: 28px 20px;
+    min-height: 470px;
+    display: grid;
+    place-items: center;
+    background:
+        linear-gradient(rgba(0, 0, 0, .35), rgba(0, 0, 0, .35)),
+        radial-gradient(circle at 30% 20%, #3f3f46, #18181b 60%);
+}
+
+.evx-spec-frame > .evx-modal-panel {
+    animation: none;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
+    border-radius: 12px;
+}
+
+.evx-spec-caption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--evx-border);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+/* ============================================================
+   11. Responsive
+   ============================================================ */
+@media (max-width: 992px) {
+    .evx-settings-grid {
+        grid-template-columns: 1fr;
+        gap: 6px 0;
+    }
+
+    .evx-form-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .evx-form-grid.cols-3 { grid-template-columns: 1fr; }
+
+    .evx-metric-table {
+        grid-template-columns: 1fr auto auto;
+    }
+
+    .evx-metric-table .hide-sm { display: none; }
+}
+
+@media (max-width: 576px) {
+    .evx-activity-day { font-size: 8px; }
+    .evx-activity-plot { gap: 3px; }
+    .evx-modal { padding: 12px; }
+    .evx-toast { white-space: normal; max-width: calc(100vw - 32px); }
+    .evx-modal-tabs { padding: 0 8px; }
+    .evx-spec-frame { padding: 16px 10px; min-height: 0; }
+}
+
+@media print {
+    .evx-modal,
+    .evx-toast,
+    .evx-card-foot .evx-add,
+    .evx-list-link,
+    .evx-switch,
+    .evx-editor-toolbar {
+        display: none !important;
+    }
+}
+
+/* Bloque de JSON crudo dentro de <details> (Settings → Eventos de webhook,
+   "Ver payload") — .mono/.evx-mono ya pone la tipografía; esto solo acota
+   el alto y evita que una línea larga rompa el layout de la fila. */
+.evx-payload {
+    max-height: 320px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--evx-bg-soft);
+    border: 1px solid var(--evx-border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.evx-payload-toggle {
+    margin-top: 6px;
+}
+
+.evx-payload-toggle summary {
+    cursor: pointer;
+    color: var(--evx-text-soft);
+    font-size: 13px;
+}
+
+.evx-payload-toggle summary:hover {
+    color: var(--evx-primary-dark);
+}

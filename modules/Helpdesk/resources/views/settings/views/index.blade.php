@@ -6,6 +6,7 @@
 <style>
 .hd-drag-handle { cursor: grab; }
 .hd-bulk-toolbar { z-index: 1050; }
+.hd-filter-badge { font-size: .6rem; }
 </style>
 @endpush
 
@@ -78,30 +79,53 @@
                 </div>
             </div>
 
-            {{-- Search --}}
+            {{-- Filtros --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('settings.helpdesk.views.index') }}" id="filterForm">
-                    <div class="d-flex gap-2 align-items-center">
-                        <div class="flex-fill">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-1">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre o descripcion..."
-                                       value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
-                            <i class="fas fa-search"></i>
+                @php
+                    $activeFilterCount = collect(['scope'])->filter(fn ($k) => request($k))->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request('search');
+                @endphp
+                <form id="views-filter-form" method="GET" action="{{ route('settings.helpdesk.views.index') }}">
+                    <input type="hidden" name="scope" id="filter-scope" value="{{ request('scope') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por nombre o descripcion..."
+                               value="{{ request('search') }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#views-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary hd-filter-badge">{{ $activeFilterCount }}</span>
+                            @endif
                         </button>
-                        @if(request('search'))
-                            <a href="{{ route('settings.helpdesk.views.index') }}"
-                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        @endif
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
+                            </button>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('settings.helpdesk.views.index') }}"
+                                   class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4">
+                            <div>
+                                <h6 class="mb-1">Filtrados:</h6>
+                            </div>
+                            @if(request('scope'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    {{ request('scope') === 'personal' ? 'Personales' : 'Compartidas' }}
+                                </span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -113,7 +137,6 @@
                             <thead class="table-light">
                                 <tr>
                                     <th scope="col" width="36"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                                    <th scope="col" width="40"></th>
                                     <th scope="col">Nombre</th>
                                     <th scope="col">Descripcion</th>
                                     <th scope="col">Ordenacion</th>
@@ -129,9 +152,6 @@
                                             @if(!$ticketView->is_system)
                                                 <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $ticketView->id }}">
                                             @endif
-                                        </td>
-                                        <td class="text-center drag-handle hd-drag-handle">
-                                            <i class="fas fa-grip-vertical text-muted"></i>
                                         </td>
                                         <td>
                                             <div>
@@ -213,7 +233,7 @@
                     <div class="text-center py-5">
                         <i class="fas fa-filter fa-3x mb-3 text-muted opacity-50"></i>
                         <h5 class="fw-bold mb-2">
-                            @if(request('search'))
+                            @if(request()->hasAny(['search', 'scope']))
                                 No se encontraron resultados
                             @else
                                 No hay vistas configuradas
@@ -222,11 +242,13 @@
                         <p class="text-muted mb-4">
                             @if(request('search'))
                                 No hay resultados para "{{ request('search') }}"
+                            @elseif(request('scope'))
+                                No hay resultados para los filtros aplicados
                             @else
                                 Aun no hay vistas guardadas creadas
                             @endif
                         </p>
-                        @if(request('search'))
+                        @if(request()->hasAny(['search', 'scope']))
                             <a href="{{ route('settings.helpdesk.views.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('settings.helpdesk.views.create') }}" class="btn btn-primary">
@@ -255,6 +277,36 @@
     </div>
 
     @include('core::components.delete')
+
+    {{-- Filter modal --}}
+    <div class="modal fade" id="views-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Alcance</label>
+                        <select id="modal-scope" class="form-control select2-filter-modal">
+                            <option value="">Todas</option>
+                            <option value="personal" {{ request('scope') === 'personal' ? 'selected' : '' }}>Personales</option>
+                            <option value="public" {{ request('scope') === 'public' ? 'selected' : '' }}>Compartidas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="views-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="views-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Bulk toolbar --}}
     <div id="bulk-toolbar" class="hd-bulk-toolbar position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
@@ -306,6 +358,19 @@ $(document).ready(function () {
         $('#delete-form').attr('action', $(this).data('url'));
     });
 
+    // ── Filter modal ─────────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#views-filter-modal'), width: '100%' });
+
+    $('#views-filter-apply-btn').on('click', function () {
+        $('#filter-scope').val($('#modal-scope').val());
+        $('#views-filter-modal').modal('hide');
+        $('#views-filter-form').submit();
+    });
+
+    $('#views-filter-clear-btn').on('click', function () {
+        $('#modal-scope').val(null).trigger('change');
+    });
+
     // ── Bulk actions ──────────────────────────────────────────────────
     const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
@@ -354,7 +419,9 @@ $(document).ready(function () {
     // ── Drag-drop reorder (jQuery UI Sortable) ────────────────────────
     if ($('#views-sortable').length) {
         $('#views-sortable').sortable({
-            handle: '.drag-handle',
+            // Ver ticket-statuses: la fila entera es el asidero de arrastre.
+            handle: 'tr',
+            cancel: 'input,textarea,button,select,option,a',
             axis: 'y',
             cursor: 'grabbing',
             start: function (e, ui) {

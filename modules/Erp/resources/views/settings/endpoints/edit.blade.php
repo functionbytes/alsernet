@@ -51,9 +51,12 @@
                     <div class="col-12 col-md-6">
                         <div class="mb-3">
                             <label class="control-label col-form-label">Slug</label>
-                            <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror"
-                                   value="{{ old('slug', $endpoint->slug) }}" placeholder="api-gestion-central">
-                            <small class="form-text text-muted">Se genera automáticamente si se deja vacío</small>
+                            @include('core::components.slug-field', [
+                                'value' => old('slug', $endpoint->slug),
+                                'from' => 'input[name=name]',
+                                'placeholder' => 'api-gestion-central',
+                            ])
+                            <small class="form-text text-muted">Sigue al nombre mientras no lo edites a mano</small>
                             @error('slug')
                                 <span class="field-validation-error"><i class="fa fa-circle-exclamation"></i> {{ $message }}</span>
                             @enderror

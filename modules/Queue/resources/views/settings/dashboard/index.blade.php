@@ -95,7 +95,7 @@
             </div>
 
             {{-- Navigation pills --}}
-            <ul class="nav nav-tabs border-0 user-profile-tab" id="queueTabs" role="tablist">
+            <ul class="nav nav-pills user-profile-tab" id="queueTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 active"
                             id="failed-tab" data-bs-toggle="pill"

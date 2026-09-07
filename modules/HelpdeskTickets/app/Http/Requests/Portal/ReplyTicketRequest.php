@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Requests\Portal;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Core\Rules\ValidMimeMagicBytes;
 
 class ReplyTicketRequest extends FormRequest
 {
@@ -15,7 +16,18 @@ class ReplyTicketRequest extends FormRequest
     {
         return [
             'message' => ['required', 'string', 'max:5000'],
-            'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'],
+            // ValidMimeMagicBytes además de mimes: comprueba la firma binaria
+            // real del fichero, no solo lo que declara la extensión. El alta
+            // interna (StoreTicketRequest) ya lo hacía; el portal — que es la
+            // entrada abierta a cualquiera con un enlace mágico — se quedaba
+            // en la comprobación más débil de las dos.
+            'attachments.*' => [
+                'nullable',
+                'file',
+                'max:5120',
+                'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip',
+                new ValidMimeMagicBytes(config('helpdesk.attachments.allowed_mime_types', [])),
+            ],
         ];
     }
 

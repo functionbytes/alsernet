@@ -24,7 +24,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Condicion de disparo</h6>
+                        <h6 class="fw-semibold mb-1">Condicion de disparo</h6>
                         <p class="text-muted small mb-3">Palabra clave que activara esta regla en los mensajes entrantes</p>
                         <div class="row g-3 mb-4">
 
@@ -60,11 +60,11 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Asignacion</h6>
+                        <h6 class="fw-semibold mb-1">Asignacion</h6>
                         <p class="text-muted small mb-3">Agente o equipo al que se asignara la conversacion cuando se cumpla la regla</p>
                         <div class="row g-3 mb-4">
 
-                            <div class="col-12 col-md-8">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="form-label">Asignar a agente</label>
                                     <select name="assign_to_user_id" class="form-select @error('assign_to_user_id') is-invalid @enderror">
@@ -83,7 +83,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuracion</h6>
                         <p class="text-muted small mb-3">Prioridad y estado de la regla</p>
                         <div class="row g-3">
 
@@ -124,20 +124,25 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las reglas de enrutamiento</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las reglas de enrutamiento</h6>
                     <p class="card-text text-muted">
                         Cuando un cliente envia un mensaje que coincide con la palabra clave, la conversacion se asigna automaticamente al agente o equipo configurado.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Tipos de coincidencia</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Tipos de coincidencia</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><span class="fw-semibold">Contiene:</span> la palabra aparece en cualquier parte del mensaje</li>
-                        <li class="mb-2 text-muted small"><span class="fw-semibold">Exacta:</span> el mensaje es exactamente igual a la palabra clave</li>
-                        <li class="text-muted small"><span class="fw-semibold">Regex:</span> patron de expresion regular avanzado</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><span class="fw-semibold">Contiene:</span> la palabra aparece en cualquier parte del mensaje</li>
+                        <li class="mb-2"><span class="fw-semibold">Exacta:</span> el mensaje es exactamente igual a la palabra clave</li>
+                        <li class="mb-0"><span class="fw-semibold">Regex:</span> patron de expresion regular avanzado</li>
                     </ul>
                 </div>
             </div>

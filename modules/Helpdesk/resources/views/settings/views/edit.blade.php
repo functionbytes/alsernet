@@ -26,7 +26,7 @@
                         @include('core::components.alerts')
 
                         {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre y descripcion visible de la vista guardada</p>
                         <div class="row g-3 mb-4">
 
@@ -55,7 +55,7 @@
                         </div>
 
                         {{-- Ordenacion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Ordenacion</h6>
+                        <h6 class="fw-semibold mb-1">Ordenacion</h6>
                         <p class="text-muted small mb-3">Criterio y direccion por defecto al aplicar la vista</p>
                         <div class="row g-3 mb-4">
 
@@ -88,7 +88,7 @@
                         </div>
 
                         {{-- Filtros --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Filtros</h6>
+                        <h6 class="fw-semibold mb-1">Filtros</h6>
                         <p class="text-muted small mb-3">Condiciones que debe cumplir un ticket para aparecer en esta vista</p>
                         <div class="row g-3 mb-4">
 
@@ -109,7 +109,7 @@
                         </div>
 
                         {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuracion</h6>
                         <p class="text-muted small mb-3">Visibilidad y marca como predeterminada</p>
                         <div class="row g-3">
 
@@ -148,25 +148,30 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las vistas guardadas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las vistas guardadas</h6>
                     <p class="card-text text-muted">
                         Las vistas guardadas permiten acceder rapidamente a un listado filtrado y ordenado de tickets sin tener que configurar los filtros cada vez.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion del registro</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">
                             <span class="fw-semibold">Creada:</span> {{ $view->created_at->format('d/m/Y H:i') }}
                         </li>
-                        <li class="mb-2 text-muted small">
+                        <li class="mb-2">
                             <span class="fw-semibold">Actualizada:</span> {{ $view->updated_at->format('d/m/Y H:i') }}
                         </li>
                         @if($view->is_system)
-                            <li class="text-muted small">
+                            <li class="mb-0">
                                 <span class="badge bg-warning-subtle text-warning">Vista del sistema</span>
                             </li>
                         @endif

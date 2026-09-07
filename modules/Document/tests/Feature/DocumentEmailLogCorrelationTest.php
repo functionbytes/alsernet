@@ -6,13 +6,13 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentMail;
 use Modules\Document\Mail\DocumentCustomMail;
-use Modules\HelpdeskEmailLog\Enums\EmailStatus;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Enums\EmailStatus;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Tests\TestCase;
 
 /**
  * Verifica la correlación de los emails del módulo Document con el log central
- * EmailLog (modules/HelpdeskEmailLog), añadida para poder "captar qué se envió"
+ * EmailLog (modules/HelpdeskEmailActivity), añadida para poder "captar qué se envió"
  * por documento sin depender únicamente de document_mails.
  *
  * No pasa por el envío real (evita depender de MailerTemplate/lang seedeados):
@@ -102,7 +102,7 @@ class DocumentEmailLogCorrelationTest extends TestCase
         $documentMail = DocumentMail::logEmail($document, 'reminder', 'Recordatorio', '<p>Body</p>');
         $documentMail->markAsSent();
 
-        // Ningún EmailLog con external_id = documentMail->uid (p.ej. HelpdeskEmailLog
+        // Ningún EmailLog con external_id = documentMail->uid (p.ej. HelpdeskEmailActivity
         // desactivado, o envío anterior a esta correlación).
         $this->assertNull($documentMail->emailLog);
         $this->assertSame('sent', $documentMail->delivery_status);

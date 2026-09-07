@@ -70,6 +70,6 @@ class FeedbackController extends Controller
 
         return redirect()
             ->to(self::signedShowUrl($ticket))
-            ->with('success', 'Gracias por tu feedback');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.feedback.thanks'));
     }
 }

@@ -53,7 +53,38 @@ class PriceLabelFontService
             Storage::disk(self::DISK)->delete($font->file_path);
         }
 
+        $family = $font->family;
         $font->delete();
+
+        $this->forgetDompdfFont($family);
+    }
+
+    /**
+     * Borra la familia del registro de fuentes de DomPDF (installed-fonts.json).
+     *
+     * Sin esto, al eliminar o reemplazar el fichero de una fuente el registro
+     * sigue apuntando al .ttf viejo: DomPDF cree que la fuente esta instalada,
+     * no encuentra el fichero y cae en Helvetica SIN AVISAR, con lo que el PDF
+     * sale con otra tipografia (y otro ancho de texto) que el editor.
+     */
+    private function forgetDompdfFont(string $family): void
+    {
+        $registry = rtrim((string) config('dompdf.options.font_dir', storage_path('fonts')), '/')
+            .'/installed-fonts.json';
+
+        if (! is_file($registry) || ! is_writable($registry)) {
+            return;
+        }
+
+        $fonts = json_decode((string) file_get_contents($registry), true);
+
+        if (! is_array($fonts) || ! array_key_exists($family, $fonts)) {
+            return;
+        }
+
+        unset($fonts[$family]);
+
+        file_put_contents($registry, json_encode($fonts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**
@@ -119,9 +150,22 @@ class PriceLabelFontService
     {
         return $this->all()
             ->map(function (PriceLabelFont $font) use ($forPdf): string {
-                $src = $forPdf
-                    ? 'file://'.Storage::disk(self::DISK)->path($font->file_path)
-                    : Storage::disk(self::DISK)->url($font->file_path);
+                if ($forPdf) {
+                    // DomPDF lee el fichero directo del disco (file://), sin
+                    // capa de cache HTTP de por medio: no hace falta cache-busting.
+                    $src = 'file://'.Storage::disk(self::DISK)->path($font->file_path);
+                } else {
+                    // El storage sirve estos ficheros con Cache-Control
+                    // "immutable" de 1 anyo. Si se reemplaza el archivo de una
+                    // fuente ya usada (p.ej. tras recortarla con subsetting),
+                    // el navegador jamas vuelve a pedirlo sin este `?v=`: se
+                    // quedaria sirviendo la version vieja en cache para
+                    // siempre, aunque el usuario fuerce un hard refresh.
+                    $version = Storage::disk(self::DISK)->exists($font->file_path)
+                        ? Storage::disk(self::DISK)->lastModified($font->file_path)
+                        : 0;
+                    $src = Storage::disk(self::DISK)->url($font->file_path).'?v='.$version;
+                }
 
                 $format = str_ends_with(strtolower($font->file_path), '.otf') ? 'opentype' : 'truetype';
 

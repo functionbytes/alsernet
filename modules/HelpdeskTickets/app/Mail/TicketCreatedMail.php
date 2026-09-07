@@ -5,11 +5,13 @@ namespace Modules\HelpdeskTickets\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -18,12 +20,25 @@ use Modules\HelpdeskTickets\Models\Ticket;
  */
 class TicketCreatedMail extends Mailable implements ShouldQueue, TracksEmailLog
 {
-    use AddsEmailLogHeaders, Queueable, SerializesModels;
+    // headers() propio abajo necesita añadir Message-ID — mismo motivo que
+    // TicketReplyMail: un trait no soporta parent::, así que se alias-ea el
+    // método del trait para complementarlo sin perder X-Email-Module/
+    // X-Entity-Type/X-Entity-Id en silencio.
+    use AddsEmailLogHeaders {
+        headers as private emailLogHeaders;
+    }
+    use Queueable, SerializesModels;
 
     public function __construct(
         public readonly Ticket $ticket,
         public readonly string $emailSubject,
         public readonly string $emailContent,
+        // Sin esto, este correo (el PRIMERO del hilo) salía siempre desde el
+        // mailer global en vez del buzón real del canal, y no llevaba
+        // Message-ID propio para que la respuesta del cliente enganchara por
+        // In-Reply-To/References — mismo motivo que TicketReplyMail.
+        public readonly ?string $fromAddress = null,
+        public readonly ?string $ownMessageId = null,
     ) {
         $this->onQueue('emails');
     }
@@ -50,11 +65,25 @@ class TicketCreatedMail extends Mailable implements ShouldQueue, TracksEmailLog
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->emailSubject);
+        return new Envelope(
+            subject: $this->emailSubject,
+            from: $this->fromAddress ? new Address($this->fromAddress) : null,
+        );
     }
 
     public function content(): Content
     {
         return new Content(htmlString: $this->emailContent);
+    }
+
+    public function headers(): Headers
+    {
+        $headers = $this->emailLogHeaders();
+
+        if ($this->ownMessageId) {
+            $headers->messageId = trim($this->ownMessageId, '<>');
+        }
+
+        return $headers;
     }
 }

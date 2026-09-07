@@ -26,7 +26,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Estado</label>
-                            <select name="status_id" class="form-select">
+                            <select name="status_id" class="form-select select2">
                                 <option value="">Todos los estados</option>
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->id }}" {{ ($filters['status_id'] ?? '') == $status->id ? 'selected' : '' }}>
@@ -38,7 +38,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Categoria</label>
-                            <select name="category_id" class="form-select">
+                            <select name="category_id" class="form-select select2">
                                 <option value="">Todas las categorias</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}" {{ ($filters['category_id'] ?? '') == $cat->id ? 'selected' : '' }}>
@@ -50,7 +50,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Prioridad</label>
-                            <select name="priority" class="form-select">
+                            <select name="priority" class="form-select select2">
                                 <option value="">Todas</option>
                                 <option value="urgent" {{ ($filters['priority'] ?? '') === 'urgent' ? 'selected' : '' }}>Urgente</option>
                                 <option value="high" {{ ($filters['priority'] ?? '') === 'high' ? 'selected' : '' }}>Alta</option>
@@ -61,7 +61,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Agente asignado</label>
-                            <select name="assignee_id" class="form-select">
+                            <select name="assignee_id" class="form-select select2">
                                 <option value="">Cualquier agente</option>
                                 @foreach($agents as $agent)
                                     <option value="{{ $agent->id }}" {{ ($filters['assignee_id'] ?? '') == $agent->id ? 'selected' : '' }}>
@@ -140,6 +140,13 @@
                                     <tr>
                                         <td>
                                             <span class="fw-semibold text-muted small">#{{ $ticket->ticket_number }}</span>
+                                            @if(in_array($ticket->id, $semanticIds ?? [], true))
+                                                {{-- No contiene las palabras buscadas: aparece porque su
+                                                     significado coincide. Marcarlo evita que parezca un
+                                                     resultado equivocado. --}}
+                                                <span class="badge bg-primary-subtle text-primary ms-1"
+                                                    title="Coincide por significado, no por las palabras exactas">similar</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <a href="{{ route('manager.helpdesk.tickets.show', $ticket) }}" class="text-dark fw-semibold text-decoration-none">
@@ -218,3 +225,12 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+});
+</script>
+@endpush
+

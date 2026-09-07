@@ -6,23 +6,10 @@
 
 @section('content')
 
-<div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
-    <div>
-        <h1 class="h4 mb-0 fw-bold">
-            <i class="far fa-file-lines text-primary me-2"></i>Gestión de formularios
-        </h1>
-        <p class="text-muted small mb-0 mt-1">
-            Cada fila mapea el <code>form_key</code> que envía alsernetforms (PrestaShop) a una categoría de ticket. Desactivar un formulario aquí hace que sus envíos se rechacen (el cron de alsernetforms los reintentará hasta agotar los intentos).
-        </p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ route('forms.manage.export') }}" class="btn btn-light">Exportar</a>
-        <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#importModal">Importar</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#formModal" data-mode="create">
-            Nuevo formulario
-        </button>
-    </div>
-</div>
+@php
+    $fmFiltering = request()->hasAny(['search', 'status', 'category']);
+    $fmActiveFilterCount = collect(['status', 'category'])->filter(fn ($k) => request($k))->count();
+@endphp
 
 @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
@@ -49,7 +36,131 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
+{{-- Tarjeta única (cabecera + totales + filtros + tabla), mismo patrón que
+     helpdesk::settings.business._auto-reply-section: antes el título y los
+     botones vivían sueltos sobre la página y la tabla en su propia tarjeta. --}}
+<div class="card mb-4">
+
+    {{-- Cabecera --}}
+    <div class="card-header p-4 border-bottom border-light">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div>
+                <h5 class="mb-1 fw-bold">Gestión de formularios</h5>
+                <p class="small mb-0 text-muted">
+                    Cada fila mapea el <code>form_key</code> que envía alsernetforms (PrestaShop) a una categoría de ticket. Desactivar un formulario aquí hace que sus envíos se rechacen (el cron de alsernetforms los reintentará hasta agotar los intentos).
+                </p>
+            </div>
+            <div class="ms-auto ps-3 d-flex gap-2 flex-shrink-0">
+                <a href="{{ route('forms.manage.export') }}" class="btn btn-light">Exportar</a>
+                <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#importModal">Importar</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#formModal" data-mode="create">
+                    Nuevo formulario
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Totales --}}
+    <div class="card-body border-bottom">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="card bg-light-secondary h-100">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">Total</h6>
+                        <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
+                        <small class="text-muted">Formularios mapeados</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-light-secondary h-100">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">Activos</h6>
+                        <h4 class="mb-1 fw-bold">{{ number_format($stats['active']) }}</h4>
+                        <small class="text-muted">Aceptan envíos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-light-secondary h-100">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">Inactivos</h6>
+                        <h4 class="mb-1 fw-bold">{{ number_format($stats['inactive']) }}</h4>
+                        <small class="text-muted">Sus envíos se rechazan</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-light-secondary h-100">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">Categorías</h6>
+                        <h4 class="mb-1 fw-bold">{{ number_format($stats['categories']) }}</h4>
+                        {{-- Un formulario sin categoría no puede abrir ticket:
+                             se avisa aquí en vez de dejarlo solo en la fila. --}}
+                        <small class="{{ $stats['uncategorised'] > 0 ? 'text-danger' : 'text-muted' }}">
+                            {{ $stats['uncategorised'] > 0
+                                ? $stats['uncategorised'].' sin categoría'
+                                : 'Todos con categoría' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Filtros --}}
+    <div class="card-body border-bottom">
+        <form method="GET" action="{{ route('forms.manage.index') }}" id="forms-filter-form">
+            <input type="hidden" name="status" id="forms-filter-status" value="{{ request('status') }}">
+            <input type="hidden" name="category" id="forms-filter-category" value="{{ request('category') }}">
+
+            <div class="d-flex align-items-center gap-2">
+                <input type="search" name="search" class="form-control flex-grow-1"
+                       placeholder="Buscar por nombre, form_key o descripción..."
+                       value="{{ request('search') }}">
+
+                <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                        data-bs-toggle="modal" data-bs-target="#forms-filter-modal" title="Filtros avanzados">
+                    <i class="fas fa-filter"></i>
+                    @if($fmActiveFilterCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary ts-filter-badge">
+                            {{ $fmActiveFilterCount }}
+                        </span>
+                    @endif
+                </button>
+
+                <div class="d-flex gap-1 flex-shrink-0">
+                    <button type="submit" class="btn btn-primary" title="Buscar">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+                    @if($fmFiltering)
+                        <a href="{{ route('forms.manage.index') }}" class="btn btn-secondary" title="Limpiar filtros">
+                            <i class="fas fa-xmark"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+
+            @if($fmActiveFilterCount > 0)
+                <div class="d-flex gap-2 flex-wrap mt-4">
+                    <div><h6 class="mb-1">Filtrados:</h6></div>
+                    @if(request('status'))
+                        <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                            Estado: {{ request('status') === 'active' ? 'Activos' : 'Inactivos' }}
+                        </span>
+                    @endif
+                    @if(request('category'))
+                        <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                            Categoría: {{ request('category') === '__none__'
+                                ? 'Sin categoría'
+                                : ($categories->firstWhere('id', request('category'))?->name ?? request('category')) }}
+                        </span>
+                    @endif
+                </div>
+            @endif
+        </form>
+    </div>
+
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -132,7 +243,17 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No hay formularios creados todavía.</td>
+                                {{-- Distinguir "no hay ninguno" de "el filtro no
+                                     devuelve nada": con 19 formularios dados de
+                                     alta, decir que no hay ninguno despista. --}}
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    @if($fmFiltering)
+                                        Ningún formulario coincide con la búsqueda o los filtros aplicados.
+                                        <a href="{{ route('forms.manage.index') }}" class="ms-1">Quitar filtros</a>
+                                    @else
+                                        No hay formularios creados todavía.
+                                    @endif
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -274,10 +395,77 @@
     </div>
 </div>
 
+{{-- Filtros avanzados — mismo patrón que el resto de listados de ajustes:
+     el modal escribe en los <input hidden> del formulario GET y lo envía. --}}
+<div class="modal fade" id="forms-filter-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filtros avanzados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Estado</label>
+                    <select id="forms-modal-status" class="form-control select2-filter-modal">
+                        <option value="">Activos e inactivos</option>
+                        <option value="active" @selected(request('status') === 'active')>Solo activos</option>
+                        <option value="inactive" @selected(request('status') === 'inactive')>Solo inactivos</option>
+                    </select>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-semibold">Categoría</label>
+                    <select id="forms-modal-category" class="form-control select2-filter-modal">
+                        <option value="">Todas las categorías</option>
+                        {{-- Un formulario sin categoría no puede abrir ticket:
+                             merece su propia opción para poder localizarlos. --}}
+                        <option value="__none__" @selected(request('category') === '__none__')>Sin categoría</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="forms-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                    Aplicar filtros
+                </button>
+                <button type="button" id="forms-filter-clear-btn" class="btn btn-secondary w-100">
+                    Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
+// Filtros avanzados: el modal solo escribe en los <input hidden> del
+// formulario GET y lo envía — mismo mecanismo que el resto de listados de
+// ajustes (ver helpdesk::settings.business._auto-reply-section).
+$(function () {
+    if ($.fn.select2) {
+        $('.select2-filter-modal').select2({
+            dropdownParent: $('#forms-filter-modal'),
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+    }
+
+    $('#forms-filter-apply-btn').on('click', function () {
+        $('#forms-filter-status').val($('#forms-modal-status').val());
+        $('#forms-filter-category').val($('#forms-modal-category').val());
+        $('#forms-filter-modal').modal('hide');
+        $('#forms-filter-form').submit();
+    });
+
+    $('#forms-filter-clear-btn').on('click', function () {
+        $('#forms-modal-status, #forms-modal-category').val(null).trigger('change');
+    });
+});
+
 (function () {
     var modal = document.getElementById('formModal');
     if (modal) {

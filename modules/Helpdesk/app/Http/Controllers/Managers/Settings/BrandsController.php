@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class BrandsController extends Controller
     public function __construct()
     {
         $this->middleware('can:helpdesk.brands.view')->only(['index']);
-        $this->middleware('can:helpdesk.brands.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle']);
+        $this->middleware('can:helpdesk.brands.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle', 'bulkAction']);
     }
 
     public function index(Request $request): View
@@ -96,5 +97,42 @@ class BrandsController extends Controller
         return redirect()
             ->route('settings.helpdesk.brands.index')
             ->with('success', $message);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $brands = Brand::whereIn('id', $request->ids)->get();
+        $count = 0;
+
+        if ($request->action === 'delete') {
+            foreach ($brands as $brand) {
+                $brand->delete();
+                $count++;
+            }
+        } else {
+            $isActive = $request->action === 'activate';
+
+            foreach ($brands as $brand) {
+                $brand->update(['is_active' => $isActive]);
+                $count++;
+            }
+        }
+
+        $labels = [
+            'activate' => 'activada(s)',
+            'deactivate' => 'desactivada(s)',
+            'delete' => 'eliminada(s)',
+        ];
+
+        return response()->json([
+            'count' => $count,
+            'message' => "{$count} marca(s) {$labels[$request->action]}.",
+        ]);
     }
 }
