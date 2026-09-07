@@ -137,6 +137,43 @@ class TicketDetailDataController extends Controller
             : round($kb / 1024, 1).' MB';
     }
 
+    /**
+     * ¿Ha cambiado algo en este ticket?
+     *
+     * El panel lo pregunta cada pocos segundos con el ticket abierto, así que
+     * es deliberadamente diminuto: dos agregados sobre índices y ni una
+     * relación cargada. `data()`, en cambio, arma el hilo entero con
+     * traducciones, adjuntos, correos, actividad y tickets relacionados — no se
+     * puede pedir en bucle.
+     *
+     * Existe como RESPALDO del tiempo real, no como sustituto. Lo normal es que
+     * el aviso llegue por websocket (MessageAdded en el canal ticket.{id}); esto
+     * cubre el caso de que Reverb no esté disponible, el navegador haya perdido
+     * la conexión o la cola de broadcasts vaya con retraso — que es exactamente
+     * lo que pasaba: los eventos se encolaban en `default`, que ningún worker
+     * sirve, y el correo de un cliente no aparecía hasta recargar a mano.
+     */
+    public function pulse(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('view', $ticket);
+
+        $items = TicketItem::query()
+            ->where('ticket_id', $ticket->id)
+            ->selectRaw('COUNT(*) as total, COALESCE(MAX(id), 0) as last_id, COALESCE(MAX(updated_at), "") as last_at')
+            ->first();
+
+        return response()->json([
+            // El frontend compara este objeto con el anterior: si algo cambia,
+            // pide data() completo. Se manda el total además del último id
+            // porque un borrado no mueve el máximo.
+            'items' => (int) $items->total,
+            'last_item_id' => (int) $items->last_id,
+            'last_item_at' => (string) $items->last_at,
+            'ticket_updated_at' => optional($ticket->updated_at)->toIso8601String(),
+            'status_id' => $ticket->status_id,
+        ]);
+    }
+
     public function data(Ticket $ticket): JsonResponse
     {
         $this->authorize('view', $ticket);
@@ -573,13 +610,26 @@ class TicketDetailDataController extends Controller
     private function customerTicketsFor(Ticket $ticket): array
     {
         if (! $ticket->customer_id) {
-            return [];
+            return ['label' => null, 'counts' => ['total' => 0, 'open' => 0, 'resolved' => 0], 'items' => [], 'url_all' => null];
         }
 
-        return Ticket::query()
-            ->where('customer_id', $ticket->customer_id)
-            ->whereKeyNot($ticket->getKey())
-            ->with(['status'])
+        $base = fn () => Ticket::query()->where('customer_id', $ticket->customer_id);
+
+        // Los contadores se calculan sobre TODOS los tickets del cliente, no
+        // sobre los 20 que se listan: "14 totales" con 7 filas visibles es
+        // justo lo que hace útil el pie "7 de 14".
+        $counts = [
+            'total' => $base()->count(),
+            'open' => $base()->whereHas('status', fn ($q) => $q->where('is_open', true))->count(),
+            'resolved' => $base()->whereNotNull('resolved_at')->count(),
+        ];
+
+        // El ticket abierto entra en la lista marcado como "Actual" en vez de
+        // excluirse: verlo en su sitio dentro del historial del cliente ubica
+        // mejor que una lista donde falta justo el que se está mirando.
+        $items = $base()
+            ->with(['status', 'assignee:id,email,firstname,lastname'])
+            ->withCount('mails')
             ->latest()
             ->limit(20)
             ->get()
@@ -591,8 +641,23 @@ class TicketDetailDataController extends Controller
                 'status_name' => $other->status?->name,
                 'priority' => $other->priority,
                 'created_at_human' => $other->created_at?->diffForHumans(),
+                'is_current' => $other->id === $ticket->id,
+                'mails_count' => (int) $other->mails_count,
+                // users no tiene columna `name`: el nombre se compone de
+                // firstname/lastname, y con ambos vacíos queda el email.
+                'agent_name' => $other->assignee
+                    ? (trim(($other->assignee->firstname ?? '').' '.($other->assignee->lastname ?? '')) ?: $other->assignee->email)
+                    : null,
+                'url' => route('manager.helpdesk.tickets.index', ['ticket' => $other->id]),
             ])
             ->all();
+
+        return [
+            'label' => $ticket->customer?->company?->name ?? $ticket->customer?->name,
+            'counts' => $counts,
+            'items' => $items,
+            'url_all' => route('manager.helpdesk.tickets.index', ['search' => $ticket->customer?->email]),
+        ];
     }
 
     /**
@@ -634,7 +699,11 @@ class TicketDetailDataController extends Controller
         $due = $ticket->sla_resolution_due_at;
         $kind = $ticket->slaRowKind();
 
-        if (! $due && ! $ticket->sla_first_response_due_at && ! $ticket->first_response_at) {
+        // Sin política aplicada y sin ningún plazo no hay SLA que resumir.
+        // Antes bastaba con que el ticket hubiera tenido primera respuesta para
+        // colar una tarjeta que decía "En plazo": afirmaba cumplir un plazo que
+        // no existía y, de paso, tapaba el aviso de que no hay política.
+        if (! $ticket->sla_policy_id && ! $due && ! $ticket->sla_first_response_due_at) {
             return null;
         }
 

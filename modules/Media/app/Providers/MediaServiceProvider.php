@@ -127,7 +127,8 @@ class MediaServiceProvider extends ServiceProvider
                     ->cron(config('media.chunk.clear.schedule.cron', '25 * * * *'));
             }
             $schedule->command('media:purge-trash')->daily();
-            $schedule->command('media:purge-expired')->hourly();
+            $schedule->command('media:purge-expired')->hourly()
+                ->runInBackground();
             $schedule->command('media:send-digest --frequency=weekly')->weekly();
             $schedule->command('media:apply-retention')->dailyAt('03:00');
         });
@@ -157,7 +158,7 @@ class MediaServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem('media', [
-            'icon' => 'fa-duotone fa-thin fa-album-circle-plus',
+            'icon' => 'fas fa-photo-film',
             'tooltip' => 'Gestor de Medios',
             'sidebar_id' => 'media',
             'url' => 'media.index',

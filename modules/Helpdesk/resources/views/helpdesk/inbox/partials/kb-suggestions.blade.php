@@ -34,6 +34,8 @@
     .bv-kb-suggest__head .bv-kb-suggest__close { margin-left: auto; background: none; border: 0; cursor: pointer; color: inherit; opacity: .7; }
     .bv-kb-suggest__body { max-height: 260px; overflow-y: auto; padding: 8px 12px; }
     .bv-kb-suggest__state { padding: 10px 4px; font-size: 13px; opacity: .8; }
+    .bv-kb-suggest__retry { border: 1px solid var(--bv-border); background: none; border-radius: 6px; padding: 2px 8px; margin-left: 6px; font-size: 11px; cursor: pointer; color: inherit; }
+    .bv-kb-suggest__retry:hover { background: rgba(125, 125, 125, .12); }
     .bv-kb-suggest__item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 6px; border-radius: 8px; }
     .bv-kb-suggest__item:hover { background: rgba(125, 125, 125, .08); }
     .bv-kb-suggest__meta { flex: 1; min-width: 0; }

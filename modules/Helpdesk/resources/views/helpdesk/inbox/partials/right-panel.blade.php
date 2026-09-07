@@ -59,18 +59,17 @@
         $rpCust   = $selectedConversation?->customer;
         $rpConvo  = $selectedConversation;
 
-        // Auto-deteccion y guardado del vinculo de e-commerce (PrestaShop + gestion).
-        // Se saca del camino critico del render: en lugar de llamar a la API externa
-        // sincronamente en cada repintado, se despacha un job en cola protegido por un
-        // guard de cache para que el sync real corra ~1 vez/hora por cliente.
-        if ($rpCust && $rpCust->email
-            && \Illuminate\Support\Facades\Cache::add('hd:commerce-sync:'.$rpCust->id, true, 3600)) {
-            \Modules\Helpdesk\Jobs\SyncCustomerCommerceJob::dispatch($rpCust);
-        }
+        // E-commerce sync (job dispatch), auto-vinculo de documento y el mapping
+        // sesión→conversación del widget ya no viven aquí: son side effects sin
+        // salida al render, movidos a
+        // ConversationsController::dispatchConversationOpenedSideEffects()
+        // (QUAL-03), invocado una vez por buildConversationPaneData() en vez de
+        // en cada render de este partial.
 
-        // Vinculos ya persistidos (consulta local barata): el panel los muestra de
-        // inmediato; el job de arriba refresca en background para la proxima apertura.
-        $rpCust?->load('externalIds');
+        // customer.externalIds ya viene eager-loaded desde
+        // buildConversationPaneData() — loadMissing() en vez de load() para no
+        // repetir la consulta en cada cambio de conversación.
+        $rpCust?->loadMissing('externalIds');
 
         $rpName   = $rpCust?->name ?? 'Sin nombre';
         $rpInitials = mb_strtoupper(collect(preg_split('/\s+/', trim($rpName)))->take(2)->map(fn($w) => mb_substr($w,0,1))->implode(''));
@@ -114,9 +113,8 @@
                     $rpDocuments = app(\Modules\HelpdeskDocument\Services\DocumentPanelPresenter::class)->list($rpDocs);
                     $rpHasDocument = true;
 
-                    // Crea el vínculo si falta, lo re-apunta si quedó roto y
-                    // refresca el snapshot informativo si el estado cambió.
-                    $rpLinker->syncLink($rpConvo, $rpDocs);
+                    // syncLink() (crea/re-apunta el vínculo) ya no corre aquí:
+                    // ver dispatchConversationOpenedSideEffects() en el controller.
                 }
             } catch (\Throwable $e) {
                 report($e);
@@ -183,14 +181,8 @@
                     ->get();
             }
 
-            // Cache session→conversation mapping so heartbeat broadcasts know the conversation_id.
-            if ($rpSessionToken && $rpConvo) {
-                \Illuminate\Support\Facades\Cache::put(
-                    'helpdesklivechat:session_conv:'.$rpSessionToken,
-                    $rpConvo->id,
-                    now()->addDay()
-                );
-            }
+            // El cache put del mapping sesión→conversación ya no corre aquí:
+            // ver dispatchConversationOpenedSideEffects() en el controller.
         }
 
         // Backwards-compat alias for places that already check $rpHasWidgetData
@@ -712,6 +704,35 @@
                 @else
                     <div class="rsp-empty">{{ __('helpdesk::helpdesk.inbox.right.no_integrations') }}</div>
                 @endif
+
+                @php
+                    // Aviso de "se buscó en gestión y no apareció". Solo se pinta
+                    // cuando la búsqueda automática ya corrió y falló: un cliente
+                    // que nunca se ha buscado no muestra nada, porque no hay nada
+                    // que contar todavía. El vínculo manda sobre el estado — si
+                    // alguien lo vinculó a mano después, el aviso sobra.
+                    $rpErpLookupFailed = $rpCust
+                        && helpdesk_erp_enabled()
+                        && $rpCust->erpLookupFailed()
+                        && ! $rpCust->externalIds->firstWhere('platform', 'erp');
+                @endphp
+                @if($rpErpLookupFailed)
+                    <div class="rsp-erp-missing" data-customer-id="{{ $rpCust->id }}"
+                         data-relink-url="{{ route('manager.helpdesk.erp.customers.relink', ['customerId' => $rpCust->id]) }}">
+                        <div class="rsp-erp-missing-text">
+                            <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                            <span>{{ $rpCust->erp_lookup_status === 'error'
+                                ? 'Gestión no respondió al buscar este cliente.'
+                                : 'Este remitente no está en gestión.' }}</span>
+                        </div>
+                        <div class="rsp-erp-missing-actions">
+                            @if($rpIntegrationsModalAvailable)
+                                <button type="button" class="rsp-erp-btn" data-bv-modal="customer-integrations" data-platform="erp">Buscar</button>
+                            @endif
+                            <button type="button" class="rsp-erp-btn" data-bv-erp-relink>Reintentar</button>
+                        </div>
+                    </div>
+                @endif
             </div>
             @endif
         </div>
@@ -1082,13 +1103,13 @@
                             class="btn btn-sm btn-primary"
                             id="hd-webrtc-request-{{ $rpConvo->id }}"
                             data-request-url="{{ route('manager.helpdesk.conversations.webrtc.request', $rpConvo) }}">
-                        <i class="fas fa-hand-pointer me-1"></i> {{ __('helpdesk::helpdesk.inbox.right.request_screen_button') }}
+                        {{ __('helpdesk::helpdesk.inbox.right.request_screen_button') }}
                     </button>
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             id="hd-webrtc-end-{{ $rpConvo->id }}"
                             data-end-url="{{ route('manager.helpdesk.conversations.webrtc.end', $rpConvo) }}">
-                        <i class="fas fa-circle-stop me-1"></i> {{ __('helpdesk::helpdesk.inbox.right.end_screen_button') }}
+                        {{ __('helpdesk::helpdesk.inbox.right.end_screen_button') }}
                     </button>
                 </div>
             </div>

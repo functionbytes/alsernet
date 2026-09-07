@@ -224,6 +224,22 @@ return [
         'mailgun_signing_key' => env('HELPDESK_MAILGUN_WEBHOOK_SIGNING_KEY', env('MAILGUN_WEBHOOK_SIGNING_KEY', '')),
         'sendgrid_webhook_secret' => env('HELPDESK_SENDGRID_WEBHOOK_SECRET', ''),
         'postmark_webhook_secret' => env('HELPDESK_POSTMARK_WEBHOOK_SECRET', ''),
+
+        /*
+         | EmailInboundService creaba la conversación con Conversation::create()
+         | a secas, sin emitir ConversationCreated. Consecuencia: los seis
+         | oyentes de ese evento —vínculo ERP, workflows, saludo, respuesta
+         | fuera de horario, puente de livechat y el broadcast que la pinta en
+         | tiempo real— quedaban inertes para todo el canal de correo.
+         |
+         | El vínculo con el ERP ya no depende de esto (se despacha directo,
+         | igual que hace HelpdeskTickets). Este interruptor gobierna solo la
+         | emisión del evento, y viene apagado a propósito: encenderlo hace que
+         | cada correo entrante pueda recibir un saludo automático y una
+         | respuesta fuera de horario que hoy no recibe. Antes de activarlo,
+         | revisa qué plantillas de bienvenida y qué horario hay configurados.
+         */
+        'dispatch_conversation_created' => env('HELPDESK_EMAIL_DISPATCH_CONVERSATION_CREATED', false),
     ],
 
     'escalation' => [

@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Jobs\Helpdesks;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -36,13 +37,29 @@ use Webklex\PHPIMAP\Client as ImapClient;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message as ImapMessage;
 
-class FetchTicketEmailsJob implements ShouldQueue
+class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
     public int $timeout = 600;
+
+    /**
+     * Una sola lectura del buzón a la vez.
+     *
+     * Antes esto lo hacía el withoutOverlapping() de la tarea programada, pero
+     * ahí protegía lo que no toca: el comando solo despacha este trabajo y
+     * termina en milisegundos. Con la lectura cada pocos segundos, ese cerrojo
+     * se quedaba tomado y la bandeja dejaba de leer correo durante minutos
+     * —reproducido varias veces el 7-sep-2026—. El solape de verdad puede
+     * ocurrir aquí, leyendo el mismo buzón dos veces a la vez, y aquí es donde
+     * se evita.
+     *
+     * uniqueFor corto para que una caída a media lectura no deje el cerrojo
+     * tomado más de un minuto; el trabajo entero tarda menos de un segundo.
+     */
+    public int $uniqueFor = 60;
 
     /** @var array<int, int> */
     public array $backoff = [30, 60, 120];
@@ -559,7 +576,7 @@ class FetchTicketEmailsJob implements ShouldQueue
 
             if ($existingMail?->ticket) {
                 if ($this->senderMatchesTicket($existingMail->ticket, $fromEmail)) {
-                    return $existingMail->ticket;
+                    return $this->threadedTicket($existingMail->ticket);
                 }
 
                 Log::warning('FetchTicketEmailsJob: Message-ID thread sender does not match ticket customer, not threading', [
@@ -575,7 +592,7 @@ class FetchTicketEmailsJob implements ShouldQueue
         if (preg_match('/#(TCK-\d{4}-\d{5})/', $parsed['subject'], $matches)) {
             $ticket = Ticket::with('customer:id,email')->where('ticket_number', $matches[1])->first();
             if ($ticket && $this->senderMatchesTicket($ticket, $fromEmail)) {
-                return $ticket;
+                return $this->threadedTicket($ticket);
             }
 
             if ($ticket) {
@@ -606,19 +623,6 @@ class FetchTicketEmailsJob implements ShouldQueue
             Log::info("Created new customer: {$fromEmail}");
         }
 
-        // Vincula el cliente con el ERP por email, en segundo plano — mismo
-        // mecanismo que ConversationCreated → DispatchErpLinkJob →
-        // LinkCustomerToErpJob en el núcleo Helpdesk (helpdesk_erp_enabled()
-        // respeta el toggle de Settings → Integraciones). LinkCustomerToErpJob
-        // ya es idempotente (no repite si el cliente ya tiene id_cliente
-        // vinculado) y best-effort: si el email no existe en el ERP, o el ERP
-        // no responde, simplemente no se vincula — nunca bloquea ni descarta
-        // el ticket. class_exists() porque HelpdeskErp es un módulo aparte que
-        // puede no estar instalado.
-        if (helpdesk_erp_enabled() && class_exists(LinkCustomerToErpJob::class)) {
-            LinkCustomerToErpJob::dispatch($customer->id);
-        }
-
         // Create new ticket inside a transaction so the lockForUpdate in
         // generateTicketNumber() is effective and numbers never collide.
         $ticket = DB::transaction(fn () => Ticket::create([
@@ -645,7 +649,45 @@ class FetchTicketEmailsJob implements ShouldQueue
         // el MessageAdded::dispatch() de más arriba.
         TicketCreated::dispatch($ticket);
 
+        // Después del Ticket::create(), no antes: el trabajo lleva el ticket de
+        // origen para que CustomerErpResolved pueda enrutar ESTE ticket y no
+        // todo lo que el cliente tenga abierto.
+        $this->dispatchErpLookup($customer->id, $ticket->id);
+
         return $ticket;
+    }
+
+    /**
+     * Un correo que se engancha a un ticket ya abierto también pide la búsqueda.
+     *
+     * Antes solo se pedía en la rama que crea ticket: si el ERP estaba caído
+     * ese día, o el cliente aún no existía en gestión, nada volvía a intentarlo
+     * nunca. El enfriamiento de LinkCustomerToErpJob es lo que evita que esto
+     * consulte el ERP en cada respuesta.
+     */
+    protected function threadedTicket(Ticket $ticket): Ticket
+    {
+        if ($ticket->customer_id) {
+            $this->dispatchErpLookup($ticket->customer_id, $ticket->id);
+        }
+
+        return $ticket;
+    }
+
+    /**
+     * Best-effort y asíncrono: si el email no está en el ERP, o el ERP no
+     * responde, no se vincula nada — nunca bloquea ni descarta el correo.
+     * class_exists() porque HelpdeskErp es un módulo aparte que puede no estar
+     * instalado, y helpdesk_erp_enabled() respeta el toggle de
+     * Ajustes → Integraciones.
+     */
+    protected function dispatchErpLookup(int $customerId, int $ticketId): void
+    {
+        if (! helpdesk_erp_enabled() || ! class_exists(LinkCustomerToErpJob::class)) {
+            return;
+        }
+
+        LinkCustomerToErpJob::dispatch($customerId, 'ticket', $ticketId);
     }
 
     /**

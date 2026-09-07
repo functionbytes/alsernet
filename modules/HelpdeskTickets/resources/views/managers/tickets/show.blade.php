@@ -80,6 +80,24 @@
                     <span><i class="fas fa-user me-1"></i>{{ $ticket->customer?->name ?? "Sin cliente" }}</span>
                     <span><i class="far fa-envelope me-1"></i>{{ $ticket->customer?->email ?? "" }}</span>
                     <span><i class="far fa-calendar me-1"></i>{{ $ticket->created_at->format('d/m/Y H:i') }}</span>
+                    @php
+                        // Mismo criterio que el aviso del inbox: solo si la
+                        // búsqueda automática ya corrió y falló, y nadie ha
+                        // vinculado el cliente a mano desde entonces.
+                        $tkErpMissing = $ticket->customer
+                            && function_exists('helpdesk_erp_enabled')
+                            && helpdesk_erp_enabled()
+                            && $ticket->customer->erpLookupFailed()
+                            && ! $ticket->customer->externalIds()->where('platform', 'erp')->exists();
+                    @endphp
+                    @if($tkErpMissing)
+                        <span class="tk-erp-missing" data-relink-url="{{ route('manager.helpdesk.erp.customers.relink', ['customerId' => $ticket->customer->id]) }}">
+                            <i class="fas fa-circle-question me-1"></i>{{ $ticket->customer->erp_lookup_status === 'error'
+                                ? 'Gestión no respondió'
+                                : 'Sin cliente en gestión' }}
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" data-tk-erp-relink>Reintentar</button>
+                        </span>
+                    @endif
                 </div>
             </div>
 

@@ -43,5 +43,9 @@ class Automation extends Model
         'ticket.assigned' => 'Ticket asignado',
         'ticket.resolved' => 'Ticket resuelto',
         'ticket.closed' => 'Ticket cerrado',
+        // Se emite cuando la búsqueda del cliente en el ERP termina, encontrado
+        // o no. Es el único disparador desde el que las condiciones erp_* ven
+        // datos: en ticket.created el trabajo sigue en la cola helpdesk-erp.
+        'ticket.erp_resolved' => 'El ERP ha respondido',
     ];
 }

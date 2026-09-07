@@ -332,3 +332,65 @@
             }
     });
 })();
+
+/**
+ * Reintento manual de la búsqueda del cliente en gestión.
+ *
+ * El aviso "Este remitente no está en gestión" del panel derecho lo pinta
+ * right-panel.blade.php cuando helpdesk_customers.erp_lookup_status dice que la
+ * búsqueda automática ya corrió y falló. Aquí solo se relanza el trabajo
+ * saltándose el enfriamiento.
+ *
+ * Delegación en document porque el panel derecho se sustituye entero al cambiar
+ * de conversación (SPA pane).
+ */
+(function ($) {
+    'use strict';
+
+    if (!$) { return; }
+
+    $(document).on('click', '[data-bv-erp-relink]', function () {
+        var $btn = $(this);
+        var $box = $btn.closest('.rsp-erp-missing');
+        var url = $box.data('relink-url');
+
+        if (!url || $btn.prop('disabled')) { return; }
+
+        $btn.prop('disabled', true).text('Buscando…');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            timeout: 15000,
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || ''
+            }
+        }).done(function (resp) {
+            if (window.toastr) {
+                window.toastr.success((resp && resp.message) || 'Buscando el cliente en gestión…');
+            }
+
+            // El trabajo es asíncrono: no se puede pintar el resultado aquí. Se
+            // deja constancia de que se pidió y se invita a recargar, en vez de
+            // fingir que ya está resuelto.
+            $box.find('.rsp-erp-missing-text span').text('Búsqueda enviada. Recarga en unos segundos para ver el resultado.');
+            $btn.text('Enviado');
+        }).fail(function (xhr, textStatus) {
+            var msg;
+
+            if (textStatus === 'timeout') {
+                msg = 'La petición tardó demasiado.';
+            } else if (xhr && xhr.status === 429) {
+                msg = 'Demasiados reintentos seguidos, espera un minuto.';
+            } else {
+                msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo pedir la búsqueda.';
+            }
+
+            if (window.toastr) { window.toastr.error(msg); }
+
+            $btn.prop('disabled', false).text('Reintentar');
+        });
+    });
+
+}(window.jQuery));

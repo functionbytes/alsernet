@@ -47,7 +47,8 @@ class HelpdeskPrestashopServiceProvider extends ServiceProvider
             $schedule->command('helpdeskprestashop:warm-cache')
                 ->everyThirtyMinutes()
                 ->withoutOverlapping()
-                ->when(fn () => helpdesk_prestashop_enabled());
+                ->when(fn () => helpdesk_prestashop_enabled())
+                ->runInBackground();
         });
 
         // A price drop or restock makes the cached catalog stale.
@@ -64,20 +65,24 @@ class HelpdeskPrestashopServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
+        // Gate de un solo punto por grupo: helpdesk_prestashop_enabled()
+        // (modulo instalado + toggle admin) — sin esto, un admin que apaga la
+        // integracion en Settings solo ocultaba el menu, pero change_status/
+        // set_tracking/start_return, la API y el webhook seguian alcanzables.
         $managers = module_path($this->moduleName, 'routes/managers.php');
         if (file_exists($managers)) {
-            Route::middleware(['web', 'auth'])
+            Route::middleware(['web', 'auth', 'integration.enabled:prestashop'])
                 ->prefix('panel/helpdesk')
                 ->group($managers);
         }
 
-        Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
+        Route::middleware(['api', 'auth:sanctum', 'throttle:60,1', 'integration.enabled:prestashop'])
             ->prefix('api/helpdeskprestashop')
             ->name('api.helpdeskprestashop.')
             ->group(module_path($this->moduleName, 'routes/api.php'));
 
         // Webhook receiver: authenticated via HMAC, no Sanctum
-        Route::middleware(['api', 'throttle:120,1'])
+        Route::middleware(['api', 'throttle:120,1', 'integration.enabled:prestashop'])
             ->prefix('api/helpdeskprestashop/webhooks')
             ->name('api.helpdeskprestashop.webhooks.')
             ->group(module_path($this->moduleName, 'routes/webhooks.php'));

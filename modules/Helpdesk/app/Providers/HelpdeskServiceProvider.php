@@ -217,6 +217,14 @@ class HelpdeskServiceProvider extends ServiceProvider
 
         RateLimiter::for('helpdesk-export', fn ($request) => Limit::perMinute(5)
             ->by(optional($request->user())->id ?: $request->ip()));
+
+        RateLimiter::for('helpdesk-webhook-inbound', fn ($request) => Limit::perMinute(300)
+            ->by($request->ip()));
+
+        // Portal de clientes: sesión propia (portal_customer_id), no Auth::user().
+        // Encontrado sin registrar por un barrido de route:list.
+        RateLimiter::for('helpdesk-customer-portal', fn ($request) => Limit::perMinute(60)
+            ->by($request->session()->get('portal_customer_id') ?: $request->ip()));
     }
 
     /**
@@ -265,9 +273,13 @@ class HelpdeskServiceProvider extends ServiceProvider
      */
     protected function registerSettingsSidebar(): void
     {
-        // Sección 1: General
+        // Todo lo que sigue es del modulo Helpdesk: una sola seccion, para
+        // que el menu de ajustes agrupe por modulo y no por tema. Los
+        // modulos satelite (Tickets, Formularios, Chat en vivo, Registro de
+        // correo, SLA...) registran la suya desde su propio provider.
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — General',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Funcionalidades', 'route' => 'settings.helpdesk.features.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Notificaciones', 'route' => 'settings.helpdesk.notifications', 'permission' => 'helpdesk.settings.view'],
@@ -281,9 +293,9 @@ class HelpdeskServiceProvider extends ServiceProvider
             ],
         ]);
 
-        // Sección 2: Canales
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Canales',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Bandejas (multi-canal)', 'route' => 'settings.helpdesk.inboxes.index', 'permission' => 'helpdesk.settings.view'],
                 // Habia dos entradas —"Email" y "Cuentas de email"— apuntando a
@@ -292,7 +304,6 @@ class HelpdeskServiceProvider extends ServiceProvider
                 // mismo metodo. Se deja una sola; la URL duplicada sigue viva
                 // como redireccion para no romper enlaces guardados.
                 ['label' => 'Email', 'route' => 'settings.helpdesk.email', 'permission' => 'helpdesk.settings.view'],
-                ['label' => 'LiveChat', 'route' => 'settings.helpdesk-livechat.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones sociales', 'route' => 'settings.helpdesk.social-integrations.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Plantillas WhatsApp', 'route' => 'settings.helpdesk.whatsapp-templates.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Consumo WhatsApp', 'route' => 'settings.helpdesk.whatsapp-usage.index', 'permission' => 'helpdesk.settings.view'],
@@ -300,20 +311,19 @@ class HelpdeskServiceProvider extends ServiceProvider
             ],
         ]);
 
-        // Sección 3: Equipo
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Equipo',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Miembros', 'route' => 'settings.helpdesk.team.members', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Grupos', 'route' => 'settings.helpdesk.team.groups', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Configuración de agentes', 'route' => 'settings.helpdesk.agent-settings.index', 'permission' => 'helpdesk.settings.view'],
-                ['label' => 'Competencias', 'route' => 'settings.helpdesk.skills.index', 'permission' => 'helpdesk.settings.view'],
             ],
         ]);
 
-        // Sección 4: Contenido
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Contenido',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Respuestas predefinidas', 'route' => 'settings.helpdesk.canned-replies.index', 'permission' => 'helpdesk.canned-replies.view'],
                 ['label' => 'Macros', 'route' => 'settings.helpdesk.macros.index', 'permission' => 'helpdesk.macros.view'],
@@ -326,9 +336,9 @@ class HelpdeskServiceProvider extends ServiceProvider
             ],
         ]);
 
-        // Sección 5: Automatización
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Automatización',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Reglas de automatización', 'route' => 'settings.helpdesk.rules.index', 'permission' => 'helpdesk.automation-rules.view'],
                 ['label' => 'Reglas de enrutamiento', 'route' => 'settings.helpdesk.routing-rules.index', 'permission' => 'helpdesk.settings.view'],
@@ -341,9 +351,14 @@ class HelpdeskServiceProvider extends ServiceProvider
         // Sección 5.5: Tickets — settings de HelpdeskTickets, sin entrada de menú propia hasta ahora
         // (existían las rutas/controllers pero ningún link las exponía; solo alcanzables por URL directa).
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Tickets',
+            'title' => 'Helpdesk · Tickets',
+            'order' => 210,
             'items' => [
                 ['label' => 'Configuración general', 'route' => 'manager.helpdesk.settings.tickets.general', 'permission' => 'helpdesk.settings.view'],
+                // Movido desde el menú operativo de Tickets: es una regla de
+                // configuración (cada cuánto se generan), no una bandeja de
+                // trabajo del día a día.
+                ['label' => 'Tickets recurrentes', 'route' => 'manager.helpdesk.recurring-tickets.index', 'permission' => 'helpdesk.tickets.view'],
                 ['label' => 'Categorías', 'route' => 'manager.helpdesk.settings.ticket-categories.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Prioridades', 'route' => 'manager.helpdesk.settings.ticket-priorities.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Estados', 'route' => 'manager.helpdesk.settings.ticket-statuses.index', 'permission' => 'helpdesk.tickets.settings'],
@@ -358,9 +373,9 @@ class HelpdeskServiceProvider extends ServiceProvider
             ],
         ]);
 
-        // Sección 6: Sistema
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Sistema',
+            'title' => 'Helpdesk',
+            'order' => 200,
             'items' => [
                 ['label' => 'Atributos personalizados', 'route' => 'settings.helpdesk.attributes.index', 'permission' => 'helpdesk.attributes.view'],
                 ['label' => 'Campos personalizados', 'route' => 'settings.helpdesk.custom-fields.index', 'permission' => 'helpdesk.settings.view'],
@@ -385,7 +400,9 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Dashboard', 'route' => 'manager.helpdesk.reports.index', 'icon' => 'fas fa-chart-bar', 'permission' => 'helpdesk.metrics.view'],
                 ['label' => 'Satisfacción (CSAT)', 'route' => 'manager.helpdesk.reports.csat', 'permission' => 'helpdesk.reports.view'],
                 ['label' => 'Clientes en riesgo', 'route' => 'manager.helpdesk.reports.at-risk', 'icon' => 'fas fa-heart-crack', 'permission' => 'helpdesk.reports.view'],
-                ['label' => 'Incumplimientos SLA', 'route' => 'manager.helpdesk.reports.sla-breaches', 'icon' => 'fas fa-gauge-high', 'permission' => 'helpdesk.reports.view'],
+                // "Incumplimientos SLA" vive en la sección "Tickets" de
+                // HelpdeskTicketsServiceProvider — es un reporte de SLA de
+                // tickets, no de conversaciones como el resto de este bloque.
             ],
         ]);
 
@@ -479,11 +496,29 @@ class HelpdeskServiceProvider extends ServiceProvider
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->command('helpdesk:check-sla')->everyFiveMinutes();
-            $schedule->command('helpdesk:process-broadcasts')->everyMinute();
+            // runInBackground() no es cosmético aquí: ambas corren cada minuto
+            // y en primer plano BLOQUEAN el bucle del planificador mientras
+            // duran. Medido el 7-sep-2026 en los logs del scheduler:
+            // process-broadcasts llegó a tardar 3m 39s y cleanup-presence otro
+            // tanto, así que imap:emailticket —la lectura del buzón— pasaba de
+            // ejecutarse cada minuto a hacerlo cada 2-6 minutos, y el correo de
+            // un cliente tardaba todo eso en aparecer en la bandeja.
+            //
+            // withoutOverlapping(5) además evita que se apilen instancias
+            // cuando una tanda tarda más de un minuto; los 5 minutos son la
+            // caducidad del cerrojo, para que un proceso muerto no lo deje
+            // tomado un día entero (el valor por defecto).
+            $schedule->command('helpdesk:process-broadcasts')
+                ->everyMinute()
+                ->withoutOverlapping(5)
+                ->runInBackground();
 
             // Mark agents whose heartbeat lapsed (Redis presence TTL is 90s) as
             // offline so presence indicators turn off when an agent disconnects.
-            $schedule->command('helpdesk:agents:cleanup-presence')->everyMinute();
+            $schedule->command('helpdesk:agents:cleanup-presence')
+                ->everyMinute()
+                ->withoutOverlapping(5)
+                ->runInBackground();
 
             // GDPR retention: hard-purge customers soft-deleted (anonymised) more
             // than the retention window ago. Promised to the user at deletion time

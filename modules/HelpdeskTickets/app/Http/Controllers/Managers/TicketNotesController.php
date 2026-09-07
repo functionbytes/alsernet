@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketNoteRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Services\MentionService;
 
@@ -30,6 +31,23 @@ class TicketNotesController extends Controller
             'color' => $request->input('color', 'yellow'),
             'is_pinned' => $request->boolean('is_pinned', false),
         ]);
+
+        // La nota también entra en el hilo, como la del composer.
+        //
+        // Escribir una nota desde la tarjeta del panel y desde el composer es
+        // la misma acción para el agente, pero hasta ahora daban resultados
+        // distintos: la del composer creaba un mensaje interno visible en la
+        // conversación y la del panel solo una fila en "Notas del ticket", así
+        // que la nota "desaparecía" del sitio donde se lee el ticket.
+        $item = $ticket->items()->create([
+            'type' => 'message',
+            'user_id' => auth()->id(),
+            'body' => $note->title ? $note->title."\n\n".$note->body : $note->body,
+            'is_internal' => true,
+            'metadata' => ['source' => 'ticket_note', 'note_id' => $note->id],
+        ]);
+
+        $note->forceFill(['ticket_item_id' => $item->id])->save();
 
         // Mismo servicio ya usado en mensajes del hilo
         // (TicketMessagingController::storeMessage) — antes solo
@@ -63,6 +81,14 @@ class TicketNotesController extends Controller
         }
 
         $this->authorize('delete', $note);
+
+        // Borrar la nota se lleva su mensaje del hilo: si no, quedaría en la
+        // conversación una nota que ya no existe y que nadie puede retirar.
+        if ($note->ticket_item_id) {
+            TicketItem::where('id', $note->ticket_item_id)
+                ->where('ticket_id', $ticket->id)
+                ->delete();
+        }
 
         $note->delete();
 

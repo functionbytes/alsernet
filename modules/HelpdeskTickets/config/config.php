@@ -5,6 +5,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cada cuánto se lee el buzón de correo
+    |--------------------------------------------------------------------------
+    | Segundos entre lecturas IMAP (comando imap:emailticket). El trabajo se
+    | despacha en menos de un segundo, así que lo que el agente esperaba era el
+    | siguiente ciclo del planificador: con el minuto de antes, un correo podía
+    | tardar hasta 60 segundos en aparecer en la bandeja.
+    |
+    | Admite cualquier divisor de 60 (3, 5, 10, 15, 20, 30); otro valor cae en
+    | 60. A 3 segundos son 20 conexiones IMAP por minuto: si el servidor de
+    | correo se queja del ritmo, sube el valor.
+    */
+    'fetch_interval_seconds' => env('HELPDESK_TICKETS_FETCH_SECONDS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Razones de CSAT
     |--------------------------------------------------------------------------
     | Lista de razones de insatisfacción que se ofrecen al cliente cuando valora

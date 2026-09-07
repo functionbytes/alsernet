@@ -1031,3 +1031,60 @@
         });
     });
 })();
+
+/**
+ * Reintento manual de la búsqueda del cliente en gestión (ERP).
+ *
+ * El aviso "Sin cliente en gestión" de la barra del ticket lo pinta
+ * show.blade.php cuando helpdesk_customers.erp_lookup_status dice que la
+ * búsqueda automática ya corrió y no encontró nada. Gemelo del handler del
+ * inbox en modules/HelpdeskErp/public/js/erp-inbox.js.
+ */
+(function ($) {
+    'use strict';
+
+    if (!$) { return; }
+
+    $(document).on('click', '[data-tk-erp-relink]', function () {
+        var $btn = $(this);
+        var $box = $btn.closest('.tk-erp-missing');
+        var url = $box.data('relink-url');
+
+        if (!url || $btn.prop('disabled')) { return; }
+
+        $btn.prop('disabled', true).text('Buscando…');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            timeout: 15000,
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || ''
+            }
+        }).done(function (resp) {
+            if (window.toastr) {
+                window.toastr.success((resp && resp.message) || 'Buscando el cliente en gestión…');
+            }
+
+            // Asíncrono: el resultado llega cuando el trabajo sale de la cola
+            // helpdesk-erp, así que aquí solo se confirma el envío.
+            $btn.text('Enviado');
+        }).fail(function (xhr, textStatus) {
+            var msg;
+
+            if (textStatus === 'timeout') {
+                msg = 'La petición tardó demasiado.';
+            } else if (xhr && xhr.status === 429) {
+                msg = 'Demasiados reintentos seguidos, espera un minuto.';
+            } else {
+                msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo pedir la búsqueda.';
+            }
+
+            if (window.toastr) { window.toastr.error(msg); }
+
+            $btn.prop('disabled', false).text('Reintentar');
+        });
+    });
+
+}(window.jQuery));

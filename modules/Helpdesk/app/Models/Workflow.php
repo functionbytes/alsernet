@@ -43,6 +43,11 @@ class Workflow extends Model
         'csat_answered' => 'CSAT respondido',
         'tag_added' => 'Etiqueta agregada',
         'sla_breach' => 'SLA incumplido',
+        // El ERP ha respondido sobre el cliente de la conversación. Es el
+        // único disparador cuyo contexto lleva las claves erp_* (deuda,
+        // fidelidad, pedidos): en conversation_created la búsqueda todavía
+        // está en la cola helpdesk-erp.
+        'conversation_erp_resolved' => 'Gestion (ERP) ha respondido',
         'manual' => 'Manual',
     ];
 

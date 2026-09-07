@@ -17,6 +17,7 @@ class TicketNote extends Model
 
     protected $fillable = [
         'ticket_id',
+        'ticket_item_id',
         'user_id',
         'title',
         'body',

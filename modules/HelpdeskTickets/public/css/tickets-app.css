@@ -202,32 +202,42 @@ body:has(.tkt) .mc-content {
 /* barra de filtros */
 .tkt-filter-bar { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-wrap: wrap; }
 .tkt-fselect, .tkt-finput { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); color: var(--tkt-text); }
-/* Chip de filtro del mockup: icono 10px + etiqueta + valor en gris claro +
-   chevron 8px, todo dentro de una píldora blanca de 4px 10px. El mockup los
-   resuelve con <button data-drop> y un panel propio; aquí el <select> nativo
-   se superpone transparente sobre el chip, así que se ve exactamente igual
-   pero conserva el desplegable del sistema, el teclado y el submit del form
-   sin añadir un menú a mano. */
+/* Chip de filtro del mockup: etiqueta + valor en gris claro + chevron 8px,
+   todo dentro de una píldora blanca de 4px 10px. Lo usan los dos chips que no
+   son un <select> (rango de fechas y "Más filtros"); los cinco desplegables
+   son select2 y replican este mismo aspecto en .tkt-fsel-c, más abajo. */
 .tkt-fchip { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); color: var(--tkt-text); cursor: pointer; white-space: nowrap; }
 .tkt-fchip:hover { background: var(--tkt-subtle); }
 .tkt-fchip > i { font-size: 10px; }
 .tkt-fchip > .tkt-fchip-caret { font-size: 8px; color: var(--tkt-text-faint); }
-.tkt-fchip > .tkt-fchip-value { color: var(--tkt-text-faint); }
+.tkt-fchip > .tkt-fchip-value { color: var(--tkt-text-mute); }
 .tkt-fchip.on > .tkt-fchip-value { color: var(--tkt-text); font-weight: 600; }
-.tkt-fchip > select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0; }
 /* Chip de rango de fechas: en el mockup es un único botón con el periodo ya
-   resumido; los dos campos reales viven en un popover que cuelga de él. */
-.tkt-fdate { position: relative; display: inline-flex; }
-.tkt-fdate.on > .tkt-fchip { border-color: var(--tkt-border-strong); font-weight: 600; }
-.tkt-fdate-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; display: flex; flex-direction: column; gap: 8px; padding: 10px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); box-shadow: var(--tkt-shadow); }
-.tkt-fdate-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--tkt-t-sm); font-weight: 600; color: var(--tkt-text-soft); }
-.tkt-fdate-field input[type="date"] { padding: 5px 8px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); background: var(--tkt-panel); font-size: var(--tkt-t); }
+   resumido. El calendario es el daterangepicker del tema (ver .tkt-drp), que
+   se monta colgado de <body> — de ahí que este contenedor ya no necesite ser
+   el ancla de ningún popover propio. */
+.tkt-fdate { display: inline-flex; }
+.tkt-fdate.on > .tkt-fchip { border-color: var(--tkt-border-strong); }
+.tkt-fdate.on .tkt-fchip-value { color: var(--tkt-text); font-weight: 600; }
+/* Estado previo al init de select2: sin esto el <select> nativo asoma un
+   instante con el chrome del navegador (mucho más alto que la barra) y la
+   fila de filtros da un salto al cargar. Si el JS no llegara a ejecutarse, el
+   filtro sigue siendo usable — solo que con el desplegable del sistema. */
+.tkt-fsel { padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-family: inherit; font-size: var(--tkt-t-md); color: var(--tkt-text); }
 .tkt-finput i { color: var(--tkt-text-faint); font-size: 10px; }
 /* .tkt-finput ya define el marco compacto (borde/fondo/radio); el <input
    type="date"> real dentro solo necesita perder su propio chrome de
    navegador para no duplicar el borde. */
 .tkt-finput input[type="date"] { border: none; background: transparent; padding: 0; color: inherit; font: inherit; width: 100px; }
 .tkt-clear-link { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); text-decoration: underline; background: none; border: none; }
+/* Campo "Creado entre" del modal "Más filtros": un <button> que se ve como
+   un .tkt-input y abre el mismo daterangepicker que el chip de la barra. Los
+   dos <input type="date"> que había antes traían el calendario del navegador,
+   imposible de tematizar. */
+.tkt .tkt-daterange-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; }
+.tkt .tkt-daterange-field > i { font-size: 8px; color: var(--tkt-text-faint); }
+.tkt .tkt-daterange-text { color: var(--tkt-text-mute); }
+.tkt .tkt-daterange-text.on { color: var(--tkt-text); font-weight: 600; }
 
 /* vistas guardadas */
 .tkt-views-bar { display: flex; align-items: center; gap: 14px; row-gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); flex-wrap: wrap; }
@@ -238,6 +248,10 @@ body:has(.tkt) .mc-content {
    1px por lado para compensar el borde que se quita. */
 .tkt-view-pill.on { background: var(--tkt-text); border: none; padding: 4px 10px; color: #fff; }
 .tkt-view-pill.add { border-style: dashed; border-color: var(--tkt-border-strong); color: var(--tkt-text-faint); }
+/* Vista compartida por otro agente: el icono va pegado al nombre, en el gris
+   de los metadatos, para que se lea como una marca y no como una acción. */
+.tkt-view-pill-icon { margin-right: 5px; font-size: 8.5px; color: var(--tkt-text-faint); }
+.tkt-view-pill.on .tkt-view-pill-icon { color: rgba(255, 255, 255, .75); }
 .tkt .a.tkt-view-pill, .tkt a.tkt-view-pill { color: var(--tkt-text-soft); }
 .tkt a.tkt-view-pill.on { color: #fff; }
 .tkt-views-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -264,11 +278,10 @@ body:has(.tkt) .mc-content {
 .tkt .tkt-list-foot-nav a { color: var(--tkt-text-mute); }
 .tkt .tkt-list-foot-nav a:hover { color: var(--tkt-text); }
 .tkt-list-foot-nav .off { color: var(--tkt-border-strong); }
-/* Select de orden de la cabecera de la lista.
-   Va con ".tkt select.tkt-sort-select" y no con la clase sola: la regla
-   genérica ".tkt select" (12px, color de texto normal) tiene más
-   especificidad que una clase suelta y le ganaba, dejando el control 1,5px
-   más alto y en negro en vez del gris del mockup. */
+/* Select de orden de la cabecera de la lista: ya es select2 (chip compacto,
+   .tkt-fsel-c--sm), así que el <select> al que apuntaba esta regla está
+   oculto. Se queda el estilo mínimo para el instante previo al init, mismo
+   criterio que .tkt-fsel en la barra de filtros. */
 .tkt select.tkt-sort-select { font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); cursor: pointer; border: 1px solid var(--tkt-border); border-radius: 5px; padding: 2px 5px; background: var(--tkt-panel); }
 .tkt-list-head-icons { margin-left: auto; display: flex; align-items: center; gap: 10px; color: var(--tkt-text-faint); font-size: 11px; }
 .tkt-list-head-icons > button { border: none; background: none; padding: 0; color: inherit; }
@@ -573,11 +586,17 @@ body:has(.tkt) .mc-content {
 .tkt-sla-bar { flex: 1; height: 5px; border-radius: 3px; background: var(--tkt-border); overflow: hidden; }
 .tkt-sla-bar > span { display: block; height: 5px; background: var(--tkt-accent); }
 .tkt-sla-pct { font-size: 10px; font-weight: 700; color: var(--tkt-accent-dark); }
-.tkt-sla-pct.over { color: var(--tkt-text); }
-/* SLA vencido: la barra pasa a negro sólido, igual que el chip de prioridad
-   urgente. El modificador va en la fila y no en un hermano posterior — la
-   barra se pinta ANTES del porcentaje en el DOM, así que "~" no la alcanza. */
-.tkt-sla-bar-row.over .tkt-sla-bar > span { background: var(--tkt-text); }
+.tkt-sla-pct.over { color: #495057; }
+/* SLA vencido. El modificador va en la fila y no en un hermano posterior — la
+   barra se pinta ANTES del porcentaje en el DOM, así que "~" no la alcanza.
+   El negro sólido de antes se leía como un fallo de pintado y no como un
+   estado; sin rojos en esta UI, el incumplimiento se marca con trama sobre
+   gris neutro, que sí se distingue del verde de avance normal. */
+.tkt-sla-bar-row.over .tkt-sla-bar > span {
+  background-color: #6c757d;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, .3) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .3) 50%, rgba(255, 255, 255, .3) 75%, transparent 75%, transparent);
+  background-size: 8px 8px;
+}
 /* Fila de "Tickets del cliente". */
 .tkt-ctk { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 9px 2px; border: none; border-bottom: 1px solid var(--tkt-border-soft); background: none; text-align: left; }
 .tkt-ctk[data-last] { border-bottom: none; }
@@ -673,13 +692,17 @@ body:has(.tkt) .mc-content {
 .tkt-line-sub { font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
 
 /* ══════════════════ Modales (sistema genérico) ═══════════ */
-.tkt-modal-backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(24,24,27,.58); display: none; align-items: flex-start; justify-content: center; padding: 44px 20px; overflow: auto; }
+/* Los modales van centrados en la pantalla, no colgando del borde superior:
+   es el mismo criterio que modal-dialog-centered en el resto del proyecto.
+   El centrado lo hace el margin:auto del hijo y no solo align-items, para que
+   un modal más alto que el viewport siga pudiendo desplazarse hasta arriba. */
+.tkt-modal-backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(24,24,27,.58); display: none; align-items: center; justify-content: center; padding: 44px 20px; overflow: auto; }
 .tkt-modal-backdrop.on { display: flex; }
 .tkt-modal {
   width: 100%;
   max-width: 380px;
   max-height: calc(100vh - 88px);
-  margin: 0 auto;
+  margin: auto;
   background: var(--tkt-panel);
   border-radius: 12px;
   box-shadow: var(--tkt-shadow-modal);
@@ -691,6 +714,9 @@ body:has(.tkt) .mc-content {
 .tkt-modal.w-md { max-width: 380px; }
 .tkt-modal.w-lg { max-width: 400px; }
 .tkt-modal.w-xl { max-width: 430px; }
+/* Unificar duplicados necesita sitio: muestra el hilo completo de varios
+   tickets a la vez, y a 430px cada mensaje salía en columna de tres palabras. */
+.tkt-modal.w-2xl { max-width: 620px; }
 .tkt-modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--tkt-border); flex-shrink: 0; }
 .tkt-modal-icon { width: 28px; height: 28px; border-radius: var(--tkt-r); background: var(--tkt-subtle); display: grid; place-items: center; font-size: 12px; }
 .tkt-modal-icon.danger { background: var(--tkt-danger-soft); color: var(--tkt-danger-text); }
@@ -950,27 +976,81 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt .select2-container--default.select2-container--open .select2-selection--single {
   border-color: var(--tkt-border-strong);
 }
-.tkt .select2-dropdown {
-  border-color: var(--tkt-border); border-radius: var(--tkt-r-md); overflow: hidden;
-  box-shadow: 0 10px 30px rgba(24,24,27,.12); font-size: var(--tkt-t-md);
+/* El panel desplegable se marca con dropdownCssClass:'tkt-s2-drop' y su CSS
+   cuelga de esa clase, NO de .tkt: antes se anclaba al .tkt para heredar este
+   scope, y como .tkt lleva overflow:hidden el panel de cualquier <select> de
+   la mitad inferior de la pantalla se recortaba contra el borde. Ahora vuelve
+   a <body> (o al backdrop del modal, por el z-index) y sigue estilado.
+   Las variables --tkt-* se declaran en .tkt, así que fuera de él no existen:
+   de ahí los literales de la paleta (mismos valores, ver el bloque de arriba). */
+.select2-dropdown.tkt-s2-drop {
+  border-color: #e8e8e8; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 10px 30px rgba(24,24,27,.12);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 11.5px; color: #18181b;
 }
-.tkt .select2-search--dropdown .select2-search__field {
-  border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); font-size: var(--tkt-t-md); padding: 5px 8px;
+.tkt-s2-drop .select2-search--dropdown .select2-search__field {
+  border: 1px solid #e8e8e8; border-radius: 4px; font-size: 11.5px; padding: 5px 8px;
 }
-.tkt .select2-results__option--highlighted[aria-selected] { background: var(--tkt-text) !important; }
-.tkt .select2-container--default .select2-results__option[aria-selected="true"] { background: var(--tkt-subtle); }
+.tkt-s2-drop .select2-results__option { font-size: 11.5px; }
+.tkt-s2-drop .select2-results__option--highlighted[aria-selected] { background: #18181b !important; color: #fff; }
+.tkt-s2-drop .select2-results__option[aria-selected="true"] { background: #f5f6f8; }
 
-/* Ancho por contexto: la barra de filtros y el panel Gestión quieren un
-   ancho compacto ajustado al contenido; los campos de los modales
-   (.tkt-field, ya block-level a ancho completo) quieren llenar la fila.
-   width:'style' (initSelect2 en tickets-app.js) copia el estilo INLINE del
-   <select> original — pero estos <select> nunca tuvieron uno (solo reglas
-   CSS por clase), así que select2 caía a su auto-ancho por contenido
-   (~104px), sin mínimo garantizado: bug real de QA visual — la caja
-   "encogía" de forma inconsistente según el texto seleccionado y la
-   etiqueta ("Estado"/"Prioridad"...) quedaba con un hueco enorme al lado.
-   Ancho fijo aquí, ya no delegado a select2. */
-.tkt-filter-bar .select2-container { width: 150px !important; }
+/* Ancho por contexto: el panel Gestión quiere un ancho compacto ajustado al
+   contenido; los campos de los modales (.tkt-field, ya block-level a ancho
+   completo) quieren llenar la fila. width:'style' (initSelect2 en
+   tickets-app.js) copia el estilo INLINE del <select> original — pero estos
+   <select> nunca tuvieron uno (solo reglas CSS por clase), así que select2
+   cae a su auto-ancho por contenido.
+   La barra de filtros tenía aquí un "width: 150px !important" que ya no
+   aplica a nadie: sus únicos select2 son los chips, y un chip mide lo que
+   mide su texto (ver .tkt-fsel-c justo arriba). */
+/* ── Chips select2 de la barra de filtros (.tkt-fsel + templateSelection en
+   tickets-app.js). El widget tiene que verse EXACTAMENTE como el .tkt-fchip
+   de al lado —píldora de 4px 10px, etiqueta en negro, valor en gris, chevron
+   de 8px— así que aquí se deshacen los tres valores que el bloque de arriba
+   fija para el resto de la pantalla: el ancho de 150px, la altura de 40px y
+   el hueco de 18px del arrow. Todos los selectores llevan .select2-container
+   --default de más para ganar en especificidad a esas reglas, no por gusto. */
+.tkt .select2-container.tkt-fsel-c { width: auto !important; }
+.tkt .select2-container--default.tkt-fsel-c .select2-selection--single {
+  height: auto; padding: 4px 24px 4px 10px; border-radius: var(--tkt-r);
+  border-color: var(--tkt-border); background: var(--tkt-panel);
+}
+.tkt .select2-container--default.tkt-fsel-c .select2-selection--single:hover { background: var(--tkt-subtle); }
+.tkt .select2-container--default.tkt-fsel-c.on .select2-selection--single { border-color: var(--tkt-border-strong); }
+.tkt .select2-container--default.tkt-fsel-c .select2-selection--single .select2-selection__rendered {
+  padding: 0; font-size: var(--tkt-t-md); line-height: 1.3; color: var(--tkt-text);
+}
+.tkt .tkt-fsel-c .tkt-fsel-rendered { display: inline-flex; align-items: center; gap: 6px; }
+/* --tkt-text-mute y no --tkt-text-faint: el valor del chip ("todos", "Alta",
+   el nombre del agente) es el texto que más se lee de esta barra, y en faint
+   (#a1a1aa) se queda en 2,56:1 sobre blanco. mute (#71717a) da 4,7:1 — AA sin
+   salirse de la escala zinc del mockup. Los timestamps e IDs siguen en faint,
+   que es donde la desviación de contraste está asumida a propósito. */
+.tkt .tkt-fsel-c .tkt-fsel-value { color: var(--tkt-text-mute); }
+.tkt .select2-container--default.tkt-fsel-c.on .tkt-fsel-value { color: var(--tkt-text); font-weight: 600; }
+/* Chevron propio en vez del triángulo relleno de select2, para que los cinco
+   chips-select y los dos chips-botón lleven el mismo icono. */
+.tkt .select2-container--default.tkt-fsel-c .select2-selection--single .select2-selection__arrow {
+  top: 0; right: 8px; width: 10px; height: 100%;
+}
+.tkt .tkt-fsel-c .select2-selection__arrow b { display: none; }
+.tkt .tkt-fsel-c .select2-selection__arrow::after {
+  content: "\f078"; font-family: "Font Awesome 6 Pro"; font-weight: 900; font-size: 8px;
+  color: var(--tkt-text-faint); position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+}
+/* Variante compacta (data-fchip-size="sm"): el <select> de orden de la
+   cabecera de la lista, que en el mockup es más pequeño que un chip de la
+   barra de filtros — mismos 10,5px y el mismo gris que tenía como <select>
+   nativo, para no engordar esa fila al pasarlo a select2. */
+.tkt .select2-container--default.tkt-fsel-c--sm .select2-selection--single {
+  padding: 2px 20px 2px 6px; border-radius: 5px;
+}
+.tkt .select2-container--default.tkt-fsel-c--sm .select2-selection--single .select2-selection__rendered {
+  font-size: var(--tkt-t-sm); color: var(--tkt-text-soft);
+}
+.tkt .tkt-fsel-c--sm .select2-selection__arrow { right: 6px; }
+.tkt .tkt-fsel-c--sm .select2-selection__arrow::after { font-size: 7px; }
 .tkt-kv-select .select2-container { margin-left: auto; width: 60% !important; }
 .tkt-kv-select .select2-selection--single { background: var(--tkt-panel) !important; }
 .tkt-field .select2-container, .tkt-modal-body .select2-container { width: 100% !important; }
@@ -1622,29 +1702,81 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    Todo en la paleta ya declarada (grises + verde de marca). Sin rojos:
    el único tono de aviso es el ámbar --tkt-warn que ya usaba el CSAT. */
 
-/* Bloque "Integraciones" de la pestaña Cliente */
+/* Bloque "Integraciones" de la pestaña Cliente.
+
+   Mismo componente que el panel derecho del inbox de Conversaciones
+   (.rsp-integration en conversations.css): tarjeta por sistema con icono,
+   nombre, el id externo debajo y el estado a la derecha. Aquí se reescribe
+   con los tokens de .tkt en vez de importar aquel CSS — son dos módulos
+   distintos y el core no debe colarse en esta pantalla (misma separación que
+   ya se aplicó al resto de .tk-/.bv-).
+
+   Antes era una fila de texto plano con un "OK" verde fijo: no distinguía
+   una integración conectada de una que no lo está —de hecho las
+   desconectadas ni se enviaban al panel— así que un cliente sin vincular con
+   la tienda se veía exactamente igual que uno vinculado. */
+.tkt-integrations { display: flex; flex-direction: column; gap: 5px; }
 .tkt-integration {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--tkt-border-soft);
-    font-size: 11.5px;
+    gap: 9px;
+    padding: 8px 10px;
+    border: 1px solid var(--tkt-border);
+    border-radius: var(--tkt-r);
+    background: var(--tkt-panel);
 }
-.tkt-integration.last { border-bottom: 0; }
-.tkt-integration .n { flex: 1; min-width: 0; font-weight: 600; }
-.tkt-integration .s { color: var(--tkt-text-faint); font-size: 10.5px; }
-.tkt-int-ok {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 1px 7px;
-    border-radius: 20px;
-    background: var(--tkt-accent-soft);
-    color: var(--tkt-accent-dark);
+.tkt-integration + .tkt-integration { margin-top: 5px; }
+.tkt-integration .ico {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--tkt-subtle);
+    display: grid;
+    place-items: center;
+    color: var(--tkt-text);
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.tkt-integration .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tkt-integration .meta .name { font-size: var(--tkt-t-md); font-weight: 600; color: var(--tkt-text); }
+.tkt-integration .meta .id { font-size: 10px; color: var(--tkt-text-mute); font-family: var(--tkt-mono); }
+.tkt-integration .status {
+    flex-shrink: 0;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--tkt-ok-bg);
+    color: var(--tkt-ok-fg);
     font-size: 9.5px;
     font-weight: 700;
-    flex-shrink: 0;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+/* Desconectada: sin fondo y en gris — presente en la lista, pero sin el peso
+   visual de una que sí funciona. */
+.tkt-integration.is-disconnected { opacity: .75; }
+.tkt-integration.is-disconnected .meta .name { color: var(--tkt-text-mid); }
+.tkt-integration.is-disconnected .status { background: transparent; color: var(--tkt-text-mute); font-weight: 500; }
+
+/* Acciones de la cabecera de una .tkt-side-card (resincronizar / abrir) y el
+   contador de integraciones conectadas, alineados a la derecha del título. */
+.tkt-side-card-act {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--tkt-text-mute);
+    font-size: 11px;
+}
+.tkt-side-card-act:first-of-type { margin-left: auto; }
+.tkt-side-card-act:hover { color: var(--tkt-text); }
+.tkt-side-card-act[disabled] { opacity: .5; }
+.tkt-side-card-count {
+    padding: 1px 6px;
+    border-radius: 20px;
+    background: var(--tkt-subtle);
+    color: var(--tkt-text-soft);
+    font-family: var(--tkt-mono);
+    font-size: 9.5px;
+    font-weight: 600;
 }
 
 /* Estado de cuenta en la ficha de cliente */
@@ -1763,18 +1895,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-info-table td { word-break: break-word; }
 
 /* Estado de la traducción automática (solo lectura) */
-.tkt-toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    font-size: 11.5px;
-    color: var(--tkt-text-mute);
-}
-.tkt-toggle-row i { font-size: 14px; color: var(--tkt-border-strong); }
-.tkt-toggle-row.on i { color: var(--tkt-accent); }
-.tkt-toggle-row .n { flex: 1; min-width: 0; }
-.tkt-toggle-row .s { font-size: 10px; color: var(--tkt-text-faint); flex-shrink: 0; }
 
 /* "+ añadir" de la pestaña Etiquetas */
 .tkt-tag-add-btn {
@@ -2369,6 +2489,23 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    este margen se pegaba al bloque anterior y se leía como su pie. */
 .tkt-slacal-cap { margin-top: 3px; }
 
+/* Fila de interruptor. Su uso original —los ajustes de traducción del panel
+   de idioma— pasó a filas etiqueta→valor porque allí eran de solo lectura y
+   el dibujo de interruptor invitaba a pulsarlos sin que hicieran nada. Aquí
+   sigue viva y sí es pulsable: los estados que pausan el reloj del SLA. */
+.tkt-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 0;
+    font-size: 11.5px;
+}
+
+.tkt-toggle-row i { font-size: 14px; color: var(--tkt-border-strong); }
+.tkt-toggle-row.on i { color: var(--tkt-accent); }
+.tkt-toggle-row .n { flex: 1; min-width: 0; }
+.tkt-toggle-row .s { font-size: 10px; color: var(--tkt-text-faint); flex-shrink: 0; }
+
 /* Interruptor de "este estado pausa el reloj". Es .tkt-toggle-row (que es un
    <div> en su uso original, de solo lectura) convertido en botón: hay que
    neutralizar el aspecto de botón nativo y darle el ancho de la fila. */
@@ -2443,3 +2580,238 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 
 /* Nombres técnicos dentro de las notas (colas, comandos, mailables). */
 .tkt-esc-mono { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); }
+
+/* ── daterangepicker del chip de fechas (.tkt-drp) ─────────────────────
+   El calendario nativo de <input type="date"> lo pinta el navegador: su
+   propia tipografía, sus flechas y el azul del sistema — nada de eso se
+   puede tematizar, y sobre esta pantalla cantaba. Se sustituye por el
+   daterangepicker que el layout del tema ya carga (mismo componente que
+   usan las otras bandejas), reskinneado aquí a la paleta del mockup.
+
+   Los tokens van en literal y no como var(--tkt-*): el panel se monta
+   colgado de <body>, fuera del .tkt donde están declaradas las variables.
+   Son los mismos valores de la paleta de arriba (zinc + verde de marca).
+   El verde de la selección ya venía puesto en daterangepicker.css. */
+.daterangepicker.tkt-drp {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11.5px; border: 1px solid #e8e8e8; border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(24,24,27,.12); color: #18181b;
+}
+/* La flechita que apunta al chip: daterangepicker la dibuja con dos bordes
+   grises que no casan con el borde del panel. */
+.daterangepicker.tkt-drp:before { border-bottom-color: #e8e8e8; }
+.daterangepicker.tkt-drp .drp-calendar { padding: 10px; }
+.daterangepicker.tkt-drp .calendar-table th,
+.daterangepicker.tkt-drp .calendar-table td { font-size: 11.5px; min-width: 28px; width: 28px; height: 26px; border-radius: 6px; }
+.daterangepicker.tkt-drp .calendar-table th { color: #71717a; font-weight: 600; }
+.daterangepicker.tkt-drp .month { font-size: 12px; font-weight: 600; color: #18181b; }
+.daterangepicker.tkt-drp td.available:hover,
+.daterangepicker.tkt-drp th.available:hover { background: #f0f1f4; }
+.daterangepicker.tkt-drp td.off,
+.daterangepicker.tkt-drp td.off.in-range,
+.daterangepicker.tkt-drp td.off.start-date,
+.daterangepicker.tkt-drp td.off.end-date { color: #a1a1aa; background: #fff; }
+.daterangepicker.tkt-drp td.in-range { background: #f4f8e8; color: #18181b; }
+.daterangepicker.tkt-drp td.active,
+.daterangepicker.tkt-drp td.active:hover { background: #90bb13; color: #fff; }
+/* La franja de rangos rápidos (Hoy, Últimos 7 días…): mismos 11,5px que el
+   resto y el verde de marca en el activo, sin el azul del componente. */
+.daterangepicker.tkt-drp .ranges li { font-size: 11.5px; padding: 7px 12px; border-radius: 6px; margin: 0 6px; color: #3f3f46; }
+.daterangepicker.tkt-drp .ranges li:hover { background: #f0f1f4; }
+.daterangepicker.tkt-drp .ranges li.active { background: #eef5d9; color: #5b7a0d; font-weight: 600; }
+.daterangepicker.tkt-drp .ranges ul { padding: 6px 0; }
+.daterangepicker.tkt-drp .drp-buttons { padding: 8px 10px; border-top-color: #e8e8e8; }
+.daterangepicker.tkt-drp .drp-selected { font-size: 11.5px; color: #52525b; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+/* Botonera: "Aplicar" es el negro del mockup (mismo tratamiento que
+   .tkt-btn.primary) y "Limpiar" queda como acción secundaria. */
+.daterangepicker.tkt-drp .drp-buttons .btn { font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 7px; }
+.daterangepicker.tkt-drp .drp-buttons .applyBtn { background: #18181b; border-color: #18181b; color: #fff; }
+.daterangepicker.tkt-drp .drp-buttons .cancelBtn { background: #fff; border: 1px solid #e8e8e8; color: #52525b; }
+.daterangepicker.tkt-drp .drp-buttons .cancelBtn:hover { background: #f5f6f8; }
+
+/* ── Aviso "el cliente no está en gestión" (tarjeta Cliente) ────────────────
+   Lo pinta erpMissingHtml() en tickets-app.js con el JSON de
+   CustomerSummaryService::erpMissing(). Tono neutro: es información, no una
+   alarma — y esta interfaz no usa rojos. */
+.tkt-erp-missing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding: 7px 9px;
+    border: 1px solid var(--tkt-border);
+    border-radius: 7px;
+    background: var(--tkt-bg-soft, rgba(125, 125, 125, .06));
+}
+
+.tkt-erp-missing-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11.5px;
+    color: var(--tkt-text-mute);
+    overflow-wrap: anywhere;
+}
+
+.tkt-erp-missing .tkt-btn-xs {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    font-size: 11px;
+}
+
+/* Aviso de tickets nuevos, sobre la lista. Es un botón a ancho completo: la
+   acción es "actualizar", así que cualquier punto del aviso vale como diana en
+   vez de obligar a apuntar a un enlace de once píxeles. */
+.tkt-new-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 12px;
+    border: none;
+    border-bottom: 1px solid var(--tkt-accent-line);
+    background: var(--tkt-accent-soft);
+    color: var(--tkt-accent-dark);
+    font-size: var(--tkt-t-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+.tkt-new-banner:hover { background: var(--tkt-accent-bg); }
+.tkt-new-banner-act { text-decoration: underline; font-weight: 700; }
+
+/* Aviso de imágenes remotas bloqueadas, encima del cuerpo del correo. En la
+   escala zinc y no en ámbar: no es un error del que avisar, es una decisión
+   por defecto que el agente puede deshacer con el botón de al lado. */
+.tkt-mail-blocked {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--tkt-border);
+    border-radius: var(--tkt-r);
+    background: var(--tkt-subtle);
+    font-size: var(--tkt-t-md);
+    color: var(--tkt-text-soft);
+}
+.tkt-mail-blocked > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tkt-mail-blocked-why { font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
+.tkt-mail-blocked .tkt-btn-xs { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; }
+/* Hueco de la imagen desactivada: sin esto el correo se ve descuadrado, con
+   los textos pegados donde debería haber una foto. */
+.tkt-mail-body img[data-blocked] {
+    min-width: 18px;
+    min-height: 18px;
+    border: 1px dashed var(--tkt-border-strong);
+    border-radius: var(--tkt-r-sm);
+    background: var(--tkt-subtle);
+}
+
+
+/* ── Presencia de agentes en la cabecera del ticket ────────────────────────
+   Burbujas estilo Drive: quién más tiene el ticket abierto. El banner de
+   texto (#tkt-collision-banner) sigue existiendo, pero vive bajo las
+   pestañas y el agente no lo mira; esto va donde sí mira, junto a Responder.
+   Se pintan desde renderPresenceBubbles() (tickets-app.js).             */
+.tkt-presence { display: inline-flex; align-items: center; margin-right: 4px; }
+.tkt-presence-av {
+    width: 26px; height: 26px; margin-left: -6px;
+    border-radius: 50%; border: 2px solid var(--tkt-panel, #fff);
+    background: var(--tkt-text); color: #fff;
+    font-size: 9.5px; font-weight: 700; letter-spacing: .02em;
+    display: grid; place-items: center; cursor: pointer; padding: 0;
+    transition: transform .12s ease;
+}
+.tkt-presence-av:first-child { margin-left: 0; }
+.tkt-presence-av:hover { transform: translateY(-1px); z-index: 2; }
+.tkt-presence-av.c0 { background: #4f6b0a; }
+.tkt-presence-av.c1 { background: #90bb13; }
+.tkt-presence-av.c2 { background: #0e7490; }
+.tkt-presence-av.c3 { background: #7c3aed; }
+.tkt-presence-av.c4 { background: #b45309; }
+.tkt-presence-av.c5 { background: #334155; }
+.tkt-presence-av.more { background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 9px; }
+
+/* Anillo latiendo mientras esa persona redacta: es la señal que evita la
+   respuesta duplicada, así que tiene que verse sin leer nada. */
+.tkt-presence-av.is-typing {
+    box-shadow: 0 0 0 2px var(--tkt-accent, #90bb13);
+    animation: tkt-presence-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tkt-presence-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--tkt-accent, #90bb13); }
+    50%      { box-shadow: 0 0 0 4px rgba(144, 187, 19, .35); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tkt-presence-av.is-typing { animation: none; }
+}
+
+.tkt-presence-hint { margin: 10px 0 0; font-size: var(--tkt-t-md); color: var(--tkt-text-soft); line-height: 1.55; }
+
+/* Agente no operativo en el modal de asignación (no ha entrado nunca, de
+   vacaciones, sin plaza…). No se deshabilita —a veces se asigna a propósito a
+   quien entrará mañana— pero tiene que distinguirse de un vistazo. */
+.tkt-pick.is-unavailable > .who > .n { color: var(--tkt-text-soft); }
+.tkt-pick.is-unavailable > .who > .s { color: var(--tkt-warn-fg, #92400e); }
+.tkt-pick.is-unavailable > .av { opacity: .55; }
+
+/* ── Unificar duplicados (v2) ──────────────────────────────────────────────
+   Una tarjeta por ticket con su hilo real dentro: es lo que hace falta para
+   decidir si tres correos son la misma pregunta o hay uno que va aparte.    */
+.tkt-unify-card {
+    border: 1px solid var(--tkt-border);
+    border-radius: var(--tkt-r-md);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--tkt-panel, #fff);
+}
+/* Marcado para unificar: se distingue del que se conserva (verde) sin gritar. */
+.tkt-unify-card.is-picked { border-color: var(--tkt-text-soft); background: var(--tkt-subtle); }
+.tkt-unify-card.is-survivor {
+    border-color: var(--tkt-accent, #90bb13);
+    box-shadow: inset 3px 0 0 var(--tkt-accent, #90bb13);
+    background: var(--tkt-accent-bg, #f4f9e6);
+}
+
+.tkt-unify-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 6px; }
+.tkt-unify-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: #fff; background: var(--tkt-accent, #90bb13);
+    padding: 2px 7px; border-radius: 20px;
+}
+.tkt-unify-check { display: inline-flex; align-items: center; gap: 5px; font-size: var(--tkt-t-xs); color: var(--tkt-text-soft); cursor: pointer; }
+.tkt-unify-num { font-weight: 700; font-size: var(--tkt-t-sm); color: var(--tkt-text); text-decoration: underline; }
+.tkt-unify-when { font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); }
+/* El botón de conservar se va a la derecha: es la acción secundaria de la fila. */
+.tkt-unify-keep-btn { margin-left: auto; }
+
+.tkt-unify-subject { font-size: var(--tkt-t-md); font-weight: 600; margin-bottom: 2px; }
+.tkt-unify-meta { font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); margin-bottom: 7px; }
+
+/* El hilo del ticket, completo y con scroll propio: un correo largo no puede
+   estirar el modal hasta dejar el botón de unificar fuera de la pantalla. */
+.tkt-unify-thread {
+    max-height: 190px;
+    overflow-y: auto;
+    padding: 8px 9px;
+    background: var(--tkt-subtle);
+    border-radius: var(--tkt-r);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.tkt-unify-thread.empty { color: var(--tkt-text-mute); font-size: var(--tkt-t-xs); font-style: italic; }
+.tkt-unify-more { font-size: 10px; color: var(--tkt-text-mute); text-transform: uppercase; letter-spacing: .04em; }
+.tkt-unify-msg { font-size: var(--tkt-t-xs); line-height: 1.55; color: var(--tkt-text-soft); }
+.tkt-unify-msg > .h { display: flex; gap: 8px; align-items: baseline; margin-bottom: 2px; }
+.tkt-unify-msg > .h > b { color: var(--tkt-text); font-size: var(--tkt-t-xs); }
+.tkt-unify-msg > .h > span { color: var(--tkt-text-mute); font-size: 10px; }
+.tkt-unify-msg > .b { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* La respuesta del agente se separa de lo que escribió el cliente. */
+.tkt-unify-msg.is-agent > .b { border-left: 2px solid var(--tkt-border); padding-left: 8px; }
+
+.tkt-unify-notify {
+    display: flex; align-items: center; gap: 8px;
+    margin: 12px 0 2px; font-size: var(--tkt-t-md); color: var(--tkt-text); cursor: pointer;
+}

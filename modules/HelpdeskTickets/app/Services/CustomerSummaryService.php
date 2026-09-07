@@ -52,6 +52,88 @@ class CustomerSummaryService
             'avg_first_response_minutes' => $this->avgFirstResponseMinutes($customer),
             'integrations' => $stats['integrations'] ?? [],
             'url_c360' => Route::has('contacts.show') ? route('contacts.show', $customer->id) : null,
+            'erp_missing' => $this->erpMissing($customer),
+            // Datos de contacto que la ficha ya guardaba y la tarjeta no
+            // pintaba: el agente tenía que abrir Contactos 360 para ver un
+            // móvil o saber de qué país escribe.
+            'whatsapp_phone' => $customer->whatsapp_phone,
+            'country' => $customer->country,
+            'city' => $customer->city,
+            'platforms' => $this->platforms($customer),
+        ];
+    }
+
+    /**
+     * Identificadores del cliente en cada plataforma externa (gestión/ERP,
+     * PrestaShop…), con los datos que el propio vínculo guardó.
+     *
+     * Sale de helpdesk_customer_external_ids, que es local: pintar esto no
+     * cuesta ninguna llamada al ERP. Es deliberado — una consulta a Oracle
+     * tarda entre 3 y 6 segundos y este panel se abre en cada ticket. El
+     * detalle en vivo (pedidos, saldo) sigue en su pestaña, que sí lo carga
+     * bajo demanda.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function platforms(Customer $customer): array
+    {
+        $labels = [
+            'erp' => 'Gestión (ERP)',
+            'prestashop' => 'PrestaShop',
+            'shopify' => 'Shopify',
+            'woocommerce' => 'WooCommerce',
+        ];
+
+        return $customer->externalIds
+            ->map(function ($link) use ($labels): array {
+                $meta = is_array($link->metadata) ? $link->metadata : [];
+
+                return [
+                    'platform' => $link->platform,
+                    'label' => $labels[$link->platform] ?? ucfirst((string) $link->platform),
+                    'id' => (string) $link->external_id,
+                    // Los guarda el vínculo cuando la plataforma los devolvió;
+                    // en vínculos antiguos vendrán vacíos y no se pintan.
+                    'email' => $meta['email'] ?? null,
+                    'phone' => $meta['phone'] ?? null,
+                    'linked_via' => $meta['linked_via'] ?? ($meta['linked_by'] ?? null),
+                ];
+            })
+            ->sortBy(fn (array $p) => $p['platform'] === 'erp' ? 0 : 1)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Aviso "no está en gestión" para el panel de ticket.
+     *
+     * El panel real (/panel/helpdesk/tickets?ticket={id}) lo pinta
+     * tickets-app.js desde este JSON, no desde la Blade show.blade.php: son dos
+     * vistas independientes y un aviso solo en la Blade no lo vería nadie.
+     *
+     * Devuelve null —y el panel no pinta nada— mientras la búsqueda automática
+     * no haya corrido: "no se ha buscado todavía" no es una noticia.
+     *
+     * @return array{reason: string, label: string, relink_url: string|null}|null
+     */
+    private function erpMissing(Customer $customer): ?array
+    {
+        if (! function_exists('helpdesk_erp_enabled') || ! helpdesk_erp_enabled()) {
+            return null;
+        }
+
+        if (! $customer->erpLookupFailed() || $customer->externalIdFor('erp') !== null) {
+            return null;
+        }
+
+        return [
+            'reason' => $customer->erp_lookup_status,
+            'label' => $customer->erp_lookup_status === 'error'
+                ? 'Gestión no respondió'
+                : 'Sin cliente en gestión',
+            'relink_url' => Route::has('manager.helpdesk.erp.customers.relink')
+                ? route('manager.helpdesk.erp.customers.relink', ['customerId' => $customer->id])
+                : null,
         ];
     }
 
@@ -129,7 +211,13 @@ class CustomerSummaryService
         return [
             'tickets_count' => $resumen['stats']['ticketsCount'] ?? null,
             'avg_csat' => $resumen['stats']['avgCsat'] ?? null,
-            'integrations' => collect($resumen['integrations'] ?? [])->filter(fn (array $i) => $i['connected'])->values()->all(),
+            // Las NO conectadas también viajan: el panel las pinta en gris con
+            // "sin vincular", igual que el panel derecho del inbox de
+            // Conversaciones. Filtrarlas aquí hacía que "PrestaShop:
+            // desconectado" fuera indistinguible de "PrestaShop: ni siquiera lo
+            // miramos" — y es justo el aviso que el agente necesita para saber
+            // que a ese cliente le falta el vínculo con la tienda.
+            'integrations' => collect($resumen['integrations'] ?? [])->values()->all(),
         ];
     }
 
