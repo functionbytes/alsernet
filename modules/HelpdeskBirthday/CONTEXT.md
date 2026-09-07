@@ -1,8 +1,8 @@
 # HelpdeskBirthday — campaña diaria de cumpleaños
 
-Cada día localiza en el ERP a los clientes que cumplen años y les envía un correo
-con el cupón del día, repartido dentro de una ventana horaria para no saturar el
-servidor de correo saliente.
+Cada día localiza en el ERP a los clientes que cumplen años, le pide a Gestión
+**un bono para cada uno** y les envía su felicitación, repartida dentro de una
+ventana horaria para no saturar el servidor de correo saliente.
 
 ---
 
@@ -11,12 +11,12 @@ servidor de correo saliente.
 ```
 scheduler ──06:00──> helpdeskbirthday:prepare
                          │
-                         ├── BirthdayCouponService ──HTTP──> gestión (/api-gestion/bono/…)
-                         │                                    fechas + importe reales
-                         ├── BirthdayAudienceService ─HTTP──> manager :8080 (/api/erp/customer)
+                         ├── BirthdayAudienceService ─HTTP──> API de clientes (/api/erp/customer)
                          │                                    quién cumple años hoy
-                         └── BirthdayScheduleCalculator
-                                  └── escribe scheduled_at por destinatario
+                         ├── BirthdayScheduleCalculator
+                         │        └── escribe scheduled_at por destinatario
+                         └── BirthdayBonoGenerator ──HTTP──> gestión (/generacion-bono/)
+                                  └── el bono de cada cliente, en su fila
 
 scheduler ──cada min──> helpdeskbirthday:dispatch-due
                          └── reserva los vencidos ('sending') y encola
@@ -108,9 +108,16 @@ Quien se queda sin bono pasa a `skipped/no_coupon` con el motivo en
 Dejarlo `pending` era un bucle: dispatch-due lo reservaba, el job lo devolvía a
 pendiente, y vuelta a empezar cada minuto sin que la campaña cerrara jamás.
 
-Sin `bono_type_id` configurado (Ajustes → Cupón del día) no se puede emitir
+Sin `bono_type_id` configurado (Ajustes → El bono de cumpleaños) no se puede emitir
 nada: la campaña se prepara igual —la audiencia del día no se puede
 reconstruir mañana— pero queda **en pausa** y avisa.
+
+**No hay cupón del día ni pantalla para configurarlo.** Ajustes solo pide el
+tipo de bono; el importe, la validez y la compra mínima los decide Gestión al
+emitirlo, y son los que se ven luego en la campaña y en cada destinatario. El
+código único de campaña sobrevive únicamente en las columnas `coupon_*` de
+`helpdesk_birthday_campaigns`, sin escritor: se dejaron para no perder el
+histórico de las promociones antiguas.
 
 ### 2b. Consultar un bono ya emitido
 
@@ -134,10 +141,12 @@ GET {erp_api_url}/api-gestion/bono/{idbono}/
 
 El código que ve el cliente es `{idbono}-{codigo_verificacion}`, exactamente el
 formato con el que PrestaShop crea el `cart_rule`
-(`CartRule::createCartRuleAlvarez`). Si no coincide, el cliente no puede canjearlo.
+(`CartRule::createCartRuleAlvarez`). Si no coincide, el cliente no puede
+canjearlo. Lo compone `BirthdayRecipient::publicCode()`, que es la única fuente
+de ese formato.
 
-Si gestión no responde se usan los valores configurados a mano y la campaña queda
-con `coupon_source = 'manual'`, marcado en el panel como «sin validar».
+Se usa al emitir el bono y en `BirthdayBonoGenerator::syncDetails()`, para
+refrescar lo que Gestión dice de un bono ya entregado.
 
 ---
 
@@ -365,12 +374,27 @@ El panel también muestra el embudo completo: cumpleañeros → enviados → abi
 
 ---
 
-## Seguimiento de apertura y clic
+## Trazabilidad: HelpdeskEmailActivity
 
-Requiere que el módulo esté en `helpdeskemailactivity.tracked_modules`
-(`HelpdeskBirthday` ya está). Era una comparación literal contra
-`HelpdeskTickets` dentro de `LogEmailQueued`, así que cualquier otro módulo que
-midiera aperturas mostraba **0% para siempre** sin ninguna pista de por qué.
+Todo lo que sale de aquí queda registrado en `email_logs`. El vínculo tiene tres
+piezas y las tres hacen falta:
+
+1. `BirthdayCouponMailable implements TracksEmailLog` — declara módulo
+   (`HelpdeskBirthday`), entidad (`BirthdayRecipient` + id) y el id de cliente
+   del ERP. Sin eso el listener registra el correo pero no sabe de quién es.
+2. `helpdeskemailactivity.tracked_modules` debe incluir el módulo (ya está).
+   Era una comparación literal contra `HelpdeskTickets` dentro de
+   `LogEmailQueued`, así que cualquier otro módulo que midiera aperturas
+   mostraba **0% para siempre** sin ninguna pista de por qué.
+3. `helpdesk_birthday_recipients.email_log_id`, que escribe
+   `SendBirthdayEmailJob` tras enviar. Es el enlace de vuelta: sin él la columna
+   se quedaba a null, el menú de la fila nunca ofrecía «ver la trazabilidad en
+   el log» y «ver el correo» re-renderizaba la plantilla en vez de enseñar el
+   HTML que de verdad salió — que es el que vale cuando un cliente reclama.
+
+Con eso, el panel resuelve entregado/abierto/clic por destinatario con
+`EmailDeliveryLookupService::forRecipients()` (una consulta por página) y los
+KPIs con `statsForModule()`.
 
 ---
 
