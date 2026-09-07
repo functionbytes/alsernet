@@ -39,6 +39,12 @@ class BirthdayExtrasTest extends TestCase
         $this->seedHelpdeskRoles();
         $this->admin = User::factory()->create();
         $this->admin->assignRole('super-settings');
+        // El permiso, explícito. Antes bastaba el rol porque Auth registraba un
+        // Gate::before que concedía TODO a 'super-settings'; retirado el
+        // 7-sep-2026, el rol ya no concede nada por sí mismo y el aviso de
+        // campaña abortada —que filtra a sus destinatarios por
+        // can('helpdeskbirthday.manage')— no habría encontrado a nadie.
+        $this->admin->givePermissionTo('helpdeskbirthday.manage');
 
         BirthdayCampaign::whereDate('campaign_date', now()->toDateString())->delete();
     }
@@ -178,10 +184,8 @@ class BirthdayExtrasTest extends TestCase
             'template_key' => 'birthday-coupon',
         ]);
 
-        // OJO: no vale $this->admin. Auth\AuthServiceProvider registra un
-        // Gate::before que concede TODO al rol 'super-settings', así que con
-        // ese rol la Policy ni se consulta. Para probarla hace falta un
-        // usuario con el permiso pero sin ese rol.
+        // Un usuario con el permiso y sin roles: prueba la Policy en sí, sin
+        // depender de lo que un rol arrastre consigo.
         $manager = User::factory()->create();
         $manager->givePermissionTo('helpdeskbirthday.manage', 'helpdeskbirthday.view');
 
