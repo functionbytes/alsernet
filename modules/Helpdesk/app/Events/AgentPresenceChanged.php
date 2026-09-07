@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class AgentPresenceChanged implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly User $user,

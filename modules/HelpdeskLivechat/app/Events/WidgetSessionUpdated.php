@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskLivechat\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
+
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -11,7 +13,7 @@ use Modules\HelpdeskLivechat\Models\WidgetSession;
 
 class WidgetSessionUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels, BroadcastsOnServedQueue;
 
     public function __construct(
         public readonly WidgetSession $session,

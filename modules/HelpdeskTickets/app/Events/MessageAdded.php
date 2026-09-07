@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -34,7 +35,7 @@ use Modules\HelpdeskTickets\Models\TicketMessage;
  */
 class MessageAdded implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public TicketMessage|TicketItem $item;
 

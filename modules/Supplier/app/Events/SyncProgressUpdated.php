@@ -2,6 +2,8 @@
 
 namespace Modules\Supplier\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
+
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -20,7 +22,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class SyncProgressUpdated implements ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, SerializesModels, BroadcastsOnServedQueue;
 
     /**
      * Create a new event instance

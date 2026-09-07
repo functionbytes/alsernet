@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskSocial\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
+
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -12,7 +14,7 @@ use Modules\HelpdeskSocial\Models\SocialComment;
 
 class SocialCommentReceived implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels, BroadcastsOnServedQueue;
 
     public function __construct(
         public readonly SocialComment $comment,

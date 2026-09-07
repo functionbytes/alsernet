@@ -64,11 +64,23 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         | retry_after tiene que ser MAYOR que el --timeout mas alto con el que
+         | corre un worker de esta conexion. Si es menor, la cola da por perdido
+         | un job que todavia se esta ejecutando y se lo entrega a otro worker:
+         | el trabajo se hace dos veces. En un correo eso es mandarlo duplicado.
+         |
+         | Estaba en 90 con workers a --timeout=300 (docker-compose.yml y
+         | devops/supervisor/laravel-queue-helpdesk.conf), es decir, al reves de
+         | como debe ser. 360 deja margen sobre esos 300.
+         |
+         | Al cambiar el --timeout de cualquier worker hay que revisar este valor.
+         */
         'redis' => [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 360),
             'block_for' => null,
             'after_commit' => false,
         ],

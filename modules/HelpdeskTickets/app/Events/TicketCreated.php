@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -12,16 +13,27 @@ use Modules\HelpdeskTickets\Models\Ticket;
 
 class TicketCreated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $ticket;
 
     /**
+     * Si el cliente debe recibir el correo de confirmación.
+     *
+     * Lo consulta SendCustomerConfirmation. Existe porque el modal "Escalar a
+     * ticket" del inbox ofrece la casilla "Notificar al cliente con el ID del
+     * ticket": sin este flag, desmarcarla no tenía ningún efecto. Por defecto
+     * true, que es el comportamiento histórico del resto de vías de creación.
+     */
+    public bool $notifyCustomer;
+
+    /**
      * Create a new event instance.
      */
-    public function __construct(Ticket $ticket)
+    public function __construct(Ticket $ticket, bool $notifyCustomer = true)
     {
         $this->ticket = $ticket;
+        $this->notifyCustomer = $notifyCustomer;
 
         // Ensure relationships are loaded
         $this->ticket->load(['customer', 'status', 'category', 'assignee', 'items', 'slaPolicy']);

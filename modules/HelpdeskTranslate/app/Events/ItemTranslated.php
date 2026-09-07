@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskTranslate\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
+
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -15,7 +17,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class ItemTranslated implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels, BroadcastsOnServedQueue;
 
     public function __construct(
         public readonly int $itemId,
