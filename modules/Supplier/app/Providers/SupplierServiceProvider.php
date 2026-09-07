@@ -199,8 +199,22 @@ class SupplierServiceProvider extends ServiceProvider
             'suppliers.route.settings',
         ];
 
+        // checkPermissionTo() y NO hasPermissionTo(): el segundo LANZA
+        // PermissionDoesNotExist cuando el permiso no está dado de alta, y
+        // ninguno de estos `suppliers.*` existe hoy en la tabla `permissions`.
+        //
+        // Como el menú lateral evalúa estas habilidades al pintarse, la
+        // excepción tumbaba con un 500 CUALQUIER página del panel para todo
+        // usuario que no fuera `super-admin` — el `hasRole()` de la izquierda
+        // los salvaba a ellos por cortocircuito, y a nadie más. No se veía
+        // porque un Gate::before global concedía todo al rol `super-settings`
+        // sin llegar a evaluar el Gate; al retirarse ese atajo quedó a la vista.
+        //
+        // checkPermissionTo devuelve false en vez de lanzar, que es lo que
+        // corresponde: un permiso que no existe es un permiso que no se tiene.
+        // Cuando se den de alta, esto sigue funcionando igual.
         foreach ($routeAbilities as $ability) {
-            Gate::define($ability, fn ($user) => $user->hasRole('super-admin') || $user->hasPermissionTo($ability));
+            Gate::define($ability, fn ($user) => $user->hasRole('super-admin') || $user->checkPermissionTo($ability));
         }
     }
 
