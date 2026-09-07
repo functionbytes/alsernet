@@ -40,6 +40,12 @@ Route::name('helpdeskbirthday.')
             Route::post('campaigns/{campaign}/retry-failed', [BirthdayCampaignsController::class, 'retryFailed'])
                 ->name('campaigns.retry-failed');
 
+            // Pide a gestión los bonos que faltan. Habla con el ERP y puede
+            // tardar (una llamada por cada 100 clientes): throttle bajo.
+            Route::post('campaigns/{campaign}/retry-bonos', [BirthdayCampaignsController::class, 'retryBonos'])
+                ->middleware('throttle:10,1')
+                ->name('campaigns.retry-bonos');
+
             // Escribe en el ERP (marca el bono como consumido): throttle bajo.
             Route::post('campaigns/{campaign}/mark-coupon-used', [BirthdayCampaignsController::class, 'markCouponUsed'])
                 ->middleware('throttle:20,1')

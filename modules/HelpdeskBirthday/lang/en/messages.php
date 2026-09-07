@@ -23,6 +23,9 @@ return [
     'test_send_too_many' => 'At most 5 addresses per test.',
     'failed_requeued' => ':count failed emails are back in the queue.',
     'no_failed_to_retry' => 'There are no failed emails to retry.',
+    'coupon_not_in_campaign' => 'That coupon does not belong to this campaign.',
+    'bonos_retried' => 'Gestión issued :generated coupons. Still without one: :failed.',
+    'no_bonos_to_retry' => 'No recipients are waiting for a coupon.',
 
     'status' => [
         'draft' => 'Draft',
@@ -47,6 +50,8 @@ return [
         'invalid_email' => 'Invalid email',
         'duplicate' => 'Duplicate',
         'cancelled' => 'Campaign cancelled',
+        'no_coupon' => 'No coupon issued',
+        'expired' => 'Birthday already passed',
     ],
 
     'source' => [

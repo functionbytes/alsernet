@@ -202,13 +202,15 @@ class BirthdayPanelTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->get(route('helpdeskbirthday.campaigns.redemptions', $campaign));
 
-        $response->assertOk()->assertSee('Canjes del cupón', false);
+        // «Bonos» y no «cupón»: Gestión emite uno por cliente, y la pantalla
+        // habla de los bonos de la campaña, no de un código único.
+        $response->assertOk()->assertSee('Canjes de los bonos', false);
 
         // Sin BD de PrestaShop configurada avisa en vez de mostrar ceros; con
         // ella, pinta la tabla. Ambas salidas son válidas según el entorno.
         $content = $response->getContent();
         $this->assertTrue(
-            str_contains($content, 'Pedidos con el cupón')
+            str_contains($content, 'Pedidos con bono')
                 || str_contains($content, 'No hay base de datos de PrestaShop configurada'),
             'La pantalla de canjes no muestra ni la tabla ni el aviso de PrestaShop no configurado.'
         );

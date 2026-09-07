@@ -43,9 +43,10 @@ class CheckUnmarkedBirthdayCoupons extends Command
         $days = max(1, (int) $this->option('days'));
         $since = CarbonImmutable::today()->subDays($days);
 
+        // Sin filtrar por coupon_code de campaña: con bono por cliente ese
+        // campo está vacío y este comando no revisaba absolutamente nada.
         $campaigns = BirthdayCampaign::query()
             ->whereDate('campaign_date', '>=', $since->toDateString())
-            ->whereNotNull('coupon_code')
             ->get();
 
         $problems = [];
@@ -59,7 +60,12 @@ class CheckUnmarkedBirthdayCoupons extends Command
                     continue;
                 }
 
-                $problems[] = $row + ['campaign_id' => $campaign->id, 'coupon' => $campaign->coupon_code];
+                // El código es el del bono que se gastó de verdad, que con un
+                // bono por cliente es distinto en cada fila.
+                $problems[] = $row + [
+                    'campaign_id' => $campaign->id,
+                    'coupon' => $row['coupon_code'] ?: (string) $campaign->coupon_code,
+                ];
             }
         }
 

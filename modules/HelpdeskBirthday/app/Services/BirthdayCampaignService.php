@@ -23,6 +23,17 @@ use Throwable;
  */
 class BirthdayCampaignService
 {
+    /**
+     * Desglose de la audiencia de la preparación en curso.
+     *
+     * Se guarda aparte para que una campaña que aborta a mitad pueda explicar
+     * igualmente en el panel a cuánta gente habría escrito: es lo único que
+     * queda de un día que ya no se puede reconstruir.
+     *
+     * @var array<string, int>|null
+     */
+    private ?array $lastAudienceStats = null;
+
     public function __construct(
         private readonly BirthdayAudienceStatsService $audienceStats,
         private readonly BirthdayBonoGenerator $bonos,
@@ -33,12 +44,18 @@ class BirthdayCampaignService
     ) {}
 
     /**
-     * Deja lista la campaña de $date: cupón congelado, destinatarios cargados y
+     * Deja lista la campaña de $date: bonos emitidos, destinatarios cargados y
      * cada uno con su hora de envío.
      *
      * Es idempotente por el UNIQUE de campaign_date: si ya existe una campaña
      * que pasó de draft, no se toca (no vamos a recargar destinatarios de algo
-     * que ya está enviando).
+     * que ya está enviando). La excepción es una campaña `failed` de un día que
+     * todavía no ha pasado: esa sí se reintenta, porque el motivo del fallo
+     * suele ser un ERP que no respondía hace un rato.
+     *
+     * Cualquier excepción se convierte en una campaña `failed` con su aviso: si
+     * se dejara subir, el comando muere de madrugada y el día entero de
+     * cumpleaños pasa sin que nadie se entere. Ha ocurrido.
      */
     public function prepare(CarbonImmutable $date): BirthdayCampaign
     {
@@ -47,7 +64,7 @@ class BirthdayCampaignService
             ['status' => BirthdayCampaign::STATUS_DRAFT]
         );
 
-        if ($campaign->status !== BirthdayCampaign::STATUS_DRAFT) {
+        if (! $this->isPreparable($campaign, $date)) {
             Log::info('[HelpdeskBirthday] La campaña del día ya estaba preparada', [
                 'date' => $date->toDateString(),
                 'status' => $campaign->status,
@@ -56,36 +73,70 @@ class BirthdayCampaignService
             return $campaign;
         }
 
+        try {
+            return $this->buildCampaign($campaign, $date);
+        } catch (BirthdayAudienceException $e) {
+            return $this->fail($campaign, $e->getMessage(), $this->lastAudienceStats);
+        } catch (Throwable $e) {
+            // Un timeout del ERP, Redis caído, un error de plantilla… da igual
+            // cuál sea: lo que no puede pasar es que el fallo sea mudo.
+            Log::error('[HelpdeskBirthday] Excepción preparando la campaña', [
+                'date' => $date->toDateString(),
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->fail(
+                $campaign,
+                'No se pudo preparar la campaña: '.$e->getMessage(),
+                $this->lastAudienceStats,
+            );
+        }
+    }
+
+    /**
+     * Una campaña se prepara desde `draft`, y se reintenta desde `failed`
+     * mientras siga siendo su día: el fallo típico es un ERP que no respondía a
+     * las 6 de la mañana y sí responde a las 7.
+     */
+    private function isPreparable(BirthdayCampaign $campaign, CarbonImmutable $date): bool
+    {
+        if ($campaign->status === BirthdayCampaign::STATUS_DRAFT) {
+            return true;
+        }
+
+        return $campaign->status === BirthdayCampaign::STATUS_FAILED
+            && $date->isSameDay(CarbonImmutable::today())
+            && $campaign->recipients()->count() === 0;
+    }
+
+    private function buildCampaign(BirthdayCampaign $campaign, CarbonImmutable $date): BirthdayCampaign
+    {
         $settings = $this->settings->all();
 
         // Antes que nada, y aunque la campaña acabe abortando: así una campaña
         // fallida sigue pudiendo explicar en el panel a cuánta gente habría
         // escrito y por qué el resto quedaba fuera. Es una lectura, no envía
         // nada.
-        $audienceStats = $this->audienceStats->forDate($date);
+        $audienceStats = $this->lastAudienceStats = $this->audienceStats->forDate($date);
 
-        // El cupón de la campaña es OPCIONAL: cuando Gestión genera un bono por
-        // cliente (ver BirthdayBonoGenerator) no hay un código único que valga
-        // para todos, y exigirlo dejaba la campaña sin prepararse siquiera.
-        // Si hay uno configurado se sigue congelando en la campaña, porque hay
-        // promociones que sí reparten el mismo código a todo el mundo.
+        // El bono lo emite Gestión POR CLIENTE (POST /api-gestion/generacion-bono/):
+        // cada persona recibe el suyo, con su propio código de verificación.
+        // El cupón de campaña es el respaldo para las promociones antiguas que
+        // repartían un único código a todo el mundo — si hay uno configurado se
+        // congela aquí, pero no es el camino normal.
         $coupon = $this->coupons->resolve($settings);
 
-        // Sin cupón global y sin tipo de bono nadie puede recibir un código,
+        // Sin tipo de bono y sin código global nadie puede recibir un regalo,
         // pero eso NO es motivo para tirar la audiencia: quién cumple años hoy
         // es un dato que caduca —mañana ya no se puede reconstruir— y con él en
         // la mano se ve a cuánta gente afecta el ajuste que falta.
         //
         // La campaña se prepara igual y queda EN PAUSA: reúne y programa, pero
-        // no envía. Y aunque alguien la reanudara, SendBirthdayEmailJob se
-        // niega a mandar un correo con el cupón vacío.
+        // no envía.
         $sinCupones = $coupon === [] && ! $this->bonos->isConfigured();
 
-        try {
-            $recipients = $this->audience->fetchForDate($date, $this->settings->exclusions());
-        } catch (BirthdayAudienceException $e) {
-            return $this->fail($campaign, $e->getMessage(), $audienceStats);
-        }
+        $recipients = $this->audience->fetchForDate($date, $this->settings->exclusions());
 
         [$windowStart, $windowEnd] = $this->calculator->windowFor(
             $date,
@@ -133,9 +184,15 @@ class BirthdayCampaignService
             $this->storeRecipients($campaign, $recipients, $plan);
         });
 
-        // Una campaña que queda en pausa por falta de cupón no envía nada, y
-        // eso hay que decirlo: el efecto para el cliente es el mismo que si
-        // hubiera fallado —no recibe su felicitación— y el día no se repite.
+        // Los bonos, ya con los destinatarios en la BD y FUERA de la
+        // transacción: son varias llamadas HTTP a Gestión (una por cada 100
+        // clientes) y tenerlas dentro mantendría abierta una transacción
+        // durante minutos, bloqueando la tabla para el resto.
+        $bonos = $this->generateBonos($campaign, $coupon);
+
+        // Una campaña que no puede regalar nada no envía, y eso hay que
+        // decirlo: el efecto para el cliente es el mismo que si hubiera
+        // fallado —no recibe su felicitación— y el día no se repite.
         if ($sinCupones) {
             $this->notifyFailure($campaign, (string) $campaign->error_message);
         }
@@ -145,11 +202,137 @@ class BirthdayCampaignService
             'total' => count($recipients),
             'sendable' => count($sendable),
             'skipped' => $skipped,
+            'bonos' => $bonos,
             'interval_seconds' => $plan->intervalSeconds,
             'overflows_window' => $plan->overflowsWindow(),
         ]);
 
         return $campaign->refresh();
+    }
+
+    /**
+     * Pide a Gestión el bono de cada destinatario y aparta a quien se quedó
+     * sin él.
+     *
+     * Es el paso que convierte una lista de cumpleañeros en una campaña
+     * enviable. Sin él los destinatarios quedan sin `coupon_code`, y un correo
+     * de cumpleaños sin el regalo dentro no se puede repetir al día siguiente.
+     *
+     * Quien se queda sin bono pasa a `skipped/no_coupon` en vez de quedarse
+     * `pending`: si se quedara pendiente, dispatch-due lo reservaría cada
+     * minuto, el job lo devolvería a pendiente y la campaña no cerraría nunca.
+     * Aparcado como omitido se ve en el panel, se explica el motivo y se puede
+     * reintentar a mano.
+     *
+     * @param  array<string, mixed>  $campaignCoupon  cupón global, si esta promoción usa uno
+     * @return array{generated: int, failed: int}|null null si no se generan bonos por cliente
+     */
+    private function generateBonos(BirthdayCampaign $campaign, array $campaignCoupon): ?array
+    {
+        // Con un código único para todo el mundo (promoción antigua) no hay
+        // nada que emitir: ese código ya está congelado en la campaña.
+        if (! $this->bonos->isConfigured() || $campaignCoupon !== []) {
+            return null;
+        }
+
+        $pending = $campaign->recipients()
+            ->where('status', BirthdayRecipient::STATUS_PENDING)
+            ->get();
+
+        if ($pending->isEmpty()) {
+            return null;
+        }
+
+        $result = $this->bonos->generateFor(
+            $pending,
+            sprintf('Cumpleaños %s', $campaign->campaign_date?->format('d/m/Y') ?? ''),
+        );
+
+        // A quien Gestión no le emitió bono no se le escribe. Su fila conserva
+        // el motivo en coupon_error, que es lo que se enseña en el panel.
+        $sinBono = $campaign->recipients()
+            ->where('status', BirthdayRecipient::STATUS_PENDING)
+            ->whereNull('coupon_code')
+            ->update([
+                'status' => BirthdayRecipient::STATUS_SKIPPED,
+                'skip_reason' => BirthdayRecipient::SKIP_NO_COUPON,
+                'scheduled_at' => null,
+                'updated_at' => now(),
+            ]);
+
+        if ($sinBono > 0) {
+            $campaign->increment('skipped_count', $sinBono);
+
+            Log::warning('[HelpdeskBirthday] Destinatarios sin bono emitido', [
+                'campaign_id' => $campaign->id,
+                'count' => $sinBono,
+            ]);
+        }
+
+        // Nadie recibió bono: la campaña no puede enviar nada. Se pausa con el
+        // motivo a la vista en vez de dejarla "programada" sin salida.
+        if ($campaign->recipients()->withCoupon()->count() === 0) {
+            $motivo = 'Gestión no emitió ningún bono para esta campaña. Revisa el tipo de bono en Ajustes y reintenta la generación.';
+
+            $campaign->update([
+                'status' => BirthdayCampaign::STATUS_PAUSED,
+                'error_message' => $motivo,
+            ]);
+
+            $this->notifyFailure($campaign, $motivo);
+        }
+
+        return ['generated' => $result['generated'], 'failed' => $result['failed']];
+    }
+
+    /**
+     * Reintenta la emisión para los que se quedaron sin bono, sin tocar a
+     * quienes ya lo tienen: regenerarlos les cambiaría el código de uno que ya
+     * puede estar en su buzón.
+     *
+     * @return array{generated: int, failed: int}
+     */
+    public function retryBonos(BirthdayCampaign $campaign): array
+    {
+        $sinBono = $campaign->recipients()
+            ->whereIn('status', [BirthdayRecipient::STATUS_PENDING, BirthdayRecipient::STATUS_SKIPPED])
+            ->where(fn ($q) => $q->whereNull('skip_reason')->orWhere('skip_reason', BirthdayRecipient::SKIP_NO_COUPON))
+            ->whereNull('coupon_code')
+            ->get();
+
+        if ($sinBono->isEmpty()) {
+            return ['generated' => 0, 'failed' => 0];
+        }
+
+        $result = $this->bonos->generateFor(
+            $sinBono,
+            sprintf('Cumpleaños %s', $campaign->campaign_date?->format('d/m/Y') ?? ''),
+        );
+
+        // Los que ya tienen bono vuelven a la cola con hora de ahora: el
+        // reparto original ya pasó y esperar a mañana sería no enviarlo.
+        $recovered = $campaign->recipients()
+            ->whereIn('id', $sinBono->pluck('id'))
+            ->withCoupon()
+            ->update([
+                'status' => BirthdayRecipient::STATUS_PENDING,
+                'skip_reason' => null,
+                'scheduled_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        if ($recovered > 0) {
+            $campaign->update([
+                'skipped_count' => max(0, $campaign->skipped_count - $recovered),
+                // Una campaña pausada por falta de bonos vuelve a estar viva:
+                // si no, nadie recogería a los que acaban de recibir el suyo.
+                'status' => $campaign->isActive() ? $campaign->status : BirthdayCampaign::STATUS_SCHEDULED,
+                'error_message' => null,
+                'finished_at' => null,
+            ]);
+        }
+
+        return $result;
     }
 
     /**
@@ -256,6 +439,67 @@ class BirthdayCampaignService
         ]);
 
         return true;
+    }
+
+    /**
+     * Cierra una campaña a la que se le pasó el día.
+     *
+     * Una felicitación de cumpleaños tiene fecha de caducidad: llega el mismo
+     * día o no llega. Si el worker estuvo caído toda la tarde, mandar mañana
+     * los correos de hoy es peor que no mandarlos — el cliente recibe un «feliz
+     * cumpleaños» con dos días de retraso y un bono que ya lleva tiempo
+     * corriendo.
+     *
+     * Sin esto, los pendientes se quedaban en la cola indefinidamente: la
+     * campaña del día siguiente convivía con la anterior y ninguna de las dos
+     * cerraba nunca.
+     *
+     * @return int cuántos destinatarios se quedaron sin felicitación
+     */
+    public function expireIfOverdue(BirthdayCampaign $campaign, ?CarbonImmutable $now = null): int
+    {
+        $now ??= CarbonImmutable::now();
+        $graceHours = max(0, (int) config('helpdeskbirthday.expire_after_hours', 6));
+
+        // El plazo se cuenta desde el final del día de la campaña en hora local
+        // (que es la del cumpleaños), más la gracia configurada para que un
+        // atasco de última hora todavía pueda resolverse.
+        $deadline = $campaign->campaign_date
+            ?->copy()
+            ->endOfDay()
+            ->addHours($graceHours);
+
+        if ($deadline === null || $now->lessThan($deadline)) {
+            return 0;
+        }
+
+        $expired = 0;
+
+        DB::connection('helpdesk')->transaction(function () use ($campaign, &$expired): void {
+            $expired = $campaign->recipients()
+                ->unfinished()
+                ->update([
+                    'status' => BirthdayRecipient::STATUS_SKIPPED,
+                    'skip_reason' => BirthdayRecipient::SKIP_EXPIRED,
+                    'updated_at' => now(),
+                ]);
+
+            $campaign->update([
+                'status' => BirthdayCampaign::STATUS_COMPLETED,
+                'skipped_count' => $campaign->skipped_count + $expired,
+                'finished_at' => $campaign->finished_at ?? now(),
+            ]);
+        });
+
+        if ($expired > 0) {
+            Log::warning('[HelpdeskBirthday] Campaña caducada con envíos sin salir', [
+                'campaign_id' => $campaign->id,
+                'date' => $campaign->campaign_date?->toDateString(),
+                'expired' => $expired,
+            ]);
+        }
+
+        return $expired;
     }
 
     /**

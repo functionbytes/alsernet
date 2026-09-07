@@ -209,10 +209,24 @@
         <div class="card-body">
             <h6 class="fw-bold mb-1">Otros</h6>
             <p class="text-muted small mb-3">
-                Plantilla del correo y qué hacer con quien nació un 29 de febrero.
+                De dónde salen los cumpleañeros, plantilla del correo y qué hacer con
+                quien nació un 29 de febrero.
             </p>
 
             <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small" for="bd-source">Origen de los cumpleañeros</label>
+                    <select name="audience_source" id="bd-source" class="form-select @error('audience_source') is-invalid @enderror">
+                        <option value="api" @selected(old('audience_source', $settings['audience_source']) === 'api')>API de clientes de este panel (recomendado)</option>
+                        <option value="gestion" @selected(old('audience_source', $settings['audience_source']) === 'gestion')>API de Gestión</option>
+                    </select>
+                    <div class="form-text">
+                        La de este panel filtra por fecha de nacimiento en la propia consulta y
+                        tarda unos segundos. La de Gestión da el mismo resultado, pero tarda unos
+                        16 segundos y descarga casi un mega de XML: úsala solo si la primera falla.
+                    </div>
+                    @error('audience_source')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
                 <div class="col-md-6">
                     <label class="form-label small" for="bd-template">Plantilla del correo</label>
                     <input type="text" name="template_key" id="bd-template" class="form-control @error('template_key') is-invalid @enderror" value="{{ old('template_key', $settings['template_key']) }}" required>

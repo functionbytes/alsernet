@@ -37,7 +37,18 @@
 @endphp
 
 {{-- El envío está atascado: los correos se encolan y no sale ninguno. --}}
-@if(! $overview['health']['healthy'])
+{{-- Que hoy no exista campaña es el fallo más silencioso de todos: no hay nada
+     atascado porque no hay nada, y el día pasa sin felicitar a nadie. --}}
+@if($overview['health']['missing_today'])
+    <div class="alert alert-warning">
+        <strong>Hoy no hay campaña.</strong>
+        La preparación de las {{ config('helpdeskbirthday.prepare_at') }} no llegó a crearla,
+        o falló. Se reintenta cada hora hasta el final de la ventana de envío; si no
+        aparece, revisa el registro y prepárala a mano.
+    </div>
+@endif
+
+@if(! $overview['health']['healthy'] && ($overview['health']['stuck_sending'] > 0 || $overview['health']['overdue_pending'] > 0))
     <div class="alert alert-warning">
         <strong>El envío parece atascado.</strong>
         @if($overview['health']['stuck_sending'] > 0)

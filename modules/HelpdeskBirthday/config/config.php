@@ -72,6 +72,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Caducidad de la campaña
+    |--------------------------------------------------------------------------
+    | Horas de gracia despues del dia del cumpleanos. Pasadas, lo que no haya
+    | salido ya no sale: una felicitacion con un dia de retraso es peor que
+    | ninguna, y el bono llevaria dias corriendo.
+    |
+    | La gracia existe para que un atasco de ultima hora (worker caido a las
+    | 23:00) todavia se pueda resolver por la manana.
+    */
+    'expire_after_hours' => (int) env('HELPDESK_BIRTHDAY_EXPIRE_AFTER_HOURS', 6),
+
+    /*
+    |--------------------------------------------------------------------------
     | Guarda de seguridad
     |--------------------------------------------------------------------------
     | Si el ERP devuelve mas destinatarios que esto, la campana se aborta en vez

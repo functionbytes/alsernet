@@ -1,7 +1,7 @@
 @extends('layouts.theme')
 @section('title', 'Canjes · Campaña del '.$campaign->campaign_date->format('d/m/Y'))
 @section('page_header')
-    @include('core::components.card', ['title' => 'Canjes del cupón'])
+    @include('core::components.card', ['title' => 'Canjes de los bonos'])
 @endsection
 
 @push('css')
@@ -12,12 +12,14 @@
 
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
     <h1 class="h4 mb-0 fw-bold">
-        <i class="fas fa-receipt text-primary me-2"></i>Canjes del cupón
-        <span class="bd-coupon-code ms-2">{{ $campaign->coupon_code ?: '—' }}</span>
+        <i class="fas fa-receipt text-primary me-2"></i>Canjes de los bonos
+        @if($campaign->coupon_code)
+            <span class="bd-coupon-code ms-2">{{ $campaign->coupon_code }}</span>
+        @endif
     </h1>
     <p class="text-muted small mb-0 w-100 order-3 mt-1">
-        Pedidos de PrestaShop que usaron este cupón y qué contestó gestión al marcar el bono.
-        Campaña del {{ $campaign->campaign_date->format('d/m/Y') }}.
+        Pedidos de PrestaShop que usaron un bono de esta campaña y qué contestó gestión al marcarlo.
+        Campaña del {{ $campaign->campaign_date->format('d/m/Y') }}, {{ $couponCount }} bonos emitidos.
     </p>
     <div class="ms-auto order-2">
         <a href="{{ route('helpdeskbirthday.campaigns.show', $campaign) }}" class="btn btn-outline-secondary btn-sm">Volver a la campaña</a>
@@ -29,7 +31,7 @@
 @if(! $available)
     <div class="alert alert-warning">
         No hay base de datos de PrestaShop configurada (<code>HELPDESK_PS_DB</code>),
-        así que no se puede saber quién usó el cupón.
+        así que no se puede saber quién usó su bono.
     </div>
 @else
 
@@ -38,7 +40,7 @@
             $conGestion = collect($rows)->where('erp_ok', true)->count();
             $sinGestion = collect($rows)->filter(fn ($r) => $r['erp_response'] === null)->count();
             $kpis = [
-                ['label' => 'Pedidos con el cupón', 'value' => count($rows), 'hint' => $summary['attributed'].' de destinatarios'],
+                ['label' => 'Pedidos con bono', 'value' => count($rows), 'hint' => $summary['attributed'].' de destinatarios'],
                 ['label' => 'Facturado', 'value' => number_format($summary['revenue'], 2, ',', '.').' €', 'hint' => number_format($summary['discount'], 2, ',', '.').' € descontados'],
                 ['label' => 'Marcados en gestión', 'value' => $conGestion, 'hint' => $sinGestion > 0 ? $sinGestion.' sin registro' : 'todos registrados'],
                 ['label' => 'Conversión', 'value' => $summary['rate'].'%', 'hint' => 'sobre '.$campaign->sent_count.' correos enviados'],
@@ -63,8 +65,8 @@
             <h6 class="fw-bold mb-1">Pedidos</h6>
             <p class="text-muted small mb-3">
                 «Atribuido» significa que el pedido es de alguien a quien le mandamos el correo.
-                Al ser el cupón el mismo para todos, un pedido sin atribuir puede ser de alguien
-                que recibió el código reenviado.
+                Cada cliente recibe su propio bono, así que un pedido sin atribuir suele ser de
+                alguien que compró con el código que le reenviaron.
             </p>
 
             <div class="table-responsive">
@@ -73,6 +75,7 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Cliente</th>
+                            <th>Bono</th>
                             <th>Pedido</th>
                             <th>Estado</th>
                             <th class="text-end">Total</th>
@@ -94,6 +97,7 @@
                                         <small class="text-muted d-block">{{ $row['name'] }}</small>
                                     @endif
                                 </td>
+                                <td><code class="small">{{ $row['coupon_code'] ?: '—' }}</code></td>
                                 <td>
                                     <code>{{ $row['order_reference'] ?: '#'.$row['order_id'] }}</code>
                                     <small class="text-muted d-block">PS #{{ $row['order_id'] }}</small>
@@ -159,14 +163,32 @@
                                                     </a>
                                                 </li>
                                             @endif
+
+                                            {{-- El caso caro: el cliente se llevó el descuento en la
+                                                 tienda pero el bono no se descontó en gestión, así que
+                                                 sigue vivo y se puede volver a gastar. ESTO ESCRIBE EN
+                                                 EL ERP, por eso solo aparece cuando hace falta. --}}
+                                            @if(! $row['erp_ok'] && $row['coupon_code'] && $canManage)
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="POST" action="{{ route('helpdeskbirthday.campaigns.mark-coupon-used', $campaign) }}">
+                                                        @csrf
+                                                        <input type="hidden" name="coupon_code" value="{{ $row['coupon_code'] }}">
+                                                        <input type="hidden" name="sale_amount" value="{{ $row['order_total'] }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            Marcar el bono en gestión
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @endif
                                         </ul>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">
-                                    Todavía nadie ha usado este cupón.
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    Todavía nadie ha usado su bono.
                                 </td>
                             </tr>
                         @endforelse

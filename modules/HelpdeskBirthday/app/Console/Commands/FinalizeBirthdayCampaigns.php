@@ -34,16 +34,33 @@ class FinalizeBirthdayCampaigns extends Command
         $this->rescueStuck();
 
         $closed = 0;
+        $expired = 0;
 
-        BirthdayCampaign::query()->active()->each(function (BirthdayCampaign $campaign) use ($campaigns, &$closed): void {
-            if ($campaigns->finalizeIfDone($campaign)) {
-                $closed++;
-            }
-        });
+        // También las pausadas: una campaña que se quedó en pausa el martes no
+        // debe poder reanudarse el viernes y soltar de golpe las felicitaciones
+        // de aquel día.
+        BirthdayCampaign::query()
+            ->whereIn('status', [
+                ...BirthdayCampaign::ACTIVE_STATUSES,
+                BirthdayCampaign::STATUS_PAUSED,
+            ])
+            ->each(function (BirthdayCampaign $campaign) use ($campaigns, &$closed, &$expired): void {
+                $caducados = $campaigns->expireIfOverdue($campaign);
+
+                if ($caducados > 0) {
+                    $expired += $caducados;
+
+                    return;
+                }
+
+                if ($campaigns->finalizeIfDone($campaign)) {
+                    $closed++;
+                }
+            });
 
         $purged = $this->purgeOld();
 
-        $this->info("Campañas cerradas: {$closed}. Campañas purgadas: {$purged}.");
+        $this->info("Campañas cerradas: {$closed}. Envíos caducados: {$expired}. Campañas purgadas: {$purged}.");
 
         return self::SUCCESS;
     }

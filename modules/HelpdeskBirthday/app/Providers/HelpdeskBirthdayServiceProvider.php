@@ -119,14 +119,34 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
         // "06:00" se ejecutaría a las 08:00 en España durante el verano.
         $timezone = (string) config('helpdeskbirthday.timezone', config('app.timezone', 'UTC'));
 
-        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) use ($prepareAt, $timezone): void {
+        $windowEnd = (string) config('helpdeskbirthday.window_end', '14:00');
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) use ($prepareAt, $windowEnd, $timezone): void {
             // withoutOverlapping()+onOneServer() en los tres: preparar dos veces
             // duplicaría destinatarios y despachar en paralelo desde dos nodos
             // podría enviar el mismo correo dos veces.
+            //
+            // El minutaje de withoutOverlapping() NO es decorativo: por defecto
+            // el candado dura 24 h, así que un proceso muerto de golpe (OOM, un
+            // contenedor reiniciado a mitad) lo deja puesto y la tarea no
+            // vuelve a correr en todo el día, en silencio. Con un TTL corto el
+            // candado se suelta solo.
             $schedule->command('helpdeskbirthday:prepare')
                 ->dailyAt($prepareAt)
                 ->timezone($timezone)
-                ->withoutOverlapping()
+                ->withoutOverlapping(30)
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_birthday_enabled());
+
+            // Reintento durante la mañana: si a las 6 el ERP no respondía, a
+            // las 7 puede que sí. El comando no hace nada cuando la campaña del
+            // día ya está preparada, así que correrlo de más es barato — y
+            // correrlo de menos cuesta un día entero de cumpleaños sin felicitar.
+            $schedule->command('helpdeskbirthday:prepare')
+                ->hourly()
+                ->between($prepareAt, $windowEnd)
+                ->timezone($timezone)
+                ->withoutOverlapping(30)
                 ->onOneServer()
                 ->when(fn (): bool => helpdesk_birthday_enabled());
 
@@ -134,7 +154,7 @@ class HelpdeskBirthdayServiceProvider extends ServiceProvider
             // pausa desde el panel surta efecto casi al instante.
             $schedule->command('helpdeskbirthday:dispatch-due')
                 ->everyMinute()
-                ->withoutOverlapping()
+                ->withoutOverlapping(5)
                 ->onOneServer()
                 ->when(fn (): bool => helpdesk_birthday_enabled());
 

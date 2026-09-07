@@ -51,6 +51,17 @@
                 </form>
             @endif
 
+            {{-- Sin bono no se envía nada, así que esta es la acción que
+                 desatasca la campaña cuando Gestión falló al emitirlos. --}}
+            @if($withoutCoupon > 0)
+                <form method="POST" action="{{ route('helpdeskbirthday.campaigns.retry-bonos', $campaign) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        Generar los {{ $withoutCoupon }} bonos que faltan
+                    </button>
+                </form>
+            @endif
+
             @if($campaign->canBeCancelled())
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#bd-cancel-modal">Cancelar</button>
             @endif
@@ -68,26 +79,53 @@
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h6 class="fw-bold mb-1">Cupón del día</h6>
-                <p class="text-muted small mb-3">
-                    {{ __('helpdeskbirthday::messages.source.'.$campaign->coupon_source) }}
-                </p>
+                {{-- Gestión emite un bono por cliente, así que aquí no hay un
+                     código único que enseñar: lo que importa es cuántos se
+                     emitieron y cuántos faltan. El código de campaña solo
+                     aparece en las promociones antiguas de código único. --}}
+                @if($campaign->coupon_code)
+                    <h6 class="fw-bold mb-1">Cupón del día</h6>
+                    <p class="text-muted small mb-3">
+                        {{ __('helpdeskbirthday::messages.source.'.$campaign->coupon_source) }}
+                    </p>
 
-                <p class="bd-coupon-code mb-2">{{ $campaign->coupon_code ?: '—' }}</p>
+                    <p class="bd-coupon-code mb-2">{{ $campaign->coupon_code }}</p>
 
-                <dl class="row small mb-0">
-                    <dt class="col-6 fw-normal text-muted">Válido desde</dt>
-                    <dd class="col-6 text-end">{{ $campaign->coupon_valid_from?->format('d/m/Y') ?: '—' }}</dd>
+                    <dl class="row small mb-0">
+                        <dt class="col-6 fw-normal text-muted">Válido desde</dt>
+                        <dd class="col-6 text-end">{{ $campaign->coupon_valid_from?->format('d/m/Y') ?: '—' }}</dd>
 
-                    <dt class="col-6 fw-normal text-muted">Válido hasta</dt>
-                    <dd class="col-6 text-end">{{ $campaign->coupon_valid_to?->format('d/m/Y') ?: '—' }}</dd>
+                        <dt class="col-6 fw-normal text-muted">Válido hasta</dt>
+                        <dd class="col-6 text-end">{{ $campaign->coupon_valid_to?->format('d/m/Y') ?: '—' }}</dd>
 
-                    <dt class="col-6 fw-normal text-muted">Importe</dt>
-                    <dd class="col-6 text-end">{{ $campaign->coupon_amount !== null ? number_format((float) $campaign->coupon_amount, 2, ',', '.').' €' : '—' }}</dd>
+                        <dt class="col-6 fw-normal text-muted">Importe</dt>
+                        <dd class="col-6 text-end">{{ $campaign->coupon_amount !== null ? number_format((float) $campaign->coupon_amount, 2, ',', '.').' €' : '—' }}</dd>
 
-                    <dt class="col-6 fw-normal text-muted">Compra mínima</dt>
-                    <dd class="col-6 text-end">{{ $campaign->coupon_min_purchase !== null ? number_format((float) $campaign->coupon_min_purchase, 2, ',', '.').' €' : '—' }}</dd>
-                </dl>
+                        <dt class="col-6 fw-normal text-muted">Compra mínima</dt>
+                        <dd class="col-6 text-end">{{ $campaign->coupon_min_purchase !== null ? number_format((float) $campaign->coupon_min_purchase, 2, ',', '.').' €' : '—' }}</dd>
+                    </dl>
+                @else
+                    <h6 class="fw-bold mb-1">Bonos emitidos</h6>
+                    <p class="text-muted small mb-3">
+                        Gestión emite un bono para cada cliente, con su propio código.
+                    </p>
+
+                    <p class="bd-kpi-value fw-bold mb-2">{{ $coupons['issued'] }}</p>
+
+                    <dl class="row small mb-0">
+                        <dt class="col-7 fw-normal text-muted">Sin bono</dt>
+                        <dd class="col-5 text-end">{{ $withoutCoupon }}</dd>
+
+                        <dt class="col-7 fw-normal text-muted">Importe</dt>
+                        <dd class="col-5 text-end">{{ $coupons['amount'] !== null ? number_format((float) $coupons['amount'], 2, ',', '.').' €' : '—' }}</dd>
+
+                        <dt class="col-7 fw-normal text-muted">Compra mínima</dt>
+                        <dd class="col-5 text-end">{{ $coupons['min_purchase'] !== null ? number_format((float) $coupons['min_purchase'], 2, ',', '.').' €' : '—' }}</dd>
+
+                        <dt class="col-7 fw-normal text-muted">Válidos hasta</dt>
+                        <dd class="col-5 text-end">{{ $coupons['valid_to'] ? \Illuminate\Support\Carbon::parse($coupons['valid_to'])->format('d/m/Y') : '—' }}</dd>
+                    </dl>
+                @endif
             </div>
         </div>
     </div>
@@ -231,6 +269,7 @@
                         <th>Email</th>
                         <th>Nombre</th>
                         <th>Nacimiento</th>
+                        <th>Bono</th>
                         <th>Estado</th>
                         <th>Enviado</th>
                         <th>Entregado</th>
@@ -249,6 +288,34 @@
                             <td>{{ $recipient->email }}</td>
                             <td>{{ $recipient->name ?: '—' }}</td>
                             <td>{{ $recipient->birth_date?->format('d/m/Y') ?: '—' }}</td>
+
+                            {{-- El bono de ESTA persona: Gestión emite uno por
+                                 cliente, así que aquí está lo que de verdad
+                                 recibió, y el motivo si se quedó sin él. --}}
+                            <td>
+                                @if($code = $recipient->publicCode())
+                                    <code class="small">{{ $code }}</code>
+                                    @if($recipient->coupon_amount)
+                                        <small class="text-muted d-block">
+                                            {{ number_format((float) $recipient->coupon_amount, 2, ',', '.') }} €
+                                            @if($recipient->coupon_valid_to)
+                                                · hasta {{ $recipient->coupon_valid_to->format('d/m/Y') }}
+                                            @endif
+                                        </small>
+                                    @endif
+                                @elseif($recipient->coupon_error)
+                                    <span class="text-muted">Sin bono</span>
+                                    <small class="text-muted d-block" title="{{ $recipient->coupon_error }}">
+                                        {{ \Illuminate\Support\Str::limit($recipient->coupon_error, 40) }}
+                                    </small>
+                                @elseif($campaign->coupon_code)
+                                    <code class="small">{{ $campaign->coupon_code }}</code>
+                                    <small class="text-muted d-block">de la campaña</small>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
                             <td>
                                 <span class="badge {{ $recipient->status === 'sent' ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' }}">
                                     {{ __('helpdeskbirthday::messages.recipient_status.'.$recipient->status) }}
@@ -359,7 +426,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $redeemers !== [] ? 11 : 10 }}" class="text-center text-muted py-4">
+                            <td colspan="{{ $redeemers !== [] ? 12 : 11 }}" class="text-center text-muted py-4">
                                 @if($campaign->recipients_total === 0 && $campaign->status === \Modules\HelpdeskBirthday\Models\BirthdayCampaign::STATUS_FAILED)
                                     {{-- Distinguir "el filtro no encuentra nada" de "esta campaña nunca
                                          llegó a tener destinatarios": la preparación aborta antes de

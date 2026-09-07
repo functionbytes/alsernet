@@ -72,16 +72,23 @@ class SendBirthdayEmailJob extends BaseJob
             return;
         }
 
-        // Un correo de cumpleaños sin cupón es peor que no mandarlo: el cliente
+        // Un correo de cumpleaños sin bono es peor que no mandarlo: el cliente
         // recibe una felicitación con un hueco donde debería estar su regalo, y
-        // ese correo ya no se puede repetir. Se devuelve a pendiente para que se
-        // reintente cuando el bono esté generado.
-        if (($recipient->coupon_code ?: $campaign->coupon_code) === null
-            || trim((string) ($recipient->coupon_code ?: $campaign->coupon_code)) === '') {
-            $recipient->update([
-                'status' => BirthdayRecipient::STATUS_PENDING,
-                'error_message' => 'Sin cupón asignado: no se envía hasta que Gestión genere el bono.',
-            ]);
+        // ese correo ya no se puede repetir.
+        //
+        // Se aparta como omitido y NO se devuelve a pendiente: devolverlo era un
+        // bucle sin final —dispatch-due lo reservaba de nuevo al minuto
+        // siguiente, este job lo devolvía, y así indefinidamente— que además
+        // impedía cerrar la campaña. Apartado se ve en el panel, con su motivo,
+        // y se recupera con «Reintentar la generación de bonos».
+        if (trim((string) ($recipient->publicCode() ?? $campaign->coupon_code)) === '') {
+            $recipient->forceFill([
+                'status' => BirthdayRecipient::STATUS_SKIPPED,
+                'skip_reason' => BirthdayRecipient::SKIP_NO_COUPON,
+                'error_message' => 'Sin bono emitido en Gestión: no se envía una felicitación sin regalo.',
+            ])->save();
+
+            $campaign->increment('skipped_count');
 
             return;
         }

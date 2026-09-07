@@ -32,6 +32,10 @@ class BirthdaySettings
             'throttle_per_hour' => $this->int('throttle_per_hour', (int) config('helpdeskbirthday.throttle_per_hour', 600)),
             'max_recipients' => $this->int('max_recipients', (int) config('helpdeskbirthday.max_recipients', 2000)),
             'leap_day_policy' => $this->string('leap_day_policy', (string) config('helpdeskbirthday.leap_day_policy', 'feb28')),
+
+            // De dónde salen los cumpleañeros: la API de clientes de este panel
+            // ('api', ~3 s) o la de Gestión ('gestion', ~16 s y 880 KB de XML).
+            'audience_source' => $this->string('audience_source', (string) config('helpdeskbirthday.audience_source', 'api')),
             'template_key' => $this->string('template_key', (string) config('helpdeskbirthday.template_key', 'birthday-coupon')),
 
             // Tipo de bono en Gestión (IDTBONO_PROMOCION): dice QUÉ bono se
