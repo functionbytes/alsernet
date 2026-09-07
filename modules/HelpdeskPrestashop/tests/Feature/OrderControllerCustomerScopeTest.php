@@ -24,7 +24,7 @@ class OrderControllerCustomerScopeTest extends TestCase
     use DatabaseTransactions;
 
     /** Revertir escrituras también en la conexión helpdesk (Customer/Inbox/Conversation). */
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected string $apiUrl = 'http://localhost:8090/modules/alsernetbridge/api.php';
 

@@ -14,7 +14,7 @@ class DetectLanguageControllerTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     private const ENDPOINT = '/panel/helpdesk/detect-language';
 

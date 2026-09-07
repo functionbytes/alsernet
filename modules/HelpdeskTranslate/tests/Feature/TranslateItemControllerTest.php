@@ -19,7 +19,7 @@ class TranslateItemControllerTest extends TestCase
     use SeedsCorePermissions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     protected function setUp(): void
     {

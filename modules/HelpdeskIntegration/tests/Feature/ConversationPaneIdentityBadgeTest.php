@@ -22,7 +22,7 @@ class ConversationPaneIdentityBadgeTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private function paneHtml(Conversation $conversation): string
     {

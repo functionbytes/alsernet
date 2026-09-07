@@ -15,7 +15,7 @@ class TranslateSettingsControllerTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     private const INDEX_URL = '/panel/settings/helpdesk-translate';
 

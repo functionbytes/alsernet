@@ -24,7 +24,7 @@ class TranslationQuotaTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     protected function setUp(): void
     {

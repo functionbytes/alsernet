@@ -44,7 +44,7 @@ class CampaignsFeatureTest extends TestCase
     use DatabaseTransactions;
     use EnsuresSanctumTable;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected User $viewer;
 

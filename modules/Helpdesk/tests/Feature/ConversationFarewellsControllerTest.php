@@ -14,7 +14,7 @@ class ConversationFarewellsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $manager;
 

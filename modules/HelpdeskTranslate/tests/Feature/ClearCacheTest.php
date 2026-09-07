@@ -17,7 +17,7 @@ class ClearCacheTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     private const URL = '/panel/settings/helpdesk-translate/cache';
 

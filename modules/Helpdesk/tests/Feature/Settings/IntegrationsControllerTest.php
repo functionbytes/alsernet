@@ -13,7 +13,7 @@ class IntegrationsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     /**
      * Every toggleable integration key, in the order exposed by the controller.

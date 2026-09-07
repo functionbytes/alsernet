@@ -14,7 +14,7 @@ class WhatsAppUsageReportTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private const INDEX_URL = '/panel/settings/helpdesk/whatsapp-usage';
 

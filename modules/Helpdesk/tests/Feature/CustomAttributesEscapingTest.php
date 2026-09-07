@@ -31,7 +31,7 @@ class CustomAttributesEscapingTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private const XSS_COMPANY = '<script>alert("xss-company")</script>';
 

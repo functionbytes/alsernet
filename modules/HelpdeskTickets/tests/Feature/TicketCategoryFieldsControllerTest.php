@@ -15,7 +15,7 @@ class TicketCategoryFieldsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected User $user;
 
