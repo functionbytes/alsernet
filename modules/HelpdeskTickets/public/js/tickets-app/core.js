@@ -6124,6 +6124,17 @@
                     renderSidePanel(current);
                     renderSelfAssignBanner(current);
                     fetchDetailData(current);
+                })
+                // Seguir/dejar de seguir (TicketLifecycleController::watch()/
+                // unwatch()) era completamente silencioso: un compañero con
+                // el mismo ticket abierto se quedaba viendo "seguidores: N"
+                // desactualizado hasta recargar a mano. Payload vacío a
+                // propósito (ver TicketWatcherChanged): fetchDetailData ya
+                // trae watchers/watchers_count reales, igual que con
+                // .message.added arriba.
+                .listen('.watchers.changed', function () {
+                    var current = TKA.state.currentTicket;
+                    if (current) fetchDetailData(current);
                 });
         } catch (e) {
             // Sin Echo/Reverb levantado en este entorno: la pantalla sigue
