@@ -33,6 +33,38 @@ const outPath = path.join(outDir, 'tickets-app.min.js');
 const publishedDir = path.join(root, 'public/modules/helpdesktickets/js');
 const publishedPath = path.join(publishedDir, 'tickets-app.min.js');
 
+// El CSS del módulo es un único archivo (no dividido como el JS): solo hace
+// falta minificarlo, sin concatenar nada. Mismo criterio de "opcional, cae
+// solo si está actualizado" que el JS — ver index.blade.php.
+const cssSrcPath = path.join(root, 'modules/HelpdeskTickets/public/css/tickets-app.css');
+const cssOutPath = path.join(root, 'modules/HelpdeskTickets/public/css/tickets-app.min.css');
+const cssPublishedDir = path.join(root, 'public/modules/helpdesktickets/css');
+const cssPublishedPath = path.join(cssPublishedDir, 'tickets-app.min.css');
+
+const kb = (n) => (n / 1024).toFixed(1) + ' KB';
+
+async function buildCss() {
+    const css = await readFile(cssSrcPath, 'utf8');
+
+    const result = await esbuild.transform(css, {
+        loader: 'css',
+        minify: true,
+        legalComments: 'none',
+    });
+
+    if (result.warnings.length) {
+        for (const w of result.warnings) console.warn('[esbuild css]', w.text, w.location);
+    }
+
+    await writeFile(cssOutPath, result.code, 'utf8');
+    await mkdir(cssPublishedDir, { recursive: true });
+    await writeFile(cssPublishedPath, result.code, 'utf8');
+
+    console.log(`tickets-app.min.css generado: ${kb(css.length)} → ${kb(result.code.length)} minificado`);
+    console.log(`  fuente:     ${path.relative(root, cssOutPath)}`);
+    console.log(`  publicado:  ${path.relative(root, cssPublishedPath)}`);
+}
+
 async function main() {
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
     const files = manifest.files;
@@ -81,10 +113,11 @@ async function main() {
     await mkdir(publishedDir, { recursive: true });
     await writeFile(publishedPath, result.code, 'utf8');
 
-    const kb = (n) => (n / 1024).toFixed(1) + ' KB';
     console.log(`tickets-app.min.js generado: ${files.length} ficheros → ${kb(concatenated.length)} → ${kb(result.code.length)} minificado`);
     console.log(`  fuente:     ${path.relative(root, outPath)}`);
     console.log(`  publicado:  ${path.relative(root, publishedPath)}`);
+
+    await buildCss();
 }
 
 main().catch((err) => {

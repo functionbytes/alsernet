@@ -14,7 +14,22 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
     {{-- ?v=filemtime evita que el navegador sirva una versión en caché tras
          cada cambio (mismo patrón que modules/Helpdesk/.../inbox/index.blade.php) --}}
-    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/tickets-app.css')) }}">
+    @php
+        // Mismo criterio "opcional, cae si está desactualizado" que el JS
+        // (ver el bloque @push('scripts') más abajo y scripts/build-tickets-app.mjs):
+        // tickets-app.min.css SOLO se sirve si existe Y es más reciente que
+        // el .css fuente que minifica.
+        $cssPath = public_path('modules/helpdesktickets/css/tickets-app.css');
+        $cssMinPath = public_path('modules/helpdesktickets/css/tickets-app.min.css');
+        $cssMtime = @filemtime($cssPath);
+        $cssMinMtime = @filemtime($cssMinPath);
+        $useCssMin = $cssMinMtime !== false && $cssMtime !== false && $cssMinMtime >= $cssMtime;
+    @endphp
+    @if ($useCssMin)
+        <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.min.css') }}?v={{ $cssMinMtime }}">
+    @else
+        <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.css') }}?v={{ $cssMtime }}">
+    @endif
 @endpush
 
 @php
