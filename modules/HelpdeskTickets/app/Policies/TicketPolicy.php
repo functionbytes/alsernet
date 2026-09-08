@@ -92,13 +92,21 @@ class TicketPolicy
     /**
      * Un agente sin helpdesk.tickets.manage solo actúa sobre lo suyo: lo que
      * tiene asignado (ya cubierto aparte en cada método de arriba, antes de
-     * llamar a este helper) o lo que sea de un equipo al que pertenece.
-     * helpdesk.tickets.manage —super-admin, super-settings, helpdesk-admin—
-     * ve y actúa sobre cualquier ticket sin esta restricción.
+     * llamar a este helper), lo que sea de un equipo al que pertenece, o lo
+     * que no tenga equipo asignado. helpdesk.tickets.manage —super-admin,
+     * super-settings, helpdesk-admin— ve y actúa sobre cualquier ticket sin
+     * esta restricción.
      *
      * Antes el permiso base (view/update/close) abría CUALQUIER ticket de
      * CUALQUIER equipo: el mismo permiso que hace falta para trabajar en el
      * propio listado abría también el ajeno tecleando la URL.
+     *
+     * 8-sep-2026: se añadió `group_id === null` como caso válido, a la vez
+     * que TicketsCrudController::scopeToVisibleTickets() empezó a tratarlo
+     * como bote compartido (ver ahí el porqué). Sin este cambio aquí, el
+     * listado ya lo enseñaba pero cualquier acción sobre él (asignar, cerrar,
+     * actualizar) se topaba con un 403 — la Policy se habría quedado más
+     * restrictiva que el propio listado.
      */
     private function inScope(User $user, Ticket $ticket): bool
     {
@@ -106,8 +114,11 @@ class TicketPolicy
             return true;
         }
 
-        return $ticket->group_id !== null
-            && in_array($ticket->group_id, TicketGroup::idsForUser($user->id), true);
+        if ($ticket->group_id === null) {
+            return true;
+        }
+
+        return in_array($ticket->group_id, TicketGroup::idsForUser($user->id), true);
     }
 
     public function resolve(User $user, Ticket $ticket): bool

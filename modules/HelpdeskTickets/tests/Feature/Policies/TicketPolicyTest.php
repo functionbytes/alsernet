@@ -218,6 +218,44 @@ class TicketPolicyTest extends TestCase
         $this->assertFalse($user->can('assign', $ticket));
     }
 
+    /**
+     * Un ticket SIN equipo (group_id null) es bote compartido: cualquiera con
+     * el permiso base puede verlo/asignárselo, no solo quien tenga
+     * helpdesk.tickets.manage. 8-sep-2026: TicketsCrudController::
+     * scopeToVisibleTickets() ya lo enseñaba en el listado; sin este mismo
+     * caso en inScope(), actuar sobre él (asignar, cerrar, actualizar) daba
+     * 403 pese a que el agente lo veía en su propia lista.
+     */
+    public function test_user_with_view_permission_can_view_ticket_without_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.view');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $ticket = $this->createTicket(); // sin group_id, sin assignee_id
+
+        $this->assertTrue($user->can('view', $ticket));
+    }
+
+    public function test_user_with_update_permission_can_assign_ticket_without_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.update');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $ticket = $this->createTicket(); // sin group_id
+
+        $this->assertTrue($user->can('assign', $ticket));
+    }
+
     public function test_assignee_can_update_own_ticket_without_global_permission(): void
     {
         $assignee = User::factory()->create();

@@ -392,14 +392,19 @@ class TicketsCrudController extends Controller
 
     /**
      * Restringe una query de Ticket a lo que el usuario puede ver: acceso
-     * total con helpdesk.tickets.manage, si no solo lo suyo (asignado a él, o
-     * de un equipo al que pertenece). Mismo criterio que
+     * total con helpdesk.tickets.manage, si no lo suyo (asignado a él, de un
+     * equipo al que pertenece, o SIN equipo asignar). Mismo criterio que
      * TicketPolicy::inScope(), aplicado aquí como filtro de listado en vez de
      * gate de una sola fila.
      *
-     * Sin equipos asignados el agente solo ve lo que tenga asignado
-     * directamente — no "nada", que dejaría el listado vacío sin explicación,
-     * pero tampoco todo.
+     * 8-sep-2026: los tickets con group_id NULL (60 de 62 en dev — casi todo
+     * lo que entra sin enrutar) se sumaron al bote compartido. Dejarlos
+     * visibles solo para helpdesk.tickets.manage rompía la pestaña "Sin
+     * asignar" para cualquier agente base: quedaba prácticamente vacía (un
+     * ticket sin agente casi nunca tiene equipo tampoco), así que nadie podía
+     * ver la cola de triaje ni auto-asignarse un ticket nuevo sin ser
+     * manager. Un ticket SIN equipo es responsabilidad de cualquiera con
+     * permiso base de ver tickets, no de nadie en particular.
      */
     private function scopeToVisibleTickets(EloquentBuilder $query, ?int $userId): void
     {
@@ -412,7 +417,8 @@ class TicketsCrudController extends Controller
         $groupIds = TicketGroup::idsForUser($userId);
 
         $query->where(function (EloquentBuilder $q) use ($groupIds, $userId) {
-            $q->where('assignee_id', $userId);
+            $q->where('assignee_id', $userId)
+                ->orWhereNull('group_id');
 
             if ($groupIds !== []) {
                 $q->orWhereIn('group_id', $groupIds);
