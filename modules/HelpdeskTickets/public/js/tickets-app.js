@@ -2165,7 +2165,7 @@
             kicker: 'IA · borrador',
             titleChip: t.ticket_number,
             title: 'Auto-respuesta IA',
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-seg" id="tkt-ai-tones">' +
                     AI_TONES.map(function (x) {
                         return '<button type="button" class="' + (x.key === '' ? 'on' : '') + '" data-ai-tone="' + x.key + '">' + x.label + '</button>';
@@ -2252,7 +2252,7 @@
             kicker: 'Redactor · macros',
             titleChip: t.ticket_number,
             title: 'Macros y atajos',
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-macro-search" placeholder="Buscar macro…" aria-label="Buscar macro"></div>' +
                   '<div id="tkt-macro-list"><div class="tkt-empty-box">Cargando…</div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-macro-apply" disabled>Aplicar macro</button>' +
@@ -2329,7 +2329,7 @@
             kicker: 'Creación · duplicados',
             titleChip: t.ticket_number,
             title: 'Posible duplicado al crear',
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-cap">Ya existe un ticket similar</div>' +
                 '<div class="tkt-note">Este cliente tiene ' + (candidates.length === 1 ? 'otro ticket abierto' : 'otros tickets abiertos') +
                     ' con un asunto muy parecido dentro de la ventana de detección.</div>' +
@@ -2835,7 +2835,7 @@
             kicker: 'Ticket · estado',
             titleChip: t.ticket_number,
             title: 'Cambiar estado',
-            width: 'sm',
+            width: 'md',
             body: options +
                 '<div class="tkt-field"><label class="tkt-label" for="tkt-state-note">Nota del cambio <span class="hint">interna</span></label>' +
                     '<textarea class="tkt-input" id="tkt-state-note" rows="2" placeholder="Por qué cambia de estado…"></textarea></div>' +
@@ -3797,7 +3797,7 @@
             kicker: 'TICKET · VISTA RÁPIDA',
             titleChip: row.ticket_number,
             title: 'Vista previa',
-            width: 'sm',
+            width: 'md',
             body: '<table class="tkt-info-table">' +
                     '<tr><th>Asunto</th><td>' + escapeHtml(row.subject || '(sin asunto)') + '</td></tr>' +
                     '<tr><th>Estado</th><td>' + escapeHtml(estado) + '</td></tr>' +
@@ -4263,7 +4263,7 @@
             kicker: 'Ticket · aplazar',
             titleChip: t.ticket_number,
             title: 'Aplazar ticket',
-            width: 'sm',
+            width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Cuándo</label>' +
                     atajos.map(function (a, i) {
@@ -4672,7 +4672,7 @@
             kicker: 'PrestaShop · formulario',
             titleChip: t.ticket_number,
             title: 'Datos del formulario',
-            width: 'md',
+            width: 'lg',
             body: (form.message ? '<blockquote class="tkt-form-quote">' + escapeHtml(form.message) + '</blockquote>' : '') +
                 '<table class="tkt-info-table">' + tableRows(submitted) + '</table>' +
                 (form.trace && form.trace.length
@@ -4899,7 +4899,7 @@
             kicker: 'Ticket · seguidores',
             titleChip: t.ticket_number,
             title: 'Seguidores del ticket',
-            width: 'sm',
+            width: 'md',
             body: '<div id="tkt-followers-list">' + rowsHtml() + '</div>' +
                 '<div class="tkt-field"><label class="tkt-label">Añadir compañero</label>' +
                     '<select class="tkt-select" id="tkt-follower-add"><option value="">Selecciona un agente…</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>',
@@ -4989,7 +4989,7 @@
             iconClass: 'danger',
             kicker: t.ticket_number,
             title: 'Eliminar ticket',
-            width: 'sm',
+            width: 'md',
             body: '' +
                 '<label class="tkt-option on" data-delete-option="archive"><input type="radio" name="tkt-delete-mode" value="archive" checked class="tkt-m0">' +
                     '<span><span class="tkt-option-title">Archivar</span><br><span class="tkt-option-sub">Se oculta de las vistas activas, se puede restaurar</span></span></label>' +
@@ -5153,7 +5153,7 @@
             icon: 'fa-solid fa-scale-balanced',
             kicker: 'Equipo · carga',
             title: 'Reparto y capacidad',
-            width: 'md',
+            width: 'xl',
             body: '<div class="tkt-empty-box">Cargando…</div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -5573,7 +5573,7 @@
             icon: 'fa-solid fa-download',
             kicker: 'Tickets · exportar',
             title: 'Exportar tickets',
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-field"><label class="tkt-label">Alcance</label>' +
                     '<label class="tkt-option' + (seleccionados.length ? ' on' : '') + '" data-scope-option>' +
                         '<input type="radio" name="tkt-export-scope" value="selection"' +
@@ -5950,7 +5950,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-user-plus', kicker: 'Ticket · asignación',
-            title: 'Asignar ticket', titleChip: t.ticket_number, width: 'sm',
+            title: 'Asignar ticket', titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-assign-search" placeholder="Buscar agente…" aria-label="Buscar agente"></div>' +
                 '<div class="tkt-pick-list" id="tkt-assign-list">' + agentRows('') + '</div>' +
                 (currentId ? '<button type="button" class="tkt-btn tkt-btn-start tkt-w-100" id="tkt-assign-none">Dejar sin asignar</button>' : ''),
@@ -6011,7 +6011,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-scissors', kicker: 'Ticket · dividir',
-            title: 'Dividir ticket', titleChip: t.ticket_number, width: 'sm',
+            title: 'Dividir ticket', titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Útil cuando el cliente mezcla dos asuntos en la misma conversación. Los mensajes se MUEVEN, no se copian.</div>' +
                 '<div class="tkt-cap">Mensajes a mover</div>' +
                 '<div class="tkt-pick-list" id="tkt-split-list">' + rowsHtml() + '</div>' +
@@ -6077,7 +6077,7 @@
     function openReputationModal() {
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-shield-halved', kicker: 'Entregabilidad · reputación',
-            title: 'Reputación y autenticación', width: 'sm',
+            title: 'Reputación y autenticación', width: 'xl',
             body: '<div id="tkt-rep-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rep-save">Guardar</button>' +
                 '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
@@ -6256,7 +6256,7 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-address-card', kicker: 'Cliente · 360',
             titleChip: customer.name || '',
-            title: 'Cliente 360', width: 'sm',
+            title: 'Cliente 360', width: 'xl',
             body: '<div class="tkt-headline"><div class="t">' + escapeHtml(customer.name || '—') + '</div>' +
                     '<div class="s">' + escapeHtml(customer.company || 'Sin empresa asociada') + '</div></div>' +
                   '<div class="tkt-side-rows">' +
@@ -6317,7 +6317,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-fingerprint', kicker: 'Cliente · identidad',
-            title: 'Identidades del cliente', width: 'sm',
+            title: 'Identidades del cliente', width: 'md',
             body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Un mismo cliente puede escribir por formulario, email, WhatsApp o portal: todo se une bajo una sola ficha.</div>' +
                 '<div class="tkt-mailitems">' + rows + '</div>' +
                 '<div class="tkt-note"><i class="fa-solid fa-triangle-exclamation"></i> Las direcciones marcadas como "detectado en el hilo" no están en la ficha: pulsa "Vincular" si son del mismo cliente, o "Fusionar duplicado" si en realidad pertenecen a otro contacto ya existente.</div>',
@@ -6346,7 +6346,7 @@
     function openAiSummaryModal(t) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-wand-magic-sparkles', iconClass: 'ok', kicker: 'IA · resumen',
-            title: 'Resumen IA del hilo', titleChip: t.ticket_number, width: 'sm',
+            title: 'Resumen IA del hilo', titleChip: t.ticket_number, width: 'lg',
             body: '<div id="tkt-sum-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sum-copy" disabled>Copiar resumen</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-sum-regen">Regenerar</button>' +
@@ -6416,7 +6416,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-tags', kicker: 'IA · clasificación',
-            title: 'Etiquetado automático', titleChip: t.ticket_number, width: 'sm',
+            title: 'Etiquetado automático', titleChip: t.ticket_number, width: 'md',
             body: '<div class="tkt-side-rows">' +
                     sideRowWithChip('Categoría sugerida', (suggestion.category && suggestion.category.name) || '—',
                         suggestion.category ? confidenceChip(suggestion.category.confidence) : '', { strong: true }) +
@@ -6476,7 +6476,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-window-maximize', kicker: 'Portal · vista cliente',
-            title: 'Portal del cliente', titleChip: t.ticket_number, width: 'sm',
+            title: 'Portal del cliente', titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-portal"><div class="tkt-portal-head">Ticket ' + escapeHtml(t.ticket_number) + ' · ' + escapeHtml(t.subject || '') + '</div>' + bubbles + '</div>' +
                   (hidden > 0 ? '<div class="tkt-note"><i class="fa-solid fa-eye-slash"></i> ' + hidden + (hidden === 1 ? ' nota interna' : ' notas internas') + ' no se muestran al cliente.</div>' : ''),
             foot: (t.url_shared_ticket ? '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(t.url_shared_ticket) + '" target="_blank" rel="noopener">Abrir la vista real</a>' : '') +
@@ -6555,7 +6555,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-inbox', kicker: 'Ajustes · correo',
-            title: 'Buzones de entrada', width: 'sm',
+            title: 'Buzones de entrada', width: 'xl',
             body: '<div id="tkt-mbx-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mbx-save" disabled>Guardar</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-mbx-test" disabled>Probar conexión</button>' +
@@ -6815,7 +6815,7 @@
             kicker: 'SLA · calendario',
             title: 'Calendario y SLA',
             titleChip: ticket ? ticket.ticket_number : null,
-            width: 'xl',
+            width: '2xl',
             body: '<div id="tkt-slacal-body"><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -7232,7 +7232,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-arrow-up-right-dots', kicker: 'Automatización · escalado',
-            title: 'Reglas de escalado', width: 'sm',
+            title: 'Reglas de escalado', width: '2xl',
             body: '<div id="tkt-esc-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -7783,7 +7783,7 @@
             icon: 'fa-solid fa-repeat',
             kicker: 'Tickets · recurrentes',
             title: 'Tickets recurrentes',
-            width: 'sm',
+            width: '2xl',
             body: '<div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -8094,7 +8094,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-bell', kicker: 'Ajustes · notificaciones',
-            title: 'Notificaciones', width: 'sm',
+            title: 'Notificaciones', width: 'lg',
             body: '<div class="tkt-side-rows">' + sideRow('Notificaciones del navegador', permLabel, { strong: true, last: true }) + '</div>' +
                   (perm === 'default' ? '<button type="button" class="tkt-btn tkt-w-100" id="tkt-notif-ask">Permitir notificaciones</button>' : '') +
                   (perm === 'denied' ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> El navegador tiene bloqueadas las notificaciones de este sitio. Hay que reactivarlas desde su configuración, no se puede pedir de nuevo desde aquí.</div>' : '') +
@@ -8312,7 +8312,7 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-clone', kicker: 'Tickets · plantillas',
-            title: 'Plantillas de ticket', width: 'sm',
+            title: 'Plantillas de ticket', width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-ttpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
                 '<div class="tkt-pick-list" id="tkt-ttpl-list">' + listHtml('') + '</div>' +
                 '<div class="tkt-tpl-preview" id="tkt-ttpl-preview">Elige una plantilla para ver el ticket que va a crear.</div>',
@@ -8347,7 +8347,7 @@
             kicker: 'Envíos programados',
             title: 'Cancelar envío programado',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
                     '<div class="s">Para ' + escapeHtml(mail.to || '—') +
@@ -8418,7 +8418,7 @@
             icon: 'fa-solid fa-link',
             kicker: 'Tickets · vinculación',
             title: 'Vincular email a ticket',
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
                     '<div class="s">' + escapeHtml((mail.direction === 'inbound' ? 'De ' : 'Para ') + (mail.direction === 'inbound' ? (mail.from || '—') : (mail.to || '—'))) + '</div>' +
@@ -8483,7 +8483,7 @@
             kicker: 'Ticket · vista rápida',
             title: 'Vista previa rápida',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-side-rows">' +
                     sideRow('Cliente', t.customer ? t.customer.name : 'Sin cliente') +
                     sideRow('Asunto', t.subject || '(sin asunto)') +
@@ -8536,7 +8536,7 @@
             kicker: 'Correo · entrega',
             title: 'Detalle de entrega',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-headline' + (mail.status === 'bounced' || mail.status === 'failed' ? ' bad' : '') + '">' +
                     '<div class="t">' + escapeHtml(headline) + '</div>' +
                     (when ? '<div class="s mono">' + escapeHtml(when) + '</div>' : '') +
@@ -8568,7 +8568,7 @@
             kicker: 'Correo · rebote',
             title: 'Email rebotado',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-headline bad">' +
                     '<div class="t mono">' + escapeHtml(mail.delivery_error || 'Rebote sin detalle del servidor') + '</div>' +
                     '<div class="s">El envío a <strong>' + escapeHtml(mail.to || '—') + '</strong> no llegó a su destino.</div>' +
@@ -8628,7 +8628,7 @@
             kicker: 'Correo · reenvío',
             title: 'Reenviar email',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
                     '<div class="s">' + escapeHtml(mail.sent_at_human || mail.created_at_human || '') +
@@ -8720,7 +8720,7 @@
             kicker: 'Adjunto · previsualización',
             titleChip: file.name || '',
             title: 'Previsualizar adjunto',
-            width: 'lg',
+            width: 'xl',
             body: body +
                 '<div class="tkt-side-rows">' +
                     sideRow('tamaño', file.size ? formatFileSize(file.size) : '—', { mono: true }) +
@@ -8773,7 +8773,7 @@
             kicker: 'Idioma · traducir',
             title: 'Traducir respuesta',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-field"><label class="tkt-label" for="tkt-tr-target">Idioma del cliente' +
                     (detected ? '<span class="hint">detectado: ' + escapeHtml(detected) + '</span>' : '') + '</label>' +
                     '<select class="tkt-input" id="tkt-tr-target" data-no-select2>' + TRANSLATE_LANGS.map(function (l) {
@@ -8892,7 +8892,7 @@
             kicker: 'Ticket · responder',
             title: 'Redactar email',
             titleChip: t.ticket_number,
-            width: 'lg',
+            width: 'xl',
             body: '' +
                 '<div class="tkt-field">' +
                     '<label class="tkt-label" for="tkt-compose-to">Para<span class="req">*</span>' +
@@ -9082,7 +9082,7 @@
             kicker: 'Ticket · programar envío',
             title: 'Programar envío',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '' +
                 '<div class="tkt-pick-list">' +
                     '<button type="button" class="tkt-pick" data-slot="' + iso(tomorrow) + '">' +
@@ -9157,7 +9157,7 @@
             icon: 'fa-regular fa-file-lines',
             kicker: 'Respuestas · plantillas',
             title: 'Plantillas de email',
-            width: 'sm',
+            width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-tpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
                 '<div class="tkt-pick-list" id="tkt-tpl-list">' + listHtml('') + '</div>' +
                 '<div class="tkt-tpl-preview" id="tkt-tpl-preview">Elige una plantilla para ver su contenido.</div>',
@@ -9215,7 +9215,7 @@
             kicker: 'Ticket · adjuntos',
             title: 'Adjuntar archivos',
             titleChip: t.ticket_number,
-            width: 'sm',
+            width: 'md',
             body: '<label class="tkt-dropzone" id="tkt-dropzone">' +
                     '<i class="fa-solid fa-cloud-arrow-up"></i>' +
                     '<span class="t">Arrastra archivos aquí</span>' +
@@ -9312,7 +9312,7 @@
             kicker: 'Automatización · seguimientos',
             titleChip: t.ticket_number,
             title: 'Secuencia de seguimiento',
-            width: 'sm',
+            width: 'lg',
             body: '' +
                 (yaProgramados.length
                     ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Este ticket ya tiene ' +
@@ -10003,7 +10003,7 @@
             icon: 'fa-solid fa-link',
             kicker: t.ticket_number,
             title: 'Vincular ticket',
-            width: 'sm',
+            width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Ticket a vincular<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-link-target" placeholder="Nº de ticket, asunto o ID…">' +
@@ -10223,6 +10223,27 @@
                     var current = TKA.state.currentTicket;
                     if (current) fetchDetailData(current);
                     playNewMessageSound();
+                })
+                // Asignar (a mano, al responder, por automatización o en
+                // bloque) ahora se transmite en este mismo canal — antes solo
+                // se enteraba quien disparaba la acción, y un compañero con
+                // este mismo ticket abierto se quedaba viendo al dueño
+                // anterior (o el banner de autoasignación sobre un ticket que
+                // ya cogió otro) hasta recargar a mano.
+                //
+                // e.assignee ya trae {id, name} (ver TicketAssigned::
+                // broadcastWith) para el pintado inmediato del nombre/avatar,
+                // igual que hace apply() en openAssignModal(); fetchDetailData
+                // detrás trae lo que solo vive en data() —carga del agente,
+                // "asignado hace…"— que el broadcast no repite a propósito.
+                .listen('.assigned', function (e) {
+                    var current = TKA.state.currentTicket;
+                    if (!current || !e || !e.assignee) return;
+
+                    current.assignee = e.assignee;
+                    renderSidePanel(current);
+                    renderSelfAssignBanner(current);
+                    fetchDetailData(current);
                 });
         } catch (e) {
             // Sin Echo/Reverb levantado en este entorno: la pantalla sigue
@@ -10701,7 +10722,7 @@
             icon: 'fa-solid fa-link',
             kicker: ids.length + (ids.length === 1 ? ' ticket seleccionado' : ' tickets seleccionados'),
             title: 'Vincular a un ticket',
-            width: 'sm',
+            width: 'md',
             body: '<div class="tkt-field"><label class="tkt-label">Ticket destino<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-bulk-link-target" placeholder="Nº de ticket, asunto o ID…">' +
                     '<div class="tkt-pick-list sm" id="tkt-bulk-link-results"></div></div>' +

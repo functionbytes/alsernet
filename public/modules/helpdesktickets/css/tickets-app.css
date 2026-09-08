@@ -717,7 +717,7 @@ body:has(.tkt) .mc-content {
 .tkt-modal-backdrop.on { display: flex; }
 .tkt-modal {
   width: 100%;
-  max-width: 380px;
+  max-width: 480px;
   max-height: calc(100vh - 88px);
   margin: auto;
   background: var(--tkt-panel);
@@ -727,13 +727,17 @@ body:has(.tkt) .mc-content {
   flex-direction: column;
   overflow: hidden;
 }
-.tkt-modal.w-sm { max-width: 340px; }
-.tkt-modal.w-md { max-width: 380px; }
-.tkt-modal.w-lg { max-width: 400px; }
-.tkt-modal.w-xl { max-width: 430px; }
+/* 8-sep-2026: toda la escala estaba comprimida entre 340 y 430px (un único
+   salto real era al 2xl) — casi cualquier modal con una lista con subtítulo,
+   una tabla o un field-row de 2 columnas se veía apretado o con texto
+   cortado, aunque ya usara 'lg'/'xl'. Se reabre la escala completa. */
+.tkt-modal.w-sm { max-width: 400px; }
+.tkt-modal.w-md { max-width: 480px; }
+.tkt-modal.w-lg { max-width: 580px; }
+.tkt-modal.w-xl { max-width: 680px; }
 /* Unificar duplicados necesita sitio: muestra el hilo completo de varios
    tickets a la vez, y a 430px cada mensaje salía en columna de tres palabras. */
-.tkt-modal.w-2xl { max-width: 620px; }
+.tkt-modal.w-2xl { max-width: 760px; }
 .tkt-modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--tkt-border); flex-shrink: 0; }
 .tkt-modal-icon { width: 28px; height: 28px; border-radius: var(--tkt-r); background: var(--tkt-subtle); display: grid; place-items: center; font-size: 12px; }
 .tkt-modal-icon.danger { background: var(--tkt-danger-soft); color: var(--tkt-danger-text); }
