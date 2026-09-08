@@ -6,7 +6,8 @@
         "build": "vite build",
         "dev": "vite",
         "preview": "vite preview",
-        "build:tickets-app": "node scripts/build-tickets-app.mjs"
+        "build:tickets-app": "node scripts/build-tickets-app.mjs",
+        "build:module-assets": "node scripts/build-module-assets.mjs"
     },
     "dependencies": {
         "@tanstack/react-query": "^5.0.0",
