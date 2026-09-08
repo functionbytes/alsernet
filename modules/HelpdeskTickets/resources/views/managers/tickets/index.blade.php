@@ -628,11 +628,62 @@
 
     {{-- Dentro de .tkt a propósito: las variables --tkt-* solo se definen
          bajo ese selector — fuera de él el modal se renderiza transparente
-         (mismo bug ya corregido una vez en openModal(), ver tickets-app.js). --}}
+         (mismo bug ya corregido una vez en openModal(), ver tickets-app/core.js). --}}
     @include('helpdesktickets::managers.tickets.partials._filters-modal')
 </div>
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('modules/helpdesktickets/js/tickets-app.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app.js')) }}"></script>
+    @php
+        // tickets-app.js era un único fichero de 11.304 líneas / 1.001
+        // funciones sin build (ver auditoría 7-sep-2026) — partido en un
+        // núcleo + un fichero por modal el 8-sep-2026. Ya no vive dentro de
+        // un IIFE de un solo archivo: cada <script> de aquí es su propio
+        // scope de nivel superior, así que TKA, openModal(), escapeHtml()…
+        // cuelgan de window y cualquier fichero puede llamarlos con solo
+        // cargarse en la página — nada se ejecuta hasta que el usuario
+        // interactúa (o initTicketsApp() al final, con todo ya cargado), así
+        // que el orden exacto de los modales no importa; 'core' sí va primero
+        // porque ahí vive TKA.
+        $ticketsAppFiles = [
+            'core',
+            'modal-02-programar-envio',
+            'modal-03-plantillas-email',
+            'modal-04-adjuntar-archivos',
+            'modal-05-detalle-entrega',
+            'modal-06-email-rebotado',
+            'modal-07-reenviar-email',
+            'modal-09-cancelar-envio-programado',
+            'modal-10-vincular-email-ticket',
+            'modal-12-vista-previa-rapida',
+            'modal-14-emails-del-ticket',
+            'modal-16-buzones-entrada',
+            'modal-19-autorespuesta-ia',
+            'modal-21-editor-plantilla',
+            'modal-22-reputacion-autenticacion',
+            'modal-23-bandeja-colision',
+            'modal-24-macros-atajos',
+            'modal-25-cliente-360',
+            'modal-26-resumen-ia-hilo',
+            'modal-27-etiquetado-automatico',
+            'modal-28-calendario-sla',
+            'modal-29-reglas-escalado',
+            'modal-30-tickets-recurrentes',
+            'modal-31-notificaciones',
+            'modal-32-portal-cliente',
+            'modal-34-identidades-cliente',
+            'modal-35-nuevo-ticket',
+            'modal-36-cambiar-estado',
+            'modal-37-asignar-ticket',
+            'modal-39-dividir-ticket',
+            'modal-40-encuesta-csat',
+            'modal-44-plantillas-ticket',
+            'modal-46-posible-duplicado',
+            'modal-49-previsualizar-adjunto',
+            'modal-50-traducir-respuesta',
+        ];
+    @endphp
+    @foreach ($ticketsAppFiles as $file)
+        <script src="{{ asset('modules/helpdesktickets/js/tickets-app/'.$file.'.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js')) }}"></script>
+    @endforeach
 @endpush
