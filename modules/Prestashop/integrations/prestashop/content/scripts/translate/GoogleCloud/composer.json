@@ -1,6 +1,0 @@
-{
-    "require": {
-        "google/cloud-translate": "^1.13",
-        "google/auth": "^1.26"
-    }
-}
