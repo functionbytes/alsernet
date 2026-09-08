@@ -346,7 +346,14 @@ class TicketDetailDataController extends Controller
         // ticket (bug real confirmado en vivo con TCK-2026-00014/173: el
         // widget "Último correo del ticket" mostraba un entrante de hace 3
         // días en vez del saliente de hoy).
-        $allMails = $ticket->mails()->reorder()->latest()->limit(50)->get();
+        // with('user'): el bloque 'mails' de abajo lee $m->user->fullName()
+        // para las iniciales de cada correo SALIENTE (modal 14) — sin esto
+        // era un N+1 real, una query por cada correo saliente distinto de
+        // los hasta 50 que trae este límite (detectado perfilando este
+        // endpoint con un ticket de historial denso: 3 queries extra a
+        // `users` con solo 3 salientes; un ticket longevo con más agentes
+        // implicados escala linealmente).
+        $allMails = $ticket->mails()->reorder()->latest()->limit(50)->with('user:id,firstname,lastname,email')->get();
         $lastMail = $allMails->first();
         // Una sola consulta para mailOpensSummary()/mailClicksSummary() y
         // traceFor(): los tres cruzaban EmailLog por el mismo message_id por
@@ -618,10 +625,25 @@ class TicketDetailDataController extends Controller
         // Los contadores se calculan sobre TODOS los tickets del cliente, no
         // sobre los 20 que se listan: "14 totales" con 7 filas visibles es
         // justo lo que hace útil el pie "7 de 14".
+        //
+        // Los 3 count() por separado (antes: 3-4 queries reales — el
+        // whereHas('status', ...) construye su propio EXISTS) se combinan
+        // aquí en UNA sola query con agregación condicional. leftJoin en vez
+        // de whereHas: el estado es un catálogo chico y esto es un COUNT,
+        // no cambia qué filas se cuentan (mismo resultado, sin el EXISTS
+        // repetido por fila). El scope de SoftDeletes de Ticket sigue
+        // aplicando: leftJoin no lo desactiva.
+        $row = $base()
+            ->leftJoin('helpdesk_ticket_statuses', 'helpdesk_ticket_statuses.id', '=', 'helpdesk_tickets.status_id')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when helpdesk_ticket_statuses.is_open = 1 then 1 else 0 end) as open')
+            ->selectRaw('sum(case when helpdesk_tickets.resolved_at is not null then 1 else 0 end) as resolved')
+            ->first();
+
         $counts = [
-            'total' => $base()->count(),
-            'open' => $base()->whereHas('status', fn ($q) => $q->where('is_open', true))->count(),
-            'resolved' => $base()->whereNotNull('resolved_at')->count(),
+            'total' => (int) $row->total,
+            'open' => (int) $row->open,
+            'resolved' => (int) $row->resolved,
         ];
 
         // El ticket abierto entra en la lista marcado como "Actual" en vez de
