@@ -1790,10 +1790,13 @@
     function composerHtml() {
         return '<div class="tkt-composer" id="tkt-composer" data-mode="reply">' +
             '<div class="tkt-comp-tabs">' +
-                '<button type="button" class="tkt-comp-tab on" data-comp-mode="reply"><i class="fa-solid fa-reply"></i> Respuesta</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-mode="note"><i class="fa-solid fa-lock"></i> Nota interna</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-act="templates"><i class="fa-regular fa-file-lines"></i> Plantillas</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-act="translate"><i class="fa-solid fa-language"></i> Traducir</button>' +
+                // Con texto, sin icono (mismo criterio que el resto de la
+                // pantalla). El indicador de idioma no es un botón, se deja
+                // con icono como el resto de chips de estado.
+                '<button type="button" class="tkt-comp-tab on" data-comp-mode="reply">Respuesta</button>' +
+                '<button type="button" class="tkt-comp-tab" data-comp-mode="note">Nota interna</button>' +
+                '<button type="button" class="tkt-comp-tab" data-comp-act="templates">Plantillas</button>' +
+                '<button type="button" class="tkt-comp-tab" data-comp-act="translate">Traducir</button>' +
                 '<span class="tkt-comp-lang" id="tkt-comp-lang" hidden><i class="fa-solid fa-language"></i> <span></span></span>' +
             '</div>' +
             '<div class="tkt-comp-ai" id="tkt-comp-ai" hidden>' +
@@ -1814,17 +1817,20 @@
             '</div>' +
             '<textarea id="tkt-reply-body" class="tkt-comp-body" rows="3" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" aria-label="Cuerpo de la respuesta o nota interna"></textarea>' +
             '<div class="tkt-comp-tools">' +
-                '<label class="tkt-comp-tool" title="Adjuntar archivo"><i class="fa-solid fa-paperclip"></i> Adjuntar<input type="file" id="tkt-reply-attach" multiple hidden></label>' +
+                // Mismo criterio que la nota interna: con texto, sin icono
+                // (feedback_buttons_no_icons). Solo se quedan los icon-only,
+                // como la ✕ de descartar el borrador de arriba.
+                '<label class="tkt-comp-tool" title="Adjuntar archivo">Adjuntar<input type="file" id="tkt-reply-attach" multiple hidden></label>' +
                 '<span class="tkt-comp-attach-count" id="tkt-reply-attach-count"></span>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="templates"><i class="fa-regular fa-file-lines"></i> Plantilla</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="macros"><i class="fa-solid fa-bolt"></i> Macros</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="followup"><i class="fa-solid fa-list-ol"></i> Automático</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="ai"><i class="fa-solid fa-wand-magic-sparkles"></i> IA</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="translate"><i class="fa-solid fa-language"></i> Traducir</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="mention"><i class="fa-solid fa-at"></i> Mencionar</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="templates">Plantilla</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="macros">Macros</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="followup">Automático</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="ai">IA</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="translate">Traducir</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="mention">Mencionar</button>' +
                 '<span class="tkt-comp-send-group">' +
-                    '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule"><i class="fa-regular fa-clock"></i> Programar</button>' +
-                    '<button type="button" class="tkt-comp-send" id="tkt-reply-send"><i class="fa-solid fa-paper-plane"></i> Enviar <span class="tkt-comp-kbd">' + sendShortcutLabel() + '</span></button>' +
+                    '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule">Programar</button>' +
+                    '<button type="button" class="tkt-comp-send" id="tkt-reply-send">Enviar <span class="tkt-comp-kbd">' + sendShortcutLabel() + '</span></button>' +
                 '</span>' +
             '</div>' +
         '</div>';
