@@ -645,45 +645,44 @@
         // interactúa (o initTicketsApp() al final, con todo ya cargado), así
         // que el orden exacto de los modales no importa; 'core' sí va primero
         // porque ahí vive TKA.
-        $ticketsAppFiles = [
-            'core',
-            'modal-02-programar-envio',
-            'modal-03-plantillas-email',
-            'modal-04-adjuntar-archivos',
-            'modal-05-detalle-entrega',
-            'modal-06-email-rebotado',
-            'modal-07-reenviar-email',
-            'modal-09-cancelar-envio-programado',
-            'modal-10-vincular-email-ticket',
-            'modal-12-vista-previa-rapida',
-            'modal-14-emails-del-ticket',
-            'modal-16-buzones-entrada',
-            'modal-19-autorespuesta-ia',
-            'modal-21-editor-plantilla',
-            'modal-22-reputacion-autenticacion',
-            'modal-23-bandeja-colision',
-            'modal-24-macros-atajos',
-            'modal-25-cliente-360',
-            'modal-26-resumen-ia-hilo',
-            'modal-27-etiquetado-automatico',
-            'modal-28-calendario-sla',
-            'modal-29-reglas-escalado',
-            'modal-30-tickets-recurrentes',
-            'modal-31-notificaciones',
-            'modal-32-portal-cliente',
-            'modal-34-identidades-cliente',
-            'modal-35-nuevo-ticket',
-            'modal-36-cambiar-estado',
-            'modal-37-asignar-ticket',
-            'modal-39-dividir-ticket',
-            'modal-40-encuesta-csat',
-            'modal-44-plantillas-ticket',
-            'modal-46-posible-duplicado',
-            'modal-49-previsualizar-adjunto',
-            'modal-50-traducir-respuesta',
-        ];
+        //
+        // El orden vive en un manifest.json (no aquí) porque scripts/
+        // build-tickets-app.mjs necesita LEER exactamente la misma lista
+        // para generar tickets-app.min.js — con dos copias del array
+        // (una en PHP, otra en el script de build) habría sido cuestión de
+        // tiempo que una cambiara sin la otra y el bundle minificado
+        // sirviera un modal desincronizado del código fuente en silencio.
+        $manifestPath = public_path('modules/helpdesktickets/js/tickets-app/manifest.json');
+        $ticketsAppFiles = json_decode(@file_get_contents($manifestPath) ?: '{}', true)['files'] ?? [];
+
+        // El bundle minificado (npm run build:tickets-app) es OPCIONAL y
+        // NO es el camino por defecto en desarrollo: aquí se edita y se
+        // prueba en vivo fichero a fichero constantemente (varias sesiones
+        // a la vez), y un bundle desactualizado serviría un modal viejo sin
+        // ningún aviso — el mismo tipo de bug de caché ya sufrido con el
+        // CSS de este módulo. Por eso NO basta con que el bundle exista:
+        // tiene que ser más reciente que TODOS los ficheros fuente que
+        // agrupa, o se ignora y cae al camino de siempre (un <script> por
+        // fichero). En producción, generar el bundle DESPUÉS del último cp
+        // de turno hace que esta condición se cumpla sola.
+        $minPath = public_path('modules/helpdesktickets/js/tickets-app.min.js');
+        $minMtime = @filemtime($minPath);
+        $useMinified = $minMtime !== false;
+        if ($useMinified) {
+            foreach ($ticketsAppFiles as $file) {
+                $srcMtime = @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js'));
+                if ($srcMtime === false || $srcMtime > $minMtime) {
+                    $useMinified = false;
+                    break;
+                }
+            }
+        }
     @endphp
-    @foreach ($ticketsAppFiles as $file)
-        <script src="{{ asset('modules/helpdesktickets/js/tickets-app/'.$file.'.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js')) }}"></script>
-    @endforeach
+    @if ($useMinified)
+        <script src="{{ asset('modules/helpdesktickets/js/tickets-app.min.js') }}?v={{ $minMtime }}"></script>
+    @else
+        @foreach ($ticketsAppFiles as $file)
+            <script src="{{ asset('modules/helpdesktickets/js/tickets-app/'.$file.'.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js')) }}"></script>
+        @endforeach
+    @endif
 @endpush
