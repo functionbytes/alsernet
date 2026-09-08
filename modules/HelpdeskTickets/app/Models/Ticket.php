@@ -1002,7 +1002,13 @@ class Ticket extends Model
         $this->items()->create([
             'type' => 'assigned',
             'user_id' => $userId,
-            'body' => "Ticket assigned to {$this->assignee?->name}",
+            // fullName() y no ->name: el User de esta app no tiene atributo
+            // 'name' (guarda firstname/lastname), así que la línea del hilo
+            // salía literalmente "Ticket assigned to " sin nadie detrás.
+            // Se resuelve por $userId y no por la relación $this->assignee,
+            // que sigue cacheada con el agente ANTERIOR justo después del
+            // update() de arriba.
+            'body' => 'Ticket asignado a '.(User::find($userId)?->fullName() ?: 'un agente'),
             'metadata' => ['assignee_id' => $userId],
         ]);
 
@@ -1039,7 +1045,11 @@ class Ticket extends Model
             'close_reason' => $reason ?: $this->close_reason,
             'close_root_cause' => $analysis['root_cause'] ?? $this->close_root_cause,
             'close_summary' => $analysis['summary'] ?? $this->close_summary,
-            'close_skip_survey' => $analysis['skip_survey'] ?? $this->close_skip_survey,
+            // ?? false al final: close_skip_survey es NOT NULL, y en una
+            // instancia recién creada con Ticket::create() el atributo todavía
+            // no está hidratado desde la BD — cerrarlo ahí mismo (lo hace la
+            // unificación de duplicados) reventaba con "cannot be null".
+            'close_skip_survey' => $analysis['skip_survey'] ?? $this->close_skip_survey ?? false,
         ]);
 
         // Create system event
@@ -1436,6 +1446,12 @@ class Ticket extends Model
             'url_ai_suggest_reply' => route('manager.helpdesk.tickets.ai.suggest-reply', ['ticket' => '__TICKET__']),
             // Modal 46: candidatos a duplicado del mismo cliente.
             'url_duplicates' => route('manager.helpdesk.tickets.ai.duplicates', ['ticket' => '__TICKET__']),
+            // Unificar duplicados (v2): resumen de cada ticket y unificación en
+            // bloque. La v1 (url_duplicates + url_merge) se mantiene intacta.
+            'url_unify_summary' => route('manager.helpdesk.tickets.unify.summary', ['ticket' => '__TICKET__']),
+            'url_unify' => route('manager.helpdesk.tickets.unify', ['ticket' => '__TICKET__']),
+            // Lista negra desde el propio ticket (correo y/o dominio) + borrado.
+            'url_blacklist' => route('manager.helpdesk.tickets.blacklist', ['ticket' => '__TICKET__']),
             'url_note_destroy_template' => route('manager.helpdesk.tickets.notes.destroy', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_note_pin_template' => route('manager.helpdesk.tickets.notes.pin', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_note_color_template' => route('manager.helpdesk.tickets.notes.color', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),

@@ -242,7 +242,7 @@ class TicketComment extends Model
     public function getSenderNameAttribute(): string
     {
         if ($this->isFromAgent()) {
-            return $this->user?->name ?? 'Sistema';
+            return $this->user?->fullName() ?: 'Sistema';
         }
 
         if ($this->isFromCustomer()) {

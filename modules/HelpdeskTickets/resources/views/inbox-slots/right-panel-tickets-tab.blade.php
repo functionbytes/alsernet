@@ -4,6 +4,12 @@
 --}}
 <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="tickets">
     @php
+        $canCreateTickets = app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->canCreateTickets();
+
+        // Las claves SON el vocabulario del módulo (low|normal|high|urgent).
+        // Cualquier otra cosa cae al fallback 'normal' de abajo, pero la clase
+        // CSS prio-{valor} de la tarjeta no existiría: por eso el modal de
+        // escalado ya no puede mandar prioridades fuera de esta lista.
         $ticketPriorityMap = [
             'low'    => ['label' => 'Baja',    'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)',  'icon' => 'fa-arrow-down'],
             'normal' => ['label' => 'Normal',  'color' => '#3b82f6', 'bg' => 'rgba(59, 130, 246, 0.1)',  'icon' => 'fa-equals'],
@@ -25,9 +31,11 @@
             <i class="far fa-ticket"></i>
             <div class="bv-tab-empty-title">Sin tickets relacionados</div>
             <div class="bv-tab-empty-sub">No hay tickets asociados a este cliente</div>
-            <button class="btn btn-sm btn-primary mt-3" data-bv-modal="create-ticket">
-                <i class="fas fa-plus me-1"></i> Crear primer ticket
-            </button>
+            @if($canCreateTickets)
+                <button class="btn btn-sm btn-primary mt-3" data-bv-modal="create-ticket">
+                    Crear primer ticket
+                </button>
+            @endif
         </div>
     @else
         {{-- Cabecera con contador --}}
@@ -42,9 +50,11 @@
                     @endif
                 </span>
             </div>
-            <button class="add-btn" data-bv-modal="create-ticket" title="Nuevo ticket">
-                <i class="fa-solid fa-plus"></i>
-            </button>
+            @if($canCreateTickets)
+                <button class="add-btn" data-bv-modal="create-ticket" title="Nuevo ticket" aria-label="Nuevo ticket">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            @endif
         </div>
 
         {{-- Filtros --}}
@@ -86,7 +96,7 @@
                     $tFilterTags   = 'all ' . ($tIsClosed ? 'closed' : 'open') . ($ticket->priority === 'urgent' ? ' urgent' : '');
                     $tFromThisConv = isset($rpConversationId) && $rpConversationId && (int) ($ticket->conversation_id ?? 0) === (int) $rpConversationId;
                 @endphp
-                <button class="tk-card prio-{{ $ticket->priority }} {{ $tIsClosed ? 'is-closed' : '' }}"
+                <button class="tk-card prio-{{ array_key_exists($ticket->priority, $ticketPriorityMap) ? $ticket->priority : 'normal' }} {{ $tIsClosed ? 'is-closed' : '' }}"
                         data-bv-modal="ticket"
                         data-ticket-id="{{ $ticket->id }}"
                         data-bv-ticket-tags="{{ $tFilterTags }}">

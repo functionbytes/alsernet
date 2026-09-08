@@ -449,6 +449,37 @@ HTML,
 </div>
 HTML,
             ],
+            [
+                'key' => 'helpdesk_tickets.tickets_unified',
+                'name' => 'Solicitudes unificadas',
+                'description' => 'Aviso al cliente de que varias solicitudes suyas pasan a ser un único ticket.',
+                'subject' => 'Hemos unificado tus solicitudes — #{TICKET_NUMBER}',
+                'variables' => [
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket que se conserva'],
+                    ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket que se conserva'],
+                    ['name' => 'MERGED_COUNT', 'required' => true, 'description' => 'Cuántas solicitudes se han unificado'],
+                    ['name' => 'MERGED_LIST', 'required' => true, 'description' => 'Lista HTML de las solicitudes unificadas'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa (para el pie del correo)'],
+                ],
+                'content' => $this->headerCard('#90bb13', 'Hemos unificado tus solicitudes').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hemos recibido {MERGED_COUNT} solicitud(es) tuya(s) sobre el mismo asunto. Para no responderte por duplicado y que no se pierda nada, las hemos unido en un único ticket.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket que queda</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0;">{TICKET_SUBJECT}</td>
+        </tr>
+    </table>
+    <p style="margin: 0 0 8px; font-weight: bold;">Solicitudes unificadas</p>
+    {MERGED_LIST}
+    <p style="color: #666; font-size: 13px; margin: 0;">A partir de ahora te responderemos en el ticket #{TICKET_NUMBER}. Puedes responder directamente a este correo: tu mensaje llegará a ese mismo ticket.</p>
+</div>
+HTML,
+            ],
         ];
     }
 

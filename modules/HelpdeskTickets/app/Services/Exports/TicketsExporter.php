@@ -63,7 +63,7 @@ class TicketsExporter
                 $ticket->status->name ?? '',
                 $ticket->category->name ?? '',
                 $ticket->priority,
-                $ticket->assignee->name ?? '',
+                $ticket->assignee?->fullName() ?: '',
                 $ticket->created_at->format('Y-m-d H:i'),
                 $ticket->closed_at?->format('Y-m-d H:i') ?? '',
                 $responseTime,

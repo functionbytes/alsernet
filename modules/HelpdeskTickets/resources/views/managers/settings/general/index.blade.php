@@ -142,6 +142,35 @@
 
                         </div>
 
+                        {{-- Estado al responder --}}
+                        <h6 class="fw-semibold mb-1">Estado al responder</h6>
+                        <p class="text-muted small mb-3">Qué le pasa al ticket cuando un agente envía una respuesta al cliente. Las notas internas nunca cambian el estado.</p>
+                        <div class="row g-3 mb-4">
+
+                            @include('helpdesktickets::managers.settings.general._toggle', [
+                                'field' => 'status_on_reply',
+                                'label' => 'Cambiar el estado al enviar una respuesta',
+                                'default' => true,
+                            ])
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Estado al responder</label>
+                                <select name="status_on_reply_slug"
+                                        class="form-select select2 @error('status_on_reply_slug') is-invalid @enderror">
+                                    @foreach($replyStatuses as $replyStatus)
+                                        <option value="{{ $replyStatus['slug'] }}"
+                                            {{ old('status_on_reply_slug', $settings['status_on_reply_slug'] ?? 'resolved') === $replyStatus['slug'] ? 'selected' : '' }}>
+                                            {{ $replyStatus['name'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('status_on_reply_slug')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                        </div>
+
                         {{-- Tiempos y automatización --}}
                         <h6 class="fw-semibold mb-1">Tiempos y automatización</h6>
                         <p class="text-muted small mb-3">Alertas de respuesta, cierre, reapertura y vencimiento automáticos</p>

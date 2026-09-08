@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\ApplyAiSuggestionController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\BulkTicketsController;
-use Modules\HelpdeskTickets\Http\Controllers\Managers\ConversationTicketBridgeController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\HelpdeskReportsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\MacroApplyController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\RecurringTicketsController;
@@ -46,6 +45,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketsCrudController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSearchController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketUnificationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 
 /*
@@ -287,6 +287,18 @@ Route::group(['prefix' => ''], function () {
     Route::get('/tickets/{ticket}/csat', [TicketOpsController::class, 'csat'])->name('manager.helpdesk.tickets.csat.show');
     Route::post('/tickets/{ticket}/unarchive', [TicketLifecycleController::class, 'unarchive'])->name('manager.helpdesk.tickets.unarchive');
     Route::post('/tickets/{ticket}/merge', [TicketLifecycleController::class, 'merge'])->name('manager.helpdesk.tickets.merge');
+
+    /*
+     * Unificar duplicados (v2 del aviso de duplicados). La v1 —fusionar de uno
+     * en uno desde el banner— sigue viva en la ruta de arriba; esto cubre el
+     * caso de varios correos del mismo cliente el mismo día: resumen de cada
+     * ticket, se conserva uno y el resto se cierran avisando al cliente.
+     */
+    Route::get('/tickets/{ticket}/unify/summary', [TicketUnificationController::class, 'summary'])->name('manager.helpdesk.tickets.unify.summary');
+    Route::post('/tickets/{ticket}/unify', [TicketUnificationController::class, 'unify'])->name('manager.helpdesk.tickets.unify');
+
+    // Bloquear al remitente (correo y/o dominio) y borrar el ticket de una vez.
+    Route::post('/tickets/{ticket}/blacklist', [TicketUnificationController::class, 'blacklist'])->name('manager.helpdesk.tickets.blacklist');
     Route::post('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'watch'])->name('manager.helpdesk.tickets.watch');
     Route::delete('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'unwatch'])->name('manager.helpdesk.tickets.unwatch');
     Route::post('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'snooze'])->name('manager.helpdesk.tickets.snooze');
@@ -507,15 +519,14 @@ Route::group(['prefix' => ''], function () {
 });
 
 /*
- * Bridge endpoints between Helpdesk's inbox UI and HelpdeskTickets.
- * Routes registered in this module so Helpdesk does not import HelpdeskTickets.
- * URLs and route names are kept identical to the previous Helpdesk-owned ones
- * for transparent migration (frontend keeps calling the same route() helpers).
+ * Los endpoints puente con la bandeja (conversations/{c}/ticket y
+ * ticket-detail) VIVÍAN AQUÍ, y este archivo entero va detrás de
+ * role:super-admin|super-settings. La bandeja, en cambio, se sirve con
+ * ['web','auth'] y decide por policies, así que un helpdesk-agent veía el
+ * botón "Crear ticket" del hilo y recibía un 403 al enviarlo. Se han movido a
+ * routes/conversation-bridge.php, con el mismo gate de rol amplio que
+ * ticket-templates.php y el permiso fino (TicketPolicy) en el controlador.
  */
-Route::post('/conversations/{conversation}/ticket', [ConversationTicketBridgeController::class, 'create'])
-    ->name('manager.helpdesk.conversations.ticket');
-Route::get('/conversations/{conversation}/ticket-detail/{ticket}', [ConversationTicketBridgeController::class, 'show'])
-    ->name('manager.helpdesk.conversations.ticket-detail');
 
 /*
  * Ticket reports endpoints. These were previously in Helpdesk's managers.php

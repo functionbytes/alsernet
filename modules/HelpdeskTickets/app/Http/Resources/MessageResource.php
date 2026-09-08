@@ -16,7 +16,7 @@ class MessageResource extends JsonResource
             'isInternal' => (bool) $this->is_internal,
             'user' => $this->whenLoaded('user', fn () => $this->user ? [
                 'id' => $this->user->id,
-                'name' => $this->user->name,
+                'name' => $this->user->fullName(),
             ] : null),
             'createdAt' => $this->created_at->toIso8601String(),
             'updatedAt' => $this->updated_at->toIso8601String(),

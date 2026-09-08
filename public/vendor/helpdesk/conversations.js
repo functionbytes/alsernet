@@ -6027,100 +6027,10 @@
     }
 
 
-    // Pre-fill create-ticket modal when opened
-    $(document).on('click', '[data-bv-modal="create-ticket"]', function () {
-        var $selected = $('.bv-conv.on');
-        var convId = $selected.data('bv-conv-id') || '';
-        var $messages = $('.bv-msg');
-        var msgCount = $messages.length;
-
-        // Update context
-        $('#bv-ticket-conv-id').text('#' + (convId || '—'));
-        $('#bv-ticket-message-count').text(msgCount);
-
-        // Build description from recent messages (last 5)
-        var descLines = [];
-        $messages.slice(-5).each(function () {
-            var $bubble = $(this).find('.bv-bubble');
-            var author = $bubble.data('bv-author') || '—';
-            var body = $bubble.data('bv-body') || '';
-            if (body) {
-                descLines.push(author + ': ' + body);
-            }
-        });
-        var description = descLines.join('\n');
-        if (description) {
-            $('#bv-ticket-description').val(description);
-        }
-
-        // Pre-fill subject from first customer message if empty
-        var $subjectInput = $('#bv-ticket-subject');
-        if (!$subjectInput.val().trim() && descLines.length > 0) {
-            var firstMsg = descLines[0].replace(/^[^:]+:\s*/, '').substring(0, 80);
-            $subjectInput.val(firstMsg);
-        }
-    });
-
-    // ─── Create Ticket Modal ──────────────────────────────────────────────────
-    $(document).on('click', '#bv-ticket-priority .prio-card', function () {
-        $(this).siblings().removeClass('on');
-        $(this).addClass('on');
-    });
-
-    $(document).on('click', '#bv-btn-create-ticket', function () {
-        var $btn = $(this);
-        var subject = $('#bv-ticket-subject').val().trim();
-        if (!subject) {
-            if (window.toastr) toastr.error('El asunto es obligatorio.');
-            else alert('El asunto es obligatorio.');
-            return;
-        }
-        var priority = $('#bv-ticket-priority .prio-card.on').data('priority') || 'medium';
-        var categoryId = $('#bv-ticket-category').val() || null;
-        var assigneeId = $('#bv-ticket-assignee').val() || null;
-        var description = $('#bv-ticket-description').val().trim();
-
-        var convId = $('.bv-composer').data('bv-conversation-id');
-        if (!convId) {
-            if (window.toastr) toastr.error('No hay conversación activa.');
-            return;
-        }
-
-        $btn.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i> Creando...');
-
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/ticket',
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                subject: subject,
-                description: description,
-                priority: priority,
-                category_id: categoryId,
-                assignee_id: assigneeId,
-            },
-            success: function (res) {
-                if (window.toastr) toastr.success(res.message || 'Ticket creado correctamente.');
-                // closeModal() lives in a different IIFE in this bundle and isn't
-                // reachable from here; replicate its non-lightbox behavior inline.
-                $('[data-bv-modal-name="create-ticket"]').removeClass('on');
-                if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
-                if (res.ticket_url) {
-                    window.open(res.ticket_url, '_blank');
-                }
-            },
-            error: function (xhr) {
-                var msg = 'Error al crear el ticket.';
-                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-                if (window.toastr) toastr.error(msg);
-                else alert(msg);
-            },
-            complete: function () {
-                $btn.prop('disabled', false).html('<i class="fa-solid fa-ticket"></i> Crear ticket');
-            }
-        });
-    });
+    // El modal "Escalar a ticket" (crear ticket desde la conversación) vivía
+    // aquí, ~230 líneas dentro del bundle del core. Ahora es de HelpdeskTickets:
+    // modules/HelpdeskTickets/resources/js/inbox-create-ticket.js, cargado por
+    // su propio slot. Con el módulo apagado ya no se sirve.
 
     // ─── Ticket detail modal (rp3-ticket click) ───────────────────────────────
     $(document).on('click', '.rp3-ticket[data-bv-modal="ticket"]', function () {

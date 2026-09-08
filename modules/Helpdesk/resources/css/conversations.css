@@ -11319,8 +11319,10 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
    Scoped bajo .bv-modal para no colisionar con Bootstrap .modal.
    Clases: .modal .w-md .modal-head .modal-icon .modal-title-wrap
            .modal-label .modal-title .modal-close .modal-body .modal-foot
-           .esc-context .field .flabel .req .hint .finput .fselect .frow
-           .prio-bar .prio-card .prio-card.on .check
+           .field .flabel .req .hint .finput .fselect .frow .check
+   Lo específico del modal "Escalar a ticket" (.esc-context, .esc-dup, .prio-bar,
+   .prio-card, .fhint) vive en su módulo:
+   modules/HelpdeskTickets/resources/css/inbox-create-ticket.css
    ───────────────────────────────────────────────────────────────────────── */
 .bv-modal .modal {
     position: relative !important;
@@ -11442,23 +11444,6 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-modal .modal-foot .btn-outline:hover { background: var(--bv-bg-hover, #f4f4f5); }
 
-/* contexto de escalado */
-.bv-modal .esc-context {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--bv-bg-hover, #f4f4f5);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 12.5px;
-}
-.bv-modal .esc-context .lbl {
-    font-weight: 600;
-    color: var(--bv-text-muted, #71717a);
-    flex-shrink: 0;
-}
-.bv-modal .esc-context .val { color: var(--bv-text, #18181b); }
-
 /* campos */
 .bv-modal .field { display: flex; flex-direction: column; gap: 5px; }
 .bv-modal .flabel {
@@ -11548,49 +11533,6 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     border-radius: 6px;
     padding: 5px 8px;
     outline: none;
-}
-
-/* barra de prioridad */
-.bv-modal .prio-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-}
-.bv-modal .prio-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 4px;
-    border: 1.5px solid var(--bv-border, #e4e4e7);
-    border-radius: 8px;
-    background: var(--bv-bg-input, #fff);
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-    font-size: 11.5px;
-    color: var(--bv-text-muted, #71717a);
-    font-weight: 500;
-    line-height: 1;
-}
-.bv-modal .prio-card .ic {
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    background: var(--bv-bg-hover, #f4f4f5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    transition: background .15s, color .15s;
-}
-.bv-modal .prio-card:hover { border-color: #a1a1aa; }
-.bv-modal .prio-card.on {
-    border-color: var(--bv-text);
-    background: var(--bv-bg-subtle);
-}
-.bv-modal .prio-card.on .ic {
-    border-color: var(--bv-text);
-    background: var(--bv-bg-subtle);
 }
 
 /* checkboxes */

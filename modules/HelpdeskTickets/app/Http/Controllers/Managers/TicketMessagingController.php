@@ -7,14 +7,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\NewTicketMessage;
 use Modules\HelpdeskTickets\Events\TicketMessageReceived;
+use Modules\HelpdeskTickets\Events\TicketResolved;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketTyping;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkReplyTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\StoreTicketMessageRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
+use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 use Modules\HelpdeskTickets\Services\MentionService;
 
 class TicketMessagingController extends Controller
@@ -149,17 +154,71 @@ class TicketMessagingController extends Controller
 
         $this->mentionService->notifyMentions($body, $ticket);
 
+        if (! $isInternal) {
+            $this->applyStatusOnReply($ticket);
+        }
+
         MessageAdded::dispatch($item);
 
         broadcast(new TicketMessageReceived($ticket, $item));
         NewTicketMessage::dispatch($ticket, [
             'id' => $item->id,
             'content' => $item->body,
-            'author' => auth()->user()->name,
+            'author' => auth()->user()?->fullName() ?: 'Agente',
             'created_at' => $item->created_at->toIso8601String(),
             'type' => 'agent',
         ]);
 
         return $item;
+    }
+
+    /**
+     * Estado automático al responder al cliente (ajuste tickets.status_on_reply).
+     *
+     * El agente contestaba y el ticket seguía "Abierto" hasta que se acordaba
+     * de marcarlo a mano, así que la bandeja acumulaba tickets ya atendidos.
+     * Solo se aplica a respuestas VISIBLES: una nota interna no cierra nada.
+     *
+     * Se cambia el estado por la misma vía que el botón "Resolver"
+     * (TicketLifecycleController): actualizar status_id a secas dejaría el
+     * historial sin la entrada del cambio y sin disparar las automatizaciones
+     * enganchadas a TicketStatusChanged.
+     */
+    private function applyStatusOnReply(Ticket $ticket): void
+    {
+        if (! Setting::get('tickets.status_on_reply', true)) {
+            return;
+        }
+
+        $slug = (string) Setting::get('tickets.status_on_reply_slug', 'resolved');
+
+        $destino = CatalogCacheService::statuses()->firstWhere('slug', $slug);
+
+        if (! $destino || (int) $ticket->status_id === (int) $destino->id) {
+            return;
+        }
+
+        $anterior = $ticket->status_id
+            ? CatalogCacheService::statuses()->firstWhere('id', $ticket->status_id)
+            : null;
+
+        $datos = ['status_id' => $destino->id];
+
+        // resolved_at es lo que miran los informes de resolución; Ticket::resolve()
+        // lo fija y aquí no se puede llamar a ese método porque el estado destino
+        // es configurable (puede ser "Esperando cliente").
+        if ($slug === 'resolved' && ! $ticket->resolved_at) {
+            $datos['resolved_at'] = now();
+        }
+
+        $ticket->update($datos);
+
+        if ($anterior instanceof TicketStatus) {
+            TicketStatusChanged::dispatch($ticket, $anterior, $destino);
+        }
+
+        if ($slug === 'resolved') {
+            TicketResolved::dispatch($ticket);
+        }
     }
 }

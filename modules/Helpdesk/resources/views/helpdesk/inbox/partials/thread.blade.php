@@ -71,8 +71,14 @@
                 <i class="far fa-envelope" aria-hidden="true"></i>
             </button>
             @endif
-            @if(helpdesk_tickets_enabled() && helpdesk_feature_enabled('tickets'))
-            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}">
+            {{-- canCreateTickets() consulta la TicketPolicy de HelpdeskTickets a
+                 través del contrato (Helpdesk no puede importar sus clases). Sin
+                 esto el botón se pintaba a todo el mundo y quien no tuviera el
+                 permiso solo se enteraba al recibir el error del POST. --}}
+            @if(helpdesk_tickets_enabled()
+                && helpdesk_feature_enabled('tickets')
+                && app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->canCreateTickets())
+            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}">
                 <i class="fas fa-ticket" aria-hidden="true"></i>
             </button>
             @endif

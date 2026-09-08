@@ -26,15 +26,44 @@ class Setting extends Model
     /**
      * Get a setting value by key.
      */
+    /**
+     * Memoria de la PETICIÓN en curso.
+     *
+     * La caché de Redis ya evitaba el SELECT, pero no la ida y vuelta a Redis:
+     * abrir el detalle de un ticket leía siete ajustes y repetía cuatro de
+     * ellos dentro del mismo request (medido 7-sep-2026). Un ajuste no puede
+     * cambiar a mitad de petición —y si lo hace es porque set() lo ha cambiado,
+     * que limpia esto—, así que la segunda lectura no tiene por qué salir del
+     * proceso. Se vacía solo al terminar el request.
+     *
+     * @var array<string, mixed>
+     */
+    private static array $memo = [];
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        $value = Cache::remember(
+        $value = self::$memo[$key] ??= Cache::remember(
             self::cacheKey($key),
             self::CACHE_TTL_SECONDS,
             fn () => static::where('key', $key)->value('value') ?? self::MISSING_SENTINEL,
         );
 
         return $value === self::MISSING_SENTINEL ? $default : $value;
+    }
+
+    /**
+     * Olvida lo memoizado. La llama set() y la necesitan los tests, que dentro
+     * de un mismo proceso cambian ajustes y vuelven a leerlos.
+     */
+    public static function forgetMemo(?string $key = null): void
+    {
+        if ($key === null) {
+            self::$memo = [];
+
+            return;
+        }
+
+        unset(self::$memo[$key]);
     }
 
     /**
@@ -56,6 +85,7 @@ class Setting extends Model
         );
 
         Cache::forget(self::cacheKey($key));
+        self::forgetMemo($key);
     }
 
     private static function cacheKey(string $key): string

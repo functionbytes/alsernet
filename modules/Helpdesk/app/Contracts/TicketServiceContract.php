@@ -19,6 +19,16 @@ interface TicketServiceContract
     public function isAvailable(): bool;
 
     /**
+     * Whether the CURRENT user is allowed to create tickets.
+     *
+     * Distinto de isAvailable(): el módulo puede estar activo y aun así el
+     * usuario no tener el permiso. Existe para que el inbox pueda ocultar el
+     * botón "Crear ticket" sin conocer la TicketPolicy de HelpdeskTickets
+     * (Helpdesk no puede importar sus clases).
+     */
+    public function canCreateTickets(): bool;
+
+    /**
      * Build a ticket from the context of an existing conversation.
      * Returns the new ticket as an associative array (id, ticket_number, url),
      * or null if creation failed or the integration is unavailable.
@@ -52,11 +62,24 @@ interface TicketServiceContract
 
     /**
      * Lightweight list of categories for ticket creation forms.
+     * Each item: ['id' => int, 'name' => string, 'sla' => ?string].
+     *
+     * 'sla' es el resumen legible de la política que heredará el ticket al
+     * elegir esa categoría ("Primera respuesta en 4 h · resolución en 1 d"), o
+     * null si la categoría no tiene ninguna. Los consumidores que solo
+     * necesiten id/name pueden ignorarlo.
+     *
+     * @return Collection<int, array{id:int,name:string,sla:?string}>
+     */
+    public function getCategories(): Collection;
+
+    /**
+     * Grupos/equipos a los que se puede asignar un ticket.
      * Each item: ['id' => int, 'name' => string].
      *
      * @return Collection<int, array{id:int,name:string}>
      */
-    public function getCategories(): Collection;
+    public function getTicketGroups(): Collection;
 
     /**
      * Agentes asignables al crear un ticket desde una conversación (agentes,

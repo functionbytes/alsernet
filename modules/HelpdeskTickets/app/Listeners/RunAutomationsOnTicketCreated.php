@@ -12,6 +12,14 @@ class RunAutomationsOnTicketCreated implements ShouldQueue
 {
     use InteractsWithQueue;
 
+    /**
+     * 'default' es deliberado: las automatizaciones son cortas y no compiten
+     * con el chat en tiempo real. Ojo, esta cola SOLO la atiende el contenedor
+     * webadmin-worker (queue:work --queue=default,sync,exports); estuvo parado
+     * dos días y por eso ninguna automatización se ejecutaba (162.000 jobs
+     * acumulados, 7-sep-2026). Si vuelve a pasar, mirar ese contenedor antes
+     * que el código.
+     */
     public string $queue = 'default';
 
     public int $tries = 3;

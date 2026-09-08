@@ -53,7 +53,17 @@ class DetectTicketLanguageJob implements ShouldQueue
 
     public int $timeout = 30;
 
-    public function __construct(public readonly int $ticketId) {}
+    public function __construct(public readonly int $ticketId)
+    {
+        // Sin esto el job heredaba 'default': detectar idioma llama al traductor
+        // y, si no basta, a un LLM, así que va con el resto de la IA en vez de
+        // competir con las notificaciones. onQueue() y no una propiedad $queue
+        // porque el trait Queueable ya declara esa propiedad (PHP rechaza la
+        // composición); en un Job sí basta con asignarla en el constructor,
+        // porque el objeto se serializa entero — a diferencia de un listener,
+        // que el Dispatcher instancia SIN constructor para leer sus opciones.
+        $this->onQueue('helpdesk-ai');
+    }
 
     public function handle(): void
     {

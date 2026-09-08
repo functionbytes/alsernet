@@ -102,7 +102,7 @@ class TicketSlaNearBreach implements ShouldBroadcast
                 ],
                 'assignee' => $this->ticket->assignee ? [
                     'id' => $this->ticket->assignee->id,
-                    'name' => $this->ticket->assignee->name,
+                    'name' => $this->ticket->assignee->fullName(),
                 ] : null,
             ],
         ];

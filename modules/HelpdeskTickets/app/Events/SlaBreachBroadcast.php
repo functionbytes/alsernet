@@ -44,7 +44,7 @@ class SlaBreachBroadcast implements ShouldBroadcast
             'ticket_id' => $this->ticket->id,
             'ticket_number' => $this->ticket->ticket_number,
             'subject' => $this->ticket->subject,
-            'assignee_name' => $this->ticket->assignee?->name,
+            'assignee_name' => $this->ticket->assignee?->fullName(),
             'due_at' => $this->ticket->sla_resolution_due_at?->toIso8601String(),
         ];
     }

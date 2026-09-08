@@ -25,9 +25,7 @@ class SendCustomerConfirmation implements ShouldQueue
 
     public function __construct(
         private readonly TicketChannelMailerService $channelMailer,
-    ) {
-        $this->queue = 'notifications';
-    }
+    ) {}
 
     public int $timeout = 60;
 
@@ -36,10 +34,37 @@ class SendCustomerConfirmation implements ShouldQueue
     /**
      * Handle the event
      */
+
+    /**
+     * La cola se declara aquí y NO en el constructor: para leer las opciones de
+     * un listener encolado, Laravel lo instancia con newInstanceWithoutConstructor()
+     * (Dispatcher::createListenerAndJob), así que un $this->queue asignado en el
+     * constructor nunca llega a leerse y el job acababa en 'default' — una cola
+     * que ningún worker de este proyecto atiende (137.000 jobs acumulados ahí).
+     * Efecto real: ni la confirmación al cliente ni los avisos a agentes salían.
+     *
+     * viaQueue() en vez de una propiedad $queue porque el trait Queueable ya
+     * declara esa propiedad con otro valor inicial y PHP lo rechaza como
+     * composición incompatible.
+     */
+    public function viaQueue(): string
+    {
+        return 'notifications';
+    }
+
     public function handle(TicketCreated $event): void
     {
         $ticket = $event->ticket;
         $customerEmail = $ticket->customer?->email;
+
+        // Casilla "Notificar al cliente" del modal de escalado del inbox.
+        if (! $event->notifyCustomer) {
+            Log::info('Skipping customer confirmation email: notification opted out at creation', [
+                'ticket_id' => $ticket->id,
+            ]);
+
+            return;
+        }
 
         if (! $customerEmail) {
             Log::info('Skipping customer confirmation email: ticket has no customer', [

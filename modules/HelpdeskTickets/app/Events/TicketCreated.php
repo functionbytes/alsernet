@@ -94,7 +94,7 @@ class TicketCreated implements ShouldBroadcast
                 ] : null,
                 'assignee' => $this->ticket->assignee ? [
                     'id' => $this->ticket->assignee->id,
-                    'name' => $this->ticket->assignee->name,
+                    'name' => $this->ticket->assignee->fullName(),
                 ] : null,
                 'sla_policy' => $this->ticket->slaPolicy ? [
                     'id' => $this->ticket->slaPolicy->id,

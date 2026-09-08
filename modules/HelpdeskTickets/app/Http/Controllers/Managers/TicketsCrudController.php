@@ -528,7 +528,15 @@ class TicketsCrudController extends Controller
                 ]);
             }
 
-            broadcast(new TicketCreated($ticket));
+            // dispatch(), NO broadcast(): broadcast() entrega el evento SOLO al
+            // broadcaster, así que los siete listeners de TicketCreated
+            // (confirmación al cliente, aviso a agentes, automatizaciones,
+            // auto-clasificación IA, auto-asignación...) nunca corrían para un
+            // ticket dado de alta desde el panel — el cliente no recibía nada.
+            // El evento implementa ShouldBroadcast, así que dispatch() hace las
+            // dos cosas. Mismo arreglo que ya llevan HelpdeskTicketBridgeService
+            // y FetchTicketEmailsJob.
+            TicketCreated::dispatch($ticket);
         });
 
         return redirect()

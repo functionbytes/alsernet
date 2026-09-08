@@ -20,14 +20,20 @@ class SendSlaWarningNotification implements ShouldQueue
 
     public int $tries = 3;
 
-    public function __construct()
-    {
-        $this->queue = 'notifications';
-    }
-
     public int $timeout = 60;
 
     public array $backoff = [30, 60, 120];
+
+    /**
+     * La cola va en viaQueue() y no en el constructor: el Dispatcher lee las
+     * opciones del listener sobre una instancia creada SIN constructor, así
+     * que un $this->queue de ahí nunca se aplicaba y el job caía en
+     * 'default' — cola que ningún worker atiende. Ver SendCustomerConfirmation.
+     */
+    public function viaQueue(): string
+    {
+        return 'notifications';
+    }
 
     /**
      * Handle the event
