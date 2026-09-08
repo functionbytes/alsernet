@@ -148,7 +148,14 @@
     // Los cinco chips de estado del mockup: Abierto #f5f6f8/#3f3f46 (info),
     // Pendiente y Cerrado #f5f6f8/#52525b (muted), Resuelto #eef5d9/#5b7a0d
     // (ok) y Sin asignar #e4e4e7/#18181b (warn).
-    var STATUS_CHIP_CLASS = { open: 'tkt-chip-info', progress: 'tkt-chip-info', pending: 'tkt-chip-muted', resolved: 'tkt-chip-ok', closed: 'tkt-chip-muted', unassigned: 'tkt-chip-warn' };
+    // 'new' faltaba en este mapa (el mockup solo cubría los 5 "canónicos") y
+    // caía al gris por defecto, indistinguible de "Recurrente"/prioridad
+    // normal. tkt-chip-info resultó ser la misma pareja de grises que
+    // tkt-chip-muted (--tkt-info-bg y --tkt-subtle son literalmente el mismo
+    // hex) — invisible a ojo pese a ser "otra clase" — así que usa su propio
+    // tkt-chip-new (mismo tono que "Sin asignar": lo nuevo, como lo sin
+    // asignar, es lo que más pide una primera mirada).
+    var STATUS_CHIP_CLASS = { new: 'tkt-chip-new', open: 'tkt-chip-info', progress: 'tkt-chip-info', pending: 'tkt-chip-muted', resolved: 'tkt-chip-ok', closed: 'tkt-chip-muted', unassigned: 'tkt-chip-warn' };
     function statusChipClass(slug) {
         return STATUS_CHIP_CLASS[slug] || 'tkt-chip-muted';
     }
@@ -1283,6 +1290,10 @@
             '</div>' +
             '<div class="tkt-banner-warn tkt-banner-presence tkt-detail-banner" id="tkt-collision-banner"  role="status"><i class="fa-solid fa-users"></i><span id="tkt-collision-text" class="tkt-flex1"></span></div>' +
             '<div class="tkt-banner-warn tkt-banner-presence tkt-detail-banner" id="tkt-typing-indicator"  role="status"><i class="fa-solid fa-pen"></i><span id="tkt-typing-text" class="tkt-flex1"></span></div>' +
+            // Relleno por renderSelfAssignBanner(): placeholder fijo en vez de
+            // insertarlo con .after() (como el de duplicados) para que el
+            // orden con el resto de banners no dependa de quién se pintó primero.
+            '<div class="tkt-detail-banner" id="tkt-selfassign-banner" hidden></div>' +
             '<div class="tkt-banner-ai tkt-detail-banner" id="tkt-ai-banner" ><i class="fa-solid fa-wand-magic-sparkles"></i>' +
                 '<span class="tkt-banner-ai-main">' +
                     '<span class="tkt-banner-ai-head"><span class="tkt-banner-ai-title">Resumen IA</span>' +
@@ -4063,7 +4074,9 @@
             kicker: 'Tickets · fusión',
             titleChip: t.ticket_number,
             title: 'Fusionar tickets',
-            width: 'sm',
+            // 'sm' (340px) apretaba el panel comparado (.tkt-merge-pair, dos
+            // columnas lado a lado) y la lista de resultados de búsqueda.
+            width: 'xl',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Ticket destino<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-merge-target" placeholder="Nº de ticket, asunto o ID…" value="' + (prefillTarget ? escapeHtml(String(prefillTarget)) : '') + '">' +

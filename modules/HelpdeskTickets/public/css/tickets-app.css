@@ -421,6 +421,13 @@ body:has(.tkt) .mc-content {
 .tkt-chip-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
 .tkt-chip-info { background: var(--tkt-info-bg); color: var(--tkt-info); }
 .tkt-chip-muted { background: var(--tkt-subtle); color: var(--tkt-text-soft); }
+/* Mismo tono que "Sin asignar" (--tkt-warn-bg/fg), pero con nombre de clase
+   propio: .tkt-detail-chips neutraliza -danger/-warn a gris en la cabecera
+   del detalle a propósito (la prioridad no necesita gritar ahí, ver ese
+   bloque), y "Nuevo" sí necesita seguir distinguiéndose incluso en el
+   detalle — es el único estado que no estaba en STATUS_CHIP_CLASS y caía
+   siempre al mismo gris que "Recurrente"/prioridad normal. */
+.tkt-chip-new { background: var(--tkt-warn-bg); color: var(--tkt-warn-fg); }
 
 /* riel de iconos (detalle y panel derecho) */
 .tkt-icon-rail { display: flex; align-items: stretch; border-top: 1px solid var(--tkt-border-soft); }
