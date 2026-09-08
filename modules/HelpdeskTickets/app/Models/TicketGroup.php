@@ -61,7 +61,14 @@ class TicketGroup extends Model
     protected function isDefault(): Attribute
     {
         return Attribute::make(
-            get: fn () => (bool) $this->attributes['default'] ?? false,
+            // (bool) ANTES de ?? rompe la protección de ?? sobre un acceso
+            // directo a array: (bool) $x['k'] se evalúa como su propia
+            // expresión (el cast tiene más precedencia), así que PHP
+            // necesita resolver $x['k'] de verdad para castearlo — el ??
+            // nunca llega a intervenir y "Undefined array key" salta igual.
+            // Detectado creando un TicketGroup sin pasar 'default' (columna
+            // sin default en el modelo, aunque sí lo tenga en la migración).
+            get: fn () => (bool) ($this->attributes['default'] ?? false),
             set: fn ($value) => ['default' => (bool) $value],
         );
     }
