@@ -388,6 +388,7 @@
                 TKA.state.serverFiltered = true;
                 TKA.state.bulk = {};
                 TKA.state.newTicketCount = 0;
+                TKA.state.reassignedCount = 0;
                 $('#tkt-new-banner').remove();
 
                 syncFilterControls(params);
@@ -469,10 +470,21 @@
         if (typeof window.Echo === 'undefined') return;
 
         try {
-            window.Echo.private('helpdesk.tickets').listen('.ticket.created', function () {
-                TKA.state.newTicketCount = (TKA.state.newTicketCount || 0) + 1;
-                renderNewTicketsBanner();
-            });
+            window.Echo.private('helpdesk.tickets')
+                .listen('.ticket.created', function () {
+                    TKA.state.newTicketCount = (TKA.state.newTicketCount || 0) + 1;
+                    renderNewTicketsBanner();
+                })
+                // Reasignar (a mano, al responder, por automatización o en
+                // bloque) también cambia lo que esta lista debería enseñar —
+                // "Sin asignar" baja, "Mis tickets" gana uno— pero el mismo
+                // motivo de arriba aplica: no se toca la fila ni el contador
+                // de la pestaña a ciegas, se avisa y el clic en "Actualizar"
+                // ya trae tab_counts frescos del servidor (ver refetchList).
+                .listen('.assigned', function () {
+                    TKA.state.reassignedCount = (TKA.state.reassignedCount || 0) + 1;
+                    renderNewTicketsBanner();
+                });
         } catch (e) {
             // Sin Reverb levantado en este entorno la pantalla sigue siendo
             // usable: se pierde el aviso, no la funcionalidad (mismo criterio
@@ -481,10 +493,14 @@
     }
 
     function renderNewTicketsBanner() {
-        var n = TKA.state.newTicketCount || 0;
-        if (!n) { $('#tkt-new-banner').remove(); return; }
+        var nuevos = TKA.state.newTicketCount || 0;
+        var reasignados = TKA.state.reassignedCount || 0;
+        if (!nuevos && !reasignados) { $('#tkt-new-banner').remove(); return; }
 
-        var label = n === 1 ? '1 ticket nuevo' : n + ' tickets nuevos';
+        var parts = [];
+        if (nuevos) parts.push(nuevos === 1 ? '1 ticket nuevo' : nuevos + ' tickets nuevos');
+        if (reasignados) parts.push(reasignados === 1 ? '1 reasignado' : reasignados + ' reasignados');
+        var label = parts.join(' · ');
 
         if ($('#tkt-new-banner').length) {
             $('#tkt-new-banner .tkt-new-banner-label').text(label);
@@ -10239,6 +10255,33 @@
                 .listen('.assigned', function (e) {
                     var current = TKA.state.currentTicket;
                     if (!current || !e || !e.assignee) return;
+
+                    // Si el ticket era tuyo y deja de serlo entre un aviso y
+                    // el anterior, es justo el caso que puede pillar al
+                    // agente a media respuesta sin enterarse: un compañero
+                    // (o una automatización) te lo acaba de quitar.
+                    var eraMio = current.assignee && current.assignee.id === TKA.state.currentUserId;
+                    var sigueSiendoMio = e.assignee.id === TKA.state.currentUserId;
+                    if (eraMio && !sigueSiendoMio && window.toastr) {
+                        toastr.warning('Ahora lo tiene ' + e.assignee.name + '.', 'Te han quitado este ticket');
+                    }
+
+                    // El modal de asignar (#tkt-assign-list, abierto a mano o
+                    // desde "¿Quieres asignártelo?") trabaja con una lista de
+                    // agentes ya caducada en cuanto llega este aviso: seguir
+                    // dejándolo abierto invita justo a la carrera que se
+                    // quiere evitar —dos agentes pulsando "Asignarme" casi a
+                    // la vez, y el segundo se lo roba de vuelta sin darse
+                    // cuenta—. Si el segundo agente es quien sigue mirando
+                    // este modal, ya se avisó arriba (eraMio nunca aplica
+                    // aquí porque el ticket no era suyo); este aviso es el
+                    // suyo propio.
+                    if ($('#tkt-assign-list').length) {
+                        closeModal();
+                        if (window.toastr && !sigueSiendoMio) {
+                            toastr.info('Alguien se te adelantó: ahora lo tiene ' + e.assignee.name + '.', 'Ticket ya asignado');
+                        }
+                    }
 
                     current.assignee = e.assignee;
                     renderSidePanel(current);
