@@ -148,14 +148,16 @@
     // Los cinco chips de estado del mockup: Abierto #f5f6f8/#3f3f46 (info),
     // Pendiente y Cerrado #f5f6f8/#52525b (muted), Resuelto #eef5d9/#5b7a0d
     // (ok) y Sin asignar #e4e4e7/#18181b (warn).
-    // 'new' faltaba en este mapa (el mockup solo cubría los 5 "canónicos") y
-    // caía al gris por defecto, indistinguible de "Recurrente"/prioridad
-    // normal. tkt-chip-info resultó ser la misma pareja de grises que
-    // tkt-chip-muted (--tkt-info-bg y --tkt-subtle son literalmente el mismo
-    // hex) — invisible a ojo pese a ser "otra clase" — así que usa su propio
-    // tkt-chip-new (mismo tono que "Sin asignar": lo nuevo, como lo sin
-    // asignar, es lo que más pide una primera mirada).
-    var STATUS_CHIP_CLASS = { new: 'tkt-chip-new', open: 'tkt-chip-info', progress: 'tkt-chip-info', pending: 'tkt-chip-muted', resolved: 'tkt-chip-ok', closed: 'tkt-chip-muted', unassigned: 'tkt-chip-warn' };
+    // 'new' (Nuevo) no hace falta como clave propia: t.status_slug ya llega
+    // pre-agrupado desde el backend (Ticket::canonicalStatusSlug() colapsa
+    // 'new' dentro de 'open', ver comentario ahí) — así que un ticket Nuevo
+    // usa 'open'/tkt-chip-info igual que uno Abierto. La primera versión de
+    // este fix añadía una clave 'new' aparte que nunca se llegaba a leer:
+    // el bug real no era la clave que faltaba, era que --tkt-info-bg y
+    // --tkt-subtle resultaron ser literalmente el mismo hex (ver esas
+    // variables) — "Abierto" y "gris sin más" quedaban indistinguibles a
+    // la vista pese a ser dos clases CSS distintas. Se corrige ahí, no aquí.
+    var STATUS_CHIP_CLASS = { open: 'tkt-chip-info', progress: 'tkt-chip-info', pending: 'tkt-chip-muted', resolved: 'tkt-chip-ok', closed: 'tkt-chip-muted', unassigned: 'tkt-chip-warn' };
     function statusChipClass(slug) {
         return STATUS_CHIP_CLASS[slug] || 'tkt-chip-muted';
     }
@@ -269,6 +271,7 @@
         renderTabs();
 
         fetchOpsQueueHint();
+        bindStatusBar();
 
         // Selects estáticos ya presentes en el DOM al cargar la página: la
         // barra de filtros (Origen/Categoría/Agente/Prioridad/Etiquetas) y
@@ -381,6 +384,7 @@
             .done(function (res) {
                 TKA.state.tickets = (res.tickets || []).map(hydrateTicketUrls);
                 TKA.state.tabCounts = res.tab_counts || TKA.state.tabCounts;
+                renderStatusCounts();
                 TKA.state.serverFiltered = true;
                 TKA.state.bulk = {};
                 TKA.state.newTicketCount = 0;
@@ -618,6 +622,7 @@
             $('.tkt-state-tab[data-filter="' + k + '"] .c, .tkt-view-pill[data-filter="' + k + '"] .mono').text(c[k]);
         });
         $('.tkt-queue-hint').text('SLA en riesgo: ' + c.sla_risk);
+        renderStatusCounts();
     }
 
     // ═══════════ Render: lista ═══════════
@@ -1293,7 +1298,7 @@
             // Relleno por renderSelfAssignBanner(): placeholder fijo en vez de
             // insertarlo con .after() (como el de duplicados) para que el
             // orden con el resto de banners no dependa de quién se pintó primero.
-            '<div class="tkt-detail-banner" id="tkt-selfassign-banner" hidden></div>' +
+            '<div id="tkt-selfassign-banner" hidden></div>' +
             '<div class="tkt-banner-ai tkt-detail-banner" id="tkt-ai-banner" ><i class="fa-solid fa-wand-magic-sparkles"></i>' +
                 '<span class="tkt-banner-ai-main">' +
                     '<span class="tkt-banner-ai-head"><span class="tkt-banner-ai-title">Resumen IA</span>' +
@@ -1310,6 +1315,7 @@
 
         joinTicketPresence(t.id);
         startTicketPulse(t);
+        renderSelfAssignBanner(t);
 
         // El icono de estado abre el modal 36; los otros dos siguen llevando
         // el foco al campo correspondiente del panel Gestión.
@@ -2635,6 +2641,52 @@
         $('#tkt-dupe-banner').remove();
     }
 
+    // ── Aviso "¿quieres asignarte este ticket?" ───────────────
+    // Un ticket sin dueño era fácil de dejar pasar: se abre, se lee, se cierra
+    // la pestaña sin que nadie quede como responsable. El aviso invita a
+    // tomarlo con un clic, que abre el MISMO modal de asignación de siempre
+    // (openAssignModal) — no se autoasigna solo, el agente decide ahí.
+    //
+    // "Descartado" se recuerda por ticket mientras dura la sesión del panel
+    // (TKA.state, no localStorage): si vuelves a este ticket más tarde sigue
+    // sin dueño y merece la pena volver a preguntarlo.
+    TKA.state.selfAssignDismissed = TKA.state.selfAssignDismissed || {};
+
+    function renderSelfAssignBanner(t) {
+        var $box = $('#tkt-selfassign-banner');
+        if (!$box.length) return;
+
+        var estado = t.status_slug || 'open';
+        var cerrado = estado === 'closed';
+
+        if (t.assignee || cerrado || TKA.state.selfAssignDismissed[t.id]) {
+            $box.attr('hidden', true).empty();
+            return;
+        }
+
+        // Sin la clase .tkt-detail-banner: esa clase es display:none por
+        // defecto (banners que solo se muestran vía .show()/.hide() explícito,
+        // como colisión/typing) y con ella puesta GANABA sobre el display:flex
+        // de .tkt-banner-warn — el banner se insertaba con contenido real pero
+        // altura 0, invisible. La visibilidad de #tkt-selfassign-banner ya se
+        // controla con el atributo hidden del contenedor, como hace el aviso
+        // de duplicados (que tampoco lleva esa clase).
+        $box.attr('hidden', false).html(
+            '<div class="tkt-banner-warn" role="status">' +
+                '<i class="fa-solid fa-user-plus"></i>' +
+                '<span class="tkt-banner-text">Este ticket no tiene agente asignado. ¿Quieres asignártelo?</span>' +
+                '<button type="button" class="tkt-btn tkt-btn-sm tkt-btn-primary" id="tkt-selfassign-yes">Asignarme</button>' +
+                '<button type="button" class="tkt-btn-icon" id="tkt-selfassign-close" aria-label="Descartar el aviso"><i class="fa-solid fa-xmark"></i></button>' +
+            '</div>'
+        );
+
+        $box.find('#tkt-selfassign-yes').on('click', function () { openAssignModal(t); });
+        $box.find('#tkt-selfassign-close').on('click', function () {
+            TKA.state.selfAssignDismissed[t.id] = true;
+            $box.attr('hidden', true).empty();
+        });
+    }
+
     // Aviso discreto sobre el detalle. Solo aparece si hay candidatos reales;
     // sin ellos no se pinta nada (nunca "0 duplicados").
     function checkDuplicates(t) {
@@ -2952,6 +3004,26 @@
             success: function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Mensaje enviado');
                 emitTyping(false);
+
+                // Responder puede haber asignado el ticket o cambiado su
+                // estado en el servidor (tickets.assign_on_reply/status_on_reply):
+                // sin esto, "Asignado a" seguía enseñando el dueño de ANTES de
+                // contestar hasta recargar a mano. Mismo objeto t que ya usa
+                // openAssignModal() al asignar a mano (es la referencia que
+                // vive en TKA.state.tickets, no una copia).
+                //
+                // renderSidePanel(t) sin pasar por renderDetail(t): ese sí
+                // arregla el chip de estado de la cabecera de un plumazo, pero
+                // reconstruye TODO el panel de detalle de golpe — el hilo
+                // vuelve un instante al esqueleto de carga aunque
+                // fetchDetailData() lo rellene enseguida después. Aquí solo
+                // hace falta repintar "Asignado a" y el aviso de autoasignación.
+                if (resp && resp.ticket) {
+                    $.extend(t, resp.ticket);
+                    renderSidePanel(t);
+                    renderSelfAssignBanner(t);
+                }
+
                 fetchDetailData(t);
             },
             error: function (xhr) {
@@ -5687,7 +5759,133 @@
             var $badge = $('#tkt-ops-queue-badge');
             if (n > 0) $badge.text(n).prop('hidden', false);
             else $badge.prop('hidden', true);
+
+            // Mismo dato en la barra de estado del pie — solo se muestra
+            // cuando hay algo real en cola, igual que el badge de arriba.
+            var $q = $('#tkt-status-queue');
+            if (n > 0) $q.html('<i class="fa-regular fa-envelope"></i> cola: ' + n).prop('hidden', false);
+            else $q.prop('hidden', true);
         });
+    }
+
+    // ═══════════ Barra de estado (pie de pantalla) ═══════════
+    // Ningún dato aquí es de relleno: conexión reusa el propio conector de
+    // Reverb (el mismo canal de presencia que ya abre openTicketPresence()),
+    // agentes en línea reusa TKA.urls.workloadOverview (modal 24 "Carga de
+    // agentes"), y SLA/resueltos reusan TKA.state.tabCounts, que ya llega
+    // hidratado en el bootstrap y se mantiene fresco por recomputeTabCounts()
+    // y cada refetch del listado.
+    function bindStatusBar() {
+        if (!$('#tkt-status-bar').length) return;
+
+        renderStatusCounts();
+        bindStatusConnection();
+        fetchOnlineAgentsCount();
+
+        var soundOn = localStorage.getItem('tkt:status:sound') === '1';
+        var $soundBtn = $('#tkt-status-sound');
+        $soundBtn.toggleClass('on', soundOn).attr('aria-pressed', soundOn ? 'true' : 'false')
+            .find('i').toggleClass('fa-volume-high', soundOn).toggleClass('fa-volume-xmark', !soundOn);
+        $soundBtn.on('click', function () {
+            soundOn = !soundOn;
+            localStorage.setItem('tkt:status:sound', soundOn ? '1' : '0');
+            $(this).toggleClass('on', soundOn).attr('aria-pressed', soundOn ? 'true' : 'false')
+                .find('i').toggleClass('fa-volume-high', soundOn).toggleClass('fa-volume-xmark', !soundOn);
+        });
+
+        $('#tkt-status-shortcuts').on('click', openShortcutsModal);
+    }
+
+    /**
+     * SLA en riesgo / resueltos de la barra: mismos números que ya pintan
+     * los tabs de arriba (TKA.state.tabCounts), no un cálculo aparte —
+     * llamarla junto a cada sitio que ya actualiza esos tabs evita que la
+     * barra se desincronice de ellos (mismo bug de fondo que
+     * recomputeTabCounts() ya documenta para "Todos"/"Resueltos").
+     */
+    function renderStatusCounts() {
+        var c = TKA.state.tabCounts || {};
+        if (c.sla_risk != null) $('#tkt-status-sla').html('<i class="fa-regular fa-clock"></i> SLA en riesgo: ' + c.sla_risk);
+        if (c.resolved != null) $('#tkt-status-resolved').html('<i class="fa-solid fa-circle-check"></i> ' + c.resolved + ' resueltos');
+    }
+
+    /**
+     * Punto de estado real: escucha el conector de Reverb/Pusher (el mismo
+     * que usa la presencia del ticket abierto) en vez de asumir "conectado"
+     * porque la página cargó. Sin Echo/Reverb en este entorno el punto se
+     * queda apagado — el propio bootstrap de la presencia ya tolera esto
+     * (ver openTicketPresence()), aquí se refleja el mismo hecho en vez de
+     * mentir con un punto verde fijo.
+     */
+    function bindStatusConnection() {
+        var $dot = $('#tkt-status-conn-dot');
+        var $text = $('#tkt-status-conn-text');
+
+        function paint(state) {
+            $dot.removeClass('on connecting off');
+            if (state === 'connected') { $dot.addClass('on'); $text.text('Conectado'); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text('Conectando…'); } else { $dot.addClass('off'); $text.text('Sin conexión en vivo'); }
+        }
+
+        if (typeof window.Echo === 'undefined' || !window.Echo.connector || !window.Echo.connector.pusher) {
+            paint('off');
+            return;
+        }
+
+        var pusher = window.Echo.connector.pusher;
+        paint(pusher.connection.state);
+        pusher.connection.bind('state_change', function (states) {
+            paint(states.current);
+        });
+    }
+
+    /**
+     * Cuenta agentes con status 'online' del mismo payload que ya carga el
+     * modal "Carga de agentes" (AgentAvailabilityService::forWorkload()) —
+     * una sola llamada al entrar a la pantalla, no un sondeo: el número no
+     * necesita ser el mismo segundo a segundo, solo no estar inventado.
+     */
+    function fetchOnlineAgentsCount() {
+        var $el = $('#tkt-status-agents');
+        if (!TKA.urls.workloadOverview) { $el.hide(); return; }
+
+        $.getJSON(TKA.urls.workloadOverview).done(function (res) {
+            var agentes = (res && res.agents) || [];
+            var enLinea = agentes.filter(function (a) { return a.status === 'online'; }).length;
+            $el.html('<i class="fa-solid fa-users"></i> ' + enLinea + (enLinea === 1 ? ' agente en línea' : ' agentes en línea'));
+        }).fail(function () {
+            $el.hide();
+        });
+    }
+
+    /**
+     * Aviso sonoro de mensaje nuevo (toggle de la barra de estado). Un tono
+     * generado con Web Audio en vez de un mp3: nada que publicar en
+     * public/modules/helpdesktickets/ ni que cargar de un CDN para un pitido
+     * de un solo uso. Se salta entero si el agente lo apagó o si el
+     * navegador bloquea el audio sin interacción previa (Safari/Chrome
+     * exigen un gesto del usuario antes del primer sonido — el propio click
+     * en el botón de la barra ya cuenta como uno).
+     */
+    function playNewMessageSound() {
+        if (localStorage.getItem('tkt:status:sound') !== '1') return;
+
+        try {
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            var ctx = new Ctx();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 720;
+            gain.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.24);
+            osc.onended = function () { ctx.close(); };
+        } catch (e) { /* audio bloqueado por el navegador: sin aviso, sin romper nada */ }
     }
 
     // ── Modal 37: Asignar ticket ──────────────────────────────
@@ -10024,6 +10222,7 @@
                 .listen('.message.added', function () {
                     var current = TKA.state.currentTicket;
                     if (current) fetchDetailData(current);
+                    playNewMessageSound();
                 });
         } catch (e) {
             // Sin Echo/Reverb levantado en este entorno: la pantalla sigue
@@ -10855,6 +11054,65 @@
         });
     }
 
+    // Modal de ayuda: SOLO los atajos que bindKeyboardShortcuts() de verdad
+    // engancha más abajo — nada aspiracional. "Enviar mensaje" y "Nueva
+    // línea" son la excepción: viven en el keydown propio de #tkt-reply-body
+    // (ver bindEvents()), no en este atajo global, pero son igual de reales.
+    function openShortcutsModal() {
+        var cols = [
+            ['Navegación', [
+                ['Ticket siguiente', ['J']],
+                ['Ticket anterior', ['K']],
+                ['Vista previa rápida', ['Espacio']],
+                ['Nuevo ticket', ['C']],
+                ['Buscar en el sistema', ['⌘', 'K']],
+                ['Mostrar atajos', ['?']],
+            ]],
+            ['Ticket abierto', [
+                ['Responder (foco)', ['R']],
+                ['Nota interna (foco)', ['N']],
+                ['Asignar agente', ['A']],
+                ['Cambiar estado', ['S']],
+            ]],
+            ['Composer', [
+                ['Enviar mensaje', ['⌘', '⏎']],
+                ['Nueva línea', ['⏎']],
+                ['Mencionar agente', ['@']],
+            ]],
+            ['Barra de estado', [
+                ['Alternar sonido', ['click', 'icono']],
+                ['Cerrar este diálogo', ['Esc']],
+            ]],
+        ];
+
+        var body = '<div class="tkt-cheat-grid">' + cols.map(function (col) {
+            var title = col[0];
+            var rows = col[1];
+
+            return '<div>' +
+                '<div class="tkt-cheat-h">' + escapeHtml(title) + '</div>' +
+                rows.map(function (row) {
+                    var label = row[0];
+                    var keys = row[1];
+
+                    return '<div class="tkt-cheat-row">' +
+                        '<span class="tkt-cheat-lbl">' + escapeHtml(label) + '</span>' +
+                        '<span class="tkt-cheat-keys">' +
+                            keys.map(function (k) { return '<kbd class="tkt-kbd">' + escapeHtml(k) + '</kbd>'; }).join('') +
+                        '</span>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        }).join('') + '</div>';
+
+        openModal(modalShell({
+            icon: 'fa-solid fa-keyboard', kicker: 'Ayuda',
+            title: 'Atajos de teclado', width: '2xl',
+            body: body,
+            foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+        }));
+    }
+
     // ═══════════ Atajos de teclado (J/K navegar, C nuevo ticket) ═══════════
     // El mockup también documenta "⌘K" para el buscador, pero el tema base
     // YA usa ⌘K globalmente para el buscador del sistema (barra superior,
@@ -10886,6 +11144,32 @@
                 if (!current) return;
                 ev.preventDefault();
                 openQuickPreviewModal(current);
+            } else if (ev.key === '?') {
+                // Ayuda: funciona haya o no un ticket abierto, y aunque haya
+                // otro modal encima (mismo criterio que el propio botón ? de
+                // la barra de estado).
+                ev.preventDefault();
+                openShortcutsModal();
+            } else if (['r', 'R', 'n', 'N', 'a', 'A', 's', 'S'].indexOf(ev.key) !== -1) {
+                // Estos cuatro actúan sobre el ticket ABIERTO en el detalle,
+                // no sobre la fila seleccionada en la lista (que puede no
+                // tener nada abierto todavía) — y no si ya hay un modal
+                // encima, para no abrir uno segundo sin que se note cuál.
+                var t = TKA.state.currentTicket;
+                if (!t || $('#tkt-modal-backdrop').length) return;
+                ev.preventDefault();
+
+                if (ev.key === 'r' || ev.key === 'R') {
+                    $('[data-comp-mode="reply"]').trigger('click');
+                    $('#tkt-reply-body').trigger('focus');
+                } else if (ev.key === 'n' || ev.key === 'N') {
+                    $('[data-comp-mode="note"]').trigger('click');
+                    $('#tkt-reply-body').trigger('focus');
+                } else if (ev.key === 'a' || ev.key === 'A') {
+                    openAssignModal(t);
+                } else if (ev.key === 's' || ev.key === 'S') {
+                    openChangeStatusModal(t);
+                }
             }
         });
     }

@@ -76,7 +76,15 @@ body:has(.tkt) .mc-content {
   --tkt-danger: #18181b;  --tkt-danger-bg: #18181b; --tkt-danger-fg: #fff;
   --tkt-danger-text: #18181b;
   --tkt-danger-soft: #e4e4e7;
-  --tkt-info: #3f3f46;    --tkt-info-bg: #f5f6f8;
+  /* Antes #3f3f46/#f5f6f8: el mismo gris que --tkt-text-soft/--tkt-subtle,
+     literalmente el mismo hex de fondo — un ticket "Abierto"/"Nuevo"
+     (.tkt-chip-info) y uno "Pendiente"/"Cerrado" (.tkt-chip-muted) eran
+     indistinguibles a la vista pese a ser dos clases CSS distintas (bug
+     real: la cabecera del detalle mostraba "Nuevo" en el mismo gris que
+     "Recurrente"). "Info" pasa a azul de verdad — el resto de la paleta ya
+     cubre verde (marca/ok), negro (urgente/danger) y gris (neutro/muted);
+     azul es el único hueco y es la convención más reconocible para "abierto". */
+  --tkt-info: #2f6fed;    --tkt-info-bg: #eaf1fd;
   --tkt-purple: #3f3f46;  --tkt-purple-bg: #f0f1f4;
   /* paleta de colores de nota (selector de punto de color en Notas del
      ticket). El mockup no tiene selector de color de nota, así que no hay
@@ -421,13 +429,6 @@ body:has(.tkt) .mc-content {
 .tkt-chip-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
 .tkt-chip-info { background: var(--tkt-info-bg); color: var(--tkt-info); }
 .tkt-chip-muted { background: var(--tkt-subtle); color: var(--tkt-text-soft); }
-/* Mismo tono que "Sin asignar" (--tkt-warn-bg/fg), pero con nombre de clase
-   propio: .tkt-detail-chips neutraliza -danger/-warn a gris en la cabecera
-   del detalle a propósito (la prioridad no necesita gritar ahí, ver ese
-   bloque), y "Nuevo" sí necesita seguir distinguiéndose incluso en el
-   detalle — es el único estado que no estaba en STATUS_CHIP_CLASS y caía
-   siempre al mismo gris que "Recurrente"/prioridad normal. */
-.tkt-chip-new { background: var(--tkt-warn-bg); color: var(--tkt-warn-fg); }
 
 /* riel de iconos (detalle y panel derecho) */
 .tkt-icon-rail { display: flex; align-items: stretch; border-top: 1px solid var(--tkt-border-soft); }
@@ -2194,6 +2195,15 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin: 12px 20px 0;
 }
 
+/* Aviso "¿quieres asignarte este ticket?": mismo margen que el resto de
+   banners del detalle, pero SIN la clase .tkt-detail-banner en el contenido
+   — su display:none por defecto ganaba sobre el display:flex de
+   .tkt-banner-warn y el aviso se insertaba invisible (altura 0). La
+   visibilidad la controla el atributo [hidden] del propio contenedor. */
+#tkt-selfassign-banner:not([hidden]) {
+    margin: 12px 20px 0;
+}
+
 /* Rejilla de columnas del modal de exportación */
 .tkt-colgrid {
     display: grid;
@@ -2830,4 +2840,72 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-unify-notify {
     display: flex; align-items: center; gap: 8px;
     margin: 12px 0 2px; font-size: var(--tkt-t-md); color: var(--tkt-text); cursor: pointer;
+}
+
+/* ── Barra de estado (pie de pantalla) ──────────────────────────────
+   Mismo hueco que la barra equivalente de Helpdesk (bandeja de
+   conversaciones): conexión en vivo, quién está trabajando ahora mismo
+   y accesos rápidos (sonido, atajos), fija al fondo de .tkt-app-card. */
+.tkt-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-top: 1px solid var(--tkt-border);
+    background: var(--tkt-bg);
+    font-size: var(--tkt-t-sm);
+    color: var(--tkt-text-mute);
+    flex-shrink: 0;
+}
+.tkt-status-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.tkt-status-sep { color: var(--tkt-border-strong); }
+.tkt-status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tkt-border-strong);
+    flex-shrink: 0;
+}
+/* Estados reales del conector de Reverb (ver bindStatusBarConnection()):
+   'connected'/'connecting'/'unavailable' — no hay un cuarto porque Echo
+   colapsa disconnected/failed en 'unavailable'. */
+.tkt-status-dot.on { background: var(--tkt-accent); }
+.tkt-status-dot.connecting { background: var(--tkt-warn); animation: tkt-pulse 1.2s ease-in-out infinite; }
+.tkt-status-dot.off { background: var(--tkt-danger-soft); }
+.tkt-status-bar .tkt-spacer { flex: 1; }
+.tkt-status-icon-btn {
+    display: grid; place-items: center;
+    width: 22px; height: 22px;
+    border: none; background: none; border-radius: var(--tkt-r-sm);
+    color: var(--tkt-text-mute); cursor: pointer; font-size: 11px;
+}
+.tkt-status-icon-btn:hover { background: var(--tkt-subtle); color: var(--tkt-text); }
+.tkt-status-icon-btn.on { color: var(--tkt-accent-dark); }
+.tkt-status-version { color: var(--tkt-text-faint); }
+
+/* ── Modal: Atajos de teclado ────────────────────────────────────── */
+.tkt-cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 28px;
+}
+.tkt-cheat-h {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--tkt-text-faint); margin-bottom: 8px;
+}
+.tkt-cheat-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 5px 0;
+}
+.tkt-cheat-lbl { font-size: var(--tkt-t-md); color: var(--tkt-text); }
+.tkt-cheat-keys { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.tkt-kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 5px;
+    border: 1px solid var(--tkt-border-strong); border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--tkt-panel);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 600; color: var(--tkt-text);
+}
+@media (max-width: 720px) {
+    .tkt-cheat-grid { grid-template-columns: 1fr; }
 }
