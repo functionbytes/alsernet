@@ -69,11 +69,12 @@ class TicketMessagingController extends Controller
             ]);
         }
 
-        // Rama solo usada por el form clásico de la ficha completa (#reply-form,
-        // sin interceptar por JS) — el panel superpuesto de /tickets responde
-        // JSON siempre (fetch), así que se queda en la ficha completa.
+        // Rama que usaba el form clásico de la ficha completa (#reply-form,
+        // sin interceptar por JS — show-full, eliminada el 8-sep-2026); el
+        // panel superpuesto de /tickets responde JSON siempre (fetch), así
+        // que ya no hay caller conocido, pero se deja el fallback.
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.message_sent'));
     }
 

@@ -41,39 +41,7 @@ const cssOutPath = path.join(root, 'modules/HelpdeskTickets/public/css/tickets-a
 const cssPublishedDir = path.join(root, 'public/modules/helpdesktickets/css');
 const cssPublishedPath = path.join(cssPublishedDir, 'tickets-app.min.css');
 
-// ticket-detail.js (managers.tickets.show, la vista de detalle completo de
-// UN ticket — pantalla distinta del listado). Ya es un único IIFE
-// autocontenido (no dividido en varios ficheros como tickets-app.js), así
-// que aquí basta con minificar: no hay nada que concatenar ni ningún orden
-// que preservar.
-const detailSrcPath = path.join(root, 'modules/HelpdeskTickets/public/js/ticket-detail.js');
-const detailOutPath = path.join(root, 'modules/HelpdeskTickets/public/js/ticket-detail.min.js');
-const detailPublishedPath = path.join(publishedDir, 'ticket-detail.min.js');
-
 const kb = (n) => (n / 1024).toFixed(1) + ' KB';
-
-async function buildTicketDetail() {
-    const code = await readFile(detailSrcPath, 'utf8');
-
-    const result = await esbuild.transform(code, {
-        loader: 'js',
-        minify: true,
-        target: 'es2019',
-        legalComments: 'none',
-    });
-
-    if (result.warnings.length) {
-        for (const w of result.warnings) console.warn('[esbuild ticket-detail]', w.text, w.location);
-    }
-
-    await writeFile(detailOutPath, result.code, 'utf8');
-    await mkdir(publishedDir, { recursive: true });
-    await writeFile(detailPublishedPath, result.code, 'utf8');
-
-    console.log(`ticket-detail.min.js generado: ${kb(code.length)} → ${kb(result.code.length)} minificado`);
-    console.log(`  fuente:     ${path.relative(root, detailOutPath)}`);
-    console.log(`  publicado:  ${path.relative(root, detailPublishedPath)}`);
-}
 
 async function buildCss() {
     const css = await readFile(cssSrcPath, 'utf8');
@@ -150,7 +118,6 @@ async function main() {
     console.log(`  publicado:  ${path.relative(root, publishedPath)}`);
 
     await buildCss();
-    await buildTicketDetail();
 }
 
 main().catch((err) => {

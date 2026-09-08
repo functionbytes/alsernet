@@ -18,11 +18,8 @@ use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketMail;
-use Modules\HelpdeskTickets\Models\TicketRead;
-use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTemplate;
@@ -206,8 +203,8 @@ class TicketsCrudController extends Controller
         // así que no hay motivo para recalcularla por request. La invalida
         // updateTags() al guardar (CatalogCacheService::invalidateTags()).
         $availableTags = CatalogCacheService::ticketTags();
-        // Para insertar plantilla en la caja de respuesta del Hilo — mismo
-        // criterio que showFull() (globales o del propio usuario, activas).
+        // Para insertar plantilla en la caja de respuesta del Hilo (globales
+        // o del propio usuario, activas — ver TicketCannedReply::availableFor()).
         $cannedReplies = TicketCannedReply::availableFor($userId);
 
         // Modal 44 "Plantillas de ticket": crear un ticket ya relleno desde
@@ -739,7 +736,8 @@ class TicketsCrudController extends Controller
      * URL corta /tickets/{ticket} — redirige al listado con el ticket
      * preseleccionado, igual que ConversationsController::show() hace con el
      * inbox de conversaciones. La ficha completa (side-conversations, horas,
-     * fusión, enlaces, historial) sigue disponible en showFull().
+     * enlaces) que existía aparte en showFull() se eliminó el 8-sep-2026 sin
+     * migrar esas 3 funciones al listado; fusión e historial sí están aquí.
      */
     public function show(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -782,85 +780,6 @@ class TicketsCrudController extends Controller
         return response()->json(['success' => true, 'tags' => $tags->all()]);
     }
 
-    public function showFull(Request $request, Ticket $ticket)
-    {
-        $this->authorize('view', $ticket);
-
-        $ticket->load(['customer', 'conversation', 'status', 'category', 'assignee', 'group', 'slaPolicy', 'items.user', 'items.author', 'watchers', 'aiSuggestedCategory']);
-        $ticket->load(['followups' => fn ($q) => $q->where('is_sent', false)->with('user')]);
-
-        $sidebarQuery = Ticket::query()
-            ->with(['customer', 'status', 'category'])
-            ->latest();
-
-        if ($request->has('status') && $request->status !== 'all') {
-            $sidebarQuery->where('status_id', $request->status);
-        }
-
-        // appends(): el sidebar filtra por ?status y sus enlaces de página no
-        // lo arrastraban, así que pasar a la página 2 devolvía la lista sin
-        // filtrar — con el filtro todavía marcado en pantalla.
-        $tickets = $sidebarQuery->paginate(20)->appends($request->query());
-
-        $statuses = CatalogCacheService::statuses();
-        $categories = CatalogCacheService::categories();
-        $groups = CatalogCacheService::groups();
-
-        $userId = auth()->id();
-        TicketRead::markAllReadFor($ticket, $userId);
-
-        $agents = CatalogCacheService::agents();
-
-        $mentionableUsers = $agents
-            ->take(50)
-            ->map(fn ($u) => [
-                'id' => $u->id,
-                'name' => trim($u->firstname.' '.$u->lastname),
-                'email' => $u->email,
-            ])->values();
-
-        $history = $ticket->history()->latest()->limit(50)->get();
-        // reorder(): Ticket::mails() ya trae su propio orderBy('created_at',
-        // 'asc') por defecto — sin limpiarlo antes, latest() encadenado
-        // encima no hace nada (MySQL ignora un 2º ORDER BY sobre la misma
-        // columna) y esta lista salía más-antiguo-primero en vez de
-        // más-reciente-primero. Ver el mismo fix/comentario en
-        // TicketDetailDataController::data().
-        $ticketMails = $ticket->mails()->reorder()->latest()->limit(30)->get();
-        $cannedReplies = TicketCannedReply::availableFor($userId);
-
-        // Para el botón "Bloquear remitente" del panel de acciones: si el email
-        // del cliente ya está cubierto por una regla (exacta o por dominio), la
-        // vista muestra el aviso en vez del botón.
-        $blacklistMatch = $ticket->customer?->email
-            ? TicketEmailBlacklist::matches($ticket->customer->email)
-            : null;
-
-        // Revisión de calidad, si el muestreo alcanzó a este ticket. Se
-        // resuelve aquí y no en la vista para no dejar una consulta en el
-        // Blade; con la función apagada ni siquiera se pregunta.
-        $qualityReview = config('helpdesktickets.quality_review.enabled', false)
-            ? TicketReview::query()->where('ticket_id', $ticket->id)->first()
-            : null;
-
-        return view('helpdesktickets::managers.tickets.show', [
-            'qualityReview' => $qualityReview,
-            'ticket' => $ticket,
-            'tickets' => $tickets,
-            'statuses' => $statuses,
-            'categories' => $categories,
-            'groups' => $groups,
-            // La vista lo recorre para el selector de participantes; sin el, show()
-            // reventaba con "Undefined variable $agents" (500 en el detalle del ticket).
-            'agents' => $agents,
-            'mentionableUsers' => $mentionableUsers,
-            'history' => $history,
-            'ticketMails' => $ticketMails,
-            'cannedReplies' => $cannedReplies,
-            'blacklistMatch' => $blacklistMatch,
-        ]);
-    }
-
     public function edit(Ticket $ticket)
     {
         $this->authorize('update', $ticket);
@@ -900,10 +819,11 @@ class TicketsCrudController extends Controller
             ]);
         }
 
-        // edit.blade.php (form #ticketForm, sin interceptar por JS) solo se
-        // llega desde la ficha completa — se vuelve ahí, no al listado.
+        // edit.blade.php (form #ticketForm, sin interceptar por JS): la ficha
+        // completa (show-full) se eliminó el 8-sep-2026, así que se vuelve
+        // al listado con el panel superpuesto igual que el resto.
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_updated'));
     }
 

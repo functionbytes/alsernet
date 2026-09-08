@@ -232,7 +232,10 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
                     // /panel/helpdeskemailactivity?module=HelpdeskTickets (mismo
                     // dato, auditoría cross-módulo unificada) — el
                     // "responder/redactar" que sí era exclusivo de tickets se
-                    // reubicó dentro de la ficha del ticket (TicketsCrudController::showFull).
+                    // reubicó dentro de la ficha del ticket (entonces
+                    // TicketsCrudController::showFull(), retirada el
+                    // 8-sep-2026 — el composer ahora vive solo en el
+                    // listado, tickets-app/core.js).
                     //
                     // 'permission' cambiado de 'helpdesk.tickets.emails.view' a
                     // 'helpdeskemailactivity.view': la autorización real la impone el

@@ -10,7 +10,6 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
@@ -88,12 +87,16 @@ class ManagersTicketsCrudTest extends TestCase
     {
         $ticket = $this->createTicket();
 
+        // Destino explícito, no solo assertRedirect() genérico: tras
+        // eliminar la ficha completa (show-full, 8-sep-2026) este redirect
+        // pasó a apuntar a 'show' (listado con panel superpuesto) — sin este
+        // assert una regresión a una ruta borrada seguiría en verde.
         $this->actingAs($this->manager)
             ->put(route('manager.helpdesk.tickets.update', $ticket), [
                 'priority' => 'urgent',
                 'status_id' => $this->openStatus->id,
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('manager.helpdesk.tickets.show', $ticket));
 
         $this->assertEquals('urgent', $ticket->fresh()->priority);
     }
@@ -238,67 +241,13 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertRedirect(route('manager.helpdesk.tickets.index', ['ticket' => $ticket->id]));
     }
 
-    public function test_manager_can_view_ticket_full_detail_page(): void
-    {
-        $ticket = $this->createTicket();
-
-        $this->actingAs($this->manager)
-            ->get(route('manager.helpdesk.tickets.show-full', $ticket))
-            ->assertOk();
-    }
-
-    /**
-     * El composer de "correo suelto" que antes solo existía en la bandeja
-     * global /tickets/emails (retirada) ahora vive aquí, apuntando al mismo
-     * endpoint (manager.helpdesk.tickets.emails.store) — ver
-     * ticket-detail.js#tkt-compose-mail-form.
-     */
-    public function test_ticket_detail_page_includes_the_email_composer_modal(): void
-    {
-        $ticket = $this->createTicket();
-
-        $this->actingAs($this->manager)
-            ->get(route('manager.helpdesk.tickets.show-full', $ticket))
-            ->assertOk()
-            ->assertSee('tkt-compose-mail-modal', false)
-            ->assertSee('tkt-compose-template', false)
-            ->assertSee(route('manager.helpdesk.tickets.emails.store'), false);
-    }
-
-    // ─── block sender quick action ───────────────────────────────────────────
-    //
-    // No hay caso "sin permiso" que probar aquí: esta página solo la abren
-    // usuarios con rol super-admin|super-settings (gate del grupo de rutas en
-    // HelpdeskTicketsServiceProvider), y HelpdeskTicketsPermissionsSeeder ya
-    // otorga helpdesk.tickets.settings a esos dos roles completos — quien ve
-    // el ticket siempre puede bloquear remitentes, por diseño.
-
-    public function test_block_sender_button_shown_when_customer_not_blacklisted(): void
-    {
-        $ticket = $this->createTicket();
-
-        $response = $this->actingAs($this->manager)
-            ->get(route('manager.helpdesk.tickets.show-full', $ticket));
-
-        $response->assertOk();
-        $response->assertViewHas('blacklistMatch', null);
-        $response->assertSee('Bloquear remitente');
-    }
-
-    public function test_block_sender_alert_shown_when_customer_already_blacklisted(): void
-    {
-        TicketEmailBlacklist::create([
-            'type' => 'email',
-            'value' => $this->customer->email,
-        ]);
-        $ticket = $this->createTicket();
-
-        $response = $this->actingAs($this->manager)
-            ->get(route('manager.helpdesk.tickets.show-full', $ticket));
-
-        $response->assertOk();
-        $response->assertSee('Remitente en lista negra');
-    }
+    // La ficha completa (show-full: página aparte con composer de correo
+    // suelto, botón "Bloquear remitente", etc.) se eliminó el 8-sep-2026 —
+    // ver commit correspondiente. Sus 4 tests (renderizado de la página,
+    // composer de email, botón/aviso de lista negra) se retiraron con ella:
+    // el listado con el panel superpuesto cubre las mismas acciones
+    // (modal "Pasar a lista negra" en tickets-app/core.js) sin una vista
+    // dedicada que probar aquí.
 
     public function test_index_shows_correct_unread_count_per_ticket(): void
     {

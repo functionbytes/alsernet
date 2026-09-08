@@ -86,11 +86,13 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Esta rama solo la usa el form clásico de la ficha completa (el panel
-        // superpuesto de /tickets pasa por la rama JSON de arriba vía
-        // execQuickAction) — se vuelve a la ficha completa, no al listado.
+        // Esta rama la usaba el form clásico de la ficha completa (show-full,
+        // eliminada el 8-sep-2026) — el panel superpuesto de /tickets pasa por
+        // la rama JSON de arriba vía execQuickAction. Sin ese form ya no hay
+        // caller conocido que llegue aquí sin ?wantsJson, pero se deja el
+        // fallback y ahora vuelve al listado en vez de a una ruta borrada.
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_closed'));
     }
 
@@ -110,9 +112,9 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
+        // Ver comentario en close(): mismo form clásico de show-full (eliminada).
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_resolved'));
     }
 
@@ -134,9 +136,9 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
+        // Ver comentario en close(): mismo form clásico de show-full (eliminada).
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_reopened'));
     }
 
@@ -178,8 +180,8 @@ class TicketLifecycleController extends Controller
 
         $merger->merge($ticket, $targetTicket);
 
-        // merge() solo se dispara desde el form de la ficha completa.
-        return redirect()->route('manager.helpdesk.tickets.show-full', $targetTicket)
+        // merge() solo se disparaba desde el form de show-full (eliminada 8-sep-2026).
+        return redirect()->route('manager.helpdesk.tickets.show', $targetTicket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_merged', ['source' => $ticket->ticket_number, 'target' => $targetTicket->ticket_number]));
     }
 
