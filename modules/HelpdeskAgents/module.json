@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskAgents",
+    "alias": "helpdeskagents",
+    "description": "Agentes IA para Helpdesk",
+    "keywords": ["helpdesk", "ai", "agents", "llm"],
+    "priority": 55,
+    "providers": [
+        "Modules\\HelpdeskAgents\\Providers\\HelpdeskAgentsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}
