@@ -154,3 +154,13 @@
 .toast-warning {
     background-color: #939495 !important;
 }
+
+/* ── Toolbar de selección masiva (bulk actions), fijo abajo ──── */
+/* 9 vistas de ajustes de HelpdeskTickets/Theme repetían este mismo
+   style="z-index:1050;" inline en #bulk-toolbar (regla del proyecto:
+   nunca style="" en HTML, siempre clases CSS — auditoría 14-sep-2026).
+   Un solo id, nunca dos instancias en la misma página, así que un
+   selector por id aquí cubre las 9 sin tocar el CSS por vista. */
+#bulk-toolbar {
+    z-index: 1050;
+}
