@@ -1,0 +1,32 @@
+{
+    "name": "modules/pulse",
+    "description": "Pulse Module - Application monitoring, performance metrics, health checks",
+    "keywords": ["pulse", "monitoring", "metrics", "performance"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "laravel/pulse": "^1.4"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Pulse\\": "app/",
+            "Modules\\Pulse\\Database\\Factories\\": "database/factories/",
+            "Modules\\Pulse\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Pulse\\Tests\\": "tests/"
+        }
+    }
+}
