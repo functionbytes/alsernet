@@ -1,0 +1,13 @@
+{
+    "name": "inoqualab/questions",
+    "description": "Consultas de producto de la tienda Alvarez.",
+    "type": "laravel-module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Questions\\": "app/",
+            "Modules\\Questions\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Questions\\Tests\\": "tests/"
+        }
+    },
+    "require": { "nwidart/laravel-modules": "^12.0" }
+}
