@@ -1,0 +1,33 @@
+{
+    "name": "modules/erp",
+    "description": "ERP Module - Enterprise resource planning, inventory, orders, integration",
+    "keywords": ["erp", "inventory", "orders", "integration"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "kub-at/php-simple-html-dom-parser": "^1.9",
+        "yajra/laravel-oci8": "^12.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Erp\\": "app/",
+            "Modules\\Erp\\Database\\Factories\\": "database/factories/",
+            "Modules\\Erp\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Erp\\Tests\\": "tests/"
+        }
+    }
+}
