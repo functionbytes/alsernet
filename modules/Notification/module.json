@@ -1,0 +1,9 @@
+{
+    "name": "Notification",
+    "alias": "notification",
+    "description": "Notification Module - Handles system notifications and notification management",
+    "keywords": ["notification", "notifications", "alerts", "messages"],
+    "priority": 10,
+    "providers": ["Modules\\Notification\\Providers\\NotificationServiceProvider"],
+    "files": []
+}
