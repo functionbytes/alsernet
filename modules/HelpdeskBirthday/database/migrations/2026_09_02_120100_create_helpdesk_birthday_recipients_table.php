@@ -50,7 +50,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['campaign_id', 'email']);
-            $table->index(['campaign_id', 'status', 'scheduled_at']);
+            // Nombre explícito: el autogenerado supera el límite de 64
+            // caracteres de MySQL para identificadores.
+            $table->index(['campaign_id', 'status', 'scheduled_at'], 'helpdesk_birthday_recipients_campaign_status_at_index');
             $table->index('email');
         });
     }

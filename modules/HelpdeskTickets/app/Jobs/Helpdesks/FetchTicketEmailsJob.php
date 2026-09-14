@@ -107,7 +107,7 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
             // no hay nada que hacer: caer al legacy procesaría el buzón
             // equivocado.
             if (empty($connections)) {
-                if ($this->onlyConnectionId !== null) {
+                if (isset($this->onlyConnectionId)) {
                     return;
                 }
 
@@ -174,7 +174,18 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         $data = json_decode((string) $raw, true);
         $connections = $data['imap']['connections'] ?? [];
 
-        if ($this->onlyConnectionId !== null) {
+        // isset() y no !== null: $onlyConnectionId es una propiedad tipada con
+        // default null promovida por constructor. Illuminate\Queue\SerializesModels
+        // omite del payload cualquier propiedad cuyo valor sea igual a su default
+        // (optimizacion de tamano) — como el dispatch normal (sin ambito) siempre
+        // deja este valor en null, nunca viaja serializada, y __unserialize() jamas
+        // la toca: queda SIN INICIALIZAR en el job reconstruido por el worker, no en
+        // null. Leerla con !== null explota con "must not be accessed before
+        // initialization" en cuanto el job pasa de verdad por la cola (no se via
+        // hasta ahora porque Horizon llevaba tiempo caido). isset() sobre una
+        // propiedad tipada sin inicializar da false sin lanzar, que es exactamente
+        // la semantica que se busca aqui (sin ambito = procesar todos los canales).
+        if (isset($this->onlyConnectionId)) {
             return array_values(array_filter(
                 $connections,
                 fn ($connection) => ($connection['id'] ?? null) === $this->onlyConnectionId
