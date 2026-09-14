@@ -1,0 +1,86 @@
+.minipopup-area {
+    position: fixed;
+    left: 30px;
+    bottom: 30px;
+    z-index: 3000;
+}
+
+.minipopup-box {
+    position: absolute;
+    left: -8rem;
+    width: 300px;
+    padding: 2rem;
+    background-color: #fff;
+    -webkit-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    -webkit-transform: translateY(-100%);
+    transform: translateY(-100%);
+    opacity: 0;
+    -webkit-transition: opacity 0.3s, left 0.3s ease-out, -webkit-transform 0.3s;
+    transition: opacity 0.3s, left 0.3s ease-out, -webkit-transform 0.3s;
+    transition: opacity 0.3s, left 0.3s ease-out, transform 0.3s;
+    transition: opacity 0.3s, left 0.3s ease-out, transform 0.3s, -webkit-transform 0.3s;
+    z-index: 3000;
+}
+
+.minipopup-box.show {
+    opacity: 1;
+    left: 0;
+}
+
+.minipopup-box.focus {
+    -webkit-transform: scale(0.98) translateY(-100%);
+    transform: scale(0.98) translateY(-100%);
+}
+
+.minipopup-box .product.product-cart {
+    padding-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.minipopup-box .product.product-cart .product-name {
+    margin-bottom: 0.9rem;
+    font-weight: 400;
+}
+
+.minipopup-box .product-details {
+    padding: 0 0 0 1.2rem;
+}
+
+.minipopup-box p {
+    margin-bottom: 0;
+    font-size: 1.3rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.minipopup-box .product-action {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+}
+
+.minipopup-box .product-action a:first-child {
+    background-color: #eee;
+    border-color: #eee;
+    color: #333;
+}
+
+.minipopup-box .product-action a:first-child:hover, .minipopup-box .product-action a:first-child:focus, .minipopup-box .product-action a:first-child:active {
+    background-color: #dcdcdc;
+    border-color: #dcdcdc;
+}
+
+.minipopup-box .product-action .btn {
+    padding-left: 1.9em;
+    padding-right: 1.9em;
+}
+
+@media (max-width: 479px) {
+    .minipopup-area {
+        left: 10px;
+    }
+}

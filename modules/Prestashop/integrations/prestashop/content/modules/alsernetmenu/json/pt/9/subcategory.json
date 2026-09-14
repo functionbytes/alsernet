@@ -1,0 +1,251 @@
+[
+    {
+        "title": "Esquis",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Esquis + Fixa\u00e7\u00f5es",
+                "url": "\/pt\/esqui\/esquis_fixacoes",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Botas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 63,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Botas de esqui",
+                "url": "\/pt\/esqui\/botas_de_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Botas Apr\u00e8s-ski",
+                "url": "\/pt\/esqui\/botas_apresski",
+                "visible": "1"
+            },
+            {
+                "title": "CAL\u00c7ADO",
+                "url": "\/pt\/esqui\/calcado",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cascos y protecciones",
+        "action": "",
+        "type": "subcategorie",
+        "id": 64,
+        "column": "1",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Capacetes de Esqui",
+                "url": "\/pt\/esqui\/capacetes_de_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Protectores de Costa e Outros Protectores",
+                "url": "\/pt\/esqui\/protectores_de_costa_e_outros_protectores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "\u00d3culos e m\u00e1scaras",
+        "action": "",
+        "type": "subcategorie",
+        "id": 65,
+        "column": "1",
+        "position_category": "5",
+        "position": "4",
+        "items": [
+            {
+                "title": "M\u00e1scaras e \u00d3culos de esqui",
+                "url": "\/pt\/esqui\/mascaras_e_oculos_de_esqui",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bast\u00f5es",
+        "action": "",
+        "type": "subcategorie",
+        "id": 66,
+        "column": "1",
+        "position_category": "4",
+        "position": "5",
+        "items": [
+            {
+                "title": "Bast\u00f5es de esqui",
+                "url": "\/pt\/esqui\/bastoes_de_esqui",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Acess\u00f3rios",
+        "action": "",
+        "type": "subcategorie",
+        "id": 67,
+        "column": "2",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Acess\u00f3rios de Esqui",
+                "url": "\/pt\/esqui\/acessorios_de_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Tren\u00f3s e esquis crian\u00e7a",
+                "url": "\/pt\/esqui\/trenos_e_esquis_crianca",
+                "visible": "1"
+            },
+            {
+                "title": "Cuidado Pessoal",
+                "url": "\/pt\/esqui\/cuidado_pessoal",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e2maras",
+                "url": "\/pt\/esqui\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "Emissoras",
+                "url": "\/pt\/esqui\/emissoras",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/pt\/esqui\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Lanternas e Focos",
+                "url": "\/pt\/esqui\/lanternas_e_focos",
+                "visible": "1"
+            },
+            {
+                "title": "Bin\u00f3culos",
+                "url": "\/pt\/esqui\/binoculos",
+                "visible": "1"
+            },
+            {
+                "title": "Rel\u00f3gios",
+                "url": "\/pt\/esqui\/relogios",
+                "visible": "0"
+            },
+            {
+                "title": "Telesc\u00f3pios",
+                "url": "\/pt\/esqui\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Livre",
+                "url": "\/pt\/esqui\/tempo_livre",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Roupa",
+        "action": "",
+        "type": "subcategorie",
+        "id": 68,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Roupa Homem Esqui",
+                "url": "\/pt\/esqui\/roupa_homem_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Mulher Esqui",
+                "url": "\/pt\/esqui\/roupa_mulher_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Crian\u00e7a Esqui",
+                "url": "\/pt\/esqui\/roupa_crianca_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Outdoor",
+                "url": "\/pt\/aventura\/roupa_e_complementos-roupa_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Gorros e Golas",
+                "url": "\/pt\/esqui\/gorros_e_golas",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas de Esqui",
+                "url": "\/pt\/esqui\/luvas_de_esqui",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Interior",
+                "url": "\/pt\/esqui\/roupa_interior",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Transporte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 69,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Sacos de transporte",
+                "url": "\/pt\/esqui\/sacos_de_transporte",
+                "visible": "1"
+            },
+            {
+                "title": "Mochilas",
+                "url": "\/pt\/esqui\/sacos_de_transporte-mochilas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 70,
+        "column": "3",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/esqui\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Esqui",
+                "url": "\/pt\/oferta_express_esqui",
+                "visible": "1"
+            }
+        ]
+    }
+]

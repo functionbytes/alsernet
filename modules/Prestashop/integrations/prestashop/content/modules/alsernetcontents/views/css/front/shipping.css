@@ -1,0 +1,123 @@
+.shipping .container .panel-title h4 {
+    font-size: 18px;
+    margin: 0 0 15px;
+    color: #90BB13;
+    text-align: left
+}
+
+.shipping .container .block_content {
+    font-family: 'Barlow', sans-serif !important;
+    font-size: 15px;
+}
+
+.shipping .container .block_content p {
+    font-family: 'Barlow', sans-serif !important;    display: block;
+    font-size: 15px;
+    letter-spacing: 0;
+    line-height: 22px;
+}
+
+
+.shipping .container .panel-group .panel-default .panel-title {
+    border-top: 1px solid transparent;
+    padding: 0;
+    margin-bottom: 0;
+    font-size: 12px
+}
+
+.shipping .container .panel-group .panel-default .panel-title .collapsed {
+    display: block;
+    font-weight: 400
+}
+
+.shipping .container .panel-default {
+    border: 1px solid transparent;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    -o-box-shadow: none;
+    -ms-box-shadow: none;
+    box-shadow: none;
+    margin-bottom: 2px;
+}
+
+.shipping .container .panel-default .panel-title {
+    text-transform: none;
+    background: #f0f0f0;
+    position: relative;
+    font-weight: 400
+}
+
+.shipping .container .panel-default .panel-title a:before {
+    background: none;
+    content: "arrow_drop_up";
+    cursor: pointer;
+    display: block;
+    font-family: "Material Icons";
+    font-size: 25px;
+    position: absolute;
+    left: auto;
+    right: 0;
+    top: 0;
+    width: auto
+}
+
+.shipping .container .panel-default .panel-title .collapsed:before {
+    background: none;
+    content: "arrow_drop_down";
+    cursor: pointer;
+    display: block;
+    font-family: "Material Icons";
+    font-size: 25px;
+    position: absolute;
+    left: auto;
+    right: 0;
+    top: 0;
+    width: auto
+}
+
+.shipping .container .panel-default .panel-heading {
+    background: #f0f0f0;
+    border: 1px solid #f0f0f0
+}
+
+.shipping .container .panel-default > .panel-heading + .panel-collapse .panel-body {
+    border: 1px solid #f0f0f0
+}
+
+.shipping .container .panel-default .panel-title {
+    margin: 0;
+    height: 30px;
+    line-height: 30px;
+    padding-left: 15px;
+    padding-right: 15px
+}
+
+.shipping .container .panel-default .panel-title .collapsed:before, .shipping .container .panel-default .panel-title a:before {
+    right: auto;
+    text-transform: none;
+    left: 15px;
+    transform: rotate(-90deg);
+    content: "arrow_drop_down"
+}
+
+.shipping .container .panel-default .panel-title a {
+    text-transform: uppercase;
+    font-size: 15px;
+    color: #9B9B9B;
+    font-weight: 700;
+    display: block;
+    padding-left: 30px
+}
+
+.shipping .container .panel-default > .panel-heading + .panel-collapse .panel-body {
+    padding: 20px
+}
+
+.shipping .expand::after, .collapse::after {
+    content: "";
+}
+
+.shipping .container .panel-default .panel-title {
+    background: #EAEAEA;
+    color: #9B9B9B
+}

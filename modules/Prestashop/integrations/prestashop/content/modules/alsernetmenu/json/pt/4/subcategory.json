@@ -1,0 +1,760 @@
+[
+    {
+        "title": "Armas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 10,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Armas de Chumbos",
+                "url": "\/pt\/caca\/armas_de_chumbos",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft",
+                "url": "\/pt\/caca\/airsoft",
+                "visible": "1"
+            },
+            {
+                "title": "Armas Decorativas",
+                "url": "\/pt\/caca\/armas_decorativas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Otica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 11,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Miras",
+                "url": "\/pt\/caca\/miras",
+                "visible": "1"
+            },
+            {
+                "title": "Bin\u00f3culos",
+                "url": "\/pt\/caca\/binoculos",
+                "visible": "1"
+            },
+            {
+                "title": "Vis\u00e3o T\u00e9rmica e Noturna",
+                "url": "\/pt\/caca\/visao_termica_e_noturna",
+                "visible": "1"
+            },
+            {
+                "title": "Monoculares t\u00e9rmicos",
+                "url": "\/pt\/caca\/monoculares_termicos",
+                "visible": "1"
+            },
+            {
+                "title": "Medidores de Dist\u00e2ncia",
+                "url": "\/pt\/caca\/medidores_de_distancia",
+                "visible": "1"
+            },
+            {
+                "title": "Pontos Vermelhos",
+                "url": "\/pt\/caca\/pontos_vermelhos",
+                "visible": "1"
+            },
+            {
+                "title": "Telesc\u00f3pios",
+                "url": "\/pt\/caca\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios de \u00d3tica",
+                "url": "\/pt\/caca\/acessorios_de_otica",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Acessorios",
+        "action": "",
+        "type": "subcategorie",
+        "id": 12,
+        "column": "1",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Prote\u00e7\u00e3o Auditiva e Ocular",
+                "url": "\/pt\/caca\/protecao_auditiva_e_ocular",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios para o Carro",
+                "url": "\/pt\/caca\/acessorios_para_o_carro",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metais",
+                "url": "\/pt\/caca\/detectores_de_metais",
+                "visible": "1"
+            },
+            {
+                "title": "Emissoras",
+                "url": "\/pt\/caca\/emissoras",
+                "visible": "1"
+            },
+            {
+                "title": "GPS Port\u00e1teis",
+                "url": "\/pt\/caca\/gps_portateis",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Tiro com Arco",
+                "url": "\/pt\/caca\/kits_tiro_com_arco",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras Homologadas",
+                "url": "\/pt\/caca\/mascaras_homologadas",
+                "visible": "1"
+            },
+            {
+                "title": "Presentes Ca\u00e7a",
+                "url": "\/pt\/caca\/presentes_caca",
+                "visible": "1"
+            },
+            {
+                "title": "Rel\u00f3gios",
+                "url": "\/pt\/caca\/relogios",
+                "visible": "1"
+            },
+            {
+                "title": "Lou\u00e7a, Decora\u00e7\u00e3o e Utilit\u00e1rios",
+                "url": "\/pt\/caca\/louca_decoracao_e_utilitarios",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Livre",
+                "url": "\/pt\/caca\/tempo_livre",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 13,
+        "column": "2",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Cofres para Armas",
+                "url": "\/pt\/caca\/cofres_para_armas",
+                "visible": "1"
+            },
+            {
+                "title": "Trip\u00e9s, Monop\u00e9s e bip\u00e9s",
+                "url": "\/pt\/caca\/tripes_monopes_e_bipes",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e2maras",
+                "url": "\/pt\/caca\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "Reprodutores, chamarizes e nega\u00e7as",
+                "url": "\/pt\/caca\/reprodutores_chamarizes_e_negacas",
+                "visible": "1"
+            },
+            {
+                "title": "Postos de Ca\u00e7a",
+                "url": "\/pt\/caca\/postos_de_caca",
+                "visible": "1"
+            },
+            {
+                "title": "Cadeiras de ca\u00e7a",
+                "url": "\/pt\/caca\/cadeiras_de_caca",
+                "visible": "1"
+            },
+            {
+                "title": "Pontos de Mira",
+                "url": "\/pt\/caca\/pontos_de_mira",
+                "visible": "1"
+            },
+            {
+                "title": "Colimadores",
+                "url": "\/pt\/caca\/colimadores",
+                "visible": "1"
+            },
+            {
+                "title": "Montagens",
+                "url": "\/pt\/caca\/montagens",
+                "visible": "1"
+            },
+            {
+                "title": "Coldres e Estojos",
+                "url": "\/pt\/caca\/coldres_e_estojos",
+                "visible": "1"
+            },
+            {
+                "title": "Transporte animais",
+                "url": "\/pt\/caca\/transporte_animais",
+                "visible": "1"
+            },
+            {
+                "title": "Limpeza Armas",
+                "url": "\/pt\/caca\/limpeza_armas",
+                "visible": "1"
+            },
+            {
+                "title": "Mochilas",
+                "url": "\/pt\/caca\/mochilas",
+                "visible": "1"
+            },
+            {
+                "title": "Depenadoras",
+                "url": "\/pt\/caca\/depenadoras",
+                "visible": "1"
+            },
+            {
+                "title": "Jogos de ca\u00e7a e tiro",
+                "url": "\/pt\/caca\/competicao_e_tiro-jogos_de_caca_e_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Porta-ca\u00e7a",
+                "url": "\/pt\/caca\/portacaca",
+                "visible": "1"
+            },
+            {
+                "title": "Recarga de Muni\u00e7\u00f5es",
+                "url": "\/pt\/caca\/recarga_de_municoes",
+                "visible": "1"
+            },
+            {
+                "title": "Cartucheiras e Porta Muni\u00e7\u00f5es",
+                "url": "\/pt\/caca\/cartucheiras_e_porta_municoes",
+                "visible": "1"
+            },
+            {
+                "title": "Chapas de coice",
+                "url": "\/pt\/caca\/chapas_de_coice",
+                "visible": "1"
+            },
+            {
+                "title": "Bandoleiras",
+                "url": "\/pt\/caca\/bandoleiras",
+                "visible": "1"
+            },
+            {
+                "title": "Dispensadores",
+                "url": "\/pt\/caca\/complementos-dispensadores",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos (Ver todos)",
+                "url": "\/pt\/caca\/complementos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Roupa e Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 14,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Cal\u00e7as",
+                "url": "\/pt\/caca\/roupa_e_complementos-calcas",
+                "visible": "1"
+            },
+            {
+                "title": "Parkas",
+                "url": "\/pt\/caca\/roupa_e_complementos-parkas",
+                "visible": "1"
+            },
+            {
+                "title": "Coletes",
+                "url": "\/pt\/caca\/roupa_e_complementos-coletes",
+                "visible": "1"
+            },
+            {
+                "title": "Polares",
+                "url": "\/pt\/caca\/roupa_e_complementos-polares",
+                "visible": "1"
+            },
+            {
+                "title": "Camisas e T-shirts",
+                "url": "\/pt\/caca\/roupa_e_complementos-camisas_e_tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Camisolas",
+                "url": "\/pt\/caca\/roupa_e_complementos-camisolas",
+                "visible": "1"
+            },
+            {
+                "title": "Casacos e Softshells",
+                "url": "\/pt\/caca\/roupa_e_complementos-casacos_e_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Imperme\u00e1veis",
+                "url": "\/pt\/caca\/roupa_e_complementos-impermeaveis",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa mulher e crian\u00e7a",
+                "url": "\/pt\/caca\/roupa_mulher_e_crianca",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Interior",
+                "url": "\/pt\/caca\/roupa_e_complementos-roupa_interior",
+                "visible": "1"
+            },
+            {
+                "title": "Meias",
+                "url": "\/pt\/caca\/roupa_e_complementos-meias",
+                "visible": "1"
+            },
+            {
+                "title": "Polainas",
+                "url": "\/pt\/caca\/roupa_e_complementos-polainas",
+                "visible": "1"
+            },
+            {
+                "title": "Polos",
+                "url": "\/pt\/caca\/roupa_e_complementos-polos",
+                "visible": "1"
+            },
+            {
+                "title": "Bon\u00e9s e chap\u00e9us",
+                "url": "\/pt\/caca\/bones_e_chapeus",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos Completos",
+                "url": "\/pt\/caca\/roupa_e_complementos-fatos_completos",
+                "visible": "1"
+            },
+            {
+                "title": "Camuflagem",
+                "url": "\/pt\/caca\/roupa_e_complementos-camuflagem",
+                "visible": "1"
+            },
+            {
+                "title": "Alta Visibilidade",
+                "url": "\/pt\/caca\/roupa_e_complementos-alta_visibilidade",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas",
+                "url": "\/pt\/caca\/luvas",
+                "visible": "1"
+            },
+            {
+                "title": "Golas e Passa-Montanhas",
+                "url": "\/pt\/caca\/roupa_e_complementos-golas_e_passamontanhas",
+                "visible": "1"
+            },
+            {
+                "title": "Cintos e Suspens\u00f3rios",
+                "url": "\/pt\/caca\/roupa_e_complementos-cintos_e_suspensorios",
+                "visible": "1"
+            },
+            {
+                "title": "Conjuntos",
+                "url": "\/pt\/caca\/roupa_e_complementos-conjuntos",
+                "visible": "1"
+            },
+            {
+                "title": "Gravatas e Bot\u00f5es de Punho",
+                "url": "\/pt\/caca\/roupa_e_complementos-gravatas_e_botoes_de_punho",
+                "visible": "1"
+            },
+            {
+                "title": "Pulseiras",
+                "url": "\/pt\/caca\/pulseiras",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa com Aquecimento",
+                "url": "\/pt\/caca\/roupa_e_complementos-roupa_com_aquecimento",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa e Complementos (Ver todos)",
+                "url": "\/pt\/caca\/roupa_e_complementos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Taxidermia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 15,
+        "column": "3",
+        "position_category": "12",
+        "position": "2",
+        "items": [
+            {
+                "title": "Peanhas de Taxidermia",
+                "url": "\/pt\/caca\/taxidermia-peanhas_de_taxidermia",
+                "visible": "1"
+            },
+            {
+                "title": "Cr\u00e2nios e Frontais",
+                "url": "\/pt\/caca\/taxidermia-cranios_e_frontais",
+                "visible": "1"
+            },
+            {
+                "title": "Prepara\u00e7\u00e3o de Trof\u00e9us",
+                "url": "\/pt\/caca\/taxidermia-preparacao_de_trofeus",
+                "visible": "1"
+            },
+            {
+                "title": "Medalhas",
+                "url": "\/pt\/caca\/taxidermia-medalhas",
+                "visible": "1"
+            },
+            {
+                "title": "Trof\u00e9us Cor\u00e7o",
+                "url": "\/pt\/caca\/taxidermia-trofeus_corco",
+                "visible": "1"
+            },
+            {
+                "title": "Taxidermia (Ver todos)",
+                "url": "\/pt\/caca\/taxidermia",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "CAL\u00c7ADO",
+        "action": "",
+        "type": "subcategorie",
+        "id": 16,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Botas Gore-tex",
+                "url": "\/pt\/caca\/calcado-botas_goretex",
+                "visible": "1"
+            },
+            {
+                "title": "Botas Baixas",
+                "url": "\/pt\/caca\/calcado-botas_baixas",
+                "visible": "1"
+            },
+            {
+                "title": "Botas Altas",
+                "url": "\/pt\/caca\/calcado-botas_altas",
+                "visible": "1"
+            },
+            {
+                "title": "Botas de \u00e1gua",
+                "url": "\/pt\/caca\/calcado-botas_de_agua",
+                "visible": "1"
+            },
+            {
+                "title": "Botas imperme\u00e1veis",
+                "url": "\/pt\/caca\/calcado-botas_impermeaveis",
+                "visible": "1"
+            },
+            {
+                "title": "Sapatos",
+                "url": "\/pt\/caca\/calcado-sapatos",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7ado outdoor",
+                "url": "\/pt\/caca\/calcado-calcado_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7ado de mulher",
+                "url": "\/pt\/caca\/calcado-calcado_de_mulher",
+                "visible": "1"
+            },
+            {
+                "title": "Sand\u00e1lias de dedo",
+                "url": "\/pt\/caca\/calcado-sandalias_de_dedo",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios de cal\u00e7ado",
+                "url": "\/pt\/caca\/calcado-acessorios_de_calcado",
+                "visible": "1"
+            },
+            {
+                "title": "CAL\u00c7ADO (Ver todos)",
+                "url": "\/pt\/caca\/calcado",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Municao",
+        "action": "",
+        "type": "subcategorie",
+        "id": 17,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Muni\u00e7\u00e3o para Armas de Ar Comprimido",
+                "url": "\/pt\/caca\/municao_para_armas_de_ar_comprimido",
+                "visible": "1"
+            },
+            {
+                "title": "Muni\u00e7\u00e3o para Armas Airsoft",
+                "url": "\/pt\/caca\/municao_para_armas_airsoft",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cutelaria",
+        "action": "",
+        "type": "subcategorie",
+        "id": 18,
+        "column": "4",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Facas",
+                "url": "\/pt\/caca\/facas",
+                "visible": "1"
+            },
+            {
+                "title": "Navalhas",
+                "url": "\/pt\/caca\/navalhas",
+                "visible": "1"
+            },
+            {
+                "title": "Multi\u00fasos",
+                "url": "\/pt\/caca\/multiusos",
+                "visible": "1"
+            },
+            {
+                "title": "Machados e Martelos",
+                "url": "\/pt\/caca\/machados_e_martelos",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/pt\/caca\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "Afiadores",
+                "url": "\/pt\/caca\/afiadores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Lanternas e Focos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 19,
+        "column": "4",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Lanternas de M\u00e3o",
+                "url": "\/pt\/caca\/lanternas_e_focos-lanternas_de_mao",
+                "visible": "1"
+            },
+            {
+                "title": "Acopl\u00e1veis \u00e0 arma",
+                "url": "\/pt\/caca\/lanternas_e_focos-acoplaveis_a_arma",
+                "visible": "1"
+            },
+            {
+                "title": "Lanternas de Cabe\u00e7a",
+                "url": "\/pt\/caca\/lanternas_e_focos-lanternas_de_cabeca",
+                "visible": "1"
+            },
+            {
+                "title": "Focos",
+                "url": "\/pt\/caca\/lanternas_e_focos-focos",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios lanternas",
+                "url": "\/pt\/caca\/lanternas_e_focos-acessorios_lanternas",
+                "visible": "1"
+            },
+            {
+                "title": "Lanternas e Focos (Ver todos)",
+                "url": "\/pt\/caca\/lanternas_e_focos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Produtos para o C\u00e3o",
+        "action": "",
+        "type": "subcategorie",
+        "id": 20,
+        "column": "5",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Coleiras",
+                "url": "\/pt\/caca\/produtos_para_o_cao-coleiras",
+                "visible": "1"
+            },
+            {
+                "title": "Coletes de prote\u00e7\u00e3o",
+                "url": "\/pt\/caca\/produtos_para_o_cao-coletes_de_protecao",
+                "visible": "1"
+            },
+            {
+                "title": "Transporte de c\u00e3es",
+                "url": "\/pt\/caca\/produtos_para_o_cao-transporte_de_caes",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios",
+                "url": "\/pt\/caca\/produtos_para_o_cao-acessorios",
+                "visible": "1"
+            },
+            {
+                "title": "Trelas",
+                "url": "\/pt\/caca\/produtos_para_o_cao-trelas",
+                "visible": "1"
+            },
+            {
+                "title": "Peitorais para c\u00e3es",
+                "url": "\/pt\/caca\/produtos_para_o_cao-peitorais_para_caes",
+                "visible": "1"
+            },
+            {
+                "title": "Apitos",
+                "url": "\/pt\/caca\/produtos_para_o_cao-apitos",
+                "visible": "1"
+            },
+            {
+                "title": "Inseticida",
+                "url": "\/pt\/caca\/produtos_para_o_cao-inseticida",
+                "visible": "1"
+            },
+            {
+                "title": "Produtos para o C\u00e3o (Ver todos)",
+                "url": "\/pt\/caca\/produtos_para_o_cao",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Competi\u00e7\u00e3o e tiro desportivo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 21,
+        "column": "5",
+        "position_category": "13",
+        "position": "2",
+        "items": [
+            {
+                "title": "Protetores Auditivos e Tamp\u00f5es",
+                "url": "\/pt\/caca\/competicao_e_tiro-protetores_auditivos_e_tampoes",
+                "visible": "1"
+            },
+            {
+                "title": "Coletes Tiro",
+                "url": "\/pt\/caca\/competicao_e_tiro-coletes_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "\u00d3culos de tiro",
+                "url": "\/pt\/caca\/competicao_e_tiro-oculos_de_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1quinas de lan\u00e7ar pratos",
+                "url": "\/pt\/caca\/competicao_e_tiro-maquinas_de_lancar_pratos",
+                "visible": "1"
+            },
+            {
+                "title": "Apoios",
+                "url": "\/pt\/caca\/competicao_e_tiro-apoios",
+                "visible": "1"
+            },
+            {
+                "title": "Pontos de Mira",
+                "url": "\/pt\/caca\/competicao_e_tiro-pontos_de_mira",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos e Malas",
+                "url": "\/pt\/caca\/competicao_e_tiro-sacos_e_malas",
+                "visible": "0"
+            },
+            {
+                "title": "Pratos e Alvos",
+                "url": "\/pt\/caca\/competicao_e_tiro-pratos_e_alvos",
+                "visible": "1"
+            },
+            {
+                "title": "Ombreiras e Cristas",
+                "url": "\/pt\/caca\/competicao_e_tiro-ombreiras_e_cristas",
+                "visible": "1"
+            },
+            {
+                "title": "Competi\u00e7\u00e3o e Tiro (Ver todos)",
+                "url": "\/pt\/caca\/competicao_e_tiro",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 22,
+        "column": "5",
+        "position_category": "15",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/caca\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Ca\u00e7a",
+                "url": "\/pt\/caca\/oferta_express_caca",
+                "visible": "1"
+            },
+            {
+                "title": "Micropre\u00e7os CA\u00c7A",
+                "url": "\/pt\/caca\/microprecos_caca",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Packs carabinas de chumbo",
+                "url": "\/pt\/caca\/oferta_packs_carabinas_de_chumbo",
+                "visible": "0"
+            }
+        ]
+    }
+]

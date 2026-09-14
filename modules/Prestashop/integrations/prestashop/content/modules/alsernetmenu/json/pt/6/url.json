@@ -1,0 +1,33 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/equitacao/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/equitacao/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/equitacao/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/equitacao/mais_vendidos"
+          },
+          {
+            "title": "Boletins",
+            "url": "/pt/equitacao/monthlynewsletters"
+          }
+        ]
+      }
+]

@@ -1,0 +1,34 @@
+[
+    {
+      "title": "Pode lhe interessar",
+        "url": "",
+        "action": "",
+        "type": "special",
+        "column": "1",
+        "id": "5",
+        "position": "5",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/golfe/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/golfe/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/golfe/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/golfe/mais_vendidos"
+          },
+          {
+            "title": "Diagnóstico De Golf",
+            "url": "/pt/golfe/diagnostico-equipamento-golfe"
+          }
+        ]
+      }
+
+]

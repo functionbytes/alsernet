@@ -1,0 +1,603 @@
+[
+    {
+        "title": "Canas de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 23,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Spinning",
+                "url": "\/pt\/pesca\/canas_de_pesca-spinning",
+                "visible": "1"
+            },
+            {
+                "title": "De Encaixe de Surfcasting",
+                "url": "\/pt\/pesca\/canas_de_pesca-de_encaixe_de_surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "De Encaixe com Passadores Lan\u00e7amento",
+                "url": "\/pt\/pesca\/canas_de_pesca-de_encaixe_com_passadores_lancamento",
+                "visible": "1"
+            },
+            {
+                "title": "Telesc\u00f3picas com passadores lan\u00e7amento ligeiro, compacta",
+                "url": "\/pt\/pesca\/canas_de_pesca-telescopicas_com_passadores_lancamento_ligeiro_compacta",
+                "visible": "1"
+            },
+            {
+                "title": "Pesca desde Embarca\u00e7\u00e3o",
+                "url": "\/pt\/pesca\/canas_de_pesca-pesca_desde_embarcacao",
+                "visible": "1"
+            },
+            {
+                "title": "Corrico",
+                "url": "\/pt\/pesca\/canas_de_pesca-corrico",
+                "visible": "1"
+            },
+            {
+                "title": "Canas telesc\u00f3picas com An\u00e9is Extra Fortes",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_telescopicas_com_aneis_extra_fortes",
+                "visible": "1"
+            },
+            {
+                "title": "Eging pesca do choco",
+                "url": "\/pt\/pesca\/canas_de_pesca-eging_pesca_do_choco",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Jigging",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_jigging",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Carp Fishing",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_carp_fishing",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Telesc\u00f3picas de Surfcasting",
+                "url": "\/pt\/pesca\/canas_de_pesca-telescopicas_de_surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Telesc\u00f3picas com Passadores, Isco e Pulso",
+                "url": "\/pt\/pesca\/canas_de_pesca-telescopicas_com_passadores_isco_e_pulso",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Pesca do Black-Bass",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_pesca_do_black_bass",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Pesca do Siluro",
+                "url": "\/pt\/pesca\/canas_de_pesca-pesca_do_siluro",
+                "visible": "1"
+            },
+            {
+                "title": "Canas de encaixe sem Anilhas",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_de_encaixe_sem_anilhas",
+                "visible": "0"
+            },
+            {
+                "title": "Canas Telesc\u00f3picas Pesca ao Fundo",
+                "url": "\/pt\/pesca\/canas_de_pesca-telescopicas_pesca_ao_fundo",
+                "visible": "1"
+            },
+            {
+                "title": "Canas de Encaixe de Rock Fishing",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_de_encaixe_de_rock_fishing",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Telesc\u00f3picas sem Passadores, Isco e Pulso",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_telescopicas_sem_passadores_isco_e_pulso",
+                "visible": "1"
+            },
+            {
+                "title": "Canas pesca Inglesa",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_pesca_inglesa",
+                "visible": "1"
+            },
+            {
+                "title": "Canas Pesca \u00e0 Mosca",
+                "url": "\/pt\/pesca\/canas_de_pesca-canas_pesca_a_mosca",
+                "visible": "1"
+            },
+            {
+                "title": "Pesca \u00e0 Fisga",
+                "url": "\/pt\/pesca\/canas_de_pesca-pesca_a_fisga",
+                "visible": "1"
+            },
+            {
+                "title": "Canas de pesca (Ver todos)",
+                "url": "\/pt\/pesca\/canas_de_pesca",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Carretos de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 24,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Carretos com Trav\u00e3o Dianteiro",
+                "url": "\/pt\/pesca\/carretos-carretos_com_travao_dianteiro",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Spinning",
+                "url": "\/pt\/pesca\/carretos-carretos_spinning",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Surfcasting",
+                "url": "\/pt\/pesca\/carretos-carretos_surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Embarcada e\/ou Corrico",
+                "url": "\/pt\/pesca\/carretos-carretos_embarcada_eou_corrico",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos de Jigging",
+                "url": "\/pt\/pesca\/carretos-carretos_de_jigging",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Multiplicadores (Baitcasting)",
+                "url": "\/pt\/pesca\/carretos-carretos_multiplicadores_baitcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Desengat\u00e1veis (Baitrunner)",
+                "url": "\/pt\/pesca\/carretos-carretos_desengataveis_baitrunner",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos com Trav\u00e3o Traseiro",
+                "url": "\/pt\/pesca\/carretos-carretos_com_travao_traseiro",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos El\u00e9tricos",
+                "url": "\/pt\/pesca\/carretos-carretos_eletricos",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Pesca Inglesa",
+                "url": "\/pt\/pesca\/carretos-carretos_pesca_inglesa",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos Fechados",
+                "url": "\/pt\/pesca\/carretos-carretos_fechados",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos de pesca (Ver todos)",
+                "url": "\/pt\/pesca\/carretos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipamentos e kits de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 25,
+        "column": "2",
+        "position_category": "3",
+        "position": "2",
+        "items": [
+            {
+                "title": "Kits Surfcasting",
+                "url": "\/pt\/pesca\/kits_de_pesca-surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Spinning kits",
+                "url": "\/pt\/pesca\/kits_de_pesca-spinning_kits",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Lan\u00e7amento Ligeiro",
+                "url": "\/pt\/pesca\/kits_de_pesca-lancamento_ligeiro",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Pesca da carpa",
+                "url": "\/pt\/pesca\/kits_de_pesca-pesca_da_carpa",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Pesca ao Fundo",
+                "url": "\/pt\/pesca\/kits_de_pesca-kits_pesca_ao_fundo",
+                "visible": "1"
+            },
+            {
+                "title": "Kits pesca Corrico",
+                "url": "\/pt\/pesca\/kits_de_pesca-corrico",
+                "visible": "0"
+            },
+            {
+                "title": "Kits Pesca Inglesa",
+                "url": "\/pt\/pesca\/kits_de_pesca-kits_pesca_inglesa",
+                "visible": "0"
+            },
+            {
+                "title": "Kits Pesca \u00e0 Mosca",
+                "url": "\/pt\/pesca\/kits_de_pesca-kits_pesca_a_mosca",
+                "visible": "0"
+            },
+            {
+                "title": "Kits Casting",
+                "url": "\/pt\/pesca\/kits_de_pesca-casting",
+                "visible": "1"
+            },
+            {
+                "title": "Pesca com Isca",
+                "url": "\/pt\/pesca\/kits_de_pesca-pesca_com_isca",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Linhas de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 26,
+        "column": "3",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Monofilamento",
+                "url": "\/pt\/pesca\/linhas-monofilamento",
+                "visible": "1"
+            },
+            {
+                "title": "Multifilamentos",
+                "url": "\/pt\/pesca\/linhas-multifilamento",
+                "visible": "1"
+            },
+            {
+                "title": "Fluorocarbonos",
+                "url": "\/pt\/pesca\/linhas-fluorocarbonos",
+                "visible": "1"
+            },
+            {
+                "title": "Bobinadores",
+                "url": "\/pt\/pesca\/linhas-bobinadores",
+                "visible": "1"
+            },
+            {
+                "title": "Linhas (Ver todos)",
+                "url": "\/pt\/pesca\/linhas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Iscos de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 27,
+        "column": "3",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Colheres de pesca",
+                "url": "\/pt\/pesca\/colheres_de_pesca",
+                "visible": "1"
+            },
+            {
+                "title": "Iscos e Peixes Artificiais",
+                "url": "\/pt\/pesca\/iscos_e_peixes_artificiais",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Kits de pesca",
+        "action": "",
+        "type": "subcategorie",
+        "id": 28,
+        "column": "3",
+        "position_category": "6",
+        "position": "3",
+        "items": [
+            {
+                "title": "Anz\u00f3is e destorcedores",
+                "url": "\/pt\/pesca\/anzois_e_destorcedores",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas e Mochilas",
+                "url": "\/pt\/pesca\/bolsas_e_mochilas",
+                "visible": "1"
+            },
+            {
+                "title": "Caixas e Cestas",
+                "url": "\/pt\/pesca\/caixas_e_cestas",
+                "visible": "1"
+            },
+            {
+                "title": "Flutuadores e Chumbos",
+                "url": "\/pt\/pesca\/flutuadores_e_chumbos",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos \/ Bolsas Canas e Carretos",
+                "url": "\/pt\/pesca\/sacos_bolsas_canas_e_carretos",
+                "visible": "1"
+            },
+            {
+                "title": "\u00d3culos pesca",
+                "url": "\/pt\/pesca\/oculos_pesca",
+                "visible": "1"
+            },
+            {
+                "title": "Patos",
+                "url": "\/pt\/pesca\/patos",
+                "visible": "1"
+            },
+            {
+                "title": "Porta-Iscos",
+                "url": "\/pt\/pesca\/portaiscos",
+                "visible": "1"
+            },
+            {
+                "title": "Camaroeiros, Redes e Cestos",
+                "url": "\/pt\/pesca\/camaroeiros_redes_e_cestos",
+                "visible": "1"
+            },
+            {
+                "title": "Trip\u00e9s e Esta\u00e7\u00f5es",
+                "url": "\/pt\/pesca\/tripes_e_estacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos Pesca",
+                "url": "\/pt\/pesca\/complementos_pesca",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 29,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Almofadas Peixes",
+                "url": "\/pt\/pesca\/almofadas_peixes",
+                "visible": "1"
+            },
+            {
+                "title": "Livros de pesca",
+                "url": "\/pt\/pesca\/livros_de_pesca",
+                "visible": "1"
+            },
+            {
+                "title": "Lanchas e Motores",
+                "url": "\/pt\/pesca\/lanchas_e_motores",
+                "visible": "1"
+            },
+            {
+                "title": "Bancos e Cadeiras",
+                "url": "\/pt\/pesca\/bancos_e_cadeiras",
+                "visible": "1"
+            },
+            {
+                "title": "Sondas",
+                "url": "\/pt\/pesca\/sondas",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Livre",
+                "url": "\/pt\/pesca\/tempo_livre",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Acessorios",
+        "action": "",
+        "type": "subcategorie",
+        "id": 30,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Facas",
+                "url": "\/pt\/pesca\/facas",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metais",
+                "url": "\/pt\/pesca\/detectores_de_metais",
+                "visible": "1"
+            },
+            {
+                "title": "Emissoras",
+                "url": "\/pt\/pesca\/emissoras",
+                "visible": "1"
+            },
+            {
+                "title": "Machados e Martelos",
+                "url": "\/pt\/pesca\/machados_e_martelos",
+                "visible": "1"
+            },
+            {
+                "title": "Lanternas e Focos",
+                "url": "\/pt\/pesca\/lanternas_e_focos",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/pt\/pesca\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras Homologadas",
+                "url": "\/pt\/pesca\/mascaras_homologadas",
+                "visible": "1"
+            },
+            {
+                "title": "Navalhas",
+                "url": "\/pt\/pesca\/navalhas",
+                "visible": "1"
+            },
+            {
+                "title": "Bin\u00f3culos",
+                "url": "\/pt\/pesca\/binoculos",
+                "visible": "1"
+            },
+            {
+                "title": "Rel\u00f3gios",
+                "url": "\/pt\/pesca\/relogios",
+                "visible": "1"
+            },
+            {
+                "title": "Telesc\u00f3pios",
+                "url": "\/pt\/pesca\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios para o Carro",
+                "url": "\/pt\/pesca\/acessorios_para_o_carro",
+                "visible": "1"
+            },
+            {
+                "title": "Multi\u00fasos",
+                "url": "\/pt\/pesca\/multiusos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Botas e Vadeadores",
+        "action": "",
+        "type": "subcategorie",
+        "id": 31,
+        "column": "4",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Botas e Vadeadores",
+                "url": "\/pt\/pesca\/botas_e_vadeadores",
+                "visible": "1"
+            },
+            {
+                "title": "CAL\u00c7ADO",
+                "url": "\/pt\/pesca\/calcado",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Roupa e Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 32,
+        "column": "5",
+        "position_category": "10",
+        "position": "1",
+        "items": [
+            {
+                "title": "Coletes",
+                "url": "\/pt\/pesca\/roupa_e_complementos-coletes",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas",
+                "url": "\/pt\/pesca\/roupa_e_complementos-luvas",
+                "visible": "1"
+            },
+            {
+                "title": "Camisas e T-shirts",
+                "url": "\/pt\/pesca\/roupa_e_complementos-camisas_e_tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Casacos e Softshells",
+                "url": "\/pt\/pesca\/roupa_e_complementos-casacos_e_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7as",
+                "url": "\/pt\/pesca\/roupa_e_complementos-calcas",
+                "visible": "1"
+            },
+            {
+                "title": "Bon\u00e9s e Chap\u00e9us",
+                "url": "\/pt\/pesca\/roupa_e_complementos-bones_e_chapeus",
+                "visible": "1"
+            },
+            {
+                "title": "Meias",
+                "url": "\/pt\/pesca\/roupa_e_complementos-meias",
+                "visible": "1"
+            },
+            {
+                "title": "Imperme\u00e1veis",
+                "url": "\/pt\/pesca\/roupa_e_complementos-impermeaveis",
+                "visible": "1"
+            },
+            {
+                "title": "Golas e Passa-Montanhas",
+                "url": "\/pt\/pesca\/roupa_e_complementos-golas_e_passamontanhas",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa e Complementos (Ver todos)",
+                "url": "\/pt\/pesca\/roupa_e_complementos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 33,
+        "column": "5",
+        "position_category": "12",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/pesca\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Pesca",
+                "url": "\/pt\/pesca\/oferta_express_pesca",
+                "visible": "1"
+            },
+            {
+                "title": "Liquida\u00e7\u00e3o Canas e Carretes",
+                "url": "\/pt\/pesca\/liquidacion_canas_y_carretes",
+                "visible": "1"
+            }
+        ]
+    }
+]

@@ -1,0 +1,29 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/segeln/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/segeln/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/segeln/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/segeln/bestseller"
+          }
+        ]
+      }
+]

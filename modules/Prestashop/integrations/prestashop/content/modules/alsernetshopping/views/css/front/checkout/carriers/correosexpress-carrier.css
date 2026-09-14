@@ -1,0 +1,235 @@
+
+.correosexpress-address-wrapper {
+    width: 100%;
+    padding: 15px;
+    background: #f5f6f8;
+    border-radius: 4px;
+}
+
+.correosexpress-address-wrapper .correosexpress-filters {
+    padding: 10px 0 10px 0;
+}
+
+.correosexpress-address-wrapper .correosexpress-filters input {
+    background-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+    margin-bottom: 0px;
+}
+
+.correosexpress-address-wrapper .correosexpress-filters input:-webkit-autofill,
+.correosexpress-address-wrapper .correosexpress-filters input:-webkit-autofill:hover,
+.correosexpress-address-wrapper .correosexpress-filters input:-webkit-autofill:focus,
+.correosexpress-address-wrapper .correosexpress-filters input:-webkit-autofill:active {
+    background-color: #fff !important;
+    -webkit-box-shadow: 0 0 0 30px #fff inset !important;
+    box-shadow: 0 0 0 30px #fff inset !important;
+    -webkit-text-fill-color: #000 !important;
+    color: #000 !important;
+    caret-color: auto;
+    border-color: #ced4da;
+}
+
+.correosexpress-address-wrapper .correosexpress-filters input:autofill {
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+.correosexpress-address-wrapper .correosexpress-filters .btn {
+    width: 100%;
+    line-height: normal;
+    font-weight: 600;
+    margin: 0;
+    height: 35px;
+    border-radius: 4px;
+    letter-spacing: 0;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    border-color: #4C4C4C;
+    background-color: #4C4C4C;
+}
+
+
+.correosexpress-address-wrapper .correosexpress-filters label.error {
+    text-align: right;
+    color: #d6021f;
+    font-weight: 600;
+    margin-top: 5px;
+    margin-bottom: 0;
+    border: none;
+    height: auto;
+    width: 100%;
+    display: flex;
+    align-items: normal;
+    justify-content: left;
+    font-size: 12px;
+}
+
+.correosexpress-address-wrapper .hr {
+    padding-top: 20px !important;
+    margin-top: 10px !important;
+    border: 0;
+    border-top: 1px solid #00000026;
+}
+
+.correosexpress-address-wrapper .alert {
+    font-size: 12px;
+    letter-spacing: .3px;
+    padding: 10px;
+}
+
+/* Estilo normal */
+.correosexpress-address-wrapper hr {
+    margin: .5rem 0 1.5rem;
+    border: 0;
+    border-top: 1px solid #0000000f;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list > [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list .correosexpress-location-list-item {
+    box-sizing: border-box;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-bottom: 10px;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list-item .item-content {
+    background-color: #fff;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list-item .item-content .info {
+    flex: 1 1 auto;
+}
+
+.correosexpress-address-wrapper .correosexpress-location-list-item .item-content .action {
+    width: 100%;
+    max-width: 120px;
+    margin-top: 1rem;
+}
+
+.correosexpress-address-wrapper  .empty-correosexpress-container a {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff!important;
+    background-color: #90bb13;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@media (min-width: 768px) {
+    .correosexpress-address-wrapper .correosexpress-location-list {
+    }
+
+    .correosexpress-address-wrapper .correosexpress-location-list .correosexpress-location-list-item {
+    }
+    .correosexpress-address-wrapper .correosexpress-location-list-item .item-content .action {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 1rem;
+    }
+}
+
+.correosexpress-address-wrapper .code-office,
+.correosexpress-address-wrapper .detail-office {
+    margin-bottom: .5em;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.correosexpress-address-wrapper .title-office{
+    margin-bottom: .5em;
+    line-height: 1.4;
+    text-align: left;
+    font-size: 16px;
+}
+
+
+
+.correosexpress-address-wrapper  .empty-correosexpress-container {
+    text-align: center;
+    padding: 50px;
+    border-radius: 10px;
+}
+
+.correosexpress-address-wrapper  .empty-correosexpress-container h1{
+    font-size: 4rem;
+    text-transform: none;
+    margin-bottom: 0px;
+}
+.correosexpress-address-wrapper .empty-correosexpress-container i {
+    font-size: 100px;
+    color: #90bb13;
+    margin-bottom: 20px;
+}
+
+
+.selected-correosexpress-wrapper {
+    font-size: 14px;
+    line-height: normal;
+    background-color: #f5f6f8;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 10px;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+}
+
+.selected-correosexpress-wrapper h5 {
+    font-weight: 600;
+    color: #333;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase
+}
+
+.selected-correosexpress-wrapper .correosexpress-address {
+    display: grid
+}
+
+.selected-correosexpress-wrapper .correosexpress-address ul {
+    display: grid;
+}
+
+
+.selected-correosexpress-wrapper .correosexpress-address ul li {
+    line-height: 1.5;
+    color: #555;
+    font-size: 13px
+}
+
+
+.selected-correosexpress-wrapper .correosexpress-address ul li.title-address{
+    margin-bottom: 5px;
+    line-height: normal;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+
+.selected-correosexpress-wrapper .btn i {
+    font-size: 11px;
+    margin-right: 5px
+}

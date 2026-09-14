@@ -1,0 +1,30 @@
+[
+  {
+    "title": "KÖNNTE SIE INTERESSIEREN",
+      "url": "",
+      "action": "",
+      "type": "special",
+      "column": "1",
+      "id": "5",
+      "position": "5",
+      "items": [
+        {
+          "title": "Unsere Marken anzeigen",
+          "url": "/de/golf/marken-liste"
+        },
+        {
+          "title": "Angebote",
+          "url": "/de/golf/angebote"
+        },
+        {
+          "title": "Neuheiten",
+          "url": "/de/golf/neuen?deporte=golf&id=3&rewrite=golf"
+        },
+        {
+          "title": "Bestseller",
+          "url": "/de/golf/bestseller"
+        }
+      ]
+    }
+
+]

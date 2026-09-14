@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/padel/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/padel/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/padel/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/padel/mais_vendidos"
+          }
+        ]
+      }
+]

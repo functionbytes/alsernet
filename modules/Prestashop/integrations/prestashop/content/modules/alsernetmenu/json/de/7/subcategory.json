@@ -1,0 +1,475 @@
+[
+    {
+        "title": "Tauchanz\u00fcge",
+        "action": "",
+        "type": "subcategorie",
+        "id": 46,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Neoprenanz\u00fcge",
+                "url": "\/de\/tauchen\/tauchanzuge-neoprenanzuge",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchen-halbtrockene Anz\u00fcge",
+                "url": "\/de\/tauchen\/tauchanzuge-tauchen_halbtrockene_anzuge",
+                "visible": "1"
+            },
+            {
+                "title": "Thermokleidung Zum Tauchen",
+                "url": "\/de\/tauchen\/tauchanzuge-thermokleidung_zum_tauchen",
+                "visible": "1"
+            },
+            {
+                "title": "Shortys Zum Tauchen",
+                "url": "\/de\/tauchen\/tauchanzuge-shortys_zum_tauchen",
+                "visible": "1"
+            },
+            {
+                "title": "T-shirts Und Uv-schutz",
+                "url": "\/de\/tauchen\/tauchanzuge-t_shirts_und_uv_schutz",
+                "visible": "1"
+            },
+            {
+                "title": "Taucherhauben",
+                "url": "\/de\/tauchen\/tauchanzuge-taucherhauben",
+                "visible": "1"
+            },
+            {
+                "title": "Trockentauchanz\u00fcge",
+                "url": "\/de\/tauchen\/tauchanzuge-trockentauchanzuge",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchanz\u00fcge (Alles sehen)",
+                "url": "\/de\/tauchen\/tauchanzuge",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pool und Schwimmen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 47,
+        "column": "1",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Schwimmbrillen",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-schwimmbrillen",
+                "visible": "1"
+            },
+            {
+                "title": "Badekappen",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-badekappen",
+                "visible": "1"
+            },
+            {
+                "title": "Badeanz\u00fcgueba\u00f1adores",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-badeanzuguebanadores",
+                "visible": "1"
+            },
+            {
+                "title": "Herrenschuhe",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-herrenschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Accesoires",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-accesoires",
+                "visible": "1"
+            },
+            {
+                "title": "Poolflossen",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-poolflossen",
+                "visible": "1"
+            },
+            {
+                "title": "Trockens\u00e4cke Tauchen",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-trockensacke_tauchen",
+                "visible": "1"
+            },
+            {
+                "title": "Ohrst\u00f6psel Und Nasenclips",
+                "url": "\/de\/tauchen\/pool_und_schwimmen-ohrstopsel_und_nasenclips",
+                "visible": "1"
+            },
+            {
+                "title": "Pool Und Schwimmen",
+                "url": "\/de\/tauchen\/pool_und_schwimmen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Tauchausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 48,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Atemregler",
+                "url": "\/de\/tauchen\/atemregler",
+                "visible": "1"
+            },
+            {
+                "title": "Octopusse",
+                "url": "\/de\/tauchen\/octopusse",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchcomputer Und Interface",
+                "url": "\/de\/tauchen\/tauchcomputer_und_interface",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchkonsolen Und Tauchdruckmesser",
+                "url": "\/de\/tauchen\/tauchkonsolen_und_tauchdruckmesser",
+                "visible": "1"
+            },
+            {
+                "title": "Kompasse",
+                "url": "\/de\/tauchen\/kompasse",
+                "visible": "1"
+            },
+            {
+                "title": "Jackets",
+                "url": "\/de\/tauchen\/jackets",
+                "visible": "1"
+            },
+            {
+                "title": "Socks Und F\u00fc\u00dflinge",
+                "url": "\/de\/tauchen\/socks_und_fusslinge",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchhandschuhe",
+                "url": "\/de\/tauchen\/tauchhandschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Schnorcheln Tauchen",
+                "url": "\/de\/tauchen\/schnorcheln_tauchen",
+                "visible": "1"
+            },
+            {
+                "title": "Unterwasserblitz & Tauchlampen",
+                "url": "\/de\/tauchen\/unterwasserblitz_tauchlampen",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchermaske",
+                "url": "\/de\/tauchen\/tauchermaske",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchflossen",
+                "url": "\/de\/tauchen\/tauchflossen",
+                "visible": "1"
+            },
+            {
+                "title": "Messer",
+                "url": "\/de\/tauchen\/messer",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchtasche",
+                "url": "\/de\/tauchen\/tauchtasche",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchflaschen",
+                "url": "\/de\/tauchen\/tauchflaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Schlauchbooten Und  Bootsmotor",
+                "url": "\/de\/tauchen\/schlauchbooten_und_bootsmotor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bekleidung f\u00fcr Taucher",
+        "action": "",
+        "type": "subcategorie",
+        "id": 49,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Badeanz\u00fcgue",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-badeanzugue",
+                "visible": "1"
+            },
+            {
+                "title": "Bermudas",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-bermudas",
+                "visible": "1"
+            },
+            {
+                "title": "Socken",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-socken",
+                "visible": "0"
+            },
+            {
+                "title": "T-shirts",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-t_shirts",
+                "visible": "1"
+            },
+            {
+                "title": "Westen",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-westen",
+                "visible": "1"
+            },
+            {
+                "title": "Jacken Und Softshelljacken",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-jacken_und_softshelljacken",
+                "visible": "1"
+            },
+            {
+                "title": "Hosen",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-hosen",
+                "visible": "1"
+            },
+            {
+                "title": "Poloshirts",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-poloshirts",
+                "visible": "0"
+            },
+            {
+                "title": "Bekleidung F\u00fcr Damen",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher-bekleidung_fur_damen",
+                "visible": "1"
+            },
+            {
+                "title": "Bekleidung F\u00fcr Taucher",
+                "url": "\/de\/tauchen\/bekleidung_fur_taucher",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Elektronik",
+        "action": "",
+        "type": "subcategorie",
+        "id": 50,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Funkger\u00e4te",
+                "url": "\/de\/tauchen\/funkgerate",
+                "visible": "1"
+            },
+            {
+                "title": "Unterwasserkameras",
+                "url": "\/de\/tauchen\/unterwasserkameras",
+                "visible": "0"
+            },
+            {
+                "title": "Gps Und Tauchsonde",
+                "url": "\/de\/gps_und_tauchsonde",
+                "visible": "0"
+            },
+            {
+                "title": "Uhren",
+                "url": "\/de\/tauchen\/uhren",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Tauchzubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 51,
+        "column": "4",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Bojen",
+                "url": "\/de\/tauchen\/tauchzubehor-bojen",
+                "visible": "1"
+            },
+            {
+                "title": "Rollen",
+                "url": "\/de\/tauchen\/tauchzubehor-rollen",
+                "visible": "1"
+            },
+            {
+                "title": "Gurte & Riemen",
+                "url": "\/de\/tauchen\/tauchzubehor-gurte_riemen",
+                "visible": "1"
+            },
+            {
+                "title": "Akustische Signalgeber",
+                "url": "\/de\/tauchen\/tauchzubehor-akustische_signalgeber",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchkarabiner",
+                "url": "\/de\/tauchen\/tauchzubehor-tauchkarabiner",
+                "visible": "1"
+            },
+            {
+                "title": "Kleiderb\u00fcgel",
+                "url": "\/de\/tauchen\/tauchzubehor-kleiderbugel",
+                "visible": "1"
+            },
+            {
+                "title": "Schl\u00e4uche",
+                "url": "\/de\/tauchen\/tauchzubehor-schlauche",
+                "visible": "1"
+            },
+            {
+                "title": "Dekompressionsbojen",
+                "url": "\/de\/tauchen\/tauchzubehor-dekompressionsbojen",
+                "visible": "0"
+            },
+            {
+                "title": "Verl\u00e4ngerungen",
+                "url": "\/de\/tauchen\/tauchzubehor-verlangerungen",
+                "visible": "1"
+            },
+            {
+                "title": "Retraktoren",
+                "url": "\/de\/tauchen\/tauchzubehor-retraktoren",
+                "visible": "1"
+            },
+            {
+                "title": "Zubeh\u00f6r-kit",
+                "url": "\/de\/tauchen\/tauchzubehor-zubehor_kit",
+                "visible": "1"
+            },
+            {
+                "title": "Allzweckger\u00e4te",
+                "url": "\/de\/tauchen\/tauchzubehor-allzweckgerate",
+                "visible": "1"
+            },
+            {
+                "title": "Schl\u00fcsselanh\u00e4nger",
+                "url": "\/de\/tauchen\/tauchzubehor-schlusselanhanger",
+                "visible": "1"
+            },
+            {
+                "title": "Tauchzubeh\u00f6r",
+                "url": "\/de\/tauchen\/tauchzubehor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Speerfischen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 52,
+        "column": "5",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Harpunen",
+                "url": "\/de\/tauchen\/speerfischen-harpunen",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Flossen",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_flossen",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischer-messer",
+                "url": "\/de\/tauchen\/speerfischen-speerfischer_messer",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Masken",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_masken",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Accesoires",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_accesoires",
+                "visible": "1"
+            },
+            {
+                "title": "Handschuhe Speerfischen",
+                "url": "\/de\/tauchen\/speerfischen-handschuhe_speerfischen",
+                "visible": "1"
+            },
+            {
+                "title": "Socks Und F\u00fc\u00dflinge Zum Speerfischen",
+                "url": "\/de\/tauchen\/speerfischen-socks_und_fusslinge_zum_speerfischen",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Taschen & Rucks\u00e4cke",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_taschen_rucksacke",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Taucherhauben",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_taucherhauben",
+                "visible": "1"
+            },
+            {
+                "title": "Ausr\u00fcstungswartung",
+                "url": "\/de\/tauchen\/speerfischen-ausrustungswartung",
+                "visible": "1"
+            },
+            {
+                "title": "Unterwasserblitz & Tauchlampe",
+                "url": "\/de\/tauchen\/speerfischen-unterwasserblitz_tauchlampe",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen Neoprenanz\u00fcge",
+                "url": "\/de\/tauchen\/speerfischen-speerfischen_neoprenanzuge",
+                "visible": "1"
+            },
+            {
+                "title": "Schnorcheln Speerfischen",
+                "url": "\/de\/tauchen\/speerfischen-schnorcheln_speerfischen",
+                "visible": "1"
+            },
+            {
+                "title": "Speerfischen (Alles sehen)",
+                "url": "\/de\/tauchen\/speerfischen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und Angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 53,
+        "column": "5",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/tauchen\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Angebot Taucher Express",
+                "url": "\/de\/tauchen\/angebot_taucher_express",
+                "visible": "1"
+            }
+        ]
+    }
+]

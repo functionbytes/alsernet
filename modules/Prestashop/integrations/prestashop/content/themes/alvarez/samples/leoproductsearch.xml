@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<dataSample>
+  <configurations>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_AJAXSEARCH]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_NUMPRO_DISPLAY]]></name><value><![CDATA[100]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_CATEGORY]]></name><value><![CDATA[]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_CATEGORY_MAXDEPTH]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_PRODUCTIMG]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_PRODUCTPRICE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_SUGGEST]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOPRODUCTSEARCH_ENABLE_CATEGORYPRODUCTCOUNT]]></name><value><![CDATA[1]]></value></config>
+</configurations>
+
+<sql>
+<![CDATA[]]></sql>
+
+  <hooks>
+    <hook module="leoproductsearch" hook="Header" position="11" exceptions=""/>
+    <hook module="leoproductsearch" hook="actionAdminControllerSetMedia" position="7" exceptions=""/>
+    <hook module="leoproductsearch" hook="actionAdminBefore" position="1" exceptions=""/>
+  </hooks>
+</dataSample>

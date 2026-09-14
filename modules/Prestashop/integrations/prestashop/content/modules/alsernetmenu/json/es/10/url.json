@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Te puede interesar",
+        "language": "es",
+        "position": 1,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Ver nuestras marcas",
+            "url": "/padel/listado-marcas"
+          },
+          {
+            "title": "Ofertas",
+            "url": "/padel/ofertas"
+          },
+          {
+            "title": "Novedades",
+            "url": "/padel/novedades"
+          },
+          {
+            "title": "Los más vendidos",
+            "url": "/padel/lo_mas_vendido"
+          },
+          {
+            "title": "Boletines",
+            "url": "/padel/monthlynewsletters"
+          },
+          {
+            "title": "Blog",
+            "url": "/blog/padel/"
+          }
+        ]
+    }
+]

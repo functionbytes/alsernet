@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+<name>alsernetimagenes</name>
+<displayName><![CDATA[Alsernet - Gestor de imágenes]]></displayName>
+<version><![CDATA[2.0.0]]></version>
+<description><![CDATA[Este módulo agiliza agregar imágenes a las referencias]]></description>
+<author><![CDATA[4webs]]></author>
+<tab><![CDATA[front_office_features]]></tab>
+<confirmUninstall><![CDATA[¿Desea desinstalar?]]></confirmUninstall>
+<is_configurable>0</is_configurable>
+<need_instance>0</need_instance>
+<limited_countries></limited_countries>
+</module>

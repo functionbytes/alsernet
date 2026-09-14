@@ -1,0 +1,245 @@
+[
+    {
+        "title": "S\u00e9curit\u00e9 \u00e0 bord",
+        "action": "",
+        "type": "subcategorie",
+        "id": 54,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Gilets de sauvetage",
+                "url": "\/fr\/nautique\/gilets_de_sauvetage",
+                "visible": "1"
+            },
+            {
+                "title": "S\u00e9curit\u00e9 et Sauvetage",
+                "url": "\/fr\/nautique\/securite_et_sauvetage",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "\u00c9quipement personnel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "V\u00eatements Nautiques",
+                "url": "\/fr\/nautique\/vetements_nautiques",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussures nautiques",
+                "url": "\/fr\/nautique\/chaussures_nautiques",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs de voyage",
+                "url": "\/fr\/nautique\/sacs_de_voyage",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs et housses imperm\u00e9ables",
+                "url": "\/fr\/nautique\/sacs_et_housses_impermeables",
+                "visible": "1"
+            },
+            {
+                "title": "Cam\u00e9ras",
+                "url": "\/fr\/nautique\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "Lunettes de soleil nautiques",
+                "url": "\/fr\/nautique\/lunettes_de_soleil_nautiques",
+                "visible": "1"
+            },
+            {
+                "title": "Couteaux Pliants",
+                "url": "\/fr\/nautique\/couteaux_pliants",
+                "visible": "1"
+            },
+            {
+                "title": "Montres",
+                "url": "\/fr\/nautique\/montres",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Mouillage & Amarrage",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Mouillage et ancrage",
+                "url": "\/fr\/nautique\/mouillage_et_ancrage",
+                "visible": "1"
+            },
+            {
+                "title": "Barques",
+                "url": "\/fr\/nautique\/barques",
+                "visible": "1"
+            },
+            {
+                "title": "Moteurs",
+                "url": "\/fr\/nautique\/moteurs",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Divertissement \u00e0 bord",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Loisirs nautiques",
+                "url": "\/fr\/nautique\/loisirs_nautiques",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accastillage & \u00c9quipement de Pont",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "\u00c9quipement de Pont",
+                "url": "\/fr\/nautique\/equipement_de_pont",
+                "visible": "1"
+            },
+            {
+                "title": "Projecteurs et lampes nautiques",
+                "url": "\/fr\/nautique\/projecteurs_et_lampes_nautiques",
+                "visible": "1"
+            },
+            {
+                "title": "Feux de Navigation",
+                "url": "\/fr\/nautique\/feux_de_navigation",
+                "visible": "1"
+            },
+            {
+                "title": "Entretien du Bateau",
+                "url": "\/fr\/nautique\/entretien_du_bateau",
+                "visible": "1"
+            },
+            {
+                "title": "Batteries et Piles",
+                "url": "\/fr\/nautique\/batteries_et_piles",
+                "visible": "1"
+            },
+            {
+                "title": "Carburant",
+                "url": "\/fr\/nautique\/carburant",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Navigation, Cartographie & \u00c9lectronique",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Radios et VHF",
+                "url": "\/fr\/nautique\/radios_et_vhf",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/fr\/nautique\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navigation",
+                "url": "\/fr\/nautique\/navigation_",
+                "visible": "1"
+            },
+            {
+                "title": "Jumelles",
+                "url": "\/fr\/nautique\/jumelles",
+                "visible": "1"
+            },
+            {
+                "title": "Sondes Nautiques",
+                "url": "\/fr\/nautique\/sondes_nautiques",
+                "visible": "1"
+            },
+            {
+                "title": "T\u00e9lescopes",
+                "url": "\/fr\/nautique\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "D\u00e9tecteurs de M\u00e9taux",
+                "url": "\/fr\/nautique\/detecteurs_de_metaux",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Confort \u00e0 Bord",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Eau \u00e0 bord",
+                "url": "\/fr\/nautique\/eau_a_bord",
+                "visible": "1"
+            },
+            {
+                "title": "Confort",
+                "url": "\/fr\/nautique\/confort",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet et offres",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet et Liquidation",
+                "url": "\/fr\/nautique\/outlet_et_liquidation",
+                "visible": "1"
+            },
+            {
+                "title": "Offre Nautique Express",
+                "url": "\/fr\/nautique\/offre_nautique_express",
+                "visible": "0"
+            }
+        ]
+    }
+]

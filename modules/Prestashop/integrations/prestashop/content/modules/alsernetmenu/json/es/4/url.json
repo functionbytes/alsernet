@@ -1,0 +1,49 @@
+[
+  {
+    "title": "Te puede interesar",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "special",
+    "items": [
+      {
+        "title": "Marcas",
+        "url": "/caza/listado-marcas"
+      },
+      {
+        "title": "Ofertas",
+        "url": "/caza/ofertas"
+      },
+      {
+        "title": "Los más vendidos",
+        "url": "/caza/lo_mas_vendido"
+      },
+      {
+        "title": "Microprecios Caza",
+        "url": "/caza/microprecios_caza"
+      },
+      {
+        "title": "Armas De Segunda Mano",
+        "url": "/caza/armas_de_segunda_mano"
+      },
+      {
+        "title": "Taller Armero",
+        "url": "/taller-armero"
+      },
+      {
+        "title": "Boletines",
+        "url": "/caza/monthlynewsletters"
+      },
+      {
+        "title": "Blog",
+        "url": "/blog/caza"
+      },
+      {
+        "title": "Licencias de Caza",
+        "url": "70781-licencias-de-caza"
+      }
+    ]
+  }
+]

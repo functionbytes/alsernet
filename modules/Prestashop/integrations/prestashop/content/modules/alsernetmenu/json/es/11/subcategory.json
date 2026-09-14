@@ -1,0 +1,361 @@
+[
+    {
+        "title": "Ropa y calzado",
+        "action": "",
+        "type": "subcategorie",
+        "id": 79,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ropa y Complementos",
+                "url": "\/aventura\/ropa_y_complementos",
+                "visible": "1"
+            },
+            {
+                "title": "CALZADO",
+                "url": "\/aventura\/calzado",
+                "visible": "1"
+            },
+            {
+                "title": "Ropa Mujer y Ni\u00f1os",
+                "url": "\/aventura\/ropa_mujer_y_ninos",
+                "visible": "1"
+            },
+            {
+                "title": "",
+                "url": "",
+                "visible": "1"
+            },
+            {
+                "title": "Gorros y Sombreros",
+                "url": "\/aventura\/gorros_y_sombreros",
+                "visible": "1"
+            },
+            {
+                "title": "Guantes",
+                "url": "\/aventura\/guantes",
+                "visible": "1"
+            },
+            {
+                "title": "Bragas y Pasamonta\u00f1as",
+                "url": "\/aventura\/bragas_y_pasamontanas",
+                "visible": "1"
+            },
+            {
+                "title": "Gafas",
+                "url": "\/aventura\/gafas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Mochilas y Bolsos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 80,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Mochilas",
+                "url": "\/aventura\/mochilas",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas de Viaje",
+                "url": "\/aventura\/bolsas_de_viaje",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas estancas",
+                "url": "\/aventura\/bolsas_estancas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "\u00d3ptica e Iluminaci\u00f3n",
+        "action": "",
+        "type": "subcategorie",
+        "id": 81,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Prism\u00e1ticos",
+                "url": "\/aventura\/prismaticos",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopios",
+                "url": "\/aventura\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Visi\u00f3n Nocturna",
+                "url": "\/aventura\/vision_nocturna",
+                "visible": "1"
+            },
+            {
+                "title": "Visi\u00f3n T\u00e9rmica",
+                "url": "\/aventura\/vision_termica",
+                "visible": "1"
+            },
+            {
+                "title": "Monoculares",
+                "url": "\/aventura\/monoculares",
+                "visible": "1"
+            },
+            {
+                "title": "Medidores de Distancia",
+                "url": "\/aventura\/medidores_de_distancia",
+                "visible": "1"
+            },
+            {
+                "title": "Linternas y Focos",
+                "url": "\/aventura\/linternas_y_focos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Electr\u00f3nica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 82,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Relojes",
+                "url": "\/aventura\/relojes",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/aventura\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Emisoras",
+                "url": "\/aventura\/emisoras",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e1maras",
+                "url": "\/aventura\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metales",
+                "url": "\/aventura\/detectores_de_metales",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Seguridad y Supervivencia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 83,
+        "column": "3",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Equipamiento de Supervivencia",
+                "url": "\/aventura\/equipamiento_de_supervivencia",
+                "visible": "1"
+            },
+            {
+                "title": "Seguridad y Salvamento",
+                "url": "\/aventura\/seguridad_y_salvamento",
+                "visible": "1"
+            },
+            {
+                "title": "Repelentes",
+                "url": "\/aventura\/repelentes",
+                "visible": "1"
+            },
+            {
+                "title": "Cuidado Personal",
+                "url": "\/aventura\/cuidado_personal",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cuchiller\u00eda",
+        "action": "",
+        "type": "subcategorie",
+        "id": 84,
+        "column": "3",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Cuchillos",
+                "url": "\/aventura\/cuchillos",
+                "visible": "1"
+            },
+            {
+                "title": "Navajas",
+                "url": "\/aventura\/navajas",
+                "visible": "1"
+            },
+            {
+                "title": "Multiusos",
+                "url": "\/aventura\/multiusos",
+                "visible": "1"
+            },
+            {
+                "title": "Hachas y Martillos",
+                "url": "\/aventura\/hachas_y_martillos",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/aventura\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "Afiladores",
+                "url": "\/aventura\/afiladores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Camping y Outdoor",
+        "action": "",
+        "type": "subcategorie",
+        "id": 85,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Productos para el Perro",
+                "url": "\/aventura\/productos_para_el_perro",
+                "visible": "1"
+            },
+            {
+                "title": "Art\u00edculos para el coche",
+                "url": "\/aventura\/articulos_para_el_coche",
+                "visible": "1"
+            },
+            {
+                "title": "Sillas y Taburetes",
+                "url": "\/aventura\/sillas_y_taburetes",
+                "visible": "1"
+            },
+            {
+                "title": "Camping",
+                "url": "\/aventura\/camping",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Arquer\u00eda",
+                "url": "\/aventura\/kits_arqueria",
+                "visible": "1"
+            },
+            {
+                "title": "Material para Setas",
+                "url": "\/aventura\/material_para_setas",
+                "visible": "1"
+            },
+            {
+                "title": "Tiempo Libre",
+                "url": "\/aventura\/tiempo_libre",
+                "visible": "1"
+            },
+            {
+                "title": "Bastones de Traves\u00eda",
+                "url": "\/aventura\/bastones_de_travesia",
+                "visible": "1"
+            },
+            {
+                "title": "Observaci\u00f3n de Aves",
+                "url": "\/aventura\/observacion_de_aves",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Aventura en el mar",
+        "action": "",
+        "type": "subcategorie",
+        "id": 86,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Lanchas y Motores",
+                "url": "\/aventura\/lanchas_y_motores",
+                "visible": "1"
+            },
+            {
+                "title": "Sondas y Plotters",
+                "url": "\/aventura\/sondas_y_plotters",
+                "visible": "0"
+            },
+            {
+                "title": "Aletas",
+                "url": "\/aventura\/aletas",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras y tubos de buceo",
+                "url": "\/aventura\/mascaras_y_tubos_de_buceo",
+                "visible": "1"
+            },
+            {
+                "title": "Piscina y Nataci\u00f3n",
+                "url": "\/aventura\/piscina_y_natacion",
+                "visible": "1"
+            },
+            {
+                "title": "Chalecos Salvavidas",
+                "url": "\/aventura\/chalecos_salvavidas",
+                "visible": "1"
+            },
+            {
+                "title": "Camisetas y Protecci\u00f3n UV",
+                "url": "\/aventura\/camisetas_y_proteccion_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Escarpines",
+                "url": "\/aventura\/escarpines",
+                "visible": "1"
+            },
+            {
+                "title": "Guantes de Buceo",
+                "url": "\/aventura\/guantes_de_buceo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet y ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 87,
+        "column": "4",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet y Liquidaciones",
+                "url": "\/aventura\/outlet_y_liquidaciones",
+                "visible": "1"
+            }
+        ]
+    }
+]

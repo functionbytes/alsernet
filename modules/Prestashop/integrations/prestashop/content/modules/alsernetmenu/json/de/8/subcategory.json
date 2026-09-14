@@ -1,0 +1,245 @@
+[
+    {
+        "title": "Sicherheit an Bord",
+        "action": "",
+        "type": "subcategorie",
+        "id": 54,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Rettungswesten",
+                "url": "\/de\/nautik\/rettungswesten",
+                "visible": "1"
+            },
+            {
+                "title": "Sicherheit und Rettung",
+                "url": "\/de\/nautik\/sicherheit_und_rettung",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pers\u00f6nliche Ausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Nautische Kleidung",
+                "url": "\/de\/nautik\/nautische_kleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Nautische Schuhe",
+                "url": "\/de\/nautik\/nautische_schuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Reisetaschen",
+                "url": "\/de\/nautik\/reisetaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Wasserdichte Taschen und Bez\u00fcge",
+                "url": "\/de\/nautik\/wasserdichte_taschen_und_bezuge",
+                "visible": "1"
+            },
+            {
+                "title": "Kameras",
+                "url": "\/de\/nautik\/kameras",
+                "visible": "1"
+            },
+            {
+                "title": "Sonnenbrillen",
+                "url": "\/de\/nautik\/sonnenbrillen",
+                "visible": "1"
+            },
+            {
+                "title": "Messer und Mehrzweck",
+                "url": "\/de\/nautik\/messer_und_mehrzweck",
+                "visible": "1"
+            },
+            {
+                "title": "Uhren",
+                "url": "\/de\/nautik\/uhren",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Anker & Ankerzubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Verankerung",
+                "url": "\/de\/nautik\/verankerung",
+                "visible": "1"
+            },
+            {
+                "title": "Boote",
+                "url": "\/de\/nautik\/boote",
+                "visible": "1"
+            },
+            {
+                "title": "Bootsmotoren",
+                "url": "\/de\/nautik\/bootsmotoren",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Wassersport & Freizeit",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Freizeitbootfahren",
+                "url": "\/de\/nautik\/freizeitbootfahren",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Deckausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Deckausr\u00fcstung",
+                "url": "\/de\/nautik\/deckausrustung",
+                "visible": "1"
+            },
+            {
+                "title": "Strahler und Taschenlampen",
+                "url": "\/de\/nautik\/strahler_und_taschenlampen",
+                "visible": "1"
+            },
+            {
+                "title": "Navigationslichter",
+                "url": "\/de\/nautik\/navigationslichter",
+                "visible": "1"
+            },
+            {
+                "title": "Bootswartung",
+                "url": "\/de\/nautik\/bootswartung",
+                "visible": "1"
+            },
+            {
+                "title": "Batterien",
+                "url": "\/de\/nautik\/batterien",
+                "visible": "1"
+            },
+            {
+                "title": "Kraftstoff",
+                "url": "\/de\/nautik\/kraftstoff",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Kompass, Elektronik & Navigation",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Stationen und UKW",
+                "url": "\/de\/nautik\/stationen_und_ukw",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/de\/nautik\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navigation",
+                "url": "\/de\/nautik\/navigation",
+                "visible": "1"
+            },
+            {
+                "title": "Ferngl\u00e4ser",
+                "url": "\/de\/nautik\/fernglaeser",
+                "visible": "1"
+            },
+            {
+                "title": "Sonden",
+                "url": "\/de\/nautik\/sonden",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskope",
+                "url": "\/de\/nautik\/teleskope",
+                "visible": "1"
+            },
+            {
+                "title": "Metalldetektoren",
+                "url": "\/de\/nautik\/metalldetektoren",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Komfort & Bordleben",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Wasser an Bord",
+                "url": "\/de\/nautik\/wasser_an_bord",
+                "visible": "1"
+            },
+            {
+                "title": "Komfort",
+                "url": "\/de\/nautik\/komfort",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/nautik\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Nautisches Express-Angebot",
+                "url": "\/de\/nautik\/nautisches_expressangebot",
+                "visible": "0"
+            }
+        ]
+    }
+]

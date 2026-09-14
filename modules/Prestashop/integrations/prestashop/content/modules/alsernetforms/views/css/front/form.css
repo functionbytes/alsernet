@@ -1,0 +1,451 @@
+/* =================================================================
+   Document Upload Card - CSS Styles
+   Based on Laravel Admin Panel Design (Modernize Bootstrap Template)
+   ================================================================= */
+
+/* Card Container */
+.documents #documentsUploadCard {
+}
+
+.documents #documentsUploadCard .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 7px 7px 0 0;
+}
+
+.documents #documentsUploadCard .card-body {
+    padding: 20px;
+}
+
+/* Document Upload Item */
+.documents .document-upload-item {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.documents .document-upload-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+/* Form Labels */
+.documents .form-label.fw-semibold {
+    font-weight: 600;
+    font-size: 14px;
+    color: #2a3547;
+}
+
+/* Badges */
+.documents .badge.bg-danger-subtle {
+    background-color: #ff0049 !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.documents .btn-danger {
+    background-color: #ff0049 !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.documents .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+/* Uploaded Document Info */
+.documents .uploaded-doc-info {
+    background-color: #f5f6f8 !important;
+    border-color: #f5f6f8 !important;
+    border: 1px solid #f5f6f8;
+    transition: all 0.2s ease-in-out;
+    border-radius: 7px;
+}
+
+.documents .uploaded-doc-info:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.documents .bg-light-secondary {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* File Input */
+.documents .document-file-input {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 9px 12px;
+    border-radius: 7px;
+    transition: border-color 0.2s ease-in-out;
+    font-size: 14px;
+}
+
+.documents .document-file-input:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.documents .document-file-input:focus {
+    border-color: #5d87ff;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Progress Bar */
+.documents #uploadProgress {
+    margin-top: 1rem;
+}
+
+.documents #uploadProgress .progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.documents #uploadProgress .progress-bar {
+    background-color: #90bb13;
+    transition: width 0.3s ease;
+}
+
+/* Buttons */
+.documents .btn {
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 7px;
+    transition: all 0.2s ease-in-out;
+    font-size: 14px;
+    display: inline;
+}
+
+.documents .btn-primary {
+    background-color: #90bb13;
+    border-color: #90bb13;
+}
+
+.documents .btn-primary:hover {
+    background-color: #90bb13;
+    border-color: #90bb13;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(93, 135, 255, 0.3);
+}
+
+.documents  ul li::before {
+    position: absolute;
+    left: 50px;
+    content: "\f192";
+    font-family: 'Font Awesome 6 Duotone';
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #90BB13;
+}
+
+.documents .btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.documents .btn-danger {
+    background-color: #fa896b;
+    border-color: #fa896b;
+}
+
+.documents .btn-danger:hover {
+    background-color: #f97752;
+    border-color: #f97752;
+}
+
+.documents .btn.w-100 {
+    width: 100%;
+}
+
+/* Success Container */
+.documents .success-documents-container {
+    text-align: center;
+    padding: 60px 30px;
+}
+
+.documents .success-documents-container h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2a3547;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+.documents .success-documents-container p {
+    font-size: 16px;
+    color: #5a6a85;
+    margin-bottom: 24px;
+}
+
+.documents .success-documents-container .text-success {
+    color: #13deb9 !important;
+}
+
+/* Checkboxes */
+.documents .form-check-input.fixed-size-input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.documents .form-check-label {
+    margin-left: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+}
+
+/* Utility Classes */
+.documents .d-flex {
+    display: flex;
+}
+
+.documents .gap-2 {
+    gap: 8px;
+}
+
+.documents .justify-content-between {
+    justify-content: space-between;
+}
+
+.documents .align-items-center {
+    align-items: center;
+}
+
+.documents .flex-grow-1 {
+    flex-grow: 1;
+}
+
+.documents .fw-bold {
+    font-weight: 700;
+}
+
+.documents .fw-semibold {
+    font-weight: 600;
+}
+
+.documents .text-muted {
+    color: #5a6a85;
+}
+
+.documents .text-success {
+    color: #13deb9;
+}
+
+.documents .text-danger {
+    color: #fa896b;
+}
+
+.documents .mb-0 {
+    margin-bottom: 0;
+}
+
+.documents .mb-1 {
+    margin-bottom: 4px;
+}
+
+.documents .mb-2 {
+    margin-bottom: 8px;
+}
+
+.documents .mb-3 {
+    margin-bottom: 16px;
+}
+
+.documents .mt-1 {
+    margin-top: 4px;
+}
+
+.documents .mt-3 {
+    margin-top: 16px;
+}
+
+.documents .p-3 {
+    padding: 20px;
+}
+
+.documents .small {
+    font-size: 12px;
+}
+
+.documents .w-100 {
+    width: 100%;
+}
+
+.documents .d-block {
+    display: block;
+}
+
+.documents .d-none {
+    display: none;
+}
+
+.documents .rounded {
+    border-radius: 7px;
+}
+
+.documents .border {
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.documents .border-bottom {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.documents .bg-white {
+    background-color: #fff;
+}
+
+/* Alert Styles */
+.documents .alert-info {
+    background-color: #f5f6f8;
+    border-color: #f5f6f8;
+    color: #000000;
+    border-radius: 7px;
+    padding: 16px;
+    border: 1px solid #f5f6f8;
+}
+
+/* Font Awesome Icons */
+.documents .fa {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-style: normal;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .documents #documentsUploadCard .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .documents #documentsUploadCard .card-header > div:last-child {
+        margin-top: 12px;
+    }
+
+    .documents .uploaded-doc-info .d-flex {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .documents .uploaded-doc-info .d-flex > .d-flex:last-child {
+        justify-content: flex-start;
+    }
+}
+
+/* Animation for Progress Bar */
+@keyframes progress-bar-stripes {
+    0% {
+        background-position: 1rem 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}
+
+.documents .progress-bar-striped {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+}
+
+.documents .progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.documents .progress-bar.bg-success {
+    background-color: #13deb9 !important;
+}
+
+/* Hover Effects */
+.documents .btn:hover {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.documents .btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.documents .btn:active {
+    transform: translateY(0);
+}
+
+/* Loading States */
+.documents .btn[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Card shadow */
+.documents .card {
+    border: 0;
+    box-shadow: 0 0 37px rgba(8, 21, 66, 0.05);
+}
+
+/* Typography */
+.documents h5.fw-bold {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2a3547;
+}
+
+.documents p.small.text-muted {
+    font-size: 13px;
+    color: #5a6a85;
+}
+
+/* Form elements */
+.documents .form-control {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 7px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: #2a3547;
+}
+
+.documents .form-control:focus {
+    border-color: #5d87ff;
+    box-shadow: none;
+    outline: 0;
+}
+
+/* Links */
+.documents a {
+    color: #5d87ff;
+    text-decoration: none;
+}
+
+.documents a:hover {
+    color: #4570ea;
+}
+
+
+.documents form .form-check .check .form-check-label {
+    padding-left: 0px !important;
+}
+
+.documents ul li::before {
+    position: absolute;
+    left: 60px;
+    content: "\f192";
+    font-family: 'Font Awesome 6 Duotone';
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #90BB13;
+}

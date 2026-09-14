@@ -1,0 +1,273 @@
+
+.thumbnail-container .product-description-short {
+  display: none
+}
+
+.thumbnail-container .product-image .thumbnail {
+  position: relative;
+  display: block;
+  padding-bottom: 100%
+}
+
+.thumbnail-container .product-meta {
+  text-align: left !important;
+  margin-top: 5px;
+  padding: 15px 15px 0 15px;
+  border-top: 1px solid #dddddd61;
+}
+
+.thumbnail-container .product-meta .stars-container {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-items: center
+}
+
+.thumbnail-container .product-meta .stars-container span {
+  text-align: left;
+  margin-left: 5px;
+  font-size: 12px;
+  color: #333;
+  font-weight: 400
+}
+
+.thumbnail-container .product-meta .stars-container a {
+  display: flex;
+  align-items: center
+}
+
+.thumbnail-container .product-meta .stars-container a img {
+  width: 80px!important
+}
+
+.thumbnail-container .product-meta .product-title .price_from {
+  margin-bottom: 2px;
+  display: block;
+  font-size: 12px;
+  color: #333;
+  font-weight: 400;
+  line-height: 12px;
+  height: 12px
+}
+
+.thumbnail-container .product-meta .product-title a {
+  font-size: 17px;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+  line-height: normal;
+  min-height: auto;
+  margin-bottom: 5px
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping {
+  display: block;
+  position: relative;
+  text-align: left;
+  margin: 5px 0 15px
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping .price-from {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+  line-height: normal;
+  min-height: auto;
+  margin-bottom: 0px;
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping .regular-price {
+  font-size: 13px;
+  color: #585858;
+  font-weight: 700;
+  margin-bottom: 5px;
+  text-decoration: line-through;
+  display: block
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping .discount-amount {
+  background-color: #d6021f;
+  font-size: 14px;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 5px 10px 6px;
+  margin-right: 5px;
+  display: inline-flex
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping .price {
+  font-size: 18px;
+  color: #333;
+  font-weight: 700;
+  line-height: 12px;
+  padding-left: 0;
+  margin-top: 5px;
+  display: inline-flex
+}
+
+.thumbnail-container .product-meta .product-price-and-shipping.has-discount .price {
+  color: #d6021f
+}
+
+.thumbnail-container .product-flags .product-flag.discount {
+  display: none
+}
+
+.thumbnail-container .product-flags li.product-flag-item {
+  margin: 0 5px 2px 0;
+  position: relative;
+  background: #4c4c4c;
+  color: #fff;
+  display: inline-block;
+  vertical-align: top;
+  text-transform: none;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  padding: 7px;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 700
+}
+
+.swiper-container .swiper-slide .item .thumbnail-container .product-flags li.FINSI23{
+  margin: 0 5px 2px 0;
+  position: relative;
+  background: #4c4c4c;
+  color: #fff;
+  display: inline-block;
+  vertical-align: top;
+  text-transform: none;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  padding: 7px 2px;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 700
+
+}
+
+
+.thumbnail-container {
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  min-height: 450px;
+  margin-bottom: 10px;
+  transition: box-shadow 0.3s ease;
+}
+
+
+.thumbnail-container .product-flags li.product-flag:empty {
+  display: none
+}
+
+@media(max-width: 767px) {
+  .thumbnail-container .product-flags li.product-flag-item {
+    font-size: 11px !important;
+    line-height: normal !important;
+    padding: 7px !important;
+  }
+}
+
+
+.thumbnail-container .product-meta .product-detail {
+  padding-top: 0;
+}
+
+
+.thumbnail-container .product-meta .product-prices {
+  margin: 10px 0 20px;
+}
+
+
+.thumbnail-container .product-meta .product-prices .product-price.has-discount .current-price-value {
+  color: #585858;
+  letter-spacing: -1px;
+}
+
+.thumbnail-container .product-meta .product-prices .current-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.thumbnail-container .product-meta .product-prices .product-discount .regular-price {
+  text-decoration: line-through;
+  font-size: 14px;
+  color: #585858;
+  font-weight: 700;
+  margin-right: 10px;
+  margin-left: 10px;
+  letter-spacing: initial;
+}
+
+.thumbnail-container .product-meta .product-prices .current-price-value {
+  color: #585858;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: inherit;
+}
+
+.thumbnail-container .product-meta .product-prices .discount {
+  color: #fff;
+  padding: 1px 5px;
+  text-transform: uppercase;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: #FF662E;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: initial;
+}
+
+.thumbnail-container .product-meta .product-prices .current-price.has-discount {
+  font-size: 30px;
+}
+
+.thumbnail-container .product-meta .product-prices .product-price {
+  font-size: 3rem;
+  color: #000;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.thumbnail-container .product-meta .product-prices .tax-shipping-delivery-label {
+  font-size: 13px;
+  color: #878787;
+}
+
+.thumbnail-container .product-meta .product-prices .product-discount {
+  display: inline-block;
+  font-size: 16px;
+  color: #acaaa6;
+  letter-spacing: -1px;
+}
+
+
+
+
+.product-wrapper .thumbnail-container {
+  min-height: 450px !important;
+  max-width: 450px !important;
+}
+
+.thumbnail-container .product-meta .product-prices .second-price .second-price-text{
+    font-size: 14px;
+    letter-spacing: 0;
+    font-family: 'Barlow', sans-serif;
+    color: #FF662E;
+    font-weight: 700;
+}
+
+.thumbnail-container .product-meta .product-prices .second-price .second-price-value{
+    font-size: 20px;
+    font-family: 'Barlow', sans-serif;
+    color: #FF662E;
+    font-weight: 700;
+}

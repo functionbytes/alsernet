@@ -1,0 +1,750 @@
+[
+    {
+        "title": "Guns",
+        "action": "",
+        "type": "subcategorie",
+        "id": 10,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "BB Guns",
+                "url": "\/en\/hunting\/bb_guns",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft",
+                "url": "\/en\/hunting\/airsoft",
+                "visible": "1"
+            },
+            {
+                "title": "Decorative Weapons",
+                "url": "\/en\/hunting\/decorative_weapons",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Optical",
+        "action": "",
+        "type": "subcategorie",
+        "id": 11,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Hunting Scopes",
+                "url": "\/en\/hunting\/hunting_scopes",
+                "visible": "1"
+            },
+            {
+                "title": "Binoculars",
+                "url": "\/en\/hunting\/binoculars",
+                "visible": "1"
+            },
+            {
+                "title": "Thermal and Night Vision",
+                "url": "\/en\/hunting\/thermal_and_night_vision",
+                "visible": "1"
+            },
+            {
+                "title": "Thermal Monoculars",
+                "url": "\/en\/hunting\/thermal_monoculars",
+                "visible": "1"
+            },
+            {
+                "title": "Distance Meters",
+                "url": "\/en\/hunting\/distance_meters",
+                "visible": "1"
+            },
+            {
+                "title": "Red dots",
+                "url": "\/en\/hunting\/red_dots",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopes",
+                "url": "\/en\/hunting\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "Optical Accessories",
+                "url": "\/en\/hunting\/optical_accessories",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accesories",
+        "action": "",
+        "type": "subcategorie",
+        "id": 12,
+        "column": "1",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Hearing and Eye Protection",
+                "url": "\/en\/hunting\/hearing_and_eye_protection",
+                "visible": "1"
+            },
+            {
+                "title": "Items for the car",
+                "url": "\/en\/hunting\/items_for_the_car",
+                "visible": "1"
+            },
+            {
+                "title": "Metal detectors",
+                "url": "\/en\/hunting\/metal_detectors",
+                "visible": "1"
+            },
+            {
+                "title": "Stations",
+                "url": "\/en\/hunting\/stations",
+                "visible": "1"
+            },
+            {
+                "title": "Portable Gps",
+                "url": "\/en\/hunting\/portable_gps",
+                "visible": "1"
+            },
+            {
+                "title": "Archery Kits",
+                "url": "\/en\/hunting\/archery_kits",
+                "visible": "1"
+            },
+            {
+                "title": "Approved Masks",
+                "url": "\/en\/hunting\/approved_masks",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting Gifts",
+                "url": "\/en\/hunting\/hunting_gifts",
+                "visible": "1"
+            },
+            {
+                "title": "Watches",
+                "url": "\/en\/hunting\/watches",
+                "visible": "1"
+            },
+            {
+                "title": "Crockery and Glassware",
+                "url": "\/en\/hunting\/crockery_and_glassware",
+                "visible": "1"
+            },
+            {
+                "title": "Free time",
+                "url": "\/en\/hunting\/free_time",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Complements",
+        "action": "",
+        "type": "subcategorie",
+        "id": 13,
+        "column": "2",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Tripods Forks and Bipods",
+                "url": "\/en\/hunting\/tripods_forks_and_bipods",
+                "visible": "1"
+            },
+            {
+                "title": "Cameras",
+                "url": "\/en\/hunting\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "Players and decoys",
+                "url": "\/en\/hunting\/players_and_decoys",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting stalls",
+                "url": "\/en\/hunting\/hunting_stalls",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting chairs",
+                "url": "\/en\/hunting\/hunting_chairs",
+                "visible": "1"
+            },
+            {
+                "title": "Sights",
+                "url": "\/en\/hunting\/sights",
+                "visible": "1"
+            },
+            {
+                "title": "Collimators",
+                "url": "\/en\/hunting\/collimators",
+                "visible": "1"
+            },
+            {
+                "title": "Mounts",
+                "url": "\/en\/hunting\/mounts",
+                "visible": "1"
+            },
+            {
+                "title": "Cases and briefcases",
+                "url": "\/en\/hunting\/cases_and_briefcases",
+                "visible": "1"
+            },
+            {
+                "title": "Transport animals",
+                "url": "\/en\/hunting\/transport_animals",
+                "visible": "1"
+            },
+            {
+                "title": "Weapons Cleaning",
+                "url": "\/en\/hunting\/weapons_cleaning",
+                "visible": "1"
+            },
+            {
+                "title": "Backpacks",
+                "url": "\/en\/hunting\/backpacks",
+                "visible": "1"
+            },
+            {
+                "title": "Pluckers",
+                "url": "\/en\/hunting\/pluckers",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting and shooting games",
+                "url": "\/en\/hunting\/competition_and_shooting-hunting_and_shooting_games",
+                "visible": "1"
+            },
+            {
+                "title": "Game Holders",
+                "url": "\/en\/hunting\/game_holders",
+                "visible": "1"
+            },
+            {
+                "title": "Reloading",
+                "url": "\/en\/hunting\/reloading",
+                "visible": "1"
+            },
+            {
+                "title": "Cartridge Belt",
+                "url": "\/en\/hunting\/cartridge_belt",
+                "visible": "1"
+            },
+            {
+                "title": "Corners",
+                "url": "\/en\/hunting\/corners",
+                "visible": "1"
+            },
+            {
+                "title": "straps",
+                "url": "\/en\/hunting\/straps",
+                "visible": "1"
+            },
+            {
+                "title": "Grain dispensers",
+                "url": "\/en\/hunting\/complements-grain_dispensers",
+                "visible": "1"
+            },
+            {
+                "title": "Complements (See all)",
+                "url": "\/en\/hunting\/complements",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Clothes and complements",
+        "action": "",
+        "type": "subcategorie",
+        "id": 14,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Trousers",
+                "url": "\/en\/hunting\/clothes_and_complements-trousers",
+                "visible": "1"
+            },
+            {
+                "title": "Parka-Jackets",
+                "url": "\/en\/hunting\/clothes_and_complements-parkajackets",
+                "visible": "1"
+            },
+            {
+                "title": "Vests",
+                "url": "\/en\/hunting\/clothes_and_complements-vests",
+                "visible": "1"
+            },
+            {
+                "title": "Fleece",
+                "url": "\/en\/hunting\/clothes_and_complements-fleece",
+                "visible": "1"
+            },
+            {
+                "title": "Shirts and T-Shirts",
+                "url": "\/en\/hunting\/clothes_and_complements-shirts_and_tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Jerseys",
+                "url": "\/en\/hunting\/clothes_and_complements-jerseys",
+                "visible": "1"
+            },
+            {
+                "title": "Jackets and Softshells",
+                "url": "\/en\/hunting\/clothes_and_complements-jackets_and_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Waterproof clothing",
+                "url": "\/en\/hunting\/clothes_and_complements-waterproof_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Clothing for women and children",
+                "url": "\/en\/hunting\/clothing_for_women_and_children",
+                "visible": "1"
+            },
+            {
+                "title": "Underwear",
+                "url": "\/en\/hunting\/clothes_and_complements-underwear",
+                "visible": "1"
+            },
+            {
+                "title": "Socks",
+                "url": "\/en\/hunting\/clothes_and_complements-socks",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting Gaiters and Stubble Gaiters",
+                "url": "\/en\/hunting\/clothes_and_complements-hunting_gaiters_and_stubble_gaiters",
+                "visible": "1"
+            },
+            {
+                "title": "Polo shirts",
+                "url": "\/en\/hunting\/clothes_and_complements-polo_shirts",
+                "visible": "1"
+            },
+            {
+                "title": "Caps and hats",
+                "url": "\/en\/hunting\/caps_and_hats",
+                "visible": "1"
+            },
+            {
+                "title": "Overall suits",
+                "url": "\/en\/hunting\/clothes_and_complements-overall_suits",
+                "visible": "1"
+            },
+            {
+                "title": "Camouflage",
+                "url": "\/en\/hunting\/clothes_and_complements-camouflage",
+                "visible": "1"
+            },
+            {
+                "title": "High visibility",
+                "url": "\/en\/hunting\/clothes_and_complements-high_visibility",
+                "visible": "1"
+            },
+            {
+                "title": "Gloves",
+                "url": "\/en\/hunting\/gloves",
+                "visible": "1"
+            },
+            {
+                "title": "Neck gaiters and balaclava",
+                "url": "\/en\/hunting\/clothes_and_complements-neck_gaiters_and_balaclava",
+                "visible": "1"
+            },
+            {
+                "title": "Belts and suspenders",
+                "url": "\/en\/hunting\/clothes_and_complements-belts_and_suspenders",
+                "visible": "1"
+            },
+            {
+                "title": "Sets",
+                "url": "\/en\/hunting\/clothes_and_complements-sets",
+                "visible": "1"
+            },
+            {
+                "title": "Ties and Cufflinks",
+                "url": "\/en\/hunting\/clothes_and_complements-ties_and_cufflinks",
+                "visible": "1"
+            },
+            {
+                "title": "Bracelets",
+                "url": "\/en\/hunting\/bracelets",
+                "visible": "1"
+            },
+            {
+                "title": "Heated Clothing",
+                "url": "\/en\/hunting\/clothes_and_complements-heated_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Clothes and complements (See all)",
+                "url": "\/en\/hunting\/clothes_and_complements",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Taxidermy",
+        "action": "",
+        "type": "subcategorie",
+        "id": 15,
+        "column": "3",
+        "position_category": "12",
+        "position": "2",
+        "items": [
+            {
+                "title": "Bases",
+                "url": "\/en\/hunting\/taxidermy-bases",
+                "visible": "1"
+            },
+            {
+                "title": "Skulls and Fronts",
+                "url": "\/en\/hunting\/taxidermy-skulls_and_fronts",
+                "visible": "1"
+            },
+            {
+                "title": "Preparation of hunting trophies",
+                "url": "\/en\/hunting\/taxidermy-preparation_of_hunting_trophies",
+                "visible": "1"
+            },
+            {
+                "title": "Medals",
+                "url": "\/en\/hunting\/taxidermy-medals",
+                "visible": "1"
+            },
+            {
+                "title": "Roe deer trophies",
+                "url": "\/en\/hunting\/taxidermy-roe_deer_trophies",
+                "visible": "1"
+            },
+            {
+                "title": "Taxidermy (See all)",
+                "url": "\/en\/hunting\/taxidermy",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "FOOTWEAR",
+        "action": "",
+        "type": "subcategorie",
+        "id": 16,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Goretex boots",
+                "url": "\/en\/hunting\/footwear-goretex_boots",
+                "visible": "1"
+            },
+            {
+                "title": "Low boots",
+                "url": "\/en\/hunting\/footwear-low_boots",
+                "visible": "1"
+            },
+            {
+                "title": "High boots",
+                "url": "\/en\/hunting\/footwear-_high_boots",
+                "visible": "1"
+            },
+            {
+                "title": "Gumboots",
+                "url": "\/en\/hunting\/footwear-_gumboots",
+                "visible": "1"
+            },
+            {
+                "title": "Waterproof boots",
+                "url": "\/en\/hunting\/footwear-waterproof_boots",
+                "visible": "1"
+            },
+            {
+                "title": "Shoes",
+                "url": "\/en\/hunting\/footwear-shoes",
+                "visible": "1"
+            },
+            {
+                "title": "Outdoor footwear",
+                "url": "\/en\/hunting\/footwear-outdoor_footwear",
+                "visible": "1"
+            },
+            {
+                "title": "Women's footwear",
+                "url": "\/en\/hunting\/footwear-womens_footwear",
+                "visible": "1"
+            },
+            {
+                "title": "Sandals",
+                "url": "\/en\/hunting\/footwear-sandals",
+                "visible": "1"
+            },
+            {
+                "title": "Footwear accessories",
+                "url": "\/en\/hunting\/footwear-footwear_accessories",
+                "visible": "1"
+            },
+            {
+                "title": "FOOTWEAR (See all)",
+                "url": "\/en\/hunting\/footwear",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ammunition",
+        "action": "",
+        "type": "subcategorie",
+        "id": 17,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Ammunition for Air Guns",
+                "url": "\/en\/hunting\/ammunition_for_air_guns",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft Gun Ammunition",
+                "url": "\/en\/hunting\/airsoft_gun_ammunition",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cuchiller\u00eda",
+        "action": "",
+        "type": "subcategorie",
+        "id": 18,
+        "column": "4",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Knives",
+                "url": "\/en\/hunting\/knives",
+                "visible": "1"
+            },
+            {
+                "title": "Pocket knifes",
+                "url": "\/en\/hunting\/pocket_knifes",
+                "visible": "1"
+            },
+            {
+                "title": "Multi tools",
+                "url": "\/en\/hunting\/multi_tools",
+                "visible": "1"
+            },
+            {
+                "title": "Axes and hammers",
+                "url": "\/en\/hunting\/axes_and_hammers",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/en\/hunting\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "Sharpeners",
+                "url": "\/en\/hunting\/sharpeners",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Flashlights and Spotlights",
+        "action": "",
+        "type": "subcategorie",
+        "id": 19,
+        "column": "4",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Flashlights",
+                "url": "\/en\/hunting\/flashlights_and_spotlights-flashlights",
+                "visible": "1"
+            },
+            {
+                "title": "Attachable to the weapon",
+                "url": "\/en\/hunting\/flashlights_and_spotlights-attachable_to_the_weapon",
+                "visible": "1"
+            },
+            {
+                "title": "Headlights",
+                "url": "\/en\/hunting\/flashlights_and_spotlights-headlights",
+                "visible": "1"
+            },
+            {
+                "title": "Spotlights",
+                "url": "\/en\/hunting\/flashlights_and_spotlights-spotlights",
+                "visible": "1"
+            },
+            {
+                "title": "Flashlight accessories",
+                "url": "\/en\/hunting\/flashlights_and_spotlights-flashlight_accessories",
+                "visible": "1"
+            },
+            {
+                "title": "Flashlights and Spotlights (See all)",
+                "url": "\/en\/hunting\/flashlights_and_spotlights",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Dog Products",
+        "action": "",
+        "type": "subcategorie",
+        "id": 20,
+        "column": "5",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Collars",
+                "url": "\/en\/hunting\/dog_products-collars",
+                "visible": "1"
+            },
+            {
+                "title": "Protective vests",
+                "url": "\/en\/hunting\/dog_products-protective_vests",
+                "visible": "1"
+            },
+            {
+                "title": "Hunting dog accessories",
+                "url": "\/en\/hunting\/dog_products-_hunting_dog_accessories",
+                "visible": "1"
+            },
+            {
+                "title": "Dog leashes",
+                "url": "\/en\/hunting\/dog_products-dog_leashes",
+                "visible": "1"
+            },
+            {
+                "title": "Harnesses",
+                "url": "\/en\/hunting\/dog_products-harnesses",
+                "visible": "1"
+            },
+            {
+                "title": "Whistles",
+                "url": "\/en\/hunting\/dog_products-whistles",
+                "visible": "1"
+            },
+            {
+                "title": "Insecticide",
+                "url": "\/en\/hunting\/dog_products-insecticide",
+                "visible": "1"
+            },
+            {
+                "title": "Dog Products (See all)",
+                "url": "\/en\/hunting\/dog_products",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Competition and shooting",
+        "action": "",
+        "type": "subcategorie",
+        "id": 21,
+        "column": "5",
+        "position_category": "13",
+        "position": "2",
+        "items": [
+            {
+                "title": "Helmets and Plugs",
+                "url": "\/en\/hunting\/competition_and_shooting-helmets_and_plugs",
+                "visible": "1"
+            },
+            {
+                "title": "Vests shot",
+                "url": "\/en\/hunting\/competition_and_shooting-vests_shot",
+                "visible": "1"
+            },
+            {
+                "title": "Shooting Eyeglasses",
+                "url": "\/en\/hunting\/competition_and_shooting-shooting_eyeglasses",
+                "visible": "1"
+            },
+            {
+                "title": "Trap Throwers",
+                "url": "\/en\/hunting\/competition_and_shooting-trap_throwers",
+                "visible": "1"
+            },
+            {
+                "title": "Supports",
+                "url": "\/en\/hunting\/competition_and_shooting-supports",
+                "visible": "1"
+            },
+            {
+                "title": "Points of view",
+                "url": "\/en\/hunting\/competition_and_shooting-points_of_view",
+                "visible": "1"
+            },
+            {
+                "title": "Bags and briefcases",
+                "url": "\/en\/hunting\/competition_and_shooting-bags_and_briefcases",
+                "visible": "0"
+            },
+            {
+                "title": "Dishes and Targets",
+                "url": "\/en\/hunting\/competition_and_shooting-dishes_and_targets",
+                "visible": "1"
+            },
+            {
+                "title": "Shoulder Pads and Cheeks",
+                "url": "\/en\/hunting\/competition_and_shooting-shoulder_pads_and_cheeks",
+                "visible": "1"
+            },
+            {
+                "title": "Competition and Shooting (See all)",
+                "url": "\/en\/hunting\/competition_and_shooting",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet and offers",
+        "action": "",
+        "type": "subcategorie",
+        "id": 22,
+        "column": "5",
+        "position_category": "15",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet and Liquidations",
+                "url": "\/en\/hunting\/outlet_and_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "Express Hunting Offer",
+                "url": "\/en\/hunting\/express_hunting_offer",
+                "visible": "1"
+            },
+            {
+                "title": "Microprecios CAZA",
+                "url": "\/en\/hunting\/microprecios_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Air Rifle Pack Offer",
+                "url": "\/en\/hunting\/air_rifle_pack_offer",
+                "visible": "0"
+            }
+        ]
+    }
+]

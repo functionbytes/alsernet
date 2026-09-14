@@ -1,0 +1,475 @@
+[
+    {
+        "title": "Mute da Immersione",
+        "action": "",
+        "type": "subcategorie",
+        "id": 46,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Mute Umide",
+                "url": "\/it\/subacquea\/mute_da_immersione-mute_umide",
+                "visible": "1"
+            },
+            {
+                "title": "Mute Semisecche",
+                "url": "\/it\/subacquea\/mute_da_immersione-mute_semisecche",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento Termico per Immersione",
+                "url": "\/it\/subacquea\/mute_da_immersione-abbigliamento_termico_per_immersione",
+                "visible": "1"
+            },
+            {
+                "title": "Shorty",
+                "url": "\/it\/subacquea\/mute_da_immersione-shorty",
+                "visible": "1"
+            },
+            {
+                "title": "T-shirt e Protezione Uv",
+                "url": "\/it\/subacquea\/mute_da_immersione-t_shirt_e_protezione_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Cappucci",
+                "url": "\/it\/subacquea\/mute_da_immersione-cappucci",
+                "visible": "1"
+            },
+            {
+                "title": "Mute Stagne",
+                "url": "\/it\/subacquea\/mute_da_immersione-mute_stagne",
+                "visible": "1"
+            },
+            {
+                "title": "Mute da Immersione (Scopri di pi\u00f9)",
+                "url": "\/it\/subacquea\/mute_da_immersione",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Piscina",
+        "action": "",
+        "type": "subcategorie",
+        "id": 47,
+        "column": "1",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Occhialini da Piscina",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-occhialini_da_piscina",
+                "visible": "1"
+            },
+            {
+                "title": "Cuffie da Piscina",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-cuffie_da_piscina",
+                "visible": "1"
+            },
+            {
+                "title": "Costumi da Bagno",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-costumi_da_bagno",
+                "visible": "1"
+            },
+            {
+                "title": "Ciabatte",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-ciabatte",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-accessori",
+                "visible": "1"
+            },
+            {
+                "title": "Aletas de piscina",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-aletas_de_piscina",
+                "visible": "1"
+            },
+            {
+                "title": "Borse Impermeabili",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-borse_impermeabili",
+                "visible": "1"
+            },
+            {
+                "title": "Tappi e Pinze da Piscina",
+                "url": "\/it\/subacquea\/nuoto_e_piscina-tappi_e_pinze_da_piscina",
+                "visible": "1"
+            },
+            {
+                "title": "Nuoto e Piscina",
+                "url": "\/it\/subacquea\/nuoto_e_piscina",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Attrezzatura sub",
+        "action": "",
+        "type": "subcategorie",
+        "id": 48,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Erogatori",
+                "url": "\/it\/subacquea\/erogatori",
+                "visible": "1"
+            },
+            {
+                "title": "Octopus",
+                "url": "\/it\/subacquea\/octopus",
+                "visible": "1"
+            },
+            {
+                "title": "Computer\/interfaccia",
+                "url": "\/it\/subacquea\/computer_interfaccia",
+                "visible": "1"
+            },
+            {
+                "title": "Console e Manometri",
+                "url": "\/it\/subacquea\/console_e_manometri",
+                "visible": "1"
+            },
+            {
+                "title": "Bussole",
+                "url": "\/it\/subacquea\/bussole",
+                "visible": "1"
+            },
+            {
+                "title": "Giubbotti Jackets",
+                "url": "\/it\/subacquea\/giubbotti_jackets",
+                "visible": "1"
+            },
+            {
+                "title": "Calzari",
+                "url": "\/it\/subacquea\/calzari",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da immersione",
+                "url": "\/it\/subacquea\/guanti_da_immersione",
+                "visible": "1"
+            },
+            {
+                "title": "Boccagli",
+                "url": "\/it\/subacquea\/boccagli",
+                "visible": "1"
+            },
+            {
+                "title": "Fari e Torce",
+                "url": "\/it\/subacquea\/fari_e_torce",
+                "visible": "1"
+            },
+            {
+                "title": "Maschere Subacquea",
+                "url": "\/it\/subacquea\/maschere_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Pinne",
+                "url": "\/it\/subacquea\/pinne",
+                "visible": "1"
+            },
+            {
+                "title": "Coltelli Subacquei",
+                "url": "\/it\/subacquea\/coltelli_subacquei",
+                "visible": "1"
+            },
+            {
+                "title": "Sacche Subacquee",
+                "url": "\/it\/subacquea\/sacche_subacquee",
+                "visible": "1"
+            },
+            {
+                "title": "Bombole da Immersione",
+                "url": "\/it\/subacquea\/bombole_da_immersione",
+                "visible": "1"
+            },
+            {
+                "title": "Gommoni e Motori",
+                "url": "\/it\/subacquea\/gommoni_e_motori",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbigliamento",
+        "action": "",
+        "type": "subcategorie",
+        "id": 49,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Costumi da Bagno",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-costumi_da_bagno",
+                "visible": "1"
+            },
+            {
+                "title": "Bermuda",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-bermuda",
+                "visible": "1"
+            },
+            {
+                "title": "Calze",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-calze",
+                "visible": "0"
+            },
+            {
+                "title": "T-shirt",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-t_shirt",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-gilet",
+                "visible": "1"
+            },
+            {
+                "title": "Giacche e Softshells",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-giacche_e_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Pantaloni",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-pantaloni",
+                "visible": "1"
+            },
+            {
+                "title": "Polo",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-polo",
+                "visible": "0"
+            },
+            {
+                "title": "Abbigliamento da Donna",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature-abbigliamento_da_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento e Calzature",
+                "url": "\/it\/subacquea\/abbigliamento_e_calzature",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Elettronica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 50,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Radio Subacquee",
+                "url": "\/it\/subacquea\/radio_subacquee",
+                "visible": "1"
+            },
+            {
+                "title": "Fotocamere",
+                "url": "\/it\/subacquea\/fotocamere",
+                "visible": "0"
+            },
+            {
+                "title": "GPS ed Ecoscandagli",
+                "url": "\/it\/gps_ed_ecoscandagli",
+                "visible": "0"
+            },
+            {
+                "title": "Orologi Sportivi",
+                "url": "\/it\/subacquea\/orologi_sportivi_",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Accessori subacquei",
+        "action": "",
+        "type": "subcategorie",
+        "id": 51,
+        "column": "4",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Boe segnaletiche",
+                "url": "\/it\/subacquea\/accessori_subacquei-boe_segnaletiche",
+                "visible": "1"
+            },
+            {
+                "title": "Mulinelli",
+                "url": "\/it\/subacquea\/accessori_subacquei-mulinelli",
+                "visible": "1"
+            },
+            {
+                "title": "Cinghie",
+                "url": "\/it\/subacquea\/accessori_subacquei-cinghie",
+                "visible": "1"
+            },
+            {
+                "title": "Avisatori acustici",
+                "url": "\/it\/subacquea\/accessori_subacquei-avisatori_acustici",
+                "visible": "1"
+            },
+            {
+                "title": "Moschettoni",
+                "url": "\/it\/subacquea\/accessori_subacquei-moschettoni",
+                "visible": "1"
+            },
+            {
+                "title": "Grucce",
+                "url": "\/it\/subacquea\/accessori_subacquei-_grucce",
+                "visible": "1"
+            },
+            {
+                "title": "Tubi",
+                "url": "\/it\/subacquea\/accessori_subacquei-tubi",
+                "visible": "1"
+            },
+            {
+                "title": "Palloni di Decompressione",
+                "url": "\/it\/subacquea\/accessori_subacquei-palloni_di_decompressione",
+                "visible": "0"
+            },
+            {
+                "title": "Prolunghe",
+                "url": "\/it\/subacquea\/accessori_subacquei-prolunghe",
+                "visible": "1"
+            },
+            {
+                "title": "Retrattori",
+                "url": "\/it\/subacquea\/accessori_subacquei-retrattori",
+                "visible": "1"
+            },
+            {
+                "title": "Set di Accessori",
+                "url": "\/it\/subacquea\/accessori_subacquei-set_di_accessori",
+                "visible": "1"
+            },
+            {
+                "title": "Multiuso",
+                "url": "\/it\/subacquea\/accessori_subacquei-multiuso",
+                "visible": "1"
+            },
+            {
+                "title": "Portachiavi",
+                "url": "\/it\/subacquea\/accessori_subacquei-portachiavi",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori Subacquei",
+                "url": "\/it\/subacquea\/accessori_subacquei",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pesca Subacquea",
+        "action": "",
+        "type": "subcategorie",
+        "id": 52,
+        "column": "5",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fucili da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-fucili_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Pinne per Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-pinne_per_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Coltelli",
+                "url": "\/it\/subacquea\/pesca_subacquea-coltelli",
+                "visible": "1"
+            },
+            {
+                "title": "Maschere da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-maschere_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-accessori_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-guanti_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpini da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-scarpini_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Borse da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-borse_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Cappucci da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-cappucci_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Manutenzione Dell'attrezzatura",
+                "url": "\/it\/subacquea\/pesca_subacquea-manutenzione_dell_attrezzatura",
+                "visible": "1"
+            },
+            {
+                "title": "Fari e Torce da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-fari_e_torce_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Mute da Pesca Subacquea",
+                "url": "\/it\/subacquea\/pesca_subacquea-mute_da_pesca_subacquea",
+                "visible": "1"
+            },
+            {
+                "title": "Tubi da Apnea",
+                "url": "\/it\/subacquea\/pesca_subacquea-tubi_da_apnea",
+                "visible": "1"
+            },
+            {
+                "title": "Pesca Subacquea (Scopri di pi\u00f9)",
+                "url": "\/it\/subacquea\/pesca_subacquea",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 53,
+        "column": "5",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/subacquea\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Lampo Sub",
+                "url": "\/it\/subacquea\/offerta_lampo_sub",
+                "visible": "1"
+            }
+        ]
+    }
+]

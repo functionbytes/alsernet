@@ -1,0 +1,245 @@
+[
+    {
+        "title": "Seguran\u00e7a",
+        "action": "",
+        "type": "subcategorie",
+        "id": 54,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Coletes salva-vidas",
+                "url": "\/pt\/vela\/coletes_salvavidas",
+                "visible": "1"
+            },
+            {
+                "title": "Seguran\u00e7a e Salvamento",
+                "url": "\/pt\/vela\/seguranca_e_salvamento",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipo personal",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "roupas n\u00e1uticas",
+                "url": "\/pt\/vela\/roupas_nauticas",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7ado n\u00e1utico",
+                "url": "\/pt\/vela\/calcado_nautico",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos de Viagem",
+                "url": "\/pt\/vela\/sacos_de_viagem",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos e Bolsas",
+                "url": "\/pt\/vela\/sacos_e_bolsas",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e2maras",
+                "url": "\/pt\/vela\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "\u00d3culos de Sol",
+                "url": "\/pt\/vela\/oculos_de_sol",
+                "visible": "1"
+            },
+            {
+                "title": "Navalhas e Multi\u00fasos",
+                "url": "\/pt\/vela\/navalhas_e_multiusos",
+                "visible": "1"
+            },
+            {
+                "title": "Rel\u00f3gios",
+                "url": "\/pt\/vela\/relogios",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Amarra\u00e7\u00e3o e ancoragem",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Amarra\u00e7\u00e3o e Ancoragem",
+                "url": "\/pt\/vela\/amarracao_e_ancoragem",
+                "visible": "1"
+            },
+            {
+                "title": "Lanchas",
+                "url": "\/pt\/vela\/lanchas",
+                "visible": "1"
+            },
+            {
+                "title": "Motores",
+                "url": "\/pt\/vela\/motores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Entretenimento",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "N\u00e1utica de Recreio",
+                "url": "\/pt\/vela\/nautica_de_recreio",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipamento de Conv\u00e9s",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Equipamento de Conv\u00e9s",
+                "url": "\/pt\/vela\/equipamento_de_conves",
+                "visible": "1"
+            },
+            {
+                "title": "Focos e Lanternas",
+                "url": "\/pt\/vela\/focos_e_lanternas",
+                "visible": "1"
+            },
+            {
+                "title": "Luzes de Navega\u00e7\u00e3o",
+                "url": "\/pt\/vela\/luzes_de_navegacao",
+                "visible": "1"
+            },
+            {
+                "title": "Manuten\u00e7\u00e3o de embarca\u00e7\u00f5es",
+                "url": "\/pt\/vela\/manutencao_de_embarcacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Baterias",
+                "url": "\/pt\/vela\/baterias",
+                "visible": "1"
+            },
+            {
+                "title": "Combust\u00edvel",
+                "url": "\/pt\/vela\/combustivel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Compassos, eletr\u00f3nica e navega\u00e7\u00e3o",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Emissoras e VHF",
+                "url": "\/pt\/vela\/emissoras_e_vhf",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/pt\/vela\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navega\u00e7\u00e3o",
+                "url": "\/pt\/vela\/navegacao",
+                "visible": "1"
+            },
+            {
+                "title": "Bin\u00f3culos",
+                "url": "\/pt\/vela\/binoculos",
+                "visible": "1"
+            },
+            {
+                "title": "Sondas",
+                "url": "\/pt\/vela\/sondas",
+                "visible": "1"
+            },
+            {
+                "title": "Telesc\u00f3pios",
+                "url": "\/pt\/vela\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metais",
+                "url": "\/pt\/vela\/detectores_de_metais",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Conforto",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "\u00c1gua a bordo",
+                "url": "\/pt\/vela\/agua_a_bordo",
+                "visible": "1"
+            },
+            {
+                "title": "Utilidades e Conforto",
+                "url": "\/pt\/vela\/utilidades_e_conforto",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/vela\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express N\u00e1utica",
+                "url": "\/pt\/vela\/oferta_express_nautica",
+                "visible": "0"
+            }
+        ]
+    }
+]

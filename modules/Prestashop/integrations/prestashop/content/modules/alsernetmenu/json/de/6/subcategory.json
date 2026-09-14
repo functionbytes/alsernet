@@ -1,0 +1,794 @@
+[
+    {
+        "title": "S\u00e4ttel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 34,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Dressurs\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-dressursattel",
+                "visible": "1"
+            },
+            {
+                "title": "Vielseitigkeitss\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-vielseitigkeitssattel",
+                "visible": "1"
+            },
+            {
+                "title": "Springs\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-springsattel",
+                "visible": "1"
+            },
+            {
+                "title": "Vaquero-s\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-vaquero_sattel",
+                "visible": "1"
+            },
+            {
+                "title": "Gel\u00e4ndes\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-gelandesattel",
+                "visible": "1"
+            },
+            {
+                "title": "Distanzs\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-distanzsattel",
+                "visible": "1"
+            },
+            {
+                "title": "Preiswerte Reitausr\u00fcstung",
+                "url": "\/de\/reiten\/sattel-preiswerte_reitausrustung",
+                "visible": "1"
+            },
+            {
+                "title": "Ponys\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-ponysattel",
+                "visible": "1"
+            },
+            {
+                "title": "Westerns\u00e4ttel",
+                "url": "\/de\/reiten\/sattel-westernsattel",
+                "visible": "1"
+            },
+            {
+                "title": "S\u00e4ttel (Alles sehen)",
+                "url": "\/de\/reiten\/sattel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Hygiene und Gesundheit",
+        "action": "",
+        "type": "subcategorie",
+        "id": 35,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Salben",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-salben",
+                "visible": "1"
+            },
+            {
+                "title": "Huf\u00f6l",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-hufol",
+                "visible": "1"
+            },
+            {
+                "title": "Biotin",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-biotin",
+                "visible": "1"
+            },
+            {
+                "title": "Pferdeleckerlis",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-pferdeleckerlis",
+                "visible": "1"
+            },
+            {
+                "title": "Erg\u00e4nzungsfutter",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-erganzungsfutter",
+                "visible": "1"
+            },
+            {
+                "title": "Haarepflege",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-haarepflege",
+                "visible": "1"
+            },
+            {
+                "title": "Insektenschutz",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-insektenschutz",
+                "visible": "1"
+            },
+            {
+                "title": "Vitamine Und Elektrolyte",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-vitamine_und_elektrolyte",
+                "visible": "1"
+            },
+            {
+                "title": "Desinfektionsmittele",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-desinfektionsmittele",
+                "visible": "1"
+            },
+            {
+                "title": "Tranquilizer",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-tranquilizer",
+                "visible": "0"
+            },
+            {
+                "title": "T\u00fccher",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-tucher",
+                "visible": "0"
+            },
+            {
+                "title": "Hygiene und Gesundheit (Alles sehen)",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pferdeausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 36,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Halfter",
+                "url": "\/de\/reiten\/halfter",
+                "visible": "1"
+            },
+            {
+                "title": "Beinschutz",
+                "url": "\/de\/reiten\/beinschutz",
+                "visible": "1"
+            },
+            {
+                "title": "Schabracken",
+                "url": "\/de\/reiten\/schabracken",
+                "visible": "1"
+            },
+            {
+                "title": "Steigb\u00fcgelriemen",
+                "url": "\/de\/reiten\/pferdeausrustung-steigbugelriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Sattelgurte",
+                "url": "\/de\/reiten\/pferdeausrustung-sattelgurte",
+                "visible": "1"
+            },
+            {
+                "title": "Sattelkissen",
+                "url": "\/de\/reiten\/sattelkissen",
+                "visible": "1"
+            },
+            {
+                "title": "Bandagen",
+                "url": "\/de\/reiten\/beinschutz-bandagen",
+                "visible": "1"
+            },
+            {
+                "title": "Fillistrense Und Zubeh\u00f6r",
+                "url": "\/de\/reiten\/pferdeausrustung-fillistrense_und_zubehor",
+                "visible": "1"
+            },
+            {
+                "title": "Gebisse Und Kappz\u00e4ume",
+                "url": "\/de\/reiten\/pferdeausrustung-gebisse_und_kappzaume",
+                "visible": "1"
+            },
+            {
+                "title": "Steigb\u00fcgel Und Zubeh\u00f6r",
+                "url": "\/de\/reiten\/pferdeausrustung-steigbugel_und_zubehor",
+                "visible": "1"
+            },
+            {
+                "title": "Z\u00fcgel",
+                "url": "\/de\/reiten\/pferdeausrustung-zugel",
+                "visible": "1"
+            },
+            {
+                "title": "Stricke",
+                "url": "\/de\/reiten\/pferdeausrustung-stricke",
+                "visible": "1"
+            },
+            {
+                "title": "Satteldecken Und Schweifriemen",
+                "url": "\/de\/reiten\/satteldecken_und_schweifriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Vorderzeug",
+                "url": "\/de\/reiten\/pferdeausrustung-vorderzeug",
+                "visible": "1"
+            },
+            {
+                "title": "Martingalgabel",
+                "url": "\/de\/reiten\/pferdeausrustung-martingalgabel",
+                "visible": "1"
+            },
+            {
+                "title": "Zubeh\u00f6r F\u00fcr S\u00e4ttel",
+                "url": "\/de\/reiten\/pferdeausrustung-zubehor_fur_sattel",
+                "visible": "1"
+            },
+            {
+                "title": "Hufglocken",
+                "url": "\/de\/reiten\/beinschutz-hufglocken",
+                "visible": "1"
+            },
+            {
+                "title": "Ohrenhaube",
+                "url": "\/de\/reiten\/ohrenhaube",
+                "visible": "1"
+            },
+            {
+                "title": "Schweifschoner",
+                "url": "\/de\/reiten\/pferdeausrustung-schweifschoner",
+                "visible": "1"
+            },
+            {
+                "title": "Pferdedecken",
+                "url": "\/de\/reiten\/pferdedecken",
+                "visible": "1"
+            },
+            {
+                "title": "Steigb\u00fcgelschoner-decken",
+                "url": "\/de\/reiten\/pferdeausrustung-steigbugelschoner_decken",
+                "visible": "1"
+            },
+            {
+                "title": "Training Und Voltigieren",
+                "url": "\/de\/reiten\/training_und_voltigieren",
+                "visible": "1"
+            },
+            {
+                "title": "Abdeckungen",
+                "url": "\/de\/reiten\/pferdeausrustung-abdeckungen",
+                "visible": "1"
+            },
+            {
+                "title": "Fliegenhauben & Fliegenmasken",
+                "url": "\/de\/reiten\/pferdeausrustung-fliegenhauben_fliegenmasken",
+                "visible": "1"
+            },
+            {
+                "title": "Reithalfter",
+                "url": "\/de\/reiten\/pferdeausrustung-reithalfter",
+                "visible": "1"
+            },
+            {
+                "title": "Kragen Und Gurte",
+                "url": "\/de\/reiten\/pferdeausrustung-kragen_und_gurte",
+                "visible": "1"
+            },
+            {
+                "title": "Schweifriemen",
+                "url": "\/de\/reiten\/pferdeausrustung-schweifriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Maulgatter",
+                "url": "\/de\/reiten\/pferdeausrustung-maulgatter",
+                "visible": "1"
+            },
+            {
+                "title": "Satteltaschen",
+                "url": "\/de\/reiten\/satteltaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Kutschen Und Geschirre",
+                "url": "\/de\/reiten\/kutschen_und_geschirre",
+                "visible": "0"
+            },
+            {
+                "title": "Kokarde",
+                "url": "\/de\/reiten\/pferdeausrustung-kokarde",
+                "visible": "1"
+            },
+            {
+                "title": "Sattelfelle",
+                "url": "\/de\/reiten\/sattelfelle",
+                "visible": "1"
+            },
+            {
+                "title": "Pferdeausr\u00fcstung (Auswahl ansehen)",
+                "url": "\/de\/reiten\/pferdeausrustung",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Reiterausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 37,
+        "column": "3",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Reithelme",
+                "url": "\/de\/reiten\/reithelme",
+                "visible": "1"
+            },
+            {
+                "title": "Sicherheitswesten",
+                "url": "\/de\/reiten\/sicherheitswesten",
+                "visible": "1"
+            },
+            {
+                "title": "Reithandschuhe",
+                "url": "\/de\/reiten\/reithandschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Sporen Und Sporenriemen",
+                "url": "\/de\/reiten\/sporen_und_sporenriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Gerten",
+                "url": "\/de\/reiten\/pferdeausrustung-gerten",
+                "visible": "1"
+            },
+            {
+                "title": "R\u00fcckenschutzg\u00fcrtel",
+                "url": "\/de\/reiten\/ruckenschutzgurtel",
+                "visible": "1"
+            },
+            {
+                "title": "Kleinkind",
+                "url": "\/de\/reiten\/kleinkind",
+                "visible": "1"
+            },
+            {
+                "title": "B\u00fccher",
+                "url": "\/de\/reiten\/bucher",
+                "visible": "1"
+            },
+            {
+                "title": "Uhren",
+                "url": "\/de\/reiten\/uhren",
+                "visible": "0"
+            },
+            {
+                "title": "Geschenkartikel",
+                "url": "\/de\/reiten\/geschenkartikel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Stallzubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 38,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Sattelhalter",
+                "url": "\/de\/reiten\/stallzubehor-sattelhalter",
+                "visible": "1"
+            },
+            {
+                "title": "Zaumzeughalter",
+                "url": "\/de\/reiten\/stallzubehor-zaumzeughalter",
+                "visible": "1"
+            },
+            {
+                "title": "Futtereimer Und Futtersch\u00fcsseln",
+                "url": "\/de\/reiten\/stallzubehor-futtereimer_und_futterschusseln",
+                "visible": "1"
+            },
+            {
+                "title": "Putzboxen Und Sattelk\u00e4sten",
+                "url": "\/de\/reiten\/stallzubehor-putzboxen_und_sattelkasten",
+                "visible": "1"
+            },
+            {
+                "title": "Rechen",
+                "url": "\/de\/reiten\/stallzubehor-rechen",
+                "visible": "1"
+            },
+            {
+                "title": "Anbindvorrichtungen",
+                "url": "\/de\/reiten\/stallzubehor-anbindvorrichtungen",
+                "visible": "1"
+            },
+            {
+                "title": "Fesselriemen",
+                "url": "\/de\/reiten\/stallzubehor-fesselriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Stockma\u00df",
+                "url": "\/de\/reiten\/stallzubehor-stockmass",
+                "visible": "1"
+            },
+            {
+                "title": "Buchstaben Und Brandzeichen",
+                "url": "\/de\/reiten\/stallzubehor-buchstaben_und_brandzeichen",
+                "visible": "1"
+            },
+            {
+                "title": "Weidezaunger\u00e4te",
+                "url": "\/de\/reiten\/weidezaungerate",
+                "visible": "1"
+            },
+            {
+                "title": "Abdeckungen Und Taschen",
+                "url": "\/de\/reiten\/abdeckungen_und_taschen",
+                "visible": "1"
+            },
+            {
+                "title": "Stallzubeh\u00f6r (Auswahl ansehen)",
+                "url": "\/de\/reiten\/stallzubehor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bekleidung und Accesoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 39,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Reithosen",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-reithosen",
+                "visible": "1"
+            },
+            {
+                "title": "Shirts Und Polos",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-shirts_und_polos",
+                "visible": "1"
+            },
+            {
+                "title": "Westen",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-westen",
+                "visible": "1"
+            },
+            {
+                "title": "Chaps Und Long Chaps",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-chaps_und_long_chaps",
+                "visible": "1"
+            },
+            {
+                "title": "Jacken Und Fleecejacken",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-jacken_und_fleecejacken",
+                "visible": "1"
+            },
+            {
+                "title": "Reitsocken",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-reitsocken",
+                "visible": "1"
+            },
+            {
+                "title": "Turnierbekleidung",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-turnierbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Reitponchos Und Reitm\u00e4ntel",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-reitponchos_und_reitmantel",
+                "visible": "1"
+            },
+            {
+                "title": "Hoodies",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-hoodies",
+                "visible": "1"
+            },
+            {
+                "title": "Zubeh\u00f6r",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-zubehor",
+                "visible": "1"
+            },
+            {
+                "title": "Caps",
+                "url": "\/de\/reiten\/bekleidung_und_accesoires-caps",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pflegeprodukte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 40,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "B\u00fcrsten",
+                "url": "\/de\/reiten\/pflegeprodukte-bursten",
+                "visible": "1"
+            },
+            {
+                "title": "Kard\u00e4tschen",
+                "url": "\/de\/reiten\/pflegeprodukte-kardatschen",
+                "visible": "1"
+            },
+            {
+                "title": "Putzboxen & Putztaschen",
+                "url": "\/de\/reiten\/pflegeprodukte-putzboxen_putztaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Hufkratzer",
+                "url": "\/de\/reiten\/pflegeprodukte-hufkratzer",
+                "visible": "1"
+            },
+            {
+                "title": "Scheren Und K\u00e4mme",
+                "url": "\/de\/reiten\/pflegeprodukte-scheren_und_kamme",
+                "visible": "1"
+            },
+            {
+                "title": "Schermaschinen",
+                "url": "\/de\/reiten\/pflegeprodukte-schermaschinen",
+                "visible": "1"
+            },
+            {
+                "title": "Schwei\u00dfabzieher",
+                "url": "\/de\/reiten\/pflegeprodukte-schweissabzieher",
+                "visible": "1"
+            },
+            {
+                "title": "Striegel Und Schwamm",
+                "url": "\/de\/reiten\/pflegeprodukte-striegel_und_schwamm",
+                "visible": "1"
+            },
+            {
+                "title": "Pferdespielzeug",
+                "url": "\/de\/reiten\/pflegeprodukte-pferdespielzeug",
+                "visible": "1"
+            },
+            {
+                "title": "Pinsel",
+                "url": "\/de\/reiten\/hygiene_und_gesundheit-pinsel",
+                "visible": "1"
+            },
+            {
+                "title": "Lochzange",
+                "url": "\/de\/reiten\/pflegeprodukte-lochzange",
+                "visible": "1"
+            },
+            {
+                "title": "Hufbeschlag",
+                "url": "\/de\/reiten\/hufbeschlag",
+                "visible": "1"
+            },
+            {
+                "title": "Pflegeprodukte (Auswahl ansehen)",
+                "url": "\/de\/reiten\/pflegeprodukte",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Schuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 41,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Reitschuhe",
+                "url": "\/de\/reiten\/reitschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Schuhe (Alles sehen)",
+                "url": "\/de\/reiten\/schuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pflege der Ausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 42,
+        "column": "5",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "\u00d6l",
+                "url": "\/de\/reiten\/pflege_der_ausrustung-ol",
+                "visible": "1"
+            },
+            {
+                "title": "Paste",
+                "url": "\/de\/reiten\/pflege_der_ausrustung-paste",
+                "visible": "1"
+            },
+            {
+                "title": "Schw\u00e4mme",
+                "url": "\/de\/reiten\/pflege_der_ausrustung-schwamme",
+                "visible": "1"
+            },
+            {
+                "title": "Fett",
+                "url": "\/de\/reiten\/pflege_der_ausrustung-fett",
+                "visible": "1"
+            },
+            {
+                "title": "Sattelseife",
+                "url": "\/de\/reiten\/pflege_der_ausrustung-sattelseife",
+                "visible": "1"
+            },
+            {
+                "title": "Pflege Der Ausr\u00fcstung (Alles sehen)",
+                "url": "\/de\/reiten\/pflege_der_ausrustung",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Andere",
+        "action": "",
+        "type": "subcategorie",
+        "id": 43,
+        "column": "5",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Metalldetektoren",
+                "url": "\/de\/reiten\/metalldetektoren",
+                "visible": "1"
+            },
+            {
+                "title": "Ferngl\u00e4ser",
+                "url": "\/de\/reiten\/fernglaser",
+                "visible": "1"
+            },
+            {
+                "title": "Hundezubeh\u00f6r & Hundebedarf",
+                "url": "\/de\/reiten\/hundezubehor_hundebedarf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pony",
+        "action": "",
+        "type": "subcategorie",
+        "id": 44,
+        "column": "5",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Ohrenhaube",
+                "url": "\/de\/reiten\/pony-ohrenhaube",
+                "visible": "1"
+            },
+            {
+                "title": "Reittrensen",
+                "url": "\/de\/reiten\/pony-reittrensen",
+                "visible": "1"
+            },
+            {
+                "title": "S\u00e4ttel",
+                "url": "\/de\/reiten\/pony-sattel",
+                "visible": "1"
+            },
+            {
+                "title": "Fliegenhauben Und Reithalfter",
+                "url": "\/de\/reiten\/pony-fliegenhauben_und_reithalfter",
+                "visible": "1"
+            },
+            {
+                "title": "Stallhalfter",
+                "url": "\/de\/reiten\/pony-stallhalfter",
+                "visible": "1"
+            },
+            {
+                "title": "Schabracken Und Satteldecken",
+                "url": "\/de\/reiten\/pony-schabracken_und_satteldecken",
+                "visible": "1"
+            },
+            {
+                "title": "Schulung",
+                "url": "\/de\/reiten\/pony-schulung",
+                "visible": "0"
+            },
+            {
+                "title": "Steigb\u00fcgelriemen Und Steigb\u00fcgel",
+                "url": "\/de\/reiten\/pony-steigbugelriemen_und_steigbugel",
+                "visible": "1"
+            },
+            {
+                "title": "Sattelgurte",
+                "url": "\/de\/reiten\/pony-sattelgurte",
+                "visible": "1"
+            },
+            {
+                "title": "Stabil und Reinigung",
+                "url": "\/de\/reiten\/pony-stabil_und_reinigung",
+                "visible": "0"
+            },
+            {
+                "title": "Beinschutz Und Hufglocken",
+                "url": "\/de\/reiten\/pony-beinschutz_und_hufglocken",
+                "visible": "1"
+            },
+            {
+                "title": "Salvacruces",
+                "url": "\/de\/reiten\/pony-salvacruces",
+                "visible": "1"
+            },
+            {
+                "title": "Autos und Haken",
+                "url": "\/de\/reiten\/pony-autos_und_haken",
+                "visible": "0"
+            },
+            {
+                "title": "Pferdegebisse Und Fillistrense",
+                "url": "\/de\/reiten\/pony-pferdegebisse_und_fillistrense",
+                "visible": "1"
+            },
+            {
+                "title": "Z\u00fcgel",
+                "url": "\/de\/reiten\/pony-zugel",
+                "visible": "1"
+            },
+            {
+                "title": "Ponydecken",
+                "url": "\/de\/reiten\/pony-ponydecken",
+                "visible": "1"
+            },
+            {
+                "title": "Vorderzeug",
+                "url": "\/de\/reiten\/pony-vorderzeug",
+                "visible": "1"
+            },
+            {
+                "title": "Pony (Alles sehen)",
+                "url": "\/de\/reiten\/pony",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und Angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 45,
+        "column": "5",
+        "position_category": "12",
+        "position": "5",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/reiten\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Schnellangebot Reitbedarf",
+                "url": "\/de\/reiten\/schnellangebot_reitbedarf",
+                "visible": "1"
+            }
+        ]
+    }
+]

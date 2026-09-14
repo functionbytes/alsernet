@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>alsernetgooglegtm</name>
+    <displayName><![CDATA[Alsernet - Gestionar etiquetas de Google Tag Manager]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Este m&oacute;dulo gestiona las etiquetas para la anal&iacute;tica de datos con Google]]></description>
+    <author><![CDATA[Alsernet]]></author>
+    <tab><![CDATA[administration]]></tab>
+    <is_configurable>1</is_configurable>
+    <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+</module>

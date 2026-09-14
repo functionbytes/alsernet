@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>alsernetimagenes</name>
+    <displayName><![CDATA[Alsernet - Gestor de im&aacute;genes]]></displayName>
+    <version><![CDATA[2.0.0]]></version>
+    <description><![CDATA[Este m&oacute;dulo agiliza agregar im&aacute;genes a las referencias]]></description>
+    <author><![CDATA[Alsernet]]></author>
+    <tab><![CDATA[administration]]></tab>
+    <is_configurable>0</is_configurable>
+    <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+</module>

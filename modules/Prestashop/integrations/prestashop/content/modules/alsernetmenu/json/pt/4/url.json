@@ -1,0 +1,41 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/caca/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/caca/promocoes"
+          },
+          {
+            "title": "Os mais vendidos",
+            "url": "/pt/caca/mais_vendidos"
+          },
+          {
+            "title": "Micropreços Caça",
+            "url": "/pt/caca/microprecos_caca"
+          },
+          {
+            "title": "Armas Segunda Mão",
+            "url": "/pt/caca/armas_segunda_mao"
+          },
+          {
+            "title": "Oficina De Armeiro",
+            "url": "/pt/oficina-do-armeiro"
+          },
+          {
+            "title": "Boletins",
+            "url": "/pt/caca/monthlynewsletters"
+          }
+        ]
+      }
+]

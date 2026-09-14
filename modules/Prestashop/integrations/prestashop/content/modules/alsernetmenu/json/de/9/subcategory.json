@@ -1,0 +1,251 @@
+[
+    {
+        "title": "Ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ski & Bindungen",
+                "url": "\/de\/ski\/ski_bindungen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Skischuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 63,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Skischuhe",
+                "url": "\/de\/ski\/skischuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Apreski-Stiefel",
+                "url": "\/de\/ski\/apreskistiefel",
+                "visible": "1"
+            },
+            {
+                "title": "SCHUHWERK",
+                "url": "\/de\/ski\/schuhwerk",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Helme & Protektoren",
+        "action": "",
+        "type": "subcategorie",
+        "id": 64,
+        "column": "1",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Skihelme",
+                "url": "\/de\/ski\/skihelme",
+                "visible": "1"
+            },
+            {
+                "title": "R\u00fcckenprotektoren und Protektoren",
+                "url": "\/de\/ski\/ruckenprotektoren_und_protektoren",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Skibrillen & Masken",
+        "action": "",
+        "type": "subcategorie",
+        "id": 65,
+        "column": "1",
+        "position_category": "5",
+        "position": "4",
+        "items": [
+            {
+                "title": "Skibrille und Masken",
+                "url": "\/de\/ski\/skibrille_und_masken",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Skist\u00f6cke",
+        "action": "",
+        "type": "subcategorie",
+        "id": 66,
+        "column": "1",
+        "position_category": "4",
+        "position": "5",
+        "items": [
+            {
+                "title": "Skist\u00f6cke",
+                "url": "\/de\/ski\/skistocke",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ski Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 67,
+        "column": "2",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ski-Zubeh\u00f6r",
+                "url": "\/de\/ski\/skizubehor",
+                "visible": "1"
+            },
+            {
+                "title": "Schlitten und Kinderski",
+                "url": "\/de\/ski\/schlitten_und_kinderski",
+                "visible": "1"
+            },
+            {
+                "title": "Pers\u00f6nliche Betreuung",
+                "url": "\/de\/ski\/personliche_betreuung",
+                "visible": "1"
+            },
+            {
+                "title": "Kameras",
+                "url": "\/de\/ski\/kameras",
+                "visible": "1"
+            },
+            {
+                "title": "Stationen",
+                "url": "\/de\/ski\/stationen",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/de\/ski\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Taschenlampen und Scheinwerfer",
+                "url": "\/de\/ski\/taschenlampen_und_scheinwerfer",
+                "visible": "1"
+            },
+            {
+                "title": "Fernglas",
+                "url": "\/de\/ski\/fernglas",
+                "visible": "1"
+            },
+            {
+                "title": "Uhren",
+                "url": "\/de\/ski\/uhren",
+                "visible": "0"
+            },
+            {
+                "title": "Teleskope",
+                "url": "\/de\/ski\/teleskope",
+                "visible": "1"
+            },
+            {
+                "title": "Freizeit",
+                "url": "\/de\/ski\/freizeit",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Skibekleidung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 68,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ski Herrenbekleidung",
+                "url": "\/de\/ski\/ski_herrenbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Damen Skibekleidung",
+                "url": "\/de\/ski\/damen_skibekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Skibekleidung f\u00fcr Kinder",
+                "url": "\/de\/ski\/skibekleidung_fur_kinder",
+                "visible": "1"
+            },
+            {
+                "title": "Outdoor-Bekleidung",
+                "url": "\/de\/outdoor\/kleidung_und_accessoires-outdoorbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Caps und Tubular",
+                "url": "\/de\/ski\/caps_und_tubular",
+                "visible": "1"
+            },
+            {
+                "title": "Skihandschuhe",
+                "url": "\/de\/ski\/skihandschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Unterw\u00e4sche",
+                "url": "\/de\/ski\/unterwasche",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Skitransport & Taschen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 69,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Transporttaschen",
+                "url": "\/de\/ski\/transporttaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Rucks\u00e4cke",
+                "url": "\/de\/ski\/transporttaschen-rucksacke",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 70,
+        "column": "3",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/ski\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "EXPRESS-Ski-Angebot",
+                "url": "\/de\/expressskiangebot",
+                "visible": "1"
+            }
+        ]
+    }
+]

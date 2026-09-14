@@ -1,0 +1,361 @@
+[
+    {
+        "title": "Abbigliamento & Calzature",
+        "action": "",
+        "type": "subcategorie",
+        "id": 78,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Abbigliamento e accessori",
+                "url": "\/it\/outdoor\/abbigliamento_e_accessori",
+                "visible": "1"
+            },
+            {
+                "title": "SCARPE",
+                "url": "\/it\/outdoor\/scarpe",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento Donna e Bambino",
+                "url": "\/it\/outdoor\/abbigliamento_donna_e_bambino",
+                "visible": "1"
+            },
+            {
+                "title": "",
+                "url": "",
+                "visible": "1"
+            },
+            {
+                "title": "Cappellini e berretti",
+                "url": "\/it\/outdoor\/cappellini_e_berretti",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti",
+                "url": "\/it\/outdoor\/guanti",
+                "visible": "1"
+            },
+            {
+                "title": "Pantaloni e passamontagna",
+                "url": "\/it\/outdoor\/pantaloni_e_passamontagna",
+                "visible": "1"
+            },
+            {
+                "title": "Occhiali da sole",
+                "url": "\/it\/outdoor\/occhiali_da_sole",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Zaini & Borse",
+        "action": "",
+        "type": "subcategorie",
+        "id": 79,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Zaini",
+                "url": "\/it\/outdoor\/zaini",
+                "visible": "1"
+            },
+            {
+                "title": "Borse da viaggio",
+                "url": "\/it\/outdoor\/borse_da_viaggio",
+                "visible": "1"
+            },
+            {
+                "title": "Borse impermeabili",
+                "url": "\/it\/outdoor\/borse_impermeabili",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ottica & Illuminazione",
+        "action": "",
+        "type": "subcategorie",
+        "id": 80,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Binocoli",
+                "url": "\/it\/outdoor\/binocoli",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopi",
+                "url": "\/it\/outdoor\/telescopi",
+                "visible": "1"
+            },
+            {
+                "title": "Visione notturna",
+                "url": "\/it\/outdoor\/visione_notturna",
+                "visible": "1"
+            },
+            {
+                "title": "Visione termica",
+                "url": "\/it\/outdoor\/visione_termica",
+                "visible": "1"
+            },
+            {
+                "title": "Monoculari",
+                "url": "\/it\/outdoor\/monoculari",
+                "visible": "1"
+            },
+            {
+                "title": "Misuratori di distanza",
+                "url": "\/it\/outdoor\/misuratori_di_distanza",
+                "visible": "1"
+            },
+            {
+                "title": "Torce e Faro",
+                "url": "\/it\/outdoor\/torce_e_faro",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Elettronica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 81,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Orologi",
+                "url": "\/it\/outdoor\/orologi",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/it\/outdoor\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Trasmettitori",
+                "url": "\/it\/outdoor\/trasmettitori",
+                "visible": "1"
+            },
+            {
+                "title": "Telecamere",
+                "url": "\/it\/outdoor\/telecamere",
+                "visible": "1"
+            },
+            {
+                "title": "Metal detector",
+                "url": "\/it\/outdoor\/metal_detector",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sicurezza & Survival",
+        "action": "",
+        "type": "subcategorie",
+        "id": 82,
+        "column": "3",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Attrezzatura di sopravvivenza",
+                "url": "\/it\/outdoor\/attrezzatura_di_sopravvivenza",
+                "visible": "1"
+            },
+            {
+                "title": "Sicurezza e salvataggio",
+                "url": "\/it\/outdoor\/sicurezza_e_salvataggio",
+                "visible": "1"
+            },
+            {
+                "title": "Repellenti",
+                "url": "\/it\/outdoor\/repellenti",
+                "visible": "1"
+            },
+            {
+                "title": "Cura della persona",
+                "url": "\/it\/outdoor\/cura_della_persona",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Coltelli & Utensili da taglio",
+        "action": "",
+        "type": "subcategorie",
+        "id": 83,
+        "column": "3",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Coltelli",
+                "url": "\/it\/outdoor\/coltelli",
+                "visible": "1"
+            },
+            {
+                "title": "Coltelli",
+                "url": "\/it\/outdoor\/coltelli",
+                "visible": "1"
+            },
+            {
+                "title": "Multiuso",
+                "url": "\/it\/outdoor\/multiuso",
+                "visible": "1"
+            },
+            {
+                "title": "Asce e martelli",
+                "url": "\/it\/outdoor\/asce_e_martelli",
+                "visible": "1"
+            },
+            {
+                "title": "Machete",
+                "url": "\/it\/outdoor\/machete",
+                "visible": "1"
+            },
+            {
+                "title": "Affilatore",
+                "url": "\/it\/outdoor\/affilatore",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Camping & Outdoor",
+        "action": "",
+        "type": "subcategorie",
+        "id": 84,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Prodotti per cani",
+                "url": "\/it\/outdoor\/prodotti_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Articoli per l'auto",
+                "url": "\/it\/outdoor\/articoli_per_l_auto",
+                "visible": "1"
+            },
+            {
+                "title": "Sedie e sgabelli",
+                "url": "\/it\/outdoor\/sedie_e_sgabelli",
+                "visible": "1"
+            },
+            {
+                "title": "Campeggio",
+                "url": "\/it\/outdoor\/campeggio",
+                "visible": "1"
+            },
+            {
+                "title": "Set Arquer\u00eda",
+                "url": "\/it\/outdoor\/set_arqueria",
+                "visible": "1"
+            },
+            {
+                "title": "Attrezzatura per funghi",
+                "url": "\/it\/outdoor\/attrezzatura_per_funghi",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo libero",
+                "url": "\/it\/outdoor\/tempo_libero",
+                "visible": "1"
+            },
+            {
+                "title": "Bastoni da trekking",
+                "url": "\/it\/outdoor\/bastoni_da_trekking",
+                "visible": "1"
+            },
+            {
+                "title": "Birdwatching",
+                "url": "\/it\/outdoor\/birdwatching",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Attivit\u00e0 Nautiche e Marine",
+        "action": "",
+        "type": "subcategorie",
+        "id": 85,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Barche e motori",
+                "url": "\/it\/outdoor\/barche_e_motori",
+                "visible": "1"
+            },
+            {
+                "title": "Sonde e Plotter",
+                "url": "\/it\/outdoor\/sonde_e_plotter",
+                "visible": "0"
+            },
+            {
+                "title": "Pinne",
+                "url": "\/it\/outdoor\/pinne",
+                "visible": "1"
+            },
+            {
+                "title": "Maschere e boccagli",
+                "url": "\/it\/outdoor\/maschere_e_boccagli",
+                "visible": "1"
+            },
+            {
+                "title": "Piscina e nuoto",
+                "url": "\/it\/outdoor\/piscina_e_nuoto",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet",
+                "url": "\/it\/outdoor\/gilet",
+                "visible": "1"
+            },
+            {
+                "title": "Magliette e protezione UV",
+                "url": "\/it\/outdoor\/magliette_e_protezione_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpette",
+                "url": "\/it\/outdoor\/scarpette",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da immersione",
+                "url": "\/it\/outdoor\/guanti_da_immersione",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 86,
+        "column": "4",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e liquidazioni",
+                "url": "\/it\/outdoor\/outlet_e_liquidazioni",
+                "visible": "1"
+            }
+        ]
+    }
+]

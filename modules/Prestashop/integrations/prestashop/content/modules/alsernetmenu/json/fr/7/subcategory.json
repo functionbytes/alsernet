@@ -1,0 +1,475 @@
+[
+    {
+        "title": "Combinaisons de plong\u00e9e",
+        "action": "",
+        "type": "subcategorie",
+        "id": 46,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Monopi\u00e8ces",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-monopieces",
+                "visible": "1"
+            },
+            {
+                "title": "Combinaisons semi-\u00e9tanches",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-combinaisons_semi_etanches_",
+                "visible": "1"
+            },
+            {
+                "title": "V\u00eatements thermiques de plong\u00e9e",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-vetements_de_plongee_thermiques",
+                "visible": "1"
+            },
+            {
+                "title": "Shortys",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-shorts_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "T-shirts et Protection UV",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-t_shirts_et_protection_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Cagoules",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-cagoules_",
+                "visible": "1"
+            },
+            {
+                "title": "Combinaisons \u00e9tanches",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee-combinaisons_etanches_",
+                "visible": "1"
+            },
+            {
+                "title": "Combinaisons de plong\u00e9e (Voir tous)",
+                "url": "\/fr\/plongee\/combinaisons_de_plongee",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Natation",
+        "action": "",
+        "type": "subcategorie",
+        "id": 47,
+        "column": "1",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Lunettes de natation",
+                "url": "\/fr\/plongee\/piscine_et_natation-lunettes_de_natation",
+                "visible": "1"
+            },
+            {
+                "title": "Bonnets de bain",
+                "url": "\/fr\/plongee\/piscine_et_natation-bonnets_de_bain",
+                "visible": "1"
+            },
+            {
+                "title": "Maillots de bain",
+                "url": "\/fr\/plongee\/piscine_et_natation-maillots_de_bain",
+                "visible": "1"
+            },
+            {
+                "title": "Sandales",
+                "url": "\/fr\/plongee\/piscine_et_natation-sandales_",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires",
+                "url": "\/fr\/plongee\/piscine_et_natation-accessoires",
+                "visible": "1"
+            },
+            {
+                "title": "Palmes de piscine",
+                "url": "\/fr\/plongee\/piscine_et_natation-palmes_de_piscine",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs \u00e9tanches",
+                "url": "\/fr\/plongee\/piscine_et_natation-sacs_etanches",
+                "visible": "1"
+            },
+            {
+                "title": "Bouchons et pince nez",
+                "url": "\/fr\/plongee\/piscine_et_natation-bouchons_et_pince_nez",
+                "visible": "1"
+            },
+            {
+                "title": "Piscine et Natation",
+                "url": "\/fr\/plongee\/piscine_et_natation",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "\u00c9quipement de plong\u00e9e",
+        "action": "",
+        "type": "subcategorie",
+        "id": 48,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "D\u00e9tendeurs",
+                "url": "\/fr\/plongee\/detendeurs",
+                "visible": "1"
+            },
+            {
+                "title": "Octopus",
+                "url": "\/fr\/plongee\/octopus_",
+                "visible": "1"
+            },
+            {
+                "title": "Ordinateurs",
+                "url": "\/fr\/plongee\/ordinateurs",
+                "visible": "1"
+            },
+            {
+                "title": "Manom\u00e8tres",
+                "url": "\/fr\/plongee\/manometres",
+                "visible": "1"
+            },
+            {
+                "title": "Boussoles et Compas",
+                "url": "\/fr\/plongee\/boussoles_et_compas",
+                "visible": "1"
+            },
+            {
+                "title": "Gilets Stabilisateurs",
+                "url": "\/fr\/plongee\/gilets_stabilisateurs",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussons et Botillons",
+                "url": "\/fr\/plongee\/chaussons_et_botillons",
+                "visible": "1"
+            },
+            {
+                "title": "Gants",
+                "url": "\/fr\/plongee\/gants_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Tubas",
+                "url": "\/fr\/plongee\/tubas",
+                "visible": "1"
+            },
+            {
+                "title": "Lampes et Phares",
+                "url": "\/fr\/plongee\/lampes_et_phares",
+                "visible": "1"
+            },
+            {
+                "title": "Masques",
+                "url": "\/fr\/plongee\/masques_",
+                "visible": "1"
+            },
+            {
+                "title": "Palmes",
+                "url": "\/fr\/plongee\/palmes",
+                "visible": "1"
+            },
+            {
+                "title": "Couteaux",
+                "url": "\/fr\/plongee\/couteaux",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs de plong\u00e9e",
+                "url": "\/fr\/plongee\/sacs_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Bouteilles",
+                "url": "\/fr\/plongee\/bouteilles",
+                "visible": "1"
+            },
+            {
+                "title": "Bateaux et Moteurs",
+                "url": "\/fr\/plongee\/bateaux_et_moteurs",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "V\u00eatements",
+        "action": "",
+        "type": "subcategorie",
+        "id": 49,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Maillots",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-maillots",
+                "visible": "1"
+            },
+            {
+                "title": "Bermudas",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-bermudas",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussettes",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-chaussettes",
+                "visible": "0"
+            },
+            {
+                "title": "T-shirts",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Gilets",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-gilets",
+                "visible": "1"
+            },
+            {
+                "title": "Vestes\/Softshells",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-vestessoftshells",
+                "visible": "1"
+            },
+            {
+                "title": "Pantalon",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-pantalons",
+                "visible": "1"
+            },
+            {
+                "title": "Polos",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-polos",
+                "visible": "0"
+            },
+            {
+                "title": "V\u00eatements pour femmes",
+                "url": "\/fr\/plongee\/vetements_et_chaussures-vetements_pour_femmes",
+                "visible": "1"
+            },
+            {
+                "title": "V\u00eatements et Chaussures",
+                "url": "\/fr\/plongee\/vetements_et_chaussures",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "\u00c9lectronique",
+        "action": "",
+        "type": "subcategorie",
+        "id": 50,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Stations",
+                "url": "\/fr\/plongee\/stations",
+                "visible": "1"
+            },
+            {
+                "title": "Cam\u00e9ras",
+                "url": "\/fr\/plongee\/cameras",
+                "visible": "0"
+            },
+            {
+                "title": "Gps et Sondes",
+                "url": "\/fr\/gps_et_sondes",
+                "visible": "0"
+            },
+            {
+                "title": "Montres",
+                "url": "\/fr\/plongee\/montres",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Accessoires de plong\u00e9e",
+        "action": "",
+        "type": "subcategorie",
+        "id": 51,
+        "column": "4",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Bou\u00e9es",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-bouees",
+                "visible": "1"
+            },
+            {
+                "title": "Moulinets de plong\u00e9e",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-moulinets_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Bretelles de plong\u00e9e",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-bretelles_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Siffletes et Sir\u00e8nes",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-siffletes_et_sirenes_",
+                "visible": "1"
+            },
+            {
+                "title": "Mousquetons",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-mousquetons",
+                "visible": "1"
+            },
+            {
+                "title": "Cintres",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-cintres",
+                "visible": "1"
+            },
+            {
+                "title": "Flexibles",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-flexibles_",
+                "visible": "1"
+            },
+            {
+                "title": "Parachute de palier",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-parachute_de_palier",
+                "visible": "0"
+            },
+            {
+                "title": "Extenseurs",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-extenseurs",
+                "visible": "1"
+            },
+            {
+                "title": "Retracteur de plong\u00e9e",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-retracteur_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Kits y accessoires",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-kits_y_accessoires",
+                "visible": "1"
+            },
+            {
+                "title": "Multi-fonction",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-multi_fonction",
+                "visible": "1"
+            },
+            {
+                "title": "Porte-cl\u00e9s",
+                "url": "\/fr\/plongee\/accessoires_de_plongee-portecles",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires de plong\u00e9e",
+                "url": "\/fr\/plongee\/accessoires_de_plongee",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Chasse sous-marine",
+        "action": "",
+        "type": "subcategorie",
+        "id": 52,
+        "column": "5",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Arbal\u00e8tes\/fusils",
+                "url": "\/fr\/plongee\/chasse_sous_marine-arbaletesfusils_",
+                "visible": "1"
+            },
+            {
+                "title": "Palmes de chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-palmes_de_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Couteaux",
+                "url": "\/fr\/plongee\/chasse_sous_marine-couteaux",
+                "visible": "1"
+            },
+            {
+                "title": "Masques de chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-masques_de_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires de chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-accessoires_de_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Gants",
+                "url": "\/fr\/plongee\/chasse_sous_marine-gants",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussures pour chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-chaussures_pour_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs pour chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-sacs_pour_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Cagoules de plong\u00e9e",
+                "url": "\/fr\/plongee\/chasse_sous_marine-cagoules_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Entretien de l'\u00e9quipement",
+                "url": "\/fr\/plongee\/chasse_sous_marine-entretien_de_l_equipement",
+                "visible": "1"
+            },
+            {
+                "title": "Projecteurs et lampes de plong\u00e9e",
+                "url": "\/fr\/plongee\/chasse_sous_marine-projecteurs_et_lampes_de_plongee",
+                "visible": "1"
+            },
+            {
+                "title": "Combinaisons de chasse sous-marine",
+                "url": "\/fr\/plongee\/chasse_sous_marine-combinaisons_de_chasse_sous_marine",
+                "visible": "1"
+            },
+            {
+                "title": "Tubas",
+                "url": "\/fr\/plongee\/chasse_sous_marine-tubas",
+                "visible": "1"
+            },
+            {
+                "title": "Chasse sous-marine (Voir tous)",
+                "url": "\/fr\/plongee\/chasse_sous_marine",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet et offres",
+        "action": "",
+        "type": "subcategorie",
+        "id": 53,
+        "column": "5",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet et liquidations",
+                "url": "\/fr\/plongee\/outlet_et_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "Offres Express de plong\u00e9e",
+                "url": "\/fr\/plongee\/offres_express_de_plongee",
+                "visible": "1"
+            }
+        ]
+    }
+]

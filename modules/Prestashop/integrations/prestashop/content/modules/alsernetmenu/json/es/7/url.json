@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Te puede interesar",
+        "language": "es",
+        "position": 1,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Ver nuestras marcas",
+            "url": "/buceo/listado-marcas"
+          },
+          {
+            "title": "Ofertas",
+            "url": "/buceo/ofertas"
+          },
+          {
+            "title": "Novedades",
+            "url": "/buceo/novedades"
+          },
+          {
+            "title": "Los más vendidos",
+            "url": "/buceo/lo_mas_vendido"
+          },
+          {
+            "title": "Boletines",
+            "url": "/buceo/monthlynewsletters"
+          },
+          {
+            "title": "Blog",
+            "url": "/blog/buceo/"
+          }
+        ]
+      }
+]

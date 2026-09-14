@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Te puede interesar",
+        "language": "es",
+        "position": 1,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Ver nuestras marcas",
+            "url": "/esqui/listado-marcas"
+          },
+          {
+            "title": "Ofertas",
+            "url": "/esqui/ofertas"
+          },
+          {
+            "title": "Novedades",
+            "url": "/esqui/novedades"
+          },
+          {
+            "title": "Los más vendidos",
+            "url": "/esqui/lo_mas_vendido"
+          },
+          {
+            "title": "Boletines",
+            "url": "/esqui/monthlynewsletters"
+          },
+          {
+            "title": "Blog",
+            "url": "/blog/esqui/"
+          }
+        ]
+      }
+]

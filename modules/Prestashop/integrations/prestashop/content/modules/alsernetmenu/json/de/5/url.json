@@ -1,0 +1,29 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/angeln/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/angeln/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/angeln/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/angeln/bestseller"
+          }
+        ]
+      }
+]

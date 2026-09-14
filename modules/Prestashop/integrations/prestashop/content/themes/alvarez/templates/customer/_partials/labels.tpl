@@ -1,0 +1,15 @@
+{l s='firstname' d='Shop.Customer.Labels'}
+{l s='lastname' d='Shop.Customer.Labels'}
+{l s='birthday' d='Shop.Customer.Labels'}
+{l s='password' d='Shop.Customer.Labels'}
+{l s='newpassword' d='Shop.Customer.Labels'}
+{l s='address1' d='Shop.Customer.Labels'}
+{l s='id_country' d='Shop.Customer.Labels'}
+{l s='id_state' d='Shop.Customer.Labels'}
+{l s='city' d='Shop.Customer.Labels'}
+{l s='postcode' d='Shop.Customer.Labels'}
+{l s='phone' d='Shop.Customer.Labels'}
+{l s='vatnumber' d='Shop.Customer.Labels'}
+{l s='alias' d='Shop.Customer.Labels'}
+{l s='Country:name' d='Shop.Customer.Labels'}
+{l s='State:name' d='Shop.Customer.Labels'}

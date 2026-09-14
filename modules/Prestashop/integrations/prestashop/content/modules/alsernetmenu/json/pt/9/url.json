@@ -1,0 +1,33 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/esqui/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/esqui/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/esqui/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/esqui/mais_vendidos"
+          },
+          {
+            "title": "Boletins",
+            "url": "/pt/esqui/monthlynewsletters"
+          }
+        ]
+      }
+]

@@ -1,0 +1,179 @@
+[
+    {
+        "title": "Padelschl\u00e4ger",
+        "action": "",
+        "type": "subcategorie",
+        "id": 71,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fortgeschrittene Ebene",
+                "url": "\/de\/padel\/padelschlaeger-fortgeschrittene_ebene",
+                "visible": "1"
+            },
+            {
+                "title": "Durchschnittliches Niveau",
+                "url": "\/de\/padel\/padelschlaeger-durchschnittliches_niveau",
+                "visible": "1"
+            },
+            {
+                "title": "Anf\u00e4nger",
+                "url": "\/de\/padel\/padelschlaeger-anfanger",
+                "visible": "1"
+            },
+            {
+                "title": "Junior Schaufeln",
+                "url": "\/de\/padel\/padelschlaeger-junior_schaufeln",
+                "visible": "0"
+            },
+            {
+                "title": "Padelschl\u00e4ger (Alles sehen)",
+                "url": "\/de\/padel\/padelschlaeger",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Padeltaschen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 72,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Padeltaschen (Alles sehen)",
+                "url": "\/de\/padel\/padeltaschen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Padel Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 73,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Besch\u00fctzer",
+                "url": "\/de\/padel\/paddelzubehor-beschutzer",
+                "visible": "0"
+            },
+            {
+                "title": "\u00dcbergriffe",
+                "url": "\/de\/padel\/paddelzubehor-ubergriffe",
+                "visible": "1"
+            },
+            {
+                "title": "H\u00fcte",
+                "url": "\/de\/padel\/paddelzubehor-hute",
+                "visible": "1"
+            },
+            {
+                "title": "Armb\u00e4nder",
+                "url": "\/de\/padel\/paddelzubehor-armbander",
+                "visible": "1"
+            },
+            {
+                "title": "Neaseres",
+                "url": "\/de\/padel\/paddelzubehor-neaseres",
+                "visible": "0"
+            },
+            {
+                "title": "Schl\u00fcsselanh\u00e4nger",
+                "url": "\/de\/padel\/paddelzubehor-schlusselanhanger",
+                "visible": "0"
+            },
+            {
+                "title": "Paddel-Zubeh\u00f6r (Alles sehen)",
+                "url": "\/de\/padel\/paddelzubehor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Padelb\u00e4lle",
+        "action": "",
+        "type": "subcategorie",
+        "id": 74,
+        "column": "3",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "B\u00e4lle",
+                "url": "\/de\/padel\/balle",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Padel Bekleidung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 75,
+        "column": "3",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Mann",
+                "url": "\/de\/padel\/kleidung-mann",
+                "visible": "1"
+            },
+            {
+                "title": "Frau",
+                "url": "\/de\/padel\/kleidung-frau",
+                "visible": "1"
+            },
+            {
+                "title": "Kleidung (Alles sehen)",
+                "url": "\/de\/padel\/kleidung",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Padelschuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 76,
+        "column": "4",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Paddelschuhe",
+                "url": "\/de\/padel\/paddelschuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 77,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/padel\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Padel Express Angebot",
+                "url": "\/de\/padel\/padel_express_angebot",
+                "visible": "1"
+            }
+        ]
+    }
+]

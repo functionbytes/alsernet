@@ -1,0 +1,344 @@
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+    background: #f5f6f8 !important;
+    -webkit-box-shadow: 0 0 0 1000px #f5f6f8 inset !important;
+    -webkit-text-fill-color: #000 !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+.page-customer-account {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.page-customer-account .card {
+    position: relative;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    padding: 0px !important;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border-radius: 4px;
+    border: 1px solid #f6f6f6;
+    box-shadow: 2px 2px 11px 0 rgba(0, 0, 0, .1);
+    padding: 0;
+}
+
+.page-customer-account .card .card-body {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    padding: 30px 30px;
+}
+
+.page-customer-account .card .card-body .card-title {
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    color: #4C4C4C;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    padding-bottom: 5px;
+
+}
+
+.page-customer-account .card .card-body .card-text {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 14px;
+}
+
+.page-customer-account .card .card-body .btn{
+    margin: 10px 0px 0px 0px !important;
+    position: inherit;
+    padding: 10px 20px;
+    border: 0;
+    transition: all .2s ease-in-out;
+    text-transform: uppercase;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+
+.page-customer-account .form .response-output.success {
+    background: #90bb1338;
+    color: #90BB13;
+    border-color: #90bb1338;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.page-customer-account .form .response-output.warning {
+    background: #be1d2e2e;
+    color: #be1d2e !important;
+    border-color: #be1d2e;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.page-customer-account .form .g-recaptcha {
+    margin-bottom: 5px;
+    width: 101%;
+    justify-content: left;
+    display: flex;
+    align-items: flex-start;
+}
+
+.page-customer-account .card .card-body .btn.btn-primary {
+    background: #90BB13;
+    color: #fff;
+    border-color: #90BB13;
+    border-radius: 4px;
+}
+
+.page-customer-account .card .card-body .btn.btn-secundary {
+    background: #4C4C4C;
+    color: #fff;
+    border-color: #4C4C4C;
+    border-radius: 4px;
+}
+
+.page-customer-account .page-content {
+    margin-bottom: 0px !important;
+}
+
+.page-customer-account .card .card-body .btn.btn-secundary:hover {
+    background: #4C4C4C;
+    color: #fff;
+    border-color: #4C4C4C;
+}
+
+.page-customer-account .card .card-body .btn.w-100 {
+    width: 100% !important
+}
+
+.page-customer-account .card .card-body .btn.btn-primary:hover {
+    background: #4C4C4C;
+    color: #fff;
+    border-color: #4C4C4C;
+}
+
+.page-customer-account .card .card-body .btn.btn-dark {
+    color: #fff;
+    border-color: #4C4C4C;
+    background-color: #4C4C4C;
+}
+
+.page-customer-account .card .card-body .btn.btn-dark:hover {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.page-customer-account .card .card-body ul  {
+    display: block;
+    padding-left: 0;
+}
+.page-customer-account .card .card-body ul li {
+    padding-bottom: 10px;
+    padding-left: 0px;
+    display: flex;
+}
+
+.page-customer-account .card .card-body ul li::before {
+    position: relative;
+    left: 0;
+    color: #90BB13;
+    top: 0px;
+    content: "\f0da";
+    font: normal normal normal 14px / 1 FontAwesome;
+}
+
+.page-customer-account .card .card-body ul li p {
+    padding: 0 0 0 10px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 16px;
+}
+
+
+.form .response-output.warning {
+    background: #be1d2e2e;
+    color: #be1d2e !important;
+    border-color: #be1d2e;
+    display: block;
+    margin-bottom: 10px;
+}
+
+
+/* HEADER ACCOUNT */
+
+@media (max-width: 768px) {
+
+    .account.auth {
+        margin-right: 0rem !important;
+    }
+
+    .page-customer-account .form .g-recaptcha {
+        margin-bottom: 5px;
+        width: 101%;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+    }
+
+    .account.auth {
+        margin-right: 0px;
+    }
+
+    .account_links {
+        display: none;
+    }
+
+}
+
+.account {
+    display: inline-flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-transition: color 0.3s;
+    transition: color 0.3s;
+    margin-right: 2.3rem;
+    color: #4C4C4C;
+}
+
+.account i {
+    font-size: 2.7rem;
+    color: inherit;
+}
+
+.account:hover i {
+    font-size: 2.7rem;
+    color: #90bb13;
+}
+
+
+
+.account span {
+    margin-top: .3rem;
+    color: inherit;
+    cursor: pointer;
+    font-weight: inherit;
+    font-size: 13px;
+    line-height: normal;
+    color: #4C4C4C;
+}
+
+.account.auth {
+    position: relative;
+    margin-right: 2rem;
+}
+
+.account.auth:hover .dropdown_links {
+    visibility: visible;
+    max-height: 200px;
+}
+
+.account.auth .dropdown_links {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    padding: 10px 20px;
+    text-align: left;
+    top: 100%;
+    right: -36px;
+    -webkit-transition: all .5s ease-out;
+    transition: all .5s ease-out;
+    overflow: hidden;
+    z-index: 9999;
+    border-radius: 3px;
+    visibility: hidden;
+    max-height: 0;
+}
+
+.account.auth .dropdown_links li a {
+    text-transform: capitalize;
+    display: block;
+    font-size: 13px;
+    white-space: nowrap;
+    line-height: 28px;
+    color: #222222;
+}
+
+.account-auth {
+    position: relative;
+}
+
+.account-auth:hover .account_links {
+    visibility: visible;
+}
+
+.account-auth .account_links {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #e1e1e182;
+    padding: 10px 15px;
+    text-align: left;
+    top: 100%;
+    right: -20%;
+    -webkit-transition: all .5s ease-out;
+    transition: all .5s ease-out;
+    overflow: hidden;
+    z-index: 9999;
+    border-radius: 3px;
+    visibility: hidden;
+    display: grid;
+    width: max-content;
+}
+
+.account-auth .account_links li{
+    width: 120px;
+}
+
+.account-auth .account_links li a{
+    color: #4C4C4C;
+}
+
+.account-auth .account_links a:hover{
+    color: #90bb13;
+}
+
+.account-auth .account_links .account_logout {
+    background: #000;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 5px;
+    border: 1px solid #e1e1e1;
+    color: #fff !important;
+    width: 100%;
+    margin-top: 5px;
+    display: flex;
+    padding: 5px 10px;
+    justify-content: center;
+}
+
+.account-auth .account_links .account_logout:hover {
+    padding: 5px 5px;
+    background: #90bb13;
+    border-radius: 5px;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: #fff !important;
+}

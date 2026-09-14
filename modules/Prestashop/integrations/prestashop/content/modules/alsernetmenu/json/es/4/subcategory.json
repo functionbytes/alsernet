@@ -1,0 +1,846 @@
+[
+    {
+        "title": "Armas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 10,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Escopetas de caza",
+                "url": "\/caza\/escopetas",
+                "visible": "1"
+            },
+            {
+                "title": "Rifles",
+                "url": "\/caza\/rifles",
+                "visible": "1"
+            },
+            {
+                "title": "Carabinas",
+                "url": "\/caza\/carabinas",
+                "visible": "1"
+            },
+            {
+                "title": "Pistolas",
+                "url": "\/caza\/armas_cortas",
+                "visible": "1"
+            },
+            {
+                "title": "Armas de Balines",
+                "url": "\/caza\/armas_de_balines",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft",
+                "url": "\/caza\/airsoft",
+                "visible": "1"
+            },
+            {
+                "title": "Armas Decorativas",
+                "url": "\/caza\/armas_decorativas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Optica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 11,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Visores de caza",
+                "url": "\/caza\/visores",
+                "visible": "1"
+            },
+            {
+                "title": "Prism\u00e1ticos",
+                "url": "\/caza\/prismaticos",
+                "visible": "1"
+            },
+            {
+                "title": "Visi\u00f3n T\u00e9rmica y Nocturna",
+                "url": "\/caza\/vision_termica_y_nocturna",
+                "visible": "1"
+            },
+            {
+                "title": "Monoculares t\u00e9rmicos",
+                "url": "\/caza\/monoculares_termicos",
+                "visible": "1"
+            },
+            {
+                "title": "Medidores de Distancia",
+                "url": "\/caza\/medidores_de_distancia",
+                "visible": "1"
+            },
+            {
+                "title": "Puntos Rojos",
+                "url": "\/caza\/puntos_rojos",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopios",
+                "url": "\/caza\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Accesorios de \u00d3ptica",
+                "url": "\/caza\/accesorios_de_optica",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accesorios",
+        "action": "",
+        "type": "subcategorie",
+        "id": 12,
+        "column": "1",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Protecci\u00f3n Auditiva y Ocular",
+                "url": "\/caza\/proteccion_auditiva_y_ocular",
+                "visible": "1"
+            },
+            {
+                "title": "Art\u00edculos para el coche",
+                "url": "\/caza\/articulos_para_el_coche",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metales",
+                "url": "\/caza\/detectores_de_metales",
+                "visible": "1"
+            },
+            {
+                "title": "Emisoras",
+                "url": "\/caza\/emisoras",
+                "visible": "1"
+            },
+            {
+                "title": "Gps Port\u00e1tiles",
+                "url": "\/caza\/gps_portatiles",
+                "visible": "1"
+            },
+            {
+                "title": "Kits Arquer\u00eda",
+                "url": "\/caza\/kits_arqueria",
+                "visible": "1"
+            },
+            {
+                "title": "Mascarillas Homologadas",
+                "url": "\/caza\/mascarillas_homologadas",
+                "visible": "1"
+            },
+            {
+                "title": "Regalos Caza",
+                "url": "\/caza\/regalos_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Relojes",
+                "url": "\/caza\/relojes",
+                "visible": "1"
+            },
+            {
+                "title": "Vajillas y Cristaler\u00edas",
+                "url": "\/caza\/vajillas_y_cristalerias",
+                "visible": "1"
+            },
+            {
+                "title": "Tiempo Libre",
+                "url": "\/caza\/tiempo_libre",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 13,
+        "column": "2",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Armeros homologados",
+                "url": "\/caza\/armeros_de_seguridad",
+                "visible": "1"
+            },
+            {
+                "title": "Tr\u00edpodes de caza",
+                "url": "\/caza\/tripodes_horquillas_y_bipodes",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e1maras",
+                "url": "\/caza\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "Reproductores y se\u00f1uelos",
+                "url": "\/caza\/reproductores_y_senuelos",
+                "visible": "1"
+            },
+            {
+                "title": "Puestos de caza",
+                "url": "\/caza\/puestos_de_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Sillas de caza",
+                "url": "\/caza\/sillas_de_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Puntos de Mira",
+                "url": "\/caza\/puntos_de_mira",
+                "visible": "1"
+            },
+            {
+                "title": "Colimadores",
+                "url": "\/caza\/colimadores",
+                "visible": "1"
+            },
+            {
+                "title": "Monturas",
+                "url": "\/caza\/monturas",
+                "visible": "1"
+            },
+            {
+                "title": "Fundas y Maletines",
+                "url": "\/caza\/fundas_y_maletines",
+                "visible": "1"
+            },
+            {
+                "title": "Transporte animales",
+                "url": "\/caza\/transporte_animales",
+                "visible": "1"
+            },
+            {
+                "title": "Limpieza Armas",
+                "url": "\/caza\/limpieza_armas",
+                "visible": "1"
+            },
+            {
+                "title": "Mochilas",
+                "url": "\/caza\/mochilas",
+                "visible": "1"
+            },
+            {
+                "title": "Desplumadoras",
+                "url": "\/caza\/desplumadoras",
+                "visible": "1"
+            },
+            {
+                "title": "Juegos de caza y tiro",
+                "url": "\/caza\/competicion_y_tiro-juegos_de_caza_y_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Portacazas",
+                "url": "\/caza\/portacazas",
+                "visible": "1"
+            },
+            {
+                "title": "Recarga",
+                "url": "\/caza\/recarga",
+                "visible": "1"
+            },
+            {
+                "title": "Cananas",
+                "url": "\/caza\/cananas",
+                "visible": "1"
+            },
+            {
+                "title": "Cantoneras",
+                "url": "\/caza\/cantoneras",
+                "visible": "1"
+            },
+            {
+                "title": "Correas",
+                "url": "\/caza\/correas",
+                "visible": "1"
+            },
+            {
+                "title": "Dispensadores",
+                "url": "\/caza\/complementos-dispensadores",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos (Ver todos)",
+                "url": "\/caza\/complementos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Segunda mano",
+        "action": "",
+        "type": "subcategorie",
+        "id": 14,
+        "column": "2",
+        "position_category": "3",
+        "position": "2",
+        "items": [
+            {
+                "title": "Armas Cortas de Segunda Mano",
+                "url": "\/caza\/armas_de_segunda_mano-armas_cortas_de_segunda_mano",
+                "visible": "1"
+            },
+            {
+                "title": "Carabinas Segunda Mano",
+                "url": "\/caza\/armas_de_segunda_mano-carabinas_segunda_mano",
+                "visible": "1"
+            },
+            {
+                "title": "Ca\u00f1ones",
+                "url": "\/caza\/armas_de_segunda_mano-canones",
+                "visible": "1"
+            },
+            {
+                "title": "Escopetas de segunda mano",
+                "url": "\/caza\/armas_de_segunda_mano-escopetas_de_segunda_mano",
+                "visible": "1"
+            },
+            {
+                "title": "Rifles de segunda mano",
+                "url": "\/caza\/armas_de_segunda_mano-rifles_de_segunda_mano",
+                "visible": "1"
+            },
+            {
+                "title": "\u00d3ptica de Segunda Mano",
+                "url": "\/caza\/armas_de_segunda_mano-optica_de_segunda_mano",
+                "visible": "1"
+            },
+            {
+                "title": "Monturas y Accesorios",
+                "url": "\/caza\/armas_de_segunda_mano-monturas_y_accesorios",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Ropa y Complementos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 15,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Pantalones",
+                "url": "\/caza\/ropa_y_complementos-pantalones",
+                "visible": "1"
+            },
+            {
+                "title": "Parkas",
+                "url": "\/caza\/ropa_y_complementos-parkas",
+                "visible": "1"
+            },
+            {
+                "title": "Chalecos",
+                "url": "\/caza\/ropa_y_complementos-chalecos",
+                "visible": "1"
+            },
+            {
+                "title": "Polares",
+                "url": "\/caza\/ropa_y_complementos-polares",
+                "visible": "1"
+            },
+            {
+                "title": "Camisas y Camisetas",
+                "url": "\/caza\/ropa_y_complementos-camisas_y_camisetas",
+                "visible": "1"
+            },
+            {
+                "title": "Jers\u00e9is",
+                "url": "\/caza\/ropa_y_complementos-jerseys",
+                "visible": "1"
+            },
+            {
+                "title": "Chaquetas y Softshells",
+                "url": "\/caza\/ropa_y_complementos-chaquetas_y_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Impermeables",
+                "url": "\/caza\/ropa_y_complementos-impermeables",
+                "visible": "1"
+            },
+            {
+                "title": "Ropa mujer y ni\u00f1os",
+                "url": "\/caza\/ropa_mujer_y_ninos",
+                "visible": "1"
+            },
+            {
+                "title": "Ropa Interior",
+                "url": "\/caza\/ropa_y_complementos-ropa_interior",
+                "visible": "1"
+            },
+            {
+                "title": "Calcetines",
+                "url": "\/caza\/ropa_y_complementos-calcetines",
+                "visible": "1"
+            },
+            {
+                "title": "Polainas y Rastrojeras",
+                "url": "\/caza\/ropa_y_complementos-polainas_y_rastrojeras",
+                "visible": "1"
+            },
+            {
+                "title": "Polos",
+                "url": "\/caza\/ropa_y_complementos-polos",
+                "visible": "1"
+            },
+            {
+                "title": "Gorros y Sombreros",
+                "url": "\/caza\/gorros_y_sombreros",
+                "visible": "1"
+            },
+            {
+                "title": "Monopieza",
+                "url": "\/caza\/ropa_y_complementos-monopieza",
+                "visible": "1"
+            },
+            {
+                "title": "Camuflaje",
+                "url": "\/caza\/ropa_y_complementos-camuflaje",
+                "visible": "1"
+            },
+            {
+                "title": "Alta Visibilidad",
+                "url": "\/caza\/ropa_y_complementos-alta_visibilidad",
+                "visible": "1"
+            },
+            {
+                "title": "Guantes",
+                "url": "\/caza\/guantes",
+                "visible": "1"
+            },
+            {
+                "title": "Bragas y Pasamonta\u00f1as",
+                "url": "\/caza\/ropa_y_complementos-bragas_y_pasamontanas",
+                "visible": "1"
+            },
+            {
+                "title": "Cinturones y Tirantes",
+                "url": "\/caza\/ropa_y_complementos-cinturones_y_tirantes",
+                "visible": "1"
+            },
+            {
+                "title": "Conjuntos",
+                "url": "\/caza\/ropa_y_complementos-conjuntos",
+                "visible": "1"
+            },
+            {
+                "title": "Corbatas y Gemelos",
+                "url": "\/caza\/ropa_y_complementos-corbatas_y_gemelos",
+                "visible": "1"
+            },
+            {
+                "title": "Pulseras",
+                "url": "\/caza\/pulseras",
+                "visible": "1"
+            },
+            {
+                "title": "Prendas Calefactables",
+                "url": "\/caza\/ropa_y_complementos-prendas_calefactables",
+                "visible": "1"
+            },
+            {
+                "title": "Ropa y Complementos (Ver todos)",
+                "url": "\/caza\/ropa_y_complementos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Taxidermia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 16,
+        "column": "3",
+        "position_category": "12",
+        "position": "2",
+        "items": [
+            {
+                "title": "Peanas",
+                "url": "\/caza\/taxidermia-peanas",
+                "visible": "1"
+            },
+            {
+                "title": "Cr\u00e1neos y Frontales",
+                "url": "\/caza\/taxidermia-craneos_y_frontales",
+                "visible": "1"
+            },
+            {
+                "title": "Preparar Trofeos",
+                "url": "\/caza\/taxidermia-preparar_trofeos",
+                "visible": "1"
+            },
+            {
+                "title": "Medallas",
+                "url": "\/caza\/taxidermia-medallas",
+                "visible": "1"
+            },
+            {
+                "title": "Trofeos Corzo",
+                "url": "\/caza\/taxidermia-trofeos_corzo",
+                "visible": "1"
+            },
+            {
+                "title": "Taxidermia (Ver todos)",
+                "url": "\/caza\/taxidermia",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "CALZADO",
+        "action": "",
+        "type": "subcategorie",
+        "id": 17,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Botas Gore-tex",
+                "url": "\/caza\/calzado-botas_goretex",
+                "visible": "1"
+            },
+            {
+                "title": "Botas Bajas",
+                "url": "\/caza\/calzado-botas_bajas",
+                "visible": "1"
+            },
+            {
+                "title": "Botas Altas",
+                "url": "\/caza\/calzado-botas_altas",
+                "visible": "1"
+            },
+            {
+                "title": "Botas de agua",
+                "url": "\/caza\/calzado-botas_de_agua",
+                "visible": "1"
+            },
+            {
+                "title": "Botas impermeables",
+                "url": "\/caza\/calzado-botas_impermeables",
+                "visible": "1"
+            },
+            {
+                "title": "Zapatos",
+                "url": "\/caza\/calzado-zapatos",
+                "visible": "1"
+            },
+            {
+                "title": "Calzado outdoor",
+                "url": "\/caza\/calzado-calzado_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Calzado de mujer",
+                "url": "\/caza\/calzado-calzado_de_mujer",
+                "visible": "1"
+            },
+            {
+                "title": "Sandalias",
+                "url": "\/caza\/calzado-sandalias",
+                "visible": "1"
+            },
+            {
+                "title": "Accesorios de calzado",
+                "url": "\/caza\/calzado-accesorios_de_calzado",
+                "visible": "1"
+            },
+            {
+                "title": "CALZADO (Ver todos)",
+                "url": "\/caza\/calzado",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Munici\u00f3n",
+        "action": "",
+        "type": "subcategorie",
+        "id": 18,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Cartuchos",
+                "url": "\/caza\/cartuchos",
+                "visible": "1"
+            },
+            {
+                "title": "Munici\u00f3n para Armas de Balines",
+                "url": "\/caza\/municion_para_armas_de_balines",
+                "visible": "1"
+            },
+            {
+                "title": "Munici\u00f3n para Armas Airsoft",
+                "url": "\/caza\/municion_para_armas_airsoft",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cuchiller\u00eda",
+        "action": "",
+        "type": "subcategorie",
+        "id": 19,
+        "column": "4",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Cuchillos",
+                "url": "\/caza\/cuchillos",
+                "visible": "1"
+            },
+            {
+                "title": "Navajas",
+                "url": "\/caza\/navajas",
+                "visible": "1"
+            },
+            {
+                "title": "Multiusos",
+                "url": "\/caza\/multiusos",
+                "visible": "1"
+            },
+            {
+                "title": "Hachas y Martillos",
+                "url": "\/caza\/hachas_y_martillos",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/caza\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "Afiladores",
+                "url": "\/caza\/afiladores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Linternas y Focos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 20,
+        "column": "4",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Linternas de Mano",
+                "url": "\/caza\/linternas_y_focos-linternas_de_mano",
+                "visible": "1"
+            },
+            {
+                "title": "Acoplables al arma",
+                "url": "\/caza\/linternas_y_focos-acoplables_al_arma",
+                "visible": "1"
+            },
+            {
+                "title": "Linternas de Cabeza",
+                "url": "\/caza\/linternas_y_focos-linternas_de_cabeza",
+                "visible": "1"
+            },
+            {
+                "title": "Focos",
+                "url": "\/caza\/linternas_y_focos-focos",
+                "visible": "1"
+            },
+            {
+                "title": "Accesorios linternas",
+                "url": "\/caza\/linternas_y_focos-accesorios_linternas",
+                "visible": "1"
+            },
+            {
+                "title": "Linternas y Focos (Ver todos)",
+                "url": "\/caza\/linternas_y_focos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Productos para el Perro",
+        "action": "",
+        "type": "subcategorie",
+        "id": 21,
+        "column": "5",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Collares",
+                "url": "\/caza\/productos_para_el_perro-collares",
+                "visible": "1"
+            },
+            {
+                "title": "Chalecos de protecci\u00f3n",
+                "url": "\/caza\/productos_para_el_perro-chalecos_de_proteccion",
+                "visible": "1"
+            },
+            {
+                "title": "Transporte de perros",
+                "url": "\/caza\/productos_para_el_perro-transporte_de_perros",
+                "visible": "1"
+            },
+            {
+                "title": "Collares y GPS Garmin",
+                "url": "\/caza\/collares_y_gps_garmin",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos",
+                "url": "\/caza\/productos_para_el_perro-complementos",
+                "visible": "1"
+            },
+            {
+                "title": "Correas",
+                "url": "\/caza\/productos_para_el_perro-correas",
+                "visible": "1"
+            },
+            {
+                "title": "Arneses",
+                "url": "\/caza\/productos_para_el_perro-arneses",
+                "visible": "1"
+            },
+            {
+                "title": "Silbatos",
+                "url": "\/caza\/productos_para_el_perro-silbatos",
+                "visible": "1"
+            },
+            {
+                "title": "Insecticida",
+                "url": "\/caza\/productos_para_el_perro-insecticida",
+                "visible": "1"
+            },
+            {
+                "title": "Productos para el Perro (Ver todos)",
+                "url": "\/caza\/productos_para_el_perro",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Competici\u00f3n y tiro deportivo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 22,
+        "column": "5",
+        "position_category": "13",
+        "position": "2",
+        "items": [
+            {
+                "title": "Cascos y Tapones",
+                "url": "\/caza\/competicion_y_tiro-cascos_y_tapones",
+                "visible": "1"
+            },
+            {
+                "title": "Chalecos tiro",
+                "url": "\/caza\/competicion_y_tiro-chalecos_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Gafas de Tiro",
+                "url": "\/caza\/competicion_y_tiro-gafas_de_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1quinas para tiro al plato",
+                "url": "\/caza\/competicion_y_tiro-maquinas_lanzaplatos",
+                "visible": "1"
+            },
+            {
+                "title": "Apoyos",
+                "url": "\/caza\/competicion_y_tiro-apoyos",
+                "visible": "1"
+            },
+            {
+                "title": "Puntos de mira",
+                "url": "\/caza\/competicion_y_tiro-puntos_de_mira",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas y Maletines",
+                "url": "\/caza\/competicion_y_tiro-bolsas_y_maletines",
+                "visible": "0"
+            },
+            {
+                "title": "Platos y Dianas",
+                "url": "\/caza\/competicion_y_tiro-platos_y_dianas",
+                "visible": "1"
+            },
+            {
+                "title": "Hombreras y Carrilleras",
+                "url": "\/caza\/competicion_y_tiro-hombreras_y_carrilleras",
+                "visible": "1"
+            },
+            {
+                "title": "Competicion y Tiro (Ver todos)",
+                "url": "\/caza\/competicion_y_tiro",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet y ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 23,
+        "column": "5",
+        "position_category": "15",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet y Liquidaciones",
+                "url": "\/caza\/outlet_y_liquidaciones",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Expr\u00e9s Caza",
+                "url": "\/caza\/oferta_expres_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Microprecios CAZA",
+                "url": "\/caza\/microprecios_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Especial Berrea 2025",
+                "url": "\/caza\/especial_berrea_2025",
+                "visible": "1"
+            },
+            {
+                "title": "Rifles Vuelta a la Caza",
+                "url": "\/caza\/rifles_vuelta_a_la_caza",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Packs Carabinas de Balines",
+                "url": "\/caza\/oferta_packs_carabinas_de_balines",
+                "visible": "0"
+            }
+        ]
+    }
+]

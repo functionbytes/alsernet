@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Ti potrebbe interessare",
+        "url": "",
+        "action": "",
+        "type": "special",
+        "column": "1",
+        "id": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Scopri le nostre marche",
+                "url": "/it/golf/lista-marchi"
+            },
+            {
+                "title": "Offerte",
+                "url": "/it/golf/offerte"
+            },
+            {
+                "title": "Novità",
+                "url": "/it/golf/novita"
+            },
+            {
+                "title": "I più venduti",
+                "url": "/it/golf/i_piu_venduti"
+            }
+        ]
+    }
+]

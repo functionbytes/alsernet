@@ -1,0 +1,245 @@
+[
+    {
+        "title": "Seguridad",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Chalecos Salvavidas",
+                "url": "\/nautica\/chalecos_salvavidas",
+                "visible": "1"
+            },
+            {
+                "title": "Seguridad y Salvamento",
+                "url": "\/nautica\/seguridad_y_salvamento",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipo personal",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Ropa n\u00e1utica",
+                "url": "\/nautica\/ropa_nautica",
+                "visible": "1"
+            },
+            {
+                "title": "Calzado n\u00e1utico",
+                "url": "\/nautica\/calzado_nautico",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas de Viaje",
+                "url": "\/nautica\/bolsas_de_viaje",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas y Fundas impermeables",
+                "url": "\/nautica\/bolsas_y_fundas_impermeables",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e1maras",
+                "url": "\/nautica\/camaras",
+                "visible": "1"
+            },
+            {
+                "title": "Gafas de Sol",
+                "url": "\/nautica\/gafas_de_sol",
+                "visible": "1"
+            },
+            {
+                "title": "Navajas",
+                "url": "\/nautica\/navajas",
+                "visible": "1"
+            },
+            {
+                "title": "Relojes",
+                "url": "\/nautica\/relojes",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Fondeo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fondeo",
+                "url": "\/nautica\/fondeo",
+                "visible": "1"
+            },
+            {
+                "title": "Lanchas",
+                "url": "\/nautica\/lanchas",
+                "visible": "1"
+            },
+            {
+                "title": "Motores",
+                "url": "\/nautica\/motores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Entretenimiento",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "N\u00e1utica de Recreo",
+                "url": "\/nautica\/nautica_de_recreo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipo de Cubierta",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Equipo de Cubierta",
+                "url": "\/nautica\/equipo_de_cubierta",
+                "visible": "1"
+            },
+            {
+                "title": "Focos y Linternas",
+                "url": "\/nautica\/focos_y_linternas",
+                "visible": "1"
+            },
+            {
+                "title": "Luces Navegaci\u00f3n",
+                "url": "\/nautica\/luces_navegacion",
+                "visible": "1"
+            },
+            {
+                "title": "Mantenimiento Barco",
+                "url": "\/nautica\/mantenimiento_barco",
+                "visible": "1"
+            },
+            {
+                "title": "Bater\u00edas",
+                "url": "\/nautica\/baterias",
+                "visible": "1"
+            },
+            {
+                "title": "Combustible",
+                "url": "\/nautica\/combustible",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Compases, electr\u00f3nica y navegaci\u00f3n",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Emisoras y VHF",
+                "url": "\/nautica\/emisoras_y_vhf",
+                "visible": "1"
+            },
+            {
+                "title": "Gps",
+                "url": "\/nautica\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navegaci\u00f3n",
+                "url": "\/nautica\/navegacion",
+                "visible": "1"
+            },
+            {
+                "title": "Prism\u00e1ticos",
+                "url": "\/nautica\/prismaticos",
+                "visible": "1"
+            },
+            {
+                "title": "Sondas",
+                "url": "\/nautica\/sondas",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopios",
+                "url": "\/nautica\/telescopios",
+                "visible": "1"
+            },
+            {
+                "title": "Detectores de metales",
+                "url": "\/nautica\/detectores_de_metales",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Confort",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Agua a Bordo",
+                "url": "\/nautica\/agua_a_bordo",
+                "visible": "1"
+            },
+            {
+                "title": "Confort",
+                "url": "\/nautica\/confort",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet y ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet y Liquidaciones",
+                "url": "\/nautica\/outlet_y_liquidaciones",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Expr\u00e9s N\u00e1utica",
+                "url": "\/nautica\/oferta_expres_nautica",
+                "visible": "0"
+            }
+        ]
+    }
+]

@@ -1,0 +1,251 @@
+[
+    {
+        "title": "Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Sci e Fissaggi",
+                "url": "\/it\/sci\/sci_e_fissaggi",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Scarponi da Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 63,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Scarponi da Sci",
+                "url": "\/it\/sci\/scarponi_da_sci",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe Apr\u00e8s-Ski",
+                "url": "\/it\/sci\/scarpe_apres_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Calzature",
+                "url": "\/it\/sci\/calzature",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Caschi e Protezioni",
+        "action": "",
+        "type": "subcategorie",
+        "id": 64,
+        "column": "1",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Caschi da Sci",
+                "url": "\/it\/sci\/caschi_da_sci",
+                "visible": "1"
+            },
+            {
+                "title": "Paraschiena e Protettori da Sci",
+                "url": "\/it\/sci\/paraschiena_e_protettori_da_sci",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Maschere e Occhiali da Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 65,
+        "column": "1",
+        "position_category": "5",
+        "position": "4",
+        "items": [
+            {
+                "title": "Maschere e Occhiali da Sci",
+                "url": "\/it\/sci\/maschere_e_occhiali_da_sci",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bastoncini da Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 66,
+        "column": "1",
+        "position_category": "4",
+        "position": "5",
+        "items": [
+            {
+                "title": "Bastoni da Sci",
+                "url": "\/it\/sci\/bastoni_da_sci",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessori da Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 67,
+        "column": "2",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Accessori per lo sci",
+                "url": "\/it\/sci\/accessori_per_lo_sci",
+                "visible": "1"
+            },
+            {
+                "title": "Slittini e Sci per Bambini",
+                "url": "\/it\/sci\/slittini_e_sci_per_bambini",
+                "visible": "1"
+            },
+            {
+                "title": "Cura personale",
+                "url": "\/it\/sci\/cura_personale",
+                "visible": "1"
+            },
+            {
+                "title": "Camere",
+                "url": "\/it\/sci\/camere",
+                "visible": "1"
+            },
+            {
+                "title": "Trasmettitori",
+                "url": "\/it\/sci\/trasmettitori",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/it\/sci\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Torce e Fari",
+                "url": "\/it\/sci\/torce_e_fari",
+                "visible": "1"
+            },
+            {
+                "title": "Binocoli",
+                "url": "\/it\/sci\/binocoli",
+                "visible": "1"
+            },
+            {
+                "title": "Orologi",
+                "url": "\/it\/sci\/orologi",
+                "visible": "0"
+            },
+            {
+                "title": "Telescopi",
+                "url": "\/it\/sci\/telescopi",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo libero",
+                "url": "\/it\/sci\/tempo_libero",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbigliamento da Sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 68,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Abbigliamento da sci per uomo",
+                "url": "\/it\/sci\/abbigliamento_da_sci_per_uomo",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento da Sci Donna",
+                "url": "\/it\/sci\/abbigliamento_da_sci_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento Sci Junior",
+                "url": "\/it\/sci\/abbigliamento_sci_junior",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento outdoor",
+                "url": "\/it\/outdoor\/abbigliamento_e_accessori-abbigliamento_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Cappellini e Tubolari",
+                "url": "\/it\/sci\/cappellini_e_tubolari",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Sci",
+                "url": "\/it\/sci\/guanti_da_sci",
+                "visible": "1"
+            },
+            {
+                "title": "Intimo Tecnico",
+                "url": "\/it\/sci\/intimo_tecnico",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Trasporto e Borse da sci",
+        "action": "",
+        "type": "subcategorie",
+        "id": 69,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Borse e Sacche da Trasporto",
+                "url": "\/it\/sci\/borse_e_sacche_da_trasporto",
+                "visible": "1"
+            },
+            {
+                "title": "Zaini",
+                "url": "\/it\/sci\/borse_e_sacche_da_trasporto-zaini",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 70,
+        "column": "3",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni Sci",
+                "url": "\/it\/sci\/outlet_e_liquidazioni_sci",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Lampo Sci",
+                "url": "\/it\/offerta_lampo_sci",
+                "visible": "1"
+            }
+        ]
+    }
+]

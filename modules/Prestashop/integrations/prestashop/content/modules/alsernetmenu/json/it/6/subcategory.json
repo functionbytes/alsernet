@@ -1,0 +1,794 @@
+[
+    {
+        "title": "Selle",
+        "action": "",
+        "type": "subcategorie",
+        "id": 34,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Dressage",
+                "url": "\/it\/equitazione\/selle-dressage",
+                "visible": "1"
+            },
+            {
+                "title": "Da Completo",
+                "url": "\/it\/equitazione\/selle-da_completo",
+                "visible": "1"
+            },
+            {
+                "title": "Salto",
+                "url": "\/it\/equitazione\/selle-salto",
+                "visible": "1"
+            },
+            {
+                "title": "Selle Spagnole",
+                "url": "\/it\/equitazione\/selle-selle_spagnole",
+                "visible": "1"
+            },
+            {
+                "title": "Maremmane",
+                "url": "\/it\/equitazione\/selle-maremmane",
+                "visible": "1"
+            },
+            {
+                "title": "Trekking",
+                "url": "\/it\/equitazione\/selle-trekking",
+                "visible": "1"
+            },
+            {
+                "title": "Equipaggiamento Completo e Selle Economiche",
+                "url": "\/it\/equitazione\/selle-equipaggiamento_completo_e_selle_economiche",
+                "visible": "1"
+            },
+            {
+                "title": "Pony",
+                "url": "\/it\/equitazione\/selle-pony",
+                "visible": "1"
+            },
+            {
+                "title": "Western",
+                "url": "\/it\/equitazione\/selle-western",
+                "visible": "1"
+            },
+            {
+                "title": "Selle (Scopri di pi\u00f9)",
+                "url": "\/it\/equitazione\/selle",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Salute e Igiene",
+        "action": "",
+        "type": "subcategorie",
+        "id": 35,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Pomate",
+                "url": "\/it\/equitazione\/salute_e_igiene-pomate",
+                "visible": "1"
+            },
+            {
+                "title": "Olio per Zoccoli",
+                "url": "\/it\/equitazione\/salute_e_igiene-olio_per_zoccoli",
+                "visible": "1"
+            },
+            {
+                "title": "Biotina",
+                "url": "\/it\/equitazione\/salute_e_igiene-biotina",
+                "visible": "1"
+            },
+            {
+                "title": "Caramelle",
+                "url": "\/it\/equitazione\/salute_e_igiene-caramelle",
+                "visible": "1"
+            },
+            {
+                "title": "Integratori Alimentari",
+                "url": "\/it\/equitazione\/salute_e_igiene-integratori_alimentari",
+                "visible": "1"
+            },
+            {
+                "title": "Cura del Mantello",
+                "url": "\/it\/equitazione\/salute_e_igiene-cura_del_mantello",
+                "visible": "1"
+            },
+            {
+                "title": "Protezione Anti-insetti",
+                "url": "\/it\/equitazione\/salute_e_igiene-protezione_anti_insetti",
+                "visible": "1"
+            },
+            {
+                "title": "Vitamine Ed Elettroliti",
+                "url": "\/it\/equitazione\/salute_e_igiene-vitamine_ed_elettroliti",
+                "visible": "1"
+            },
+            {
+                "title": "Disinfettanti",
+                "url": "\/it\/equitazione\/salute_e_igiene-disinfettanti",
+                "visible": "1"
+            },
+            {
+                "title": "Tranquilizantes",
+                "url": "\/it\/equitazione\/salute_e_igiene-tranquilizantes",
+                "visible": "0"
+            },
+            {
+                "title": "Salviettine",
+                "url": "\/it\/equitazione\/salute_e_igiene-salviettine",
+                "visible": "0"
+            },
+            {
+                "title": "Salute e Igiene (Scopri di pi\u00f9)",
+                "url": "\/it\/equitazione\/salute_e_igiene",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipaggiamento per il cavallo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 36,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Cavezze per Cavalli",
+                "url": "\/it\/equitazione\/cavezze_per_cavalli",
+                "visible": "1"
+            },
+            {
+                "title": "Protezioni Cavallo",
+                "url": "\/it\/equitazione\/protezioni_cavallo",
+                "visible": "1"
+            },
+            {
+                "title": "Sottoselle",
+                "url": "\/it\/equitazione\/sottoselle",
+                "visible": "1"
+            },
+            {
+                "title": "Staffili",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-staffili",
+                "visible": "1"
+            },
+            {
+                "title": "Sottopancia",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-sottopancia",
+                "visible": "1"
+            },
+            {
+                "title": "Salvagarrese",
+                "url": "\/it\/equitazione\/salvagarrese",
+                "visible": "1"
+            },
+            {
+                "title": "Fasce e Sottofasce",
+                "url": "\/it\/equitazione\/protezioni_cavallo-fasce_e_sottofasce",
+                "visible": "1"
+            },
+            {
+                "title": "Imboccature  e Accessori",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-imboccature_e_accessori",
+                "visible": "1"
+            },
+            {
+                "title": "Morsi e Serraglie",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-morsi_e_serraglie",
+                "visible": "1"
+            },
+            {
+                "title": "Staffe e Accessori",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-staffe_e_accessori",
+                "visible": "1"
+            },
+            {
+                "title": "Redini",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-redini",
+                "visible": "1"
+            },
+            {
+                "title": "Cavezze",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-cavezze",
+                "visible": "1"
+            },
+            {
+                "title": "Sottoselle e Groppiere",
+                "url": "\/it\/equitazione\/sottoselle_e_groppiere",
+                "visible": "1"
+            },
+            {
+                "title": "Pettorale",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-pettorale",
+                "visible": "1"
+            },
+            {
+                "title": "Martingale e Collari di Testa",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-martingale_e_collari_di_testa",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Selle",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-accessori_per_selle",
+                "visible": "1"
+            },
+            {
+                "title": "Paraglomi",
+                "url": "\/it\/equitazione\/protezioni_cavallo-paraglomi",
+                "visible": "1"
+            },
+            {
+                "title": "Cuffiette",
+                "url": "\/it\/equitazione\/cuffiette",
+                "visible": "1"
+            },
+            {
+                "title": "Fasce di Fissaggio",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-fasce_di_fissaggio",
+                "visible": "1"
+            },
+            {
+                "title": "Coperte",
+                "url": "\/it\/equitazione\/coperte",
+                "visible": "1"
+            },
+            {
+                "title": "Coperte Con Staffe",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-coperte_con_staffe",
+                "visible": "1"
+            },
+            {
+                "title": "Addestramento e Volteggio",
+                "url": "\/it\/equitazione\/addestramento_e_volteggio",
+                "visible": "1"
+            },
+            {
+                "title": "Copricoda",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-copricoda",
+                "visible": "1"
+            },
+            {
+                "title": "Paramosche per Cavalli",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-paramosche_per_cavalli",
+                "visible": "1"
+            },
+            {
+                "title": "Capezzine",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-capezzine",
+                "visible": "1"
+            },
+            {
+                "title": "Collari, Longine e Redini",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-collari_longine_e_redini",
+                "visible": "1"
+            },
+            {
+                "title": "Sottocoda",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-sottocoda",
+                "visible": "1"
+            },
+            {
+                "title": "Apribocca",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-apribocca",
+                "visible": "1"
+            },
+            {
+                "title": "Bisacce",
+                "url": "\/it\/equitazione\/bisacce",
+                "visible": "1"
+            },
+            {
+                "title": "Attacchi per cavalli e pony",
+                "url": "\/it\/equitazione\/attacchi_per_cavalli_e_pony",
+                "visible": "0"
+            },
+            {
+                "title": "Coccarda",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-coccarda",
+                "visible": "1"
+            },
+            {
+                "title": "Pellicia per Sella",
+                "url": "\/it\/equitazione\/pellicia_per_sella",
+                "visible": "1"
+            },
+            {
+                "title": "Equipaggiamento per Il Cavallo (Vedi Selezione)",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipaggiamento per cavaliere",
+        "action": "",
+        "type": "subcategorie",
+        "id": 37,
+        "column": "3",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Caschi da Equitazione",
+                "url": "\/it\/equitazione\/caschi_da_equitazione",
+                "visible": "1"
+            },
+            {
+                "title": "Corpetto protettivo da equitazione",
+                "url": "\/it\/equitazione\/corpetto_protettivo_da_equitazione",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Equitazione",
+                "url": "\/it\/equitazione\/guanti_da_equitazione",
+                "visible": "1"
+            },
+            {
+                "title": "Speroni e Cinghiette",
+                "url": "\/it\/equitazione\/speroni_e_cinghiette",
+                "visible": "1"
+            },
+            {
+                "title": "Fuste",
+                "url": "\/it\/equitazione\/equipaggiamento_per_il_cavallo-fuste",
+                "visible": "1"
+            },
+            {
+                "title": "Fasce Protettive",
+                "url": "\/it\/equitazione\/fasce_protettive",
+                "visible": "1"
+            },
+            {
+                "title": "Infantil",
+                "url": "\/it\/equitazione\/infantil",
+                "visible": "1"
+            },
+            {
+                "title": "Libri",
+                "url": "\/it\/equitazione\/libri",
+                "visible": "1"
+            },
+            {
+                "title": "Orologi",
+                "url": "\/it\/equitazione\/orologi",
+                "visible": "0"
+            },
+            {
+                "title": "Regali",
+                "url": "\/it\/equitazione\/regali",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Articoli per scuderia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 38,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Portaselle",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-portaselle",
+                "visible": "1"
+            },
+            {
+                "title": "Portabriglie",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-portabriglie",
+                "visible": "1"
+            },
+            {
+                "title": "Mangiatoie e Abbeveratoi",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-mangiatoie_e_abbeveratoi",
+                "visible": "1"
+            },
+            {
+                "title": "Cassette e Armadietti per Selleria",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-cassette_e_armadietti_per_selleria",
+                "visible": "1"
+            },
+            {
+                "title": "Forche",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-forche",
+                "visible": "1"
+            },
+            {
+                "title": "Corde e Moschettoni di Fissaggio",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-corde_e_moschettoni_di_fissaggio",
+                "visible": "1"
+            },
+            {
+                "title": "Travi di Legatura",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-travi_di_legatura",
+                "visible": "1"
+            },
+            {
+                "title": "Ippometri",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-ippometri",
+                "visible": "1"
+            },
+            {
+                "title": "Lettere e Marcature",
+                "url": "\/it\/equitazione\/articoli_per_scuderia-lettere_e_marcature",
+                "visible": "1"
+            },
+            {
+                "title": "Recinti Elettrici",
+                "url": "\/it\/equitazione\/recinti_elettrici",
+                "visible": "1"
+            },
+            {
+                "title": "Borse e copriselle",
+                "url": "\/it\/equitazione\/borse_e_copriselle",
+                "visible": "1"
+            },
+            {
+                "title": "Articoli per Scuderia (Vedi Selezione)",
+                "url": "\/it\/equitazione\/articoli_per_scuderia",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbrigliamento e accessori",
+        "action": "",
+        "type": "subcategorie",
+        "id": 39,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Pantaloni",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-pantaloni",
+                "visible": "1"
+            },
+            {
+                "title": "Magliette e Polo",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-magliette_e_polo",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-gilet",
+                "visible": "1"
+            },
+            {
+                "title": "Ghette e Chaps",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-ghette_e_chaps",
+                "visible": "1"
+            },
+            {
+                "title": "Giacche e Pile",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-giacche_e_pile",
+                "visible": "1"
+            },
+            {
+                "title": "Calze",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-calze",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento da Concorso",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-abbigliamento_da_concorso",
+                "visible": "1"
+            },
+            {
+                "title": "Poncho e Mantelle da Equitazione",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-poncho_e_mantelle_da_equitazione",
+                "visible": "1"
+            },
+            {
+                "title": "Felpe",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-felpe",
+                "visible": "1"
+            },
+            {
+                "title": "Complementi",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-complementi",
+                "visible": "1"
+            },
+            {
+                "title": "Capelli e Visiere",
+                "url": "\/it\/equitazione\/abbigliamento_e_accessori-capelli_e_visiere",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cura del cavallo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 40,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Spazzole",
+                "url": "\/it\/equitazione\/cura_del_cavallo-spazzole",
+                "visible": "1"
+            },
+            {
+                "title": "Spazzole per Cavalli",
+                "url": "\/it\/equitazione\/cura_del_cavallo-spazzole_per_cavalli",
+                "visible": "1"
+            },
+            {
+                "title": "Cassette e Borse per la Pulizia",
+                "url": "\/it\/equitazione\/cura_del_cavallo-cassette_e_borse_per_la_pulizia",
+                "visible": "1"
+            },
+            {
+                "title": "Puliscicaschi",
+                "url": "\/it\/equitazione\/cura_del_cavallo-puliscicaschi_",
+                "visible": "1"
+            },
+            {
+                "title": "Forbici e Pettini",
+                "url": "\/it\/equitazione\/cura_del_cavallo-forbici_e_pettini",
+                "visible": "1"
+            },
+            {
+                "title": "Tosatrici per Cavalli",
+                "url": "\/it\/equitazione\/cura_del_cavallo-tosatrici_per_cavalli",
+                "visible": "1"
+            },
+            {
+                "title": "Levagocce",
+                "url": "\/it\/equitazione\/cura_del_cavallo-levagocce",
+                "visible": "1"
+            },
+            {
+                "title": "Striglie e spugne",
+                "url": "\/it\/equitazione\/cura_del_cavallo-striglie_e_spugne",
+                "visible": "1"
+            },
+            {
+                "title": "Giocattoli per Cavalli",
+                "url": "\/it\/equitazione\/cura_del_cavallo-giocattoli_per_cavalli",
+                "visible": "1"
+            },
+            {
+                "title": "Pennelli",
+                "url": "\/it\/equitazione\/salute_e_igiene-pennelli",
+                "visible": "1"
+            },
+            {
+                "title": "Fustellatrice",
+                "url": "\/it\/equitazione\/cura_del_cavallo-fustellatrice",
+                "visible": "1"
+            },
+            {
+                "title": "Ferratura",
+                "url": "\/it\/equitazione\/ferratura",
+                "visible": "1"
+            },
+            {
+                "title": "Cura del Cavallo (Vedi Selezione)",
+                "url": "\/it\/equitazione\/cura_del_cavallo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Calzature",
+        "action": "",
+        "type": "subcategorie",
+        "id": 41,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Calzature per Equitazione",
+                "url": "\/it\/equitazione\/calzature_per_equitazione",
+                "visible": "1"
+            },
+            {
+                "title": "Calzature (Scopri di pi\u00f9)",
+                "url": "\/it\/equitazione\/calzature",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cura dell'attrezzura",
+        "action": "",
+        "type": "subcategorie",
+        "id": 42,
+        "column": "5",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Olio per Cuoio",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura-olio_per_cuoio",
+                "visible": "1"
+            },
+            {
+                "title": "Crema",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura-crema",
+                "visible": "1"
+            },
+            {
+                "title": "Spugne",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura-spugne",
+                "visible": "1"
+            },
+            {
+                "title": "Grasso",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura-grasso",
+                "visible": "1"
+            },
+            {
+                "title": "Sapone",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura-sapone",
+                "visible": "1"
+            },
+            {
+                "title": "Cura Dell'attrezzura (Scopri di pi\u00f9)",
+                "url": "\/it\/equitazione\/cura_dell_attrezzura",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Altri",
+        "action": "",
+        "type": "subcategorie",
+        "id": 43,
+        "column": "5",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Metal Detector",
+                "url": "\/it\/equitazione\/metal_detector",
+                "visible": "1"
+            },
+            {
+                "title": "Binocoli",
+                "url": "\/it\/equitazione\/binocoli",
+                "visible": "1"
+            },
+            {
+                "title": "Prodotti per il Cane",
+                "url": "\/it\/equitazione\/prodotti_per_il_cane",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pony",
+        "action": "",
+        "type": "subcategorie",
+        "id": 44,
+        "column": "5",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Cuffie per Pony",
+                "url": "\/it\/equitazione\/pony-cuffie_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Testiere da monta per Pony",
+                "url": "\/it\/equitazione\/pony-testiere_da_monta_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Selle per Pony",
+                "url": "\/it\/equitazione\/pony-selle_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Frontaline e Capezzine",
+                "url": "\/it\/equitazione\/pony-frontaline_e_capezzine",
+                "visible": "1"
+            },
+            {
+                "title": "Cavezze da Scuderia",
+                "url": "\/it\/equitazione\/pony-cavezze_da_scuderia",
+                "visible": "1"
+            },
+            {
+                "title": "Sottoselle e Salvagarrese per Pony",
+                "url": "\/it\/equitazione\/pony-sottoselle_e_salvagarrese_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Allenamento",
+                "url": "\/it\/equitazione\/pony-allenamento",
+                "visible": "0"
+            },
+            {
+                "title": "Staffili e Staffe per Pony",
+                "url": "\/it\/equitazione\/pony-staffili_e_staffe_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Sottopancia",
+                "url": "\/it\/equitazione\/pony-sottopancia",
+                "visible": "1"
+            },
+            {
+                "title": "Scuderia e pulizia",
+                "url": "\/it\/equitazione\/pony-scuderia_e_pulizia",
+                "visible": "0"
+            },
+            {
+                "title": "Paraglomi e Protezioni per Pony",
+                "url": "\/it\/equitazione\/pony-paraglomi_e_protezioni_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Salvacruces",
+                "url": "\/it\/equitazione\/pony-salvacruces",
+                "visible": "1"
+            },
+            {
+                "title": "Carretti e Finimenti",
+                "url": "\/it\/equitazione\/pony-carretti_e_finimenti_",
+                "visible": "0"
+            },
+            {
+                "title": "Morsi e Filetti per Pony",
+                "url": "\/it\/equitazione\/pony-morsi_e_filetti_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Redini per Pony",
+                "url": "\/it\/equitazione\/pony-redini_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Coperte per Pony",
+                "url": "\/it\/equitazione\/pony-coperte_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Pettorali per Pony",
+                "url": "\/it\/equitazione\/pony-pettorali_per_pony",
+                "visible": "1"
+            },
+            {
+                "title": "Pony (Scopri di pi\u00f9)",
+                "url": "\/it\/equitazione\/pony",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 45,
+        "column": "5",
+        "position_category": "12",
+        "position": "5",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/equitazione\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerte Lampo Equitazione",
+                "url": "\/it\/equitazione\/offerte_lampo_equitazione",
+                "visible": "1"
+            }
+        ]
+    }
+]

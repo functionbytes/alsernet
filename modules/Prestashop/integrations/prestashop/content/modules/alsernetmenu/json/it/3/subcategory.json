@@ -1,0 +1,411 @@
+[
+    {
+        "title": "Bastoni da Golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 1,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Driver",
+                "url": "\/it\/golf\/bastoni_da_golf-driver",
+                "visible": "1"
+            },
+            {
+                "title": "Ferri",
+                "url": "\/it\/golf\/bastoni_da_golf-ferri",
+                "visible": "1"
+            },
+            {
+                "title": "Legni da Fairway",
+                "url": "\/it\/golf\/bastoni_da_golf-legni_da_fairway",
+                "visible": "1"
+            },
+            {
+                "title": "Ibridi e Utility da Golf",
+                "url": "\/it\/golf\/bastoni_da_golf-ibridi_e_utility_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Putter",
+                "url": "\/it\/golf\/bastoni_da_golf-putter",
+                "visible": "1"
+            },
+            {
+                "title": "Wedge",
+                "url": "\/it\/golf\/bastoni_da_golf-wedge",
+                "visible": "1"
+            },
+            {
+                "title": "Set",
+                "url": "\/it\/golf\/bastoni_da_golf-set",
+                "visible": "1"
+            },
+            {
+                "title": "Bastoni da Golf (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/bastoni_da_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Scarpe da Golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 2,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Scarpe da Golf Uomo",
+                "url": "\/it\/golf\/scarpe_da_golf-scarpe_da_golf_uomo",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe da Golf Donna",
+                "url": "\/it\/golf\/scarpe_da_golf-scarpe_da_golf_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe Da Golf Junior",
+                "url": "\/it\/golf\/scarpe_da_golf-scarpe_da_golf_junior",
+                "visible": "1"
+            },
+            {
+                "title": "Borse Portascarpe",
+                "url": "\/it\/golf\/scarpe_da_golf-borse_portascarpe",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Scarpe da Golf",
+                "url": "\/it\/golf\/scarpe_da_golf-accessori_per_scarpe_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe da Golf (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/scarpe_da_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Palline da Golf & Accessori",
+        "action": "",
+        "type": "subcategorie",
+        "id": 3,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Callaway",
+                "url": "\/it\/golf\/palline_da_golf_accessori-callaway",
+                "visible": "1"
+            },
+            {
+                "title": "TaylorMade",
+                "url": "\/it\/golf\/palline_da_golf_accessori-taylormade",
+                "visible": "1"
+            },
+            {
+                "title": "Titleist",
+                "url": "\/it\/golf\/palline_da_golf_accessori-titleist",
+                "visible": "1"
+            },
+            {
+                "title": "Srixon",
+                "url": "\/it\/golf\/palline_da_golf_accessori-srixon",
+                "visible": "1"
+            },
+            {
+                "title": "Pinnacle",
+                "url": "\/it\/golf\/palline_da_golf_accessori-pinnacle",
+                "visible": "0"
+            },
+            {
+                "title": "Wilson",
+                "url": "\/it\/golf\/palline_da_golf_accessori-wilson",
+                "visible": "1"
+            },
+            {
+                "title": "XXIO",
+                "url": "\/it\/golf\/palline_da_golf_accessori-xxio",
+                "visible": "1"
+            },
+            {
+                "title": "Mizuno",
+                "url": "\/it\/golf\/palline_da_golf_accessori-mizuno",
+                "visible": "1"
+            },
+            {
+                "title": "Donnay",
+                "url": "\/it\/golf\/palline_da_golf_accessori-donnay",
+                "visible": "0"
+            },
+            {
+                "title": "Palline Colorate",
+                "url": "\/it\/golf\/palline_da_golf_accessori-palline_colorate",
+                "visible": "1"
+            },
+            {
+                "title": "Palline da Pratica",
+                "url": "\/it\/golf\/palline_da_golf_accessori-palline_da_pratica",
+                "visible": "1"
+            },
+            {
+                "title": "Palline da Golf Recuperate",
+                "url": "\/it\/golf\/palline_da_golf_accessori-palline_da_golf_recuperate",
+                "visible": "1"
+            },
+            {
+                "title": "Palline da Golf da Donna",
+                "url": "\/it\/golf\/palline_da_golf_accessori-palline_da_golf_da_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Raccoglipalle",
+                "url": "\/it\/golf\/palline_da_golf_accessori-raccoglipalle",
+                "visible": "1"
+            },
+            {
+                "title": "Palline da Golf & Accessori (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/palline_da_golf_accessori",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessori da golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 4,
+        "column": "3",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Borse da Viaggio",
+                "url": "\/it\/golf\/borse_da_viaggio",
+                "visible": "1"
+            },
+            {
+                "title": "Orologi Gps da Golf",
+                "url": "\/it\/golf\/orologi_gps_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Telemetri da Golf",
+                "url": "\/it\/golf\/telemetri_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Migliora Il Tuo Gioco",
+                "url": "\/it\/golf\/migliora_il_tuo_gioco",
+                "visible": "1"
+            },
+            {
+                "title": "Ombrelli da Golf",
+                "url": "\/it\/golf\/ombrelli_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Copri Bastoni da Golf",
+                "url": "\/it\/golf\/copri_bastoni_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Tee da Golf",
+                "url": "\/it\/golf\/tee_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Asciugamani da Golf",
+                "url": "\/it\/golf\/asciugamani_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Occhiali da Sole da Golf",
+                "url": "\/it\/golf\/occhiali_da_sole_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Complementi",
+                "url": "\/it\/golf\/complementi",
+                "visible": "1"
+            },
+            {
+                "title": "Dvd e Libri",
+                "url": "\/it\/golf\/dvd_e_libri",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Libero",
+                "url": "\/it\/golf\/tempo_libero",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Carrelli da Golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 5,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Carrelli Elettrici",
+                "url": "\/it\/golf\/carrelli_da_golf-carrelli_elettrici",
+                "visible": "1"
+            },
+            {
+                "title": "Carrelli Manuali",
+                "url": "\/it\/golf\/carrelli_da_golf-carrelli_manuali",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Carrelli da Golf",
+                "url": "\/it\/golf\/carrelli_da_golf-accessori_per_carrelli_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Carrelli da Golf (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/carrelli_da_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 6,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/golf\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Speciale Bushnell Golf",
+                "url": "\/it\/golf\/offerta_speciale_bushnell_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta lampo Golf",
+                "url": "\/it\/golf\/offerta_lampo_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta TaylorMade Stealth 2",
+                "url": "\/it\/golf\/oferta_taylormade_stealth_2",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Callaway Rogue",
+                "url": "\/it\/golf\/oferta_callaway_rogue",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta TaylorMade SIM MAX-2",
+                "url": "\/it\/golf\/oferta_taylormade_sim_max2",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbigliamento da golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 7,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Abbigliamento da Golf",
+                "url": "\/it\/golf\/abbigliamento_da_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Cappellini da Golf",
+                "url": "\/it\/golf\/cappellini_da_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Guanti da Golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 8,
+        "column": "5",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Guanti da Golf Uomo",
+                "url": "\/it\/golf\/guanti_da_golf-guanti_da_golf_uomo",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Golf Donna",
+                "url": "\/it\/golf\/guanti_da_golf-guanti_da_golf_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Golf Junior",
+                "url": "\/it\/golf\/guanti_da_golf-guanti_da_golf_junior",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Golf (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/guanti_da_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sacche da Golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 9,
+        "column": "5",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Sacche Carry e Pencil",
+                "url": "\/it\/golf\/sacche_da_golf-sacche_carry_e_pencil",
+                "visible": "1"
+            },
+            {
+                "title": "Sacche da Carrello",
+                "url": "\/it\/golf\/sacche_da_golf-sacche_da_carrello",
+                "visible": "1"
+            },
+            {
+                "title": "Sacche Con Cavalletto",
+                "url": "\/it\/golf\/sacche_da_golf-sacche_con_cavalletto",
+                "visible": "1"
+            },
+            {
+                "title": "Sacche da Golf Impermeabili",
+                "url": "\/it\/golf\/sacche_da_golf-sacche_da_golf_impermeabili",
+                "visible": "1"
+            },
+            {
+                "title": "Sacche da Golf (Scopri di pi\u00f9)",
+                "url": "\/it\/golf\/sacche_da_golf",
+                "visible": "1"
+            }
+        ]
+    }
+]

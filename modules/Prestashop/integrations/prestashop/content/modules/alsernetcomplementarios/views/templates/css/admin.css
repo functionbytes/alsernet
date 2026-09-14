@@ -1,0 +1,56 @@
+#alc-btn-exclude-product,
+#alc-btn-exclude-category,
+#alc-btn-exclude-brand {
+  background:#000 !important;
+  color:#fff !important;
+  border-color:#000 !important;
+}
+#alc-conflicts ul { margin-top:8px; }
+
+.tree-checkbox {
+    display: none !important;
+}
+
+/* Resalta brevemente la fila de la categoría seleccionada */
+.alc-pulse {
+  animation: alcPulse 1s ease-out 1;
+}
+@keyframes alcPulse {
+  0%   { background: rgba(255, 230, 150, 0.6); }
+  100% { background: transparent; }
+}
+
+/* Loader overlay para paneles */
+.alc-loading-overlay{
+  position:absolute; inset:0; background:rgba(255,255,255,.6);
+  display:flex; align-items:center; justify-content:center; z-index:5;
+  border-radius:4px;
+}
+.alc-loading-spinner{
+  display:inline-block; width:28px; height:28px;
+  border:3px solid #999; border-top-color:transparent; border-radius:50%;
+  animation:alcSpin 0.8s linear infinite;
+}
+@keyframes alcSpin { to { transform:rotate(360deg);} }
+
+/* Botón bloqueado muestra spinner a la izquierda del texto */
+.alc-btn-busy{
+  position:relative; pointer-events:none; opacity:.7;
+}
+.alc-btn-busy:before{
+  content:""; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%;
+  animation:alcSpin .8s linear infinite;
+}
+
+/* Highlight de fila seleccionada (ya lo usabas para categorías) */
+.alc-pulse { box-shadow:0 0 0 2px #5bc0de inset; transition:box-shadow .2s; }
+
+/* views/templates/css/admin.css */
+.alc-children-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.alc-children-toggle input[type="checkbox"] {
+  margin-right: 4px;
+}

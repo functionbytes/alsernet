@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Cela peut vous intéresser",
+        "language": "fr",
+        "position": 3,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Marques",
+            "url": "/fr/chasse/liste-marques"
+          },
+          {
+            "title": "Offres",
+            "url": "/fr/chasse/offres"
+          },
+          {
+            "title": "Meilleures ventes",
+            "url": "/fr/chasse/les_plus_vendus"
+          },
+          {
+            "title": "Prix Cassés - Spécial Chasse",
+            "url": "/fr/chasse/micro_prix_chasse"
+          },
+          {
+            "title": "Armes D'Occasion",
+            "url": "/fr/chasse/armes_d_occasion"
+          },
+          {
+            "title": "Atelier Armurier",
+            "url": "/fr/atelier-armurier"
+          }
+        ]
+      }
+]

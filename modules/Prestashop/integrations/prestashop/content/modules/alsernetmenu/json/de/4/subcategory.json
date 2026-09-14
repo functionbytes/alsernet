@@ -1,0 +1,750 @@
+[
+    {
+        "title": "Waffen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 10,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Luftdruckwaffen",
+                "url": "\/de\/jagd\/luftdruckwaffen",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft",
+                "url": "\/de\/jagd\/airsoft",
+                "visible": "1"
+            },
+            {
+                "title": "Dekorative Waffen",
+                "url": "\/de\/jagd\/dekorative_waffen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Optik",
+        "action": "",
+        "type": "subcategorie",
+        "id": 11,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Jagd-Zielfernrohre",
+                "url": "\/de\/jagd\/jagd_zielfernrohre",
+                "visible": "1"
+            },
+            {
+                "title": "Ferngl\u00e4ser",
+                "url": "\/de\/jagd\/fernglaeser",
+                "visible": "1"
+            },
+            {
+                "title": "W\u00e4rmebild- und Nachtsichtger\u00e4te",
+                "url": "\/de\/jagd\/waermebild_und_nachtsichtgeraete",
+                "visible": "1"
+            },
+            {
+                "title": "W\u00e4rmebildmonokular",
+                "url": "\/de\/jagd\/waermebildmonokular",
+                "visible": "1"
+            },
+            {
+                "title": "Entfernungsmesser",
+                "url": "\/de\/jagd\/entfernungsmesser",
+                "visible": "1"
+            },
+            {
+                "title": "Rotpunktvisiere",
+                "url": "\/de\/jagd\/rotpunktvisiere",
+                "visible": "1"
+            },
+            {
+                "title": "Spektive",
+                "url": "\/de\/jagd\/spektive",
+                "visible": "1"
+            },
+            {
+                "title": "Optik Zubeh\u00f6r",
+                "url": "\/de\/jagd\/optik_zubehoer",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 12,
+        "column": "1",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Geh\u00f6r- und Augenschutz",
+                "url": "\/de\/jagd\/gehoer_und_augenschutz",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdzubeh\u00f6r Auto",
+                "url": "\/de\/jagd\/jagdzubehoer_auto",
+                "visible": "1"
+            },
+            {
+                "title": "Metalldetektoren",
+                "url": "\/de\/jagd\/metalldetektoren",
+                "visible": "1"
+            },
+            {
+                "title": "Funkger\u00e4te",
+                "url": "\/de\/jagd\/funkgeraete",
+                "visible": "1"
+            },
+            {
+                "title": "Tragbare GPS-Ger\u00e4te",
+                "url": "\/de\/jagd\/tragbare_gps_geraete",
+                "visible": "1"
+            },
+            {
+                "title": "Archery set",
+                "url": "\/de\/jagd\/archery_set",
+                "visible": "1"
+            },
+            {
+                "title": "Zugelassene Masken",
+                "url": "\/de\/jagd\/zugelassene_masken",
+                "visible": "1"
+            },
+            {
+                "title": "Geschenke f\u00fcr J\u00e4ger",
+                "url": "\/de\/jagd\/geschenke_fuer_jaeger",
+                "visible": "1"
+            },
+            {
+                "title": "Armbanduhren",
+                "url": "\/de\/jagd\/armbanduhren_",
+                "visible": "1"
+            },
+            {
+                "title": "Geschirrset und Glaswaren",
+                "url": "\/de\/jagd\/geschirrset_und_glaswaren",
+                "visible": "1"
+            },
+            {
+                "title": "Freizeit",
+                "url": "\/de\/jagd\/freizeit",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Jagdzubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 13,
+        "column": "2",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Jagd stative",
+                "url": "\/de\/jagd\/jagd_stative",
+                "visible": "1"
+            },
+            {
+                "title": "Kameras",
+                "url": "\/de\/jagd\/kameras",
+                "visible": "1"
+            },
+            {
+                "title": "Lockrufger\u00e4te und Wildattrappen",
+                "url": "\/de\/jagd\/lockrufgeraete_und_wildattrappen",
+                "visible": "1"
+            },
+            {
+                "title": "Ansitze",
+                "url": "\/de\/jagd\/ansitze",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdstuhl",
+                "url": "\/de\/jagd\/jagdstuhl",
+                "visible": "1"
+            },
+            {
+                "title": "Zielpunkt",
+                "url": "\/de\/jagd\/zielpunkt",
+                "visible": "1"
+            },
+            {
+                "title": "Kollimatoren",
+                "url": "\/de\/jagd\/kollimatoren",
+                "visible": "1"
+            },
+            {
+                "title": "Zielfernrohrmontagen",
+                "url": "\/de\/jagd\/zielfernrohrmontagen",
+                "visible": "1"
+            },
+            {
+                "title": "Futterale & Koffer",
+                "url": "\/de\/jagd\/futterale_koffer",
+                "visible": "1"
+            },
+            {
+                "title": "Tiertransport",
+                "url": "\/de\/jagd\/tiertransport",
+                "visible": "1"
+            },
+            {
+                "title": "Waffenreinigung",
+                "url": "\/de\/jagd\/waffenreinigung",
+                "visible": "1"
+            },
+            {
+                "title": "Rucks\u00e4cke",
+                "url": "\/de\/jagd\/rucksacke",
+                "visible": "1"
+            },
+            {
+                "title": "Rupfger\u00e4te",
+                "url": "\/de\/jagd\/rupfgeraete",
+                "visible": "1"
+            },
+            {
+                "title": "Jagd- Und Schie\u00dfspiele",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-jagd_und_schiessspiele",
+                "visible": "1"
+            },
+            {
+                "title": "Wildtr\u00e4ger",
+                "url": "\/de\/jagd\/wildtraeger",
+                "visible": "1"
+            },
+            {
+                "title": "Wiederladen",
+                "url": "\/de\/jagd\/wiederladen",
+                "visible": "1"
+            },
+            {
+                "title": "Patronengurt",
+                "url": "\/de\/jagd\/patronengurt",
+                "visible": "1"
+            },
+            {
+                "title": "Jagd Schaftkappen",
+                "url": "\/de\/jagd\/jagd_schaftkappen",
+                "visible": "1"
+            },
+            {
+                "title": "Gewehrriemen",
+                "url": "\/de\/jagd\/gewehrriemen",
+                "visible": "1"
+            },
+            {
+                "title": "Futterautomat",
+                "url": "\/de\/jagd\/jagdzubehoer-futterautomat",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdzubeh\u00f6r (Alles sehen)",
+                "url": "\/de\/jagd\/jagdzubehoer",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bekleidung und Accesoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 14,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Jagdhosen",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdhosen",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdjacken",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdjacken",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdwesten",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdwesten",
+                "visible": "1"
+            },
+            {
+                "title": "Fleecejacke",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-fleecejacke",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdhemden und T-Shirts",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdhemden_und_t_shirts",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdpullover",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdpullover",
+                "visible": "1"
+            },
+            {
+                "title": "Jacken und Softshelljacken",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jacken_und_softshelljacken",
+                "visible": "1"
+            },
+            {
+                "title": "Regenbekleidung",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-regenbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Bekleidung f\u00fcr Damen und Kinder",
+                "url": "\/de\/jagd\/bekleidung_fuer_damen_und_kinder",
+                "visible": "1"
+            },
+            {
+                "title": "Unterw\u00e4sche",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-unterwaesche",
+                "visible": "1"
+            },
+            {
+                "title": "Socken",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-socken",
+                "visible": "1"
+            },
+            {
+                "title": "Gamaschen",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-gamaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Poloshirts",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-poloshirts",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00fctzen und H\u00fcte",
+                "url": "\/de\/jagd\/muetzen_und_huete",
+                "visible": "1"
+            },
+            {
+                "title": "Ansitzoveralls",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-ansitzoveralls",
+                "visible": "1"
+            },
+            {
+                "title": "Tarnbekleidung",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-tarnbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Warnkleidung",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-warnkleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdhandschuhe",
+                "url": "\/de\/jagd\/jagdhandschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Schlauchschals und Sturmhauben",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-schlauchschals_und_sturmhauben",
+                "visible": "1"
+            },
+            {
+                "title": "G\u00fcrtel & Hosentr\u00e4ger",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-guertel_hosentraeger",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdsets",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-jagdsets",
+                "visible": "1"
+            },
+            {
+                "title": "Krawatten und Manschettenkn\u00f6pfe",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-krawatten_und_manschettenknoepfe",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdarmb\u00e4nder",
+                "url": "\/de\/jagd\/jagdarmbaender",
+                "visible": "1"
+            },
+            {
+                "title": "Beheizbare Bekleidung",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires-beheizbare_bekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Bekleidung und Accesoires (Alles sehen)",
+                "url": "\/de\/jagd\/bekleidung_und_accesoires",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Tierpr\u00e4paration",
+        "action": "",
+        "type": "subcategorie",
+        "id": 15,
+        "column": "3",
+        "position_category": "12",
+        "position": "2",
+        "items": [
+            {
+                "title": "Troph\u00e4enschilde",
+                "url": "\/de\/jagd\/tierpraeparation-trophaeenschilde",
+                "visible": "1"
+            },
+            {
+                "title": "Sch\u00e4del und Stirnbeine",
+                "url": "\/de\/jagd\/tierpraeparation-schaedel_und_stirnbeine",
+                "visible": "1"
+            },
+            {
+                "title": "Troph\u00e4enpr\u00e4paration",
+                "url": "\/de\/jagd\/tierpraeparation-trophaeenpraeparation",
+                "visible": "1"
+            },
+            {
+                "title": "Medaillen",
+                "url": "\/de\/jagd\/tierpraeparation-medaillen",
+                "visible": "1"
+            },
+            {
+                "title": "Rehbocktroph\u00e4en",
+                "url": "\/de\/jagd\/tierpraeparation-rehbocktrophaeen",
+                "visible": "1"
+            },
+            {
+                "title": "Tierpr\u00e4paration (Alles sehen)",
+                "url": "\/de\/jagd\/tierpraeparation",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Schuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 16,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Gore-Tex Stiefel",
+                "url": "\/de\/jagd\/schuhe-gore_tex_stiefel",
+                "visible": "1"
+            },
+            {
+                "title": "Halbstiefel",
+                "url": "\/de\/jagd\/schuhe-halbstiefel",
+                "visible": "1"
+            },
+            {
+                "title": "Hochstiefel",
+                "url": "\/de\/jagd\/schuhe-hochstiefel",
+                "visible": "1"
+            },
+            {
+                "title": "Gummistiefel",
+                "url": "\/de\/jagd\/schuhe-gummistiefel",
+                "visible": "1"
+            },
+            {
+                "title": "Wasserdichte Stiefel",
+                "url": "\/de\/jagd\/schuhe-wasserdichte_stiefel",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdschuhe",
+                "url": "\/de\/jagd\/schuhe-jagdschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Outdoor Schuhe",
+                "url": "\/de\/jagd\/schuhe-outdoor_schuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Damenschuhe",
+                "url": "\/de\/jagd\/schuhe-damenschuhe",
+                "visible": "1"
+            },
+            {
+                "title": "Sandalen",
+                "url": "\/de\/jagd\/schuhe-sandalen",
+                "visible": "1"
+            },
+            {
+                "title": "Schuhzubeh\u00f6r",
+                "url": "\/de\/jagd\/schuhe-schuhzubehoer",
+                "visible": "1"
+            },
+            {
+                "title": "Schuhe (Alles sehen)",
+                "url": "\/de\/jagd\/schuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Munition",
+        "action": "",
+        "type": "subcategorie",
+        "id": 17,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Munition f\u00fcr Luftgewehre",
+                "url": "\/de\/jagd\/munition_fuer_luftgewehre",
+                "visible": "1"
+            },
+            {
+                "title": "Munition f\u00fcr Airsoft-Waffen",
+                "url": "\/de\/jagd\/munition_fuer_airsoft_waffen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Messer & Werkzeuge",
+        "action": "",
+        "type": "subcategorie",
+        "id": 18,
+        "column": "4",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Messer",
+                "url": "\/de\/jagd\/messer",
+                "visible": "1"
+            },
+            {
+                "title": "Taschenmesser",
+                "url": "\/de\/jagd\/taschenmesser",
+                "visible": "1"
+            },
+            {
+                "title": "Multitools",
+                "url": "\/de\/jagd\/multitools",
+                "visible": "1"
+            },
+            {
+                "title": "\u00c4xte",
+                "url": "\/de\/jagd\/aexte",
+                "visible": "1"
+            },
+            {
+                "title": "Macheten",
+                "url": "\/de\/jagd\/macheten",
+                "visible": "1"
+            },
+            {
+                "title": "Messersch\u00e4rfer",
+                "url": "\/de\/jagd\/messerschaerfer",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Taschenlampen und Handscheinwerfern",
+        "action": "",
+        "type": "subcategorie",
+        "id": 19,
+        "column": "4",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Taschenlampen",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern-taschenlampen",
+                "visible": "1"
+            },
+            {
+                "title": "Waffenlampen",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern-waffenlampen",
+                "visible": "1"
+            },
+            {
+                "title": "Stirnlampe",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern-stirnlampe",
+                "visible": "1"
+            },
+            {
+                "title": "Jagdscheinwerfern",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern-jagdscheinwerfern",
+                "visible": "1"
+            },
+            {
+                "title": "Taschenlampenzubeh\u00f6r",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern-taschenlampenzubehoer",
+                "visible": "1"
+            },
+            {
+                "title": "Taschenlampen und Handscheinwerfern (Alles sehen)",
+                "url": "\/de\/jagd\/taschenlampen_und_handscheinwerfern",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Hundezubeh\u00f6r & Hundebedarf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 20,
+        "column": "5",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Hundehalsbands",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-hundehalsbands",
+                "visible": "1"
+            },
+            {
+                "title": "Hundeschutzweste",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-hundeschutzweste",
+                "visible": "1"
+            },
+            {
+                "title": "Zubeh\u00f6r f\u00fcr Hunde",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-zubehoer_fuer_hunde",
+                "visible": "1"
+            },
+            {
+                "title": "Hundeleine",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-hundeleine",
+                "visible": "1"
+            },
+            {
+                "title": "Hundegeschirre",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-hundegeschirre",
+                "visible": "1"
+            },
+            {
+                "title": "Hundepfeife",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-hundepfeife",
+                "visible": "1"
+            },
+            {
+                "title": "Insektenschutz",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf-insektenschutz",
+                "visible": "1"
+            },
+            {
+                "title": "Hundezubeh\u00f6r & Hundebedarf (Alles sehen)",
+                "url": "\/de\/jagd\/hundezubehoer_hundebedarf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Wettbewerb und schiesen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 21,
+        "column": "5",
+        "position_category": "13",
+        "position": "2",
+        "items": [
+            {
+                "title": "Geh\u00f6rschutz Und Geh\u00f6rst\u00f6psel",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-gehorschutz_und_gehorstopsel",
+                "visible": "1"
+            },
+            {
+                "title": "Schie\u00dfwesten",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-schiesswesten",
+                "visible": "1"
+            },
+            {
+                "title": "Schie\u00dfbrille",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-schiessbrille",
+                "visible": "1"
+            },
+            {
+                "title": "Wurfscheibenmaschinen",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-wurfscheibenmaschinen",
+                "visible": "1"
+            },
+            {
+                "title": "Schie\u00dfauflagen",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-schiessauflagen",
+                "visible": "1"
+            },
+            {
+                "title": "Visierpunkte",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-visierpunkte",
+                "visible": "1"
+            },
+            {
+                "title": "Taschen und Aktentaschen",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-taschen_und_aktentaschen",
+                "visible": "0"
+            },
+            {
+                "title": "Wurf- Und Zielscheiben",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-wurf_und_zielscheiben",
+                "visible": "1"
+            },
+            {
+                "title": "Schulterpolster Und Wangenauflagen",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen-schulterpolster_und_wangenauflagen",
+                "visible": "1"
+            },
+            {
+                "title": "Wettbewerb und Schie\u00dfen (Alles sehen)",
+                "url": "\/de\/jagd\/wettbewerb_und_schiesen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und Angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 22,
+        "column": "5",
+        "position_category": "15",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/jagd\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Schnellangebote Jagdbedarf",
+                "url": "\/de\/jagd\/schnellangebote_jagdbedarf",
+                "visible": "1"
+            },
+            {
+                "title": "Superg\u00fcnstiger Jagdbedarf",
+                "url": "\/de\/jagd\/supergunstiger_jagdbedarf",
+                "visible": "1"
+            },
+            {
+                "title": "Angebot Packs Luftgewehre",
+                "url": "\/de\/jagd\/angebot_packs_luftgewehre",
+                "visible": "0"
+            }
+        ]
+    }
+]

@@ -1,0 +1,45 @@
+[
+    {
+        "title":"Te puede interesar",
+        "url":"",
+        "action":"",
+        "type": "special",
+        "column":"1",
+        "id":"1",
+        "position":"1",
+        "items":[
+        {
+        "title": "Ver nuestras marcas",
+        "url": "/golf/listado-marcas"
+        },
+        {
+        "title": "Ofertas",
+        "url": "/golf/ofertas"
+        },
+        {
+        "title": "Novedades",
+        "url": "/golf/novedades"
+        },
+        {
+        "title": "Los más vendidos",
+        "url": "/golf/lo_mas_vendido"
+        },
+        {
+        "title": "Diagnóstico De Golf",
+        "url": "/diagnostico-de-golf"
+        },
+        {
+        "title": "Fitting",
+        "url": "/56764-fitting-personalizado"
+        },
+        {
+        "title": "Boletines",
+        "url": "/golf/monthlynewsletters"
+        },
+        {
+        "title": "Blogs",
+        "url": "/blog/golf"
+        }
+    ]
+}
+]

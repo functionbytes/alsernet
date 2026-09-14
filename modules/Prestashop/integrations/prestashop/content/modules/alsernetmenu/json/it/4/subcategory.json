@@ -1,0 +1,750 @@
+[
+    {
+        "title": "Armi",
+        "action": "",
+        "type": "subcategorie",
+        "id": 10,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Armi ad Aria Compressa",
+                "url": "\/it\/caccia\/armi_ad_aria_compressa",
+                "visible": "1"
+            },
+            {
+                "title": "Airsoft",
+                "url": "\/it\/caccia\/airsoft",
+                "visible": "1"
+            },
+            {
+                "title": "Armi Decorative",
+                "url": "\/it\/caccia\/armi_decorative",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ottica",
+        "action": "",
+        "type": "subcategorie",
+        "id": 11,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Visori da Caccia",
+                "url": "\/it\/caccia\/visori_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Binocoli",
+                "url": "\/it\/caccia\/binocoli",
+                "visible": "1"
+            },
+            {
+                "title": "Visione Termica e Notturna",
+                "url": "\/it\/caccia\/visione_termica_e_notturna",
+                "visible": "1"
+            },
+            {
+                "title": "Monocoli Termici",
+                "url": "\/it\/caccia\/monocoli_termici",
+                "visible": "1"
+            },
+            {
+                "title": "Misuratori di Distanza",
+                "url": "\/it\/caccia\/misuratori_di_distanza",
+                "visible": "1"
+            },
+            {
+                "title": "Punti Rossi",
+                "url": "\/it\/caccia\/punti_rossi",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopi",
+                "url": "\/it\/caccia\/telescopi",
+                "visible": "1"
+            },
+            {
+                "title": "Accesori per Ottica",
+                "url": "\/it\/caccia\/accesori_per_ottica",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessori",
+        "action": "",
+        "type": "subcategorie",
+        "id": 12,
+        "column": "1",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Protezione Uditiva e Oculare",
+                "url": "\/it\/caccia\/protezione_uditiva_e_oculare",
+                "visible": "1"
+            },
+            {
+                "title": "Articoli per L'auto",
+                "url": "\/it\/caccia\/articoli_per_l_auto",
+                "visible": "1"
+            },
+            {
+                "title": "Metal Detector",
+                "url": "\/it\/caccia\/metal_detector",
+                "visible": "1"
+            },
+            {
+                "title": "Ricetrasmettitori",
+                "url": "\/it\/caccia\/ricetrasmettitori",
+                "visible": "1"
+            },
+            {
+                "title": "Gps Portatili",
+                "url": "\/it\/caccia\/gps_portatili",
+                "visible": "1"
+            },
+            {
+                "title": "Set di Tiro Con L'arco",
+                "url": "\/it\/caccia\/set_di_tiro_con_l_arco",
+                "visible": "1"
+            },
+            {
+                "title": "Mascherine Omologate",
+                "url": "\/it\/caccia\/mascherine_omologate",
+                "visible": "1"
+            },
+            {
+                "title": "Regali di Caccia",
+                "url": "\/it\/caccia\/regali_di_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Orologi",
+                "url": "\/it\/caccia\/orologi",
+                "visible": "1"
+            },
+            {
+                "title": "Set da Tavola e Cristalleria",
+                "url": "\/it\/caccia\/set_da_tavola_e_cristalleria",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Libero",
+                "url": "\/it\/caccia\/tempo_libero",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessori per la Caccia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 13,
+        "column": "2",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Treppiedi da Caccia",
+                "url": "\/it\/caccia\/treppiedi_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Fotocamere",
+                "url": "\/it\/caccia\/fotocamere",
+                "visible": "1"
+            },
+            {
+                "title": "Richiami e Attrattori",
+                "url": "\/it\/caccia\/richiami_e_attrattori",
+                "visible": "1"
+            },
+            {
+                "title": "Capanni di Caccia",
+                "url": "\/it\/caccia\/capanni_di_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Sedie da Caccia",
+                "url": "\/it\/caccia\/sedie_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Mirini da Caccia",
+                "url": "\/it\/caccia\/mirini_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Collimatori",
+                "url": "\/it\/caccia\/collimatori",
+                "visible": "1"
+            },
+            {
+                "title": "Attacchi \/ Montature",
+                "url": "\/it\/caccia\/attacchi_montature",
+                "visible": "1"
+            },
+            {
+                "title": "Fondine e Valigette",
+                "url": "\/it\/caccia\/fondine_e_valigette",
+                "visible": "1"
+            },
+            {
+                "title": "Trasporto della Selvaggina",
+                "url": "\/it\/caccia\/trasporto_della_selvaggina",
+                "visible": "1"
+            },
+            {
+                "title": "Pulizia Armi",
+                "url": "\/it\/caccia\/pulizia_armi",
+                "visible": "1"
+            },
+            {
+                "title": "Zaini",
+                "url": "\/it\/caccia\/zaini",
+                "visible": "1"
+            },
+            {
+                "title": "Spiumatrici",
+                "url": "\/it\/caccia\/spiumatrici",
+                "visible": "1"
+            },
+            {
+                "title": "Giochi da Caccia e Tiro",
+                "url": "\/it\/caccia\/competizione_e_tiro-giochi_da_caccia_e_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Portacacciagione",
+                "url": "\/it\/caccia\/portacacciagione",
+                "visible": "1"
+            },
+            {
+                "title": "Ricarica",
+                "url": "\/it\/caccia\/ricarica",
+                "visible": "1"
+            },
+            {
+                "title": "Cartucciere e Portacolpi",
+                "url": "\/it\/caccia\/cartucciere_e_portacolpi",
+                "visible": "1"
+            },
+            {
+                "title": "Calcioli da Caccia",
+                "url": "\/it\/caccia\/calcioli_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Tracolle",
+                "url": "\/it\/caccia\/tracolle",
+                "visible": "1"
+            },
+            {
+                "title": "Distributore",
+                "url": "\/it\/caccia\/accessori_per_la_caccia-distributore",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per la Caccia (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/accessori_per_la_caccia",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbigliamento e Accessori",
+        "action": "",
+        "type": "subcategorie",
+        "id": 14,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Pantaloni da Caccia",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-pantaloni_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Parka",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-parka",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet da Caccia",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-gilet_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Pile",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-pile",
+                "visible": "1"
+            },
+            {
+                "title": "Camicie e T-shirt da Caccia",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-camicie_e_t_shirt_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Maglioni",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-maglioni",
+                "visible": "1"
+            },
+            {
+                "title": "Giacche e Softshell",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-giacche_e_softshell",
+                "visible": "1"
+            },
+            {
+                "title": "Impermeabili",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-impermeabili",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento Donna e Bambini",
+                "url": "\/it\/caccia\/abbigliamento_donna_e_bambini",
+                "visible": "1"
+            },
+            {
+                "title": "Biancheria Intima",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-biancheria_intima",
+                "visible": "1"
+            },
+            {
+                "title": "Calze",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-calze",
+                "visible": "1"
+            },
+            {
+                "title": "Ghette e Gambali",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-ghette_e_gambali",
+                "visible": "1"
+            },
+            {
+                "title": "Polo",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-polo",
+                "visible": "1"
+            },
+            {
+                "title": "Cappelli e Berretti",
+                "url": "\/it\/caccia\/cappelli_e_berretti",
+                "visible": "1"
+            },
+            {
+                "title": "Tuta Intera",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-tuta_intera",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento Mimetico",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-abbigliamento_mimetico",
+                "visible": "1"
+            },
+            {
+                "title": "Alta Visibilit\u00e0",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-alta_visibilita",
+                "visible": "1"
+            },
+            {
+                "title": "Guanti da Caccia",
+                "url": "\/it\/caccia\/guanti_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Scaldacollo e Passamontagna",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-scaldacollo_e_passamontagna",
+                "visible": "1"
+            },
+            {
+                "title": "Cinturoni e Bretelle",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-cinturoni_e_bretelle",
+                "visible": "1"
+            },
+            {
+                "title": "Completi da Caccia",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-completi_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Cravatte e Gemelli",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-cravatte_e_gemelli",
+                "visible": "1"
+            },
+            {
+                "title": "Braccialetti da Caccia",
+                "url": "\/it\/caccia\/braccialetti_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Indumenti Riscaldati",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori-indumenti_riscaldati",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento e Accessori (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/abbigliamento_e_accessori",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Tassidermia",
+        "action": "",
+        "type": "subcategorie",
+        "id": 15,
+        "column": "3",
+        "position_category": "12",
+        "position": "2",
+        "items": [
+            {
+                "title": "Basamenti-portatrofei",
+                "url": "\/it\/caccia\/tassidermia-basamenti_portatrofei",
+                "visible": "1"
+            },
+            {
+                "title": "Teschi e Frontali",
+                "url": "\/it\/caccia\/tassidermia-teschi_e_frontali",
+                "visible": "1"
+            },
+            {
+                "title": "Preparazione Trofei",
+                "url": "\/it\/caccia\/tassidermia-preparazione_trofei",
+                "visible": "1"
+            },
+            {
+                "title": "Medaglie",
+                "url": "\/it\/caccia\/tassidermia-medaglie",
+                "visible": "1"
+            },
+            {
+                "title": "Trofei Capriolo",
+                "url": "\/it\/caccia\/tassidermia-trofei_capriolo",
+                "visible": "1"
+            },
+            {
+                "title": "Tassidermia (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/tassidermia",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Calzature",
+        "action": "",
+        "type": "subcategorie",
+        "id": 16,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Stivali Gore-tex",
+                "url": "\/it\/caccia\/calzature-stivali_gore_tex",
+                "visible": "1"
+            },
+            {
+                "title": "Stivali Bassi",
+                "url": "\/it\/caccia\/calzature-stivali_bassi",
+                "visible": "1"
+            },
+            {
+                "title": "Stivali Alti",
+                "url": "\/it\/caccia\/calzature-stivali_alti",
+                "visible": "1"
+            },
+            {
+                "title": "Stivali da Acqua",
+                "url": "\/it\/caccia\/calzature-stivali_da_acqua",
+                "visible": "1"
+            },
+            {
+                "title": "Stivali Impermeabili",
+                "url": "\/it\/caccia\/calzature-stivali_impermeabili",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe e Scarponi da Caccia",
+                "url": "\/it\/caccia\/calzature-scarpe_e_scarponi_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Calzature Outdoor",
+                "url": "\/it\/caccia\/calzature-calzature_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Calzature da Donna",
+                "url": "\/it\/caccia\/calzature-calzature_da_donna",
+                "visible": "1"
+            },
+            {
+                "title": "Sandali",
+                "url": "\/it\/caccia\/calzature-sandali",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Scarpe e Scarponi",
+                "url": "\/it\/caccia\/calzature-accessori_per_scarpe_e_scarponi",
+                "visible": "1"
+            },
+            {
+                "title": "Calzature (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/calzature",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Munizioni",
+        "action": "",
+        "type": "subcategorie",
+        "id": 17,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Munizioni per Armi ad Aria Compressa",
+                "url": "\/it\/caccia\/munizioni_per_armi_ad_aria_compressa",
+                "visible": "1"
+            },
+            {
+                "title": "Munizioni per Armi Airsoft",
+                "url": "\/it\/caccia\/munizioni_per_armi_airsoft",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Coltelleria",
+        "action": "",
+        "type": "subcategorie",
+        "id": 18,
+        "column": "4",
+        "position_category": "10",
+        "position": "3",
+        "items": [
+            {
+                "title": "Coltelli",
+                "url": "\/it\/caccia\/coltelli",
+                "visible": "1"
+            },
+            {
+                "title": "Coltelli Serramanici",
+                "url": "\/it\/caccia\/coltelli_serramanici",
+                "visible": "1"
+            },
+            {
+                "title": "Multiuso",
+                "url": "\/it\/caccia\/multiuso",
+                "visible": "1"
+            },
+            {
+                "title": "Accette e Martelli",
+                "url": "\/it\/caccia\/accette_e_martelli",
+                "visible": "1"
+            },
+            {
+                "title": "Machete",
+                "url": "\/it\/caccia\/machete",
+                "visible": "1"
+            },
+            {
+                "title": "Affilatori",
+                "url": "\/it\/caccia\/affilatori",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Torce e Fari",
+        "action": "",
+        "type": "subcategorie",
+        "id": 19,
+        "column": "4",
+        "position_category": "11",
+        "position": "4",
+        "items": [
+            {
+                "title": "Torcie Tascabili",
+                "url": "\/it\/caccia\/torce_e_fari-torcie_tascabili",
+                "visible": "1"
+            },
+            {
+                "title": "Applicabili All'arma",
+                "url": "\/it\/caccia\/torce_e_fari-applicabili_all_arma",
+                "visible": "1"
+            },
+            {
+                "title": "Torcie Frontali",
+                "url": "\/it\/caccia\/torce_e_fari-torcie_frontali",
+                "visible": "1"
+            },
+            {
+                "title": "Fari da Caccia",
+                "url": "\/it\/caccia\/torce_e_fari-fari_da_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Torce",
+                "url": "\/it\/caccia\/torce_e_fari-accessori_per_torce",
+                "visible": "1"
+            },
+            {
+                "title": "Torce e Fari (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/torce_e_fari",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Prodotti per Cani",
+        "action": "",
+        "type": "subcategorie",
+        "id": 20,
+        "column": "5",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Collari",
+                "url": "\/it\/caccia\/prodotti_per_cani-collari",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet di Protezione per Cani",
+                "url": "\/it\/caccia\/prodotti_per_cani-gilet_di_protezione_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Cani",
+                "url": "\/it\/caccia\/prodotti_per_cani-accessori_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Guinzagli",
+                "url": "\/it\/caccia\/prodotti_per_cani-guinzagli",
+                "visible": "1"
+            },
+            {
+                "title": "Pettorine per Cani",
+                "url": "\/it\/caccia\/prodotti_per_cani-pettorine_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Fischietti per Cani",
+                "url": "\/it\/caccia\/prodotti_per_cani-fischietti_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Antiparassitari per Cani",
+                "url": "\/it\/caccia\/prodotti_per_cani-antiparassitari_per_cani",
+                "visible": "1"
+            },
+            {
+                "title": "Prodotti per Cani (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/prodotti_per_cani",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Competizione e tiro sportivi",
+        "action": "",
+        "type": "subcategorie",
+        "id": 21,
+        "column": "5",
+        "position_category": "13",
+        "position": "2",
+        "items": [
+            {
+                "title": "Cuffie e Tappi",
+                "url": "\/it\/caccia\/competizione_e_tiro-cuffie_e_tappi",
+                "visible": "1"
+            },
+            {
+                "title": "Gilet da Tiro",
+                "url": "\/it\/caccia\/competizione_e_tiro-gilet_da_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Occhiali da Tiro",
+                "url": "\/it\/caccia\/competizione_e_tiro-occhiali_da_tiro",
+                "visible": "1"
+            },
+            {
+                "title": "Lanciapiattelli",
+                "url": "\/it\/caccia\/competizione_e_tiro-lanciapiattelli",
+                "visible": "1"
+            },
+            {
+                "title": "Supporti",
+                "url": "\/it\/caccia\/competizione_e_tiro-supporti",
+                "visible": "1"
+            },
+            {
+                "title": "Punti di Mira",
+                "url": "\/it\/caccia\/competizione_e_tiro-punti_di_mira",
+                "visible": "1"
+            },
+            {
+                "title": "Borse e Valigette",
+                "url": "\/it\/caccia\/competizione_e_tiro-borse_e_valigette",
+                "visible": "0"
+            },
+            {
+                "title": "Piatelli e Bersagli",
+                "url": "\/it\/caccia\/competizione_e_tiro-piatelli_e_bersagli",
+                "visible": "1"
+            },
+            {
+                "title": "Spalliere e Carrillette",
+                "url": "\/it\/caccia\/competizione_e_tiro-spalliere_e_carrillette",
+                "visible": "1"
+            },
+            {
+                "title": "Competizione e Tiro (Scopri di pi\u00f9)",
+                "url": "\/it\/caccia\/competizione_e_tiro",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 22,
+        "column": "5",
+        "position_category": "15",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/caccia\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerte Lampo Caccia",
+                "url": "\/it\/caccia\/offerte_lampo_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Mini Prezzi Caccia",
+                "url": "\/it\/caccia\/mini_prezzi_caccia",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Pacchetti Carabine ad aria compressa",
+                "url": "\/it\/caccia\/offerta_pacchetti_carabine_ad_aria_compressa",
+                "visible": "0"
+            }
+        ]
+    }
+]
