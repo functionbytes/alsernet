@@ -117,6 +117,63 @@ class TicketMergeTest extends TestCase
         $this->assertSoftDeleted('helpdesk_tickets', ['id' => $source->id], 'helpdesk');
     }
 
+    /**
+     * Fix de lógica de negocio del 14-sep-2026 (auditoría): close() crea su
+     * propio TicketItem ('closed'/'Ticket cerrado') sobre el ticket que
+     * recibe la llamada. Llamarlo DESPUÉS de reapuntar items() al destino
+     * (como estaba) dejaba ese aviso colgado del ticket origen, que se borra
+     * dos líneas después — invisible para siempre en el hilo del destino.
+     */
+    public function test_merge_moves_the_closed_system_item_to_the_target_ticket(): void
+    {
+        $source = $this->createTicket(['subject' => 'Source ticket']);
+        $target = $this->createTicket(['subject' => 'Target ticket']);
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.merge', $source), [
+                'merge_into_id' => $target->id,
+            ]);
+
+        $this->assertDatabaseHas('helpdesk_ticket_items', [
+            'ticket_id' => $target->id,
+            'type' => 'closed',
+            'body' => 'Ticket cerrado',
+        ], 'helpdesk');
+
+        $this->assertDatabaseMissing('helpdesk_ticket_items', [
+            'ticket_id' => $source->id,
+            'type' => 'closed',
+        ], 'helpdesk');
+    }
+
+    /**
+     * Fix de lógica de negocio del 14-sep-2026 (auditoría): los
+     * TicketWatcher del origen se copiaban al destino pero nunca se
+     * borraban del origen — quedaban huérfanos apuntando a un ticket_id que
+     * deja de existir.
+     */
+    public function test_merge_does_not_leave_orphaned_watchers_on_the_source_ticket(): void
+    {
+        $source = $this->createTicket(['subject' => 'Source ticket']);
+        $target = $this->createTicket(['subject' => 'Target ticket']);
+
+        $source->watchers()->create(['user_id' => $this->manager->id]);
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.merge', $source), [
+                'merge_into_id' => $target->id,
+            ]);
+
+        $this->assertDatabaseHas('helpdesk_ticket_watchers', [
+            'ticket_id' => $target->id,
+            'user_id' => $this->manager->id,
+        ], 'helpdesk');
+
+        $this->assertDatabaseMissing('helpdesk_ticket_watchers', [
+            'ticket_id' => $source->id,
+        ], 'helpdesk');
+    }
+
     public function test_merge_migrates_related_data_to_target_ticket(): void
     {
         $source = $this->createTicket(['subject' => 'Source ticket']);
