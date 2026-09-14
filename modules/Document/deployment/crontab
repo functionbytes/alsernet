@@ -1,0 +1,15 @@
+# ============================================================
+# Módulo Document — Entradas cron requeridas
+# ============================================================
+# Importar con:
+#   crontab -l | cat - /ruta/al/modulo/Document/crontab | crontab -
+#
+# O editar manualmente con:
+#   crontab -e
+#
+# Reemplaza /var/www/html por la ruta real de tu proyecto Laravel
+# ============================================================
+
+# Laravel Scheduler — requerido para sincronización de bloqueos
+# y recordatorios automáticos de documentos
+* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
