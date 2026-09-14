@@ -56,7 +56,7 @@
                     if (window.toastr) toastr.success((resp && resp.message) || 'Aviso enviado'); else window.alert('Aviso enviado');
                 })
                 .fail(function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo avisar.';
+                    var msg = apiErrorMessage(xhr, 'No se pudo avisar.');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });

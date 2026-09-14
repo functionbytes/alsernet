@@ -103,9 +103,8 @@
 
             // Mismo dato en la barra de estado del pie — solo se muestra
             // cuando hay algo real en cola, igual que el badge de arriba.
-            var $q = $('#tkt-status-queue');
-            if (n > 0) $q.html('<i class="fa-regular fa-envelope"></i> cola: ' + n).prop('hidden', false);
-            else $q.prop('hidden', true);
+            TKA.state.mailQueueCount = Number(n) || 0;
+            if (typeof updateOfflineQueueStatus === 'function') updateOfflineQueueStatus();
         });
     }
 
@@ -135,6 +134,7 @@
         });
 
         $('#tkt-status-shortcuts').on('click', openShortcutsModal);
+        $('#tkt-status-queue').off('click.tktOffline').on('click.tktOffline', openOfflineQueueModal);
     }
 
     /**
@@ -167,31 +167,91 @@
             if (state === 'connected') { $dot.addClass('on'); $text.text('Conectado'); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text('Conectando…'); } else { $dot.addClass('off'); $text.text('Sin conexión en vivo'); }
         }
 
-        if (typeof window.Echo === 'undefined' || !window.Echo.connector || !window.Echo.connector.pusher) {
-            paint('off');
-            return;
-        }
+        var connectWaits = 0;
+        var bind = function () {
+            if (TKA.state.statusConnectionBound) return;
 
-        var pusher = window.Echo.connector.pusher;
-        paint(pusher.connection.state);
-        pusher.connection.bind('state_change', function (states) {
-            paint(states.current);
-        });
+            if (typeof window.Echo === 'undefined' || !window.Echo.connector || !window.Echo.connector.pusher) {
+                paint('off');
+                // En la entrada directa Echo puede aparecer después de que
+                // initTicketsApp() haya pintado la barra. Esperar aquí evita
+                // dejar el indicador en rojo toda la sesión por una carrera
+                // de carga entre Vite y el bundle de Tickets.
+                if (++connectWaits <= 20) window.setTimeout(bind, 500);
+                return;
+            }
+
+            TKA.state.statusConnectionBound = true;
+            var pusher = window.Echo.connector.pusher;
+            var previous = pusher.connection.state;
+            paint(previous);
+
+            pusher.connection.bind('state_change', function (states) {
+                var current = states.current;
+                paint(current);
+
+                // Durante una caída se pueden perder eventos broadcast. Al
+                // recuperar el socket se sincronizan lista, contadores y el
+                // ticket abierto; el refetch respeta filtros y no modifica
+                // el historial del navegador.
+                if (current === 'connected' && previous !== 'connected') {
+                    var ticket = TKA.state.currentTicket || null;
+                    if (typeof queueTicketListRefresh === 'function') {
+                        queueTicketListRefresh('reconnected', ticket, {
+                            freshCounts: true,
+                            refreshDetail: !!ticket,
+                            forceDetail: !!ticket,
+                            silent: true,
+                            delay: 0,
+                        });
+                    }
+                }
+
+                previous = current;
+            });
+
+            window.addEventListener('offline', function () { paint('off'); });
+            window.addEventListener('online', function () {
+                paint(pusher.connection.state);
+                if (pusher.connection.state === 'connected' && typeof queueTicketListRefresh === 'function') {
+                    var ticket = TKA.state.currentTicket || null;
+                    queueTicketListRefresh('browser-online', ticket, {
+                        freshCounts: true,
+                        refreshDetail: !!ticket,
+                        forceDetail: !!ticket,
+                        silent: true,
+                        delay: 0,
+                    });
+                }
+            });
+        };
+
+        bind();
     }
 
     /**
-     * Cuenta agentes con status 'online' del mismo payload que ya carga el
-     * modal "Carga de agentes" (AgentAvailabilityService::forWorkload()) —
-     * una sola llamada al entrar a la pantalla, no un sondeo: el número no
-     * necesita ser el mismo segundo a segundo, solo no estar inventado.
+     * Cuenta agentes en línea de verdad — bug real (QA 14-sep-2026): esto
+     * leía TKA.urls.workloadOverview (modal 24 "Carga de agentes"), cuyo
+     * JSON nunca trae un campo 'status' — el comentario original decía que
+     * reutilizaba "AgentAvailabilityService::forWorkload()", un método que
+     * no existe en el repo. Resultado: el filtro daba siempre 0, el "0
+     * agentes en línea" que se ve en el pie de pantalla sea cual sea la
+     * realidad.
+     *
+     * AgentPresenceController::list() (módulo Helpdesk hermano) sí calcula
+     * presencia real con heartbeat en Redis — ver agentPresenceBeat() más
+     * arriba en core.js, que es quien alimenta ese heartbeat mientras el
+     * panel está abierto. "En línea" = cualquier estado que no sea
+     * 'offline' (disponible/ocupado/ausente cuentan como conectado; el
+     * matiz de disponibilidad es otro dato, no este contador).
      */
     function fetchOnlineAgentsCount() {
         var $el = $('#tkt-status-agents');
-        if (!TKA.urls.workloadOverview) { $el.hide(); return; }
+        if (!TKA.urls.agentPresenceAgents) { $el.hide(); return; }
 
-        $.getJSON(TKA.urls.workloadOverview).done(function (res) {
+        $.getJSON(TKA.urls.agentPresenceAgents).done(function (res) {
             var agentes = (res && res.agents) || [];
-            var enLinea = agentes.filter(function (a) { return a.status === 'online'; }).length;
+            var enLinea = agentes.filter(function (a) { return a.presence_state && a.presence_state !== 'offline'; }).length;
             $el.html('<i class="fa-solid fa-users"></i> ' + enLinea + (enLinea === 1 ? ' agente en línea' : ' agentes en línea'));
         }).fail(function () {
             $el.hide();
@@ -228,5 +288,3 @@
             osc.onended = function () { ctx.close(); };
         } catch (e) { /* audio bloqueado por el navegador: sin aviso, sin romper nada */ }
     }
-
-

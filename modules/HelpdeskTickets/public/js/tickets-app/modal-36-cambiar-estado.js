@@ -74,10 +74,12 @@
                 function done() {
                     if (window.toastr) toastr.success('Estado actualizado');
                     closeModal();
-                    // Mismo criterio que patchTicket(): recargar es lo único
-                    // que refresca a la vez la fila, los contadores de los
-                    // tabs y la cabecera del detalle.
-                    window.location.reload();
+                    applyLocalTicketField(t, 'status_id', statusId);
+                    queueTicketListRefresh('ticket-status-changed', t, {
+                        freshCounts: true,
+                        refreshDetail: true,
+                        forceDetail: true,
+                    });
                 }
 
                 if (!note || !TKA.urls.notesStoreTemplate) { done(); return; }
@@ -94,7 +96,7 @@
                     if (window.toastr) toastr.warning('El estado se guardó, pero no se pudo añadir la nota.');
                 }).always(done);
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo cambiar el estado';
+                var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
                 $btn.prop('disabled', false).text('Guardar estado');
             });
@@ -109,4 +111,3 @@
     // real en vez de adivinar qué cambió.
     // Las macros se piden una sola vez por sesión: la lista es la misma para
     // todo el listado y cambia solo cuando alguien las edita en ajustes.
-

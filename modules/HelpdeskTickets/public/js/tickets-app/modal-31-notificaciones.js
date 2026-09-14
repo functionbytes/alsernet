@@ -127,7 +127,7 @@
                     cargar();
                 })
                 .fail(function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar.';
+                    var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });
@@ -138,7 +138,7 @@
             $.post(TKA.urls.notifTeamChannelsTest).done(function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Prueba enviada'); else window.alert('Prueba enviada');
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo enviar la prueba.';
+                var msg = apiErrorMessage(xhr, 'No se pudo enviar la prueba.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Enviar prueba');

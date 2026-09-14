@@ -52,7 +52,7 @@
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo corregir el rebote';
+                    var msg = apiErrorMessage(xhr, 'No se pudo corregir el rebote');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Corregir y reenviar');
                 },

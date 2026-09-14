@@ -67,7 +67,7 @@
                 closeModal();
                 dismissDuplicateBanner();
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar la relación.';
+                var msg = apiErrorMessage(xhr, 'No se pudo guardar la relación.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             });
         });

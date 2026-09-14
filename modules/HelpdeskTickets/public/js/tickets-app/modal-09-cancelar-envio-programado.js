@@ -41,7 +41,7 @@
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo cancelar el envío';
+                    var msg = apiErrorMessage(xhr, 'No se pudo cancelar el envío');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $backdrop.find('[data-cancel-mode]').prop('disabled', false);
                 },

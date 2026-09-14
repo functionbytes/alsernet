@@ -45,7 +45,7 @@
                     closeModal(); if (onSaved) onSaved();
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar la plantilla';
+                    var msg = apiErrorMessage(xhr, 'No se pudo guardar la plantilla');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Guardar plantilla');
                 },

@@ -77,7 +77,7 @@
                     window.location = TKA.urls.index + '?ticket=' + resp.ticket_id;
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo dividir el ticket';
+                    var msg = apiErrorMessage(xhr, 'No se pudo dividir el ticket');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Dividir ticket');
                 },

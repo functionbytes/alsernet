@@ -77,7 +77,7 @@
                 if (window.toastr) toastr.success((resp && resp.message) || 'Encuesta reenviada.');
                 closeModal();
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo reenviar la encuesta.';
+                var msg = apiErrorMessage(xhr, 'No se pudo reenviar la encuesta.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
                 $btn.prop('disabled', false).text('Reenviar encuesta de satisfacción');
             });

@@ -127,7 +127,7 @@
                 }
                 if (window.toastr) toastr.success((res && res.message) || 'Plantilla duplicada.');
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo duplicar la plantilla.';
+                var msg = apiErrorMessage(xhr, 'No se pudo duplicar la plantilla.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Duplicar como mía');

@@ -259,7 +259,7 @@
                 },
                 error: function (xhr) {
                     $backdrop.find('[data-rec-toggle="' + id + '"]').prop('disabled', false);
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo cambiar el estado de la recurrencia';
+                    var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado de la recurrencia');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });

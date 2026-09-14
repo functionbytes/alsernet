@@ -174,7 +174,7 @@
                     if (!tickets && !replies) note('warn', msg);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar el buzón.';
+                    var msg = apiErrorMessage(xhr, 'No se pudo guardar el buzón.');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
                 complete: function () {
@@ -200,7 +200,7 @@
                 error: function (xhr) {
                     // La prueba es un chequeo TCP: no valida credenciales, así que
                     // el fallo se cuenta tal cual lo devuelve el servidor.
-                    note('danger', (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo probar la conexión.');
+                    note('danger', apiErrorMessage(xhr, 'No se pudo probar la conexión.'));
                 },
                 complete: function () {
                     $btn.prop('disabled', !canManage).text('Probar conexión');

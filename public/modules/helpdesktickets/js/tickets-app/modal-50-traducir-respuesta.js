@@ -75,7 +75,7 @@
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false).text('Traducir');
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo traducir el texto';
+                    var msg = apiErrorMessage(xhr, 'No se pudo traducir el texto');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });

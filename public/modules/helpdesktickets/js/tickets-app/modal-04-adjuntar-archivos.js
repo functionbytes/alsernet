@@ -3,7 +3,6 @@
     // ── Modal 04: Adjuntar archivos ───────────────────────────
     function openAttachModal(t) {
         var staged = composeDraft.files.slice();
-        var MAX_BYTES = 10 * 1024 * 1024;
 
         function stagedHtml() {
             if (!staged.length) return '';
@@ -25,8 +24,8 @@
             body: '<label class="tkt-dropzone" id="tkt-dropzone">' +
                     '<i class="fa-solid fa-cloud-arrow-up"></i>' +
                     '<span class="t">Arrastra archivos aquí</span>' +
-                    '<span class="s">PDF, DOCX, XLSX, PNG · máx. 10 MB por archivo</span>' +
-                    '<input type="file" id="tkt-attach-input" multiple hidden>' +
+                    '<span class="s">' + TKT_ATTACHMENT_EXTENSIONS.map(function (ext) { return ext.toUpperCase(); }).join(', ') + ' · máx. ' + formatFileSize(TKT_ATTACHMENT_MAX_BYTES) + ' por archivo</span>' +
+                    '<input type="file" id="tkt-attach-input" multiple accept=".' + TKT_ATTACHMENT_EXTENSIONS.join(',.') + '" hidden>' +
                   '</label>' +
                   '<div id="tkt-attach-staged">' + stagedHtml() + '</div>' +
                   '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Los adjuntos se guardan en el ticket junto al email enviado.</div>',
@@ -41,8 +40,9 @@
 
         function add(fileList) {
             Array.prototype.forEach.call(fileList, function (f) {
-                if (f.size > MAX_BYTES) {
-                    if (window.toastr) toastr.error(f.name + ' supera los 10 MB');
+                var extension = String(f.name || '').split('.').pop().toLowerCase();
+                if (f.size > TKT_ATTACHMENT_MAX_BYTES || TKT_ATTACHMENT_EXTENSIONS.indexOf(extension) === -1) {
+                    if (window.toastr) toastr.error(f.name + ' no cumple el límite o formato permitido');
                     return;
                 }
                 staged.push(f);
@@ -72,4 +72,3 @@
 
     // Picker simplificado por prompt() (el mockup abre un modal de
     // participantes con buscador) — backend real, tres preguntas mínimas.
-

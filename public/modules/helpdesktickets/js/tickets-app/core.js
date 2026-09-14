@@ -924,6 +924,34 @@
         return !Object.prototype.hasOwnProperty.call(features, key) || Boolean(features[key]);
     }
 
+    // Mensaje de error de una respuesta $.ajax fallida — patrón repetido en
+    // ~20 sitios de core.js y modal-*.js como
+    // apiErrorMessage(xhr, 'texto genérico'),
+    // que ignora xhr.responseJSON.errors: ante un 422 de validación sin
+    // 'message' de nivel superior, el agente veía el texto genérico en vez
+    // de qué campo falló (14-sep-2026, auditoría de calidad JS). Todos los
+    // ficheros de este directorio son <script> clásicos concatenados en el
+    // mismo scope global, core.js siempre primero (ver manifest.json), así
+    // que cualquier modal-*.js puede llamar a esto sin declarar nada propio.
+    function apiErrorMessage(xhr, fallback) {
+        var body = xhr && xhr.responseJSON;
+        if (body && body.message) return body.message;
+
+        if (body && body.errors) {
+            var firstField = Object.keys(body.errors)[0];
+            var firstMsg = firstField && body.errors[firstField] && body.errors[firstField][0];
+            if (firstMsg) return firstMsg;
+        }
+
+        return fallback;
+    }
+
+    // Mismo bloque de "no se pudo cargar" repetido igual en varios modales
+    // (cola de jobs, carga por agente…) — 14-sep-2026, auditoría de calidad JS.
+    function renderModalError($backdrop, msg) {
+        $backdrop.find('.tkt-modal-body').html('<div class="tkt-empty-box">' + escapeHtml(msg) + '</div>');
+    }
+
     // Completa un ticket de TKA.state.tickets con sus URLs de acción a
     // partir de TKA.urls.ticketTemplates (ver initTicketsApp()) — las plantillas
     // con un segundo placeholder de sub-recurso (macro/nota/seguimiento/
@@ -1046,6 +1074,12 @@
                 if (opts.onDone) opts.onDone(res, { changed: shouldRender });
             })
             .fail(function () {
+                // Antes recargaba la página entera sin avisar ante CUALQUIER
+                // fallo de red (un blip transitorio mientras el agente
+                // filtraba/paginaba perdía selección múltiple y filtros sin
+                // aplicar, sin que nada explicara por qué la pantalla se
+                // refrescó sola) — 14-sep-2026, auditoría de calidad JS.
+                if (window.toastr) toastr.error('No se pudo actualizar el listado, recargando la página…');
                 window.location = url;
             })
             .always(function () {
@@ -1789,7 +1823,7 @@
                 renderList();
             },
             error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo mover el ticket';
+                var msg = apiErrorMessage(xhr, 'No se pudo mover el ticket');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
                 renderKanban();
             },
@@ -1866,7 +1900,7 @@
                     window.location.reload();
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar la vista';
+                    var msg = apiErrorMessage(xhr, 'No se pudo guardar la vista');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -1911,7 +1945,7 @@
                 if (window.toastr) toastr.success(msg); else window.alert(msg);
             },
             error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo sincronizar las integraciones del cliente.';
+                var msg = apiErrorMessage(xhr, 'No se pudo sincronizar las integraciones del cliente.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
             complete: function () {
@@ -3553,7 +3587,7 @@
                 // no valen: se recarga, como el resto de acciones destructivas.
                 if (res.ticket_deleted) window.location.reload();
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo bloquear el remitente.';
+                var msg = apiErrorMessage(xhr, 'No se pudo bloquear el remitente.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
                 $btn.prop('disabled', false).text('Bloquear');
             });
@@ -3728,7 +3762,7 @@
             // por la misma vía que el resto de acciones destructivas del panel.
             window.location.reload();
         }).fail(function (xhr) {
-            var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudieron unificar los tickets.';
+            var msg = apiErrorMessage(xhr, 'No se pudieron unificar los tickets.');
             if (window.toastr) toastr.error(msg); else window.alert(msg);
             $btn.prop('disabled', false).text('Unificar');
         });
@@ -3860,7 +3894,7 @@
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo aplicar la macro';
+                var msg = apiErrorMessage(xhr, 'No se pudo aplicar la macro');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -4081,7 +4115,7 @@
                 next();
             }).fail(function (xhr) {
                 entry.attempts = (entry.attempts || 0) + 1;
-                entry.lastError = (xhr.responseJSON && xhr.responseJSON.message) || (xhr.status ? 'Servidor respondió ' + xhr.status : 'No hay conexión');
+                entry.lastError = apiErrorMessage(xhr, xhr.status ? 'Servidor respondió ' + xhr.status : 'No hay conexión');
                 entry.dead = entry.attempts >= TKT_OFFLINE_MAX_ATTEMPTS;
                 entry.nextAttemptAt = entry.dead ? null : new Date(Date.now() + offlineRetryDelay(entry)).toISOString();
                 if (isAttachment) {
@@ -4356,7 +4390,7 @@
                     queueOfflineReply(t, '(archivo adjunto)', false, fileList, idempotencyKey);
                     return;
                 }
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo adjuntar el archivo';
+                var msg = apiErrorMessage(xhr, 'No se pudo adjuntar el archivo');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -5293,7 +5327,7 @@
                     $btn.text('Enviada').prop('disabled', true);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo enviar la encuesta';
+                    var msg = apiErrorMessage(xhr, 'No se pudo enviar la encuesta');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Reenviar encuesta de satisfacción');
                 },
@@ -5797,7 +5831,7 @@
                     closeModal();
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo fusionar';
+                    var msg = apiErrorMessage(xhr, 'No se pudo fusionar');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -6199,7 +6233,7 @@
                     if (d) d.watchers = watchers;
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo quitar el seguidor';
+                    var msg = apiErrorMessage(xhr, 'No se pudo quitar el seguidor');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -6220,7 +6254,7 @@
                     $('#tkt-follower-add').val('');
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo añadir el seguidor';
+                    var msg = apiErrorMessage(xhr, 'No se pudo añadir el seguidor');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -6269,7 +6303,7 @@
                     window.location = TKA.urls.index;
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo completar la acción';
+                    var msg = apiErrorMessage(xhr, 'No se pudo completar la acción');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -6295,7 +6329,7 @@
         function load() {
             $.getJSON(TKA.urls.ops).done(function (res) {
                 var s = res && res.snapshot;
-                if (!s) { $backdrop.find('.tkt-modal-body').html('<div class="tkt-empty-box">No se pudo cargar el estado de las colas.</div>'); return; }
+                if (!s) { renderModalError($backdrop, 'No se pudo cargar el estado de las colas.'); return; }
 
                 var queueRows = Object.keys(s.queues || {}).map(function (name) {
                     return '<div class="tkt-line"><span class="tkt-line-main">' + escapeHtml(name) + '</span><span class="mono">' + s.queues[name] + '</span></div>';
@@ -6331,7 +6365,7 @@
                 $backdrop.find('.tkt-modal-body').html(html);
                 $backdrop.find('#tkt-queue-retry-all, #tkt-queue-flush').prop('disabled', failed.length === 0);
             }).fail(function () {
-                $backdrop.find('.tkt-modal-body').html('<div class="tkt-empty-box">No se pudo cargar el estado de las colas.</div>');
+                renderModalError($backdrop, 'No se pudo cargar el estado de las colas.');
             });
         }
 
@@ -6345,7 +6379,7 @@
                 if (window.toastr) toastr.success((resp && resp.message) || label);
                 load();
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || (xhr.status === 403
+                var msg = apiErrorMessage(xhr, xhr.status === 403
                     ? 'Hace falta permiso de ajustes del módulo para reencolar jobs.'
                     : 'No se pudieron reencolar los jobs.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
@@ -6373,7 +6407,7 @@
                         if (window.toastr) toastr.success((resp && resp.message) || 'Dead-letter purgada.');
                         openQueueModal();
                     }).fail(function (xhr) {
-                        var msg = (xhr.responseJSON && xhr.responseJSON.message) || (xhr.status === 403
+                        var msg = apiErrorMessage(xhr, xhr.status === 403
                             ? 'Hace falta permiso de ajustes del módulo para purgar la cola.'
                             : 'No se pudo purgar la cola de fallidos.');
                         if (window.toastr) toastr.error(msg); else window.alert(msg);
@@ -6689,13 +6723,13 @@
         function load() {
             $.getJSON(TKA.urls.workloadOverview).done(function (res) {
                 if (!res || !res.agents) {
-                    $backdrop.find('.tkt-modal-body').html('<div class="tkt-empty-box">No se pudo cargar la carga por agente.</div>');
+                    renderModalError($backdrop, 'No se pudo cargar la carga por agente.');
                     return;
                 }
                 data = res;
                 render();
             }).fail(function () {
-                $backdrop.find('.tkt-modal-body').html('<div class="tkt-empty-box">No se pudo cargar la carga por agente.</div>');
+                renderModalError($backdrop, 'No se pudo cargar la carga por agente.');
             });
         }
 
@@ -6746,7 +6780,7 @@
                     render();
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar el reparto.';
+                    var msg = apiErrorMessage(xhr, 'No se pudo guardar el reparto.');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Reintentar');
                 },
@@ -6783,7 +6817,7 @@
                     load();
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo repartir';
+                    var msg = apiErrorMessage(xhr, 'No se pudo repartir');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Reintentar');
                 },
@@ -7022,7 +7056,7 @@
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo programar el seguimiento';
+                    var msg = apiErrorMessage(xhr, 'No se pudo programar el seguimiento');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                 },
             });
@@ -7046,7 +7080,7 @@
                         fetchDetailData(t);
                     },
                     error: function (xhr) {
-                        var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo cancelar el seguimiento';
+                        var msg = apiErrorMessage(xhr, 'No se pudo cancelar el seguimiento');
                         if (window.toastr) toastr.error(msg); else window.alert(msg);
                     },
                 });
@@ -7606,7 +7640,7 @@
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo aplicar la sugerencia';
+                var msg = apiErrorMessage(xhr, 'No se pudo aplicar la sugerencia');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -8428,7 +8462,7 @@
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar la nota';
+                var msg = apiErrorMessage(xhr, 'No se pudo guardar la nota');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -8529,7 +8563,7 @@
             error: function (xhr) {
                 restoreTicketField(t, snapshot);
                 refreshOptimisticTicket(t);
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo actualizar el ticket';
+                var msg = apiErrorMessage(xhr, 'No se pudo actualizar el ticket');
                 TKA.state.suppressUndoOnce = false;
                 if (xhr.status === 409) {
                     if (xhr.responseJSON && xhr.responseJSON.ticket) $.extend(t, xhr.responseJSON.ticket);
@@ -8580,7 +8614,7 @@
             error: function (xhr) {
                 restoreTicketField(t, snapshot);
                 refreshOptimisticTicket(t);
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo completar la acción';
+                var msg = apiErrorMessage(xhr, 'No se pudo completar la acción');
                 TKA.state.suppressUndoOnce = false;
                 if (xhr.status === 409) {
                     showEditConflict(msg, true, xhr.responseJSON && xhr.responseJSON.conflict_fields);
@@ -9492,7 +9526,7 @@
             } else if (xhr && xhr.status === 429) {
                 msg = 'Demasiados reintentos seguidos, espera un minuto.';
             } else {
-                msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo pedir la búsqueda.';
+                msg = apiErrorMessage(xhr, 'No se pudo pedir la búsqueda.');
             }
 
             if (window.toastr) { window.toastr.error(msg); }

@@ -40,7 +40,7 @@
             $.post(t.url_portal_send_access).done(function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Acceso enviado');
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo enviar el acceso.';
+                var msg = apiErrorMessage(xhr, 'No se pudo enviar el acceso.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Enviar acceso al cliente');

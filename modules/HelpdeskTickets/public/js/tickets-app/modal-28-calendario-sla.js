@@ -420,7 +420,7 @@
                     if (window.toastr && res && res.message) toastr.success(res.message);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se ha podido cambiar la pausa del SLA';
+                    var msg = apiErrorMessage(xhr, 'No se ha podido cambiar la pausa del SLA');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false);
                 },

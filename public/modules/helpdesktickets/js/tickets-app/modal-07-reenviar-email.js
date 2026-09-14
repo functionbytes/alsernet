@@ -69,7 +69,7 @@
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo reenviar el correo';
+                    var msg = apiErrorMessage(xhr, 'No se pudo reenviar el correo');
                     if (window.toastr) toastr.error(msg); else window.alert(msg);
                     $btn.prop('disabled', false).text('Reenviar ahora');
                 },

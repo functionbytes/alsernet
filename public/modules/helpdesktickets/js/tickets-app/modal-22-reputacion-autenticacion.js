@@ -23,7 +23,7 @@
             }).done(function (resp) {
                 if (window.toastr) toastr.success(resp.message || 'Guardado'); else window.alert(resp.message || 'Guardado');
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo guardar.';
+                var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             }).always(function () {
                 $btn.prop('disabled', false);
