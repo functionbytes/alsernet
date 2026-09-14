@@ -1,0 +1,13 @@
+{
+    "$schema": "https://raw.githubusercontent.com/nWidart/laravel-modules/master/module.schema.json",
+    "name": "Theme",
+    "alias": "theme",
+    "description": "Theme and navigation management services",
+    "keywords": ["theme", "navigation", "menu", "sidebar", "ui"],
+    "priority": 5,
+    "providers": [
+        "Modules\\Theme\\Providers\\ThemeServiceProvider",
+        "Modules\\Theme\\Providers\\MenuServiceProvider"
+    ],
+    "files": []
+}

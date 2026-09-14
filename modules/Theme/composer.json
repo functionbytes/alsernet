@@ -1,0 +1,25 @@
+{
+    "name": "modules/theme",
+    "description": "Theme and navigation management services",
+    "type": "laravel-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alsernet Development Team",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Theme\\": "app/",
+            "Modules\\Theme\\Database\\Factories\\": "database/factories/",
+            "Modules\\Theme\\Database\\Seeders\\": "database/seeders/"
+        },
+        "files": [
+            "app/Helpers/helpers.php"
+        ]
+    }
+}
