@@ -1,0 +1,13 @@
+{
+    "name": "Activity",
+    "alias": "activity",
+    "description": "User action auditing, activity logging, and history tracking",
+    "keywords": ["activity", "audit", "logging", "history"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Activity\\Providers\\ActivityServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}
