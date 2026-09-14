@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskPrestashop",
+    "alias": "helpdeskprestashop",
+    "description": "Integración de datos Prestashop/Remarketing en el contexto de tickets del Helpdesk",
+    "keywords": ["helpdesk", "prestashop", "remarketing", "ecommerce", "orders"],
+    "priority": 0,
+    "providers": [
+        "Modules\\HelpdeskPrestashop\\Providers\\HelpdeskPrestashopServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk", "HelpdeskTickets"]
+}
