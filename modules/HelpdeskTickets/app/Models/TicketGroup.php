@@ -192,17 +192,28 @@ class TicketGroup extends Model
      * equipo(s), más los que tenga asignados a él directamente aunque el
      * ticket sea de un equipo ajeno (p. ej. reasignado a mano).
      *
+     * Memoizada en memoria (no cache compartida) por $userId: la misma
+     * request de listado llama a esto hasta 3 veces (scopeToVisibleTickets(),
+     * tabCountsScopeKey() y — por cada ticket — TicketPolicy::inScope() en
+     * una acción masiva de BulkTicketsController), siempre para el mismo
+     * usuario autenticado (14-sep-2026, auditoría de rendimiento). La
+     * membresía de grupo no cambia dentro de una misma request/job, así que
+     * no hace falta invalidar esta caché en vivo.
+     *
      * @return array<int, int>
      */
     public static function idsForUser(int $userId): array
     {
-        return DB::connection('helpdesk')
+        return self::$idsForUserCache[$userId] ??= DB::connection('helpdesk')
             ->table('helpdesk_group_user')
             ->where('user_id', $userId)
             ->pluck('group_id')
             ->map(fn ($id) => (int) $id)
             ->all();
     }
+
+    /** @var array<int, array<int, int>> */
+    private static array $idsForUserCache = [];
 
     /**
      * Get the next agent for assignment based on assignment mode.

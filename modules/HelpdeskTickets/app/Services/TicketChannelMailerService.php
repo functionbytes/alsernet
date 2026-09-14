@@ -22,6 +22,29 @@ use Modules\HelpdeskTickets\Models\TicketMail;
  */
 class TicketChannelMailerService
 {
+    /**
+     * Memoizadas por ticket_id (no por instancia: SendCustomerConfirmation/
+     * StatusNotification/ReopenNotification/ReplyNotification son listeners
+     * ShouldQueue independientes, cada uno resuelve su PROPIA instancia de
+     * este servicio vía el contenedor — un array de instancia no serviría de
+     * nada entre ellos). El worker que sirve la cola 'notifications'
+     * (supervisor-helpdesk, maxProcesses:1) procesa esos jobs uno tras otro
+     * en el MISMO proceso PHP, así que hasta 4 listeners reaccionando al
+     * mismo cambio de estado de un ticket pagaban hasta 3 queries a
+     * helpdesk_ticket_mails cada uno — 12 queries para un solo evento
+     * (14-sep-2026, auditoría de rendimiento). El canal/hilo de un ticket no
+     * cambia dentro de esa ventana, así que memoizar es seguro.
+     *
+     * @var array<int, array<string, mixed>|null>
+     */
+    private static array $channelCache = [];
+
+    /** @var array<int, string|null> */
+    private static array $lastInboundMessageIdCache = [];
+
+    /** @var array<int, string|null> */
+    private static array $firstMailSubjectCache = [];
+
     public function __construct(private readonly TicketEmailChannelsRepository $channels) {}
 
     /**
@@ -29,6 +52,10 @@ class TicketChannelMailerService
      */
     public function resolveChannelForTicket(Ticket $ticket): ?array
     {
+        if (array_key_exists($ticket->id, self::$channelCache)) {
+            return self::$channelCache[$ticket->id];
+        }
+
         $lastInbound = TicketMail::where('ticket_id', $ticket->id)
             ->where('direction', 'inbound')
             ->latest()
@@ -41,7 +68,7 @@ class TicketChannelMailerService
                 $username = strtolower((string) ($channel['username'] ?? ''));
 
                 if ($username !== '' && str_contains($to, $username)) {
-                    return $channel;
+                    return self::$channelCache[$ticket->id] = $channel;
                 }
             }
         }
@@ -53,7 +80,7 @@ class TicketChannelMailerService
         // recibido tu solicitud" salía del mailer genérico de la app en vez
         // del buzón real de soporte (detectado 3-sep-2026 probando un ticket
         // real nacido del formulario de contacto de alsernetforms).
-        return $this->channels->default();
+        return self::$channelCache[$ticket->id] = $this->channels->default();
     }
 
     /**
@@ -63,7 +90,11 @@ class TicketChannelMailerService
      */
     public function lastInboundMessageId(Ticket $ticket): ?string
     {
-        return TicketMail::where('ticket_id', $ticket->id)
+        if (array_key_exists($ticket->id, self::$lastInboundMessageIdCache)) {
+            return self::$lastInboundMessageIdCache[$ticket->id];
+        }
+
+        return self::$lastInboundMessageIdCache[$ticket->id] = TicketMail::where('ticket_id', $ticket->id)
             ->where('direction', 'inbound')
             ->latest()
             ->value('message_id');
@@ -88,7 +119,16 @@ class TicketChannelMailerService
      */
     public function threadSubject(Ticket $ticket): string
     {
-        $stored = TicketMail::where('ticket_id', $ticket->id)->oldest()->value('subject');
+        // Solo se memoiza la parte que cuesta una query (el asunto guardado
+        // del primer TicketMail); el resto se recalcula siempre con los
+        // datos ACTUALES de $ticket, para no arrastrar un subject/
+        // ticket_number obsoleto de una llamada anterior con una instancia
+        // más vieja del mismo ticket.
+        if (! array_key_exists($ticket->id, self::$firstMailSubjectCache)) {
+            self::$firstMailSubjectCache[$ticket->id] = TicketMail::where('ticket_id', $ticket->id)->oldest()->value('subject');
+        }
+
+        $stored = self::$firstMailSubjectCache[$ticket->id];
 
         $base = $stored ? $this->stripThreadDecorations($ticket, $stored) : null;
 

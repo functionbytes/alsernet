@@ -7,16 +7,25 @@ use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\TicketSettings;
 
 class AutoCloseTicketsCommand extends Command
 {
-    protected $signature = 'ticket:autoclose {--days=7 : Close tickets resolved for this many days}';
+    protected $signature = 'ticket:autoclose {--days= : Override the configured inactivity period in days}';
 
     protected $description = 'Auto-close resolved tickets that have not had activity for N days';
 
     public function handle(): int
     {
         try {
+            $settings = app(TicketSettings::class);
+
+            if (! $settings->boolean('auto_close_ticket', true)) {
+                $this->info('Automatic ticket closing is disabled in Helpdesk settings.');
+
+                return Command::SUCCESS;
+            }
+
             $closedStatus = TicketStatus::where('is_open', false)->orderBy('order')->first();
 
             if (! $closedStatus) {
@@ -25,10 +34,18 @@ class AutoCloseTicketsCommand extends Command
                 return Command::FAILURE;
             }
 
-            $days = (int) $this->option('days');
+            $optionDays = $this->option('days');
+            $days = $optionDays !== null
+                ? max(1, (int) $optionDays)
+                : $settings->integer('auto_close_ticket_time', 30);
             $resolvedStatus = TicketStatus::where('name', 'like', '%resolv%')->first();
 
             $query = Ticket::query()
+                // Sin esto, leer $ticket->status más abajo (para tenerlo
+                // ANTES del update) disparaba una query lazy por ticket —
+                // N+1 real con cientos de tickets elegibles para auto-cierre
+                // (14-sep-2026, auditoría de rendimiento).
+                ->with('status')
                 ->whereNull('closed_at')
                 ->where('updated_at', '<', now()->subDays($days));
 

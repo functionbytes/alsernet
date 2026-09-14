@@ -228,11 +228,17 @@ class TicketsCrudController extends Controller
         $selectedTicket = null;
         if ($selectedId = $request->integer('ticket')) {
             $selectedTicket = Ticket::query()
-                ->with(['customer', 'status', 'category', 'assignee'])
+                // Mismo with() que la query principal de arriba: sin
+                // customer.company/group/lastMessage/lastOutboundMail,
+                // toListRow() (llamado más abajo también sobre este ticket)
+                // disparaba ~4 queries lazy adicionales en CADA carga con
+                // ?ticket= y en cada refetch/polling de la pantalla
+                // (14-sep-2026, auditoría de rendimiento).
+                ->with(['customer', 'customer.company', 'status', 'category', 'group', 'assignee', 'lastMessage', 'lastOutboundMail'])
                 ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
                     'reads',
                     fn ($q2) => $q2->where('user_id', $userId)
-                )])
+                ), 'messages as message_count'])
                 ->find($selectedId);
 
             if ($selectedTicket) {
