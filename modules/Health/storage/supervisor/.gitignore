@@ -1,0 +1,6 @@
+# Ignorar todos los archivos de configuración generados
+*.conf
+
+# Excepto el archivo de ejemplo
+!.gitignore
+!README.md
