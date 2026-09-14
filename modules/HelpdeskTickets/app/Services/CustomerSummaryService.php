@@ -7,7 +7,6 @@ use Modules\Helpdesk\Models\Company;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Services\ContactAggregatorService;
 use Modules\HelpdeskTickets\Models\TicketMail;
-use Nwidart\Modules\Facades\Module;
 use Throwable;
 
 /**
@@ -166,7 +165,11 @@ class CustomerSummaryService
      */
     public function prestashopOrders(?Customer $customer): array
     {
-        if (! $customer || ! Module::find('HelpdeskContacts')?->isEnabled() || ! class_exists(ContactAggregatorService::class)) {
+        // Antes solo miraba si el módulo estaba INSTALADO — apagar la
+        // integración en Settings → Integraciones (el toggle que
+        // helpdesk_contacts_enabled() sí respeta) no ocultaba estos pedidos
+        // (detectado 14-sep-2026, auditoría de funcionalidades de tickets).
+        if (! $customer || ! helpdesk_contacts_enabled() || ! class_exists(ContactAggregatorService::class)) {
             return ['available' => false, 'orders' => []];
         }
 
@@ -198,7 +201,9 @@ class CustomerSummaryService
      */
     public function stats(Customer $customer): array
     {
-        if (! Module::find('HelpdeskContacts')?->isEnabled() || ! class_exists(ContactAggregatorService::class)) {
+        // Mismo fix que prestashopOrders(): el toggle fino de Settings →
+        // Integraciones, no solo si el módulo está instalado.
+        if (! helpdesk_contacts_enabled() || ! class_exists(ContactAggregatorService::class)) {
             return [];
         }
 
