@@ -1,0 +1,28 @@
+{
+    "name": "modules/helpdesklivechat",
+    "description": "Live chat widget público (canal Web), embeds en sitios externos y configuración del widget.",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskLivechat\\": "app/",
+            "Modules\\HelpdeskLivechat\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskLivechat\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskLivechat\\Tests\\": "tests/"
+        }
+    }
+}
