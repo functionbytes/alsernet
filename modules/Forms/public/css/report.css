@@ -1,0 +1,28 @@
+/* Colores fijos por categoría de formulario, mismos valores que
+   FormsTicketCategorySeeder. Clases en vez de style="" inline. */
+
+.forms-cat-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: .375rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: .5rem;
+    font-size: 11px;
+}
+
+.forms-cat-contacto-general { background: #6c757d22; color: #6c757d; }
+.forms-cat-compromiso-mejor-precio { background: #19875422; color: #198754; }
+.forms-cat-devoluciones-cambios { background: #dc354522; color: #dc3545; }
+.forms-cat-que-te-llamemos { background: #0dcaf022; color: #0dcaf0; }
+.forms-cat-canal-interno-informacion { background: #21252922; color: #212529; }
+.forms-cat-seguros-caza { background: #6f4e3722; color: #6f4e37; }
+.forms-cat-cita-fitting { background: #0d6efd22; color: #0d6efd; }
+.forms-cat-diagnostico-golf { background: #19875422; color: #198754; }
+.forms-cat-taller-armero { background: #6c757d22; color: #6c757d; }
+.forms-cat-paquetes-buceo { background: #0dcaf022; color: #0dcaf0; }
+.forms-cat-dudas-envio { background: #ffc10722; color: #ffc107; }
+.forms-cat-metodos-pago-financiacion { background: #19875422; color: #198754; }
+.forms-cat-trabaja-con-nosotros { background: #6c757d22; color: #6c757d; }
+.forms-cat-sin-categoria { background: #dc354522; color: #dc3545; }

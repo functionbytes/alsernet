@@ -1,0 +1,27 @@
+{
+    "name": "modules/forms",
+    "description": "Constructor de formularios y receptor de alsernetforms como tickets de Helpdesk.",
+    "type": "laravel-module",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Forms\\Providers\\FormsServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Forms\\": "app/",
+            "Modules\\Forms\\Database\\Factories\\": "database/factories/",
+            "Modules\\Forms\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Forms\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "nwidart/laravel-modules": "^12.0"
+    }
+}
