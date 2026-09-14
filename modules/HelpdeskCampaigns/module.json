@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskCampaigns",
+    "alias": "helpdeskcampaigns",
+    "description": "Modulo de campanas para Helpdesk",
+    "keywords": ["helpdesk", "campaigns", "marketing"],
+    "priority": 60,
+    "providers": [
+        "Modules\\HelpdeskCampaigns\\Providers\\HelpdeskCampaignsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}
