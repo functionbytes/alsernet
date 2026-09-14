@@ -73,6 +73,11 @@
     <div id="tkt-data"
          data-tickets="{{ json_encode($ticketsPayload, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-tab-counts="{{ json_encode($tabCounts, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- Settings → Helpdesk · Tickets → Funcionalidades: qué botones/
+              secciones de la vista de detalle debe pintar el JS. --}}
+         data-features="{{ json_encode($ticketFeatures ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         data-attachment-max-bytes="{{ (int) data_get($ticketAttachmentSettings ?? [], 'max_bytes', 10 * 1024 * 1024) }}"
+         data-attachment-extensions="{{ json_encode(data_get($ticketAttachmentSettings ?? [], 'extensions', []), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-user-id="{{ auth()->id() }}"
          data-initial-filter="{{ $activeFilter }}"
          data-initial-view="{{ request('view', 'list') }}"
@@ -104,6 +109,13 @@
          {{-- Modal de carga de agentes: resumen y ajustes de reparto. --}}
          data-workload-overview-url="{{ route('manager.helpdesk.tickets.workload.overview') }}"
          data-workload-assignment-url="{{ route('manager.helpdesk.tickets.workload.assignment') }}"
+         {{-- Presencia en vivo del listado: qué agentes están viendo cada fila ahora mismo. --}}
+         data-presence-overview-url="{{ route('manager.helpdesk.tickets.presence.overview') }}"
+         {{-- Disponibilidad general del agente (módulo Helpdesk hermano) — late
+              mientras el panel de tickets está abierto para que "N agentes en
+              línea" del pie de pantalla deje de dar siempre 0 (QA 14-sep-2026). --}}
+         data-agent-presence-heartbeat-url="{{ route('manager.helpdesk.presence.heartbeat') }}"
+         data-agent-presence-agents-url="{{ route('manager.helpdesk.presence.agents') }}"
          {{-- Modal de buzones de entrada: estado, comportamiento y prueba. --}}
          data-mailboxes-url="{{ route('manager.helpdesk.tickets.mailboxes.index') }}"
          data-mailbox-behavior-url-template="{{ route('manager.helpdesk.tickets.mailboxes.behavior', ['channel' => '__MBX__']) }}"
@@ -487,11 +499,17 @@
             </div>
         </div>
 
+        <div class="tkt-mobile-nav" id="tkt-mobile-nav" role="tablist" aria-label="Panel visible">
+            <button type="button" class="on" data-mobile-pane="list" role="tab" aria-selected="true"><i class="fa-solid fa-list"></i> Lista</button>
+            <button type="button" data-mobile-pane="detail" role="tab" aria-selected="false"><i class="fa-regular fa-message"></i> Ticket</button>
+            <button type="button" data-mobile-pane="side" role="tab" aria-selected="false"><i class="fa-solid fa-sliders"></i> Gestión</button>
+        </div>
+
         <div class="tkt-split-wrap" id="tkt-split-wrap">
         <div class="tkt-split">
 
             {{-- Columna: lista --}}
-            <div class="tkt-split-list">
+            <div class="tkt-split-list" aria-label="Lista de tickets">
                 {{-- Cabecera de la lista, como el mockup: checkbox + "Seleccionar
                      todo" + un <select> de orden (no un enlace que alterna un solo
                      criterio) y, a la derecha, los tres iconos de actualizar,
@@ -517,6 +535,7 @@
                         <option value="priority" @selected(request('sort') === 'priority')>Prioridad</option>
                     </select>
                     <span class="tkt-list-head-icons">
+                        <button type="button" id="tkt-list-density" title="Usar lista compacta" aria-label="Usar lista compacta" aria-pressed="false"><i class="fa-solid fa-compress"></i></button>
                         <button type="button" id="tkt-list-refresh" title="Actualizar" aria-label="Actualizar la lista"><i class="fa-solid fa-rotate"></i></button>
                         <button type="button" id="tkt-list-export" title="Exportar" aria-label="Exportar los tickets del filtro actual"><i class="fa-solid fa-download"></i></button>
                         <button type="button" id="tkt-list-trash" title="Enviar a papelera" aria-label="Enviar los tickets seleccionados a la papelera"><i class="fa-regular fa-trash-can"></i></button>
@@ -557,7 +576,7 @@
                 <div class="tkt-skeleton-list" id="tkt-skeleton">
                     <div class="tkt-skeleton"></div><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>
                 </div>
-                <div class="tkt-list" id="tkt-list"></div>
+                <div class="tkt-list" id="tkt-list" role="list" aria-label="Tickets"></div>
                 {{-- Pie: "1–6 de 218 tickets" y dos chevrones, como el mockup —
                      no el paginador numerado del tema, que no cabe en 380px de
                      columna y desentona con el resto de la pantalla. --}}
@@ -582,8 +601,12 @@
                 </div>
             </div>
 
+            <button type="button" class="tkt-split-resizer" id="tkt-resizer-list" data-resize-target="list"
+                    role="separator" aria-orientation="vertical" aria-label="Redimensionar lista y detalle"
+                    title="Arrastra para cambiar el ancho de la lista"></button>
+
             {{-- Columna: detalle --}}
-            <div class="tkt-split-detail" id="tkt-detail-col">
+            <div class="tkt-split-detail" id="tkt-detail-col" aria-label="Detalle del ticket">
                 <div class="tkt-empty-state" id="tkt-detail-empty">
                     <div class="tkt-empty-icon"><i class="fa-regular fa-rectangle-list"></i></div>
                     <div class="tkt-empty-title">Ningún ticket seleccionado</div>
@@ -601,9 +624,13 @@
                 <div id="tkt-detail" style="display:none"></div>
             </div>
 
+            <button type="button" class="tkt-split-resizer" id="tkt-resizer-side" data-resize-target="side"
+                    role="separator" aria-orientation="vertical" aria-label="Redimensionar detalle y gestión"
+                    title="Arrastra para cambiar el ancho del panel de gestión"></button>
+
             {{-- Columna: panel lateral — Fase C: las 8 pestañas ya tienen
                  contenido real (reusan el mismo JSON de data()). --}}
-            <div class="tkt-side" id="tkt-side">
+            <div class="tkt-side" id="tkt-side" aria-label="Gestión del ticket">
                 <div class="tkt-icon-rail top" id="tkt-side-rail">
                     <button type="button" class="tkt-icon-tab on" data-side="gestion" title="Gestión" aria-label="Gestión"><i class="fa-solid fa-sliders"></i></button>
                     <button type="button" class="tkt-icon-tab" data-side="cliente" title="Cliente" aria-label="Cliente"><i class="fa-regular fa-address-card"></i></button>
@@ -617,6 +644,7 @@
                          respondió antes sin salir de la pantalla. --}}
                     <button type="button" class="tkt-icon-tab" data-side="tickets" title="Tickets del cliente" aria-label="Tickets del cliente"><i class="fa-solid fa-ticket"></i></button>
                     <button type="button" class="tkt-icon-tab" data-side="hist" title="Historial" aria-label="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button type="button" class="tkt-side-toggle" id="tkt-side-toggle" title="Ocultar panel de gestión" aria-label="Ocultar panel de gestión" aria-pressed="false"><i class="fa-solid fa-angles-right"></i></button>
                 </div>
                 <div id="tkt-side-content" class="tkt-side-pane">
                     <div class="tkt-empty-box">Sin ticket seleccionado. Aquí verás la gestión (estado, prioridad, categoría, equipo, acciones) del ticket que elijas en la lista.</div>
@@ -634,7 +662,7 @@
              bandeja de conversaciones de Helpdesk. La rellena
              renderStatusBar() en tickets-app.js; todos los valores salen de
              endpoints que la pantalla ya carga (nada aquí es decorativo). --}}
-        <div class="tkt-status-bar" id="tkt-status-bar">
+        <div class="tkt-status-bar" id="tkt-status-bar" role="status" aria-live="polite">
             <span class="tkt-status-item"><span class="tkt-status-dot" id="tkt-status-conn-dot"></span><span id="tkt-status-conn-text">Conectando…</span></span>
             <span class="tkt-status-sep">·</span>
             <span class="tkt-status-item" id="tkt-status-agents"><i class="fa-solid fa-users"></i> —</span>
@@ -643,7 +671,8 @@
             <span class="tkt-status-sep">·</span>
             <span class="tkt-status-item" id="tkt-status-resolved"><i class="fa-solid fa-circle-check"></i> — resueltos</span>
             <span class="tkt-status-sep">·</span>
-            <span class="tkt-status-item" id="tkt-status-queue" hidden><i class="fa-regular fa-envelope"></i></span>
+            <button type="button" class="tkt-status-item tkt-status-queue" id="tkt-status-queue" hidden aria-label="Abrir cola de respuestas pendientes"><i class="fa-regular fa-envelope"></i></button>
+            <span class="tkt-undo" id="tkt-undo" hidden aria-live="polite"><span id="tkt-undo-text"></span><button type="button" class="tkt-btn tkt-btn-mini" id="tkt-undo-btn">Deshacer</button></span>
             <span class="tkt-spacer"></span>
             <button type="button" class="tkt-status-icon-btn" id="tkt-status-sound" title="Sonido al llegar un mensaje nuevo" aria-label="Alternar sonido de mensaje nuevo" aria-pressed="false"><i class="fa-solid fa-volume-high"></i></button>
             <button type="button" class="tkt-status-icon-btn" id="tkt-status-shortcuts" title="Atajos de teclado (?)" aria-label="Mostrar atajos de teclado"><i class="fa-solid fa-keyboard"></i></button>

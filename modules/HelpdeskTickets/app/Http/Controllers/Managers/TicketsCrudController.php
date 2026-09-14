@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Filters\TicketFilter;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Exceptions\StaleTicketException;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -25,8 +27,10 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTemplate;
 use Modules\HelpdeskTickets\Models\TicketView;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
+use Modules\HelpdeskTickets\Support\TicketFeatures;
 
 class TicketsCrudController extends Controller
 {
@@ -247,10 +251,26 @@ class TicketsCrudController extends Controller
         //
         // Va aquí abajo, después de resolver $selectedTicket, para no
         // duplicar ni la construcción de la query ni la autorización.
+        $tabCounts = $this->tabCounts($userId, $request->boolean('fresh_counts'));
+
         if ($request->wantsJson()) {
+            $ticketsPayload = $tickets->getCollection()
+                ->map(fn (Ticket $t) => $t->toListRow())
+                ->values();
+
+            // Igual que en el SSR inicial: si el agente abrió un ticket que
+            // no pertenece a la pestaña activa, se conserva como primera fila
+            // para que un refetch automático no le quite la selección de
+            // debajo del detalle. El total de paginación sigue siendo el
+            // total real filtrado; esta fila adicional es solo contexto del
+            // ticket que el agente está atendiendo.
+            if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
+                $ticketsPayload->prepend($selectedTicket->toListRow());
+            }
+
             return response()->json([
-                'tickets' => $tickets->getCollection()->map(fn (Ticket $t) => $t->toListRow())->values(),
-                'tab_counts' => $this->tabCounts($userId),
+                'tickets' => $ticketsPayload,
+                'tab_counts' => $tabCounts,
                 'pagination' => [
                     'total' => $tickets->total(),
                     'per_page' => $tickets->perPage(),
@@ -266,6 +286,14 @@ class TicketsCrudController extends Controller
 
         return view('helpdesktickets::managers.tickets.index', [
             'tickets' => $tickets,
+            // Vista de detalle (composer/acciones/gestión/pestañas): resuelto
+            // una sola vez aquí y pasado al JS vía #tkt-data → TKA.state.features
+            // — ver Settings → Helpdesk · Tickets → Funcionalidades.
+            'ticketFeatures' => TicketFeatures::resolved(),
+            'ticketAttachmentSettings' => [
+                'max_bytes' => app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024,
+                'extensions' => app(HelpdeskSettings::class)->attachmentExtensions(),
+            ],
             'statuses' => $statuses,
             'categories' => $categories,
             'groups' => $groups,
@@ -300,7 +328,7 @@ class TicketsCrudController extends Controller
                 'status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status',
                 'search', 'archived', 'tag', 'mail_status', 'mail_type', 'mailbox', 'has_attachments',
             ]),
-            'tabCounts' => $this->tabCounts($userId),
+            'tabCounts' => $tabCounts,
         ]);
     }
 
@@ -476,10 +504,15 @@ class TicketsCrudController extends Controller
         return 'groups:'.implode(',', $groupIds);
     }
 
-    private function tabCounts(?int $userId): array
+    private function tabCounts(?int $userId, bool $fresh = false): array
     {
+        $cacheKey = self::TAB_COUNTS_CACHE_KEY.':'.$this->tabCountsScopeKey($userId);
+        if ($fresh) {
+            Cache::forget($cacheKey);
+        }
+
         $shared = Cache::remember(
-            self::TAB_COUNTS_CACHE_KEY.':'.$this->tabCountsScopeKey($userId),
+            $cacheKey,
             self::TAB_COUNTS_CACHE_TTL_SECONDS,
             fn () => $this->sharedTabCounts($userId),
         );
@@ -724,7 +757,9 @@ class TicketsCrudController extends Controller
 
             if ($request->hasFile('attachments')) {
                 $attachmentPaths = [];
+                $attachmentSecurity = app(TicketAttachmentSecurityService::class);
                 foreach ($request->file('attachments') as $file) {
+                    $attachmentSecurity->assertSafe($file);
                     $attachmentPaths[] = $file->store(
                         'helpdesk/tickets/'.$ticket->id,
                         config('helpdesk.attachments.disk', 'local')
@@ -842,7 +877,28 @@ class TicketsCrudController extends Controller
         // otra ruta que no pase por ese FormRequest concreto.
         $this->authorize('update', $ticket);
 
-        $this->ticketUpdateService->applyChanges($ticket, $request->getModifiableFields(), auth()->user());
+        try {
+            $this->ticketUpdateService->applyChanges(
+                $ticket,
+                $request->getModifiableFields(),
+                auth()->user(),
+                $request->clientUpdatedAt(),
+            );
+        } catch (StaleTicketException $e) {
+            $message = 'El ticket cambió en otro navegador. Recarga sus datos antes de volver a guardar.';
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'code' => 'stale_ticket',
+                    'conflict_fields' => array_keys($request->getModifiableFields()),
+                    'ticket' => $ticket->fresh(['customer', 'status', 'assignee']),
+                ], 409);
+            }
+
+            return back()->withInput()->withErrors(['ticket' => $message]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
