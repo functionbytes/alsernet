@@ -1,0 +1,214 @@
+openapi: 3.1.0
+info:
+  title: Media Module API
+  version: 1.0.0
+  description: API REST del módulo Media para gestión de archivos y carpetas
+
+servers:
+  - url: /api
+
+paths:
+  /media/files:
+    get:
+      summary: Lista archivos del usuario
+      security: [{ sanctum: [] }]
+      parameters:
+        - name: folder_id
+          in: query
+          schema: { type: integer }
+        - name: type
+          in: query
+          schema: { type: string, enum: [image, video, audio, document, pdf, zip] }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 15 }
+      responses:
+        "200": { description: Lista paginada de archivos }
+        "401": { description: No autenticado }
+
+    post:
+      summary: Sube un archivo nuevo
+      security: [{ sanctum: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                folder_id:
+                  type: integer
+                  nullable: true
+                disk:
+                  type: string
+                  default: media
+      responses:
+        "201": { description: Archivo creado exitosamente }
+        "422": { description: Error de validación }
+
+  /media/files/{id}:
+    get:
+      summary: Obtiene detalles de un archivo
+      security: [{ sanctum: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200": { description: Detalles del archivo }
+        "404": { description: Archivo no encontrado }
+
+    put:
+      summary: Actualiza nombre o carpeta de un archivo
+      security: [{ sanctum: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                folder_id: { type: integer, nullable: true }
+      responses:
+        "200": { description: Archivo actualizado }
+        "422": { description: Error de validación }
+
+    delete:
+      summary: Elimina un archivo (soft delete)
+      security: [{ sanctum: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Archivo eliminado }
+        "404": { description: Archivo no encontrado }
+
+  /media/files/{id}/similar:
+    get:
+      summary: Lista archivos similares por pHash
+      security: [{ sanctum: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+        - name: max_distance
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200": { description: Lista de archivos similares }
+        "404": { description: Archivo no encontrado }
+
+  /media/files/{id}/share:
+    post:
+      summary: Crea una URL de compartición firmada (con expiración)
+      security: [{ sanctum: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expires_in_minutes:
+                  type: integer
+                  default: 1440
+      responses:
+        "200":
+          description: URL firmada generada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  url: { type: string }
+                  expires_at: { type: string, format: date-time }
+
+  /media/folders:
+    get:
+      summary: Lista carpetas del usuario
+      security: [{ sanctum: [] }]
+      parameters:
+        - name: parent_id
+          in: query
+          schema: { type: integer, nullable: true }
+      responses:
+        "200": { description: Lista de carpetas }
+
+    post:
+      summary: Crea una nueva carpeta
+      security: [{ sanctum: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                parent_id: { type: integer, nullable: true }
+                color: { type: string, example: "#3498db" }
+      responses:
+        "201": { description: Carpeta creada }
+        "422": { description: Error de validación }
+
+  /media/health:
+    get:
+      summary: Health check del módulo Media (no requiere autenticación)
+      responses:
+        "200":
+          description: Sistema saludable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  disk: { type: string }
+                  checks:
+                    type: object
+                    properties:
+                      disk_writable: { type: boolean }
+                      ffmpeg: { type: boolean }
+                      tesseract: { type: boolean }
+        "503":
+          description: Uno o más checks fallaron
+
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MediaFile:
+      type: object
+      properties:
+        id: { type: integer }
+        uid: { type: string }
+        name: { type: string }
+        mimeType: { type: string }
+        size: { type: integer }
+        type: { type: string, enum: [image, video, audio, document, zip] }
+        url: { type: string }
+        disk: { type: string }
+        visibility: { type: string, enum: [public, private] }
+        metadata: { type: object }
+        createdAt: { type: string, format: date-time }
+
+    MediaFolder:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        parentId: { type: integer, nullable: true }
+        color: { type: string }
+        createdAt: { type: string, format: date-time }
