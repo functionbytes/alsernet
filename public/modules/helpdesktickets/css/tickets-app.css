@@ -163,7 +163,6 @@ body:has(.tkt) .mc-content {
 .tkt-row { display: flex; align-items: center; gap: 8px; }
 .tkt-spacer { margin-left: auto; }
 .tkt-trunc { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tkt-divider-v { width: 1px; height: 10px; background: var(--tkt-border); flex-shrink: 0; }
 
 /* ── Botones ─────────────────────────────────────────────── */
 .tkt-btn {
@@ -181,13 +180,8 @@ body:has(.tkt) .mc-content {
 .tkt-btn-primary:hover { background: var(--tkt-accent-dark); border-color: var(--tkt-accent-dark); }
 /* Variante oscura para el botón que en el mockup sí va en negro (el
    segmentado de vista activo y los iconos de la cabecera del detalle). */
-.tkt-btn-dark { background: var(--tkt-text); color: #fff; border-color: var(--tkt-text); }
-.tkt-btn-dark:hover { background: var(--tkt-text-strong); }
-.tkt-btn-ghost { background: transparent; border-color: transparent; color: var(--tkt-text-soft); }
-.tkt-btn-ghost:hover { background: var(--tkt-subtle); }
 .tkt-btn-icon { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); color: var(--tkt-text-soft); }
 .tkt-btn-icon:hover { background: var(--tkt-subtle); }
-.tkt-btn-icon-dark { border-color: transparent; background: var(--tkt-text); color: #fff; }
 .tkt-btn[disabled] { opacity: .5; cursor: not-allowed; }
 /* grupo segmentado (modos de vista) — fondo blanco con borde (antes gris,
    se confundía con el fondo de la página que usa el mismo tono) y el
@@ -230,7 +224,7 @@ body:has(.tkt) .mc-content {
 
 /* barra de filtros */
 .tkt-filter-bar { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-wrap: wrap; }
-.tkt-fselect, .tkt-finput { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); color: var(--tkt-text); }
+.tkt-fselect { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); color: var(--tkt-text); }
 /* Chip de filtro del mockup: etiqueta + valor en gris claro + chevron 8px,
    todo dentro de una píldora blanca de 4px 10px. Lo usan los dos chips que no
    son un <select> (rango de fechas y "Más filtros"); los cinco desplegables
@@ -253,11 +247,6 @@ body:has(.tkt) .mc-content {
    fila de filtros da un salto al cargar. Si el JS no llegara a ejecutarse, el
    filtro sigue siendo usable — solo que con el desplegable del sistema. */
 .tkt-fsel { padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-family: inherit; font-size: var(--tkt-t-md); color: var(--tkt-text); }
-.tkt-finput i { color: var(--tkt-text-faint); font-size: 10px; }
-/* .tkt-finput ya define el marco compacto (borde/fondo/radio); el <input
-   type="date"> real dentro solo necesita perder su propio chrome de
-   navegador para no duplicar el borde. */
-.tkt-finput input[type="date"] { border: none; background: transparent; padding: 0; color: inherit; font: inherit; width: 100px; }
 .tkt-clear-link { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); text-decoration: underline; background: none; border: none; }
 /* Campo "Creado entre" del modal "Más filtros": un <button> que se ve como
    un .tkt-input y abre el mismo daterangepicker que el chip de la barra. Los
@@ -426,7 +415,6 @@ body:has(.tkt) .mc-content {
 .tkt-presence-dot::after { content: ""; position: absolute; inset: -1.5px; border-radius: 50%; background: var(--tkt-accent-dark); opacity: .5; animation: tkt-presence-ping 1.8s ease-out infinite; }
 @keyframes tkt-presence-ping { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.4); opacity: 0; } }
 
-.tkt-origin { padding: 1px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: var(--tkt-t-xs); font-weight: 700; flex-shrink: 0; }
 
 .tkt-sla { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; }
 .tkt-sla-dot { width: 6px; height: 6px; border-radius: 50%; }
@@ -656,27 +644,11 @@ body:has(.tkt) .mc-content {
 .tkt-att-pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 9px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); font-size: var(--tkt-t-md); }
 .tkt-att-pill > i { color: var(--tkt-text-mute); font-size: 11px; }
 .tkt-att-pill > .mono { font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); }
-.tkt-attach-bar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-top: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-wrap: wrap; }
-/* Fila de adjunto. Puede renderizarse como <div>, <a> (descarga directa) o
-   <button> (abre el visor), así que normaliza texto y color para los tres. */
-.tkt-attach { display: flex; align-items: center; gap: 7px; width: 100%; padding: 5px 9px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); font-size: var(--tkt-t-md); text-align: left; text-decoration: none; cursor: pointer; }
-.tkt-attach:hover { background: var(--tkt-subtle); }
-.tkt .tkt-attach, .tkt a.tkt-attach { color: var(--tkt-text); }
 
 /* hilo de conversación */
 .tkt-thread-day { display: flex; align-items: center; gap: 10px; }
 .tkt-thread-day::before, .tkt-thread-day::after { content: ""; flex: 1; height: 1px; background: var(--tkt-border); }
 .tkt-thread-day span { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); }
-.tkt-msg { display: flex; gap: 11px; }
-.tkt-msg.mine { flex-direction: row-reverse; }
-.tkt-msg-avatar { width: 28px; height: 28px; border-radius: var(--tkt-r-md); display: grid; place-items: center; font-size: 10px; font-weight: 700; flex-shrink: 0; background: var(--tkt-subtle); color: var(--tkt-text-soft); }
-.tkt-msg-col { flex: 1; max-width: 74%; display: flex; flex-direction: column; gap: 4px; }
-.tkt-msg.mine .tkt-msg-col { align-items: flex-end; }
-.tkt-msg-head { display: flex; align-items: center; gap: 7px; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
-.tkt-msg-bubble { background: var(--tkt-panel); color: #27272a; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); padding: 11px 13px; font-size: var(--tkt-t); line-height: 1.6; }
-.tkt-msg.mine .tkt-msg-bubble { background: var(--tkt-text); border-color: var(--tkt-text); color: #fff; }
-.tkt-note-internal { display: flex; gap: 11px; padding: 10px 12px; background: var(--tkt-warn-soft); border: 1px solid var(--tkt-warn-line); border-radius: var(--tkt-r-lg); color: var(--tkt-warn-fg); font-size: var(--tkt-t); line-height: 1.6; }
-.tkt-reply-bar { display: flex; gap: 8px; padding: 11px 12px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); align-items: center; }
 
 /* trazabilidad y actividad */
 .tkt-timeline { display: flex; flex-direction: column; }
@@ -820,20 +792,12 @@ body:has(.tkt) .mc-content {
 .tkt-kcard.dragging { opacity: .4; }
 
 /* ── Botones (variantes que faltaban del mockup) ────────── */
-.tkt-btn-outline { background: var(--tkt-panel); border-color: var(--tkt-border-strong); }
-.tkt-btn-outline:hover { background: var(--tkt-subtle); }
-.tkt-btn-soft { background: var(--tkt-panel); border-color: var(--tkt-border); }
-.tkt-btn-soft:hover { background: var(--tkt-subtle); }
 .tkt-btn-danger { background: var(--tkt-action-danger); color: #fff; border-color: var(--tkt-action-danger); }
 .tkt-btn-danger:hover { background: var(--tkt-action-danger-hover); border-color: var(--tkt-action-danger-hover); color: #fff; }
 .tkt-btn-start { justify-content: flex-start; }
-.tkt-btn-inline { width: auto; padding: 6px 11px; }
 .tkt-btn-sm { padding: 5px 10px; font-size: var(--tkt-t-md); }
 
 /* ── Filtros: chips activos + dropdowns ─────────────────── */
-.tkt-filter-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); }
-.tkt-filter-btn i { font-size: 10px; }
-.tkt-filter-btn .val { color: var(--tkt-text-faint); }
 /* .tkt a { color: var(--tkt-text) } (línea ~75) tiene más especificidad
    (clase+tag) que .tkt-filter-chip sola (solo clase) y le ganaba, dejando
    texto negro sobre fondo negro — invisible. El propio archivo ya resuelve
@@ -841,7 +805,6 @@ body:has(.tkt) .mc-content {
    mismo criterio aquí. */
 .tkt-filter-chip, .tkt a.tkt-filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 20px; background: var(--tkt-text); color: #fff; font-size: 11px; font-weight: 600; }
 .tkt-filter-chip i { font-size: 9px; cursor: pointer; }
-.tkt-filter-count { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
 .tkt-drop { position: absolute; z-index: 9000; min-width: 190px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
 /* Variante para un .tkt-drop que se abre hacia ARRIBA (bottom:100% en vez de
    top:100%, como el de plantillas del composer del hilo): la sombra de
@@ -855,10 +818,6 @@ body:has(.tkt) .mc-content {
 
 /* ── Piezas sueltas usadas dentro de paneles/modales ────── */
 .tkt-list-empty { padding: 40px 20px; text-align: center; font-size: var(--tkt-t); color: var(--tkt-text-faint); line-height: 1.6; }
-.tkt-load-bar { height: 6px; border-radius: 20px; background: var(--tkt-subtle); overflow: hidden; }
-.tkt-load-bar > span { display: block; height: 100%; border-radius: 20px; background: var(--tkt-ok); }
-.tkt-load-bar.warn > span { background: var(--tkt-warn); }
-.tkt-load-bar.danger > span { background: var(--tkt-danger); }
 /* fila informativa con acción a la derecha (conversación paralela,
    tickets relacionados) — ya se usaba en tickets-app.js sin definir
    aquí: filas sin caja ni padding hasta este fix. */
@@ -1015,9 +974,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-preview-stage { display: grid; place-items: center; min-height: 320px; max-height: 55vh; padding: 10px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); overflow: auto; }
 .tkt-preview-stage img { max-width: 100%; max-height: 52vh; object-fit: contain; }
 .tkt-preview-stage iframe { width: 100%; height: 52vh; border: none; background: var(--tkt-panel); }
-.tkt-attach-meta { margin-left: auto; color: var(--tkt-text-faint); }
-.tkt-attach-zoom { font-size: 9px; color: var(--tkt-text-faint); }
-.tkt-attach:hover .tkt-attach-zoom { color: var(--tkt-text); }
 .tkt-link-btn.strong { color: var(--tkt-text); font-weight: 700; }
 /* Pestañas segmentadas dentro de un modal (Todos · Entrantes · Salientes). */
 .tkt-seg-tabs { display: flex; align-items: center; gap: 2px; padding: 2px; background: var(--tkt-subtle); border-radius: var(--tkt-r-md); }
@@ -1270,7 +1226,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    (jQuery lo alterna con .css('display','flex')) y los colores que vienen de
    la base de datos.
    ──────────────────────────────────────────────────────────────────────── */
-.tkt-fs-11        { font-size: 11px; }
 .tkt-meta         { font-size: 11px; color: var(--tkt-text-mute); }
 .tkt-title-sm     { font-size: 11.5px; font-weight: 700; }
 /* En el mockup el contador y "limpiar" van juntos al final de la barra,
@@ -1281,7 +1236,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-toolbar-right{ margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
 .tkt-actions      { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .tkt-link-plain   { text-decoration: none; }
-.tkt-link-right   { margin-left: auto; text-decoration: none; }
 .tkt-chip-row     { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 14px 9px; }
 .tkt-badge-row    { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
 
@@ -2040,7 +1994,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    una integración conectada de una que no lo está —de hecho las
    desconectadas ni se enviaban al panel— así que un cliente sin vincular con
    la tienda se veía exactamente igual que uno vinculado. */
-.tkt-integrations { display: flex; flex-direction: column; gap: 5px; }
 .tkt-integration {
     display: flex;
     align-items: center;
