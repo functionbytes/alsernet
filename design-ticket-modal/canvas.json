@@ -1,0 +1,37 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 412, "h": 900, "title": "A · Una sola columna", "is_interactive": true },
+    { "file": "OpcionB.dc.html", "x": 540, "y": 0, "w": 412, "h": 800, "title": "B · Cifras arriba + pestañas", "is_interactive": true }
+  ],
+  "annotations": [
+    {
+      "id": "bug",
+      "x": 0,
+      "y": -260,
+      "w": 412,
+      "text": "ANTES DEL DISEÑO — el modal actual no está mal maquetado: está VACÍO.\n\nEl JS que carga los datos escucha clics en «.rp3-ticket», una clase que ya no existe en ninguna vista: las tarjetas del panel se llaman «.tk-card» desde que se rehízo. El modal abre, la petición nunca sale y se quedan los guiones de la plantilla.\n\nY aunque se arregle el selector, PEDIDO y ORIGEN seguirán vacíos: el JS no los rellena (ORIGEN sí viaja en el payload, PEDIDO no existe todavía).\n\nEstos dos diseños dan por hecho que eso se arregla."
+    },
+    {
+      "id": "nota-a",
+      "x": 0,
+      "y": 940,
+      "w": 412,
+      "text": "A · Una sola columna, todo a la vista, en el orden en que se decide: estado → SLA → cliente → qué pide → qué pasó → datos.\n\nA favor: no esconde nada; se lee de arriba abajo sin tocar.\nEn contra: es alto — con la descripción desplegada pide scroll.\n\nLo nuevo respecto al modal de hoy va marcado en el código: SLA, ERP del cliente, último movimiento, etiquetas, pedido y origen."
+    },
+    {
+      "id": "nota-b",
+      "x": 540,
+      "y": 840,
+      "w": 412,
+      "text": "B · Las tres cifras que se miran sin leer (SLA, mensajes, último movimiento) van arriba en una tira, y el resto se reparte en dos pestañas.\n\nA favor: cabe sin scroll y la actividad real tiene sitio de verdad.\nEn contra: esconde media ficha tras una pestaña; en un modal pequeño puede ser un clic de más.\n\nPruébalas: las pestañas funcionan."
+    },
+    {
+      "id": "datos",
+      "x": 1080,
+      "y": 0,
+      "w": 330,
+      "text": "QUÉ FALTA TRAER (lo que el endpoint no devuelve hoy)\n\n1. SLA — vencimiento y política. Es lo primero que decide si abres el ticket. El dato ya está calculado en el ticket.\n2. Último movimiento — quién escribió lo último y por qué canal. Hoy solo hay «última act. hace 2 h», que no dice si fue el cliente insistiendo o un compañero respondiendo.\n3. Nº de mensajes — ya viaja en el payload (items_count) y no se pinta.\n4. Etiquetas — el ticket las guarda; aquí no se ven.\n5. Pedido — la fila existe en la plantilla y nunca se rellena.\n6. Origen/canal — viaja en el payload (source) y el JS no lo escribe.\n7. Vínculo con gestión (ERP) del cliente — evita abrir Contactos 360 solo para comprobarlo.\n8. Actividad real — hoy es una línea fija inventada («Sistema creó el ticket»), no el historial.\n9. Estado del último correo — si la última respuesta rebotó, el ticket está muerto y nadie lo sabe.\n10. Acciones — «Abrir completo» (la URL ya viaja en el payload) y «Asignármelo»."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

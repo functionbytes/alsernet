@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+    a { color: #5b7a0d; } a:hover { color: #3f5509; }
+    .mono { font-family: 'JetBrains Mono', 'Menlo', monospace; }
+  </style>
+</helmet>
+
+<div style="width: 340px; background: #fff; color: #18181b;">
+
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #e4e4e7;">
+    <span class="mono" style="font-size: 26px; font-weight: 800; line-height: 1;">{{counts.total}}</span>
+    <div style="display: flex; flex-direction: column; gap: 1px; flex-grow: 1;">
+      <span style="font-size: 10px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: .08em;">Tickets</span>
+      <span style="font-size: 11.5px; color: #3f3f46;">{{counts.subtitle}}</span>
+    </div>
+    <button style="width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #e4e4e7; border-radius: 8px; background: #fff; color: #3f3f46; cursor: pointer;" title="Nuevo ticket">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+
+  <div style="display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid #f4f4f5;">
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+      <button onClick="{{f.pick}}" style="{{f.style}}">
+        {{f.label}}<span style="{{f.countStyle}}">{{f.count}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- La procedencia deja de ser un badge por tarjeta y pasa a ser el criterio
+       que ORDENA la lista: si los cinco tickets vinieran de esta conversación,
+       cinco badges idénticos no informan de nada. Como encabezado de grupo se
+       dice una vez y separa de verdad. -->
+  <div style="display: flex; flex-direction: column; padding: 4px 0 12px;">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column;">
+
+        <div style="display: flex; align-items: center; gap: 7px; padding: 12px 16px 7px;">
+          <span style="{{g.iconStyle}}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
+          </span>
+          <span style="font-size: 10px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: .07em;">{{g.label}}</span>
+          <span class="mono" style="font-size: 10px; color: #a1a1aa;">{{g.count}}</span>
+          <span style="flex-grow: 1; height: 1px; background: #f4f4f5;"></span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <sc-for list="{{g.tickets}}" as="t" hint-placeholder-count="3">
+            <div style="{{t.rowStyle}}">
+              <!-- Punto de estado en vez de chip: a 340px un chip de texto
+                   arriba a la derecha come el ancho del asunto, y el estado
+                   solo tiene cuatro valores. El color lo dice; el texto vive
+                   abajo, donde hay sitio. -->
+              <span style="{{t.dotStyle}}"></span>
+              <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1;">
+                <span style="{{t.titleStyle}}">{{t.subject}}</span>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: #71717a; min-width: 0;">
+                  <span style="{{t.statusTextStyle}}">{{t.status}}</span>
+                  <span style="width: 3px; height: 3px; border-radius: 50%; background: #d4d4d8; flex-shrink: 0;"></span>
+                  <span style="{{t.assigneeStyle}}">{{t.assignee}}</span>
+                  <span style="margin-left: auto; white-space: nowrap; flex-shrink: 0;">{{t.age}}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "$preview": {"width": 340, "height": 640},
+  "accent": {"editor": "color", "default": "#5b7a0d", "options": ["#5b7a0d", "#18181b", "#3730a3", "#0f766e"], "section": "Diseño"}
+}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+
+  data() {
+    return [
+      { number: '#TCK-2026-00116', subject: 'Pregunta sobre garantía', status: 'Nuevo', priority: 'normal', assignee: null, age: 'hace 9 m', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00115', subject: 'Pregunta sobre garantía', status: 'Nuevo', priority: 'normal', assignee: null, age: 'hace 1 h', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00111', subject: 'Prueba de enrutado por datos de gestión', status: 'Abierto', priority: 'high', assignee: 'Marta Ruiz', age: 'hace 3 h', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00104', subject: 'Pedido 829575 sin recibir', status: 'Abierto', priority: 'urgent', assignee: 'Javier Alonso', age: 'hace 2 d', fromThisConversation: false, closed: false },
+      { number: '#TCK-2026-00098', subject: 'Cambio de dirección de envío', status: 'Resuelto', priority: 'low', assignee: 'Marta Ruiz', age: 'hace 6 d', fromThisConversation: false, closed: true }
+    ];
+  }
+
+  prioColor(p) {
+    return { urgent: '#3730a3', high: '#f59e0b', normal: '#3b82f6', low: '#10b981' }[p] || '#3b82f6';
+  }
+
+  renderVals() {
+    var self = this;
+    var filter = (this.state && this.state.filter) || 'all';
+    var all = this.data();
+
+    var counts = {
+      all: all.length,
+      open: all.filter(function (t) { return !t.closed; }).length,
+      closed: all.filter(function (t) { return t.closed; }).length,
+      urgent: all.filter(function (t) { return t.priority === 'urgent'; }).length
+    };
+
+    var pillBase = 'display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; font-family: inherit;';
+
+    var filters = [
+      { id: 'all', label: 'Todos', count: counts.all },
+      { id: 'open', label: 'Abiertos', count: counts.open },
+      { id: 'closed', label: 'Cerrados', count: counts.closed },
+      { id: 'urgent', label: 'Urgentes', count: counts.urgent }
+    ].map(function (d) {
+      var on = d.id === filter;
+      return {
+        label: d.label,
+        count: d.count,
+        style: pillBase + (on ? ' background: #18181b; color: #fff;' : ' background: #f4f4f5; color: #71717a;'),
+        countStyle: 'font-size: 10.5px; font-weight: 600; opacity: ' + (on ? '.85' : '.7') + ';',
+        pick: function () { self.setState({ filter: d.id }); }
+      };
+    });
+
+    var visible = all.filter(function (t) {
+      if (filter === 'open') return !t.closed;
+      if (filter === 'closed') return t.closed;
+      if (filter === 'urgent') return t.priority === 'urgent';
+      return true;
+    });
+
+    function shape(t) {
+      return {
+        subject: t.subject,
+        status: t.status,
+        age: t.age,
+        assignee: t.assignee || 'Sin asignar',
+        rowStyle: 'display: flex; align-items: flex-start; gap: 9px; padding: 9px 8px; border-radius: 7px; cursor: pointer; text-align: left;' + (t.closed ? ' opacity: .6;' : ''),
+        dotStyle: 'flex-shrink: 0; width: 8px; height: 8px; margin-top: 4px; border-radius: 50%; background: ' + self.prioColor(t.priority) + ';',
+        titleStyle: 'font-size: 12.5px; font-weight: 600; line-height: 1.35; letter-spacing: -.005em; color: #18181b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;' + (t.closed ? ' text-decoration: line-through; text-decoration-color: #d4d4d8;' : ''),
+        statusTextStyle: 'font-weight: 600; color: ' + (t.closed ? '#a1a1aa' : '#3f3f46') + '; white-space: nowrap; flex-shrink: 0;',
+        assigneeStyle: 'min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' + (t.assignee ? '' : ' font-style: italic; color: #a1a1aa;')
+      };
+    }
+
+    var mine = visible.filter(function (t) { return t.fromThisConversation; });
+    var others = visible.filter(function (t) { return !t.fromThisConversation; });
+
+    var groups = [];
+    if (mine.length) {
+      groups.push({
+        label: 'De esta conversación',
+        count: mine.length,
+        iconStyle: 'display: inline-flex; color: ' + (this.props.accent || '#5b7a0d') + ';',
+        tickets: mine.map(shape)
+      });
+    }
+    if (others.length) {
+      groups.push({
+        label: 'Otros del cliente',
+        count: others.length,
+        iconStyle: 'display: none;',
+        tickets: others.map(shape)
+      });
+    }
+
+    return {
+      filters: filters,
+      groups: groups,
+      counts: {
+        total: counts.all,
+        subtitle: counts.open + (counts.open === 1 ? ' abierto' : ' abiertos') +
+          (counts.urgent ? ' · ' + counts.urgent + ' urgente' + (counts.urgent === 1 ? '' : 's') : '')
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
