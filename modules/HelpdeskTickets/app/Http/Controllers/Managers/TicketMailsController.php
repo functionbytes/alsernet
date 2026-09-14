@@ -17,6 +17,8 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
+use Modules\HelpdeskTickets\Policies\TicketPolicy;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketMailAiSummaryService;
 use Modules\HelpdeskTickets\Services\TicketMailDispatcher;
@@ -204,6 +206,22 @@ class TicketMailsController extends Controller
         $this->authorize('viewAny', TicketMail::class);
 
         $ticket = $request->filled('ticket_id') ? Ticket::find($request->integer('ticket_id')) : null;
+
+        // 'viewAny' de arriba autoriza la pantalla de correos en general,
+        // no ESTE ticket concreto: sin este check un agente con solo
+        // helpdesk.tickets.emails.view podía pedir ?ticket_id=<ajeno> y
+        // leer en el JSON el NIF/saldo/límite de crédito ERP y el contacto
+        // de un cliente al que no tiene acceso (14-sep-2026, auditoría de
+        // seguridad) — mismo patrón ya corregido en CannedRepliesController.
+        // accessibleTo(), no authorize('view', ...): este endpoint entra con
+        // helpdesk.tickets.emails.view, no helpdesk.tickets.view — exigir
+        // este último aquí rompería al agente legítimo que solo tiene el
+        // primero (reproducido con
+        // TicketMailsControllerTest::test_templates_includes_interpolated_subject...).
+        if ($ticket) {
+            abort_unless(app(TicketPolicy::class)->accessibleTo(auth()->user(), $ticket), 403);
+        }
+
         $interpolator = new TicketVariableInterpolator;
 
         $templates = Macro::query()
@@ -530,8 +548,10 @@ class TicketMailsController extends Controller
         $disk = config('helpdesk.attachments.disk', 'local');
         $files = [];
         $meta = [];
+        $attachmentSecurity = app(TicketAttachmentSecurityService::class);
 
         foreach ($request->file('attachments') as $file) {
+            $attachmentSecurity->assertSafe($file);
             $path = $file->store('helpdesk/tickets/'.$ticket->id.'/emails', $disk);
             $name = $file->getClientOriginalName();
 
@@ -618,6 +638,16 @@ class TicketMailsController extends Controller
 
         $target = Ticket::findOrFail($validated['ticket_id']);
         $this->authorize('update', $target);
+
+        // Antes solo autorizaba el DESTINO: un agente que solo fuera
+        // assignee del ticket destino (pasa TicketPolicy::update() por ese
+        // atajo, sin ningún permiso helpdesk.tickets.emails.*) podía mover
+        // aquí cualquier TicketMail existente — incluido uno de un ticket al
+        // que no tiene acceso — arrastrando además todo el hilo con
+        // move_thread (14-sep-2026, auditoría de seguridad).
+        if ($mail->ticket) {
+            $this->authorize('update', $mail->ticket);
+        }
 
         $moved = 1;
 

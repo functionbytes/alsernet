@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Policies;
 
 use App\Models\User;
+use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketGroup;
 
@@ -60,6 +61,11 @@ class TicketPolicy
 
     public function delete(User $user, Ticket $ticket): bool
     {
+        if (filter_var(Setting::get('tickets.restict_to_delete_ticket', false), FILTER_VALIDATE_BOOLEAN)
+            && ! $user->hasPermissionTo('helpdesk.tickets.manage')) {
+            return false;
+        }
+
         return $user->hasPermissionTo('helpdesk.tickets.delete');
     }
 
@@ -119,6 +125,28 @@ class TicketPolicy
         }
 
         return in_array($ticket->group_id, TicketGroup::idsForUser($user->id), true);
+    }
+
+    /**
+     * "¿Este ticket está al alcance de este usuario?", independiente del
+     * permiso de una acción concreta — asignado a él, o en su equipo (o
+     * ticket sin equipo). Pensado para endpoints de lectura que exigen su
+     * PROPIO permiso de entrada más fino que helpdesk.tickets.view (p. ej.
+     * helpdesk.tickets.emails.view en TicketMailsController::templates(),
+     * o el autocompletado de respuestas predefinidas en
+     * CannedRepliesController::search()) pero necesitan de todos modos
+     * bloquear el cruce entre equipos antes de devolver datos del ticket
+     * (nombre/email/NIF/saldo ERP del cliente, interpolados). Usar
+     * authorize('view', $ticket) ahí exigiría ADEMÁS helpdesk.tickets.view,
+     * rompiendo el caso legítimo de un agente que solo tiene el permiso más
+     * fino (detectado 14-sep-2026 corrigiendo la fuga real: un fix ingenuo
+     * con authorize('view', ...) tumbaba
+     * TicketMailsControllerTest::test_templates_includes_interpolated_subject...,
+     * cuyo usuario a propósito solo tiene helpdesk.tickets.emails.view).
+     */
+    public function accessibleTo(User $user, Ticket $ticket): bool
+    {
+        return $ticket->assignee_id === $user->id || $this->inScope($user, $ticket);
     }
 
     public function resolve(User $user, Ticket $ticket): bool

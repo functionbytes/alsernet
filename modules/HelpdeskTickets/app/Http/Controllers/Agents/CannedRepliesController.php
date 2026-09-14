@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Policies\TicketPolicy;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 
 class CannedRepliesController extends Controller
@@ -43,7 +44,19 @@ class CannedRepliesController extends Controller
             ? Ticket::find((int) $request->input('ticket_id'))
             : null;
 
+        // Antes interpolaba directo sin comprobar la instancia: un agente
+        // podía pedir ?ticket_id=<de otro equipo> y leer en el JSON el
+        // NIF/saldo/límite de crédito ERP y el contacto de un cliente al
+        // que no tiene acceso — mismo patrón ya corregido en
+        // Api\TicketsController (14-sep-2026, auditoría de seguridad).
+        // accessibleTo() (no authorize('view', ...)): este endpoint no exige
+        // helpdesk.tickets.view como permiso de entrada, así que pedirlo
+        // aquí bloquearía al agente legítimo que solo tiene acceso al
+        // autocompletado de respuestas predefinidas — el check real que
+        // hace falta es "¿este ticket es de su equipo/suyo?", no el permiso.
         if ($ticket) {
+            abort_unless(app(TicketPolicy::class)->accessibleTo(auth()->user(), $ticket), 403);
+
             $replies->transform(function ($reply) use ($ticket) {
                 $reply->body = $this->interpolator->interpolate($reply->body, $ticket);
                 $reply->html_body = $this->interpolator->interpolate($reply->html_body, $ticket);
