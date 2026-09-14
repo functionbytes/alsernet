@@ -1,0 +1,64 @@
+vendor/
+# Excepcion: las librerias de terceros que un modulo publica junto a sus assets
+# (interact.js del editor de PriceLabels) viven en un js/vendor/ y si van al
+# repo; si no, cualquier despliegue se queda sin ellas y la vista no funciona.
+!modules/*/public/**/vendor/
+!public/modules/*/**/vendor/
+node_modules/
+stubs/
+
+bootstrap/compiled.php
+bootstrap/cache/
+
+public/storage
+public/hot
+public_html/storage
+public_html/hot
+public/build
+public/storage
+
+/storage/
+/storage/pail
+storage/*.key
+
+.env
+.env.backup
+.env.production
+.phpactor.json
+
+# Logs & caches
+*.log
+*.cache
+*.txt
+
+# IDE & OS
+.DS_Store
+
+# Claude Code & Development Tools
+.claude/
+.tinker/
+.idea/
+.vscode/
+
+# Composer
+composer.lock
+composer.phar
+
+# NPM/Yarn
+package-lock.json
+yarn.lock
+
+# Dumps / backups
+*.sql
+*.sql.gz
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+EOF
