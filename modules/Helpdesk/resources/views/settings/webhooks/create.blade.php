@@ -1,0 +1,74 @@
+@extends('layouts.theme')
+
+@section('title', 'Nuevo webhook')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nuevo webhook'])
+@endsection
+
+@section('content')
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <form action="{{ route('settings.helpdesk.webhooks.store') }}" method="POST">
+                    @csrf
+
+                    <div class="card-header border-bottom p-3">
+                        <h5 class="mb-0 fw-bold">Nuevo webhook</h5>
+                        <small class="text-muted">Configura una URL externa para recibir notificaciones de eventos</small>
+                    </div>
+
+                    <div class="card-body">
+                        @include('core::components.alerts')
+                        @include('helpdesk::settings.webhooks._form')
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            Guardar webhook
+                        </button>
+                        <a href="{{ route('settings.helpdesk.webhooks.index') }}" class="btn btn-light w-100">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los webhooks</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted small">
+                        Los webhooks permiten que sistemas externos reciban notificaciones automaticas cuando ocurren eventos en Helpdesk, similar a como funciona Zapier o Zendesk.
+                    </p>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Firma HMAC</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted small">
+                        Si configuras un secreto, cada peticion incluira la cabecera <code>X-Helpdesk-Signature</code> con un hash HMAC-SHA256 para validar la autenticidad.
+                    </p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Cabeceras personalizadas</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted small">
+                        Puedes enviar cabeceras adicionales en formato JSON. Ejemplo:
+                    </p>
+                    <pre class="bg-light p-2 rounded small">{"Authorization": "Bearer tu-token"}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection

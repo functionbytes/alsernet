@@ -1,0 +1,191 @@
+<?php
+
+namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Settings\UpdateAgentSettingsRequest;
+use Modules\Helpdesk\Models\AgentSettings;
+
+class AgentSettingsController extends Controller
+{
+    /**
+     * Roles considered helpdesk agents. Kept in sync with
+     * AgentsController so both panels list the same users.
+     *
+     * @var list<string>
+     */
+    private const AGENT_ROLES = ['administrative', 'manager', 'settings', 'super-settings'];
+
+    /**
+     * Display all agents with their settings.
+     */
+    public function index(Request $request): View
+    {
+        $this->authorize('helpdesk.agents.manage');
+
+        $query = User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', self::AGENT_ROLES));
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                    ->orWhere('lastname', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('available')) {
+            $isAvailable = $request->available === '1';
+            $query->whereHas('agentSettings', fn ($q) => $q->where('is_available', $isAvailable));
+        }
+
+        $agents = $query->orderBy('firstname')->paginate(25)->appends($request->query());
+
+        // Load agent settings separately (cross-DB safe)
+        $agentIds = $agents->pluck('id');
+
+        $settingsMap = AgentSettings::query()
+            ->whereIn('user_id', $agentIds)
+            ->get()
+            ->keyBy('user_id');
+
+        // Stats
+        $stats = $this->getStats();
+
+        return view('helpdesk::settings.agent-settings.index', [
+            'agents' => $agents,
+            'settingsMap' => $settingsMap,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Show edit form for a specific agent.
+     */
+    public function edit(User $user): View
+    {
+        $this->authorize('helpdesk.agents.manage');
+
+        $agentSettings = AgentSettings::query()
+            ->where('user_id', $user->id)
+            ->first() ?? AgentSettings::newFromDefault();
+
+        return view('helpdesk::settings.agent-settings.edit', [
+            'agent' => $user,
+            'agentSettings' => $agentSettings,
+        ]);
+    }
+
+    /**
+     * Update agent settings.
+     */
+    public function update(UpdateAgentSettingsRequest $request, User $user): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        AgentSettings::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'is_available' => $request->boolean('is_available'),
+                'accepts_conversations' => $validated['accepts_conversations'],
+                'max_concurrent_conversations' => $validated['max_concurrent_conversations'] ?? 0,
+                'auto_assign' => $request->boolean('auto_assign'),
+                'vacation_until' => $validated['vacation_until'] ?? null,
+                'languages' => $this->parseLanguages($validated['languages'] ?? null),
+            ]
+        );
+
+        return redirect()
+            ->route('settings.helpdesk.agent-settings.index')
+            ->with('success', "Configuracion de {$user->name} actualizada correctamente");
+    }
+
+    /**
+     * Bulk-set availability for a selection of agents.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('helpdesk.agents.manage');
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:available,unavailable'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $validated['action'];
+
+        // Only touch ids that actually belong to agents, same guard as index().
+        $agentIds = User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', self::AGENT_ROLES))
+            ->whereIn('id', $validated['ids'])
+            ->pluck('id');
+
+        $count = 0;
+
+        foreach ($agentIds as $agentId) {
+            AgentSettings::query()->updateOrCreate(
+                ['user_id' => $agentId],
+                ['is_available' => $action === 'available']
+            );
+            $count++;
+        }
+
+        $labels = [
+            'available' => 'marcado(s) como disponible(s)',
+            'unavailable' => 'marcado(s) como no disponible(s)',
+        ];
+
+        return response()->json([
+            'message' => "{$count} agente(s) {$labels[$action]}.",
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * CSV "es, en-GB" → ["es", "en-gb"] (null si queda vacío). Los códigos se
+     * comparan por subtag primario en AgentSettings::speaksLanguage().
+     *
+     * @return list<string>|null
+     */
+    private function parseLanguages(?string $languages): ?array
+    {
+        $parsed = array_values(array_unique(array_filter(array_map(
+            fn (string $code): string => strtolower(trim($code)),
+            explode(',', (string) $languages)
+        ))));
+
+        return $parsed === [] ? null : $parsed;
+    }
+
+    /**
+     * Calculate summary statistics for the index page.
+     */
+    private function getStats(): array
+    {
+        $total = User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', self::AGENT_ROLES))
+            ->count();
+
+        $available = AgentSettings::where('is_available', true)->count();
+
+        $onVacation = AgentSettings::whereNotNull('vacation_until')
+            ->where('vacation_until', '>', now())
+            ->count();
+
+        $withLimit = AgentSettings::where('max_concurrent_conversations', '>', 0)->count();
+
+        return [
+            'total' => $total,
+            'available' => $available,
+            'on_vacation' => $onVacation,
+            'with_limit' => $withLimit,
+        ];
+    }
+}

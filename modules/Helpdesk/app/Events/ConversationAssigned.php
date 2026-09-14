@@ -1,0 +1,44 @@
+<?php
+
+namespace Modules\Helpdesk\Events;
+
+use App\Events\Concerns\BroadcastsOnServedQueue;
+use App\Models\User;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Modules\Helpdesk\Concerns\BroadcastsToWidgetConversation;
+use Modules\Helpdesk\Models\Conversation;
+
+class ConversationAssigned implements ShouldBroadcast
+{
+    use BroadcastsOnServedQueue, BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public readonly Conversation $conversation,
+        public readonly User $assignee,
+        public readonly ?int $byUserId = null,
+    ) {}
+
+    public function broadcastOn(): array
+    {
+        return array_values(array_filter([
+            $this->widgetConversationChannel($this->conversation),
+        ]));
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'conversation.assigned';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'conversation_id' => $this->conversation->id,
+            'agent_name' => $this->assignee->name,
+            'agent_id' => $this->assignee->id,
+        ];
+    }
+}
