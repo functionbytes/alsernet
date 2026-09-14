@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    {!! $fontFaceCss !!}
+
+    @page { margin: 0; }
+    body { margin: 0; padding: 0; }
+    .page {
+        position: relative;
+        width: {{ $pageWidthMm }}mm;
+        height: {{ $pageHeightMm }}mm;
+        page-break-after: always;
+    }
+    .page:last-child { page-break-after: auto; }
+    .field {
+        position: absolute;
+        overflow: hidden;
+    }
+    /* El texto se centra en los dos ejes DENTRO de la caja configurada, no
+       respecto a la pagina: una tabla al 100% de la caja con la celda en
+       vertical-align:middle es la unica forma fiable de centrado vertical en
+       DomPDF (no soporta flexbox ni el truco de line-height con varias lineas). */
+    .field table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .field td {
+        /* La alineacion, el aire interior y el interlineado los fija cada campo. */
+        padding: 0;
+        text-align: center;
+        vertical-align: middle;
+        /* Una URL o una palabra kilometrica se parte en vez de salirse por el
+           lateral de la caja. */
+        word-wrap: break-word;
+        /* El interlineado lo fija cada campo: cuando el mensaje no cabe se
+           aprieta antes de encoger la letra. */
+        line-height: 1.2;
+        /* Una URL o una palabra kilometrica se parte en vez de salirse por el
+           lateral de la caja. */
+        word-wrap: break-word;
+    }
+    /* Emojis: no estan en la fuente, se pintan como <img> (ver
+       GiftMessagePdfService::messageToHtml). El tamano va en em para que siga
+       al de la letra —los atributos width/height del <img> los interpreta
+       DomPDF en px, asi que el emoji salia a 0.6em en vez de 0.8em— y el
+       vertical-align negativo lo baja al centro optico de la linea: con
+       'middle' DomPDF lo dejaba flotando por encima del texto. */
+    /* Cada parrafo va en su propio bloque: sin esto DomPDF no le hereda el
+       interlineado de la celda y usa el "normal" de la fuente, que con DejaVu
+       Sans es bastante mayor y desbordaba la caja por abajo. */
+    .field td div {
+        line-height: inherit;
+    }
+
+    .field img.emoji {
+        width: 0.8em;
+        height: 0.8em;
+        vertical-align: -0.1em;
+    }
+</style>
+</head>
+<body>
+@foreach ($pages as $page)
+    {{-- Sin imagen de fondo: el sobre y la tarjeta ya vienen impresos de
+         imprenta y aqui solo se deposita el texto. La pagina conserva el tamano
+         real de la pieza, asi que las cajas caen en el mismo sitio que en el
+         editor de ajustes. --}}
+    <div class="page">
+        <div class="field" style="
+            left: {{ $page['t1']['left'] }}mm;
+            top: {{ $page['t1']['top'] }}mm;
+            width: {{ $page['t1']['width'] }}mm;
+            height: {{ $page['t1']['height'] }}mm;
+            font-family: {{ $page['t1']['font_family'] }};
+            font-size: {{ $page['t1']['font_size'] }}pt;
+            line-height: {{ $page['t1']['line_height'] }};
+            color: {{ $page['t1']['color'] }};
+            opacity: {{ $page['t1']['opacity'] }};
+        ">
+            <table>
+                <tr><td style="
+                    height: {{ $page['t1']['height'] }}mm;
+                    text-align: {{ $page['t1']['align'] ?? 'center' }};
+                    vertical-align: {{ $page['t1']['valign'] ?? 'middle' }};
+                    padding: {{ $page['t1']['padding'] ?? 0 }}pt;
+                ">{!! $page['t1']['html'] !!}</td></tr>
+            </table>
+        </div>
+
+        <div class="field" style="
+            left: {{ $page['t2']['left'] }}mm;
+            top: {{ $page['t2']['top'] }}mm;
+            width: {{ $page['t2']['width'] }}mm;
+            height: {{ $page['t2']['height'] }}mm;
+            font-family: {{ $page['t2']['font_family'] }};
+            font-size: {{ $page['t2']['font_size'] }}pt;
+            line-height: {{ $page['t2']['line_height'] }};
+            color: {{ $page['t2']['color'] }};
+            opacity: {{ $page['t2']['opacity'] }};
+        ">
+            <table>
+                <tr><td style="
+                    height: {{ $page['t2']['height'] }}mm;
+                    text-align: {{ $page['t2']['align'] ?? 'center' }};
+                    vertical-align: {{ $page['t2']['valign'] ?? 'middle' }};
+                    padding: {{ $page['t2']['padding'] ?? 0 }}pt;
+                ">{{ $page['t2']['text'] }}</td></tr>
+            </table>
+        </div>
+    </div>
+@endforeach
+</body>
+</html>

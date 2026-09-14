@@ -1,0 +1,183 @@
+.giftmessage-canvas-outer {
+    border: 1px solid #ddd;
+    max-width: 100%;
+    overflow: auto;
+}
+
+.giftmessage-canvas {
+    position: relative;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.giftmessage-canvas-envelope {
+    width: 660px;
+    height: 330px;
+}
+
+.giftmessage-canvas-card {
+    width: 600px;
+    height: 270px;
+}
+
+.giftmessage-drag {
+    position: absolute;
+    box-sizing: border-box;
+    cursor: move;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    border: 1px dashed #90bb13;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 4px;
+    user-select: none;
+    text-align: center;
+    /* Sin esto, el nodo de texto (item flex anonimo) no se encoge por debajo
+       de su ancho de contenido minimo y se sale del overflow:hidden cuando
+       la caja es mas angosta que una palabra sin espacios (bug conocido de
+       flexbox: min-width del item flex es 'auto' por defecto). */
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* Marca la esquina para que se vea que la caja se puede redimensionar. */
+.giftmessage-drag::after {
+    content: '';
+    position: absolute;
+    right: 1px;
+    bottom: 1px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #90bb13;
+    border-bottom: 2px solid #90bb13;
+    pointer-events: none;
+}
+
+.giftmessage-drag:focus {
+    outline: 2px solid #333;
+    outline-offset: 1px;
+}
+
+.giftmessage-drag[data-slot="t1"] {
+    border-color: #333;
+}
+
+.giftmessage-color-swatch {
+    width: 44px;
+    flex-shrink: 0;
+    padding: 2px;
+}
+
+.giftmessage-fine-tune-table th,
+.giftmessage-fine-tune-table td {
+    vertical-align: middle;
+}
+
+.giftmessage-fine-tune-table input {
+    width: 76px;
+}
+
+.giftmessage-image-thumb {
+    max-width: 100%;
+    max-height: 160px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    object-fit: contain;
+    background: #fafafa;
+    display: block;
+}
+
+/* ── Imagen de fondo: zona de arrastrar y soltar ─────────────────────────── */
+/* La zona hace de vista previa y de destino a la vez: cuando ya hay imagen
+   guardada, el JS la pinta de fondo con background-size: 100% 100%, el mismo
+   encuadre estirado que usan el lienzo de posicionamiento y el PDF. */
+.giftmessage-dropzone.dropzone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px dashed #d5d5d5;
+    border-radius: 8px;
+    background-color: #fafafa;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.giftmessage-dropzone-envelope { aspect-ratio: 220 / 110; }
+
+.giftmessage-dropzone-card { aspect-ratio: 200 / 90; }
+
+.giftmessage-dropzone.dropzone:hover,
+.giftmessage-dropzone.dropzone.dz-drag-hover {
+    border-color: #90bb13;
+    background-color: rgba(144, 187, 19, 0.08);
+}
+
+.giftmessage-dropzone .dz-message {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: #555555;
+}
+
+/* Con imagen de fondo el borde deja de ser discontinuo y el texto solo aparece
+   al pasar por encima, para no tapar la vista previa. */
+.giftmessage-dropzone-filled.dropzone {
+    border-style: solid;
+    border-color: #dddddd;
+}
+
+.giftmessage-dropzone-filled .dz-message {
+    opacity: 0;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #111111;
+    transition: opacity 0.15s ease;
+}
+
+.giftmessage-dropzone-filled:hover .dz-message,
+.giftmessage-dropzone-filled.dz-drag-hover .dz-message,
+.giftmessage-dropzone-filled:focus-within .dz-message {
+    opacity: 1;
+}
+
+/* Las previews que Dropzone inyecta sobrarian sobre la imagen de fondo: el
+   resultado de la subida ya se ve en la propia zona y en el aviso de toastr. */
+.giftmessage-dropzone .dz-preview { display: none; }
+
+.giftmessage-dropzone.is-uploading .dz-message { opacity: 1; }
+
+/* ── Aviso del tamano real de impresion ──────────────────────────────────── */
+.giftmessage-fit-note {
+    color: #555555;
+}
+
+/* Sin rojos: el aviso se marca con el verde oscuro de la paleta y negrita. */
+.giftmessage-fit-note-alert {
+    color: #4f6b0a;
+    font-weight: 600;
+}
+
+/* ── Previsualizacion del PDF ────────────────────────────────────────────── */
+.giftmessage-preview-frame {
+    width: 100%;
+    height: 60vh;
+    min-height: 320px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f5f6f8;
+}

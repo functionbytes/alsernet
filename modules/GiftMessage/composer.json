@@ -1,0 +1,28 @@
+{
+    "name": "modules/giftmessage",
+    "description": "Gestion y generacion de PDF de mensajes regalo para pedidos",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\GiftMessage\\": "app/",
+            "Modules\\GiftMessage\\Database\\Factories\\": "database/factories/",
+            "Modules\\GiftMessage\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\GiftMessage\\Tests\\": "tests/"
+        }
+    }
+}
