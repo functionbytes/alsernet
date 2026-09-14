@@ -1,0 +1,122 @@
+<?php
+
+namespace Modules\Supplier\Jobs;
+
+use Exception;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Modules\Supplier\Models\Sync\SyncBatch;
+use Modules\Supplier\Models\Sync\SyncFailure;
+use Modules\Supplier\Services\ErpSyncService;
+use Modules\Supplier\Services\PriceSyncAgent;
+use Modules\Supplier\Services\SyncStatusService;
+
+/**
+ * Sync Prices Job
+ *
+ * Queued job that runs the PriceSyncAgent for a given SyncBatch.
+ */
+class SyncPricesJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public int $timeout = 3600;
+
+    public function __construct(
+        public SyncBatch $batch,
+        public ?int $supplierId = null,
+        public ?array $dateRange = null,
+    ) {}
+
+    public function backoff(): array
+    {
+        return [60, 180, 600];
+    }
+
+    public function handle(SyncStatusService $statusService, ErpSyncService $erpSyncService): void
+    {
+        Log::info('Price sync job started', [
+            'batch_id' => $this->batch->id,
+            'supplier_id' => $this->supplierId,
+            'date_range' => $this->dateRange,
+            'attempt' => $this->attempts(),
+        ]);
+
+        try {
+            $agent = new PriceSyncAgent($this->batch, $statusService, $erpSyncService);
+
+            if ($this->supplierId) {
+                $agent->forSupplier($this->supplierId);
+            }
+
+            if ($this->dateRange && count($this->dateRange) >= 1) {
+                $agent->withinDateRange($this->dateRange[0] ?? null, $this->dateRange[1] ?? null);
+            }
+
+            $result = $agent->execute();
+
+            Log::info('Price sync job completed', [
+                'batch_id' => $this->batch->id,
+                'result' => $result,
+            ]);
+        } catch (Exception $e) {
+            $this->recordSyncFailure($e);
+
+            Log::error('Price sync job failed', [
+                'batch_id' => $this->batch->id,
+                'attempt' => $this->attempts(),
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    public function failed(Exception $exception): void
+    {
+        $this->batch->markAsFailed();
+
+        Log::error('Price sync job failed permanently', [
+            'batch_id' => $this->batch->id,
+            'attempts' => $this->attempts(),
+            'error' => $exception->getMessage(),
+        ]);
+
+        $this->recordSyncFailure($exception);
+    }
+
+    protected function recordSyncFailure(Exception $exception): void
+    {
+        try {
+            SyncFailure::create([
+                'batch_id' => $this->batch->id,
+                'sync_type' => 'price',
+                'supplier_id' => $this->supplierId,
+                'entity_id' => null,
+                'erp_id' => null,
+                'changed_data' => [],
+                'context' => [
+                    'job' => self::class,
+                    'attempt' => $this->attempts(),
+                    'date_range' => $this->dateRange,
+                ],
+                'error_message' => $exception->getMessage(),
+                'error_code' => $exception->getCode() ?: 'UNKNOWN',
+                'retry_count' => 0,
+                'max_retries' => $this->tries,
+                'failure_status' => 'pending',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to record price sync failure', [
+                'original_error' => $exception->getMessage(),
+                'recording_error' => $e->getMessage(),
+            ]);
+        }
+    }
+}

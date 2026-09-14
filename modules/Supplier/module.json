@@ -1,0 +1,12 @@
+{
+    "name": "Supplier",
+    "alias": "supplier",
+    "description": "Módulo de gestión de proveedores - Sincronización de contenido, automatización de extracción, generación de contenido IA y gestión de fuentes",
+    "keywords": ["supplier", "automation", "content", "ai", "extraction"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Supplier\\Providers\\SupplierServiceProvider",
+        "Modules\\Supplier\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}
