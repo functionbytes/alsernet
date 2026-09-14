@@ -17,14 +17,23 @@ class MacroExecutor
 
     public function run(Macro $macro, Ticket $ticket): void
     {
-        DB::connection('helpdesk')->transaction(function () use ($macro, $ticket) {
+        // Guard inTransaction() igual que Ticket::generateTicketNumber():
+        // si el PDO de 'helpdesk' ya está en una transacción (SharesHelpdeskPdo
+        // en tests, o cualquier llamador futuro que ya haya abierto una),
+        // pedirle otra revienta con "There is already an active transaction"
+        // (auditoría de lógica de negocio, 14-sep-2026 — no falla en
+        // producción, cada conexión tiene su propio PDO real ahí).
+        $connection = DB::connection('helpdesk');
+        $execute = function () use ($macro, $ticket) {
             foreach ($macro->actions as $action) {
                 $this->executeAction($action, $ticket);
             }
 
             $macro->increment('usage_count');
             $macro->update(['last_used_at' => now()]);
-        });
+        };
+
+        $connection->getPdo()->inTransaction() ? $execute() : $connection->transaction($execute);
     }
 
     private function executeAction(array $action, Ticket $ticket): void
