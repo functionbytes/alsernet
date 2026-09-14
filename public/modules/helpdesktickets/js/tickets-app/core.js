@@ -21,6 +21,38 @@
             selected: null,
             currentUserId: null,
             bulk: {},
+            listRefreshTimer: null,
+            listRefreshInFlight: false,
+            listRefreshQueued: false,
+            listRefreshInterval: null,
+            splitLayout: null,
+            listDensity: 'normal',
+            mobilePane: 'list',
+            draftSaveTimer: null,
+            threadHistoryExpanded: false,
+            slaTimer: null,
+            undoAction: null,
+            undoTimer: null,
+            networkOnline: typeof navigator === 'undefined' || navigator.onLine !== false,
+            offlineQueue: [],
+            offlineAttachmentQueue: [],
+            realtimeRetryTimer: null,
+            realtimeRetryCount: 0,
+            realtimeLastEventAt: null,
+            realtimeEventCount: 0,
+            realtimeErrorCount: 0,
+            threadSearch: '',
+            threadSearchTimer: null,
+            threadPage: 1,
+            threadHasMore: false,
+            threadTotal: 0,
+            threadPerPage: 30,
+            threadFilters: { sender: '', type: 'all', from: '', to: '', channel: '' },
+            threadLoadingMore: false,
+            editConflictMessage: '',
+            editConflictFields: [],
+            slaNotified: {},
+            offlineRetryTimer: null,
         },
         urls: {},
 
@@ -30,6 +62,532 @@
         // la vista si algún día hay muchos agentes a la vez.
         pulseIntervalMs: 3000,
     };
+
+    // Preferencias visuales del split. Se guardan por navegador y usuario para
+    // que cada agente pueda dar más espacio a la conversación o a la gestión
+    // sin convertirlo en una configuración global del helpdesk.
+    var TKT_SPLIT_LAYOUT_KEY = 'helpdesk.tickets.split-layout.v1';
+    var TKT_SPLIT_DEFAULTS = { listWidth: 380, sideWidth: 316, sideCollapsed: false };
+    var TKT_LIST_DENSITY_KEY = 'helpdesk.tickets.list-density.v1';
+    var TKT_MOBILE_PANE_KEY = 'helpdesk.tickets.mobile-pane.v1';
+    var TKT_DRAFT_KEY_PREFIX = 'helpdesk.tickets.draft.v1.';
+    var TKT_OFFLINE_QUEUE_KEY = 'helpdesk.tickets.offline-replies.v1';
+    var TKT_OFFLINE_DB_NAME = 'helpdesk-tickets-offline-v1';
+    var TKT_OFFLINE_DB_STORE = 'replies';
+    var TKT_OFFLINE_MAX_ATTEMPTS = 8;
+    var TKT_OFFLINE_RETRY_BASE_MS = 5000;
+    var TKT_OFFLINE_RETENTION_MS = 24 * 60 * 60 * 1000;
+    var TKT_OFFLINE_MAX_ENTRIES = 50;
+    var TKT_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+    var TKT_ATTACHMENT_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'zip', 'rar', 'txt'];
+    var TKT_THREAD_VISIBLE_LIMIT = 12;
+
+    function clampSplitWidth(value, min, max) {
+        var n = parseInt(value, 10);
+        if (isNaN(n)) n = min;
+        return Math.max(min, Math.min(max, n));
+    }
+
+    function readSplitLayout() {
+        var out = $.extend({}, TKT_SPLIT_DEFAULTS);
+        try {
+            var raw = window.localStorage.getItem(TKT_SPLIT_LAYOUT_KEY);
+            if (raw) $.extend(out, JSON.parse(raw));
+        } catch (e) { /* localStorage bloqueado o dato antiguo: usa defaults */ }
+
+        out.listWidth = clampSplitWidth(out.listWidth, 320, 520);
+        out.sideWidth = clampSplitWidth(out.sideWidth, 290, 460);
+        out.sideCollapsed = out.sideCollapsed === true;
+        return out;
+    }
+
+    function persistSplitLayout() {
+        var layout = TKA.state.splitLayout;
+        if (!layout) return;
+        try { window.localStorage.setItem(TKT_SPLIT_LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* opcional */ }
+    }
+
+    function applySplitLayout() {
+        var layout = TKA.state.splitLayout || readSplitLayout();
+        TKA.state.splitLayout = layout;
+        var split = document.querySelector('.tkt-split');
+        var side = document.getElementById('tkt-side');
+        var toggle = document.getElementById('tkt-side-toggle');
+        if (!split) return;
+
+        split.style.setProperty('--tkt-list-width', layout.listWidth + 'px');
+        split.style.setProperty('--tkt-side-width', layout.sideWidth + 'px');
+        split.classList.toggle('side-collapsed', layout.sideCollapsed);
+        if (side) side.classList.toggle('is-collapsed', layout.sideCollapsed);
+        if (toggle) {
+            toggle.setAttribute('aria-pressed', layout.sideCollapsed ? 'true' : 'false');
+            toggle.setAttribute('aria-label', layout.sideCollapsed ? 'Mostrar panel de gestión' : 'Ocultar panel de gestión');
+            toggle.title = layout.sideCollapsed ? 'Mostrar panel de gestión' : 'Ocultar panel de gestión';
+            toggle.innerHTML = '<i class="fa-solid ' + (layout.sideCollapsed ? 'fa-angles-left' : 'fa-angles-right') + '"></i>';
+        }
+    }
+
+    function setSideCollapsed(collapsed) {
+        if (!TKA.state.splitLayout) TKA.state.splitLayout = readSplitLayout();
+        TKA.state.splitLayout.sideCollapsed = !!collapsed;
+        applySplitLayout();
+        persistSplitLayout();
+    }
+
+    function resizeSplit(target, movement) {
+        if (!TKA.state.splitLayout) TKA.state.splitLayout = readSplitLayout();
+        if (TKA.state.splitLayout.sideCollapsed) return;
+
+        if (target === 'list') {
+            TKA.state.splitLayout.listWidth = clampSplitWidth(
+                TKA.state.splitLayout.listWidth + movement, 320, 520
+            );
+        } else {
+            // El segundo divisor se mueve en sentido contrario al ancho del
+            // panel lateral: arrastrarlo a la derecha da más espacio al hilo.
+            TKA.state.splitLayout.sideWidth = clampSplitWidth(
+                TKA.state.splitLayout.sideWidth - movement, 290, 460
+            );
+        }
+        applySplitLayout();
+    }
+
+    function initSplitLayout() {
+        TKA.state.splitLayout = readSplitLayout();
+        applySplitLayout();
+
+        $('#tkt-side-toggle').off('click.tktSplit').on('click.tktSplit', function () {
+            setSideCollapsed(!TKA.state.splitLayout.sideCollapsed);
+        });
+
+        var $handles = $('.tkt-split-resizer');
+        $handles.off('.tktSplit').on('pointerdown.tktSplit', function (ev) {
+            if (TKA.state.splitLayout && TKA.state.splitLayout.sideCollapsed) return;
+            var handle = this;
+            if (handle.setPointerCapture) handle.setPointerCapture(ev.pointerId);
+            $(handle).addClass('dragging');
+            $('body').addClass('tkt-split-resizing');
+            TKA.state.splitDrag = { target: $(handle).data('resize-target'), x: ev.clientX };
+            ev.preventDefault();
+        }).on('dblclick.tktSplit', function () {
+            if (!TKA.state.splitLayout) TKA.state.splitLayout = readSplitLayout();
+            var target = $(this).data('resize-target');
+            if (target === 'list') TKA.state.splitLayout.listWidth = TKT_SPLIT_DEFAULTS.listWidth;
+            if (target === 'side') TKA.state.splitLayout.sideWidth = TKT_SPLIT_DEFAULTS.sideWidth;
+            applySplitLayout();
+            persistSplitLayout();
+        }).on('keydown.tktSplit', function (ev) {
+            var amount = 0;
+            if (ev.key === 'ArrowRight') amount = 16;
+            if (ev.key === 'ArrowLeft') amount = -16;
+            if (!amount) return;
+            resizeSplit($(this).data('resize-target'), amount);
+            persistSplitLayout();
+            ev.preventDefault();
+        });
+
+        $(document).off('pointermove.tktSplit pointerup.tktSplit pointercancel.tktSplit')
+            .on('pointermove.tktSplit', function (ev) {
+                var drag = TKA.state.splitDrag;
+                if (!drag) return;
+                var movement = ev.clientX - drag.x;
+                drag.x = ev.clientX;
+                resizeSplit(drag.target, movement);
+            })
+            .on('pointerup.tktSplit pointercancel.tktSplit', function () {
+                if (!TKA.state.splitDrag) return;
+                $('.tkt-split-resizer').removeClass('dragging');
+                $('body').removeClass('tkt-split-resizing');
+                TKA.state.splitDrag = null;
+                persistSplitLayout();
+            });
+    }
+
+    function readPreference(key, fallback) {
+        try {
+            var value = window.localStorage.getItem(key);
+            return value == null ? fallback : value;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function writePreference(key, value) {
+        try { window.localStorage.setItem(key, value); } catch (e) { /* opcional */ }
+    }
+
+    function readOfflineQueue() {
+        try {
+            var raw = window.localStorage.getItem(TKT_OFFLINE_QUEUE_KEY);
+            var parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? trimOfflineQueue(parsed.map(normalizeOfflineEntry).filter(function (entry) {
+                return !offlineEntryExpired(entry);
+            })) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function normalizeOfflineEntry(entry) {
+        entry = entry || {};
+        return $.extend({
+            createdAt: new Date().toISOString(),
+            attempts: 0,
+            nextAttemptAt: null,
+            lastError: '',
+            dead: false,
+        }, entry);
+    }
+
+    function offlineEntryExpired(entry) {
+        var createdAt = Date.parse(entry && entry.createdAt);
+        return Number.isFinite(createdAt) && Date.now() - createdAt > TKT_OFFLINE_RETENTION_MS;
+    }
+
+    function trimOfflineQueue(queue) {
+        queue = Array.isArray(queue) ? queue : [];
+        return queue.length > TKT_OFFLINE_MAX_ENTRIES ? queue.slice(-TKT_OFFLINE_MAX_ENTRIES) : queue;
+    }
+
+    function writeOfflineQueue(queue) {
+        var normalized = (queue || []).map(normalizeOfflineEntry).filter(function (entry) {
+            return !offlineEntryExpired(entry);
+        });
+        var remainingSlots = Math.max(0, TKT_OFFLINE_MAX_ENTRIES - (TKA.state.offlineAttachmentQueue || []).length);
+        TKA.state.offlineQueue = remainingSlots > 0 ? trimOfflineQueue(normalized).slice(-remainingSlots) : [];
+        try {
+            if (TKA.state.offlineQueue.length) {
+                window.localStorage.setItem(TKT_OFFLINE_QUEUE_KEY, JSON.stringify(TKA.state.offlineQueue));
+            } else {
+                window.localStorage.removeItem(TKT_OFFLINE_QUEUE_KEY);
+            }
+        } catch (e) { /* localStorage opcional */ }
+        updateOfflineQueueStatus();
+    }
+
+    function openOfflineDb() {
+        if (!window.indexedDB) return Promise.reject(new Error('IndexedDB no disponible'));
+        return new Promise(function (resolve, reject) {
+            var request = window.indexedDB.open(TKT_OFFLINE_DB_NAME, 1);
+            request.onupgradeneeded = function () {
+                if (!request.result.objectStoreNames.contains(TKT_OFFLINE_DB_STORE)) {
+                    request.result.createObjectStore(TKT_OFFLINE_DB_STORE, { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = function () { resolve(request.result); };
+            request.onerror = function () { reject(request.error || new Error('No se pudo abrir la cola offline')); };
+        });
+    }
+
+    function readOfflineAttachmentQueue() {
+        return openOfflineDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var request = db.transaction(TKT_OFFLINE_DB_STORE, 'readonly').objectStore(TKT_OFFLINE_DB_STORE).getAll();
+                request.onsuccess = function () { resolve(request.result || []); };
+                request.onerror = function () { reject(request.error); };
+            });
+        });
+    }
+
+    function putOfflineAttachmentReply(entry) {
+        return openOfflineDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var request = db.transaction(TKT_OFFLINE_DB_STORE, 'readwrite').objectStore(TKT_OFFLINE_DB_STORE).put(entry);
+                request.onsuccess = function () { resolve(true); };
+                request.onerror = function () { reject(request.error); };
+            });
+        });
+    }
+
+    function deleteOfflineAttachmentReply(id) {
+        return openOfflineDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var request = db.transaction(TKT_OFFLINE_DB_STORE, 'readwrite').objectStore(TKT_OFFLINE_DB_STORE).delete(id);
+                request.onsuccess = function () { resolve(true); };
+                request.onerror = function () { reject(request.error); };
+            });
+        });
+    }
+
+    function pruneOfflineAttachmentQueue(queue) {
+        var normalized = (queue || []).map(normalizeOfflineEntry);
+        var expired = normalized.filter(offlineEntryExpired);
+        var live = normalized.filter(function (entry) { return !offlineEntryExpired(entry); });
+        var remainingSlots = Math.max(0, TKT_OFFLINE_MAX_ENTRIES - (TKA.state.offlineQueue || []).length);
+        var overflow = live.length > remainingSlots ? live.slice(0, live.length - remainingSlots) : [];
+        var kept = remainingSlots > 0 ? live.slice(-remainingSlots) : [];
+
+        return Promise.all(expired.concat(overflow).map(function (entry) {
+            return deleteOfflineAttachmentReply(entry.id).catch(function () { return false; });
+        })).then(function () { return kept; });
+    }
+
+    function updateOfflineQueueStatus() {
+        var $queue = $('#tkt-status-queue');
+        if (!$queue.length) return;
+        var count = (TKA.state.offlineQueue || []).length;
+        var attachmentCount = (TKA.state.offlineAttachmentQueue || []).length;
+        var mailCount = Number(TKA.state.mailQueueCount || 0);
+        var pendingEntries = (TKA.state.offlineQueue || []).concat(TKA.state.offlineAttachmentQueue || []);
+        var failedCount = pendingEntries.filter(function (entry) { return entry.dead === true; }).length;
+        var parts = [];
+        if (count) parts.push(count + (count === 1 ? ' respuesta pendiente' : ' respuestas pendientes'));
+        if (attachmentCount) parts.push(attachmentCount + (attachmentCount === 1 ? ' adjunto pendiente' : ' adjuntos pendientes'));
+        if (failedCount) parts.push(failedCount + (failedCount === 1 ? ' reintento bloqueado' : ' reintentos bloqueados'));
+        if (mailCount) parts.push('cola de correo: ' + mailCount);
+        $queue.prop('hidden', parts.length === 0);
+        $queue.attr('aria-label', parts.join(' · ') || 'Sin respuestas pendientes');
+        $queue.html('<i class="fa-regular fa-envelope"></i> ' + parts.join(' · '));
+        $queue.attr('title', parts.length ? 'Abrir cola de respuestas pendientes' : 'Sin respuestas pendientes');
+    }
+
+    function setNetworkState(online, detail) {
+        TKA.state.networkOnline = !!online;
+        var $bar = $('#tkt-status-bar');
+        var $dot = $('#tkt-status-conn-dot');
+        var $text = $('#tkt-status-conn-text');
+        $bar.toggleClass('is-offline', !online).toggleClass('is-online', !!online);
+        $dot.removeClass('on connecting off').addClass(online ? 'on' : 'off');
+        $text.text(online ? (detail || 'Conectado') : 'Sin conexión');
+        $dot.attr('title', online
+            ? ($dot.data('realtime-last') || 'Tiempo real pendiente de eventos')
+            : 'Sin conexión con el servidor');
+        updateOfflineQueueStatus();
+    }
+
+    function markRealtimeEvent(label) {
+        TKA.state.realtimeLastEventAt = Date.now();
+        TKA.state.realtimeEventCount = (TKA.state.realtimeEventCount || 0) + 1;
+        var stamp = new Date(TKA.state.realtimeLastEventAt).toLocaleTimeString('es-ES');
+        var text = (label || 'Evento recibido') + ' · ' + stamp;
+        var $dot = $('#tkt-status-conn-dot');
+        $dot.data('realtime-last', text).attr('title', text);
+        $('#tkt-status-bar').attr('data-realtime-last', text);
+    }
+
+    function scheduleRealtimeRetry(ticketId) {
+        if (!ticketId || TKA.state.realtimeRetryTimer) return;
+        var attempt = TKA.state.realtimeRetryCount || 0;
+        var delay = Math.min(15000, Math.max(1000, Math.pow(2, attempt) * 1000));
+        TKA.state.realtimeRetryCount = attempt + 1;
+        TKA.state.realtimeRetryTimer = setTimeout(function () {
+            TKA.state.realtimeRetryTimer = null;
+            var current = TKA.state.currentTicket;
+            if (current && String(current.id) === String(ticketId)) joinTicketPresence(ticketId);
+        }, delay);
+    }
+
+    function initNetworkResilience() {
+        TKA.state.offlineQueue = readOfflineQueue();
+        readOfflineAttachmentQueue().then(function (queue) {
+            return pruneOfflineAttachmentQueue(queue);
+        }).then(function (queue) {
+            TKA.state.offlineAttachmentQueue = queue;
+            updateOfflineQueueStatus();
+            if (TKA.state.networkOnline) flushOfflineReplies();
+        }).catch(function () { TKA.state.offlineAttachmentQueue = []; });
+        setNetworkState(TKA.state.networkOnline);
+
+        if (TKA.state.networkListenersBound) return;
+        TKA.state.networkListenersBound = true;
+        window.addEventListener('offline', function () {
+            setNetworkState(false);
+            if (window.toastr) toastr.warning('Se perdió la conexión. Las respuestas de texto se guardarán para reintentarlas.');
+        });
+        window.addEventListener('online', function () {
+            setNetworkState(true, 'Conexión recuperada');
+            TKA.state.realtimeRetryCount = 0;
+            if (TKA.state.currentTicket) joinTicketPresence(TKA.state.currentTicket.id);
+            flushOfflineReplies();
+            queueTicketListRefresh('connection-restored', TKA.state.currentTicket, { freshCounts: true, preserveBulk: true });
+        });
+        if (TKA.state.networkOnline) flushOfflineReplies();
+    }
+
+    function hideUndo() {
+        clearTimeout(TKA.state.undoTimer);
+        TKA.state.undoTimer = null;
+        TKA.state.undoAction = null;
+        $('#tkt-undo').prop('hidden', true);
+    }
+
+    function offerUndo(label, callback) {
+        clearTimeout(TKA.state.undoTimer);
+        TKA.state.undoAction = { callback: callback };
+        $('#tkt-undo-text').text(label);
+        $('#tkt-undo').prop('hidden', false);
+        TKA.state.undoTimer = setTimeout(hideUndo, 8000);
+    }
+
+    function applyListDensity(compact) {
+        var isCompact = !!compact;
+        TKA.state.listDensity = isCompact ? 'compact' : 'normal';
+        $('.tkt-split-list').toggleClass('is-compact', isCompact);
+        var $button = $('#tkt-list-density');
+        if ($button.length) {
+            $button.attr('aria-pressed', isCompact ? 'true' : 'false')
+                .attr('aria-label', isCompact ? 'Usar lista normal' : 'Usar lista compacta')
+                .attr('title', isCompact ? 'Usar lista normal' : 'Usar lista compacta')
+                .html('<i class="fa-solid ' + (isCompact ? 'fa-expand' : 'fa-compress') + '"></i>');
+        }
+    }
+
+    function initListDensity() {
+        applyListDensity(readPreference(TKT_LIST_DENSITY_KEY, 'normal') === 'compact');
+    }
+
+    function applyMobilePane(which) {
+        which = ['list', 'detail', 'side'].indexOf(which) !== -1 ? which : 'list';
+        TKA.state.mobilePane = which;
+        var $split = $('.tkt-split');
+        $split.removeClass('mobile-list mobile-detail mobile-side').addClass('mobile-' + which);
+        $('#tkt-mobile-nav [data-mobile-pane]').each(function () {
+            var on = $(this).data('mobile-pane') === which;
+            $(this).toggleClass('on', on).attr('aria-selected', on ? 'true' : 'false');
+        });
+        writePreference(TKT_MOBILE_PANE_KEY, which);
+    }
+
+    function initMobilePane() {
+        applyMobilePane(readPreference(TKT_MOBILE_PANE_KEY, 'list'));
+    }
+
+    function openMobilePane(which) {
+        applyMobilePane(which);
+    }
+
+    function draftStorageKey(ticket) {
+        return TKT_DRAFT_KEY_PREFIX + (ticket && ticket.id != null ? String(ticket.id) : '');
+    }
+
+    function readComposerDraft(ticket) {
+        if (!ticket || ticket.id == null) return null;
+        try {
+            var raw = window.localStorage.getItem(draftStorageKey(ticket));
+            if (!raw) return null;
+            var draft = JSON.parse(raw);
+            return draft && typeof draft.body === 'string' && draft.body.trim()
+                ? draft
+                : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function updateDraftStatus($composer, draft, savedNow) {
+        var $status = $composer && $composer.find('#tkt-draft-status');
+        if (!$status || !$status.length) return;
+        var hasDraft = !!(draft && draft.body && draft.body.trim());
+        $status.toggleClass('saved', hasDraft).text(hasDraft
+            ? (savedNow ? 'Borrador guardado' : 'Borrador recuperado')
+            : '');
+        $status.attr('aria-label', hasDraft ? 'Borrador guardado automáticamente' : '');
+    }
+
+    function clearComposerDraft(ticket) {
+        if (!ticket || ticket.id == null) return;
+        try { window.localStorage.removeItem(draftStorageKey(ticket)); } catch (e) { /* opcional */ }
+        updateDraftStatus($('#tkt-composer'), null, false);
+    }
+
+    function saveComposerDraft(ticket, body, mode) {
+        if (!ticket || ticket.id == null) return;
+        var clean = String(body || '').trim();
+        try {
+            if (!clean) {
+                window.localStorage.removeItem(draftStorageKey(ticket));
+                updateDraftStatus($('#tkt-composer'), null, false);
+                return;
+            }
+            if (clean) {
+                var draft = { body: String(body || ''), mode: mode === 'note' ? 'note' : 'reply', updatedAt: new Date().toISOString() };
+                window.localStorage.setItem(draftStorageKey(ticket), JSON.stringify(draft));
+                updateDraftStatus($('#tkt-composer'), draft, true);
+            }
+        } catch (e) { /* los borradores son una mejora opcional */ }
+    }
+
+    function scheduleComposerDraftSave() {
+        var $body = $('#tkt-reply-body');
+        var ticket = TKA.state.currentTicket;
+        var $composer = $('#tkt-composer');
+        if (!$body.length || !ticket || !$composer.length) return;
+        clearTimeout(TKA.state.draftSaveTimer);
+        TKA.state.draftSaveTimer = setTimeout(function () {
+            saveComposerDraft(ticket, $body.val(), $composer.attr('data-mode'));
+        }, 500);
+    }
+
+    function stopSlaClock() {
+        if (TKA.state.slaTimer) clearInterval(TKA.state.slaTimer);
+        TKA.state.slaTimer = null;
+    }
+
+    function formatSlaRemaining(ms) {
+        var past = ms < 0;
+        var total = Math.abs(Math.round(ms / 60000));
+        var days = Math.floor(total / 1440);
+        var hours = Math.floor((total % 1440) / 60);
+        var minutes = total % 60;
+        var text = days ? days + ' d ' + hours + ' h' : (hours ? hours + ' h ' + minutes + ' min' : minutes + ' min');
+        return past ? 'hace ' + text : 'quedan ' + text;
+    }
+
+    function updateSlaClock(ticket) {
+        if (!ticket || !ticket.sla_due_at) return;
+        var due = new Date(ticket.sla_due_at).getTime();
+        if (isNaN(due)) return;
+        var diff = due - Date.now();
+        var label = formatSlaRemaining(diff);
+        var breach = diff < 0;
+        var kind = breach ? 'breach' : (ticket.sla_kind === 'warn' ? 'warn' : 'ok');
+        var $live = $('[data-sla-live]');
+        $live.text(label)
+            .toggleClass('breach', breach)
+            .toggleClass('warn', kind === 'warn' && !breach)
+            .attr('title', new Date(due).toLocaleString('es-ES'));
+        $('[data-sla-banner]').attr('data-sla-state', kind).toggleClass('breach', breach).toggleClass('warn', kind === 'warn' && !breach);
+        $('[data-sla-label]').text(kind === 'breach' ? 'SLA vencido' : (kind === 'warn' ? 'SLA en riesgo' : 'SLA dentro de plazo'));
+        $('[data-sla-chip]').toggleClass('tkt-chip-ok', kind === 'ok').toggleClass('tkt-chip-warn', kind === 'warn').toggleClass('tkt-chip-danger', kind === 'breach');
+        if (TKA.state.slaLastKind && TKA.state.slaLastKind !== kind && (kind === 'warn' || kind === 'breach')) {
+            notifySlaTransition(ticket, kind);
+        }
+        if (TKA.state.slaLastKind === 'warn' && kind === 'breach') {
+            queueTicketListRefresh('sla-breach', ticket, { freshCounts: true, preserveBulk: true });
+        }
+        TKA.state.slaLastKind = kind;
+    }
+
+    function notifySlaTransition(ticket, kind) {
+        var key = String(ticket.id) + ':' + kind;
+        if (TKA.state.slaNotified[key]) return;
+        TKA.state.slaNotified[key] = true;
+        var title = kind === 'breach' ? 'SLA vencido' : 'SLA en riesgo';
+        var message = '#' + ticket.id + ' · ' + (ticket.subject || 'Ticket') + (kind === 'breach' ? ' requiere atención inmediata.' : ' se acerca al límite de respuesta.');
+        if (window.toastr) {
+            (kind === 'breach' ? toastr.error : toastr.warning)(message, title);
+        }
+        // No se solicita permiso automáticamente: solo se usa la notificación
+        // del sistema si el agente ya la concedió en la configuración del
+        // navegador. Así la pantalla no dispara un prompt inesperado.
+        if (typeof window.Notification === 'function' && window.Notification.permission === 'granted') {
+            try { new window.Notification(title, { body: message, tag: key }); } catch (e) { /* opcional */ }
+        }
+    }
+
+    function startSlaClock(ticket) {
+        stopSlaClock();
+        if (!ticket || !ticket.sla_due_at) return;
+        TKA.state.slaLastKind = ticket.sla_kind || null;
+        updateSlaClock(ticket);
+        TKA.state.slaTimer = setInterval(function () {
+            if (!document.hidden && TKA.state.currentTicket === ticket) updateSlaClock(ticket);
+        }, 30000);
+    }
+
+    // Elemento que abrió el modal; se recupera al cerrar para no dejar el
+    // foco perdido en <body>. Solo hay un modal dinámico visible a la vez.
+    var tktModalReturnFocus = null;
 
     function escapeHtml(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -114,6 +672,12 @@
         form: 'Formulario', formulario: 'Formulario', web_form: 'Formulario',
         prestashop: 'PrestaShop', recurring: 'Recurrente', scheduled: 'Programado',
         import: 'Importado', chat: 'Chat', portal: 'Portal',
+        // Ticket abierto automáticamente desde el flujo omnicanal
+        // Conversación→Ticket (ChatFlow/Social) — valor real en BD que
+        // faltaba en este mapa: salía el slug en crudo ("conversation") en
+        // vez de una etiqueta, visto en el listado real al añadir el canal
+        // a la fila (QA visual 14-sep-2026).
+        conversation: 'Conversación',
     };
 
     // Icono por canal para el chip de origen de la cabecera del detalle
@@ -129,6 +693,7 @@
         form: 'fa-regular fa-file-lines', formulario: 'fa-regular fa-file-lines', web_form: 'fa-regular fa-file-lines',
         prestashop: 'fa-solid fa-cart-shopping', recurring: 'fa-solid fa-rotate', scheduled: 'fa-regular fa-calendar',
         import: 'fa-solid fa-file-import', chat: 'fa-solid fa-comments', portal: 'fa-solid fa-door-open',
+        conversation: 'fa-solid fa-comments',
     };
 
     var STATUS_LABEL_FALLBACK = {
@@ -205,6 +770,22 @@
         TKA.state.agentsFull = safeJson($data.attr('data-agents-full'), []);
         TKA.state.cannedReplies = safeJson($data.attr('data-canned-replies'), []);
         TKA.state.ticketTemplates = safeJson($data.attr('data-ticket-templates'), []);
+        // Settings → Helpdesk · Tickets → Funcionalidades (14-sep-2026):
+        // {feature_x_enabled: bool} resuelto server-side (TicketFeatures::resolved()).
+        // featureEnabled() abajo defaultea a true si una key no llega —
+        // mismo criterio "visible mientras no exista fila en BD" que ya usa
+        // helpdesk_ticket_feature_enabled() en PHP.
+        TKA.state.features = safeJson($data.attr('data-features'), {});
+        var configuredAttachmentMax = parseInt($data.attr('data-attachment-max-bytes'), 10);
+        if (Number.isFinite(configuredAttachmentMax) && configuredAttachmentMax > 0) {
+            TKT_ATTACHMENT_MAX_BYTES = configuredAttachmentMax;
+        }
+        var configuredAttachmentExtensions = safeJson($data.attr('data-attachment-extensions'), []);
+        if (Array.isArray(configuredAttachmentExtensions) && configuredAttachmentExtensions.length) {
+            TKT_ATTACHMENT_EXTENSIONS = configuredAttachmentExtensions.map(function (extension) {
+                return String(extension).toLowerCase().replace(/^\./, '');
+            });
+        }
         TKA.state.closeReasons = safeJson($data.attr('data-close-reasons'), []);
         TKA.state.closeRootCauses = safeJson($data.attr('data-close-root-causes'), []);
         var selectedId = $data.attr('data-selected-id');
@@ -251,6 +832,9 @@
         TKA.urls.mailboxTestTemplate = $data.attr('data-mailbox-test-url-template') || null;
         TKA.urls.workloadOverview = $data.attr('data-workload-overview-url') || null;
         TKA.urls.workloadAssignment = $data.attr('data-workload-assignment-url') || null;
+        TKA.urls.presenceOverview = $data.attr('data-presence-overview-url') || null;
+        TKA.urls.agentPresenceHeartbeat = $data.attr('data-agent-presence-heartbeat-url') || null;
+        TKA.urls.agentPresenceAgents = $data.attr('data-agent-presence-agents-url') || null;
         TKA.urls.slaCalendar = $data.attr('data-sla-calendar-url') || null;
         TKA.urls.slaPauseStatus = $data.attr('data-sla-pause-status-url') || null;
         TKA.urls.automationsList = $data.attr('data-automations-list-url') || null;
@@ -283,6 +867,10 @@
         // volver a cribarlo en cliente sobraría. Ver visibleTickets().
         TKA.state.serverFiltered = true;
 
+        initSplitLayout();
+        initListDensity();
+        initMobilePane();
+        initNetworkResilience();
         bindEvents();
         renderTabs();
 
@@ -315,7 +903,7 @@
         if (TKA.state.view === 'kanban') applyViewMode('kanban');
 
         if (TKA.state.selected) {
-            var pre = TKA.state.tickets.find(function (t) { return t.id === TKA.state.selected; });
+            var pre = TKA.state.tickets.find(function (t) { return String(t.id) === String(TKA.state.selected); });
             if (pre) selectTicket(pre);
         }
     }
@@ -323,6 +911,17 @@
     function safeJson(raw, fallback) {
         if (!raw) return fallback;
         try { return JSON.parse(raw); } catch (e) { return fallback; }
+    }
+
+    // Settings → Helpdesk · Tickets → Funcionalidades (14-sep-2026). Mismo
+    // criterio que el backend (helpdesk_ticket_feature_enabled()): si la key
+    // no llegó en TKA.state.features (grupo sin fila en BD todavía), se
+    // considera activada — nunca oculta algo por una ausencia de datos.
+    function featureEnabled(slug) {
+        var key = 'feature_' + slug + '_enabled';
+        var features = TKA.state.features || {};
+
+        return !Object.prototype.hasOwnProperty.call(features, key) || Boolean(features[key]);
     }
 
     // Completa un ticket de TKA.state.tickets con sus URLs de acción a
@@ -390,45 +989,191 @@
     function refetchList(params, opts) {
         opts = opts || {};
         params = params || {};
+        var requestParams = $.extend({}, params);
+        if (opts.freshCounts) requestParams.fresh_counts = 1;
         var qs = $.param(params);
+        var requestQs = $.param(requestParams);
         var url = TKA.urls.index + (qs ? '?' + qs : '');
+        var requestUrl = TKA.urls.index + (requestQs ? '?' + requestQs : '');
+        var previousSignature = listSignature(TKA.state.tickets, TKA.state.tabCounts);
+        var shouldRender = !opts.skipIfUnchanged;
 
-        $('#tkt-skeleton').addClass('on');
-        $('#tkt-list').hide();
+        if (!opts.silent) {
+            $('#tkt-skeleton').addClass('on');
+            $('#tkt-list').hide();
+        }
 
-        $.ajax({ url: url, dataType: 'json', headers: { Accept: 'application/json' } })
+        $.ajax({ url: requestUrl, dataType: 'json', headers: { Accept: 'application/json' } })
             .done(function (res) {
-                TKA.state.tickets = (res.tickets || []).map(hydrateTicketUrls);
-                TKA.state.tabCounts = res.tab_counts || TKA.state.tabCounts;
-                renderStatusCounts();
+                var nextTickets = (res.tickets || []).map(hydrateTicketUrls);
+                var nextCounts = res.tab_counts || TKA.state.tabCounts;
+                var nextSignature = listSignature(nextTickets, nextCounts);
+                shouldRender = !opts.skipIfUnchanged || previousSignature !== nextSignature;
+
+                TKA.state.tickets = nextTickets;
+                TKA.state.tabCounts = nextCounts;
                 TKA.state.serverFiltered = true;
-                TKA.state.bulk = {};
+                if (!opts.preserveBulk) TKA.state.bulk = {};
+                else {
+                    Object.keys(TKA.state.bulk).forEach(function (id) {
+                        if (!TKA.state.tickets.some(function (t) { return String(t.id) === String(id); })) {
+                            delete TKA.state.bulk[id];
+                        }
+                    });
+                }
                 TKA.state.newTicketCount = 0;
                 TKA.state.reassignedCount = 0;
                 $('#tkt-new-banner').remove();
 
-                syncFilterControls(params);
-                renderTabs();
-                renderList();
-                renderFoot(res.pagination || {});
-                renderBulkBar();
-                // En modo Kanban la lista está oculta y las columnas se pintan
-                // aparte: sin esto, un cambio de pestaña desde el Kanban dejaba
-                // las tarjetas viejas en pantalla (renderList solo toca #tkt-list).
-                if (TKA.state.view === 'kanban') applyViewMode('kanban');
+                if (shouldRender) {
+                    renderStatusCounts();
+                    syncFilterControls(params);
+                    renderTabs();
+                    renderList();
+                    renderFoot(res.pagination || {});
+                    renderBulkBar();
+                    // En modo Kanban la lista está oculta y las columnas se pintan
+                    // aparte: sin esto, un cambio de pestaña desde el Kanban dejaba
+                    // las tarjetas viejas en pantalla (renderList solo toca #tkt-list).
+                    if (TKA.state.view === 'kanban') applyViewMode('kanban');
+                }
+
+                TKA.state.listSignature = nextSignature;
 
                 if (window.history && window.history.pushState) {
-                    window.history.pushState({ tktRefetch: true }, '', url);
+                    if (opts.pushHistory !== false) window.history.pushState({ tktRefetch: true }, '', url);
                 }
-                if (opts.onDone) opts.onDone(res);
+                if (opts.onDone) opts.onDone(res, { changed: shouldRender });
             })
             .fail(function () {
                 window.location = url;
             })
             .always(function () {
-                $('#tkt-skeleton').removeClass('on');
-                if (TKA.state.view !== 'kanban') $('#tkt-list').show();
+                if (!opts.silent) {
+                    $('#tkt-skeleton').removeClass('on');
+                    if (TKA.state.view !== 'kanban') $('#tkt-list').show();
+                }
+                if (opts.onAlways) opts.onAlways();
             });
+    }
+
+    // Firma estable de los datos que realmente afectan a una fila o a sus
+    // contadores. Se usa para que el sondeo de respaldo no repinte la bandeja
+    // cada 15 segundos si nadie ha cambiado nada.
+    function listSignature(tickets, counts) {
+        var rows = (tickets || []).map(function (t) {
+            return [
+                t.id, t.updated_at, t.status_id, t.status_slug, t.priority,
+                t.category_id, t.group_id, t.assignee ? t.assignee.id : '',
+                t.unread_count, t.snoozed_until, t.archived_at,
+                t.last_message_at, t.last_message_snippet, t.sla_kind,
+            ].join(':');
+        }).join('|');
+        var countPart = Object.keys(counts || {}).sort().map(function (key) {
+            return key + ':' + counts[key];
+        }).join('|');
+        return rows + '||' + countPart;
+    }
+
+    function ticketSignature(t) {
+        return t ? [
+            t.id, t.updated_at, t.status_id, t.status_slug, t.priority,
+            t.category_id, t.group_id, t.assignee ? t.assignee.id : '',
+            t.unread_count, t.snoozed_until, t.archived_at,
+        ].join(':') : '';
+    }
+
+    // Punto único para mantener la lista después de una mutación. Coalescea
+    // respuestas locales y eventos Echo que llegan juntos, conserva el ticket
+    // seleccionado y no modifica el historial del navegador durante una
+    // actualización automática.
+    function queueTicketListRefresh(reason, ticket, opts) {
+        opts = opts || {};
+        var state = TKA.state;
+        state.listRefreshReason = reason || 'ticket-updated';
+        state.listRefreshRefreshDetail = state.listRefreshRefreshDetail || !!opts.refreshDetail;
+        state.listRefreshForceDetail = state.listRefreshForceDetail || !!opts.forceDetail;
+        state.listRefreshFreshCounts = state.listRefreshFreshCounts || !!opts.freshCounts;
+        state.listRefreshSilent = opts.silent !== false;
+        state.listRefreshPreserveBulk = opts.preserveBulk !== false;
+        state.listRefreshTicket = ticket || state.listRefreshTicket || null;
+
+        if (state.listRefreshTimer) clearTimeout(state.listRefreshTimer);
+        state.listRefreshTimer = setTimeout(function () {
+            state.listRefreshTimer = null;
+            if (state.listRefreshInFlight) {
+                state.listRefreshQueued = true;
+                return;
+            }
+
+            state.listRefreshInFlight = true;
+            state.listRefreshQueued = false;
+
+            var current = state.currentTicket;
+            var selectedId = state.selected;
+            var beforeCurrentSignature = ticketSignature(current);
+            var refreshDetail = !!state.listRefreshRefreshDetail;
+            var forceDetail = !!state.listRefreshForceDetail;
+            var freshCounts = !!state.listRefreshFreshCounts;
+            var refreshTicket = state.listRefreshTicket;
+
+            state.listRefreshRefreshDetail = false;
+            state.listRefreshForceDetail = false;
+            state.listRefreshFreshCounts = false;
+            state.listRefreshTicket = null;
+
+            var page = new URLSearchParams(window.location.search).get('page') || 1;
+            refetchList(currentListParams({ page: page }), {
+                silent: state.listRefreshSilent,
+                pushHistory: false,
+                freshCounts: freshCounts,
+                preserveBulk: state.listRefreshPreserveBulk,
+                skipIfUnchanged: !forceDetail,
+                onDone: function (res, meta) {
+                    if (!refreshDetail || !selectedId || !current || String(current.id) !== String(selectedId)) return;
+
+                    var fresh = state.tickets.find(function (t) { return String(t.id) === String(selectedId); });
+                    var next = fresh || refreshTicket || current;
+                    var afterCurrentSignature = ticketSignature(next);
+
+                    if (fresh) state.currentTicket = fresh;
+                    else if (refreshTicket && String(refreshTicket.id) === String(selectedId)) {
+                        $.extend(current, refreshTicket);
+                        state.currentTicket = current;
+                    }
+
+                    if (forceDetail || beforeCurrentSignature !== afterCurrentSignature || (meta && meta.changed && refreshTicket)) {
+                        renderDetail(state.currentTicket);
+                        renderSidePanel(state.currentTicket);
+                    }
+                },
+                onAlways: function () {
+                    state.listRefreshInFlight = false;
+                    state.listRefreshSilent = true;
+                    state.listRefreshPreserveBulk = true;
+                    if (state.listRefreshQueued) {
+                        state.listRefreshQueued = false;
+                        queueTicketListRefresh('queued-update', state.currentTicket, { freshCounts: true });
+                    }
+                },
+            });
+        }, opts.delay == null ? 100 : opts.delay);
+    }
+
+    // Respaldo cuando no hay Echo/Reverb disponible. La petición es la misma
+    // consulta JSON del listado, pero solo repinta si cambia la firma.
+    function startTicketListRefresh() {
+        if (TKA.state.listRefreshInterval) clearInterval(TKA.state.listRefreshInterval);
+        TKA.state.listRefreshInterval = setInterval(function () {
+            if (document.hidden || $('#tkt-modal-backdrop.on').length || !TKA.state.networkOnline || navigator.onLine === false) return;
+            queueTicketListRefresh('poll', TKA.state.currentTicket, {
+                refreshDetail: true,
+                freshCounts: true,
+                silent: true,
+                preserveBulk: true,
+                delay: 0,
+            });
+        }, 15000);
     }
 
     // Los dos formularios de filtro pintan el MISMO estado desde ángulos
@@ -486,49 +1231,77 @@
         if (typeof window.Echo === 'undefined') return;
 
         try {
-            window.Echo.private('helpdesk.tickets')
+            var channel = window.Echo.private('helpdesk.tickets');
+            channel
                 .listen('.ticket.created', function () {
-                    TKA.state.newTicketCount = (TKA.state.newTicketCount || 0) + 1;
-                    renderNewTicketsBanner();
+                    queueTicketListRefresh('ticket-created', null, { freshCounts: true });
                 })
-                // Reasignar (a mano, al responder, por automatización o en
-                // bloque) también cambia lo que esta lista debería enseñar —
-                // "Sin asignar" baja, "Mis tickets" gana uno— pero el mismo
-                // motivo de arriba aplica: no se toca la fila ni el contador
-                // de la pestaña a ciegas, se avisa y el clic en "Actualizar"
-                // ya trae tab_counts frescos del servidor (ver refetchList).
-                .listen('.assigned', function () {
-                    TKA.state.reassignedCount = (TKA.state.reassignedCount || 0) + 1;
-                    renderNewTicketsBanner();
+                .listen('.message.added', function (e) {
+                    // Un correo entrante también se emite en el canal global
+                    // de la bandeja. El canal de presencia del ticket refresca
+                    // el hilo; este listener refresca fila, contadores y orden
+                    // sin esperar al polling de 15 s.
+                    var incomingTicket = e && e.ticket_id ? findTicketById(e.ticket_id) : null;
+                    queueTicketListRefresh('message-added', incomingTicket, {
+                        freshCounts: true,
+                        preserveBulk: true,
+                        refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                    });
+                })
+                .listen('.assigned', function (e) {
+                    queueTicketListRefresh('ticket-assigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                })
+                .listen('.unassigned', function (e) {
+                    queueTicketListRefresh('ticket-unassigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                })
+                .listen('.ticket.status.changed', function (e) {
+                    var statusTicket = e && e.ticket_id ? findTicketById(e.ticket_id) : null;
+                    var selectedTicket = e && e.ticket_id && isSelectedTicket(e.ticket_id) ? TKA.state.currentTicket : null;
+                    var changedTicket = statusTicket || selectedTicket;
+                    if (changedTicket && e && e.new_status) {
+                        applyLocalTicketField(changedTicket, 'status_id', e.new_status.id);
+                        changedTicket.status_slug = canonicalClientStatusSlug(e.new_status.slug);
+                        changedTicket.status_name = e.new_status.name;
+                    }
+                    queueTicketListRefresh('ticket-status-changed', changedTicket, {
+                        freshCounts: true,
+                        refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                        forceDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                    });
+                })
+                .listen('.ticket.updated', function (e) {
+                    var id = e && e.ticket && e.ticket.id ? e.ticket.id : null;
+                    var updatedTicket = id ? findTicketById(id) : null;
+                    var currentUpdatedTicket = id && isSelectedTicket(id) ? TKA.state.currentTicket : null;
+                    var changedUpdatedTicket = updatedTicket || currentUpdatedTicket;
+                    if (currentUpdatedTicket && $('#tkt-reply-body').val().trim()) {
+                        showEditConflict('Otro agente actualizó este ticket mientras redactabas. Revisa el hilo antes de enviar.');
+                    }
+                    if (changedUpdatedTicket && e.ticket) {
+                        if (Object.prototype.hasOwnProperty.call(e.ticket, 'priority')) {
+                            applyLocalTicketField(changedUpdatedTicket, 'priority', e.ticket.priority);
+                        }
+                        if (Object.prototype.hasOwnProperty.call(e.ticket, 'status_id')) {
+                            applyLocalTicketField(changedUpdatedTicket, 'status_id', e.ticket.status_id);
+                        }
+                    }
+                    queueTicketListRefresh('ticket-updated', changedUpdatedTicket, {
+                        freshCounts: true,
+                        refreshDetail: !!(id && isSelectedTicket(id)),
+                    });
                 });
         } catch (e) {
             // Sin Reverb levantado en este entorno la pantalla sigue siendo
-            // usable: se pierde el aviso, no la funcionalidad (mismo criterio
-            // que el banner de colisión entre agentes).
+            // usable: el sondeo periódico de la bandeja cubre los cambios.
         }
     }
 
-    function renderNewTicketsBanner() {
-        var nuevos = TKA.state.newTicketCount || 0;
-        var reasignados = TKA.state.reassignedCount || 0;
-        if (!nuevos && !reasignados) { $('#tkt-new-banner').remove(); return; }
+    function findTicketById(id) {
+        return TKA.state.tickets.find(function (t) { return String(t.id) === String(id); }) || null;
+    }
 
-        var parts = [];
-        if (nuevos) parts.push(nuevos === 1 ? '1 ticket nuevo' : nuevos + ' tickets nuevos');
-        if (reasignados) parts.push(reasignados === 1 ? '1 reasignado' : reasignados + ' reasignados');
-        var label = parts.join(' · ');
-
-        if ($('#tkt-new-banner').length) {
-            $('#tkt-new-banner .tkt-new-banner-label').text(label);
-            return;
-        }
-
-        $('#tkt-list').before(
-            '<button type="button" class="tkt-new-banner" id="tkt-new-banner">' +
-                '<span class="tkt-new-banner-label">' + label + '</span>' +
-                '<span class="tkt-new-banner-act">Actualizar</span>' +
-            '</button>'
-        );
+    function isSelectedTicket(id) {
+        return id != null && String(TKA.state.selected) === String(id);
     }
 
     // Pie de la lista ("1–50 de 66 tickets" + las dos flechas). Mismo markup
@@ -665,7 +1438,7 @@
     }
 
     function renderRow(t) {
-        var isActive = TKA.state.selected === t.id;
+        var isActive = String(TKA.state.selected) === String(t.id);
         var checked = TKA.state.bulk[t.id] ? 'checked' : '';
         var statusRowClass = 's-' + (t.status_slug || 'open');
         var statusLabel = t.status_name || STATUS_LABEL_FALLBACK[t.status_slug] || t.status_slug;
@@ -684,52 +1457,118 @@
         }
 
         // s-unassigned se añade como clase EXTRA (nunca sustituye la del
-        // estado real) — la regla CSS .tkt-ticket-row.s-unassigned ya
-        // existía en la hoja de estilos pero era inalcanzable (esta clase
-        // nunca se usaba fuera del Kanban); al declararse después de
-        // s-open/s-pending/… en el CSS, gana el borde rojo "necesita
-        // atención" sobre el color normal del estado cuando el ticket no
-        // tiene agente.
-        // Fila del mockup: cuatro líneas apiladas en una sola columna, no una
-        // columna principal + una lateral con la hora/SLA/prioridad.
-        //   1) nº de ticket · asunto · clip · fecha
-        //   2) cliente · empresa
-        //   3) resumen del último mensaje
-        //   4) chips de estado, prioridad, categoría y SLA
+        // estado real) — sin regla CSS propia hoy.
+        // La raya de color por urgencia (sla-breach) se probó y se quitó:
+        // con casi toda la bandeja vencida pintaba la lista entera de negro
+        // (QA visual 14-sep-2026, ver comentario junto a .tkt-ticket-row en
+        // tickets-app.css). En su lugar, sombra en la fila cuando el ticket
+        // no se ha abierto todavía (mismo dato que ya usa el cuadrado negro
+        // de no-leído, unread_count > 0).
+        // Fila rediseñada (auditoría UI 14-sep-2026), en una sola columna:
+        //   1) código de ticket · fecha (línea propia, arriba del todo)
+        //   2) asunto (línea propia, a todo el ancho)
+        //   3) cliente · empresa
+        //   4) resumen del último mensaje
+        //   5) etiquetas: estado, canal, prioridad, categoría, adjuntos, SLA
+        //   6) avatar del agente asignado (o "sin asignar") + no-leído
         var customerLine = t.customer
             ? (t.customer.company ? t.customer.name + ' · ' + t.customer.company : t.customer.name)
             : 'Sin cliente';
+        var slaChipCls = t.sla_kind === 'breach' ? 'sla-breach' : (t.sla_kind === 'warn' ? 'sla-warn' : 'sla-ok');
         var $row = $(
-            '<div class="tkt-ticket-row ' + statusRowClass + (t.assignee ? '' : ' s-unassigned') + (isActive ? ' on' : '') + '" data-id="' + t.id + '">' +
+            '<div class="tkt-ticket-row ' + statusRowClass + (t.assignee ? '' : ' s-unassigned') + (t.unread_count > 0 ? ' unread' : '') + (isActive ? ' on' : '') + '" data-id="' + t.id + '" tabindex="0" role="listitem" aria-label="Abrir ticket ' + escapeHtml(t.ticket_number + ': ' + (t.subject || 'sin asunto')) + '">' +
             '<label class="tkt-ticket-checkzone">' +
                 '<input type="checkbox" class="tkt-ticket-check" data-check="' + t.id + '" aria-label="Seleccionar ticket ' + escapeHtml(t.ticket_number) + '" ' + checked + '>' +
             '</label>' +
             '<div class="tkt-ticket-main">' +
-                '<div class="tkt-ticket-line1">' +
+                '<div class="tkt-ticket-topline">' +
                     '<span class="tkt-ticket-id mono">' + escapeHtml(t.ticket_number) + '</span>' +
-                    '<span class="tkt-ticket-subject">' + escapeHtml(t.subject || '(sin asunto)') + '</span>' +
-                    (t.has_attachments ? '<i class="fa-solid fa-paperclip tkt-ticket-clip" title="Con adjuntos"></i>' : '') +
                     '<span class="tkt-ticket-time mono">' + timeLabel + '</span>' +
                 '</div>' +
+                '<div class="tkt-ticket-subject">' + escapeHtml(t.subject || '(sin asunto)') + '</div>' +
                 '<div class="tkt-ticket-customer">' + escapeHtml(customerLine) + '</div>' +
                 (t.last_message_snippet ? '<div class="tkt-ticket-last">' + escapeHtml(t.last_message_snippet) + '</div>' : '') +
                 '<div class="tkt-ticket-metarow">' +
                     '<span class="tkt-rchip">' + escapeHtml(statusLabel) + '</span>' +
+                    // Canal de origen: iba ausente de esta fila (solo se
+                    // pintaba en Kanban/detalle) — mismo mapa ORIGIN_LABELS
+                    // de siempre, sin icono, en mono para distinguirse de
+                    // las demás etiquetas sin depender de un glifo.
+                    '<span class="tkt-rchip origin">' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
                     (t.priority && t.priority !== 'normal' && t.priority !== 'low'
                         ? '<span class="tkt-rchip strong">' + escapeHtml(priorityLabel(t.priority)) + '</span>'
                         : '') +
-                    (t.category_name ? '<span class="tkt-ticket-cat" title="' + escapeHtml(t.category_name) + '">' + escapeHtml(t.category_name) + '</span>' : '') +
+                    // Distinto del SLA de resolución (más abajo): first_response_at
+                    // dice si YA se contestó al cliente, sin importar si el
+                    // ticket sigue abierto. Es la señal más urgente de la
+                    // fila —nadie ha tocado este ticket todavía— así que
+                    // comparte el negro sólido de "Urgente", no un tono
+                    // propio. No se pinta en cerrados: ahí ya no hay nada
+                    // pendiente de contestar (mismo criterio que el aviso de
+                    // autoasignación, ver renderSelfAssignBanner()).
+                    (!t.first_response_at && t.status_slug !== 'closed'
+                        ? '<span class="tkt-rchip strong" title="Nadie ha respondido a este ticket todavía">Sin responder</span>'
+                        : '') +
+                    (t.category_name ? '<span class="tkt-rchip cat" title="' + escapeHtml(t.category_name) + '">' + escapeHtml(t.category_name) + '</span>' : '') +
+                    // Equipo/cola: mismo caso que el canal — ya viaja en el
+                    // payload (group_name, con la relación group precargada
+                    // en la misma consulta del listado) pero no se pintaba
+                    // en ningún sitio de esta fila, así que en bandejas
+                    // compartidas por varios equipos no había forma de
+                    // triar de un vistazo sin abrir el ticket.
+                    (t.group_name ? '<span class="tkt-rchip group" title="' + escapeHtml(t.group_name) + '">' + escapeHtml(t.group_name) + '</span>' : '') +
+                    // Antes un clip de icono junto al asunto — sin conteo real
+                    // de adjuntos en el backend (has_attachments es booleano),
+                    // así que la etiqueta dice "Adjunto" a secas, no un número.
+                    (t.has_attachments ? '<span class="tkt-rchip attach" title="Con adjuntos">Adjunto</span>' : '') +
+                    // Correo saliente rebotado/fallido — dato que ya viaja en
+                    // el payload (last_mail_status, con lastOutboundMail
+                    // precargado también en la consulta del listado, no solo
+                    // en el detalle) pero hasta ahora no se pintaba en
+                    // ningún sitio de esta fila: el agente no se enteraba de
+                    // que su respuesta nunca llegó sin abrir el ticket y la
+                    // pestaña Correo. Mismo criterio de texto que el chip de
+                    // entrega de la cabecera del detalle (deliveryChip en
+                    // renderDetail()): "Email rebotado" para failed y
+                    // bounced por igual, sin distinguir matices ahí tampoco.
+                    (t.last_mail_status === 'failed' || t.last_mail_status === 'bounced'
+                        ? '<span class="tkt-rchip strong" title="El último correo saliente no llegó al cliente">Correo rebotado</span>'
+                        : '') +
                     // slaRowText() devuelve el guion largo cuando el ticket no
                     // tiene plazo: es un valor "vacío" con forma de texto, así
-                    // que un truthy a secas pintaba "● —" en casi todas las
-                    // filas. El mockup no muestra nada en ese caso.
-                    (t.sla_text && t.sla_text !== '—' ? '<span class="tkt-rsla ' + slaClass(t.sla_kind) + '"><span class="tkt-sla-dot"></span>' + escapeHtml(t.sla_text) + '</span>' : '') +
+                    // que un truthy a secas pintaba una etiqueta vacía en casi
+                    // todas las filas. Sin plazo, no se pinta nada.
+                    // Prefijo "Resolución:" a propósito (bug de confusión
+                    // real, QA 14-sep-2026): slaRowText() siempre mide el
+                    // plazo de RESOLUCIÓN (sla_resolution_due_at), nunca el
+                    // de primera respuesta — un agente que ya respondió veía
+                    // "vencido" a secas y asumía que el sistema no se había
+                    // enterado de su respuesta. Contestar no para ese reloj;
+                    // solo cambiar el ticket a Resuelto/Cerrado lo hace.
+                    (t.sla_text && t.sla_text !== '—' ? '<span class="tkt-rchip ' + slaChipCls + '" title="Plazo de resolución — responder no lo detiene, solo resolver o cerrar el ticket">Resolución: ' + escapeHtml(t.sla_text) + '</span>' : '') +
                     '<span class="tkt-ticket-metaend">' +
+                        // t.viewers lo rellena pollListPresence() (sondeo
+                        // aparte, no viaja en toListRow() por ser dato
+                        // efímero) — quién está viendo ESTE ticket ahora
+                        // mismo, que puede no ser el asignado. Punto verde
+                        // sobre el mismo avatar en vez de uno aparte: la
+                        // posición ya dice "esto es sobre esta persona/
+                        // ticket", igual que en la cabecera del detalle.
+                        (function () {
+                            var viewers = t.viewers || [];
+                            var dot = viewers.length
+                                ? '<span class="tkt-presence-dot" title="' + escapeHtml(viewers.map(function (v) { return v.name; }).join(', ') + (viewers.length === 1 ? ' está viendo este ticket ahora' : ' están viendo este ticket ahora')) + '"></span>'
+                                : '';
+                            return t.assignee
+                                ? '<span class="tkt-avatar" title="' + escapeHtml(t.assignee.name) + '">' + escapeHtml(initials(t.assignee.name)) + dot + '</span>'
+                                : '<span class="tkt-avatar unassigned" title="Sin asignar">–' + dot + '</span>';
+                        })() +
                         // Sin contador de mensajes: el mockup deja este hueco
                         // vacío y el número repetido en cada fila era ruido.
-                        // Se conserva solo el punto de "sin leer", que es la
-                        // única señal de que hay algo nuevo que mirar.
-                        (t.unread_count > 0 ? '<span class="tkt-ticket-unread" title="Con mensajes sin leer">●</span>' : '') +
+                        // Se conserva solo el cuadrado de "sin leer" — forma
+                        // distinta a propósito del punto verde de presencia
+                        // que usa el detalle, para no confundirse con él.
+                        (t.unread_count > 0 ? '<span class="tkt-ticket-unread" title="Con mensajes sin leer"></span>' : '') +
                     '</span>' +
                 '</div>' +
             '</div>' +
@@ -743,8 +1582,14 @@
             renderBulkBar();
         });
         $row.on('click', function () {
-            var t2 = TKA.state.tickets.find(function (x) { return x.id === t.id; });
+            var t2 = TKA.state.tickets.find(function (x) { return String(x.id) === String(t.id); });
             if (t2) selectTicket(t2);
+        });
+        $row.on('keydown', function (ev) {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            if ($(ev.target).is('input,button,a,select,textarea')) return;
+            ev.preventDefault();
+            $(this).trigger('click');
         });
 
         return $row;
@@ -764,7 +1609,12 @@
                 '</div>'
             );
         } else {
-            rows.forEach(function (t) { $list.append(renderRow(t)); });
+            // Montar las filas fuera del DOM evita un reflow por ticket cuando
+            // el agente cambia de pestaña, vuelve de una reconexión o recibe
+            // una página grande del servidor.
+            var fragment = document.createDocumentFragment();
+            rows.forEach(function (t) { fragment.appendChild(renderRow(t)[0]); });
+            $list[0].appendChild(fragment);
         }
 
         // "6 tickets" a secas, como el mockup — el "en esta página" sobra
@@ -929,6 +1779,11 @@
             success: function () {
                 if (window.toastr) toastr.success('Ticket actualizado');
                 onSuccess();
+                queueTicketListRefresh('ticket-field-updated', t, {
+                    freshCounts: true,
+                    refreshDetail: true,
+                    forceDetail: true,
+                });
                 recomputeTabCounts();
                 renderTabs();
                 renderList();
@@ -1074,7 +1929,14 @@
     // Etiquetar/Conversación paralela. Se cierra con la X (o cualquier
     // elemento con [data-modal-close]), clic en el fondo, o Escape.
     function openModal(html) {
-        closeModal();
+        var active = document.activeElement;
+        var hadModal = $('#tkt-modal-backdrop').length > 0;
+        var returnFocus = tktModalReturnFocus;
+        if (!hadModal && active && active !== document.body) {
+            returnFocus = active;
+        }
+        closeModal(false);
+        tktModalReturnFocus = returnFocus;
         var $backdrop = $('<div class="tkt-modal-backdrop on" id="tkt-modal-backdrop"></div>').html(html);
         // Se añade dentro de .tkt (no de body): las variables --tkt-* solo
         // se definen bajo ese selector — fuera de él el modal se renderiza
@@ -1088,6 +1950,25 @@
         $backdrop.on('click', '[data-modal-close]', function () { closeModal(); });
         $(document).on('keydown.tktModal', function (ev) {
             if (ev.key === 'Escape') closeModal();
+        });
+        var $dialog = $backdrop.find('.tkt-modal').first();
+        $backdrop.on('keydown.tktModalTrap', function (ev) {
+            if (ev.key !== 'Tab' || !$dialog.length) return;
+            var $focusable = $dialog.find('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])').filter(':visible');
+            if (!$focusable.length) {
+                ev.preventDefault();
+                $dialog.trigger('focus');
+                return;
+            }
+            var first = $focusable.get(0);
+            var last = $focusable.get($focusable.length - 1);
+            if (ev.shiftKey && document.activeElement === first) {
+                ev.preventDefault();
+                last.focus();
+            } else if (!ev.shiftKey && document.activeElement === last) {
+                ev.preventDefault();
+                first.focus();
+            }
         });
         // Todo modal dinámico (bulk actions, seguidores, conversación
         // paralela…) trae sus <select> ya con las opciones finales en el
@@ -1106,15 +1987,24 @@
         // ':visible' ya lo descarta solo, pero enfocarlo igualmente no
         // abriría el desplegable visual.
         var $autofocus = $backdrop.find('input, textarea').filter(':visible:not(:disabled)').first();
-        if ($autofocus.length) $autofocus.trigger('focus');
+        if ($autofocus.length) {
+            $autofocus.trigger('focus');
+        } else if ($dialog.length) {
+            $dialog.trigger('focus');
+        }
 
         return $backdrop;
     }
 
-    function closeModal() {
+    function closeModal(restoreFocus) {
         $('#tkt-modal-backdrop').remove();
         $(document).off('keydown.tktModal');
         $('body').css('overflow', '');
+        var target = tktModalReturnFocus;
+        tktModalReturnFocus = null;
+        if (restoreFocus !== false && target && document.contains(target)) {
+            $(target).trigger('focus');
+        }
     }
 
     // Sustituye a los window.confirm() encadenados que quedaban sueltos
@@ -1144,13 +2034,21 @@
     // comportamiento de apertura/cierre (fondo, ✕, Escape) que los dinámicos.
     function bindStaticModal(openSel, backdropSel, closeSel) {
         var $backdrop = $(backdropSel);
+        var $dialog = $backdrop.find('.tkt-modal').first();
+        var returnFocus = null;
         $(openSel).on('click', function () {
+            returnFocus = document.activeElement;
             $backdrop.addClass('on');
             $('body').css('overflow', 'hidden');
+            var $autofocus = $dialog.find('input, textarea, select').filter(':visible:not(:disabled)').first();
+            if ($autofocus.length) $autofocus.trigger('focus');
+            else if ($dialog.length) $dialog.trigger('focus');
         });
         function close() {
             $backdrop.removeClass('on');
             $('body').css('overflow', '');
+            if (returnFocus && document.contains(returnFocus)) $(returnFocus).trigger('focus');
+            returnFocus = null;
         }
         $(closeSel).on('click', close);
         $backdrop.on('mousedown', function (ev) {
@@ -1166,18 +2064,18 @@
     function modalShell(opts) {
         var iconCls = opts.iconClass ? ' ' + opts.iconClass : '';
         return '' +
-            '<div class="tkt-modal' + (opts.width ? ' w-' + opts.width : '') + '">' +
+            '<div class="tkt-modal' + (opts.width ? ' w-' + opts.width : '') + '" id="tkt-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="tkt-modal-title" tabindex="-1">' +
                 '<div class="tkt-modal-head">' +
                     '<div class="tkt-modal-icon' + iconCls + '"><i class="' + opts.icon + '"></i></div>' +
                     '<div class="tkt-fill">' +
                         (opts.kicker ? '<div class="tkt-modal-kicker">' + escapeHtml(opts.kicker) + '</div>' : '') +
                         // titleChip: el nº de ticket en negro junto al título,
                         // como en las cabeceras de modal del mockup.
-                        '<div class="tkt-modal-title">' + escapeHtml(opts.title) +
+                        '<div class="tkt-modal-title" id="tkt-modal-title">' + escapeHtml(opts.title) +
                             (opts.titleChip ? '<span class="tkt-chip-id">' + escapeHtml(opts.titleChip) + '</span>' : '') +
                         '</div>' +
                     '</div>' +
-                    '<button type="button" class="tkt-modal-close" data-modal-close><i class="fa-solid fa-xmark"></i></button>' +
+                    '<button type="button" class="tkt-modal-close" data-modal-close aria-label="Cerrar ventana"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
                 '</div>' +
                 '<div class="tkt-modal-body">' + opts.body + '</div>' +
                 (opts.foot ? '<div class="tkt-modal-foot' + (opts.footTwoCol ? ' two-col' : '') + '">' + opts.foot + '</div>' : '') +
@@ -1204,6 +2102,19 @@
     });
 
     function selectTicket(t) {
+        var previousTicket = TKA.state.currentTicket;
+        if (!previousTicket || String(previousTicket.id) !== String(t.id)) {
+            TKA.state.threadHistoryExpanded = false;
+            TKA.state.currentDetail = null;
+            TKA.state.threadSearch = '';
+            TKA.state.threadPage = 1;
+            TKA.state.threadHasMore = false;
+            TKA.state.threadTotal = 0;
+            TKA.state.threadFilters = { sender: '', type: 'all', from: '', to: '', channel: '' };
+            TKA.state.threadLoadingMore = false;
+            TKA.state.editConflictMessage = '';
+            TKA.state.editConflictFields = [];
+        }
         TKA.state.selected = t.id;
         $('.tkt-ticket-row').removeClass('on');
         $('.tkt-ticket-row[data-id="' + t.id + '"]').addClass('on');
@@ -1218,6 +2129,7 @@
         }
         renderDetail(t);
         renderSidePanel(t);
+        if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('detail');
     }
 
     /**
@@ -1257,6 +2169,18 @@
     }
 
     function renderDetail(t) {
+        // Un cambio de estado/prioridad puede llegar mientras el agente está
+        // escribiendo. Guardamos el nodo completo, no solo el texto: así no
+        // se pierde el modo "Nota interna", el cursor ni los File objects del
+        // input de adjuntos al reconstruir la cabecera del detalle.
+        var $preservedComposer = $('#tkt-composer');
+        if ($preservedComposer.length && TKA.state.currentTicket &&
+            String(TKA.state.currentTicket.id) === String(t.id)) {
+            TKA.state.preservedComposer = $preservedComposer.detach();
+        } else {
+            TKA.state.preservedComposer = null;
+        }
+
         $('#tkt-detail-empty').hide();
         // .css('display','flex') en vez de .show(): #tkt-detail necesita
         // ser flex-column (cabecera fija + panes con scroll interno propio,
@@ -1279,21 +2203,23 @@
         var slaChip = '';
         var slaBanner = '';
         if (t.sla_kind === 'breach') {
-            slaBanner = '<div class="tkt-detail-sla-banner breach">' +
+            slaBanner = '<div class="tkt-detail-sla-banner breach" data-sla-banner data-sla-state="breach">' +
                 '<i class="fa-solid fa-triangle-exclamation"></i>' +
-                '<b>SLA vencido</b>' +
-                (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· hace ' + escapeHtml(t.sla_text.replace(/ vencido$/, '')) + '</span>' : '') +
+                '<b data-sla-label>SLA vencido</b>' +
+                (t.sla_due_at ? '<span class="dim">· <span data-sla-live></span></span>' : (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· hace ' + escapeHtml(t.sla_text.replace(/ vencido$/, '')) + '</span>' : '')) +
                 '<button type="button" class="tkt-detail-sla-banner-link" id="tkt-sla-banner-link">Ver política SLA <i class="fa-solid fa-chevron-right"></i></button>' +
             '</div>';
         } else if (t.sla_kind === 'warn') {
-            slaBanner = '<div class="tkt-detail-sla-banner warn">' +
+            slaBanner = '<div class="tkt-detail-sla-banner warn" data-sla-banner data-sla-state="warn">' +
                 '<i class="fa-regular fa-clock"></i>' +
-                '<b>SLA en riesgo</b>' +
-                (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· quedan ' + escapeHtml(t.sla_text) + '</span>' : '') +
+                '<b data-sla-label>SLA en riesgo</b>' +
+                (t.sla_due_at ? '<span class="dim">· <span data-sla-live></span></span>' : (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· quedan ' + escapeHtml(t.sla_text) + '</span>' : '')) +
                 '<button type="button" class="tkt-detail-sla-banner-link" id="tkt-sla-banner-link">Ver política SLA <i class="fa-solid fa-chevron-right"></i></button>' +
             '</div>';
         } else if (t.sla_text && t.sla_text !== '—') {
-            slaChip = chip('SLA ' + t.sla_text, 'tkt-chip-ok');
+            slaChip = t.sla_due_at
+                ? '<span class="tkt-chip tkt-chip-ok" data-sla-chip><i class="fa-regular fa-clock"></i><span data-sla-live></span></span>'
+                : chip('SLA ' + t.sla_text, 'tkt-chip-ok');
         }
 
         // Posición dentro de la lista visible ("1 de 6" en el mockup), para
@@ -1339,6 +2265,7 @@
                             (t.customer && t.customer.email ? '<span class="sep">·</span><span class="mail">' + escapeHtml(t.customer.email) + '</span>' : '') +
                             '<span class="sep">·</span>' +
                             '<span id="tkt-detail-meta">' + escapeHtml(detailMetaText(t)) + '</span>' +
+                            '<span id="tkt-detail-customer-quick" class="tkt-detail-customer-quick" hidden></span>' +
                         '</div>' +
                     '</div>' +
                     '<div class="tkt-detail-actions">' +
@@ -1349,19 +2276,21 @@
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-state" title="Cambiar estado" aria-label="Cambiar estado"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>' +
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-assign" title="Asignar" aria-label="Asignar"><i class="fa-solid fa-user-plus"></i></button>' +
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-actions" title="Más acciones" aria-label="Más acciones"><i class="fa-solid fa-ellipsis"></i></button>' +
+                        '<button type="button" class="tkt-btn-icon" id="tkt-open-action-palette" title="Paleta de acciones (⌘⇧P)" aria-label="Abrir paleta de acciones"><i class="fa-solid fa-command"></i></button>' +
                     '</div>' +
                 '</div>' +
                 slaBanner +
                 '<div class="tkt-dtabs">' +
-                    '<button type="button" class="tkt-dtab" data-dtab="mail"><i class="fa-regular fa-envelope"></i> Correo<span class="tkt-dcount" data-badge="mail"></span></button>' +
+                    (featureEnabled('tab_mail') ? '<button type="button" class="tkt-dtab" data-dtab="mail"><i class="fa-regular fa-envelope"></i> Correo<span class="tkt-dcount" data-badge="mail"></span></button>' : '') +
                     '<button type="button" class="tkt-dtab on" data-dtab="thread"><i class="fa-solid fa-comments"></i> Hilo<span class="tkt-dcount" data-badge="thread"></span></button>' +
-                    '<button type="button" class="tkt-dtab" data-dtab="trace"><i class="fa-solid fa-route"></i> Traza<span class="tkt-dcount" data-badge="trace"></span></button>' +
-                    '<button type="button" class="tkt-dtab" data-dtab="activity"><i class="fa-solid fa-wave-square"></i> Actividad<span class="tkt-dcount" data-badge="activity"></span></button>' +
-                    '<button type="button" class="tkt-dtab" data-dtab="files"><i class="fa-solid fa-paperclip"></i> Adjuntos<span class="tkt-dcount" data-badge="files"></span></button>' +
+                    (featureEnabled('tab_trace') ? '<button type="button" class="tkt-dtab" data-dtab="trace"><i class="fa-solid fa-route"></i> Traza<span class="tkt-dcount" data-badge="trace"></span></button>' : '') +
+                    (featureEnabled('tab_activity') ? '<button type="button" class="tkt-dtab" data-dtab="activity"><i class="fa-solid fa-wave-square"></i> Actividad<span class="tkt-dcount" data-badge="activity"></span></button>' : '') +
+                    (featureEnabled('tab_files') ? '<button type="button" class="tkt-dtab" data-dtab="files"><i class="fa-solid fa-paperclip"></i> Adjuntos<span class="tkt-dcount" data-badge="files"></span></button>' : '') +
                 '</div>' +
             '</div>' +
             '<div class="tkt-banner-warn tkt-banner-presence tkt-detail-banner" id="tkt-collision-banner"  role="status"><i class="fa-solid fa-users"></i><span id="tkt-collision-text" class="tkt-flex1"></span></div>' +
             '<div class="tkt-banner-warn tkt-banner-presence tkt-detail-banner" id="tkt-typing-indicator"  role="status"><i class="fa-solid fa-pen"></i><span id="tkt-typing-text" class="tkt-flex1"></span></div>' +
+            '<div class="tkt-banner-warn tkt-detail-banner tkt-edit-conflict" id="tkt-edit-conflict" role="status" hidden><i class="fa-solid fa-shield-halved"></i><span id="tkt-edit-conflict-text" class="tkt-flex1"></span><button type="button" class="tkt-btn tkt-btn-mini" id="tkt-edit-conflict-review">Revisar cambios</button><button type="button" class="tkt-banner-dismiss" id="tkt-edit-conflict-dismiss" aria-label="Ocultar aviso"><i class="fa-solid fa-xmark"></i></button></div>' +
             // Relleno por renderSelfAssignBanner(): placeholder fijo en vez de
             // insertarlo con .after() (como el de duplicados) para que el
             // orden con el resto de banners no dependa de quién se pintó primero.
@@ -1382,11 +2311,19 @@
 
         joinTicketPresence(t.id);
         startTicketPulse(t);
+        startPresenceHeartbeat(t);
+        startSlaClock(t);
         renderSelfAssignBanner(t);
 
         // El icono de estado abre el modal 36; los otros dos siguen llevando
         // el foco al campo correspondiente del panel Gestión.
         $('#tkt-goto-state').on('click', function () { openChangeStatusModal(t); });
+        $('#tkt-open-action-palette').on('click', function () { openActionPalette(t); });
+        $('#tkt-edit-conflict-dismiss').on('click', function () {
+            TKA.state.editConflictMessage = '';
+            $('#tkt-edit-conflict').attr('hidden', true);
+        });
+        $('#tkt-edit-conflict-review').on('click', openConflictReviewModal);
 
         // "Ver política SLA" de la franja de alerta abre el mismo modal 28
         // que ya usa la acción "Calendario y SLA" del panel Gestión — lee el
@@ -1474,11 +2411,112 @@
         });
     }
 
+    function renderCustomerQuickSummary(ticket, customer) {
+        var $quick = $('#tkt-detail-customer-quick');
+        if (!$quick.length || !customer) return;
+        var facts = [];
+        if (customer.tickets_count != null) facts.push(customer.tickets_count + ' tickets');
+        if (customer.avg_csat != null) facts.push('CSAT ' + customer.avg_csat);
+        if (customer.is_banned) facts.push('bloqueado');
+        if (!facts.length) return;
+        $quick.html('<button type="button" id="tkt-detail-customer-open" title="Abrir resumen del cliente"><i class="fa-regular fa-address-card"></i> ' + escapeHtml(facts.join(' · ')) + '</button>').removeAttr('hidden');
+        $quick.off('click.tktCustomer').on('click.tktCustomer', '#tkt-detail-customer-open', function () {
+            if (TKA.state.sideTab !== 'cliente') selectSideTab('cliente');
+            if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+            var el = document.getElementById('tkt-side-content');
+            if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+    }
+
     // ═══════════ Detalle: Hilo / Trazabilidad / Actividad / Archivos / Correo ═══════════
-    function fetchDetailData(t) {
-        $.getJSON(t.url_data)
+    function threadFilterState(filters) {
+        filters = filters || TKA.state.threadFilters || {};
+        return {
+            sender: String(filters.sender || '').trim(),
+            type: String(filters.type || 'all'),
+            from: String(filters.from || '').trim(),
+            to: String(filters.to || '').trim(),
+            channel: String(filters.channel || '').trim(),
+        };
+    }
+
+    function appendQueryParams(url, params) {
+        var parts = [];
+        Object.keys(params || {}).forEach(function (key) {
+            if (params[key] !== undefined && params[key] !== null && String(params[key]) !== '') {
+                parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+            }
+        });
+        return parts.length ? url + (url.indexOf('?') === -1 ? '?' : '&') + parts.join('&') : url;
+    }
+
+    function mergeThreadItems(existing, incoming) {
+        var seen = {};
+        return (existing || []).concat(incoming || []).filter(function (item) {
+            var key = threadItemKey(item);
+            if (seen[key]) return false;
+            seen[key] = true;
+            return true;
+        }).sort(function (a, b) {
+            var at = new Date(a.created_at || 0).getTime() || 0;
+            var bt = new Date(b.created_at || 0).getTime() || 0;
+            return at === bt ? (Number(a.id || 0) - Number(b.id || 0)) : at - bt;
+        });
+    }
+
+    function fetchDetailData(t, opts) {
+        opts = opts || {};
+        var requestedThreadSearch = opts.threadSearch !== undefined
+            ? String(opts.threadSearch || '').trim()
+            : String(TKA.state.threadSearch || '').trim();
+        var requestedFilters = threadFilterState(opts.threadFilters || TKA.state.threadFilters);
+        var requestedPage = opts.threadPage !== undefined ? Math.max(1, Number(opts.threadPage) || 1) : 1;
+        var dataUrl = appendQueryParams(t.url_data, {
+            thread_search: requestedThreadSearch,
+            thread_sender: requestedFilters.sender,
+            thread_type: requestedFilters.type === 'all' ? '' : requestedFilters.type,
+            thread_from: requestedFilters.from,
+            thread_to: requestedFilters.to,
+            thread_channel: requestedFilters.channel,
+            thread_page: requestedPage,
+            thread_per_page: TKA.state.threadPerPage || 30,
+        });
+
+        $.getJSON(dataUrl)
             .done(function (d) {
+                if (TKA.state.currentTicket !== t || String(TKA.state.threadSearch || '').trim() !== requestedThreadSearch || JSON.stringify(threadFilterState()) !== JSON.stringify(requestedFilters)) return;
+                var previousDetail = TKA.state.currentDetail;
+                var previousThread = previousDetail && previousDetail.thread ? previousDetail.thread : [];
+                var nextThread = d.thread || [];
+                var appendingOlder = !!opts.appendThread && requestedPage > 1;
+                if (appendingOlder) nextThread = mergeThreadItems(nextThread, previousThread);
+                TKA.state.threadRefreshMeta = {
+                    existing: !!previousDetail,
+                    changed: appendingOlder ? false : threadDataChanged(previousThread, nextThread),
+                    newMessages: appendingOlder ? 0 : countNewThreadMessages(previousThread, nextThread),
+                    prepended: appendingOlder,
+                };
+                TKA.state.threadPage = Number(d.thread_page || requestedPage);
+                TKA.state.threadHasMore = !!d.thread_has_more;
+                TKA.state.threadTotal = Number(d.thread_total || nextThread.length);
+                TKA.state.threadFilters = requestedFilters;
+                TKA.state.threadLoadingMore = false;
+                d.thread = nextThread;
                 TKA.state.currentDetail = d;
+                renderCustomerQuickSummary(t, d.customer);
+                // El propio endpoint (TicketDetailDataController::data())
+                // marca leído todo el hilo para este agente como efecto
+                // secundario de abrirlo (TicketRead::markAllReadFor()) — la
+                // fila de la lista tenía el dato viejo desde que se cargó,
+                // así que se corrige aquí sin esperar a un refetch completo.
+                // Solo esta fila, no renderList() entero: repintar la lista
+                // completa en cada apertura de ticket devolvería el scroll
+                // arriba cada vez, y aquí no hace falta — nada más cambia.
+                if (t.unread_count > 0) {
+                    t.unread_count = 0;
+                    var $oldRow = $('.tkt-ticket-row[data-id="' + t.id + '"]');
+                    if ($oldRow.length) $oldRow.replaceWith(renderRow(t));
+                }
                 renderThreadPane(d.thread || []);
                 renderActivityPane(d.activity || [], d.activity_total_count);
                 renderFilesPane(d.files || [], t);
@@ -1487,10 +2525,38 @@
                 renderActiveSidePane();
                 updateDetailTabBadges(d);
                 checkDuplicates(t);
+                TKA.state.threadRefreshMeta = null;
+                if (TKA.state.editConflictMessage) showEditConflict(TKA.state.editConflictMessage, true);
             })
             .fail(function () {
+                TKA.state.threadLoadingMore = false;
+                if (opts.appendThread) {
+                    if (window.toastr) toastr.error('No se pudieron cargar los mensajes anteriores.');
+                    return;
+                }
                 showDetailError(t);
             });
+    }
+
+    function threadItemKey(item) {
+        if (!item) return '';
+        return String(item.id || [item.type, item.created_at, item.sender_name, item.body].join('|'));
+    }
+
+    function threadDataChanged(previous, next) {
+        previous = previous || [];
+        next = next || [];
+        if (previous.length !== next.length) return true;
+        if (!previous.length && !next.length) return false;
+        return threadItemKey(previous[previous.length - 1]) !== threadItemKey(next[next.length - 1]);
+    }
+
+    function countNewThreadMessages(previous, next) {
+        var oldKeys = {};
+        (previous || []).forEach(function (item) { oldKeys[threadItemKey(item)] = true; });
+        return (next || []).filter(function (item) {
+            return item && item.type === 'message' && !item.is_internal && !oldKeys[threadItemKey(item)];
+        }).length;
     }
 
     // Fallo al cargar el detalle. Sustituye al panel entero, no solo a la
@@ -1551,9 +2617,16 @@
         }
     }
 
+    // Antes solo 6 claves: priority_changed/category_changed (ambos creados
+    // de verdad por TicketUpdateService) y system/note (TicketMergeService,
+    // TicketSideConversationService) caían todos en el genérico fa-circle-info
+    // — imposible distinguir de un vistazo "cambió la prioridad" de "se fusionó
+    // un duplicado" (auditoría de tipos reales del hilo, 14-sep-2026).
     var EVENT_ICONS = {
         message: 'fa-comment', internal_note: 'fa-lock', status_change: 'fa-arrow-right-arrow-left',
         assigned: 'fa-user-check', unassigned: 'fa-user-xmark', closed: 'fa-lock', reopened: 'fa-rotate-left',
+        priority_changed: 'fa-arrow-up-short-wide', category_changed: 'fa-tags',
+        system: 'fa-gear', note: 'fa-comment-dots',
     };
 
     // Clave de día (año-mes-día local) para agrupar el hilo — separada del
@@ -1575,23 +2648,44 @@
     // (el mapa de canales es el mismo ORIGIN_LABELS de arriba)
 
     /**
-     * Chips de la cabecera de un mensaje: quién es (rol), por dónde entró
-     * (canal) y en qué sentido (entrante/saliente).
+     * Chips de la cabecera de un mensaje: quién es (rol) y por dónde entró
+     * (canal).
      *
-     * Cada chip se omite si su dato no viene: un ticket creado a mano no
-     * tiene canal, y pintar "—" en su lugar solo añade ruido.
+     * Antes había un tercer chip de dirección (Entrante/Saliente) — se quitó
+     * (14-sep-2026, feedback visual directo sobre el mockup: "muchos datos
+     * ahí, no necesarios") porque es pura redundancia matemática con el rol:
+     * direction sale de isFromAgent() igual que role, así que "Cliente"
+     * SIEMPRE es "Entrante" y "Agente" SIEMPRE "Saliente" — ningún mensaje
+     * real puede combinar Cliente+Saliente. El color de fondo de la tarjeta
+     * (blanco/verde) ya distingue lo mismo una tercera vez.
+     *
+     * Cada chip restante se omite si su dato no viene: un ticket creado a
+     * mano no tiene canal, y pintar "—" en su lugar solo añade ruido.
      */
     function threadChips(it) {
         var out = '';
 
-        if (it.role) out += '<span class="tkt-tchip">' + escapeHtml(it.role) + '</span>';
+        // El rol "Sistema" lleva su propio tono (antes idéntico al resto):
+        // con el bug de role_system ya corregido en el backend, una burbuja
+        // de Sistema (auto-respuesta, notificación) ahora sí puede aparecer,
+        // y sin nada que la distinga se confunde con un chip cualquiera.
+        if (it.role) {
+            out += '<span class="tkt-tchip' + (it.role === 'Sistema' ? ' system' : '') + '">' + escapeHtml(it.role) + '</span>';
+        }
 
+        // Solo texto: con icono + rol + canal + hora la cabecera quedaba
+        // recargada para lo que aporta (14-sep-2026, feedback sobre el
+        // canvas de diseño). El icono vivía además duplicado con el de
+        // ORIGIN_ICON en la cabecera del detalle del ticket.
         if (it.channel) {
             out += '<span class="tkt-tchip">' + escapeHtml(ORIGIN_LABELS[it.channel] || it.channel) + '</span>';
         }
 
-        if (it.direction) {
-            out += '<span class="tkt-tchip solid">' + (it.direction === 'inbound' ? 'Entrante' : 'Saliente') + '</span>';
+        // Solo el caso confirmado por metadata (AutoResponseTicketCommand);
+        // macros/programadas/automatizaciones no dejan rastro distinguible
+        // hoy (ver comentario de TicketDetailDataController::data()).
+        if (it.is_auto) {
+            out += '<span class="tkt-tchip auto" title="Enviado automáticamente, sin intervención de un agente">Automático</span>';
         }
 
         return out;
@@ -1626,9 +2720,22 @@
     function threadDelivery(it) {
         if (!it.delivery) return '';
 
-        return '<div class="tkt-tdelivery">' +
-            '<i class="fa-solid fa-check-double"></i> ' +
-            escapeHtml(it.delivery.label) + ' ' + escapeHtml(it.delivery.at) +
+        // Antes threadDelivery() del backend devolvía null también para
+        // failed/bounced -- un correo que rebotó se veía IDÉNTICO a uno sin
+        // ninguna confirmación todavía, el agente solo se enteraba abriendo
+        // la pestaña Correo y pulsando "Ver rebote" (14-sep-2026). Ahora el
+        // backend manda {label, at, error, failed} y aquí se pinta en tono
+        // de error (negro/blanco, la única escala de "peligro" de esta
+        // pantalla — ver --tkt-danger-* en tickets-app.css) con el motivo en
+        // el title si el proveedor lo dio.
+        var failed = Boolean(it.delivery.failed);
+        var icon = failed ? 'fa-triangle-exclamation' : 'fa-check-double';
+        var timeText = it.delivery.at ? ' ' + escapeHtml(it.delivery.at) : '';
+        var titleAttr = (failed && it.delivery.error) ? ' title="' + escapeHtml(it.delivery.error) + '"' : '';
+
+        return '<div class="tkt-tdelivery' + (failed ? ' error' : '') + '"' + titleAttr + '>' +
+            '<i class="fa-solid ' + icon + '"></i> ' +
+            escapeHtml(it.delivery.label) + timeText +
         '</div>';
     }
 
@@ -1690,8 +2797,75 @@
         setTimeout(pin, 300);
     }
 
+    function threadIsNearBottom(el) {
+        return !el || (el.scrollHeight - el.scrollTop - el.clientHeight) <= 72;
+    }
+
+    function applyThreadFilter($p, mode, query) {
+        mode = mode || 'all';
+        query = String(query == null ? '' : query).trim().toLowerCase();
+        TKA.state.threadSearch = query;
+        $p.find('[data-thread-filter]').removeClass('on');
+        $p.find('[data-thread-filter="' + mode + '"]').addClass('on');
+        $p.find('[data-thread-kind]').each(function () {
+            var kind = $(this).data('thread-kind');
+            var visible = mode === 'all'
+                || (mode === 'customer' && kind === 'customer')
+                || (mode === 'no-notes' && kind !== 'note')
+                || (mode === 'no-events' && kind !== 'event');
+            var hiddenHistory = $(this).is('[data-thread-old]') && !query;
+            var searchText = String($(this).attr('data-thread-search-text') || $(this).text()).toLowerCase();
+            $(this).toggle(Boolean(visible) && !hiddenHistory && (!query || searchText.indexOf(query) !== -1));
+        });
+
+        $p.find('[data-thread-kind="day"]').each(function () {
+            var $siblings = $(this).nextUntil('[data-thread-kind="day"]');
+            $(this).toggle($siblings.filter(':visible').length > 0);
+        });
+        $p.find('[data-thread-expand]').toggle(!query);
+        var activeFilters = threadFilterState();
+        var advancedActive = Object.keys(activeFilters).some(function (key) {
+            return key === 'type' ? activeFilters[key] !== 'all' : Boolean(activeFilters[key]);
+        });
+        $p.find('[data-thread-no-results]').toggle((Boolean(query) || advancedActive) && $p.find('[data-thread-kind]:not([data-thread-kind="day"]):visible').length === 0);
+    }
+
+    function loadOlderThread() {
+        var current = TKA.state.currentTicket;
+        if (!current || !TKA.state.threadHasMore || TKA.state.threadLoadingMore) return;
+        TKA.state.threadLoadingMore = true;
+        var nextPage = (Number(TKA.state.threadPage) || 1) + 1;
+        fetchDetailData(current, {
+            threadPage: nextPage,
+            threadFilters: TKA.state.threadFilters,
+            threadSearch: TKA.state.threadSearch,
+            appendThread: true,
+        });
+    }
+
     function renderThreadPane(items) {
         var $p = $('#tkt-dpane-thread');
+        var currentTicket = TKA.state.currentTicket;
+        var existingScroll = document.getElementById('tkt-thread-scroll');
+        var hasExistingThread = !!existingScroll;
+        var previousScrollTop = existingScroll ? existingScroll.scrollTop : 0;
+        var previousScrollHeight = existingScroll ? existingScroll.scrollHeight : 0;
+        var wasAtBottom = !existingScroll || threadIsNearBottom(existingScroll);
+        var activeThreadFilter = $p.find('[data-thread-filter].on').data('thread-filter') || 'all';
+        var activeThreadSearch = TKA.state.threadSearch || '';
+        var activeThreadFilters = threadFilterState(TKA.state.threadFilters);
+        var refreshMeta = TKA.state.threadRefreshMeta || {};
+        var showNewMarker = hasExistingThread && refreshMeta.existing && refreshMeta.changed && !wasAtBottom && (refreshMeta.newMessages || 0) > 0;
+        var newMessageCount = refreshMeta.newMessages || 0;
+        // fetchDetailData() también reconstruye este pane cuando llega un
+        // correo del cliente. Desacoplamos el composer antes de hacer
+        // .html(): jQuery conservará handlers, selección, modo y adjuntos.
+        // En la primera carga no existe todavía y se crea abajo normalmente.
+        var $preservedComposer = TKA.state.preservedComposer;
+        if (!$preservedComposer || !$preservedComposer.length) {
+            $preservedComposer = $p.find('#tkt-composer').detach();
+        }
+        TKA.state.preservedComposer = null;
         // El composer debe quedar fijo abajo aunque el hilo sea largo — antes
         // thread-bar+mensajes+composer compartían el overflow-y:auto de
         // .tkt-pane, así que el composer se desplazaba fuera de la vista al
@@ -1709,12 +2883,28 @@
         html += '<div class="tkt-thread-bar">' +
             '<span class="tkt-cap">Conversación completa</span>' +
             '<div class="tkt-seg" id="tkt-thread-filter">' +
-                '<button type="button" class="on" data-thread-filter="all">Todo</button>' +
-                '<button type="button" data-thread-filter="customer">Solo cliente</button>' +
-                '<button type="button" data-thread-filter="no-notes">Sin notas</button>' +
-                '<button type="button" data-thread-filter="no-events">Sin eventos</button>' +
+                '<button type="button" class="' + (activeThreadFilter === 'all' ? 'on' : '') + '" data-thread-filter="all">Todo</button>' +
+                '<button type="button" class="' + (activeThreadFilter === 'customer' ? 'on' : '') + '" data-thread-filter="customer">Solo cliente</button>' +
+                '<button type="button" class="' + (activeThreadFilter === 'no-notes' ? 'on' : '') + '" data-thread-filter="no-notes">Sin notas</button>' +
+                '<button type="button" class="' + (activeThreadFilter === 'no-events' ? 'on' : '') + '" data-thread-filter="no-events">Sin eventos</button>' +
+            '</div>' +
+            '<label class="tkt-thread-search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" class="tkt-thread-search" id="tkt-thread-search" value="' + escapeHtml(activeThreadSearch) + '" placeholder="Buscar en el hilo" aria-label="Buscar en la conversación"></label>' +
+            '<button type="button" class="tkt-btn tkt-btn-mini tkt-thread-advanced-toggle" id="tkt-thread-advanced-toggle" aria-expanded="false"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Filtros</button>' +
+            '<div class="tkt-thread-advanced" id="tkt-thread-advanced" hidden>' +
+                '<label>Remitente<input type="search" id="tkt-thread-filter-sender" value="' + escapeHtml(activeThreadFilters.sender) + '" placeholder="Nombre o email"></label>' +
+                '<label>Tipo<select id="tkt-thread-filter-type"><option value="all">Todos</option><option value="customer"' + (activeThreadFilters.type === 'customer' ? ' selected' : '') + '>Cliente</option><option value="agent"' + (activeThreadFilters.type === 'agent' ? ' selected' : '') + '>Agente</option><option value="note"' + (activeThreadFilters.type === 'note' ? ' selected' : '') + '>Nota interna</option><option value="event"' + (activeThreadFilters.type === 'event' ? ' selected' : '') + '>Evento</option></select></label>' +
+                '<label>Desde<input type="date" id="tkt-thread-filter-from" value="' + escapeHtml(activeThreadFilters.from) + '"></label>' +
+                '<label>Hasta<input type="date" id="tkt-thread-filter-to" value="' + escapeHtml(activeThreadFilters.to) + '"></label>' +
+                '<label>Canal<select id="tkt-thread-filter-channel"><option value="">Todos</option><option value="email"' + (activeThreadFilters.channel === 'email' ? ' selected' : '') + '>Email</option><option value="formulario"' + (activeThreadFilters.channel === 'formulario' ? ' selected' : '') + '>Formulario</option><option value="widget"' + (activeThreadFilters.channel === 'widget' ? ' selected' : '') + '>Widget</option><option value="prestashop"' + (activeThreadFilters.channel === 'prestashop' ? ' selected' : '') + '>PrestaShop</option><option value="phone"' + (activeThreadFilters.channel === 'phone' ? ' selected' : '') + '>Teléfono</option></select></label>' +
+                '<div class="tkt-thread-advanced-actions"><button type="button" class="tkt-btn tkt-btn-mini" id="tkt-thread-advanced-clear">Limpiar</button><button type="button" class="tkt-btn tkt-btn-mini tkt-btn-primary" id="tkt-thread-advanced-apply">Aplicar</button></div>' +
             '</div>' +
         '</div>';
+
+        if (TKA.state.threadHasMore) {
+            var loaded = (Number(TKA.state.threadPage) || 1) * (Number(TKA.state.threadPerPage) || 30);
+            var remaining = Math.max(0, (Number(TKA.state.threadTotal) || loaded) - loaded);
+            html += '<button type="button" class="tkt-thread-load-more" data-thread-load-more' + (TKA.state.threadLoadingMore ? ' disabled' : '') + '><i class="fa-solid fa-clock-rotate-left"></i> ' + (TKA.state.threadLoadingMore ? 'Cargando…' : 'Cargar mensajes anteriores' + (remaining ? ' · quedan ' + remaining : '')) + '</button>';
+        }
 
         if (!items.length) {
             html += '<div class="tkt-empty-box">Este ticket todavía no tiene mensajes ni eventos.</div>';
@@ -1753,9 +2943,15 @@
                             '<i class="fa-solid fa-language"></i> Traducido automáticamente del ' + escapeHtml(it.source_language_name || '') +
                             '<div class="tkt-tmsg-translation-text">' + escapeHtml(it.translated_body).replace(/\n/g, '<br>') + '</div>' +
                         '</div>' : '';
+                    // Un mensaje de "Sistema" (auto-respuesta, notificación
+                    // automática) llevaba las mismas iniciales que cualquier
+                    // otro remitente — con el fix de role (arriba) ahora se
+                    // distingue también por avatar, no solo por el chip.
+                    var isSystemSender = it.role === 'Sistema';
+                    var avatarInner = isSystemSender ? '<i class="fa-solid fa-gear"></i>' : initials(it.sender_name);
                     html += '<div class="tkt-tmsg" data-thread-kind="' + (mine ? 'agent' : 'customer') + '">' +
                         '<div class="tkt-tmsg-head">' +
-                            '<span class="tkt-tmsg-avatar">' + initials(it.sender_name) + '</span>' +
+                            '<span class="tkt-tmsg-avatar' + (isSystemSender ? ' system' : '') + '">' + avatarInner + '</span>' +
                             '<span class="tkt-tmsg-who">' + escapeHtml(it.sender_name) + '</span>' +
                             threadChips(it) +
                             '<span class="tkt-tmsg-time">' + escapeHtml(it.time || it.created_at_human || '') + '</span>' +
@@ -1800,6 +2996,13 @@
             });
         }
 
+        if (showNewMarker) {
+            html += '<button type="button" class="tkt-thread-new-marker" data-thread-new role="status">' +
+                '<i class="fa-solid fa-arrow-down"></i> ' +
+                (newMessageCount > 1 ? newMessageCount + ' mensajes nuevos' : 'Mensaje nuevo') +
+                '</button>';
+        }
+
         html += '</div>'; // cierra .tkt-thread-scroll
 
         // Composer del mockup: cuatro pestañas de modo, la franja del
@@ -1809,38 +3012,121 @@
         // TicketCannedReply para plantillas, MacroApplyController para
         // macros) — cambia la superficie, no el backend. Fuera de
         // .tkt-thread-scroll a propósito: es el hermano fijo que no escrolea.
-        html += composerHtml();
+        html += composerHtml(currentTicket);
 
         $p.html(html);
+        $p.find('[data-thread-kind]:not([data-thread-kind="day"])').each(function () {
+            $(this).attr('data-thread-search-text', $(this).text().replace(/\s+/g, ' ').trim().toLowerCase());
+        });
 
-        // Al abrir el ticket (o recargar la página) se arranca viendo el
-        // mensaje más reciente, no el primero del historial — como
-        // cualquier chat. requestAiDraft() (más abajo, bindComposer()) puede
-        // mostrar la franja "Borrador sugerido" un instante después y esto
-        // encoge el hueco del hilo — ese mismo helper se vuelve a llamar
-        // entonces para no dejar el último mensaje a medio tapar contra el
-        // composer.
-        scrollThreadToBottom();
+        if ($preservedComposer.length && currentTicket &&
+            String($preservedComposer.attr('data-ticket-id')) === String(currentTicket.id)) {
+            $('#tkt-composer').replaceWith($preservedComposer);
+        }
+
+        var $threadScroll = $('#tkt-thread-scroll');
+        var $threadItems = $threadScroll.children('.tkt-tmsg, .tkt-tnote, .tkt-tevent');
+        if (!TKA.state.threadHistoryExpanded && $threadItems.length > TKT_THREAD_VISIBLE_LIMIT) {
+            var collapseCount = $threadItems.length - TKT_THREAD_VISIBLE_LIMIT;
+            $threadItems.slice(0, collapseCount).attr('data-thread-old', '1').hide();
+            $threadItems.eq(collapseCount).before('<button type="button" class="tkt-thread-expand" data-thread-expand><i class="fa-solid fa-clock-rotate-left"></i> Mostrar ' + collapseCount + ' elementos anteriores</button>');
+        }
+
+        // El marcador flotante se posiciona por encima del composer fijo y no
+        // altera la altura del hilo. Solo se muestra cuando el agente se aleja
+        // del último mensaje.
+        var positionLatestMarker = function () {
+            var $composer = $p.find('#tkt-composer');
+            $p.css('--tkt-composer-height', (($composer.outerHeight() || 0) + 20) + 'px');
+        };
+        positionLatestMarker();
+
+        // En la primera carga se arranca viendo el mensaje más reciente. En un
+        // refresco automático solo se baja si el agente ya estaba abajo; si
+        // estaba leyendo el historial, se conserva su posición y aparece un
+        // marcador discreto para saltar a lo nuevo.
+        if (wasAtBottom || !hasExistingThread) {
+            scrollThreadToBottom();
+        } else {
+            var restoredScroll = document.getElementById('tkt-thread-scroll');
+            if (restoredScroll) {
+                restoredScroll.scrollTop = refreshMeta.prepended
+                    ? previousScrollTop + Math.max(0, restoredScroll.scrollHeight - previousScrollHeight)
+                    : Math.min(previousScrollTop, restoredScroll.scrollHeight);
+            }
+        }
 
         $('#tkt-thread-filter [data-thread-filter]').on('click', function () {
             var mode = $(this).data('thread-filter');
-            $('#tkt-thread-filter button').removeClass('on');
-            $(this).addClass('on');
-            $p.find('[data-thread-kind]').each(function () {
-                var kind = $(this).data('thread-kind');
-                var visible = mode === 'all'
-                    || (mode === 'customer' && kind === 'customer')
-                    || (mode === 'no-notes' && kind !== 'note')
-                    || (mode === 'no-events' && kind !== 'event');
-                $(this).toggle(Boolean(visible));
+            applyThreadFilter($p, mode, TKA.state.threadSearch);
+        });
+        $p.find('.tkt-thread-bar').append('<span class="tkt-thread-no-results" data-thread-no-results style="display:none">No hay coincidencias</span>');
+        $p.off('input.tktThreadSearch').on('input.tktThreadSearch', '#tkt-thread-search', function () {
+            var value = String(this.value || '').trim();
+            applyThreadFilter($p, activeThreadFilter, value);
+            clearTimeout(TKA.state.threadSearchTimer);
+            TKA.state.threadSearchTimer = setTimeout(function () {
+                var current = TKA.state.currentTicket;
+                if (current && String(TKA.state.threadSearch || '') === value) {
+                    fetchDetailData(current, { threadSearch: value });
+                }
+            }, 350);
+        });
+        $p.off('click.tktThreadAdvanced').on('click.tktThreadAdvanced', '#tkt-thread-advanced-toggle', function () {
+            var open = !$('#tkt-thread-advanced').prop('hidden');
+            $('#tkt-thread-advanced').prop('hidden', open);
+            $(this).attr('aria-expanded', open ? 'false' : 'true');
+        }).on('click.tktThreadAdvanced', '#tkt-thread-advanced-apply', function () {
+            var filters = threadFilterState({
+                sender: $('#tkt-thread-filter-sender').val(),
+                type: $('#tkt-thread-filter-type').val(),
+                from: $('#tkt-thread-filter-from').val(),
+                to: $('#tkt-thread-filter-to').val(),
+                channel: $('#tkt-thread-filter-channel').val(),
             });
+            TKA.state.threadFilters = filters;
+            TKA.state.threadPage = 1;
+            TKA.state.threadHasMore = false;
+            if (TKA.state.currentTicket) fetchDetailData(TKA.state.currentTicket, { threadPage: 1, threadFilters: filters });
+        }).on('click.tktThreadAdvanced', '#tkt-thread-advanced-clear', function () {
+            var filters = { sender: '', type: 'all', from: '', to: '', channel: '' };
+            TKA.state.threadFilters = filters;
+            TKA.state.threadPage = 1;
+            TKA.state.threadHasMore = false;
+            if (TKA.state.currentTicket) fetchDetailData(TKA.state.currentTicket, { threadPage: 1, threadFilters: filters });
+        }).on('click.tktThreadAdvanced', '[data-thread-load-more]', function () {
+            loadOlderThread();
+        });
+        applyThreadFilter($p, activeThreadFilter, activeThreadSearch);
 
-            // Un separador de día cuyo contenido entero quedó filtrado se
-            // queda flotando sobre nada: se oculta también.
-            $p.find('[data-thread-kind="day"]').each(function () {
-                var $siblings = $(this).nextUntil('[data-thread-kind="day"]');
-                $(this).toggle($siblings.filter(':visible').length > 0);
-            });
+        $p.off('click.tktThreadNew').on('click.tktThreadNew', '[data-thread-new]', function () {
+            TKA.state.threadUnread = 0;
+            $(this).remove();
+            $p.find('[data-thread-latest]').remove();
+            scrollThreadToBottom();
+        });
+
+        $p.on('click.tktThreadNew', '[data-thread-latest]', function () {
+            $(this).remove();
+            scrollThreadToBottom();
+        });
+        $p.on('click.tktThreadNew', '[data-thread-expand]', function () {
+            TKA.state.threadHistoryExpanded = true;
+            $p.find('[data-thread-old]').removeAttr('data-thread-old').show();
+            $(this).remove();
+            applyThreadFilter($p, activeThreadFilter, TKA.state.threadSearch);
+        });
+
+        $threadScroll.off('scroll.tktLatest').on('scroll.tktLatest', function () {
+            if (this.scrollTop < 80 && TKA.state.threadHasMore && !TKA.state.threadLoadingMore) loadOlderThread();
+            var away = !threadIsNearBottom(this);
+            var hasNewMarker = $p.find('[data-thread-new]').length > 0;
+            if (away && this.scrollHeight > this.clientHeight && !hasNewMarker && !$p.find('[data-thread-latest]').length) {
+                $p.append('<button type="button" class="tkt-thread-latest-marker" data-thread-latest><i class="fa-solid fa-arrow-down"></i> Ir al último mensaje</button>');
+                positionLatestMarker();
+            } else if (!away) {
+                $p.find('[data-thread-latest]').remove();
+            }
         });
 
         // ── Acciones por mensaje del hilo ──
@@ -1903,7 +3189,7 @@
             });
         });
 
-        bindComposer($p);
+        if (!$('#tkt-composer').is($preservedComposer)) bindComposer($p);
     }
 
     // ── Composer del hilo ────────────────────────────────────────────
@@ -1912,8 +3198,8 @@
     // El modo vive en data-mode del contenedor, no en variables sueltas:
     // sendReply() lo lee para decidir si crea un mensaje público o una nota.
 
-    function composerHtml() {
-        return '<div class="tkt-composer" id="tkt-composer" data-mode="reply">' +
+    function composerHtml(t) {
+        return '<div class="tkt-composer" id="tkt-composer" data-ticket-id="' + escapeHtml(t && t.id != null ? String(t.id) : '') + '" data-mode="reply">' +
             '<div class="tkt-comp-tabs">' +
                 // Con texto, sin icono (mismo criterio que el resto de la
                 // pantalla). El indicador de idioma no es un botón, se deja
@@ -1925,18 +3211,18 @@
                 // tenía que mirar dos sitios para lo mismo. Ahora toda la
                 // barra de acciones vive en un solo lugar, arriba.
                 '<button type="button" class="tkt-comp-tab on" data-comp-mode="reply">Respuesta</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-mode="note">Nota interna</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-act="templates">Plantillas</button>' +
-                '<button type="button" class="tkt-comp-tab" data-comp-act="translate">Traducir</button>' +
-                '<label class="tkt-comp-tool" title="Adjuntar archivo">Adjuntar<input type="file" id="tkt-reply-attach" multiple hidden></label>' +
-                '<span class="tkt-comp-attach-count" id="tkt-reply-attach-count"></span>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="macros">Macros</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="followup">Automático</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="ai">IA</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="mention">Mencionar</button>' +
+                (featureEnabled('composer_note') ? '<button type="button" class="tkt-comp-tab" data-comp-mode="note">Nota interna</button>' : '') +
+                (featureEnabled('composer_templates') ? '<button type="button" class="tkt-comp-tab" data-comp-act="templates">Plantillas</button>' : '') +
+                (featureEnabled('composer_translate') ? '<button type="button" class="tkt-comp-tab" data-comp-act="translate">Traducir</button>' : '') +
+                (featureEnabled('composer_attach') ? '<label class="tkt-comp-tool" title="Adjuntar archivo">Adjuntar<input type="file" id="tkt-reply-attach" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar,.txt" hidden></label><span class="tkt-comp-attach-count" id="tkt-reply-attach-count"></span>' : '') +
+                (featureEnabled('composer_macros') ? '<button type="button" class="tkt-comp-tool" data-comp-act="macros">Macros</button>' : '') +
+                (featureEnabled('composer_followup') ? '<button type="button" class="tkt-comp-tool" data-comp-act="followup">Automático</button>' : '') +
+                (featureEnabled('composer_ai') ? '<button type="button" class="tkt-comp-tool" data-comp-act="ai">IA</button>' : '') +
+                (featureEnabled('composer_mention') ? '<button type="button" class="tkt-comp-tool" data-comp-act="mention">Mencionar</button>' : '') +
                 '<span class="tkt-comp-lang" id="tkt-comp-lang" hidden><i class="fa-solid fa-language"></i> <span></span></span>' +
+                '<span class="tkt-comp-draft-status" id="tkt-draft-status" role="status" aria-live="polite"></span>' +
                 '<span class="tkt-comp-send-group">' +
-                    '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule">Programar</button>' +
+                    (featureEnabled('composer_schedule') ? '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule">Programar</button>' : '') +
                     '<button type="button" class="tkt-comp-send" id="tkt-reply-send">Enviar <span class="tkt-comp-kbd">' + sendShortcutLabel() + '</span></button>' +
                 '</span>' +
             '</div>' +
@@ -1988,6 +3274,7 @@
         var $c = $('#tkt-composer');
         var $body = $('#tkt-reply-body');
         var t = TKA.state.currentTicket;
+        var draft = readComposerDraft(t);
 
         // "/" para respuestas rápidas: el placeholder lo anuncia desde
         // siempre pero nunca estuvo conectado a nada — solo abría el modal
@@ -2022,7 +3309,16 @@
             $body.attr('placeholder', mode === 'note'
                 ? 'Nota interna: el cliente no la verá… (@ para mencionar)'
                 : 'Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)');
+            scheduleComposerDraftSave();
         });
+
+        if (draft && !$body.val().trim()) {
+            $body.val(draft.body);
+            if (draft.mode === 'note') $c.find('[data-comp-mode="note"]').trigger('click');
+            autoResizeTextarea($body[0]);
+            $c.addClass('is-expanded');
+        }
+        updateDraftStatus($c, draft, false);
 
         $c.on('click', '[data-comp-act]', function () {
             switch ($(this).data('comp-act')) {
@@ -2037,15 +3333,37 @@
         });
 
         $('#tkt-reply-attach').on('change', function () {
-            var n = this.files.length;
+            var files = Array.prototype.slice.call(this.files || []);
+            var invalid = files.find(function (file) {
+                var extension = String(file.name || '').split('.').pop().toLowerCase();
+                return file.size > TKT_ATTACHMENT_MAX_BYTES || TKT_ATTACHMENT_EXTENSIONS.indexOf(extension) === -1;
+            });
+            if (files.length > 10 || invalid) {
+                this.value = '';
+                $('#tkt-reply-attach-count').text('');
+                var reason = files.length > 10 ? 'Puedes adjuntar como máximo 10 archivos.' : 'El archivo debe ser un formato permitido y no superar ' + Math.round(TKT_ATTACHMENT_MAX_BYTES / 1024 / 1024 * 100) / 100 + ' MB.';
+                if (window.toastr) toastr.warning(reason, 'Adjunto no válido'); else window.alert(reason);
+                return;
+            }
+            var n = files.length;
             $('#tkt-reply-attach-count').text(n ? n + ' archivo(s)' : '');
         });
 
         $('#tkt-reply-send').on('click', sendReply);
 
         var typingTimer;
+        $body.on('focus.tktComposer', function () {
+            $c.addClass('is-expanded');
+        });
+        $body.on('blur.tktComposer', function () {
+            setTimeout(function () {
+                if (!$body.val().trim()) $c.removeClass('is-expanded');
+            }, 0);
+        });
         $body.on('input', function () {
             autoResizeTextarea(this);
+            if (this.value.trim()) $c.addClass('is-expanded');
+            scheduleComposerDraftSave();
             if (composerIsNote()) return; // una nota interna no es "está escribiendo"
             clearTimeout(typingTimer);
             emitTyping(true);
@@ -2423,8 +3741,13 @@
     // ── Aviso "¿quieres asignarte este ticket?" ───────────────
     // Un ticket sin dueño era fácil de dejar pasar: se abre, se lee, se cierra
     // la pestaña sin que nadie quede como responsable. El aviso invita a
-    // tomarlo con un clic, que abre el MISMO modal de asignación de siempre
-    // (openAssignModal) — no se autoasigna solo, el agente decide ahí.
+    // tomarlo con un clic de verdad — bug de UX real (QA visual 14-sep-2026):
+    // "Asignarme" abría el modal genérico de asignación (buscador + lista
+    // completa de agentes) en vez de autoasignar, así que el agente tenía
+    // que volver a encontrarse a sí mismo en la lista y confirmar otra vez
+    // algo que el botón ya decía haber hecho. Ahora usa el mismo
+    // patchTicketSilent() que el modal, con TKA.state.currentUserId — sin
+    // abrir nada.
     //
     // "Descartado" se recuerda por ticket mientras dura la sesión del panel
     // (TKA.state, no localStorage): si vuelves a este ticket más tarde sigue
@@ -2459,7 +3782,21 @@
             '</div>'
         );
 
-        $box.find('#tkt-selfassign-yes').on('click', function () { openAssignModal(t); });
+        $box.find('#tkt-selfassign-yes').on('click', function () {
+            patchTicketSilent(t, 'assignee_id', TKA.state.currentUserId, function () {
+                // Revisión de código 14-sep-2026: si el usuario actual no
+                // apareciera en agentsFull (rol sin permiso de agente, lista
+                // todavía no cargada…), el PATCH al backend igual tiene
+                // éxito — sin este 'Tú' de reserva, t.assignee se quedaba
+                // sin tocar y la fila seguía mostrando "Sin asignar" pese a
+                // estar ya asignada de verdad, hasta el próximo refresco
+                // completo de la lista.
+                var me = (TKA.state.agentsFull || []).find(function (a) { return a.id === TKA.state.currentUserId; });
+                t.assignee = me ? { id: me.id, name: me.name } : { id: TKA.state.currentUserId, name: 'Tú' };
+                renderDetail(t);
+                renderSidePanel(t);
+            });
+        });
         $box.find('#tkt-selfassign-close').on('click', function () {
             TKA.state.selfAssignDismissed[t.id] = true;
             $box.attr('hidden', true).empty();
@@ -2554,6 +3891,230 @@
         });
     }
 
+    function makeIdempotencyKey(t) {
+        var random = window.crypto && typeof window.crypto.randomUUID === 'function'
+            ? window.crypto.randomUUID()
+            : Date.now() + '-' + Math.random().toString(36).slice(2);
+        return 'ticket-' + t.id + '-' + random;
+    }
+
+    function queueOfflineReply(t, body, isInternal, files, idempotencyKey) {
+        var entry = {
+            id: idempotencyKey || makeIdempotencyKey(t),
+            ticketId: t.id,
+            url: t.url_message_store,
+            body: body,
+            isInternal: isInternal ? 1 : 0,
+            createdAt: new Date().toISOString(),
+            attempts: 0,
+            nextAttemptAt: null,
+            lastError: '',
+            dead: false,
+        };
+
+        if (files && files.length) {
+            if ((TKA.state.offlineQueue || []).length + (TKA.state.offlineAttachmentQueue || []).length >= TKT_OFFLINE_MAX_ENTRIES) {
+                if (window.toastr) toastr.error('La cola offline está llena. Conéctate y envía las respuestas pendientes antes de añadir otra.');
+                return Promise.resolve(false);
+            }
+            entry.files = Array.prototype.slice.call(files);
+            return putOfflineAttachmentReply(entry).then(function () {
+                TKA.state.offlineAttachmentQueue = (TKA.state.offlineAttachmentQueue || []).concat([entry]);
+                updateOfflineQueueStatus();
+                if (window.toastr) toastr.info('Respuesta y adjuntos guardados. Se enviarán al recuperar la conexión.');
+                return true;
+            }).catch(function () {
+                if (window.toastr) toastr.error('No se pudo guardar el adjunto offline. Mantén esta ventana abierta y reintenta con conexión.');
+                return false;
+            });
+        }
+
+        var queue = (TKA.state.offlineQueue || []).slice();
+        queue.push(entry);
+        writeOfflineQueue(queue);
+        if (window.toastr) toastr.info('Respuesta guardada. Se enviará automáticamente al recuperar la conexión.');
+        return Promise.resolve(true);
+    }
+
+    function attachmentValidationMessage(fileList) {
+        var files = Array.prototype.slice.call(fileList || []);
+        if (files.length > 10) return 'Puedes adjuntar como máximo 10 archivos.';
+        var invalid = files.find(function (file) {
+            var extension = String(file.name || '').split('.').pop().toLowerCase();
+            return file.size > TKT_ATTACHMENT_MAX_BYTES || TKT_ATTACHMENT_EXTENSIONS.indexOf(extension) === -1;
+        });
+        return invalid ? 'El archivo debe ser un formato permitido y no superar ' + Math.round(TKT_ATTACHMENT_MAX_BYTES / 1024 / 1024 * 100) / 100 + ' MB.' : '';
+    }
+
+    function showAttachmentValidationError(message) {
+        if (window.toastr) toastr.warning(message, 'Adjunto no válido'); else window.alert(message);
+    }
+
+    function scheduleOfflineFlush(delay) {
+        clearTimeout(TKA.state.offlineRetryTimer);
+        TKA.state.offlineRetryTimer = setTimeout(function () {
+            TKA.state.offlineRetryTimer = null;
+            if (TKA.state.networkOnline && navigator.onLine !== false) flushOfflineReplies();
+        }, Math.max(1000, delay || TKT_OFFLINE_RETRY_BASE_MS));
+    }
+
+    function offlineRetryDelay(entry) {
+        var attempts = Math.max(1, Number(entry.attempts) || 1);
+        return Math.min(5 * 60 * 1000, TKT_OFFLINE_RETRY_BASE_MS * Math.pow(2, attempts - 1));
+    }
+
+    function persistOfflineAttachmentEntry(entry) {
+        return putOfflineAttachmentReply(entry).catch(function () { return false; });
+    }
+
+    function retryOfflineQueue(id) {
+        var writes = [];
+        var textQueue = (TKA.state.offlineQueue || []).map(function (entry) {
+            if (!id || String(entry.id) === String(id)) {
+                entry = normalizeOfflineEntry(entry);
+                entry.attempts = 0;
+                entry.nextAttemptAt = null;
+                entry.lastError = '';
+                entry.dead = false;
+            }
+            return entry;
+        });
+        var attachmentQueue = (TKA.state.offlineAttachmentQueue || []).map(function (entry) {
+            if (!id || String(entry.id) === String(id)) {
+                entry = normalizeOfflineEntry(entry);
+                entry.attempts = 0;
+                entry.nextAttemptAt = null;
+                entry.lastError = '';
+                entry.dead = false;
+                writes.push(persistOfflineAttachmentEntry(entry));
+            }
+            return entry;
+        });
+        writeOfflineQueue(textQueue);
+        TKA.state.offlineAttachmentQueue = attachmentQueue;
+        updateOfflineQueueStatus();
+        return Promise.all(writes).then(function () {
+            flushOfflineReplies();
+        });
+    }
+
+    function openOfflineQueueModal() {
+        var entries = (TKA.state.offlineQueue || []).map(function (entry) { return $.extend({ kind: 'Respuesta' }, entry); })
+            .concat((TKA.state.offlineAttachmentQueue || []).map(function (entry) { return $.extend({ kind: 'Respuesta con adjuntos' }, entry); }));
+        var body = entries.length ? '<div class="tkt-offline-queue-list">' + entries.map(function (entry) {
+            var status = entry.dead ? 'Bloqueado tras ' + (entry.attempts || TKT_OFFLINE_MAX_ATTEMPTS) + ' intentos' : (entry.nextAttemptAt ? 'Próximo intento ' + new Date(entry.nextAttemptAt).toLocaleTimeString('es-ES') : 'Pendiente');
+            return '<div class="tkt-offline-queue-row"><div class="tkt-offline-queue-main"><b>#' + escapeHtml(entry.ticketId) + ' · ' + escapeHtml(entry.kind) + '</b><span>' + escapeHtml(status) + (entry.lastError ? ' · ' + escapeHtml(entry.lastError) : '') + '</span></div><button type="button" class="tkt-btn tkt-btn-mini" data-offline-retry="' + escapeHtml(entry.id) + '">Reintentar</button></div>';
+        }).join('') + '</div>' : '<div class="tkt-empty-box">No hay respuestas pendientes.</div>';
+        var $backdrop = openModal(modalShell({
+            icon: 'fa-solid fa-cloud-arrow-up',
+            kicker: 'Persistencia local',
+            title: 'Cola offline de respuestas',
+            width: 'lg',
+            body: body + '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Las respuestas se mantienen en este navegador hasta que el servidor confirme su recepción y caducan a las 24 horas. Hay un máximo de ' + TKT_OFFLINE_MAX_ENTRIES + ' pendientes. Los reintentos usan espera progresiva para no saturar la conexión.</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-offline-retry-all">Reintentar todo</button><button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+        }));
+        $backdrop.on('click', '[data-offline-retry]', function () {
+            var id = $(this).data('offline-retry');
+            retryOfflineQueue(id).then(function () { closeModal(); });
+        });
+        $backdrop.on('click', '#tkt-offline-retry-all', function () {
+            retryOfflineQueue().then(function () { closeModal(); });
+        });
+    }
+
+    function flushOfflineReplies() {
+        if (!TKA.state.networkOnline || TKA.state.offlineFlushInFlight || (!(TKA.state.offlineQueue || []).length && !(TKA.state.offlineAttachmentQueue || []).length)) {
+            updateOfflineQueueStatus();
+            return;
+        }
+
+        TKA.state.offlineFlushInFlight = true;
+        var pending = (TKA.state.offlineQueue || []).slice();
+        var pendingAttachments = (TKA.state.offlineAttachmentQueue || []).slice();
+        var delivered = 0;
+
+        function next() {
+            if (!TKA.state.networkOnline || (!pending.length && !pendingAttachments.length)) {
+                TKA.state.offlineFlushInFlight = false;
+                if (delivered && window.toastr) toastr.success(delivered + (delivered === 1 ? ' respuesta enviada' : ' respuestas enviadas'));
+                return;
+            }
+
+            var now = Date.now();
+            var textIndex = pending.findIndex(function (entry) { return !entry.dead && (!entry.nextAttemptAt || Date.parse(entry.nextAttemptAt) <= now); });
+            var attachmentIndex = pendingAttachments.findIndex(function (entry) { return !entry.dead && (!entry.nextAttemptAt || Date.parse(entry.nextAttemptAt) <= now); });
+            var isAttachment = textIndex < 0 && attachmentIndex >= 0;
+            if (textIndex < 0 && attachmentIndex < 0) {
+                var future = pending.concat(pendingAttachments).filter(function (entry) { return !entry.dead && entry.nextAttemptAt; }).map(function (entry) { return Math.max(1000, Date.parse(entry.nextAttemptAt) - Date.now()); });
+                TKA.state.offlineFlushInFlight = false;
+                updateOfflineQueueStatus();
+                if (future.length) scheduleOfflineFlush(Math.min.apply(Math, future));
+                return;
+            }
+
+            var index = isAttachment ? attachmentIndex : textIndex;
+            var entry = normalizeOfflineEntry(isAttachment ? pendingAttachments[index] : pending[index]);
+            var formData = new FormData();
+            formData.append('body', entry.body);
+            formData.append('is_internal', entry.isInternal ? 1 : 0);
+            (entry.files || []).forEach(function (file) { formData.append('attachments[]', file, file.name); });
+            $.ajax({
+                url: entry.url,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: { Accept: 'application/json' },
+                beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', entry.id); },
+            }).done(function () {
+                if (isAttachment) {
+                    pendingAttachments.splice(index, 1);
+                    TKA.state.offlineAttachmentQueue = pendingAttachments.slice();
+                    deleteOfflineAttachmentReply(entry.id).catch(function () {});
+                } else {
+                    pending.splice(index, 1);
+                }
+                delivered++;
+                writeOfflineQueue(pending);
+                var current = TKA.state.currentTicket;
+                if (current && String(current.id) === String(entry.ticketId)) fetchDetailData(current);
+                next();
+            }).fail(function (xhr) {
+                entry.attempts = (entry.attempts || 0) + 1;
+                entry.lastError = (xhr.responseJSON && xhr.responseJSON.message) || (xhr.status ? 'Servidor respondió ' + xhr.status : 'No hay conexión');
+                entry.dead = entry.attempts >= TKT_OFFLINE_MAX_ATTEMPTS;
+                entry.nextAttemptAt = entry.dead ? null : new Date(Date.now() + offlineRetryDelay(entry)).toISOString();
+                if (isAttachment) {
+                    pendingAttachments[index] = entry;
+                    TKA.state.offlineAttachmentQueue = pendingAttachments.slice();
+                    persistOfflineAttachmentEntry(entry);
+                } else {
+                    pending[index] = entry;
+                }
+                writeOfflineQueue(pending);
+                TKA.state.offlineFlushInFlight = false;
+                if (xhr.status === 0 || !navigator.onLine) setNetworkState(false);
+                // Se conserva la cola ante errores de red o respuestas 5xx.
+                // Los 4xx también se dejan visibles para que el agente pueda
+                // corregir el problema sin perder una respuesta escrita.
+                updateOfflineQueueStatus();
+                if (!entry.dead && navigator.onLine !== false) scheduleOfflineFlush(offlineRetryDelay(entry));
+                if (entry.dead && window.toastr) toastr.error('Una respuesta quedó bloqueada tras varios intentos. Revisa la cola offline.');
+            });
+        }
+
+        next();
+    }
+
+    function clearComposerAfterQueue(t, isInternal) {
+        clearTimeout(TKA.state.draftSaveTimer);
+        clearComposerDraft(t);
+        $('#tkt-reply-body').val('').css('height', '').trigger('blur');
+        $('#tkt-reply-attach').val('');
+        $('#tkt-reply-attach-count').text('');
+        $('#tkt-composer').removeClass('is-expanded').toggleClass('is-note', isInternal);
+    }
+
     function sendReply() {
         var t = TKA.state.currentTicket;
         var body = $('#tkt-reply-body').val().trim();
@@ -2575,6 +4136,21 @@
         TKA.state.replyCollisionAccepted = false;
 
         var files = document.getElementById('tkt-reply-attach').files;
+        var attachmentError = attachmentValidationMessage(files);
+        if (attachmentError) {
+            $('#tkt-reply-attach').val('');
+            $('#tkt-reply-attach-count').text('');
+            showAttachmentValidationError(attachmentError);
+            return;
+        }
+        var idempotencyKey = makeIdempotencyKey(t);
+
+        if (!TKA.state.networkOnline || navigator.onLine === false) {
+            queueOfflineReply(t, body, isInternal, files, idempotencyKey).then(function (queued) {
+                if (queued) clearComposerAfterQueue(t, isInternal);
+            });
+            return;
+        }
 
         var formData = new FormData();
         formData.append('body', body);
@@ -2588,9 +4164,16 @@
             processData: false,
             contentType: false,
             headers: { Accept: 'application/json' },
+            beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', idempotencyKey); },
             success: function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Mensaje enviado');
                 emitTyping(false);
+                clearTimeout(TKA.state.draftSaveTimer);
+                clearComposerDraft(t);
+                $('#tkt-reply-body').val('').css('height', '').trigger('blur');
+                $('#tkt-reply-attach').val('');
+                $('#tkt-reply-attach-count').text('');
+                $('#tkt-composer').removeClass('is-expanded').toggleClass('is-note', isInternal);
 
                 // Responder puede haber asignado el ticket o cambiado su
                 // estado en el servidor (tickets.assign_on_reply/status_on_reply):
@@ -2614,6 +4197,13 @@
                 fetchDetailData(t);
             },
             error: function (xhr) {
+                if (xhr.status === 0 || !navigator.onLine) {
+                    setNetworkState(false);
+                    queueOfflineReply(t, body, isInternal, files, idempotencyKey).then(function (queued) {
+                        if (queued) clearComposerAfterQueue(t, isInternal);
+                    });
+                    return;
+                }
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo enviar el mensaje';
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
@@ -2630,6 +4220,7 @@
         var d = String(description || '').toLowerCase();
 
         if (d.indexOf('creado') !== -1) return 'created';
+        if (d.indexOf('visto') !== -1) return 'viewed';
         if (d.indexOf('elimin') !== -1 || d.indexOf('borrad') !== -1) return 'removed';
         if (d.indexOf('email') !== -1 || d.indexOf('correo') !== -1) return 'sent';
         if (d.indexOf('asign') !== -1) return 'assign';
@@ -2644,6 +4235,40 @@
         }
 
         return 'edited';
+    }
+
+    function auditFieldLabel(field) {
+        return {
+            status_id: 'estado',
+            assignee_id: 'asignado a',
+            priority: 'prioridad',
+            subject: 'asunto',
+            customer_id: 'cliente',
+            due_at: 'vencimiento',
+        }[field] || String(field).replace(/_/g, ' ');
+    }
+
+    function auditValue(value) {
+        if (value === null || value === undefined || value === '') return '—';
+        if (typeof value === 'object') {
+            try { return JSON.stringify(value); } catch (e) { return String(value); }
+        }
+        return String(value);
+    }
+
+    function auditChangesHtml(changes) {
+        changes = changes || {};
+        var oldValues = changes.old || {};
+        var newValues = changes.attributes || {};
+        var keys = Object.keys(oldValues).concat(Object.keys(newValues)).filter(function (key, index, all) {
+            return all.indexOf(key) === index;
+        });
+        var rows = keys.filter(function (key) {
+            return auditValue(oldValues[key]) !== auditValue(newValues[key]);
+        }).map(function (key) {
+            return '<span class="tkt-audit-change"><b>' + escapeHtml(auditFieldLabel(key)) + '</b>: ' + escapeHtml(auditValue(oldValues[key])) + ' <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ' + escapeHtml(auditValue(newValues[key])) + '</span>';
+        });
+        return rows.length ? '<span class="tkt-audit-changes" aria-label="Valores anteriores y nuevos">' + rows.join('') + '</span>' : '';
     }
 
     function renderActivityPane(activities, totalCount) {
@@ -2671,7 +4296,7 @@
             html += stepHtml({
                 type: activityStepType(a.description),
                 title: escapeHtml(a.description),
-                detail: actor,
+                detail: actor + auditChangesHtml(a.changes),
                 time: a.created_at_human || '',
                 iso: a.created_at,
                 last: i === activities.length - 1,
@@ -2697,6 +4322,12 @@
     function uploadTicketAttachments(t, fileList) {
         if (!t || !fileList || !fileList.length) return;
 
+        var attachmentError = attachmentValidationMessage(fileList);
+        if (attachmentError) {
+            showAttachmentValidationError(attachmentError);
+            return;
+        }
+
         // StoreTicketMessageRequest exige body (min:1) — no acepta adjuntar
         // sin ningún texto, así que se manda un texto mínimo en vez de
         // forzar un string vacío que el backend rechazaría.
@@ -2704,15 +4335,27 @@
         formData.append('body', '(archivo adjunto)');
         formData.append('is_internal', 0);
         for (var i = 0; i < fileList.length; i++) formData.append('attachments[]', fileList[i]);
+        var idempotencyKey = makeIdempotencyKey(t);
+
+        if (!TKA.state.networkOnline || navigator.onLine === false) {
+            queueOfflineReply(t, '(archivo adjunto)', false, fileList, idempotencyKey);
+            return;
+        }
 
         $.ajax({
             url: t.url_message_store, method: 'POST', data: formData, processData: false, contentType: false,
             headers: { Accept: 'application/json' },
+            beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', idempotencyKey); },
             success: function () {
                 if (window.toastr) toastr.success('Archivo adjuntado');
                 fetchDetailData(t);
             },
             error: function (xhr) {
+                if (xhr.status === 0 || !navigator.onLine) {
+                    setNetworkState(false);
+                    queueOfflineReply(t, '(archivo adjunto)', false, fileList, idempotencyKey);
+                    return;
+                }
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo adjuntar el archivo';
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
@@ -2742,8 +4385,8 @@
         html += '<label class="tkt-dropzone" id="tkt-files-drop">' +
                 '<i class="fa-solid fa-cloud-arrow-up"></i>' +
                 '<span class="t">Arrastra archivos aquí</span>' +
-                '<span class="s">o pulsa para seleccionar · máx. 10 MB por archivo</span>' +
-                '<input type="file" id="tkt-files-attach-input" multiple hidden>' +
+                '<span class="s">o pulsa para seleccionar · máx. ' + formatFileSize(TKT_ATTACHMENT_MAX_BYTES) + ' por archivo</span>' +
+                '<input type="file" id="tkt-files-attach-input" multiple accept=".' + TKT_ATTACHMENT_EXTENSIONS.join(',.') + '" hidden>' +
             '</label>';
 
         // Pie del mockup: el botón explícito (la zona de arrastre sola no se
@@ -3003,6 +4646,7 @@
         clicked:  { icon: 'fa-arrow-pointer',        tone: 'mute' },
         bounced:  { icon: 'fa-arrow-rotate-left',    tone: 'bad'  },
         failed:   { icon: 'fa-triangle-exclamation', tone: 'bad'  },
+        viewed:   { icon: 'fa-eye',                  tone: 'mute' },
     };
 
     // Una fila de la línea de tiempo: círculo + línea vertical, texto
@@ -3222,6 +4866,11 @@
     }
 
     function selectSideTab(which) {
+        // Al elegir una pestaña desde el riel reducido, se vuelve a abrir el
+        // panel para que el contenido sea visible inmediatamente.
+        if (TKA.state.splitLayout && TKA.state.splitLayout.sideCollapsed) {
+            setSideCollapsed(false);
+        }
         TKA.state.sideTab = which;
         $('#tkt-side-rail [data-side]').each(function () {
             $(this).toggleClass('on', $(this).data('side') === which);
@@ -3502,19 +5151,23 @@
 
         var tieneEmail = !!(t.customer && t.customer.email);
 
+        // Settings → Helpdesk · Tickets → Funcionalidades (14-sep-2026): cada
+        // condición se multiplica por featureEnabled() sin tocar la lógica
+        // de negocio que ya decidía si el botón aplica al estado del ticket
+        // — "Responder al cliente" queda fuera, no se puede apagar.
         var botones = [
             // Responder sigue disponible en un ticket cerrado: es lo que lo
             // reabre en la práctica cuando el cliente vuelve a escribir.
             ['tkt-act-reply', 'Responder al cliente', 'tkt-btn-primary', true],
-            [null, 'Marcar como resuelto', '', vivo && !resuelto, 'resolve'],
-            [null, 'Cerrar ticket', '', vivo, 'close'],
-            [null, 'Reabrir ticket', '', cerrado || resuelto, 'reopen'],
-            ['tkt-act-snooze', 'Aplazar seguimiento', '', vivo],
-            ['tkt-act-merge', 'Fusionar duplicado', '', vivo],
-            ['tkt-act-split', 'Dividir ticket', '', puedeDividir],
-            ['tkt-act-portal', 'Ver como el cliente', '', true],
-            ['tkt-act-blacklist', 'Pasar a lista negra', 'tkt-btn-danger', tieneEmail],
-            ['tkt-act-delete', 'Eliminar / Archivar', 'tkt-btn-danger', true],
+            [null, 'Marcar como resuelto', '', vivo && !resuelto && featureEnabled('action_resolve'), 'resolve'],
+            [null, 'Cerrar ticket', '', vivo && featureEnabled('action_close'), 'close'],
+            [null, 'Reabrir ticket', '', (cerrado || resuelto) && featureEnabled('action_reopen'), 'reopen'],
+            ['tkt-act-snooze', 'Aplazar seguimiento', '', vivo && featureEnabled('action_snooze')],
+            ['tkt-act-merge', 'Fusionar duplicado', '', vivo && featureEnabled('action_merge')],
+            ['tkt-act-split', 'Dividir ticket', '', puedeDividir && featureEnabled('action_split')],
+            ['tkt-act-portal', 'Ver como el cliente', '', featureEnabled('action_portal')],
+            ['tkt-act-blacklist', 'Pasar a lista negra', 'tkt-btn-danger', tieneEmail && featureEnabled('action_blacklist')],
+            ['tkt-act-delete', 'Eliminar / Archivar', 'tkt-btn-danger', featureEnabled('action_delete')],
         ];
 
         return botones.filter(function (b) { return b[3]; }).map(function (b) {
@@ -3557,14 +5210,14 @@
                         sideRow('asignado', asg.assigned_at_human || '—', { mono: true, last: true }) +
                     '</div>' +
                     '<div class="tkt-side-duo">' +
-                        '<button type="button" class="tkt-btn" id="tkt-act-reassign">Reasignar</button>' +
-                        '<button type="button" class="tkt-btn" id="tkt-act-followers">Seguidores</button>' +
+                        (featureEnabled('mgmt_reassign') ? '<button type="button" class="tkt-btn" id="tkt-act-reassign">Reasignar</button>' : '') +
+                        (featureEnabled('mgmt_followers') ? '<button type="button" class="tkt-btn" id="tkt-act-followers">Seguidores</button>' : '') +
                     '</div>' +
                 '</div>' +
             '</div>';
 
         // Card SLA con barra de progreso. Solo si hay política aplicada.
-        var slaCard = sla
+        var slaCard = !featureEnabled('mgmt_sla_card') ? '' : sla
             ? '<div class="tkt-side-card">' +
                 '<div class="tkt-side-card-head">SLA<span class="tkt-spacer"><button type="button" class="tkt-link-btn" id="tkt-act-slacal">Calendario</button></span></div>' +
                 '<div class="tkt-side-card-body tight">' +
@@ -3604,6 +5257,7 @@
                 '<div class="tkt-side-card-head">Acciones</div>' +
                 '<div class="tkt-side-card-body">' + accionesHtml(t, d) + '</div>' +
             '</div>' +
+            (!featureEnabled('mgmt_fields') ? '' :
             '<div class="tkt-side-card">' +
                 '<div class="tkt-side-card-head">Gestión del ticket<span class="tkt-spacer">' + chip(t.status_name || STATUS_LABEL_FALLBACK[t.status_slug] || t.status_slug, statusChipClass(t.status_slug)) + '</span></div>' +
                 // Etiqueta en versalitas ENCIMA del control, a ancho completo.
@@ -3615,14 +5269,17 @@
                     '<div class="tkt-field"><label for="tkt-sg-category">Categoría</label><select id="tkt-sg-category" data-field="category_id"><option value="">—</option>' + optionsHtml(TKA.state.categories, 'id', t.category_id) + '</select></div>' +
                     '<div class="tkt-field"><label for="tkt-sg-group">Equipo</label><select id="tkt-sg-group" data-field="group_id"><option value="">—</option>' + optionsHtml(TKA.state.groups, 'id', t.group_id) + '</select></div>' +
                 '</div>' +
-            '</div>' +
+            '</div>') +
             assigneeCard +
             slaCard +
-            renderCsatCard(csat)
+            (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '')
         );
 
-        // Tanto la ficha del agente como "Reasignar" abren el modal 37.
-        $c.find('#tkt-sg-assignee-wrap, #tkt-act-reassign').on('click', function () { openAssignModal(t); });
+        // Tanto la ficha del agente como "Reasignar" abren el modal 37 — salvo
+        // que "Reasignar" esté apagado en Funcionalidades: entonces la ficha
+        // queda como información de solo lectura, no como atajo alternativo
+        // al mismo modal que el toggle acaba de ocultar.
+        $c.find(featureEnabled('mgmt_reassign') ? '#tkt-sg-assignee-wrap, #tkt-act-reassign' : '#tkt-act-reassign').on('click', function () { openAssignModal(t); });
         $c.find('#tkt-act-slacal').on('click', openSlaCalendarModal);
         $c.find('#tkt-act-blacklist').on('click', function () { openBlacklistModal(t); });
 
@@ -3898,7 +5555,12 @@
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
                     if (window.toastr) toastr.success((resp && resp.message) || 'Ticket pospuesto');
-                    window.location.reload();
+                    closeModal();
+                    queueTicketListRefresh('ticket-snoozed', t, {
+                        freshCounts: true,
+                        refreshDetail: true,
+                        forceDetail: true,
+                    });
                 },
                 error: function (xhr) {
                     var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo posponer el ticket';
@@ -5727,7 +7389,7 @@
                 // parte de la interfaz.
                 '<div class="tkt-note-tools">' +
                     '<button type="button" class="tkt-comp-tool" id="tkt-note-macro" title="Insertar una macro">Macro</button>' +
-                    '<label class="tkt-comp-tool" title="Adjuntar un archivo al ticket">Adjuntar<input type="file" id="tkt-note-attach" multiple hidden></label>' +
+                    '<label class="tkt-comp-tool" title="Adjuntar un archivo al ticket">Adjuntar<input type="file" id="tkt-note-attach" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar,.txt" hidden></label>' +
                     '<button type="button" class="tkt-comp-tool" id="tkt-note-mention" title="Mencionar a un compañero">Mencionar</button>' +
                     '<label class="tkt-note-pin-toggle"><input type="checkbox" id="tkt-new-note-pin"> Fijar</label>' +
                     '<span class="tkt-note-count mono" id="tkt-note-counter">0 / ' + NOTE_MAX_LENGTH + '</span>' +
@@ -6143,6 +7805,81 @@
     // los casos en que ese aviso no llega: Reverb caído, el navegador sin
     // conexión, o la cola de broadcasts con retraso.
     //
+    function showEditConflict(message, force, fields) {
+        TKA.state.editConflictMessage = message || 'El ticket cambió mientras redactabas. Revisa el hilo antes de enviar.';
+        if (Array.isArray(fields) && fields.length) TKA.state.editConflictFields = fields;
+        var $body = $('#tkt-reply-body');
+        var $banner = $('#tkt-edit-conflict');
+        if (!$body.length || !$banner.length || (!force && !$body.val().trim())) return;
+        $('#tkt-edit-conflict-text').text(TKA.state.editConflictMessage);
+        $banner.removeAttr('hidden');
+    }
+
+    function openConflictReviewModal() {
+        var t = TKA.state.currentTicket;
+        var detail = TKA.state.currentDetail || {};
+        var thread = detail.thread || [];
+        var latestCustomer = null;
+        for (var i = thread.length - 1; i >= 0; i--) {
+            if (thread[i].type === 'message' && !thread[i].is_internal && !thread[i].from_agent) {
+                latestCustomer = thread[i];
+                break;
+            }
+        }
+
+        var remoteText = latestCustomer && latestCustomer.body ? String(latestCustomer.body) : 'No hay un mensaje reciente del cliente para comparar.';
+        if (latestCustomer && latestCustomer.is_html) {
+            var textNode = document.createElement('div');
+            textNode.innerHTML = remoteText;
+            remoteText = textNode.textContent || textNode.innerText || '';
+        }
+        var draft = $('#tkt-reply-body').val() || '';
+        var message = TKA.state.editConflictMessage || 'El ticket cambió mientras redactabas. Revisa el hilo antes de enviar.';
+        var fields = (TKA.state.editConflictFields || []).map(auditFieldLabel);
+        var fieldsHtml = fields.length ? '<div class="tkt-note"><i class="fa-solid fa-list-check"></i><span>Campos implicados: <b>' + escapeHtml(fields.join(', ')) + '</b>. La acción se detuvo hasta que confirmes la versión correcta.</span></div>' : '';
+        var $backdrop = openModal(modalShell({
+            icon: 'fa-solid fa-code-compare',
+            title: 'Revisar cambios del ticket',
+            kicker: t ? '#' + t.id : 'Edición concurrente',
+            width: 'xl',
+            body: '<div class="tkt-note warn"><i class="fa-solid fa-shield-halved"></i><span>' + escapeHtml(message) + '</span></div>' + fieldsHtml +
+                '<div class="tkt-conflict-grid">' +
+                    '<section><label class="tkt-field-label" for="tkt-conflict-draft">Tu borrador</label><textarea id="tkt-conflict-draft" class="tkt-textarea tkt-conflict-draft" rows="8">' + escapeHtml(draft) + '</textarea><p class="tkt-preview-hint">Puedes editarlo antes de volver a enviarlo.</p></section>' +
+                    '<section><div class="tkt-field-label">Último mensaje del ticket</div><div class="tkt-conflict-remote">' + escapeHtml(remoteText).replace(/\n/g, '<br>') + '</div><p class="tkt-preview-hint">Se ha actualizado el hilo. Comprueba aquí el contexto nuevo.</p></section>' +
+                '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-danger" id="tkt-conflict-discard">Descartar borrador</button>' +
+                '<button type="button" class="tkt-btn" id="tkt-conflict-keep">Mantener borrador</button>' +
+                '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-conflict-apply">Aplicar edición</button>',
+        }));
+
+        $backdrop.on('click', '#tkt-conflict-apply', function () {
+            var value = $('#tkt-conflict-draft').val() || '';
+            $('#tkt-reply-body').val(value).trigger('input').trigger('focus');
+            TKA.state.editConflictMessage = '';
+            TKA.state.editConflictFields = [];
+            $('#tkt-edit-conflict').attr('hidden', true);
+            closeModal();
+        });
+        $backdrop.on('click', '#tkt-conflict-keep', function () {
+            TKA.state.editConflictMessage = '';
+            TKA.state.editConflictFields = [];
+            $('#tkt-edit-conflict').attr('hidden', true);
+            closeModal();
+            $('#tkt-reply-body').trigger('focus');
+        });
+        $backdrop.on('click', '#tkt-conflict-discard', function () {
+            var current = TKA.state.currentTicket;
+            if (current) clearComposerDraft(current);
+            $('#tkt-reply-body').val('').trigger('input').trigger('blur');
+            $('#tkt-reply-attach').val('');
+            $('#tkt-reply-attach-count').text('');
+            TKA.state.editConflictMessage = '';
+            TKA.state.editConflictFields = [];
+            $('#tkt-edit-conflict').attr('hidden', true);
+            closeModal();
+        });
+    }
+
     // Hacía falta de verdad: los once eventos de tiempo real del módulo se
     // encolaban en `default`, que ningún worker de webadmin sirve, así que el
     // correo de un cliente con el ticket abierto no aparecía hasta recargar a
@@ -6166,7 +7903,7 @@
         TKA.state.pulseTimer = setInterval(function () {
             // Con la pestaña en segundo plano no se pregunta: el agente no está
             // mirando, y al volver el navegador dispara 'visibilitychange'.
-            if (document.hidden) return;
+            if (document.hidden || !TKA.state.networkOnline || navigator.onLine === false) return;
 
             // Espaciado progresivo: 3s mientras hay movimiento, y hasta 15s en
             // un ticket que lleva un rato quieto. Esta sonda nació cuando los
@@ -6225,6 +7962,49 @@
         TKA.state.pulseInFlight = false;
     }
 
+    // Late contra TicketPresenceController::heartbeat() mientras el detalle
+    // está abierto — endpoint que ya existía (lo usa el aviso "colisión" del
+    // propio canal de presencia) pero al que ningún JS llamaba todavía
+    // (huérfano, QA 14-sep-2026): sin este heartbeat, Cache::get(
+    // "helpdesk:ticket:{id}:viewers") está siempre vacío y el listado no
+    // tiene forma de saber que este ticket se está viendo ahora mismo.
+    // Cada 20s de sobra (el TTL es 60s, la purga a los 35s) — no hace falta
+    // la cadencia de 3s de startTicketPulse(), esto no detecta cambios, solo
+    // dice "sigo aquí".
+    var PRESENCE_HEARTBEAT_MS = 20000;
+
+    function startPresenceHeartbeat(t) {
+        stopPresenceHeartbeat();
+
+        if (!t || !t.url_presence_heartbeat) return;
+
+        TKA.state.presenceHeartbeatTicket = t;
+
+        function beat() {
+            if (document.hidden || !TKA.state.networkOnline || navigator.onLine === false) return;
+            var current = TKA.state.presenceHeartbeatTicket;
+            if (!current) return;
+            $.post(current.url_presence_heartbeat, { action: 'viewing' });
+        }
+
+        beat();
+        TKA.state.presenceHeartbeatTimer = setInterval(beat, PRESENCE_HEARTBEAT_MS);
+    }
+
+    function stopPresenceHeartbeat() {
+        if (TKA.state.presenceHeartbeatTimer) clearInterval(TKA.state.presenceHeartbeatTimer);
+        TKA.state.presenceHeartbeatTimer = null;
+
+        var t = TKA.state.presenceHeartbeatTicket;
+        TKA.state.presenceHeartbeatTicket = null;
+
+        // Fire-and-forget: avisa "ya no estoy" sin bloquear el cambio de
+        // ticket ni fallar si la pestaña se está cerrando.
+        if (t && t.url_presence_leave) {
+            $.ajax({ url: t.url_presence_leave, method: 'DELETE' });
+        }
+    }
+
     // Al volver a la pestaña se comprueba en el acto en vez de esperar al
     // siguiente tic: es justo el momento en que el agente quiere ver si le han
     // contestado.
@@ -6258,6 +8038,9 @@
                     var actual = TKA.state.currentTicket;
                     if (actual && actual.id === ticketId) joinTicketPresence(ticketId);
                 }, 500);
+            } else {
+                setNetworkState(TKA.state.networkOnline, 'Reintentando tiempo real…');
+                scheduleRealtimeRetry(ticketId);
             }
 
             return;
@@ -6272,10 +8055,22 @@
 
         try {
             TKA.state.presenceChannel = window.Echo.join('ticket.' + ticketId)
-                .here(function (users) { renderCollisionBanner(users); })
+                .here(function (users) {
+                    TKA.state.realtimeRetryCount = 0;
+                    setNetworkState(true, 'Tiempo real conectado');
+                    renderCollisionBanner(users);
+                })
                 .joining(function () { renderCollisionBanner(); })
                 .leaving(function () { renderCollisionBanner(); })
+                .error(function () {
+                    TKA.state.realtimeErrorCount = (TKA.state.realtimeErrorCount || 0) + 1;
+                    TKA.state.presenceChannel = null;
+                    TKA.state.presenceTicketId = null;
+                    setNetworkState(false);
+                    scheduleRealtimeRetry(ticketId);
+                })
                 .listen('.typing', function (e) {
+                    markRealtimeEvent('Actividad de escritura recibida');
                     if (e.userId === TKA.state.currentUserId) return;
 
                     // Se registra quién escribe (no solo se pinta la franja):
@@ -6307,8 +8102,22 @@
                 // detalle completo en vez de reconstruir el hilo a mano con
                 // un payload parcial.
                 .listen('.message.added', function () {
+                    markRealtimeEvent('Mensaje nuevo recibido');
                     var current = TKA.state.currentTicket;
-                    if (current) fetchDetailData(current);
+                    if ($('#tkt-reply-body').val().trim()) {
+                        showEditConflict('Llegó un mensaje nuevo mientras redactabas. Revisa la conversación antes de enviar.');
+                    }
+                    // El refetch del listado también devuelve el estado actual
+                    // de la fila. Esto cubre el caso en que un cliente responde
+                    // a un ticket cerrado y el backend lo reabre antes de crear
+                    // el mensaje: no dejamos la cabecera mostrando "Cerrado".
+                    if (current) {
+                        queueTicketListRefresh('message-added-open-ticket', current, {
+                            freshCounts: true,
+                            preserveBulk: true,
+                            refreshDetail: true,
+                        });
+                    }
                     playNewMessageSound();
                 })
                 // Asignar (a mano, al responder, por automatización o en
@@ -6324,6 +8133,7 @@
                 // detrás trae lo que solo vive en data() —carga del agente,
                 // "asignado hace…"— que el broadcast no repite a propósito.
                 .listen('.assigned', function (e) {
+                    markRealtimeEvent('Asignación actualizada');
                     var current = TKA.state.currentTicket;
                     if (!current || !e || !e.assignee) return;
 
@@ -6367,6 +8177,7 @@
                 // trae watchers/watchers_count reales, igual que con
                 // .message.added arriba.
                 .listen('.watchers.changed', function () {
+                    markRealtimeEvent('Seguidores actualizados');
                     var current = TKA.state.currentTicket;
                     if (current) fetchDetailData(current);
                 });
@@ -6374,6 +8185,9 @@
             // Sin Echo/Reverb levantado en este entorno: la pantalla sigue
             // funcionando igual, solo sin el aviso de colaboración en vivo.
             TKA.state.presenceChannel = null;
+            TKA.state.presenceTicketId = null;
+            setNetworkState(false, 'Tiempo real no disponible');
+            scheduleRealtimeRetry(ticketId);
         }
     }
 
@@ -6385,6 +8199,12 @@
 
     function leaveTicketPresence() {
         stopTicketPulse();
+        stopPresenceHeartbeat();
+        stopSlaClock();
+
+        if (TKA.state.realtimeRetryTimer) clearTimeout(TKA.state.realtimeRetryTimer);
+        TKA.state.realtimeRetryTimer = null;
+        TKA.state.realtimeRetryCount = 0;
 
         if (TKA.state.presenceTicketId && typeof window.Echo !== 'undefined') {
             try { window.Echo.leave('ticket.' + TKA.state.presenceTicketId); } catch (e) { /* ignore */ }
@@ -6493,6 +8313,73 @@
         renderCollisionBanner();
     }, 5000);
 
+    // Presencia en vivo DEL LISTADO — quién está viendo cada fila ahora
+    // mismo, sin tener que abrir cada ticket. A diferencia de la presencia
+    // del detalle (canal de Reverb, push), esto es sondeo simple contra
+    // TicketPresenceController::overview() cada 8s: unirse a un canal de
+    // presencia por cada fila visible (hasta 50 a la vez) sería 50
+    // conexiones de Reverb solo por tener la lista abierta — el heartbeat
+    // que ya escribe startPresenceHeartbeat() (TTL 60s, purga a los 35s)
+    // hace que un sondeo cada 8s vaya sobrado de margen.
+    var PRESENCE_LIST_POLL_MS = 8000;
+
+    function pollListPresence() {
+        if (document.hidden || !TKA.urls.presenceOverview) return;
+
+        var rows = visibleTickets();
+        if (!rows.length) return;
+
+        $.getJSON(TKA.urls.presenceOverview, { ids: rows.map(function (t) { return t.id; }).join(',') })
+            .done(function (res) {
+                var data = (res && res.data) || {};
+
+                rows.forEach(function (t) {
+                    var viewers = data[t.id] || [];
+                    // Comparar solo por quién está (no por 'at'/timestamp, que
+                    // cambia en cada heartbeat aunque sea la misma gente) —
+                    // si no, esto repintaría las 27+ filas visibles cada 8s
+                    // aunque no haya cambiado nada, perdiendo cualquier
+                    // selección de texto o scroll fino que el agente tuviera
+                    // en ese momento.
+                    var antes = (t.viewers || []).map(function (v) { return v.user_id; }).sort().join(',');
+                    var ahora = viewers.map(function (v) { return v.user_id; }).sort().join(',');
+                    if (antes === ahora) return;
+
+                    t.viewers = viewers;
+                    var $oldRow = $('.tkt-ticket-row[data-id="' + t.id + '"]');
+                    if ($oldRow.length) $oldRow.replaceWith(renderRow(t));
+                });
+            });
+    }
+
+    setInterval(pollListPresence, PRESENCE_LIST_POLL_MS);
+
+    // Disponibilidad general del agente (módulo Helpdesk hermano, no
+    // HelpdeskTickets) — bug real encontrado el 14-sep-2026: "N agentes en
+    // línea" del pie de pantalla daba siempre 0 porque fetchOnlineAgentsCount()
+    // (modal-14-emails-del-ticket.js) leía un campo 'status' que el endpoint
+    // que llamaba nunca devolvía. El sistema que SÍ calcula presencia de
+    // verdad (AgentPresenceService, con heartbeat en Redis) ya existía, pero
+    // nadie llamaba a su endpoint de heartbeat — sin ping, TODOS los agentes
+    // caducan a 'offline' a los 90s, se hayan puesto disponibles o no desde
+    // el modal "Cambiar disponibilidad" o no.
+    //
+    // A propósito SIN atarlo a ningún ticket (a diferencia de
+    // startPresenceHeartbeat): esto es "sigo usando el panel", no "sigo
+    // viendo este ticket" — debe latir todo el tiempo que la pantalla esté
+    // abierta, aunque no haya ningún detalle seleccionado.
+    // AgentPresenceController::heartbeat() ya autoasigna 'available' en el
+    // primer latido si el agente seguía 'offline' — no hace falta
+    // replicar esa lógica aquí, un POST y ya.
+    if (TKA.urls.agentPresenceHeartbeat) {
+        var agentPresenceBeat = function () {
+            if (document.hidden || !TKA.state.networkOnline || navigator.onLine === false) return;
+            $.post(TKA.urls.agentPresenceHeartbeat);
+        };
+        agentPresenceBeat();
+        setInterval(agentPresenceBeat, 60000);
+    }
+
     // Clic en una burbuja → modal de colisión (avisar / asignar / tomar el control).
     $(document).on('click', '[data-presence-user]', function () {
         var t = TKA.state.currentTicket;
@@ -6547,6 +8434,62 @@
         });
     }
 
+    function canonicalClientStatusSlug(slug) {
+        return slug === 'new' ? 'open' : slug;
+    }
+
+    function applyLocalTicketField(t, field, value) {
+        if (!t) return;
+        t[field] = value;
+
+        if (field === 'status_id') {
+            var status = (TKA.state.statuses || []).find(function (s) { return String(s.id) === String(value); });
+            if (status) {
+                t.status_slug = canonicalClientStatusSlug(status.slug);
+                t.status_name = status.name;
+            }
+        } else if (field === 'category_id') {
+            var category = (TKA.state.categories || []).find(function (c) { return String(c.id) === String(value); });
+            t.category_name = category ? category.name : null;
+        } else if (field === 'group_id') {
+            var group = (TKA.state.groups || []).find(function (g) { return String(g.id) === String(value); });
+            t.group_name = group ? group.name : null;
+        }
+    }
+
+    function snapshotTicketField(t, field) {
+        return {
+            field: field,
+            value: t ? t[field] : undefined,
+            status_slug: t ? t.status_slug : undefined,
+            status_name: t ? t.status_name : undefined,
+            category_name: t ? t.category_name : undefined,
+            group_name: t ? t.group_name : undefined,
+        };
+    }
+
+    function restoreTicketField(t, snapshot) {
+        if (!t || !snapshot) return;
+        t[snapshot.field] = snapshot.value;
+        if (snapshot.field === 'status_id') {
+            t.status_slug = snapshot.status_slug;
+            t.status_name = snapshot.status_name;
+        }
+        if (snapshot.field === 'category_id') t.category_name = snapshot.category_name;
+        if (snapshot.field === 'group_id') t.group_name = snapshot.group_name;
+    }
+
+    function refreshOptimisticTicket(t) {
+        if (!t) return;
+        var $row = $('.tkt-ticket-row[data-id="' + t.id + '"]');
+        if ($row.length) $row.replaceWith(renderRow(t));
+        if (TKA.state.currentTicket && String(TKA.state.currentTicket.id) === String(t.id)) {
+            TKA.state.currentTicket = t;
+            renderDetail(t);
+            renderSidePanel(t);
+        }
+    }
+
     function patchTicket(t, field, value) {
         // La ruta es PUT, pero un PUT real por AJAX devuelve 405 en este
         // entorno Docker aunque route:list/OPTIONS lo muestren registrado
@@ -6555,17 +8498,46 @@
         // Blade con @method('PUT').
         var data = { _method: 'PUT' };
         data[field] = value;
+        if (t.updated_at) data.client_updated_at = t.updated_at;
+        var snapshot = snapshotTicketField(t, field);
+        applyLocalTicketField(t, field, value);
+        refreshOptimisticTicket(t);
         $.ajax({
             url: t.url_update,
             method: 'POST',
             data: data,
             headers: { Accept: 'application/json' },
-            success: function () {
+            success: function (resp) {
                 if (window.toastr) toastr.success('Ticket actualizado');
-                window.location.reload();
+                if (resp && resp.ticket) $.extend(t, resp.ticket);
+                applyLocalTicketField(t, field, value);
+                if (!TKA.state.suppressUndoOnce) {
+                    var labels = { status_id: 'estado', category_id: 'categoría', group_id: 'equipo', assignee_id: 'asignación', priority: 'prioridad' };
+                    offerUndo('Se cambió la ' + (labels[field] || 'propiedad') + '.', function () {
+                        TKA.state.suppressUndoOnce = true;
+                        patchTicket(t, field, snapshot.value);
+                    });
+                } else {
+                    TKA.state.suppressUndoOnce = false;
+                }
+                queueTicketListRefresh('ticket-field-updated', t, {
+                    freshCounts: true,
+                    refreshDetail: true,
+                    forceDetail: true,
+                });
             },
             error: function (xhr) {
+                restoreTicketField(t, snapshot);
+                refreshOptimisticTicket(t);
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo actualizar el ticket';
+                TKA.state.suppressUndoOnce = false;
+                if (xhr.status === 409) {
+                    if (xhr.responseJSON && xhr.responseJSON.ticket) $.extend(t, xhr.responseJSON.ticket);
+                    showEditConflict(msg, true, xhr.responseJSON && xhr.responseJSON.conflict_fields);
+                    fetchDetailData(t);
+                    if (window.toastr) toastr.warning(msg, 'Cambio simultáneo detectado');
+                    return;
+                }
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -6574,17 +8546,48 @@
     function runLifecycleAction(t, action, extra) {
         var url = action === 'resolve' ? t.url_resolve : (action === 'close' ? t.url_close : t.url_reopen);
         if (!url) return;
+        var targetSlug = action === 'close' ? 'closed' : (action === 'resolve' ? 'resolved' : 'open');
+        var targetStatus = (TKA.state.statuses || []).find(function (s) {
+            return canonicalClientStatusSlug(s.slug) === targetSlug;
+        });
+        var snapshot = snapshotTicketField(t, 'status_id');
+        if (targetStatus) {
+            applyLocalTicketField(t, 'status_id', targetStatus.id);
+            refreshOptimisticTicket(t);
+        }
         $.ajax({
             url: url,
             method: 'POST',
             headers: { Accept: 'application/json' },
-            data: extra || {},
+            data: $.extend({}, extra || {}, t.updated_at ? { client_updated_at: t.updated_at } : {}),
             success: function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Ticket actualizado');
-                window.location.reload();
+                if (resp && resp.ticket) $.extend(t, resp.ticket);
+                if (targetStatus) applyLocalTicketField(t, 'status_id', targetStatus.id);
+                var suppressUndo = TKA.state.suppressUndoOnce;
+                TKA.state.suppressUndoOnce = false;
+                if ((action === 'close' || action === 'resolve') && !suppressUndo) {
+                    offerUndo(action === 'close' ? 'Ticket cerrado.' : 'Ticket resuelto.', function () {
+                        runLifecycleAction(t, 'reopen');
+                    });
+                }
+                queueTicketListRefresh('ticket-' + action, t, {
+                    freshCounts: true,
+                    refreshDetail: true,
+                    forceDetail: true,
+                });
             },
             error: function (xhr) {
+                restoreTicketField(t, snapshot);
+                refreshOptimisticTicket(t);
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo completar la acción';
+                TKA.state.suppressUndoOnce = false;
+                if (xhr.status === 409) {
+                    showEditConflict(msg, true, xhr.responseJSON && xhr.responseJSON.conflict_fields);
+                    fetchDetailData(t);
+                    if (window.toastr) toastr.warning(msg, 'Cambio simultáneo detectado');
+                    return;
+                }
                 if (window.toastr) toastr.error(msg); else window.alert(msg);
             },
         });
@@ -6786,7 +8789,11 @@
             data: $.extend({ ticket_ids: ids, action: action }, extra),
             success: function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Acción completada');
-                window.location.reload();
+                queueTicketListRefresh('bulk-' + action, TKA.state.currentTicket, {
+                    freshCounts: true,
+                    refreshDetail: true,
+                    forceDetail: true,
+                });
             },
             error: function (xhr) {
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo completar la acción';
@@ -6940,6 +8947,16 @@
         $('#tkt-sort').on('change', function () {
             refetchList(currentListParams({ sort: this.value }));
         });
+        $('#tkt-list-density').on('click', function () {
+            var compact = TKA.state.listDensity !== 'compact';
+            applyListDensity(compact);
+            writePreference(TKT_LIST_DENSITY_KEY, compact ? 'compact' : 'normal');
+        });
+        $('#tkt-undo-btn').on('click', function () {
+            var action = TKA.state.undoAction;
+            hideUndo();
+            if (action && typeof action.callback === 'function') action.callback();
+        });
         $('#tkt-list-refresh').on('click', function () { window.location.reload(); });
         $('#tkt-list-export').on('click', openExportModal);
         $('#tkt-list-trash').on('click', function () {
@@ -7002,10 +9019,7 @@
         });
 
         listenForNewTickets();
-
-        $(document).on('click', '#tkt-new-banner', function () {
-            refetchList(currentListParams({}));
-        });
+        startTicketListRefresh();
 
         // Rango de fechas — el chip de la barra y el campo "Creado entre" del
         // modal "Más filtros". Los dos usaban <input type="date">, cuyo
@@ -7141,6 +9155,10 @@
             selectSideTab($(this).data('side'));
         });
 
+        $('#tkt-mobile-nav [data-mobile-pane]').on('click', function () {
+            openMobilePane($(this).data('mobile-pane'));
+        });
+
         $('#tkt-select-all').on('change', function () {
             var checked = this.checked;
             visibleTickets().forEach(function (t) {
@@ -7212,6 +9230,7 @@
                 ['Vista previa rápida', ['Espacio']],
                 ['Nuevo ticket', ['C']],
                 ['Buscar en el sistema', ['⌘', 'K']],
+                ['Paleta de acciones', ['⌘', '⇧', 'P']],
                 ['Mostrar atajos', ['?']],
             ]],
             ['Ticket abierto', [
@@ -7259,6 +9278,67 @@
         }));
     }
 
+    function openActionPalette(t) {
+        if (!t) return;
+        var actions = [
+            ['reply', 'Responder al cliente', 'Escribir una respuesta pública', 'fa-reply'],
+            ['note', 'Añadir nota interna', 'Registrar información para el equipo', 'fa-lock'],
+            ['status', 'Cambiar estado', 'Mover el ticket a otro estado', 'fa-arrow-right-arrow-left'],
+            ['assign', 'Asignar agente', 'Reasignar la atención del ticket', 'fa-user-plus'],
+            ['manage', 'Abrir gestión', 'Mostrar estado, prioridad y equipo', 'fa-sliders'],
+            ['customer', 'Abrir resumen del cliente', 'Ver datos e histórico del contacto', 'fa-address-card'],
+            ['snooze', 'Aplazar seguimiento', 'Programar cuándo volver a verlo', 'fa-clock'],
+            ['schedule', 'Programar respuesta', 'Enviar el mensaje en otra fecha', 'fa-calendar'],
+            ['portal', 'Ver como el cliente', 'Abrir la vista pública de solo lectura', 'fa-door-open'],
+            ['split', 'Dividir ticket', 'Crear una conversación separada', 'fa-code-branch'],
+            ['close', 'Cerrar ticket', 'Registrar el motivo y cerrar', 'fa-lock'],
+        ];
+        var listHtml = actions.map(function (a) {
+            return '<button type="button" class="tkt-palette-item" data-palette-action="' + a[0] + '" data-palette-search="' + escapeHtml((a[1] + ' ' + a[2]).toLowerCase()) + '">' +
+                '<span class="tkt-palette-icon"><i class="fa-solid ' + a[3] + '"></i></span>' +
+                '<span><b>' + escapeHtml(a[1]) + '</b><small>' + escapeHtml(a[2]) + '</small></span>' +
+            '</button>';
+        }).join('');
+        var $modal = openModal(modalShell({
+            icon: 'fa-solid fa-command', kicker: 'Acciones rápidas',
+            title: 'Paleta de acciones', titleChip: t.ticket_number, width: 'lg',
+            body: '<input type="search" class="tkt-input tkt-palette-search" id="tkt-palette-search" placeholder="Buscar una acción…" aria-label="Buscar una acción" autocomplete="off">' +
+                '<div class="tkt-palette-list" id="tkt-palette-list">' + listHtml + '</div>',
+            foot: '<span class="tkt-palette-hint"><kbd class="tkt-kbd">Esc</kbd> cerrar</span><button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+        }));
+
+        $modal.on('input', '#tkt-palette-search', function () {
+            var query = String($(this).val() || '').toLowerCase().trim();
+            $modal.find('[data-palette-action]').each(function () {
+                $(this).toggle(!query || String($(this).data('palette-search')).indexOf(query) !== -1);
+            });
+        });
+        $modal.on('click', '[data-palette-action]', function () {
+            var action = $(this).data('palette-action');
+            closeModal();
+            if (action === 'reply' || action === 'note') {
+                selectDetailTab('thread');
+                $('[data-comp-mode="' + action + '"]').trigger('click');
+                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('detail');
+                $('#tkt-reply-body').trigger('focus');
+            } else if (action === 'status') openChangeStatusModal(t);
+            else if (action === 'assign') openAssignModal(t);
+            else if (action === 'manage') {
+                selectSideTab('gestion');
+                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+                $('#tkt-sg-actions').addClass('tkt-highlight-flash').one('animationend', function () { $(this).removeClass('tkt-highlight-flash'); });
+            } else if (action === 'customer') {
+                selectSideTab('cliente');
+                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+            } else if (action === 'snooze') snoozeTicket(t);
+            else if (action === 'schedule') openScheduleModal(t);
+            else if (action === 'portal') openPortalModal(t);
+            else if (action === 'split') openSplitModal(t);
+            else if (action === 'close') openCloseTicketModal(t);
+        });
+        setTimeout(function () { $('#tkt-palette-search').trigger('focus'); }, 0);
+    }
+
     // ═══════════ Atajos de teclado (J/K navegar, C nuevo ticket) ═══════════
     // El mockup también documenta "⌘K" para el buscador, pero el tema base
     // YA usa ⌘K globalmente para el buscador del sistema (barra superior,
@@ -7286,6 +9366,14 @@
             var tag = (ev.target.tagName || '').toLowerCase();
             var typing = tag === 'input' || tag === 'textarea' || tag === 'select' || ev.target.isContentEditable;
 
+            if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key === 'p' || ev.key === 'P')) {
+                if (anyOverlayOpen()) return;
+                var paletteTicket = TKA.state.currentTicket;
+                if (!paletteTicket) return;
+                ev.preventDefault();
+                openActionPalette(paletteTicket);
+                return;
+            }
             if (typing) return;
             // Bug real probando los atajos uno a uno: sin este corte, ⌘K (el
             // buscador global del header, ver header.blade.php) también
@@ -7312,7 +9400,7 @@
                 // Solo con la lista enfocada: dentro de un modal el espacio
                 // tiene que seguir activando el botón que tenga el foco.
                 if (anyOverlayOpen()) return;
-                var current = TKA.state.tickets.find(function (x) { return x.id === TKA.state.selected; });
+                var current = TKA.state.tickets.find(function (x) { return String(x.id) === String(TKA.state.selected); });
                 if (!current) return;
                 ev.preventDefault();
                 openQuickPreviewModal(current);
@@ -7353,7 +9441,7 @@
     function moveSelection(delta) {
         var rows = visibleTickets();
         if (!rows.length) return;
-        var idx = rows.findIndex(function (t) { return t.id === TKA.state.selected; });
+        var idx = rows.findIndex(function (t) { return String(t.id) === String(TKA.state.selected); });
         var next = rows[Math.min(Math.max(idx + delta, 0), rows.length - 1)] || rows[0];
         // Si la vista previa rápida está abierta, J/K la repintan con el
         // ticket nuevo en vez de cerrarla — es lo que promete su propio copy.
@@ -7412,5 +9500,3 @@
             $btn.prop('disabled', false).text('Reintentar');
         });
     });
-
-

@@ -76,6 +76,23 @@ body:has(.tkt) .mc-content {
   --tkt-danger: #18181b;  --tkt-danger-bg: #18181b; --tkt-danger-fg: #fff;
   --tkt-danger-text: #18181b;
   --tkt-danger-soft: #e4e4e7;
+  /* Hilo de conversación: dos superficies con color propio, fuera de la
+     escala mono+verde de arriba — pedido explícito del usuario (14-sep-2026)
+     para distinguir de un vistazo nota interna / mensaje que enviamos /
+     mensaje que nos envían, sin tener que leer el chip de rol. Separadas de
+     --tkt-warn (que sigue en zinc para SLA, prioridad, CSAT…) para no
+     arrastrar el resto de la app a otro color por un cambio pensado solo
+     para estas dos tarjetas. */
+  --tkt-note-bg: #fffbeb;      --tkt-note-line: #f2c14e; --tkt-note-fg: #92400e;
+  --tkt-note-chip-bg: #fef3c7; --tkt-note-chip-line: #fde68a;
+  --tkt-customer-bg: #eef4fb;  --tkt-customer-line: #b9d4ec;
+  /* Acciones destructivas: se separan de la escala de estados porque
+     "urgente" puede seguir siendo monocromo, pero eliminar/cancelar debe
+     reconocerse inmediatamente como una acción irreversible. */
+  --tkt-action-danger: #b42318;
+  --tkt-action-danger-hover: #912018;
+  --tkt-action-danger-bg: #fff1f0;
+  --tkt-action-danger-line: #f1b5b0;
   /* Antes #3f3f46/#f5f6f8: el mismo gris que --tkt-text-soft/--tkt-subtle,
      literalmente el mismo hex de fondo — un ticket "Abierto"/"Nuevo"
      (.tkt-chip-info) y uno "Pendiente"/"Cerrado" (.tkt-chip-muted) eran
@@ -279,9 +296,20 @@ body:has(.tkt) .mc-content {
 /* El wrap conserva el scroll horizontal de seguridad para viewports muy
    estrechos (min-width de .tkt-app-card); el alto lo fija .tkt-split. */
 .tkt-split-wrap { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
-.tkt-split { display: grid; grid-template-columns: minmax(320px, 380px) minmax(430px, 1fr) minmax(290px, 316px); height: 100%; }
+.tkt-mobile-nav { display: none; }
+.tkt-split { --tkt-list-width: 380px; --tkt-side-width: 316px; display: grid; grid-template-columns: minmax(320px, var(--tkt-list-width)) 8px minmax(430px, 1fr) 8px minmax(290px, var(--tkt-side-width)); height: 100%; }
 .tkt-split-list { border-right: 1px solid var(--tkt-border); background: var(--tkt-panel); display: flex; flex-direction: column; min-width: 0; height: 100%; min-height: 0; }
 .tkt-split-detail { display: flex; flex-direction: column; background: var(--tkt-bg); border-right: 1px solid var(--tkt-border); min-width: 0; height: 100%; min-height: 0; }
+.tkt-split-resizer { position: relative; width: 8px; height: 100%; padding: 0; border: 0; background: var(--tkt-border-soft); cursor: col-resize; touch-action: none; z-index: 4; }
+.tkt-split-resizer::before { content: ''; position: absolute; top: 50%; left: 3px; width: 2px; height: 34px; border-radius: 2px; background: var(--tkt-border-strong); transform: translateY(-50%); opacity: .65; transition: height .12s ease, background .12s ease, opacity .12s ease; }
+.tkt-split-resizer:hover, .tkt-split-resizer:focus, .tkt-split-resizer.dragging { background: var(--tkt-accent-soft); outline: none; }
+.tkt-split-resizer:hover::before, .tkt-split-resizer:focus::before, .tkt-split-resizer.dragging::before { height: 56px; background: var(--tkt-accent); opacity: 1; }
+.tkt-split.side-collapsed { grid-template-columns: minmax(320px, var(--tkt-list-width)) 8px minmax(430px, 1fr) 8px 46px; }
+.tkt-split.side-collapsed .tkt-side-pane { display: none; }
+.tkt-split.side-collapsed .tkt-icon-rail.top { flex-direction: column; align-items: stretch; border-bottom: none; }
+.tkt-split.side-collapsed .tkt-icon-tab { flex: 0 0 34px; }
+.tkt-split.side-collapsed .tkt-side-toggle { margin-top: auto; }
+.tkt-split-resizing, .tkt-split-resizing * { cursor: col-resize !important; user-select: none !important; }
 
 /* ── Listado de tickets ──────────────────────────────────── */
 .tkt-list-head { display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); font-size: 11px; color: var(--tkt-text-mute); }
@@ -299,42 +327,104 @@ body:has(.tkt) .mc-content {
 .tkt-list-head-icons > button { border: none; background: none; padding: 0; color: inherit; }
 .tkt-list-head-icons > button:hover { color: var(--tkt-text); }
 .tkt-list { display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0; }
+.tkt-split-list.is-compact .tkt-ticket-row { padding-top: 7px; padding-bottom: 7px; gap: 8px; }
+.tkt-split-list.is-compact .tkt-ticket-checkzone { margin-top: -7px; margin-bottom: -7px; }
+.tkt-split-list.is-compact .tkt-ticket-main { gap: 2px; }
+.tkt-split-list.is-compact .tkt-ticket-last { display: none; }
+.tkt-split-list.is-compact .tkt-ticket-metarow { gap: 4px; }
+.tkt-split-list.is-compact .tkt-rchip { font-size: 9px; padding: 1px 5px; }
 
-/* Fila del listado, calcada del mockup: sin barra de color a la izquierda
-   (el estado se lee en el chip de la cuarta línea, no en un borde), la zona
-   del checkbox ocupa toda la altura para que el clic sea generoso, y la
-   separación entre filas es #f0f1f4, no el borde normal. */
+/* Fila del listado (rediseño auditoría UI 14-sep-2026): checkbox a toda
+   altura para que el clic sea generoso, separación entre filas #f0f1f4 (no
+   el borde normal). La raya de color por urgencia (sla-breach/s-unassigned)
+   se probó y se quitó: con casi toda la bandeja vencida pintaba la lista
+   entera de negro y dejaba de distinguir nada (QA visual 14-sep-2026).
+   Tampoco sombra de elevación: este sistema de diseño no usa sombras fuera
+   de los modales (--tkt-shadow-modal), así que una caja "flotando" sobre la
+   lista desentonaba. "No leído" pasa a leerse en dos señales que sí encajan
+   con el resto de la fila: el mismo tinte que ya usa :hover (como si el
+   ticket llevara la mano encima) y el peso del asunto (ver .tkt-ticket-
+   subject más abajo, estilo Gmail/Front: negrita mientras no se abre, se
+   aclara en cuanto se lee). Desaparece solo al entrar al ticket
+   (unread_count baja a 0 y el listado se repinta, ver renderList()). */
 .tkt-ticket-row {
   display: flex; gap: 10px; padding: 12px 14px;
   border-bottom: 1px solid var(--tkt-border-soft);
   cursor: pointer; transition: background .12s ease;
+  content-visibility: auto; contain-intrinsic-size: 0 116px;
 }
+.tkt-ticket-row.unread { background: var(--tkt-hover); }
 .tkt-ticket-row:hover { background: var(--tkt-hover); }
 .tkt-ticket-row.on { background: var(--tkt-subtle); }
+.tkt-ticket-row:focus-visible { outline: 2px solid var(--tkt-accent); outline-offset: -2px; }
 .tkt-ticket-checkzone { display: grid; place-items: center; width: 26px; align-self: stretch; margin: -12px 0 -12px -6px; flex-shrink: 0; cursor: pointer; }
 .tkt-ticket-check { width: 14px; height: 14px; cursor: pointer; }
 
 .tkt-ticket-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.tkt-ticket-line1 { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.tkt-ticket-id { font-size: var(--tkt-t-xs); font-weight: 700; padding: 1px 6px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-mid); flex-shrink: 0; }
-/* white-space:nowrap + ellipsis: comparado contra el mockup, aquí faltaba
-   truncar a una línea — sin esto un asunto largo envuelve a varias líneas y
-   las filas de la lista pierden el alto uniforme que sí tiene el mockup. */
-.tkt-ticket-subject { flex: 1; min-width: 0; font-size: var(--tkt-t-lg); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tkt-ticket-clip { font-size: 10px; color: var(--tkt-text-faint); flex-shrink: 0; }
-.tkt-ticket-time { font-size: 10px; color: var(--tkt-text-mute); flex-shrink: 0; }
+/* El código de ticket ya no comparte línea con el asunto (se veía
+   descuadrado junto a un bloque de varias líneas, QA visual) — línea propia
+   arriba del todo, con la hora al otro extremo. */
+.tkt-ticket-topline { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tkt-ticket-id { font-family: var(--tkt-mono); font-size: var(--tkt-t-xs); font-weight: 700; padding: 2px 7px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-mid); white-space: nowrap; flex-shrink: 0; }
+.tkt-ticket-time { margin-left: auto; font-size: 10px; color: var(--tkt-text-mute); flex-shrink: 0; }
+/* El asunto baja a su propia línea completa, sin competir por ancho con el
+   código de ticket ni la hora — white-space:nowrap + ellipsis trunca a una
+   sola línea para que todas las filas mantengan el mismo alto. */
+.tkt-ticket-subject { min-width: 0; font-size: var(--tkt-t-lg); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Estilo Gmail/Front: negrita+color fuerte por defecto (arriba) es el
+   estado "no leído"; en cuanto se lee, el asunto baja de peso y se aclara,
+   para que las filas de verdad nuevas destaquen por contraste con las ya
+   vistas, no solo por el tinte de fondo. */
+.tkt-ticket-row:not(.unread) .tkt-ticket-subject { font-weight: 600; color: var(--tkt-text-mid); }
 .tkt-ticket-customer { font-size: 11px; color: var(--tkt-text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tkt-ticket-last { font-size: 11px; color: var(--tkt-text-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tkt-ticket-metarow { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; }
-/* Chip de la fila: gris con borde por defecto (estado), negro sólido en
-   .strong (prioridad alta/urgente) — las dos únicas variantes del mockup. */
-.tkt-rchip { padding: 1px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-subtle); border: 1px solid var(--tkt-border); color: var(--tkt-text-mid); font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.tkt-ticket-metarow { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; flex-wrap: wrap; }
+/* Todas las etiquetas de la fila comparten ya la misma familia visual (chip
+   con borde) — sin iconos: el canal se distingue por ir en mono, igual que
+   el código de ticket, no por un glifo. Antes solo estado y prioridad eran
+   etiquetas de verdad; canal, categoría, adjuntos y SLA iban en texto
+   suelto sin caja y se perdían entre las demás (bug de diseño real). */
+.tkt-rchip { padding: 1px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-subtle); border: 1px solid var(--tkt-border); color: var(--tkt-text-mid); font-size: 10px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
 .tkt-rchip.strong { background: var(--tkt-text); border: none; padding: 2px 8px; color: #fff; }
-.tkt-ticket-cat { font-size: 10px; color: var(--tkt-text-mute); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tkt-rsla { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--tkt-text-soft); flex-shrink: 0; }
-.tkt-ticket-metaend { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.tkt-ticket-msgs { font-size: 10px; color: var(--tkt-text-faint); }
-.tkt-ticket-unread { color: var(--tkt-text); font-weight: 700; font-size: 10px; }
+.tkt-rchip.origin { font-family: var(--tkt-mono); font-weight: 600; background: #fff; color: var(--tkt-text-soft); }
+.tkt-rchip.attach { background: #fff; color: var(--tkt-text-mute); }
+/* Categoría y equipo/cola: ninguna de las dos tiene una longitud acotada de
+   antemano (a diferencia del resto de etiquetas), así que llevan el mismo
+   tope de ancho con elipsis — mismo tipo de dato (texto de clasificación
+   libre), mismo trato visual. */
+.tkt-rchip.cat, .tkt-rchip.group { background: #fff; color: var(--tkt-text-mute); font-weight: 600; max-width: 108px; overflow: hidden; text-overflow: ellipsis; }
+/* SLA como etiqueta más, con el mismo peso que estado/prioridad/canal —
+   antes era texto suelto con un punto de color, el único dato de la fila
+   sin caja propia. Mismos tonos que .tkt-sla-ok/warn/breach (más abajo,
+   compartidas con el Kanban), pero como fondo de chip en vez de solo texto. */
+.tkt-rchip.sla-breach { background: var(--tkt-text); border: none; color: #fff; }
+.tkt-rchip.sla-warn { background: var(--tkt-accent-soft); border-color: var(--tkt-accent-line); color: var(--tkt-text-mid); }
+.tkt-rchip.sla-ok { background: var(--tkt-accent-bg); border-color: var(--tkt-accent-line); color: var(--tkt-accent-dark); }
+/* Sin margin-left:auto a propósito — con eso el avatar/no-leído se iban
+   hasta el borde del contenedor, con un hueco enorme en medio en cuanto la
+   fila era algo ancha (bug de QA visual). Ahora es una etiqueta más de la
+   fila, con el mismo gap que las demás: todo el bloque de metadatos queda
+   agrupado y compacto, sin estirarse aunque el contenedor sea muy ancho. */
+.tkt-ticket-metaend { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+/* Cuadrado, no punto — con el mismo tamaño y forma que un punto de color
+   cualquiera, solo el tono (y un tooltip invisible en una captura) lo
+   distinguían de otras señales. La forma sola dice "esto es distinto". */
+.tkt-ticket-unread { width: 6.5px; height: 6.5px; background: var(--tkt-text); border-radius: 1.5px; flex-shrink: 0; }
+/* Avatar del agente asignado: iniciales en texto, sin icono ni foto —
+   "sin asignar" usa el mismo círculo con un guion, borde punteado en vez de
+   sólido. Antes la asignación era del todo invisible en esta fila (la
+   clase s-unassigned existía pero no se leía en ningún sitio). */
+.tkt-avatar { position: relative; width: 18px; height: 18px; border-radius: 50%; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); display: grid; place-items: center; font-size: 8px; font-weight: 800; color: var(--tkt-text-soft); flex-shrink: 0; }
+.tkt-avatar.unassigned { border-style: dashed; color: var(--tkt-text-faint); background: #fff; font-size: 10px; }
+/* Presencia en vivo de la fila (pollListPresence(), tickets-app/core.js):
+   punto verde con ping sobre el propio avatar — "alguien está viendo este
+   ticket AHORA", sea o no quien lo tiene asignado. Reutiliza el mismo verde
+   de marca que el resto de la app usa para "positivo/en curso"; sin ping
+   constante en los que ya llevan un rato (se quitaría solo al distraer),
+   así que el anillo es intencionadamente parte del diseño, no un adorno. */
+.tkt-presence-dot { position: absolute; bottom: -1px; right: -1px; width: 7px; height: 7px; border-radius: 50%; background: var(--tkt-accent-dark); border: 1.5px solid #fff; }
+.tkt-presence-dot::after { content: ""; position: absolute; inset: -1.5px; border-radius: 50%; background: var(--tkt-accent-dark); opacity: .5; animation: tkt-presence-ping 1.8s ease-out infinite; }
+@keyframes tkt-presence-ping { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.4); opacity: 0; } }
 
 .tkt-origin { padding: 1px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: var(--tkt-t-xs); font-weight: 700; flex-shrink: 0; }
 
@@ -408,6 +498,9 @@ body:has(.tkt) .mc-content {
 .tkt-detail-context .who { display: inline-flex; align-items: center; gap: 5px; }
 .tkt-detail-context .who > i { font-size: 9px; color: var(--tkt-text-faint); }
 .tkt-detail-context .mail { font-family: var(--tkt-mono); font-size: 10px; }
+.tkt-detail-customer-quick { display: inline-flex; align-items: center; min-width: 0; }
+.tkt-detail-customer-quick button { display: inline-flex; align-items: center; gap: 4px; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 6px; border: 1px solid var(--tkt-accent-line); border-radius: 12px; background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); font-size: 9.5px; font-weight: 700; cursor: pointer; }
+.tkt-detail-customer-quick button:hover { background: var(--tkt-accent-bg); }
 .tkt-detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .tkt-detail-actions .tkt-btn-icon { width: 31px; height: 31px; font-size: 11px; }
 /* El primario de la cabecera es más contundente que un .tkt-btn normal:
@@ -454,6 +547,15 @@ body:has(.tkt) .mc-content {
    colado. */
 .tkt-dtab .tkt-dcount { display: inline-flex; align-items: center; font-family: var(--tkt-mono); font-size: var(--tkt-t-xs); line-height: 13px; padding: 1px 5px; background: #e4e4e7; border-radius: 3px; color: var(--tkt-text-soft); }
 .tkt-dtab .tkt-dcount:empty { display: none; }
+.tkt-detail-navbar { padding: 6px 14px; }
+.tkt-detail-head-row { gap: 8px 12px; padding: 10px 14px 8px; }
+.tkt-detail-title-col { gap: 4px; }
+.tkt-detail-title { font-size: 16px; }
+.tkt-detail-chips { gap: 5px; }
+.tkt-detail-context { gap: 6px; }
+.tkt-detail-sla-banner { padding: 7px 14px; }
+.tkt-dtabs { padding: 0 14px; }
+.tkt-dtab { padding: 7px 9px; }
 .tkt-chip-id { font-family: var(--tkt-mono); font-size: 10px; padding: 2px 7px; background: var(--tkt-text); color: #fff; border-radius: var(--tkt-r-sm); }
 .tkt-chip-mono { font-family: var(--tkt-mono); font-size: 10px; padding: 2px 7px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-soft); }
 .tkt-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 5px; font-size: var(--tkt-t-sm); font-weight: 700; }
@@ -462,6 +564,8 @@ body:has(.tkt) .mc-content {
 .tkt-chip-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
 .tkt-chip-info { background: var(--tkt-info-bg); color: var(--tkt-info); }
 .tkt-chip-muted { background: var(--tkt-subtle); color: var(--tkt-text-soft); }
+[data-sla-live].breach { color: var(--tkt-danger-fg); font-weight: 800; }
+[data-sla-live].warn { color: var(--tkt-warn-fg); font-weight: 800; }
 
 /* riel de iconos (detalle y panel derecho) */
 .tkt-icon-rail { display: flex; align-items: stretch; border-top: 1px solid var(--tkt-border-soft); }
@@ -472,6 +576,8 @@ body:has(.tkt) .mc-content {
 .tkt-icon-tab[disabled] { color: var(--tkt-border-strong); cursor: not-allowed; }
 .tkt-icon-tab[disabled]:hover { color: var(--tkt-border-strong); }
 .tkt-btn-icon[disabled] { opacity: .45; cursor: not-allowed; }
+.tkt-side-toggle { flex: 0 0 30px; display: grid; place-items: center; width: 30px; border: 0; border-left: 1px solid var(--tkt-border-soft); background: transparent; color: var(--tkt-text-faint); font-size: 10px; cursor: pointer; }
+.tkt-side-toggle:hover, .tkt-side-toggle:focus { color: var(--tkt-text); background: var(--tkt-subtle); outline: none; }
 
 .tkt-pane { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; }
 .tkt-pane[hidden] { display: none; }
@@ -485,8 +591,11 @@ body:has(.tkt) .mc-content {
    heredado y se mueve a .tkt-thread-scroll, dejando el composer como
    hermano fijo (renderThreadPane() en tickets-app/core.js arma este mismo
    wrapper). */
-#tkt-dpane-thread { padding: 0; overflow-y: hidden; }
+#tkt-dpane-thread { position: relative; padding: 0; overflow-y: hidden; }
 .tkt-thread-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 16px 20px; }
+.tkt-thread-scroll > .tkt-tmsg,
+.tkt-thread-scroll > .tkt-tnote,
+.tkt-thread-scroll > .tkt-tevent { contain: layout paint; }
 #tkt-dpane-thread > .tkt-composer { flex-shrink: 0; margin: 0 20px 16px; }
 /* #tkt-detail arranca oculto (inline style="display:none" en el blade);
    al mostrarse, tickets-app.js usa .css('display','flex') — no .show(),
@@ -601,6 +710,7 @@ body:has(.tkt) .mc-content {
    el scroll correcto, solo faltaba esto. */
 .tkt-side-card { background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); overflow: hidden; flex-shrink: 0; }
 .tkt-side-card-head { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-bottom: 1px solid var(--tkt-border-soft); font-size: var(--tkt-t-md); font-weight: 700; }
+.tkt-side-pane > #tkt-sg-actions { position: sticky; top: -12px; z-index: 3; box-shadow: 0 3px 12px rgba(24, 24, 27, .06); }
 .tkt-side-card-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
 .tkt-kv { display: flex; align-items: center; gap: 10px; padding: 7px 9px; background: var(--tkt-bg); border-radius: var(--tkt-r); }
 .tkt-kv > .k { font-size: var(--tkt-t-md); color: var(--tkt-text-mute); }
@@ -714,12 +824,8 @@ body:has(.tkt) .mc-content {
 .tkt-btn-outline:hover { background: var(--tkt-subtle); }
 .tkt-btn-soft { background: var(--tkt-panel); border-color: var(--tkt-border); }
 .tkt-btn-soft:hover { background: var(--tkt-subtle); }
-/* El mockup no distingue el botón destructivo: "Descartar", "Eliminar
-   definitivamente" y "Cancelar" comparten el mismo blanco con borde
-   #e8e8e8 que cualquier secundario. Se clona tal cual — sin rojo, que
-   además no existe en ninguna parte del documento. */
-.tkt-btn-danger { background: var(--tkt-panel); color: var(--tkt-text); border-color: var(--tkt-border); }
-.tkt-btn-danger:hover { background: var(--tkt-subtle); }
+.tkt-btn-danger { background: var(--tkt-action-danger); color: #fff; border-color: var(--tkt-action-danger); }
+.tkt-btn-danger:hover { background: var(--tkt-action-danger-hover); border-color: var(--tkt-action-danger-hover); color: #fff; }
 .tkt-btn-start { justify-content: flex-start; }
 .tkt-btn-inline { width: auto; padding: 6px 11px; }
 .tkt-btn-sm { padding: 5px 10px; font-size: var(--tkt-t-md); }
@@ -994,14 +1100,34 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    con scroll horizontal no intencional. */
 @media (max-width: 1180px) {
   .tkt-app-card { min-width: 0; }
-  .tkt-split { grid-template-columns: 1fr; min-height: 0; }
-  .tkt-split-list, .tkt-split-detail { border-right: none; border-bottom: 1px solid var(--tkt-border); }
+  .tkt-mobile-nav { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
+  .tkt-mobile-nav > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; cursor: pointer; }
+  .tkt-mobile-nav > button.on { background: var(--tkt-text); color: #fff; font-weight: 700; }
+  .tkt-mobile-nav > button > i { font-size: 10px; }
+  .tkt-split-wrap { overflow-x: hidden; }
+  .tkt-split { display: flex; width: 100%; min-height: 0; }
+  .tkt-split.side-collapsed { display: flex; }
+  .tkt-split-resizer { display: none; }
+  .tkt-split-list, .tkt-split-detail, .tkt-side { display: none !important; width: 100%; flex: 1 1 auto; border-right: none; border-bottom: 1px solid var(--tkt-border); }
+  .tkt-split.mobile-list .tkt-split-list,
+  .tkt-split.mobile-detail .tkt-split-detail,
+  .tkt-split.mobile-side .tkt-side { display: flex !important; }
+  .tkt-split.side-collapsed .tkt-side-pane { display: block; }
+  .tkt-split.side-collapsed .tkt-icon-rail.top { flex-direction: row; align-items: stretch; }
+  .tkt-split.side-collapsed .tkt-icon-tab { flex: 1 1 auto; }
+  .tkt-split.side-collapsed .tkt-side-toggle { margin-top: 0; }
   .tkt-detail-title-col { min-width: 0; }
+  .tkt-thread-bar { flex-wrap: wrap; }
+  .tkt-thread-bar .tkt-seg { margin-left: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tkt-thread-search-wrap { flex: 1 1 170px; }
+  .tkt-thread-advanced { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tkt-thread-advanced-actions { grid-column: 1 / -1; justify-content: flex-end; }
 }
 @media (max-width: 640px) {
   .tkt-state-tabs, .tkt-filter-bar, .tkt-views-bar { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
   .tkt-modal { max-width: 100%; }
   .tkt-modal-backdrop { padding: 16px 10px; }
+  .tkt-palette-list { grid-template-columns: 1fr; }
   /* scrollbar-width:none oculta la barra nativa (affordance de scroll) sin
      dejar ninguna pista de reemplazo — a 480px el select "Prioridad" queda
      cortado a la mitad y esa es la única señal de que hay más contenido.
@@ -1016,6 +1142,13 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     background: linear-gradient(to right, transparent, var(--tkt-bg));
     pointer-events: none;
   }
+  .tkt-thread-bar { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
+  .tkt-thread-search-wrap { order: 3; flex-basis: 100%; }
+  .tkt-thread-bar .tkt-seg { width: 100%; }
+  .tkt-thread-advanced { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tkt-thread-advanced-actions { grid-column: 1 / -1; }
+  .tkt-conflict-grid { grid-template-columns: 1fr; }
+  .tkt-conflict-draft, .tkt-conflict-remote { min-height: 130px; }
 }
 
 /* ── select2 (todo <select> de la pantalla usa select2 — bug real de QA:
@@ -1168,11 +1301,33 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
+    position: sticky;
+    top: -16px;
+    z-index: 4;
+    margin: -16px -20px 10px;
+    padding: 10px 20px 8px;
+    background: var(--tkt-panel);
+    border-bottom: 1px solid var(--tkt-border-soft);
 }
 
 .tkt-thread-bar .tkt-seg {
     margin-left: auto;
 }
+.tkt-thread-search-wrap { display: inline-flex; align-items: center; gap: 6px; min-width: 150px; padding: 4px 8px; border: 1px solid var(--tkt-border); border-radius: 7px; background: var(--tkt-panel); color: var(--tkt-text-faint); }
+.tkt-thread-search-wrap:focus-within { border-color: var(--tkt-accent-line); box-shadow: 0 0 0 2px var(--tkt-accent-soft); }
+.tkt-thread-search-wrap i { font-size: 10px; }
+.tkt-thread-search { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--tkt-text); font-size: 10.5px; }
+.tkt-thread-search::placeholder { color: var(--tkt-text-faint); }
+.tkt-thread-no-results { margin-left: auto; color: var(--tkt-text-mute); font-size: 10px; font-style: italic; white-space: nowrap; }
+.tkt-thread-advanced-toggle { flex-shrink: 0; }
+.tkt-thread-advanced { flex: 1 0 100%; display: grid; grid-template-columns: minmax(130px, 1.4fr) repeat(4, minmax(86px, 1fr)) auto; align-items: end; gap: 7px; padding: 9px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-subtle); }
+.tkt-thread-advanced[hidden] { display: none; }
+.tkt-thread-advanced label { display: flex; flex-direction: column; gap: 4px; color: var(--tkt-text-mute); font-size: 9.5px; font-weight: 700; }
+.tkt-thread-advanced input, .tkt-thread-advanced select { min-width: 0; height: 29px; padding: 4px 7px; border: 1px solid var(--tkt-border); border-radius: 6px; background: var(--tkt-panel); color: var(--tkt-text); font-size: 10.5px; font-weight: 400; }
+.tkt-thread-advanced-actions { display: flex; gap: 5px; }
+.tkt-thread-load-more { align-self: center; padding: 6px 10px; border: 1px dashed var(--tkt-border-strong); border-radius: 7px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; cursor: pointer; }
+.tkt-thread-load-more:hover { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); }
+.tkt-thread-load-more:disabled { opacity: .65; cursor: wait; }
 
 /* ── Mensaje ── */
 .tkt-tmsg,
@@ -1187,19 +1342,22 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin-bottom: 10px;
 }
 
-/* La nota interna se marca con el borde, no con color de fondo: el mockup
-   mantiene todas las tarjetas en blanco. Se queda a ancho completo (no es
-   parte de la conversación con el cliente, no le toca lado ni color). */
-.tkt-tnote {
-    border-color: #d4d4d8;
-}
-
 /* Ancho completo como el resto de tarjetas del hilo (no burbujas de chat
-   estrechas) — solo el color de fondo distingue cliente de agente. */
+   estrechas) — el color de fondo + borde izquierdo distingue de un vistazo
+   nota interna / lo que enviamos (agente) / lo que nos envían (cliente). */
 .tkt-tmsg[data-thread-kind="agent"] {
     background: var(--tkt-accent-soft);
     border-color: var(--tkt-accent-line);
 }
+
+.tkt-tmsg[data-thread-kind="customer"] {
+    background: var(--tkt-customer-bg);
+    border-color: var(--tkt-customer-line);
+}
+
+.tkt-tmsg[data-thread-kind="customer"] { border-left: 3px solid var(--tkt-customer-line); }
+.tkt-tmsg[data-thread-kind="agent"] { border-left: 3px solid var(--tkt-accent); }
+.tkt-tnote { border-left: 3px solid var(--tkt-note-line); background: var(--tkt-note-bg); border-color: var(--tkt-note-line); }
 
 .tkt-tmsg-head {
     display: flex;
@@ -1225,7 +1383,17 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-tnote-icon {
     font-size: 10px;
-    color: #52525b;
+    background: var(--tkt-note-chip-bg);
+    color: var(--tkt-note-fg);
+}
+
+/* Avatar de un remitente "Sistema": icono en vez de iniciales — "S" de
+   Sistema y "S" de un agente/cliente que empiece por S eran indistinguibles
+   a golpe de vista (visto en vivo: super-admin y Sistema con el mismo
+   avatar "S" en el mismo hilo). */
+.tkt-tmsg-avatar.system {
+    font-size: 11px;
+    color: var(--tkt-text-mute, #71717a);
 }
 
 .tkt-tmsg-who {
@@ -1237,8 +1405,11 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     white-space: nowrap;
 }
 
-/* Chips de rol / canal / dirección. El "solid" (dirección) va con fondo
-   para separarlo de los dos que solo llevan contorno. */
+/* Chips de rol / canal. Había un tercer chip "solid" para la dirección
+   (Entrante/Saliente) — se quitó (14-sep-2026): direction se deriva 1:1 del
+   rol (isFromAgent() decide ambos), así que era el mismo dato repetido dos
+   veces, y el fondo de la tarjeta ya lo cuenta una tercera vez. Regla .solid
+   retirada por no tener ya ningún uso. */
 .tkt-tchip {
     padding: 1px 6px;
     border-radius: 4px;
@@ -1250,15 +1421,27 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     flex-shrink: 0;
 }
 
-.tkt-tchip.solid {
-    background: #f5f6f8;
-    border-color: #f5f6f8;
+.tkt-tchip.warn {
+    background: var(--tkt-note-chip-bg);
+    border-color: var(--tkt-note-chip-line);
+    color: var(--tkt-note-fg);
 }
 
-.tkt-tchip.warn {
-    background: #e4e4e7;
-    border-color: #e4e4e7;
-    color: #18181b;
+/* Rol "Sistema": antes indistinguible del resto de chips (mismo bug de
+   datos que hacía que un item de Sistema saliera etiquetado "Cliente",
+   corregido en TicketDetailDataController::data() — 14-sep-2026). Tono
+   punteado, no sólido: no es una acción de nadie, es la propia app. */
+.tkt-tchip.system {
+    border-style: dashed;
+    color: var(--tkt-text-mute, #71717a);
+}
+
+/* "Automático": único caso confirmado hoy por metadata (auto_response de
+   AutoResponseTicketCommand) — ver threadChips() en core.js. */
+.tkt-tchip.auto {
+    background: var(--tkt-accent-bg, #eef5d9);
+    border-color: var(--tkt-accent-line, #d3e5a3);
+    color: var(--tkt-accent-dark, #5b7a0d);
 }
 
 /* La hora se va al extremo derecho y las acciones detrás de ella. */
@@ -1388,6 +1571,13 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     flex-shrink: 0;
 }
 
+.tkt-thread-new-marker { align-self: center; display: inline-flex; align-items: center; gap: 7px; margin: 2px 0 4px; padding: 6px 11px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); font-size: 10.5px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(24, 24, 27, .08); }
+.tkt-thread-new-marker:hover, .tkt-thread-new-marker:focus { background: var(--tkt-accent-soft); outline: 2px solid var(--tkt-accent-line); outline-offset: 1px; }
+.tkt-thread-expand { align-self: center; display: inline-flex; align-items: center; gap: 7px; margin: 0 0 2px; padding: 5px 10px; border: 1px solid var(--tkt-border); border-radius: 16px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; font-weight: 700; cursor: pointer; }
+.tkt-thread-expand:hover, .tkt-thread-expand:focus { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); outline: none; }
+.tkt-thread-latest-marker { position: absolute; z-index: 5; left: 50%; bottom: calc(var(--tkt-composer-height, 100px) + 8px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); box-shadow: 0 4px 12px rgba(24, 24, 27, .12); font-size: 10.5px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.tkt-thread-latest-marker:hover, .tkt-thread-latest-marker:focus { background: var(--tkt-accent-soft); outline: 2px solid var(--tkt-accent-line); outline-offset: 1px; }
+
 /* ── Separador de día: línea · fecha · línea ── */
 .tkt-thread-day {
     display: flex;
@@ -1407,23 +1597,37 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 }
 
 
-/* Traza de entrega bajo un mensaje saliente ("entregado 10:42:11"). Va en la
-   misma zona que los adjuntos, separada por el mismo filete. */
+/* Traza de entrega bajo un mensaje saliente ("enviado 10:42:11"). Antes era
+   una fila de ancho completo con filete superior, igual de prominente que
+   los adjuntos — feedback directo sobre el mockup (14-sep-2026): demasiado
+   peso visual para un dato secundario. Ahora es un pill flotante, del mismo
+   ancho que su contenido, coherente con el resto de chips de la cabecera. */
 .tkt-tdelivery {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding-top: 8px;
-    border-top: 1px solid #f0f1f4;
+    gap: 5px;
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 3px 9px;
+    border-radius: var(--tkt-r-full, 999px);
+    background: var(--tkt-accent-bg, #eef5d9);
     font-family: var(--tkt-mono, 'JetBrains Mono', ui-monospace, monospace);
     font-size: 10px;
-    color: #5b7a0d;
+    font-weight: 600;
+    color: var(--tkt-accent-dark, #5b7a0d);
+    cursor: default;
 }
 
-/* Cuando hay adjuntos, la traza va justo debajo y no repite el filete. */
-.tkt-tatts + .tkt-tdelivery {
-    padding-top: 0;
-    border-top: none;
+/* Envío fallido/rebotado: antes threadDelivery() del backend devolvía null
+   para failed/bounced igual que "sin confirmación todavía", así que la
+   burbuja no mostraba NADA distinto de un correo normal en cola — el motivo
+   del fallo (delivery_error) queda en el title de este mismo bloque, sin
+   duplicar el botón "Ver rebote" de la pestaña Correo. Único uso de
+   --tkt-danger-* dentro de una burbuja del hilo: es la misma escala que ya
+   usa el chip "Email rebotado" de la cabecera, no un color nuevo. */
+.tkt-tdelivery.error {
+    color: var(--tkt-danger-fg, #fff);
+    background: var(--tkt-danger-bg, #18181b);
 }
 
 /* ── Composer del hilo (mockup: tabs + borrador IA + textarea + toolbar) ──
@@ -1501,6 +1705,8 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     font-size: 9.5px;
     font-weight: 700;
 }
+.tkt-comp-draft-status { margin-left: auto; min-height: 15px; color: var(--tkt-text-faint); font-size: 9.5px; white-space: nowrap; }
+.tkt-comp-draft-status.saved { color: var(--tkt-accent-dark); }
 
 /* Borrador sugerido por IA (TicketReplySuggestionService). Franja verde
    entre las pestañas y el textarea; se oculta hasta que hay sugerencia. */
@@ -1605,7 +1811,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     font-size: 12.5px;
     line-height: 1.5;
     resize: vertical;
-    min-height: 86px;
+    min-height: 68px;
     max-height: 260px;
     /* Es la última franja del composer (.tkt-composer ya no recorta con
        overflow:hidden, ver más arriba): redondea ella misma las esquinas
@@ -1615,6 +1821,8 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 }
 
 .tkt textarea.tkt-comp-body:focus { outline: 0; }
+.tkt-composer:focus-within textarea.tkt-comp-body,
+.tkt-composer.is-expanded textarea.tkt-comp-body { min-height: 132px; }
 
 .tkt-comp-tool {
     display: inline-flex;
@@ -1689,6 +1897,32 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     font-size: 10px;
     color: var(--tkt-text-faint);
 }
+
+/* Aviso de edición concurrente: conserva el texto del agente y le pide
+   revisar el hilo, sin bloquear ni descartar el borrador automáticamente. */
+.tkt-edit-conflict { align-items: center; gap: 8px; }
+.tkt-banner-dismiss { flex: 0 0 auto; padding: 2px 5px; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .65; }
+.tkt-banner-dismiss:hover, .tkt-banner-dismiss:focus { opacity: 1; outline: none; }
+.tkt-conflict-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tkt-conflict-grid section { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.tkt-field-label { color: var(--tkt-text-mute); font-size: var(--tkt-t-sm); font-weight: 700; }
+.tkt-conflict-draft { width: 100%; min-height: 180px; resize: vertical; }
+.tkt-conflict-remote { min-height: 180px; padding: 10px 11px; overflow: auto; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: var(--tkt-t-md); line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
+.tkt-audit-changes { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; color: var(--tkt-text-soft); }
+.tkt-audit-change { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: 5px; background: var(--tkt-subtle); font-size: 9.5px; }
+.tkt-audit-change b { color: var(--tkt-text); }
+.tkt-audit-change i { color: var(--tkt-text-faint); font-size: 8px; }
+
+/* Paleta de acciones */
+.tkt-palette-search { margin-bottom: 10px; }
+.tkt-palette-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 390px; overflow-y: auto; }
+.tkt-palette-item { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 9px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-panel); color: var(--tkt-text); text-align: left; cursor: pointer; }
+.tkt-palette-item:hover, .tkt-palette-item:focus { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); outline: none; }
+.tkt-palette-item > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tkt-palette-item b { font-size: 11px; }
+.tkt-palette-item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tkt-text-mute); font-size: 9.5px; }
+.tkt-palette-icon { display: grid; place-items: center; flex: 0 0 25px; width: 25px; height: 25px; border-radius: 6px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; }
+.tkt-palette-hint { margin-right: auto; color: var(--tkt-text-faint); font-size: 10px; }
 
 /* Desplegable de macros que aparece junto al botón, dentro de la toolbar. */
 .tkt-comp-macro-select {
@@ -2759,27 +2993,6 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     font-size: 11px;
 }
 
-/* Aviso de tickets nuevos, sobre la lista. Es un botón a ancho completo: la
-   acción es "actualizar", así que cualquier punto del aviso vale como diana en
-   vez de obligar a apuntar a un enlace de once píxeles. */
-.tkt-new-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 7px 12px;
-    border: none;
-    border-bottom: 1px solid var(--tkt-accent-line);
-    background: var(--tkt-accent-soft);
-    color: var(--tkt-accent-dark);
-    font-size: var(--tkt-t-md);
-    font-weight: 600;
-    cursor: pointer;
-}
-.tkt-new-banner:hover { background: var(--tkt-accent-bg); }
-.tkt-new-banner-act { text-decoration: underline; font-weight: 700; }
-
 /* Aviso de imágenes remotas bloqueadas, encima del cuerpo del correo. En la
    escala zinc y no en ámbar: no es un error del que avisar, es una decisión
    por defecto que el agente puede deshacer con el botón de al lado. */
@@ -2932,6 +3145,8 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     flex-shrink: 0;
 }
 .tkt-status-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.tkt-status-queue { padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.tkt-status-queue:hover { color: var(--tkt-text); }
 .tkt-status-sep { color: var(--tkt-border-strong); }
 .tkt-status-dot {
     width: 7px; height: 7px; border-radius: 50%;
@@ -2954,6 +3169,10 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-status-icon-btn:hover { background: var(--tkt-subtle); color: var(--tkt-text); }
 .tkt-status-icon-btn.on { color: var(--tkt-accent-dark); }
 .tkt-status-version { color: var(--tkt-text-faint); }
+.tkt-status-bar.is-offline { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
+.tkt-status-bar.is-offline .tkt-status-version { color: var(--tkt-danger-fg); opacity: .75; }
+.tkt-undo { display: inline-flex; align-items: center; gap: 8px; margin-left: 4px; padding-left: 8px; border-left: 1px solid var(--tkt-border-strong); color: var(--tkt-text-soft); font-size: var(--tkt-t-sm); }
+.tkt-undo .tkt-btn { white-space: nowrap; }
 
 /* ── Modal: Atajos de teclado ────────────────────────────────────── */
 .tkt-cheat-grid {
@@ -2982,4 +3201,106 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 }
 @media (max-width: 720px) {
     .tkt-cheat-grid { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════ Ajustes visuales de modales ════════════════════════
+   Capa de refinamiento común: los 35 modales dinámicos y el modal estático
+   de filtros comparten este shell, así que la densidad y la jerarquía se
+   corrigen aquí sin tener que parchear cada plantilla. */
+.tkt-modal-backdrop {
+    padding: 32px 20px;
+    overscroll-behavior: contain;
+}
+.tkt-modal {
+    max-width: 520px;
+    max-height: min(calc(100vh - 64px), 920px);
+    border: 1px solid rgba(24, 24, 27, .12);
+}
+.tkt-modal.w-sm { max-width: 420px; }
+.tkt-modal.w-md { max-width: 520px; }
+.tkt-modal.w-lg { max-width: 640px; }
+.tkt-modal.w-xl { max-width: 800px; }
+.tkt-modal.w-2xl { max-width: 920px; }
+.tkt-modal-head { gap: 12px; padding: 15px 18px; }
+.tkt-modal-icon { width: 32px; height: 32px; font-size: 13px; flex-shrink: 0; }
+.tkt-modal-kicker { font-size: 10px; color: var(--tkt-text-mute); }
+.tkt-modal-title { font-size: 15px; line-height: 1.25; }
+.tkt-modal-close { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
+.tkt-modal-body { padding: 18px; gap: 14px; }
+.tkt-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 18px;
+}
+.tkt-modal-foot .tkt-btn { width: auto; min-width: 104px; min-height: 34px; }
+.tkt-modal-foot.two-col { display: grid; grid-template-columns: 1fr 1fr; }
+.tkt-modal-foot.two-col .tkt-btn { width: 100%; }
+
+/* Selectores clave/valor conservan su ancho compacto dentro de un modal. */
+.tkt-modal-body .tkt-kv-select .select2-container { width: 60% !important; }
+
+/* Componentes que se estaban generando desde core.js sin una capa visual. */
+.tkt-fsel-label { display: inline-flex; align-items: center; gap: 5px; color: var(--tkt-text-mute); font-size: var(--tkt-t-md); }
+.tkt-ctk {
+    display: flex; flex-direction: column; gap: 4px; width: 100%;
+    padding: 10px 11px; border: 0; border-bottom: 1px solid var(--tkt-border-soft);
+    border-radius: 0; background: transparent; color: var(--tkt-text);
+    text-align: left; cursor: pointer; transition: background .12s ease;
+}
+.tkt-ctk:last-child { border-bottom: 0; }
+.tkt-ctk:hover { background: var(--tkt-subtle); }
+.tkt-ctk.is-current { background: var(--tkt-accent-soft); box-shadow: inset 3px 0 0 var(--tkt-accent); }
+.tkt-ctk .line1, .tkt-ctk .line2 { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.tkt-ctk .subj { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--tkt-t-md); font-weight: 600; }
+.tkt-ctk .line2 { color: var(--tkt-text-faint); font-size: var(--tkt-t-sm); }
+.tkt-ctk .tkt-ticket-id { flex-shrink: 0; color: var(--tkt-text-mute); }
+.tkt-ctk-badge { flex-shrink: 0; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: 4px; background: var(--tkt-panel); color: var(--tkt-text-mute); font-size: 9px; font-weight: 700; }
+.tkt-ctk-badge.current { border-color: var(--tkt-accent-line); background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); }
+.tkt-ctk-chevron { flex-shrink: 0; color: var(--tkt-text-faint); font-size: 9px; }
+.tkt-ctk-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--tkt-border-strong); flex-shrink: 0; }
+.tkt-ctk .when { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tkt-ctk-foot { display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-top: 1px solid var(--tkt-border-soft); color: var(--tkt-text-faint); font-size: var(--tkt-t-sm); }
+.tkt-ctk-foot a { color: var(--tkt-text-mute); font-weight: 600; }
+.tkt-ctk-foot a:hover { color: var(--tkt-text); }
+.tkt-preview-body {
+    min-height: 96px; padding: 12px 13px; border: 1px solid var(--tkt-border);
+    border-radius: var(--tkt-r-md); background: var(--tkt-bg); color: var(--tkt-text-soft);
+    font-size: var(--tkt-t-md); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.tkt-preview-hint { margin: 0; font-size: var(--tkt-t-sm); }
+
+.tkt-modal-close:focus-visible,
+.tkt-modal .tkt-btn:focus-visible,
+.tkt-modal input:focus-visible,
+.tkt-modal textarea:focus-visible,
+.tkt-modal select:focus-visible,
+.tkt-modal [tabindex]:focus-visible {
+    outline: 2px solid var(--tkt-accent);
+    outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+    .tkt-modal-backdrop { align-items: flex-end; padding: 12px 10px; }
+    .tkt-modal,
+    .tkt-modal.w-sm,
+    .tkt-modal.w-md,
+    .tkt-modal.w-lg,
+    .tkt-modal.w-xl,
+    .tkt-modal.w-2xl {
+        width: 100%; max-width: none; max-height: calc(100vh - 24px); border-radius: 16px;
+    }
+    @supports (height: 100dvh) {
+        .tkt-modal { max-height: calc(100dvh - 24px); }
+    }
+    .tkt-modal-head { padding: 14px 16px; }
+    .tkt-modal-body { padding: 16px; gap: 12px; }
+    .tkt-modal-foot,
+    .tkt-modal-foot.two-col { display: grid; grid-template-columns: 1fr; padding: 12px 16px; }
+    .tkt-modal-foot .tkt-btn,
+    .tkt-modal-foot.two-col .tkt-btn { width: 100%; }
+    .tkt-field-row { flex-direction: column; gap: 12px; }
+    .tkt-kpi4 { grid-template-columns: repeat(2, 1fr); }
 }

@@ -1068,7 +1068,7 @@ class Ticket extends Model
         // Create system event
         $this->items()->create([
             'type' => 'closed',
-            'body' => 'Ticket closed',
+            'body' => 'Ticket cerrado',
         ]);
 
         return $this;
@@ -1097,7 +1097,7 @@ class Ticket extends Model
         // Create system event
         $this->items()->create([
             'type' => 'status_change',
-            'body' => 'Ticket resolved',
+            'body' => 'Ticket resuelto',
             'metadata' => ['resolved_at' => now()->toIso8601String()],
         ]);
 
@@ -1125,7 +1125,7 @@ class Ticket extends Model
         // Create system event
         $this->items()->create([
             'type' => 'reopened',
-            'body' => 'Ticket reopened',
+            'body' => 'Ticket reabierto',
         ]);
 
         return $this;
@@ -1489,6 +1489,13 @@ class Ticket extends Model
             'url_split' => route('manager.helpdesk.tickets.split', ['ticket' => '__TICKET__']),
             // Modal 23: avisar a un agente presente en el ticket.
             'url_presence_nudge' => route('manager.helpdesk.tickets.presence.nudge', ['ticket' => '__TICKET__']),
+            // Late mientras el detalle está abierto ("estoy viendo/
+            // respondiendo este ticket") y avisa al cerrarlo — el mismo
+            // heartbeat/leave de TicketPresenceController que ya existía
+            // pero ningún JS llamaba (QA 14-sep-2026): el listado ahora
+            // pinta un punto de presencia por fila con este dato.
+            'url_presence_heartbeat' => route('manager.helpdesk.tickets.presence.heartbeat', ['ticket' => '__TICKET__']),
+            'url_presence_leave' => route('manager.helpdesk.tickets.presence.leave', ['ticket' => '__TICKET__']),
             // Modal 25: pedidos PrestaShop del cliente, bajo demanda.
             'url_customer_orders' => route('manager.helpdesk.tickets.customer-360.orders', ['ticket' => '__TICKET__']),
             // Modal 32: enviar el enlace mágico de acceso al portal.
@@ -1626,6 +1633,14 @@ class Ticket extends Model
             'created_at_human' => $this->created_at?->diffForHumans(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'assigned_at' => $this->assigned_at?->toIso8601String(),
+            // Si el agente ya respondió al cliente — dato distinto del SLA
+            // de resolución (sla_text/sla_kind, que sigue el plazo de
+            // CERRAR el ticket, no el de responder). Sin esto la fila del
+            // listado no podía distinguir "nadie le ha contestado todavía"
+            // de "ya le contestamos, solo falta cerrarlo" — confusión real
+            // de un agente que veía "vencido" en negro tras haber respondido
+            // (QA visual 14-sep-2026).
+            'first_response_at' => $this->first_response_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'close_reason' => $this->close_reason,
             'close_reason_label' => $this->close_reason

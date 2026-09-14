@@ -3,24 +3,27 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
+use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Services\CustomerSummaryService;
 use Modules\HelpdeskTickets\Services\EmailLogLookupService;
 use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
 use Modules\HelpdeskTickets\Services\MentionService;
-use Nwidart\Modules\Facades\Module;
 use Throwable;
 
 /**
@@ -34,6 +37,8 @@ use Throwable;
  */
 class TicketDetailDataController extends Controller
 {
+    private ?bool $threadFullTextAvailable = null;
+
     public function __construct(
         private readonly CustomerSummaryService $customerSummary,
         private readonly EmailLogLookupService $emailLogLookup,
@@ -98,11 +103,20 @@ class TicketDetailDataController extends Controller
      * Traza de entrega de un mensaje saliente, para la línea
      * "entregado 10:42:11" del mockup.
      *
-     * Devuelve null cuando no hay correo o cuando aún no consta entregado: el
-     * mockup enseña siempre la traza porque su ejemplo está entregado, pero
-     * afirmar una entrega que el proveedor no ha confirmado sería inventarla.
+     * Devuelve null cuando no hay correo y ninguno de los tres estados
+     * conocidos (entregado/enviado/fallido) aplica todavía (p.ej. en cola):
+     * el mockup enseña siempre la traza porque su ejemplo está entregado,
+     * pero afirmar una entrega que el proveedor no ha confirmado sería
+     * inventarla.
      *
-     * @return array{label: string, at: string}|null
+     * El caso 'failed'/'bounced' antes devolvía null igual que "sin traza
+     * todavía" — la burbuja de un correo que rebotó se veía IDÉNTICA a una
+     * sin ninguna confirmación de envío, y el agente solo se enteraba del
+     * rebote si abría la pestaña Correo y pulsaba "Ver rebote" (detectado
+     * 14-sep-2026 rediseñando el hilo). delivery_error ya se guardaba en
+     * TicketMail (ver TicketMail::markFailed()) pero nunca llegaba aquí.
+     *
+     * @return array{label: string, at: ?string, error: ?string, failed: bool}|null
      */
     private function threadDelivery(?TicketMail $mail): ?array
     {
@@ -110,14 +124,23 @@ class TicketDetailDataController extends Controller
             return null;
         }
 
+        if (in_array($mail->status, ['failed', 'bounced'], true)) {
+            return [
+                'label' => $mail->status === 'bounced' ? 'rebotado' : 'no se pudo enviar',
+                'at' => $mail->sent_at?->format('H:i:s'),
+                'error' => $mail->delivery_error,
+                'failed' => true,
+            ];
+        }
+
         if ($mail->delivered_at) {
-            return ['label' => 'entregado', 'at' => $mail->delivered_at->format('H:i:s')];
+            return ['label' => 'entregado', 'at' => $mail->delivered_at->format('H:i:s'), 'error' => null, 'failed' => false];
         }
 
         // Aceptado por el servidor pero sin confirmación de entrega: se dice
         // exactamente eso, que no es lo mismo.
         if ($mail->sent_at && $mail->status === 'sent') {
-            return ['label' => 'enviado', 'at' => $mail->sent_at->format('H:i:s')];
+            return ['label' => 'enviado', 'at' => $mail->sent_at->format('H:i:s'), 'error' => null, 'failed' => false];
         }
 
         return null;
@@ -178,14 +201,142 @@ class TicketDetailDataController extends Controller
     {
         $this->authorize('view', $ticket);
 
-        $ticket->load(['items' => fn ($q) => $q->orderBy('created_at'), 'items.user', 'items.author', 'followups', 'aiSuggestedCategory', 'watchers.user']);
+        // La búsqueda del hilo vive en el servidor para que un ticket con
+        // cientos de mensajes no tenga que descargarse entero. La misma
+        // consulta soporta filtros avanzados y páginas de mensajes antiguos.
+        $threadSearch = trim((string) request()->query('thread_search', ''));
+        $threadSender = trim((string) request()->query('thread_sender', ''));
+        $threadType = (string) request()->query('thread_type', 'all');
+        $threadFrom = (string) request()->query('thread_from', '');
+        $threadTo = (string) request()->query('thread_to', '');
+        $threadChannel = trim((string) request()->query('thread_channel', ''));
+        $threadPage = max(1, (int) request()->query('thread_page', 1));
+        $threadPerPage = min(50, max(10, (int) request()->query('thread_per_page', 30)));
+
+        $threadQuery = TicketItem::query()
+            ->where('ticket_id', $ticket->id)
+            ->with(['user', 'author']);
+
+        if ($threadSearch !== '') {
+            $like = '%'.$threadSearch.'%';
+            if ($this->threadFullTextAvailable() && mb_strlen($threadSearch) >= 3) {
+                $threadQuery->whereRaw(
+                    '(MATCH(body, html_body) AGAINST (? IN NATURAL LANGUAGE MODE) > 0 OR body LIKE ? OR html_body LIKE ?)',
+                    [$threadSearch, $like, $like]
+                );
+            } else {
+                $threadQuery->where(function ($query) use ($like): void {
+                    $query->where('body', 'like', $like)
+                        ->orWhere('html_body', 'like', $like);
+                });
+            }
+        }
+
+        if ($threadType === 'customer') {
+            $threadQuery->where('type', 'message')->whereNotNull('author_id')->whereNull('user_id');
+        } elseif ($threadType === 'agent') {
+            $threadQuery->where('type', 'message')->whereNotNull('user_id')->where('is_internal', false);
+        } elseif ($threadType === 'note') {
+            $threadQuery->where('is_internal', true);
+        } elseif ($threadType === 'event') {
+            $threadQuery->where('type', '!=', 'message');
+        }
+
+        // El canal se hereda del ticket, no del item. Aun así se filtra aquí
+        // para que el control avanzado tenga semántica clara y no descargue
+        // mensajes cuando el canal solicitado no coincide.
+        if ($threadChannel !== '') {
+            // `formulario` es el nombre visible del canal, mientras que
+            // algunos tickets antiguos guardan `form` o `web_form` en
+            // source. Normalizamos ambos lados para que el filtro no parezca
+            // roto en esos tickets históricos.
+            $channelAliases = [
+                'formulario' => 'form',
+                'web_form' => 'form',
+            ];
+            $requestedChannel = $channelAliases[strtolower($threadChannel)] ?? strtolower($threadChannel);
+            $ticketChannel = $channelAliases[strtolower((string) $ticket->sourceSlug())] ?? strtolower((string) $ticket->sourceSlug());
+            if ($requestedChannel !== $ticketChannel) {
+                $threadQuery->whereRaw('1 = 0');
+            }
+        }
+
+        if ($threadFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $threadFrom)) {
+            $threadQuery->whereDate('created_at', '>=', $threadFrom);
+        }
+        if ($threadTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $threadTo)) {
+            $threadQuery->whereDate('created_at', '<=', $threadTo);
+        }
+
+        if ($threadSender !== '') {
+            $likeSender = '%'.$threadSender.'%';
+            $userIds = User::query()
+                ->where(function ($query) use ($likeSender): void {
+                    $query->where('firstname', 'like', $likeSender)
+                        ->orWhere('lastname', 'like', $likeSender)
+                        ->orWhere('email', 'like', $likeSender);
+                })->pluck('id');
+            $customerIds = Customer::query()
+                ->where(function ($query) use ($likeSender): void {
+                    $query->where('name', 'like', $likeSender)
+                        ->orWhere('email', 'like', $likeSender);
+                })->pluck('id');
+
+            $threadQuery->where(function ($query) use ($userIds, $customerIds): void {
+                $query->whereIn('user_id', $userIds->isEmpty() ? [-1] : $userIds)
+                    ->orWhereIn('author_id', $customerIds->isEmpty() ? [-1] : $customerIds);
+            });
+        }
+
+        $threadTotal = (clone $threadQuery)->reorder()->count();
+        $threadItems = $threadQuery
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->forPage($threadPage, $threadPerPage)
+            ->get()
+            ->sortBy(fn (TicketItem $item) => sprintf('%s-%020d', $item->created_at?->format('YmdHis.u') ?? '', $item->id))
+            ->values();
+
+        // El resto del payload puede seguir usando $ticket->items para el
+        // hilo de esta página. Las pestañas de archivos consultan sus propios
+        // items con adjuntos más abajo, por lo que no pierden ficheros de
+        // páginas que todavía no se han cargado.
+        $ticket->setRelation('items', $threadItems);
+        $ticket->load(['followups', 'aiSuggestedCategory', 'watchers.user']);
+
+        // Marca leído para este agente todo el hilo que acaba de abrir.
+        // TicketRead::markAllReadFor() ya existía —el portal de agentes
+        // (Agents/TicketsController) la llama desde 2025— pero el panel de
+        // manager (esta vista, la única desde que se retiró "ficha
+        // completa" el 8-sep-2026) nunca la invocaba: abrir un ticket aquí
+        // no escribía ni una fila en helpdesk_ticket_reads, así que
+        // getUnreadCountForUser() devolvía el total de mensajes del ticket
+        // para siempre, sin importar cuántas veces se abriera (bug real,
+        // confuso a simple vista en el listado — QA visual 14-sep-2026).
+        //
+        // "Ticket visto" en la pestaña Actividad, pedido a continuación del
+        // fix anterior: solo cuando markAllReadFor() marcó algo REALMENTE
+        // nuevo, no en cada apertura — un agente repasando el mismo ticket
+        // varias veces (o la navegación J/K) no debe generar una entrada
+        // por cada clic. activity()->log() es el camino manual v5 (a
+        // diferencia de LogsActivity en Ticket, que usa v4 — ver el docblock
+        // de la migración add_attribute_changes_to_activity_log_table):
+        // ambos caminos escriben en la misma tabla, así que $ticket->
+        // activities() (relación que ya alimenta esta pestaña más abajo) la
+        // recoge igual que cualquier cambio automático.
+        if (TicketRead::markAllReadFor($ticket, auth()->id()) > 0) {
+            activity()
+                ->performedOn($ticket)
+                ->causedBy(auth()->user())
+                ->log('Ticket visto');
+        }
 
         // Correo asociado a cada item, en UNA consulta: los botones "Reenviar"
         // y "Ver original" del hilo operan sobre TicketMail, no sobre el item,
         // y sin este mapa habría que consultarlo fila a fila.
         $mailsByItem = $ticket->mails()
             ->whereNotNull('ticket_item_id')
-            ->get(['id', 'ticket_item_id', 'status', 'delivered_at', 'sent_at'])
+            ->get(['id', 'ticket_item_id', 'status', 'delivered_at', 'sent_at', 'delivery_error'])
             ->keyBy('ticket_item_id');
 
         $thread = $ticket->items->map(fn ($item) => [
@@ -216,6 +367,11 @@ class TicketDetailDataController extends Controller
             // probando el flujo real con un mensaje en inglés).
             'translated_body' => $item->translated_body,
             'source_language_name' => $item->source_language_name,
+            // Solo AutoResponseTicketCommand marca este flag hoy; macros,
+            // respuestas programadas y automatizaciones no dejan ningún
+            // rastro en metadata que las distinga de una respuesta manual
+            // del agente — no se inventa una heurística para esos casos.
+            'is_auto' => (bool) data_get($item->metadata, 'auto_response', false),
             'attachment_count' => $item->attachment_count,
             'created_at' => $item->created_at?->toIso8601String(),
             'created_at_human' => $item->created_at?->diffForHumans(),
@@ -226,9 +382,21 @@ class TicketDetailDataController extends Controller
             'time' => $item->created_at?->format('H:i'),
             // Rol de quien escribe: es lo que distingue de un vistazo la
             // columna del cliente de la del agente.
-            'role' => $item->isFromAgent()
-                ? ($item->user_id ? __('helpdesktickets::helpdesktickets.thread.role_agent') : __('helpdesktickets::helpdesktickets.thread.role_system'))
-                : __('helpdesktickets::helpdesktickets.thread.role_customer'),
+            //
+            // Antes: isFromAgent() ? ($item->user_id ? role_agent :
+            // role_system) : role_customer. isFromAgent() ES user_id!==null,
+            // así que la rama role_system era inalcanzable — un item de
+            // sistema sin user_id ni author_id (p.ej. la auto-respuesta de
+            // AutoResponseTicketCommand) caía en el "else" final y salía
+            // etiquetado "Cliente" aunque sender_name ya mostrara "Sistema"
+            // correctamente (detectado 14-sep-2026 rediseñando el hilo:
+            // burbuja "Sistema" con chip "Cliente"). Misma terna de 3 vías
+            // que getSenderNameAttribute()/isFromCustomer().
+            'role' => $item->isFromCustomer()
+                ? __('helpdesktickets::helpdesktickets.thread.role_customer')
+                : ($item->isFromAgent()
+                    ? __('helpdesktickets::helpdesktickets.thread.role_agent')
+                    : __('helpdesktickets::helpdesktickets.thread.role_system')),
             // Canal por el que entró/salió el mensaje. Se hereda del ticket:
             // el item no guarda origen propio, y todos los de un ticket
             // comparten el suyo salvo los eventos del sistema.
@@ -275,6 +443,10 @@ class TicketDetailDataController extends Controller
                 // que la pestaña Actividad se pintaba entera sin autor.
                 'causer' => $this->causerName($a->causer),
                 'causer_kind' => $this->causerKind($a),
+                'changes' => [
+                    'old' => (array) data_get($a->properties, 'old', []),
+                    'attributes' => (array) data_get($a->properties, 'attributes', []),
+                ],
                 'created_at' => $a->created_at?->toIso8601String(),
                 'created_at_human' => $a->created_at?->diffForHumans(),
             ])->values();
@@ -283,7 +455,12 @@ class TicketDetailDataController extends Controller
 
         // Adjuntos escritos por el panel de agente: rutas de storage dentro de
         // TicketItem.attachment_urls.
-        $itemFiles = $ticket->items
+        $itemsWithAttachments = TicketItem::query()
+            ->where('ticket_id', $ticket->id)
+            ->whereNotNull('attachment_urls')
+            ->get();
+
+        $itemFiles = $itemsWithAttachments
             ->filter(fn ($item) => $item->hasAttachments())
             ->flatMap(fn ($item) => collect($item->attachment_urls)->values()->map(fn ($path, $index) => [
                 // Storage::putFile() genera un hash como nombre real de
@@ -422,6 +599,18 @@ class TicketDetailDataController extends Controller
             // Ver comentario junto a $activityTotalCount: > count(activity)
             // cuando el limit(20) de arriba recortó historial real.
             'activity_total_count' => $activityTotalCount,
+            'thread_search' => $threadSearch !== '' ? $threadSearch : null,
+            'thread_page' => $threadPage,
+            'thread_per_page' => $threadPerPage,
+            'thread_total' => $threadTotal,
+            'thread_has_more' => ($threadPage * $threadPerPage) < $threadTotal,
+            'thread_filters' => [
+                'sender' => $threadSender !== '' ? $threadSender : null,
+                'type' => $threadType,
+                'from' => $threadFrom !== '' ? $threadFrom : null,
+                'to' => $threadTo !== '' ? $threadTo : null,
+                'channel' => $threadChannel !== '' ? $threadChannel : null,
+            ],
             'files' => $files,
             'mail' => $lastMail ? [
                 'subject' => $lastMail->subject,
@@ -689,7 +878,12 @@ class TicketDetailDataController extends Controller
      */
     private function translationSettings(): ?array
     {
-        if (! Module::find('HelpdeskTranslate')?->isEnabled()) {
+        // Antes solo miraba si el módulo estaba INSTALADO — un admin que
+        // apagaba la integración en Settings → Integraciones (el toggle que
+        // helpdesk_translate_enabled() sí respeta) seguía viendo este resumen
+        // en la card Correo, como si la traducción automática siguiera activa
+        // (detectado 14-sep-2026, auditoría de funcionalidades de tickets).
+        if (! helpdesk_translate_enabled()) {
             return null;
         }
 
@@ -874,9 +1068,11 @@ class TicketDetailDataController extends Controller
 
         // Adjuntos que llegaron con el formulario: son los del cliente, ya
         // cargados como TicketAttachment (mismo origen que $customerFiles).
-        $attachments = $ticket->items
-            ->flatMap(fn (TicketItem $item) => $item->attachments ?? collect())
-            ->map(fn ($a) => [
+        $attachments = TicketAttachment::query()
+            ->whereHas('message', fn ($q) => $q->where('ticket_id', $ticket->id))
+            ->latest()
+            ->get()
+            ->map(fn (TicketAttachment $a) => [
                 'name' => $a->original_filename ?: $a->filename,
                 'size_human' => $this->humanSize((int) $a->size),
                 'url_download' => route('manager.helpdesk.tickets.message-attachments.download', [$ticket, $a->id]),
@@ -1166,5 +1362,29 @@ class TicketDetailDataController extends Controller
         }
 
         return $events;
+    }
+
+    /**
+     * Use the indexed search when the optional migration has been applied;
+     * keep LIKE as a safe fallback for rolling deployments and SQLite tests.
+     */
+    private function threadFullTextAvailable(): bool
+    {
+        if ($this->threadFullTextAvailable !== null) {
+            return $this->threadFullTextAvailable;
+        }
+
+        try {
+            $connection = DB::connection('helpdesk');
+            $this->threadFullTextAvailable = in_array($connection->getDriverName(), ['mysql', 'mariadb'], true)
+                && $connection->select(
+                    'SHOW INDEX FROM `helpdesk_ticket_items` WHERE Key_name = ?',
+                    ['helpdesk_ticket_items_body_fulltext']
+                ) !== [];
+        } catch (Throwable) {
+            $this->threadFullTextAvailable = false;
+        }
+
+        return $this->threadFullTextAvailable;
     }
 }
