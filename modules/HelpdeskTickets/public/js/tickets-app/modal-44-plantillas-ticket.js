@@ -21,7 +21,12 @@
         '{{customer_phone}}': '600 111 222',
         '{{agent_name}}': 'Tu nombre',
         '{{assignee_name}}': 'Tu nombre',
-        '{{fecha}}': new Date().toLocaleDateString('es-ES'),
+        // Mismas opciones explícitas que el resto de fechas mostradas en la
+        // pantalla (día/mes abreviado/año, es-ES) — sin ellas, toLocaleDateString
+        // sin argumentos cae al formato corto por defecto del motor ("14/9/2026"),
+        // que no coincide con ningún otro sitio del sistema (14-sep-2026,
+        // auditoría de calidad JS).
+        '{{fecha}}': new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
         '{{erp_id_cliente}}': '4521',
         '{{erp_nif}}': 'B12345678',
         '{{erp_ciudad}}': 'Madrid',
