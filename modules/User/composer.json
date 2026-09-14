@@ -1,0 +1,35 @@
+{
+    "name": "modules/user",
+    "description": "User Module - Manages application users and user management",
+    "type": "laravel-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\User\\Providers\\UserServiceProvider"
+            ],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\User\\": "app/",
+            "Modules\\User\\Database\\Factories\\": "database/factories/",
+            "Modules\\User\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\User\\Tests\\": "tests/"
+        }
+    }
+}
