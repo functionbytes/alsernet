@@ -1,0 +1,32 @@
+{
+    "name": "modules/queue",
+    "description": "Queue Module - Job queue management, rate limiting, background task processing",
+    "keywords": ["queue", "job", "background", "async", "rate-limiting"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-rate-limited-job-middleware": "^2.8"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Queue\\": "app/",
+            "Modules\\Queue\\Database\\Factories\\": "database/factories/",
+            "Modules\\Queue\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Queue\\Tests\\": "tests/"
+        }
+    }
+}
