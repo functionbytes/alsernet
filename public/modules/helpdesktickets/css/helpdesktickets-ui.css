@@ -1,0 +1,36 @@
+/*
+ * Utilidades compartidas por las vistas del módulo que no cargan uno de los
+ * CSS grandes (tickets.css / tickets-app.css / emails.css).
+ *
+ * Existen para retirar los style="" que quedaban sueltos en las pantallas de
+ * agente, ajustes y páginas públicas. Se dejan inline, a propósito, dos cosas
+ * que NO son presentación y por tanto no pertenecen a una hoja de estilos:
+ *
+ *   - Los colores que salen de la base de datos (color del estado o de la
+ *     categoría del ticket): el valor no se conoce al escribir el CSS.
+ *   - El display:none inicial de los paneles que jQuery alterna con
+ *     .show()/.hide()/.css('display', …), que escriben estilo inline y no
+ *     verían una clase (y contra .d-none de Bootstrap, que lleva !important,
+ *     perderían).
+ */
+
+/* Truncados de tabla */
+.hdt-truncate-140 { max-width: 140px; }
+.hdt-truncate-200 { max-width: 200px; }
+
+/* Formularios de una columna */
+.hdt-form-narrow { max-width: 700px; }
+
+/* Avatares */
+.hdt-avatar-36 { width: 36px; height: 36px; }
+.hdt-avatar-48 { width: 48px; height: 48px; }
+
+/* Barra flotante de acciones masivas: por encima de modales y offcanvas */
+.hdt-floating-bar { z-index: 1050; }
+
+/* Columna elástica que puede encogerse por debajo de su contenido */
+.hdt-flex-fill-min { flex: 1; min-width: 0; }
+
+/* Iconos decorativos de páginas públicas */
+.hdt-icon-xl  { font-size: 3rem; }
+.hdt-icon-xxl { font-size: 5rem; }

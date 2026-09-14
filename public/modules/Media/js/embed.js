@@ -1,0 +1,25 @@
+(function () {
+    var scripts = document.querySelectorAll('script[data-media-embed]');
+
+    scripts.forEach(function (script) {
+        var fileId = script.dataset.mediaEmbed;
+        var token = script.dataset.mediaToken;
+        var size = script.dataset.mediaSize || 'medium';
+
+        if (!fileId || !token) {
+            return;
+        }
+
+        var endpoint =
+            script.dataset.mediaEndpoint ||
+            window.location.protocol + '//' + window.location.host;
+
+        var url = endpoint + '/media/share/' + token;
+        var container = document.createElement('div');
+        container.className = 'media-embed-widget';
+        container.innerHTML =
+            '<img src="' + url + '" alt="" style="max-width:100%;height:auto">';
+
+        script.parentNode.insertBefore(container, script);
+    });
+})();

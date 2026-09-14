@@ -116,6 +116,21 @@
         import: 'Importado', chat: 'Chat', portal: 'Portal',
     };
 
+    // Icono por canal para el chip de origen de la cabecera del detalle
+    // (rediseño canal/estado/prioridad — auditoría UI 14-sep-2026). Mismas
+    // claves que ORIGIN_LABELS; 'fa-tag' de reserva para un origen sin mapear.
+    var ORIGIN_ICON = {
+        email: 'fa-regular fa-envelope', widget: 'fa-regular fa-comment-dots',
+        wa: 'fa-brands fa-whatsapp', whatsapp: 'fa-brands fa-whatsapp',
+        fb: 'fa-brands fa-facebook', facebook: 'fa-brands fa-facebook',
+        ig: 'fa-brands fa-instagram', instagram: 'fa-brands fa-instagram',
+        agent: 'fa-regular fa-user', manual: 'fa-regular fa-user',
+        api: 'fa-solid fa-code', phone: 'fa-solid fa-phone',
+        form: 'fa-regular fa-file-lines', formulario: 'fa-regular fa-file-lines', web_form: 'fa-regular fa-file-lines',
+        prestashop: 'fa-solid fa-cart-shopping', recurring: 'fa-solid fa-rotate', scheduled: 'fa-regular fa-calendar',
+        import: 'fa-solid fa-file-import', chat: 'fa-solid fa-comments', portal: 'fa-solid fa-door-open',
+    };
+
     var STATUS_LABEL_FALLBACK = {
         open: 'Abierto', progress: 'En curso', pending: 'En espera', resolved: 'Resuelto', closed: 'Cerrado',
     };
@@ -216,6 +231,7 @@
         TKA.urls.emailChannels = $data.attr('data-email-channels-url');
         TKA.urls.recurring = $data.attr('data-recurring-url');
         TKA.urls.cannedUpdateTemplate = $data.attr('data-canned-update-url-template');
+        TKA.urls.cannedDuplicateTemplate = $data.attr('data-canned-duplicate-url-template');
         TKA.state.senders = safeJson($data.attr('data-senders'), []);
         TKA.urls.contactsMergeSearchTemplate = $data.attr('data-contacts-merge-search-url-template');
         TKA.urls.contactsMergePreviewTemplate = $data.attr('data-contacts-merge-preview-url-template');
@@ -1079,6 +1095,19 @@
         // cubre cualquier modal presente y futuro sin tener que acordarse
         // de llamarlo en cada función que abre uno.
         initSelect2($backdrop);
+
+        // Foco automático en el primer campo editable — encontrado probando
+        // los atajos de teclado uno por uno: "A" abría "Asignar ticket" pero
+        // dejaba el foco en <body>, así que había que hacer clic a mano en
+        // "Buscar agente…" antes de poder teclear. Un único punto (como
+        // initSelect2 arriba) cubre cualquier modal presente y futuro. Solo
+        // input/textarea (nunca <select>): select2 oculta el <select> real
+        // con aria-hidden y monta un elemento nuevo al lado — ese
+        // ':visible' ya lo descarta solo, pero enfocarlo igualmente no
+        // abriría el desplegable visual.
+        var $autofocus = $backdrop.find('input, textarea').filter(':visible:not(:disabled)').first();
+        if ($autofocus.length) $autofocus.trigger('focus');
+
         return $backdrop;
     }
 
@@ -1237,13 +1266,35 @@
         var $d = $('#tkt-detail').css('display', 'flex');
 
         var statusLabel = t.status_name || STATUS_LABEL_FALLBACK[t.status_slug] || t.status_slug;
-        // Mismo criterio que la fila del listado: slaRowText() devuelve el
-        // guion largo cuando el ticket no tiene plazo, y "SLA —" no dice nada.
-        // Sin plazo, el chip no se pinta.
+        // El SLA vencido/en riesgo ya NO vive como chip en la fila de
+        // clasificación (bug de diseño real, QA visual 14-sep-2026): ahí
+        // competía en el mismo gris apagado que "Urgente"/"Manual" y la
+        // alerta más crítica de la cabecera pasaba desapercibida. Ahora sale
+        // como franja aparte (slaBanner, ver tkt-detail-sla-banner en
+        // tickets-app.css), fuera de la fila de chips. En plazo no hay nada
+        // que avisar, así que sigue siendo un chip discreto — una franja por
+        // cada ticket sin problema sería ruido, no alerta. Mismo criterio que
+        // la fila del listado: slaRowText() devuelve el guion largo cuando el
+        // ticket no tiene plazo, y "SLA —" no dice nada.
         var slaChip = '';
-        if (t.sla_kind === 'breach') slaChip = chip('SLA vencido', 'tkt-chip-danger');
-        else if (t.sla_kind === 'warn') slaChip = chip('SLA en riesgo', 'tkt-chip-warn');
-        else if (t.sla_text && t.sla_text !== '—') slaChip = chip('SLA ' + t.sla_text, 'tkt-chip-ok');
+        var slaBanner = '';
+        if (t.sla_kind === 'breach') {
+            slaBanner = '<div class="tkt-detail-sla-banner breach">' +
+                '<i class="fa-solid fa-triangle-exclamation"></i>' +
+                '<b>SLA vencido</b>' +
+                (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· hace ' + escapeHtml(t.sla_text.replace(/ vencido$/, '')) + '</span>' : '') +
+                '<button type="button" class="tkt-detail-sla-banner-link" id="tkt-sla-banner-link">Ver política SLA <i class="fa-solid fa-chevron-right"></i></button>' +
+            '</div>';
+        } else if (t.sla_kind === 'warn') {
+            slaBanner = '<div class="tkt-detail-sla-banner warn">' +
+                '<i class="fa-regular fa-clock"></i>' +
+                '<b>SLA en riesgo</b>' +
+                (t.sla_text && t.sla_text !== '—' ? '<span class="dim">· quedan ' + escapeHtml(t.sla_text) + '</span>' : '') +
+                '<button type="button" class="tkt-detail-sla-banner-link" id="tkt-sla-banner-link">Ver política SLA <i class="fa-solid fa-chevron-right"></i></button>' +
+            '</div>';
+        } else if (t.sla_text && t.sla_text !== '—') {
+            slaChip = chip('SLA ' + t.sla_text, 'tkt-chip-ok');
+        }
 
         // Posición dentro de la lista visible ("1 de 6" en el mockup), para
         // la barra de navegación de la cabecera.
@@ -1277,9 +1328,9 @@
                         '<div class="tkt-detail-chips">' +
                             deliveryChip +
                             '<span class="tkt-chip-id">' + escapeHtml(t.ticket_number) + '</span>' +
-                            chip(statusLabel, statusChipClass(t.status_slug)) +
-                            (t.priority ? chip(priorityLabel(t.priority), priorityChipClass(t.priority)) : '') +
-                            '<span class="tkt-chip-mono">' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
+                            '<span class="tkt-chip ' + statusChipClass(t.status_slug) + '"><span class="tkt-chip-dot"></span>' + escapeHtml(statusLabel) + '</span>' +
+                            (t.priority ? '<span class="tkt-chip ' + priorityChipClass(t.priority) + '"><i class="fa-solid fa-flag"></i>' + escapeHtml(priorityLabel(t.priority)) + '</span>' : '') +
+                            '<span class="tkt-chip-channel"><i class="' + (ORIGIN_ICON[t.source] || 'fa-solid fa-tag') + '"></i>' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
                             slaChip +
                             (t.has_attachments ? '<span class="tkt-chip-att"><i class="fa-solid fa-paperclip"></i> 1</span>' : '') +
                         '</div>' +
@@ -1295,12 +1346,12 @@
                         // El banner de texto sigue existiendo, pero el agente
                         // mira la cabecera, no una franja bajo las pestañas.
                         '<span class="tkt-presence" id="tkt-presence" hidden></span>' +
-                        '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-goto-reply" title="Responder al cliente">Responder</button>' +
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-state" title="Cambiar estado" aria-label="Cambiar estado"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>' +
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-assign" title="Asignar" aria-label="Asignar"><i class="fa-solid fa-user-plus"></i></button>' +
                         '<button type="button" class="tkt-btn-icon" id="tkt-goto-actions" title="Más acciones" aria-label="Más acciones"><i class="fa-solid fa-ellipsis"></i></button>' +
                     '</div>' +
                 '</div>' +
+                slaBanner +
                 '<div class="tkt-dtabs">' +
                     '<button type="button" class="tkt-dtab" data-dtab="mail"><i class="fa-regular fa-envelope"></i> Correo<span class="tkt-dcount" data-badge="mail"></span></button>' +
                     '<button type="button" class="tkt-dtab on" data-dtab="thread"><i class="fa-solid fa-comments"></i> Hilo<span class="tkt-dcount" data-badge="thread"></span></button>' +
@@ -1337,6 +1388,11 @@
         // el foco al campo correspondiente del panel Gestión.
         $('#tkt-goto-state').on('click', function () { openChangeStatusModal(t); });
 
+        // "Ver política SLA" de la franja de alerta abre el mismo modal 28
+        // que ya usa la acción "Calendario y SLA" del panel Gestión — lee el
+        // ticket seleccionado de TKA.state, no hace falta pasárselo.
+        $('#tkt-sla-banner-link').on('click', openSlaCalendarModal);
+
         $('#tkt-goto-assign, #tkt-goto-actions').on('click', function () {
             var focusId = this.id === 'tkt-goto-assign' ? 'tkt-sg-assignee-wrap' : 'tkt-sg-actions';
             // Los tres viven dentro del panel "Gestión" del lateral: hay que abrirlo primero.
@@ -1361,8 +1417,6 @@
                 else $target.addClass('tkt-highlight-flash').one('animationend', function () { $(this).removeClass('tkt-highlight-flash'); });
             }
         });
-
-        $('#tkt-goto-reply').on('click', function () { openComposeModal(t); });
 
         $d.find('[data-dtab]').on('click', function () {
             if ($(this).is('[disabled]')) return;
@@ -1617,9 +1671,35 @@
         return 'fa-file-lines';
     }
 
+    // Lleva el hilo hasta el último mensaje. Tres pasadas, cada vez más
+    // tarde, en vez de una sola: verificado en vivo (DevTools) que un solo
+    // requestAnimationFrame se quedaba ~60px corto — el ancho de columna
+    // (sidebar "Gestión" con sus select2) se termina de asentar un instante
+    // después, el texto del último mensaje reajusta su wrap y crece, y el
+    // scroll ya fijado no se entera. La 2ª pasada (rAF anidado) cubre un
+    // reflow dentro del mismo frame; el setTimeout final es la red para lo
+    // que llega de verdad asíncrono (select2, fuentes web).
+    function scrollThreadToBottom() {
+        var el = document.getElementById('tkt-thread-scroll');
+        if (!el) return;
+        var pin = function () { el.scrollTop = el.scrollHeight; };
+        requestAnimationFrame(function () {
+            pin();
+            requestAnimationFrame(pin);
+        });
+        setTimeout(pin, 300);
+    }
+
     function renderThreadPane(items) {
         var $p = $('#tkt-dpane-thread');
-        var html = '';
+        // El composer debe quedar fijo abajo aunque el hilo sea largo — antes
+        // thread-bar+mensajes+composer compartían el overflow-y:auto de
+        // .tkt-pane, así que el composer se desplazaba fuera de la vista al
+        // hacer scroll en vez de quedarse visible. Este wrapper aísla el
+        // scroll a solo thread-bar+mensajes; composerHtml() se añade después,
+        // fuera de él, como hermano (ver #tkt-dpane-thread/.tkt-thread-scroll
+        // en tickets-app.css).
+        var html = '<div class="tkt-thread-scroll" id="tkt-thread-scroll">';
         var lastDayKey = null;
 
         // Filtro del hilo (Todo/Solo cliente/Sin notas) — puramente
@@ -1720,15 +1800,27 @@
             });
         }
 
+        html += '</div>'; // cierra .tkt-thread-scroll
+
         // Composer del mockup: cuatro pestañas de modo, la franja del
         // borrador sugerido por IA, el textarea y la barra de herramientas.
         // Reusa los mismos endpoints que ya existían
         // (TicketMessagingController::storeMessage con adjuntos multipart,
         // TicketCannedReply para plantillas, MacroApplyController para
-        // macros) — cambia la superficie, no el backend.
+        // macros) — cambia la superficie, no el backend. Fuera de
+        // .tkt-thread-scroll a propósito: es el hermano fijo que no escrolea.
         html += composerHtml();
 
         $p.html(html);
+
+        // Al abrir el ticket (o recargar la página) se arranca viendo el
+        // mensaje más reciente, no el primero del historial — como
+        // cualquier chat. requestAiDraft() (más abajo, bindComposer()) puede
+        // mostrar la franja "Borrador sugerido" un instante después y esto
+        // encoge el hueco del hilo — ese mismo helper se vuelve a llamar
+        // entonces para no dejar el último mensaje a medio tapar contra el
+        // composer.
+        scrollThreadToBottom();
 
         $('#tkt-thread-filter [data-thread-filter]').on('click', function () {
             var mode = $(this).data('thread-filter');
@@ -1826,11 +1918,27 @@
                 // Con texto, sin icono (mismo criterio que el resto de la
                 // pantalla). El indicador de idioma no es un botón, se deja
                 // con icono como el resto de chips de estado.
+                //
+                // Una sola barra: antes "Plantillas" y "Traducir" vivían aquí
+                // Y también, duplicados, como "Plantilla"/"Traducir" en una
+                // fila de herramientas aparte bajo el textarea — el agente
+                // tenía que mirar dos sitios para lo mismo. Ahora toda la
+                // barra de acciones vive en un solo lugar, arriba.
                 '<button type="button" class="tkt-comp-tab on" data-comp-mode="reply">Respuesta</button>' +
                 '<button type="button" class="tkt-comp-tab" data-comp-mode="note">Nota interna</button>' +
                 '<button type="button" class="tkt-comp-tab" data-comp-act="templates">Plantillas</button>' +
                 '<button type="button" class="tkt-comp-tab" data-comp-act="translate">Traducir</button>' +
+                '<label class="tkt-comp-tool" title="Adjuntar archivo">Adjuntar<input type="file" id="tkt-reply-attach" multiple hidden></label>' +
+                '<span class="tkt-comp-attach-count" id="tkt-reply-attach-count"></span>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="macros">Macros</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="followup">Automático</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="ai">IA</button>' +
+                '<button type="button" class="tkt-comp-tool" data-comp-act="mention">Mencionar</button>' +
                 '<span class="tkt-comp-lang" id="tkt-comp-lang" hidden><i class="fa-solid fa-language"></i> <span></span></span>' +
+                '<span class="tkt-comp-send-group">' +
+                    '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule">Programar</button>' +
+                    '<button type="button" class="tkt-comp-send" id="tkt-reply-send">Enviar <span class="tkt-comp-kbd">' + sendShortcutLabel() + '</span></button>' +
+                '</span>' +
             '</div>' +
             '<div class="tkt-comp-ai" id="tkt-comp-ai" hidden>' +
                 '<span class="tkt-comp-ai-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>' +
@@ -1848,23 +1956,19 @@
                     '<button type="button" class="tkt-comp-ai-drop" id="tkt-comp-ai-drop" aria-label="Descartar el borrador sugerido"><i class="fa-solid fa-xmark"></i></button>' +
                 '</span>' +
             '</div>' +
-            '<textarea id="tkt-reply-body" class="tkt-comp-body" rows="3" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" aria-label="Cuerpo de la respuesta o nota interna"></textarea>' +
-            '<div class="tkt-comp-tools">' +
-                // Mismo criterio que la nota interna: con texto, sin icono
-                // (feedback_buttons_no_icons). Solo se quedan los icon-only,
-                // como la ✕ de descartar el borrador de arriba.
-                '<label class="tkt-comp-tool" title="Adjuntar archivo">Adjuntar<input type="file" id="tkt-reply-attach" multiple hidden></label>' +
-                '<span class="tkt-comp-attach-count" id="tkt-reply-attach-count"></span>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="templates">Plantilla</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="macros">Macros</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="followup">Automático</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="ai">IA</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="translate">Traducir</button>' +
-                '<button type="button" class="tkt-comp-tool" data-comp-act="mention">Mencionar</button>' +
-                '<span class="tkt-comp-send-group">' +
-                    '<button type="button" class="tkt-comp-schedule" data-comp-act="schedule">Programar</button>' +
-                    '<button type="button" class="tkt-comp-send" id="tkt-reply-send">Enviar <span class="tkt-comp-kbd">' + sendShortcutLabel() + '</span></button>' +
-                '</span>' +
+            '<div class="tkt-relative">' +
+                '<textarea id="tkt-reply-body" class="tkt-comp-body" rows="3" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" aria-label="Cuerpo de la respuesta o nota interna"></textarea>' +
+                // Se abre HACIA ARRIBA (bottom:100%, no top:100% como el de
+                // menciones de la nota interna): este composer suele vivir
+                // pegado al fondo de la pantalla, un dropdown hacia abajo
+                // quedaría cortado por el viewport.
+                '<div class="tkt-drop tkt-drop-up" id="tkt-reply-tpl-drop" style="bottom:100%;left:0;right:0;margin-bottom:6px;max-height:260px;overflow:auto" hidden></div>' +
+                // "@" para mencionar — el placeholder ya lo anunciaba, como
+                // "/", pero el botón "Mencionar" solo insertaba el símbolo
+                // sin sugerir a quién. Mismo bindMentionAutocomplete() que ya
+                // usan las notas internas del sidebar, mismo criterio
+                // "hacia arriba" que el de plantillas de aquí al lado.
+                '<div class="tkt-drop tkt-drop-up" id="tkt-reply-mention-drop" style="bottom:100%;left:0;right:0;margin-bottom:6px;max-height:200px;overflow:auto" hidden></div>' +
             '</div>' +
         '</div>';
     }
@@ -1883,6 +1987,27 @@
     function bindComposer($p) {
         var $c = $('#tkt-composer');
         var $body = $('#tkt-reply-body');
+        var t = TKA.state.currentTicket;
+
+        // "/" para respuestas rápidas: el placeholder lo anuncia desde
+        // siempre pero nunca estuvo conectado a nada — solo abría el modal
+        // completo desde el botón "Plantillas". Arranca con la lista en
+        // bruto (misma que usa el modal) y en cuanto responde
+        // url_canned_replies se sustituye por la interpolada contra este
+        // ticket, igual que hace openTemplatesModal().
+        var templatesForSlash = (TKA.state.cannedReplies || []).slice();
+        if (t && t.url_canned_replies) {
+            $.getJSON(t.url_canned_replies).done(function (resolved) {
+                if (resolved) templatesForSlash = resolved;
+            });
+        }
+        bindTemplateAutocomplete($body, $('#tkt-reply-tpl-drop'), function () { return templatesForSlash; });
+
+        // "@" para mencionar: el placeholder lo anuncia igual que "/", pero
+        // hasta ahora el botón "Mencionar" solo insertaba el símbolo sin
+        // sugerir nombres — la única mención con autocompletado real vivía
+        // en la nota interna del sidebar. Mismo bindMentionAutocomplete().
+        bindMentionAutocomplete($body, $('#tkt-reply-mention-drop'));
 
         $c.on('click', '[data-comp-mode]', function () {
             var mode = $(this).data('comp-mode');
@@ -1900,7 +2025,6 @@
         });
 
         $c.on('click', '[data-comp-act]', function () {
-            var t = TKA.state.currentTicket;
             switch ($(this).data('comp-act')) {
                 case 'templates': openTemplatesModal(t); break;
                 case 'macros': openMacrosModal(t); break;
@@ -2021,6 +2145,10 @@
                 $('#tkt-comp-lang').removeAttr('hidden').find('span').text('responde en ' + String(s.language).toUpperCase());
             }
             $box.removeAttr('hidden');
+            // La franja recién apareció y encogió el hueco del hilo — solo
+            // en la carga automática (no cuando el agente pulsa "Refrescar"
+            // a propósito, que no debería moverle la vista sin avisar).
+            if (!refresh) scrollThreadToBottom();
         }).fail(function () {
             $box.attr('hidden', true);
             if (refresh && window.toastr) toastr.error('No se pudo generar el borrador.');
@@ -5411,6 +5539,112 @@
         });
     }
 
+    // Autocompletado "/" de plantillas sobre el composer del hilo — mismo
+    // patrón que bindMentionAutocomplete() de arriba, pero:
+    //   - filtra por título O short_code (no solo por prefijo del nombre),
+    //   - un espacio corta la búsqueda (el código no lleva espacios, y así
+    //     una barra suelta en medio de una frase normal no dispara nada),
+    //   - inserta el CONTENIDO de la plantilla, no su nombre,
+    //   - se navega con el teclado (↑/↓ + Enter), no solo con el ratón —
+    //     escribir "/algo" y quedarse sin soltar el teclado para elegir era
+    //     justo lo que "/ para respuestas rápidas" prometía.
+    // getTemplates() es una función (no un array) porque la lista arranca en
+    // bruto y se sustituye por la interpolada contra el ticket en cuanto
+    // responde el fetch — leerla en cada tecleo evita quedarse con la
+    // primera versión cacheada.
+    function bindTemplateAutocomplete($textarea, $drop, getTemplates) {
+        // Estado del desplegable abierto ahora mismo (null si está cerrado):
+        // qué coincidencias muestra, en qué posición del texto se insertará
+        // el resultado y cuál está resaltada para Enter/clic.
+        var state = null;
+
+        function render() {
+            $drop.html(state.matches.map(function (r, i) {
+                return '<button type="button" class="tkt-drop-item' + (i === state.index ? ' on' : '') + '" data-tpl-index="' + i + '">' +
+                    '<span class="tkt-shortcode mono">' + (r.short_code ? escapeHtml('/' + String(r.short_code).replace(/^\/+/, '')) : '—') + '</span>' +
+                    '<span class="tkt-trunc">' + escapeHtml(r.title) + '</span>' +
+                '</button>';
+            }).join('')).prop('hidden', false);
+        }
+
+        function close() {
+            state = null;
+            $drop.prop('hidden', true).empty();
+        }
+
+        function pick(index) {
+            var reply = state && state.matches[index];
+            if (!reply) return;
+            var val = $textarea.val();
+            var before = val.slice(0, state.slashIndex);
+            var after = val.slice(state.pos);
+            $textarea.val(before + reply.content + after);
+            close();
+            $textarea.trigger('focus').trigger('input');
+            if (typeof autoResizeTextarea === 'function') autoResizeTextarea($textarea[0]);
+        }
+
+        $textarea.on('input', function () {
+            var val = this.value;
+            var pos = this.selectionStart;
+            var slashIndex = val.lastIndexOf('/', pos - 1);
+            var textSinceSlash = slashIndex > -1 ? val.slice(slashIndex + 1, pos) : null;
+            if (slashIndex === -1 || textSinceSlash === null || /[\n/\s]/.test(textSinceSlash)) {
+                close();
+                return;
+            }
+
+            var q = textSinceSlash.toLowerCase();
+            var matches = (getTemplates() || []).filter(function (r) {
+                return !q || String(r.title).toLowerCase().indexOf(q) !== -1 ||
+                    String(r.short_code || '').replace(/^\/+/, '').toLowerCase().indexOf(q) !== -1;
+            }).slice(0, 8);
+
+            if (!matches.length) { close(); return; }
+
+            state = { matches: matches, slashIndex: slashIndex, pos: pos, index: 0 };
+            render();
+        });
+
+        // Delegado en $drop (no en cada item): render() reemplaza el HTML en
+        // cada tecleo, un .on() por item se perdería con el elemento viejo.
+        $drop.on('click', '[data-tpl-index]', function () {
+            pick(parseInt($(this).data('tpl-index'), 10));
+        });
+        $drop.on('mouseenter', '[data-tpl-index]', function () {
+            if (!state) return;
+            state.index = parseInt($(this).data('tpl-index'), 10);
+            render();
+        });
+
+        $textarea.on('keydown', function (ev) {
+            if (!state) return;
+            if (ev.key === 'ArrowDown') {
+                ev.preventDefault();
+                state.index = (state.index + 1) % state.matches.length;
+                render();
+            } else if (ev.key === 'ArrowUp') {
+                ev.preventDefault();
+                state.index = (state.index - 1 + state.matches.length) % state.matches.length;
+                render();
+            } else if (ev.key === 'Enter') {
+                // Sin Mayús/Ctrl/Cmd: esas combinaciones siguen su curso
+                // normal (salto de línea, enviar) en vez de elegir a ciegas.
+                if (ev.shiftKey || ev.metaKey || ev.ctrlKey) return;
+                ev.preventDefault();
+                pick(state.index);
+            } else if (ev.key === 'Escape') {
+                ev.preventDefault();
+                close();
+            }
+        });
+
+        $textarea.on('blur', function () {
+            // pequeño delay para que el click en el dropdown se registre antes de ocultarlo
+            setTimeout(close, 150);
+        });
+    }
+
     // Agentes mencionados en las notas del ticket (@nombre). El backend no
     // guarda las menciones en una tabla aparte, así que se extraen del propio
     // texto — que es donde el autocompletado del editor las escribe.
@@ -7032,34 +7266,64 @@
     // con ese y a veces robaba el foco. Se deja el ⌘K como está (el global),
     // sin duplicarlo aquí; el chip visual junto al buscador local queda solo
     // como texto informativo del propio input, no como atajo real distinto.
+    // Bug real probando los atajos uno a uno (J/K/C no comprobaban NINGÚN
+    // overlay): con el modal "Asignar ticket" abierto para el TCK-...-113 y
+    // el foco fuera de su buscador, "j" cambiaba el detalle de fondo al
+    // TCK-...-112 dejando el modal abierto — si el agente completaba la
+    // asignación ahí, se la aplicaba al ticket equivocado, uno que ni
+    // siquiera veía ya en pantalla. "c" hacía lo mismo pero reemplazando el
+    // modal por "Nuevo ticket" en silencio. Mismo problema con el buscador
+    // global del header (#gs-dialog, fuera de este módulo): "j"/"k" también
+    // cambiaban el ticket de fondo mientras el buscador seguía abierto.
+    function anyOverlayOpen() {
+        if ($('#tkt-modal-backdrop').length) return true;
+        var gs = document.getElementById('gs-dialog');
+        return !!(gs && gs.classList.contains('open'));
+    }
+
     function bindKeyboardShortcuts() {
         $(document).on('keydown', function (ev) {
             var tag = (ev.target.tagName || '').toLowerCase();
             var typing = tag === 'input' || tag === 'textarea' || tag === 'select' || ev.target.isContentEditable;
 
             if (typing) return;
+            // Bug real probando los atajos uno a uno: sin este corte, ⌘K (el
+            // buscador global del header, ver header.blade.php) también
+            // llegaba aquí como una simple "k" y disparaba "ticket anterior"
+            // — cada ⌘K navegaba a otro ticket además de abrir el buscador.
+            // Ninguno de estos atajos lleva modificador, así que cualquiera
+            // presente significa que es OTRO atajo (del navegador, del SO, o
+            // el global de arriba) y no de esta pantalla.
+            if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
 
             if (ev.key === 'j' || ev.key === 'J') {
+                if (anyOverlayOpen()) return;
                 ev.preventDefault();
                 moveSelection(1);
             } else if (ev.key === 'k' || ev.key === 'K') {
+                if (anyOverlayOpen()) return;
                 ev.preventDefault();
                 moveSelection(-1);
             } else if (ev.key === 'c' || ev.key === 'C') {
+                if (anyOverlayOpen()) return;
                 openNewTicketModal();
             } else if (ev.key === ' ') {
                 // Vista previa rápida (modal 12) sobre la fila seleccionada.
                 // Solo con la lista enfocada: dentro de un modal el espacio
                 // tiene que seguir activando el botón que tenga el foco.
-                if ($('#tkt-modal-backdrop').length) return;
+                if (anyOverlayOpen()) return;
                 var current = TKA.state.tickets.find(function (x) { return x.id === TKA.state.selected; });
                 if (!current) return;
                 ev.preventDefault();
                 openQuickPreviewModal(current);
             } else if (ev.key === '?') {
                 // Ayuda: funciona haya o no un ticket abierto, y aunque haya
-                // otro modal encima (mismo criterio que el propio botón ? de
-                // la barra de estado).
+                // otro modal PROPIO encima (mismo criterio que el propio
+                // botón ? de la barra de estado) — pero no si el buscador
+                // global ya está abierto, para no apilar dos diálogos que
+                // openModal()/closeModal() no controlan.
+                var gsForHelp = document.getElementById('gs-dialog');
+                if (gsForHelp && gsForHelp.classList.contains('open')) return;
                 ev.preventDefault();
                 openShortcutsModal();
             } else if (['r', 'R', 'n', 'N', 'a', 'A', 's', 'S'].indexOf(ev.key) !== -1) {
@@ -7068,7 +7332,7 @@
                 // tener nada abierto todavía) — y no si ya hay un modal
                 // encima, para no abrir uno segundo sin que se note cuál.
                 var t = TKA.state.currentTicket;
-                if (!t || $('#tkt-modal-backdrop').length) return;
+                if (!t || anyOverlayOpen()) return;
                 ev.preventDefault();
 
                 if (ev.key === 'r' || ev.key === 'R') {
