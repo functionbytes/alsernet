@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
+use Modules\HelpdeskAgents\Services\AgentLlmService;
 use Modules\HelpdeskTickets\Services\TicketDeflectionService;
 use Tests\TestCase;
 
@@ -86,5 +87,27 @@ class TicketDeflectionServiceTest extends TestCase
         config(['helpdesktickets.deflection.enabled' => false]);
 
         $this->assertSame([], app(TicketDeflectionService::class)->suggest('No me llega el pedido que hice la semana pasada'));
+    }
+
+    /**
+     * Fix de lógica de negocio del 14-sep-2026 (auditoría): filter() no
+     * capturaba las excepciones de $this->llm->chat(), rompiendo la
+     * garantía documentada en la clase ("Nunca impide abrir el ticket.
+     * Sugiere y se aparta.") — un fallo transitorio del LLM (timeout,
+     * credencial inválida) reventaba en vez de degradar.
+     */
+    public function test_a_failing_llm_falls_back_to_the_first_three_articles_instead_of_throwing(): void
+    {
+        $this->mock(AgentLlmService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')->andReturn(true);
+            $mock->shouldReceive('chat')->andThrow(new \RuntimeException('proveedor caído'));
+        });
+
+        $method = new \ReflectionMethod(TicketDeflectionService::class, 'filter');
+        $method->setAccessible(true);
+
+        $picked = $method->invoke(app(TicketDeflectionService::class), 'consulta de prueba', $this->articles());
+
+        $this->assertSame($this->articles(), $picked, 'Sin LLM disponible, debe degradar a los 3 primeros del buscador, no lanzar.');
     }
 }
