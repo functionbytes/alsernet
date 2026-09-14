@@ -33,7 +33,7 @@ class TicketEmailBlacklistController extends Controller
             });
         }
 
-        $entries = $query->with('addedBy:id,name')
+        $entries = $query->with('addedBy:id,firstname,lastname')
             ->latest()
             ->paginate(20)
             ->withQueryString();

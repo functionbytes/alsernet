@@ -33,6 +33,14 @@
 @endpush
 
 @php
+    // Default 'unassigned' (antes 'all'): mismo criterio que
+    // TicketsCrudController::index() — sin filtro explícito en la URL, la
+    // bandeja arranca en "Sin asignar". Una sola variable para las tabs/
+    // pills de abajo Y data-initial-filter: con dos defaults sueltos habría
+    // sido cuestión de tiempo que uno cambiara sin el otro y la tab marcada
+    // como activa dejara de coincidir con los tickets realmente listados.
+    $activeFilter = request('quick_filter', 'unassigned');
+
     // Ticket::toListRow() es la única fuente del contrato de fila (mismo
     // patrón que TicketMail::toListRow() para la bandeja de emails) — la usa
     // tanto esta hidratación SSR como el futuro JSON de refetch.
@@ -66,7 +74,7 @@
          data-tickets="{{ json_encode($ticketsPayload, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-tab-counts="{{ json_encode($tabCounts, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-user-id="{{ auth()->id() }}"
-         data-initial-filter="{{ request('quick_filter', 'all') }}"
+         data-initial-filter="{{ $activeFilter }}"
          data-initial-view="{{ request('view', 'list') }}"
          data-selected-id="{{ $selectedTicket?->id }}"
          data-bulk-url="{{ route('manager.helpdesk.tickets.bulk') }}"
@@ -136,6 +144,10 @@
               este entorno Docker, así que la plantilla de URL se usa con POST +
               _method=PUT (gotcha ya documentado del proyecto). --}}
          data-canned-update-url-template="{{ route('manager.helpdesk.settings.ticket-canned-replies.update', ['reply' => '__REPLY__']) }}"
+         {{-- Modal 03: "Duplicar como mía" — a diferencia de la de arriba,
+              esta SÍ funciona sin helpdesk.tickets.settings (ver
+              TicketCannedRepliesController::duplicate()). --}}
+         data-canned-duplicate-url-template="{{ route('manager.helpdesk.tickets.canned-replies.duplicate', ['reply' => '__REPLY__']) }}"
          {{-- Remitentes elegibles del modal "Redactar email". Lista cerrada
               (ver TicketMailsController::availableSenders()); el backend
               vuelve a validar contra ella, no se fía de este campo. --}}
@@ -221,12 +233,12 @@
              asignar/Abiertos/Pendientes/Resueltos/Cerrados — Urgentes/Míos
              viven como chips de "Vistas" más abajo, no como tabs de estado) --}}
         <div class="tkt-state-tabs">
-            <button type="button" class="tkt-state-tab on" data-filter="all">Todos <span class="c">{{ $tabCounts['all'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="unassigned">Sin asignar <span class="c">{{ $tabCounts['unassigned'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="open">Abiertos <span class="c">{{ $tabCounts['open'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'all' ? ' on' : '' }}" data-filter="all">Todos <span class="c">{{ $tabCounts['all'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'unassigned' ? ' on' : '' }}" data-filter="unassigned">Sin asignar <span class="c">{{ $tabCounts['unassigned'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'open' ? ' on' : '' }}" data-filter="open">Abiertos <span class="c">{{ $tabCounts['open'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'pending' ? ' on' : '' }}" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'resolved' ? ' on' : '' }}" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'closed' ? ' on' : '' }}" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
             {{-- "Plantillas" cierra la fila de tabs en el mockup. Una auditoría previa
                  lo había quitado por ser un <a> que navegaba fuera de la pantalla en
                  vez de filtrar como sus vecinos, y por duplicar el botón de la barra
@@ -433,12 +445,12 @@
         <div class="tkt-views-bar">
             <div class="tkt-views-group">
                 <span class="tkt-cap">Vistas</span>
-                <button type="button" class="tkt-view-pill on" data-filter="all">Todos</button>
-                <button type="button" class="tkt-view-pill" data-filter="mine">Míos</button>
-                <button type="button" class="tkt-view-pill" data-filter="unassigned">Sin asignar</button>
-                <button type="button" class="tkt-view-pill" data-filter="sla_risk">SLA en riesgo</button>
-                <button type="button" class="tkt-view-pill" data-filter="from_presta">Desde PrestaShop</button>
-                <button type="button" class="tkt-view-pill" data-filter="from_email">Desde email</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'all' ? ' on' : '' }}" data-filter="all">Todos</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'mine' ? ' on' : '' }}" data-filter="mine">Míos</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'unassigned' ? ' on' : '' }}" data-filter="unassigned">Sin asignar</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'sla_risk' ? ' on' : '' }}" data-filter="sla_risk">SLA en riesgo</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'from_presta' ? ' on' : '' }}" data-filter="from_presta">Desde PrestaShop</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'from_email' ? ' on' : '' }}" data-filter="from_email">Desde email</button>
                 {{-- Las vistas de otros agentes (is_shared) llevan un icono de
                      equipo: la lista mezcla las propias con las compartidas y sin
                      esa marca no habría forma de saber cuáles puedes borrar ni de

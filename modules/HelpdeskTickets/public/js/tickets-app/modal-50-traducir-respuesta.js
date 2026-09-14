@@ -182,7 +182,9 @@
                 '</div>' +
                 '<div class="tkt-field">' +
                     '<label class="tkt-label" for="tkt-compose-body">Mensaje<span class="req">*</span>' +
-                        '<span class="hint">variables: {{cliente}} {{ticket}}</span></label>' +
+                        // Sintaxis real de TicketVariableInterpolator: snake_case
+                        // plano, nunca con puntos (bug 11-sep-2026).
+                        '<span class="hint">variables: {{customer_name}} {{ticket_number}} {{agent_name}}</span></label>' +
                     '<div class="tkt-composer">' +
                         '<div class="tkt-composer-bar">' +
                             '<button type="button" data-wrap="**" title="Negrita"><i class="fa-solid fa-bold"></i></button>' +

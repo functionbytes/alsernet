@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskTickets",
+    "alias": "helpdesktickets",
+    "description": "Gestion de tickets del helpdesk",
+    "keywords": ["helpdesk", "tickets", "support"],
+    "priority": 50,
+    "providers": [
+        "Modules\\HelpdeskTickets\\Providers\\HelpdeskTicketsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}

@@ -172,11 +172,15 @@ body:has(.tkt) .mc-content {
 .tkt-btn-icon:hover { background: var(--tkt-subtle); }
 .tkt-btn-icon-dark { border-color: transparent; background: var(--tkt-text); color: #fff; }
 .tkt-btn[disabled] { opacity: .5; cursor: not-allowed; }
-/* grupo segmentado (modos de vista) */
-.tkt-seg { display: flex; gap: 2px; padding: 2px; background: var(--tkt-subtle); border-radius: var(--tkt-r-md); flex-wrap: wrap; }
+/* grupo segmentado (modos de vista) — fondo blanco con borde (antes gris,
+   se confundía con el fondo de la página que usa el mismo tono) y el
+   seleccionado en verde de marca en vez de blanco/negro, para que resalte
+   de verdad sobre el resto de opciones. */
+.tkt-seg { display: flex; gap: 2px; padding: 2px; background: #fff; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); flex-wrap: wrap; }
 .tkt-seg > button { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 6px; font-size: var(--tkt-t-md); font-weight: 600; color: var(--tkt-text-soft); background: transparent; border: none; }
 .tkt-seg > button > i { font-size: 10px; color: var(--tkt-text-mute); }
-.tkt-seg > button.on { background: var(--tkt-panel); color: var(--tkt-text); box-shadow: var(--tkt-shadow-sm); }
+.tkt-seg > button.on { background: var(--tkt-accent); color: #fff; }
+.tkt-seg > button.on > i { color: #fff; }
 
 /* ── Shell de la aplicación ──────────────────────────────── */
 /* height:100% en cada nivel — .tkt ya viene acotado a la altura del
@@ -382,14 +386,22 @@ body:has(.tkt) .mc-content {
 .tkt-detail-head-row { display: flex; align-items: flex-start; gap: 10px 14px; padding: 14px 16px 12px; flex-wrap: wrap; }
 .tkt-detail-title-col { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 6px; }
 .tkt-detail-title { font-size: var(--tkt-t-xl); font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
-.tkt-detail-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tkt-detail-chips { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 /* En la cabecera del detalle los chips llevan borde (19px de alto), a
-   diferencia de los de la fila del listado. Y la prioridad va en gris como el
-   estado: el negro sólido es exclusivo de la fila, donde tiene que destacar
-   entre treinta. */
+   diferencia de los de la fila del listado. La prioridad YA NO se aplana a
+   gris aquí (bug de diseño real, QA visual 14-sep-2026): "Alta"/"Urgente"
+   quedaban indistinguibles de "Baja"/"Normal" y del canal de origen, los
+   tres en el mismo gris apagado. Sigue siendo el mismo negro sólido que la
+   fila del listado — ya no hace falta apagarlo aquí porque el SLA vencido/
+   en riesgo salió de esta fila (ver .tkt-detail-sla-banner más abajo) y no
+   compite por la misma llamada de atención. */
 .tkt-detail-chips .tkt-chip { border: 1px solid var(--tkt-border); }
-.tkt-detail-chips .tkt-chip-danger,
-.tkt-detail-chips .tkt-chip-warn { background: var(--tkt-subtle); color: var(--tkt-text-soft); border-color: var(--tkt-border); }
+.tkt-detail-chips .tkt-chip i { font-size: 9px; }
+.tkt-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+/* Chip de canal/origen con icono — antes .tkt-chip-mono (sin icono,
+   compartido con otras vistas que no tocan este rediseño). */
+.tkt-chip-channel { display: inline-flex; align-items: center; gap: 5px; font-family: var(--tkt-mono); font-size: 10px; padding: 2px 8px; background: #fff; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-soft); }
+.tkt-chip-channel i { font-size: 9px; color: var(--tkt-text-faint); }
 /* Línea de contexto bajo los chips: cliente · email · fechas y agente. */
 .tkt-detail-context { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--tkt-text-mute); }
 .tkt-detail-context .sep { color: var(--tkt-text-faint); }
@@ -406,6 +418,27 @@ body:has(.tkt) .mc-content {
 .tkt-chip-delivery > i { font-size: 9px; }
 .tkt-chip-att { display: inline-flex; align-items: center; gap: 4px; font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); padding: 2px 7px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); }
 .tkt-chip-att > i { font-size: 9px; }
+/* Franja de alerta del SLA: entre la fila de chips y las pestañas, fuera de
+   .tkt-detail-chips a propósito — un SLA vencido es la alerta más crítica de
+   la cabecera y antes competía en igualdad de peso visual con "Urgente"/
+   "Manual" dentro de la misma fila de chips grises (bug de diseño real, QA
+   visual 14-sep-2026). Solo se pinta si hay algo que avisar (vencido/en
+   riesgo); en plazo no hay franja, solo el chip verde discreto de siempre
+   (ver slaBanner/slaChip en renderDetail(), tickets-app/core.js). */
+.tkt-detail-sla-banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: var(--tkt-t-md); font-weight: 600; border-top: 1px solid var(--tkt-border); }
+.tkt-detail-sla-banner i { font-size: 12px; flex-shrink: 0; }
+.tkt-detail-sla-banner b { font-weight: 800; }
+.tkt-detail-sla-banner .dim { font-weight: 500; opacity: .75; }
+.tkt-detail-sla-banner-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font: inherit; font-weight: 700; font-size: var(--tkt-t-sm); white-space: nowrap; background: none; border: none; padding: 0; cursor: pointer; color: inherit; }
+.tkt-detail-sla-banner-link:hover { text-decoration: underline; }
+.tkt-detail-sla-banner-link i { font-size: 9px; }
+/* Vencido: el mismo negro sólido que ya usa "Urgente"/"vencido" en la fila
+   del listado — la alerta más fuerte del sistema de diseño, sin rojos. */
+.tkt-detail-sla-banner.breach { background: var(--tkt-text); color: #fff; }
+/* En riesgo: reutiliza el verde pálido de .tkt-banner-warn (mismo tono que
+   colisión/escritura en curso/duplicados) — alerta más leve, todavía no rota. */
+.tkt-detail-sla-banner.warn { background: var(--tkt-warn-soft); color: var(--tkt-warn-fg); border-top-color: var(--tkt-warn-line); }
+
 /* Pestañas del detalle: con texto y contador, no solo iconos. El subrayado
    del activo es el verde de marca. */
 .tkt-dtabs { display: flex; align-items: stretch; gap: 2px; padding: 0 16px; margin-bottom: -1px; overflow-x: auto; scrollbar-width: none; }
@@ -442,6 +475,19 @@ body:has(.tkt) .mc-content {
 
 .tkt-pane { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; }
 .tkt-pane[hidden] { display: none; }
+
+/* #tkt-dpane-thread es el único .tkt-pane con composer: el composer debe
+   quedar fijo abajo aunque el hilo sea largo, así que no puede compartir el
+   overflow-y:auto genérico de .tkt-pane con thread-bar+mensajes (eso
+   desplazaba el composer fuera de la vista al escrolear — ver el
+   flex-shrink:0 de .tkt-composer, que ya lo intentaba sin éxito porque el
+   problema era el padre, no el propio composer). Se anula el padding/scroll
+   heredado y se mueve a .tkt-thread-scroll, dejando el composer como
+   hermano fijo (renderThreadPane() en tickets-app/core.js arma este mismo
+   wrapper). */
+#tkt-dpane-thread { padding: 0; overflow-y: hidden; }
+.tkt-thread-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 16px 20px; }
+#tkt-dpane-thread > .tkt-composer { flex-shrink: 0; margin: 0 20px 16px; }
 /* #tkt-detail arranca oculto (inline style="display:none" en el blade);
    al mostrarse, tickets-app.js usa .css('display','flex') — no .show(),
    que ignoraría este flex-column y volvería a "block". Cabecera/rail/
@@ -691,6 +737,12 @@ body:has(.tkt) .mc-content {
 .tkt-filter-chip i { font-size: 9px; cursor: pointer; }
 .tkt-filter-count { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
 .tkt-drop { position: absolute; z-index: 9000; min-width: 190px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+/* Variante para un .tkt-drop que se abre hacia ARRIBA (bottom:100% en vez de
+   top:100%, como el de plantillas del composer del hilo): la sombra de
+   arriba cae hacia abajo y, pegada al elemento de debajo, se veía como una
+   mancha gris justo en el borde superior del textarea. Aquí se invierte
+   para que "flote" hacia arriba, lejos de lo que tiene debajo. */
+.tkt-drop-up { box-shadow: 0 -12px 30px rgba(0,0,0,.16); }
 .tkt-drop-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; font-size: var(--tkt-t); width: 100%; background: transparent; border: none; text-align: left; }
 .tkt-drop-item:hover { background: var(--tkt-subtle); }
 .tkt-drop-item.on { background: var(--tkt-subtle); font-weight: 700; }
@@ -1136,9 +1188,17 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 }
 
 /* La nota interna se marca con el borde, no con color de fondo: el mockup
-   mantiene todas las tarjetas en blanco. */
+   mantiene todas las tarjetas en blanco. Se queda a ancho completo (no es
+   parte de la conversación con el cliente, no le toca lado ni color). */
 .tkt-tnote {
     border-color: #d4d4d8;
+}
+
+/* Ancho completo como el resto de tarjetas del hilo (no burbujas de chat
+   estrechas) — solo el color de fondo distingue cliente de agente. */
+.tkt-tmsg[data-thread-kind="agent"] {
+    background: var(--tkt-accent-soft);
+    border-color: var(--tkt-accent-line);
 }
 
 .tkt-tmsg-head {
@@ -1374,7 +1434,15 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     background: #fff;
     border: 1px solid var(--tkt-border);
     border-radius: 10px;
-    overflow: hidden;
+    /* overflow:hidden (antes) recortaba el desplegable de plantillas del
+       "/": se abre hacia ARRIBA (bottom:100%, ver .tkt-drop-up) para no
+       quedar cortado por el viewport, así que se desborda por encima del
+       composer — con overflow:hidden ahí mismo lo volvía a cortar, dejando
+       ver como mucho una fila. El redondeo de esquinas que overflow:hidden
+       resolvía gratis se hace ahora en los hijos que tocan el borde
+       (.tkt-comp-tabs arriba, el textarea abajo).
+    */
+    overflow: visible;
     /* El panel es flex column: sin esto el composer es el item que cede
        altura cuando el hilo es largo y acaba aplastado a la altura de la
        fila de pestañas (mismo fallo ya visto en el composer del inbox). */
@@ -1388,6 +1456,12 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     flex-wrap: wrap;
     padding: 7px 8px;
     border-bottom: 1px solid var(--tkt-border-soft);
+    /* .tkt-composer ya no recorta con overflow:hidden (ver más arriba): esta
+       es la primera franja, así que redondea ella misma las esquinas
+       superiores para que el modo nota (fondo gris, ver .is-note) no
+       asome en cuadrado por encima del contorno redondeado del composer. */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 .tkt-comp-tab {
@@ -1533,18 +1607,14 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     resize: vertical;
     min-height: 86px;
     max-height: 260px;
+    /* Es la última franja del composer (.tkt-composer ya no recorta con
+       overflow:hidden, ver más arriba): redondea ella misma las esquinas
+       inferiores. */
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
 .tkt textarea.tkt-comp-body:focus { outline: 0; }
-
-.tkt-comp-tools {
-    display: flex;
-    align-items: center;
-    gap: 6px 2px;
-    flex-wrap: wrap;
-    padding: 7px 9px;
-    border-top: 1px solid var(--tkt-border-soft);
-}
 
 .tkt-comp-tool {
     display: inline-flex;
@@ -1610,7 +1680,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    el único aviso no puede ser el texto del botón. */
 .tkt-composer.is-note { border-color: var(--tkt-border-strong); }
 .tkt-composer.is-note .tkt-comp-body,
-.tkt-composer.is-note .tkt-comp-tools { background: var(--tkt-subtle); }
+.tkt-composer.is-note .tkt-comp-tabs { background: var(--tkt-subtle); }
 .tkt-composer.is-note .tkt-comp-send { background: var(--tkt-text); }
 
 /* Contador de adjuntos seleccionados, junto al botón Adjuntar. */

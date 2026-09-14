@@ -158,7 +158,10 @@ class TicketsCrudController extends Controller
         // que se veía en pantalla: "Resueltos 340" con seis filas debajo.
         // Aquí se aplica el MISMO criterio que usa sharedTabCounts() para
         // contar, así que badge y lista no pueden volver a discrepar.
-        $this->applyQuickFilter($query, (string) $request->get('quick_filter', 'all'), $userId);
+        // Default 'unassigned' (antes 'all'): al entrar sin filtro explícito
+        // en la URL, la bandeja arranca en "Sin asignar" — es lo primero que
+        // un agente necesita ver, no la mezcla completa de todos los estados.
+        $this->applyQuickFilter($query, (string) $request->get('quick_filter', 'unassigned'), $userId);
 
         // Los cuatro órdenes del <select> de la cabecera de la lista en el
         // mockup. "SLA más urgente" pone delante los de vencimiento más
@@ -299,6 +302,36 @@ class TicketsCrudController extends Controller
             ]),
             'tabCounts' => $this->tabCounts($userId),
         ]);
+    }
+
+    /**
+     * Plantillas de email (TicketCannedReply) con sus variables {{...}} ya
+     * resueltas contra $ticket. index() manda la lista completa en bruto una
+     * sola vez para toda la sesión SPA — en ese momento no se sabe todavía
+     * con qué ticket va a responder el agente, así que no puede interpolar
+     * nada — y el modal "Plantillas de email" pide esto justo al abrirse
+     * para un ticket real. Mismo TicketVariableInterpolator que ya usan
+     * Macros y las plantillas de creación de ticket (fuente única de
+     * variables).
+     */
+    public function cannedReplies(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('view', $ticket);
+
+        $interpolator = app(TicketVariableInterpolator::class);
+
+        $replies = TicketCannedReply::availableFor(auth()->id())
+            ->map(function (TicketCannedReply $reply) use ($interpolator, $ticket) {
+                return [
+                    'id' => $reply->id,
+                    'title' => $reply->title,
+                    'content' => $interpolator->interpolate($reply->content, $ticket),
+                    'html_body' => $interpolator->interpolate($reply->html_body, $ticket),
+                    'short_code' => $reply->short_code,
+                ];
+            });
+
+        return response()->json($replies);
     }
 
     /**

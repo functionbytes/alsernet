@@ -13,7 +13,10 @@
                         '<input type="text" class="tkt-input" id="tkt-tpled-code" value="' + escapeHtml(reply.short_code || '') + '" placeholder="/doc"></div>' +
                   '</div>' +
                   '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-body">Contenido<span class="req">*</span>' +
-                    '<span class="hint">variables: {{cliente}} {{ticket}} {{agente}}</span></label>' +
+                    // Sintaxis real de TicketVariableInterpolator (fuente única
+                    // de variables): snake_case plano, nunca con puntos —
+                    // {{cliente.nombre}} nunca se sustituía (bug 11-sep-2026).
+                    '<span class="hint">variables: {{customer_name}} {{ticket_number}} {{agent_name}}</span></label>' +
                     '<textarea class="tkt-input" id="tkt-tpled-body" style="min-height:160px">' + escapeHtml(reply.content || '') + '</textarea></div>' +
                   '<div class="tkt-cap">Vista previa</div>' +
                   '<div class="tkt-tpl-preview" id="tkt-tpled-preview">' + escapeHtml(reply.content || '') + '</div>',

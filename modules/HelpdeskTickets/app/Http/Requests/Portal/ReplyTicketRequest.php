@@ -1,0 +1,52 @@
+<?php
+
+namespace Modules\HelpdeskTickets\Http\Requests\Portal;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Modules\Core\Rules\ValidMimeMagicBytes;
+
+class ReplyTicketRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'message' => ['required', 'string', 'max:5000'],
+            // ValidMimeMagicBytes además de mimes: comprueba la firma binaria
+            // real del fichero, no solo lo que declara la extensión. El alta
+            // interna (StoreTicketRequest) ya lo hacía; el portal — que es la
+            // entrada abierta a cualquiera con un enlace mágico — se quedaba
+            // en la comprobación más débil de las dos.
+            'attachments.*' => [
+                'nullable',
+                'file',
+                'max:5120',
+                'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip',
+                new ValidMimeMagicBytes(config('helpdesk.attachments.allowed_mime_types', [])),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'message.required' => 'El mensaje es obligatorio.',
+            'message.max' => 'El mensaje no puede superar los 5000 caracteres.',
+            'attachments.*.file' => 'El archivo adjunto debe ser un archivo valido.',
+            'attachments.*.max' => 'El archivo adjunto no puede superar los 5 MB.',
+            'attachments.*.mimes' => 'El formato del archivo adjunto no es valido.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'message' => 'mensaje',
+            'attachments.*' => 'archivo adjunto',
+        ];
+    }
+}

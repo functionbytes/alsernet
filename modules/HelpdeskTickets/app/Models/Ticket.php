@@ -1438,6 +1438,10 @@ class Ticket extends Model
         return [
             'url' => route('manager.helpdesk.tickets.show', ['ticket' => '__TICKET__']),
             'url_data' => route('manager.helpdesk.tickets.data', ['ticket' => '__TICKET__']),
+            // Modal 03 "Plantillas de email": el mismo listado de
+            // TicketCannedReply que ya viaja en data-canned-replies, pero con
+            // {{...}} resuelto contra este ticket concreto.
+            'url_canned_replies' => route('manager.helpdesk.tickets.canned-replies', ['ticket' => '__TICKET__']),
             // Sonda del refresco automático; ver TicketDetailDataController::pulse().
             'url_pulse' => route('manager.helpdesk.tickets.pulse', ['ticket' => '__TICKET__']),
             'url_message_store' => route('manager.helpdesk.tickets.messages.store', ['ticket' => '__TICKET__']),

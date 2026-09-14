@@ -1,0 +1,196 @@
+<?php
+
+namespace Modules\HelpdeskTickets\Services;
+
+use App\Models\User;
+use Modules\HelpdeskErp\Services\ErpFactsService;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Models\Automation;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Notifications\AutomationTicketNotification;
+
+class AutomationEngine
+{
+    public function handle(string $event, Ticket $ticket): void
+    {
+        $automations = Automation::query()
+            ->where('trigger_event', $event)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        foreach ($automations as $automation) {
+            if (! $this->matchesConditions($automation->conditions, $ticket)) {
+                continue;
+            }
+
+            $this->runActions($automation->actions, $ticket);
+            $automation->increment('run_count');
+            $automation->update(['last_run_at' => now()]);
+        }
+    }
+
+    /**
+     * Pública para que "Probar regla" (modal de escalado) pueda comprobar en
+     * seco unas condiciones contra tickets reales sin ejecutar acciones. Sin
+     * esto habría que duplicar la tabla de operadores en el controlador, que
+     * es justo la forma de que las dos se separen con el tiempo.
+     */
+    public function matchesConditions(array $conditions, Ticket $ticket): bool
+    {
+        $erpFacts = null;
+
+        foreach ($conditions as $condition) {
+            $field = $condition['field'] ?? null;
+            $op = $condition['op'] ?? 'equals';
+            $value = $condition['value'] ?? null;
+
+            // Los campos erp_* no son columnas del ticket: salen de la ficha
+            // del cliente en gestión. Se resuelven una sola vez por evaluación
+            // y solo si la regla los usa, para no pedir el contexto del ERP en
+            // reglas que no lo necesitan.
+            if (is_string($field) && str_starts_with($field, 'erp_')) {
+                $erpFacts ??= $this->erpFacts($ticket);
+                $ticketValue = $erpFacts[$field] ?? null;
+            } else {
+                $ticketValue = data_get($ticket, $field);
+            }
+
+            $matches = match ($op) {
+                'equals' => $ticketValue == $value,
+                'not_equals' => $ticketValue != $value,
+                // contains/not_contains ignoran mayúsculas y minúsculas. Con
+                // str_contains a secas, una regla por la palabra "factura" no
+                // disparaba con el asunto "Problema con mi Factura" — es decir,
+                // fallaba justo con la forma en que la gente escribe, al
+                // empezar frase. Quien escribe una regla por palabra clave no
+                // espera tener que declinar cada variante.
+                'contains' => is_string($ticketValue) && str_contains(mb_strtolower($ticketValue), mb_strtolower((string) $value)),
+                'not_contains' => is_string($ticketValue) && ! str_contains(mb_strtolower($ticketValue), mb_strtolower((string) $value)),
+                'in' => is_array($value) && in_array($ticketValue, $value, false),
+                'greater_than' => $ticketValue > $value,
+                'less_than' => $ticketValue < $value,
+                'is_null' => $ticketValue === null,
+                'is_not_null' => $ticketValue !== null,
+                default => false,
+            };
+
+            if (! $matches) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Señales del cliente en gestión para las condiciones erp_*.
+     *
+     * HelpdeskErp es un módulo aparte que puede no estar instalado o estar
+     * apagado; sin él, ErpFactsService no existe y una regla con condiciones
+     * del ERP no debe disparar (todo a los valores de "sin ficha"), no
+     * reventar.
+     *
+     * @return array<string, mixed>
+     */
+    private function erpFacts(Ticket $ticket): array
+    {
+        if (! class_exists(ErpFactsService::class)) {
+            return [];
+        }
+
+        return app(ErpFactsService::class)->forCustomer($ticket->customer);
+    }
+
+    private function runActions(array $actions, Ticket $ticket): void
+    {
+        foreach ($actions as $action) {
+            $type = $action['type'] ?? null;
+            $value = $action['value'] ?? null;
+
+            match ($type) {
+                'assign_group' => $ticket->update(['group_id' => $value]),
+                // Antes hacía update() directo: no creaba el item de
+                // actividad ni disparaba TicketAssigned, así que un
+                // automatismo que asignaba agente no notificaba al agente
+                // (NotifyAgentOfAssignment) ni encadenaba otros automatismos
+                // "al asignar" (RunAutomationsOnTicketAssigned) — a
+                // diferencia de la asignación manual/AssignmentService, que
+                // sí lo hacían.
+                'assign_user' => $this->assignUser($ticket, $value),
+                'set_priority' => $ticket->update(['priority' => $value]),
+                'set_status' => $ticket->update(['status_id' => $value]),
+                'add_tag' => $ticket->update([
+                    'tags' => array_unique(array_merge($ticket->tags ?? [], [$value])),
+                ]),
+                // Antes hacía update(['closed_at' => now()]) sin tocar
+                // status_id: reproducía el mismo bug ya arreglado para el
+                // botón manual "Cerrar ticket" (ver docblock de
+                // Ticket::close()) — el ticket quedaba con closed_at pero
+                // seguía apareciendo "Abierto" en los listados. Tampoco
+                // disparaba TicketClosed, así que la encuesta CSAT
+                // automática no se enviaba desde un cierre por regla.
+                'close' => $this->closeTicket($ticket),
+                'add_internal_note' => $ticket->items()->create([
+                    'type' => 'message',
+                    'body' => $value,
+                    'is_internal' => true,
+                ]),
+                'notify_agent' => $this->notifyAgent($ticket),
+                // Enrutado asistido por IA: aplica la categoria que sugirio
+                // ClassifyTicketJob y reparte con AssignmentService. Se expone
+                // como accion de automatismo, y no como comportamiento
+                // implicito del modulo, para que quede visible y configurable
+                // en el panel como cualquier otra regla.
+                'ai_route' => $this->aiRoute($ticket),
+                default => null,
+            };
+        }
+    }
+
+    private function assignUser(Ticket $ticket, mixed $value): void
+    {
+        $agent = User::find($value);
+
+        if (! $agent) {
+            return;
+        }
+
+        $ticket->assignTo($agent->id);
+
+        TicketAssigned::dispatch($ticket, $agent);
+    }
+
+    private function closeTicket(Ticket $ticket): void
+    {
+        $ticket->close();
+
+        TicketClosed::dispatch($ticket);
+    }
+
+    /**
+     * Dependencia suave con HelpdeskAgents: si el modulo de IA no esta
+     * disponible, la accion no hace nada en vez de romper el automatismo
+     * entero (que dejaria sin ejecutar las acciones siguientes de la regla).
+     */
+    private function aiRoute(Ticket $ticket): void
+    {
+        if (! class_exists(AiRoutingService::class)) {
+            return;
+        }
+
+        app(AiRoutingService::class)->route($ticket);
+    }
+
+    private function notifyAgent(Ticket $ticket): void
+    {
+        $agent = $ticket->assignee;
+
+        if (! $agent) {
+            return;
+        }
+
+        $agent->notify(new AutomationTicketNotification($ticket));
+    }
+}

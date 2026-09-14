@@ -81,6 +81,23 @@ Route::group(['prefix' => ''], function () {
     // Artículos del centro de ayuda sugeridos al responder (deflexión)
     Route::get('/tickets/{ticket}/suggested-articles', [SuggestedArticlesController::class, 'index'])->name('manager.helpdesk.tickets.suggested-articles');
 
+    // Plantillas de email (TicketCannedReply) con las variables {{...}} ya
+    // resueltas contra ESTE ticket. index() manda la lista en bruto una sola
+    // vez para toda la sesión SPA (no sabe con qué ticket se va a responder
+    // todavía); el modal "Plantillas de email" pide esto al abrirse para
+    // insertar el texto ya interpolado en vez del placeholder sin resolver
+    // (bug reportado 11-sep-2026: {{cliente.nombre}} llegaba tal cual).
+    Route::get('/tickets/{ticket}/canned-replies', [TicketsCrudController::class, 'cannedReplies'])->name('manager.helpdesk.tickets.canned-replies');
+
+    // "Duplicar como mía" (TicketCannedReply) — a propósito FUERA del grupo
+    // 'settings/tickets' (más abajo, gateado por can:helpdesk.tickets.settings):
+    // cualquier agente sin ese permiso puede querer su propia copia editable
+    // de una plantilla global desde el modal "Plantillas de email" del propio
+    // ticket, no solo quien administra plantillas. Mismo controlador que la
+    // pantalla de ajustes (TicketCannedRepliesController::duplicate()), que
+    // excluye esta acción de su middleware de permiso en el constructor.
+    Route::post('/tickets/canned-replies/{reply}/duplicate', [TicketCannedRepliesController::class, 'duplicate'])->name('manager.helpdesk.tickets.canned-replies.duplicate');
+
     // Traducción de texto del ticket (mensaje entrante / borrador de respuesta)
     Route::post('/tickets/{ticket}/translate', [TicketTranslationController::class, 'translate'])->name('manager.helpdesk.tickets.translate');
 
