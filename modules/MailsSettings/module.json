@@ -1,0 +1,9 @@
+{
+    "name": "MailsSettings",
+    "alias": "mails-settings",
+    "description": "Email Configuration Settings Module - SMTP, IMAP, and email actions configuration",
+    "keywords": ["email", "smtp", "imap", "settings", "configuration", "mail"],
+    "priority": 11,
+    "providers": ["Modules\\MailsSettings\\Providers\\MailsSettingsServiceProvider"],
+    "files": []
+}
