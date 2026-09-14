@@ -7,11 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
-use Modules\HelpdeskTickets\Events\NewTicketMessage;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
-use Modules\HelpdeskTickets\Events\TicketMessageReceived;
 use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketTyping;
@@ -22,11 +21,13 @@ use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
 use Modules\HelpdeskTickets\Services\MentionService;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 
 class TicketMessagingController extends Controller
 {
     public function __construct(
         private readonly MentionService $mentionService,
+        private readonly TicketAttachmentSecurityService $attachmentSecurity,
     ) {}
 
     public function storeMessage(StoreTicketMessageRequest $request, Ticket $ticket): JsonResponse|RedirectResponse
@@ -34,28 +35,74 @@ class TicketMessagingController extends Controller
         $this->authorize('update', $ticket);
 
         $validated = $request->validated();
+        $idempotencyKey = trim((string) ($request->header('X-Idempotency-Key') ?: $request->input('idempotency_key')));
+        $idempotencyKey = $idempotencyKey !== '' ? Str::limit($idempotencyKey, 120, '') : null;
 
-        $attachmentPaths = [];
+        // Escanear antes del lock y antes de escribir cualquier ruta evita
+        // que una subida bloqueada deje basura persistida o mantenga la
+        // transacción del ticket abierta durante el proceso de ClamAV.
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $attachmentPaths[] = $file->store(
-                    'helpdesk/tickets/'.$ticket->id,
-                    config('helpdesk.attachments.disk', 'local')
-                );
+                $this->attachmentSecurity->assertSafe($file);
             }
         }
 
-        $item = $this->createMessageItem(
-            $ticket,
-            $validated['body'],
-            $request->boolean('is_internal', false),
-            $attachmentPaths
-        );
+        // La clave se guarda en metadata, que ya existe en TicketItem. El
+        // lock de la fila Ticket cierra la carrera entre dos reintentos que
+        // llegan exactamente al mismo tiempo, antes de almacenar archivos o
+        // emitir broadcasts.
+        $item = DB::transaction(function () use ($request, $ticket, $validated, $idempotencyKey) {
+            $lockedTicket = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
+
+            if ($idempotencyKey) {
+                $existing = TicketItem::query()
+                    ->where('ticket_id', $lockedTicket->id)
+                    ->where(function ($query) use ($idempotencyKey): void {
+                        // La columna indexada cubre las nuevas respuestas;
+                        // el fallback conserva la deduplicación de mensajes
+                        // creados durante el despliegue anterior que solo
+                        // guardaba la clave en metadata.
+                        $query->where('idempotency_key', $idempotencyKey)
+                            ->orWhere('metadata->idempotency_key', $idempotencyKey);
+                    })
+                    ->first();
+
+                if ($existing) {
+                    return ['item' => $existing, 'replayed' => true];
+                }
+            }
+
+            $attachmentPaths = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $attachmentPaths[] = $file->store(
+                        'helpdesk/tickets/'.$lockedTicket->id,
+                        config('helpdesk.attachments.disk', 'local')
+                    );
+                }
+            }
+
+            return [
+                'item' => $this->createMessageItem(
+                    $lockedTicket,
+                    $validated['body'],
+                    $request->boolean('is_internal', false),
+                    $attachmentPaths,
+                    $idempotencyKey,
+                ),
+                'replayed' => false,
+            ];
+        });
+
+        $itemWasAlreadyCreated = (bool) ($item['replayed'] ?? false);
+        $item = $item['item'];
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => __('helpdesktickets::helpdesktickets.messages.message_sent'),
+                'message' => $itemWasAlreadyCreated
+                    ? 'El mensaje ya había sido procesado.'
+                    : __('helpdesktickets::helpdesktickets.messages.message_sent'),
                 'item' => $item->load(['user']),
                 // Enviar la respuesta puede haber asignado el ticket
                 // (tickets.assign_on_reply) y/o cambiado su estado
@@ -66,6 +113,7 @@ class TicketMessagingController extends Controller
                 // estado previo de $ticket, y el mismo toListRow() que ya usa
                 // el resto de la pantalla para no inventar otra forma.
                 'ticket' => $ticket->fresh()->toListRow(),
+                'idempotent_replay' => (bool) $itemWasAlreadyCreated,
             ]);
         }
 
@@ -147,18 +195,34 @@ class TicketMessagingController extends Controller
      *
      * @param  array<int, string>  $attachmentPaths
      */
-    private function createMessageItem(Ticket $ticket, string $body, bool $isInternal, array $attachmentPaths = []): TicketItem
+    private function createMessageItem(Ticket $ticket, string $body, bool $isInternal, array $attachmentPaths = [], ?string $idempotencyKey = null): TicketItem
     {
-        $item = $ticket->items()->create([
+        $attributes = [
             'type' => 'message',
             'user_id' => auth()->id(),
             'body' => $body,
             'attachment_urls' => $attachmentPaths,
             'is_internal' => $isInternal,
-        ]);
+        ];
+        if ($idempotencyKey) {
+            $attributes['idempotency_key'] = $idempotencyKey;
+            // Se conserva metadata para que integraciones que ya inspeccionan
+            // ese JSON sigan identificando respuestas reintentadas durante la
+            // transición a la columna indexada.
+            $attributes['metadata'] = ['idempotency_key' => $idempotencyKey];
+        }
+        $item = $ticket->items()->create($attributes);
 
         $data = ['last_message_at' => now()];
-        if (! $ticket->first_response_at) {
+        // Solo una respuesta REAL al cliente cuenta como primera respuesta
+        // — antes se marcaba con cualquier mensaje, notas internas
+        // incluidas, así que un agente que solo dejaba una nota ("me lo
+        // asigno, reviso en un rato") ya hacía desaparecer "Sin responder"
+        // del listado aunque el cliente no hubiera recibido nada todavía
+        // (bug real, encontrado en la revisión de código de la fila del
+        // listado — QA 14-sep-2026, ver el chip "Sin responder" en
+        // renderRow()/tickets-app/core.js).
+        if (! $isInternal && ! $ticket->first_response_at) {
             $data['first_response_at'] = now();
         }
         $ticket->update($data);
@@ -170,16 +234,18 @@ class TicketMessagingController extends Controller
             $this->applyStatusOnReply($ticket);
         }
 
+        // TicketMessageReceived/NewTicketMessage retirados de aquí
+        // (14-sep-2026, auditoría de seguridad): TicketMessageReceived
+        // broadcasteaba en new Channel('ticket.'.$ticket->id) -- PÚBLICO, sin
+        // autenticar, a propósito para el widget del cliente -- pero se
+        // disparaba SIEMPRE, incluida una nota interna ($isInternal true):
+        // cualquiera suscrito a ese canal por websocket, sin login, recibía
+        // el body/html_body completo de la nota. Ninguno de los dos eventos
+        // tenía además listener ni consumidor real en el JS de este módulo
+        // (confirmado por grep en todo el repo) -- MessageAdded::dispatch()
+        // de arriba ya es la única fuente de verdad para "mensaje añadido en
+        // vivo" (ver HelpdeskTicketsEventServiceProvider).
         MessageAdded::dispatch($item);
-
-        broadcast(new TicketMessageReceived($ticket, $item));
-        NewTicketMessage::dispatch($ticket, [
-            'id' => $item->id,
-            'content' => $item->body,
-            'author' => auth()->user()?->fullName() ?: 'Agente',
-            'created_at' => $item->created_at->toIso8601String(),
-            'type' => 'agent',
-        ]);
 
         return $item;
     }
