@@ -317,6 +317,7 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Bienvenida', 'route' => 'settings.helpdesk.business.greeting', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Despedida', 'route' => 'settings.helpdesk.business.farewell', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Subida de archivos', 'route' => 'settings.helpdesk.uploading', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Salud y diagnósticos', 'route' => 'settings.helpdesk.health', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones', 'route' => 'settings.helpdesk.integrations.index', 'permission' => 'helpdesk.settings.view'],
             ],
         ]);
@@ -383,6 +384,7 @@ class HelpdeskServiceProvider extends ServiceProvider
             'order' => 210,
             'items' => [
                 ['label' => 'Configuración general', 'route' => 'manager.helpdesk.settings.tickets.general', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Funcionalidades', 'route' => 'manager.helpdesk.settings.tickets.features', 'permission' => 'helpdesk.settings.view'],
                 // Movido desde el menú operativo de Tickets: es una regla de
                 // configuración (cada cuánto se generan), no una bandeja de
                 // trabajo del día a día.
