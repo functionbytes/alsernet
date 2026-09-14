@@ -1,0 +1,30 @@
+{
+    "name": "modules/storage",
+    "description": "Storage Module - File storage configuration and management",
+    "keywords": ["storage", "configuration", "file management"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {},
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Storage\\": "app/",
+            "Modules\\Storage\\Database\\Factories\\": "database/factories/",
+            "Modules\\Storage\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Storage\\Tests\\": "tests/"
+        }
+    }
+}
