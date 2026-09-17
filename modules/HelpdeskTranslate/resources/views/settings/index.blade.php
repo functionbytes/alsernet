@@ -408,222 +408,38 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-$(function () {
-    // Toggle visibility of API key
-    $('#ht-toggle-key').on('click', function () {
-        var input = $('#deepl_key');
-        var isPassword = input.attr('type') === 'password';
-        input.attr('type', isPassword ? 'text' : 'password');
-        $(this).find('i').toggleClass('fa-eye fa-eye-slash');
-    });
-
-    // Show only the section matching the selected provider
-    $('#provider').on('change', function () {
-        var p = $(this).val();
-        $('#ht-deepl-section').toggleClass('d-none', p !== 'deepl');
-        $('#ht-libre-section').toggleClass('d-none', p !== 'libretranslate');
-    });
-
-    // Clear cache button
-    $('#ht-clear-cache').on('click', function () {
-        if (!confirm('{{ __('helpdesktranslate::messages.settings.js_confirm_clear') }}')) {
-            return;
-        }
-        var $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> {{ __('helpdesktranslate::messages.settings.js_clearing') }}');
-        $.ajax({
-            url: "{{ route('settings.helpdesk-translate.cache.clear') }}",
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (resp) {
-                if (window.toastr) {
-                    toastr.success(resp.message || '{{ __('helpdesktranslate::messages.success.cache_cleared', ['count' => '']) }}');
-                }
-                setTimeout(function () { window.location.reload(); }, 800);
-            },
-            error: function () {
-                if (window.toastr) {
-                    toastr.error('{{ __('helpdesktranslate::messages.errors.cache_clear_failed') }}');
-                }
-                $btn.prop('disabled', false).html('<i class="fas fa-broom me-1"></i> {{ __('helpdesktranslate::messages.settings.btn_clear_cache') }}');
-            }
-        });
-    });
-
-    // Test DeepL connection
-    $('#ht-test-connection').on('click', function () {
-        var $btn = $(this);
-        var $result = $('#ht-test-result');
-
-        $btn.prop('disabled', true);
-        $result.removeClass('text-success text-danger').addClass('text-muted')
-            .html('<i class="fas fa-spinner fa-spin"></i> {{ __('helpdesktranslate::messages.settings.js_testing') }}');
-
-        $.ajax({
-            url: "{{ route('settings.helpdesk-translate.test') }}",
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (resp) {
-                var msg = resp.message || '{{ __('helpdesktranslate::messages.settings.js_test_ok_default') }}';
-                if (resp.usage && resp.usage.character_count !== null) {
-                    msg += ' — {{ __('helpdesktranslate::messages.settings.js_test_usage') }}'
-                        .replace(':count', resp.usage.character_count.toLocaleString())
-                        .replace(':limit', (resp.usage.character_limit || '∞').toLocaleString());
-                }
-                $result.removeClass('text-muted text-danger').addClass('text-success')
-                    .html('<i class="fas fa-check-circle"></i> ' + msg);
-            },
-            error: function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) || '{{ __('helpdesktranslate::messages.settings.js_error_default') }}';
-                $result.removeClass('text-muted text-success').addClass('text-danger')
-                    .html('<i class="fas fa-circle-xmark"></i> ' + msg);
-            },
-            complete: function () {
-                $btn.prop('disabled', false);
-            }
-        });
-    });
-
-    // Usage / consumption report
-    var htFeatureLabels = {
-        manual: "{{ __('helpdesktranslate::messages.settings.usage_feature_manual') }}",
-        auto_incoming: "{{ __('helpdesktranslate::messages.settings.usage_feature_auto_incoming') }}",
-        auto_outgoing: "{{ __('helpdesktranslate::messages.settings.usage_feature_auto_outgoing') }}",
-        other: "{{ __('helpdesktranslate::messages.settings.usage_feature_other') }}"
-    };
-    var htOperationLabels = {
-        translate: "{{ __('helpdesktranslate::messages.settings.usage_operation_translate') }}",
-        detect: "{{ __('helpdesktranslate::messages.settings.usage_operation_detect') }}"
-    };
-
-    function htFillUsageTable(selector, rows, key, labels) {
-        var $tbody = $(selector).empty();
-        (rows || []).forEach(function (row) {
-            var label = (labels && labels[row[key]]) || row[key];
-            $tbody.append(
-                $('<tr>').append(
-                    $('<td>').text(label),
-                    $('<td class="text-end">').text(Number(row.characters).toLocaleString()),
-                    $('<td class="text-end">').text(Number(row.calls).toLocaleString())
-                )
-            );
-        });
-    }
-
-    var htChart = null;
-
-    function htRenderUsage(data) {
-        $('#ht-usage-characters').text(Number(data.totals.characters).toLocaleString());
-        $('#ht-usage-calls').text(Number(data.totals.calls).toLocaleString());
-        $('#ht-usage-failed').text(Number(data.totals.failed_calls).toLocaleString());
-        $('#ht-usage-cost').text('€' + Number(data.totals.estimated_cost_eur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }));
-
-        if (data.quota && data.quota.character_count !== null && data.quota.character_count !== undefined) {
-            var limit = data.quota.character_limit ? Number(data.quota.character_limit).toLocaleString() : '∞';
-            $('#ht-usage-quota').text(Number(data.quota.character_count).toLocaleString() + ' / ' + limit);
-        } else {
-            $('#ht-usage-quota').text('{{ __('helpdesktranslate::messages.settings.usage_quota_unavailable') }}');
-        }
-
-        htFillUsageTable('#ht-usage-by-feature', data.by_feature, 'feature', htFeatureLabels);
-        htFillUsageTable('#ht-usage-by-operation', data.by_operation, 'operation', htOperationLabels);
-        htFillUsageTable('#ht-usage-by-provider', data.by_provider, 'provider', {});
-
-        var daily = data.daily || [];
-        if (htChart) {
-            htChart.destroy();
-            htChart = null;
-        }
-        // Barras y no linea: es un total cerrado por dia, no una magnitud
-        // continua. La linea con tension dibujaba curvas entre dias sueltos y
-        // sugeria consumos intermedios que nunca existieron.
-        htChart = new Chart(document.getElementById('ht-usage-chart'), {
-            type: 'bar',
-            data: {
-                labels: daily.map(function (d) { return d.date; }),
-                datasets: [
-                    {
-                        label: '{{ __('helpdesktranslate::messages.settings.usage_stat_characters') }}',
-                        data: daily.map(function (d) { return d.characters; }),
-                        backgroundColor: '#90bb13',
-                        borderRadius: 2,
-                        maxBarThickness: 28,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                var d = daily[ctx.dataIndex] || {};
-                                return Number(ctx.parsed.y).toLocaleString() + ' caracteres · ' +
-                                       Number(d.calls || 0).toLocaleString() + ' llamadas';
-                            },
-                        },
-                    },
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 16 } },
-                    y: { beginAtZero: true, ticks: { precision: 0 } },
-                },
-            },
-        });
-
-        var isEmpty = data.totals.calls === 0;
-        $('#ht-usage-content').toggleClass('d-none', isEmpty);
-        $('#ht-usage-empty').toggleClass('d-none', !isEmpty);
-    }
-
-    function htCurrentRange() {
-        return { from: $('#ht-usage-from').val(), to: $('#ht-usage-to').val() };
-    }
-
-    function htLoadUsage() {
-        $('#ht-usage-loading').removeClass('d-none');
-        $('#ht-usage-content, #ht-usage-empty').addClass('d-none');
-
-        $.ajax({
-            url: "{{ route('settings.helpdesk-translate.usage') }}",
-            method: 'GET',
-            data: htCurrentRange(),
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (resp) {
-                htRenderUsage(resp);
-            },
-            error: function () {
-                if (window.toastr) {
-                    toastr.error('{{ __('helpdesktranslate::messages.settings.usage_js_error') }}');
-                }
-            },
-            complete: function () {
-                $('#ht-usage-loading').addClass('d-none');
-            }
-        });
-    }
-
-    function htUpdateExportLink() {
-        $('#ht-usage-export').attr('href', "{{ route('settings.helpdesk-translate.usage.export') }}?" + $.param(htCurrentRange()));
-    }
-
-    $('#ht-usage-filter').on('click', function () {
-        htUpdateExportLink();
-        htLoadUsage();
-    });
-
-    (function () {
-        var today = new Date();
-        var from = new Date();
-        from.setDate(today.getDate() - 29);
-        $('#ht-usage-to').val(today.toISOString().slice(0, 10));
-        $('#ht-usage-from').val(from.toISOString().slice(0, 10));
-        htUpdateExportLink();
-        htLoadUsage();
-    })();
-});
-</script>
+{{-- Bootstrap minimo de datos (cadenas traducidas + URLs de route()) que
+     settings.js no puede resolver por su cuenta — toda la logica vive ahi,
+     mismo patron que window.HelpdeskTranslateI18n en
+     partials/translate-panel.blade.php. --}}
+@php
+    $htSettingsI18n = [
+        'confirmClear' => __('helpdesktranslate::messages.settings.js_confirm_clear'),
+        'clearing' => __('helpdesktranslate::messages.settings.js_clearing'),
+        'cacheCleared' => __('helpdesktranslate::messages.success.cache_cleared', ['count' => '']),
+        'cacheClearFailed' => __('helpdesktranslate::messages.errors.cache_clear_failed'),
+        'btnClearCache' => __('helpdesktranslate::messages.settings.btn_clear_cache'),
+        'testing' => __('helpdesktranslate::messages.settings.js_testing'),
+        'testOkDefault' => __('helpdesktranslate::messages.settings.js_test_ok_default'),
+        'testUsage' => __('helpdesktranslate::messages.settings.js_test_usage'),
+        'testErrorDefault' => __('helpdesktranslate::messages.settings.js_error_default'),
+        'usageFeatureManual' => __('helpdesktranslate::messages.settings.usage_feature_manual'),
+        'usageFeatureAutoIncoming' => __('helpdesktranslate::messages.settings.usage_feature_auto_incoming'),
+        'usageFeatureAutoOutgoing' => __('helpdesktranslate::messages.settings.usage_feature_auto_outgoing'),
+        'usageFeatureOther' => __('helpdesktranslate::messages.settings.usage_feature_other'),
+        'usageOperationTranslate' => __('helpdesktranslate::messages.settings.usage_operation_translate'),
+        'usageOperationDetect' => __('helpdesktranslate::messages.settings.usage_operation_detect'),
+        'usageQuotaUnavailable' => __('helpdesktranslate::messages.settings.usage_quota_unavailable'),
+        'usageStatCharacters' => __('helpdesktranslate::messages.settings.usage_stat_characters'),
+        'usageJsError' => __('helpdesktranslate::messages.settings.usage_js_error'),
+    ];
+    $htSettingsRoutes = [
+        'cacheClear' => route('settings.helpdesk-translate.cache.clear'),
+        'test' => route('settings.helpdesk-translate.test'),
+        'usage' => route('settings.helpdesk-translate.usage'),
+        'usageExport' => route('settings.helpdesk-translate.usage.export'),
+    ];
+@endphp
+<script>window.HelpdeskTranslateSettings = { i18n: @json($htSettingsI18n), routes: @json($htSettingsRoutes) };</script>
+<script src="{{ asset('vendor/helpdesktranslate/settings.js') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/settings.js')) }}"></script>
 @endpush
