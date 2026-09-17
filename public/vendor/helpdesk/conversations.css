@@ -12312,10 +12312,10 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-weight: 700;
     letter-spacing: .04em;
     text-transform: uppercase;
-    color: #15803d;
+    color: var(--bv-primary-strong, #5e7a0d);
     padding: 2px 7px;
     border-radius: 3px;
-    background: #dcfce7;
+    background: rgba(144, 187, 19, .12);
     flex-shrink: 0;
 }
 .bv-right .rsp-integration.is-disconnected {
