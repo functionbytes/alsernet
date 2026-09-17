@@ -10,15 +10,15 @@
                 <div class="modal-body">
                     <input type="hidden" id="tag_id" name="id">
 
-                    {{-- Informacion basica --}}
+                    {{-- Información básica --}}
                     <div class="mb-4">
-                        <h6 class="fw-bold mb-3">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, descripcion y color identificador</p>
+                        <h6 class="fw-bold mb-3">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, descripción y color identificador</p>
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label" for="tag_name">Nombre <span class="ais-required">· obligatorio</span></label>
                                 <input type="text" class="form-control" id="tag_name" name="name"
-                                       placeholder="Ej: Urgente, Soporte tecnico" required>
+                                       placeholder="Ej: Urgente, Soporte técnico" required>
                                 <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-12">
@@ -34,7 +34,7 @@
                             <div class="col-12">
                                 <label class="form-label" for="tag_description">Descripción</label>
                                 <textarea class="form-control" id="tag_description" name="description" rows="2"
-                                          placeholder="Breve descripcion del proposito de este tag"></textarea>
+                                          placeholder="Breve descripción del propósito de este tag"></textarea>
                                 <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-12">
@@ -56,7 +56,7 @@
                                 <label class="form-label" for="tag_priority">Prioridad</label>
                                 <input type="number" class="form-control" id="tag_priority" name="priority"
                                        value="0" min="0" max="100">
-                                <div class="form-text">Mayor prioridad = mas relevante</div>
+                                <div class="form-text">Mayor prioridad = más relevante</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" for="tag_is_active">Estado</label>
@@ -66,10 +66,10 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <label class="form-label" for="tag_system_prompt_addition">Instruccion adicional para el system prompt</label>
+                                <label class="form-label" for="tag_system_prompt_addition">Instrucción adicional para el system prompt</label>
                                 <textarea class="form-control" id="tag_system_prompt_addition" name="system_prompt_addition" rows="3"
-                                          placeholder="Instrucciones que se añadiran al prompt cuando este tag este activo..."></textarea>
-                                <div class="form-text">Este texto se agrega al prompt del agente cuando una conversacion tenga este tag</div>
+                                          placeholder="Instrucciones que se añadirán al prompt cuando este tag esté activo..."></textarea>
+                                <div class="form-text">Este texto se agrega al prompt del agente cuando una conversación tenga este tag</div>
                             </div>
                         </div>
                     </div>

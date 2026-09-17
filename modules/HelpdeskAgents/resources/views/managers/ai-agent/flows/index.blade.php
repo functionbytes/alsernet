@@ -258,7 +258,9 @@
         </div>
     </div>
 
-    @include('core::components.delete')
+    {{-- El modal #delete-modal / #delete-form ya lo pone layouts.theme en
+         cada página — incluirlo otra vez aquí duplicaba su id (mismo gotcha
+         que en managers/ai-agent/settings.blade.php). --}}
 
 @endsection
 

@@ -78,19 +78,24 @@
     </div>
 
     {{-- ── Pestañas ─────────────────────────────────────────────────── --}}
+    {{-- IDs prefijados con "ai-": el layout global (Theme/includes/nav.blade.php)
+         ya usa "tab-settings" para su propio menú lateral — con el mismo id
+         aquí, Bootstrap's tab.js localizaba ese otro elemento al desactivar la
+         pestaña y el panel de Configuración se quedaba visible para siempre
+         encima de Etiquetas/Herramientas/Base de conocimiento. --}}
     <ul class="nav nav-tabs-underline mb-0" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" data-bs-toggle="tab" href="#tab-settings" role="tab" aria-selected="true">Configuración</a>
+            <a class="nav-link active" data-bs-toggle="tab" href="#ai-tab-settings" role="tab" aria-selected="true">Configuración</a>
         </li>
         @if ($hasAgent)
             <li class="nav-item" role="presentation">
-                <a class="nav-link" data-bs-toggle="tab" href="#tab-tags" role="tab" aria-selected="false">Etiquetas <span class="ais-tab-count" id="tags-count">0</span></a>
+                <a class="nav-link" data-bs-toggle="tab" href="#ai-tab-tags" role="tab" aria-selected="false">Etiquetas <span class="ais-tab-count" id="tags-count">0</span></a>
             </li>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" data-bs-toggle="tab" href="#tab-tools" role="tab" aria-selected="false">Herramientas <span class="ais-tab-count" id="tools-count">0</span></a>
+                <a class="nav-link" data-bs-toggle="tab" href="#ai-tab-tools" role="tab" aria-selected="false">Herramientas <span class="ais-tab-count" id="tools-count">0</span></a>
             </li>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" data-bs-toggle="tab" href="#tab-knowledge" role="tab" aria-selected="false">Base de conocimiento <span class="ais-tab-count" id="knowledge-count">0</span></a>
+                <a class="nav-link" data-bs-toggle="tab" href="#ai-tab-knowledge" role="tab" aria-selected="false">Base de conocimiento <span class="ais-tab-count" id="knowledge-count">0</span></a>
             </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link" href="{{ route('helpdesk.ai.flows.index') }}">Flujos</a>
@@ -107,7 +112,7 @@
     {{-- ── Contenido de pestañas ────────────────────────────────────── --}}
     <div class="tab-content" id="aiAgentTabContent">
 
-        <div class="tab-pane fade show active" id="tab-settings" role="tabpanel">
+        <div class="tab-pane fade show active" id="ai-tab-settings" role="tabpanel">
 
             @php
                 // Tras un fallo de validación el formulario tiene que quedar a la
@@ -170,7 +175,7 @@
 
         </div>
 
-        <div class="tab-pane fade" id="tab-tags" role="tabpanel">
+        <div class="tab-pane fade" id="ai-tab-tags" role="tabpanel">
             <div id="tags-container">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
@@ -178,7 +183,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="tab-tools" role="tabpanel">
+        <div class="tab-pane fade" id="ai-tab-tools" role="tabpanel">
             <div id="tools-container">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
@@ -186,7 +191,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="tab-knowledge" role="tabpanel">
+        <div class="tab-pane fade" id="ai-tab-knowledge" role="tabpanel">
             <div id="knowledge-container">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
@@ -197,7 +202,12 @@
     </div>
 </div>
 
-@include('core::components.delete')
+{{-- El modal #delete-modal / #delete-form ya lo pone layouts.theme en cada
+     página — incluirlo otra vez aquí duplicaba su id: el segundo formulario
+     (huérfano, sin el manejador AJAX de ai-agent-tags/tools/knowledge.js) era
+     el que Bootstrap encontraba primero para el "Confirmar eliminación" y
+     lo enviaba de verdad como POST normal en vez de la llamada DELETE por
+     AJAX, dando un 405 detrás del 500/200 correcto. --}}
 
 {{-- Modales --}}
 @include('helpdeskagents::managers.ai-agent.modals.tag-modal')

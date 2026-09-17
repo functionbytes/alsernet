@@ -53,7 +53,7 @@
     <div class="text-center py-5">
         <i class="fas fa-brain fa-3x mb-3 text-muted opacity-50"></i>
         <h5 class="fw-bold mb-2">No hay documentos en la base de conocimiento</h5>
-        <p class="text-muted mb-4">Agrega documentos, FAQs o artículos para que el agente responda con mas precision.</p>
+        <p class="text-muted mb-4">Agrega documentos, FAQs o artículos para que el agente responda con más precisión.</p>
         <button type="button" class="btn btn-primary" id="btn-new-knowledge-empty">
             Nuevo documento
         </button>
@@ -74,7 +74,7 @@
             <tbody>
                 @foreach($knowledge as $item)
                     @php
-                        $typeLabels = ['document' => 'Documento', 'faq' => 'FAQ', 'article' => 'Articulo', 'manual' => 'Manual', 'url' => 'URL'];
+                        $typeLabels = ['document' => 'Documento', 'faq' => 'FAQ', 'article' => 'Artículo', 'manual' => 'Manual', 'url' => 'URL'];
                     @endphp
                     <tr data-count-item>
                         <td>

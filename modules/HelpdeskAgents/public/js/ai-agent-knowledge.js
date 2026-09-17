@@ -117,6 +117,13 @@
             $('#delete-modal .modal-title').text('Eliminar documento: ' + name);
             $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
                 ev.preventDefault();
+                // #delete-form/#delete-modal son el modal genérico de
+                // layouts.theme, que también escucha su submit por
+                // delegación en document (línea "Delete confirmation modal").
+                // Sin stopPropagation() ese manejador genérico TAMBIÉN
+                // disparaba tras este, mandando un POST con action="#" que
+                // acababa en 405 y un segundo toast de error fantasma.
+                ev.stopPropagation();
                 $.ajax({
                     url: urlFor(config.destroyUrlTemplate, id),
                     method: 'DELETE',

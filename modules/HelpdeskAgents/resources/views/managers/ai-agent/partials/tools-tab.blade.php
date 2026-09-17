@@ -77,12 +77,12 @@
                         <td>
                             <span class="fw-semibold">{{ $tool->name }}</span>
                             @if($tool->requires_approval)
-                                <span class="badge bg-warning-subtle text-warning ms-1">Aprobacion</span>
+                                <span class="badge bg-warning-subtle text-warning ms-1">Aprobación</span>
                             @endif
                         </td>
                         <td>
                             @php
-                                $typeLabels = ['function' => 'Funcion', 'api' => 'API', 'database' => 'Base de datos', 'custom' => 'Personalizado'];
+                                $typeLabels = ['function' => 'Función', 'api' => 'API', 'database' => 'Base de datos', 'custom' => 'Personalizado'];
                                 $typeBadges = ['function' => 'primary', 'api' => 'info', 'database' => 'warning', 'custom' => 'secondary'];
                             @endphp
                             <span class="badge bg-{{ $typeBadges[$tool->type] ?? 'secondary' }}-subtle text-{{ $typeBadges[$tool->type] ?? 'secondary' }}">

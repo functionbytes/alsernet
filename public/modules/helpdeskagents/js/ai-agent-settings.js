@@ -34,7 +34,10 @@
         var loadedTabs = { settings: true, tags: false, tools: false, knowledge: false };
 
         $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-            var tabName = $(e.target).attr('href').replace('#tab-', '');
+            // Los ids de los tab-pane van prefijados "ai-tab-" (ver
+            // settings.blade.php) para no chocar con el #tab-settings del
+            // menú lateral global (Theme/includes/nav.blade.php).
+            var tabName = $(e.target).attr('href').replace('#ai-tab-', '');
 
             if (loadedTabs[tabName] === false) {
                 loadTabContent(tabName);
