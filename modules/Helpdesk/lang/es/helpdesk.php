@@ -132,6 +132,8 @@ return [
             'conversation_activity' => 'Actividad de la conversación',
             'auto_assignment' => 'Auto-asignación',
             'role_permissions' => 'Permisos de rol',
+            'sla_config' => 'Configuración SLA',
+            'supervisor_review' => 'Solicitar revisión de supervisor',
             'help_center' => 'Centro de ayuda',
             'spam' => 'Spam',
             'block_contact' => 'Bloquear contacto',

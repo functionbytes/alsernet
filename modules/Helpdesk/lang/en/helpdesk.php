@@ -169,6 +169,8 @@ return [
             'conversation_activity' => 'Conversation activity',
             'auto_assignment' => 'Auto-assignment',
             'role_permissions' => 'Role permissions',
+            'sla_config' => 'SLA configuration',
+            'supervisor_review' => 'Request supervisor review',
             'help_center' => 'Help center',
             'spam' => 'Spam',
             'block_contact' => 'Block contact',

@@ -69,7 +69,7 @@
                 pause_off_hours:   $('#slaPauseOffHours').is(':checked'),
                 notify_supervisor: $('#slaNotifySupervisor').is(':checked'),
             }),
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PUT' }
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
         }).done(function () {
             closeBvModal('sla-config');
             if (window.toastr) { toastr.success('Configuración SLA guardada'); }

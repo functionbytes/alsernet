@@ -135,7 +135,7 @@
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ permissions: _perms, apply_to_all: $('#rolePermsApplyAll').is(':checked') }),
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PUT' }
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
         }).done(function () {
             closeBvModal('role-perms');
             if (window.toastr) { toastr.success('Permisos guardados'); }

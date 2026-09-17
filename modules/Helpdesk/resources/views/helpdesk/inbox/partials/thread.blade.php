@@ -147,6 +147,7 @@
                         <i class="far fa-star"></i>{{ __('helpdesk::helpdesk.inbox.thread.send_csat_survey') }}
                     </button>
                     @endif
+                    <button data-bv-modal="supervisor-review"><i class="fas fa-user-shield"></i>{{ __('helpdesk::helpdesk.inbox.thread.supervisor_review') }}</button>
 
                     <button data-bv-modal="audit-log"><i class="fas fa-clock-rotate-left"></i>{{ __('helpdesk::helpdesk.inbox.thread.conversation_activity') }}</button>
                     @can('helpdesk.manage')
@@ -154,6 +155,9 @@
                     @endcan
                     @can("roles.permissions.view")
                         <button data-bv-modal="role-perms"><i class="fas fa-shield-halved"></i>{{ __('helpdesk::helpdesk.inbox.thread.role_permissions') }}</button>
+                    @endcan
+                    @can('helpdesk.sla-policies.view')
+                        <button data-bv-modal="sla-config"><i class="far fa-clock"></i>{{ __('helpdesk::helpdesk.inbox.thread.sla_config') }}</button>
                     @endcan
                     @if(helpdesk_helpcenter_enabled())
                         <button data-bv-modal="help-center"><i class="far fa-circle-question"></i>{{ __('helpdesk::helpdesk.inbox.thread.help_center') }}</button>
