@@ -3227,7 +3227,7 @@
             $btn.prop('disabled', true);
             try {
                 const resp = await $.ajax({
-                    url: '/panel/helpdesk/conversations/' + convId + '/ai-suggestions',
+                    url: '/panel/helpdesk/conversations/' + convId + '/ai/suggestions',
                     method: 'POST',
                     dataType: 'json',
                     data: { context: $('.bv-composer-input').val() || '' },
@@ -3236,7 +3236,12 @@
                         'Accept': 'application/json',
                     },
                 });
-                buildAiDropdown(resp.suggestions || []);
+                const suggestions = (resp.data && resp.data.suggestions) || [];
+                if (!suggestions.length) {
+                    if (window.toastr) toastr.info(resp.message || 'No hay sugerencias disponibles.');
+                    return;
+                }
+                buildAiDropdown(suggestions);
                 positionAiDropdown($btn);
             } catch (e) {
                 if (window.toastr) toastr.error('No se pudo obtener sugerencias');

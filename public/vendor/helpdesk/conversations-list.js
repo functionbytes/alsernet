@@ -231,6 +231,192 @@
             $(this).closest('.bv-conv').toggleClass('selected', this.checked);
         });
 
+        // ─── Bulk bar: contador de seleccionadas, acciones en bloque y macros ───
+        // Extraído de bulk-bar.blade.php (@push('scripts') @once ... @endpush @endonce).
+        (function () {
+            var bulkUrl = '/panel/helpdesk/conversations/bulk';
+            var csrf    = $('meta[name="csrf-token"]').attr('content');
+
+            function getSelectedIds() {
+                var ids = [];
+                $('[data-bv-bulk-select]:checked').each(function () {
+                    var id = $(this).closest('.bv-conv').data('bv-conv-id');
+                    if (id) { ids.push(id); }
+                });
+                return ids;
+            }
+
+            function updateBulkBar() {
+                var count = $('[data-bv-bulk-select]:checked').length;
+                $('#bv-bulk-count').text(count);
+                if (count > 0) {
+                    $('#bv-bulk-bar').removeClass('bv-hidden');
+                } else {
+                    $('#bv-bulk-bar').addClass('bv-hidden');
+                }
+            }
+
+            function executeBulkAction(action, ids, payload) {
+                $.ajax({
+                    url: bulkUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ action: action, ids: ids, payload: payload || {} }),
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                }).done(function (resp) {
+                    ids.forEach(function (id) {
+                        $('.bv-conv[data-bv-conv-id="' + id + '"]').fadeOut(200, function () { $(this).remove(); });
+                    });
+                    $('#bv-bulk-bar').addClass('bv-hidden');
+                }).fail(function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se pudo ejecutar la acción';
+                    toastr.error(msg);
+                });
+            }
+
+            // Mostrar/ocultar barra al cambiar selección
+            $(document).on('change', '[data-bv-bulk-select]', function () {
+                updateBulkBar();
+            });
+
+            // También actualizar cuando se agrega/quita clase selected por JS externo
+            $(document).on('bv:selection-changed', function () {
+                updateBulkBar();
+            });
+
+            // Deseleccionar todo
+            $(document).on('click', '#bv-bulk-deselect', function () {
+                $('.bv-conv.selected').removeClass('selected');
+                $('[data-bv-bulk-select]').prop('checked', false);
+                $('#bv-bulk-bar').addClass('bv-hidden');
+            });
+
+            // Ejecutar acción bulk
+            $(document).on('click', '[data-bv-bulk-action]', function () {
+                var action = $(this).data('bv-bulk-action');
+                var ids    = getSelectedIds();
+                if (!ids.length) { return; }
+
+                executeBulkAction(action, ids, {});
+            });
+
+            // ─── Asignar en bloque ──────────────────────────────────────────────
+            var agentsForBulkLoaded = false;
+
+            function renderAssignMenu(agents) {
+                var $menu = $('#bv-bulk-assign-menu');
+                $menu.empty();
+                if (!agents || !agents.length) {
+                    $menu.append('<div class="dropdown-item-text text-muted small px-3 py-2">No hay agentes disponibles.</div>');
+                    return;
+                }
+                agents.forEach(function (a) {
+                    var $item = $('<button type="button" class="dropdown-item d-flex align-items-center gap-2"></button>')
+                        .attr('data-bv-agent-id', a.id);
+                    $item.append($('<span></span>').text(a.name || a.email));
+                    $menu.append($item);
+                });
+            }
+
+            function loadAgentsForBulk() {
+                if (agentsForBulkLoaded) { return; }
+                $.get('/panel/helpdesk/api/agents-autocomplete', { include_self: 1 })
+                    .done(function (resp) {
+                        agentsForBulkLoaded = true;
+                        renderAssignMenu((resp && resp.agents) || []);
+                    })
+                    .fail(function () {
+                        $('#bv-bulk-assign-menu').html('<div class="dropdown-item-text text-dark small px-3 py-2">No se pudieron cargar los agentes.</div>');
+                    });
+            }
+
+            // Cargar agentes la primera vez que se abre el dropdown
+            $(document).on('click', '#bv-bulk-assign-toggle', loadAgentsForBulk);
+
+            // Asignar el agente elegido a las conversaciones seleccionadas
+            $(document).on('click', '#bv-bulk-assign-menu [data-bv-agent-id]', function () {
+                var agentId = $(this).data('bv-agent-id');
+                var ids     = getSelectedIds();
+                if (!agentId || !ids.length) { return; }
+                executeBulkAction('assign', ids, { agent_id: agentId });
+            });
+
+            // ─── Aplicar macro en bloque ──────────────────────────────────────────
+            var macroPickerUrl = '/panel/helpdesk/conversations/macros-picker';
+            var bulkMacroUrl   = '/panel/helpdesk/conversations/bulk-macro';
+            var macrosLoaded   = false;
+
+            function renderMacroMenu(macros) {
+                var $menu = $('#bv-bulk-macro-menu');
+                $menu.empty();
+                if (!macros || !macros.length) {
+                    $menu.append('<div class="dropdown-item-text text-muted small px-3 py-2">No hay macros disponibles.</div>');
+                    return;
+                }
+                $menu.append('<div class="dropdown-header">Más usados</div>');
+                macros.forEach(function (m) {
+                    var badge = m.usados
+                        ? '<span class="badge bg-secondary ms-2">' + m.usageCount + '</span>'
+                        : '';
+                    var $item = $('<button type="button" class="dropdown-item d-flex align-items-center justify-content-between gap-2"></button>')
+                        .attr('data-bv-macro-id', m.id);
+                    $item.append($('<span></span>').text(m.name));
+                    $item.append($(badge || '<span></span>'));
+                    $menu.append($item);
+                });
+            }
+
+            function loadMacros() {
+                if (macrosLoaded) { return; }
+                $.get(macroPickerUrl, { sort: 'used' })
+                    .done(function (resp) {
+                        macrosLoaded = true;
+                        renderMacroMenu(resp && resp.macros ? resp.macros : []);
+                    })
+                    .fail(function () {
+                        $('#bv-bulk-macro-menu').html('<div class="dropdown-item-text text-dark small px-3 py-2">No se pudieron cargar los macros.</div>');
+                    });
+            }
+
+            // Cargar macros la primera vez que se abre el dropdown
+            $(document).on('click', '#bv-bulk-macro-toggle', loadMacros);
+
+            // Aplicar el macro elegido a las conversaciones seleccionadas
+            $(document).on('click', '#bv-bulk-macro-menu [data-bv-macro-id]', function () {
+                var macroId = $(this).data('bv-macro-id');
+                var ids     = getSelectedIds();
+                if (!macroId || !ids.length) { return; }
+
+                $.ajax({
+                    url: bulkMacroUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ macro_id: macroId, conversation_ids: ids }),
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                }).done(function (resp) {
+                    if (resp && resp.success) {
+                        toastr.success(resp.message || 'Macro aplicado');
+                    } else {
+                        toastr.warning((resp && resp.message) || 'No se aplicó el macro a ninguna conversación.');
+                    }
+                    $('#bv-bulk-bar').addClass('bv-hidden');
+                    $('.bv-conv.selected').removeClass('selected');
+                    $('[data-bv-bulk-select]').prop('checked', false);
+                    // Reuse the inbox list-refresh pipeline already wired in index.blade.php
+                    window.dispatchEvent(new CustomEvent('inbox:incoming-message'));
+                }).fail(function (xhr) {
+                    if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                        $.each(xhr.responseJSON.errors, function (field, msgs) {
+                            toastr.error(msgs[0]);
+                        });
+                        return;
+                    }
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se pudo aplicar el macro';
+                    toastr.error(msg);
+                });
+            });
+        })();
+
         // ─── Quick action: pin conversation ──────────────────────────
         $(document).on('click', '[data-bv-action="pin"]', function (e) {
             e.stopPropagation();
@@ -477,3 +663,194 @@
 
     });
 })(jQuery);
+
+// ═══════════════════════════════════════════════════════════════════
+// Listener global de la bandeja: nuevas conversaciones / nuevos mensajes.
+// Extraído de inbox/index.blade.php. Mantiene la lista (.bv-list / .bv-conv)
+// y los contadores del sidebar sincronizados en tiempo real vía Echo; vive
+// aquí (no en conversations-core.js) porque su trabajo es, en esencia, la
+// lista de conversaciones. window.BvSidebarInboxIds es el dato server-side
+// (bandejas visibles del agente) que index.blade.php expone justo antes de
+// cargar estos scripts — ver el <script> de datos en ese archivo.
+// ═══════════════════════════════════════════════════════════════════
+(function () {
+    // UI-05: live-region oculta para anunciar eventos dinámicos a lectores de pantalla.
+    window.bvAnnounce = window.bvAnnounce || function (message) {
+        var $live = $('#bv-sr-live');
+        if (!$live.length) {
+            $live = $('<div id="bv-sr-live" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>');
+            $('body').append($live);
+        }
+        // Vaciar y re-escribir fuerza el re-anuncio aunque el texto se repita.
+        $live.text('');
+        window.setTimeout(function () { $live.text(message); }, 50);
+    };
+
+    function setupInboxListener() {
+        if (typeof window.Echo === 'undefined') {
+            console.warn('[Inbox] Echo not ready, retrying in 500ms');
+            setTimeout(setupInboxListener, 500);
+            return;
+        }
+
+        const myId = parseInt(document.querySelector('meta[name="user-id"]')?.content || '0', 10);
+
+        // SEC-01: el canal global 'helpdesk.inbox' se retiró (transportaba el
+        // payload completo de cada mensaje, incluidas notas internas, a
+        // cualquier agente con el permiso grueso 'helpdesk.conversations.view',
+        // sin aislar por bandeja). Ahora hay un canal privado por bandeja
+        // ('helpdesk.inbox.{inboxId}'), autorizado contra AgentInboxCapacity
+        // (ver routes/channels.php). Nos suscribimos a las mismas bandejas que
+        // ya ve el agente en el sidebar — $sidebarInboxes viene del controller
+        // ya filtrado por ConversationsController::getUserInboxIds(), el mismo
+        // criterio que usa el canal para autorizar.
+        const inboxIds = window.BvSidebarInboxIds || [];
+        const inboxChannels = inboxIds.map(function (id) {
+            return window.Echo.private('helpdesk.inbox.' + id);
+        });
+        console.log('[Inbox] Subscribing to', inboxChannels.length, 'private helpdesk.inbox.{id} channel(s)');
+
+        function refreshConversationList(done) {
+            const $list = $('.bv-list').first();
+            if (!$list.length) {
+                console.warn('[Inbox] .bv-list not found, cannot refresh');
+                if (typeof done === 'function') done();
+                return;
+            }
+            const url = '/panel/helpdesk/conversations/list';
+            const currentParams = new URLSearchParams(window.location.search);
+            $.get(url, Object.fromEntries(currentParams)).done(function (resp) {
+                if (resp && typeof resp.html === 'string') {
+                    $list.replaceWith(resp.html);
+                }
+                if (resp && resp.counts) {
+                    ['total', 'unread', 'mine', 'urgent'].forEach(function (k) {
+                        if (resp.counts[k] !== undefined) {
+                            $('[data-counter="' + k + '"]').text(resp.counts[k]);
+                        }
+                    });
+                }
+            }).fail(function (xhr) {
+                console.error('[Inbox] List refresh failed:', xhr.status);
+            }).always(function () {
+                if (typeof done === 'function') done();
+            });
+        }
+
+        let refreshTimer = null;
+        let refreshInflight = false;
+        let pendingRefresh = false;
+        function scheduleRefresh() {
+            if (refreshInflight) {
+                pendingRefresh = true;
+                return;
+            }
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(function () {
+                refreshInflight = true;
+                pendingRefresh = false;
+                refreshConversationList(function () {
+                    refreshInflight = false;
+                    if (pendingRefresh) scheduleRefresh();
+                });
+            }, 50);
+        }
+
+        // Same listener wired on every inbox channel the agent can see. Sidebar
+        // update only — thread bubble rendering is handled by the
+        // per-conversation listener below.
+        function handleInboxItemCreated(e) {
+            const msg = e.message || {};
+            // Los mensajes de actividad (etiqueta, asignación, estado…) no deben
+            // pisar el preview del último mensaje real en la lista lateral.
+            if (msg.type === 'activity') return;
+            if (msg.user_id && parseInt(msg.user_id, 10) === myId) return;
+
+            const conv = e.conversation || {};
+            const isNew = !!e.is_new_conversation;
+            const isViewing = parseInt(new URLSearchParams(window.location.search).get('selected') || '0', 10) === parseInt(conv.id, 10);
+
+            const $existing = $('.bv-conv[data-bv-conv-id="' + conv.id + '"]');
+            if (!isNew && $existing.length) {
+                patchConvItem($existing, conv, msg, isViewing);
+            } else {
+                scheduleRefresh();
+            }
+
+            // Push notification when message is incoming and agent is not viewing it
+            const isIncoming = !msg.user_id && (msg.author_id || msg.is_incoming);
+            if (isIncoming && (document.visibilityState === 'hidden' || !isViewing)) {
+                const customerName = conv.customer_name || conv.subject || 'Nuevo mensaje';
+                const preview = (msg.body || '').slice(0, 100);
+                const avatar = conv.customer_avatar || null;
+                if (typeof window.showInboxPushNotif === 'function') {
+                    window.showInboxPushNotif(conv.id, customerName, preview, avatar);
+                }
+            }
+        }
+
+        inboxChannels.forEach(function (channel) {
+            channel.listen('.item.created', handleInboxItemCreated);
+        });
+
+        // Patch a conversation item in-place: update last message preview,
+        // bump unread badge, and move to top — all without an AJAX call.
+        function patchConvItem($item, conv, msg, isViewing) {
+            const preview = (msg.body || '').slice(0, 100);
+            if (preview) {
+                $item.find('.row2 .preview').first().text(preview);
+            }
+
+            $item.find('.row1 .time').first().text('ahora');
+
+            if (!isViewing && msg.is_incoming) {
+                const wasUnread = $item.hasClass('unread');
+                $item.addClass('unread');
+                const $badge = $item.find('.bv-ucount');
+                if ($badge.length) {
+                    const n = parseInt($badge.text(), 10) || 0;
+                    $badge.text(n >= 9 ? '9+' : n + 1);
+                } else {
+                    $item.find('.row2 .meta').first().append('<span class="bv-ucount">1</span>');
+                }
+
+                // patchConvItem existe justamente para no hacer un AJAX por
+                // cada mensaje entrante (este canal recibe eventos de todas
+                // las conversaciones de las bandejas del agente). El
+                // contador "No leídos" del sidebar se actualiza aquí mismo,
+                // en vez de esperar al próximo refreshConversationList.
+                if (!wasUnread) {
+                    const $counter = $('[data-counter="unread"]');
+                    const cur = parseInt($counter.text(), 10) || 0;
+                    $counter.text(cur + 1);
+                }
+            }
+
+            // Move to top of its group
+            const $group = $item.closest('.bv-conv-group, .bv-conv-stack, .bv-conv-list');
+            if ($group.length && $item.prev().length) {
+                $item.detach();
+                $group.find('.bv-conv-group-head, .bv-conv-stack-head').first().after($item);
+                if (!$item.parent().is($group)) {
+                    $group.prepend($item);
+                }
+            }
+
+            $item.addClass('bv-conv-flash');
+            setTimeout(() => $item.removeClass('bv-conv-flash'), 1200);
+        }
+
+        // Also refresh when an item.created arrives on any open conversation channel,
+        // because counters (last_message_at, unread badge) change.
+        window.addEventListener('inbox:incoming-message', scheduleRefresh);
+
+        window.__hdInboxListenerReady = true;
+        console.log('[Inbox] Listener registered');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupInboxListener);
+    } else {
+        setupInboxListener();
+    }
+})();

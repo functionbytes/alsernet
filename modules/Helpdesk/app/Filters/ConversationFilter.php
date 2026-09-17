@@ -51,6 +51,14 @@ class ConversationFilter
                 $this->request->filled('inbox'),
                 fn ($q) => $q->where('inbox_id', (int) $this->request->input('inbox'))
             )
+            // Vista guardada "Pospuestas" (?snoozed=1): solo se manejaba en
+            // applyViewFilters() (vistas sembradas/con filtros en BD), nunca
+            // aquí — así que un link directo con este query param no filtraba
+            // nada y mostraba el listado completo.
+            ->when(
+                $this->request->boolean('snoozed'),
+                fn ($q) => $q->snoozed()
+            )
             // Sidebar "Bloqueados" / "Spam" links (?view=blocked / ?view=spam)
             // used to fall through to the plain default-view query — same
             // result as clicking "Todas" — because nothing here ever read
