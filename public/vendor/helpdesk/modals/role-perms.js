@@ -41,24 +41,16 @@
         $('#rolePermsBody').html(html);
     }
 
-    $(document).on('bv:modal:open', function (e, name, data) {
-        if (name !== 'role-perms') { return; }
-        _roleId = data && data.roleId ? data.roleId : null;
-        var roleName = (data && data.roleName) || '';
-        $('#rolePermsRoleName').text(roleName);
+    function loadPermissions(roleId, roleName) {
+        _roleId = roleId;
+        $('#rolePermsRoleName').text(roleName || '');
+        $('#rolePermsPickRole').hide();
         $('#rolePermsContent').hide();
         $('#rolePermsLoading').show();
-        $('#bv-role-perms-save').prop('disabled', true);
-
-        if (!_roleId) {
-            $('#rolePermsLoading').hide();
-            $('#rolePermsContent').show();
-            $('#bv-role-perms-save').prop('disabled', false);
-            return;
-        }
+        $('#bv-role-perms-save, #bv-role-perms-reset').show().prop('disabled', true);
 
         $.ajax({
-            url: '/panel/helpdesk/roles/' + _roleId + '/permissions',
+            url: '/panel/helpdesk/roles/' + roleId + '/permissions',
             method: 'GET',
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
         }).done(function (resp) {
@@ -67,9 +59,59 @@
             $('#rolePermsLoading').hide();
             $('#rolePermsContent').show();
             $('#bv-role-perms-save').prop('disabled', false);
-        }).fail(function () {
+        }).fail(function (xhr) {
             $('#rolePermsLoading').hide();
+            if (window.toastr) {
+                toastr.error(xhr?.responseJSON?.message || 'No se pudieron cargar los permisos del rol');
+            }
         });
+    }
+
+    function loadRoleOptions() {
+        var $sel = $('#rolePermsRoleSelect').prop('disabled', true).html('<option>…</option>');
+        $.ajax({
+            url: '/panel/helpdesk/roles',
+            method: 'GET',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+        }).done(function (resp) {
+            var roles = (resp && resp.roles) || [];
+            $sel.html(roles.map(function (r) {
+                return '<option value="' + r.id + '">' + escHtml(r.name) + '</option>';
+            }).join('')).prop('disabled', false);
+        }).fail(function () {
+            $sel.html('<option value="">—</option>');
+        });
+    }
+
+    $(document).on('bv:modal:open', function (e, name, data) {
+        if (name !== 'role-perms') { return; }
+
+        var roleId = data && data.roleId ? data.roleId : null;
+        var roleName = (data && data.roleName) || '';
+
+        $('#rolePermsLoading').hide();
+        $('#rolePermsContent').hide();
+        $('#bv-role-perms-save, #bv-role-perms-reset').prop('disabled', true);
+
+        // Sin roleId de contexto (abierto desde "Más opciones" del inbox, no
+        // desde una fila de rol/agente concreta): pedirlo primero. Los botones
+        // de guardar/descartar no aplican todavía (no hay matriz cargada).
+        if (!roleId) {
+            $('#rolePermsRoleName').text('');
+            $('#bv-role-perms-save, #bv-role-perms-reset').hide();
+            $('#rolePermsPickRole').show();
+            loadRoleOptions();
+            return;
+        }
+
+        loadPermissions(roleId, roleName);
+    });
+
+    $(document).on('click', '#bv-role-perms-pick-continue', function () {
+        var $sel = $('#rolePermsRoleSelect');
+        var roleId = $sel.val();
+        if (!roleId) { return; }
+        loadPermissions(roleId, $sel.find('option:selected').text());
     });
 
     $(document).on('click', '.bv-perm-chk', function () {
@@ -77,6 +119,11 @@
         _perms[key] = !_perms[key];
         $(this).toggleClass('on', !!_perms[key]);
         $(this).html(_perms[key] ? '<i class="fas fa-check"></i>' : '');
+    });
+
+    $(document).on('click', '#bv-role-perms-reset', function () {
+        if (!_roleId) { return; }
+        loadPermissions(_roleId, $('#rolePermsRoleName').text());
     });
 
     $(document).on('click', '#bv-role-perms-save', function () {

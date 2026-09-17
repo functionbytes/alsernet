@@ -341,3 +341,9 @@
     align-items: center;
     gap: var(--space-3, 12px);
 }
+
+/* ════ FLOWS EDITOR (Nodos y conexiones) ════ */
+.node-item { border-left: 3px solid #90bb13; }
+.node-item .node-handle { cursor: grab; color: #adb5bd; }
+.node-item .node-handle:hover { color: #6c757d; }
+.node-item.sortable-ghost { opacity: 0.4; }

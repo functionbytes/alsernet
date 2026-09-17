@@ -144,10 +144,13 @@
     --bv-success-bg:     #ecfdf5;
     --bv-success-border: #a7f3d0;
 
-    /* Warning — SLA warn, pendiente, en proceso */
-    --bv-warning:        #b45309;
-    --bv-warning-bg:     #fffbeb;
-    --bv-warning-border: #fde68a;
+    /* Warning — SLA warn, pendiente, en proceso. Sin ámbar en la paleta de
+       la casa (ver nota de --bv-danger): un tono de verde más claro que
+       --bv-primary-strong, para diferenciar "warning" de "danger"/"urgent"
+       solo por saturación, nunca por matiz rojo/naranja. */
+    --bv-warning:        #4f6b0a;
+    --bv-warning-bg:     rgba(182,211,74,.18);
+    --bv-warning-border: rgba(182,211,74,.5);
 
     /* Danger — SLA breach, urgente, error. Sin rojos en la paleta de la
        casa: indigo oscuro en vez de rojo, manteniendo la misma estructura
@@ -206,11 +209,11 @@
 :root {
     --bv-priority-low:     #a1a1aa;   /* gris claro */
     --bv-priority-normal:  #52525b;   /* gris medio */
-    --bv-priority-high:    #3730a3;   /* indigo */
-    --bv-priority-urgent:  #3730a3;   /* indigo (con halo) */
+    --bv-priority-high:    #3730a3;   /* indigo — token sin uso, ningún selector lo referencia */
+    --bv-priority-urgent:  #5e7a0d;   /* sin rojos en la paleta de la casa: verde oscuro de marca (con halo) */
 
-    --bv-priority-urgent-bg:    #eef2ff;
-    --bv-priority-urgent-glow:  rgba(55, 48, 163, .18);
+    --bv-priority-urgent-bg:    rgba(144,187,19,.12);
+    --bv-priority-urgent-glow:  rgba(144,187,19,.35);
 }
 
 

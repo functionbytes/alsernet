@@ -544,7 +544,13 @@
         $('#prProductList .ps-prc-item').removeClass('on');
         $('#prDetailZone').addClass('bv-hidden');
         $('#prDetailEmpty').removeClass('bv-hidden');
-        $('#prAttrBlock, #prAltBlock, #prHistBlock').addClass('bv-hidden');
+        // #prHistBlock NO se oculta aquí: "Ya recomendados" es del historial de
+        // la conversación entera (loadConversationHistory() lo carga una sola
+        // vez al abrir el modal), no del producto seleccionado. Ocultarlo en
+        // cada reset de búsqueda lo dejaba invisible para el resto de la
+        // sesión del modal en cuanto el agente escribía algo en el buscador,
+        // porque nada vuelve a llamar loadConversationHistory() después.
+        $('#prAttrBlock, #prAltBlock').addClass('bv-hidden');
         $('#prComboCount').addClass('bv-hidden');
         $('#prFootDefault').removeClass('bv-hidden');
         $('#prFootSelected').addClass('bv-hidden');
@@ -570,7 +576,22 @@
         $('#prResultCount').addClass('bv-hidden');
         $('#prProductList').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>');
         HDCommerce.ajax({ url: base + '/ps/products', method: 'GET' })
-            .done(function (r) { renderList(r.products || [], r.has_more); })
+            .done(function (r) {
+                var prods = r.products || [];
+                if (!prods.length) {
+                    // Mensaje propio: el genérico de emptyStateHtml() invita a
+                    // "escribir una búsqueda", que no aplica aquí — este cliente
+                    // simplemente no tiene compras previas en PrestaShop.
+                    _pool = [];
+                    $('#prProductList').html(
+                        '<div class="ps-empty"><i class="fas fa-bag-shopping"></i>' +
+                        '<span>Sin compras previas</span>' +
+                        '<small>Este cliente no tiene pedidos registrados en PrestaShop. Busca por nombre, referencia o SKU.</small></div>'
+                    );
+                    return;
+                }
+                renderList(prods, r.has_more);
+            })
             .fail(function () {
                 $('#prProductList').html('<div class="bv-oc-empty"><i class="fas fa-triangle-exclamation"></i><div class="title">Error al cargar</div></div>');
             });
@@ -1078,7 +1099,9 @@
         $('#prFootSelected').addClass('bv-hidden');
         loadRecommended();
         loadConversationHistory();
-        loadCategories();               // MEJORA 6: cargar categorías al abrir
+        // MEJORA 6 desactivada: el <select> está disabled en el blade (el
+        // filtro por categoría no funciona — ver nota ahí), así que no tiene
+        // sentido gastar una petición en poblar opciones que nadie puede usar.
         detectProductFromChat();        // Mejora 10
     });
 

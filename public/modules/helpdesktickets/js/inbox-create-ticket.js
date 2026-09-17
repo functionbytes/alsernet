@@ -13,6 +13,20 @@
 (function () {
     'use strict';
 
+    // Vivía como bloque <script> suelto en el propio slot Blade (además del
+    // <script src> de este archivo). Sin datos dinámicos de servidor, así que
+    // no hay motivo para que esté inline: dropdownParent es fijo (el propio
+    // modal) y los tres selects son siempre los mismos.
+    $(function () {
+        // dropdownParent: igual que el resto de selects dentro de un .bv-modal
+        // (z-index:1080) — sin esto, el desplegable de select2 (z-index:1051 por
+        // defecto) se renderiza detrás del propio modal.
+        $('#bv-ticket-category, #bv-ticket-assignee, #bv-ticket-group').select2({
+            width: '100%',
+            dropdownParent: $('[data-bv-modal-name="create-ticket"]'),
+        });
+    });
+
     // Pre-fill create-ticket modal when opened
     $(document).on('click', '[data-bv-modal="create-ticket"]', function () {
         // Misma fuente que usa el envío (.bv-composer): antes el contexto leía
