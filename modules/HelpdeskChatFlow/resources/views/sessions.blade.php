@@ -266,13 +266,10 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-});
+window.HelpdeskChatFlowSessions = {
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdeskchatflow/js/chatflow-sessions.js') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/js/chatflow-sessions.js')) }}" defer></script>
 @endpush

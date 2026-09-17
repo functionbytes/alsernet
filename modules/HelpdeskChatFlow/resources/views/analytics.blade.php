@@ -270,25 +270,9 @@
 @endsection
 
 @push('css')
-<style>
-.dropoff-rate-col { min-width: 180px; }
-.dropoff-bar { height: 8px; }
-.dropoff-rate-val { min-width: 42px; }
-</style>
+<link rel="stylesheet" href="{{ asset('modules/helpdeskchatflow/css/chatflow.css') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/css/chatflow.css')) }}">
 @endpush
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    // Width of each drop-off bar from data-rate (avoids inline styles)
-    $('.progress-bar[data-rate]').each(function () {
-        $(this).css('width', $(this).data('rate') + '%');
-    });
-
-    // Reload analytics for the selected period
-    $('#analytics-range').on('change', function () {
-        $('#analytics-range-form').trigger('submit');
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdeskchatflow/js/chatflow-analytics.js') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/js/chatflow-analytics.js')) }}" defer></script>
 @endpush

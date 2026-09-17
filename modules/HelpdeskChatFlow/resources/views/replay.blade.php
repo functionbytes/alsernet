@@ -71,11 +71,5 @@
 @endsection
 
 @push('css')
-<style>
-.chatflow-replay { background: #f3f4f6; border-radius: 8px; padding: 16px; }
-.replay-bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 13.5px; white-space: pre-wrap; word-break: break-word; }
-.replay-customer { background: #90bb13; color: #fff; border-bottom-right-radius: 3px; }
-.replay-bot { background: #fff; color: #1e293b; border: 1px solid #e5e7eb; border-bottom-left-radius: 3px; }
-.replay-system { background: #fef9c3; color: #854d0e; border-color: #fde68a; font-size: 12px; }
-</style>
+<link rel="stylesheet" href="{{ asset('modules/helpdeskchatflow/css/chatflow.css') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/css/chatflow.css')) }}">
 @endpush

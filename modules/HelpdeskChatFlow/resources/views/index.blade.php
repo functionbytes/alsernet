@@ -361,37 +361,15 @@
 @endsection
 
 @push('css')
-<style>
-.chatflow-search-input { min-width: 200px; }
-.template-card { background: #fff; transition: border-color .15s, box-shadow .15s; cursor: pointer; }
-.template-card:hover { border-color: #90bb13 !important; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-.template-icon {
-    width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 18px;
-}
-</style>
+<link rel="stylesheet" href="{{ asset('modules/helpdeskchatflow/css/chatflow.css') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/css/chatflow.css')) }}">
 @endpush
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Apply each template's accent color from data-color (avoids inline styles)
-    $('.template-icon').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-});
+window.HelpdeskChatFlowIndex = {
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdeskchatflow/js/chatflow-index.js') }}?v={{ @filemtime(public_path('modules/helpdeskchatflow/js/chatflow-index.js')) }}" defer></script>
 @endpush
