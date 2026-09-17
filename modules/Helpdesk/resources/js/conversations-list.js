@@ -338,7 +338,7 @@
                 var agentId = $(this).data('bv-agent-id');
                 var ids     = getSelectedIds();
                 if (!agentId || !ids.length) { return; }
-                executeBulkAction('assign', ids, { agent_id: agentId });
+                executeBulkAction('assign', ids, { assignee_id: agentId });
             });
 
             // ─── Aplicar macro en bloque ──────────────────────────────────────────
