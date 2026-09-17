@@ -158,7 +158,7 @@ class MediaServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem('media', [
-            'icon' => 'fas fa-photo-film',
+            'icon' => 'media',
             'tooltip' => 'Gestor de Medios',
             'sidebar_id' => 'media',
             'url' => 'media.index',

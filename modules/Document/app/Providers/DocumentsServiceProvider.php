@@ -414,7 +414,7 @@ class DocumentsServiceProvider extends ServiceProvider
     {
         // Mini-nav item para Documentos (operaciones)
         NavService::registerMiniItem('documents', [
-            'icon' => 'fa-duotone fa-thin fa-album-collection-circle-plus',
+            'icon' => 'wallet',
             'tooltip' => 'Documentos',
             'sidebar_id' => 'documents',
             'order' => 20,

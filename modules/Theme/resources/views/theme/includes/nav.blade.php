@@ -28,7 +28,7 @@
             @foreach($mainSidebars as $sidebarId => $sidebar)
                 @php
                     $miniItem  = $navMiniItems[$sidebarId] ?? null;
-                    $iconClass = $miniItem['icon'] ?? 'fa-duotone fa-thin fa-circle-dot';
+                    $iconKey   = $miniItem['icon'] ?? 'dot';
                     $label     = $miniItem['tooltip'] ?? ucfirst(str_replace(['-', '_'], ' ', $sidebarId));
                     $allItems  = collect($sidebar['sections'] ?? [])->flatMap(fn ($s) => $s['items'] ?? []);
 
@@ -43,7 +43,7 @@
                 <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
                     @if($allItems->count() === 1)
                         <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
+                            <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($iconKey) !!}</span>
                         </a>
                     @else
                         <a class="menu-link{{ $isActive ? ' active' : '' }}"
@@ -51,7 +51,7 @@
                            aria-controls="tab-{{ $sidebarId }}"
                            aria-label="{{ $label }}"
                            data-bs-toggle="tab">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
+                            <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($iconKey) !!}</span>
                         </a>
                     @endif
                 </li>
@@ -60,7 +60,7 @@
             @if($settingsSidebar)
                 @php
                     $settingsMiniItem = $navMiniItems['settings'] ?? null;
-                    $settingsIcon     = $settingsMiniItem['icon'] ?? 'fa-duotone fa-thin fa-gear';
+                    $settingsIcon     = $settingsMiniItem['icon'] ?? 'sliders';
                     $settingsLabel    = $settingsMiniItem['tooltip'] ?? 'Configuración';
                     $settingsActive   = $activeSidebarId === 'settings';
                 @endphp
@@ -71,7 +71,7 @@
                        aria-controls="tab-settings"
                        aria-label="{{ $settingsLabel }}"
                        data-bs-toggle="tab">
-                        <i class="{{ $settingsIcon }}" aria-hidden="true"></i>
+                        <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($settingsIcon) !!}</span>
                     </a>
                 </li>
             @endif

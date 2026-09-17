@@ -422,7 +422,7 @@ class SupplierServiceProvider extends ServiceProvider
     {
         // Mini-nav item para Proveedores
         NavService::registerMiniItem('suppliers', [
-            'icon' => 'fa-duotone fa-thin fa-truck-field',
+            'icon' => 'truck',
             'tooltip' => 'Proveedores',
             'sidebar_id' => 'suppliers',
             'order' => 50,

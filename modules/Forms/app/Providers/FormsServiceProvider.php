@@ -250,7 +250,7 @@ class FormsServiceProvider extends ServiceProvider
     protected function registerBuilderMenus(): void
     {
         NavService::registerMiniItem('forms-inbox', [
-            'icon' => 'fas fa-inbox',
+            'icon' => 'inbox',
             'tooltip' => 'Formularios',
             'sidebar_id' => 'forms-inbox',
             'order' => 46,
