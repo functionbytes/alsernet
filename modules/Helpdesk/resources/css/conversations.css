@@ -1271,6 +1271,13 @@ body:has(.conversations) .mc-content {
 .bv-lp-meta i {
     font-size: 10px;
 }
+.bv-lp-favicon {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
 .bv-bubble.note .note-badge {
     display: inline-flex;
     align-items: center;

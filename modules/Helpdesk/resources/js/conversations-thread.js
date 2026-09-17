@@ -1092,6 +1092,9 @@
                     ? '<p class="bv-lp-desc">' + escape(linkPreview.description) + '</p>'
                     : '';
                 const lpSite = linkPreview.site || (lpUrl ? (new URL(lpUrl).hostname || '') : '');
+                const lpFavicon = linkPreview.favicon
+                    ? '<img src="' + escape(linkPreview.favicon) + '" alt="" class="bv-lp-favicon" loading="lazy" onerror="this.remove()">'
+                    : '<i class="fas fa-link"></i>';
                 linkPreviewHtml =
                     '<a href="' + escape(lpUrl) + '" target="_blank" rel="noopener noreferrer" class="bv-link-preview">' +
                         lpImg +
@@ -1099,7 +1102,7 @@
                             lpTitle +
                             lpDesc +
                             '<div class="bv-lp-meta">' +
-                                '<i class="fas fa-link"></i>' +
+                                lpFavicon +
                                 '<span>' + escape(lpSite) + '</span>' +
                             '</div>' +
                         '</div>' +
