@@ -1261,7 +1261,15 @@
         // ─── Botón "re-sincronizar" comercio (PrestaShop/gestión) ───
         // Botón "re-sincronizar": redetecta el vínculo PrestaShop/gestión del cliente
         // y recarga el panel para reflejar integraciones y pedidos actualizados.
+        // Fallback SOLO para instalaciones sin HelpdeskIntegration: cuando ese
+        // módulo está activo, verify-customer-identity.js registra su propio
+        // handler (más completo: re-render en vivo sin reload, catálogo dinámico
+        // de proveedores) sobre el MISMO botón .bv-sync-commerce — sin este guard
+        // ambos disparaban a la vez en cada clic (dos peticiones, dos toasts).
+        // Mismo check que ya usa este archivo en el trigger de "Verificar
+        // identidad" (línea ~1254) para detectar si el módulo está cargado.
         $(document).on('click', '.bv-sync-commerce', function () {
+            if (typeof window.openCustomerIdentityVerification === 'function') { return; }
             var convId = $(this).data('conv-id');
             if (!convId) { return; }
             var $btn = $(this).prop('disabled', true);

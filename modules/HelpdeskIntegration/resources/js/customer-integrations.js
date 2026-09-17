@@ -113,12 +113,15 @@
         $('#ciOpenSearch').toggle(linkablePlatforms.length > 0);
     }
 
-    function onIdentityResolved(resp) {
-        linkablePlatforms = resp.linkable_platforms || [];
-        lastIntegrations = resp.integrations || [];
-        confirmPlatform = null;
-        showMainView();
-        renderList(lastIntegrations, resp.last_activity);
+    // El modal customer-integrations ya se cerró (HDCommerce.close) antes de
+    // abrir el gate de identidad, así que showMainView()/renderList() sobre
+    // este modal pintaban una ventana invisible: la sección "IDENTIDAD" del
+    // panel derecho (badge "Verificar identidad" / "Verificada") se quedaba
+    // obsoleta hasta que el agente recargaba a mano. Mismo remedio que ya usa
+    // el trigger .bv-identity-verify-trigger del panel derecho
+    // (conversations-panel.js) para el mismo evento.
+    function onIdentityResolved() {
+        window.location.reload();
     }
 
     $(document).on('click', '#ciOpenVerify', function () {
