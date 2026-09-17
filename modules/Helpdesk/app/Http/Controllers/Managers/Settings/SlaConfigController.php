@@ -97,11 +97,30 @@ class SlaConfigController extends Controller
                 continue;
             }
 
-            SlaPolicy::query()
+            // QA 18-sep-2026: antes era un update() sobre where('priority_id', ...),
+            // que en cualquier BD sin una SlaPolicy ya vinculada a esa prioridad
+            // afecta 0 filas en silencio — el modal respondía éxito sin guardar
+            // nada. Si ya existe, solo tocamos first_response_time_hours (no
+            // pisar name/resolution_time_hours que el admin pudo personalizar
+            // desde la pantalla real de políticas SLA); si no existe, se crea
+            // con los mismos valores por defecto que SlaPoliciesSeeder.
+            $policy = SlaPolicy::query()
                 ->active()
                 ->where('priority_id', $priorityId)
                 ->whereNull('category_id')
-                ->update(['first_response_time_hours' => $row['value']]);
+                ->first();
+
+            if ($policy) {
+                $policy->update(['first_response_time_hours' => $row['value']]);
+            } else {
+                SlaPolicy::create([
+                    'name' => "SLA Prioridad {$row['label']}",
+                    'priority_id' => $priorityId,
+                    'first_response_time_hours' => $row['value'],
+                    'resolution_time_hours' => max((int) $row['value'] * 3, 1),
+                    'is_active' => true,
+                ]);
+            }
         }
     }
 

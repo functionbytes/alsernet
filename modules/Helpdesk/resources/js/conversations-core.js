@@ -449,4 +449,26 @@
             $(document).one('click keydown', requestPermissionOnce);
         }, 1000);
     });
+
+    // ─── Latido de presencia del agente (QA 18-sep-2026) ──────────────────
+    // Vivía dentro de modals/away-mode.js, pero ese modal se carga en diferido
+    // (auditoría 17-sep-2026: window.BvLazyModalScripts) — su JS solo se
+    // descarga la primera vez que el agente abre "Cambiar disponibilidad". El
+    // resultado: mientras nadie abriera ese modal, AgentPresenceService::
+    // getOnlineAgents() nunca veía un heartbeat de nadie, así que "X agentes
+    // en línea" marcaba 0 siempre, con agentes reales usando el inbox. Movido
+    // aquí (core, se carga siempre) para que el latido arranque con la
+    // página, sin depender de que se abra ese modal.
+    function bvPresenceHeartbeat() {
+        $.ajax({
+            url: '/panel/helpdesk/presence/heartbeat',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+        });
+    }
+    bvPresenceHeartbeat();
+    setInterval(bvPresenceHeartbeat, 60000);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) { bvPresenceHeartbeat(); }
+    });
 })();

@@ -99,30 +99,15 @@
         });
     }
 
-    function heartbeat() {
-        // Con la pestaña en segundo plano no latimos si el agente está
-        // "disponible": así deja de figurar disponible mientras no está mirando.
-        // En estados manuales (ausente/ocupado/no molestar) sí mantenemos el
-        // latido para no perder el estado elegido.
-        var state = (_loaded && _loaded.raw_state) || 'available';
-        if (document.hidden && state === 'available') { return; }
-        $.ajax({
-            url: '/panel/helpdesk/presence/heartbeat', method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' }
-        });
-    }
-
-    // Mantiene la presencia viva (auto-marca "disponible" si estaba offline) y
-    // refleja el estado inicial en la tarjeta de usuario del nav.
+    // El latido periódico (POST /presence/heartbeat) vivía aquí, pero este
+    // script es de un modal de carga diferida (solo se descarga al abrir
+    // "Cambiar disponibilidad" por primera vez) — así que mientras nadie lo
+    // abriera, ningún agente latía y "X agentes en línea" marcaba 0 siempre.
+    // Movido a conversations-core.js (carga siempre, arranca con la página).
+    // Ver bvPresenceHeartbeat() ahí.
     initSelect2();
-    heartbeat();
-    setInterval(heartbeat, 60000);
     setTimeout(loadPresence, 500);
     setTimeout(loadReassignAgents, 500);
-    // Latir de inmediato al volver a la pestaña.
-    document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) { heartbeat(); }
-    });
 
     $(document).on('bv:modal:open', function (e, name) {
         if (name !== 'away-mode') { return; }
