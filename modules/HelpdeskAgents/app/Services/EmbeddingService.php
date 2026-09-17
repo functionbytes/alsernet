@@ -16,19 +16,20 @@ class EmbeddingService
     public function __construct()
     {
         $this->apiKey = config('helpdeskagents.embeddings.api_key')
-            ?? config('services.openai.key', '');
+            ?? config('services.openai.key')
+            ?? '';
 
         $this->model = config('helpdeskagents.embeddings.model', 'text-embedding-3-small');
         $this->timeout = config('helpdeskagents.embeddings.timeout', 30);
     }
 
-    public function embed(string $text): array
+    public function embed(string $text, ?int $timeoutSeconds = null, ?int $tries = null): array
     {
         $this->assertConfigured();
 
         $response = Http::withToken($this->apiKey)
-            ->timeout($this->timeout)
-            ->retry(3, 250, throw: false)
+            ->timeout($timeoutSeconds ?? $this->timeout)
+            ->retry($tries ?? 3, 250, throw: false)
             ->post('https://api.openai.com/v1/embeddings', [
                 'model' => $this->model,
                 'input' => $text,

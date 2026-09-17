@@ -264,18 +264,10 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
+window.HelpdeskAgentsFlowsIndex = {
+    success: @json(session('success')),
+    error: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-flows-index.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-flows-index.js')) }}" defer></script>
 @endpush

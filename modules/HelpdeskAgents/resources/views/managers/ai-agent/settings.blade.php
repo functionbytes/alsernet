@@ -208,66 +208,43 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Primer arranque: la guía cede el sitio al formulario.
-    $('#ais-setup-start').on('click', function () {
-        document.getElementById('ais-setup').hidden = true;
-        document.getElementById('ais-form-wrap').hidden = false;
-        document.getElementById('ais-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-
-    // El "Guardar cambios" de la cabecera envía el mismo formulario.
-    $('#btn-save-top').on('click', function () {
-        document.getElementById('settingsForm')?.requestSubmit();
-    });
-
-    // Carga perezosa de pestañas: cada una pide su parcial la primera vez.
-    const loadedTabs = { settings: true, tags: false, tools: false, knowledge: false };
-
-    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-        const tabName = $(e.target).attr('href').replace('#tab-', '');
-
-        if (loadedTabs[tabName] === false) {
-            loadTabContent(tabName);
-            loadedTabs[tabName] = true;
-        }
-    });
-
-    function loadTabContent(tabName) {
-        const container = $(`#${tabName}-container`);
-
-        const urls = {
-            tags: '{{ route("helpdesk.ai.tags.index") }}',
-            tools: '{{ route("helpdesk.ai.tools.index") }}',
-            knowledge: '{{ route("helpdesk.ai.knowledge.index") }}',
-        };
-
-        if (!urls[tabName]) {
-            return;
-        }
-
-        $.ajax({
-            url: urls[tabName],
-            method: 'GET',
-            success: function (response) {
-                container.html(response);
-                updateTabCounter(tabName);
-            },
-            error: function () {
-                container.html('<div class="alert alert-warning">Error al cargar el contenido. Vuelve a intentarlo.</div>');
-            }
-        });
-    }
-
-    function updateTabCounter(tabName) {
-        const count = $(`#${tabName}-container`).find('[data-count-item]').length;
-        $(`#${tabName}-count`).text(count);
-    }
-
-    window.showSuccess = function (message) { toastr.success(message, 'Éxito'); };
-    window.showError = function (message) { toastr.error(message, 'Error'); };
-
-    $('[data-bs-toggle="tooltip"]').tooltip();
-});
+window.HelpdeskAgentsAiSettings = {
+    tabUrls: {
+        tags: '{{ route("helpdesk.ai.tags.index") }}',
+        tools: '{{ route("helpdesk.ai.tools.index") }}',
+        knowledge: '{{ route("helpdesk.ai.knowledge.index") }}',
+    },
+    settingsTab: {
+        providers: @json($providers),
+        testUrl: '{{ route("helpdesk.ai.settings.test") }}',
+    },
+    tags: {
+        indexUrl: '{{ route("helpdesk.ai.tags.index") }}',
+        storeUrl: '{{ route("helpdesk.ai.tags.store") }}',
+        updateUrlTemplate: '{{ route("helpdesk.ai.tags.update", "__ID__") }}',
+        toggleUrlTemplate: '{{ route("helpdesk.ai.tags.toggle", "__ID__") }}',
+        destroyUrlTemplate: '{{ route("helpdesk.ai.tags.destroy", "__ID__") }}',
+    },
+    tools: {
+        indexUrl: '{{ route("helpdesk.ai.tools.index") }}',
+        storeUrl: '{{ route("helpdesk.ai.tools.store") }}',
+        updateUrlTemplate: '{{ route("helpdesk.ai.tools.update", "__ID__") }}',
+        toggleUrlTemplate: '{{ route("helpdesk.ai.tools.toggle", "__ID__") }}',
+        destroyUrlTemplate: '{{ route("helpdesk.ai.tools.destroy", "__ID__") }}',
+    },
+    knowledge: {
+        indexUrl: '{{ route("helpdesk.ai.knowledge.index") }}',
+        storeUrl: '{{ route("helpdesk.ai.knowledge.store") }}',
+        updateUrlTemplate: '{{ route("helpdesk.ai.knowledge.update", "__ID__") }}',
+        toggleUrlTemplate: '{{ route("helpdesk.ai.knowledge.toggle", "__ID__") }}',
+        destroyUrlTemplate: '{{ route("helpdesk.ai.knowledge.destroy", "__ID__") }}',
+        generateEmbeddingUrlTemplate: '{{ route("helpdesk.ai.knowledge.generate-embedding", "__ID__") }}',
+    },
+};
 </script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-settings.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-settings.js')) }}" defer></script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-settings-tab.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-settings-tab.js')) }}" defer></script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-tags.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-tags.js')) }}" defer></script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-tools.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-tools.js')) }}" defer></script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-knowledge.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-knowledge.js')) }}" defer></script>
 @endpush
