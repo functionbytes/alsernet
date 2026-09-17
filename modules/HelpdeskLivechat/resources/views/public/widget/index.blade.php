@@ -9,18 +9,9 @@
     {{-- Vite React App --}}
     @vite(['resources/js/helpdesk/widget/widget-entry.tsx'])
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            @if($isInline ?? false)
-            overflow: hidden;
-            height: 100vh;
-            @endif
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/helpdesklivechat/css/widget-dev-shell.css') }}?v={{ filemtime(public_path('modules/helpdesklivechat/css/widget-dev-shell.css')) }}">
 </head>
-<body>
+<body class="{{ ($isInline ?? false) ? 'widget-inline' : '' }}">
     <div id="widget-root"
          data-preview="{{ ($isPreview ?? false) ? 'true' : 'false' }}"
          data-inline="{{ ($isInline ?? false) ? 'true' : 'false' }}"

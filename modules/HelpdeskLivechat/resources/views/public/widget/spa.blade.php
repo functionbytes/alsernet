@@ -10,27 +10,7 @@
         <link rel="stylesheet" href="{{ asset('build-helpdesklivechat/widget/main.css') }}">
     @endif
 
-    <style>
-        html, body { margin: 0; padding: 0; height: 100%; }
-        body { background: #f5f6f8; }
-        #widget-root { width: 100%; height: 100vh; }
-        .widget-not-built {
-            max-width: 480px;
-            margin: 80px auto;
-            padding: 24px;
-            border: 1px solid #f5c2c7;
-            border-radius: 8px;
-            background: #f8d7da;
-            color: #842029;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .widget-not-built code {
-            background: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/helpdesklivechat/css/widget-spa-shell.css') }}?v={{ filemtime(public_path('modules/helpdesklivechat/css/widget-spa-shell.css')) }}">
 </head>
 <body>
     {{-- Always inject config: even in preview (without token) the widget needs reverbHost/Port and baseUrl. --}}
@@ -44,52 +24,15 @@
     @else
         <div class="widget-not-built">
             <strong>Helpdesk widget bundle not built yet.</strong>
-            <p style="margin: 8px 0 0;">Run <code>cd modules/HelpdeskLivechat && npm install && npm run widget:build</code> to compile the React bundle.</p>
+            <p class="widget-not-built-hint">Run <code>cd modules/HelpdeskLivechat && npm install && npm run widget:build</code> to compile the React bundle.</p>
         </div>
     @endif
 
     {{-- Engagement bridge: SDK + listener to open chat on trigger:fired --}}
     @if(($engagement_active ?? false) && $websiteToken)
-        <script>
-        (function (w, d) {
-            w.chat = w.chat || function () { (w.chat.q = w.chat.q || []).push(arguments); };
-        })(window, document);
-        </script>
+        <script>window.HelpdeskEngagementBridgeConfig = {!! json_encode(['token' => $websiteToken, 'apiUrl' => url('/')], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};</script>
+        <script src="{{ asset('modules/helpdesklivechat/js/widget-engagement-bridge.js') }}?v={{ filemtime(public_path('modules/helpdesklivechat/js/widget-engagement-bridge.js')) }}"></script>
         <script async src="{{ $engagement_sdk_url }}"></script>
-        <script>
-        window.chat('init', {
-            token: @json($websiteToken),
-            apiUrl: @json(url('/')),
-            consent: true,
-        });
-        window.chat('on', 'trigger:fired', function (e) {
-            var action = (e && e.action) ? e.action : {};
-            var w = window.HelpdeskWidget;
-            if (!w) return;
-
-            switch (action.type) {
-                case 'open_chat':
-                    w.open();
-                    break;
-                case 'show_message_in_chat':
-                    w.botMessage(action.text || action.message || '');
-                    w.open();
-                    break;
-                case 'prefill_form':
-                    w.prefill(action.fields || {});
-                    w.open();
-                    break;
-                case 'request_rating':
-                    w.requestRating();
-                    w.open();
-                    break;
-                case 'inject_recommendations':
-                    w.showRecommendations(action.products || []);
-                    w.open();
-                    break;
-            }
-        });
-        </script>
     @endif
 </body>
 </html>
