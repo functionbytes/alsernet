@@ -209,6 +209,14 @@
                     if (convId && typeof window.bvLoadConversationPane === 'function') {
                         window.bvLoadConversationPane(convId, null, { push: false });
                     }
+                    // El pane solo actualiza el panel derecho: si la lista está
+                    // filtrada por una etiqueta (ej. "?tag=2") y esta se quitó,
+                    // la fila se quedaba visible hasta recargar a mano. Reutiliza
+                    // el mismo refresco que ya usan reopen/status con los filtros
+                    // activos de la URL para no perder el filtro (ver #bv-btn-reopen).
+                    if (typeof window.refreshInboxList === 'function' && typeof window.readInboxFiltersFromUrl === 'function') {
+                        window.refreshInboxList(window.readInboxFiltersFromUrl());
+                    }
                 } else {
                     toastr.error(resp.message || 'Error al guardar etiquetas');
                 }
