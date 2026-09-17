@@ -44,6 +44,13 @@
             return Math.round(m / 60) + 'h';
         }
 
+        // Mismo mapeo que Ticket::activityPriorityLabel() en HelpdeskTickets:
+        // la API devuelve el slug crudo de la columna priority.
+        var PRIORITY_LABELS = { urgent: 'Urgente', high: 'Alta', normal: 'Normal', low: 'Baja' };
+        function priorityLabel(p) {
+            return PRIORITY_LABELS[p] || p;
+        }
+
         function renderAgents(rows) {
             if (!rows.length) {
                 $('#agent-rows').html('<tr><td colspan="8" class="text-center text-muted py-3">' + t('noDataRange', 'No data in range.') + '</td></tr>');
@@ -81,7 +88,7 @@
             }
             $('#ticket-priority-rows').html(byPriority.map(function (p) {
                 return '<tr>' +
-                    '<td>' + $('<div>').text(p.priority).html() + '</td>' +
+                    '<td>' + $('<div>').text(priorityLabel(p.priority)).html() + '</td>' +
                     '<td>' + p.count + '</td>' +
                     '</tr>';
             }).join(''));
