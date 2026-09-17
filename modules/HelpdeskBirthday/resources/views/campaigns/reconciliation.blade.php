@@ -203,63 +203,7 @@
 </div>
 
 @push('scripts')
-<script>
-    (function () {
-        const form = document.getElementById('bd-reconcile-form');
-
-        if (!form) {
-            return;
-        }
-
-        const checks = () => Array.from(form.querySelectorAll('.bd-reconcile-check'));
-        const label = document.getElementById('bd-reconcile-count');
-        const modalCount = document.getElementById('bd-reconcile-modal-count');
-
-        function refresh() {
-            const n = checks().filter((c) => c.checked).length;
-
-            if (label) {
-                label.textContent = n === 0
-                    ? 'Ninguno seleccionado'
-                    : (n === 1 ? '1 seleccionado' : n + ' seleccionados');
-            }
-
-            if (modalCount) {
-                modalCount.textContent = n;
-            }
-        }
-
-        const all = document.getElementById('bd-check-all');
-
-        if (all) {
-            all.addEventListener('change', function () {
-                checks().forEach((c) => { c.checked = all.checked; });
-                refresh();
-            });
-        }
-
-        form.addEventListener('change', function (event) {
-            if (event.target.classList.contains('bd-reconcile-check')) {
-                refresh();
-            }
-        });
-
-        // Sin nada marcado no se abre la confirmación: enviar el formulario
-        // vacío devolvería un error de validación en vez de decirlo aquí.
-        form.addEventListener('submit', function (event) {
-            if (checks().filter((c) => c.checked).length === 0) {
-                event.preventDefault();
-                event.stopPropagation();
-
-                if (label) {
-                    label.textContent = 'Selecciona al menos un bono.';
-                }
-            }
-        });
-
-        refresh();
-    })();
-</script>
+<script src="{{ asset('modules/helpdeskbirthday/js/reconciliation.js') }}?v={{ @filemtime(public_path('modules/helpdeskbirthday/js/reconciliation.js')) }}" defer></script>
 @endpush
 
 @endsection

@@ -282,28 +282,7 @@
 </div>
 
 @push('scripts')
-<script>
-    document.addEventListener('click', function (event) {
-        const trigger = event.target.closest('.bd-view-email');
-
-        if (!trigger) {
-            return;
-        }
-
-        const url = trigger.dataset.emailUrl;
-
-        document.getElementById('bd-email-frame').src = url;
-        document.getElementById('bd-email-open').href = url;
-        document.getElementById('bd-email-to').textContent = 'Para: ' + trigger.dataset.emailTo;
-
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('bd-email-modal')).show();
-    });
-
-    // Soltar el iframe al cerrar: si no, el correo sigue cargado de fondo.
-    document.getElementById('bd-email-modal').addEventListener('hidden.bs.modal', function () {
-        document.getElementById('bd-email-frame').src = 'about:blank';
-    });
-</script>
+<script src="{{ asset('modules/helpdeskbirthday/js/recipients.js') }}?v={{ @filemtime(public_path('modules/helpdeskbirthday/js/recipients.js')) }}" defer></script>
 @endpush
 
 @include('helpdeskbirthday::campaigns._cancel-modal')
