@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Jobs\Helpdesks;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
@@ -14,10 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
-// uploading.allowed_extensions vive en helpdesk_settings (Modules\Helpdesk\Models\Setting),
-// distinta de Modules\Core\Models\Setting (tabla `settings`, usada aquí para
-// incoming_email) — alias explícito para no confundir las dos clases "Setting".
-use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskEmailActivity\Services\EmailBounceCorrelatorService;
 use Modules\HelpdeskEmailActivity\Support\DsnMessageParser;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
@@ -28,6 +26,7 @@ use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\SpamClassifierService;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Support\EmailReplyQuoteStripper;
@@ -238,9 +237,9 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
      * setFlag('Seen') falla (visto en producción: error de IMAP silencioso),
      * el mensaje seguiría apareciendo como no leído y se reprocesaría cada
      * minuto — el guard de idempotencia al inicio de processIncomingEmail()
-     * (por message_id) es quien evita que eso vuelva a crear un ticket
-     * duplicado o reenvíe la confirmación al cliente; aquí solo se distingue
-     * el log para que ese caso no se confunda con un fallo real de
+     * (por message_id o UID IMAP) es quien evita que eso vuelva a crear un
+     * ticket duplicado o reenvíe la confirmación al cliente; aquí solo se
+     * distingue el log para que ese caso no se confunda con un fallo real de
      * procesamiento.
      */
     protected function processMessage(ImapMessage $message, array $connection): void
@@ -353,19 +352,18 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
      */
     protected function processIncomingEmail(ImapMessage $message, array $connection = []): void
     {
-        // Idempotencia por Message-ID: si este correo ya se guardó en un
-        // TicketMail, reprocesarlo (típicamente porque setFlag('Seen') falló
-        // en la corrida anterior y el mensaje sigue apareciendo como no
-        // leído) NO debe crear un segundo ticket ni reenviar la confirmación
-        // al cliente — solo se necesita reintentar el flag, lo que hace el
-        // caller (processMessage()). Se comprueba el Message-ID real del
-        // mensaje (antes de aplicar el fallback generateMessageId() de más
-        // abajo): un correo entrante sin su propio Message-ID recibiría un
-        // valor aleatorio distinto en cada intento y este guard nunca
-        // engancharía, así que ahí no hay protección posible por esta vía.
+        // Idempotencia por Message-ID/UID IMAP: si este correo ya se guardó
+        // en un TicketMail, reprocesarlo (típicamente porque setFlag('Seen')
+        // falló y el mensaje sigue apareciendo como no leído) NO debe crear
+        // un segundo ticket ni reenviar la confirmación al cliente. Algunos
+        // emisores omiten Message-ID; en ese caso usamos el UID estable del
+        // buzón, con el canal/carpeta dentro del namespace.
         $messageId = $this->stringAttribute($message->message_id);
+        if (! $messageId) {
+            $messageId = $this->stableImapMessageId($message, $connection);
+        }
 
-        if ($messageId && TicketMail::where('message_id', $messageId)->exists()) {
+        if ($messageId && TicketMail::withTrashed()->where('message_id', $messageId)->exists()) {
             Log::info('FetchTicketEmailsJob: email already processed, skipping (message_id already recorded)', [
                 'message_id' => $messageId,
             ]);
@@ -419,7 +417,24 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         // sin recortar -- es el registro de auditoría ("Correo"/"Ver
         // original" en el panel), tiene que conservar el correo tal cual
         // llegó.
-        $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
+        try {
+            $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
+        } catch (QueryException $e) {
+            // El guard anterior cubre el caso normal. Este segundo cierre es
+            // necesario si dos workers pasan el guard al mismo tiempo: el
+            // índice UNIQUE de message_id gana la carrera y el perdedor debe
+            // tratarse como ya procesado, no quedar reintentándose para
+            // siempre con el correo aún marcado como no leído.
+            if ($messageId && TicketMail::withTrashed()->where('message_id', $messageId)->exists()) {
+                Log::warning('FetchTicketEmailsJob: duplicate email rejected by unique message_id index, skipping', [
+                    'message_id' => $messageId,
+                ]);
+
+                return;
+            }
+
+            throw $e;
+        }
 
         // Create a TicketItem for the timeline (customer message). Los
         // adjuntos entran por attachment_urls (rutas de storage), el mismo
@@ -795,10 +810,36 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
                 return null;
             }
 
+            $content = $attachment->getContent();
+            $maxBytes = app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024;
+            if (strlen($content) > $maxBytes) {
+                $skippedAttachments[] = $filename;
+                Log::warning('FetchTicketEmailsJob: skipped oversized attachment', [
+                    'filename' => $filename,
+                    'size' => strlen($content),
+                    'max_bytes' => $maxBytes,
+                ]);
+
+                return null;
+            }
+
             $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
             $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
 
-            Storage::disk($disk)->put($path, $attachment->getContent());
+            Storage::disk($disk)->put($path, $content);
+
+            try {
+                app(TicketAttachmentSecurityService::class)->assertSafeStored($disk, $path, $filename);
+            } catch (\Throwable $exception) {
+                Storage::disk($disk)->delete($path);
+                $skippedAttachments[] = $filename;
+                Log::warning('FetchTicketEmailsJob: skipped attachment blocked by malware scan', [
+                    'filename' => $filename,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return null;
+            }
 
             return $path;
         } catch (\Exception $e) {
@@ -820,19 +861,7 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
      */
     private function allowedAttachmentExtensions(): array
     {
-        $stored = HelpdeskGeneralSetting::get('uploading.allowed_extensions');
-
-        if (is_string($stored) && trim($stored) !== '') {
-            return array_values(array_filter(array_map(
-                fn (string $ext) => strtolower(trim($ext)),
-                explode(',', $stored)
-            )));
-        }
-
-        return array_map(
-            'strtolower',
-            config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'])
-        );
+        return app(HelpdeskSettings::class)->attachmentExtensions();
     }
 
     /**
@@ -909,10 +938,16 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
             return [];
         }
 
+        // RFC 5322 suele separar References con espacios, aunque algunos
+        // servidores/clientes los entregan separados por comas. Aceptar solo
+        // comas rompía el hilado cuando el correo no traía In-Reply-To y
+        // References venía en su formato habitual: <id1> <id2>.
+        preg_match_all('/<([^<>]+)>|([^\s,<>]+)/', $references, $matches, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL);
+
         return array_values(array_filter(array_map(
-            fn ($id) => trim($id, " \t\n\r\0\x0B<>"),
-            explode(',', $references)
-        )));
+            static fn (array $match): string => trim((string) ($match[1] ?? $match[2] ?? '')),
+            $matches,
+        ), static fn (string $id): bool => $id !== ''));
     }
 
     protected function stringAttribute(?ImapAttribute $attribute): ?string
@@ -1012,5 +1047,36 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
     protected function generateMessageId(): string
     {
         return uniqid().'@'.config('app.name');
+    }
+
+    /**
+     * Genera una identidad determinista para un mensaje IMAP sin
+     * Message-ID. El UID solo es único dentro de una carpeta, por eso el
+     * namespace incluye id/host/usuario/carpeta del canal. Si el doble de
+     * pruebas o un proveedor IMAP no expone UID, se conserva el fallback
+     * aleatorio de generateMessageId() y no se inventa una deduplicación
+     * basada en asunto/cuerpo (podría borrar dos correos legítimos iguales).
+     */
+    protected function stableImapMessageId(ImapMessage $message, array $connection = []): ?string
+    {
+        try {
+            $uid = $message->uid;
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! is_int($uid) && ! (is_string($uid) && ctype_digit($uid))) {
+            return null;
+        }
+
+        $config = $connection !== [] ? $connection : (array) config('helpdesk.email.imap', []);
+        $scope = implode('|', [
+            $config['id'] ?? '',
+            $config['server'] ?? $config['host'] ?? '',
+            $config['username'] ?? '',
+            $config['folder'] ?? 'INBOX',
+        ]);
+
+        return 'imap-'.hash('sha256', $scope.'|'.$uid).'@'.config('app.name');
     }
 }

@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
@@ -101,6 +102,114 @@ class ManagersTicketsCrudTest extends TestCase
         $this->assertEquals('urgent', $ticket->fresh()->priority);
     }
 
+    public function test_json_update_rejects_a_stale_client_version(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->putJson(route('manager.helpdesk.tickets.update', $ticket), [
+                'priority' => 'urgent',
+                'client_updated_at' => now()->subDay()->toIso8601String(),
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'stale_ticket');
+
+        $this->assertEquals('normal', $ticket->fresh()->priority);
+    }
+
+    public function test_detail_search_filters_the_thread_on_the_server(): void
+    {
+        $ticket = $this->createTicket();
+        $ticket->items()->create([
+            'author_id' => $this->customer->id,
+            'type' => 'message',
+            'body' => 'Necesito ayuda con la factura de marzo.',
+            'is_internal' => false,
+        ]);
+        $ticket->items()->create([
+            'user_id' => $this->manager->id,
+            'type' => 'message',
+            'body' => 'Revisaré el acceso a la cuenta.',
+            'is_internal' => false,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', [$ticket, 'thread_search' => 'factura']))
+            ->assertOk()
+            ->assertJsonPath('thread_search', 'factura')
+            ->assertJsonCount(1, 'thread')
+            ->assertJsonPath('thread.0.body', 'Necesito ayuda con la factura de marzo.');
+
+        $this->assertSame(
+            2,
+            TicketRead::where('user_id', $this->manager->id)
+                ->whereIn('ticket_item_id', $ticket->items()->pluck('id'))
+                ->count(),
+            'Buscar una coincidencia no debe dejar el resto del hilo como no leído.'
+        );
+    }
+
+    public function test_repeated_message_with_same_idempotency_key_is_not_duplicated(): void
+    {
+        $ticket = $this->createTicket();
+        $headers = ['X-Idempotency-Key' => 'manager-test-idempotency-9140'];
+        $payload = ['body' => 'Respuesta procesada una sola vez.', 'is_internal' => false];
+
+        $this->actingAs($this->manager)
+            ->withHeaders($headers)
+            ->postJson(route('manager.helpdesk.tickets.messages.store', $ticket), $payload)
+            ->assertOk()
+            ->assertJsonPath('idempotent_replay', false);
+
+        $this->actingAs($this->manager)
+            ->withHeaders($headers)
+            ->postJson(route('manager.helpdesk.tickets.messages.store', $ticket), $payload)
+            ->assertOk()
+            ->assertJsonPath('idempotent_replay', true);
+
+        $this->assertSame(1, $ticket->items()->where('body', $payload['body'])->count());
+    }
+
+    public function test_detail_thread_supports_incremental_pages(): void
+    {
+        $ticket = $this->createTicket();
+
+        for ($i = 1; $i <= 35; $i++) {
+            $ticket->items()->create([
+                'author_id' => $this->customer->id,
+                'type' => 'message',
+                'body' => 'Mensaje histórico '.$i,
+                'is_internal' => false,
+            ]);
+        }
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', [$ticket, 'thread_page' => 2, 'thread_per_page' => 30]))
+            ->assertOk()
+            ->assertJsonPath('thread_page', 2)
+            ->assertJsonPath('thread_per_page', 30)
+            ->assertJsonPath('thread_total', 35)
+            ->assertJsonPath('thread_has_more', false)
+            ->assertJsonCount(5, 'thread');
+    }
+
+    public function test_detail_channel_filter_accepts_formulario_alias_for_legacy_form_tickets(): void
+    {
+        $ticket = $this->createTicket(['source' => 'form']);
+        $ticket->items()->create([
+            'author_id' => $this->customer->id,
+            'type' => 'message',
+            'body' => 'Solicitud enviada desde el formulario.',
+            'is_internal' => false,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', [$ticket, 'thread_channel' => 'formulario']))
+            ->assertOk()
+            ->assertJsonPath('thread_filters.channel', 'formulario')
+            ->assertJsonCount(1, 'thread');
+    }
+
     public function test_manager_can_close_ticket(): void
     {
         $ticket = $this->createTicket();
@@ -110,6 +219,20 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertRedirect();
 
         $this->assertNotNull($ticket->fresh()->closed_at);
+    }
+
+    public function test_json_close_rejects_a_stale_client_version(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.close', $ticket), [
+                'client_updated_at' => now()->subDay()->toIso8601String(),
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'stale_ticket');
+
+        $this->assertNull($ticket->fresh()->closed_at);
     }
 
     /**

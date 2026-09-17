@@ -655,7 +655,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
+        Route::middleware(['api', 'auth:sanctum', 'helpdesk.api.scope', 'throttle:60,1'])
             ->prefix('api/v1/helpdesk')
             ->name('api.v1.helpdesk.')
             ->group($path);

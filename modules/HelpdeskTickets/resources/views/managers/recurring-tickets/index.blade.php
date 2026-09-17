@@ -316,86 +316,19 @@
 
 @endsection
 
-@push('styles')
-<style>
-    .rt-bulk-toolbar { z-index: 1050; }
-</style>
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
 @endpush
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+{{-- Solo datos: la lógica entera vive en recurring-tickets-index.js. --}}
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // ── Filtros avanzados ────────────────────────────────────────────
-    $('.select2-filter-modal').select2({
-        dropdownParent: window.FilterShell.el('rt-filter-modal'),
-        width: '100%',
-    });
-
-    $('#rt-filter-apply-btn').on('click', function () {
-        $('#rt-filter-frequency').val($('#modal-frequency').val());
-        $('#rt-filter-category').val($('#modal-category').val());
-        $('#rt-filter-status').val($('#modal-status').val());
-        window.FilterShell.close('rt-filter-modal');
-        $('#rt-filter-form').submit();
-    });
-
-    $('#rt-filter-clear-btn').on('click', function () {
-        $('#modal-frequency, #modal-category, #modal-status').val(null).trigger('change');
-    });
-
-    // ── Acciones masivas ─────────────────────────────────────────────────
-    if (document.querySelector('.bulk-checkbox')) {
-        $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-        var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-        $('#bulk-modal').on('hide.bs.modal', function () {
-            $('#bulk-action-select').val('').trigger('change');
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            bulk.reset();
-        });
-
-        $('#bulk-apply-btn').on('click', function () {
-            var action = $('#bulk-action-select').val();
-            var ids = bulk.getIds();
-
-            if (! action) { toastr.warning('Selecciona una accion.'); return; }
-            if (! ids.length) { toastr.warning('Selecciona al menos un ticket recurrente.'); return; }
-            if (action === 'delete' && ! confirm('¿Eliminar los ' + ids.length + ' ticket(s) recurrente(s) seleccionado(s)? No se puede deshacer.')) return;
-
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('manager.helpdesk.recurring-tickets.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        });
-    }
-});
+window.hdtRecurringTicketsIndexConfig = {
+    bulkActionUrl: @json(route('manager.helpdesk.recurring-tickets.bulk-action')),
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/recurring-tickets-index.js') }}"></script>
 @endpush

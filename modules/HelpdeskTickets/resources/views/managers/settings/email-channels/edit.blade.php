@@ -125,32 +125,12 @@
 @endsection
 
 @push('scripts')
+{{-- Solo datos: la URL de sincronizacion (depende del id del canal). La
+     lógica entera vive en email-channel-edit.js. --}}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-    document.querySelector('.btn-sync-channel')?.addEventListener('click', function () {
-        const button = this;
-        const original = button.textContent;
-        button.disabled = true;
-        button.textContent = 'Sincronizando...';
-
-        fetch('{{ route('manager.helpdesk.settings.email-channels.sync', $channel['id']) }}', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        }).then(r => r.json()).then(data => {
-            if (data.success) {
-                toastr.success(data.message);
-            } else {
-                toastr.error(data.message);
-            }
-            setTimeout(() => location.reload(), 1200);
-        }).catch(() => {
-            toastr.error('Error inesperado al sincronizar el canal.');
-            button.disabled = false;
-            button.textContent = original;
-        });
-    });
-});
+window.hdtEmailChannelEditConfig = {
+    syncUrl: @json(route('manager.helpdesk.settings.email-channels.sync', $channel['id'])),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/email-channel-edit.js') }}"></script>
 @endpush

@@ -5,12 +5,16 @@ use Modules\HelpdeskTickets\Http\Controllers\Portal\CustomerPortalController;
 
 Route::get('/', [CustomerPortalController::class, 'index'])->name('index');
 Route::get('login', [CustomerPortalController::class, 'showLogin'])->name('login');
-Route::post('login', [CustomerPortalController::class, 'login'])->name('login.submit');
+Route::post('login', [CustomerPortalController::class, 'login'])
+    ->middleware('throttle:helpdesk-customer-portal')
+    ->name('login.submit');
 Route::get('auth/{token}', [CustomerPortalController::class, 'authenticate'])->name('authenticate');
 Route::post('logout', [CustomerPortalController::class, 'logout'])->name('logout');
 Route::get('tickets', [CustomerPortalController::class, 'tickets'])->name('tickets');
 Route::get('tickets/create', [CustomerPortalController::class, 'createTicket'])->name('tickets.create');
-Route::post('tickets', [CustomerPortalController::class, 'storeTicket'])->name('tickets.store');
+Route::post('tickets', [CustomerPortalController::class, 'storeTicket'])
+    ->middleware('throttle:helpdesk-customer-portal')
+    ->name('tickets.store');
 // Deflexión: artículos que podrían resolver la duda antes de abrir el ticket.
 // Throttle propio: se dispara mientras el cliente escribe, no al enviar.
 Route::post('tickets/suggest-articles', [CustomerPortalController::class, 'suggestArticles'])
@@ -22,8 +26,12 @@ Route::get('tickets/{ticketNumber}', [CustomerPortalController::class, 'showTick
 Route::get('tickets/{ticketNumber}/attachments/{attachment}', [CustomerPortalController::class, 'downloadAttachment'])
     ->name('tickets.attachments.download')
     ->whereNumber('attachment');
-Route::post('tickets/{ticketNumber}/reply', [CustomerPortalController::class, 'replyToTicket'])->name('tickets.reply');
-Route::post('tickets/{ticketNumber}/rate', [CustomerPortalController::class, 'rateTicket'])->name('tickets.rate');
+Route::post('tickets/{ticketNumber}/reply', [CustomerPortalController::class, 'replyToTicket'])
+    ->middleware('throttle:helpdesk-customer-portal')
+    ->name('tickets.reply');
+Route::post('tickets/{ticketNumber}/rate', [CustomerPortalController::class, 'rateTicket'])
+    ->middleware('throttle:helpdesk-customer-portal')
+    ->name('tickets.rate');
 Route::get('tickets/{ticketNumber}/rate/{rating}', [CustomerPortalController::class, 'rateTicketFromEmail'])->name('tickets.rate.email')->middleware('signed');
 Route::get('account', [CustomerPortalController::class, 'account'])->name('account');
 Route::put('account', [CustomerPortalController::class, 'updateAccount'])->name('account.update');

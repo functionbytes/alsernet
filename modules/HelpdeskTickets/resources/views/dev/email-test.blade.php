@@ -86,124 +86,13 @@
 @endsection
 
 @push('scripts')
+{{-- Solo datos: las URLs de servidor que el JS necesita. La lógica entera
+     vive en dev-email-test.js. --}}
 <script>
-$(document).ready(function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    function clearFieldErrors() {
-        $('#send-email-form .form-control').removeClass('is-invalid');
-        $('#send-email-form .invalid-feedback').text('');
-    }
-
-    function showFieldErrors(errors) {
-        $.each(errors, function (field, messages) {
-            $('#' + field).addClass('is-invalid');
-            $('#error-' + field).text(messages[0]);
-        });
-    }
-
-    function setSendLoading(loading) {
-        $('#btn-send-text').toggleClass('d-none', loading);
-        $('#btn-send-spinner').toggleClass('d-none', !loading);
-        $('#btn-send-email').prop('disabled', loading);
-    }
-
-    function setSyncLoading(loading) {
-        $('#btn-sync-text').toggleClass('d-none', loading);
-        $('#btn-sync-spinner').toggleClass('d-none', !loading);
-        $('#btn-sync').prop('disabled', loading);
-    }
-
-    function renderTicketsTable(tickets) {
-        const $container = $('#tickets-result');
-        $container.empty();
-
-        if (!tickets || tickets.length === 0) {
-            $container.append($('<p class="text-muted small mb-0">').text('No se encontraron tickets recientes.'));
-            return;
-        }
-
-        const $tbody = $('<tbody>');
-        tickets.forEach(function (t) {
-            $tbody.append(
-                $('<tr>').append(
-                    $('<td>').text(t.id),
-                    $('<td>').text(t.ticket_number || '—'),
-                    $('<td>').text(t.subject || '—'),
-                    $('<td>').append($('<span class="badge bg-secondary">').text(t.source || '—')),
-                    $('<td class="text-nowrap">').text(t.created_at || '—')
-                )
-            );
-        });
-
-        const $table = $('<table class="table table-sm table-hover align-middle mb-0">').append(
-            $('<thead>').append(
-                $('<tr>').append(
-                    $('<th>').text('#'),
-                    $('<th>').text('Numero'),
-                    $('<th>').text('Asunto'),
-                    $('<th>').text('Fuente'),
-                    $('<th>').text('Fecha')
-                )
-            ),
-            $tbody
-        );
-
-        $container.append($('<div class="table-responsive">').append($table));
-    }
-
-    $('#btn-send-email').on('click', function () {
-        clearFieldErrors();
-        setSendLoading(true);
-
-        $.ajax({
-            url: '{{ route('dev.email-test.send') }}',
-            method: 'POST',
-            dataType: 'json',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            data: $('#send-email-form').serialize(),
-            success: function (res) {
-                toastr.success(res.message || 'Email enviado correctamente');
-                toastr.info('Ahora haz click en "Sincronizar" para crear el ticket.');
-            },
-            error: function (xhr) {
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                    showFieldErrors(xhr.responseJSON.errors);
-                    toastr.error('Corrige los errores del formulario.');
-                } else {
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error al enviar el email.';
-                    toastr.error(msg);
-                }
-            },
-            complete: function () {
-                setSendLoading(false);
-            }
-        });
-    });
-
-    $('#btn-sync').on('click', function () {
-        setSyncLoading(true);
-        $('#tickets-result').html('<p class="text-muted small mb-0"><span class="spinner-border spinner-border-sm me-1"></span> Sincronizando...</p>');
-
-        $.ajax({
-            url: '{{ route('dev.email-test.sync') }}',
-            method: 'POST',
-            dataType: 'json',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            success: function (res) {
-                toastr.success('Sincronizacion completada');
-                renderTicketsTable(res.tickets);
-            },
-            error: function (xhr) {
-                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error al sincronizar.';
-                toastr.error(msg);
-                $('#tickets-result').empty().append($('<p class="text-danger small mb-0">').text(msg));
-            },
-            complete: function () {
-                setSyncLoading(false);
-            }
-        });
-    });
-});
+window.hdtDevEmailTestConfig = {
+    sendUrl: @json(route('dev.email-test.send')),
+    syncUrl: @json(route('dev.email-test.sync')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/dev-email-test.js') }}"></script>
 @endpush

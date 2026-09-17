@@ -72,6 +72,7 @@ class TicketStatusChanged implements ShouldBroadcast
             'previous_status' => [
                 'id' => $this->previousStatus->id,
                 'name' => $this->previousStatus->name,
+                'slug' => $this->previousStatus->slug,
                 'is_open' => $this->previousStatus->is_open,
                 'color' => $this->previousStatus->color,
                 'stops_sla_timer' => $this->previousStatus->stops_sla_timer,
@@ -79,6 +80,7 @@ class TicketStatusChanged implements ShouldBroadcast
             'new_status' => [
                 'id' => $this->newStatus->id,
                 'name' => $this->newStatus->name,
+                'slug' => $this->newStatus->slug,
                 'is_open' => $this->newStatus->is_open,
                 'color' => $this->newStatus->color,
                 'stops_sla_timer' => $this->newStatus->stops_sla_timer,

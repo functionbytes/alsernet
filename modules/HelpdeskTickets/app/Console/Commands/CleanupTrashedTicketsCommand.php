@@ -5,17 +5,29 @@ namespace Modules\HelpdeskTickets\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Services\TicketSettings;
 
 class CleanupTrashedTicketsCommand extends Command
 {
-    protected $signature = 'trashedticket:autodelete {--days=30 : Delete tickets trashed for this many days}';
+    protected $signature = 'trashedticket:autodelete {--days= : Override the configured retention period in days}';
 
     protected $description = 'Permanently delete soft-deleted tickets older than N days';
 
     public function handle(): int
     {
         try {
-            $days = (int) $this->option('days');
+            $settings = app(TicketSettings::class);
+
+            if (! $settings->boolean('trashed_ticket_autodelete', true)) {
+                $this->info('Automatic deletion of trashed tickets is disabled in Helpdesk settings.');
+
+                return Command::SUCCESS;
+            }
+
+            $optionDays = $this->option('days');
+            $days = $optionDays !== null
+                ? max(1, (int) $optionDays)
+                : $settings->integer('trashed_ticket_delete_time', 30);
             $count = 0;
 
             $tickets = Ticket::onlyTrashed()

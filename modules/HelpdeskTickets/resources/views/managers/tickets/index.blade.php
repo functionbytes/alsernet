@@ -621,7 +621,7 @@
                         <button type="button" class="tkt-btn tkt-btn-primary" id="tkt-empty-create">Crear un ticket</button>
                     @endcan
                 </div>
-                <div id="tkt-detail" style="display:none"></div>
+                <div id="tkt-detail" class="tkt-initially-hidden"></div>
             </div>
 
             <button type="button" class="tkt-split-resizer" id="tkt-resizer-side" data-resize-target="side"

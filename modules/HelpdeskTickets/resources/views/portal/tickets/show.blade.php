@@ -20,8 +20,8 @@
                 <div>
                     @if ($ticket->status)
                         <span
-                            class="badge fs-6"
-                            style="background-color: {{ $ticket->status->color ?? '#6c757d' }}"
+                            class="badge fs-6 hdt-dyn-bg"
+                            style="--hdt-color: {{ $ticket->status->color ?? '#6c757d' }}"
                         >
                             {{ $ticket->status->name }}
                         </span>
@@ -111,14 +111,20 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Attachments <span class="text-muted">(optional, max 5MB each)</span></label>
-                        <input type="file" name="attachments[]" class="form-control @error('attachments.*') is-invalid @enderror" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip">
-                        <div class="form-text">Allowed: images, PDF, Word, text, ZIP. Max 5MB per file.</div>
-                        @error('attachments.*')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @if ($attachmentSettings['user_upload_enabled'] ?? true)
+                        @php
+                            $attachmentMaxMb = ($attachmentSettings['max_kilobytes'] ?? 25600) / 1024;
+                            $attachmentAccept = collect($attachmentSettings['extensions'] ?? [])->map(fn ($extension) => '.'.$extension)->implode(',');
+                        @endphp
+                        <div class="mb-3">
+                            <label class="form-label">Attachments <span class="text-muted">(optional, max {{ rtrim(rtrim(number_format($attachmentMaxMb, 2, '.', ''), '0'), '.') }}MB each)</span></label>
+                            <input type="file" name="attachments[]" class="form-control @error('attachments.*') is-invalid @enderror" multiple accept="{{ $attachmentAccept }}">
+                            <div class="form-text">Allowed: {{ strtoupper(implode(', ', $attachmentSettings['extensions'] ?? [])) }}. Max {{ rtrim(rtrim(number_format($attachmentMaxMb, 2, '.', ''), '0'), '.') }}MB per file.</div>
+                            @error('attachments.*')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-paper-plane me-1"></i>Send reply
                     </button>

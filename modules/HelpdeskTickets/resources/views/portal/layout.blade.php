@@ -7,13 +7,7 @@
     <title>Support Portal</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f6f8; }
-        .navbar-brand { font-weight: 600; }
-        .ticket-message { border-left: 4px solid #dee2e6; padding-left: 1rem; margin-bottom: 1rem; }
-        .ticket-message.from-customer { border-color: #90bb13; }
-        .ticket-message.from-agent { border-color: #0d6efd; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/portal.css') }}">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
@@ -61,6 +55,15 @@
         @yield('content')
     </div>
 
+    {{-- jQuery: lo asume el JS propio de las pantallas del portal (p.ej.
+         portal-ticket-create-form.js), pero nunca se cargaba aquí — bug
+         preexistente, no introducido en esta limpieza. --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Sin este stack, cualquier @push('scripts') de las vistas del portal
+         (p.ej. portal/tickets/create.blade.php) se descartaba en silencio:
+         bug preexistente que dejaba la deflexión de KB del formulario de
+         "nuevo ticket" sin ejecutarse nunca. --}}
+    @stack('scripts')
 </body>
 </html>

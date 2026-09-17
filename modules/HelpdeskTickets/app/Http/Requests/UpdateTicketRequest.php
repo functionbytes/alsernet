@@ -40,6 +40,7 @@ class UpdateTicketRequest extends BaseTicketRequest
             'sla_policy_id' => 'sometimes|nullable|integer|exists:helpdesk.helpdesk_ticket_sla_policies,id',
             'tags' => 'sometimes|nullable|array',
             'tags.*' => 'string|max:100',
+            'client_updated_at' => 'sometimes|nullable|date',
         ];
     }
 
@@ -54,5 +55,10 @@ class UpdateTicketRequest extends BaseTicketRequest
             'title', 'subject', 'description', 'status_id', 'category_id',
             'priority', 'assignee_id', 'group_id', 'sla_policy_id', 'tags',
         ]);
+    }
+
+    public function clientUpdatedAt(): ?string
+    {
+        return $this->input('client_updated_at');
     }
 }

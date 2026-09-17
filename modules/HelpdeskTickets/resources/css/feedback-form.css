@@ -1,0 +1,11 @@
+/**
+ * Formulario público de feedback CSAT (public/feedback-form.blade.php) —
+ * propiedad de HelpdeskTickets. Vivía como <style> suelto en el propio
+ * Blade.
+ *
+ * Tras editar, copiar a public/modules/helpdesktickets/css/feedback-form.css.
+ */
+
+.rating-star { font-size: 2.5rem; cursor: pointer; color: #e4e5e9; transition: color 0.2s; }
+.rating-star.active, .rating-star:hover { color: #ffc107; }
+.rating-star.active i, .rating-star:hover i { font-weight: 900; }

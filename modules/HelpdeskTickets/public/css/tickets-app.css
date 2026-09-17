@@ -163,6 +163,10 @@ body:has(.tkt) .mc-content {
 .tkt-row { display: flex; align-items: center; gap: 8px; }
 .tkt-spacer { margin-left: auto; }
 .tkt-trunc { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Oculto en el primer render — antes style="display:none" suelto en el
+   Blade. Sin !important: core.js lo revela con $('#tkt-detail').css(
+   'display', 'flex'), que escribe el estilo inline y ya gana a la clase. */
+.tkt-initially-hidden { display: none; }
 
 /* ── Botones ─────────────────────────────────────────────── */
 .tkt-btn {

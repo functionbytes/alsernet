@@ -53,16 +53,29 @@ class TicketRead extends Model
 
     /**
      * Mark every item on the ticket as read for the given user (bulk insert,
-     * skipping items already marked read). Assumes $ticket->items is already
-     * eager-loaded — shared by both the manager and agent ticket detail
-     * views when opening a ticket.
+     * skipping items already marked read). It queries only item IDs, so the
+     * result is correct even when a caller loaded a filtered thread.
+     *
+     * @return int Number of items newly marked as read (0 if the user had
+     *             already read everything — TicketDetailDataController usa
+     *             esto para no registrar "Ticket visto" en la pestaña
+     *             Actividad en cada apertura, solo cuando de verdad había
+     *             algo nuevo que leer).
      */
-    public static function markAllReadFor(Ticket $ticket, int $userId): void
+    public static function markAllReadFor(Ticket $ticket, int $userId): int
     {
-        $itemIds = $ticket->items->pluck('id');
+        // No uses la relación potencialmente filtrada que haya cargado la
+        // pantalla. El detalle admite ?thread_search y, si se reutilizaba
+        // $ticket->items, abrir una búsqueda marcaba leídos solo los matches;
+        // los mensajes restantes seguían apareciendo como no leídos al volver
+        // al listado. Solo necesitamos los IDs y esta consulta evita además
+        // hidratar el hilo entero.
+        $itemIds = TicketItem::query()
+            ->where('ticket_id', $ticket->id)
+            ->pluck('id');
 
         if ($itemIds->isEmpty()) {
-            return;
+            return 0;
         }
 
         $alreadyRead = static::where('user_id', $userId)
@@ -84,6 +97,8 @@ class TicketRead extends Model
         if ($toInsert !== []) {
             static::insert($toInsert);
         }
+
+        return count($toInsert);
     }
 
     /**

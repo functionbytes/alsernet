@@ -3,10 +3,13 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketUnassigned;
+use Modules\HelpdeskTickets\Events\TicketUpdated;
+use Modules\HelpdeskTickets\Exceptions\StaleTicketException;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 class TicketUpdateService
@@ -16,9 +19,33 @@ class TicketUpdateService
      *
      * @return array<string> Fields that were actually changed
      */
-    public function applyChanges(Ticket $ticket, array $data, User $actor): array
+    public function applyChanges(Ticket $ticket, array $data, User $actor, ?string $expectedUpdatedAt = null): array
     {
-        return DB::transaction(fn () => $this->applyChangesWithinTransaction($ticket, $data, $actor));
+        return DB::transaction(function () use ($ticket, $data, $actor, $expectedUpdatedAt) {
+            // Serializa las ediciones de varios agentes. La comparación se
+            // hace dentro de la misma transacción que el lock: leer primero y
+            // bloquear después dejaba una ventana en la que dos formularios
+            // podían aprobar la misma versión antigua.
+            $lockedTicket = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
+
+            if ($expectedUpdatedAt !== null && $lockedTicket->updated_at) {
+                $expected = Carbon::parse($expectedUpdatedAt);
+                $actual = $lockedTicket->updated_at;
+
+                // La mayoría de instalaciones persisten segundos, aunque el
+                // navegador envíe ISO con milisegundos. Comparar a segundo
+                // evita falsos conflictos por precisión que la base de datos
+                // no conserva.
+                if ($expected->getTimestamp() !== $actual->getTimestamp()) {
+                    throw new StaleTicketException(
+                        $expected->toIso8601String(),
+                        $actual->toIso8601String(),
+                    );
+                }
+            }
+
+            return $this->applyChangesWithinTransaction($lockedTicket, $data, $actor);
+        });
     }
 
     /**
@@ -27,9 +54,11 @@ class TicketUpdateService
     private function applyChangesWithinTransaction(Ticket $ticket, array $data, User $actor): array
     {
         $changed = [];
+        $changeDetails = [];
 
         if (isset($data['status_id']) && $data['status_id'] != $ticket->status_id) {
             $oldStatus = $ticket->status;
+            $oldStatusId = $ticket->status_id;
             $ticket->update(['status_id' => $data['status_id']]);
             $newStatus = $ticket->fresh()->status;
 
@@ -67,10 +96,12 @@ class TicketUpdateService
             // además dispara esos 4 listeners.
             TicketStatusChanged::dispatch($ticket, $oldStatus, $newStatus);
             $changed[] = 'status_id';
+            $changeDetails['status_id'] = ['old' => $oldStatusId, 'new' => $newStatus->id];
             unset($data['status_id']);
         }
 
         if (isset($data['priority']) && $data['priority'] != $ticket->priority) {
+            $oldPriority = $ticket->priority;
             $ticket->items()->create([
                 'type' => 'priority_changed',
                 'user_id' => $actor->id,
@@ -78,10 +109,12 @@ class TicketUpdateService
                 'metadata' => ['old' => $ticket->priority, 'new' => $data['priority']],
             ]);
             $changed[] = 'priority';
+            $changeDetails['priority'] = ['old' => $oldPriority, 'new' => $data['priority']];
         }
 
         if (isset($data['category_id']) && $data['category_id'] != $ticket->category_id) {
             $oldCategory = $ticket->category;
+            $oldCategoryId = $ticket->category_id;
             $ticket->update(['category_id' => $data['category_id']]);
             $newCategory = $ticket->fresh()->category;
 
@@ -92,6 +125,7 @@ class TicketUpdateService
                 'metadata' => ['old' => $ticket->category_id, 'new' => $data['category_id']],
             ]);
             $changed[] = 'category_id';
+            $changeDetails['category_id'] = ['old' => $oldCategoryId, 'new' => $newCategory?->id];
             unset($data['category_id']);
         }
 
@@ -101,6 +135,7 @@ class TicketUpdateService
         // desasignación (más abajo) inalcanzable: nunca se limpiaba
         // assignee_id/assigned_at ni se disparaba TicketUnassigned.
         if (array_key_exists('assignee_id', $data) && $data['assignee_id'] != $ticket->assignee_id) {
+            $oldAssigneeId = $ticket->assignee_id;
             if ($data['assignee_id']) {
                 $ticket->assignTo($data['assignee_id']);
 
@@ -124,13 +159,26 @@ class TicketUpdateService
                 TicketUnassigned::dispatch($ticket);
             }
             $changed[] = 'assignee_id';
+            $changeDetails['assignee_id'] = ['old' => $oldAssigneeId, 'new' => $data['assignee_id'] ?: null];
             unset($data['assignee_id']);
         }
 
         $remaining = array_diff_key($data, array_flip(['status_id', 'category_id', 'assignee_id']));
         if (! empty($remaining)) {
+            foreach ($remaining as $field => $value) {
+                $changeDetails[$field] = ['old' => $ticket->getAttribute($field), 'new' => $value];
+            }
             $ticket->update($remaining);
             $changed = array_merge($changed, array_keys($remaining));
+        }
+
+        if ($changed !== []) {
+            // El listado necesita enterarse también de prioridad, categoría,
+            // equipo y cualquier otro campo editable, no solo del estado o
+            // de la asignación. El frontend coalescea este aviso con
+            // TicketStatusChanged/TicketAssigned cuando una acción toca
+            // varios campos.
+            TicketUpdated::dispatch($ticket->fresh(), $changeDetails);
         }
 
         return $changed;

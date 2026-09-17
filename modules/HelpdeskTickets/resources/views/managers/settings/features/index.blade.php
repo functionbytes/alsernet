@@ -83,9 +83,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush

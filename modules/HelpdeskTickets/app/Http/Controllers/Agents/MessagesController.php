@@ -39,8 +39,13 @@ class MessagesController extends Controller
 
         $ticket->update(['last_message_at' => now()]);
 
-        // Set first_response_at if this is the first agent response
-        if ($ticket->first_response_at === null) {
+        // Set first_response_at if this is the first REAL response to the
+        // customer — a plain "is_internal" note is not visible to them, so
+        // it must not count (mismo bug que TicketMessagingController::
+        // createMessageItem(), el equivalente del panel de manager — se
+        // marcaba con cualquier mensaje, notas internas incluidas; QA
+        // 14-sep-2026).
+        if (! ($validated['is_internal'] ?? false) && $ticket->first_response_at === null) {
             $ticket->update(['first_response_at' => now()]);
         }
 

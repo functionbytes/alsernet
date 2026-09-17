@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketUnassigned;
+use Modules\HelpdeskTickets\Exceptions\StaleTicketException;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
@@ -141,5 +142,20 @@ class TicketUpdateServiceTest extends TestCase
         $this->assertNull($fresh->assigned_at);
         Event::assertDispatched(TicketUnassigned::class, fn (TicketUnassigned $event) => $event->ticket->is($ticket));
         Event::assertNotDispatched(TicketAssigned::class);
+    }
+
+    public function test_rejects_an_edit_based_on_an_old_ticket_version(): void
+    {
+        $ticket = Ticket::factory()->create(['priority' => 'normal']);
+        $actor = User::factory()->create();
+
+        $this->expectException(StaleTicketException::class);
+
+        $this->service->applyChanges(
+            $ticket,
+            ['priority' => 'urgent'],
+            $actor,
+            now()->subDay()->toIso8601String(),
+        );
     }
 }

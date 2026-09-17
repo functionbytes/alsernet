@@ -1,5 +1,8 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Mis tickets')
 
 @section('page_header')
@@ -57,7 +60,7 @@
                         <td>{{ $ticket->subject }}</td>
                         <td>
                             @if($ticket->status)
-                                <span class="badge" style="background-color:{{ $ticket->status->color }}">
+                                <span class="badge hdt-dyn-bg" style="--hdt-color:{{ $ticket->status->color }}">
                                     {{ $ticket->status->name }}
                                 </span>
                             @endif
@@ -85,9 +88,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush

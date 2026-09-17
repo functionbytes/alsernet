@@ -5,8 +5,10 @@ namespace Modules\HelpdeskTickets\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\CannedReply;
+use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
+use Modules\HelpdeskTickets\Services\TicketSettings;
 
 class AutoResponseTicketCommand extends Command
 {
@@ -17,7 +19,15 @@ class AutoResponseTicketCommand extends Command
     public function handle(): int
     {
         try {
-            $hours = (int) config('helpdesk.auto_response_hours', 1);
+            $settings = app(TicketSettings::class);
+
+            if (! $settings->boolean('auto_responsetime_ticket', false)) {
+                $this->info('Automatic first-response messages are disabled in Helpdesk settings.');
+
+                return Command::SUCCESS;
+            }
+
+            $hours = $settings->integer('auto_responsetime_ticket_time', 48);
 
             $tickets = Ticket::query()
                 ->whereNull('first_response_at')
@@ -36,7 +46,7 @@ class AutoResponseTicketCommand extends Command
 
             foreach ($tickets as $ticket) {
                 try {
-                    TicketItem::create([
+                    $item = TicketItem::create([
                         'ticket_id' => $ticket->id,
                         'type' => 'message',
                         'body' => $body,
@@ -45,7 +55,16 @@ class AutoResponseTicketCommand extends Command
                         'metadata' => ['auto_response' => true],
                     ]);
 
-                    $ticket->update(['first_response_at' => now()]);
+                    $ticket->update([
+                        'first_response_at' => now(),
+                        'last_message_at' => now(),
+                    ]);
+                    // Persisting the system message alone did not send an
+                    // email to the customer. Reuse the same event pipeline as
+                    // a real agent reply so the automatic response is visible
+                    // in the portal and delivered through the configured
+                    // ticket mailbox.
+                    MessageAdded::dispatch($item);
                     $count++;
                 } catch (\Throwable $e) {
                     Log::error('AutoResponse failed for ticket', [

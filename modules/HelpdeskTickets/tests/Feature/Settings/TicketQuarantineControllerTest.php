@@ -31,7 +31,6 @@ class TicketQuarantineControllerTest extends TestCase
     // hay FKs cruzadas hacia 'mariadb' en este flujo que necesiten el PDO
     // compartido.
     use DatabaseTransactions;
-
     use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];

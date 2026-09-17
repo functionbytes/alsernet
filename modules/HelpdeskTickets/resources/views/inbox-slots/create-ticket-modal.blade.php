@@ -213,7 +213,9 @@
 <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/inbox-create-ticket.css') }}">
 
 @push('scripts')
-<script src="{{ asset('modules/helpdesktickets/js/inbox-create-ticket.js') }}"></script>
+{{-- Solo datos: los textos traducidos del servidor que el JS necesita para
+     los toasts de error/éxito. La lógica (select2, submit, etc.) vive entera
+     en inbox-create-ticket.js — nada de <script> con código suelto aquí. --}}
 <script>
 window.bvTicketI18n = {
     subjectRequired: @json(__('helpdesktickets::helpdesktickets.inbox_escalate.subject_required')),
@@ -221,14 +223,6 @@ window.bvTicketI18n = {
     error: @json(__('helpdesktickets::helpdesktickets.inbox_escalate.error')),
     viewTicket: @json(__('helpdesktickets::helpdesktickets.inbox_escalate.view_ticket')),
 };
-$(function () {
-    // dropdownParent: igual que el resto de selects dentro de un .bv-modal
-    // (z-index:1080) — sin esto, el desplegable de select2 (z-index:1051 por
-    // defecto) se renderiza detrás del propio modal.
-    $('#bv-ticket-category, #bv-ticket-assignee, #bv-ticket-group').select2({
-        width: '100%',
-        dropdownParent: $('[data-bv-modal-name="create-ticket"]'),
-    });
-});
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/inbox-create-ticket.js') }}"></script>
 @endpush

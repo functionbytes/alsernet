@@ -5,7 +5,7 @@
      envoltorio visual — no se generó con openModal() porque los <option
      selected> ya vienen resueltos por el servidor. --}}
 <div class="tkt-modal-backdrop" id="tkt-filters-modal-backdrop">
-    <div class="tkt-modal w-md">
+    <div class="tkt-modal w-lg" role="dialog" aria-modal="true" aria-labelledby="tkt-filters-modal-title" tabindex="-1">
         <form method="get" id="htk-filters-form" action="{{ route('manager.helpdesk.tickets.index') }}">
             {{-- El mismo arrastre que hace la barra de filtros, en el otro
                  sentido: este formulario controla 16 campos, pero la pantalla
@@ -22,9 +22,9 @@
                 <div class="tkt-modal-icon"><i class="fa-solid fa-sliders"></i></div>
                 <div class="hdt-flex-fill-min">
                     <div class="tkt-modal-kicker">Tickets · Filtros</div>
-                    <div class="tkt-modal-title">Filtrar tickets</div>
+                    <div class="tkt-modal-title" id="tkt-filters-modal-title">Filtrar tickets</div>
                 </div>
-                <button type="button" class="tkt-modal-close" id="tkt-filters-modal-close"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="tkt-modal-close" id="tkt-filters-modal-close" aria-label="Cerrar filtros"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
 
             <div class="tkt-modal-body">

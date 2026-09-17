@@ -60,40 +60,10 @@
 </div>
 
 @push('styles')
-<style>
-.rating-star { font-size: 2.5rem; cursor: pointer; color: #e4e5e9; transition: color 0.2s; }
-.rating-star.active, .rating-star:hover { color: #ffc107; }
-.rating-star.active i, .rating-star:hover i { font-weight: 900; }
-</style>
+<link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/feedback-form.css') }}">
 @endpush
 
 @push('scripts')
-<script>
-$(function () {
-    $('.select2').select2({ width: '100%' });
-});
-
-(function() {
-    const stars = document.querySelectorAll('.rating-star');
-    const form = document.querySelector('form[data-reason-threshold]');
-    const threshold = form ? parseInt(form.dataset.reasonThreshold, 10) : 3;
-    const reasonBlock = document.getElementById('reason-block');
-    stars.forEach((star, idx) => {
-        star.addEventListener('click', () => {
-            const rating = idx + 1;
-            const radio = document.getElementById('r' + rating);
-            radio.checked = true;
-            stars.forEach((s, i) => {
-                s.classList.toggle('active', i <= idx);
-                s.querySelector('i').className = i <= idx ? 'fas fa-star' : 'far fa-star';
-            });
-            // Solo pedimos el motivo cuando la nota es baja (<= umbral).
-            if (reasonBlock) {
-                reasonBlock.classList.toggle('d-none', rating > threshold);
-            }
-        });
-    });
-})();
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/feedback-form.js') }}"></script>
 @endpush
 @endsection

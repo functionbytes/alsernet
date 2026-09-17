@@ -47,8 +47,11 @@ class SendCustomerReplyNotification implements ShouldQueue
     {
         $item = $event->item;
 
-        // Only notify customer when an agent (user_id set) sends a non-internal message
-        if ($item->is_internal || $item->user_id === null) {
+        // System auto-responses are also customer-visible. All other
+        // user-less items (imports, placeholders or internal system records)
+        // must stay silent.
+        $isAutomaticResponse = (bool) data_get($item->metadata, 'auto_response', false);
+        if ($item->is_internal || ($item->user_id === null && ! $isAutomaticResponse)) {
             return;
         }
 
