@@ -93,7 +93,8 @@
                     $contentLabels = ['empty' => 'Vacias', 'with' => 'Con contenido'];
                 @endphp
 
-                <form method="GET" action="{{ route('manager.helpcenter.categories') }}" id="categories-filter-form">
+                <form method="GET" action="{{ route('manager.helpcenter.categories') }}" id="categories-filter-form"
+                      data-bulk-url="{{ route('manager.helpcenter.categories.bulk-action') }}">
                     <input type="hidden" name="visible_to_role" id="filter-role" value="{{ request('visible_to_role') }}">
                     <input type="hidden" name="content" id="filter-content" value="{{ request('content') }}">
 
@@ -393,84 +394,13 @@
 
 @endsection
 
-@push('styles')
-<style>
-    .hc-bulk-toolbar { z-index: 1050; }
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/helpcenter-manager.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/helpcenter-manager.css')) }}">
 @endpush
+
+@include('helpdeskhelpcenter::partials.common-scripts')
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
-<script>
-$(document).ready(function () {
-    // El contenedor de filtros es modal o panel lateral segun el .env.
-    $('.select2-filter-modal').select2({
-        dropdownParent: window.FilterShell.el('categories-filter-modal'),
-        width: '100%',
-    });
-
-    $('#categories-filter-apply-btn').on('click', function () {
-        $('#filter-role').val($('#modal-role').val());
-        $('#filter-content').val($('#modal-content').val());
-        window.FilterShell.close('categories-filter-modal');
-        $('#categories-filter-form').submit();
-    });
-
-    $('#categories-filter-clear-btn').on('click', function () {
-        $('#modal-role, #modal-content').val(null).trigger('change');
-    });
-
-    // ── Acciones masivas ─────────────────────────────────────────────────
-    if (document.querySelector('.bulk-checkbox')) {
-        $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-        var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-        $('#bulk-modal').on('hide.bs.modal', function () {
-            $('#bulk-action-select').val('').trigger('change');
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            bulk.reset();
-        });
-
-        $('#bulk-apply-btn').on('click', function () {
-            var action = $('#bulk-action-select').val();
-            var ids = bulk.getIds();
-
-            if (! action) { toastr.warning('Selecciona una accion.'); return; }
-            if (! ids.length) { toastr.warning('Selecciona al menos una categoria.'); return; }
-
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('manager.helpcenter.categories.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        });
-    }
-
-    $('.delete-btn').on('click', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
-</script>
+<script src="{{ asset('modules/helpdeskhelpcenter/js/categories-index.js') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/js/categories-index.js')) }}"></script>
 @endpush

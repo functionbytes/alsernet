@@ -90,7 +90,8 @@
                     $draftLabels = ['0' => 'Publicados', '1' => 'Borradores'];
                 @endphp
 
-                <form method="GET" action="{{ route('manager.helpcenter.articles') }}" id="articles-filter-form">
+                <form method="GET" action="{{ route('manager.helpcenter.articles') }}" id="articles-filter-form"
+                      data-bulk-url="{{ route('manager.helpcenter.articles.bulk-action') }}">
                     <input type="hidden" name="draft" id="filter-draft" value="{{ request('draft') }}">
                     <input type="hidden" name="category_id" id="filter-category" value="{{ request('category_id') }}">
                     <input type="hidden" name="author_id" id="filter-author" value="{{ request('author_id') }}">
@@ -352,91 +353,13 @@
 
 @endsection
 
-@push('styles')
-<style>
-.helpcenter-filter-status { min-width: 180px; }
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/helpcenter-manager.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/helpcenter-manager.css')) }}">
 @endpush
 
-@push('styles')
-<style>
-    .hc-bulk-toolbar { z-index: 1050; }
-</style>
-@endpush
+@include('helpdeskhelpcenter::partials.common-scripts')
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
-<script>
-$(document).ready(function () {
-    // El contenedor de filtros es modal o panel lateral segun el .env.
-    $('.select2-filter-modal').select2({
-        dropdownParent: window.FilterShell.el('articles-filter-modal'),
-        width: '100%',
-    });
-
-    $('#articles-filter-apply-btn').on('click', function () {
-        $('#filter-draft').val($('#modal-draft').val());
-        $('#filter-category').val($('#modal-category').val());
-        $('#filter-author').val($('#modal-author').val());
-        window.FilterShell.close('articles-filter-modal');
-        $('#articles-filter-form').submit();
-    });
-
-    $('#articles-filter-clear-btn').on('click', function () {
-        $('#modal-draft, #modal-category, #modal-author').val(null).trigger('change');
-    });
-
-    // ── Acciones masivas ─────────────────────────────────────────────────
-    if (document.querySelector('.bulk-checkbox')) {
-        $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-        var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-        $('#bulk-modal').on('hide.bs.modal', function () {
-            $('#bulk-action-select').val('').trigger('change');
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            bulk.reset();
-        });
-
-        $('#bulk-apply-btn').on('click', function () {
-            var action = $('#bulk-action-select').val();
-            var ids = bulk.getIds();
-
-            if (! action) { toastr.warning('Selecciona una accion.'); return; }
-            if (! ids.length) { toastr.warning('Selecciona al menos un articulo.'); return; }
-
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('manager.helpcenter.articles.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        });
-    }
-
-    $('.delete-btn').on('click', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
-</script>
+<script src="{{ asset('modules/helpdeskhelpcenter/js/articles-index.js') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/js/articles-index.js')) }}"></script>
 @endpush
