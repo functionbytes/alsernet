@@ -7,7 +7,8 @@
         "dev": "vite",
         "preview": "vite preview",
         "build:tickets-app": "node scripts/build-tickets-app.mjs",
-        "build:module-assets": "node scripts/build-module-assets.mjs"
+        "build:module-assets": "node scripts/build-module-assets.mjs",
+        "test:tickets-browser": "python3 -m unittest tests/Browser/tickets_app_smoke.py"
     },
     "dependencies": {
         "@tanstack/react-query": "^5.0.0",
