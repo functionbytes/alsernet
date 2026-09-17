@@ -65,7 +65,7 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
         }
 
         NavService::registerMiniItem('contacts', [
-            'icon' => 'fas fa-address-book',
+            'icon' => 'id-card',
             'tooltip' => 'Contactos',
             'sidebar_id' => 'contacts',
             'order' => 71,

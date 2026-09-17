@@ -2,7 +2,7 @@
  * Modal "Enviar plantilla WhatsApp" — compartido entre el envío individual
  * (dropdown del listado / botón de la ficha 360) y el envío masivo (barra de
  * selección del listado). Misma lógica de armado de variables/preview que
- * public/vendor/helpdesk/conversations.js (picker HSM del composer del
+ * public/vendor/helpdesk/conversations-thread.js (picker HSM del composer del
  * inbox), adaptada a un <select> simple en vez del panel de búsqueda.
  */
 (function () {

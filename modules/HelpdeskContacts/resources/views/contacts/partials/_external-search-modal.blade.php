@@ -16,48 +16,9 @@
     data-mode="index" (listado, sin contacto aún) / "link" (ficha 360, vincula
     al contacto ya abierto) — seteado por el trigger antes de abrir el modal.
 --}}
-@once
-    @push('css')
-        <style>
-            /* Las 3 vistas son un nivel de anidado extra dentro de
-               .bv-modal-body, que solo da su gap:12px a hijos directos — sin
-               esto, los campos internos de cada vista (fila plataforma/tipo,
-               búsqueda, resultados) quedaban pegados entre sí. Clase (no
-               inline) a propósito: JS solo alterna .d-none, así que
-               display:flex sigue viniendo del stylesheet en todo momento. */
-            .ext-view-stack { display: flex; flex-direction: column; gap: 12px; }
-
-            /* select2 asume una caja de ~28px (su alto por defecto) y coloca
-               la flecha con un "top" fijo para esa altura — dentro del
-               .bv-modal la caja sale más alta (mismo padding que .fselect),
-               así que la flecha quedaba pegada arriba en vez de centrada.
-               Se iguala la caja al look de .fselect y se centra la flecha
-               con top:50% en vez de un valor fijo, para que no importe la
-               altura real que termine teniendo. */
-            #external-search-modal .select2-container .select2-selection--single {
-                height: auto;
-                padding: 8px 10px;
-                border: 1px solid var(--bv-border, #e4e4e7);
-                border-radius: 8px;
-            }
-            #external-search-modal .select2-container .select2-selection--single .select2-selection__rendered {
-                padding: 0;
-                line-height: 1.4;
-                font-size: 13px;
-                color: var(--bv-text, #18181b);
-            }
-            #external-search-modal .select2-container .select2-selection--single .select2-selection__arrow {
-                height: auto;
-                top: 50%;
-                right: 8px;
-                transform: translateY(-50%);
-            }
-
-            .nc-platform-group { padding: 10px; }
-            .nc-platform-group .bv-modal-label { padding: 10px; }
-        </style>
-    @endpush
-@endonce
+{{-- Estilos de este modal: modules/HelpdeskContacts/resources/css/contacts.css
+     (cargado desde index.blade.php y show.blade.php, las dos vistas que
+     incluyen este partial — ver comentario de cabecera de ese fichero). --}}
 <div class="bv-modal" id="external-search-modal" data-bv-modal-name="external-search"
      data-platforms-url="{{ route('contacts.external-platforms') }}"
      data-search-url="{{ route('contacts.external-search') }}"
@@ -131,12 +92,12 @@
             <button class="btn-secondary" data-bv-close type="button">Cerrar</button>
         </div>
 
-        <div class="bv-modal-foot" id="extPreviewFoot" style="display:none">
+        <div class="bv-modal-foot bv-step-hidden" id="extPreviewFoot">
             <div id="ext-preview-actions"></div>
             <button class="btn-secondary" id="ext-preview-back" type="button">Volver a la búsqueda</button>
         </div>
 
-        <div class="bv-modal-foot" id="extHsmFoot" style="display:none">
+        <div class="bv-modal-foot bv-step-hidden" id="extHsmFoot">
             <button class="btn-primary" id="ext-hsm-send" type="button">Enviar plantilla</button>
             <button class="btn-secondary" id="ext-hsm-back" type="button">Volver a la ficha</button>
         </div>

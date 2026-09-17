@@ -58,7 +58,10 @@
             // que el gap entre sus campos internos sea confiable — .toggle()
             // podía restaurar "block" en vez de "flex" al mostrarlas.
             $('#' + v + 'View').toggleClass('d-none', !on);
-            $('#' + v + 'Foot').toggle(on);
+            // .bv-step-hidden (sin !important, definida en conversations.css —
+            // ya cargado en esta página) en vez de jQuery .toggle(): evita
+            // fijar un style="display" inline.
+            $('#' + v + 'Foot').toggleClass('bv-step-hidden', !on);
         });
     }
 
@@ -172,9 +175,9 @@
 
         var html = order.map(function (platform, groupIdx) {
             var items = groups[platform];
-            var groupStyle = groupIdx > 0
-                ? ' style="margin-top:22px;padding-top:14px;padding-bottom:2px;border-top:1px solid var(--bv-border, #e4e4e7)"'
-                : '';
+            // Separador entre grupos de plataforma — clase en vez de
+            // style="" inline (.nc-platform-group--sep, contacts.css).
+            var groupClass = groupIdx > 0 ? ' nc-platform-group--sep' : '';
 
             var rows = items.map(function (r) {
                 var detParts = [];
@@ -200,7 +203,7 @@
                 '</div>';
             }).join('');
 
-            return '<div class="nc-platform-group"' + groupStyle + '>' +
+            return '<div class="nc-platform-group' + groupClass + '">' +
                 '<span class="bv-modal-label">' + escapeHtml(platformLabel(platform)) + ' (' + items.length + ')</span>' +
                 '<div class="bv-intg-list">' + rows + '</div>' +
             '</div>';
@@ -357,11 +360,11 @@
         var html = '';
 
         if (orders.length) {
-            html += '<div class="flabel" style="margin-bottom:6px">Pedidos (' + orders.length + ')</div>';
+            html += '<div class="flabel ext-preview-orders-title">Pedidos (' + orders.length + ')</div>';
             html += '<div class="reason-list">' + orders.slice(0, 5).map(function (o) {
                 var title = o.reference || o.number || ('#' + (o.id || ''));
                 var subtitle = [o.status, (o.total || o.amount)].filter(Boolean).join(' · ');
-                return '<div class="reason" style="cursor:default">' +
+                return '<div class="reason ext-preview-order-item">' +
                     '<div class="ic"><i class="fas fa-box"></i></div>' +
                     '<div class="body"><div class="t">' + escapeHtml(title) + '</div><div class="s">' + escapeHtml(subtitle) + '</div></div>' +
                     '</div>';
