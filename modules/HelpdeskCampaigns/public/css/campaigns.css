@@ -776,3 +776,25 @@ body:has(.helpdesk-campaigns-page) .mc-content {
   .hcm-approval-card__thumb { width: 100%; height: 160px; }
   .hcm-kpi-grid { grid-template-columns: repeat(2, 1fr); padding: 12px; }
 }
+
+/* ─── 18. View utilities (Bootstrap card/table pages) ───────────── */
+/* Estas clases no dependen del scope .helpdesk-campaigns-page: las
+   vistas actuales (index/templates/show) usan tarjetas y tablas de
+   Bootstrap estandar, no el sistema .hcm-* de arriba. */
+.hcm-template-icon {
+  width: 72px;
+  height: 72px;
+}
+.hcm-template-preview {
+  min-height: 140px;
+}
+.hcm-progress-thin {
+  height: 10px;
+}
+.hcm-chart-box {
+  position: relative;
+  height: 320px;
+}
+.hcm-ctr-bar {
+  width: var(--hcm-ctr, 0%);
+}

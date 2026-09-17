@@ -2,6 +2,10 @@
 
 @section('title', 'Editar campaña — ' . $campaign->name)
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskcampaigns/css/campaigns.css') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/css/campaigns.css')) }}">
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Editar campaña'])
 @endsection

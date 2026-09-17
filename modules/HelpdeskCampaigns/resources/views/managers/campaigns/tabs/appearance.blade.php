@@ -141,26 +141,5 @@
 </form>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    // Sync color inputs
-    [['bg-color', 'appearance[background_color]'],
-     ['text-color', 'appearance[text_color]'],
-     ['primary-color', 'appearance[primary_color]']
-    ].forEach(([id]) => {
-        const colorInput = document.getElementById(`${id}-input`);
-        const textDisplay = document.getElementById(`${id}-text`);
-        if (colorInput && textDisplay) {
-            colorInput.addEventListener('input', () => { textDisplay.value = colorInput.value; });
-        }
-    });
-
-    // Border radius range output
-    const rangeInput = document.getElementById('border-radius-range');
-    const rangeOutput = document.getElementById('border-radius-output');
-    if (rangeInput && rangeOutput) {
-        rangeInput.addEventListener('input', () => { rangeOutput.textContent = rangeInput.value + 'px'; });
-    }
-});
-</script>
+<script src="{{ asset('modules/helpdeskcampaigns/js/campaign-form-appearance.js') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/js/campaign-form-appearance.js')) }}" defer></script>
 @endpush
