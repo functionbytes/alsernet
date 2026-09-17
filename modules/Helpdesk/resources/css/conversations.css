@@ -10876,16 +10876,20 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .asgn-load.full { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 
 /* Checkmark */
+/* Mismo círculo que .prio-radio (modal de Prioridad) — el cuadrado
+   original desentonaba con el resto de modales de selección única del
+   inbox, todos con el check circular. */
 .asgn-check {
     width: 16px;
     height: 16px;
     border: 1.5px solid var(--bv-border-strong);
-    border-radius: 4px;
+    border-radius: 50%;
     display: grid;
     place-items: center;
     color: transparent;
-    font-size: 9px;
+    font-size: 7px;
     flex-shrink: 0;
+    transition: background .12s, border-color .12s, color .12s;
 }
 .asgn-item.on .asgn-check { background: var(--bv-text); border-color: var(--bv-text); color: #fff; }
 
