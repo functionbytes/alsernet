@@ -12,9 +12,16 @@
         apiIndexRoute: null,
         apiReadRoute: null,
         markAllReadRoute: null,
-        refreshInterval: 60000, // 60 seconds
-        limit: 4,
+        refreshInterval: 60000, // Cadencia cuando el realtime (Echo/Reverb) está conectado
+        fallbackInterval: 15000, // Red de seguridad cuando no hay realtime disponible
+        limit: 4, // Notificaciones mostradas en el dropdown del header
     };
+
+    // Notificaciones a pedir a la API por cada refresco. Es mayor que `config.limit`
+    // porque otros consumidores de window event 'bv:notifications:refreshed' (p.ej.
+    // los toasts del inbox de Helpdesk) necesitan revisar una ventana más amplia que
+    // los 4 elementos que se pintan en el dropdown.
+    const FETCH_LIMIT = 20;
 
     // State management
     let state = {
@@ -49,12 +56,8 @@
             // Load initial notifications
             loadNotifications();
 
-            // Set up auto-refresh
-            state.refreshTimer = setInterval(function() {
-                console.log('⏰ Auto-refresh triggered (every 60s)');
-                loadNotifications();
-            }, config.refreshInterval);
-            console.log('✅ Auto-refresh timer started. Interval: ' + config.refreshInterval + 'ms');
+            // Set up auto-refresh (cadencia adaptativa: ver scheduleNextRefresh)
+            scheduleNextRefresh();
 
             // Set up event listeners
             setupEventListeners();
@@ -72,7 +75,7 @@
          */
         destroy: function() {
             if (state.refreshTimer) {
-                clearInterval(state.refreshTimer);
+                clearTimeout(state.refreshTimer);
                 state.refreshTimer = null;
             }
         },
@@ -214,12 +217,42 @@
     }
 
     /**
+     * Comprueba si Laravel Echo/Reverb tiene una conexión realtime activa.
+     * Se usa para decidir la cadencia del refresco (ver scheduleNextRefresh).
+     */
+    function isRealtimeConnected() {
+        try {
+            const connection = window.Echo && window.Echo.connector
+                && window.Echo.connector.pusher && window.Echo.connector.pusher.connection;
+            return !!(connection && connection.state === 'connected');
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Programa el siguiente refresco. Cuando no hay realtime conectado, el
+     * refresco actúa como red de seguridad y se acelera a `fallbackInterval`.
+     */
+    function scheduleNextRefresh() {
+        const delay = isRealtimeConnected() ? config.refreshInterval : config.fallbackInterval;
+        console.log('⏰ Next refresh scheduled in ' + delay + 'ms (realtime connected: ' + isRealtimeConnected() + ')');
+
+        state.refreshTimer = setTimeout(function() {
+            loadNotifications();
+            scheduleNextRefresh();
+        }, delay);
+    }
+
+    /**
      * Load notifications from API
      */
     function loadNotifications() {
-        // Build URL with query parameters
+        // Build URL with query parameters. Se pide FETCH_LIMIT (mayor que config.limit)
+        // para que otros consumidores del evento 'bv:notifications:refreshed' dispongan
+        // de una ventana más amplia de notificaciones recientes.
         const url = new URL(config.apiIndexRoute, window.location.origin);
-        url.searchParams.append('limit', config.limit);
+        url.searchParams.append('limit', FETCH_LIMIT);
         url.searchParams.append('unread', 'true');
 
         console.log('📡 Loading notifications from API:', url.toString());
@@ -241,7 +274,7 @@
                 console.log('📊 Unread count: ' + state.unreadCount);
 
                 updateBadge(state.unreadCount);
-                renderNotifications(response.notifications);
+                renderNotifications(response.notifications.slice(0, config.limit));
                 state.initialLoadDone = true;
 
                 // Hide loading state
@@ -250,6 +283,16 @@
                 // Update unread count text
                 updateUnreadCountText(state.unreadCount);
                 updateRemainingText(state.unreadCount);
+
+                // Fuente única de datos: otros consumidores (p.ej. los toasts del
+                // inbox de Helpdesk) escuchan este evento en vez de hacer su propio
+                // fetch a /api/notifications.
+                window.dispatchEvent(new CustomEvent('bv:notifications:refreshed', {
+                    detail: {
+                        notifications: response.notifications,
+                        unread_count: state.unreadCount,
+                    },
+                }));
             },
             error: function(xhr, status, error) {
                 console.error('❌ Error loading notifications:', xhr.status, xhr.statusText);

@@ -2042,9 +2042,12 @@
 
     // ═══════════════════════════════════════════════════════════════
     // FEATURE: Notificaciones push en tiempo real (Helpdesk)
-    // Sondeo cada 15s + listener del evento 'notification-received'
-    // Cuando Reverb esté operativo, el evento se dispara desde Echo.
-    // Mientras tanto, el sondeo actúa como fallback.
+    // Escucha el evento 'notification-received' (Echo/Reverb) y el evento
+    // 'bv:notifications:refreshed' que emite window.NotificationManager
+    // (modules/Notification/public/js/notifications.js) cada vez que
+    // consulta /api/notifications. Este módulo NO hace su propio fetch:
+    // reutiliza los datos ya pedidos por NotificationManager para evitar
+    // pegarle dos veces a la misma API.
     // ═══════════════════════════════════════════════════════════════
     (function () {
         var HD_TYPES = {
@@ -2117,63 +2120,30 @@
         });
 
         // Timestamp de cuándo cargó la página — solo mostramos toasts para notificaciones más nuevas
-        var pageLoadTs = null;
+        var pageLoadTs = new Date();
 
-        function poll() {
-            $.ajax({
-                url: '/api/notifications',
-                method: 'GET',
-                dataType: 'json',
-                data: { unread: 1, limit: 20 },
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                xhrFields: { withCredentials: true },
-            }).done(function (resp) {
-                var list = resp.notifications || [];
+        // FE-06: NotificationManager ya sondea /api/notifications (cada 60s con
+        // realtime conectado, cada 15s si no) y dispara este evento con el
+        // resultado. Aquí solo decidimos qué toasts mostrar con esos datos.
+        window.addEventListener('bv:notifications:refreshed', function (e) {
+            var list = (e.detail && e.detail.notifications) || [];
 
-                if (!initialized) {
-                    // Primera carga: registrar todos los IDs actuales sin mostrar toasts
-                    list.forEach(function (n) { seenDbIds.add(n.id); });
-                    initialized = true;
-                    return;
-                }
-
-                list.forEach(function (n) {
-                    if (seenDbIds.has(n.id)) { return; }
-                    seenDbIds.add(n.id);
-                    if (!HD_TYPES[n.type]) { return; }
-                    // Solo mostrar si la notificación es posterior a la carga de la página
-                    if (pageLoadTs && n.created_at_full && new Date(n.created_at_full) < pageLoadTs) { return; }
-                    if (wasRecentlyShownByEcho(n)) { return; }
-                    showNotification(n);
-                });
-            });
-        }
-
-        function echoIsConnected() {
-            try {
-                var connector = window.Echo && window.Echo.connector;
-                var conn = connector && connector.pusher && connector.pusher.connection;
-                return !!(conn && conn.state === 'connected');
-            } catch (e) {
-                return false;
+            if (!initialized) {
+                // Primera carga: registrar todos los IDs actuales sin mostrar toasts
+                list.forEach(function (n) { seenDbIds.add(n.id); });
+                initialized = true;
+                return;
             }
-        }
 
-        // FE-06: el polling solo actúa como red de seguridad. Si Echo/Reverb está
-        // conectado (realtime activo) espaciamos a 60s para no duplicar eventos;
-        // si no hay conexión disponible mantenemos el fallback cada 15s.
-        function scheduleNextPoll() {
-            var delay = echoIsConnected() ? 60000 : 15000;
-            setTimeout(function () {
-                poll();
-                scheduleNextPoll();
-            }, delay);
-        }
-
-        $(function () {
-            pageLoadTs = new Date();
-            poll();
-            scheduleNextPoll();
+            list.forEach(function (n) {
+                if (seenDbIds.has(n.id)) { return; }
+                seenDbIds.add(n.id);
+                if (!HD_TYPES[n.type]) { return; }
+                // Solo mostrar si la notificación es posterior a la carga de la página
+                if (pageLoadTs && n.created_at_full && new Date(n.created_at_full) < pageLoadTs) { return; }
+                if (wasRecentlyShownByEcho(n)) { return; }
+                showNotification(n);
+            });
         });
     })();
 
