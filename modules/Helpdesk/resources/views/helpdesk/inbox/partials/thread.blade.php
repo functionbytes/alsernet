@@ -339,7 +339,11 @@
                                         <p class="bv-lp-desc">{{ $linkPreview['description'] }}</p>
                                     @endif
                                     <div class="bv-lp-meta">
-                                        <i class="fas fa-link"></i>
+                                        @if(! empty($linkPreview['favicon']))
+                                            <img src="{{ $linkPreview['favicon'] }}" alt="" class="bv-lp-favicon" loading="lazy" onerror="this.remove()">
+                                        @else
+                                            <i class="fas fa-link"></i>
+                                        @endif
                                         <span>{{ $linkPreview['site'] ?? parse_url($linkPreview['url'], PHP_URL_HOST) }}</span>
                                     </div>
                                 </div>
