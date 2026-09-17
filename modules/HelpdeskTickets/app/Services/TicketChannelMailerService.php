@@ -3,8 +3,11 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 
 /**
  * Resuelve por qué canal de correo (buzón IMAP/SMTP) debería salir la
@@ -180,13 +183,15 @@ class TicketChannelMailerService
             'password' => $channel['password'],
         ];
 
+        $streamOptions = null;
+
         // Mismo apaño que en FetchTicketEmailsJob para los servidores que solo
         // hablan TLS 1.0/1.1: OpenSSL 3 los rechaza de fabrica y el envio muere
         // con "unsupported protocol". Se rebaja el nivel de cifrado solo para
         // los hosts declarados en helpdesk.imap.legacy_tls_hosts, y sin tocar la
         // verificacion del certificado, que sigue exigiendose.
         if ($this->needsLegacyTls((string) $channel['smtp_host'])) {
-            $mailer['stream'] = [
+            $streamOptions = [
                 'ssl' => [
                     'ciphers' => 'DEFAULT@SECLEVEL=0',
                     'verify_peer' => true,
@@ -196,6 +201,24 @@ class TicketChannelMailerService
         }
 
         Config::set("mail.mailers.{$name}", $mailer);
+
+        // Config::set(...) por sí solo NO alcanza para el apaño de arriba:
+        // MailManager::configureSmtpTransport() (Laravel 12) no lee ninguna
+        // clave 'stream' del config array, así que guardarla ahí es un no-op
+        // silencioso — verificado con un envío real contra correo.a-alvarez.com,
+        // que fallaba con el mismo "unsupported protocol" pese a esta config.
+        // Symfony sí expone setStreamOptions() en el SocketStream del
+        // transporte ya construido, así que se aplica acá, sobre la instancia
+        // que Mail::mailer($name) cachea internamente (MailManager::mailer()
+        // reutiliza la misma instancia entre llamadas con el mismo $name),
+        // para que el envío real que haga el llamador ya la tenga puesta.
+        if ($streamOptions !== null) {
+            $transport = Mail::mailer($name)->getSymfonyTransport();
+
+            if ($transport instanceof EsmtpTransport && ($stream = $transport->getStream()) instanceof SocketStream) {
+                $stream->setStreamOptions($streamOptions);
+            }
+        }
 
         return $name;
     }
