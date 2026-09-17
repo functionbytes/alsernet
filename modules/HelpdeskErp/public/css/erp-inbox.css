@@ -28,7 +28,7 @@
 
 /* rp3-points-card: loyalty points highlight */
 .rp3-points-card {
-    background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
+    background: linear-gradient(135deg, #90bb13 0%, #4f6b0a 100%);
     border-radius: 10px;
     padding: 16px;
     text-align: center;
@@ -95,3 +95,15 @@
 
 .rsp-erp-btn:hover { background: rgba(125, 125, 125, .12); }
 .rsp-erp-btn[disabled] { opacity: .55; cursor: default; }
+
+/* Chip de estado del workspace de pedido ERP (modals/order-workspace.blade.php).
+   El ERP no expone un color de estado por pedido (a diferencia de PrestaShop,
+   que sí y por eso calcula el suyo inline vía JS): aquí es siempre el mismo
+   tono neutro, así que es una clase y no un style="" dinámico. La forma
+   (.bv-po-pill) es del core (conversations-commerce.css); este módulo solo
+   aporta el color. */
+.bv-po-pill--neutral {
+    background: #eef0f2;
+    color: #52525b;
+    border: 1px solid #e5e7eb;
+}
