@@ -1812,6 +1812,40 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                         'Accept': 'application/json',
                     },
+                }).done(function (resp) {
+                    // Sin esto la reacción se guardaba bien (200 confirmado) pero
+                    // no se veía en la burbuja hasta recargar — no había ningún
+                    // feedback de que la acción hizo algo.
+                    //
+                    // Reconstruye el mismo contenedor que el blade pinta al cargar
+                    // la página (`.bv-bubble-reactions > .bv-reaction[data-bv-react]`,
+                    // agrupado por emoji con contador, desde metadata['reactions']) —
+                    // usar una clase distinta duplicaba visualmente la reacción ya
+                    // renderizada por el servidor en vez de sincronizarse con ella.
+                    const counts = {};
+                    (resp.reactions || []).forEach(function (r) {
+                        if (r && r.emoji) counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+                    });
+                    let $wrap = $bubble.find('.bv-bubble-reactions');
+                    const emojis = Object.keys(counts);
+                    if (!emojis.length) {
+                        $wrap.remove();
+                        return;
+                    }
+                    if (!$wrap.length) {
+                        $wrap = $('<div class="bv-bubble-reactions"></div>');
+                        const $meta = $bubble.find('.meta').first();
+                        if ($meta.length) $meta.before($wrap); else $bubble.append($wrap);
+                    }
+                    $wrap.empty();
+                    emojis.forEach(function (e) {
+                        $('<button type="button" class="bv-reaction"></button>')
+                            .attr('data-bv-react', e)
+                            .attr('data-bv-item', itemId)
+                            .append(document.createTextNode(e + ' '))
+                            .append($('<span class="c"></span>').text(counts[e]))
+                            .appendTo($wrap);
+                    });
                 }).fail(function (xhr) {
                     if (window.toastr) {
                         const msg = xhr?.responseJSON?.message || 'No se pudo registrar la reacción';
@@ -1820,6 +1854,47 @@
                 });
             });
         }
+
+        // ─── Hover toolbar en burbujas (responder / reaccionar) ───────────
+        // "reply" y "react" ya existían completos (backend + frontend) pero
+        // solo se disparaban por clic derecho / long-press — nada en la UI
+        // insinuaba que existían, así que en la práctica nadie los usaba. Un
+        // botón visible al pasar el ratón reutiliza exactamente la misma
+        // lógica (bv:set-reply / openReactionPicker) sin duplicarla.
+        function bubbleActionData($bubble) {
+            const body = ($bubble.data('bv-body') || '').toString();
+            return {
+                id: $bubble.data('bv-item-id'),
+                author: $bubble.data('bv-author') || '',
+                preview: ($bubble.data('bv-body-preview') || body.slice(0, 80)).toString(),
+            };
+        }
+
+        $(document).on('mouseenter', '.bv-bubble', function () {
+            const $bubble = $(this);
+            if ($bubble.find('.bv-bubble-hover-actions').length) return;
+            $bubble.append(
+                '<div class="bv-bubble-hover-actions">' +
+                    '<button type="button" class="bv-bubble-hover-btn" data-bv-hover-action="reply" data-bv-tip="Responder citando" aria-label="Responder citando"><i class="fas fa-reply"></i></button>' +
+                    '<button type="button" class="bv-bubble-hover-btn" data-bv-hover-action="react" data-bv-tip="Reaccionar" aria-label="Reaccionar"><i class="far fa-face-smile"></i></button>' +
+                '</div>'
+            );
+        });
+
+        $(document).on('mouseleave', '.bv-bubble', function () {
+            $(this).find('.bv-bubble-hover-actions').remove();
+        });
+
+        $(document).on('click', '.bv-bubble-hover-btn', function (e) {
+            e.stopPropagation();
+            const $bubble = $(this).closest('.bv-bubble');
+            const data = bubbleActionData($bubble);
+            if ($(this).data('bv-hover-action') === 'reply') {
+                $(document).trigger('bv:set-reply', { id: data.id, author: data.author, body: data.preview });
+            } else {
+                openReactionPicker($bubble, data.id);
+            }
+        });
 
         // ─── Forward modal (reenviar mensaje a otro cliente) ─────────────
         // Nota: existe otro `openForwardModal` más abajo para attachments —

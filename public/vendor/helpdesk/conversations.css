@@ -1052,7 +1052,8 @@ body:has(.conversations) .mc-content {
     color: var(--bv-primary);
 }
 
-/* Emoji de reacción (propia del agente o del cliente vía customer_reactions) */
+/* Emoji de reacción del cliente, pintado en vivo vía WebSocket
+   (metadata['customer_reactions'] — ver .item.created listener) */
 .bv-bubble-reaction {
     position: absolute;
     bottom: -10px;
@@ -1068,6 +1069,38 @@ body:has(.conversations) .mc-content {
 .bv-msg.out .bv-bubble-reaction {
     right: auto;
     left: 8px;
+}
+
+/* Reacciones del agente sobre un mensaje (agrupadas por emoji con contador
+   — metadata['reactions'] / reactToMessage()). El blade ya generaba este
+   markup al cargar la página pero nunca tuvo estilos: se veía como texto
+   plano "❤️ 1" dentro de la burbuja. */
+.bv-bubble-reactions {
+    position: absolute;
+    bottom: -12px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 2;
+}
+.bv-msg.out .bv-bubble-reactions {
+    right: auto;
+    left: 8px;
+}
+.bv-reaction {
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+.bv-reaction .c {
+    font-weight: 600;
+    color: var(--bv-text-muted);
+    margin-left: 2px;
 }
 
 /* (Modal styles for forward/info reuse the existing .bv-modal / .bv-modal-dialog

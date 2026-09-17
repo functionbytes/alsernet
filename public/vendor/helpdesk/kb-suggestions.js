@@ -200,11 +200,18 @@
         loadSuggestions(true);
     });
 
-    // Al cambiar de conversación el thread se sustituye: la petición en vuelo
-    // ya no sirve y el nodo del panel es otro (vuelve al spinner estático).
+    // Al cambiar de conversación (o al recargarse el pane por actividad en
+    // tiempo real de otro agente sobre la misma conversación) el thread se
+    // sustituye por HTML fresco del servidor: el nodo del panel es otro y
+    // vuelve a su estado inicial en el markup ("Buscando artículos
+    // relevantes…" estático, sin la clase "on"). Si algo restaura la UI
+    // previa marcándolo como abierto sin volver a pedir datos, el spinner
+    // se queda colgado. Cerrar explícitamente aquí lo evita: la próxima
+    // apertura manual siempre vuelve a disparar loadSuggestions().
     $(document).on('pane:loaded', function () {
         abortInFlight();
         _loadedForConv = null;
+        togglePanel(false);
     });
 
     // Insertar enlace o extracto en la respuesta
