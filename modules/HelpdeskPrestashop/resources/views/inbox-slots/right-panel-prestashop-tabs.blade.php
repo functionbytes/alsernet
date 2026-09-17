@@ -46,15 +46,13 @@
         </div>
         @endif
 
-        {{-- Carrito --}}
-        <button class="ps-section-tile" type="button" onclick="openCartBuild()">
-            <span class="ps-st-icon"><i class="fas fa-cart-shopping"></i></span>
-            <span class="ps-st-body">
-                <span class="ps-st-title">Carrito</span>
-                <span class="ps-st-sub">Ver y editar carrito del cliente</span>
-            </span>
-            <i class="fas fa-chevron-right ps-st-arrow"></i>
-        </button>
+        {{-- Carrito: retirado — igual que la pestaña "Carritos" del panel
+             derecho, depende por completo de AssistedCartController, cuyas
+             rutas están comentadas en HelpdeskPrestashop/routes/managers.php
+             porque el módulo Ecommerce del que depende no existe en este
+             proyecto. El botón solo llevaba a "No se pudo cargar el
+             carrito". Ver decisión del usuario para el mismo caso en la
+             pestaña "Carritos". --}}
 
         {{-- Direcciones --}}
         <button class="ps-section-tile" type="button" onclick="openPsAddressesModal()">
@@ -388,73 +386,10 @@
 </div>
 
 @once
-
 @push('scripts')
-<script>
-(function () {
-    window.openPsOrdersModal = function () {
-        var modal = new bootstrap.Modal(document.getElementById('psOrdersModal'));
-        modal.show();
-    };
-
-    // Abrir el workspace de pedido PrestaShop (detalle real vía el bridge) al
-    // pulsar un pedido de la lista. Cierra el modal-lista de bootstrap antes.
-    $(document).on('click', '.rp3-order[data-ps-order-open]', function () {
-        var id = $(this).data('order-id');
-        if (!id) { return; }
-        var lm = bootstrap.Modal.getInstance(document.getElementById('psOrdersModal'));
-        if (lm) { lm.hide(); }
-        if (typeof window.openPsOrderWorkspace === 'function') {
-            window.openPsOrderWorkspace(id);
-        }
-    });
-
-    window.openPsAddressesModal = function () {
-        var $body = $('#psAddressesBody');
-        $body.html('<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
-
-        var modal = new bootstrap.Modal(document.getElementById('psAddressesModal'));
-        modal.show();
-
-        var base = window.HDCommerce ? window.HDCommerce.base() : null;
-        if (!base) {
-            $body.html('<p class="text-center text-danger py-3">No hay cliente seleccionado.</p>');
-            return;
-        }
-
-        $.ajax({
-            url: base + '/ps/addresses',
-            method: 'GET',
-            dataType: 'json',
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            },
-        }).done(function (r) {
-            var addresses = r.addresses || r.data || [];
-            if (addresses.length) {
-                var html = addresses.map(function (a) {
-                    return '<div class="ps-addr-card">' +
-                        '<div class="ps-addr-alias">' + esc(a.alias) + '</div>' +
-                        '<div class="ps-addr-name">' + esc(a.full_name) + (a.company ? ' · ' + esc(a.company) : '') + '</div>' +
-                        '<div class="ps-addr-line">' + esc(a.address1) + (a.address2 ? ', ' + esc(a.address2) : '') + '</div>' +
-                        '<div class="ps-addr-city">' + esc(a.postcode) + ' ' + esc(a.city) + (a.country ? ', ' + esc(a.country) : '') + '</div>' +
-                        (a.phone ? '<div class="ps-addr-phone"><i class="fas fa-phone"></i> ' + esc(a.phone) + '</div>' : '') +
-                    '</div>';
-                }).join('');
-                $body.html(html);
-            } else {
-                $body.html('<p class="text-center text-muted py-3">No hay direcciones guardadas.</p>');
-            }
-        }).fail(function () {
-            $body.html('<p class="text-center text-danger py-3">Error al cargar direcciones.</p>');
-        });
-    };
-
-    function esc(s) {
-        return $('<span>').text(String(s || '')).html();
-    }
-})();
-</script>
+    {{-- JS extraido a fichero propio: se cachea en el navegador en vez de
+         re-descargarse en cada render del inbox. Fuente en
+         modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar. --}}
+    <script src="{{ asset('modules/helpdeskprestashop/js/right-panel-prestashop-tabs.js') }}?v={{ @filemtime(public_path('modules/helpdeskprestashop/js/right-panel-prestashop-tabs.js')) }}" defer></script>
 @endpush
 @endonce

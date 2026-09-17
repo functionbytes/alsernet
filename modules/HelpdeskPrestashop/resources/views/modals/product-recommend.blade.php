@@ -1,17 +1,30 @@
-{{-- Modal: Recomendar producto de PrestaShop — Diseño C · dos columnas --}}
-<div class="bv-modal" data-bv-modal-name="ps-product-recommend" data-ps-admin-url="{{ config('helpdeskprestashop.admin_url') }}">
-    <div class="bv-modal-dialog xl">
+{{-- Modal: Recomendar producto de PrestaShop — Diseño C · dos columnas.
+     Cabecera y pie migrados al sistema de modales v2 (.modal/.modal-head/
+     .modal-icon/.modal-label/.modal-foot), el mismo que ya usan
+     "Escalar a ticket" y "Ver conversación anterior". El cuerpo se queda
+     con sus clases .ps-* propias (layout de 2 columnas, necesita su propio
+     grid — el .modal-body genérico no sirve aquí).
 
-        <div class="bv-modal-head bv-modal-head--with-icon">
-            <div class="bv-modal-icon-box primary"><i class="fas fa-gift"></i></div>
-            <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · PRODUCTOS</span>
-                <div class="bv-modal-title"><span>Recomendar producto</span></div>
+     CTA principal = "Recomendar en chat": es la única acción que hoy
+     funciona de verdad contra el bridge. "Añadir al carrito" depende de
+     AssistedCartController, cuyas rutas están comentadas en
+     routes/managers.php porque el módulo Ecommerce no se trae a este
+     proyecto — se deshabilita con una nota en vez de dejar un botón que
+     siempre da 404, y ya no ocupa una fila entera como si fuera la acción
+     esperada. --}}
+<div class="bv-modal" data-bv-modal-name="ps-product-recommend" data-ps-admin-url="{{ config('helpdeskprestashop.admin_url') }}">
+    <div class="modal w-xl">
+
+        <div class="modal-head">
+            <div class="modal-icon"><i class="fas fa-gift"></i></div>
+            <div class="modal-title-wrap">
+                <div class="modal-label">Chat · Productos</div>
+                <div class="modal-title">Recomendar producto</div>
             </div>
-            <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
+            <button class="modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
 
-        <div class="bv-modal-body ps-modal-body">
+        <div class="modal-body ps-modal-body">
 
             {{-- ── IZQUIERDA: buscador + lista ─────────────────────────────── --}}
             <div class="ps-list-pane">
@@ -33,7 +46,16 @@
                         <option value="price_desc">Precio ↓</option>
                         <option value="stock_desc">Stock disponible</option>
                     </select>
-                    <select id="prCategoryFilter" class="ps-sort-select">
+                    {{-- Deshabilitado: ni el bridge ni el fallback de BD devuelven
+                         category_id en la búsqueda de productos (solo el nombre de
+                         categoría como texto), así que el filtro JS por ID
+                         (String(p.category_id) === catId) siempre comparaba contra
+                         `undefined` y daba 0 resultados con cualquier categoría real
+                         seleccionada — confirmado en QA. Arreglarlo de verdad
+                         requiere tocar el módulo alsernetbridge (repo de PrestaShop,
+                         fuera de este proyecto) para que categorice by id. --}}
+                    <select id="prCategoryFilter" class="ps-sort-select" disabled
+                            title="Filtro no disponible: el bridge no devuelve el ID de categoría por producto">
                         <option value="">Todas las categorías</option>
                     </select>
                 </div>
@@ -121,26 +143,27 @@
         </div>
 
         {{-- Footer sin selección --}}
-        <div class="bv-modal-foot" id="prFootDefault">
-            <button class="btn-secondary" data-bv-close><i class="fas fa-xmark"></i>Cerrar</button>
+        <div class="modal-foot" id="prFootDefault">
+            <button class="btn btn-outline" data-bv-close type="button"><i class="fas fa-xmark"></i>Cerrar</button>
         </div>
 
         {{-- Footer con producto seleccionado --}}
-        <div class="bv-modal-foot bv-hidden" id="prFootSelected">
-            <div class="ps-note-wrap" id="prNoteWrap">
-                <textarea class="ps-note-input" id="prInternalNote" rows="2" placeholder="Nota interna (opcional)…"></textarea>
-            </div>
+        <div class="modal-foot bv-hidden" id="prFootSelected">
+            <textarea class="ps-note-input" id="prInternalNote" rows="1" placeholder="Nota interna (opcional)…"></textarea>
             <div class="ps-footer-actions">
-                <button class="btn-secondary" id="prSendToChat" type="button"><i class="fas fa-paper-plane"></i>Recomendar en chat</button>
-                <button class="ps-email-btn" id="prSendEmail" type="button"><i class="fas fa-envelope"></i> Email</button>
+                <button class="btn btn-primary" id="prSendToChat" type="button"><i class="fas fa-paper-plane"></i>Recomendar en chat</button>
+                <button class="btn btn-outline" id="prSendEmail" type="button"><i class="fas fa-envelope"></i>Email</button>
             </div>
             <div class="ps-qty-wrap">
-                <button class="ps-qty-btn" id="prQtyMinus" type="button"><i class="fas fa-minus"></i></button>
-                <input class="ps-qty-input" id="prQtyInput" type="number" value="1" min="1" max="999" readonly>
-                <button class="ps-qty-btn" id="prQtyPlus" type="button"><i class="fas fa-plus"></i></button>
-                <button class="btn-primary" id="prAddToCart" type="button"><i class="fas fa-cart-plus"></i>Añadir al carrito</button>
+                <button class="ps-qty-btn" id="prQtyMinus" type="button" disabled><i class="fas fa-minus"></i></button>
+                <input class="ps-qty-input" id="prQtyInput" type="number" value="1" min="1" max="999" readonly disabled>
+                <button class="ps-qty-btn" id="prQtyPlus" type="button" disabled><i class="fas fa-plus"></i></button>
+                <button class="btn btn-outline" id="prAddToCart" type="button" disabled
+                        title="El carrito asistido no está disponible en este entorno todavía">
+                    <i class="fas fa-cart-plus"></i>Añadir al carrito
+                </button>
+                <span class="ps-cart-tip">No disponible en este entorno</span>
             </div>
-            <button class="btn-secondary" data-bv-close type="button"><i class="fas fa-xmark"></i>Cerrar</button>
         </div>
 
     </div>
