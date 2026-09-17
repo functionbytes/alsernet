@@ -85,14 +85,6 @@
                                 <li><span class="dropdown-item-text text-muted">Cargando...</span></li>
                             </ul>
                         </div>
-                        <div id="aiSuggestionBox" class="alert alert-light border mb-2 d-none">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fas fa-robot text-primary"></i>
-                                <strong class="small">Sugerencia IA</strong>
-                            </div>
-                            <p class="mb-1 small mt-1" id="aiSuggestionText"></p>
-                            <button type="button" class="btn btn-sm btn-link p-0" onclick="useAiSuggestion()">Usar sugerencia</button>
-                        </div>
                         <form id="replyForm" action="{{ route('helpdesksocial.inbox.reply', $comment) }}" method="POST">
                             @csrf
                             <textarea name="body" id="replyBody" class="form-control" rows="4" maxlength="2000" required></textarea>

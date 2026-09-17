@@ -8,8 +8,6 @@
  * (cargado justo antes que este fichero) — el backend de etiquetas/notas/
  * aprobación ya existía completo vía API; solo faltaba attachTag/detachTag
  * en SocialInboxController y el propio JS, que nunca se había escrito.
- * useAiSuggestion() sigue siendo un stub inerte: no hay backend de
- * sugerencias IA en ningún sitio del módulo.
  */
 (function () {
     'use strict';

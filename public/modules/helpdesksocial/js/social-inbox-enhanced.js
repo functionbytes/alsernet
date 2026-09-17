@@ -16,12 +16,10 @@
  * expusiera) — se añadió `attachTag`/`detachTag` en SocialInboxController
  * junto con este archivo.
  *
- * La "Sugerencia IA" (#aiSuggestionBox) NO tiene backend en ningún sitio
- * del módulo (ni servicio, ni endpoint) — no es una limpieza, es una
- * funcionalidad nunca construida. Se deja intencionalmente inerte (el box
- * ya nace oculto con d-none y este fichero nunca la muestra); el botón
- * "Usar sugerencia" queda con un stub seguro para no romper si algún día
- * alguien la muestra a mano.
+ * El bloque "Sugerencia IA" (#aiSuggestionBox) se retiró de la vista: no
+ * tenía backend en ningún sitio del módulo (ni servicio, ni endpoint) —
+ * era una funcionalidad nunca construida, no una limpieza de algo que
+ * funcionaba.
  *
  * Depende de #social-comment-show[data-comment-id] para saber sobre qué
  * comentario operar — lo único que este fichero no puede resolver solo.
@@ -159,17 +157,9 @@
                 $menu.append($item);
             });
         }).fail(function (xhr) {
-            $menu.html('<li><span class="dropdown-item-text text-danger">Error al cargar plantillas.</span></li>');
+            $menu.html('<li><span class="dropdown-item-text text-brand">Error al cargar plantillas.</span></li>');
             flashError(xhr, 'No se pudieron cargar las respuestas guardadas.');
         });
-    };
-
-    // ── Sugerencia IA: sin backend, inerte a propósito (ver cabecera) ──
-    window.useAiSuggestion = function () {
-        var text = $.trim($('#aiSuggestionText').text());
-        if (text) {
-            $('#replyBody').val(text);
-        }
     };
 
     // ── Aprobación ─────────────────────────────────────────────────────
