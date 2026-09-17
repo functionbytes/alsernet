@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Modules\Helpdesk\Database\Factories\CustomerFactory;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
@@ -20,7 +21,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Customer extends Model
 {
-    use HasCustomAttributes, HasFactory, LogsActivity, SoftDeletes;
+    // Notifiable añadido en QA 18-sep-2026: StatusChangedNotification::via()
+    // ya declaraba ['mail'] para Customer, pero al no tener este trait
+    // $customer->notify(...) lanzaba "Call to undefined method
+    // Customer::notify()" — en cola 'notifications' (sync en tests, real
+    // worker en dev/prod), así que cerrar/reabrir una conversación desde la
+    // UI nunca fallaba visiblemente para el agente, pero el job siempre
+    // terminaba en failed_jobs sin que el cliente recibiera el email.
+    use HasCustomAttributes, HasFactory, LogsActivity, Notifiable, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
