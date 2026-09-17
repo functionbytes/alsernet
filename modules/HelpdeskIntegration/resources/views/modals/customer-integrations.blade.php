@@ -15,7 +15,7 @@
             {{-- Vista: prompt de verificacion de identidad — el flujo completo
                  (selector de canal, codigo OTP, intentos/bloqueo, caducidad)
                  vive en el modal reutilizable verify-customer-identity. --}}
-            <div id="ciGateView" style="display:none">
+            <div id="ciGateView" class="bv-step-hidden">
                 <div class="info-table" id="ciGateCustomer">
                     <div class="lbl">Cliente</div>
                     <div class="val" id="ciGateCustomerName">—</div>
@@ -23,7 +23,7 @@
                     <div class="val mono" id="ciGateCustomerContact">—</div>
                 </div>
 
-                <div class="bv-oc-empty" style="padding:20px 10px">
+                <div class="bv-oc-empty hi-gate-empty">
                     <i class="fas fa-user-lock"></i>
                     <div class="title">Identidad no verificada</div>
                     <div>Verifica la identidad del cliente antes de ver o gestionar sus integraciones.</div>
@@ -31,7 +31,7 @@
             </div>
 
             {{-- Vista principal: lista de integraciones --}}
-            <div id="ciMainView" style="display:none">
+            <div id="ciMainView" class="bv-step-hidden">
                 <div class="info-table" id="ciCustomer">
                     <div class="lbl">Cliente</div>
                     <div class="val" id="ciCustomerName">—</div>
@@ -43,11 +43,11 @@
                     <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
                 </div>
 
-                <div id="ciLastActivity" class="bv-intg-audit" style="display:none"></div>
+                <div id="ciLastActivity" class="bv-intg-audit bv-step-hidden"></div>
             </div>
 
             {{-- Vista: historial completo de auditoría --}}
-            <div id="ciAuditView" style="display:none">
+            <div id="ciAuditView" class="bv-step-hidden">
                 <div id="ciAuditList">
                     <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
                 </div>
@@ -57,14 +57,14 @@
                  widget del panel derecho) — nombre/email/NIF/teléfono/ciudad/...,
                  mismos campos que la ficha "Confirmar vínculo" del buscador, pero
                  para revisar un vínculo existente en vez de crear uno nuevo. --}}
-            <div id="ciDetailView" style="display:none">
+            <div id="ciDetailView" class="bv-step-hidden">
                 <div id="ciDetailBody">
                     <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
                 </div>
             </div>
 
             {{-- Vista de búsqueda/vinculación --}}
-            <div id="ciLinkPanel" style="display:none">
+            <div id="ciLinkPanel" class="bv-step-hidden">
                 <div class="field">
                     <div class="flabel">Buscar cliente en las plataformas disponibles</div>
                     <div class="search-field">
@@ -73,7 +73,7 @@
                     </div>
                     <div class="flabel flabel-hint">Introduce el email, teléfono o identificador con el que el cliente aparece en la plataforma.</div>
                 </div>
-                <div id="ciAutoNote" class="minfo mb-2" style="display:none">
+                <div id="ciAutoNote" class="minfo mb-2 bv-step-hidden">
                     <i class="fas fa-wand-magic-sparkles"></i>
                     <div>Este cliente no tiene ninguna plataforma vinculada — buscando automáticamente.</div>
                 </div>
@@ -91,31 +91,31 @@
             {{-- Footer: gate de identidad (delega al modal verify-customer-identity) --}}
             <div id="ciFootGate">
                 <button class="btn-primary w-100 mb-2" id="ciOpenVerify" type="button">Verificar identidad</button>
-                <button class="btn-secondary w-100 mb-2" id="ciOpenSearch" type="button" style="display:none">Buscar cliente en plataformas</button>
+                <button class="btn-secondary w-100 mb-2 bv-step-hidden" id="ciOpenSearch" type="button">Buscar cliente en plataformas</button>
                 <button class="btn-secondary w-100" data-bv-close>Cerrar</button>
             </div>
             {{-- Footer vista principal --}}
-            <div id="ciFootMain" style="display:none">
-                <button class="btn-primary w-100 mb-2" id="ciSyncAll" type="button" style="display:none">Sincronizar todo</button>
+            <div id="ciFootMain" class="bv-step-hidden">
+                <button class="btn-primary w-100 mb-2 bv-step-hidden" id="ciSyncAll" type="button">Sincronizar todo</button>
                 <button class="btn-secondary w-100 mb-2" id="ciLink" type="button" disabled>
                     <span id="ciLinkLabel">Vincular plataforma</span>
                 </button>
                 <button class="btn-secondary w-100" data-bv-close>Cerrar</button>
             </div>
             {{-- Footer vista de búsqueda --}}
-            <div id="ciFootSearch" style="display:none">
+            <div id="ciFootSearch" class="bv-step-hidden">
                 <button class="btn-secondary w-100" id="ciBackBtn" type="button">
                     <i class="fas fa-arrow-left"></i> Volver a integraciones
                 </button>
             </div>
             {{-- Footer vista de historial de auditoría --}}
-            <div id="ciFootAudit" style="display:none">
+            <div id="ciFootAudit" class="bv-step-hidden">
                 <button class="btn-secondary w-100" id="ciAuditBackBtn" type="button">
                     <i class="fas fa-arrow-left"></i> Volver a integraciones
                 </button>
             </div>
             {{-- Footer vista de detalle de una plataforma vinculada --}}
-            <div id="ciFootDetail" style="display:none">
+            <div id="ciFootDetail" class="bv-step-hidden">
                 <button class="btn-secondary w-100 mb-2" id="ciDetailUnlinkBtn" type="button">Desvincular</button>
                 <button class="btn-secondary w-100" data-bv-close>Cerrar</button>
             </div>
@@ -123,13 +123,12 @@
     </div>
 </div>
 
+{{-- CSS del módulo (helpdeskintegration.css) — cubre este modal y el de
+     verify-customer-identity, que siempre se incluye junto a este (ambos
+     detrás del mismo helpdesk_integration_enabled() en inbox/partials/modals.blade.php). --}}
 @once
 @push('css')
-<style>
-    #ciLinkPanel .flabel-hint { font-weight: 400; color: var(--bv-text-muted); }
-    #ciLinkPanel .flabel-eyebrow { font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; }
-    #ciSearchResults { display: flex; flex-direction: column; gap: 6px; }
-</style>
+<link rel="stylesheet" href="{{ asset('vendor/helpdeskintegration/helpdeskintegration.css') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/helpdeskintegration.css')) }}"/>
 @endpush
 @endonce
 

@@ -1,0 +1,31 @@
+/* ============================================================
+   HelpdeskIntegration — estilos propios del módulo
+   Fuente del módulo (source of truth). Se sirve publicado en
+   public/vendor/helpdeskintegration/helpdeskintegration.css — tras editar
+   este archivo hay que copiarlo ahí a mano (no hay build step):
+     cp modules/HelpdeskIntegration/resources/css/helpdeskintegration.css \
+        public/vendor/helpdeskintegration/helpdeskintegration.css
+   ============================================================ */
+
+/* Avatar circular del proveedor en el catálogo de integraciones
+   (settings/providers/index.blade.php). El color es dinámico por
+   proveedor (Model::$color) vía la variable --icon-color que sí se
+   inyecta inline en el Blade. */
+.avatar-icon-32 {
+    width: 32px;
+    height: 32px;
+    color: var(--icon-color, inherit);
+}
+
+/* Modal "Verificar identidad" (verify-customer-identity.blade.php) */
+.nc-platform-group { padding: 10px; }
+.nc-platform-group .bv-modal-label { padding: 10px; }
+
+/* Modal "Integraciones del cliente" (customer-integrations.blade.php) */
+#ciLinkPanel .flabel-hint { font-weight: 400; color: var(--bv-text-muted); }
+#ciLinkPanel .flabel-eyebrow { font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; }
+#ciSearchResults { display: flex; flex-direction: column; gap: 6px; }
+
+/* Aviso "identidad no verificada" del gate: mismo bloque .bv-oc-empty que el
+   resto del inbox, pero con más aire porque va solo en la vista de gate. */
+.hi-gate-empty { padding: 20px 10px; }
