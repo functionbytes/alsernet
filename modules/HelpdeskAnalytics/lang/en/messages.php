@@ -26,6 +26,7 @@ return [
     'first_response_short' => '1st resp.',
     'loading' => 'Loading...',
     'no_data_range' => 'No data in range.',
+    'load_error' => 'Metrics could not be loaded.',
     'tickets_title' => 'Tickets',
     'tickets_created' => 'Tickets created',
     'tickets_closed' => 'Tickets closed',

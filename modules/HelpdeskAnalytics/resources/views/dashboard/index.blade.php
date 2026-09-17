@@ -167,127 +167,21 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{{-- Config/i18n inline (datos, no lógica): la lógica real vive en
+     public/js/dashboard.js, que no tiene acceso a __()/route(). --}}
 <script>
-$(function () {
-    const dataUrl = @json(route('helpdeskanalytics.data'));
-    const charts = {};
-    // Paleta de marca para las donuts (sin el rosado/multicolor por defecto de
-    // Chart.js ni rojo, aunque sea semantico como "en riesgo"): mismos hex que
-    // el donut de distribucion en Core/dashboard/index.blade.php.
-    const donutPalette = ['#90bb13', '#4f6b0a', '#b6d34a', '#6c757d', '#adb5bd', '#333333'];
-
-    function destroyChart(id) {
-        if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-    }
-
-    function secs(s) {
-        if (!s) return '—';
-        if (s < 60) return s + 's';
-        if (s < 3600) return Math.round(s / 60) + 'm';
-        return Math.round(s / 3600) + 'h';
-    }
-
-    function renderAgents(rows) {
-        if (!rows.length) {
-            $('#agent-rows').html('<tr><td colspan="8" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.no_data_range') }}</td></tr>');
-            return;
-        }
-        $('#agent-rows').html(rows.map(function (a) {
-            return '<tr>' +
-                '<td>' + $('<div>').text(a.name).html() + '</td>' +
-                '<td>' + a.closed_count + '</td>' +
-                '<td>' + (a.csat_avg || '—') + '</td>' +
-                '<td>' + secs(a.avg_response_seconds) + '</td>' +
-                '<td>' + a.message_count + '</td>' +
-                '<td>' + (a.ticket_closed_count || 0) + '</td>' +
-                '<td>' + minutes(a.ticket_avg_first_response_minutes) + '</td>' +
-                '<td>' + minutes(a.ticket_avg_resolution_minutes) + '</td>' +
-                '</tr>';
-        }).join(''));
-    }
-
-    function minutes(m) {
-        if (!m) return '—';
-        if (m < 60) return m + 'm';
-        return Math.round(m / 60) + 'h';
-    }
-
-    function renderTickets(t) {
-        t = t || {};
-        $('#kpi-tickets-created').text(t.total_created ?? 0);
-        $('#kpi-tickets-closed').text(t.total_closed ?? 0);
-        $('#kpi-tickets-resolved').text(t.total_resolved ?? 0);
-        $('#kpi-tickets-sla-breached').text(t.sla_breached ?? 0);
-        $('#kpi-tickets-unassigned').text(t.unassigned ?? 0);
-        $('#kpi-tickets-frt').text(minutes(t.avg_first_response_minutes));
-        $('#kpi-tickets-resolution').text(minutes(t.avg_resolution_minutes));
-
-        const byPriority = t.by_priority || [];
-
-        if (!byPriority.length) {
-            $('#ticket-priority-rows').html('<tr><td colspan="2" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.no_data_range') }}</td></tr>');
-            return;
-        }
-        $('#ticket-priority-rows').html(byPriority.map(function (p) {
-            return '<tr>' +
-                '<td>' + $('<div>').text(p.priority).html() + '</td>' +
-                '<td>' + p.count + '</td>' +
-                '</tr>';
-        }).join(''));
-    }
-
-    function load() {
-        $.get(dataUrl, $('#filters').serialize()).done(function (res) {
-            const o = res.overview || {};
-            $('#kpi-conversations').text(o.conversations ?? 0);
-            $('#kpi-closed').text(o.closed ?? 0);
-            $('#kpi-open').text(o.open ?? 0);
-            $('#kpi-frt').text(secs(o.avg_first_response_seconds));
-            $('#kpi-csat').text(o.csat_avg ?? '—');
-
-            const trends = res.trends || [];
-            destroyChart('chart-trends');
-            charts['chart-trends'] = new Chart(document.getElementById('chart-trends'), {
-                type: 'line',
-                data: {
-                    labels: trends.map(t => t.date),
-                    datasets: [
-                        { label: '{{ __("helpdeskanalytics::messages.created") }}', data: trends.map(t => t.created), borderColor: '#90bb13', tension: 0.3 },
-                        { label: '{{ __("helpdeskanalytics::messages.closed") }}', data: trends.map(t => t.closed), borderColor: '#6c757d', tension: 0.3 },
-                    ],
-                },
-                options: { responsive: true, maintainAspectRatio: false },
-            });
-
-            const channels = res.channels || [];
-            destroyChart('chart-channels');
-            charts['chart-channels'] = new Chart(document.getElementById('chart-channels'), {
-                type: 'doughnut',
-                data: { labels: channels.map(c => c.channel), datasets: [{ data: channels.map(c => c.count), backgroundColor: donutPalette }] },
-                options: { responsive: true, maintainAspectRatio: false },
-            });
-
-            const cust = res.customers || {};
-            destroyChart('chart-customers');
-            charts['chart-customers'] = new Chart(document.getElementById('chart-customers'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['{{ __("helpdeskanalytics::messages.health_healthy") }}', '{{ __("helpdeskanalytics::messages.health_neutral") }}', '{{ __("helpdeskanalytics::messages.health_at_risk") }}'],
-                    datasets: [{ data: [cust.healthy || 0, cust.neutral || 0, cust.at_risk || 0], backgroundColor: donutPalette }],
-                },
-                options: { responsive: true, maintainAspectRatio: false },
-            });
-            $('#cust-sampled').toggleClass('d-none', !cust.sampled);
-
-            renderAgents(res.agents || []);
-            renderTickets(res.tickets);
-        }).fail(function () {
-            toastr.error('No se pudieron cargar las metricas.');
-        });
-    }
-
-    $('#filters').on('submit', function (e) { e.preventDefault(); load(); });
-    load();
-});
+window.HelpdeskAnalyticsDashboard = {
+    dataUrl: @json(route('helpdeskanalytics.data')),
+    i18n: {
+        noDataRange: @json(__('helpdeskanalytics::messages.no_data_range')),
+        created: @json(__('helpdeskanalytics::messages.created')),
+        closed: @json(__('helpdeskanalytics::messages.closed')),
+        healthHealthy: @json(__('helpdeskanalytics::messages.health_healthy')),
+        healthNeutral: @json(__('helpdeskanalytics::messages.health_neutral')),
+        healthAtRisk: @json(__('helpdeskanalytics::messages.health_at_risk')),
+        loadError: @json(__('helpdeskanalytics::messages.load_error')),
+    },
+};
 </script>
+<script src="{{ asset('modules/helpdeskanalytics/js/dashboard.js') }}?v={{ @filemtime(public_path('modules/helpdeskanalytics/js/dashboard.js')) }}" defer></script>
 @endpush

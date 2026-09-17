@@ -26,6 +26,7 @@ return [
     'first_response_short' => '1ª resp.',
     'loading' => 'Cargando...',
     'no_data_range' => 'Sin datos en el rango.',
+    'load_error' => 'No se pudieron cargar las métricas.',
     'tickets_title' => 'Tickets',
     'tickets_created' => 'Tickets creados',
     'tickets_closed' => 'Tickets cerrados',
