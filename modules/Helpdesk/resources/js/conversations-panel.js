@@ -37,6 +37,11 @@
             const erpHidden = $('.bv-right-tab[data-bv-tab^="erp-"]').toArray().every(b => b.style.display === 'none');
             $sep.toggle(!(psHidden && erpHidden));
         }
+        // Expuesta en window: los módulos satélite (erp-inbox.js, que pinta las
+        // pestañas ERP tras su fetch diferido) necesitan re-evaluar qué botones
+        // mostrar una vez llega contenido real, y viven en un <script> aparte sin
+        // acceso a este scope privado.
+        window.bvSyncRightTabVisibility = syncRightTabVisibility;
 
         // Helpers rtab URL
 

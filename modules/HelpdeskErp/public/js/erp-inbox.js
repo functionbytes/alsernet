@@ -101,7 +101,7 @@
                         '<div class="bv-tab-empty-sub">No hay pedidos en gestión</div></div>';
                 }
                 $t.html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderErpFinanceTab(data) {
@@ -141,7 +141,7 @@
                         '<div class="bv-tab-empty-sub">No hay información financiera disponible</div></div>';
                 }
                 $('#bv-erp-finance').html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderErpLoyaltyTab(data) {
@@ -159,7 +159,7 @@
                         '<div class="bv-tab-empty-sub">No hay puntos registrados</div></div>';
                 }
                 $('#bv-erp-loyalty').html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderForTab(tabName, data) {
@@ -169,7 +169,7 @@
                         '<div class="bv-tab-empty-title">Error al cargar</div>' +
                         '<div class="bv-tab-empty-sub">No se pudo obtener el contexto ERP</div></div>'
                     );
-                    syncRightTabVisibility();
+                    if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
                     return;
                 }
                 if (tabName === 'erp-orders') { renderErpOrdersTab(data); }
@@ -177,8 +177,25 @@
                 else if (tabName === 'erp-loyalty') { renderErpLoyaltyTab(data); }
             }
 
-            // Pre-warm context when panel loads — avoids wait on first tab click
-            fetchErpContext(null);
+            // Pre-warm context when panel loads — avoids wait on first tab click.
+            //
+            // Antes este pre-warm solo rellenaba erpCache sin pintar nada. El
+            // markup inicial de erp-orders/finance/loyalty (right-panel-erp-tabs.
+            // blade.php) es siempre un .bv-tab-empty estático, así que
+            // syncRightTabVisibility() —que corre en initRightPanelTabs() al
+            // cargar la página, antes de que este fetch en segundo plano
+            // termine— ocultaba los 3 botones de pestaña. Como el único gatillo
+            // para pintar contenido real es el propio click, y un botón con
+            // display:none no es clicable, los tabs ERP quedaban inaccesibles
+            // para cualquier cliente vinculado, aunque el contexto se hubiera
+            // descargado correctamente. Pintar (o re-vaciar) las 3 pestañas en
+            // cuanto llega el contexto deja que syncRightTabVisibility() las
+            // muestre de nuevo cuando sí hay datos reales.
+            fetchErpContext(function (data) {
+                renderForTab('erp-orders', data);
+                renderForTab('erp-finance', data);
+                renderForTab('erp-loyalty', data);
+            });
 
             // Lazy-load on tab click
             // Usar capture phase nativo: el click en erp-orders/finance/loyalty siempre dispara primero

@@ -19,6 +19,7 @@ use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationStatusChanged;
 use Modules\Helpdesk\Events\ConversationTagAdded;
+use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
 use Modules\Helpdesk\Http\Requests\Managers\LinkConversationCustomerRequest;
@@ -41,7 +42,9 @@ use Modules\Helpdesk\Models\ConversationView;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\Helpdesk\Notifications\ConversationAssignedNotification;
 use Modules\Helpdesk\Services\ConversationMessageService;
+use Modules\Helpdesk\Services\Conversations\ActivityMessageService;
 use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CsatService;
@@ -55,6 +58,7 @@ class ConversationsController extends Controller
     public function __construct(
         private ConversationTagService $tagService,
         private ConversationInboxMetricsService $inboxMetrics,
+        private ActivityMessageService $activityMessages,
     ) {
         $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'pane', 'listJson', 'kanban']);
         $this->middleware('can:helpdesk.conversations.create')->only(['create', 'store']);
@@ -421,9 +425,15 @@ class ConversationsController extends Controller
             )
             ->when(
                 $request->filled('tag'),
+                // El modal "Filtrar conversaciones" puede mandar varios chips
+                // de etiqueta a la vez ("3,4"): $request->integer('tag') solo
+                // castea el primer número y descarta el resto en silencio.
                 fn ($q) => $q->whereHas(
                     'conversationTags',
-                    fn ($t) => $t->where('helpdesk_conversation_tags.id', $request->integer('tag'))
+                    fn ($t) => $t->whereIn(
+                        'helpdesk_conversation_tags.id',
+                        array_map('intval', explode(',', (string) $request->input('tag')))
+                    )
                 )
             );
 
@@ -854,9 +864,20 @@ class ConversationsController extends Controller
 
         if ($request->has('status_id')) {
             $conversation->status_id = $request->validated()['status_id'];
+            $statusChanged = $conversation->isDirty('status_id');
             $conversation->save();
 
             $status = $conversation->status()->first();
+
+            // Ver comentario equivalente en close()/reopen(): sin este dispatch,
+            // cambiar el estado desde el desplegable "Estado" del panel derecho no
+            // dejaba rastro en la pestaña "Actividad" ni notificaba al widget del
+            // cliente en tiempo real (único listener: LogActivityOnConversation
+            // StatusChanged, que escucha ConversationStatusChanged, no el genérico
+            // ConversationUpdated que dispara el observer).
+            if ($statusChanged && $status) {
+                ConversationStatusChanged::dispatch($conversation, $status, auth()->id());
+            }
 
             return response()->json([
                 'success' => true,
@@ -888,7 +909,8 @@ class ConversationsController extends Controller
 
         if ($request->has('group_id')) {
             $oldGroupId = $conversation->group_id;
-            $conversation->group_id = $request->validated()['group_id'] ?? null;
+            $newGroupId = $request->validated()['group_id'] ?? null;
+            $conversation->group_id = $newGroupId;
             $conversation->save();
 
             // Remove old group tag if group changed
@@ -900,11 +922,31 @@ class ConversationsController extends Controller
             }
 
             // Attach new group tag
+            $group = null;
             if ($conversation->group_id) {
-                $group = Group::find($conversation->group_id);
+                $group = Group::with('users')->find($conversation->group_id);
                 if ($group?->tag_id) {
                     $conversation->conversationTags()->syncWithoutDetaching([$group->tag_id]);
                 }
+            }
+
+            // Este endpoint (modal "Mover a equipo" del panel derecho) solo movía
+            // group_id + las tags, sin pasar por Conversation::assignToGroup() —
+            // por eso no se notificaba a los miembros del equipo ni quedaba
+            // registro en la pestaña "Actividad" (ActivityMessageService::
+            // logTeamAssigned() existía pero nadie la invocaba).
+            if ($group && $newGroupId != $oldGroupId) {
+                foreach ($group->users as $member) {
+                    event(new InboxItemChanged($conversation->id, $member->id, 'assigned'));
+                    $member->notify(new ConversationAssignedNotification($conversation));
+                }
+
+                $this->activityMessages->logTeamAssigned(
+                    $conversation,
+                    $group->id,
+                    $group->name,
+                    auth()->user()
+                );
             }
 
             return response()->json([
