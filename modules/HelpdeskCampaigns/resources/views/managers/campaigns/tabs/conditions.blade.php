@@ -3,18 +3,18 @@
     @csrf
     @method('PUT')
 
-    <h6 class="fw-semibold mb-1">Condiciones de visualizacion</h6>
-    <p class="text-muted small mb-3">Definen cuando y a quien se mostrara la campana. Sin condiciones, se muestra a todos los visitantes.</p>
+    <h6 class="fw-semibold mb-1">Condiciones de visualización</h6>
+    <p class="text-muted small mb-3">Definen cuándo y a quién se mostrará la campaña. Sin condiciones, se muestra a todos los visitantes.</p>
 
     @php $conditions = old('conditions', $campaign->conditions ?? []); @endphp
 
     @if(empty($conditions))
         <div class="alert alert-warning mb-3" id="no-conditions-alert">
-            Sin condiciones configuradas. La campana se mostrara a todos los visitantes.
+            Sin condiciones configuradas. La campaña se mostrará a todos los visitantes.
         </div>
     @else
         <div class="alert alert-success mb-3">
-            Tienes {{ count($conditions) }} condicion(es) configurada(s). La campana se mostrara cuando todas se cumplan (logica AND).
+            Tienes {{ count($conditions) }} condición(es) configurada(s). La campaña se mostrará cuando todas se cumplan (lógica AND).
         </div>
     @endif
 
@@ -36,16 +36,16 @@
                     Visitante recurrente
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetCondition('specific-page')">
-                    Pagina especifica
+                    Página específica
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetCondition('time-on-site')">
                     Tiempo en sitio
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetCondition('exit-intent')">
-                    Intencion de salida
+                    Intención de salida
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addCondition()">
-                    Condicion personalizada
+                    Condición personalizada
                 </button>
             </div>
         </div>
@@ -58,7 +58,7 @@
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Guardar condiciones</button>
             <a href="{{ route('helpdesk.campaigns.show', $campaign) }}" class="btn btn-light">
-                Ver campana
+                Ver campaña
             </a>
         </div>
     </div>
@@ -75,17 +75,17 @@
                         <option value="">Seleccionar...</option>
                         <optgroup label="Visitante">
                             <option value="visitor_type">Tipo de visitante</option>
-                            <option value="visit_count">Numero de visitas</option>
+                            <option value="visit_count">Número de visitas</option>
                             <option value="time_on_site">Tiempo en sitio</option>
-                            <option value="pages_visited">Paginas visitadas</option>
+                            <option value="pages_visited">Páginas visitadas</option>
                         </optgroup>
-                        <optgroup label="Pagina">
+                        <optgroup label="Página">
                             <option value="current_url">URL actual</option>
                             <option value="referrer">Referrer</option>
                             <option value="device_type">Tipo de dispositivo</option>
                         </optgroup>
                         <optgroup label="Comportamiento">
-                            <option value="exit_intent">Intencion de salida</option>
+                            <option value="exit_intent">Intención de salida</option>
                             <option value="scroll_depth">Profundidad de scroll</option>
                             <option value="idle_time">Tiempo inactivo</option>
                         </optgroup>
@@ -108,7 +108,7 @@
                            name="conditions[][value]" placeholder="Valor a comparar">
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-sm btn-light-danger w-100" onclick="removeCondition(this)">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeCondition(this)">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

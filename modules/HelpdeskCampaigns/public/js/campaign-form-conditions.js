@@ -30,7 +30,7 @@ function removeCondition(btn) {
     const $container = $('#conditions-container');
     if ($container.children().length === 0 && $('#no-conditions-alert').length === 0) {
         $container.before(
-            '<div class="alert alert-warning mb-3" id="no-conditions-alert">Sin condiciones configuradas. La campana se mostrara a todos los visitantes.</div>'
+            '<div class="alert alert-warning mb-3" id="no-conditions-alert">Sin condiciones configuradas. La campaña se mostrará a todos los visitantes.</div>'
         );
     }
 }
@@ -52,7 +52,7 @@ function updateConditionOperators(select) {
             <option value="less_than">Menor que</option>
             <option value="greater_or_equal">Mayor o igual</option>
             <option value="less_or_equal">Menor o igual</option>`);
-        $valueInput.attr('type', 'number').attr('placeholder', 'Numero');
+        $valueInput.attr('type', 'number').attr('placeholder', 'Número');
     } else if (booleanFields.includes(field)) {
         $operatorSelect.html('<option value="equals">Es igual a</option>');
         $valueInput.val('true').attr('placeholder', 'true o false');

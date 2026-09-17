@@ -62,11 +62,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
-
-        return view('helpdeskcampaigns::managers.campaigns.create', [
-            'templates' => $templates,
-        ]);
+        return view('helpdeskcampaigns::managers.campaigns.create');
     }
 
     /**
@@ -119,11 +115,8 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
-
         return view('helpdeskcampaigns::managers.campaigns.edit', [
             'campaign' => $campaign,
-            'templates' => $templates,
         ]);
     }
 
@@ -514,7 +507,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
+        $templates = CampaignTemplate::select(['id', 'name', 'description', 'template_type'])->limit(100)->get();
 
         return view('helpdeskcampaigns::managers.campaigns.templates', [
             'templates' => $templates,

@@ -9,7 +9,7 @@ $(function () {
     const config = window.HcmCampaignShow || {};
 
     if (config.flashSuccess) {
-        toastr.success(config.flashSuccess, 'Exito');
+        toastr.success(config.flashSuccess, 'Éxito');
     }
     if (config.flashError) {
         toastr.error(config.flashError, 'Error');

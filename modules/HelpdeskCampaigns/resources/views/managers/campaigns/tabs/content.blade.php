@@ -4,13 +4,13 @@
     @method('PUT')
 
     <h6 class="fw-semibold mb-1">Bloques de contenido</h6>
-    <p class="text-muted small mb-3">Componentes visuales que forman el cuerpo de la campana</p>
+    <p class="text-muted small mb-3">Componentes visuales que forman el cuerpo de la campaña</p>
 
     @php $content = old('content', $campaign->content ?? []); @endphp
 
     @if(empty($content))
         <div class="alert alert-info mb-3" id="empty-state">
-            Sin contenido aun. Haz clic en "Agregar bloque" para comenzar a disenar la campana.
+            Sin contenido aún. Haz clic en "Agregar bloque" para comenzar a diseñar la campaña.
         </div>
     @endif
 
@@ -48,14 +48,14 @@
                         <select class="form-select form-select-sm block-type" name="content[][type]" onchange="updateBlockFields(this)">
                             <option value="text">Texto</option>
                             <option value="heading">Encabezado</option>
-                            <option value="button">Boton</option>
+                            <option value="button">Botón</option>
                             <option value="image">Imagen</option>
                             <option value="html">HTML personalizado</option>
                         </select>
                     </div>
                     <div class="block-fields"></div>
                 </div>
-                <button type="button" class="btn btn-sm btn-light-danger flex-shrink-0" onclick="removeBlock(this)">
+                <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" onclick="removeBlock(this)">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>

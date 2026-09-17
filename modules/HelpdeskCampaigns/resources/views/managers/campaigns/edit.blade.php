@@ -69,7 +69,7 @@
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion de la campana</h6>
+                    <h6 class="card-title mb-3">Información de la campaña</h6>
                     <dl class="row mb-0 small">
                         <dt class="col-5 text-muted fw-normal">Estado</dt>
                         <dd class="col-7">
@@ -91,25 +91,25 @@
                 </div>
                 <hr class="my-0">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Acciones rapidas</h6>
+                    <h6 class="card-title mb-3">Acciones rápidas</h6>
                     <div class="d-flex flex-column gap-2">
                         <a href="{{ route('helpdesk.campaigns.show', $campaign) }}" class="btn btn-light btn-sm">
-                            Ver estadisticas
+                            Ver estadísticas
                         </a>
                         @if($campaign->status === 'draft')
                             <form method="POST" action="{{ route('helpdesk.campaigns.publish', $campaign) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-success btn-sm w-100">Publicar campana</button>
+                                <button type="submit" class="btn btn-success btn-sm w-100">Publicar campaña</button>
                             </form>
                         @elseif($campaign->status === 'active')
                             <form method="POST" action="{{ route('helpdesk.campaigns.pause', $campaign) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-warning btn-sm w-100">Pausar campana</button>
+                                <button type="submit" class="btn btn-warning btn-sm w-100">Pausar campaña</button>
                             </form>
                         @elseif($campaign->status === 'paused')
                             <form method="POST" action="{{ route('helpdesk.campaigns.resume', $campaign) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-success btn-sm w-100">Reanudar campana</button>
+                                <button type="submit" class="btn btn-success btn-sm w-100">Reanudar campaña</button>
                             </form>
                         @endif
                     </div>

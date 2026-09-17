@@ -15,7 +15,7 @@
     "HelpdeskAgents": true,
     "HelpdeskAnalytics": false,
     "HelpdeskBirthday": true,
-    "HelpdeskCampaigns": false,
+    "HelpdeskCampaigns": true,
     "HelpdeskChatFlow": true,
     "HelpdeskCompliance": true,
     "HelpdeskContacts": true,

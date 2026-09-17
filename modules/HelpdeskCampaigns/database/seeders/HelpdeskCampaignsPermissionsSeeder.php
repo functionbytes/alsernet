@@ -13,11 +13,11 @@ class HelpdeskCampaignsPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            ['helpdesk.campaigns.view', 'Ver campanas de helpdesk'],
-            ['helpdesk.campaigns.create', 'Crear campanas de helpdesk'],
-            ['helpdesk.campaigns.update', 'Actualizar campanas de helpdesk'],
-            ['helpdesk.campaigns.delete', 'Eliminar campanas de helpdesk'],
-            ['helpdesk.campaigns.manage', 'Gestionar campanas de helpdesk completamente'],
+            ['helpdesk.campaigns.view', 'Ver campañas de helpdesk'],
+            ['helpdesk.campaigns.create', 'Crear campañas de helpdesk'],
+            ['helpdesk.campaigns.update', 'Actualizar campañas de helpdesk'],
+            ['helpdesk.campaigns.delete', 'Eliminar campañas de helpdesk'],
+            ['helpdesk.campaigns.manage', 'Gestionar campañas de helpdesk completamente'],
         ];
 
         foreach ($permissions as [$name, $description]) {

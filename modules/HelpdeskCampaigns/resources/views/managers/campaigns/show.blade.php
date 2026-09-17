@@ -7,7 +7,7 @@
 @endpush
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Detalle de campana'])
+    @include('core::components.card', ['title' => 'Detalle de campaña'])
 @endsection
 
 @section('content')
@@ -48,7 +48,7 @@
                     @endcan
                     <div class="dropdown">
                         <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Mas acciones
+                            Más acciones
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             @can('update', $campaign)
@@ -176,7 +176,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-2">Promedio diario</h6>
                     <h4 class="mb-1 fw-bold">{{ number_format($stats['daily_avg']) }}</h4>
-                    <small class="text-muted">Impresiones por dia</small>
+                    <small class="text-muted">Impresiones por día</small>
                 </div>
             </div>
         </div>
@@ -188,7 +188,7 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header border-bottom p-3">
-                    <h6 class="mb-0 fw-bold">Informacion de la campana</h6>
+                    <h6 class="mb-0 fw-bold">Información de la campaña</h6>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
@@ -205,8 +205,8 @@
                         @if($campaign->published_at)
                             <dt class="col-5 text-muted fw-normal">Publicada</dt>
                             <dd class="col-7">{{ $campaign->published_at->format('d/m/Y H:i') }}</dd>
-                            <dt class="col-5 text-muted fw-normal">Dias activos</dt>
-                            <dd class="col-7">{{ $stats['days_active'] }} dias</dd>
+                            <dt class="col-5 text-muted fw-normal">Días activos</dt>
+                            <dd class="col-7">{{ $stats['days_active'] }} días</dd>
                         @endif
                         @if($campaign->ends_at)
                             <dt class="col-5 text-muted fw-normal">Finaliza</dt>
@@ -233,7 +233,7 @@
                     @if($stats['total_impressions'] > 0)
                         <div class="mb-4">
                             <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted small">Tasa de conversion</span>
+                                <span class="text-muted small">Tasa de conversión</span>
                                 <span class="fw-bold">{{ $stats['ctr'] }}%</span>
                             </div>
                             <div class="progress hcm-progress-thin">
@@ -260,12 +260,12 @@
                         </div>
                         @if($campaign->published_at)
                             <p class="mb-0 small text-muted mt-3">
-                                Promedio de {{ number_format($stats['daily_avg']) }} impresiones por dia durante {{ $stats['days_active'] }} dias activos.
+                                Promedio de {{ number_format($stats['daily_avg']) }} impresiones por día durante {{ $stats['days_active'] }} días activos.
                             </p>
                         @endif
                     @else
                         <div class="alert alert-info mb-0">
-                            Esta campana aun no tiene impresiones registradas.
+                            Esta campaña aún no tiene impresiones registradas.
                             @if($campaign->status === 'draft')
                                 Publicala para comenzar a recopilar datos.
                             @endif

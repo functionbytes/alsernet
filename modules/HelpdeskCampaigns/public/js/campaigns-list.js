@@ -8,7 +8,7 @@ $(function () {
     const config = window.HcmCampaignsList || {};
 
     if (config.flashSuccess) {
-        toastr.success(config.flashSuccess, 'Exito');
+        toastr.success(config.flashSuccess, 'Éxito');
     }
     if (config.flashError) {
         toastr.error(config.flashError, 'Error');
@@ -38,20 +38,27 @@ $(function () {
         const ids = $('.bulk-row:checked').map((_, el) => parseInt(el.value, 10)).get();
         if (!action || ids.length === 0) return;
 
-        if (action === 'delete' && !confirm(`¿Eliminar ${ids.length} campaña(s)?`)) return;
+        function run() {
+            $.ajax({
+                url: config.bulkActionUrl,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { action, ids },
+                success: function (res) {
+                    toastr.success(res.message || 'Acción aplicada');
+                    setTimeout(() => location.reload(), 800);
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Error en la acción masiva');
+                }
+            });
+        }
 
-        $.ajax({
-            url: config.bulkActionUrl,
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { action, ids },
-            success: function (res) {
-                toastr.success(res.message || 'Acción aplicada');
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Error en la acción masiva');
-            }
-        });
+        if (action === 'delete') {
+            window.__confirm(`¿Eliminar ${ids.length} campaña(s)? Esta acción no se puede deshacer.`, run);
+            return;
+        }
+
+        run();
     });
 });

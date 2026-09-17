@@ -52,7 +52,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Activas</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($campaigns->where('status', 'active')->count()) }}</h4>
-                                <small class="text-muted">En ejecucion</small>
+                                <small class="text-muted">En ejecución</small>
                             </div>
                         </div>
                     </div>
@@ -201,7 +201,7 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('helpdesk.campaigns.show', $campaign) }}">
-                                                            Ver estadisticas
+                                                            Ver estadísticas
                                                         </a>
                                                     </li>
                                                     @can('update', $campaign)

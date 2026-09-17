@@ -116,7 +116,7 @@
                 @endif
             </div>
         </div>
-        <button type="button" class="btn btn-sm btn-light-danger" onclick="removeBlock(this)">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBlock(this)">
             <i class="fas fa-trash"></i>
         </button>
     </div>
