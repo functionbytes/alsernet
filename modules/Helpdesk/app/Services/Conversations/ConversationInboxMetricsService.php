@@ -248,7 +248,19 @@ class ConversationInboxMetricsService
             60,
             fn () => ConversationTag::query()
                 ->where('is_active', true)
-                ->withCount('conversations')
+                // Mismo criterio de visibilidad que sidebarGroups()/sidebarInboxes():
+                // clickear una etiqueta navega a ?tag=X, que hereda el filtro
+                // is_open=true de la vista por defecto "Todas las abiertas" (ver
+                // ConversationFilter::requestOverrides() — 'tag' no libera 'is_open').
+                // Sin este scope aquí, withCount('conversations') contaba TODAS las
+                // conversaciones con la etiqueta (incluidas cerradas/archivadas/bot),
+                // así que el badge no coincidía con lo que realmente se veía al
+                // filtrar (p.ej. "Resuelta" mostraba 2 con la lista vacía).
+                ->withCount(['conversations' => fn ($q) => $q
+                    ->whereHas('status', fn ($s) => $s->where('is_open', true))
+                    ->where('is_archived', false)
+                    ->withoutActiveBot(),
+                ])
                 ->orderBy('name')
                 ->get()
         );
