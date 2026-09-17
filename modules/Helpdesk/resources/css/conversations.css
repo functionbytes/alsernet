@@ -1013,6 +1013,63 @@ body:has(.conversations) .mc-content {
     transform: scale(1.2);
 }
 
+/* === Hover toolbar en burbujas (responder / reaccionar) ===
+   "reply"/"react" solo eran accesibles por clic derecho, sin ninguna pista
+   visual — este toolbar aparece al pasar el ratón sobre la burbuja. */
+.bv-bubble-hover-actions {
+    position: absolute;
+    top: -14px;
+    right: 8px;
+    display: flex;
+    gap: 2px;
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: 8px;
+    padding: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+}
+.bv-msg.out .bv-bubble-hover-actions {
+    right: auto;
+    left: 8px;
+}
+.bv-bubble-hover-btn {
+    background: transparent;
+    border: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    color: var(--bv-text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s, color .12s;
+}
+.bv-bubble-hover-btn:hover {
+    background: var(--bv-bg-subtle);
+    color: var(--bv-primary);
+}
+
+/* Emoji de reacción (propia del agente o del cliente vía customer_reactions) */
+.bv-bubble-reaction {
+    position: absolute;
+    bottom: -10px;
+    right: 8px;
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+.bv-msg.out .bv-bubble-reaction {
+    right: auto;
+    left: 8px;
+}
+
 /* (Modal styles for forward/info reuse the existing .bv-modal / .bv-modal-dialog
    infrastructure defined later in this file — only the unique sub-elements
    below are added.) */
@@ -10697,8 +10754,23 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-modal-search--hint input:focus { outline: none; box-shadow: none; }
 .asgn-search-hint { margin-left: auto; pointer-events: none; }
 
-/* Unified list container */
-.asgn-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+/* Unified list container — con muchos agentes/equipos crecía sin límite y
+   empujaba "Notificar al agente" y los botones del footer fuera de la vista
+   inicial. Altura fija (~5 filas y media, para insinuar que hay más) con
+   scroll interno; barra de scroll oculta mientras se mantiene el scroll
+   funcional (rueda/trackpad/teclado), consistente con el resto de listas
+   con overflow del inbox. */
+.asgn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 4px;
+    max-height: 344px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.asgn-list::-webkit-scrollbar { display: none; }
 
 /* Section label */
 .asgn-sec-lbl {
