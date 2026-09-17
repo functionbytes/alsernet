@@ -22,7 +22,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger-solid" id="bv-mark-spam-confirm">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_confirm') }}</button>
+            <button class="btn-brand-solid" id="bv-mark-spam-confirm">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_confirm') }}</button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
@@ -30,38 +30,8 @@
 
 @once
 @push('scripts')
-<script>
-$(document).on('click', '#bv-mark-spam-confirm', function () {
-    var url = $('#bv-btn-mark-spam').data('spam-url');
-    if (!url) {
-        if (window.toastr) toastr.warning('No hay conversación activa');
-        return;
-    }
-
-    var $btn = $(this).prop('disabled', true);
-
-    $.ajax({
-        url: url,
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json',
-        },
-    })
-    .done(function () {
-        $('[data-bv-modal-name="mark-spam"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) $('body').css('overflow', '');
-        if (window.toastr) toastr.success('Conversación marcada como spam.');
-        $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-    })
-    .fail(function (xhr) {
-        var msg = xhr?.responseJSON?.message || 'Error al marcar como spam';
-        if (window.toastr) toastr.error(msg);
-    })
-    .always(function () {
-        $btn.prop('disabled', false);
-    });
-});
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/mark-spam.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/mark-spam.js')) }}" defer></script>
 @endpush
 @endonce

@@ -40,14 +40,14 @@
                 @endif
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Asunto <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold">Asunto <span class="text-brand">*</span></label>
                     <input type="text" name="subject" class="form-control @error('subject') is-invalid @enderror"
                         value="{{ old('subject') }}" required>
                     @error('subject')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Descripción <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold">Descripción <span class="text-brand">*</span></label>
                     <textarea name="description" rows="5"
                         class="form-control @error('description') is-invalid @enderror" required>{{ old('description') }}</textarea>
                     @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -55,7 +55,7 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">Categoría <span class="text-brand">*</span></label>
                         <select name="category_id" id="categorySelect" class="form-select select2 @error('category_id') is-invalid @enderror" required>
                             <option value="">Seleccionar...</option>
                             @foreach($categories as $cat)
@@ -95,31 +95,12 @@
 @endsection
 
 @push('scripts')
+{{-- Solo datos: las plantillas disponibles. La lógica entera vive en
+     agent-ticket-create-form.js. --}}
 <script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    // Usar plantilla: autorrellena el formulario, no lo bloquea — el agente
-    // puede seguir editando cualquier campo despues de aplicarla.
-    const TEMPLATES = @json($templates->keyBy('id'));
-
-    $('#templateSelect').on('change', function () {
-        const id = $(this).val();
-        if (!id || !TEMPLATES[id]) return;
-
-        const tpl = TEMPLATES[id];
-
-        $('input[name="subject"]').val(tpl.subject);
-        $('textarea[name="description"]').val(tpl.body);
-
-        if (tpl.category_id) {
-            $('#categorySelect').val(String(tpl.category_id)).trigger('change');
-        }
-
-        if (tpl.priority) {
-            $('#prioritySelect').val(tpl.priority).trigger('change');
-        }
-    });
-});
+window.hdtAgentTicketCreateConfig = {
+    templates: @json($templates->keyBy('id')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/agent-ticket-create-form.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/agent-ticket-create-form.js')) }}"></script>
 @endpush

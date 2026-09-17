@@ -51,7 +51,7 @@
                                 @csrf
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label class="form-label">Agente <span class="text-danger">*</span></label>
+                                        <label class="form-label">Agente <span class="text-brand">*</span></label>
                                         <select name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
                                             <option value="">Seleccionar agente...</option>
                                             @foreach($agents as $agent)
@@ -66,7 +66,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Dia de la semana <span class="text-danger">*</span></label>
+                                        <label class="form-label">Dia de la semana <span class="text-brand">*</span></label>
                                         <select name="day_of_week" class="form-select @error('day_of_week') is-invalid @enderror" required>
                                             <option value="">Seleccionar dia...</option>
                                             @foreach([0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miercoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sabado'] as $num => $label)
@@ -80,7 +80,7 @@
 
                                     <div class="row g-2">
                                         <div class="col-6">
-                                            <label class="form-label">Inicio <span class="text-danger">*</span></label>
+                                            <label class="form-label">Inicio <span class="text-brand">*</span></label>
                                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
                                                    value="{{ old('start_time') }}" required>
                                             @error('start_time')
@@ -88,7 +88,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-6">
-                                            <label class="form-label">Fin <span class="text-danger">*</span></label>
+                                            <label class="form-label">Fin <span class="text-brand">*</span></label>
                                             <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
                                                    value="{{ old('end_time') }}" required>
                                             @error('end_time')
@@ -202,7 +202,7 @@
                                 @csrf
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label class="form-label">Agente <span class="text-danger">*</span></label>
+                                        <label class="form-label">Agente <span class="text-brand">*</span></label>
                                         <select name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
                                             <option value="">Seleccionar agente...</option>
                                             @foreach($agents as $agent)
@@ -217,7 +217,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Fecha inicio <span class="text-danger">*</span></label>
+                                        <label class="form-label">Fecha inicio <span class="text-brand">*</span></label>
                                         <input type="date" name="starts_at" class="form-control @error('starts_at') is-invalid @enderror"
                                                value="{{ old('starts_at') }}" required>
                                         @error('starts_at')
@@ -226,7 +226,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Fecha fin <span class="text-danger">*</span></label>
+                                        <label class="form-label">Fecha fin <span class="text-brand">*</span></label>
                                         <input type="date" name="ends_at" class="form-control @error('ends_at') is-invalid @enderror"
                                                value="{{ old('ends_at') }}" required>
                                         @error('ends_at')
@@ -302,7 +302,7 @@
                                                                 $badgeMap = [
                                                                     'approved' => 'bg-success-subtle text-success',
                                                                     'pending' => 'bg-warning-subtle text-warning',
-                                                                    'rejected' => 'bg-danger-subtle text-danger',
+                                                                    'rejected' => 'bg-brand-subtle text-brand',
                                                                 ];
                                                                 $labelMap = [
                                                                     'approved' => 'Aprobado',
@@ -365,7 +365,7 @@
                                 @csrf
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                                                value="{{ old('name') }}" placeholder="Ej. Guardia nocturna" required>
                                         @error('name')
@@ -374,7 +374,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Agentes en rotacion <span class="text-danger">*</span></label>
+                                        <label class="form-label">Agentes en rotacion <span class="text-brand">*</span></label>
                                         <select name="user_ids[]" class="form-select @error('user_ids') is-invalid @enderror" multiple size="5" required>
                                             @foreach($agents as $agent)
                                                 <option value="{{ $agent->id }}"
@@ -390,7 +390,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Duracion del turno (horas) <span class="text-danger">*</span></label>
+                                        <label class="form-label">Duracion del turno (horas) <span class="text-brand">*</span></label>
                                         <input type="number" name="shift_duration_hours" class="form-control @error('shift_duration_hours') is-invalid @enderror"
                                                value="{{ old('shift_duration_hours', 24) }}" min="1" max="720" required>
                                         @error('shift_duration_hours')
@@ -399,7 +399,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Inicio de la rotacion <span class="text-danger">*</span></label>
+                                        <label class="form-label">Inicio de la rotacion <span class="text-brand">*</span></label>
                                         <input type="datetime-local" name="started_at" class="form-control @error('started_at') is-invalid @enderror"
                                                value="{{ old('started_at') }}" required>
                                         @error('started_at')
@@ -519,35 +519,10 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Restore active tab on page reload (after form submit)
-    const activeTab = localStorage.getItem('scheduleActiveTab');
-    if (activeTab) {
-        const tabEl = document.querySelector('#scheduleTabs button[data-bs-target="' + activeTab + '"]');
-        if (tabEl) {
-            new bootstrap.Tab(tabEl).show();
-        }
-    }
-
-    document.querySelectorAll('#scheduleTabs button[data-bs-toggle="tab"]').forEach(function (btn) {
-        btn.addEventListener('shown.bs.tab', function (e) {
-            localStorage.setItem('scheduleActiveTab', e.target.getAttribute('data-bs-target'));
-        });
-    });
-});
+window.HelpdeskAgentsSchedule = {
+    success: @json(session('success')),
+    error: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdeskagents/js/schedule.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/schedule.js')) }}" defer></script>
 @endpush

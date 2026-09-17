@@ -1,5 +1,8 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Busqueda avanzada - Helpdesk')
 
 @section('page_header')
@@ -150,7 +153,7 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('manager.helpdesk.tickets.show', $ticket) }}" class="text-dark fw-semibold text-decoration-none">
-                                                {{ \Str::limit($ticket->title, 50) }}
+                                                {{ \Str::limit($ticket->subject, 50) }}
                                             </a>
                                             @if($ticket->category)
                                                 <br><small class="text-muted">{{ $ticket->category->name }}</small>
@@ -158,8 +161,8 @@
                                         </td>
                                         <td>
                                             @if($ticket->status)
-                                                <span class="badge rounded-pill"
-                                                      style="background-color: {{ $ticket->status->color ?? '#6c757d' }}; color: white;">
+                                                <span class="badge rounded-pill hdt-dyn-bg text-white"
+                                                      style="--hdt-color: {{ $ticket->status->color ?? '#6c757d' }}">
                                                     {{ $ticket->status->name }}
                                                 </span>
                                             @else
@@ -169,7 +172,7 @@
                                         <td>
                                             @php
                                                 $priorityClasses = [
-                                                    'urgent' => 'bg-danger-subtle text-danger',
+                                                    'urgent' => 'bg-brand-subtle text-brand',
                                                     'high' => 'bg-warning-subtle text-warning',
                                                     'normal' => 'bg-info-subtle text-info',
                                                     'low' => 'bg-secondary-subtle text-secondary',
@@ -227,10 +230,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush
 

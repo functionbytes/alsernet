@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
+
 @php $isEdit = isset($recurringTicket) && $recurringTicket !== null && $recurringTicket->exists; @endphp
 
 @section('title', $isEdit ? 'Editar ticket recurrente' : 'Nuevo ticket recurrente')
@@ -36,7 +40,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                 <input type="text" name="name"
                                        class="form-control @error('name') is-invalid @enderror"
                                        value="{{ old('name', $recurringTicket->name ?? '') }}"
@@ -48,7 +52,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Asunto <span class="text-danger">*</span></label>
+                                <label class="form-label">Asunto <span class="text-brand">*</span></label>
                                 <input type="text" name="subject"
                                        class="form-control @error('subject') is-invalid @enderror"
                                        value="{{ old('subject', $recurringTicket->subject ?? '') }}"
@@ -132,7 +136,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Frecuencia <span class="text-danger">*</span></label>
+                                <label class="form-label">Frecuencia <span class="text-brand">*</span></label>
                                 <select name="frequency" id="frequency" class="form-select select2 @error('frequency') is-invalid @enderror" required>
                                     <option value="">Seleccionar frecuencia...</option>
                                     <option value="daily"   {{ old('frequency', $recurringTicket->frequency ?? '') === 'daily'   ? 'selected' : '' }}>Diario — cada día</option>
@@ -145,8 +149,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-12 col-md-6" id="cron-expression-group"
-                                 @if(old('frequency', $recurringTicket->frequency ?? '') !== 'custom') style="display:none" @endif>
+                            <div class="col-12 col-md-6 @if(old('frequency', $recurringTicket->frequency ?? '') !== 'custom') hdt-step-hidden @endif" id="cron-expression-group">
                                 <label class="form-label">Expresión cron</label>
                                 <input type="text" name="cron_expression"
                                        class="form-control font-monospace @error('cron_expression') is-invalid @enderror"
@@ -237,13 +240,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    $('#frequency').on('change', function () {
-        $('#cron-expression-group').toggle(this.value === 'custom');
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/recurring-ticket-form.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/recurring-ticket-form.js')) }}"></script>
 @endpush

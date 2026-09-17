@@ -1,5 +1,8 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Editar ticket #' . $ticket->ticket_number)
 
 @section('page_header')
@@ -44,7 +47,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Asunto <span class="text-danger">*</span></label>
+                                <label class="form-label">Asunto <span class="text-brand">*</span></label>
                                 @if($ticket->isClosed())
                                     <input type="text" class="form-control" value="{{ $ticket->subject }}" disabled>
                                 @else
@@ -59,7 +62,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                                <label class="form-label">Descripción <span class="text-brand">*</span></label>
                                 @if($ticket->isClosed())
                                     <textarea class="form-control" rows="6" disabled>{{ $ticket->description }}</textarea>
                                 @else
@@ -87,7 +90,7 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoría <span class="text-danger">*</span></label>
+                                <label class="form-label">Categoría <span class="text-brand">*</span></label>
                                 @if($ticket->isClosed())
                                     <input type="text" class="form-control" value="{{ $ticket->category?->name ?? "Sin categoría" }}" disabled>
                                 @else
@@ -111,7 +114,7 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Prioridad <span class="text-danger">*</span></label>
+                                <label class="form-label">Prioridad <span class="text-brand">*</span></label>
                                 @if($ticket->isClosed())
                                     <input type="text" class="form-control" value="{{ ucfirst($ticket->priority) }}" disabled>
                                 @else
@@ -240,7 +243,7 @@
                 <div class="card-body">
                     <div class="mb-2">
                         <small class="text-muted d-block">Estado</small>
-                        <span class="badge" style="background-color: {{ $ticket->status?->color ?? "#6c757d" }}">
+                        <span class="badge hdt-dyn-bg" style="--hdt-color: {{ $ticket->status?->color ?? "#6c757d" }}">
                             {{ $ticket->status?->name ?? "Sin estado" }}
                         </span>
                     </div>
@@ -286,80 +289,12 @@
 @endsection
 
 @push('scripts')
+{{-- Solo datos: los campos personalizados ya guardados en el ticket. La
+     lógica entera vive en ticket-edit-form.js. --}}
 <script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    const existingCustomFields = @json($ticket->custom_fields ?? []);
-    const $categorySelect = $('#categorySelect');
-    const $customFieldsContainer = $('#customFieldsContainer');
-
-    function renderCustomFields() {
-        if (!$categorySelect.length) return;
-
-        const $selected = $categorySelect.find(':selected');
-        const fields = JSON.parse($selected.attr('data-fields') || '[]');
-        const required = JSON.parse($selected.attr('data-required') || '[]');
-
-        $customFieldsContainer.empty();
-
-        if (fields.length === 0) return;
-
-        $customFieldsContainer.append(
-            '<div class="col-12"><h6 class="fw-semibold mb-1">Campos personalizados</h6></div>'
-        );
-
-        fields.forEach(function (field) {
-            const isRequired = required.includes(field.name);
-            const fieldName = 'custom_fields[' + field.name + ']';
-            const currentValue = existingCustomFields[field.name] || '';
-            let $input;
-
-            if (field.type === 'text') {
-                $input = $('<input type="text" class="form-control">')
-                    .attr({ name: fieldName, placeholder: field.placeholder || '' })
-                    .val(currentValue);
-            } else if (field.type === 'textarea') {
-                $input = $('<textarea class="form-control" rows="3">').attr('name', fieldName).val(currentValue);
-            } else if (field.type === 'select') {
-                $input = $('<select class="form-select select2">').attr('name', fieldName);
-                $input.append($('<option value="">').text('Seleccione...'));
-                (field.options || []).forEach(function (opt) {
-                    $input.append($('<option>').val(opt).text(opt).prop('selected', currentValue === opt));
-                });
-            } else if (field.type === 'date') {
-                $input = $('<input type="date" class="form-control">').attr('name', fieldName).val(currentValue);
-            } else {
-                return;
-            }
-
-            if (isRequired) {
-                $input.prop('required', true);
-            }
-
-            const $label = $('<label class="form-label">').text(field.label || field.name);
-            if (isRequired) {
-                $label.append($('<span class="text-danger">').text('*'));
-            }
-
-            const $col = $('<div class="col-12">').append($label, $input);
-
-            if (field.help_text) {
-                $col.append($('<small class="text-muted">').text(field.help_text));
-            }
-
-            $customFieldsContainer.append($col);
-
-            // El <select> del campo personalizado se crea después del init
-            // genérico de arriba: necesita su propia llamada a select2().
-            if ($input.is('select')) {
-                $input.select2({ width: '100%' });
-            }
-        });
-    }
-
-    $categorySelect.on('change', renderCustomFields);
-    renderCustomFields();
-});
+window.hdtTicketEditConfig = {
+    customFields: @json($ticket->custom_fields ?? []),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/ticket-edit-form.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/ticket-edit-form.js')) }}"></script>
 @endpush

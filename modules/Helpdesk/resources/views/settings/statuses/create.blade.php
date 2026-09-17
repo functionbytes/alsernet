@@ -30,7 +30,7 @@
 
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name') }}"
@@ -78,7 +78,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Color <span class="text-danger">*</span></label>
+                                    <label class="form-label">Color <span class="text-brand">*</span></label>
                                     @include('core::components.color-field', [
                                         'name' => 'color',
                                         'value' => old('color', '#90bb13'),
@@ -178,9 +178,7 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-});
-</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/statuses-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/statuses-form.js')) }}" defer></script>
 @endpush

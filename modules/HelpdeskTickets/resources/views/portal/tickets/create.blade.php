@@ -29,7 +29,7 @@
                         @csrf
 
                         <div class="mb-3">
-                            <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <label for="subject" class="form-label">Subject <span class="text-brand">*</span></label>
                             <input
                                 type="text"
                                 id="subject"
@@ -47,7 +47,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <label for="description" class="form-label">Description <span class="text-brand">*</span></label>
                             <textarea
                                 id="description"
                                 name="description"
@@ -77,14 +77,20 @@
                             </div>
                         @endif
 
-                        <div class="mb-3">
-                            <label class="form-label">Attachments <span class="text-muted">(optional, max 5MB each)</span></label>
-                            <input type="file" name="attachments[]" class="form-control @error('attachments.*') is-invalid @enderror" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip">
-                            <div class="form-text">Allowed: images, PDF, Word, text, ZIP. Max 5MB per file.</div>
-                            @error('attachments.*')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        @if ($attachmentSettings['user_upload_enabled'] ?? true)
+                            @php
+                                $attachmentMaxMb = ($attachmentSettings['max_kilobytes'] ?? 25600) / 1024;
+                                $attachmentAccept = collect($attachmentSettings['extensions'] ?? [])->map(fn ($extension) => '.'.$extension)->implode(',');
+                            @endphp
+                            <div class="mb-3">
+                                <label class="form-label">Attachments <span class="text-muted">(optional, max {{ rtrim(rtrim(number_format($attachmentMaxMb, 2, '.', ''), '0'), '.') }}MB each)</span></label>
+                                <input type="file" name="attachments[]" class="form-control @error('attachments.*') is-invalid @enderror" multiple accept="{{ $attachmentAccept }}">
+                                <div class="form-text">Allowed: {{ strtoupper(implode(', ', $attachmentSettings['extensions'] ?? [])) }}. Max {{ rtrim(rtrim(number_format($attachmentMaxMb, 2, '.', ''), '0'), '.') }}MB per file.</div>
+                                @error('attachments.*')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @endif
 
                         <div class="mb-4">
                             <label for="priority" class="form-label">Priority</label>
@@ -107,80 +113,20 @@
     </div>
 @endsection
 
+{{-- OJO: portal/layout.blade.php NO tiene @stack('scripts') (solo
+     @yield('content')), así que este @push('scripts') no se renderiza en
+     ningún sitio — esto ya pasaba con el <script> inline anterior, no es una
+     regresión de esta extracción. La deflexión de KB del portal lleva sin
+     ejecutarse en producción desde que se escribió; arreglar el layout queda
+     fuera del alcance de esta limpieza de <script> inline (se deja
+     documentado para quien lo retome). --}}
 @push('scripts')
+{{-- Solo datos: la URL del endpoint de sugerencias. La lógica entera vive en
+     portal-ticket-create-form.js. --}}
 <script>
-$(function () {
-    // Deflexión: artículos que podrían resolver la duda antes de crear el
-    // ticket. Antes esto llamaba directamente al buscador del centro de ayuda
-    // con lo tecleado en el asunto; ahora pasa por el endpoint del portal, que
-    // además considera la descripción y descarta lo que no responde de verdad
-    // a la consulta (ver TicketDeflectionService).
-    const $subject = $('input[name="subject"]');
-    const $description = $('textarea[name="description"]');
-    const $container = $('#kb-suggestions');
-
-    let kbTimer;
-    let lastQuery = '';
-
-    function suggest() {
-        const subject = $subject.val().trim();
-        const description = $description.val().trim();
-        const signature = subject + '|' + description;
-
-        if ((subject + ' ' + description).trim().length < 12) {
-            $container.empty();
-            lastQuery = '';
-            return;
-        }
-
-        // Sin cambios reales desde la última consulta, no se repite: cada
-        // llamada cuesta, y el cliente sigue escribiendo mucho después de
-        // haber dicho ya de qué va su problema.
-        if (signature === lastQuery) return;
-        lastQuery = signature;
-
-        $.ajax({
-            url: '{{ route('portal.tickets.suggest-articles') }}',
-            method: 'POST',
-            dataType: 'json',
-            data: { subject: subject, description: description },
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        }).done(function (res) {
-            $container.empty();
-
-            if (!res.articles || !res.articles.length) return;
-
-            const $list = $('<div class="list-group mt-2">');
-
-            res.articles.forEach(function (a) {
-                $list.append(
-                    $('<a target="_blank" class="list-group-item list-group-item-action small py-2">')
-                        .attr('href', a.url)
-                        .append($('<i class="fas fa-book me-2 text-muted">'))
-                        .append(document.createTextNode(a.title))
-                );
-            });
-
-            $container.append(
-                $('<div class="alert alert-info p-2 mb-0">').append(
-                    $('<strong class="small">').append(
-                        $('<i class="fas fa-lightbulb me-1">'),
-                        document.createTextNode(' Could this solve it?')
-                    ),
-                    $list,
-                    $('<div class="small text-muted mt-2">').text(
-                        'If not, just carry on — your ticket will be created normally.'
-                    )
-                )
-            );
-        });
-    }
-
-    // 1200 ms, no 500: detrás hay una llamada con coste, no una búsqueda local.
-    $subject.add($description).on('input', function () {
-        clearTimeout(kbTimer);
-        kbTimer = setTimeout(suggest, 1200);
-    });
-});
+window.hdtPortalTicketCreateConfig = {
+    suggestUrl: @json(route('portal.tickets.suggest-articles')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/portal-ticket-create-form.js') }}"></script>
 @endpush

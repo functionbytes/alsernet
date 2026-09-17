@@ -3,7 +3,7 @@
     {{-- Titulo --}}
     <div class="col-12">
         <label class="form-label">
-            Titulo <span class="text-danger">*</span>
+            Titulo <span class="text-brand">*</span>
         </label>
         <input type="text" name="title" class="form-control @error('title') is-invalid @enderror"
             value="{{ old('title', $cannedReply->title ?? '') }}"
@@ -58,7 +58,7 @@
     {{-- Cuerpo --}}
     <div class="col-12">
         <label class="form-label">
-            Cuerpo <span class="text-danger">*</span>
+            Cuerpo <span class="text-brand">*</span>
         </label>
         <textarea name="body" rows="8"
             class="form-control @error('body') is-invalid @enderror"
@@ -71,11 +71,5 @@
 </div>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    // 'select.select2': el contenedor que genera select2 hereda esa clase y un
-    // selector por clase acabaria reinicializandose sobre si mismo.
-    $('select.select2').select2({ width: '100%', minimumResultsForSearch: Infinity });
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/settings/canned-replies-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/canned-replies-form.js')) }}" defer></script>
 @endpush

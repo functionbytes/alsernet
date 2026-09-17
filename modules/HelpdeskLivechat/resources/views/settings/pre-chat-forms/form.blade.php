@@ -34,7 +34,7 @@
 
                             <div class="col-12 col-md-7">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name', $form->name ?? '') }}"
@@ -80,7 +80,7 @@
                         <h6 class="fw-semibold mb-1">Campos del formulario</h6>
                         <p class="text-muted small mb-3">Define los campos que se mostraran al cliente antes del chat</p>
 
-                        <div id="fieldsContainer">
+                        <div id="fieldsContainer" data-field-count="{{ count($existingFields ?? []) }}">
                             @php
                                 $existingFields = old('fields', $form->fields ?? []);
                             @endphp
@@ -243,28 +243,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    let fieldCount = {{ count($existingFields ?? []) }};
-
-    $('#addField').on('click', function () {
-        const template = document.getElementById('fieldTemplate').innerHTML;
-        const html = template.replace(/__IDX__/g, fieldCount);
-        const $el = $(html);
-        $el.find('.field-number').text(fieldCount + 1);
-        $('#fieldsContainer').append($el);
-        $el.find('.form-select').select2({ width: '100%' });
-        fieldCount++;
-    });
-
-    $(document).on('click', '.remove-field', function () {
-        $(this).closest('.field-item').remove();
-        $('#fieldsContainer .field-item').each(function (i) {
-            $(this).find('.field-number').text(i + 1);
-        });
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdesklivechat/js/pre-chat-forms-form.js') }}?v={{ filemtime(public_path('modules/helpdesklivechat/js/pre-chat-forms-form.js')) }}"></script>
 @endpush

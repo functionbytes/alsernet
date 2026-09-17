@@ -111,7 +111,7 @@
                          que corregir. Primero en la fila: es la acción más urgente
                          cuando la hay. --}}
                     @if($canManage && $log->status?->value === 'bounced')
-                        <button type="button" class="evx-btn evx-btn-danger evx-btn-inline" id="btnBounceTriage"
+                        <button type="button" class="evx-btn evx-btn-brand evx-btn-inline" id="btnBounceTriage"
                                 data-url="{{ route('helpdeskemailactivity.resolve-bounce', $log->uid) }}"
                                 data-old-address="{{ $log->to_addresses[0] ?? '' }}"
                                 data-error="{{ $log->error_message }}"
@@ -1153,7 +1153,7 @@
                                 data-url="{{ route('helpdeskemailactivity.trash.restore', $log->uid) }}">
                             {{ __('helpdeskemailactivity::emaillog.trash.restore') }}
                         </button>
-                        <button type="button" class="evx-btn evx-btn-danger js-trash-force-delete"
+                        <button type="button" class="evx-btn evx-btn-brand js-trash-force-delete"
                                 data-url="{{ route('helpdeskemailactivity.trash.force-destroy', $log->uid) }}">
                             {{ __('helpdeskemailactivity::emaillog.trash.force_delete') }}
                         </button>

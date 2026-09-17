@@ -31,7 +31,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Prefijo de ticket <span class="text-danger">*</span></label>
+                                <label class="form-label">Prefijo de ticket <span class="text-brand">*</span></label>
                                 <input type="text" name="customer_ticketid"
                                        class="form-control @error('customer_ticketid') is-invalid @enderror"
                                        value="{{ old('customer_ticketid', $settings['customer_ticketid'] ?? 'SPT') }}"
@@ -43,7 +43,7 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Máximo de caracteres en descripción <span class="text-danger">*</span></label>
+                                <label class="form-label">Máximo de caracteres en descripción <span class="text-brand">*</span></label>
                                 <input type="number" name="ticket_character"
                                        class="form-control @error('ticket_character') is-invalid @enderror"
                                        value="{{ old('ticket_character', $settings['ticket_character'] ?? 100) }}"
@@ -457,9 +457,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush

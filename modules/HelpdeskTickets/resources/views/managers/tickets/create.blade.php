@@ -41,7 +41,7 @@
 
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label">Asunto <span class="text-danger">*</span></label>
+                                <label class="form-label">Asunto <span class="text-brand">*</span></label>
                                 <input type="text" name="subject"
                                        class="form-control @error('subject') is-invalid @enderror"
                                        value="{{ old('subject') }}"
@@ -54,7 +54,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                                <label class="form-label">Descripción <span class="text-brand">*</span></label>
                                 <textarea name="description" rows="8"
                                           class="form-control @error('description') is-invalid @enderror"
                                           placeholder="Describa el problema en detalle..."
@@ -86,7 +86,7 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoría <span class="text-danger">*</span></label>
+                                <label class="form-label">Categoría <span class="text-brand">*</span></label>
                                 <select name="category_id"
                                         class="form-select select2 @error('category_id') is-invalid @enderror"
                                         required
@@ -107,7 +107,7 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Prioridad <span class="text-danger">*</span></label>
+                                <label class="form-label">Prioridad <span class="text-brand">*</span></label>
                                 <select name="priority" class="form-select select2 @error('priority') is-invalid @enderror" required>
                                     <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Baja</option>
                                     {{-- value="normal": StoreTicketRequest valida in:low,normal,high,urgent —
@@ -160,7 +160,7 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                                <label class="form-label">Cliente <span class="text-brand">*</span></label>
                                 <select name="customer_id"
                                         class="form-select @error('customer_id') is-invalid @enderror"
                                         required
@@ -265,153 +265,12 @@
 @endsection
 
 @push('scripts')
+{{-- Solo datos: las plantillas disponibles. La lógica entera vive en
+     ticket-create-form.js. --}}
 <script>
-$(document).ready(function () {
-    // customerSelect/assigneeSelect ya tienen su propio select2 con placeholder
-    // más abajo — el resto de selects planos usa la config genérica.
-    $('.select2').not('#customerSelect, #assigneeSelect').select2({ width: '100%' });
-
-    // Usar plantilla: autorrellena el formulario, no lo bloquea — el agente
-    // puede seguir editando cualquier campo despues de aplicarla.
-    const TEMPLATES = @json($templates->keyBy('id'));
-
-    $('#templateSelect').on('change', function () {
-        const id = $(this).val();
-        if (!id || !TEMPLATES[id]) return;
-
-        const tpl = TEMPLATES[id];
-
-        $('input[name="subject"]').val(tpl.subject);
-        $('textarea[name="description"]').val(tpl.body);
-
-        if (tpl.category_id) {
-            $('#categorySelect').val(String(tpl.category_id)).trigger('change');
-        }
-
-        if (tpl.priority) {
-            $('select[name="priority"]').val(tpl.priority).trigger('change');
-        }
-    });
-
-    // Dynamic custom fields based on category selection
-    const $categorySelect = $('#categorySelect');
-    const $customFieldsContainer = $('#customFieldsContainer');
-
-    $categorySelect.on('change', function () {
-        const $selected = $(this).find(':selected');
-        const fields = JSON.parse($selected.attr('data-fields') || '[]');
-        const required = JSON.parse($selected.attr('data-required') || '[]');
-
-        $customFieldsContainer.empty();
-
-        if (fields.length === 0) return;
-
-        $customFieldsContainer.append(
-            '<div class="col-12"><h6 class="fw-semibold mb-1">Campos personalizados</h6></div>'
-        );
-
-        fields.forEach(function (field) {
-            const isRequired = required.includes(field.name);
-            const fieldName = 'custom_fields[' + field.name + ']';
-            let $input;
-
-            if (field.type === 'text') {
-                $input = $('<input type="text" class="form-control">')
-                    .attr({ name: fieldName, placeholder: field.placeholder || '' });
-            } else if (field.type === 'textarea') {
-                $input = $('<textarea class="form-control" rows="3">').attr('name', fieldName);
-            } else if (field.type === 'select') {
-                $input = $('<select class="form-select select2">').attr('name', fieldName);
-                $input.append($('<option value="">').text('Seleccione...'));
-                (field.options || []).forEach(function (opt) {
-                    $input.append($('<option>').val(opt).text(opt));
-                });
-            } else if (field.type === 'date') {
-                $input = $('<input type="date" class="form-control">').attr('name', fieldName);
-            } else {
-                return;
-            }
-
-            if (isRequired) {
-                $input.prop('required', true);
-            }
-
-            const $label = $('<label class="form-label">').text(field.label || field.name);
-            if (isRequired) {
-                $label.append($('<span class="text-danger">').text('*'));
-            }
-
-            const $col = $('<div class="col-12">').append($label, $input);
-
-            if (field.help_text) {
-                $col.append($('<small class="text-muted">').text(field.help_text));
-            }
-
-            $customFieldsContainer.append($col);
-
-            // El <select> del campo personalizado se crea después del init
-            // genérico de arriba: necesita su propia llamada a select2().
-            if ($input.is('select')) {
-                $input.select2({ width: '100%' });
-            }
-        });
-    });
-
-    // Trigger on page load if category is pre-selected
-    if ($categorySelect.val()) {
-        $categorySelect.trigger('change');
-    }
-
-    // Select2 for customer and assignee
-    if ($.fn.select2) {
-        $('#customerSelect').select2({ placeholder: 'Buscar cliente por nombre o email...', allowClear: true, width: '100%' });
-        $('#assigneeSelect').select2({ placeholder: 'Seleccionar agente...', allowClear: true, width: '100%' });
-    }
-
-    // Disable submit while sending
-    $('#ticketForm').on('submit', function () {
-        const $btn = $(this).find('button[type="submit"]');
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Creando ticket...');
-    });
-
-    // Knowledge base suggestions on subject input
-    let kbTimer;
-    $(document).on('input', 'input[name="subject"]', function () {
-        clearTimeout(kbTimer);
-        const q = $(this).val().trim();
-        if (q.length < 3) {
-            $('#kb-suggestions').empty();
-            return;
-        }
-        kbTimer = setTimeout(function () {
-            $.get('/helpcenter/search', { q: q }).done(function (res) {
-                const $container = $('#kb-suggestions');
-                $container.empty();
-
-                if (!res.articles || !res.articles.length) return;
-
-                const $list = $('<div class="list-group mt-2">');
-                res.articles.forEach(function (a) {
-                    $list.append(
-                        $('<a target="_blank" class="list-group-item list-group-item-action small py-2">')
-                            .attr('href', '/helpcenter/articles/' + encodeURIComponent(a.slug))
-                            .append($('<i class="fas fa-book me-2 text-muted">'))
-                            .append(document.createTextNode(a.title))
-                    );
-                });
-
-                const $alert = $('<div class="alert alert-info p-2 mb-0">').append(
-                    $('<strong class="small">').append(
-                        $('<i class="fas fa-lightbulb me-1">'),
-                        document.createTextNode(' ¿Esto podría resolverlo?')
-                    ),
-                    $list
-                );
-
-                $container.append($alert);
-            });
-        }, 500);
-    });
-});
+window.hdtTicketCreateConfig = {
+    templates: @json($templates->keyBy('id')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/ticket-create-form.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/ticket-create-form.js')) }}"></script>
 @endpush

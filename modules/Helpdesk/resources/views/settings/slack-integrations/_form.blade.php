@@ -5,7 +5,7 @@
         <label class="form-label">
             URL del webhook
             @if(!isset($integration) || !$integration?->id)
-                <span class="text-danger">*</span>
+                <span class="text-brand">*</span>
             @endif
         </label>
 
@@ -38,7 +38,7 @@
     {{-- Channel name --}}
     <div class="col-12">
         <label class="form-label">
-            Canal de Slack <span class="text-danger">*</span>
+            Canal de Slack <span class="text-brand">*</span>
         </label>
         <div class="input-group">
             <span class="input-group-text">#</span>
@@ -56,7 +56,7 @@
     {{-- Events --}}
     <div class="col-12">
         <label class="form-label">
-            Eventos <span class="text-danger">*</span>
+            Eventos <span class="text-brand">*</span>
         </label>
         <div class="border rounded p-3 @error('events')  @enderror">
             @foreach($availableEvents as $eventKey => $eventLabel)
@@ -105,15 +105,7 @@
 </div>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    $('#btn_change_webhook').on('click', function () {
-        const input = $('#webhook_url');
-        input.prop('disabled', false).attr('type', 'url').focus();
-        $(this).hide();
-    });
-});
-</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/slack-integration-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/slack-integration-form.js')) }}" defer></script>
 @endpush

@@ -3,9 +3,7 @@
 @section('title', 'Contactos')
 
 @push('css')
-    <style>
-        .icon-instagram { color: #c13584; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/contacts/css/contacts.css') }}?v={{ filemtime(public_path('modules/contacts/css/contacts.css')) }}">
     @if(helpdesk_integration_enabled())
         {{-- Framework visual .bv-modal del modal de búsqueda externa — mismo
              patrón ya usado fuera del inbox por helpdesk/customers/index.blade.php. --}}
@@ -110,7 +108,8 @@
                 ->count();
         @endphp
         <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('contacts.index') }}" id="contactsFilterForm">
+            <form method="GET" action="{{ route('contacts.index') }}" id="contactsFilterForm"
+                  data-bulk-url="{{ route('contacts.bulk-action') }}">
                 <input type="hidden" name="channel"  id="ct-filter-channel"  value="{{ request('channel') }}">
                 <input type="hidden" name="verified" id="ct-filter-verified" value="{{ request('verified') }}">
                 <input type="hidden" name="banned"   id="ct-filter-banned"   value="{{ request('banned') }}">
@@ -171,7 +170,7 @@
                                             <i class="fas fa-circle-check text-success ms-1"></i>
                                         @endif
                                         @if($customer->banned_at ?? false)
-                                            <span class="badge bg-danger-subtle text-danger ms-1">Suspendido</span>
+                                            <span class="badge bg-brand-subtle text-brand ms-1">Suspendido</span>
                                         @endif
                                     </div>
                                     <small class="text-muted">{{ $customer->email ?: '—' }}</small>
@@ -286,8 +285,7 @@
 
     {{-- Bulk trigger (floating), igual patrón que settings/users --}}
     <div id="bulk-toolbar"
-         class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none"
-         style="z-index: 1050;">
+         class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none ct-bulk-toolbar">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
@@ -374,100 +372,9 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    $('#contactsFilterForm .select2').select2({ width: '100%' });
-
-    var bulkUrl = '{{ route("contacts.bulk-action") }}';
-
-    // Helper global (public/core/js/bulk.js, cargado en el layout) — mismo
-    // patrón que settings/users: toolbar flotante + contador delegado.
-    var bulk = window.BulkActions.init({ checkbox: '.contact-check' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#per-page-select').on('change', function () {
-        var url = new URL(window.location.href);
-        url.searchParams.set('per_page', this.value);
-        url.searchParams.delete('page');
-        window.location.href = url.toString();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        var action = $('#bulk-action-select').val();
-        var ids = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción antes de continuar.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos un contacto.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' contactos? Esta acción no se puede deshacer.')) { return; }
-
-        if (action === 'send-hsm') {
-            $('#bulk-modal').modal('hide');
-            // send-hsm no pasa por bulkUrl: reusa el flujo bulk ya construido
-            // en send-hsm-modal.js (mismo selector, sin duplicar esa lógica).
-            $('[data-bulk-action="send-hsm"]').trigger('click');
-            return;
-        }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-        $.ajax({
-            url: bulkUrl,
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            contentType: 'application/json',
-            data: JSON.stringify({ action: action, ids: ids }),
-        }).done(function (resp) {
-            $('#bulk-modal').modal('hide');
-            toastr.success(resp.message || 'Acción aplicada');
-            setTimeout(function () { location.reload(); }, 800);
-        }).fail(function (xhr) {
-            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al ejecutar la acción');
-        }).always(function () {
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        });
-    });
-
-    $('.delete-btn').on('click', function (e) {
-        e.preventDefault();
-        $('#delete-form').attr('action', $(this).data('url'));
-        $('#delete-modal').modal('show');
-    });
-});
-</script>
+<script src="{{ asset('modules/contacts/js/contacts-index.js') }}?v={{ filemtime(public_path('modules/contacts/js/contacts-index.js')) }}"></script>
 <script src="{{ asset('modules/contacts/js/send-hsm-modal.js') }}?v={{ filemtime(public_path('modules/contacts/js/send-hsm-modal.js')) }}"></script>
 @if(helpdesk_integration_enabled())
 <script src="{{ asset('modules/contacts/js/external-search-modal.js') }}?v={{ filemtime(public_path('modules/contacts/js/external-search-modal.js')) }}"></script>
 @endif
-<script>
-$(document).ready(function () {
-    // El modal solo rellena los hidden del formulario de busqueda: asi el filtro
-    // viaja por GET y la URL sigue siendo compartible.
-    $('.select2-filter-modal').select2({ dropdownParent: $('#ct-filter-modal'), width: '100%' });
-
-    $('#ct-filter-apply-btn').on('click', function () {
-        $('#ct-filter-channel').val($('#ct-modal-channel').val());
-        $('#ct-filter-verified').val($('#ct-modal-verified').val());
-        $('#ct-filter-banned').val($('#ct-modal-banned').val());
-        $('#ct-filter-modal').modal('hide');
-        $('#contactsFilterForm').submit();
-    });
-
-    $('#ct-filter-clear-btn').on('click', function () {
-        window.location = '{{ route('contacts.index') }}';
-    });
-});
-</script>
-@endpush
-
-@push('styles')
-<style>
-    .ts-filter-badge { font-size: .6rem; }
-</style>
 @endpush

@@ -2,6 +2,10 @@
 
 @section('title', 'Nueva campaña')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskcampaigns/css/campaigns.css') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/css/campaigns.css')) }}">
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Nueva campaña'])
 @endsection
@@ -30,7 +34,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                 <input type="text" name="name"
                                        class="form-control @error('name') is-invalid @enderror"
                                        value="{{ old('name') }}"
@@ -59,7 +63,7 @@
                         <div class="row g-3">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Tipo de campaña <span class="text-danger">*</span></label>
+                                <label class="form-label">Tipo de campaña <span class="text-brand">*</span></label>
                                 <select name="type" class="form-select @error('type') is-invalid @enderror" required>
                                     <option value="">Seleccionar tipo...</option>
                                     <option value="popup" {{ old('type') === 'popup' ? 'selected' : '' }}>Pop-up — ventana emergente</option>

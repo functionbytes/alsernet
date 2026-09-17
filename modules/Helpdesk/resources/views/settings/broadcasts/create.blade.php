@@ -47,7 +47,7 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label">
-                                        Nombre <span class="text-danger">*</span>
+                                        Nombre <span class="text-brand">*</span>
                                     </label>
                                     <input type="text" name="name"
                                         class="form-control @error('name') is-invalid @enderror"
@@ -60,7 +60,7 @@
 
                                 <div class="col-12">
                                     <label class="form-label">
-                                        Canal <span class="text-danger">*</span>
+                                        Canal <span class="text-brand">*</span>
                                     </label>
                                     <select name="channel" class="form-select @error('channel') is-invalid @enderror">
                                         <option value="">Selecciona un canal...</option>
@@ -114,7 +114,7 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label">
-                                        Tipo de contenido <span class="text-danger">*</span>
+                                        Tipo de contenido <span class="text-brand">*</span>
                                     </label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
@@ -141,7 +141,7 @@
 
                                 <div class="col-12" id="bodyField">
                                     <label class="form-label">
-                                        Mensaje <span class="text-danger">*</span>
+                                        Mensaje <span class="text-brand">*</span>
                                     </label>
                                     <textarea name="body" id="body" rows="6"
                                         class="form-control @error('body') is-invalid @enderror"
@@ -156,7 +156,7 @@
 
                                 <div class="col-12 d-none" id="templateField">
                                     <label class="form-label">
-                                        ID del template HSM <span class="text-danger">*</span>
+                                        ID del template HSM <span class="text-brand">*</span>
                                     </label>
                                     <input type="text" name="template_id"
                                         class="form-control @error('template_id') is-invalid @enderror"
@@ -315,131 +315,17 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    let currentStep = 1;
-    const totalSteps = 4;
-
-    function updateStepper(step) {
-        $('.stepper-step').each(function () {
-            const stepNum = parseInt($(this).data('step'));
-            const badge = $(this).find('.step-badge');
-            const label = $(this).find('.step-label');
-
-            if (stepNum === step) {
-                badge.removeClass('bg-light text-muted').addClass('bg-primary');
-                label.removeClass('text-muted').addClass('text-primary');
-            } else if (stepNum < step) {
-                badge.removeClass('bg-light text-muted bg-primary').addClass('bg-success text-white');
-                label.removeClass('text-muted text-primary').addClass('text-success');
-            } else {
-                badge.removeClass('bg-primary bg-success text-white').addClass('bg-light text-muted');
-                label.removeClass('text-primary text-success').addClass('text-muted');
-            }
-        });
-    }
-
-    function showStep(step) {
-        $('.step-content').addClass('d-none');
-        $('#step-' + step).removeClass('d-none');
-        updateStepper(step);
-
-        $('#btnPrev').toggleClass('d-none', step === 1);
-        $('#btnNext').toggleClass('d-none', step === totalSteps);
-        $('#btnSubmit').toggleClass('d-none', step !== totalSteps);
-
-        if (step === 3) fillSummary();
-        if (step === 4) fillConfirm();
-    }
-
-    function fillSummary() {
-        const channelLabels = {
-            whatsapp: 'WhatsApp', facebook: 'Facebook', instagram: 'Instagram',
-            email: 'Email', web: 'Web'
-        };
-        const typeLabels = { text: 'Texto libre', hsm: 'Template HSM' };
-
-        $('#summary-name').text($('[name="name"]').val() || '—');
-        $('#summary-channel').text(channelLabels[$('[name="channel"]').val()] || '—');
-        $('#summary-type').text(typeLabels[$('[name="template_type"]:checked').val()] || '—');
-        $('#summary-tag').text($('[name="filters[tag]"]').val() || '—');
-        $('#summary-filter-channel').text($('[name="filters[channel]"]').val() || '—');
-
-        const body = $('[name="template_type"]:checked').val() === 'hsm'
-            ? 'Template HSM: ' + $('[name="template_id"]').val()
-            : $('#body').val();
-        $('#summary-body').text(body || '—');
-    }
-
-    function fillConfirm() {
-        const channelLabels = {
-            whatsapp: 'WhatsApp', facebook: 'Facebook', instagram: 'Instagram',
-            email: 'Email', web: 'Web'
-        };
-        const typeLabels = { text: 'Texto libre', hsm: 'Template HSM' };
-
-        const name = $('[name="name"]').val() || 'Sin nombre';
-        const channel = channelLabels[$('[name="channel"]').val()] || '—';
-        const type = typeLabels[$('[name="template_type"]:checked').val()] || '—';
-
-        $('#confirm-name').text(name);
-        $('#confirm-summary').text('Canal: ' + channel + ' | Tipo: ' + type);
-    }
-
-    $('#btnNext').on('click', function () {
-        if (currentStep < totalSteps) {
-            currentStep++;
-            showStep(currentStep);
-        }
-    });
-
-    $('#btnPrev').on('click', function () {
-        if (currentStep > 1) {
-            currentStep--;
-            showStep(currentStep);
-        }
-    });
-
-    // Toggle body / template fields based on template_type
-    $('[name="template_type"]').on('change', function () {
-        const isHsm = $(this).val() === 'hsm';
-        $('#bodyField').toggleClass('d-none', isHsm);
-        $('#templateField').toggleClass('d-none', !isHsm);
-    });
-
-    // Trigger initial state
-    $('[name="template_type"]:checked').trigger('change');
-
-    // Live preview
-    $('#body').on('input', function () {
-        const text = $(this).val();
-        const count = text.length;
-        $('#charCount').text(count + ' / 4096 caracteres');
-        $('#previewText').text(text || 'El mensaje aparecera aqui mientras escribes...')
-            .toggleClass('fst-italic text-muted', !text);
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // If there are validation errors, show the appropriate step
-    @if($errors->any())
-        @if($errors->has('name') || $errors->has('channel') || $errors->has('filters.*'))
-            showStep(1);
-        @elseif($errors->has('template_type') || $errors->has('body') || $errors->has('template_id'))
-            currentStep = 2;
-            showStep(2);
-        @elseif($errors->has('scheduled_at'))
-            currentStep = 3;
-            showStep(3);
-        @endif
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
+window.HdBroadcastCreateConfig = {
+    initialStep: @json($errors->any() ? (
+        ($errors->has('name') || $errors->has('channel') || $errors->has('filters.*')) ? 1 : (
+            ($errors->has('template_type') || $errors->has('body') || $errors->has('template_id')) ? 2 : (
+                $errors->has('scheduled_at') ? 3 : null
+            )
+        )
+    ) : null),
+};
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/broadcast-create.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/broadcast-create.js')) }}" defer></script>
 @endpush

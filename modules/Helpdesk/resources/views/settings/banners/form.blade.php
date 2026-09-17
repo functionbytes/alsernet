@@ -34,7 +34,7 @@
 
                             <div class="col-12 col-md-8">
                                 <div class="mb-3">
-                                    <label class="form-label">Titulo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Titulo <span class="text-brand">*</span></label>
                                     <input type="text" name="title"
                                            class="form-control @error('title') is-invalid @enderror"
                                            value="{{ old('title', $banner->title ?? '') }}"
@@ -48,7 +48,7 @@
 
                             <div class="col-12 col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Tipo <span class="text-brand">*</span></label>
                                     <select name="type" class="form-select @error('type') is-invalid @enderror" required>
                                         <option value="info" {{ old('type', $banner->type ?? '') === 'info' ? 'selected' : '' }}>Info</option>
                                         <option value="success" {{ old('type', $banner->type ?? '') === 'success' ? 'selected' : '' }}>Exito</option>
@@ -63,7 +63,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Contenido <span class="text-danger">*</span></label>
+                                    <label class="form-label">Contenido <span class="text-brand">*</span></label>
                                     <textarea name="body"
                                               class="form-control @error('body') is-invalid @enderror"
                                               rows="4"
@@ -220,9 +220,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
 @endpush

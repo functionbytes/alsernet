@@ -38,7 +38,7 @@
 
                             <div class="col-12 col-md-7">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name', $survey->name ?? '') }}"
@@ -52,7 +52,7 @@
 
                             <div class="col-12 col-md-5">
                                 <div class="mb-3">
-                                    <label class="form-label">Disparo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Disparo <span class="text-brand">*</span></label>
                                     <select name="trigger_type" class="form-select @error('trigger_type') is-invalid @enderror" required>
                                         @foreach($triggerTypes as $value => $label)
                                             <option value="{{ $value }}" {{ old('trigger_type', $survey->trigger_type ?? '') === $value ? 'selected' : '' }}>
@@ -241,30 +241,8 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    let questionCount = {{ count($existingQuestions ?? []) }};
-
-    $('#addQuestion').on('click', function () {
-        const template = document.getElementById('questionTemplate').innerHTML;
-        const uuid = Math.random().toString(36).substr(2, 9);
-        const html = template.replace(/__IDX__/g, questionCount).replace(/""/g, '"' + uuid + '"');
-        const $el = $(html);
-        $el.find('.question-number').text(questionCount + 1);
-        $el.find('input[type="hidden"][name*="[id]"]').val(uuid);
-        $('#questionsContainer').append($el);
-        $el.find('.form-select').select2({ width: '100%' });
-        questionCount++;
-    });
-
-    $(document).on('click', '.remove-question', function () {
-        $(this).closest('.question-item').remove();
-        $('#questionsContainer .question-item').each(function (i) {
-            $(this).find('.question-number').text(i + 1);
-        });
-    });
-});
-</script>
+<script>window.SurveyFormConfig = { questionCount: {{ count($existingQuestions ?? []) }} };</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/surveys-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/surveys-form.js')) }}" defer></script>
 @endpush

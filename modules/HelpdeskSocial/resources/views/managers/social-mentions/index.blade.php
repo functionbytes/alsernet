@@ -2,6 +2,8 @@
 
 @section('title', 'Menciones sociales')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Menciones sociales'])
 @endsection
@@ -10,7 +12,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Menciones sociales</h1>
         <div class="d-flex gap-2">
-            <span class="badge bg-danger">{{ $mentions->where('sentiment', 'negative')->count() }} negativas</span>
+            <span class="badge bg-brand">{{ $mentions->where('sentiment', 'negative')->count() }} negativas</span>
             <span class="badge bg-success">{{ $mentions->where('sentiment', 'positive')->count() }} positivas</span>
         </div>
     </div>
@@ -57,7 +59,7 @@
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" id="mentions-table">
                     <thead class="table-light">
                         <tr>
                             <th>Plataforma</th>
@@ -81,7 +83,7 @@
                                 <small class="text-muted">{{ $mention->author_username ?? '' }}</small>
                             </td>
                             <td>
-                                <div class="text-truncate" style="max-width: 280px;" title="{{ $mention->body }}">
+                                <div class="text-truncate hso-truncate-280" title="{{ $mention->body }}">
                                     {{ $mention->body }}
                                 </div>
                                 @if($mention->url)
@@ -139,29 +141,6 @@
     </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function markMentionAsReviewed(id) {
-        $.ajax({
-            url: '{{ url('panel/helpdesk/social/mentions') }}/' + id + '/review',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function () {
-                if (window.toastr) {
-                    toastr.success('Mención marcada como revisada.');
-                }
-                $('tr[data-mention-id="' + id + '"] td:nth-child(6) .badge').removeClass('bg-warning text-dark').addClass('bg-info').text('Reviewed');
-            },
-            error: function () {
-                if (window.toastr) {
-                    toastr.error('No se pudo actualizar la mención.');
-                }
-            }
-        });
-    }
-
-    window.markMentionAsReviewed = markMentionAsReviewed;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-mentions-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-mentions-index.js')) }}"></script>
+@endpush

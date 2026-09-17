@@ -184,7 +184,7 @@
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label for="firstname" class="form-label fw-semibold">
-                                Nombre <span class="text-danger">*</span>
+                                Nombre <span class="text-brand">*</span>
                             </label>
                             <input type="text" class="form-control @error('firstname') is-invalid @enderror"
                                    id="firstname" name="firstname"
@@ -197,7 +197,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="lastname" class="form-label fw-semibold">
-                                Apellido <span class="text-danger">*</span>
+                                Apellido <span class="text-brand">*</span>
                             </label>
                             <input type="text" class="form-control @error('lastname') is-invalid @enderror"
                                    id="lastname" name="lastname"
@@ -210,7 +210,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="email" class="form-label fw-semibold">
-                                Correo Electrónico <span class="text-danger">*</span>
+                                Correo Electrónico <span class="text-brand">*</span>
                             </label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror"
                                    id="email" name="email"
@@ -223,7 +223,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="role" class="form-label fw-semibold">
-                                Rol <span class="text-danger">*</span>
+                                Rol <span class="text-brand">*</span>
                             </label>
                             <select name="role" class="form-select select2 @error('role') is-invalid @enderror" id="role">
                                 <option value="">— Seleccionar rol —</option>
@@ -473,80 +473,13 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: true,
-        placeholder: function() {
-            return $(this).find('option:first').text();
-        },
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    // Availability change handler
-    $('#availabilitySelect').on('change', function() {
-        if ($(this).val() === 'working_hours') {
-            $('#workingHoursSection').slideDown(300);
-        } else {
-            $('#workingHoursSection').slideUp(300);
-        }
-    });
-
-    // Day checkbox handler
-    $('.day-checkbox').on('change', function() {
-        const row = $(this).closest('tr');
-        const timeInputs = row.find('input[type="time"]');
-        const isChecked = $(this).is(':checked');
-
-        timeInputs.prop('disabled', !isChecked);
-
-        if (isChecked) {
-            row.addClass('table-success');
-        } else {
-            row.removeClass('table-success');
-        }
-    });
-
-    // Group checkbox handler
-    $('.group-checkbox').on('change', function() {
-        const card = $(this).closest('.group-card');
-        const priorityToggle = card.find('.priority-toggle');
-        const isChecked = $(this).is(':checked');
-
-        if (isChecked) {
-            priorityToggle.slideDown(200);
-            card.addClass('border-primary').removeClass('border');
-        } else {
-            priorityToggle.slideUp(200);
-            card.removeClass('border-primary').addClass('border');
-        }
-
-        // Update counter
-        updateGroupCounter();
-    });
-
-    // Update group counter
-    function updateGroupCounter() {
-        const selectedCount = $('.group-checkbox:checked').length;
-        $('#selectedGroupsCount').text(selectedCount);
-    }
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.TeamMemberEditConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+};
 </script>
-@endsection
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/team-member-edit.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/team-member-edit.js')) }}" defer></script>
+@endpush

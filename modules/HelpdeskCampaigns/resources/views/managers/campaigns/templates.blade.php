@@ -2,6 +2,10 @@
 
 @section('title', 'Plantillas de campañas')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskcampaigns/css/campaigns.css') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/css/campaigns.css')) }}">
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Plantillas de campañas'])
 @endsection
@@ -33,11 +37,10 @@
 
                 {{-- Blank template --}}
                 <div class="mb-4">
-                    <div class="card border-dashed bg-light" style="cursor: pointer; border-style: dashed !important;"
+                    <div class="card border-dashed bg-light cursor-pointer"
                          onclick="showCreateModal('')">
                         <div class="card-body text-center py-5">
-                            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
-                                 style="width: 72px; height: 72px;">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3 hcm-template-icon">
                                 <i class="fas fa-plus fs-3 text-primary"></i>
                             </div>
                             <h5 class="mb-1">Comenzar en blanco</h5>
@@ -52,10 +55,9 @@
                     <div class="row g-3">
                         @foreach($templates as $template)
                             <div class="col-md-4">
-                                <div class="card h-100" style="cursor: pointer;"
+                                <div class="card h-100 cursor-pointer"
                                      onclick="showCreateModal(@json($template->id))">
-                                    <div class="card-body bg-light-secondary d-flex align-items-center justify-content-center"
-                                         style="min-height: 140px;">
+                                    <div class="card-body bg-light-secondary d-flex align-items-center justify-content-center hcm-template-preview">
                                         @if($template->type === 'popup')
                                             <i class="far fa-window-maximize fa-3x text-muted opacity-50"></i>
                                         @elseif($template->type === 'banner')
@@ -115,13 +117,13 @@
 
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <label class="form-label">Nombre <span class="text-brand">*</span></label>
                             <input type="text" name="name" class="form-control"
                                    placeholder="Ej: Promocion de verano 2025"
                                    required autofocus>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Tipo de campana <span class="text-danger">*</span></label>
+                            <label class="form-label">Tipo de campana <span class="text-brand">*</span></label>
                             <select name="type" class="form-select" required>
                                 <option value="popup">Pop-up — ventana emergente</option>
                                 <option value="banner">Banner — barra superior o inferior</option>
@@ -148,10 +150,5 @@
 @endsection
 
 @push('scripts')
-<script>
-function showCreateModal(templateId) {
-    document.getElementById('template-id-input').value = templateId;
-    new bootstrap.Modal(document.getElementById('createCampaignModal')).show();
-}
-</script>
+<script src="{{ asset('modules/helpdeskcampaigns/js/campaign-templates.js') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/js/campaign-templates.js')) }}" defer></script>
 @endpush

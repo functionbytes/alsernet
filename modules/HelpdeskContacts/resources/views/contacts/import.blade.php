@@ -33,7 +33,7 @@
 
                     <div class="mb-3">
                         <label for="file" class="form-label fw-semibold">
-                            Archivo CSV <span class="text-danger">*</span>
+                            Archivo CSV <span class="text-brand">*</span>
                         </label>
                         <input
                             type="file"

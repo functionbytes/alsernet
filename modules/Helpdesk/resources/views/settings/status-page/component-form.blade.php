@@ -34,7 +34,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name', $component->name ?? '') }}"
@@ -67,7 +67,7 @@
 
                             <div class="col-12 col-md-5">
                                 <div class="mb-3">
-                                    <label class="form-label">Estado <span class="text-danger">*</span></label>
+                                    <label class="form-label">Estado <span class="text-brand">*</span></label>
                                     <select name="status" class="form-select @error('status') is-invalid @enderror" required>
                                         @foreach(\Modules\Helpdesk\Models\StatusComponent::STATUSES as $value => $label)
                                             <option value="{{ $value }}" {{ old('status', $component->status ?? 'operational') === $value ? 'selected' : '' }}>
@@ -157,9 +157,7 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-});
-</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/status-component-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/status-component-form.js')) }}" defer></script>
 @endpush

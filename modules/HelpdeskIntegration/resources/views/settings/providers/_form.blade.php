@@ -3,7 +3,7 @@
     {{-- Platform slug --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Identificador (platform) @if(!isset($provider) || !$provider?->isNative())<span class="text-danger">*</span>@endif
+            Identificador (platform) @if(!isset($provider) || !$provider?->isNative())<span class="text-brand">*</span>@endif
         </label>
         @if(isset($provider) && $provider?->isNative())
             <input type="text" class="form-control" value="{{ $provider->platform }}" disabled>
@@ -22,7 +22,7 @@
 
     {{-- Label --}}
     <div class="col-12 col-md-6">
-        <label class="form-label">Etiqueta <span class="text-danger">*</span></label>
+        <label class="form-label">Etiqueta <span class="text-brand">*</span></label>
         <input type="text" name="label"
             class="form-control @error('label') is-invalid @enderror"
             value="{{ old('label', $provider->label ?? '') }}"
@@ -171,11 +171,5 @@
 </div>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('#providerIconInput').on('input', function () {
-        var value = $.trim($(this).val()) || 'fas fa-plug';
-        $('#providerIconPreview i').attr('class', value);
-    });});
-</script>
+<script src="{{ asset('vendor/helpdeskintegration/provider-form.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/provider-form.js')) }}" defer></script>
 @endpush

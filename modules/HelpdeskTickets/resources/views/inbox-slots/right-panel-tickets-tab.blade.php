@@ -46,7 +46,7 @@
                 <span class="sub">
                     {{ $tCounts['open'] }} abierto{{ $tCounts['open'] === 1 ? '' : 's' }}
                     @if($tCounts['urgent'] > 0)
-                        · <span class="text-danger fw-semibold">{{ $tCounts['urgent'] }} urgente{{ $tCounts['urgent'] === 1 ? '' : 's' }}</span>
+                        · <span class="text-brand fw-semibold">{{ $tCounts['urgent'] }} urgente{{ $tCounts['urgent'] === 1 ? '' : 's' }}</span>
                     @endif
                 </span>
             </div>

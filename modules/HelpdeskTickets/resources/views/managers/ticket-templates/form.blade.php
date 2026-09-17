@@ -1,5 +1,8 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', isset($template) ? 'Editar plantilla' : 'Nueva plantilla')
 
 @section('page_header')
@@ -34,7 +37,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                 <input type="text" name="name"
                                        class="form-control @error('name') is-invalid @enderror"
                                        value="{{ old('name', $template->name ?? '') }}"
@@ -69,7 +72,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Asunto <span class="text-danger">*</span></label>
+                                <label class="form-label">Asunto <span class="text-brand">*</span></label>
                                 <input type="text" name="subject" id="templateSubjectInput"
                                        class="form-control @error('subject') is-invalid @enderror"
                                        value="{{ old('subject', $template->subject ?? '') }}"
@@ -81,7 +84,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Cuerpo <span class="text-danger">*</span></label>
+                                <label class="form-label">Cuerpo <span class="text-brand">*</span></label>
                                 <textarea name="body" id="templateBodyInput" rows="8"
                                           class="form-control @error('body') is-invalid @enderror"
                                           placeholder="Contenido de la plantilla..."
@@ -244,57 +247,6 @@
 
 @endsection
 
-<style>
-.tpl-preview-body {
-    white-space: pre-wrap;
-}
-</style>
-
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    // Vista previa con datos de ejemplo — puramente en el navegador, no llama
-    // al servidor ni al ERP; el mismo texto de ejemplo para todas las
-    // variables listadas en el panel de la derecha (TicketVariableInterpolator::availableVariables()).
-    var SAMPLE_VALUES = {
-        '@{{ticket_number}}': 'TCK-2026-00123',
-        '@{{ticket_subject}}': 'Asunto de ejemplo',
-        '@{{ticket_status}}': 'Abierto',
-        '@{{ticket_priority}}': 'Media',
-        '@{{ticket_category}}': 'Soporte técnico',
-        '@{{customer_name}}': 'Ana Pérez',
-        '@{{customer_email}}': 'ana.perez@ejemplo.com',
-        '@{{customer_phone}}': '600 111 222',
-        '@{{agent_name}}': 'Tu nombre',
-        '@{{assignee_name}}': 'Tu nombre',
-        '@{{fecha}}': new Date().toLocaleDateString('es-ES'),
-        '@{{erp_id_cliente}}': '4521',
-        '@{{erp_nif}}': 'B12345678',
-        '@{{erp_ciudad}}': 'Madrid',
-        '@{{erp_saldo_pendiente}}': '150.00',
-        '@{{erp_limite_credito}}': '5000',
-        '@{{erp_ultimo_pedido_numero}}': 'PED-000987',
-        '@{{erp_ultimo_pedido_fecha}}': '15/08/2026',
-    };
-
-    function applySample(text) {
-        Object.keys(SAMPLE_VALUES).forEach(function (key) {
-            text = text.split(key).join(SAMPLE_VALUES[key]);
-        });
-
-        return text;
-    }
-
-    $('#previewTemplateBtn').on('click', function () {
-        var subject = $('#templateSubjectInput').val() || '';
-        var body = $('#templateBodyInput').val() || '';
-
-        $('#templatePreviewSubject').text(applySample(subject));
-        $('#templatePreviewBody').text(applySample(body));
-        $('#templatePreviewBox').prop('hidden', false);
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/ticket-templates-form.js') }}"></script>
 @endpush

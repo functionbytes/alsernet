@@ -2,6 +2,8 @@
 
 @section('title', 'Solicitudes de aprobación')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Solicitudes de aprobación'])
 @endsection
@@ -35,7 +37,7 @@
                         <tr data-approval-id="{{ $approval->id }}">
                             <td>
                                 <div class="fw-semibold">{{ $approval->comment?->author_name ?? 'N/A' }}</div>
-                                <small class="text-muted text-truncate d-block" style="max-width: 250px;">
+                                <small class="text-muted text-truncate d-block hso-truncate-250">
                                     {{ $approval->comment?->body ?? '-' }}
                                 </small>
                                 @if($approval->comment?->socialAccount)
@@ -45,13 +47,15 @@
                             <td>
                                 <span class="badge bg-light text-dark">{{ ucfirst($approval->action_type) }}</span>
                             </td>
-                            <td>{{ $approval->requester?->name ?? 'N/A' }}</td>
+                            {{-- El modelo User de este proyecto no tiene columna `name` (siempre
+                                 NULL) — usa firstname/lastname, como el resto de Helpdesk. --}}
+                            <td>{{ $approval->requester ? trim($approval->requester->firstname.' '.$approval->requester->lastname) : 'N/A' }}</td>
                             <td>
                                 <span class="badge bg-{{ $approval->status === 'pending' ? 'warning text-dark' : ($approval->status === 'approved' ? 'success' : 'danger') }}">
                                     {{ ucfirst($approval->status) }}
                                 </span>
                             </td>
-                            <td>{{ $approval->approver?->name ?? '-' }}</td>
+                            <td>{{ $approval->approver ? trim($approval->approver->firstname.' '.$approval->approver->lastname) : '-' }}</td>
                             <td>
                                 <small>{{ $approval->created_at->diffForHumans() }}</small>
                             </td>
@@ -60,7 +64,7 @@
                                 <button type="button" class="btn btn-sm btn-success" onclick="respondApproval({{ $approval->id }}, 'approve')" title="Aprobar">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="respondApproval({{ $approval->id }}, 'reject')" title="Rechazar">
+                                <button type="button" class="btn btn-sm btn-brand" onclick="respondApproval({{ $approval->id }}, 'reject')" title="Rechazar">
                                     <i class="fas fa-times"></i>
                                 </button>
                                 @endif
@@ -89,7 +93,7 @@
 <div class="modal fade" id="approvalResponseModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="approvalResponseForm" method="POST" action="">
+            <form id="approvalResponseForm">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="approvalResponseModalLabel">Responder solicitud</h5>
@@ -112,17 +116,6 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function respondApproval(id, action) {
-        $('#approvalResponseForm').attr('action', '{{ url('panel/helpdesk/social/approvals') }}/' + id + '/respond');
-        $('#approvalAction').val(action);
-        $('#approvalResponseModalLabel').text(action === 'approve' ? 'Aprobar solicitud' : 'Rechazar solicitud');
-        $('#approvalResponseModal').modal('show');
-    }
-
-    window.respondApproval = respondApproval;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-approvals-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-approvals-index.js')) }}"></script>
+@endpush
