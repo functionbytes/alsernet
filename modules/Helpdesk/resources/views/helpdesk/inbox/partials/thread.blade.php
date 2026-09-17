@@ -800,7 +800,17 @@
         </div>
     </div>
 </div>
+@endif
 
+{{-- Estos dos bloques deben renderizarse SIEMPRE (no solo cuando hay una
+     conversación seleccionada): la vista "pane" (AJAX, ver pane.blade.php)
+     nunca emite el stack 'scripts', así que el <script> de thread-extension.js
+     y el markup de #hdArticleOverlay solo llegan al navegador si ya estaban
+     en la carga completa inicial de /panel/helpdesk/conversations (sin
+     conversación seleccionada). Si se dejan dentro de "@if($convo)", el botón
+     "Buscar artículo de ayuda" queda con un onclick a una función que nunca
+     se define (ReferenceError: openArticleModal is not defined) en cualquier
+     sesión que abra su primera conversación vía SPA (el caso normal). --}}
 @stack('hd-thread-modals')
 
 @once
@@ -828,4 +838,3 @@
 
 @endpush
 @endonce
-@endif
