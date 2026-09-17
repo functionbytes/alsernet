@@ -81,7 +81,9 @@
 <div class="modal fade" id="slaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="slaForm" method="POST" action="">
+            <form id="slaForm" method="POST" action=""
+                  data-store-url="{{ route('helpdesksocial.sla-policies.store') }}"
+                  data-update-url-template="{{ route('helpdesksocial.sla-policies.update', '__ID__') }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="slaModalLabel">Nueva política SLA</h5>
@@ -135,33 +137,6 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function resetSlaForm() {
-        $('#slaForm').attr('action', '{{ route('helpdesksocial.sla-policies.store') }}');
-        $('#slaForm').find('input[name="_method"]').remove();
-        $('#slaForm')[0].reset();
-        $('#slaModalLabel').text('Nueva política SLA');
-    }
-
-    function editSla(id, name, platform, priority, responseTime, resolutionTime, isActive) {
-        $('#slaForm').attr('action', '{{ route('helpdesksocial.sla-policies.update', '__ID__') }}'.replace('__ID__', id));
-        if ($('#slaForm').find('input[name="_method"]').length === 0) {
-            $('#slaForm').prepend('<input type="hidden" name="_method" value="PUT">');
-        }
-        $('#slaForm input[name="name"]').val(name);
-        $('#slaForm select[name="platform"]').val(platform);
-        $('#slaForm select[name="priority"]').val(priority);
-        $('#slaForm input[name="response_time_minutes"]').val(responseTime);
-        $('#slaForm input[name="resolution_time_minutes"]').val(resolutionTime);
-        $('#slaForm input[name="is_active"]').prop('checked', isActive === 1);
-        $('#slaModalLabel').text('Editar política SLA');
-        $('#slaModal').modal('show');
-    }
-
-    window.resetSlaForm = resetSlaForm;
-    window.editSla = editSla;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-sla-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-sla-index.js')) }}"></script>
+@endpush

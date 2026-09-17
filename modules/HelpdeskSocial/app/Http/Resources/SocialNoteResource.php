@@ -14,9 +14,11 @@ class SocialNoteResource extends JsonResource
             'social_comment_id' => $this->social_comment_id,
             'body' => $this->body,
             'type' => $this->type,
+            // El modelo User de este proyecto no tiene columna `name` (siempre
+            // NULL) — usa firstname/lastname, como el resto de Helpdesk.
             'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
-                'name' => $this->user->name,
+                'name' => trim($this->user->firstname.' '.$this->user->lastname),
             ]),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

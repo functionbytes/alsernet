@@ -14,9 +14,11 @@ class SocialAssignmentRuleResource extends JsonResource
             'name' => $this->name,
             'conditions' => $this->conditions,
             'assignee_user_id' => $this->assignee_user_id,
+            // El modelo User de este proyecto no tiene columna `name` (siempre
+            // NULL) — usa firstname/lastname, como el resto de Helpdesk.
             'assignee' => $this->whenLoaded('assignee', fn () => [
                 'id' => $this->assignee->id,
-                'name' => $this->assignee->name,
+                'name' => trim($this->assignee->firstname.' '.$this->assignee->lastname),
             ]),
             'assignment_strategy' => $this->assignment_strategy,
             'priority' => $this->priority,

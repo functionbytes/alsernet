@@ -13,14 +13,16 @@ class SocialApprovalRequestResource extends JsonResource
             'id' => $this->id,
             'social_comment_id' => $this->social_comment_id,
             'requested_by_user_id' => $this->requested_by_user_id,
+            // El modelo User de este proyecto no tiene columna `name` (siempre
+            // NULL) — usa firstname/lastname, como el resto de Helpdesk.
             'requester' => $this->whenLoaded('requester', fn () => [
                 'id' => $this->requester->id,
-                'name' => $this->requester->name,
+                'name' => trim($this->requester->firstname.' '.$this->requester->lastname),
             ]),
             'approver_user_id' => $this->approver_user_id,
             'approver' => $this->whenLoaded('approver', fn () => [
                 'id' => $this->approver->id,
-                'name' => $this->approver->name,
+                'name' => trim($this->approver->firstname.' '.$this->approver->lastname),
             ]),
             'action_type' => $this->action_type,
             'payload' => $this->payload,

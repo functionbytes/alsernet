@@ -295,7 +295,7 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         }
 
         NavService::registerMiniItem('helpdesk-social', [
-            'icon' => 'fa-duotone fa-thin fa-comments',
+            'icon' => 'chat',
             'tooltip' => 'Social Helpdesk',
             'sidebar_id' => 'helpdesk-social',
             'order' => 75,

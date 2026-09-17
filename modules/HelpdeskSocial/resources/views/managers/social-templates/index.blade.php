@@ -2,6 +2,8 @@
 
 @section('title', 'Plantillas de respuesta')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Plantillas de respuesta'])
 @endsection
@@ -45,7 +47,7 @@
                             </td>
                             <td>{{ $template->category ?? '-' }}</td>
                             <td>
-                                <div class="text-truncate" style="max-width: 300px;">
+                                <div class="text-truncate hso-truncate-300">
                                     {{ $template->body }}
                                 </div>
                             </td>

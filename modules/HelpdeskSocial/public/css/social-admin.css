@@ -1,0 +1,42 @@
+/**
+ * HelpdeskSocial — utilidades propias del módulo para las pantallas de
+ * gestión (menciones, comentarios, reglas, tags, analítica de agentes).
+ * Extraído de style="" inline en varias vistas.
+ *
+ * Nota: este módulo también tiene public/css/social.css (~1000 líneas,
+ * clases .hso-* de un rediseño de bandeja que ningún .blade.php actual usa
+ * — no se toca aquí, ver auditoría).
+ */
+
+/* Truncado de texto con title="" para el tooltip completo — un valor de
+   max-width distinto por tabla/columna. */
+.hso-truncate-250 { max-width: 250px; }
+.hso-truncate-280 { max-width: 280px; }
+.hso-truncate-300 { max-width: 300px; }
+.hso-truncate-320 { max-width: 320px; }
+
+/* Badge/punto de color de una etiqueta (social-tags, comentario del inbox)
+   — el color viene de BD por registro: variable CSS inline + clase que la
+   consume con var(). */
+.hso-tag-badge { background-color: var(--hso-tag-color); color: #fff; }
+.hso-tag-dot { width: 20px; height: 20px; background-color: var(--hso-tag-color); }
+
+/* Icono "quitar etiqueta" dentro del badge. */
+.hso-remove-tag-icon { font-size: 10px; }
+
+/* Iniciales del agente (analítica). */
+.hso-agent-avatar { width: 36px; height: 36px; font-size: 14px; }
+
+/* Barra de progreso compacta (tasa de respuesta / puntuación del agente). */
+.hso-progress-sm { height: 8px; max-width: 120px; }
+
+/* Relleno de la barra de progreso — porcentaje dinámico por agente. */
+.hso-progress-bar-dynamic { width: var(--hso-progress); }
+
+/* .hso-step-hidden (sin !important) — usar en vez de style="display:none"
+   en filas/elementos que su propio JS revela/oculta con jQuery
+   .show()/.hide()/.toggle() (mismo patron que .bv-step-hidden del core
+   Helpdesk). Declarada al final del archivo a propósito: tiene que ganar
+   sobre cualquier otra clase de igual especificidad que también fije
+   `display`. */
+.hso-step-hidden { display: none; }

@@ -2,6 +2,8 @@
 
 @section('title', 'Rendimiento de agentes')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Rendimiento de agentes'])
 @endsection
@@ -67,11 +69,16 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 14px;">
-                                        {{ strtoupper(substr($agent->name, 0, 2)) }}
+                                    @php
+                                        // El modelo User de este proyecto no tiene columna `name` (siempre
+                                        // NULL) — usa firstname/lastname, como el resto de Helpdesk.
+                                        $agentName = trim($agent->firstname.' '.$agent->lastname);
+                                    @endphp
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center hso-agent-avatar">
+                                        {{ strtoupper(substr($agentName, 0, 2)) }}
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">{{ $agent->name }}</div>
+                                        <div class="fw-semibold">{{ $agentName }}</div>
                                         <small class="text-muted">{{ $agent->email }}</small>
                                     </div>
                                 </div>
@@ -81,8 +88,8 @@
                             <td>
                                 @if($agent->assigned_count > 0)
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height: 8px; max-width: 120px;">
-                                            <div class="progress-bar bg-success" style="width: {{ min(100, ($agent->replied_count / $agent->assigned_count) * 100) }}%"></div>
+                                        <div class="progress flex-grow-1 hso-progress-sm">
+                                            <div class="progress-bar bg-success hso-progress-bar-dynamic" data-progress="{{ min(100, ($agent->replied_count / $agent->assigned_count) * 100) }}%"></div>
                                         </div>
                                         <small>{{ round(($agent->replied_count / $agent->assigned_count) * 100, 1) }}%</small>
                                     </div>
@@ -111,8 +118,8 @@
                                     $score = min(100, max(0, $score));
                                 @endphp
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="progress flex-grow-1" style="height: 8px; max-width: 120px;">
-                                        <div class="progress-bar bg-{{ $score >= 80 ? 'success' : ($score >= 50 ? 'warning' : 'danger') }}" style="width: {{ $score }}%"></div>
+                                    <div class="progress flex-grow-1 hso-progress-sm">
+                                        <div class="progress-bar bg-{{ $score >= 80 ? 'success' : ($score >= 50 ? 'warning' : 'danger') }} hso-progress-bar-dynamic" data-progress="{{ $score }}%"></div>
                                     </div>
                                     <small>{{ round($score, 1) }}</small>
                                 </div>
@@ -134,3 +141,7 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-analytics-agents.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-analytics-agents.js')) }}"></script>
+@endpush

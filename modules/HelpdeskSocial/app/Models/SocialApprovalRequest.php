@@ -58,6 +58,7 @@ class SocialApprovalRequest extends Model
         $this->update([
             'status' => 'approved',
             'approver_note' => $note,
+            'approver_user_id' => $this->approver_user_id ?? auth()->id(),
             'responded_at' => now(),
         ]);
     }
@@ -67,6 +68,7 @@ class SocialApprovalRequest extends Model
         $this->update([
             'status' => 'rejected',
             'approver_note' => $note,
+            'approver_user_id' => $this->approver_user_id ?? auth()->id(),
             'responded_at' => now(),
         ]);
     }

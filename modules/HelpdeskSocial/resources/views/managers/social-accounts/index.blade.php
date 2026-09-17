@@ -17,7 +17,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle" id="accounts-table">
                     <thead>
                         <tr>
                             <th>Plataforma</th>
@@ -71,7 +71,9 @@
                                 {{ $account->last_synced_at ? $account->last_synced_at->diffForHumans() : 'Nunca' }}
                             </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="toggleCrisisMode({{ $account->id }})" title="Modo crisis">
+                                <button type="button" class="btn btn-sm {{ $account->crisis_mode_active ? 'btn-outline-primary' : 'btn-outline-secondary' }}"
+                                        onclick="toggleCrisisMode({{ $account->id }}, {{ $account->crisis_mode_active ? 'true' : 'false' }})"
+                                        title="Modo crisis {{ $account->crisis_mode_active ? '(activo)' : '' }}">
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </button>
                                 <a href="{{ route('helpdesksocial.accounts.edit', $account) }}" class="btn btn-sm btn-outline-primary">
@@ -93,32 +95,33 @@
             {{ $accounts->links() }}
         </div>
     </div>
+
+    {{-- EnterCrisisModeRequest exige un motivo — este modal lo recoge en
+         vez de usar window.__confirm() (que no acepta texto libre). Salir
+         de modo crisis no requiere motivo, así que no lo usa. --}}
+    <div class="modal fade" id="crisisModeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="crisisModeForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Activar modo crisis</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Las respuestas automáticas de esta cuenta se pausarán.</p>
+                        <label class="form-label">Motivo</label>
+                        <textarea id="crisisModeReason" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Activar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function toggleCrisisMode(accountId) {
-        window.__confirm('¿Activar/desactivar modo crisis para esta cuenta? Las respuestas automáticas se pausarán.', function () {
-        $.ajax({
-            url: '{{ url('panel/helpdesk/social/accounts') }}/' + accountId + '/crisis-mode',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (response) {
-                if (window.toastr) {
-                    toastr.success(response.message || 'Modo crisis actualizado.');
-                }
-                window.location.reload();
-            },
-            error: function () {
-                if (window.toastr) {
-                    toastr.error('No se pudo actualizar el modo crisis.');
-                }
-            }
-        });
-    }
-
-    window.toggleCrisisMode = toggleCrisisMode;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-accounts-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-accounts-index.js')) }}"></script>
+@endpush
