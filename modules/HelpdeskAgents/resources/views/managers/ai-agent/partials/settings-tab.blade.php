@@ -92,9 +92,15 @@
                         <select name="model" id="model" class="form-select @error('model') is-invalid @enderror" required>
                             <option value="">Seleccionar modelo</option>
                             @if ($agent->provider ?? false)
-                                @foreach ($providers[$agent->provider]['models'] as $model)
-                                    <option value="{{ $model }}" {{ old('model', $agent->model ?? '') === $model ? 'selected' : '' }}>
-                                        {{ $model }}
+                                {{-- models es {clave: etiqueta} (p.ej. "claude-opus-5" =>
+                                     "Claude Opus 5"); con "as $model" (forma de un solo
+                                     valor) PHP liga $model a la ETIQUETA, no a la clave,
+                                     así el value nunca coincidía con el slug guardado en
+                                     $agent->model y la opción correcta no quedaba
+                                     seleccionada al editar. --}}
+                                @foreach ($providers[$agent->provider]['models'] as $modelKey => $modelLabel)
+                                    <option value="{{ $modelKey }}" {{ old('model', $agent->model ?? '') === $modelKey ? 'selected' : '' }}>
+                                        {{ $modelLabel }}
                                     </option>
                                 @endforeach
                             @endif

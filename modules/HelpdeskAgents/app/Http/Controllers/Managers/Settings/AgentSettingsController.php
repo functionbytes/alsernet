@@ -65,11 +65,14 @@ class AgentSettingsController extends Controller
 
     public function update(UpdateAiAgentSettingsRequest $request): RedirectResponse
     {
-        $this->authorize('update', AiAgent::class);
+        $agent = $this->getDefaultAgent() ?? new AiAgent;
+
+        // Este método hace de alta y edición a la vez: sin agente todavía no
+        // hay instancia que pasarle a la policy de update() (exige AiAgent
+        // $agent, no la clase) — tiraba ArgumentCountError al crear el primero.
+        $this->authorize($agent->exists ? 'update' : 'create', $agent->exists ? $agent : AiAgent::class);
 
         $validated = $request->validated();
-
-        $agent = $this->getDefaultAgent() ?? new AiAgent;
 
         $agent->name = $validated['name'];
         $agent->description = $validated['description'];

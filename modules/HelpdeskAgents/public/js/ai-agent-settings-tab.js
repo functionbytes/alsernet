@@ -43,10 +43,14 @@
                 modelSelect.innerHTML = '<option value="">Seleccionar modelo</option>';
 
                 if (provider && providers[provider]) {
-                    providers[provider].models.forEach(function (model) {
+                    // providers[provider].models es {valor: etiqueta} (p.ej.
+                    // {"claude-opus-5": "Claude Opus 5"}), no un array — con
+                    // .forEach() directo tiraba TypeError y el <select> se
+                    // quedaba vacío en cuanto se elegía proveedor.
+                    Object.keys(providers[provider].models).forEach(function (value) {
                         var option = document.createElement('option');
-                        option.value = model;
-                        option.textContent = model;
+                        option.value = value;
+                        option.textContent = providers[provider].models[value];
                         modelSelect.appendChild(option);
                     });
                 }
