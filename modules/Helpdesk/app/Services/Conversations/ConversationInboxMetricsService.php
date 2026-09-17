@@ -93,25 +93,31 @@ class ConversationInboxMetricsService
                     ->groupBy('channel')
                     ->pluck('cnt', 'channel');
 
+                // unassigned/archived/spam comparten la misma base ($inbox, sin
+                // join) y solo difieren en una columna simple: un único SELECT con
+                // SUM(CASE WHEN ...) sobre helpdesk_conversations directamente
+                // (antes 3 COUNT idénticos salvo el where). pending/closed/blocked/vip
+                // se quedan en sus propias queries porque necesitan whereHas (join a
+                // status/customer), igual que defaultViewVisible() (unread/mine/urgent).
+                $columnCounts = (clone $inbox)->selectRaw(
+                    'SUM(CASE WHEN assignee_id IS NULL THEN 1 ELSE 0 END) as unassigned,
+                    SUM(CASE WHEN is_archived = 1 THEN 1 ELSE 0 END) as archived,
+                    SUM(CASE WHEN is_spam = 1 THEN 1 ELSE 0 END) as spam'
+                )->first();
+
                 return [
-                    // Sin leer: mismo criterio que el filtro ?unread=1 de la lista
-                    // (helpdesk_conversation_reads real, no la vieja heurística
-                    // "abierta y sin asignar" que no tenía relación con si ESTE
-                    // usuario ya la había leído — el badge decía "3" con la lista
-                    // vacía debajo porque contaban cosas distintas).
+                    // Sin leer: Conversation::scopeUnreadFor() — única fuente de
+                    // verdad, compartida con listJson() (ver comentario del scope).
                     'unread' => $userId
-                        ? (clone $inbox)
-                            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-                            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
-                            ->count()
+                        ? (clone $inbox)->unreadFor($userId)->count()
                         : 0,
-                    'mine' => $userId ? (clone $inbox)->where('assignee_id', $userId)->count() : 0,
-                    'unassigned' => (clone $inbox)->whereNull('assignee_id')->count(),
-                    'urgent' => (clone $inbox)->where('priority', 'urgent')->count(),
+                    'mine' => $userId ? (clone $inbox)->defaultViewVisible()->where('assignee_id', $userId)->count() : 0,
+                    'unassigned' => (int) $columnCounts->unassigned,
+                    'urgent' => (clone $inbox)->defaultViewVisible()->where('priority', 'urgent')->count(),
                     'pending' => (clone $inbox)
                         ->whereHas('status', fn ($q) => $q->where('name', 'Esperando'))
                         ->count(),
-                    'archived' => (clone $inbox)->where('is_archived', true)->count(),
+                    'archived' => (int) $columnCounts->archived,
                     // "Cerradas" in the sidebar means resolved/closed status
                     // (is_open=false) — NOT archived, a separate concept. The
                     // link used to point at ?archived=1 and show this same
@@ -123,7 +129,7 @@ class ConversationInboxMetricsService
                     'blocked' => (clone $inbox)
                         ->whereHas('customer', fn ($c) => $c->whereNotNull('banned_at'))
                         ->count(),
-                    'spam' => (clone $inbox)->where('is_spam', true)->count(),
+                    'spam' => (int) $columnCounts->spam,
                     'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
                     'facebook' => (int) ($channelCounts['facebook'] ?? 0),
                     'instagram' => (int) ($channelCounts['instagram'] ?? 0),

@@ -97,19 +97,8 @@ class ConversationFilterViewTest extends TestCase
         $this->assertTrue($ids->contains($archived->id), 'Una vista guardada con archived=1 debe mostrar archivadas.');
     }
 
-    public function test_search_matches_customer_email_and_conversation_id(): void
-    {
-        $customer = Customer::factory()->create(['email' => 'objetivo-unico@example.com']);
-        $conv = Conversation::factory()->create([
-            'customer_id' => $customer->id,
-            'status_id' => $this->makeStatus('Abierta s', true)->id,
-            'is_archived' => false,
-        ]);
-
-        $byEmail = $this->filterIds(['search' => 'objetivo-unico@'], self::DEFAULT_VIEW);
-        $byId = $this->filterIds(['search' => (string) $conv->id], self::DEFAULT_VIEW);
-
-        $this->assertTrue($byEmail->contains($conv->id), 'El buscador debe encontrar por email del cliente.');
-        $this->assertTrue($byId->contains($conv->id), 'El buscador debe encontrar por id de conversación.');
-    }
+    // La búsqueda por email/nombre de cliente (FULLTEXT desde el 17-sep-2026)
+    // se mueve a ConversationFilterCustomerSearchTest: InnoDB no sincroniza el
+    // índice FULLTEXT hasta el COMMIT, así que MATCH AGAINST no ve las filas
+    // creadas dentro de la transacción que envuelve esta clase.
 }

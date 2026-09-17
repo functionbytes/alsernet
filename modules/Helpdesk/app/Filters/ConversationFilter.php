@@ -166,14 +166,7 @@ class ConversationFilter
     {
         return $query->where(function ($q) use ($search) {
             $this->applySubjectSearch($q, $search)
-                ->orWhereHas('customer', fn ($c) => $c
-                    // Sin FULLTEXT en estos campos: un agente puede buscar por
-                    // apellido en medio del nombre, dominio del email o los
-                    // últimos dígitos del teléfono, así que se mantiene el
-                    // LIKE '%term%' de siempre (un prefijo rompería esos casos).
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%"));
+                ->orWhereHas('customer', fn ($c) => $this->applyCustomerSearch($c, $search));
 
             // A bare number also matches the conversation id (agents paste it).
             if (ctype_digit($search)) {
@@ -197,6 +190,29 @@ class ConversationFilter
         }
 
         return $q->whereFullText('subject', $fullTextTerm, ['mode' => 'boolean']);
+    }
+
+    /**
+     * Filtra nombre/email de `helpdesk_customers` usando el índice FULLTEXT
+     * compuesto (helpdesk_customers_name_email_fulltext), mismo patrón que
+     * applySubjectSearch(). El teléfono se queda siempre en LIKE '%term%': un
+     * agente busca por los últimos dígitos (SMS/WhatsApp) y FULLTEXT solo
+     * soporta comodín de sufijo (prefijo), nunca resolvería ese caso.
+     */
+    private function applyCustomerSearch(Builder $c, string $search): Builder
+    {
+        $fullTextTerm = $this->fullTextBooleanTerm($search);
+
+        $c->where(function ($q) use ($search, $fullTextTerm) {
+            if ($fullTextTerm === null) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            } else {
+                $q->whereFullText(['name', 'email'], $fullTextTerm, ['mode' => 'boolean']);
+            }
+        });
+
+        return $c->orWhere('phone', 'like', "%{$search}%");
     }
 
     /**
