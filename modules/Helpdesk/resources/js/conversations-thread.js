@@ -3942,6 +3942,24 @@
             });
         });
 
+        // QA tiempo real (18-sep-2026): el panel derecho (estado/prioridad/
+        // agente/equipo) no reflejaba en vivo los cambios hechos por OTRO
+        // agente con la misma conversación abierta — se veía la píldora de
+        // actividad en el hilo ("El estado cambió a...") pero los selects
+        // del sidebar quedaban desincronizados hasta recargar. Causa: el
+        // evento ConversationUpdated emitía en un canal ('conversations.{id}')
+        // que nadie autoriza ni suscribe. Ya corregido en el evento
+        // (broadcasts ahora en 'helpdesk.conversation.{id}'); aquí solo
+        // falta escucharlo. Se recarga el panel completo vía el mismo
+        // helper que usa el cambio de conversación — más simple y fiable
+        // que parchear a mano cada píldora/select del sidebar.
+        convChannel.listen('.conversation.updated', function (e) {
+            if (!e || parseInt(e.by_user_id, 10) === myId()) return;
+            if (typeof window.bvLoadConversationPane === 'function') {
+                window.bvLoadConversationPane(convId, null, { push: false });
+            }
+        });
+
         // ─── Typing indicator: peer (Echo whisper) + customer (Meta API) ────
         $(document).on('input.bvconv', '.bv-composer-input', function () {
             var now = Date.now();

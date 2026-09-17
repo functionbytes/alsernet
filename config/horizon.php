@@ -265,7 +265,20 @@ return [
             ],
             'supervisor-livechat' => [
                 'connection' => 'redis',
-                'queue' => ['helpdesklivechat'],
+                // helpdesk-broadcasts sumada 18-sep-2026 (QA tiempo real): la usan
+                // ~47 eventos ShouldBroadcast del inbox via el trait
+                // BroadcastsOnServedQueue (App\Events\Concerns), pero ningun
+                // supervisor la escuchaba — mismo patron que las colas de arriba
+                // (helpdesk-audit, helpdesk-social-*): sin worker dedicado, caian
+                // al 'default' de Horizon (que tampoco la lista) y se quedaban
+                // encoladas para siempre. Se detecto porque ConversationUpdated
+                // (estado/prioridad/agente/equipo) nunca llegaba en vivo a un
+                // segundo agente con la misma conversacion abierta — 42 jobs
+                // acumulados en Redis en el momento del hallazgo. Va en esta
+                // cola por ser la mas ligera/realtime, tal como pide el propio
+                // comentario del trait ("no debe compartir sitio con envios
+                // masivos").
+                'queue' => ['helpdesk-broadcasts', 'helpdesklivechat'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
                 'minProcesses' => 1,
@@ -330,7 +343,16 @@ return [
             ],
             'supervisor-local' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'pagespeed', 'google-sync', 'notifications', 'notifications-high', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk', 'helpdesk-events', 'helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-ai', 'helpdesk-audit', 'helpdesk-social-ai', 'helpdesk-social-analytics', 'helpdesk-social-processing', 'chatflow', 'broadcasts', 'drip', 'remarketing', 'remarketing-webhooks'],
+                // helpdesk-broadcasts y helpdesklivechat sumadas 18-sep-2026 (QA
+                // tiempo real): este es el bloque de entorno realmente activo en
+                // el Docker de dev (APP_ENV=local) — el bloque 'production' de
+                // arriba con sus supervisores dedicados no aplica aqui. Sin
+                // 'helpdesk-broadcasts' en esta lista, eventos como
+                // ConversationUpdated (estado/prioridad/agente/equipo del inbox)
+                // se encolaban y jamas se procesaban: 42 jobs acumulados en Redis
+                // en el momento del hallazgo, cero en el log de Horizon. Mismo
+                // caso con 'helpdesklivechat', que tampoco estaba.
+                'queue' => ['default', 'pagespeed', 'google-sync', 'notifications', 'notifications-high', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk', 'helpdesk-events', 'helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-ai', 'helpdesk-audit', 'helpdesk-social-ai', 'helpdesk-social-analytics', 'helpdesk-social-processing', 'chatflow', 'broadcasts', 'helpdesk-broadcasts', 'helpdesklivechat', 'drip', 'remarketing', 'remarketing-webhooks'],
                 'balance' => 'simple',
                 'processes' => 3,
                 'tries' => 1,
