@@ -17,6 +17,7 @@ use Illuminate\View\View;
 use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Events\ConversationStatusChanged;
 use Modules\Helpdesk\Events\ConversationTagAdded;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
@@ -128,9 +129,13 @@ class ConversationsController extends Controller
         $statuses = ConversationStatus::active()->ordered()->get();
         $groups = Group::orderBy('name')->get();
 
+        // Conversation::scopeDefaultViewVisible() — debe coincidir con lo que
+        // realmente se ve al aterrizar en el inbox sin filtros (vista "Todas
+        // las abiertas"), no con el total absoluto incluyendo cerradas/archivadas.
         $totalConversations = Conversation::query()
             ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
             ->withoutActiveBot()
+            ->defaultViewVisible()
             ->count();
 
         // Metricas/contadores agregados y cacheados del sidebar+statusbar —
@@ -487,15 +492,25 @@ class ConversationsController extends Controller
                     ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
                     ->withoutActiveBot();
 
+                // Conversation::scopeDefaultViewVisible()/scopeUnreadFor() — única
+                // fuente de verdad, compartida con
+                // ConversationInboxMetricsService::sidebarCounters(). Antes estos
+                // conteos no exigían is_open/is_archived, así que los badges
+                // (refrescados por este endpoint en cada evento en vivo) divergían
+                // del filtro real (p.ej. "Todas" 41 con la lista mostrando 21,
+                // "Urgentes" 5 con la lista mostrando 3, "Sin leer" 20 con la
+                // lista vacía).
                 return [
-                    'base_total' => (int) (clone $baseCount)->count(),
-                    'unread' => (int) (clone $baseCount)
-                        ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
-                        ->count(),
+                    'base_total' => (int) (clone $baseCount)->defaultViewVisible()->count(),
+                    'unread' => $userId
+                        ? (int) (clone $baseCount)->unreadFor($userId)->count()
+                        : 0,
                     'mine' => (int) (clone $baseCount)
+                        ->defaultViewVisible()
                         ->where('assignee_id', $userId)
                         ->count(),
                     'urgent' => (int) (clone $baseCount)
+                        ->defaultViewVisible()
                         ->where('priority', 'urgent')
                         ->count(),
                     'channels' => (clone $baseCount)
@@ -955,6 +970,14 @@ class ConversationsController extends Controller
 
         ConversationClosed::dispatch($conversation);
 
+        // close()/reopen() actualizan status_id con un update() directo en el
+        // modelo, sin pasar por ConversationStatusChanged — el único listener
+        // que registra el cambio en el audit log (LogActivityOnConversation
+        // StatusChanged). Antes de este fix, cerrar/reabrir desde el inbox
+        // web no dejaba ningún rastro en la pestaña "Actividad", solo el
+        // cambio manual de estado vía la API v1 lo hacía.
+        ConversationStatusChanged::dispatch($conversation, $conversation->fresh('status')->status, auth()->id());
+
         // Fire CSAT survey unless explicitly skipped (best effort — never block close).
         if (! $request->boolean('skip_csat')) {
             try {
@@ -986,6 +1009,11 @@ class ConversationsController extends Controller
         $this->authorize('update', $conversation);
 
         $conversation->reopen();
+
+        // Ver comentario equivalente en close(): reopen() tampoco disparaba
+        // ConversationStatusChanged, así que reabrir no quedaba registrado
+        // en la pestaña "Actividad" de la conversación.
+        ConversationStatusChanged::dispatch($conversation, $conversation->fresh('status')->status, auth()->id());
 
         if ($request->wantsJson()) {
             return response()->json([

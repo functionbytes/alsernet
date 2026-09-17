@@ -13,7 +13,24 @@
     function applied()  { return $('#tags-applied'); }
     function tagsList() { return $('#tags-list'); }
 
-    /* ── Sincroniza estado al abrir ──────────────────────────── */
+    /* ── Sincroniza estado al abrir ──────────────────────────────
+     * El modal vive fuera del pane (se incluye una sola vez en el layout),
+     * así que su HTML de "Aplicadas" solo refleja la conversación que
+     * estaba abierta cuando la PÁGINA cargó — al cambiar de conversación
+     * por SPA sin recargar, quedaba obsoleto (ej. abría en "Ninguna
+     * aplicada" con una etiqueta ya puesta). El panel derecho (#rsp-tag-wrap)
+     * sí se actualiza en cada bvLoadConversationPane, así que es la fuente
+     * real de qué etiquetas tiene la conversación actualmente abierta.
+     */
+    function currentTagsFromRightPanel() {
+        var $wrap = $('#rsp-tag-wrap');
+        var tags = [];
+        $wrap.find('[data-tag-id]').each(function () {
+            tags.push({ id: String($(this).data('tag-id')), name: $(this).text().trim() });
+        });
+        return tags;
+    }
+
     (new MutationObserver(function (mutations) {
         mutations.forEach(function (m) {
             if (m.attributeName !== 'class') { return; }
@@ -23,11 +40,17 @@
             preAppliedIds = new Set();
             tagsList().find('.bv-rtag[data-tag-id]').removeClass('bv-rtag--on');
 
-            applied().find('.bv-rtag').each(function () {
-                var id = String($(this).data('tag-id'));
-                preAppliedIds.add(id);
-                tagsList().find('.bv-rtag[data-tag-id="' + id + '"]').addClass('bv-rtag--on');
-            });
+            var currentTags = currentTagsFromRightPanel();
+            applied().empty();
+            if (currentTags.length) {
+                currentTags.forEach(function (t) {
+                    addChip(t.id, t.name);
+                    preAppliedIds.add(t.id);
+                    tagsList().find('.bv-rtag[data-tag-id="' + t.id + '"]').addClass('bv-rtag--on');
+                });
+            } else {
+                applied().append('<em class="bv-tags-empty" id="tags-applied-empty">Ninguna aplicada</em>');
+            }
 
             $('#tags-search').val('').trigger('input');
         });

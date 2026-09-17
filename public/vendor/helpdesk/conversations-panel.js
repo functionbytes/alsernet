@@ -294,6 +294,22 @@
                         '<button class="bv-th-action" data-bv-modal="close-conv" title="Cerrar conversación">' +
                         '<i class="fas fa-check"></i></button>'
                     );
+
+                    // Solo el botón se actualizaba: el "Estado" del panel derecho
+                    // seguía mostrando "Cerrado"/"Resuelto" y los contadores del
+                    // sidebar (Cerradas, Todas...) no bajaban hasta recargar la
+                    // página a mano. Reutiliza el mismo refresco que ya usan
+                    // tags/status para mantener ambos al día sin full reload.
+                    const convId = $('.bv-composer').data('bv-conversation-id');
+                    if (convId && typeof window.bvLoadConversationPane === 'function') {
+                        window.bvLoadConversationPane(convId, null, { push: false });
+                    }
+                    // Sin filtros, refreshInboxList() navega a "/conversations" a
+                    // secas y pierde el filtro activo (ej. "?status=closed" donde
+                    // se reabrió la conversación) — hay que pasarle los de la URL.
+                    if (typeof window.refreshInboxList === 'function' && typeof window.readInboxFiltersFromUrl === 'function') {
+                        window.refreshInboxList(window.readInboxFiltersFromUrl());
+                    }
                 })
                 .fail(function (xhr) {
                     const msg = xhr?.responseJSON?.message || 'No se pudo reabrir la conversación';
@@ -722,6 +738,901 @@
                 .filter(Boolean);
             ajaxConversationUpdate({ tag_ids: ids }, 'Etiquetas actualizadas').done(() => closeNamedModal('tags'));
         });
+
+        // ═══ Panel derecho (right-panel.blade.php) — extraído de los <script>
+        // inline del partial; conservado tal cual, ver notas de cada bloque. ═══
+
+        // ─── Páginas visitadas: paginación "Mostrar más" + refresco pestaña Tecnología ───
+        (function () {
+            var btn = document.getElementById('bv-pages-show-more');
+            if (!btn) return;
+
+            btn.addEventListener('click', function () {
+                var shown  = parseInt(btn.dataset.shown, 10);
+                var total  = parseInt(btn.dataset.total, 10);
+                var reveal = Math.min(100, total - shown);
+                var items  = document.querySelectorAll('#bv-pages-timeline .bv-page-collapsed');
+                var revealed = 0;
+
+                for (var i = 0; i < items.length && revealed < reveal; i++) {
+                    items[i].classList.remove('bv-page-collapsed');
+                    revealed++;
+                }
+
+                shown += revealed;
+                btn.dataset.shown = shown;
+                var remaining = total - shown;
+
+                if (remaining <= 0) {
+                    btn.remove();
+                } else {
+                    var next = Math.min(100, remaining);
+                    document.getElementById('bv-pages-show-more-count').textContent = next;
+                    btn.querySelector('.bv-pages-show-more-total').textContent = '(' + remaining + ' restantes)';
+                }
+
+                // Hide day labels whose items are all still collapsed
+                document.querySelectorAll('#bv-pages-timeline .bv-pages-day-label').forEach(function (label) {
+                    var next = label.nextElementSibling;
+                    var hasVisible = false;
+                    while (next && !next.classList.contains('bv-pages-day-label') && !next.classList.contains('bv-pages-show-more')) {
+                        if (!next.classList.contains('bv-page-collapsed')) { hasVisible = true; break; }
+                        next = next.nextElementSibling;
+                    }
+                    label.style.display = hasVisible ? '' : 'none';
+                });
+            });
+
+            // Initial pass: hide day labels that have no visible items (all collapsed)
+            document.querySelectorAll('#bv-pages-timeline .bv-pages-day-label').forEach(function (label) {
+                var next = label.nextElementSibling;
+                var hasVisible = false;
+                while (next && !next.classList.contains('bv-pages-day-label') && !next.classList.contains('bv-pages-show-more')) {
+                    if (!next.classList.contains('bv-page-collapsed')) { hasVisible = true; break; }
+                    next = next.nextElementSibling;
+                }
+                if (!hasVisible) label.style.display = 'none';
+            });
+
+        }());
+
+        (function () {
+            // Refresh button — re-fetches the full Technology tab content (device info,
+            // current page and visited pages) without a full page reload.
+            // Uses event delegation on the aside so the handler survives innerHTML replacement.
+            var bvAside = document.querySelector('.bv-right');
+            if (!bvAside) return;
+
+            bvAside.addEventListener('click', async function (e) {
+                var btn = e.target.closest('#bv-pages-refresh');
+                if (!btn) return;
+
+                var icon = btn.querySelector('i');
+                btn.disabled = true;
+                if (icon) icon.classList.add('fa-spin');
+                try {
+                    var res = await fetch(window.location.href, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
+                        credentials: 'same-origin',
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    var html = await res.text();
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+
+                    var freshTab = doc.querySelector('[data-bv-tab-content="technology"]');
+                    var oldTab = document.querySelector('[data-bv-tab-content="technology"]');
+                    if (freshTab && oldTab) {
+                        oldTab.innerHTML = freshTab.innerHTML;
+                    }
+
+                    if (typeof window.toastr !== 'undefined') {
+                        window.toastr.success('Datos de sesión actualizados');
+                    }
+                } catch (e) {
+                    if (typeof window.toastr !== 'undefined') {
+                        window.toastr.error('No se pudo refrescar');
+                    }
+                } finally {
+                    btn.disabled = false;
+                    if (icon) icon.classList.remove('fa-spin');
+                }
+            });
+        }());
+
+        // ─── Pestaña Tecnología: eco en vivo de widget.session.updated ───
+        // Gate original: @if($rpShowTechnologyTab && helpdesk_feature_enabled('tab_technology') && $rpConvo)
+        (function () {
+            var techTabEl = document.querySelector('[data-bv-tab-content="technology"]');
+            if (!techTabEl) { return; }
+            var convId = techTabEl.dataset.convId;
+            if (!convId) { return; }
+
+            // Resolve Echo asynchronously (it may load after this script runs).
+            function waitForEcho(cb) {
+                if (typeof window.Echo !== 'undefined' && window.Echo) {
+                    return cb();
+                }
+                var tries = 0;
+                var iv = setInterval(function () {
+                    tries++;
+                    if (typeof window.Echo !== 'undefined' && window.Echo) {
+                        clearInterval(iv);
+                        cb();
+                    } else if (tries > 60) {
+                        clearInterval(iv);
+                    }
+                }, 250);
+            }
+
+            waitForEcho(function () {
+                window.Echo.private('helpdesk.conversation.' + convId)
+                    .listen('.widget.session.updated', function (data) {
+                        // Update "Página actual" section in real time.
+                        var section = document.querySelector('.bv-current-page-section');
+
+                        var url = data.current_url;
+                        if (!url) return;
+
+                        // Parse host + path from the new URL.
+                        var parsed;
+                        try { parsed = new URL(url); } catch (e) { return; }
+                        var host = parsed.hostname;
+                        var path = parsed.pathname + (parsed.search || '');
+
+                        if (section) {
+                            // Update host label.
+                            var hostEl = section.querySelector('.bv-current-page-host');
+                            if (hostEl) { hostEl.lastChild.textContent = host; }
+
+                            // Update link: href + visible text.
+                            var linkEl = section.querySelector('.bv-current-page-path');
+                            if (linkEl) {
+                                linkEl.href = url;
+                                linkEl.title = url;
+                                var textNode = linkEl.firstChild;
+                                var truncated = path.length > 80 ? path.slice(0, 77) + '...' : path;
+                                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                                    textNode.textContent = truncated + ' ';
+                                }
+                            }
+
+                            // Switch pulse indicator to "Viendo ahora".
+                            var idle = section.querySelector('.bv-current-page-idle');
+                            if (idle) {
+                                idle.className = 'bv-current-page-pulse';
+                                idle.title = 'Visitante activo ahora';
+                                idle.innerHTML = '<span class="bv-pulse-dot"></span>Viendo ahora';
+                            }
+                        } else {
+                            // Section doesn't exist yet (no current_url on initial load) — do a
+                            // lightweight fetch-replace so the full section renders server-side.
+                            var techTab = document.querySelector('[data-bv-tab-content="technology"]');
+                            if (!techTab) return;
+
+                            fetch(window.location.href, {
+                                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
+                                credentials: 'same-origin',
+                            }).then(function (res) {
+                                return res.ok ? res.text() : Promise.reject(res.status);
+                            }).then(function (html) {
+                                var doc = new DOMParser().parseFromString(html, 'text/html');
+                                var fresh = doc.querySelector('[data-bv-tab-content="technology"]');
+                                if (fresh) { techTab.innerHTML = fresh.innerHTML; }
+                            }).catch(function () {});
+                        }
+                    });
+            });
+        }());
+
+        // ─── Pestaña Pantalla (assist): live view (rrweb) + WebRTC screen share ───
+        // Gate original: @if($rpShowAssistTab && helpdesk_feature_enabled('tab_assist') && $rpConvo)
+        (function () {
+            var assistTabEl = document.querySelector('[data-bv-tab-content="assist"]');
+            if (!assistTabEl) { return; }
+            var conversationId = assistTabEl.dataset.conversationId;
+            if (!conversationId) { return; }
+            var liveViewEnabled = assistTabEl.dataset.enableLiveView === '1';
+            var screenShareEnabled = assistTabEl.dataset.enableScreenShare === '1';
+
+            // window.Echo can load asynchronously after this script runs.
+            // Poll until it appears (cap at 15s) so we don't miss the bind window.
+            function waitForEcho(cb) {
+                if (typeof window.Echo !== 'undefined' && window.Echo) {
+                    return cb();
+                }
+                var tries = 0;
+                var iv = setInterval(function () {
+                    tries++;
+                    if (typeof window.Echo !== 'undefined' && window.Echo) {
+                        clearInterval(iv);
+                        cb();
+                    } else if (tries > 60) {
+                        clearInterval(iv);
+                        console.warn('[hd-assist] Echo never initialized — live view disabled.');
+                    }
+                }, 250);
+            }
+
+            waitForEcho(function () {
+
+            // ── Live view (rrweb player) ─────────────────────────────────
+            if (liveViewEnabled) {
+                var playerEl = document.getElementById('hd-liveview-player-' + conversationId);
+                var statusEl = document.getElementById('hd-liveview-status-' + conversationId);
+                var emptyEl = playerEl ? playerEl.querySelector('.hd-liveview-empty') : null;
+                var player = null;
+                var bufferedEvents = [];
+
+                function setStatus(text, cls) {
+                    if (statusEl) {
+                        statusEl.textContent = text;
+                        statusEl.className = 'bv-assist-status badge ' + cls;
+                    }
+                }
+
+                function ensurePlayer() {
+                    if (player || !playerEl) {
+                        return Promise.resolve(player);
+                    }
+                    // Load rrweb-player from CDN (no bundler step required for the
+                    // admin panel — the script is small enough to fetch on demand
+                    // and only loads when an agent opens the Pantalla tab).
+                    var cssUrl = 'https://cdn.jsdelivr.net/npm/rrweb-player@1.0.0-alpha.4/dist/style.css';
+                    var jsUrl = 'https://cdn.jsdelivr.net/npm/rrweb-player@1.0.0-alpha.4/dist/index.mjs';
+                    if (! document.querySelector('link[data-hd="rrweb-player"]')) {
+                        var link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = cssUrl;
+                        link.dataset.hd = 'rrweb-player';
+                        document.head.appendChild(link);
+                    }
+                    return import(jsUrl).then(function (mod) {
+                        if (emptyEl) emptyEl.remove();
+                        var Player = mod.default || mod.Player || mod;
+                        player = new Player({
+                            target: playerEl,
+                            props: {
+                                events: bufferedEvents.slice(),
+                                autoPlay: true,
+                                showController: false,
+                                liveMode: true,
+                            },
+                        });
+                        bufferedEvents = [];
+                        return player;
+                    }).catch(function (e) {
+                        console.warn('[hd-assist] rrweb-player load failed', e);
+                        if (playerEl) {
+                            playerEl.innerHTML = '<div class="text-warning small p-3 text-center">No se pudo cargar el reproductor (rrweb-player no disponible).</div>';
+                        }
+                    });
+                }
+
+                // Fetch backlog first — rrweb requires the initial Meta + FullSnapshot
+                // events to render anything. Live mode alone shows a blank frame for
+                // any agent that joins after the visitor started recording.
+                var historyUrl = assistTabEl.dataset.historyUrl;
+                var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                fetch(historyUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfMeta ? csrfMeta.content : '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                })
+                    .then(function (r) { return r.ok ? r.json() : { events: [] }; })
+                    .then(function (data) {
+                        var historyEvents = data.events || [];
+                        if (historyEvents.length > 0) {
+                            bufferedEvents = bufferedEvents.concat(historyEvents);
+                            setStatus('Reproduciendo', 'bg-info');
+                            ensurePlayer();
+                        }
+                    })
+                    .catch(function () { /* silent — live mode still works without backlog */ });
+
+                try {
+                    window.Echo.private('livestream.conversation.' + conversationId)
+                        .listen('.livestream.batch', function (data) {
+                            setStatus('En vivo', 'bg-success');
+                            if (player) {
+                                (data.events || []).forEach(function (e) { player.addEvent(e); });
+                            } else {
+                                bufferedEvents = bufferedEvents.concat(data.events || []);
+                                ensurePlayer();
+                            }
+                        });
+                } catch (e) {
+                    setStatus('Sin conexión', 'bg-warning');
+                }
+            }
+
+            // ── WebRTC screen share (agent answers visitor offer) ─────────
+            if (screenShareEnabled) {
+                var videoEl = document.getElementById('hd-webrtc-video-' + conversationId);
+                var emptyWebrtc = document.getElementById('hd-webrtc-empty-' + conversationId);
+                var endBtn = document.getElementById('hd-webrtc-end-' + conversationId);
+                var peer = null;
+
+                var STUN = [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                ];
+
+                function postJson(url, data) {
+                    var token = document.querySelector('meta[name="csrf-token"]');
+                    return fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token ? token.content : '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify(data),
+                        credentials: 'same-origin',
+                    });
+                }
+
+                function tearDown() {
+                    try { peer && peer.close(); } catch (e) {}
+                    peer = null;
+                    if (videoEl) {
+                        videoEl.srcObject = null;
+                        videoEl.removeAttribute('data-streaming');
+                    }
+                    if (emptyWebrtc) emptyWebrtc.style.display = '';
+                }
+
+                try {
+                    window.Echo.private('webrtc.conversation.' + conversationId)
+                        .listen('.webrtc.offer', async function (data) {
+                            if (!data || !data.payload || !data.payload.sdp) return;
+                            if (peer) tearDown();
+
+                            peer = new RTCPeerConnection({ iceServers: STUN });
+
+                            peer.ontrack = function (event) {
+                                if (videoEl && event.streams && event.streams[0]) {
+                                    videoEl.srcObject = event.streams[0];
+                                    videoEl.setAttribute('data-streaming', '1');
+                                    if (emptyWebrtc) emptyWebrtc.style.display = 'none';
+                                }
+                            };
+
+                            peer.onicecandidate = function (event) {
+                                if (event.candidate) {
+                                    postJson(
+                                        assistTabEl.dataset.iceUrl,
+                                        { candidate: event.candidate.toJSON() }
+                                    );
+                                }
+                            };
+
+                            await peer.setRemoteDescription({ type: 'offer', sdp: data.payload.sdp });
+                            var answer = await peer.createAnswer();
+                            await peer.setLocalDescription(answer);
+                            postJson(
+                                assistTabEl.dataset.answerUrl,
+                                { sdp: answer.sdp || '', type: 'answer' }
+                            );
+                        })
+                        .listen('.webrtc.ice', function (data) {
+                            if (peer && data && data.payload && data.payload.candidate) {
+                                try { peer.addIceCandidate(new RTCIceCandidate(data.payload.candidate)); } catch (e) {}
+                            }
+                        })
+                        .listen('.webrtc.end', function () {
+                            tearDown();
+                        });
+                } catch (e) {}
+
+                if (endBtn) {
+                    endBtn.addEventListener('click', function () {
+                        postJson(endBtn.dataset.endUrl, {});
+                        tearDown();
+                    });
+                }
+
+                var requestBtn = document.getElementById('hd-webrtc-request-' + conversationId);
+                if (requestBtn) {
+                    requestBtn.addEventListener('click', function () {
+                        requestBtn.disabled = true;
+                        var label = requestBtn.innerHTML;
+                        requestBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Solicitando…';
+                        postJson(requestBtn.dataset.requestUrl, {})
+                            .then(function () {
+                                setTimeout(function () {
+                                    requestBtn.disabled = false;
+                                    requestBtn.innerHTML = label;
+                                }, 5000);
+                            })
+                            .catch(function () {
+                                requestBtn.disabled = false;
+                                requestBtn.innerHTML = label;
+                            });
+                    });
+                }
+            }
+
+            // ── Fullscreen modal: hosts the player or the WebRTC video ───
+            var modalEl = document.getElementById('hd-liveview-modal-' + conversationId);
+            var modalBody = document.getElementById('hd-liveview-modal-body-' + conversationId);
+            var modalClose = document.getElementById('hd-liveview-modal-close-' + conversationId);
+            var modalTitle = document.getElementById('hd-liveview-modal-title-' + conversationId);
+            var modalStatus = document.getElementById('hd-liveview-modal-status-' + conversationId);
+            var liveExpand = document.getElementById('hd-liveview-expand-' + conversationId);
+            var webrtcExpand = document.getElementById('hd-webrtc-expand-' + conversationId);
+
+            var modalOriginalParent = null;
+            var modalMovedNode = null;
+
+            function triggerPlayerResize() {
+                // rrweb-player listens to window resize internally (Svelte component).
+                // Dispatch the event AFTER the move so the canvas re-scales to the
+                // new container dimensions.
+                try {
+                    window.dispatchEvent(new Event('resize'));
+                } catch (e) { /* noop */ }
+                if (player && typeof player.triggerResize === 'function') {
+                    player.triggerResize();
+                }
+            }
+
+            function openModal(node, title, statusEl) {
+                if (! modalEl || ! modalBody || ! node) return;
+                modalOriginalParent = node.parentElement;
+                modalMovedNode = node;
+                modalBody.innerHTML = '';
+                modalBody.appendChild(node);
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalStatus && statusEl) {
+                    modalStatus.textContent = statusEl.textContent;
+                    modalStatus.className = 'bv-assist-status badge ' + (statusEl.className.match(/bg-\w+/)?.[0] || 'bg-secondary');
+                }
+                modalEl.classList.add('is-open');
+                // The player computes scale on mount; force a resize tick so the
+                // visitor viewport rescales to the new (larger) container.
+                setTimeout(triggerPlayerResize, 60);
+                setTimeout(triggerPlayerResize, 250);
+            }
+
+            function closeModal() {
+                if (! modalEl || ! modalMovedNode || ! modalOriginalParent) {
+                    modalEl?.classList.remove('is-open');
+                    return;
+                }
+                modalOriginalParent.appendChild(modalMovedNode);
+                modalEl.classList.remove('is-open');
+                modalMovedNode = null;
+                modalOriginalParent = null;
+                setTimeout(triggerPlayerResize, 60);
+            }
+
+            if (liveExpand) {
+                liveExpand.addEventListener('click', function () {
+                    var playerEl = document.getElementById('hd-liveview-player-' + conversationId);
+                    var statusEl = document.getElementById('hd-liveview-status-' + conversationId);
+                    openModal(playerEl, 'Live view del visitante', statusEl);
+                });
+            }
+            if (webrtcExpand) {
+                webrtcExpand.addEventListener('click', function () {
+                    var wrap = document.getElementById('hd-webrtc-video-' + conversationId)?.parentElement;
+                    openModal(wrap, 'Pantalla del visitante', null);
+                });
+            }
+            if (modalClose) {
+                modalClose.addEventListener('click', closeModal);
+            }
+            if (modalEl) {
+                modalEl.addEventListener('click', function (e) {
+                    if (e.target === modalEl) closeModal();
+                });
+            }
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modalEl && modalEl.classList.contains('is-open')) {
+                    closeModal();
+                }
+            });
+            });
+        }());
+
+        // ─── Badge de identidad verificada: abre modal de verificación ───
+        // Badge/boton de identidad del panel: abre el modal reutilizable de
+        // verificacion (definido en HelpdeskIntegration) y recarga el panel al
+        // validar, para reflejar el badge "Verificada" sin duplicar el render.
+        $(document).on('click', '.bv-identity-verify-trigger', function () {
+            var customerId = $(this).data('customer-id');
+            if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
+
+            window.openCustomerIdentityVerification(customerId, function () {
+                window.location.reload();
+            });
+        });
+
+        // ─── Botón "re-sincronizar" comercio (PrestaShop/gestión) ───
+        // Botón "re-sincronizar": redetecta el vínculo PrestaShop/gestión del cliente
+        // y recarga el panel para reflejar integraciones y pedidos actualizados.
+        $(document).on('click', '.bv-sync-commerce', function () {
+            var convId = $(this).data('conv-id');
+            if (!convId) { return; }
+            var $btn = $(this).prop('disabled', true);
+            $btn.find('i').addClass('fa-spin');
+            $.ajax({
+                url: '/panel/helpdesk/conversations/' + convId + '/sync-commerce',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            }).done(function (res) {
+                if (window.toastr) { toastr.success((res && res.message) || 'Cliente sincronizado.'); }
+                setTimeout(function () { window.location.reload(); }, 600);
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) || 'No se pudo sincronizar.';
+                if (window.toastr) { toastr.error(msg); } else { alert(msg); }
+                $btn.prop('disabled', false).find('i').removeClass('fa-spin');
+            });
+        });
+
+        // ─── Carga perezosa: Archivos / Anteriores / Actividad / Cliente 360 ───
+        (function () {
+            var RP_LAZY_TABS = {
+                files: { url: 'right-panel/files' },
+                previous: { url: 'right-panel/previous' },
+                activity: { url: 'right-panel/activity' },
+                'customer-360': { url: 'right-panel/customer-360' },
+            };
+            var rpLazyState = {};
+
+            function rpLoadLazyTab(tabName, force) {
+                var cfg = RP_LAZY_TABS[tabName];
+                if (!cfg) { return; }
+                var container = document.getElementById('bv-' + tabName + '-tab');
+                if (!container) { return; }
+                var convId = container.dataset.convId;
+                if (!convId) { return; }
+
+                var state = rpLazyState[tabName] || (rpLazyState[tabName] = {});
+                if (!force && state.loaded && state.convId === convId) { return; }
+
+                container.innerHTML = '<div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+                $.ajax({
+                    url: '/panel/helpdesk/conversations/' + convId + '/' + cfg.url + (force ? '?force=1' : ''),
+                    method: 'GET',
+                }).done(function (html) {
+                    container.innerHTML = html;
+                    state.loaded = true;
+                    state.convId = convId;
+                }).fail(function () {
+                    container.innerHTML = '<div class="bv-tab-empty"><div class="bv-tab-empty-sub">No se pudo cargar el contenido.</div></div>';
+                    state.loaded = false;
+                });
+            }
+
+            $(document).on('click', '.bv-right-tab', function () {
+                var tabName = $(this).data('bv-tab');
+                if (RP_LAZY_TABS[tabName]) { rpLoadLazyTab(tabName); }
+            });
+
+            // Botón "Refrescar" dentro de la pestaña Cliente 360 — fuerza
+            // bypass de caché en ErpContextService/PrestashopContextService.
+            $(document).on('click', '#customer360Refresh', function (e) {
+                e.stopPropagation();
+                rpLoadLazyTab('customer-360', true);
+            });
+
+            // Recargar al cambiar de conversación aun si la pestaña ya estaba activa
+            // (mismo mecanismo de MutationObserver que usa la pestaña "Emails").
+            Object.keys(RP_LAZY_TABS).forEach(function (tabName) {
+                var node = document.getElementById('bv-' + tabName + '-tab');
+                if (!node) { return; }
+                (new MutationObserver(function () {
+                    var state = rpLazyState[tabName];
+                    if (state) { state.loaded = false; }
+                })).observe(node, { attributes: true, attributeFilter: ['data-conv-id'] });
+            });
+        })();
+
+        // ─── Pestaña Emails: listado + filtros ───
+        // Gate original: @if(helpdesk_feature_enabled('email'))
+        (function () {
+            // Gate: este bloque vivía en right-panel.blade.php dentro de
+            // @if(helpdesk_feature_enabled('email')) — se preserva la misma condición.
+            if (document.querySelector('.bv-right')?.dataset.emailFeature !== '1') { return; }
+            var _rpEmAll    = [];
+            var _rpEmFilter = 'all';
+            var _rpEmLoaded = false;
+            var _rpEmConvId = null;
+
+            function listEl() { return document.getElementById('rpEmList'); }
+
+            function emEsc(text) { return $('<span>').text(text || '').html(); }
+
+            // failed/bounced/complained/suppressed son estados terminales negativos
+            // y se agrupan como "danger" (rojo) — antes cualquiera de ellos que no
+            // fuera literalmente 'failed' se pintaba gris, igual que "en cola".
+            var EM_DANGER_STATUSES = ['failed', 'bounced', 'complained', 'suppressed'];
+            var EM_STATUS_ICON = { sent: 'fa-check', danger: 'fa-xmark', queued: 'fa-clock' };
+
+            function renderCards(filter) {
+                _rpEmFilter = filter;
+                document.querySelectorAll('.bv-em-tab-pill').forEach(function (p) {
+                    p.classList.toggle('on', p.dataset.rpEmFilter === filter);
+                });
+
+                // El pill "failed" filtra el mismo grupo "danger" que pinta la
+                // tarjeta en rojo (failed/bounced/complained/suppressed), no solo
+                // el literal 'failed' — si no, un email bloqueado por la lista de
+                // supresión se veía rojo en la tarjeta pero desaparecía al filtrar.
+                var emails = _rpEmAll.filter(function (e) {
+                    if (filter === 'all') { return true; }
+                    if (filter === 'failed') { return EM_DANGER_STATUSES.indexOf(e.status) !== -1; }
+                    return e.status === filter;
+                });
+
+                if (!emails.length) {
+                    listEl().innerHTML = '<div class="bv-em-empty">' +
+                        (filter !== 'all' ? 'Sin emails en este estado.' : 'Sin emails enviados.') +
+                        '</div>';
+                    return;
+                }
+
+                listEl().innerHTML = emails.map(function (e) {
+                    var sc = e.status === 'sent' ? 'sent' : (EM_DANGER_STATUSES.indexOf(e.status) !== -1 ? 'danger' : 'queued');
+                    var sl = e.status_label || e.status;
+                    var att = e.attachments_count > 0
+                        ? '<span class="bv-em-chip"><i class="fas fa-paperclip"></i> ' + e.attachments_count + (e.attachments_count === 1 ? ' adjunto' : ' adjuntos') + '</span>'
+                        : '';
+                    var preview = e.preview
+                        ? '<div class="bv-em-preview">' + emEsc(e.preview) + '</div>'
+                        : '';
+                    return '<button class="bv-em-card" data-em-uid="' + e.uid + '">' +
+                        '<div class="bv-em-head">' +
+                        '<span class="bv-em-avatar ' + sc + '"><i class="fas ' + (EM_STATUS_ICON[sc] || 'fa-clock') + '"></i></span>' +
+                        '<span class="bv-em-to">' + emEsc(e.to) + '</span>' +
+                        '<span class="bv-em-status ' + sc + '">' + emEsc(sl) + '</span>' +
+                        '</div>' +
+                        '<div class="bv-em-subject">' + emEsc(e.subject) + '</div>' +
+                        preview +
+                        (att ? '<div class="bv-em-chips">' + att + '</div>' : '') +
+                        '<div class="bv-em-foot">' +
+                        '<span class="bv-em-who">' + emEsc(e.sent_by) + '</span>' +
+                        '<span class="bv-em-date">' + (e.date_human || '') + '</span>' +
+                        '</div>' +
+                    '</button>';
+                }).join('');
+            }
+
+            function loadEmails(convId) {
+                _rpEmConvId = String(convId);
+                _rpEmLoaded = false;
+                listEl().innerHTML = '<div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+                document.getElementById('rpEmCount').textContent = '—';
+                document.getElementById('rpEmSub').textContent   = '—';
+                document.getElementById('rpEmFilterRow').style.display = 'none';
+
+                $.ajax({
+                    url: '/panel/helpdesk/conversations/' + convId + '/emails',
+                    method: 'GET', dataType: 'json',
+                    headers: { 'Accept': 'application/json' },
+                }).done(function (resp) {
+                    _rpEmAll = resp.emails || [];
+                    var counts = resp.counts || {};
+                    var sent   = counts.sent   || 0;
+                    var failed = counts.failed || 0;
+
+                    document.getElementById('rpEmCount').textContent      = _rpEmAll.length;
+                    document.getElementById('rpEmCountAll').textContent   = _rpEmAll.length;
+                    document.getElementById('rpEmCountSent').textContent  = sent;
+                    document.getElementById('rpEmCountFailed').textContent = failed;
+
+                    var queued = counts.queued || 0;
+                    // counts.failed ya agrupa failed/bounced/complained/suppressed
+                    // (ver emailLogIndex) — sent+queued+failed suman el total exacto,
+                    // así que ya no hace falta un cuarto cubo de "incidencias".
+                    var parts = [];
+                    if (sent > 0)   { parts.push(sent   + ' enviado'  + (sent   !== 1 ? 's' : '')); }
+                    if (queued > 0) { parts.push(queued + ' en cola'); }
+                    if (failed > 0) { parts.push(failed + ' fallido'  + (failed !== 1 ? 's' : '')); }
+                    document.getElementById('rpEmSub').textContent = parts.length ? parts.join(' · ') : 'ninguno aún';
+
+                    if (_rpEmAll.length) {
+                        document.getElementById('rpEmFilterRow').style.display = '';
+                    }
+                    renderCards(_rpEmFilter);
+                    _rpEmLoaded = true;
+                }).fail(function () {
+                    listEl().innerHTML = '<div class="bv-em-empty">No se pudieron cargar los emails.</div>';
+                });
+            }
+
+            // Activar tab "emails" → cargar
+            $(document).on('click', '[data-bv-tab="emails"]', function () {
+                var convId = document.getElementById('bv-emails-tab')?.dataset.convId
+                    || $('.bv-composer').data('bv-conversation-id');
+                if (!convId) { return; }
+                if (!_rpEmLoaded || _rpEmConvId !== String(convId)) {
+                    loadEmails(convId);
+                }
+            });
+
+            // Recargar al cambiar de conversación
+            var tabNode = document.getElementById('bv-emails-tab');
+            if (tabNode) {
+                (new MutationObserver(function () { _rpEmLoaded = false; }))
+                    .observe(tabNode, { attributes: true, attributeFilter: ['data-conv-id'] });
+            }
+
+            // Click en em-card → abrir viewer
+            $(document).on('click', '#rpEmList .bv-em-card', function () {
+                var uid = $(this).data('em-uid');
+                if (!uid) { return; }
+                if (typeof window.openEmailViewer === 'function') {
+                    window.openEmailViewer(uid);
+                }
+            });
+
+            // Pills de filtro
+            $(document).on('click', '.bv-em-tab-pill', function () {
+                renderCards($(this).data('rp-em-filter'));
+            });
+
+            // Recargar desde fuera (tras enviar email nuevo)
+            window.rpEmReload = function () {
+                _rpEmLoaded = false;
+                var tab = document.getElementById('bv-emails-tab');
+                if (tab && !tab.classList.contains('bv-tab-hidden')) {
+                    var convId = tab.dataset.convId || $('.bv-composer').data('bv-conversation-id');
+                    if (convId) { loadEmails(convId); }
+                }
+            };
+        }());
+
+        // ─── Pestaña Anteriores: búsqueda/filtro + visor de conversación ───
+        (function () {
+            // Este bloque solo se registraba en el Blade original dentro de
+            // @if(helpdesk_feature_enabled('email')) (aunque su contenido, la
+            // pestaña 'Anteriores' / visor de conversaciones, no es del feature de
+            // email — se preserva el mismo gate tal cual estaba).
+            if (document.querySelector('.bv-right')?.dataset.emailFeature !== '1') { return; }
+            // ── Previous tab: search + filter ──────────────────────────────
+            $(document).on('input', '.bv-prev-search-input', function () {
+                var q = $(this).val().toLowerCase();
+                $('#bvPrevList .bv-conv-card').each(function () {
+                    var text = ($(this).data('bv-prev-text') || '') + ' ' + $(this).find('.bv-conv-nm').text().toLowerCase();
+                    $(this).toggleClass('bv-hidden', q.length > 0 && !text.includes(q));
+                });
+            });
+
+            $(document).on('click', '.bv-prev-pill', function () {
+                var filter = $(this).data('bv-prev-filter');
+                $('.bv-prev-pill').removeClass('on');
+                $(this).addClass('on');
+                $('#bvPrevList .bv-conv-card').each(function () {
+                    var isOpen = $(this).data('bv-prev-open') === 1 || $(this).data('bv-prev-open') === '1';
+                    var show = filter === 'all' || (filter === 'open' && isOpen) || (filter === 'closed' && !isOpen);
+                    $(this).toggleClass('bv-hidden', !show);
+                });
+            });
+
+            // ── Click conv-card → open conversation viewer ─────────────────
+            $(document).on('click', '.bv-conv-card', function () {
+                var convId = $(this).data('conv-id');
+                if (!convId) { return; }
+                window._cvConvId = convId;
+                $('[data-bv-modal-name="conversation-viewer"]').addClass('on');
+                $('body').css('overflow', 'hidden');
+                if (typeof window.loadConversationViewer === 'function') {
+                    window.loadConversationViewer($(this).data('viewer-url'));
+                }
+            });
+
+            // ── History modal pills filter ─────────────────────────────────
+            $(document).on('click', '.bv-hist-pill', function () {
+                var filter = $(this).data('bv-hist-filter');
+                $('.bv-hist-pill').removeClass('on');
+                $(this).addClass('on');
+                $('#histList .bv-conv-card').each(function () {
+                    var isOpen = $(this).data('bv-prev-open') === 1 || $(this).data('bv-prev-open') === '1';
+                    var show = filter === 'all' || (filter === 'open' && isOpen) || (filter === 'closed' && !isOpen);
+                    $(this).toggleClass('bv-hidden', !show);
+                });
+            });
+
+            $(document).on('input', '#histSearchInput', function () {
+                var q = $(this).val().toLowerCase();
+                $('#histList .bv-conv-card').each(function () {
+                    var text = $(this).find('.bv-conv-nm, .bv-conv-preview').text().toLowerCase();
+                    $(this).toggleClass('bv-hidden', q.length > 0 && !text.includes(q));
+                });
+            });
+
+            // ── Conversation viewer loader ─────────────────────────────────
+            window.loadConversationViewer = function (viewerUrl) {
+                $('#cvLoading').removeClass('bv-hidden');
+                $('#cvCtxBar, #cvMessages').addClass('bv-hidden');
+                $('#cvMessages').empty();
+
+                $.ajax({
+                    url: viewerUrl,
+                    method: 'GET',
+                    dataType: 'json',
+                    headers: { 'Accept': 'application/json' },
+                }).done(function (data) {
+                    var conv  = data.conversation || {};
+                    var items = data.items || [];
+
+                    var cvSubjectHtml = $('<span>').text(conv.subject || 'Conversación').html();
+                    var cvChip = conv.id ? '<span class="bv-cv-id-chip">#' + conv.id + '</span>' : '';
+                    $('#cvModalTitle').html(cvSubjectHtml + cvChip);
+                    $('#cvCtxAv').text(conv.customer_initials || '?');
+                    $('#cvCtxNm').text(conv.customer_name || '—');
+
+                    var ch = conv.channel_icon ? '<i class="' + conv.channel_icon + '"></i> ' : '';
+                    $('#cvCtxSub').html(ch + (conv.channel || 'web') + ' · ' + (conv.message_count || 0) + ' mensajes · iniciado el ' + (conv.started_at_formatted || ''));
+
+                    var statusCls = conv.is_open ? 'open' : '';
+                    $('#cvCtxStatus').attr('class', 'bv-cv-ctx-status ' + statusCls).text(conv.status_name || '—');
+                    $('#cvCtxBar').removeClass('bv-hidden');
+
+                    if (window._cvConvId) {
+                        $('#cvBtnOpen').off('click.cv').on('click.cv', function () {
+                            window.open('/panel/helpdesk/conversations?selected=' + window._cvConvId, '_self');
+                        });
+                    }
+
+                    var html = '';
+                    items.forEach(function (item) {
+                        if (item.type === 'day_separator') {
+                            html += '<div class="bv-cv-day">' + $('<span>').text(item.label).html() + '</div>';
+                            return;
+                        }
+                        if (item.is_internal) {
+                            html += '<div class="bv-cv-system">' + $('<span>').text(item.body || '').html() + '</div>';
+                            return;
+                        }
+                        var dirClass = item.is_agent ? 'bv-out' : 'bv-in';
+                        var avText   = $('<span>').text(item.author_initials || '?').html();
+                        var bodyHtml = $('<span>').text(item.body || '').html().replace(/\n/g, '<br>');
+                        html += '<div class="bv-cv-bubble-row ' + dirClass + '">' +
+                            '<div class="bv-cv-av-sm">' + avText + '</div>' +
+                            '<div class="bv-cv-bubble">' + bodyHtml +
+                            '<span class="bv-cv-ts">' + $('<span>').text(item.time_formatted || '').html() + '</span>' +
+                            '</div></div>';
+                    });
+
+                    if (!html) {
+                        html = '<div class="bv-cv-loading-msg">Sin mensajes registrados.</div>';
+                    }
+
+                    $('#cvMessages').html(html).removeClass('bv-hidden');
+
+                    var msgs = document.getElementById('cvMessages');
+                    if (msgs) { msgs.scrollTop = msgs.scrollHeight; }
+                }).fail(function () {
+                    $('#cvLoading').html('<i class="fas fa-triangle-exclamation"></i> No se pudo cargar la conversación.');
+                }).always(function () {
+                    $('#cvLoading').addClass('bv-hidden');
+                });
+            };
+
+            // ── MutationObserver: reset viewer when modal closes ──────────
+            var cvModal = document.querySelector('[data-bv-modal-name="conversation-viewer"]');
+            if (cvModal) {
+                (new MutationObserver(function (mutations) {
+                    mutations.forEach(function (m) {
+                        if (m.attributeName !== 'class') { return; }
+                        if (!$(m.target).hasClass('on')) {
+                            window._cvConvId = null;
+                            $('#cvMessages').empty();
+                            $('#cvCtxBar, #cvMessages').addClass('bv-hidden');
+                            $('#cvLoading').removeClass('bv-hidden').html('<i class="fas fa-spinner fa-spin"></i> Cargando…');
+                        }
+                    });
+                })).observe(cvModal, { attributes: true });
+            }
+        }());
 
 
         // Exponer helpers compartidos con conversations-list.js / conversations-thread.js
