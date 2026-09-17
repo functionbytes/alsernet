@@ -568,7 +568,7 @@ body:has(.conversations) .mc-content {
     background: linear-gradient(90deg, rgba(28, 27, 26, .02), transparent 40%);
 }
 .bv-conv.urgent {
-    border-left: 3px solid var(--bv-danger);
+    border-left: 3px solid var(--bv-primary, #90bb13);
     padding-left: 11px;
 }
 
@@ -707,30 +707,11 @@ body:has(.conversations) .mc-content {
     gap: 5px;
     flex-shrink: 0;
 }
-.bv-sla {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 5px;
-    font-variant-numeric: tabular-nums;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.bv-sla.ok { background: #ecfdf5; color: var(--bv-success); }
-.bv-sla.warn { background: #fffbeb; color: var(--bv-warning); }
-.bv-sla.breach { background: #fef2f2; color: var(--bv-danger); }
-
-.bv-tag {
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-}
-.bv-tag.urgent { background: #fef2f2; color: var(--bv-danger); }
-.bv-tag.high { background: #fffbeb; color: var(--bv-warning); }
+/* Las reglas reales de .bv-sla/.bv-tag viven más abajo (bloque "Badge SLA en
+   lista" / "Badge tag en lista") — este duplicado tenía la misma
+   especificidad y quedaba oculto por el que aparece después en el archivo,
+   así que un cambio aquí no se veía nunca. Se quita para no volver a
+   editar el bloque muerto por error. */
 
 .bv-ucount {
     min-width: 18px;
@@ -1072,7 +1053,7 @@ body:has(.conversations) .mc-content {
     font-size: 12px;
     padding: 12px;
 }
-.bv-fwd-hint.is-error { color: var(--bv-danger, #ef4444); }
+.bv-fwd-hint.is-error { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-fwd-result {
     text-align: left;
     background: transparent;
@@ -2322,10 +2303,16 @@ body:has(.conversations) .mc-content {
     letter-spacing: .01em;
     display: inline-flex; align-items: center; gap: 3px;
 }
-.bv-sla.ok  { background: var(--bv-success-bg); color: var(--bv-success); }
+/* "ok" en verde de marca (mismo tratamiento que .bv-em-status.sent), no el
+   --bv-success genérico — ese verde no tenía relación con el #90bb13 de la
+   identidad del proyecto. */
+.bv-sla.ok  { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-sla.warn { background: var(--bv-warning-bg); color: var(--bv-warning); }
+/* Sin rojos en la paleta de la casa (regla del usuario, 26-ago-2026):
+   estados "danger" van en verde de marca, igual que .bv-sla.ok — no hay
+   rojo/ámbar disponible para diferenciar "incumplido" de "cumplido". */
 .bv-sla.breach {
-    background: var(--bv-danger-bg); color: var(--bv-danger);
+    background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d);
     animation: bv-sla-pulse 2s infinite;
 }
 @keyframes bv-sla-pulse {
@@ -2339,9 +2326,11 @@ body:has(.conversations) .mc-content {
     padding: 2px 6px; border-radius: 4px;
     letter-spacing: .05em; text-transform: uppercase;
 }
-.bv-tag.urgent { background: var(--bv-danger-bg); color: var(--bv-danger); }
+/* Sin rojos en la paleta de la casa: "urgent" va en verde de marca, igual
+   que el resto de estados "danger" (ver nota en .bv-sla.breach). */
+.bv-tag.urgent { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-tag.high   { background: var(--bv-warning-bg); color: var(--bv-warning); }
-.bv-tag.low    { background: var(--bv-success-bg); color: var(--bv-success); }
+.bv-tag.low    { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 
 /* Badge unread count (prefijo bv-) */
 .bv-ucount {
@@ -2381,8 +2370,8 @@ body:has(.conversations) .mc-content {
 }
 .bv-more-menu button i { width: 14px; color: var(--bv-text-muted); font-size: 12px; }
 .bv-more-menu button:hover { background: var(--bv-bg-subtle); }
-.bv-more-menu button.danger { color: var(--bv-danger); }
-.bv-more-menu button.danger i { color: var(--bv-danger); }
+.bv-more-menu button.danger { color: var(--bv-primary-strong, #5e7a0d); }
+.bv-more-menu button.danger i { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-more-menu .sep { height: 1px; background: var(--bv-border); margin: 4px 6px; }
 
 /* ── Composer panels (HSM, traducción, adjuntar) ─────────────────── */
@@ -2479,12 +2468,29 @@ body:has(.conversations) .mc-content {
 .bv-hsm-row {
     padding: 7px 8px; border-radius: 6px;
     cursor: pointer; transition: background .1s;
+    margin-bottom: 2px;
 }
 .bv-hsm-row:hover { background: var(--bv-bg-subtle); }
-/* Acento de marca a la izquierda para distinguir "seleccionada" de solo
-   "hover" — antes ambos estados usaban el mismo fondo y eran indistinguibles. */
-.bv-hsm-row.on { background: var(--bv-bg-subtle); box-shadow: inset 3px 0 0 #90bb13; }
-.bv-hsm-row .nm { font-size: 11.5px; font-weight: 500; color: var(--bv-text); margin-bottom: 3px; }
+/* Fondo con tinte de marca (no solo el acento lateral) para que "seleccionada"
+   se distinga de "hover" de un vistazo, sin usar rojo/ambar (paleta = verdes). */
+.bv-hsm-row.on {
+    background: rgba(144, 187, 19, .1);
+    box-shadow: inset 3px 0 0 var(--bv-primary);
+}
+.bv-hsm-row .nm { font-size: 11.5px; font-weight: 500; color: var(--bv-text); margin-bottom: 2px; }
+.bv-hsm-row.on .nm { color: var(--bv-primary-strong); font-weight: 600; }
+/* Fragmento del cuerpo — dos líneas máx, para que la fila de por sí ya
+   adelante de qué trata la plantilla sin tener que seleccionarla. */
+.bv-hsm-row .excerpt {
+    font-size: 10.5px;
+    line-height: 1.35;
+    color: var(--bv-text-muted);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
 .bv-hsm-row .meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--bv-text-muted); }
 
 /* Estado de la lista de plantillas: cargando / error / vacío */
@@ -2499,7 +2505,7 @@ body:has(.conversations) .mc-content {
     font-size: 12px;
 }
 .bv-hsm-list-status i { font-size: 16px; }
-.bv-hsm-list-status.is-error { color: #3730a3; }
+.bv-hsm-list-status.is-error { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-hsm-detail {
     padding: 12px; display: flex;
     flex-direction: column; overflow-y: auto;
@@ -2839,12 +2845,29 @@ body:has(.conversations) .mc-content {
     padding: 5px 8px; background: var(--bv-bg-subtle);
     border: 1px solid var(--bv-border); border-radius: 6px;
     margin-bottom: 6px;
+    transition: border-color .1s, box-shadow .1s;
+}
+.bv-panel-search:focus-within {
+    border-color: var(--bv-primary);
+    box-shadow: 0 0 0 2px rgba(144, 187, 19, .15);
 }
 .bv-panel-search i { color: var(--bv-text-muted); font-size: 10px; }
 .bv-panel-search input {
     flex: 1; border: 0; background: transparent; outline: none;
     font-size: 11.5px; color: var(--bv-text); font-family: inherit;
 }
+
+/* Toggle "Mostrar todos los idiomas" — oculto por defecto (JS lo revela solo
+   si existe al menos una plantilla en el idioma del cliente). Vive fuera de
+   .bv-panel-search para no interferir con su focus-within. */
+.bv-hsm-lang-toggle {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px 8px;
+    font-size: 10.5px; color: var(--bv-text-muted);
+    cursor: pointer; user-select: none;
+}
+.bv-hsm-lang-toggle:hover { color: var(--bv-text); }
+.bv-hsm-lang-toggle input { accent-color: var(--bv-primary); cursor: pointer; }
 
 /* Fl-section y fl-pills: asegurar bv-wa/fb/ig/widget/email */
 .conversations {
@@ -2947,10 +2970,12 @@ body:has(.conversations) .mc-content {
     font-size: 12px;
 }
 
-/* ── HSM var label (monospace + blue) ───────────────────────────── */
+/* ── HSM var label (monospace, acento de marca) ─────────────────── */
 .bv-hsm-var-lbl {
     font-family: monospace;
-    color: #2563eb;
+    font-weight: 600;
+    color: var(--bv-primary-strong);
+    min-width: 26px;
 }
 
 /* ── HSM var input ──────────────────────────────────────────────── */
@@ -2963,6 +2988,20 @@ body:has(.conversations) .mc-content {
     font-family: inherit;
     background: var(--bv-bg-panel);
     color: var(--bv-text);
+}
+/* Selectores por #id: dos bloques legacy de un modal ya eliminado
+   (hsm.blade.php) reusan las clases .bv-hsm-vars/.bv-hsm-var-row más abajo en
+   este archivo y ganarían la cascada por orden de aparición — se ancla aquí
+   por id para que el panel del composer no herede ese layout ajeno. */
+#bv-hsm-vars {
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--bv-border);
+}
+#bv-hsm-vars .bv-hsm-var-input:focus {
+    border-color: var(--bv-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(144, 187, 19, .15);
 }
 
 /* ── Panel action buttons (cancel / confirm style) ──────────────── */
@@ -3014,7 +3053,7 @@ body:has(.conversations) .mc-content {
 }
 
 /* ── Tag pill color variants ────────────────────────────────────── */
-.bv-tag-pill-red    { background: #eef2ff; color: #3730a3; }
+.bv-tag-pill-red    { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-tag-pill-amber  { background: #fffbeb; color: #d97706; }
 .bv-tag-pill-blue   { background: #eff6ff; color: #1d4ed8; }
 
@@ -3079,7 +3118,7 @@ body:has(.conversations) .mc-content {
 .bv-dot-status-success { background: var(--bv-success); }
 .bv-dot-status-warning { background: var(--bv-warning); }
 .bv-dot-status-info    { background: var(--bv-info); }
-.bv-dot-status-danger  { background: var(--bv-danger); }
+.bv-dot-status-danger  { background: var(--bv-primary, #90bb13); }
 
 /* ── Hidden tab content ─────────────────────────────────────────── */
 .bv-tab-hidden {
@@ -3210,7 +3249,7 @@ body:has(.conversations) .mc-content {
     border-radius: 5px;
     font-weight: 600;
 }
-.bv-ticket-badge-urgent  { background: var(--bv-danger-bg);  color: var(--bv-danger); }
+.bv-ticket-badge-urgent  { background: rgba(144,187,19,.12);  color: var(--bv-primary-strong, #5e7a0d); }
 .bv-ticket-badge-success { background: var(--bv-success-bg); color: var(--bv-success); }
 
 /* ── Ticket title ───────────────────────────────────────────────── */
@@ -3316,7 +3355,7 @@ body:has(.conversations) .mc-content {
 .dot.bv-dot-ig   { background: var(--bv-channel-instagram); }
 
 /* Nav: puntos de color para etiquetas */
-.dot.bv-dot-urgente    { background: #3730a3; }
+.dot.bv-dot-urgente    { background: var(--bv-primary, #90bb13); }
 .dot.bv-dot-pendiente  { background: #d97706; }
 .dot.bv-dot-resuelto   { background: #059669; }
 .dot.bv-dot-seguimiento { background: #6366f1; }
@@ -3481,9 +3520,11 @@ body:has(.conversations) .mc-content {
     background: #f1f5f9;
     color: #475569;
 }
+/* Tokens --bv-warning (verde ámbar de este proyecto, no rojo) en vez de un
+   ambar hardcodeado — consistente con el resto de badges de aviso. */
 .bv-hsm-badge-lang--mismatch {
-    background: #fffbeb;
-    color: #b45309;
+    background: var(--bv-warning-bg);
+    color: var(--bv-warning);
 }
 .bv-hsm-row--lang-mismatch { opacity: .72; }
 
@@ -3553,8 +3594,8 @@ body:has(.conversations) .mc-content {
 }
 /* Variable vacía al intentar insertar — se limpia sola en el próximo input. */
 .bv-hsm-var-input.is-invalid {
-    border-color: #3730a3;
-    box-shadow: 0 0 0 1px #3730a3;
+    border-color: var(--bv-primary-strong, #5e7a0d);
+    box-shadow: 0 0 0 1px var(--bv-primary-strong, #5e7a0d);
 }
 /* Prellenada automaticamente (nombre del cliente / num. de caso detectado
    por contexto) — distinta a "escrita a mano" para que el agente sepa que
@@ -3642,7 +3683,7 @@ body:has(.conversations) .mc-content {
 }
 
 /* Tag pills con colores semánticos */
-.bv-tag-pill-danger  { background: #eef2ff; color: #3730a3; }
+.bv-tag-pill-danger  { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-tag-pill-warning { background: #fffbeb; color: #d97706; }
 .bv-tag-pill-info    { background: #eff6ff; color: #1d4ed8; }
 
@@ -3844,7 +3885,7 @@ body:has(.conversations) .mc-content {
     border-radius: 5px;
     font-weight: 600;
 }
-.bv-ticket-badge-danger  { background: var(--bv-danger-bg);  color: var(--bv-danger); }
+.bv-ticket-badge-danger  { background: rgba(144,187,19,.12);  color: var(--bv-primary-strong, #5e7a0d); }
 .bv-ticket-badge-success { background: var(--bv-success-bg); color: var(--bv-success); }
 .bv-ticket-title {
     font-size: 12px;
@@ -3914,7 +3955,7 @@ body:has(.conversations) .mc-content {
 }
 .bv-modal-title-icon--success  { color: var(--bv-success, #10b981); }
 .bv-modal-title-icon--warning  { color: var(--bv-warning, #f59e0b); }
-.bv-modal-title-icon--danger   { color: var(--bv-danger, #ef4444); }
+.bv-modal-title-icon--danger   { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-modal-title-icon--info     { color: var(--bv-info, #3b82f6); }
 .bv-modal-title-icon--whatsapp { color: var(--bv-channel-whatsapp, #25d366); }
 
@@ -3926,7 +3967,7 @@ body:has(.conversations) .mc-content {
     border-radius: 10px;
     margin-left: 6px;
 }
-.bv-modal-title-badge-danger  { background: #eef2ff; color: #3730a3; }
+.bv-modal-title-badge-danger  { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-modal-title-badge-success { background: #d1fae5; color: #065f46; }
 .bv-modal-title-badge-info    { background: #eff6ff; color: #1d4ed8; }
 
@@ -4250,7 +4291,7 @@ body:has(.conversations) .mc-content {
     cursor: pointer;
 }
 .bv-status-badge-info    { background: #eff6ff; color: #1d4ed8; }
-.bv-status-badge-danger  { background: #eef2ff; color: #3730a3; }
+.bv-status-badge-danger  { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 
 /* Dot dentro del badge */
 .bv-badge-dot {
@@ -4259,7 +4300,7 @@ body:has(.conversations) .mc-content {
     border-radius: 50%;
 }
 .bv-badge-dot-info   { background: #3b82f6; }
-.bv-badge-dot-danger { background: var(--bv-priority-urgent, #ef4444); }
+.bv-badge-dot-danger { background: var(--bv-primary, #90bb13); }
 
 /* Avatar pequeño en aside */
 .bv-av-sm {
@@ -4550,7 +4591,7 @@ body:has(.conversations) .mc-content {
     border-radius: 8px;
     font-size: 11.5px;
     cursor: pointer;
-    color: #3730a3;
+    color: var(--bv-primary-strong, #5e7a0d);
     width: 100%;
 }
 
@@ -4930,7 +4971,7 @@ body:has(.conversations) .mc-content {
 }
 
 /* Icono de color dinámico en fl-saved (danger) */
-.bv-fl-ico-danger  { color: var(--bv-danger); }
+.bv-fl-ico-danger  { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-fl-ico-warning { color: var(--bv-warning); }
 
 /* Chips sin punto de color, como el mockup (.flt-chip .d { display:none }) */
@@ -5158,8 +5199,11 @@ body:has(.conversations) .mc-content {
 /* Ícono de info en warning (con margin-top) */
 .bv-info-icon { margin-top: 2px; }
 
-/* Step 2 de newconv (oculto por defecto) */
-.bv-step-hidden { display: none; }
+/* .bv-step-hidden vive al final de este fichero (no aquí) — ver nota allí:
+   necesita ganar por orden de cascada a cualquier otra clase del elemento
+   que también fije `display` (.bv-tk-list, .bv-chip-id, .bv-lp-row,
+   .bv-minfo, .bv-info-table, .bv-media-grid...), y con la misma
+   especificidad (una sola clase) gana la que se declara más tarde. */
 
 /* Botón "añadir contacto nuevo" */
 .bv-add-contact-btn {
@@ -5443,12 +5487,12 @@ body:has(.conversations) .mc-content {
 .bv-d-widget  { background: var(--bv-widget); }
 .bv-d-email   { background: var(--bv-email); }
 .bv-d-success { background: var(--bv-success); }
-.bv-d-danger  { background: var(--bv-danger); }
+.bv-d-danger  { background: var(--bv-primary, #90bb13); }
 .bv-d-warning { background: var(--bv-warning); }
 .bv-d-info    { background: var(--bv-info); }
 
 /* Fixed hex tag/label colors */
-.bv-d-red    { background: #3730a3; }
+.bv-d-red    { background: var(--bv-primary, #90bb13); }
 .bv-d-amber  { background: #f59e0b; }
 .bv-d-green  { background: #10b981; }
 .bv-d-blue   { background: #3b82f6; }
@@ -5461,7 +5505,7 @@ body:has(.conversations) .mc-content {
 .bv-icon-muted      { color: var(--bv-text-muted); }
 .bv-icon-resolved   { color: #10b981; }
 .bv-icon-neutral    { color: #6b7280; }
-.bv-icon-warn-red   { color: #3730a3; }
+.bv-icon-warn-red   { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-icon-warn-amber { color: #f59e0b; }
 
 /* --- newconv.blade.php --- */
@@ -5549,7 +5593,7 @@ body:has(.conversations) .mc-content {
 .bv-timeline-icon-primary    { background: var(--bv-accent); }
 .bv-timeline-icon-success     { background: var(--bv-success); }
 .bv-timeline-icon-warning     { background: var(--bv-warning); }
-.bv-timeline-icon-danger      { background: var(--bv-danger); }
+.bv-timeline-icon-danger      { background: var(--bv-primary, #90bb13); }
 .bv-timeline-icon-info        { background: var(--bv-info); }
 .bv-timeline-icon-secondary   { background: var(--bv-text-muted); }
 .bv-timeline-icon-muted       { background: var(--bv-text-muted); }
@@ -6109,7 +6153,7 @@ body:has(.conversations) .mc-content {
 }
 
 /* Priority badge */
-.bv-priority-urgent { background: #eef2ff; color: var(--bv-danger); }
+.bv-priority-urgent { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-priority-high { background: #fffbeb; color: var(--bv-warning); }
 .bv-priority-normal { background: #f4f4f5; color: var(--bv-text-muted); }
 .bv-priority-low { background: #f0fdf4; color: var(--bv-success); }
@@ -6226,7 +6270,7 @@ body:has(.conversations) .mc-content {
 }
 .bv-droptarget-active {
     background: rgba(144, 187, 19, .12) !important;
-    outline: 2px dashed #3730a3;
+    outline: 2px dashed var(--bv-primary, #90bb13);
     outline-offset: -2px;
     border-radius: 6px;
 }
@@ -7032,14 +7076,14 @@ body:has(.conversations) .mc-content {
     color: var(--bv-text);
 }
 .bv-bubble-menu-item.is-danger {
-    color: #3730a3;
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-bubble-menu-item.is-danger i {
-    color: #3730a3;
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-bubble-menu-item.is-danger:hover {
-    background: #eef2ff;
-    color: #3730a3;
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 
 /* Loading state de traducción */
@@ -7133,11 +7177,11 @@ body:has(.conversations) .mc-content {
 }
 .bv-mention-load-fill.success { background: #10b981; }
 .bv-mention-load-fill.warning { background: #f59e0b; }
-.bv-mention-load-fill.danger  { background: #3730a3; }
+.bv-mention-load-fill.danger  { background: var(--bv-primary, #90bb13); }
 
 /* Estados del dot del avatar dentro del modal */
 .bv-mention-opt .bv-av-dot.online  { background: #10b981; }
-.bv-mention-opt .bv-av-dot.busy    { background: #3730a3; }
+.bv-mention-opt .bv-av-dot.busy    { background: var(--bv-primary, #90bb13); }
 .bv-mention-opt .bv-av-dot.away    { background: #f59e0b; }
 .bv-mention-opt .bv-av-dot.offline { background: #94a3b8; }
 
@@ -7433,7 +7477,7 @@ body:has(.conversations) .mc-content {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #3730a3;
+    background: var(--bv-primary, #90bb13);
     animation: bv-pulse 1.2s infinite ease-in-out;
 }
 @keyframes bv-pulse {
@@ -7970,9 +8014,9 @@ mark.bv-search-hit.bv-search-current {
 }
 .perm-url .copy:hover { background: #e5e7eb; color: #374151; }
 .perm-notice-denied {
-    font-size: 12.5px; color: #3730a3; line-height: 1.5;
-    padding: 10px 12px; background: #eef2ff; border: 1px solid #c7d2fe;
-    border-left: 3px solid #3730a3; border-radius: 6px;
+    font-size: 12.5px; color: var(--bv-primary-strong, #5e7a0d); line-height: 1.5;
+    padding: 10px 12px; background: rgba(144,187,19,.12); border: 1px solid rgba(144,187,19,.35);
+    border-left: 3px solid var(--bv-primary, #90bb13); border-radius: 6px;
 }
 .hd-modal .btn-sm { padding: 5px 12px; font-size: 12px; }
 
@@ -8130,7 +8174,7 @@ mark.bv-search-hit.bv-search-current {
     cursor: pointer;
     padding: 4px;
 }
-.bv-quote-cancel:hover { color: var(--bv-danger); }
+.bv-quote-cancel:hover { color: var(--bv-primary-strong, #5e7a0d); }
 
 /* Quoted message inside bubble */
 .bv-quoted-msg {
@@ -8183,7 +8227,7 @@ mark.bv-search-hit.bv-search-current {
 /* === Notification button states === */
 #bv-toggle-notifications.granted .bad { display: none !important; }
 #bv-toggle-notifications.denied .bad {
-    background: var(--bv-danger);
+    background: var(--bv-primary, #90bb13);
     color: #fff;
 }
 #bv-toggle-notifications.default .bad {
@@ -8367,6 +8411,9 @@ mark.bv-search-hit.bv-search-current {
 
 /* Spacing utilities (margin-top / margin-bottom / margin-left) */
 .bv-mt-2  { margin-top: 2px; }
+.bv-mt-5  { margin-top: 5px; }
+.bv-mt-8  { margin-top: 8px; }
+.bv-mt-10 { margin-top: 10px; }
 .bv-mt-12 { margin-top: 12px; }
 .bv-mt-14 { margin-top: 14px; }
 .bv-mt-16 { margin-top: 16px; }
@@ -8377,8 +8424,76 @@ mark.bv-search-hit.bv-search-current {
 .bv-ml-4  { margin-left: 4px; }
 .bv-ml-auto { margin-left: auto; }
 
-/* Hide utility (replaces style="display:none") */
+/* Hide utility (replaces style="display:none" — clases que TOGGLEAN
+   visibilidad por CLASE: removeClass/addClass/toggleClass('bv-hidden'). El
+   !important es necesario para que la clase gane, ya que nada pone un estilo
+   inline que deba ganarle. NO usar en elementos que jQuery .show()/.hide()
+   manipule directamente — ver .bv-step-hidden más abajo. */
 .bv-hidden { display: none !important; }
+
+/* .bv-step-hidden (sin !important) es la que hay que usar en vez de
+   style="display:none" en elementos que su propio JS revela con jQuery
+   .show()/.hide()/.toggle(): esos métodos fijan un display inline, que
+   SIEMPRE pierde contra un !important — con .bv-hidden (arriba) el elemento
+   nunca volvería a aparecer. Su definición vive al FINAL del fichero a
+   propósito (no aquí): un elemento puede llevar .bv-step-hidden junto a
+   otra clase que también fije `display` (.bv-tk-list, .bv-chip-id, etc.) —
+   con la misma especificidad (una sola clase), gana la que se declara más
+   tarde en la cascada, así que .bv-step-hidden tiene que ser literalmente
+   la última regla del archivo para ganar siempre, sin depender de dónde
+   esté cada clase concreta. */
+
+/* Piezas sueltas de estilos inline concretos ya convertidos a clase
+   (módulo core, limpieza de style="" — ver feedback_no_inline_styles). */
+.bv-feedback-file-preview { font-size: 11.5px; }
+.bv-orders-list-content { flex-direction: column; gap: 7px; }
+.bv-translate-result {
+    padding: 10px 12px;
+    background: var(--bv-bg-subtle, #f9fafb);
+    border-radius: 6px;
+}
+
+/* Tamaños fijos (reemplazo de style="width:...;height:...", batch 2026-09-17) */
+.bv-wh-36 { width: 36px; height: 36px; }
+.bv-wh-44 { width: 44px; height: 44px; }
+.bv-wh-64 { width: 64px; height: 64px; }
+.bv-w-150 { width: 150px; }
+.bv-w-160 { width: 160px; }
+.bv-maxw-80  { max-width: 80px; }
+.bv-maxw-200 { max-width: 200px; }
+.bv-minw-140 { min-width: 140px; }
+.bv-h-6 { height: 6px; }
+.bv-chart-260 { height: 260px; }
+.bv-chart-280 { height: 280px; }
+
+/* Tamaños de fuente puntuales */
+.bv-fs-11  { font-size: 11px; }
+.bv-fs-70  { font-size: .7rem; }
+.bv-fs-75  { font-size: .75rem; }
+
+/* Varios */
+.bv-cursor-pointer { cursor: pointer; }
+.bv-vdivider-36 { width: 1px; height: 36px; background: #e9ecef; }
+
+/* Valores realmente dinámicos por registro/fila: se pasan como variable CSS
+   inline (style="--bv-x: valor") y la clase solo los consume vía var(). Así
+   el valor cambia por fila sin volver a inyectar un style="" completo.
+   .bv-icon-dyn/.bv-badge-dyn/.bv-wh-44 tienen una copia intencional en
+   public/portal/layouts/base.blade.php: el portal de cliente es un HTML
+   autónomo que no carga este archivo. */
+.bv-dot-dyn   { background: var(--bv-dot-color); }
+.bv-icon-dyn  { color: var(--bv-icon-color); }
+.bv-badge-dyn { background-color: var(--bv-badge-color); }
+.bv-seg-dyn   { width: var(--bv-seg-pct); background: var(--bv-seg-color); }
+.bv-heatmap-cell {
+    min-width: 32px;
+    height: 36px;
+    /* !important: es un <td> dentro de .table de Bootstrap, cuya regla
+       ".table > :not(caption) > * > *" tiene mas especificidad (combina
+       clase + selector de tipo via :not()) y gana a una sola clase. */
+    background: var(--bv-cell-bg) !important;
+    color: var(--bv-cell-fg) !important;
+}
 
 /* Modal divider (separador horizontal dentro del body) */
 .bv-modal-divider {
@@ -8433,7 +8548,7 @@ mark.bv-search-hit.bv-search-current {
 }
 .bv-modal-radio-icon--success { color: #10b981; }
 .bv-modal-radio-icon--muted   { color: #6b7280; }
-.bv-modal-radio-icon--danger  { color: #3730a3; }
+.bv-modal-radio-icon--danger  { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-modal-radio-icon--warning { color: #f59e0b; }
 
 .bv-modal-radio-body {
@@ -8488,7 +8603,7 @@ mark.bv-search-hit.bv-search-current {
 .bv-tag-dot--pink   { background: #ec4899; }
 
 /* Activity dot inline (ticket pills) */
-.bv-activity-dot-danger { background: #3730a3; }
+.bv-activity-dot-danger { background: var(--bv-primary, #90bb13); }
 .bv-th-pill-dot {
     display: inline-block;
     width: 7px;
@@ -8555,7 +8670,7 @@ mark.bv-search-hit.bv-search-current {
 .bv-fl-dot-blue    { background: #64748b; }
 .bv-fl-dot-purple  { background: #a855f7; }
 .bv-fl-dot-teal    { background: #14b8a6; }
-.bv-fl-dot-danger  { background: var(--bv-danger, #ef4444); }
+.bv-fl-dot-danger  { background: var(--bv-primary, #90bb13); }
 .bv-fl-dot-warning { background: var(--bv-warning, #f59e0b); }
 .bv-fl-dot-info    { background: var(--bv-info, #64748b); }
 .bv-fl-dot-success { background: var(--bv-success, #10b981); }
@@ -8771,7 +8886,7 @@ mark.bv-search-hit.bv-search-current {
     font-weight: 500;
     border-radius: 6px;
     background: var(--bv-bg-panel, #fff);
-    color: var(--bv-danger, #dc2626);
+    color: var(--bv-primary-strong, #5e7a0d);
     border: 1px solid var(--bv-border);
     cursor: pointer;
     display: inline-flex;
@@ -8780,8 +8895,8 @@ mark.bv-search-hit.bv-search-current {
     transition: .12s;
 }
 .btn-danger:hover {
-    background: #eef2ff;
-    border-color: var(--bv-danger, #dc2626);
+    background: rgba(144,187,19,.12);
+    border-color: var(--bv-primary, #90bb13);
 }
 
 .btn-danger-solid {
@@ -8867,9 +8982,9 @@ mark.bv-search-hit.bv-search-current {
     color: #78350f;
 }
 .alert.danger {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-    color: #3730a3;
+    background: rgba(144,187,19,.12);
+    border-color: rgba(144,187,19,.35);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 
 /* === AVATAR STATUS DOTS === */
@@ -8965,7 +9080,7 @@ mark.bv-search-hit.bv-search-current {
     place-items: center;
     font-size: 19px;
 }
-.bv-confirm-icon.danger  { background: #eef2ff; color: var(--bv-danger, #dc2626); }
+.bv-confirm-icon.danger  { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-confirm-icon.warning { background: #fffbeb; color: var(--bv-warning, #f59e0b); }
 .bv-confirm-icon.success { background: #f0fdf4; color: var(--bv-success, #10b981); }
 .bv-confirm-icon.info    { background: var(--bv-bg-subtle, #f4f4f5); color: var(--bv-info, #64748b); }
@@ -9061,7 +9176,7 @@ mark.bv-search-hit.bv-search-current {
 .bv-r-prio-btn.low    .d { background: var(--bv-success, #10b981); }
 .bv-r-prio-btn.normal .d { background: var(--bv-info,    #3b82f6); }
 .bv-r-prio-btn.high   .d { background: var(--bv-warning, #f59e0b); }
-.bv-r-prio-btn.urgent .d { background: var(--bv-danger,  #ef4444); }
+.bv-r-prio-btn.urgent .d { background: var(--bv-primary, #90bb13); }
 
 /* === DEADLINE-BOX (caja con icono reloj para SLA breach; sin rojo) === */
 .bv-deadline-box {
@@ -9069,13 +9184,13 @@ mark.bv-search-hit.bv-search-current {
     align-items: center;
     gap: 8px;
     padding: 8px 10px;
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
+    background: rgba(144,187,19,.12);
+    border: 1px solid rgba(144,187,19,.35);
     border-radius: 6px;
     font-size: 11px;
-    color: #3730a3;
+    color: var(--bv-primary-strong, #5e7a0d);
 }
-.bv-deadline-box i { color: var(--bv-danger, #dc2626); }
+.bv-deadline-box i { color: var(--bv-primary-strong, #5e7a0d); }
 
 /* === TYPING INDICATOR (3 dots animados) === */
 .bv-typing {
@@ -9128,7 +9243,7 @@ mark.bv-search-hit.bv-search-current {
 }
 .bv-bar-fill.ok      { background: var(--bv-success, #10b981); }
 .bv-bar-fill.warn    { background: var(--bv-warning, #f59e0b); }
-.bv-bar-fill.full    { background: var(--bv-danger,  #ef4444); }
+.bv-bar-fill.full    { background: var(--bv-primary, #90bb13); }
 .bv-bar-fill.info    { background: var(--bv-info,    #3b82f6); }
 
 /* === KBD (atajos de teclado, helper extra) === */
@@ -9176,7 +9291,7 @@ mark.bv-search-hit.bv-search-current {
 .bv-text-muted   { color: var(--bv-text-muted); }
 .bv-text-success { color: var(--bv-success, #10b981); }
 .bv-text-warning { color: var(--bv-warning, #f59e0b); }
-.bv-text-danger  { color: var(--bv-danger, #ef4444); }
+.bv-text-danger  { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-text-info    { color: var(--bv-info, #3b82f6); }
 
 /* Combinaciones frecuentes (más usadas) */
@@ -9250,7 +9365,7 @@ mark.bv-search-hit.bv-search-current {
 /* Error box (padding + danger) */
 .bv-error-box {
     padding: 16px;
-    color: var(--bv-danger, #ef4444);
+    color: var(--bv-primary-strong, #5e7a0d);
     font-size: 12px;
 }
 
@@ -9375,7 +9490,7 @@ mark.bv-search-hit.bv-search-current {
     color: var(--bv-text-muted);
     font-weight: 400;
 }
-.bv-req { color: var(--bv-danger, #dc2626); margin-left: 2px; }
+.bv-req { color: var(--bv-primary-strong, #5e7a0d); margin-left: 2px; }
 
 .bv-finput {
     width: 100%;
@@ -9485,7 +9600,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-prio-low    .bv-prio-dot { background: #16a34a; }
 .bv-prio-normal .bv-prio-dot { background: #2563eb; }
 .bv-prio-high   .bv-prio-dot { background: #d97706; }
-.bv-prio-urgent .bv-prio-dot { background: #3730a3; }
+.bv-prio-urgent .bv-prio-dot { background: var(--bv-primary, #90bb13); }
 
 /* ── Checkbox label ─────────────────────────────────────────── */
 .bv-check {
@@ -10653,7 +10768,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     letter-spacing: .02em;
 }
 .asgn-load.warn { background: #fffbeb; color: #d97706; }
-.asgn-load.full { background: #eef2ff; color: #3730a3; }
+.asgn-load.full { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 
 /* Checkmark */
 .asgn-check {
@@ -10956,9 +11071,12 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-size: 12px; color: var(--bv-text-muted); text-align: center; padding: 20px 0;
 }
 
-/* Email card */
+/* Email card — variante "más información": avatar de estado, colores
+   reales por estado (antes solo "sent"/"failed" tenían color propio;
+   bounced/complained/suppressed caían todos en el gris de "en cola"),
+   vista previa a dos líneas y quién lo envió en el pie. */
 .bv-em-card {
-    display: flex; flex-direction: column; gap: 4px;
+    display: flex; flex-direction: column; gap: 5px;
     width: 100%; text-align: left;
     padding: 10px 12px; border-radius: 8px;
     border: 1px solid var(--bv-border);
@@ -10966,11 +11084,20 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     transition: border-color .12s, box-shadow .12s;
 }
 .bv-em-card:hover {
-    border-color: var(--bv-border-strong);
-    border-left-color: var(--bv-text);
+    /* Sin el fallback, --bv-border-strong (nunca definida) dejaba el
+       hover sin color de borde real. */
+    border-color: var(--bv-border-strong, #d4d4d8);
     box-shadow: 0 2px 6px rgba(0,0,0,.06);
 }
-.bv-em-head { display: flex; align-items: center; gap: 7px; }
+.bv-em-head { display: flex; align-items: center; gap: 8px; }
+.bv-em-avatar {
+    width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px;
+}
+.bv-em-avatar.sent { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-em-avatar.danger { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-em-avatar.queued { background: #f3f4f6; color: #4b5563; }
 .bv-em-to {
     font-size: 11px; color: var(--bv-text-muted);
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -10981,25 +11108,31 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     text-transform: uppercase;
     padding: 2px 7px; border-radius: 3px;
     white-space: nowrap; flex-shrink: 0;
-    background: var(--bv-text); color: #fff;
 }
-.bv-em-status.failed { background: #3730a3; color: #fff; }
-.bv-em-status.queued { background: var(--bv-text-soft, #52525b); color: #fff; }
+.bv-em-status.sent { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-em-status.danger { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-em-status.queued { background: #f3f4f6; color: #4b5563; }
 .bv-em-subject {
     font-size: 13px; font-weight: 600; color: var(--bv-text); letter-spacing: -.005em;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .bv-em-preview {
-    font-size: 11.5px; color: var(--bv-text-muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 11.5px; color: var(--bv-text-muted); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+.bv-em-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.bv-em-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: var(--bv-text-soft);
+    background: var(--bv-bg-subtle); border-radius: 5px; padding: 2px 7px;
+}
+.bv-em-chip i { font-size: 9px; }
 .bv-em-foot {
     display: flex; align-items: center; gap: 8px;
     font-size: 10.5px; color: var(--bv-text-muted); margin-top: 1px;
 }
-.bv-em-att { display: inline-flex; align-items: center; gap: 3px; }
-.bv-em-att i, .bv-em-foot i { font-size: 9.5px; }
-.bv-em-date { margin-left: auto; font-style: italic; }
+.bv-em-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bv-em-date { margin-left: auto; font-style: italic; flex-shrink: 0; }
 
 /* ─── Email viewer two-column layout ─── */
 .bv-email-viewer {
@@ -11037,19 +11170,105 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-size: 11px; transition: background .1s, color .1s;
 }
 .bv-ev-dt-btn.on { background: var(--bv-text); color: #fff; border-color: var(--bv-text); }
-.bv-ev-preview-body { flex: 1; overflow: auto; padding: 0; }
-.bv-ev-iframe { width: 100%; height: 100%; border: none; display: block; }
+/* El email vive en una "hoja" blanca flotando sobre el fondo subtle, como en
+   el inspector de HelpdeskEmailActivity — sin esto, un email sin plantilla
+   HTML propia (texto plano con <br/>) se ve pegado al fondo gris, sin
+   ningún límite visual. El ancho 100% en escritorio anula el centrado del
+   flex; el centrado solo se nota cuando .mobile reduce el max-width. */
+.bv-ev-preview-body {
+    flex: 1; overflow-y: auto; padding: 18px;
+    display: flex; justify-content: center; align-items: flex-start;
+}
+.bv-ev-iframe {
+    width: 100%; max-width: 100%; height: 100%;
+    border: none; display: block;
+    background: #fff; border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(24, 24, 27, .10);
+    transition: max-width .2s ease;
+}
+.bv-ev-iframe.mobile { max-width: 390px; }
 
-/* Right: detail */
+/* Right: detail. Fondo deliberadamente más oscuro que blanco (no
+   var(--bv-bg), que a #f5f6f8 es casi indistinguible del blanco de las
+   tarjetas de abajo y las dejaba "flotando" sin separación visible). */
 .bv-ev-detail {
     padding: 14px; overflow-y: auto;
-    display: flex; flex-direction: column; gap: 14px;
+    display: flex; flex-direction: column; gap: 12px;
     border-left: 1px solid var(--bv-border);
+    background: #eceef1;
 }
-.bv-ev-section { display: flex; flex-direction: column; gap: 8px; }
+
+/* Pestañas Detalle/Traza/Apertura dentro del panel derecho */
+.bv-ev-tabs {
+    display: flex; gap: 4px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--bv-border); flex-shrink: 0;
+}
+.bv-ev-tab {
+    flex: 1; padding: 6px 8px; border-radius: 6px; border: none;
+    background: transparent; color: var(--bv-text-muted);
+    font-size: 11.5px; font-weight: 600; cursor: pointer;
+    transition: background .12s, color .12s;
+}
+.bv-ev-tab:hover { background: var(--bv-bg-soft, #f9fafb); }
+.bv-ev-tab.on { background: var(--bv-text, #1f2937); color: #fff; }
+.bv-ev-tabpanel { display: flex; flex-direction: column; gap: 14px; }
+
+/* Traza de envío */
+.bv-ev-trace { display: flex; flex-direction: column; }
+.bv-ev-trace-step {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px dashed var(--bv-border);
+}
+.bv-ev-trace-step:last-child { border-bottom: none; }
+.bv-ev-trace-icon {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; background: var(--bv-bg-subtle); color: var(--bv-text-muted);
+}
+.bv-ev-trace-icon.ok { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-ev-trace-icon.err { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+.bv-ev-trace-icon.warn { background: #fffbeb; color: #92400e; }
+.bv-ev-trace-icon.spam { background: #fff7ed; color: #9a3412; }
+.bv-ev-trace-main { flex: 1; min-width: 0; }
+.bv-ev-trace-main .t { font-size: 12px; font-weight: 600; color: var(--bv-text); }
+.bv-ev-trace-main .s { font-size: 10.5px; color: var(--bv-text-muted); margin-top: 1px; word-break: break-word; }
+.bv-ev-trace-time {
+    font-size: 10.5px; color: var(--bv-text-muted); flex-shrink: 0;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Aperturas / clics — ambos bloques viven en UNA tarjeta (.bv-ev-section),
+   separados por <hr id="evOpensClicksSep">; necesitan su propio gap porque
+   ya no son hijos directos de la tarjeta. */
+.bv-ev-block { display: flex; flex-direction: column; gap: 8px; }
+.bv-ev-event-list { display: flex; flex-direction: column; gap: 8px; }
+.bv-ev-event-row { display: flex; align-items: flex-start; gap: 8px; }
+.bv-ev-event-icon {
+    width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9.5px; background: var(--bv-bg-subtle); color: var(--bv-text-muted);
+}
+.bv-ev-event-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bv-ev-event-main .t { font-size: 11.5px; font-weight: 600; color: var(--bv-text); }
+.bv-ev-event-main .s { font-size: 10px; color: var(--bv-text-muted); word-break: break-word; }
+.bv-ev-event-main a.mono { font-size: 11px; font-family: 'JetBrains Mono', ui-monospace, monospace; word-break: break-all; }
+
+.bv-ev-empty { font-size: 11.5px; color: var(--bv-text-muted); font-style: italic; padding: 6px 0; }
+
+/* Cada sección del panel derecho es su propia tarjeta blanca — antes eran
+   bloques planos separados solo por el gap del contenedor, que sobre el
+   nuevo fondo #eceef1 dejaba las secciones sin límite visible. */
+.bv-ev-section {
+    display: flex; flex-direction: column; gap: 10px;
+    background: #fff; border: 1px solid var(--bv-border); border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(24, 24, 27, .06);
+    padding: 14px;
+}
+.bv-ev-section hr {
+    border: none; border-top: 1px solid var(--bv-border-soft, #ececef); margin: 0;
+}
 .bv-ev-hdr {
     display: flex; flex-direction: column; gap: 1px;
-    padding-bottom: 6px; border-bottom: 1px solid var(--bv-border);
 }
 .bv-ev-hdr .t { font-size: 12.5px; font-weight: 700; color: var(--bv-text); }
 .bv-ev-hdr .s { font-size: 10.5px; color: var(--bv-text-muted); }
@@ -11060,13 +11279,34 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-ev-field .v { font-size: 12px; color: var(--bv-text); word-break: break-word; }
 .bv-ev-field .v.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; }
+/* Variante compacta: etiqueta a la izquierda, valor a la derecha en la
+   misma línea — para campos cortos (destinatario, estado, fecha...). El
+   asunto y el error se quedan en .bv-ev-field porque su valor es largo. */
+.bv-ev-field-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.bv-ev-field-row .k {
+    font-size: 9.5px; font-weight: 600; color: var(--bv-text-muted);
+    text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0;
+}
+.bv-ev-field-row .v { font-size: 12px; font-weight: 600; color: var(--bv-text); text-align: right; word-break: break-word; }
+.bv-ev-field-row .v.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 500; font-size: 11px; }
+/* Fila de metadatos técnicos: etiqueta pequeña encima, valor mono debajo. */
+.bv-ev-meta-row .k {
+    display: block; margin-bottom: 3px;
+    font-size: 9px; font-weight: 700; color: var(--bv-text-muted);
+    text-transform: uppercase; letter-spacing: .08em;
+}
+.bv-ev-meta-row .v { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 500; color: var(--bv-text); word-break: break-all; }
+.bv-ev-meta-group { display: flex; flex-direction: column; gap: 11px; }
 .bv-ev-status {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 5px;
     background: var(--bv-bg-subtle); color: var(--bv-text-soft);
 }
-.bv-ev-status.sent { background: #f0fdf4; color: #166534; }
-.bv-ev-status.failed { background: #eef2ff; color: #3730a3; }
+.bv-ev-status.sent { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
+/* "danger" cubre failed/bounced/complained/suppressed: son estados
+   terminales negativos y antes se veían igual que "queued" (gris) o con
+   un indigo que no comunicaba urgencia. */
+.bv-ev-status.danger { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-ev-status.queued { background: #f3f4f6; color: #4b5563; }
 .bv-ev-tag {
     display: inline-flex; align-items: center;
@@ -11076,7 +11316,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-size: 11px; font-weight: 500;
     border: 1px solid var(--bv-border-soft, #e5e7eb);
 }
-.bv-ev-error { color: var(--bv-danger, #dc3545); font-size: 11px; }
+.bv-ev-error { color: var(--bv-primary-strong, #5e7a0d); font-size: 11px; }
 .bv-ev-muted { color: var(--bv-text-muted); font-family: inherit; }
 
 .bv-ev-actions { display: flex; flex-direction: column; gap: 8px; }
@@ -11171,27 +11411,23 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-conv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); border-color: var(--bv-border-strong); }
 .bv-conv-av {
-    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    background: var(--bv-text); color: #fff;
-    font-size: 11px; font-weight: 700; letter-spacing: .03em;
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    background: var(--bv-bg); color: var(--bv-text-muted);
+    font-size: 13px;
     display: flex; align-items: center; justify-content: center;
-    position: relative;
 }
-.bv-ch-badge {
-    position: absolute; bottom: -2px; right: -2px;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--bv-bg-panel); border: 1.5px solid var(--bv-border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 8px; color: var(--bv-text-muted);
-}
-.bv-ch-badge .fa-whatsapp { color: #25d366; }
-.bv-ch-badge .fa-facebook-f { color: #1877f2; }
-.bv-ch-badge .fa-instagram { color: #e4405f; }
-.bv-ch-badge .fa-envelope { color: #52525b; }
 .bv-conv-body { flex: 1; min-width: 0; }
-.bv-conv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 2px; }
-.bv-conv-nm { font-size: 12.5px; font-weight: 600; color: var(--bv-text); }
+.bv-conv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+.bv-conv-nm {
+    font-size: 12.5px; font-weight: 600; color: var(--bv-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .bv-conv-time { font-size: 10.5px; color: var(--bv-text-muted); flex-shrink: 0; }
+.bv-conv-meta {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10.5px; color: var(--bv-text-muted); margin-bottom: 5px;
+}
+.bv-conv-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--bv-border-strong); flex-shrink: 0; }
 .bv-conv-preview {
     font-size: 11.5px; color: var(--bv-text-muted);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -11239,8 +11475,8 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-hist-status.open { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
 .bv-hist-time { font-size: 10.5px; color: var(--bv-text-muted); }
 
-/* ─── Conversation viewer modal ─── */
-.bv-modal-dialog--cv { max-height: 740px; display: flex; flex-direction: column; }
+/* ─── Conversation viewer modal (cabecera/pie: sistema v2, ver
+   conversation-viewer.blade.php) ─── */
 .bv-cv-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 .bv-cv-ctx-bar {
     display: flex; align-items: center; gap: 10px;
@@ -11261,7 +11497,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     padding: 3px 8px; border-radius: 4px;
     background: var(--bv-bg); color: var(--bv-text-muted); border: 1px solid var(--bv-border);
 }
-.bv-cv-ctx-status.open { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.bv-cv-ctx-status.open { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
 .bv-cv-messages {
     flex: 1; overflow-y: auto; padding: 14px 16px;
     display: flex; flex-direction: column; gap: 8px;
@@ -11302,11 +11538,6 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     text-align: center; font-size: 10.5px; color: var(--bv-text-muted);
     font-style: italic; padding: 2px 0;
 }
-.bv-cv-internal .bv-cv-bubble {
-    background: #fef9c3; border-color: #fde68a; color: #92400e;
-    font-style: italic;
-}
-.bv-modal-dialog--cv .bv-modal-label .bv-cv-label-chat { color: #d97706; font-weight: 800; }
 .bv-cv-id-chip {
     display: inline-flex; align-items: center; justify-content: center;
     background: #1a1a1a; color: #fff;
@@ -11341,6 +11572,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-modal .modal.w-md { max-width: 460px; }
 .bv-modal .modal.w-lg { max-width: 720px; }
+.bv-modal .modal.w-xl { max-width: 880px; }
 .bv-modal .modal.w-sm { max-width: 380px; }
 
 /* head */
@@ -11456,7 +11688,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     align-items: center;
     gap: 6px;
 }
-.bv-modal .flabel .req { color: var(--bv-danger, #ef4444); font-size: 13px; line-height: 1; }
+.bv-modal .flabel .req { color: var(--bv-primary-strong, #5e7a0d); font-size: 13px; line-height: 1; }
 .bv-modal .flabel .hint {
     margin-left: auto;
     font-weight: 400;
@@ -11491,7 +11723,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-modal .fselect:focus { border-color: var(--bv-primary, #90bb13); }
 .bv-modal .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.bv-modal .field-error { font-size: 11.5px; color: var(--bv-danger, #ef4444); margin-top: -4px; }
+.bv-modal .field-error { font-size: 11.5px; color: var(--bv-primary-strong, #5e7a0d); margin-top: -4px; }
 
 
 /* select2 dentro de modales bv (reemplaza <select class="fselect"> cuando se inicializa) */
@@ -12379,10 +12611,10 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-modal .minfo > i { margin-top: 1px; flex-shrink: 0; color: var(--bv-text, #18181b); }
 .bv-modal .minfo.danger {
-    background: #eef2ff;
-    color: #3730a3;
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
-.bv-modal .minfo.danger > i { color: var(--bv-danger, #b91c1c); }
+.bv-modal .minfo.danger > i { color: var(--bv-primary-strong, #5e7a0d); }
 
 /* ─── modal-list-label ─────────────────────────────────────────────────── */
 .bv-modal .bv-modal-list-label {
@@ -12908,13 +13140,13 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-right .r-tag-danger {
     /* Sin rojos en la paleta de la casa: se mantiene el nombre de clase
        (lo comparten right-panel.blade.php y conversations.js) pero se
-       recolorea a indigo, igual que --bv-danger. Texto oscuro sobre fondo
-       claro (no blanco sobre oscuro): .rsp-kv-ctrl .r-tag-btn tiene mas
-       especificidad y siempre gana el background, dejando el texto blanco
-       ilegible sobre blanco — el texto oscuro se mantiene legible en ambos
-       casos. */
-    background: #eef2ff;
-    color: #3730a3;
+       recolorea a verde de marca, igual que el resto de estados "danger".
+       Texto oscuro sobre fondo claro (no blanco sobre oscuro):
+       .rsp-kv-ctrl .r-tag-btn tiene mas especificidad y siempre gana el
+       background, dejando el texto blanco ilegible sobre blanco — el
+       texto oscuro se mantiene legible en ambos casos. */
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-right .r-tag-success {
     background: #dcfce7;
@@ -13127,17 +13359,29 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     align-items: flex-start;
 }
 .bv-right .rsp-tl-item .ic {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: var(--bv-text, #18181b);
-    color: #fff;
+    background: #f1f5f9;
+    color: var(--bv-info, #64748b);
     display: grid;
     place-items: center;
-    font-size: 8px;
+    font-size: 9px;
     flex-shrink: 0;
     z-index: 1;
     position: relative;
+}
+/* Tono "positivo" — asignaciones, etiquetas añadidas, emails, reapertura...
+   Verde de marca (sin rojos en la paleta de la casa, ver .bv-tag.urgent). */
+.bv-right .rsp-tl-item .ic.pos {
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
+}
+/* Tono "fuerte" — el único caso hoy es cambio de prioridad: se sale del
+   patrón tinte+texto porque necesita destacar más que un evento cualquiera. */
+.bv-right .rsp-tl-item .ic.strong {
+    background: var(--bv-primary-strong, #5e7a0d);
+    color: #fff;
 }
 .bv-right .rsp-tl-item .body {
     flex: 1;
@@ -13152,6 +13396,48 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-size: 10.5px;
     color: var(--bv-text-muted, #71717a);
     margin-top: 1px;
+}
+
+/* Encabezado de grupo por día dentro del timeline */
+.bv-right .rsp-tl-day {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--bv-text-muted, #71717a);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 16px 0 10px;
+}
+.bv-right .rsp-tl-day:first-child {
+    margin-top: 0;
+}
+
+/* Tarjeta de email dentro de un item del timeline (asunto + estado real,
+   en vez del texto plano "Email sent" que dejaba el fallback en inglés) */
+.bv-right .rsp-tl-em-card {
+    margin-top: 6px;
+    padding: 9px 10px;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    border-radius: 8px;
+}
+.bv-right .rsp-tl-em-subj {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--bv-text, #18181b);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bv-right .rsp-tl-em-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--bv-primary-strong, #5e7a0d);
+}
+.bv-right .rsp-tl-em-status.is-pending {
+    color: var(--bv-text-muted, #71717a);
 }
 
 /* ── RSP Page items (páginas visitadas en tab Dispositivo) ─────────────────── */
@@ -13332,7 +13618,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     border-left-color: var(--bv-text, #18181b);
     box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
-.bv-right .tk-card.prio-urgent { border-left-color: #3730a3; }
+.bv-right .tk-card.prio-urgent { border-left-color: var(--bv-primary, #90bb13); }
 .bv-right .tk-card.prio-high   { border-left-color: #f59e0b; }
 .bv-right .tk-card.prio-normal { border-left-color: #3b82f6; }
 .bv-right .tk-card.prio-low    { border-left-color: #10b981; }
@@ -13491,6 +13777,7 @@ textarea.bv-form-input { resize: vertical; }
     transition: transform .12s;
 }
 .bv-color-dot:hover { transform: scale(1.18); }
+.bv-color-dot.on { outline: 2px solid #18181b; outline-offset: 2px; }
 
 /* ─── Transfer: agente actual (bv-tf-current) ─────────────────────────────── */
 .bv-tf-current {
@@ -13619,9 +13906,9 @@ textarea.bv-form-input { resize: vertical; }
 }
 .bv-bulk-act.danger:hover,
 .bv-bulk-act.danger.on {
-    background: rgba(55,48,163,.07);
-    border-color: var(--bv-danger, #dc2626);
-    color: var(--bv-danger, #dc2626);
+    background: rgba(144,187,19,.16);
+    border-color: var(--bv-primary-strong, #5e7a0d);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-bulk-sub {
     border: 1px solid var(--bv-border, #e4e4e7);
@@ -13766,12 +14053,12 @@ textarea.bv-form-input { resize: vertical; }
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: rgba(55,48,163,.1);
+    background: rgba(144,187,19,.16);
     display: grid;
     place-items: center;
     margin: 8px auto 12px;
     font-size: 26px;
-    color: var(--bv-danger, #dc2626);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-modal-danger-text {
     font-size: 13px;
@@ -13898,7 +14185,7 @@ textarea.bv-form-input { resize: vertical; }
 /* ─── Warn box — complete styles ──────────────────────────────────────────── */
 .bv-warn-box {
     border-radius: 7px;
-    border: 1px solid var(--bv-danger-border, rgba(55,48,163,.25));
+    border: 1px solid rgba(55,48,163,.25);
     background: rgba(55,48,163,.05);
     padding: 9px 12px;
     margin-top: 12px;
@@ -14170,7 +14457,7 @@ textarea.bv-form-input { resize: vertical; }
 }
 .bv-doc-card__status--approved { background: rgba(34,197,94,.15); color: #15803d; }
 .bv-doc-card__status--pending  { background: rgba(251,191,36,.15); color: #b45309; }
-.bv-doc-card__status--rejected { background: rgba(55,48,163,.12); color: #3730a3; }
+.bv-doc-card__status--rejected { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-doc-card__info { padding: 8px 10px; }
 .bv-doc-card__nm { display: block; font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bv-doc-card__meta { display: block; font-size: 10.5px; color: var(--bv-text-muted); margin-top: 2px; }
@@ -14189,7 +14476,7 @@ textarea.bv-form-input { resize: vertical; }
 }
 .bv-gd-dot.approved { background: #22c55e; }
 .bv-gd-dot.pending  { background: #fbbf24; }
-.bv-gd-dot.rejected { background: #3730a3; }
+.bv-gd-dot.rejected { background: var(--bv-primary, #90bb13); }
 .bv-gd-action-row {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 0; border-bottom: 1px solid var(--bv-border, #e4e4e7);
@@ -14238,7 +14525,7 @@ textarea.bv-form-input { resize: vertical; }
 .bv-ord-card__status--pending   { background: rgba(251,191,36,.15); color: #b45309; }
 .bv-ord-card__status--shipped   { background: rgba(59,130,246,.12); color: #1d4ed8; }
 .bv-ord-card__status--delivered { background: rgba(34,197,94,.12); color: #15803d; }
-.bv-ord-card__status--cancelled { background: rgba(55,48,163,.1); color: #3730a3; }
+.bv-ord-card__status--cancelled { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-ord-card__product { font-size: 12.5px; color: var(--bv-text-soft); }
 .bv-ord-card__row {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -14416,7 +14703,7 @@ textarea.bv-form-input { resize: vertical; }
 /* ─── Sentiment bar (sentiment) ─────────────────────────────────────────────── */
 .bv-sent-bar {
     height: 8px; border-radius: 6px;
-    background: linear-gradient(90deg, #3730a3 0%, #fbbf24 40%, #22c55e 100%);
+    background: linear-gradient(90deg, #a1a1aa 0%, #b6d34a 50%, #90bb13 100%);
     position: relative; margin: 12px 0 6px;
 }
 .bv-sent-bar__fill {
@@ -14438,7 +14725,7 @@ textarea.bv-form-input { resize: vertical; }
 .bv-sent-row__act { flex: 1; }
 .bv-sent-row__val { font-weight: 700; font-size: 13px; }
 .bv-sent-row__val.positive { color: #22c55e; }
-.bv-sent-row__val.negative { color: #3730a3; }
+.bv-sent-row__val.negative { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-sent-row__val.neutral  { color: var(--bv-text-muted); }
 
 /* ─── Severity/priority bar (report-incident, feedback) ────────────────────── */
@@ -14457,7 +14744,7 @@ textarea.bv-form-input { resize: vertical; }
 .bv-prio-card--low      { color: #22c55e; }
 .bv-prio-card--medium   { color: #fbbf24; }
 .bv-prio-card--high     { color: #f97316; }
-.bv-prio-card--critical { color: #3730a3; }
+.bv-prio-card--critical { color: var(--bv-primary-strong, #5e7a0d); }
 
 /* ─── Perm hero (mic-permission) ────────────────────────────────────────────── */
 .bv-perm-hero {
@@ -14836,7 +15123,7 @@ textarea.bv-form-input { resize: vertical; }
 
 /* Iconos de estado dentro del picker de disponibilidad (sin inline styles) */
 .bv-modal .reason .ic .bv-st-available { color: #16a34a; font-size: 9px; }
-.bv-modal .reason .ic .bv-st-dnd { color: var(--bv-danger, #b91c1c); }
+.bv-modal .reason .ic .bv-st-dnd { color: var(--bv-primary-strong, #5e7a0d); }
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -15456,4 +15743,19 @@ textarea.bv-form-input { resize: vertical; }
     border-color: var(--bv-text, #18181b);
     color: #fff;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   .bv-step-hidden — DEBE SER LA ÚLTIMA REGLA DEL ARCHIVO.
+   Reemplaza style="display:none" en elementos que su propio JS revela con
+   jQuery .show()/.hide()/.toggle() (ver comentario junto a .bv-hidden en el
+   bloque de utilidades). Sin !important a propósito — el .show() de jQuery
+   fija un display inline que SÍ debe poder ganarle. Pero varios de estos
+   elementos llevan además otra clase que también fija `display`
+   (.bv-tk-list, .bv-chip-id, .bv-lp-row, .bv-minfo, .bv-info-table,
+   .bv-media-grid...) con la MISMA especificidad (una sola clase) — en ese
+   empate gana quien se declara más tarde en el archivo, así que esta regla
+   tiene que quedar literalmente al final para ganar siempre, sin importar
+   qué otra clase lleve el elemento ni dónde esté definida.
+   ─────────────────────────────────────────────────────────────────────── */
+.bv-step-hidden { display: none; }
 .bv-tkm-btn.primary:hover { background: #27272a; color: #fff; }

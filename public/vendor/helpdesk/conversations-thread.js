@@ -170,6 +170,10 @@
         var hsmTemplates = [];
         var hsmSelectedId = null;
         var hsmPreviewBody = '';
+        // Preferencia de "ver todos los idiomas" (ver applyHsmFilters). Se
+        // resetea en cada cambio de conversación (evento pane:loaded) para que
+        // no se arrastre de un cliente a otro con idioma distinto.
+        var hsmShowAllLangs = false;
 
         function hsmListStatus(cls, icon, text) {
             var $list = $('#bv-hsm-list');
@@ -178,7 +182,7 @@
         }
 
         function loadHsmTemplates() {
-            if (hsmTemplates.length) { renderHsmList(hsmTemplates); return; }
+            if (hsmTemplates.length) { applyHsmFilters($('#bv-hsm-search').val()); return; }
             hsmListStatus('', 'fas fa-spinner fa-spin', 'Cargando plantillas…');
             $.ajax({
                 url: '/panel/helpdesk/hsm-templates',
@@ -186,11 +190,16 @@
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             }).done(function (resp) {
                 hsmTemplates = resp.templates || [];
-                renderHsmList(hsmTemplates);
+                applyHsmFilters($('#bv-hsm-search').val());
             }).fail(function () {
                 hsmListStatus('is-error', 'fas fa-triangle-exclamation', 'Error al cargar plantillas');
             });
         }
+
+        $(document).on('pane:loaded', function () {
+            hsmShowAllLangs = false;
+            hsmSelectedId = null;
+        });
 
         var HSM_CATEGORY_LABELS = { marketing: 'Marketing', utility: 'Utility', authentication: 'Auth' };
         var HSM_HEADER_ICONS = { image: 'fa-image', video: 'fa-video', document: 'fa-file' };
@@ -217,7 +226,7 @@
             return matched.length ? matched.concat(rest) : list;
         }
 
-        function renderHsmList(list, query) {
+        function renderHsmList(list, query, customerLang) {
             var $list = $('#bv-hsm-list');
             $list.find('.bv-hsm-row, .bv-hsm-list-status').remove();
             if (!list.length) {
@@ -232,7 +241,6 @@
                 }
                 return;
             }
-            var customerLang = hsmLangPrefix(($('.bv-right').data('customer-language') || '').toString());
             var sorted = sortHsmByCustomerLanguage(list, customerLang);
             sorted.forEach(function (t, i) {
                 var catLabel = HSM_CATEGORY_LABELS[t.category] || '';
@@ -246,12 +254,65 @@
                         (isMismatch ? ' title="El contacto usa \'' + escapeHtml(customerLang) + '\', esta plantilla esta registrada en \'' + escapeHtml(tLang) + '\'">' : '>') +
                         tLang.toUpperCase() + '</span>'
                     : '';
+                // Fragmento del cuerpo en la fila: el agente ya intuye de que va la
+                // plantilla sin tener que abrirlas una a una para leer la vista previa.
+                var excerpt = (t.body || '').replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim();
+                if (excerpt.length > 90) { excerpt = excerpt.slice(0, 90) + '…'; }
+                var excerptHtml = excerpt ? '<div class="excerpt">' + escapeHtml(excerpt) + '</div>' : '';
                 var html = '<div class="bv-hsm-row' + (i === 0 ? ' on' : '') + (isMismatch ? ' bv-hsm-row--lang-mismatch' : '') + '" data-hsm-id="' + t.id + '">' +
                     '<div class="nm">' + escapeHtml(t.name) + '</div>' +
+                    excerptHtml +
                     '<div class="meta">' + langBadge + catBadge + '<span class="bv-hsm-badge-approved">APPROVED</span></div></div>';
                 $list.append(html);
             });
             if (sorted.length) selectHsmTemplate(sorted[0].id);
+        }
+
+        function getCustomerLang() {
+            return hsmLangPrefix(($('.bv-right').data('customer-language') || '').toString());
+        }
+
+        // Busca tanto en el nombre como en el cuerpo de la plantilla — un agente
+        // que recuerda "reembolso" o "envío" pero no el nombre técnico interno
+        // (ej. "postventa_02_es") antes no encontraba nada.
+        function hsmMatchesQuery(t, q) {
+            if (!q) return true;
+            var name = (t.name || '').toLowerCase();
+            var body = (t.body || '').toLowerCase();
+            return name.includes(q) || body.includes(q);
+        }
+
+        function renderHsmLangToggle(hasLangMatch, otherLangCount) {
+            var $toggle = $('#bv-hsm-lang-toggle');
+            $toggle.toggleClass('d-none', !hasLangMatch);
+            if (!hasLangMatch) return;
+            $toggle.find('#bv-hsm-lang-toggle-input').prop('checked', hsmShowAllLangs);
+            $toggle.find('.bv-hsm-lang-toggle-label').text('Mostrar todos los idiomas (' + otherLangCount + ')');
+        }
+
+        // Filtro por idioma + texto combinados. Por defecto solo se listan las
+        // plantillas en el idioma del cliente (evita elegir sin querer una en
+        // otro idioma — ver nota de error 132001 en sortHsmByCustomerLanguage).
+        // Si el cliente no tiene ninguna plantilla en su idioma no hay nada que
+        // filtrar y se muestran todas (mismo fallback que ya usaba el orden).
+        function applyHsmFilters(query) {
+            var q = (query || '').toLowerCase();
+            var customerLang = getCustomerLang();
+            var textFiltered = hsmTemplates.filter(function (t) { return hsmMatchesQuery(t, q); });
+            var hasLangMatch = !!customerLang && hsmTemplates.some(function (t) {
+                return hsmLangPrefix(t.language) === customerLang;
+            });
+            var otherLangCount = hasLangMatch
+                ? hsmTemplates.filter(function (t) { return hsmLangPrefix(t.language) !== customerLang; }).length
+                : 0;
+
+            renderHsmLangToggle(hasLangMatch, otherLangCount);
+
+            var shown = (hasLangMatch && !hsmShowAllLangs)
+                ? textFiltered.filter(function (t) { return hsmLangPrefix(t.language) === customerLang; })
+                : textFiltered;
+
+            renderHsmList(shown, q, customerLang);
         }
 
         var HSM_GREETING_RE = /\b(hola|hi|hello)\s*\{\{(\d+)\}\}/i;
@@ -376,11 +437,12 @@
         });
 
         $(document).on('input', '#bv-hsm-search', function () {
-            var q = $(this).val().toLowerCase();
-            var filtered = hsmTemplates.filter(function (t) {
-                return !q || (t.name && t.name.toLowerCase().includes(q));
-            });
-            renderHsmList(filtered, q);
+            applyHsmFilters($(this).val());
+        });
+
+        $(document).on('change', '#bv-hsm-lang-toggle-input', function () {
+            hsmShowAllLangs = $(this).is(':checked');
+            applyHsmFilters($('#bv-hsm-search').val());
         });
 
         // Navegacion por teclado: flechas para moverse por la lista filtrada,
@@ -3543,3 +3605,603 @@
 
     });
 })(jQuery);
+
+// ═══════════════════════════════════════════════════════════════════
+// Suscripción Reverb + typing + borrador por conversación. Extraído de
+// inbox/index.blade.php. Antes vivía acoplada a la conversación inicial;
+// ahora se expone como window.bvBindConversation(convId) para que
+// conversations-list.js la vuelva a enlazar tras cada cambio de conversación
+// SPA (sin recargar la página). Los handlers de document van namespaced con
+// .bvconv y se reenganchan en cada bind para no duplicarse; los canales Echo
+// anteriores se abandonan. Vive en conversations-thread.js porque usa
+// appendBubbleToThread / appendActivityPillToThread, definidas más arriba en
+// este mismo archivo. window.BvSelectedConversationId es el dato server-side
+// que index.blade.php expone justo antes de cargar estos scripts.
+// ═══════════════════════════════════════════════════════════════════
+(function () {
+    var currentConvId = null;
+    var convChannel = null;
+    var typingTimeout = null;
+    var typingHideTimer = null;
+    var lastTypingPing = 0;
+    var lastTypingState = false;
+
+    function csrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    }
+    function myId() {
+        return parseInt(document.querySelector('meta[name="user-id"]')?.content || '0', 10);
+    }
+
+    function showTypingIndicator() {
+        var $ind = $('#bv-typing-ind');
+        if (!$ind.length) {
+            // UI-05: role=status + aria-live anuncian "escribiendo…" a lectores de pantalla.
+            $ind = $('<div id="bv-typing-ind" class="bv-typing-ind" role="status" aria-live="polite"><span class="bv-typing-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="bv-typing-text">Escribiendo…</span></div>');
+            $('.bv-th-body').append($ind);
+        }
+        $ind.show();
+        clearTimeout(typingHideTimer);
+        typingHideTimer = setTimeout(function () { $ind.hide(); }, 4000);
+    }
+
+    function postTypingState(isTyping) {
+        if (!currentConvId || lastTypingState === isTyping) return;
+        lastTypingState = isTyping;
+        $.ajax({
+            url: '/panel/helpdesk/conversations/' + currentConvId + '/typing',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf() },
+            data: { is_typing: isTyping ? 1 : 0 },
+        });
+    }
+
+    // Abandona los canales y handlers de la conversación previa.
+    window.bvUnbindConversation = function () {
+        if (typeof window.Echo !== 'undefined' && window.Echo && currentConvId) {
+            try { window.Echo.leave('helpdesk.conversation.' + currentConvId); } catch (_) {}
+            try { window.Echo.leave('helpdesk.conversation.' + currentConvId + '.typing'); } catch (_) {}
+        }
+        $(document).off('.bvconv');
+        clearTimeout(typingTimeout);
+        clearTimeout(typingHideTimer);
+        $('#bv-typing-ind').hide();
+        lastTypingState = false;
+        lastTypingPing = 0;
+        convChannel = null;
+        currentConvId = null;
+    };
+
+    // ─── Sugerencia "Detectar idioma" (modal detect-lang.blade.php) ──
+    // El idioma del contacto (helpdesk_customers.language) y el idioma de
+    // trabajo del agente (select #bv-tp-to del panel Traducir, precargado
+    // server-side desde helpdesktranslate.default_target) vivían sin
+    // conectar entre sí: el agente nunca se enteraba de que estaba
+    // respondiendo en un idioma distinto al del cliente salvo que se
+    // fijara él mismo. No depende de Echo/Reverb (no hay tiempo real
+    // fiable en este entorno) — se revisa con lo que ya llegó en el pane.
+    var HD_LANG_LABELS = { es: 'Español', en: 'Inglés', fr: 'Francés', de: 'Alemán', pt: 'Portugués', it: 'Italiano' };
+
+    function maybeSuggestLanguageMismatch(convId) {
+        var seenKey = 'bv_lang_prompt_seen_' + convId;
+        if (sessionStorage.getItem(seenKey)) return;
+
+        var settings = {};
+        try { settings = JSON.parse(sessionStorage.getItem('inbox_translation_settings') || '{}'); } catch (_e) {}
+        if (settings.mode && settings.mode !== 'off') return; // ya hay traducción activa en esta pestaña
+
+        var customerLang = ($('.bv-right').data('customer-language') || '').toString().trim().toLowerCase();
+        var workingLang = ($('#bv-tp-to').val() || '').toString().trim().toLowerCase();
+        if (!customerLang || !workingLang || customerLang === workingLang) return;
+        if (!HD_LANG_LABELS[customerLang] || !HD_LANG_LABELS[workingLang]) return;
+
+        var sample = ($('.bv-msg.in .bv-bubble').last().data('bv-body') || '').toString().trim();
+        if (!sample) return; // sin mensajes entrantes todavía, nada que mostrar como ejemplo
+
+        var $modal = $('[data-bv-modal-name="detect-lang"]');
+        if (!$modal.length) return;
+
+        // No se repite en esta conversación aunque el agente cierre el
+        // modal sin elegir nada — evita que reaparezca en cada mensaje.
+        sessionStorage.setItem(seenKey, '1');
+
+        $modal.addClass('on');
+        $('body').css('overflow', 'hidden');
+        $(document).trigger('bv:modal:open', ['detect-lang', {
+            detected: HD_LANG_LABELS[customerLang],
+            working: HD_LANG_LABELS[workingLang],
+            sample: sample.length > 140 ? sample.slice(0, 140) + '…' : sample,
+            fromCode: customerLang,
+            toCode: workingLang,
+        }]);
+    }
+
+    window.bvBindConversation = function (convId) {
+        convId = parseInt(convId, 10);
+        if (!convId) return;
+
+        maybeSuggestLanguageMismatch(convId);
+
+        window.bvUnbindConversation();
+        currentConvId = convId;
+
+        if (typeof window.Echo === 'undefined' || !window.Echo) return;
+
+        // Marcar como leída + limpiar el badge en la lista.
+        $.ajax({
+            url: '/panel/helpdesk/conversations/' + convId + '/mark-read',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf() },
+        }).done(function () {
+            var $item = $('.bv-conv[data-bv-conv-id="' + convId + '"]');
+            var wasUnread = $item.hasClass('unread');
+            $item.removeClass('unread');
+            $item.find('.bv-ucount').remove();
+            if (wasUnread) {
+                var $counter = $('[data-counter="unread"]');
+                var cur = parseInt($counter.text(), 10) || 0;
+                $counter.text(Math.max(0, cur - 1));
+            }
+        }).fail(function (xhr) {
+            console.warn('[Inbox] mark-read failed:', xhr.status);
+        });
+
+        convChannel = window.Echo.private('helpdesk.conversation.' + convId);
+
+        convChannel.listen('.item.created', function (e) {
+            // El payload viene envuelto en { message: {...} } desde broadcastWith()
+            const msg = e.message || e;
+
+            // Mensajes de actividad (etiqueta añadida, cambio de estado, asignación,
+            // etc.): se pintan como píldora centrada, no como burbuja de chat.
+            if (msg.type === 'activity') {
+                if (typeof window.appendActivityPillToThread === 'function') {
+                    window.appendActivityPillToThread(msg.body);
+                }
+                return;
+            }
+
+            // Si el mensaje lo envió el propio agente, ya está pintado por la UI optimista
+            if (msg.user_id && parseInt(msg.user_id, 10) === myId()) return;
+
+            const isCustomerMessage = !msg.user_id && msg.author_id;
+            const custId = (e.conversation && e.conversation.customer && e.conversation.customer.id) || convId;
+            const item = {
+                id: msg.id,
+                body: msg.body,
+                attachment_urls: msg.attachment_urls || [],
+                attachments: msg.attachments || [],
+                metadata: msg.metadata || {},
+                is_internal: !!msg.is_internal,
+                is_incoming: !!isCustomerMessage,
+                author: msg.sender_name || (isCustomerMessage ? 'Cliente' : 'Tú'),
+                time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                avatar: msg.sender_avatar,
+                // Matches the server-side `(customer->id ?? conversation->id ?? 1) - 1) % 8 + 1`
+                // so the avatar colour is identical whether the bubble came from the
+                // initial page render or a live WebSocket append.
+                colorIdx: ((custId - 1) % 8 + 8) % 8 + 1,
+            };
+
+            if (typeof window.appendBubbleToThread === 'function') {
+                window.appendBubbleToThread(item, !!msg.is_internal);
+            }
+
+            // UI-05: anunciar el mensaje entrante en la live-region oculta.
+            if (typeof window.bvAnnounce === 'function') {
+                window.bvAnnounce('Nuevo mensaje de ' + (item.author || 'cliente'));
+            }
+
+            // PERF-05: delivery/read receipts ya NO viajan en este evento (ver
+            // '.receipts_updated' más abajo) — antes cada recibo generaba un
+            // broadcast .item.created completo por mensaje marcado.
+            const meta = msg.metadata || {};
+
+            // Render customer reactions (e.g. ❤️) on agent-sent bubbles.
+            if (msg.user_id && Array.isArray(meta.customer_reactions) && meta.customer_reactions.length) {
+                const $bubble = $('.bv-bubble[data-bv-item-id="' + msg.id + '"]');
+                if ($bubble.length) {
+                    const emoji = meta.customer_reactions[0].emoji || '❤️';
+                    let $r = $bubble.find('.bv-bubble-reaction');
+                    if (!$r.length) {
+                        $r = $('<span class="bv-bubble-reaction"></span>');
+                        $bubble.append($r);
+                    }
+                    $r.text(emoji);
+                }
+            }
+
+            window.dispatchEvent(new CustomEvent('inbox:incoming-message', { detail: msg }));
+
+            // Push notification for per-conversation listener (agent on page, tab hidden)
+            if (isCustomerMessage && document.visibilityState === 'hidden') {
+                const conv = e.conversation || {};
+                const customerName = conv.customer_name || 'Nuevo mensaje';
+                const preview = (msg.body || '').slice(0, 100);
+                if (typeof window.showInboxPushNotif === 'function') {
+                    window.showInboxPushNotif(convId, customerName, preview, msg.sender_avatar || null);
+                }
+            }
+        });
+
+        // PERF-05: recibos de entrega/lectura de Messenger/Instagram llegan
+        // agregados — un solo evento con los ids de los ítems marcados, en vez
+        // de un '.item.created' completo por cada mensaje que cambia de estado.
+        convChannel.listen('.receipts_updated', function (e) {
+            if (!e || !Array.isArray(e.item_ids) || !e.item_ids.length) return;
+
+            const isRead = e.field === 'customer_read_at';
+
+            e.item_ids.forEach(function (itemId) {
+                const $bubble = $('.bv-bubble[data-bv-item-id="' + itemId + '"]');
+                if (!$bubble.length) return;
+
+                const $chk = $bubble.find('.bv-chk-read, .chk');
+                if (isRead) {
+                    $chk.removeClass('chk-delivered').addClass('chk-read').addClass('text-primary');
+                } else {
+                    $chk.addClass('chk-delivered');
+                }
+            });
+        });
+
+        // ─── Typing indicator: peer (Echo whisper) + customer (Meta API) ────
+        $(document).on('input.bvconv', '.bv-composer-input', function () {
+            var now = Date.now();
+            // Throttle network/whisper traffic: max 1 ping every 2s while typing.
+            if (now - lastTypingPing >= 2000) {
+                lastTypingPing = now;
+                if (convChannel && convChannel.whisper) {
+                    convChannel.whisper('typing', { user_id: myId(), is_typing: true });
+                }
+                postTypingState(true);
+            }
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(function () {
+                if (convChannel && convChannel.whisper) {
+                    convChannel.whisper('typing', { user_id: myId(), is_typing: false });
+                }
+                postTypingState(false);
+            }, 3000);
+        });
+
+        // Stop typing the moment the message is sent.
+        $(document).on('bv:message:sent.bvconv', function () {
+            clearTimeout(typingTimeout);
+            postTypingState(false);
+        });
+
+        // Typing entre agentes (whisper)
+        convChannel.listenForWhisper('typing', function (e) {
+            if (!e || parseInt(e.user_id, 10) === myId()) return;
+            if (e.is_typing) {
+                showTypingIndicator();
+            } else {
+                clearTimeout(typingHideTimer);
+                $('#bv-typing-ind').hide();
+            }
+        });
+
+        // Typing del cliente desde el widget
+        window.Echo.private('helpdesk.conversation.' + convId + '.typing')
+            .listen('.typing', function () {
+                showTypingIndicator();
+            });
+
+        // ─── Autosave borrador del composer en localStorage ──────────
+        var draftKey = 'bv:draft:' + convId;
+        var $composer = $('.bv-composer-input');
+        var saved = localStorage.getItem(draftKey);
+        if (saved && !$composer.val()) {
+            $composer.val(saved);
+            $composer[0]?.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        $(document).on('input.bvconv', '.bv-composer-input', function () {
+            var val = $(this).val();
+            if (val && val.trim()) localStorage.setItem(draftKey, val);
+            else localStorage.removeItem(draftKey);
+        });
+        // Limpiar borrador tras envío exitoso
+        $(document).on('bv:message:sent.bvconv', function () {
+            localStorage.removeItem(draftKey);
+            $('.bv-composer-input').val('');
+        });
+    };
+
+    $(document).ready(function () {
+        if (window.BvSelectedConversationId) {
+            window.bvBindConversation(window.BvSelectedConversationId);
+        }
+    });
+})();
+
+// ─── Supervisor toma el control de una conversación que atiende el bot ───
+// Extraído de inbox/index.blade.php. El botón #bv-btn-takeover vive en
+// partials/thread.blade.php (bv-th-action--takeover).
+$(document).on('click', '#bv-btn-takeover', function () {
+    var $btn = $(this);
+    var url = $btn.data('takeover-url');
+    if (!url) return;
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: url,
+        method: 'POST',
+        dataType: 'json',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+    }).done(function (resp) {
+        if (window.toastr) toastr.success((resp && resp.message) || 'Has tomado el control de la conversación.');
+        $btn.remove();
+        var $list = $('.bv-list').first();
+        if ($list.length) {
+            var params = new URLSearchParams(window.location.search);
+            $.get('/panel/helpdesk/conversations/list', Object.fromEntries(params)).done(function (r) {
+                if (r && typeof r.html === 'string') { $list.replaceWith(r.html); }
+            });
+        }
+    }).fail(function (xhr) {
+        if (window.toastr) toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo tomar el control.');
+    }).always(function () {
+        $btn.prop('disabled', false);
+    });
+});
+
+// ─── Empuje activo: fuera de la ventana de 24h de WhatsApp, guiar al agente
+// al panel de plantillas (HSM) y bloquear el envío de texto libre. Extraído
+// de inbox/index.blade.php. data-bv-wa-window-closed vive en el
+// .bv-composer de partials/thread.blade.php. ────────────────────────────
+(function () {
+    function steerWhatsAppWindow() {
+        var $composer = $('.bv-composer');
+        if (!$composer.length) return;
+        var closed = $composer.attr('data-bv-wa-window-closed') === '1';
+        var $replyTab = $composer.find('.bv-composer-tab[data-bv-tab="reply"]');
+        if (closed) {
+            // Abrir el panel de plantillas (dispara el handler delegado) y
+            // bloquear la pestaña de respuesta libre; las notas internas siguen.
+            var hsmTab = $composer.find('.bv-composer-tab[data-bv-tab="hsm"]')[0];
+            if (hsmTab && !$composer.hasClass('bv-hsm-mode')) { hsmTab.click(); }
+            $composer.addClass('bv-hsm-mode');
+            $replyTab.prop('disabled', true).addClass('disabled');
+        } else {
+            $composer.removeClass('bv-hsm-mode');
+            $replyTab.prop('disabled', false).removeClass('disabled');
+        }
+    }
+    document.addEventListener('pane:loaded', steerWhatsAppWindow);
+    $(function () { steerWhatsAppWindow(); });
+})();
+
+// ─── Reintentar envío de un mensaje saliente marcado como "no entregado" ───
+// Extraído de inbox/index.blade.php. .bv-retry-send / .bv-send-failed viven
+// en partials/thread.blade.php. Los textos de toastr eran
+// helpdesk::helpdesk.inbox.thread.retry_send_ok/retry_send_error — se
+// hardcodean en español aquí porque este archivo estático no pasa por el
+// compilador de Blade (mismo patrón que el resto de textos de toastr de
+// este archivo, p.ej. 'Texto copiado' / 'No se pudieron cargar los mensajes
+// anteriores').
+$(document).on('click', '.bv-retry-send', function () {
+    var $btn = $(this);
+    var url = $btn.data('bv-retry-url');
+    if (!url) return;
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: url,
+        method: 'POST',
+        dataType: 'json',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+    }).done(function () {
+        if (window.toastr) toastr.info('Reintentando el envío…');
+        // Optimista: sustituir el indicador de fallo por el check de enviado.
+        $btn.closest('.bv-send-failed').replaceWith('<span class="chk read bv-chk-read">✓✓</span>');
+    }).fail(function (xhr) {
+        if (window.toastr) toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo reintentar el envío.');
+        $btn.prop('disabled', false);
+    });
+});
+
+// ─── Respuesta rápida (modal #hdCannedOverlay) + envío de CSAT ─────────────
+// Extraído de partials/thread.blade.php, donde vivía inline dentro de un
+// @once/@push('scripts') que solo se emitía cuando había conversación
+// seleccionada ($convo). El markup del modal (#hdCannedOverlay) sigue
+// viviendo en ese partial, dentro del mismo `@if($convo)` que antes envolvía
+// también este script — de ahí el guard de abajo: si el overlay no está en
+// el DOM (sin conversación seleccionada en la carga inicial), no se registra
+// nada, igual que antes. window.HdThreadCtx lo define thread.blade.php vía
+// @json (contact./agent./company./conversation.* para reemplazar
+// placeholders {{...}} en las plantillas insertadas).
+(function () {
+    var hdCannedOverlayEl = document.getElementById('hdCannedOverlay');
+    if (!hdCannedOverlayEl) { return; }
+
+    var hdCsrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
+
+    // Contexto para reemplazar placeholders en plantillas
+    var hdCtx = window.HdThreadCtx || {};
+
+    function hdReplace(text) {
+        if (!text) { return text; }
+        return text.replace(/\{\{([^}]+)\}\}/g, function(match, key) {
+            var k = key.trim();
+            return hdCtx.hasOwnProperty(k) ? hdCtx[k] : match;
+        });
+    }
+
+    function hdEscape(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    hdCannedOverlayEl.addEventListener('click', function(e) {
+        if (e.target === this) closeCannedModal();
+    });
+
+    // Los .media-pill son <span role="button"> (filtros de categoría): activar con Enter/Espacio.
+    hdCannedOverlayEl.addEventListener('keydown', function(e) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('media-pill')) {
+            e.preventDefault();
+            e.target.click();
+        }
+    });
+
+    // ── CANNED REPLIES ─────────────────────────────────────
+    var hdCannedAll = [], hdCannedFiltered = [], hdCannedActive = -1, hdCannedSelId = null, hdCannedTimer = null, hdCannedCat = '';
+
+    window.openCannedModal = function() {
+        document.getElementById('hdCannedOverlay').classList.add('open');
+        var inp = document.getElementById('hdCannedSearch');
+        inp.value = ''; inp.focus();
+        if (!hdCannedAll.length) { hdCannedFetch(''); }
+        else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
+    };
+    window.closeCannedModal = function() {
+        document.getElementById('hdCannedOverlay').classList.remove('open');
+    };
+    window.hdCannedFilter = function(cat) {
+        hdCannedCat = cat;
+        document.querySelectorAll('#hdCannedSeg .media-pill').forEach(function(b) {
+            b.classList.toggle('on', b.dataset.cat === cat);
+        });
+        hdCannedRender(hdCannedApplyFilters(hdCannedAll, cat));
+    };
+
+    function hdCannedFetch(q) {
+        var url = '/panel/helpdesk/canned-replies/search' + (q ? '?q=' + encodeURIComponent(q) : '');
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': hdCsrf } })
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                if (!q) { hdCannedAll = data; hdCannedBuildSeg(); }
+                hdCannedRender(hdCannedApplyFilters(data, hdCannedCat));
+            });
+    }
+
+    function hdCannedBuildSeg() {
+        var cats = [];
+        hdCannedAll.forEach(function(r) { if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category); });
+        var seg = document.getElementById('hdCannedSeg');
+        var html = '<span class="media-pill ' + (!hdCannedCat ? 'on' : '') + '" data-cat="" role="button" tabindex="0" onclick="hdCannedFilter(\'\')">'
+            + 'Todas <span class="c">' + hdCannedAll.length + '</span></span>';
+        cats.forEach(function(cat) {
+            var cnt = hdCannedAll.filter(function(r){ return r.category === cat; }).length;
+            html += '<span class="media-pill ' + (hdCannedCat === cat ? 'on' : '') + '" data-cat="' + hdEscape(cat)
+                + '" role="button" tabindex="0" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
+                + hdEscape(cat) + ' <span class="c">' + cnt + '</span></span>';
+        });
+        seg.innerHTML = html;
+    }
+
+    function hdCannedApplyFilters(list, cat) {
+        var q = document.getElementById('hdCannedSearch').value.toLowerCase();
+        return list.filter(function(r) {
+            var matchCat = !cat || r.category === cat;
+            var matchQ   = !q || (r.name && r.name.toLowerCase().includes(q))
+                               || (r.shortcut && r.shortcut.toLowerCase().includes(q))
+                               || (r.body && r.body.toLowerCase().includes(q));
+            return matchCat && matchQ;
+        });
+    }
+
+    function hdCannedRender(list) {
+        hdCannedFiltered = list;
+        hdCannedActive   = list.length ? 0 : -1;
+        hdCannedSelId    = list.length ? list[0].id : null;
+        var el = document.getElementById('hdCannedList');
+        if (!list.length) {
+            el.innerHTML = '<div class="bv-list-state">Sin resultados</div>';
+            document.getElementById('hdCannedPreview').value = '';
+            return;
+        }
+        el.innerHTML = list.map(function(r, i) {
+            return '<button class="list-item ' + (i === 0 ? 'on' : '') + '" data-idx="' + i + '" onclick="hdCannedSelect(' + i + ')">'
+                + (r.shortcut ? '<span class="kbd">/' + hdEscape(r.shortcut) + '</span>' : '<span class="kbd"></span>')
+                + '<div class="body"><span class="t">' + hdEscape(r.name) + '</span>'
+                + '<span class="s">' + (r.category ? hdEscape(r.category) + ' · ' : '') + 'usada ' + (r.usage_count || 0) + ' veces</span>'
+                + '</div></button>';
+        }).join('');
+        document.getElementById('hdCannedPreview').value = hdReplace(list[0].body || '');
+    }
+
+    window.hdCannedSelect = function(idx) {
+        hdCannedActive = idx;
+        hdCannedSelId  = hdCannedFiltered[idx] ? hdCannedFiltered[idx].id : null;
+        document.querySelectorAll('#hdCannedList .list-item').forEach(function(el, i) {
+            el.classList.toggle('on', i === idx);
+        });
+        document.getElementById('hdCannedPreview').value = hdCannedFiltered[idx] ? hdReplace(hdCannedFiltered[idx].body || '') : '';
+    };
+
+    window.hdInsertCanned = function() {
+        var txt = document.getElementById('hdCannedPreview').value;
+        if (!txt.trim()) { return; }
+        var ta = document.querySelector('.bv-composer-input');
+        if (ta) { ta.value = txt; ta.focus(); ta.dispatchEvent(new Event('input')); }
+        if (hdCannedSelId) {
+            fetch('/panel/helpdesk/canned-replies/' + hdCannedSelId + '/use', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': hdCsrf }
+            }).catch(function(){});
+        }
+        closeCannedModal();
+    };
+
+    var hdCannedSearchInp = document.getElementById('hdCannedSearch');
+    hdCannedSearchInp.addEventListener('input', function() {
+        clearTimeout(hdCannedTimer);
+        var q = this.value.trim();
+        hdCannedTimer = setTimeout(function() {
+            if (q) { hdCannedFetch(q); }
+            else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
+        }, 250);
+    });
+    hdCannedSearchInp.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (hdCannedActive < hdCannedFiltered.length - 1) hdCannedSelect(hdCannedActive + 1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if (hdCannedActive > 0) hdCannedSelect(hdCannedActive - 1); }
+        else if (e.key === 'Enter') { e.preventDefault(); hdInsertCanned(); }
+        else if (e.key === 'Escape') { closeCannedModal(); }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('hdCannedOverlay').classList.contains('open')) { closeCannedModal(); return; }
+    });
+
+    // ── CSAT ───────────────────────────────────────────────
+    $(document).on('click', '#bv-btn-send-csat', function() {
+        var url = $(this).data('csat-url');
+        if (!url) { toastr.error('No hay conversación seleccionada'); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': hdCsrf, 'Accept': 'application/json' },
+        }).done(function(resp) {
+        }).fail(function(xhr) {
+            var msg = xhr?.responseJSON?.message || 'No se pudo enviar la encuesta';
+            toastr.error(msg);
+        }).always(function() {
+            $btn.prop('disabled', false);
+            $('#bv-more-menu').removeClass('open');
+        });
+    });
+
+    // ── Integración con el slash-menu de conversations.js (más abajo en este
+    // mismo archivo) ─────────────────────────────────────────
+    window.bvCannedRepliesUrl = '/panel/helpdesk/canned-replies/search';
+
+    // Reemplazar marcadores de posición en el composer después de insertar una plantilla.
+    // Usamos jQuery .on() porque el resto de este archivo dispara
+    // $textarea.trigger('input'), que no siempre propaga al addEventListener nativo.
+    $(document).on('input', '.bv-composer-input', function() {
+        var ta = this;
+        var val = ta.value;
+        if (!/\{\{/.test(val)) return;
+        var replaced = hdReplace(val);
+        if (replaced !== val) {
+            var pos = ta.selectionStart;
+            ta.value = replaced;
+            ta.setSelectionRange(pos, pos);
+            // Evento nativo para auto-resize (ya sin {{}} no vuelve a procesar)
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+})();
