@@ -17,7 +17,7 @@
             {{-- Búsqueda --}}
             <div class="bv-modal-search bv-modal-search--hint">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="assign-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" autocomplete="off">
+                <input id="assign-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" autocomplete="off">
                 <span class="bv-kbd asgn-search-hint">↑↓</span>
             </div>
 

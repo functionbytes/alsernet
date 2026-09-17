@@ -16,7 +16,6 @@
 {{-- Modales del flujo principal --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.newconv')
 @include('helpdesk::helpdesk.inbox.partials.modals.assign')
-@include('helpdesk::helpdesk.inbox.partials.modals.transfer')
 @include('helpdesk::helpdesk.inbox.partials.modals.move-to-team')
 @include('helpdesk::helpdesk.inbox.partials.modals.tags')
 @include('helpdesk::helpdesk.inbox.partials.modals.tag-create')
@@ -63,11 +62,8 @@
 @endif
 
 {{-- Modales de búsqueda y composer --}}
-@include('helpdesk::helpdesk.inbox.partials.modals.customer-search')
-@include('helpdesk::helpdesk.inbox.partials.modals.quick-reply')
 @include('helpdesk::helpdesk.inbox.partials.modals.translate')
 @include('helpdesk::helpdesk.inbox.partials.modals.attach-file')
-@include('helpdesk::helpdesk.inbox.partials.modals.assign-tickets')
 @include('helpdesk::helpdesk.inbox.partials.modals.reminder')
 @include('helpdesk::helpdesk.inbox.partials.modals.email')
 @include('helpdesk::helpdesk.inbox.partials.modals.email-viewer')
@@ -91,9 +87,6 @@
 
 {{-- Modal: Vincular conversación a otro cliente (identidad/ficha incorrecta) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.link-customer')
-
-{{-- Modal: Plantillas WhatsApp HSM --}}
-@include('helpdesk::helpdesk.inbox.partials.modals.hsm')
 
 {{-- Modal: Guardar vista (inline, fuera del sistema bv-modal) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.save-view')
@@ -141,11 +134,19 @@
 @include('helpdesk::helpdesk.inbox.partials.modals.report-incident')
 @include('helpdesk::helpdesk.inbox.partials.modals.supervisor-review')
 
-{{-- Modales de administración (roles, SLA, horarios, auto-asignación) --}}
+{{-- Modales de administración (roles, SLA, horarios, auto-asignación).
+     role-perms y sla-config quedan sin gatear: su JS llama a endpoints que no
+     existen en modules/Helpdesk/routes (/roles/{id}/permissions y
+     /settings/sla dan 404 hoy), así que no hay un permiso backend real que
+     replicar aquí — inventar uno sería adivinar. --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.role-perms')
 @include('helpdesk::helpdesk.inbox.partials.modals.sla-config')
-@include('helpdesk::helpdesk.inbox.partials.modals.business-hours')
-@include('helpdesk::helpdesk.inbox.partials.modals.auto-assign')
+@can('helpdesk.settings.view')
+    @include('helpdesk::helpdesk.inbox.partials.modals.business-hours')
+@endcan
+@can('helpdesk.manage')
+    @include('helpdesk::helpdesk.inbox.partials.modals.auto-assign')
+@endcan
 
 {{-- Modales de feedback y novedades --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.feedback')
@@ -155,9 +156,6 @@
 @include('helpdesk::helpdesk.inbox.partials.modals.import-conv')
 @include('helpdesk::helpdesk.inbox.partials.modals.schedule-report')
 @include('helpdesk::helpdesk.inbox.partials.modals.export-contacts')
-
-{{-- Modales de nueva conversación (wizard 2 pasos) --}}
-@include('helpdesk::helpdesk.inbox.partials.modals.new-conv-wizard')
 
 {{-- Modales de pedidos y paneles laterales --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.orders-list')

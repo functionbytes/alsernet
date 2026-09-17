@@ -63,8 +63,8 @@
                             <span class="t">{{ __('helpdesk::helpdesk.inbox.modals.close_conv_reason_other') }}</span>
                             <input type="text" id="close-other-input"
                                    placeholder="{{ __('helpdesk::helpdesk.inbox.modals.close_conv_other_placeholder') }}"
-                                   class="finput bv-close-other-input mt-1"
-                                   style="display:none">
+                                   aria-label="{{ __('helpdesk::helpdesk.inbox.modals.close_conv_other_placeholder') }}"
+                                   class="finput bv-close-other-input mt-1 bv-step-hidden">
                         </div>
                         <div class="radio"></div>
                     </div>
