@@ -27,7 +27,7 @@
     "HelpdeskLivechat": true,
     "HelpdeskPrestashop": true,
     "HelpdeskSla": true,
-    "HelpdeskSocial": false,
+    "HelpdeskSocial": true,
     "HelpdeskTickets": true,
     "HelpdeskTranslate": true,
     "Health": true,

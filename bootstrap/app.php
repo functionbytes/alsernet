@@ -54,6 +54,7 @@ use Modules\Core\Http\Middleware\TrustProxies;
 use Modules\Core\Http\Middleware\ValidateSignature;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
 use Modules\Document\Http\Middleware\DocumentPermissionMiddleware;
+use Modules\Helpdesk\Http\Middleware\EnsureHelpdeskApiScope;
 use Modules\Helpdesk\Http\Middleware\EnsureIntegrationEnabled;
 use Modules\System\Http\Middleware\PreventRequestsDuringMaintenance;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -138,6 +139,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Toggle de "Settings > Integraciones" para módulos satélite de Helpdesk
             'integration.enabled' => EnsureIntegrationEnabled::class,
+
+            // Scopes least-privilege for personal Sanctum tokens on Helpdesk APIs
+            'helpdesk.api.scope' => EnsureHelpdeskApiScope::class,
 
             // Settings section access
             'settings' => CheckSettings::class,
