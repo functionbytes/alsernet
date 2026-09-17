@@ -142,8 +142,11 @@ return [
         // Debe reflejar 1:1 los mimes de 'allowed_mime_types' de abajo (image/webp,
         // text/plain, text/csv ya estaban declarados ahí pero faltaban aquí, por lo
         // que el composer los ofrecia en su UI y la validacion 'mimes:' los rechazaba
-        // igual con "Tipo de archivo no permitido").
-        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv', 'zip'],
+        // igual con "Tipo de archivo no permitido"). Mismo problema con
+        // ppt/pptx/mp3/ogg/wav/m4a/webm (QA 18-sep-2026): el composer los anuncia
+        // en "Documento"/"Subir audio", y "Grabar audio" genera un .webm, pero
+        // ninguno estaba en esta lista por defecto.
+        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv', 'zip', 'mp3', 'ogg', 'wav', 'm4a', 'webm'],
         'allowed_mime_types' => [
             'image/jpeg',
             'image/png',
@@ -154,11 +157,20 @@ return [
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'application/zip',
             'application/x-rar-compressed',
             'application/x-7z-compressed',
             'text/plain',
             'text/csv',
+            'audio/mpeg',
+            'audio/ogg',
+            'audio/wav',
+            'audio/x-wav',
+            'audio/mp4',
+            'audio/x-m4a',
+            'video/webm',
         ],
         'disk' => env('HELPDESK_ATTACHMENTS_DISK', 'public'),
         'path' => 'helpdesk/attachments',

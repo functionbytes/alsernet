@@ -88,7 +88,7 @@ class HelpdeskSettings
             'tar' => 'application/x-tar', 'gz' => 'application/gzip', 'mp3' => 'audio/mpeg',
             'mp4' => 'video/mp4', 'mov' => 'video/quicktime', 'avi' => 'video/x-msvideo',
             'mkv' => 'video/x-matroska', 'ogg' => 'audio/ogg', 'wav' => 'audio/wav',
-            'webm' => 'video/webm',
+            'webm' => 'video/webm', 'm4a' => 'audio/mp4',
         ];
 
         $mapped = array_values(array_filter(array_map(
