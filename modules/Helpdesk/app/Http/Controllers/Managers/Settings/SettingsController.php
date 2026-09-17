@@ -12,7 +12,7 @@ class SettingsController extends Controller
 {
     private const DEFAULTS = [
         'max_file_size_mb' => 25,
-        'allowed_extensions' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip',
+        'allowed_extensions' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,webp,txt,csv,zip',
         'enable_image_compression' => true,
         'image_max_width' => 1920,
         'image_max_height' => 1080,

@@ -139,7 +139,11 @@ return [
 
     'attachments' => [
         'max_size' => 25 * 1024,
-        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'zip'],
+        // Debe reflejar 1:1 los mimes de 'allowed_mime_types' de abajo (image/webp,
+        // text/plain, text/csv ya estaban declarados ahí pero faltaban aquí, por lo
+        // que el composer los ofrecia en su UI y la validacion 'mimes:' los rechazaba
+        // igual con "Tipo de archivo no permitido").
+        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv', 'zip'],
         'allowed_mime_types' => [
             'image/jpeg',
             'image/png',
