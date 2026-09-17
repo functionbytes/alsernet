@@ -6,6 +6,33 @@
    Cerrar: data-bv-close, click en backdrop, o tecla ESC
    ═══════════════════════════════════════════════════════════════════════ --}}
 
+{{-- Carga diferida de scripts de modal (auditoría 17-sep-2026): los ~40 modales
+     que no son de uso inmediato (todo salvo status/priority/filter/edit-contact/
+     shortcuts, que son las acciones más frecuentes) ya NO traen su propio
+     <script src> — su JS se descarga la primera vez que openModal() los abre.
+     Ver window.BvLazyModalScripts / window.BvLoadedModalScripts en
+     conversations-core.js. El mapa se resuelve aquí en PHP (mismo filemtime de
+     cache-busting que usaba cada partial) para no recalcularlo en JS. --}}
+@php
+    $bvLazyModalNames = [
+        'agent-profile', 'ai-suggest', 'ai-summary', 'attach-contact', 'attach-file',
+        'attach-location', 'audit-log', 'away-mode', 'bulk-actions', 'business-hours',
+        'email', 'export-contacts', 'export-conv', 'feedback', 'help-center',
+        'import-conv', 'internal-note', 'link-customer', 'macro', 'media-panel',
+        'merge', 'newconv', 'note', 'notifications', 'orders-list', 'profile-customer',
+        'reminder', 'report-incident', 'resolve', 'role-perms', 'schedule',
+        'schedule-msg', 'schedule-report', 'sentiment', 'sla-config', 'snooze',
+        'supervisor-review', 'tags', 'tickets-panel', 'translate',
+    ];
+    $bvLazyModalScripts = collect($bvLazyModalNames)->mapWithKeys(function (string $name) {
+        $path = "vendor/helpdesk/modals/{$name}.js";
+        return [$name => asset($path) . '?v=' . @filemtime(public_path($path))];
+    });
+@endphp
+@push('scripts')
+<script>window.BvLazyModalScripts = @json($bvLazyModalScripts);</script>
+@endpush
+
 {{-- Modales clave (acciones frecuentes) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.status')
 @include('helpdesk::helpdesk.inbox.partials.modals.priority')

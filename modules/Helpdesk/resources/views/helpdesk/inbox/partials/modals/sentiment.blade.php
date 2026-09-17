@@ -13,7 +13,7 @@
 
             <div id="sentimentLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
 
-            <div id="sentimentContent" style="display:none">
+            <div id="sentimentContent" class="bv-step-hidden">
 
                 <div class="bv-sent-bar">
                     <i class="far fa-face-frown bv-sent-bar__icon-neg"></i>
@@ -31,7 +31,7 @@
 
             </div>
 
-            <div id="sentimentError" class="bv-cv-loading-msg" style="display:none">
+            <div id="sentimentError" class="bv-cv-loading-msg bv-step-hidden">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
 
@@ -42,11 +42,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/sentiment.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/sentiment.js')) }}" defer></script>
-@endpush
-@endonce

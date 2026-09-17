@@ -24,7 +24,7 @@
             </div>
 
             <div id="ordersListLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
-            <div id="ordersListContent" style="display:none;flex-direction:column;gap:7px"></div>
+            <div id="ordersListContent" class="bv-step-hidden bv-orders-list-content"></div>
 
         </div>
         <div class="bv-modal-foot">
@@ -33,11 +33,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/orders-list.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/orders-list.js')) }}" defer></script>
-@endpush
-@endonce

@@ -12,7 +12,7 @@
         <div class="bv-modal-body">
 
             {{-- Contexto --}}
-            <div class="bv-info-table" id="reminderContext" style="display:none">
+            <div class="bv-info-table bv-step-hidden" id="reminderContext">
                 <div class="bv-info-table__row">
                     <span class="bv-info-table__k">{{ __('helpdesk::helpdesk.inbox.modals.context_card_customer') }}</span>
                     <span class="bv-info-table__v" id="reminderCustomerName">—</span>
@@ -51,7 +51,7 @@
             </div>
 
             {{-- Custom date picker (hidden by default) --}}
-            <div id="reminderCustomPanel" style="display:none">
+            <div id="reminderCustomPanel" class="bv-step-hidden">
                 <div class="bv-frow">
                     <div class="bv-form-field">
                         <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.date') }}</label>
@@ -81,11 +81,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/reminder.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/reminder.js')) }}" defer></script>
-@endpush
-@endonce

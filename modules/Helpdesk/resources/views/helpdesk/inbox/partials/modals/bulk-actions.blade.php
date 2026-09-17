@@ -58,7 +58,7 @@
             </div>
 
             {{-- Sub-panel condicional por acción --}}
-            <div id="bulkSubPanel" class="d-none" style="margin-top:14px">
+            <div id="bulkSubPanel" class="d-none bv-mt-14">
 
                 {{-- Assign sub-panel --}}
                 <div id="bulkSubAssign" class="bv-bulk-sub d-none">
@@ -147,11 +147,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/bulk-actions.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/bulk-actions.js')) }}" defer></script>
-@endpush
-@endonce

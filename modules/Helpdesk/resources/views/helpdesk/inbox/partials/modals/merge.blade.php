@@ -59,18 +59,16 @@
 
             {{-- Merge preview --}}
             <div class="bv-right-section-title bv-mt-16 bv-mb-8">{{ __('helpdesk::helpdesk.inbox.modals.merge_preview_title') }}</div>
+            {{-- Las burbujas se rellenan en JS (merge.js) con los últimos
+                 mensajes reales de cada conversación — antes quedaban fijas
+                 con texto de muestra sin relación con lo que se iba a
+                 fusionar (acción irreversible). --}}
             <div class="bv-merge-preview-grid">
                 <div class="bv-merge-conv-panel">
                     <div class="bv-merge-panel-label">{{ __('helpdesk::helpdesk.inbox.modals.merge_current_conversation') }}</div>
-                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_1') }}</div>
-                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_2') }}</div>
-                    <div class="bv-bubble bv-merge-bubble-last">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_3') }}</div>
                 </div>
                 <div class="bv-merge-conv-panel">
                     <div class="bv-merge-panel-label">{{ __('helpdesk::helpdesk.inbox.modals.merge_target_conversation') }}</div>
-                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_1') }}</div>
-                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_2') }}</div>
-                    <div class="bv-bubble bv-merge-bubble-last">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_3') }}</div>
                 </div>
             </div>
 
@@ -81,11 +79,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/merge.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/merge.js')) }}" defer></script>
-@endpush
-@endonce

@@ -46,7 +46,7 @@
                 </div>
             </div>
 
-            <div class="bv-minfo bv-minfo--success" id="resolveEmailHint" style="display:none">
+            <div class="bv-minfo bv-minfo--success bv-step-hidden" id="resolveEmailHint">
                 <i class="fas fa-paper-plane"></i>
                 <div>{{ __('helpdesk::helpdesk.inbox.modals.resolve_email_hint') }} <b id="resolveEmailAddr"></b>.</div>
             </div>
@@ -59,11 +59,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/resolve.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/resolve.js')) }}" defer></script>
-@endpush
-@endonce

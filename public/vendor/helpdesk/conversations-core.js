@@ -105,10 +105,39 @@
             return $d;
         }
 
+        // Carga diferida de scripts de modal (auditoría 17-sep-2026): la mayoría de los
+        // ~65 modales del inbox no se abren en la mayor parte de las sesiones, pero antes
+        // se descargaban SIEMPRE en cada carga de página. window.BvLazyModalScripts (mapa
+        // nombre → URL con su filemtime, generado en modals.blade.php) sólo cubre esos
+        // modales; los de uso frecuente (status/priority/filter/edit-contact/shortcuts) y
+        // los que abren su script fuera del flujo openModal (command-palette, email-viewer,
+        // _commerce-js) siguen cargando su <script> de forma síncrona, sin entrar aquí.
+        const loadedModalScripts = window.BvLoadedModalScripts || new Set();
+        window.BvLoadedModalScripts = loadedModalScripts;
+
+        function ensureModalScript(name, onReady) {
+            const src = (window.BvLazyModalScripts || {})[name];
+            if (!src || loadedModalScripts.has(name)) {
+                onReady();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.defer = true;
+            script.onload = script.onerror = function () {
+                // Se marca como cargado incluso si falla (onerror) para no reintentar
+                // la descarga en cada apertura y dejar el modal inutilizable en bucle.
+                loadedModalScripts.add(name);
+                onReady();
+            };
+            document.head.appendChild(script);
+        }
+
         function openModal(name) {
             const $modal = $(`[data-bv-modal-name="${name}"]`);
-            if ($modal.length) {
-                lastFocusedBeforeModal = document.activeElement;
+            if (!$modal.length) { return; }
+            lastFocusedBeforeModal = document.activeElement;
+            ensureModalScript(name, function () {
                 const $dialog = applyModalA11y($modal, name);
                 $modal.addClass('on');
                 $('body').css('overflow', 'hidden');
@@ -116,7 +145,7 @@
                 // UI-04: mover el foco dentro del diálogo (focus-trap).
                 if (!$dialog.attr('tabindex')) { $dialog.attr('tabindex', '-1'); }
                 $dialog.trigger('focus');
-            }
+            });
         }
 
         function closeModal($modal) {

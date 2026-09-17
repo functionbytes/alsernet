@@ -15,7 +15,7 @@
                 <i class="fas fa-spinner fa-spin"></i>
             </div>
 
-            <div id="aiSuggestContent" style="display:none">
+            <div id="aiSuggestContent" class="bv-step-hidden">
                 <div class="bv-quote-block" id="aiSuggestOriginalMsg"></div>
 
                 <div class="bv-form-label bv-x10" id="aiSuggestCountLabel"></div>
@@ -31,7 +31,7 @@
                 </div>
             </div>
 
-            <div id="aiSuggestError" class="bv-cv-loading-msg" style="display:none">
+            <div id="aiSuggestError" class="bv-cv-loading-msg bv-step-hidden">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
 
@@ -43,11 +43,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/ai-suggest.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/ai-suggest.js')) }}" defer></script>
-@endpush
-@endonce

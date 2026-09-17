@@ -13,7 +13,7 @@
 
             <div id="rolePermsLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
 
-            <div id="rolePermsContent" style="display:none">
+            <div id="rolePermsContent" class="bv-step-hidden">
                 <table class="bv-perm-matrix" id="rolePermsTable">
                     <thead>
                         <tr>
@@ -41,11 +41,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/role-perms.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/role-perms.js')) }}" defer></script>
-@endpush
-@endonce

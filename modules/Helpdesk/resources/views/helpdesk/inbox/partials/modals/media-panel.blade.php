@@ -34,7 +34,7 @@
             </div>
 
             <div id="mediaPanelLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
-            <div id="mediaPanelGrid" class="bv-media-grid" style="display:none"></div>
+            <div id="mediaPanelGrid" class="bv-media-grid bv-step-hidden"></div>
 
         </div>
         <div class="bv-modal-foot">
@@ -43,11 +43,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/media-panel.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/media-panel.js')) }}" defer></script>
-@endpush
-@endonce
