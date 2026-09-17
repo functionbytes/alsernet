@@ -377,7 +377,13 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('vendor/helpdesk/conversations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.js')) }}" defer></script>
+    {{-- conversations.js (7.138 líneas) se dividió por responsabilidad para que sea más
+         mantenible; el orden de carga no es crítico (todo se registra vía delegación de
+         eventos), pero conversations-core.js debe ir primero porque expone en window los
+         helpers que usan los demás (openModal, escapeHtml, refreshInboxList, ...). --}}
+    @foreach (['core', 'list', 'thread', 'panel', 'extras'] as $bvInboxJsPart)
+        <script src="{{ asset('vendor/helpdesk/conversations-' . $bvInboxJsPart . '.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-' . $bvInboxJsPart . '.js')) }}" defer></script>
+    @endforeach
 
     {{-- Listener global de la bandeja: nuevas conversaciones / nuevos mensajes --}}
     <script>
@@ -430,6 +436,13 @@
                 $.get(url, Object.fromEntries(currentParams)).done(function (resp) {
                     if (resp && typeof resp.html === 'string') {
                         $list.replaceWith(resp.html);
+                    }
+                    if (resp && resp.counts) {
+                        ['total', 'unread', 'mine', 'urgent'].forEach(function (k) {
+                            if (resp.counts[k] !== undefined) {
+                                $('[data-counter="' + k + '"]').text(resp.counts[k]);
+                            }
+                        });
                     }
                 }).fail(function (xhr) {
                     console.error('[Inbox] List refresh failed:', xhr.status);
@@ -499,18 +512,31 @@
             function patchConvItem($item, conv, msg, isViewing) {
                 const preview = (msg.body || '').slice(0, 100);
                 if (preview) {
-                    $item.find('.bv-conv-preview, .bv-conv-last-msg').first().text(preview);
+                    $item.find('.row2 .preview').first().text(preview);
                 }
 
-                $item.find('.bv-conv-time').first().text('ahora');
+                $item.find('.row1 .time').first().text('ahora');
 
                 if (!isViewing && msg.is_incoming) {
-                    const $badge = $item.find('.bv-conv-unread');
+                    const wasUnread = $item.hasClass('unread');
+                    $item.addClass('unread');
+                    const $badge = $item.find('.bv-ucount');
                     if ($badge.length) {
-                        const n = parseInt($badge.text() || '0', 10);
-                        $badge.text(n + 1).removeClass('d-none').show();
+                        const n = parseInt($badge.text(), 10) || 0;
+                        $badge.text(n >= 9 ? '9+' : n + 1);
                     } else {
-                        $item.addClass('unread');
+                        $item.find('.row2 .meta').first().append('<span class="bv-ucount">1</span>');
+                    }
+
+                    // patchConvItem existe justamente para no hacer un AJAX por
+                    // cada mensaje entrante (este canal recibe eventos de todas
+                    // las conversaciones de las bandejas del agente). El
+                    // contador "No leídos" del sidebar se actualiza aquí mismo,
+                    // en vez de esperar al próximo refreshConversationList.
+                    if (!wasUnread) {
+                        const $counter = $('[data-counter="unread"]');
+                        const cur = parseInt($counter.text(), 10) || 0;
+                        $counter.text(cur + 1);
                     }
                 }
 
@@ -762,8 +788,14 @@
                 headers: { 'X-CSRF-TOKEN': csrf() },
             }).done(function () {
                 var $item = $('.bv-conv[data-bv-conv-id="' + convId + '"]');
+                var wasUnread = $item.hasClass('unread');
                 $item.removeClass('unread');
-                $item.find('.bv-conv-unread').remove();
+                $item.find('.bv-ucount').remove();
+                if (wasUnread) {
+                    var $counter = $('[data-counter="unread"]');
+                    var cur = parseInt($counter.text(), 10) || 0;
+                    $counter.text(Math.max(0, cur - 1));
+                }
             }).fail(function (xhr) {
                 console.warn('[Inbox] mark-read failed:', xhr.status);
             });
