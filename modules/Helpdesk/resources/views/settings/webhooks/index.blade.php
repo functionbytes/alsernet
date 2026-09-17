@@ -156,16 +156,23 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
+                                                        <a class="dropdown-item" href="{{ route('settings.helpdesk.webhooks.show', $webhook) }}">
+                                                            Historial de envíos
+                                                        </a>
+                                                    </li>
+                                                    <li>
                                                         <a class="dropdown-item" href="{{ route('settings.helpdesk.webhooks.edit', $webhook) }}">
                                                             Editar
                                                         </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
+                                                        <button class="dropdown-item delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-id="{{ $webhook->id }}"
                                                             data-url="{{ route('settings.helpdesk.webhooks.destroy', $webhook) }}"
-                                                            data-name="{{ $webhook->name }}">
+                                                            data-title="Eliminar webhook: {{ $webhook->name }}">
                                                             Eliminar
                                                         </button>
                                                     </li>
@@ -222,22 +229,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.WebhooksIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/webhooks-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/webhooks-index.js')) }}" defer></script>
 @endpush

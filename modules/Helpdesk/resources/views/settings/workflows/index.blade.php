@@ -164,10 +164,12 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
+                                                        <button class="dropdown-item delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-id="{{ $workflow->id }}"
                                                             data-url="{{ route('settings.helpdesk.workflows.destroy', $workflow) }}"
-                                                            data-name="{{ $workflow->name }}">
+                                                            data-title="Eliminar workflow: {{ $workflow->name }}">
                                                             Eliminar
                                                         </button>
                                                     </li>
@@ -232,29 +234,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    $(document).on('click', '.btn-toggle', function () {
-        const url = $(this).data('url');
-        $('#toggleForm').attr('action', url).submit();
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.WorkflowsIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/workflows-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/workflows-index.js')) }}" defer></script>
 @endpush

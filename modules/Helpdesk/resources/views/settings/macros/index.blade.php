@@ -195,10 +195,12 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
+                                                        <button class="dropdown-item delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-id="{{ $macro->id }}"
                                                             data-url="{{ route('settings.helpdesk.macros.destroy', $macro) }}"
-                                                            data-name="{{ $macro->name }}">
+                                                            data-title="Eliminar macro: {{ $macro->name }}">
                                                             Eliminar
                                                         </button>
                                                     </li>
@@ -328,74 +330,16 @@
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // Filter modal
-    $('.select2-filter-modal').select2({ dropdownParent: $('#macros-filter-modal'), width: '100%' });
-
-    $('#macros-filter-apply-btn').on('click', function () {
-        $('#filter-visibility').val($('#modal-visibility').val());
-        $('#filter-status').val($('#modal-status').val());
-        $('#macros-filter-modal').modal('hide');
-        $('#macros-filter-form').submit();
-    });
-
-    $('#macros-filter-clear-btn').on('click', function () {
-        $('#modal-visibility, #modal-status').val(null).trigger('change');
-    });
-
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos un macro.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' macro(s) seleccionados?')) { return; }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-        $.ajax({
-            url: '{{ route("settings.helpdesk.macros.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
-    });
-});
+@php
+    $hdMacrosConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error'),
+    'bulkUrl' => route('settings.helpdesk.macros.bulk-action')
+];
+@endphp
+window.HdMacrosConfig = @json($hdMacrosConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/macros-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/macros-index.js')) }}" defer></script>
 @endpush
