@@ -802,12 +802,12 @@
                         <p class="small mb-0">Cargando vista previa…</p>
                     </div>
                 </div>
-                <div class="modal-footer border-top px-4 py-3 gap-2">
-                    <a href="#" id="preview-detail-link" class="btn btn-outline-secondary flex-grow-1" target="_blank">
-                        <i class="fas fa-up-right-from-square me-1"></i> Ver detalle
+                <div class="modal-footer border-top px-4 py-3 gap-2 flex-column">
+                    <a href="#" id="preview-detail-link" class="btn btn-secondary w-100" target="_blank">
+                        Ver detalle
                     </a>
-                    <a href="#" id="preview-chat-link" class="btn btn-primary flex-grow-1" target="_blank">
-                        <i class="fas fa-comments me-1"></i> Chat IA
+                    <a href="#" id="preview-chat-link" class="btn btn-primary w-100" target="_blank">
+                        Chat IA
                     </a>
                 </div>
             </div>
