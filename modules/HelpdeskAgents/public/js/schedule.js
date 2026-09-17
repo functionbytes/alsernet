@@ -20,7 +20,7 @@
         $('.form-select').select2({ width: '100%' });
 
         if (flash.success) {
-            toastr.success(flash.success, 'Exito');
+            toastr.success(flash.success, 'Éxito');
         }
         if (flash.error) {
             toastr.error(flash.error, 'Error');

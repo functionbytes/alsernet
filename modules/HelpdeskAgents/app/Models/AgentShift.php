@@ -40,10 +40,10 @@ class AgentShift extends Model
             0 => 'Domingo',
             1 => 'Lunes',
             2 => 'Martes',
-            3 => 'Miercoles',
+            3 => 'Miércoles',
             4 => 'Jueves',
             5 => 'Viernes',
-            6 => 'Sabado',
+            6 => 'Sábado',
             default => '—',
         };
     }

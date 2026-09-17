@@ -18,9 +18,9 @@ class HelpdeskAgentsOncallSeeder extends Seeder
         $durationHours = 24;
 
         OncallRotation::updateOrCreate(
-            ['name' => 'Guardia nocturna - Soporte critico'],
+            ['name' => 'Guardia nocturna - Soporte crítico'],
             [
-                'name' => 'Guardia nocturna - Soporte critico',
+                'name' => 'Guardia nocturna - Soporte crítico',
                 'user_ids' => $agentIds,
                 'shift_duration_hours' => $durationHours,
                 'started_at' => $startedAt,

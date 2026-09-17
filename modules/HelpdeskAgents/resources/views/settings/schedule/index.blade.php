@@ -66,10 +66,10 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Dia de la semana <span class="text-brand">*</span></label>
+                                        <label class="form-label">Día de la semana <span class="text-brand">*</span></label>
                                         <select name="day_of_week" class="form-select @error('day_of_week') is-invalid @enderror" required>
-                                            <option value="">Seleccionar dia...</option>
-                                            @foreach([0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miercoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sabado'] as $num => $label)
+                                            <option value="">Seleccionar día...</option>
+                                            @foreach([0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado'] as $num => $label)
                                                 <option value="{{ $num }}" {{ old('day_of_week') == $num ? 'selected' : '' }}>{{ $label }}</option>
                                             @endforeach
                                         </select>
@@ -126,7 +126,7 @@
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>Agente</th>
-                                                    <th>Dia</th>
+                                                    <th>Día</th>
                                                     <th>Horario</th>
                                                     <th>Zona</th>
                                                     <th class="text-center">Acciones</th>
@@ -249,7 +249,7 @@
                                     <div class="mb-1">
                                         <label class="form-label">Motivo</label>
                                         <textarea name="reason" class="form-control" rows="2"
-                                                  placeholder="Descripcion opcional...">{{ old('reason') }}</textarea>
+                                                  placeholder="Descripción opcional...">{{ old('reason') }}</textarea>
                                     </div>
                                 </div>
                                 <div class="card-footer">
@@ -358,8 +358,8 @@
                     <div class="col-12 col-lg-4">
                         <div class="card h-100">
                             <div class="card-header border-bottom p-3">
-                                <h5 class="mb-0 fw-bold">Nueva rotacion de guardia</h5>
-                                <small class="text-muted">Configura quien esta de guardia y cuanto tiempo</small>
+                                <h5 class="mb-0 fw-bold">Nueva rotación de guardia</h5>
+                                <small class="text-muted">Configura quién está de guardia y cuánto tiempo</small>
                             </div>
                             <form action="{{ route('settings.helpdesk.schedule.oncall.store') }}" method="POST">
                                 @csrf
@@ -374,7 +374,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Agentes en rotacion <span class="text-brand">*</span></label>
+                                        <label class="form-label">Agentes en rotación <span class="text-brand">*</span></label>
                                         <select name="user_ids[]" class="form-select @error('user_ids') is-invalid @enderror" multiple size="5" required>
                                             @foreach($agents as $agent)
                                                 <option value="{{ $agent->id }}"
@@ -383,14 +383,14 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        <div class="form-text">Haz clic para agregar cada agente a la rotacion</div>
+                                        <div class="form-text">Haz clic para agregar cada agente a la rotación</div>
                                         @error('user_ids')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Duracion del turno (horas) <span class="text-brand">*</span></label>
+                                        <label class="form-label">Duración del turno (horas) <span class="text-brand">*</span></label>
                                         <input type="number" name="shift_duration_hours" class="form-control @error('shift_duration_hours') is-invalid @enderror"
                                                value="{{ old('shift_duration_hours', 24) }}" min="1" max="720" required>
                                         @error('shift_duration_hours')
@@ -399,7 +399,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Inicio de la rotacion <span class="text-brand">*</span></label>
+                                        <label class="form-label">Inicio de la rotación <span class="text-brand">*</span></label>
                                         <input type="datetime-local" name="started_at" class="form-control @error('started_at') is-invalid @enderror"
                                                value="{{ old('started_at') }}" required>
                                         @error('started_at')
@@ -421,7 +421,7 @@
                                 </div>
                                 <div class="card-footer">
                                     <button type="submit" class="btn btn-primary w-100">
-                                        Crear rotacion
+                                        Crear rotación
                                     </button>
                                 </div>
                             </form>
@@ -443,8 +443,8 @@
                                                 <tr>
                                                     <th>Nombre</th>
                                                     <th>Guardia actual</th>
-                                                    <th>Duracion (h)</th>
-                                                    <th>Proximo handoff</th>
+                                                    <th>Duración (h)</th>
+                                                    <th>Próximo handoff</th>
                                                     <th class="text-center">Estado</th>
                                                     <th class="text-center">Acciones</th>
                                                 </tr>
@@ -484,7 +484,7 @@
                                                                            data-bs-toggle="modal"
                                                                            data-bs-target="#delete-modal"
                                                                            data-url="{{ route('settings.helpdesk.schedule.oncall.destroy', $oncall->id) }}"
-                                                                           data-title="Eliminar rotacion: {{ $oncall->name }}">
+                                                                           data-title="Eliminar rotación: {{ $oncall->name }}">
                                                                             Eliminar
                                                                         </a>
                                                                     </li>
@@ -500,7 +500,7 @@
                                     <div class="text-center py-5">
                                         <i class="fas fa-bell fa-3x mb-3 text-muted opacity-50"></i>
                                         <h5 class="fw-bold mb-2">Sin rotaciones configuradas</h5>
-                                        <p class="text-muted mb-0">Usa el formulario para crear la primera rotacion</p>
+                                        <p class="text-muted mb-0">Usa el formulario para crear la primera rotación</p>
                                     </div>
                                 @endif
                             </div>
@@ -513,7 +513,9 @@
 
     </div>
 
-    @include('core::components.delete')
+    {{-- El modal #delete-modal / #delete-form ya lo pone layouts.theme en
+         cada página — incluirlo otra vez aquí duplicaba su id (mismo gotcha
+         que en managers/ai-agent/settings.blade.php). --}}
 
 @endsection
 
