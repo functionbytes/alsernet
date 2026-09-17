@@ -44,17 +44,23 @@
         $('#awayReassign').val(current).trigger('change');
     }
 
+    // Respuesta compartida de /presence/agents: puebla el <select> de
+    // reasignación Y pinta los dots de presencia en un único round-trip
+    // (antes eran dos peticiones GET separadas en la carga inicial).
+    function applyAgentsResponse(resp) {
+        _agentsList = resp.agents || [];
+        populateReassignAgents(_agentsList);
+        // Si la presencia ya se había cargado (posible carrera con loadPresence),
+        // reaplica la selección ahora que las opciones de agente ya existen.
+        if (_loaded) { fillForm(_loaded); }
+        _agentsList.forEach(function (a) { updateAgentDot(a.user_id, a.presence_state); });
+    }
+
     function loadReassignAgents() {
         $.ajax({
             url: '/panel/helpdesk/presence/agents', method: 'GET',
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf() }
-        }).done(function (resp) {
-            _agentsList = resp.agents || [];
-            populateReassignAgents(_agentsList);
-            // Si la presencia ya se había cargado (posible carrera con loadPresence),
-            // reaplica la selección ahora que las opciones de agente ya existen.
-            if (_loaded) { fillForm(_loaded); }
-        });
+        }).done(applyAgentsResponse);
     }
 
     function paintCard(state) {
@@ -205,7 +211,9 @@
                 .listen('.presence.changed', function (e) { updateAgentDot(e.user_id, e.new_state); });
         } catch (err) { /* Echo no disponible */ }
     }
-    refreshAllAgentDots();
+    // El pintado inicial de los dots lo cubre el applyAgentsResponse() de
+    // loadReassignAgents() (arriba, a los 500ms); solo el polling periódico
+    // necesita su propia petición.
     _presencePoll = setInterval(refreshAllAgentDots, 90000);
 
     // Reflejar el propio cambio de estado en los dots al instante.

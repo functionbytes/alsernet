@@ -22,6 +22,7 @@
         refreshTimer: null,
         notificationPermission: 'default', // 'granted', 'denied', or 'default'
         shownNotifications: new Set(), // Track which notifications have been shown as desktop notifications
+        initialLoadDone: false, // First loadNotifications() only marks existing unread as "seen", never plays sound/desktop notif
         retryCount: 0,
         maxRetries: 3,
         baseRetryDelay: 2000,
@@ -241,6 +242,7 @@
 
                 updateBadge(state.unreadCount);
                 renderNotifications(response.notifications);
+                state.initialLoadDone = true;
 
                 // Hide loading state
                 $('#notifications-loading').hide();
@@ -391,8 +393,13 @@
             $list.append(html);
 
             if (isUnread && !state.shownNotifications.has(notification.id)) {
-                showDesktopNotification(notification);
-                playNotificationSound();
+                // Solo sonido/notificación de escritorio a partir de la segunda
+                // carga: la primera solo registra las ya existentes como "vistas"
+                // (evita que suenen las que ya estaban sin leer al abrir la página).
+                if (state.initialLoadDone) {
+                    showDesktopNotification(notification);
+                    playNotificationSound();
+                }
                 state.shownNotifications.add(notification.id);
             }
         });
