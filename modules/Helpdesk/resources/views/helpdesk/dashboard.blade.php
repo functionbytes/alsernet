@@ -6,6 +6,10 @@
     @include('core::components.card', ['title' => 'Dashboard Helpdesk'])
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
+@endpush
+
 @section('content')
 
     {{-- Filters bar --}}
@@ -210,7 +214,7 @@
                                                     {{ $ticket->ticket_number }}
                                                 </a>
                                             </td>
-                                            <td class="text-truncate" style="max-width:200px;">
+                                            <td class="text-truncate bv-maxw-200">
                                                 {{ $ticket->subject }}
                                             </td>
                                             <td>{{ $ticket->customer?->name ?? '—' }}</td>
@@ -255,8 +259,7 @@
                             @php $isLast = $loop->last; @endphp
                             <div class="d-flex align-items-center justify-content-between {{ $isLast ? '' : 'mb-4' }}">
                                 <div class="d-flex align-items-center">
-                                    <div class="p-2 bg-primary-subtle rounded-2 d-flex align-items-center justify-content-center me-3"
-                                         style="width:36px;height:36px;">
+                                    <div class="p-2 bg-primary-subtle rounded-2 d-flex align-items-center justify-content-center me-3 bv-wh-36">
                                         <i class="fas fa-user text-primary"></i>
                                     </div>
                                     <div>
@@ -314,14 +317,14 @@
                                                     {{ $ticket->ticket_number }}
                                                 </a>
                                             </td>
-                                            <td class="text-truncate" style="max-width:200px;">
+                                            <td class="text-truncate bv-maxw-200">
                                                 {{ $ticket->subject }}
                                             </td>
                                             <td>{{ $ticket->customer?->name ?? '—' }}</td>
                                             <td>
                                                 @if($ticket->status)
-                                                    <span class="badge rounded-pill"
-                                                          style="background-color: {{ $ticket->status->color ?? '#6c757d' }}">
+                                                    <span class="badge rounded-pill bv-badge-dyn"
+                                                          style="--bv-badge-color: {{ $ticket->status->color ?? '#6c757d' }}">
                                                         {{ $ticket->status->name }}
                                                     </span>
                                                 @else

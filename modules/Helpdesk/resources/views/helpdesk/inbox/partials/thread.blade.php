@@ -152,6 +152,9 @@
                     @can('helpdesk.manage')
                         <button data-bv-modal="auto-assign"><i class="fas fa-shuffle"></i>{{ __('helpdesk::helpdesk.inbox.thread.auto_assignment') }}</button>
                     @endcan
+                    @can("roles.permissions.view")
+                        <button data-bv-modal="role-perms"><i class="fas fa-shield-halved"></i>{{ __('helpdesk::helpdesk.inbox.thread.role_permissions') }}</button>
+                    @endcan
                     @if(helpdesk_helpcenter_enabled())
                         <button data-bv-modal="help-center"><i class="far fa-circle-question"></i>{{ __('helpdesk::helpdesk.inbox.thread.help_center') }}</button>
                     @endif
@@ -592,7 +595,7 @@
                 <i class="fas fa-lock bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.internal_note') }}
             </button>
             @endif
-            @if(helpdesk_feature_enabled('composer_hsm'))
+            @if(helpdesk_feature_enabled('composer_hsm') && $convo?->channel === 'whatsapp')
             <button class="bv-composer-tab" data-bv-tab="hsm">
                 <i class="fas fa-rectangle-list bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}
             </button>
@@ -605,7 +608,7 @@
 
         {{-- Área de texto --}}
         <div class="bv-composer-box" id="bv-composer-box">
-            <textarea class="bv-composer-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_placeholder') }}" rows="2" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.composer_aria_label') }}"></textarea>
+            <textarea class="bv-composer-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_placeholder') }}" data-bv-note-placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_note_placeholder') }}" rows="2" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.composer_aria_label') }}"></textarea>
             <div class="bv-composer-toolbar">
                 {{-- Adjuntar con menú --}}
                 @if(helpdesk_feature_enabled('composer_attach'))

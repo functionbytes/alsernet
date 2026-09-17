@@ -16,6 +16,7 @@ class ConversationMessageService
     public function __construct(
         private OutboundMessageService $outbound,
         private MentionParser $mentionParser,
+        private AttachmentSecurityService $attachmentSecurity,
     ) {}
 
     /**
@@ -148,6 +149,7 @@ class ConversationMessageService
                 continue;
             }
 
+            $this->attachmentSecurity->assertSafe($file);
             $path = $file->store('helpdesk/attachments', 'public');
             $mime = $file->getMimeType() ?? 'application/octet-stream';
             $urls[] = [

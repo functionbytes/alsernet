@@ -34,9 +34,12 @@ use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\RemindersController;
 use Modules\Helpdesk\Http\Controllers\Managers\RightPanelTabController;
+use Modules\Helpdesk\Http\Controllers\Managers\RolePermissionsController;
 use Modules\Helpdesk\Http\Controllers\Managers\SearchController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlaConfigController;
 use Modules\Helpdesk\Http\Controllers\Managers\SlaBreachesReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\SuggestedArticlesController;
+use Modules\Helpdesk\Http\Controllers\Managers\SupervisorReviewController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\WebRtcAgentController;
 
@@ -146,6 +149,18 @@ Route::group(['prefix' => ''], function () {
     Route::get('/auto-assignment', [AutoAssignmentController::class, 'show'])->name('manager.helpdesk.auto-assignment.show');
     Route::put('/auto-assignment', [AutoAssignmentController::class, 'update'])->name('manager.helpdesk.auto-assignment.update');
 
+    // Adaptador del modal "sla-config" (#76 ve-sla-config) hacia las políticas
+    // SLA reales — ver SlaConfigController para el porqué. POST en vez de PUT
+    // real: ver reference_put_ajax_405_docker.
+    Route::get('/settings/sla', [SlaConfigController::class, 'show'])->name('manager.helpdesk.settings.sla.show');
+    Route::post('/settings/sla', [SlaConfigController::class, 'update'])->name('manager.helpdesk.settings.sla.update');
+
+    // Matriz reducida de permisos por rol (#75 ve-role-perms). POST en vez de
+    // PUT real: ver reference_put_ajax_405_docker — PUT vía AJAX da 405 aquí.
+    Route::get('/roles', [RolePermissionsController::class, 'index'])->name('manager.helpdesk.roles.index');
+    Route::get('/roles/{role}/permissions', [RolePermissionsController::class, 'show'])->name('manager.helpdesk.roles.permissions.show');
+    Route::post('/roles/{role}/permissions', [RolePermissionsController::class, 'update'])->name('manager.helpdesk.roles.permissions.update');
+
     // Banco de pruebas omnicanal (simulador de canales + contexto PrestaShop/gestion)
     Route::get('/simulator', [HelpdeskSimulatorController::class, 'index'])->name('manager.helpdesk.simulator.index');
     Route::get('/simulator/customers', [HelpdeskSimulatorController::class, 'searchCustomers'])->middleware('throttle:60,1')->name('manager.helpdesk.simulator.customers');
@@ -197,6 +212,7 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/attachments/forward', [ConversationAttachmentsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
     Route::post('/conversations/{conversation}/contact', [ConversationAttachmentsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
     Route::post('/conversations/{conversation}/location', [ConversationAttachmentsController::class, 'storeLocation'])->name('manager.helpdesk.conversations.location.store');
+    Route::post('/conversations/{conversation}/supervisor-review', [SupervisorReviewController::class, 'store'])->name('manager.helpdesk.conversations.supervisor-review.store');
     Route::get('/conversations/{conversation}/email-templates/preview', [ConversationEmailController::class, 'previewEmailTemplate'])
         ->middleware('throttle:30,1')
         ->name('manager.helpdesk.conversations.email-templates.preview');
@@ -223,6 +239,9 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/{conversation}/right-panel/activity', [RightPanelTabController::class, 'activity'])
         ->middleware('throttle:120,1')
         ->name('manager.helpdesk.conversations.right-panel.activity');
+    Route::get('/conversations/{conversation}/right-panel/customer-360', [RightPanelTabController::class, 'customer360'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.right-panel.customer-360');
     Route::get('/conversations/{conversation}/viewer-items', [HelpdeskConversationsController::class, 'conversationViewerItems'])
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:60,1'])
         ->name('manager.helpdesk.conversations.viewer-items');

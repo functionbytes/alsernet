@@ -81,13 +81,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.btn-copy-token').on('click', function () {
-        const token = $(this).closest('.input-group').find('input').val();
-        navigator.clipboard.writeText(token).then(function () {
-        });
-    });
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/brand-edit.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/brand-edit.js')) }}" defer></script>
 @endpush

@@ -204,13 +204,16 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Guardado');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+@php
+    $hdIntegrationsConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error'),
+    'flashSuccessTitle' => 'Guardado'
+];
+@endphp
+window.HdIntegrationsConfig = @json($hdIntegrationsConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/integrations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/integrations.js')) }}" defer></script>
 @endpush

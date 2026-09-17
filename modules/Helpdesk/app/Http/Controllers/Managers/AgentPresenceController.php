@@ -134,10 +134,21 @@ class AgentPresenceController extends Controller
     /**
      * GET /panel/helpdesk/presence/agents
      * List all agents with their presence state.
+     *
+     * Exigía solo 'helpdesk.conversations.view' — desde que el panel de
+     * Tickets (HelpdeskTickets, módulo hermano) también lo llama para el
+     * contador "N agentes en línea" del pie de pantalla (14-sep-2026), eso
+     * dejaba fuera al rol helpdesk-manager: tiene 'helpdesk.tickets.view'
+     * pero no 'helpdesk.conversations.view' (verificado con Spatie, hoy sin
+     * ningún usuario real con ese rol — pero el hueco es real en cuanto se
+     * asigne a alguien). "Quién está en línea" no es un dato propio de
+     * Conversaciones; cualquiera de los dos permisos basta.
      */
     public function list(Request $request): JsonResponse
     {
-        $this->authorize('helpdesk.conversations.view');
+        if (! $request->user()->can('helpdesk.conversations.view') && ! $request->user()->can('helpdesk.tickets.view')) {
+            abort(403);
+        }
 
         $agents = $this->presenceService->getAgentsList(
             $request->integer('inbox_id') ?: null

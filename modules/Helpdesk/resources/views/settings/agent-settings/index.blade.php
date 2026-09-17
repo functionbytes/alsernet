@@ -306,65 +306,11 @@
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // Filter modal
-    $('.select2-filter-modal').select2({ dropdownParent: $('#agent-settings-filter-modal'), width: '100%' });
-
-    $('#agent-settings-filter-apply-btn').on('click', function () {
-        $('#filter-available').val($('#modal-available').val());
-        $('#agent-settings-filter-modal').modal('hide');
-        $('#agent-settings-filter-form').submit();
-    });
-
-    $('#agent-settings-filter-clear-btn').on('click', function () {
-        $('#modal-available').val(null).trigger('change');
-    });
-
-    // Bulk actions
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos un agente.'); return; }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-        $.ajax({
-            url: '{{ route("settings.helpdesk.agent-settings.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
-    });
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
+window.HdAgentSettingsIndexConfig = {
+    bulkUrl: '{{ route('settings.helpdesk.agent-settings.bulk-action') }}',
+};
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/agent-settings-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/agent-settings-index.js')) }}" defer></script>
 @endpush

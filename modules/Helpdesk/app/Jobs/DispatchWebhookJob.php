@@ -25,7 +25,7 @@ class DispatchWebhookJob implements ShouldQueue
         private readonly string $event,
         private readonly array $payload,
     ) {
-        $this->onQueue('webhooks');
+        $this->onQueue(config('helpdesk.queue.webhooks', 'helpdesk-webhooks'));
     }
 
     public function handle(): void
@@ -82,8 +82,6 @@ class DispatchWebhookJob implements ShouldQueue
                 $webhook->increment('success_count');
                 $webhook->update(['last_triggered_at' => now(), 'last_error' => null]);
             } else {
-                $webhook->increment('failure_count');
-                $webhook->update(['last_error' => 'HTTP '.$response->status()]);
                 throw new \RuntimeException("HTTP {$response->status()}");
             }
         } catch (\Throwable $e) {

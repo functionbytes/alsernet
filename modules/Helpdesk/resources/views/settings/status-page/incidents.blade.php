@@ -190,18 +190,15 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
+@php
+    $hdStatusIncidentsConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error')
+];
+@endphp
+window.HdStatusIncidentsConfig = @json($hdStatusIncidentsConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/status-incidents-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/status-incidents-index.js')) }}" defer></script>
 @endpush

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationTag;
+use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Services\AgentPresenceService;
 
@@ -200,6 +201,38 @@ class ConversationInboxMetricsService
 
                 return $inboxList->each(
                     fn (Inbox $inbox) => $inbox->setAttribute('conversations_count', (int) ($counts[$inbox->id] ?? 0))
+                );
+            }
+        );
+    }
+
+    /**
+     * Contador de conversaciones por equipo para la sección "EQUIPOS" del
+     * sidebar — mismo criterio y mismo patrón de GROUP BY único que
+     * sidebarInboxes(), que hasta ahora era el único que lo aplicaba
+     * (Group::orderBy('name')->get() en index() nunca traía el conteo).
+     *
+     * @return Collection<int, Group>
+     */
+    public function sidebarGroups(): Collection
+    {
+        return cache()->remember(
+            'helpdesk:inbox:sidebar-groups',
+            60,
+            function () {
+                $groups = Group::orderBy('name')->get();
+
+                $counts = Conversation::query()
+                    ->whereIn('group_id', $groups->pluck('id'))
+                    ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                    ->where('is_archived', false)
+                    ->withoutActiveBot()
+                    ->selectRaw('group_id, COUNT(*) as cnt')
+                    ->groupBy('group_id')
+                    ->pluck('cnt', 'group_id');
+
+                return $groups->each(
+                    fn (Group $group) => $group->setAttribute('conversations_count', (int) ($counts[$group->id] ?? 0))
                 );
             }
         );

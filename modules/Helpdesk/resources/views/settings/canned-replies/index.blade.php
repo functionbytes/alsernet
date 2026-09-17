@@ -191,12 +191,13 @@
                                                     @can('helpdesk.canned-replies.delete')
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li>
-                                                            <button class="dropdown-item btn-delete"
-                                                                data-id="{{ $cannedReply->id }}"
+                                                            <a class="dropdown-item delete-btn" href="#"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#delete-modal"
                                                                 data-url="{{ route('settings.helpdesk.canned-replies.destroy', $cannedReply) }}"
-                                                                data-name="{{ $cannedReply->title }}">
+                                                                data-title="Eliminar respuesta predefinida: {{ $cannedReply->title }}">
                                                                 Eliminar
-                                                            </button>
+                                                            </a>
                                                         </li>
                                                     @endcan
                                                 </ul>
@@ -327,82 +328,13 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // ── Filter modal ─────────────────────────────────────────────────
-    $('.select2-filter-modal').select2({ dropdownParent: $('#canned-replies-filter-modal'), width: '100%' });
-
-    $('#canned-replies-filter-apply-btn').on('click', function () {
-        $('#filter-category').val($('#modal-category').val());
-        $('#filter-scope').val($('#modal-scope').val());
-        $('#canned-replies-filter-modal').modal('hide');
-        $('#canned-replies-filter-form').submit();
-    });
-
-    $('#canned-replies-filter-clear-btn').on('click', function () {
-        $('#modal-category, #modal-scope').val(null).trigger('change');
-    });
-
-    // ── Bulk actions ──────────────────────────────────────────────────
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una respuesta.'); return; }
-
-        const applyBulkAction = function () {
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('settings.helpdesk.canned-replies.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar la acción.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        };
-
-        if (action === 'delete') {
-            window.__confirm('¿Eliminar ' + ids.length + ' respuesta(s) predefinida(s)? Esta acción no se puede deshacer.', applyBulkAction);
-        } else {
-            applyBulkAction();
-        }
-    });
-});
+window.HdCannedRepliesConfig = {
+    flashSuccess: @json(session('success')),
+    flashError: @json(session('error')),
+    bulkUrl: @json(route('settings.helpdesk.canned-replies.bulk-action')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/canned-replies-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/canned-replies-index.js')) }}" defer></script>
 @endpush

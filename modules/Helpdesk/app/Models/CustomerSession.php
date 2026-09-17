@@ -16,13 +16,13 @@ class CustomerSession extends Model
 
     protected $fillable = [
         'customer_id',
+        'session_id',
         'ip_address',
         'user_agent',
         'country',
         'city',
         'latitude',
         'longitude',
-        'session_token',
         'last_activity_at',
     ];
 
@@ -98,8 +98,9 @@ class CustomerSession extends Model
     /**
      * Check if session is still active (less than 30 minutes old)
      */
-    public function isActive()
+    public function isActive(): bool
     {
-        return $this->last_activity_at && $this->last_activity_at->diffInMinutes(now()) < 30;
+        return (bool) $this->last_activity_at
+            && $this->last_activity_at->diffInMinutes(now()) < (int) config('helpdesk.portal.session_idle_minutes', 120);
     }
 }

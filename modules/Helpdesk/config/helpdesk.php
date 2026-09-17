@@ -138,8 +138,8 @@ return [
     ],
 
     'attachments' => [
-        'max_size' => 10240,
-        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'],
+        'max_size' => 25 * 1024,
+        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'zip'],
         'allowed_mime_types' => [
             'image/jpeg',
             'image/png',
@@ -160,6 +160,15 @@ return [
         'path' => 'helpdesk/attachments',
         // Tope de tamaño al descargar media entrante (anti-OOM del worker). 25 MB.
         'max_download_bytes' => (int) env('HELPDESK_ATTACHMENTS_MAX_DOWNLOAD_BYTES', 26214400),
+        // Escaneo síncrono antes de persistir subidas del panel/portal. Se
+        // mantiene apagado por defecto para no bloquear instalaciones que no
+        // tengan ClamAV; cuando se activa, la ausencia del binario bloquea la
+        // subida (fail closed).
+        'virus_scan' => [
+            'enabled' => env('HELPDESK_TICKETS_VIRUS_SCAN_ENABLED', false),
+            'clamscan_path' => env('HELPDESK_TICKETS_CLAMSCAN_PATH', 'clamscan'),
+            'timeout' => (int) env('HELPDESK_TICKETS_VIRUS_SCAN_TIMEOUT', 300),
+        ],
     ],
 
     'cleanup' => [
@@ -193,6 +202,9 @@ return [
         'enabled' => env('HELPDESK_PORTAL_ENABLED', true),
         'token_expiry_hours' => env('HELPDESK_PORTAL_TOKEN_EXPIRY', 24),
         'max_tickets_per_page' => env('HELPDESK_PORTAL_PAGE_SIZE', 10),
+        // Idle timeout for the session created by the customer magic link.
+        // The timestamp is refreshed by PortalAuth on every protected request.
+        'session_idle_minutes' => env('HELPDESK_PORTAL_SESSION_IDLE_MINUTES', 120),
     ],
 
     'imap' => [

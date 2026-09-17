@@ -77,13 +77,8 @@
 
 @once
 @push('scripts')
-<script>
-(function ($) {
-    'use strict';
-    $(document).on('click', '#bv-sc-print', function () {
-        window.print();
-    });
-}(window.jQuery));
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/shortcuts.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/shortcuts.js')) }}" defer></script>
 @endpush
 @endonce

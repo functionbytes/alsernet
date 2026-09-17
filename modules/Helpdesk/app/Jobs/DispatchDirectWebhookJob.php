@@ -28,7 +28,7 @@ class DispatchDirectWebhookJob implements ShouldQueue
         private readonly string $url,
         private readonly array $payload,
     ) {
-        $this->onQueue('webhooks');
+        $this->onQueue(config('helpdesk.queue.webhooks', 'helpdesk-webhooks'));
     }
 
     public function handle(): void

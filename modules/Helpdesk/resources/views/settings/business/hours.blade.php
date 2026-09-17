@@ -153,37 +153,12 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    function toggleDayInputs(day, isOpen) {
-        var $row = $('[data-day="' + day + '"]').closest('tr');
-        $row.find('.time-input').prop('disabled', !isOpen);
-
-        if (isOpen) {
-            $row.removeClass('bh-row-closed');
-        } else {
-            $row.addClass('bh-row-closed');
-        }
-    }
-
-    // Initialize state on load
-    $('.day-toggle').each(function () {
-        toggleDayInputs($(this).data('day'), $(this).is(':checked'));
-    });
-
-    // Toggle on change
-    $(document).on('change', '.day-toggle', function () {
-        toggleDayInputs($(this).data('day'), $(this).is(':checked'));
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdBusinessHoursConfig = {
+    flashSuccess: @json(session('success')),
+    flashError: @json(session('error')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/business-hours.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/business-hours.js')) }}" defer></script>
 @endpush

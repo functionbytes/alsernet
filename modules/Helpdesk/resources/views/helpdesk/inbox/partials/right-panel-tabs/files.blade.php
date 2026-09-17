@@ -88,8 +88,8 @@
             @foreach($rpTypeColors as $t => $color)
                 @if($rpFileSizes[$t] > 0)
                     @php $pct = ($rpFileSizes[$t] / $rpFileSizes['all']) * 100; @endphp
-                    <div class="seg {{ $t }}"
-                         style="width:{{ round($pct, 2) }}%;background:{{ $color }};"
+                    <div class="seg {{ $t }} bv-seg-dyn"
+                         style="--bv-seg-pct: {{ round($pct, 2) }}%; --bv-seg-color: {{ $color }};"
                          data-tooltip="{{ $rpTypeLabels[$t] }}: {{ $rpFileCounts[$t] }} · {{ $rpFormatSize($rpFileSizes[$t]) }}"
                          aria-label="{{ $rpTypeLabels[$t] }}: {{ $rpFileCounts[$t] }} · {{ $rpFormatSize($rpFileSizes[$t]) }}"></div>
                 @endif
@@ -99,7 +99,7 @@
             @foreach($rpTypeColors as $t => $color)
                 @if($rpFileCounts[$t] > 0)
                     <span class="item">
-                        <span class="d {{ $t }}" style="background:{{ $color }};"></span>
+                        <span class="d {{ $t }} bv-dot-dyn" style="--bv-dot-color: {{ $color }};"></span>
                         {{ $rpTypeLabels[$t] }}
                         <strong>{{ $rpFormatSize($rpFileSizes[$t]) }}</strong>
                     </span>
@@ -193,7 +193,7 @@
                         </div>
                         <span class="bv-file-overlay"><i class="fas fa-play"></i></span>
                     @else
-                        <div class="bv-file-icon-wrap" style="color:{{ $fileMeta['color'] }};">
+                        <div class="bv-file-icon-wrap bv-icon-dyn" style="--bv-icon-color: {{ $fileMeta['color'] }};">
                             <i class="fas {{ $fileMeta['icon'] }}"></i>
                         </div>
                         <span class="bv-file-overlay"><i class="fas fa-download"></i></span>
@@ -217,7 +217,7 @@
     </div>
 
     {{-- Footer: descarga y cierre (solo visible con selección activa) --}}
-    <div class="bv-files-footer" id="bv-files-footer" style="display:none;">
+    <div class="bv-files-footer bv-step-hidden" id="bv-files-footer">
         <button type="button" class="bv-files-dl-btn" id="bv-files-dl-btn">
             {{ __('helpdesk::helpdesk.inbox.right.download_selection') }}
         </button>

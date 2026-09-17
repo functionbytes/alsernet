@@ -323,21 +323,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Auto-submit search on enter
-    $('input[name="search"]').on('keypress', function(e) {
-        if (e.which === 13) {
-            $('#searchForm').submit();
-        }
-    });
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.TeamGroupsIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/team-groups-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/team-groups-index.js')) }}" defer></script>
 @endpush

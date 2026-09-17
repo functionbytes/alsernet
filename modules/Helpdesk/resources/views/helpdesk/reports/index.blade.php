@@ -6,6 +6,10 @@
     @include('core::components.card', ['title' => 'Reportes - Helpdesk'])
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
+@endpush
+
 @section('content')
 
         {{-- Page Header --}}
@@ -561,64 +565,22 @@
             'count' => (int) $row->count,
         ];
     })->values();
+
+    // Config que consume public/vendor/helpdesk/reports/index.js. Igual que
+    // arriba, se arma en PHP y se pasa a @json() como variable simple para
+    // no repetir el bug de @json([...]) multilinea con Blade.
+    $hdReportsIndexConfig = [
+        'trend' => $trend,
+        'statusChart' => $statusChartData,
+        'flashSuccess' => session('success'),
+        'flashError' => session('error'),
+    ];
 @endphp
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-    (function () {
-        const trendData = @json($trend);
-
-        new Chart(document.getElementById('chart-trend'), {
-            type: 'line',
-            data: {
-                labels: trendData.labels,
-                datasets: [{
-                    label: 'Tickets creados',
-                    data: trendData.series,
-                    borderColor: '#90bb13',
-                    backgroundColor: 'rgba(144,187,19,0.12)',
-                    tension: 0.3,
-                    fill: true,
-                }],
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            },
-        });
-
-        const statusChartEl = document.getElementById('chart-status');
-        if (statusChartEl) {
-            const statusData = @json($statusChartData);
-
-            new Chart(statusChartEl, {
-                type: 'doughnut',
-                data: {
-                    labels: statusData.map(d => d.label),
-                    datasets: [{
-                        data: statusData.map(d => d.count),
-                        backgroundColor: statusData.map(d => d.color),
-                        borderWidth: 0,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    cutout: '65%',
-                    plugins: { legend: { display: false } },
-                },
-            });
-        }
-    })();
-
-    $(document).ready(function () {
-        @if(session('success'))
-            toastr.success('{{ session('success') }}', 'Exito');
-        @endif
-        @if(session('error'))
-            toastr.error('{{ session('error') }}', 'Error');
-        @endif
-    });
-</script>
+<script>window.HdReportsIndex = @json($hdReportsIndexConfig);</script>
+{{-- JS extraido a public/vendor/helpdesk/reports/: se cachea en el navegador
+     en vez de re-descargarse en cada carga de esta página. --}}
+<script src="{{ asset('vendor/helpdesk/reports/index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/reports/index.js')) }}" defer></script>
 @endpush

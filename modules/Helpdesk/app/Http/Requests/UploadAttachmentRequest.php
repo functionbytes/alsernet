@@ -3,23 +3,38 @@
 namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Core\Rules\ValidMimeMagicBytes;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 
 class UploadAttachmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manager.helpdesk.conversations.update') ?? false;
+        return $this->user()?->can('helpdesk.conversations.update') ?? false;
     }
 
     public function rules(): array
     {
+        $settings = app(HelpdeskSettings::class);
+
         return [
-            'files' => ['required', 'array', 'max:5'],
+            'files' => [
+                'required',
+                'array',
+                'max:5',
+                Rule::prohibitedIf(fn () => ! filter_var(
+                    Setting::get('tickets.user_file_upload_enable', true),
+                    FILTER_VALIDATE_BOOLEAN,
+                )),
+            ],
             'files.*' => [
                 'required',
                 'file',
-                'max:16384',
-                'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,mp4,mov,mp3,ogg,wav,webm,oga',
+                'max:'.$settings->attachmentMaxKilobytes(),
+                'mimes:'.implode(',', $settings->attachmentExtensions()),
+                new ValidMimeMagicBytes($settings->attachmentMimeTypes()),
             ],
         ];
     }
@@ -31,7 +46,7 @@ class UploadAttachmentRequest extends FormRequest
             'files.max' => 'No puedes adjuntar más de 5 archivos a la vez.',
             'files.*.required' => 'El archivo es requerido.',
             'files.*.file' => 'El elemento enviado no es un archivo válido.',
-            'files.*.max' => 'Cada archivo no puede superar los 16 MB.',
+            'files.*.max' => 'Cada archivo no puede superar el límite configurado en Helpdesk.',
             'files.*.mimes' => 'Tipo de archivo no permitido.',
         ];
     }

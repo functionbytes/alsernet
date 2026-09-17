@@ -471,14 +471,15 @@
                         @endif
                     </span>
                 </div>
-                @if($rpConvo?->group)
-                <div class="rsp-kv">
+                <div class="rsp-kv rsp-kv-ctrl">
                     <span class="k">{{ __('helpdesk::helpdesk.inbox.right.team_label') }}</span>
                     <span class="v">
-                        <span class="r-tag"><i class="fa-regular fa-users"></i> {{ $rpConvo->group->name }}</span>
+                        <button type="button" class="r-tag r-tag-btn @if(!$rpConvo?->group) r-tag-muted @endif" data-bv-modal="move-to-team">
+                            {{ $rpConvo?->group?->name ?? __('helpdesk::helpdesk.inbox.right.no_team') }}
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
                     </span>
                 </div>
-                @endif
             </div>
             @endif
 

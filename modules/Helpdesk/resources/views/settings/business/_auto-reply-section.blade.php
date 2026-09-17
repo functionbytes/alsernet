@@ -354,7 +354,7 @@
                     <select id="{{ $idPrefix }}-modal-channel" class="form-control select2-filter-modal">
                         <option value="">Todos los canales</option>
                         @foreach($offHoursChannels as $value => $label)
-                            @php($opt = $value === null || $value === '' ? $ccNone : $value)
+                            @php $opt = $value === null || $value === '' ? $ccNone : $value; @endphp
                             <option value="{{ $opt }}" @selected(request('channel') === $opt)>{{ $label }}</option>
                         @endforeach
                     </select>
@@ -364,7 +364,7 @@
                     <select id="{{ $idPrefix }}-modal-language" class="form-control select2-filter-modal">
                         <option value="">Todos los idiomas</option>
                         @foreach($offHoursLanguages as $value => $label)
-                            @php($opt = $value === null || $value === '' ? $ccNone : $value)
+                            @php $opt = $value === null || $value === '' ? $ccNone : $value; @endphp
                             <option value="{{ $opt }}" @selected(request('language') === $opt)>{{ $label }}</option>
                         @endforeach
                     </select>
@@ -435,86 +435,22 @@
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
-    $(function () {
-        // width:'100%' evita el bug de select2 calculando 0px de ancho
-        // porque el <select> vive dentro de un modal oculto (display:none)
-        // al momento del init; dropdownParent evita que el desplegable
-        // quede detras del modal.
-        $('.select2').each(function () {
-            $(this).select2({
-                width: '100%',
-                minimumResultsForSearch: Infinity,
-                dropdownParent: $(this).closest('.modal'),
-            });
-        });
-
-        // Filter modal
-        $('.select2-filter-modal').select2({ dropdownParent: $('#{{ $idPrefix }}-filter-modal'), width: '100%' });
-
-        $('#{{ $idPrefix }}-filter-apply-btn').on('click', function () {
-            $('#{{ $idPrefix }}-filter-channel').val($('#{{ $idPrefix }}-modal-channel').val());
-            $('#{{ $idPrefix }}-filter-language').val($('#{{ $idPrefix }}-modal-language').val());
-            $('#{{ $idPrefix }}-filter-status').val($('#{{ $idPrefix }}-modal-status').val());
-            $('#{{ $idPrefix }}-filter-modal').modal('hide');
-            $('#{{ $idPrefix }}-filter-form').submit();
-        });
-
-        $('#{{ $idPrefix }}-filter-clear-btn').on('click', function () {
-            $('#{{ $idPrefix }}-modal-channel, #{{ $idPrefix }}-modal-language, #{{ $idPrefix }}-modal-status').val(null).trigger('change');
-        });
-
-        var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-        $('#bulk-modal').on('hide.bs.modal', function () {
-            $('#bulk-action-select').val('').trigger('change');
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            bulk.reset();
-        });
-
-        $('#bulk-apply-btn').on('click', function () {
-            var action = $('#bulk-action-select').val();
-            var ids = bulk.getIds();
-
-            if (! action) { toastr.warning('Selecciona una accion.'); return; }
-            if (! ids.length) { toastr.warning('Selecciona al menos un mensaje.'); return; }
-
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route($bulkRouteName) }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        });
-    });
+@php
+    $hdAutoReplySectionConfig = [
+    'idPrefix' => $idPrefix,
+    'bulkUrl' => route($bulkRouteName),
+    // Validacion fallida o duplicado detectado (este ultimo llega como flash
+    // 'error', no como error de formulario): reabrir el modal correspondiente
+    // — el de alta, o la edicion concreta via old('_item_id') — en vez de
+    // dejar el motivo oculto dentro de un modal cerrado.
+    'reopenModalId' => ($errors->getBag($errorBag)->isNotEmpty() || session('error'))
+        ? ($idPrefix.'-'.(old('_item_id') ? 'edit-'.old('_item_id') : 'create-modal'))
+        : null
+];
+@endphp
+window.HdAutoReplySectionConfig = @json($hdAutoReplySectionConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/auto-reply-section.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/auto-reply-section.js')) }}" defer></script>
 @endpush
-
-@if($errors->getBag($errorBag)->isNotEmpty() || session('error'))
-    {{-- Validacion fallida o duplicado detectado (este ultimo llega como
-         flash 'error', no como error de formulario): reabre el modal
-         correspondiente — el de alta, o la edicion concreta via
-         old('_item_id') — en vez de dejar el motivo oculto dentro de un
-         modal cerrado. --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var failedItemId = @json(old('_item_id'));
-            var modalId = failedItemId ? '{{ $idPrefix }}-edit-' + failedItemId : '{{ $idPrefix }}-create-modal';
-            var modalEl = document.getElementById(modalId);
-            if (modalEl) {
-                new bootstrap.Modal(modalEl).show();
-            }
-        });
-    </script>
-@endif

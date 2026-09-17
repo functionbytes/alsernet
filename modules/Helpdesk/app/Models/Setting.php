@@ -4,6 +4,8 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Services\AuditLogService;
 
 class Setting extends Model
 {
@@ -86,6 +88,68 @@ class Setting extends Model
 
         Cache::forget(self::cacheKey($key));
         self::forgetMemo($key);
+    }
+
+    /**
+     * Persist a group atomically and record the effective changes.
+     *
+     * The settings screens used to update each key independently and had no
+     * before/after trail. This helper keeps a multi-field form consistent and
+     * makes changes visible in the existing Helpdesk audit viewer. Secret-like
+     * keys are masked before they reach the audit table.
+     *
+     * @param  array<string, mixed>  $values  Bare keys or already-prefixed keys
+     */
+    public static function setMany(array $values, string $group, ?string $auditAction = 'settings.updated'): void
+    {
+        $prefix = trim($group, '.').'.';
+
+        DB::connection('helpdesk')->transaction(function () use ($values, $group, $prefix, $auditAction): void {
+            foreach ($values as $bareKey => $value) {
+                $key = str_starts_with((string) $bareKey, $prefix) || str_contains((string) $bareKey, '.')
+                    ? (string) $bareKey
+                    : $prefix.$bareKey;
+
+                $setting = static::query()->where('key', $key)->first();
+                $before = $setting?->value;
+
+                if ($setting && static::sameValue($before, $value)) {
+                    continue;
+                }
+
+                $setting = static::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => $value, 'group' => $group],
+                );
+
+                Cache::forget(self::cacheKey($key));
+                self::forgetMemo($key);
+
+                if ($auditAction !== null) {
+                    AuditLogService::record(
+                        $auditAction,
+                        $setting,
+                        ['key' => $key, 'value' => self::auditValue($key, $before)],
+                        ['key' => $key, 'value' => self::auditValue($key, $value)],
+                    );
+                }
+            }
+        });
+    }
+
+    private static function sameValue(mixed $before, mixed $after): bool
+    {
+        return json_encode($before) === json_encode($after)
+            || (string) $before === (string) $after;
+    }
+
+    private static function auditValue(string $key, mixed $value): mixed
+    {
+        if (preg_match('/password|secret|token|api[_-]?key|credential/i', $key)) {
+            return filled($value) ? '[REDACTED]' : null;
+        }
+
+        return $value;
     }
 
     private static function cacheKey(string $key): string

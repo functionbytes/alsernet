@@ -330,85 +330,11 @@
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
-$(document).ready(function () {
-    $('.hd-color-swatch[data-color]').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // ── Filtros avanzados ──────────────────────────────────────────────
-    $('.select2-filter-modal').select2({ dropdownParent: $('#brands-filter-modal'), width: '100%' });
-
-    $('#brands-filter-apply-btn').on('click', function () {
-        $('#filter-status').val($('#modal-status').val());
-        $('#brands-filter-modal').modal('hide');
-        $('#brands-filter-form').submit();
-    });
-
-    $('#brands-filter-clear-btn').on('click', function () {
-        $('#modal-status').val(null).trigger('change');
-    });
-
-    // ── Bulk actions ─────────────────────────────────────────────────
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una marca.'); return; }
-
-        const applyBulkAction = function () {
-            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('settings.helpdesk.brands.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(() => location.reload(), 800);
-                },
-                error: function (xhr) {
-                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        };
-
-        if (action === 'delete') {
-            window.__confirm('¿Eliminar ' + ids.length + ' marca(s)? Esta acción no se puede deshacer.', applyBulkAction);
-        } else {
-            applyBulkAction();
-        }
-    });
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
+window.HdBrandsIndexConfig = {
+    bulkUrl: '{{ route('settings.helpdesk.brands.bulk-action') }}',
+};
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/brands-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/brands-index.js')) }}" defer></script>
 @endpush

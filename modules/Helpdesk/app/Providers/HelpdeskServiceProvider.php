@@ -287,7 +287,7 @@ class HelpdeskServiceProvider extends ServiceProvider
     protected function registerHelpdeskSidebar(): void
     {
         NavService::registerMiniItem('helpdesk', [
-            'icon' => 'fa-duotone fa-thin fa-ticket',
+            'icon' => 'inbox',
             'tooltip' => 'Helpdesk',
             'sidebar_id' => 'helpdesk',
             'order' => 70,

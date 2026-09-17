@@ -59,7 +59,7 @@
                                 @else
                                     <span class="badge bg-secondary">Deshabilitado</span>
                                 @endif
-                                <button type="button" id="test-whatsapp" class="btn btn-sm btn-outline-success" onclick="testConnection('whatsapp')">
+                                <button type="button" id="test-whatsapp" class="btn btn-sm btn-outline-success js-test-connection" data-platform="whatsapp">
                                     Probar conexión
                                 </button>
                             </div>
@@ -82,7 +82,7 @@ WHATSAPP_APP_SECRET=your_app_secret</code></pre>
                                 <p class="small text-muted mb-2">Configura este webhook en <strong>Meta Business Suite → WhatsApp → Configuración de webhook</strong>:</p>
                                 <div class="input-group input-group-sm mb-3">
                                     <input type="text" class="form-control font-monospace" value="{{ $webhookBaseUrl }}/whatsapp" readonly id="whatsapp-webhook-url">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('whatsapp-webhook-url')" title="Copiar">
+                                    <button class="btn btn-outline-secondary js-copy-to-clipboard" type="button" data-clipboard-target="whatsapp-webhook-url" title="Copiar">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -118,7 +118,7 @@ WHATSAPP_APP_SECRET=your_app_secret</code></pre>
                                 @else
                                     <span class="badge bg-secondary">Deshabilitado</span>
                                 @endif
-                                <button type="button" id="test-facebook" class="btn btn-sm btn-outline-primary" onclick="testConnection('facebook')">
+                                <button type="button" id="test-facebook" class="btn btn-sm btn-outline-primary js-test-connection" data-platform="facebook">
                                     Probar conexión
                                 </button>
                             </div>
@@ -145,7 +145,7 @@ FACEBOOK_VERIFY_TOKEN=your_verify_token</code></pre>
                                 <p class="small text-muted mb-2">Configura este webhook en <strong>Meta for Developers → Messenger → Configuración de webhook</strong>:</p>
                                 <div class="input-group input-group-sm mb-3">
                                     <input type="text" class="form-control font-monospace" value="{{ $webhookBaseUrl }}/facebook" readonly id="facebook-webhook-url">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('facebook-webhook-url')" title="Copiar">
+                                    <button class="btn btn-outline-secondary js-copy-to-clipboard" type="button" data-clipboard-target="facebook-webhook-url" title="Copiar">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -182,7 +182,7 @@ FACEBOOK_VERIFY_TOKEN=your_verify_token</code></pre>
                                 @else
                                     <span class="badge bg-secondary">Deshabilitado</span>
                                 @endif
-                                <button type="button" id="test-instagram" class="btn btn-sm btn-outline-danger" onclick="testConnection('instagram')">
+                                <button type="button" id="test-instagram" class="btn btn-sm btn-outline-danger js-test-connection" data-platform="instagram">
                                     Probar conexión
                                 </button>
                             </div>
@@ -214,7 +214,7 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token</code></pre>
                                 <p class="small text-muted mb-2">Configura este webhook en <strong>Meta for Developers → Instagram → Configuración de webhook</strong>:</p>
                                 <div class="input-group input-group-sm mb-3">
                                     <input type="text" class="form-control font-monospace" value="{{ $webhookBaseUrl }}/instagram" readonly id="instagram-webhook-url">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('instagram-webhook-url')" title="Copiar">
+                                    <button class="btn btn-outline-secondary js-copy-to-clipboard" type="button" data-clipboard-target="instagram-webhook-url" title="Copiar">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -237,46 +237,16 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token</code></pre>
 
 @push('scripts')
 <script>
-    const socialTestRoutes = {
-        whatsapp: '{{ route('settings.helpdesk.social-integrations.test.whatsapp') }}',
-        facebook: '{{ route('settings.helpdesk.social-integrations.test.facebook') }}',
-        instagram: '{{ route('settings.helpdesk.social-integrations.test.instagram') }}',
-    };
-
-    function testConnection(platform) {
-        const btn = document.getElementById('test-' + platform);
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Probando...';
-
-        fetch(socialTestRoutes[platform], {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            },
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-            } else {
-                toastr.error(data.message);
-            }
-        })
-        .catch(() => toastr.error('Error de conexión'))
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        });
-    }
-
-    function copyToClipboard(inputId) {
-        const input = document.getElementById(inputId);
-        navigator.clipboard.writeText(input.value).then(() => {
-        }).catch(() => {
-            input.select();
-            document.execCommand('copy');
-        });
-    }
+@php
+    $hdSocialIntegrationsConfig = [
+    'testRoutes' => [
+        'whatsapp' => route('settings.helpdesk.social-integrations.test.whatsapp'),
+        'facebook' => route('settings.helpdesk.social-integrations.test.facebook'),
+        'instagram' => route('settings.helpdesk.social-integrations.test.instagram'),
+    ]
+];
+@endphp
+window.HdSocialIntegrationsConfig = @json($hdSocialIntegrationsConfig);
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/social-integrations-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/social-integrations-index.js')) }}" defer></script>
 @endpush

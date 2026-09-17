@@ -401,116 +401,12 @@
 
 @push('scripts')
 <script>
-(function () {
-    const csrf = document.querySelector('meta[name="csrf-token"]').content;
-
-    $('.form-select').select2({ width: '100%' });
-
-    // Toggle visibility smtp/imap fields
-    $('#outbound_enabled').on('change', function () {
-        $('#smtp-fields').toggleClass('d-none', !this.checked);
-    });
-
-    $('#inbound_enabled').on('change', function () {
-        $('#imap-fields').toggleClass('d-none', !this.checked);
-    });
-
-    // Toggle password visibility
-    $(document).on('click', '.toggle-password', function () {
-        const $input = $('#' + $(this).data('target'));
-        const isPassword = $input.attr('type') === 'password';
-        $input.attr('type', isPassword ? 'text' : 'password');
-        $(this).find('i').toggleClass('fa-eye', !isPassword).toggleClass('fa-eye-slash', isPassword);
-    });
-
-    // Save form via AJAX
-    $('#emailSettingsForm').on('submit', function (e) {
-        e.preventDefault();
-        const $btn = $('#saveBtn').prop('disabled', true).text('Guardando...');
-
-        fetch(this.action, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-            body: new FormData(this),
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status) {
-                toastr.success(data.message, 'Guardado');
-            } else {
-                toastr.error(data.message || 'Error al guardar', 'Error');
-            }
-        })
-        .catch(() => toastr.error('Error al guardar la configuración', 'Error'))
-        .finally(() => $btn.prop('disabled', false).text('Guardar configuracion'));
-    });
-
-    // Test SMTP connection
-    $('#testSmtpBtn').on('click', function () {
-        const $btn = $(this).prop('disabled', true);
-        const $result = $('#smtp-test-result').text('Probando...').removeClass('text-success text-dark');
-
-        fetch('{{ route("settings.helpdesk.email.test-smtp") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({
-                host:       $('#smtp_host').val(),
-                port:       $('#smtp_port').val(),
-                username:   $('#smtp_username').val(),
-                password:   $('#smtp_password').val(),
-                encryption: $('#smtp_encryption').val(),
-            }),
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status) {
-                $result.addClass('text-success').text(data.message);
-                toastr.success(data.message, 'SMTP');
-            } else {
-                $result.addClass('text-dark').text(data.message);
-                toastr.error(data.message, 'SMTP');
-            }
-        })
-        .catch(() => {
-            $result.addClass('text-dark').text('Error al ejecutar la prueba');
-            toastr.error('Error al probar la conexión SMTP', 'Error');
-        })
-        .finally(() => $btn.prop('disabled', false));
-    });
-
-    // Test IMAP connection
-    $('#testImapBtn').on('click', function () {
-        const $btn = $(this).prop('disabled', true);
-        const $result = $('#imap-test-result').text('Probando...').removeClass('text-success text-dark');
-
-        fetch('{{ route("settings.helpdesk.email.test-imap") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({
-                host:       $('#imap_host').val(),
-                port:       $('#imap_port').val(),
-                username:   $('#imap_username').val(),
-                password:   $('#imap_password').val(),
-                encryption: $('#imap_encryption').val(),
-                folder:     $('#imap_folder').val(),
-            }),
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status) {
-                $result.addClass('text-success').text(data.message);
-                toastr.success(data.message, 'IMAP');
-            } else {
-                $result.addClass('text-dark').text(data.message);
-                toastr.error(data.message, 'IMAP');
-            }
-        })
-        .catch(() => {
-            $result.addClass('text-dark').text('Error al ejecutar la prueba');
-            toastr.error('Error al probar la conexión IMAP', 'Error');
-        })
-        .finally(() => $btn.prop('disabled', false));
-    });
-})();
+window.HdEmailSettingsConfig = {
+    testSmtpUrl: @json(route('settings.helpdesk.email.test-smtp')),
+    testImapUrl: @json(route('settings.helpdesk.email.test-imap')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/email-settings.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/email-settings.js')) }}" defer></script>
 @endpush

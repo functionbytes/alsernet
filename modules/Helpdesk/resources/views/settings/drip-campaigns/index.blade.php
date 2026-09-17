@@ -169,12 +169,13 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
-                                                            data-id="{{ $campaign->id }}"
+                                                        <a class="dropdown-item delete-btn" href="#"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-url="{{ route('settings.helpdesk.drip-campaigns.destroy', $campaign) }}"
-                                                            data-name="{{ $campaign->name }}">
+                                                            data-title="Eliminar campaña: {{ $campaign->name }}">
                                                             Eliminar
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endcan
                                             </ul>
@@ -237,27 +238,12 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.form-select').select2({ width: '100%' });
-
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        $('#delete-form').attr('action', url);
-        $('#delete-modal').modal('show');
-    });
-
-    $(document).on('click', '.btn-toggle', function () {
-        const url = $(this).data('url');
-        $('#toggleForm').attr('action', url).submit();
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdDripCampaignsIndexConfig = {
+    flashSuccess: @json(session('success')),
+    flashError: @json(session('error')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/drip-campaigns-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/drip-campaigns-index.js')) }}" defer></script>
 @endpush

@@ -4,7 +4,6 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\UpdateUploadingSettingsRequest;
 use Modules\Helpdesk\Models\Setting;
@@ -62,11 +61,7 @@ class SettingsController extends Controller
             $validated['allowed_extensions'] = implode(',', $validated['allowed_extensions']);
         }
 
-        Cache::put('helpdesk.uploading', $validated, now()->addDays(365));
-
-        foreach ($validated as $key => $value) {
-            Setting::set('uploading.'.$key, $value, 'uploading');
-        }
+        Setting::setMany($validated, 'uploading', 'settings.uploading.updated');
 
         return back()->with('success', 'Configuración de subida de archivos actualizada correctamente.');
     }

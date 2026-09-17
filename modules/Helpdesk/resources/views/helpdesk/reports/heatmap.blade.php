@@ -4,6 +4,10 @@
     @include('core::components.card', ['title' => 'Heatmap horas pico · Helpdesk'])
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
+@endpush
+
 @section('content')
     <h1 class="h3 mb-4"><i class="fas fa-fire text-dark me-2"></i>Heatmap de horas pico</h1>
     <p class="text-muted">Mensajes recibidos por día de la semana y hora (últimos 30 días).</p>
@@ -14,7 +18,7 @@
     @endphp
     <div class="card border-0 shadow-sm">
         <div class="card-body p-3 overflow-auto">
-            <table class="table table-borderless mb-0" style="font-size:11px">
+            <table class="table table-borderless mb-0 bv-fs-11">
                 <thead>
                     <tr>
                         <th scope="col"></th>
@@ -29,9 +33,9 @@
                                 @php
                                     $val = (int) ($matrix[$d][$h] ?? 0);
                                     $intensity = $val > 0 ? min(1, $val / $max) : 0;
-                                    $color = sprintf('rgba(177, 1, 0, %.2f)', $intensity * 0.85);
+                                    $color = sprintf('rgba(144, 187, 19, %.2f)', $intensity * 0.85);
                                 @endphp
-                                <td class="text-center" style="background: {{ $color }}; color: {{ $intensity > 0.5 ? '#fff' : '#222' }}; min-width:32px; height:36px;" title="{{ $days[$d-1] }} {{ $h }}h: {{ $val }} mensajes">
+                                <td class="text-center bv-heatmap-cell" style="--bv-cell-bg: {{ $color }}; --bv-cell-fg: {{ $intensity > 0.5 ? '#fff' : '#222' }};" title="{{ $days[$d-1] }} {{ $h }}h: {{ $val }} mensajes">
                                     {{ $val ?: '·' }}
                                 </td>
                             @endfor

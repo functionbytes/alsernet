@@ -206,6 +206,9 @@ class ConversationItem extends Model
             'internal_note' => 'Nota Interna',
             'attachment_added' => 'Adjunto Añadido',
             'customer_replied' => 'Respuesta del Cliente',
+            'email_sent' => 'Email Enviado',
+            'contact' => 'Contacto Compartido',
+            'location' => 'Ubicación Compartida',
         ];
 
         return $labels[$this->type] ?? ucfirst(str_replace('_', ' ', $this->type));

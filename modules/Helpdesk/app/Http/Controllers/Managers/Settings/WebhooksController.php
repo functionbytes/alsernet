@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\StoreWebhookRequest;
 use Modules\Helpdesk\Http\Requests\UpdateWebhookRequest;
+use Modules\Helpdesk\Jobs\ReplayWebhookDeliveryJob;
 use Modules\Helpdesk\Models\Webhook;
 use Modules\Helpdesk\Models\WebhookDelivery;
 
@@ -17,7 +18,7 @@ class WebhooksController extends Controller
     {
         $this->middleware('can:helpdesk.webhooks.view')->only(['index', 'show']);
         $this->middleware('can:helpdesk.webhooks.create')->only(['create', 'store']);
-        $this->middleware('can:helpdesk.webhooks.update')->only(['edit', 'update', 'toggleActive', 'test']);
+        $this->middleware('can:helpdesk.webhooks.update')->only(['edit', 'update', 'toggleActive', 'test', 'replay']);
         $this->middleware('can:helpdesk.webhooks.delete')->only(['destroy']);
     }
 
@@ -67,6 +68,15 @@ class WebhooksController extends Controller
         ]);
     }
 
+    public function show(Webhook $webhook): View
+    {
+        $deliveries = $webhook->deliveries()
+            ->latest()
+            ->paginate(30);
+
+        return view('helpdesk::settings.webhooks.show', compact('webhook', 'deliveries'));
+    }
+
     public function store(StoreWebhookRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -114,6 +124,15 @@ class WebhooksController extends Controller
         return redirect()
             ->route('settings.helpdesk.webhooks.index')
             ->with('success', 'Webhook eliminado exitosamente.');
+    }
+
+    public function replay(Request $request, Webhook $webhook, WebhookDelivery $delivery): RedirectResponse
+    {
+        abort_unless((int) $delivery->webhook_id === (int) $webhook->id, 404);
+
+        ReplayWebhookDeliveryJob::dispatch($delivery->id);
+
+        return back()->with('success', 'El reintento del webhook se ha enviado a la cola.');
     }
 
     /**

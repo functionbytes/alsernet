@@ -4,6 +4,9 @@ namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Core\Rules\ValidMimeMagicBytes;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 
 class StoreConversationMessageRequest extends FormRequest
 {
@@ -15,6 +18,7 @@ class StoreConversationMessageRequest extends FormRequest
     public function rules(): array
     {
         $hasAttachments = $this->hasFile('attachments');
+        $settings = app(HelpdeskSettings::class);
 
         return [
             'body' => [$hasAttachments ? 'nullable' : 'required', 'nullable', 'string'],
@@ -29,8 +33,21 @@ class StoreConversationMessageRequest extends FormRequest
                 Rule::exists('helpdesk.helpdesk_conversation_items', 'id')
                     ->where('conversation_id', $this->route('conversation')?->id),
             ],
-            'attachments' => [$hasAttachments ? 'required' : 'nullable', 'array'],
-            'attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip,mp4,mp3,ogg'],
+            'attachments' => [
+                $hasAttachments ? 'required' : 'nullable',
+                'array',
+                Rule::prohibitedIf(fn () => ! filter_var(
+                    Setting::get('tickets.user_file_upload_enable', true),
+                    FILTER_VALIDATE_BOOLEAN,
+                )),
+            ],
+            'attachments.*' => [
+                'nullable',
+                'file',
+                'max:'.$settings->attachmentMaxKilobytes(),
+                'mimes:'.implode(',', $settings->attachmentExtensions()),
+                new ValidMimeMagicBytes($settings->attachmentMimeTypes()),
+            ],
             'action' => ['nullable', 'in:send,send_and_close'],
         ];
     }
@@ -39,7 +56,7 @@ class StoreConversationMessageRequest extends FormRequest
     {
         return [
             'body.required' => 'El cuerpo del mensaje es obligatorio.',
-            'attachments.*.max' => 'Cada archivo no puede superar los 10 MB.',
+            'attachments.*.max' => 'Cada archivo no puede superar el límite configurado en Helpdesk.',
             'attachments.*.mimes' => 'Tipo de archivo no permitido.',
             'action.in' => 'La acción debe ser: enviar o enviar y cerrar.',
         ];

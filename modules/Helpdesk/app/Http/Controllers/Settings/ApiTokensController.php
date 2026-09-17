@@ -10,6 +10,11 @@ use Modules\Helpdesk\Http\Requests\Settings\StoreApiTokenRequest;
 
 class ApiTokensController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.view');
+    }
+
     public function index(Request $request): View
     {
         $tokens = $request->user()->tokens()
@@ -23,7 +28,9 @@ class ApiTokensController extends Controller
     {
         $data = $request->validated();
 
-        $abilities = $data['abilities'] ?? ['*'];
+        // Read-only is the safe default. Write/manage must be explicitly
+        // granted by the person creating the token.
+        $abilities = array_values(array_unique($data['abilities'] ?? ['helpdesk.read']));
         $created = $request->user()->createToken($data['name'], $abilities);
 
         return redirect()

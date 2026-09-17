@@ -140,9 +140,7 @@ class FeaturesSettingsController extends Controller
             $validated[$key] = $request->boolean($key);
         }
 
-        foreach ($validated as $key => $value) {
-            Setting::set(self::GROUP.'.'.$key, $value, self::GROUP);
-        }
+        Setting::setMany($validated, self::GROUP, 'settings.features.updated');
 
         cache()->forget('helpdesk_features');
 

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\HealthController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AgentSettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AttributesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AuditController;
@@ -62,6 +63,13 @@ Route::put('features', [FeaturesSettingsController::class, 'update'])->name('fea
 Route::get('uploading', [SettingsController::class, 'uploadingIndex'])->name('uploading');
 Route::put('uploading', [SettingsController::class, 'uploadingUpdate'])->name('uploading.update');
 
+// Operational diagnostics (the public /helpdesk/health endpoint is deliberately
+// reduced to liveness information; this page is restricted by the settings
+// route group and may show troubleshooting details).
+Route::get('health', [HealthController::class, 'panel'])
+    ->middleware('can:helpdesk.settings.view')
+    ->name('health');
+
 // Social Integrations Settings
 Route::get('social-integrations', [SocialIntegrationsController::class, 'index'])->name('social-integrations.index');
 Route::post('social-integrations/test/whatsapp', [SocialIntegrationsController::class, 'testWhatsapp'])->name('social-integrations.test.whatsapp');
@@ -95,9 +103,11 @@ Route::prefix('webhooks')->name('webhooks.')->group(function () {
     Route::get('/', [WebhooksController::class, 'index'])->name('index');
     Route::get('create', [WebhooksController::class, 'create'])->name('create');
     Route::post('/', [WebhooksController::class, 'store'])->name('store');
+    Route::get('{webhook}', [WebhooksController::class, 'show'])->name('show');
     Route::get('{webhook}/edit', [WebhooksController::class, 'edit'])->name('edit');
     Route::put('{webhook}', [WebhooksController::class, 'update'])->name('update');
     Route::delete('{webhook}', [WebhooksController::class, 'destroy'])->name('destroy');
+    Route::post('{webhook}/deliveries/{delivery}/replay', [WebhooksController::class, 'replay'])->name('deliveries.replay');
 });
 
 // Schedule routes moved to modules/HelpdeskAgents/routes/settings.php

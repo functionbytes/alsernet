@@ -77,13 +77,30 @@
             font-weight: 700;
             flex-shrink: 0;
         }
+        /* Este layout es un documento HTML autonomo (no extiende
+           layouts.theme ni carga conversations.css), asi que las
+           utilidades .bv-* que usan dashboard.blade.php y
+           conversation.blade.php se definen aqui. */
+        .bv-maxw-860 { max-width: 860px; }
+        .bv-wh-44 { width: 44px; height: 44px; }
+        .bv-wh-72 { width: 72px; height: 72px; }
+        .bv-fs-80 { font-size: .8rem; }
+        .bv-channel-icon-bg { background: #f0f0f0; }
+        .bv-avatar-customer { background: #90bb13; color: #fff; }
+        .bv-avatar-agent { background: #e9ecef; color: #495057; }
+        /* Valores dinamicos por registro (color de estado/canal): se pasan
+           como variable CSS inline (style="--bv-x: valor") y la clase solo
+           los consume via var(). */
+        .bv-icon-dyn  { color: var(--bv-icon-color); }
+        .bv-badge-dyn { background-color: var(--bv-badge-color); }
+
         @yield('extra-styles')
     </style>
 </head>
 <body>
     {{-- Navigation --}}
     <nav class="portal-nav navbar navbar-expand-md py-2 mb-4">
-        <div class="container" style="max-width: 860px;">
+        <div class="container bv-maxw-860">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('helpdesk.portal.dashboard') }}">
                 <i class="fas fa-headset"></i>
                 Portal de soporte
@@ -120,7 +137,7 @@
         </div>
     </nav>
 
-    <main class="container pb-5" style="max-width: 860px;">
+    <main class="container pb-5 bv-maxw-860">
         {{-- Flash messages --}}
         @if (session('success'))
             <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2 mb-4" role="alert">

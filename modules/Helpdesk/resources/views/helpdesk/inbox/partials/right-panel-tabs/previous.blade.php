@@ -2,13 +2,14 @@
      demanda por RightPanelTabController@previous. Recibe $rpPrevious, $rpCust. --}}
 @php
     $prevChannelIcons = [
-        'whatsapp'  => ['icon' => 'fab fa-whatsapp',     'color' => '#25d366'],
-        'facebook'  => ['icon' => 'fab fa-facebook-f',   'color' => '#1877f2'],
-        'instagram' => ['icon' => 'fab fa-instagram',    'color' => '#e4405f'],
-        'email'     => ['icon' => 'far fa-envelope',     'color' => '#52525b'],
-        'twitter'   => ['icon' => 'fab fa-twitter',      'color' => '#1da1f2'],
-        'web'       => ['icon' => 'far fa-comment-dots', 'color' => '#14b8a6'],
+        'whatsapp'  => ['icon' => 'fab fa-whatsapp',     'color' => '#25d366', 'label' => 'WhatsApp'],
+        'facebook'  => ['icon' => 'fab fa-facebook-f',   'color' => '#1877f2', 'label' => 'Facebook'],
+        'instagram' => ['icon' => 'fab fa-instagram',    'color' => '#e4405f', 'label' => 'Instagram'],
+        'email'     => ['icon' => 'far fa-envelope',     'color' => '#52525b', 'label' => 'Email'],
+        'twitter'   => ['icon' => 'fab fa-twitter',      'color' => '#1da1f2', 'label' => 'Twitter'],
+        'web'       => ['icon' => 'far fa-comment-dots', 'color' => '#14b8a6', 'label' => 'Web'],
     ];
+    $prevPriorityLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
 @endphp
 @if($rpPrevious->isEmpty())
     <div class="bv-tab-empty">
@@ -49,18 +50,15 @@
                 $isOpen     = (bool)($prev->status?->is_open ?? true);
                 $statusName = $prev->status?->name ?? 'Abierta';
                 $custName   = $rpCust?->name ?? 'Cliente';
-                $initials   = mb_strtoupper(
-                    collect(preg_split('/\s+/', trim($custName)))
-                        ->take(2)->map(fn($w) => mb_substr($w,0,1))->implode('')
-                );
+                $subject    = $prev->subject ?: 'Conversación con ' . $custName;
+                $priority   = in_array($prev->priority, ['low', 'high', 'urgent'], true) ? $prev->priority : null;
                 $msgCount   = $prev->messages_count ?? 0;
                 $dateLabel  = optional($prev->last_message_at ?? $prev->created_at)->diffForHumans(['short' => true]) ?? '—';
                 $preview    = $prev->lastMessage?->body ?? '';
-                if (!$preview && $prev->subject) { $preview = $prev->subject; }
             @endphp
             <button class="bv-conv-card"
                     data-bv-prev-open="{{ $isOpen ? '1' : '0' }}"
-                    data-bv-prev-text="{{ strtolower($statusName . ' ' . ($prev->subject ?? '')) }}"
+                    data-bv-prev-text="{{ strtolower($statusName . ' ' . $subject) }}"
                     data-conv-id="{{ $prev->id }}"
                     data-conv-subject="{{ e($prev->subject ?? 'Conversación') }}"
                     data-conv-status="{{ e($statusName) }}"
@@ -68,15 +66,19 @@
                     data-conv-channel="{{ $prev->channel ?? 'web' }}"
                     data-viewer-url="{{ route('manager.helpdesk.conversations.viewer-items', $prev->id) }}">
                 <div class="bv-conv-av">
-                    {{ $initials ?: '?' }}
-                    <span class="bv-ch-badge">
-                        <i class="{{ $ch['icon'] }}"></i>
-                    </span>
+                    <i class="{{ $ch['icon'] }}"></i>
                 </div>
                 <div class="bv-conv-body">
                     <div class="bv-conv-head">
-                        <span class="bv-conv-nm">{{ $custName }}</span>
+                        <span class="bv-conv-nm">{{ $subject }}</span>
                         <span class="bv-conv-time">{{ $dateLabel }}</span>
+                    </div>
+                    <div class="bv-conv-meta">
+                        @if($priority)
+                            <span class="bv-tag {{ $priority }}">{{ $prevPriorityLabels[$priority] }}</span>
+                            <span class="bv-conv-dot"></span>
+                        @endif
+                        {{ $ch['label'] }}
                     </div>
                     @if($preview)
                         <div class="bv-conv-preview">{{ \Illuminate\Support\Str::limit($preview, 80) }}</div>

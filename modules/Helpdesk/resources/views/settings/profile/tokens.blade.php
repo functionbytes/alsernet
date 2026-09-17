@@ -34,6 +34,24 @@
             <div class="col-md-8">
                 <input type="text" name="name" class="form-control" placeholder="Nombre del token (ej. Mobile app)" required maxlength="80">
             </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold mb-1">Permisos del token</label>
+                <div class="d-flex flex-wrap gap-3">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="abilities[]" value="helpdesk.read" checked>
+                        <span class="form-check-label">Lectura</span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="abilities[]" value="helpdesk.write">
+                        <span class="form-check-label">Escritura</span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="abilities[]" value="helpdesk.manage">
+                        <span class="form-check-label">Administración</span>
+                    </label>
+                </div>
+                <small class="text-muted">Usa el mínimo necesario. Lectura permite GET; escritura permite crear o modificar datos.</small>
+            </div>
             <div class="col-md-4">
                 <button type="submit" class="btn btn-primary w-100">
                     Generar token
@@ -52,6 +70,7 @@
                     <thead class="table-light">
                         <tr>
                             <th scope="col">Nombre</th>
+                            <th scope="col">Permisos</th>
                             <th scope="col">Último uso</th>
                             <th scope="col">Creado</th>
                             <th scope="col" class="text-end">Acciones</th>
@@ -61,6 +80,11 @@
                         @foreach($tokens as $token)
                             <tr>
                                 <td class="fw-semibold">{{ $token->name }}</td>
+                                <td>
+                                    @foreach(($token->abilities ?? []) as $ability)
+                                        <span class="badge bg-light text-dark border me-1">{{ $ability }}</span>
+                                    @endforeach
+                                </td>
                                 <td><small class="text-muted">{{ $token->last_used_at?->diffForHumans() ?? 'Nunca' }}</small></td>
                                 <td><small class="text-muted">{{ $token->created_at->diffForHumans() }}</small></td>
                                 <td class="text-end">

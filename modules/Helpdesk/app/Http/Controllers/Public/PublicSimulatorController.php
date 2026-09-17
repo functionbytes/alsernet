@@ -16,6 +16,7 @@ use Modules\Helpdesk\Http\Requests\Public\UploadSimulatorAttachmentRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\CsatRating;
+use Modules\Helpdesk\Services\AttachmentSecurityService;
 use Modules\Helpdesk\Services\Public\PublicSimulatorService;
 use Throwable;
 
@@ -34,8 +35,10 @@ use Throwable;
  */
 class PublicSimulatorController extends Controller
 {
-    public function __construct(private readonly PublicSimulatorService $simulator)
-    {
+    public function __construct(
+        private readonly PublicSimulatorService $simulator,
+        private readonly AttachmentSecurityService $attachmentSecurity,
+    ) {
         abort_unless((bool) config('helpdesk.simulator_public_enabled'), 404);
     }
 
@@ -191,6 +194,7 @@ class PublicSimulatorController extends Controller
         $this->authorizeToken($conversation, $request->input('token'));
 
         $file = $request->file('file');
+        $this->attachmentSecurity->assertSafe($file);
         $path = $file->store('helpdesk/attachments', 'public');
         $mime = $file->getMimeType() ?? 'application/octet-stream';
         $url = asset('storage/'.$path);

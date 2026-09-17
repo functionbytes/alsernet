@@ -16,8 +16,7 @@
     @if ($conversations->isEmpty())
         <div class="card border-0 shadow-sm text-center py-5">
             <div class="card-body">
-                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
-                     style="width:72px;height:72px;">
+                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3 bv-wh-72">
                     <i class="far fa-comments fa-2x text-muted"></i>
                 </div>
                 <h5 class="fw-semibold">Sin conversaciones aún</h5>
@@ -31,10 +30,9 @@
                    class="conversation-card card text-decoration-none text-reset">
                     <div class="card-body d-flex align-items-center gap-3 py-3">
                         {{-- Channel icon --}}
-                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width:44px;height:44px;background:#f0f0f0;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 bv-wh-44 bv-channel-icon-bg">
                             @php $channelInfo = $conv->channel_info @endphp
-                            <i class="{{ $channelInfo['icon'] }} fa-lg" style="color:{{ $channelInfo['color'] }};"></i>
+                            <i class="{{ $channelInfo['icon'] }} fa-lg bv-icon-dyn" style="--bv-icon-color: {{ $channelInfo['color'] }};"></i>
                         </div>
 
                         {{-- Main info --}}
@@ -58,8 +56,8 @@
                         {{-- Status badge --}}
                         <div class="flex-shrink-0 d-flex align-items-center gap-2">
                             @if ($conv->status)
-                                <span class="badge rounded-pill"
-                                      style="background-color: {{ $conv->status->is_open ? '#13C672' : '#6c757d' }}">
+                                <span class="badge rounded-pill bv-badge-dyn"
+                                      style="--bv-badge-color: {{ $conv->status->is_open ? '#13C672' : '#6c757d' }}">
                                     {{ $conv->status->name }}
                                 </span>
                             @endif

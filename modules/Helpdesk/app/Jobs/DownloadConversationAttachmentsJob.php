@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Services\AttachmentSecurityService;
 use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 /**
@@ -43,7 +44,7 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
         public readonly string $platform,
         public readonly ?string $bearerToken = null,
     ) {
-        $this->onQueue('helpdesk-webhooks');
+        $this->onQueue(config('helpdesk.queue.webhooks', 'helpdesk-webhooks'));
     }
 
     public function handle(): void
@@ -189,6 +190,21 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
 
             $disk = config('helpdesk.attachments.disk', 'public');
             Storage::disk($disk)->put($filename, $body);
+
+            try {
+                // Incoming media is an untrusted external input too. Scan it
+                // after the bounded download and before publishing its local
+                // URL to the conversation.
+                app(AttachmentSecurityService::class)->assertSafeStored($disk, $filename, $name);
+            } catch (\Throwable $exception) {
+                Storage::disk($disk)->delete($filename);
+                Log::warning('DownloadConversationAttachmentsJob: media blocked by attachment security', [
+                    'platform' => $this->platform,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return null;
+            }
 
             try {
                 $publicUrl = Storage::disk($disk)->url($filename);

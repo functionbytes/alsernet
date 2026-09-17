@@ -31,7 +31,8 @@
                     <div class="reason {{ $selectedConversation?->status_id === $s->id ? 'on' : '' }}"
                          data-bv-value="{{ $s->id }}"
                          data-bv-label="{{ $s->name }}"
-                         data-bv-color="{{ $s->color }}">
+                         data-bv-color="{{ $s->color }}"
+                         data-bv-is-open="{{ $s->is_open ? '1' : '0' }}">
                         <div class="ic"><i class="{{ $icon }}"></i></div>
                         <div class="body">
                             <span class="t">{{ $s->name }}</span>

@@ -9,7 +9,7 @@
      Antes de este rediseño el modal salía ENTERO en blanco: el JS que lo
      rellena escuchaba clics en ".rp3-ticket", una clase que dejó de existir
      cuando el panel derecho pasó a ".tk-card", así que la petición no llegaba
-     a salir. Ver el handler en public/vendor/helpdesk/conversations.js.
+     a salir. Ver el handler en public/vendor/helpdesk/conversations-extras.js.
 
      Todo lo que se pinta aquí viene de HelpdeskTicketBridgeService::
      getTicketDetail(); los bloques con id bv-tkm-* los rellena el JS y se

@@ -299,6 +299,37 @@ class Conversation extends Model
     }
 
     /**
+     * Scope: conversations visible in the default inbox view ("Todas las
+     * abiertas": open + not archived) — the single source of truth for every
+     * sidebar badge that is supposed to match what the agent sees when they
+     * land on the inbox with no explicit filter (Todas / Mías / Urgentes /
+     * Sin leer).
+     *
+     * This criterion was already fixed once, ad hoc, directly inside
+     * ConversationInboxMetricsService::sidebarCounters()'s "unread" count
+     * after the sidebar badge and the real ?unread=1 list disagreed (badge
+     * said N, list was empty). ConversationsController::listJson() kept its
+     * own duplicated "unread" count without it, and neither "unread" count
+     * applied it to "total"/"mine"/"urgent", so the same class of mismatch
+     * resurfaced for those badges too (e.g. "Todas" said 41, the list showed
+     * 21; "Urgentes" said 5, the list showed 3). Route every "default view"
+     * count through this scope instead of re-deriving the criteria.
+     */
+    public function scopeDefaultViewVisible(Builder $query): Builder
+    {
+        return $query->open()->where('is_archived', false);
+    }
+
+    /**
+     * Scope: conversations counted as "unread" for a given agent.
+     */
+    public function scopeUnreadFor(Builder $query, int $userId): Builder
+    {
+        return $query->defaultViewVisible()
+            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId));
+    }
+
+    /**
      * Scope: Get conversations assigned to a user
      */
     public function scopeAssignedTo($query, $userId)

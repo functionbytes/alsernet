@@ -127,7 +127,7 @@ class ConversationsController extends Controller
 
         $conversations = $query->paginate(50)->appends($request->query());
         $statuses = ConversationStatus::active()->ordered()->get();
-        $groups = Group::orderBy('name')->get();
+        $groups = $this->inboxMetrics->sidebarGroups();
 
         // Conversation::scopeDefaultViewVisible() — debe coincidir con lo que
         // realmente se ve al aterrizar en el inbox sin filtros (vista "Todas

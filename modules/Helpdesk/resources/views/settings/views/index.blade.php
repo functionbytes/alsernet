@@ -353,115 +353,13 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // ── Filter modal ─────────────────────────────────────────────────
-    $('.select2-filter-modal').select2({ dropdownParent: $('#views-filter-modal'), width: '100%' });
-
-    // ── Bulk actions ──────────────────────────────────────────────────
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#views-filter-apply-btn').on('click', function () {
-        $('#filter-scope').val($('#modal-scope').val());
-        $('#views-filter-modal').modal('hide');
-        $('#views-filter-form').submit();
-    });
-
-    $('#views-filter-clear-btn').on('click', function () {
-        $('#modal-scope').val(null).trigger('change');
-    });
-
-    // ── Bulk actions ──────────────────────────────────────────────────
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        var action = $('#bulk-action-select').val();
-        var ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una vista.'); return; }
-
-        var applyBulkAction = function () {
-            var $btn = $('#bulk-apply-btn');
-            $btn.prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('settings.helpdesk.views.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar la acción.');
-                    $btn.prop('disabled', false).text('Aplicar');
-                },
-            });
-        };
-
-        if (action === 'delete') {
-            window.__confirm('¿Eliminar ' + ids.length + ' vista(s)? Esta acción no se puede deshacer.', applyBulkAction);
-        } else {
-            applyBulkAction();
-        }
-    });
-
-    // ── Drag-drop reorder (jQuery UI Sortable) ────────────────────────
-    if ($('#views-sortable').length) {
-        $('#views-sortable').sortable({
-            // Ver ticket-statuses: la fila entera es el asidero de arrastre.
-            handle: 'tr',
-            cancel: 'input,textarea,button,select,option,a',
-            axis: 'y',
-            cursor: 'grabbing',
-            start: function (e, ui) {
-                ui.item.addClass('table-active');
-            },
-            stop: function (e, ui) {
-                ui.item.removeClass('table-active');
-            },
-            update: function () {
-                const ids = $('#views-sortable tr').map(function () {
-                    return $(this).data('id');
-                }).get();
-
-                $.ajax({
-                    url: '{{ route('settings.helpdesk.views.reorder') }}',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ ids }),
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    success: function (res) {
-                    },
-                    error: function () {
-                        toastr.error('Error al actualizar el orden.');
-                        $('#views-sortable').sortable('cancel');
-                    },
-                });
-            },
-        });
-    }
-});
+window.ViewsIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+    bulkActionUrl: @json(route('settings.helpdesk.views.bulk-action')),
+    reorderUrl: @json(route('settings.helpdesk.views.reorder')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/views-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/views-index.js')) }}" defer></script>
 @endpush

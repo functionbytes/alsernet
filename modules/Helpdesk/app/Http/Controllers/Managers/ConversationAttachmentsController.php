@@ -19,6 +19,8 @@ use Modules\Helpdesk\Http\Requests\StoreLocationItemRequest;
 use Modules\Helpdesk\Http\Requests\UploadAttachmentRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Services\AttachmentSecurityService;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -29,8 +31,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ConversationAttachmentsController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly AttachmentSecurityService $attachmentSecurity,
+        private readonly HelpdeskSettings $settings,
+    ) {
         $this->middleware('can:helpdesk.conversations.update')->only(['uploadAttachments', 'storeContact', 'storeLocation']);
     }
 
@@ -49,6 +53,11 @@ class ConversationAttachmentsController extends Controller
         $attachments = [];
 
         foreach ($request->file('files') as $file) {
+            // The request validates extension/MIME. This final check runs just
+            // before persistence so the conversation inbox has the same
+            // malware boundary as tickets and portal uploads.
+            $this->attachmentSecurity->assertSafe($file);
+
             $mime = $file->getMimeType() ?? 'application/octet-stream';
             $folder = "helpdesk/customers/{$customerId}/conversations/{$conversation->id}/{$dateFolder}";
             $disk = Storage::disk('public');
@@ -230,6 +239,10 @@ class ConversationAttachmentsController extends Controller
 
         $this->authorize('view', $sourceItem->conversation);
 
+        // Legacy files may predate ClamAV being enabled. Re-scan on copy so a
+        // forward cannot become a bypass of the current security policy.
+        $this->attachmentSecurity->assertSafeStored('public', $path, basename($path));
+
         $customerId = $conversation->customer_id ?: 0;
         $convId = $conversation->id;
         $newPath = "helpdesk/customers/{$customerId}/conversations/{$convId}/".now()->format('Y-m-d').'/'.basename($path);
@@ -369,7 +382,7 @@ class ConversationAttachmentsController extends Controller
      */
     private function shouldCompressImage(string $mime, int $bytes): bool
     {
-        if (! str_starts_with($mime, 'image/')) {
+        if (! $this->settings->imageCompressionEnabled() || ! str_starts_with($mime, 'image/')) {
             return false;
         }
 
@@ -410,9 +423,12 @@ class ConversationAttachmentsController extends Controller
         }
 
         // Resize: max 1920px on the longest side, keep aspect ratio
-        $image->scaleDown(width: 1920, height: 1920);
+        $image->scaleDown(
+            width: $this->settings->imageMaxWidth(),
+            height: $this->settings->imageMaxHeight(),
+        );
 
-        $encoded = $image->toJpeg(quality: 80);
+        $encoded = $image->toJpeg(quality: $this->settings->imageQuality());
         $filename = pathinfo($file->hashName(), PATHINFO_FILENAME).'.jpg';
         $disk->put("{$folder}/{$filename}", $encoded->toString());
 
