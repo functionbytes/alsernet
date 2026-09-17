@@ -152,34 +152,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    $('#bounce-mailbox-add-modal .form-select').select2({ width: '100%', dropdownParent: $('#bounce-mailbox-add-modal') });
-    $('#bounce-mailbox-edit-modal .form-select').select2({ width: '100%', dropdownParent: $('#bounce-mailbox-edit-modal') });
-
-    const editModalEl = document.getElementById('bounce-mailbox-edit-modal');
-    const editModal = new bootstrap.Modal(editModalEl);
-    const $editForm = $('#bounce-mailbox-edit-form');
-
-    $(document).on('click', '.js-edit-mailbox', function () {
-        const data = $(this).data('mailbox');
-        const updateUrl = $(this).data('update-url');
-
-        $editForm.attr('action', updateUrl);
-        $editForm.find('[name="label"]').val(data.label || '');
-        $editForm.find('[name="host"]').val(data.host || '');
-        $editForm.find('[name="port"]').val(data.port || 993);
-        $editForm.find('[name="encryption"]').val(data.encryption || 'ssl').trigger('change');
-        $editForm.find('[name="username"]').val(data.username || '');
-        $editForm.find('[name="password"]').val('');
-        $editForm.find('[name="folder"]').val(data.folder || 'INBOX');
-        $editForm.find('[name="enabled"]').val(data.enabled ? '1' : '0').trigger('change');
-
-        const $scope = $editForm.find('[name="module_scope[]"]');
-        $scope.val(data.module_scope || []).trigger('change');
-
-        editModal.show();
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdeskemailactivity/js/bounce-mailboxes.js') }}?v={{ filemtime(public_path('modules/helpdeskemailactivity/js/bounce-mailboxes.js')) }}"></script>
 @endpush

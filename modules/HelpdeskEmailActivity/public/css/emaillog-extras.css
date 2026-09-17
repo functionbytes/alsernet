@@ -1988,3 +1988,10 @@
     margin-left: auto;
     align-self: center;
 }
+
+/* .evx-step-hidden (sin !important) — usar en vez de style="display:none" en
+   elementos que su propio JS revela/oculta con jQuery .show()/.hide()/.toggle()
+   (mismo patron que .bv-step-hidden del core Helpdesk). Se declara al final
+   del archivo a proposito: tiene que ganar sobre cualquier otra clase de
+   igual especificidad que tambien fije `display`. */
+.evx-step-hidden { display: none; }

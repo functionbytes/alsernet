@@ -126,9 +126,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    $('#suppression-add-modal .form-select').select2({ width: '100%', dropdownParent: $('#suppression-add-modal') });
-});
-</script>
+<script src="{{ asset('modules/helpdeskemailactivity/js/suppressions.js') }}?v={{ filemtime(public_path('modules/helpdeskemailactivity/js/suppressions.js')) }}"></script>
 @endpush

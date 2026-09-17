@@ -193,76 +193,20 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js') }}"></script>
-<script>
-$(function () {
-    @if(session('success')) toastr.success(@json(session('success'))); @endif
-    @if(session('error')) toastr.error(@json(session('error'))); @endif
-
-    const csrf = $('meta[name="csrf-token"]').attr('content');
-    const $confirmModal = $('#trash-confirm-modal');
-    const confirmModal = new bootstrap.Modal($confirmModal[0]);
-    let pendingAccept = null;
-
-    function askConfirm({ title, message, onAccept }) {
-        $('#trash-confirm-title').text(title);
-        $('#trash-confirm-message').text(message);
-        pendingAccept = onAccept;
-        confirmModal.show();
-    }
-
-    $('#trash-confirm-accept').on('click', function () {
-        const fn = pendingAccept;
-        pendingAccept = null;
-        confirmModal.hide();
-        if (typeof fn === 'function') fn();
-    });
-
-    // Restaurar (fila individual)
-    $(document).on('click', '.js-trash-restore', function () {
-        const url = $(this).data('url');
-        askConfirm({
-            title: @json(__('helpdeskemailactivity::emaillog.trash.restore_confirm_title')),
-            message: @json(__('helpdeskemailactivity::emaillog.trash.restore_confirm')),
-            onAccept: () => {
-                $.ajax({ url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } })
-                    .done(() => location.reload())
-                    .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
-            },
-        });
-    });
-
-    // Eliminar definitivamente (fila individual) — irreversible, ver
-    // EmailLogController::forceDestroy().
-    $(document).on('click', '.js-trash-force-delete', function () {
-        const url = $(this).data('url');
-        askConfirm({
-            title: @json(__('helpdeskemailactivity::emaillog.trash.force_delete_confirm_title')),
-            message: @json(__('helpdeskemailactivity::emaillog.trash.force_delete_confirm')),
-            onAccept: () => {
-                $.ajax({ url, method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } })
-                    .done(() => location.reload())
-                    .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
-            },
-        });
-    });
-
-    // Restauración masiva
-    window.BulkActions.init({ checkbox: '.trash-bulk-checkbox', selectAll: '#trash-select-all', toolbar: '#trash-bulk-toolbar' });
-
-    $('#trash-bulk-restore').on('click', function () {
-        const uids = $('.trash-bulk-checkbox:checked').map(function () { return this.value; }).get();
-        if (!uids.length) { toastr.warning(@json(__('helpdeskemailactivity::emaillog.bulk.none_selected'))); return; }
-        const url = $(this).data('url');
-        askConfirm({
-            title: @json(__('helpdeskemailactivity::emaillog.trash.bulk_restore_confirm_title')),
-            message: @json(__('helpdeskemailactivity::emaillog.trash.bulk_restore_confirm')).replace(':count', uids.length),
-            onAccept: () => {
-                $.ajax({ url, method: 'POST', data: { uids }, headers: { 'X-CSRF-TOKEN': csrf } })
-                    .done(() => location.reload())
-                    .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
-            },
-        });
-    });
-});
-</script>
+{{-- Bootstrap minimo de datos (sesion flash + cadenas traducidas) que
+     trash.js no puede resolver por su cuenta — toda la logica vive ahi. --}}
+@php
+    $trashFlash = ['success' => session('success'), 'error' => session('error')];
+    $trashI18n = [
+        'restoreConfirmTitle' => __('helpdeskemailactivity::emaillog.trash.restore_confirm_title'),
+        'restoreConfirm' => __('helpdeskemailactivity::emaillog.trash.restore_confirm'),
+        'forceDeleteConfirmTitle' => __('helpdeskemailactivity::emaillog.trash.force_delete_confirm_title'),
+        'forceDeleteConfirm' => __('helpdeskemailactivity::emaillog.trash.force_delete_confirm'),
+        'bulkRestoreConfirmTitle' => __('helpdeskemailactivity::emaillog.trash.bulk_restore_confirm_title'),
+        'bulkRestoreConfirm' => __('helpdeskemailactivity::emaillog.trash.bulk_restore_confirm'),
+        'noneSelected' => __('helpdeskemailactivity::emaillog.bulk.none_selected'),
+    ];
+@endphp
+<script>window.EmailActivityTrash = { flash: @json($trashFlash), i18n: @json($trashI18n) };</script>
+<script src="{{ asset('modules/helpdeskemailactivity/js/trash.js') }}?v={{ filemtime(public_path('modules/helpdeskemailactivity/js/trash.js')) }}"></script>
 @endpush
