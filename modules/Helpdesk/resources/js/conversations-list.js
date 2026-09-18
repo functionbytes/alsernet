@@ -717,11 +717,17 @@
                 if (typeof done === 'function') done();
                 return;
             }
+            // El replaceWith() de abajo sustituye el nodo entero, así que
+            // pierde el scroll de la lista si no se restaura a mano — molesto
+            // para un agente revisando conversaciones más abajo cuando llega
+            // el evento que dispara este refresco.
+            const scrollTop = $('#bv-conv-list').scrollTop();
             const url = '/panel/helpdesk/conversations/list';
             const currentParams = new URLSearchParams(window.location.search);
             $.get(url, Object.fromEntries(currentParams)).done(function (resp) {
                 if (resp && typeof resp.html === 'string') {
                     $list.replaceWith(resp.html);
+                    $('#bv-conv-list').scrollTop(scrollTop);
                 }
                 if (resp && resp.counts) {
                     ['total', 'unread', 'mine', 'urgent'].forEach(function (k) {
@@ -740,20 +746,32 @@
         let refreshTimer = null;
         let refreshInflight = false;
         let pendingRefresh = false;
-        function scheduleRefresh() {
+
+        // No reemplazar la lista mientras el agente tiene la barra de
+        // selección en bloque abierta (perdería los checkboxes marcados a
+        // mitad de una acción) o un modal en curso.
+        function isInboxBusy() {
+            return $('#bv-bulk-bar').is(':visible') || $('.bv-modal.on').length > 0;
+        }
+
+        function scheduleRefresh(delayMs) {
             if (refreshInflight) {
                 pendingRefresh = true;
                 return;
             }
             clearTimeout(refreshTimer);
             refreshTimer = setTimeout(function () {
+                if (isInboxBusy()) {
+                    scheduleRefresh(delayMs);
+                    return;
+                }
                 refreshInflight = true;
                 pendingRefresh = false;
                 refreshConversationList(function () {
                     refreshInflight = false;
                     if (pendingRefresh) scheduleRefresh();
                 });
-            }, 50);
+            }, delayMs || 50);
         }
 
         // Same listener wired on every inbox channel the agent can see. Sidebar
@@ -802,9 +820,39 @@
         // (helpdesk::helpdesk.inbox.partials.conv-item solo pinta prioridad/
         // sla/no-leídos), así que solo hay algo que actualizar visualmente
         // ahí.
+        // Claves de query string que restringen qué conversaciones entran en
+        // la lista (ver ConversationFilter::apply()/applyViewFilters() y el
+        // vocabulario de conv-item.blade.php). Una vista guardada ("Mis
+        // vistas") no usa un id server-side propio: el enlace ya lleva estos
+        // mismos parámetros en la URL, así que basta con mirar la URL actual.
+        const FILTER_QUERY_KEYS = [
+            'status', 'assignee', 'group', 'priority', 'search', 'channel', 'inbox',
+            'tag', 'archived', 'unread', 'mine', 'urgent', 'vip', 'date', 'snoozed',
+            'view', 'bot', 'viewId',
+        ];
+
+        function hasActiveInboxFilter() {
+            const params = new URLSearchParams(window.location.search);
+            return FILTER_QUERY_KEYS.some(function (key) {
+                const value = params.get(key);
+                return value !== null && value !== '' && value !== 'all' && value !== '0';
+            });
+        }
+
         const priorityLabels = { low: 'Baja', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
         function handleInboxConversationUpdated(e) {
             if (!e || !e.conversation_id) return;
+
+            // Con un filtro o vista activos, este cambio puede hacer que la
+            // conversación deba entrar o salir de la lista — no solo
+            // refrescar su fila si ya estaba visible. Se reaplica el propio
+            // filtro activo (mismo endpoint que usa applyInboxFilters),
+            // debounced para agrupar ráfagas de eventos. Sin filtro (bandeja
+            // "Todas") el patch de abajo ya es suficiente y más barato.
+            if (hasActiveInboxFilter()) {
+                scheduleRefresh(600);
+            }
+
             const $item = $('.bv-conv[data-bv-conv-id="' + e.conversation_id + '"]');
             if (!$item.length) return;
 
