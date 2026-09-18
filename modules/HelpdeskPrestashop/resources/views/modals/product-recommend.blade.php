@@ -149,6 +149,22 @@
 
         {{-- Footer con producto seleccionado --}}
         <div class="modal-foot bv-hidden" id="prFootSelected">
+            {{-- Vista previa del enlace que se va a enviar (QA 18-sep-2026):
+                 el envío ya incluía id_product_attribute cuando había una
+                 combinación seleccionada, pero era invisible para el agente
+                 hasta después de enviar. Esto lo muestra por adelantado y
+                 avisa si ninguna combinación tiene stock. --}}
+            <div class="ps-link-preview bv-hidden" id="prLinkPreview">
+                <div class="ps-link-preview-icon" id="prLinkPreviewIcon"><i class="fas fa-link"></i></div>
+                <div class="ps-link-preview-body">
+                    <div class="ps-link-preview-title">Se enviará este enlace</div>
+                    <div class="ps-link-preview-url" id="prLinkPreviewUrl"></div>
+                    <div class="ps-link-preview-caption" id="prLinkPreviewCaption"></div>
+                </div>
+                <button type="button" class="ps-copy-btn ps-link-preview-copy" data-copy-target="prLinkPreviewUrl" title="Copiar enlace" aria-label="Copiar enlace">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
             <textarea class="ps-note-input" id="prInternalNote" rows="1" placeholder="Nota interna (opcional)…"></textarea>
             <div class="ps-footer-actions">
                 <button class="btn btn-primary" id="prSendToChat" type="button"><i class="fas fa-paper-plane"></i>Recomendar en chat</button>

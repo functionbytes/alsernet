@@ -449,6 +449,7 @@
         if (!_combinations.length) {
             $('#prAttrBlock').addClass('bv-hidden');
             $('#prComboCount').addClass('bv-hidden');
+            updateLinkPreview();
             return;
         }
 
@@ -497,6 +498,11 @@
         if (firstAvailable) {
             var $first = $('#prAttrGroups .combo-row[data-cid="' + firstAvailable.id + '"]');
             if ($first.length) { $first.trigger('click'); }
+        } else {
+            // Todas agotadas: nada que auto-seleccionar, pero la vista previa
+            // debe reflejarlo (enlace general + aviso) en vez de quedarse con
+            // el estado del producto anterior.
+            updateLinkPreview();
         }
     }
 
@@ -519,11 +525,49 @@
     function selectProduct(p) {
         _selected      = p;
         _selectedCombo = null;
+        _combinations  = [];
         $('#prProductList .ps-prc-item').each(function (i) {
             $(this).toggleClass('on', !!(_pool[i] && _pool[i].id === p.id));
         });
         renderDetail(p);
+        updateLinkPreview();
         fetchAttributes(p.id);
+    }
+
+    // ── Vista previa del enlace que se enviará (QA 18-sep-2026) ───────────────
+    // Único lugar donde se construye la URL final: el botón "Recomendar en
+    // chat" reutiliza _pendingUrl en vez de recalcularla, así que lo que el
+    // agente ve aquí es exactamente lo que se envía — nunca puede desincronizarse.
+    var _pendingUrl = '';
+
+    function updateLinkPreview() {
+        var $box = $('#prLinkPreview');
+        if (!_selected) { $box.addClass('bv-hidden'); _pendingUrl = ''; return; }
+
+        var url = (_selected.url || '').trim();
+        if (!url) { $box.addClass('bv-hidden'); _pendingUrl = ''; return; }
+
+        var allSoldOut = _combinations.length > 0 && !_selectedCombo;
+        if (_selectedCombo) {
+            url += (url.indexOf('?') === -1 ? '?' : '&') + 'id_product_attribute=' + _selectedCombo.id;
+        }
+        _pendingUrl = url;
+
+        var caption;
+        if (allSoldOut) {
+            caption = 'Todas las combinaciones están agotadas: se enviará el enlace general del producto, sin talla ni color.';
+        } else if (_selectedCombo) {
+            caption = 'Incluye la combinación seleccionada (' + (_selectedCombo.label || _selectedCombo.reference || '') + '). Elige otra arriba si quieres cambiarla.';
+        } else {
+            caption = 'Este producto no tiene variantes.';
+        }
+
+        $box.removeClass('bv-hidden').toggleClass('is-warn', allSoldOut);
+        $('#prLinkPreviewUrl').text(url);
+        $('#prLinkPreviewCaption').text(caption);
+        $('#prLinkPreviewIcon').html(allSoldOut
+            ? '<i class="fas fa-triangle-exclamation"></i>'
+            : '<i class="fas fa-link"></i>');
     }
 
     // ── Deseleccionar ────────────────────────────────────────────────────────
@@ -543,6 +587,7 @@
         $('#prVolBlock').html('');     // MEJORA 4: limpiar precios por volumen
         $('#prProductList .ps-prc-item').removeClass('on');
         $('#prDetailZone').addClass('bv-hidden');
+        updateLinkPreview();
         $('#prDetailEmpty').removeClass('bv-hidden');
         // #prHistBlock NO se oculta aquí: "Ya recomendados" es del historial de
         // la conversación entera (loadConversationHistory() lo carga una sola
@@ -779,6 +824,8 @@
         } else {
             $('#prAttrSel').addClass('bv-hidden');
         }
+
+        updateLinkPreview();
     });
 
     // ── Deseleccionar ────────────────────────────────────────────────────────
@@ -818,12 +865,11 @@
 
     $(document).on('click', '#prSendToChat', function () {
         if (!_selected) { return; }
-        var url = (_selected.url || '').trim();
+        // Misma URL que ya muestra la vista previa (#prLinkPreview) — nunca se
+        // recalcula por separado, para que lo que el agente ve sea siempre
+        // exactamente lo que se envía.
+        var url = _pendingUrl;
         if (!url) { toastr.warning('Este producto no tiene URL disponible.'); return; }
-        // Añadir id_product_attribute si hay una combinación seleccionada
-        if (_selectedCombo) {
-            url += (url.indexOf('?') === -1 ? '?' : '&') + 'id_product_attribute=' + _selectedCombo.id;
-        }
 
         // Mensaje enriquecido
         var priceStr = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
