@@ -3813,6 +3813,20 @@
         }]);
     }
 
+    // Registrado una sola vez (bvBindConversation se re-invoca cada vez que
+    // el agente cambia de conversación): lee currentConvId al momento de la
+    // reconexión, no un convId cerrado sobre la conversación que estuviera
+    // abierta cuando se registró el callback.
+    if (!window.__bvThreadReconnectHookRegistered) {
+        window.__bvThreadReconnectHookRegistered = true;
+        window.bvOnRealtimeReconnect = window.bvOnRealtimeReconnect || [];
+        window.bvOnRealtimeReconnect.push(function () {
+            if (currentConvId && typeof window.bvLoadConversationPane === 'function') {
+                window.bvLoadConversationPane(currentConvId, null, { push: false });
+            }
+        });
+    }
+
     window.bvBindConversation = function (convId) {
         convId = parseInt(convId, 10);
         if (!convId) return;

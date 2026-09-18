@@ -471,4 +471,35 @@
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) { bvPresenceHeartbeat(); }
     });
+
+    // ─── Recuperación tras reconexión de Reverb (QA 18-sep-2026) ──────────
+    // Reverb/Pusher no reenvía eventos perdidos durante un corte de
+    // WebSocket (wifi, VPN, portátil suspendido): al reconectar, el cliente
+    // vuelve a un canal "en blanco" sin lo que se emitió mientras estuvo
+    // desconectado (contadores del sidebar, filas de la lista, el hilo
+    // abierto). window.bvOnRealtimeReconnect es el punto de enganche común:
+    // conversations-list.js/-thread.js registran ahí su propio "vuelve a
+    // pedir tus datos" sin que este archivo conozca sus internals.
+    window.bvOnRealtimeReconnect = window.bvOnRealtimeReconnect || [];
+
+    function bvWatchReverbReconnect() {
+        if (typeof window.Echo === 'undefined' || !window.Echo.connector?.pusher?.connection) {
+            setTimeout(bvWatchReverbReconnect, 500);
+            return;
+        }
+
+        let everConnected = false;
+        window.Echo.connector.pusher.connection.bind('state_change', function (states) {
+            if (states.current === 'connected') {
+                if (everConnected) {
+                    console.log('[Inbox] Reverb reconectado, refrescando datos en tiempo real');
+                    window.bvOnRealtimeReconnect.forEach(function (cb) {
+                        try { cb(); } catch (e) { console.error('[Inbox] Fallo en callback de reconexión:', e); }
+                    });
+                }
+                everConnected = true;
+            }
+        });
+    }
+    bvWatchReverbReconnect();
 })();

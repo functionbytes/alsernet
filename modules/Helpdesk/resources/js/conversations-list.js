@@ -978,6 +978,11 @@
         // because counters (last_message_at, unread badge) change.
         window.addEventListener('inbox:incoming-message', scheduleRefresh);
 
+        // Tras un corte de Reverb no hay eventos perdidos que "recuperar": la
+        // única forma honesta de saber en qué quedó todo es volver a pedirlo.
+        window.bvOnRealtimeReconnect = window.bvOnRealtimeReconnect || [];
+        window.bvOnRealtimeReconnect.push(function () { refreshConversationList(); });
+
         window.__hdInboxListenerReady = true;
         console.log('[Inbox] Listener registered');
     }
