@@ -137,7 +137,7 @@
         var html = _pool.map(function (p, i) {
             var thumb = p.image
                 ? '<span class="ps-prc-thumb">' + safeImg(p.image) + '</span>'
-                : '<span class="ps-prc-thumb"><i class="fas fa-box"></i></span>';
+                : '<span class="ps-prc-thumb"><i class="fas fa-image"></i></span>';
             var sk = stockLabel(p);
             var on = (_selected && _selected.id === p.id) ? ' on' : '';
             var skuEl = p.sku ? '<small>' + esc(p.sku) + '</small>' : '';
@@ -165,7 +165,7 @@
             var i     = _pool.indexOf(p);
             var thumb = p.image
                 ? '<span class="ps-prc-thumb">' + safeImg(p.image) + '</span>'
-                : '<span class="ps-prc-thumb"><i class="fas fa-box"></i></span>';
+                : '<span class="ps-prc-thumb"><i class="fas fa-image"></i></span>';
             var sk    = stockLabel(p);
             var on    = (_selected && _selected.id === p.id) ? ' on' : '';
             var skuEl = p.sku ? '<small>' + esc(p.sku) + '</small>' : '';
@@ -185,7 +185,7 @@
 
     function renderDetail(p) {
         // Thumb
-        $('#prDThumb').html(p.image ? safeImg(p.image) : '<i class="fas fa-box"></i>');
+        $('#prDThumb').html(p.image ? safeImg(p.image) : '<i class="fas fa-image"></i>');
 
         // Cabecera
         $('#prDName').text(p.name);
@@ -309,7 +309,7 @@
         }).done(function (r) {
             if (r.success && r.products && r.products.length) {
                 var html = r.products.map(function (p) {
-                    var thumb = p.image ? '<img class="ps-img-safe" src="' + esc(p.image) + '" loading="lazy">' : '<i class="fas fa-box"></i>';
+                    var thumb = p.image ? '<img class="ps-img-safe" src="' + esc(p.image) + '" loading="lazy">' : '<i class="fas fa-image"></i>';
                     var price = p.price_with_tax > 0 ? money(p.price_with_tax) : '';
                     var stTxt = p.in_stock ? '' : ' · Sin stock';
                     return '<button class="ps-alt-row" type="button" data-pid="' + p.id + '">' +
@@ -330,7 +330,7 @@
                         var ask     = stockLabel(a);
                         var refPart = a.sku ? 'Ref: ' + esc(a.sku) + ' · ' : '';
                         var stPart  = '<span class="' + ask.cls + '">' + ask.text + '</span>';
-                        var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-box"></i>';
+                        var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-image"></i>';
                         return '<button class="ps-alt-row" type="button" data-idx="' + _pool.indexOf(a) + '">' +
                             '<span class="at">' + thumbEl + '</span>' +
                             '<span class="ab">' +
@@ -352,7 +352,7 @@
                     var ask     = stockLabel(a);
                     var refPart = a.sku ? 'Ref: ' + esc(a.sku) + ' · ' : '';
                     var stPart  = '<span class="' + ask.cls + '">' + ask.text + '</span>';
-                    var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-box"></i>';
+                    var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-image"></i>';
                     return '<button class="ps-alt-row" type="button" data-idx="' + _pool.indexOf(a) + '">' +
                         '<span class="at">' + thumbEl + '</span>' +
                         '<span class="ab">' +
@@ -610,9 +610,9 @@
         if (!e.target.classList || !e.target.classList.contains('ps-img-safe')) { return; }
         var $wrap = $(e.target).closest('.ps-prc-thumb, .ps-pc-thumb, .at');
         if ($wrap.length) {
-            $wrap.html('<i class="fas fa-box"></i>');
+            $wrap.html('<i class="fas fa-image"></i>');
         } else {
-            $(e.target).replaceWith('<i class="fas fa-box"></i>');
+            $(e.target).replaceWith('<i class="fas fa-image"></i>');
         }
     }, true);
 
@@ -668,7 +668,7 @@
     function renderHistory(recs) {
         if (!recs || !recs.length) { return; }
         var html = recs.map(function (r) {
-            var thumbEl = r.product_image ? safeImg(r.product_image) : '<i class="fas fa-box"></i>';
+            var thumbEl = r.product_image ? safeImg(r.product_image) : '<i class="fas fa-image"></i>';
             return '<div class="ps-hist-row">' +
                 '<span class="at">' + thumbEl + '</span>' +
                 '<span class="ab">' +
