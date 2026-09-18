@@ -330,6 +330,105 @@ return [
                 'timeout' => 30,
                 'memory' => 128,
             ],
+
+            // ---------------------------------------------------------------
+            // A partir de aca: colas propias de este proyecto (webadmin, NO
+            // webadminpruebas -- ese vive en su propio config/horizon.php,
+            // archivo aparte) que hoy procesan supervisores sueltos de
+            // /etc/supervisor/conf.d/ y no tenian entrada en Horizon. Se
+            // agregan 18-sep-2026 para poder migrarlos a Horizon; mismo
+            // tuning (tries/timeout/procesos) que su supervisor equivalente,
+            // para que el comportamiento no cambie al migrar. Los tres que
+            // corren con conexion `database` (health, document-default,
+            // document-emails) NO pueden entrar aca -- Horizon es Redis-only,
+            // se quedan como supervisores propios para siempre.
+            'supervisor-erp' => [
+                'connection' => 'redis',
+                'queue' => ['erp'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 1,
+                'timeout' => 60,
+            ],
+            'supervisor-helpdesk-erp' => [
+                'connection' => 'redis',
+                'queue' => ['helpdesk-erp', 'helpdesk-erp-warming', 'helpdesk-ps', 'helpdesk-ps-warming', 'helpdesk-embeddings'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 3,
+                'timeout' => 120,
+            ],
+            'supervisor-helpdesk-compliance' => [
+                'connection' => 'redis',
+                'queue' => ['helpdeskcompliance'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
+            'supervisor-campaigns' => [
+                'connection' => 'redis',
+                'queue' => ['campaigns-scheduler', 'impressions'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
+            'supervisor-supplier-sync' => [
+                'connection' => 'redis',
+                'queue' => ['sync'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 3700,
+            ],
+            'supervisor-supplier-extraction' => [
+                'connection' => 'redis',
+                'queue' => ['supplier-extraction'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 310,
+            ],
+            'supervisor-supplier-retry' => [
+                'connection' => 'redis',
+                'queue' => ['supplier-retry'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 310,
+            ],
+            'supervisor-supplier-maintenance' => [
+                'connection' => 'redis',
+                'queue' => ['maintenance'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 1,
+                'timeout' => 3700,
+            ],
+            'supervisor-supplier-ai' => [
+                'connection' => 'redis',
+                'queue' => ['ai-generation', 'ai-content-generation'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 700,
+            ],
+            // Cupones de cumpleanos (HelpdeskBirthday, SendBirthdayEmailJob) --
+            // agregada 18-sep-2026: nunca tuvo worker real escuchandola, ni
+            // antes de esta migracion (config('helpdeskbirthday.queue',
+            // 'birthdays'), verificado que ningun supervisor la cubria, ni
+            // el instalado en produccion ni la plantilla vieja del repo).
+            'supervisor-birthdays' => [
+                'connection' => 'redis',
+                'queue' => ['birthdays'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
         ],
 
         'local' => [
