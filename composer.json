@@ -23,7 +23,7 @@
         "pragmarx/google2fa": "^9.0",
         "ramsey/uuid": "^4.7",
         "spatie/image-optimizer": "^1.8",
-        "spatie/laravel-activitylog": "^5.0",
+        "spatie/laravel-activitylog": "^4.12",
         "spatie/simple-excel": "^3.9",
         "symfony/finder": "^7.2",
         "symfony/mime": "^7.2"
