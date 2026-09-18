@@ -532,9 +532,9 @@
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
                                                 <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-semibold bv-icon-circle-32">
-                                                    {{ strtoupper(substr($row['agent']->name, 0, 1)) }}
+                                                    {{ mb_strtoupper(mb_substr($row['agent']->fullName(), 0, 1)) }}
                                                 </div>
-                                                <span>{{ $row['agent']->name }}</span>
+                                                <span>{{ $row['agent']->fullName() }}</span>
                                             </div>
                                         </td>
                                         <td class="text-center">
