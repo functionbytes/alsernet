@@ -793,6 +793,43 @@
             channel.listen('.item.created', handleInboxItemCreated);
         });
 
+        // QA tiempo real (18-sep-2026), area 2: cambiar prioridad/estado desde
+        // OTRA pestaña no tocaba la fila de la lista salvo que esa conversación
+        // estuviera abierta en el panel derecho (ver ConversationUpdated::
+        // broadcastOn()). Ahora el evento también llega por este mismo canal
+        // de bandeja ya suscrito; solo falta parchear la píldora de prioridad
+        // de la fila si está visible. No hay indicador de "estado" en la fila
+        // (helpdesk::helpdesk.inbox.partials.conv-item solo pinta prioridad/
+        // sla/no-leídos), así que solo hay algo que actualizar visualmente
+        // ahí.
+        const priorityLabels = { low: 'Baja', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
+        function handleInboxConversationUpdated(e) {
+            if (!e || !e.conversation_id) return;
+            const $item = $('.bv-conv[data-bv-conv-id="' + e.conversation_id + '"]');
+            if (!$item.length) return;
+
+            const $meta = $item.find('.row2 .meta').first();
+            const $pill = $item.find('.bv-tag').first();
+            if (e.priority && e.priority !== 'normal') {
+                const label = priorityLabels[e.priority] || e.priority;
+                if ($pill.length) {
+                    $pill.attr('class', 'bv-tag ' + e.priority).text(label);
+                } else {
+                    const $sla = $meta.find('.bv-sla').first();
+                    const $newPill = $('<span class="bv-tag ' + e.priority + '">' + label + '</span>');
+                    if ($sla.length) $sla.after($newPill); else $meta.prepend($newPill);
+                }
+            } else {
+                $pill.remove();
+            }
+
+            $item.toggleClass('urgent', e.priority === 'urgent');
+        }
+
+        inboxChannels.forEach(function (channel) {
+            channel.listen('.conversation.updated', handleInboxConversationUpdated);
+        });
+
         // Patch a conversation item in-place: update last message preview,
         // bump unread badge, and move to top — all without an AJAX call.
         function patchConvItem($item, conv, msg, isViewing) {

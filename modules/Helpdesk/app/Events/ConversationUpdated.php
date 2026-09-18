@@ -36,12 +36,29 @@ class ConversationUpdated implements ShouldBroadcast
      * llegaba a ningun navegador. Se corrige para usar el mismo canal ya
      * autorizado (ConversationPolicy::view) al que conversations-thread.js
      * ya esta suscrito para '.item.created'.
+     *
+     * QA tiempo real (18-sep-2026), area 2: ese fix solo cubre el panel
+     * derecho de la conversacion ABIERTA (conversations-thread.js recarga el
+     * pane via bvLoadConversationPane, que reemplaza .bv-thread/.bv-right,
+     * nunca .bv-conv de la lista). Un agente que solo ve la conversacion como
+     * fila en su LISTA (sin tenerla abierta) no recibia el cambio de
+     * prioridad en absoluto. Se anade tambien el canal por bandeja
+     * ('helpdesk.inbox.{inboxId}'), ya autorizado contra AgentInboxCapacity y
+     * ya suscrito por conversations-list.js para 'item.created', para que esa
+     * misma lista pueda parchear la fila (ver handler '.conversation.updated'
+     * en setupInboxListener()).
      */
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new PrivateChannel('helpdesk.conversation.'.$this->conversation->id),
         ];
+
+        if ($this->conversation->inbox_id) {
+            $channels[] = new PrivateChannel('helpdesk.inbox.'.$this->conversation->inbox_id);
+        }
+
+        return $channels;
     }
 
     /**
