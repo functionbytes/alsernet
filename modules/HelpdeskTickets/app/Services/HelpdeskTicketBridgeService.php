@@ -348,9 +348,10 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
 
     public function getCustomerTickets(Customer $customer, int $limit = 5): Collection
     {
+        // La vista del panel accede a assignee y category por cada fila.
         return Ticket::query()
             ->where('customer_id', $customer->id)
-            ->with('status')
+            ->with(['status', 'category', 'assignee'])
             ->latest()
             ->limit($limit)
             ->get();
