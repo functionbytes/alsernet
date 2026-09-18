@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskIntegration\Support\Drivers;
 
+use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskErp\Services\ErpContextService;
 use Modules\HelpdeskIntegration\Contracts\IntegrationDriverContract;
@@ -56,7 +57,7 @@ class ErpIntegrationDriver implements IntegrationDriverContract
      * Busca en ERP via ErpContextService (manager Oracle) y normaliza la
      * respuesta al mismo formato {id,name,email,meta} que el resto de drivers.
      */
-    public function search(string $query, string $type): DriverResult
+    public function search(string $query, string $type, int $offset = 0): DriverResult
     {
         if (! $this->isAvailable()) {
             return DriverResult::failed();
@@ -75,8 +76,25 @@ class ErpIntegrationDriver implements IntegrationDriverContract
             default => 'email',
         };
 
+        // Las búsquedas por nombre/apellidos/teléfono recorren la tabla de
+        // clientes entera en Oracle (14-20 s, sin índice): se cachean 5 min
+        // para que repetirla (volver de una ficha, cambiar de plataforma y
+        // volver) sea instantáneo. Solo se cachean respuestas correctas.
+        $cacheKey = 'helpdeskintegration:erp-search:'.sha1(mb_strtolower(trim($query)).'|'.$erpType.'|'.$offset);
+
         try {
-            $results = app(ErpContextService::class)->searchCustomers($query, $erpType);
+            // Por id (resync/verificación de vínculo) no: es instantáneo y
+            // tiene que reflejar el estado actual.
+            $cacheable = $erpType !== 'customer_id';
+            $results = $cacheable ? Cache::get($cacheKey) : null;
+
+            if (! is_array($results)) {
+                $results = app(ErpContextService::class)->searchCustomers($query, $erpType, $offset);
+
+                if ($cacheable) {
+                    Cache::put($cacheKey, $results, now()->addMinutes(5));
+                }
+            }
         } catch (Throwable) {
             return DriverResult::failed();
         }
@@ -90,9 +108,31 @@ class ErpIntegrationDriver implements IntegrationDriverContract
         // para guardar teléfonos — PhoneNormalizerService::normalize()) en
         // vez de dejarlo vacío en la ficha de confirmación. Para búsquedas
         // por nombre/email/NIF no hay teléfono disponible desde aquí.
-        $phone = $type === 'phone'
-            ? app(PhoneNormalizerService::class)->normalize($query)
-            : null;
+        //
+        // El modal de búsqueda externa manda type=auto, así que además se
+        // deduce: consulta numérica cuya fila no coincide por IDCLIENTE,
+        // tarjeta ni código internet → el manager la encontró por teléfono.
+        $normalized = app(PhoneNormalizerService::class)->normalize($query);
+        $numeric = $normalized !== null && preg_match('/^\+?\d{6,15}$/', $normalized) === 1;
+
+        $phoneFor = function (array $r) use ($type, $normalized, $numeric): ?string {
+            if ($type === 'phone') {
+                return $normalized;
+            }
+
+            if ($type !== 'auto' || ! $numeric) {
+                return null;
+            }
+
+            $digits = ltrim($normalized, '+');
+            foreach (['id', 'card', 'code_internet'] as $field) {
+                if ((string) ($r[$field] ?? '') === $digits) {
+                    return null;
+                }
+            }
+
+            return $normalized;
+        };
 
         return DriverResult::ok(array_map(fn ($r) => [
             'id' => (string) ($r['id'] ?? ''),
@@ -100,7 +140,7 @@ class ErpIntegrationDriver implements IntegrationDriverContract
             'email' => $r['email'] ?? '',
             'meta' => 'ERP-'.($r['id'] ?? ''),
             'nif' => $r['cif'] ?? null,
-            'phone' => $phone,
+            'phone' => $phoneFor($r),
             'card' => $r['card'] ?? null,
             'code_internet' => $r['code_internet'] ?? null,
             'active' => $r['available'] ?? null,

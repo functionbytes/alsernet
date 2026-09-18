@@ -26,8 +26,11 @@ class ErpContextService
      *
      * Cuando se proporciona $helpdeskCustomerId y el cliente es encontrado,
      * persiste el link en helpdesk_customer_external_ids para búsquedas futuras.
+     *
+     * $erpId (IDCLIENTE ya conocido, p. ej. de un resultado de búsqueda) evita
+     * la búsqueda por email en Oracle: EMAIL no tiene índice y tarda ~12 s.
      */
-    public function getCustomerContext(string $email, ?string $phone = null, ?int $helpdeskCustomerId = null): array
+    public function getCustomerContext(string $email, ?string $phone = null, ?int $helpdeskCustomerId = null, ?int $erpId = null): array
     {
         $start = microtime(true);
         // Sin email (cliente encontrado solo por teléfono) cacheKey('') sería
@@ -45,7 +48,7 @@ class ErpContextService
             return $result;
         }
 
-        $result = $this->fetchFromErp($email, $phone);
+        $result = $this->fetchFromErp($email, $phone, $erpId);
         $this->putInCache($key, $result);
 
         if ($helpdeskCustomerId !== null && ($result['customer']['found'] ?? false)) {
@@ -94,7 +97,13 @@ class ErpContextService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function searchCustomers(string $query, string $type = 'email'): array
+    /**
+     * Tamaño de página de searchCustomers(): una página llena significa que
+     * puede haber más ("Cargar más" en la búsqueda externa).
+     */
+    public const SEARCH_PAGE_SIZE = 20;
+
+    public function searchCustomers(string $query, string $type = 'email', int $offset = 0): array
     {
         if (! $this->baseUrl() || strlen($query) < 3) {
             return [];
@@ -110,10 +119,13 @@ class ErpContextService
             $query = app(PhoneNormalizerService::class)->toDigits($query) ?? $query;
         }
 
-        $params = ['q' => $query, 'limit' => 20, 'type' => $type];
+        $params = ['q' => $query, 'limit' => self::SEARCH_PAGE_SIZE, 'offset' => max(0, $offset), 'type' => $type];
 
         try {
-            $resp = $this->http()->get($this->url('erp/customer/search'), $params);
+            // Las búsquedas por texto recorren CLIENTE_CENT entera (sin índice
+            // en NOMBRE/APELLIDOS: ~14 s con 1,5 M filas) — con el
+            // http_timeout general (15 s) el ERP "no respondía".
+            $resp = $this->http()->timeout((int) config('helpdeskErp.search_timeout', 40))->get($this->url('erp/customer/search'), $params);
         } catch (\Throwable $e) {
             $this->recordFailure();
 
@@ -272,7 +284,7 @@ class ErpContextService
 
     /* ── Private helpers ──────────────────────────────────────────────────── */
 
-    private function fetchFromErp(string $email, ?string $phone = null): array
+    private function fetchFromErp(string $email, ?string $phone = null, ?int $erpId = null): array
     {
         // Cuando el módulo Erp está en la misma app, usar ErpCustomerDataService
         // directamente para evitar la llamada HTTP circular que genera deadlock
@@ -284,7 +296,7 @@ class ErpContextService
         // aquí). Solo se toma el atajo directo si hay credenciales de verdad.
         if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')
             && filled(config('database.connections.oracle.username'))) {
-            return $this->fetchDirectFromOracle($email, $phone);
+            return $this->fetchDirectFromOracle($email, $phone, $erpId);
         }
 
         if (! $this->baseUrl()) {
@@ -340,14 +352,18 @@ class ErpContextService
      * Fetch customer context via ErpCustomerDataService (Erp module, mismo proceso).
      * Evita la llamada HTTP circular al manager que genera deadlock en PHP-FPM.
      */
-    private function fetchDirectFromOracle(string $email, ?string $phone = null): array
+    private function fetchDirectFromOracle(string $email, ?string $phone = null, ?int $erpId = null): array
     {
         try {
             $erp = app(ErpCustomerDataService::class);
             $ordersLimit = (int) config('helpdeskErp.orders_limit', 10);
             $invoicesLimit = (int) config('helpdeskErp.invoices_limit', 5);
 
-            $c = $erp->findByEmail($email);
+            $c = $erpId !== null ? $erp->findById($erpId) : null;
+
+            if (! $c && $email !== '') {
+                $c = $erp->findByEmail($email);
+            }
 
             if (! $c && $phone !== null) {
                 $digits = app(PhoneNormalizerService::class)->toDigits($phone);
@@ -363,6 +379,7 @@ class ErpContextService
             $idcliente = (int) $c['idcliente'];
             $orderRows = $erp->getRecentOrders($idcliente, $ordersLimit);
             $invoiceRows = $erp->getRecentInvoices($idcliente, $invoicesLimit);
+            $contact = $erp->getContactInfo($idcliente);
 
             $orders = array_map(fn ($o) => [
                 'id' => $o['idpedidocli_central'] ?? null,
@@ -394,9 +411,10 @@ class ErpContextService
                     'name' => trim(($c['nombre'] ?? '').' '.($c['apellidos'] ?? '')),
                     'email' => $c['email'] ?? $email,
                     'nif' => $c['cif'] ?? null,
-                    'phone' => null,
-                    'city' => null,
-                    'province' => null,
+                    'phone' => $contact['phone'],
+                    'city' => $contact['city'],
+                    'province' => $contact['province'],
+                    'address' => $contact['address'],
                     'credit_limit' => null,
                     'balance_pending' => null,
                     'balance_invoiced' => null,

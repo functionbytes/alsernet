@@ -56,8 +56,13 @@ class PrestashopIntegrationDriver implements IntegrationDriverContract
         return class_exists(PrestashopContextService::class) && helpdesk_prestashop_enabled();
     }
 
-    public function search(string $query, string $type): DriverResult
+    public function search(string $query, string $type, int $offset = 0): DriverResult
     {
+        // Sin paginación en PrestaShop: todo llega en la primera página.
+        if ($offset > 0) {
+            return DriverResult::ok([]);
+        }
+
         try {
             return DriverResult::ok($this->sync->searchCustomersOrFail($query, $type));
         } catch (Throwable) {

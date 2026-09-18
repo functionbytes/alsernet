@@ -27,6 +27,7 @@ use Modules\HelpdeskContacts\Http\Requests\Managers\ExternalSearchRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ImportContactsRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\SendHsmRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\UpdateContactRequest;
+use Modules\Erp\Http\Controllers\Api\CustomerController as ErpCustomerController;
 use Modules\HelpdeskErp\Services\ErpContextService;
 use Modules\HelpdeskIntegration\Services\CustomerIntegrationService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
@@ -523,12 +524,22 @@ class ContactsController extends Controller
             ? [$data['platform']]
             : collect($integrations->linkablePlatforms())->pluck('platform')->all();
 
+        $offset = (int) ($data['offset'] ?? 0);
+        $pageSize = ErpContextService::SEARCH_PAGE_SIZE;
+
         $anyOk = false;
         $failedPlatforms = [];
         $results = [];
+        $hasMore = false;
 
         foreach ($platforms as $platform) {
-            $result = $integrations->search($platform, $data['query'], $data['type']);
+            $result = $integrations->search($platform, $data['query'], $data['type'], $offset);
+
+            // Una página llena del ERP indica que puede haber más (antes se
+            // cortaba en 20 sin forma de ver el resto).
+            if ($platform === 'erp' && $result['ok'] && count($result['results']) >= $pageSize) {
+                $hasMore = true;
+            }
 
             if (! $result['ok']) {
                 $failedPlatforms[] = $platform;
@@ -559,6 +570,8 @@ class ContactsController extends Controller
             'ok' => $anyOk || $platforms === [],
             'failed_platforms' => $failedPlatforms,
             'results' => $results,
+            'has_more' => $hasMore,
+            'next_offset' => $hasMore ? $offset + $pageSize : null,
         ]);
     }
 
@@ -613,13 +626,37 @@ class ContactsController extends Controller
         // Ahora exige que el email/teléfono ya pertenezca a un Customer
         // dentro de su forAgent() — mismo aislamiento por inbox que el resto
         // del controlador (assertVisible/bulkAction/index).
-        $this->assertKnownToAgent($email, $phone);
+        //
+        // Excepción: un resultado de la búsqueda externa aún no es contacto
+        // (ese es justo el caso de "Ver ficha" antes de "Crear contacto
+        // nuevo"), y con solo el chequeo anterior la ficha daba siempre 403.
+        // Se acepta si el par id+email coincide con la ficha real de la
+        // plataforma: es el mismo dato que la búsqueda ya le mostró al agente.
+        $externalId = filled($data['external_id'] ?? null) ? (string) $data['external_id'] : null;
+        if (! $this->isExternalResult($data['platform'], $externalId, $email, $phone)) {
+            $this->assertKnownToAgent($email, $phone);
+        }
 
         // ERP soporta fallback por teléfono cuando no hay email (frecuente en
         // resultados encontrados por búsqueda telefónica) — PrestaShop no
         // tiene ese fallback implementado, sigue exigiendo email.
+        $erpId = $externalId !== null && ctype_digit($externalId) ? (int) $externalId : null;
+
+        // Con el IDCLIENTE ya conocido se usa la ficha del módulo Erp
+        // (GET /erp/customer/{id}): clave primaria + teléfonos + direcciones,
+        // sin pedidos — PEDIDOCLI_CENTRAL no tiene índice por cliente y los
+        // pedidos tardaban >10 s en una ficha que solo sirve para decidir si
+        // importar. 'orders' => null le dice a la vista que no pinte esa sección.
+        if ($data['platform'] === 'erp' && $erpId !== null) {
+            $summary = $this->erpSummaryPreview($erpId);
+
+            if ($summary !== null) {
+                return response()->json(['success' => true, 'customer' => $summary, 'orders' => null]);
+            }
+        }
+
         $context = match ($data['platform']) {
-            'erp' => app(ErpContextService::class)->getCustomerContext($email, $phone),
+            'erp' => app(ErpContextService::class)->getCustomerContext($email, $phone, erpId: $erpId),
             'prestashop' => app(PrestashopContextService::class)->getCustomerContext($email),
         };
 
@@ -840,6 +877,78 @@ class ContactsController extends Controller
             403,
             'Sin autorización sobre este contacto.'
         );
+    }
+
+    /**
+     * Ficha de Gestión para la vista previa, desde el endpoint de cliente del
+     * módulo Erp (llamado en proceso, sin HTTP a sí mismo). Teléfono: el
+     * primer móvil activo, si no el primero activo; dirección: la de tipo 1
+     * si existe. Null si el módulo no está o la consulta falla.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function erpSummaryPreview(int $erpId): ?array
+    {
+        if (! class_exists(ErpCustomerController::class)) {
+            return null;
+        }
+
+        try {
+            $response = app(ErpCustomerController::class)->summary($erpId);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $payload = $response->getData(true);
+        $d = $payload['data'] ?? null;
+
+        if ($response->getStatusCode() !== 200 || ! is_array($d)) {
+            return null;
+        }
+
+        $phones = collect($d['phones'] ?? [])->filter(fn ($p) => ($p['available'] ?? true) && filled($p['number'] ?? null));
+        $phone = $phones->first(fn ($p) => preg_match('/^[67]/', (string) $p['number']) === 1) ?? $phones->first();
+
+        $addresses = collect($d['addresses'] ?? [])->filter(fn ($a) => $a['available'] ?? true);
+        $address = $addresses->firstWhere('type', '1') ?? $addresses->first();
+
+        return [
+            'found' => true,
+            'id' => $d['id'] ?? $erpId,
+            'name' => trim(($d['label'] ?? '').' '.($d['surnames'] ?? '')),
+            'email' => $d['email'] ?? null,
+            'nif' => $d['cif'] ?? null,
+            'phone' => $phone['number'] ?? null,
+            'city' => $address['city'] ?? null,
+            'province' => $address['province'] ?? null,
+            'address' => $address
+                ? (implode(', ', array_filter([trim(($address['street'] ?? '').' '.($address['number'] ?? '')), $address['postal_code'] ?? null])) ?: null)
+                : null,
+        ];
+    }
+
+    /**
+     * True when $externalId resolves on the platform to a record carrying
+     * the given email (or phone, when no email is sent) — i.e. the request
+     * is for a result the external search itself returned.
+     */
+    private function isExternalResult(string $platform, ?string $externalId, string $email, ?string $phone): bool
+    {
+        if ($externalId === null) {
+            return false;
+        }
+
+        $record = app(CustomerIntegrationService::class)->resolveExternal($platform, $externalId);
+
+        if ($record === null) {
+            return false;
+        }
+
+        if ($email !== '') {
+            return strcasecmp((string) ($record['email'] ?? ''), $email) === 0;
+        }
+
+        return filled($phone) && app(PhoneNormalizerService::class)->similar($record['phone'] ?? null, $phone);
     }
 
     /**

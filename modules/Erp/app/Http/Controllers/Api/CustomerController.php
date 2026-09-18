@@ -504,6 +504,19 @@ class CustomerController extends ApiController
         }
     }
 
+    /**
+     * Palabras de una búsqueda por texto, en mayúsculas (máx. 4, de 2+
+     * caracteres; las más cortas — "de", "y" — solo ensancharían el LIKE).
+     *
+     * @return list<string>
+     */
+    private function searchWords(string $q): array
+    {
+        $words = preg_split('/\s+/u', mb_strtoupper(trim($q))) ?: [];
+
+        return array_slice(array_values(array_filter($words, fn ($w) => mb_strlen($w) >= 2)), 0, 4);
+    }
+
     public function search(Request $request): JsonResponse
     {
         $startTime = microtime(true);
@@ -511,6 +524,9 @@ class CustomerController extends ApiController
         try {
             $q = trim((string) $request->get('q', ''));
             $limit = min((int) $request->get('limit', 10), 50);
+            // Paginación ("Cargar más"): se piden offset+limit+1 filas con el
+            // mismo ROWNUM de siempre y se descartan las ya mostradas.
+            $offset = max(0, (int) $request->get('offset', 0));
 
             if ($q === '') {
                 return response()->json([
@@ -521,7 +537,7 @@ class CustomerController extends ApiController
             }
 
             $oci8 = app(OCI8Service::class);
-            $n = $limit + 1;
+            $n = $offset + $limit + 1;
             $cols = 'IDCLIENTE, NOMBRE, APELLIDOS, CIF, EMAIL, CODIGO_INTERNET, IDTARJETA, ESTADO, '.
                     "TO_CHAR(FCREACION, 'YYYY-MM-DD HH24:MI:SS') AS FCREACION, ".
                     "TO_CHAR(FMODIFICACION, 'YYYY-MM-DD HH24:MI:SS') AS FMODIFICACION";
@@ -566,6 +582,25 @@ class CustomerController extends ApiController
                         $slowTimeout
                     );
                 }
+            } elseif (count($words = $this->searchWords($q)) > 1) {
+                // Varias palabras ("monica regueira", "regueira timiraos"):
+                // nombre y apellidos van en columnas distintas, así que ni
+                // APELLIDOS LIKE 'MONICA REGUEIRA%' ni NOMBRE LIKE ... podían
+                // coincidir — eran dos recorridos completos inútiles (~14 s
+                // cada uno) que además pasaban del timeout del cliente. Ahora
+                // es UN recorrido: cada palabra debe aparecer en nombre+apellidos.
+                $where = [];
+                $binds = [];
+                foreach ($words as $i => $word) {
+                    $where[] = "UPPER(NOMBRE || ' ' || APELLIDOS) LIKE :w{$i}";
+                    $binds["w{$i}"] = '%'.$word.'%';
+                }
+
+                $rows = $oci8->query(
+                    "SELECT {$cols} FROM DEVELOPER.CLIENTE_CENT WHERE FBAJA IS NULL AND ".implode(' AND ', $where)." AND ROWNUM <= {$n}",
+                    $binds,
+                    30000
+                );
             } else {
                 // CIF exacto con índice (IDX_CLIENTE_CENT_CIF) — O(log n), muy rápido
                 $rows = $oci8->query(
@@ -598,6 +633,7 @@ class CustomerController extends ApiController
                 }
             }
 
+            $rows = array_slice($rows, $offset);
             $hasMore = count($rows) > $limit;
             if ($hasMore) {
                 $rows = array_slice($rows, 0, $limit);
@@ -624,7 +660,7 @@ class CustomerController extends ApiController
                 'data' => $this->cleanUtf8Array($data),
                 'pagination' => [
                     'limit' => $limit,
-                    'offset' => 0,
+                    'offset' => $offset,
                     'count' => count($rows),
                     'hasMore' => $hasMore,
                 ],

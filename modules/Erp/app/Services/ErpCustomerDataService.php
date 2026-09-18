@@ -26,6 +26,75 @@ class ErpCustomerDataService
     }
 
     /**
+     * Busca un cliente por IDCLIENTE (clave primaria: instantáneo, a
+     * diferencia de findByEmail, que recorre la tabla porque EMAIL no tiene
+     * índice).
+     *
+     * @return array{idcliente: int, nombre: string, apellidos: string, cif: string|null, email: string|null}|null
+     */
+    public function findById(int $idcliente): ?array
+    {
+        $rows = $this->oci8->query(
+            'SELECT IDCLIENTE, NOMBRE, APELLIDOS, CIF, EMAIL FROM DEVELOPER.CLIENTE_CENT '.
+            'WHERE FBAJA IS NULL AND IDCLIENTE = :id',
+            ['id' => $idcliente],
+            10000
+        );
+
+        return $rows[0] ?? null;
+    }
+
+    /**
+     * Teléfono principal (activo, móvil primero) y población/provincia/
+     * dirección (la de tipo 1 si existe) de un cliente. Cada parte falla por
+     * separado a null: son datos de apoyo para la ficha, no deben tumbarla.
+     *
+     * @return array{phone: string|null, city: string|null, province: string|null, address: string|null}
+     */
+    public function getContactInfo(int $idcliente): array
+    {
+        $info = ['phone' => null, 'city' => null, 'province' => null, 'address' => null];
+
+        try {
+            $phones = $this->oci8->query(
+                'SELECT TELEFONO FROM DEVELOPER.CLIENTETELEFONO_CENT '.
+                'WHERE IDCLIENTE = :id AND FBAJA IS NULL AND TELEFONO IS NOT NULL '.
+                "ORDER BY CASE WHEN SUBSTR(TELEFONO, 1, 1) IN ('6', '7') THEN 0 ELSE 1 END, FMODIFICACION DESC NULLS LAST",
+                ['id' => $idcliente],
+                10000
+            );
+            $info['phone'] = $phones[0]['telefono'] ?? null;
+        } catch (\Throwable) {
+        }
+
+        try {
+            $addrs = $this->oci8->query(
+                'SELECT * FROM ('.
+                'SELECT CALLE, NUM, CODIGOPOSTAL, POBLACION, PROVINCIA '.
+                'FROM DEVELOPER.CLIENTEDIRECCION_CENT '.
+                'WHERE IDCLIENTE = :id AND FBAJA IS NULL '.
+                'ORDER BY CASE WHEN IDTIPODIRECCION = 1 THEN 0 ELSE 1 END'.
+                ') WHERE ROWNUM <= 1',
+                ['id' => $idcliente],
+                10000
+            );
+
+            if (! empty($addrs)) {
+                $a = $addrs[0];
+                $info['city'] = $a['poblacion'] ?? null;
+                $info['province'] = $a['provincia'] ?? null;
+                $info['address'] = implode(', ', array_filter([
+                    trim(($a['calle'] ?? '').' '.($a['num'] ?? '')),
+                    $a['codigopostal'] ?? null,
+                ])) ?: null;
+            }
+        } catch (\Throwable) {
+        }
+
+        return $info;
+    }
+
+    /**
      * Busca un cliente por número de teléfono (dígitos puros).
      *
      * @return array{idcliente: int, nombre: string, apellidos: string, cif: string|null, email: string|null}|null

@@ -32,8 +32,11 @@ interface IntegrationDriverContract
      * lanzar: los fallos del servicio subyacente (timeout, conexión, etc.)
      * se devuelven como DriverResult::failed() para que la UI pueda
      * distinguirlos de una búsqueda sin coincidencias.
+     *
+     * $offset pagina los resultados ("Cargar más"); una plataforma sin
+     * paginación devuelve vacío para $offset > 0.
      */
-    public function search(string $query, string $type): DriverResult;
+    public function search(string $query, string $type, int $offset = 0): DriverResult;
 
     /**
      * Reverifica que un vinculo existente siga siendo valido en la

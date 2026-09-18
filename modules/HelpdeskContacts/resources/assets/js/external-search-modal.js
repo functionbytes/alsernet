@@ -18,6 +18,9 @@
     var platforms = [];
     var platformsLoaded = false;
     var lastResults = [];
+    var lastSearchKey = null;
+    var lastFailedPlatforms = [];
+    var lastSearchParams = null;
 
     var currentResult = null;
     var lastPreviewPhone = null;
@@ -66,6 +69,7 @@
     }
 
     function resetSearchView() {
+        lastSearchKey = null;
         $('#ext-search-query').val('');
         $('#ext-search-results').html(
             '<div class="bv-oc-empty"><i class="fas fa-magnifying-glass"></i>' +
@@ -144,6 +148,7 @@
 
     function renderResults(results, failedPlatforms) {
         lastResults = results;
+        lastFailedPlatforms = failedPlatforms || [];
         var $box = $('#ext-search-results');
         var warning = '';
 
@@ -212,6 +217,44 @@
         $box.html(warning + html);
     }
 
+    // "Cargar más": solo el ERP pagina (PrestaShop trae todo en la primera
+    // página), así que las páginas siguientes se piden solo al ERP.
+    function renderMoreButton(resp) {
+        $('#ext-search-more-wrap').remove();
+
+        if (!resp || !resp.has_more || resp.next_offset == null) {
+            return;
+        }
+
+        $('#ext-search-results').append(
+            '<div id="ext-search-more-wrap" class="nc-platform-group--sep">' +
+                '<button type="button" class="btn-secondary w-100" id="ext-search-more" data-offset="' + escapeHtml(resp.next_offset) + '">' +
+                    '<i class="fas fa-chevron-down"></i> Cargar más resultados' +
+                '</button>' +
+            '</div>'
+        );
+    }
+
+    $(document).on('click', '#ext-search-more', function () {
+        if (!lastSearchParams) {
+            return;
+        }
+
+        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Buscando…');
+        var params = $.extend({}, lastSearchParams, { platform: 'erp', offset: $btn.data('offset') });
+
+        $.get($('#external-search-modal').data('search-url'), params)
+            .done(function (resp) {
+                var more = (resp && resp.results) || [];
+                renderResults(lastResults.concat(more), lastFailedPlatforms);
+                renderMoreButton(resp);
+            })
+            .fail(function () {
+                $btn.prop('disabled', false).html('<i class="fas fa-chevron-down"></i> Cargar más resultados');
+                toastr.error('No se pudieron cargar más resultados', 'Error');
+            });
+    });
+
     function runSearch() {
         var $modal = $('#external-search-modal');
         var platform = $('#ext-search-platform').val();
@@ -222,8 +265,19 @@
             return;
         }
 
+        // La búsqueda también corre en el blur del campo, y hacer clic en un
+        // resultado provoca ese blur: repetir la misma búsqueda redibujaba la
+        // lista entre el mousedown y el click, y el primer clic se perdía
+        // ("hay que dar dos veces para ver la ficha").
+        var searchKey = (platform || '') + '|' + query;
+        if (searchKey === lastSearchKey) {
+            return;
+        }
+        lastSearchKey = searchKey;
+
         var $box = $('#ext-search-results').html(
-            '<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Buscando…</div>'
+            '<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Buscando… ' +
+            '<small class="text-muted">(en Gestión, una búsqueda por nombre o teléfono puede tardar hasta 20 s)</small></div>'
         );
         // Sin selector "Buscar por": el backend infiere el tipo por el
         // contenido de la búsqueda (email/id/nif/nombre) — ver
@@ -233,6 +287,7 @@
         if (platform !== ALL_PLATFORMS_VALUE) {
             params.platform = platform;
         }
+        lastSearchParams = { type: 'auto', query: query };
 
         $.get($modal.data('search-url'), params)
             .done(function (resp) {
@@ -241,8 +296,10 @@
                     return;
                 }
                 renderResults(resp.results || [], resp.failed_platforms);
+                renderMoreButton(resp);
             })
             .fail(function () {
+                lastSearchKey = null;
                 $box.html('<div class="minfo danger"><i class="fas fa-triangle-exclamation"></i><div>Error al buscar.</div></div>');
             });
     }
@@ -354,6 +411,13 @@
         });
         if (extraRows) {
             $('#ext-preview-customer').append(extraRows);
+        }
+
+        // orders === null: la plataforma no los trae en la vista previa (ERP:
+        // sin índice por cliente, tardaban >10 s) — no se pinta la sección.
+        if (resp && resp.orders === null) {
+            $('#ext-preview-orders').empty();
+            return;
         }
 
         var orders = (resp && resp.orders) || [];

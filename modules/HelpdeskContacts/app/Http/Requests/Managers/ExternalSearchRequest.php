@@ -23,6 +23,8 @@ class ExternalSearchRequest extends FormRequest
             'platform' => ['nullable', 'string', 'max:50'],
             'query' => ['required', 'string', 'min:2', 'max:255'],
             'type' => ['required', 'string', 'max:50'],
+            // "Cargar más": desplazamiento sobre la página anterior.
+            'offset' => ['nullable', 'integer', 'min:0', 'max:1000'],
         ];
     }
 

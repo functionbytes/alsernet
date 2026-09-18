@@ -38,6 +38,11 @@ return [
      */
     'http_timeout' => env('HELPDESK_ERP_HTTP_TIMEOUT', 15),
 
+    // Búsqueda de clientes (buscador externo): las búsquedas por nombre/
+    // apellidos recorren CLIENTE_CENT entera (~14 s sin índice), no caben en
+    // http_timeout.
+    'search_timeout' => env('HELPDESK_ERP_SEARCH_TIMEOUT', 40),
+
     /*
      | Circuit breaker: nº de fallos consecutivos del manager (conexión rechazada
      | o timeout) tras los que se corta el tráfico ERP. Con el manager caído cada

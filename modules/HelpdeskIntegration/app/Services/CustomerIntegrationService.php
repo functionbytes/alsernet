@@ -200,12 +200,29 @@ class CustomerIntegrationService
     }
 
     /**
+     * Ficha de un id concreto en la plataforma remota (id/nombre/email/
+     * teléfono…), o null si no resuelve o la plataforma no respondió.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function resolveExternal(string $platform, string $externalId): ?array
+    {
+        $result = $this->driverFor($platform)?->resync($externalId);
+
+        if (! $result || ! $result->found($externalId)) {
+            return null;
+        }
+
+        return collect($result->results)->first(fn (array $r) => (string) $r['id'] === $externalId);
+    }
+
+    /**
      * Busca en la plataforma remota. `ok=false` significa que la plataforma
      * falló o no respondió — distinto de "respondió sin coincidencias".
      *
      * @return array{ok: bool, results: list<array{id: string, name: string, email: string, meta: string}>}
      */
-    public function search(string $platform, string $query, string $type): array
+    public function search(string $platform, string $query, string $type, int $offset = 0): array
     {
         $driver = $this->driverFor($platform);
 
@@ -213,7 +230,7 @@ class CustomerIntegrationService
             return ['ok' => true, 'results' => []];
         }
 
-        $result = $driver->search($query, $type);
+        $result = $driver->search($query, $type, $offset);
 
         return ['ok' => $result->ok, 'results' => $result->results];
     }
@@ -452,6 +469,13 @@ class CustomerIntegrationService
         // habilitar el envío de plantillas WhatsApp sin esperar a que el
         // cliente escriba primero por ese canal.
         $whatsapp = filled($phone) ? app(PhoneNormalizerService::class)->toWhatsappE164($phone) : null;
+
+        // El teléfono se guarda con el mismo indicativo que llega por WhatsApp
+        // ("34615490503"); guardado en local ("615490503") la ficha quedaba
+        // sin prefijo de país mientras el contacto de WhatsApp sí lo tenía.
+        if (filled($phone) && $whatsapp !== null) {
+            $phone = ltrim($whatsapp, '+');
+        }
 
         $email = filled($match['email'] ?? null) ? $match['email'] : null;
 
