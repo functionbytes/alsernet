@@ -3275,7 +3275,9 @@
         $(document).on('click', '.bv-quick-item', function () {
             const body = $(this).data('bv-quick-body');
             const $ta = $('.bv-composer-input').first();
-            $ta.val(body).focus();
+            // trigger('input'): sin él no corría el reemplazo de {{nombre}} y
+            // la plantilla salía con los marcadores literales.
+            $ta.val(body).trigger('input').focus();
             $('#bv-quick-replies').remove();
         });
 
@@ -3938,6 +3940,30 @@
         // PERF-05: recibos de entrega/lectura de Messenger/Instagram llegan
         // agregados — un solo evento con los ids de los ítems marcados, en vez
         // de un '.item.created' completo por cada mensaje que cambia de estado.
+        // Traducción automática terminada (se hace en cola, después del
+        // '.item.created'): se pinta en la burbuja ya mostrada — antes solo
+        // aparecía al recargar, así que del segundo mensaje en adelante el
+        // chat en vivo se veía sin traducir.
+        convChannel.listen('.item.translated', function (e) {
+            if (!e || !e.item_id || !e.translated_body) return;
+
+            const $bubble = $('.bv-bubble[data-bv-item-id="' + e.item_id + '"]');
+            if (!$bubble.length) return;
+
+            const isOutgoing = e.field === 'outgoing_translated_body';
+            const selector = isOutgoing ? '.bv-outgoing-translation' : '.bv-bubble-translation:not(.bv-outgoing-translation)';
+            if ($bubble.find(selector).length) return;
+
+            const $tr = $('<div class="bv-bubble-translation"></div>');
+            if (isOutgoing) $tr.addClass('bv-outgoing-translation');
+            $tr.attr('data-bv-original', ($bubble.data('bv-body') || '').toString());
+            $tr.attr('data-bv-translated', e.translated_body);
+            $tr.append('<span class="bv-bubble-translation-lbl">&#8627; </span>');
+            $tr.append(document.createTextNode(e.translated_body));
+            $tr.append(' <button type="button" class="bv-bubble-translation-toggle" title="Ver original"><i class="fas fa-arrows-rotate"></i></button>');
+            $bubble.append($tr);
+        });
+
         convChannel.listen('.receipts_updated', function (e) {
             if (!e || !Array.isArray(e.item_ids) || !e.item_ids.length) return;
 
@@ -4139,21 +4165,56 @@ $(document).on('click', '.bv-retry-send', function () {
 // nada, igual que antes. window.HdThreadCtx lo define thread.blade.php vía
 // @json (contact./agent./company./conversation.* para reemplazar
 // placeholders {{...}} en las plantillas insertadas).
+// Reemplazo de {{...}} en respuestas rápidas. Global y fuera del guard de
+// abajo: lee #hd-thread-ctx en cada llamada — ese JSON llega con cada
+// conversación cargada por AJAX, mientras que window.HdThreadCtx (en
+// @push) se quedaba con el cliente de la primera conversación abierta, o ni
+// existía si la página se abrió sin conversación seleccionada. Un marcador
+// sin dato (p. ej. cliente sin nombre) se deja tal cual para que el agente
+// lo vea antes de enviar.
+(function () {
+    function threadCtx() {
+        var el = document.getElementById('hd-thread-ctx');
+        if (el) {
+            try { return JSON.parse(el.textContent || '{}') || {}; } catch (e) { /* JSON roto: sin datos */ }
+        }
+        return window.HdThreadCtx || {};
+    }
+
+    window.bvReplacePlaceholders = function (text) {
+        if (!text || text.indexOf('{{') === -1) { return text; }
+        var ctx = threadCtx();
+        return text.replace(/\{\{([^}]+)\}\}/g, function (match, key) {
+            var k = key.trim();
+            return Object.prototype.hasOwnProperty.call(ctx, k) ? String(ctx[k]) : match;
+        });
+    };
+
+    // Usamos jQuery .on() porque el resto de este archivo dispara
+    // $textarea.trigger('input'), que no siempre propaga al addEventListener nativo.
+    $(document).on('input', '.bv-composer-input', function () {
+        var ta = this;
+        var val = ta.value;
+        if (!/\{\{/.test(val)) return;
+        var replaced = window.bvReplacePlaceholders(val);
+        if (replaced !== val) {
+            var pos = ta.selectionStart + (replaced.length - val.length);
+            ta.value = replaced;
+            ta.setSelectionRange(pos, pos);
+            // Evento nativo para auto-resize (ya sin {{}} no vuelve a procesar)
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+})();
+
 (function () {
     var hdCannedOverlayEl = document.getElementById('hdCannedOverlay');
     if (!hdCannedOverlayEl) { return; }
 
     var hdCsrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
 
-    // Contexto para reemplazar placeholders en plantillas
-    var hdCtx = window.HdThreadCtx || {};
-
     function hdReplace(text) {
-        if (!text) { return text; }
-        return text.replace(/\{\{([^}]+)\}\}/g, function(match, key) {
-            var k = key.trim();
-            return hdCtx.hasOwnProperty(k) ? hdCtx[k] : match;
-        });
+        return window.bvReplacePlaceholders(text);
     }
 
     function hdEscape(str) {
@@ -4316,21 +4377,4 @@ $(document).on('click', '.bv-retry-send', function () {
     // ── Integración con el slash-menu de conversations.js (más abajo en este
     // mismo archivo) ─────────────────────────────────────────
     window.bvCannedRepliesUrl = '/panel/helpdesk/canned-replies/search';
-
-    // Reemplazar marcadores de posición en el composer después de insertar una plantilla.
-    // Usamos jQuery .on() porque el resto de este archivo dispara
-    // $textarea.trigger('input'), que no siempre propaga al addEventListener nativo.
-    $(document).on('input', '.bv-composer-input', function() {
-        var ta = this;
-        var val = ta.value;
-        if (!/\{\{/.test(val)) return;
-        var replaced = hdReplace(val);
-        if (replaced !== val) {
-            var pos = ta.selectionStart;
-            ta.value = replaced;
-            ta.setSelectionRange(pos, pos);
-            // Evento nativo para auto-resize (ya sin {{}} no vuelve a procesar)
-            ta.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    });
 })();

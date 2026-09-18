@@ -5,7 +5,54 @@
 @php
     $convo = $selectedConversation ?? null;
     $cust = $convo?->customer;
+
+    // Datos para reemplazar {{...}} en las respuestas rápidas. Van en el
+    // propio partial (no en @push('scripts')): al cambiar de conversación el
+    // panel llega por AJAX y @push no se vuelve a imprimir, así que los datos
+    // se quedaban en el cliente de la primera conversación (o no existían).
+    // Se aceptan los tres juegos de nombres en uso: español ({{nombre}}, el de
+    // las respuestas guardadas), el de Ajustes ({{customer_name}}) y el
+    // original ({{contact.name}}). {{nombre}} es el nombre de pila, con
+    // mayúscula inicial si en Gestión viene todo en mayúsculas.
+    $hdFullName = trim((string) ($cust?->name ?? ''));
+    $hdFirstName = (string) (preg_split('/\s+/u', $hdFullName)[0] ?? '');
+    if ($hdFirstName !== '' && mb_strtoupper($hdFirstName) === $hdFirstName) {
+        $hdFirstName = mb_convert_case($hdFirstName, MB_CASE_TITLE);
+    }
+    $hdAgent = auth()->user();
+    // users no tiene columna name (firstname/lastname, y a menudo lastname
+    // repite el nombre): {{agente}} es el nombre de pila.
+    $hdAgentFirst = trim((string) ($hdAgent?->firstname ?? ''));
+    $hdAgentLast = trim((string) ($hdAgent?->lastname ?? ''));
+    $hdAgentFull = trim($hdAgentFirst.($hdAgentLast !== '' && $hdAgentLast !== $hdAgentFirst ? ' '.$hdAgentLast : ''));
+    $hdThreadCtx = array_filter([
+        'nombre' => $hdFirstName,
+        'nombre_completo' => $hdFullName,
+        'cliente' => $hdFullName,
+        'email' => $cust?->email,
+        'telefono' => $cust?->phone,
+        'agente' => $hdAgentFirst,
+        'ticket' => $convo?->id ? '#'.$convo->id : null,
+        'empresa' => config('app.name'),
+        'customer_name' => $hdFullName,
+        'customer_email' => $cust?->email,
+        'agent_name' => $hdAgentFull,
+        'agent_email' => $hdAgent?->email,
+        'ticket_number' => $convo?->id ? '#'.$convo->id : null,
+        'subject' => $convo?->subject,
+        'current_date' => now()->format('d/m/Y'),
+        'current_time' => now()->format('H:i'),
+        'current_datetime' => now()->format('d/m/Y H:i'),
+        'contact.name' => $hdFullName,
+        'contact.email' => $cust?->email,
+        'contact.phone' => $cust?->phone,
+        'agent.name' => $hdAgentFull,
+        'agent.email' => $hdAgent?->email,
+        'company.name' => config('app.name'),
+        'conversation.id' => $convo?->id,
+    ], fn ($v) => filled($v));
 @endphp
+<script type="application/json" id="hd-thread-ctx">@json($hdThreadCtx)</script>
 <div class="bv-thread">
 @if(empty($selectedConversationId) || !$convo)
     <div class="bv-thread-empty">
@@ -821,18 +868,8 @@
      conversations-thread.js (bloque "Respuesta rápida + envío de CSAT" al
      final del archivo). Solo puede viajar como datos: son valores de Blade
      (cliente/agente/empresa actuales) que un .js estático no puede resolver. --}}
-@php
-    $hdThreadCtx = [
-        'contact.name'    => $cust?->name ?? '',
-        'contact.email'   => $cust?->email ?? '',
-        'contact.phone'   => $cust?->phone ?? '',
-        'agent.name'      => auth()->user()->name ?? '',
-        'agent.email'     => auth()->user()->email ?? '',
-        'company.name'    => config('app.name'),
-        'conversation.id' => $convo?->id ?? '',
-    ];
-@endphp
-<script>window.HdThreadCtx = @json($hdThreadCtx);</script>
+{{-- Los datos de placeholders viajan en #hd-thread-ctx (arriba, fuera de
+     @push) para que se renueven al cambiar de conversación por AJAX. --}}
 
 @stack('hd-thread-scripts')
 
