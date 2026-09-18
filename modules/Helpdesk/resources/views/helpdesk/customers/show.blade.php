@@ -295,7 +295,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary-subtle text-secondary">
-                                            {{ $conversation->status ?? 'Abierta' }}
+                                            {{ $conversation->status?->name ?? 'Abierta' }}
                                         </span>
                                     </td>
                                     <td>
