@@ -424,6 +424,36 @@ class Customer extends Model
     }
 
     /**
+     * Busca el cliente de un WhatsApp entrante comparando por dígitos, en
+     * whatsapp_phone y también en phone. Los formatos guardados no son
+     * uniformes ("34615490503" del webhook, "+34615490503" de la
+     * importación ERP, "615490503" a mano), así que una comparación exacta
+     * sobre whatsapp_phone creaba un contacto duplicado cada vez que alguien
+     * importado o dado de alta a mano escribía por WhatsApp.
+     */
+    public static function findByWhatsappPhone(string $phone): ?self
+    {
+        $normalizer = app(PhoneNormalizerService::class);
+        $digits = $normalizer->toDigits($phone);
+
+        if ($digits === null) {
+            return null;
+        }
+
+        $tail = substr($digits, -9);
+
+        $candidates = static::query()
+            ->where(fn ($q) => $q->where('whatsapp_phone', 'like', "%{$tail}")
+                ->orWhere('phone', 'like', "%{$tail}"))
+            ->orderBy('id')
+            ->limit(50)
+            ->get();
+
+        return $candidates->first(fn (self $c) => $normalizer->toDigits($c->whatsapp_phone) === $digits)
+            ?? $candidates->first(fn (self $c) => $normalizer->toDigits($c->phone) === $digits);
+    }
+
+    /**
      * Generate a portal authentication token.
      *
      * Stores the SHA-256 hash of the token in portal_token (never the cleartext),

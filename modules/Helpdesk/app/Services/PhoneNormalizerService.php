@@ -119,6 +119,13 @@ class PhoneNormalizerService
             return $this->isValidWhatsapp($candidate) ? $candidate : null;
         }
 
+        // E.164 español sin '+' ("34615490503"): así llega desde WhatsApp
+        // Cloud API y a veces desde el ERP. Sin este caso el contacto
+        // importado quedaba sin whatsapp_phone.
+        if (preg_match('/^34[6789]\d{8}$/', $normalized) === 1) {
+            return '+'.$normalized;
+        }
+
         return null;
     }
 }

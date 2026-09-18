@@ -114,4 +114,13 @@ class PhoneNormalizerServiceTest extends TestCase
         $this->assertFalse($this->svc->similar(null, '+34615490503'));
         $this->assertFalse($this->svc->similar('', '+34615490503'));
     }
+
+    public function test_to_whatsapp_e164_accepts_every_spanish_format(): void
+    {
+        $this->assertSame('+34629852446', $this->svc->toWhatsappE164('629852446'));
+        $this->assertSame('+34629852446', $this->svc->toWhatsappE164('+34 629 85 24 46'));
+        $this->assertSame('+34629852446', $this->svc->toWhatsappE164('0034629852446'));
+        $this->assertSame('+34629852446', $this->svc->toWhatsappE164('34629852446'));
+        $this->assertNull($this->svc->toWhatsappE164('12345'));
+    }
 }

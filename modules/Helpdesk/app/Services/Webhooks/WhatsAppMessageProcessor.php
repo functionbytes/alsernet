@@ -36,10 +36,13 @@ class WhatsAppMessageProcessor
         $name = $event['name'] ?? $phone;
         $body = $event['body'] ?? $this->fallbackBody($event);
 
-        $customer = Customer::firstOrCreate(
-            ['whatsapp_phone' => $phone],
-            ['name' => $name, 'phone' => $phone, 'language' => 'es'],
-        );
+        $customer = Customer::findByWhatsappPhone($phone);
+
+        if ($customer === null) {
+            $customer = Customer::create(['name' => $name, 'phone' => $phone, 'whatsapp_phone' => $phone, 'language' => 'es']);
+        } elseif (blank($customer->whatsapp_phone)) {
+            $customer->update(['whatsapp_phone' => $phone]);
+        }
 
         $item = $this->ingestor->ingest('whatsapp', $phone, $customer, [
             'body' => $body,

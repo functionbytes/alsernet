@@ -17,6 +17,14 @@ class ErpCustomerLinkerService
      */
     private bool $searchFailed = false;
 
+    /**
+     * Ficha de Gestión que produjo la coincidencia (la guarda searchByEmail/
+     * searchByPhone) para completar el contacto al vincular.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $matchedRecord = null;
+
     public function __construct(
         private readonly ErpContextService $erp,
         private readonly PhoneNormalizerService $phoneNormalizer,
@@ -38,6 +46,7 @@ class ErpCustomerLinkerService
         }
 
         $this->searchFailed = false;
+        $this->matchedRecord = null;
 
         // 1. Buscar por email (descartamos correos anónimos del chat web)
         $email = $customer->email;
@@ -115,6 +124,8 @@ class ErpCustomerLinkerService
 
         $customer->recordErpLookup('linked');
 
+        $this->fillProfileFromErp($customer);
+
         // Invalidar el contexto cacheado de este cliente.
         //
         // getCustomerContext() cachea también los negativos (miss_ttl, 60 s por
@@ -163,6 +174,49 @@ class ErpCustomerLinkerService
         app(CustomerIntegrationService::class)->logFailedLookup($customer, 'erp', $status);
     }
 
+    /**
+     * Completa el contacto con la ficha de Gestión al vincularlo: el nombre de
+     * Gestión reemplaza al del perfil de WhatsApp/Messenger, y el email se
+     * rellena solo si el contacto no tiene uno. Si ese email ya es de otro
+     * contacto (índice único, incluye borrados) no se toca: es señal de un
+     * duplicado a fusionar a mano, no algo que se pueda resolver aquí.
+     */
+    private function fillProfileFromErp(Customer $customer): void
+    {
+        $record = $this->matchedRecord;
+
+        if ($record === null) {
+            return;
+        }
+
+        $updates = [];
+
+        $name = trim(($record['label'] ?? '').' '.($record['surnames'] ?? ''));
+        if ($name !== '' && $name !== $customer->name) {
+            $updates['name'] = $name;
+        }
+
+        $email = $record['email'] ?? null;
+        if (blank($customer->email) && is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $taken = Customer::withTrashed()
+                ->where('email', $email)
+                ->whereKeyNot($customer->getKey())
+                ->exists();
+
+            if ($taken) {
+                Log::info('HelpdeskErp: el email de Gestión ya pertenece a otro contacto, no se copia.', [
+                    'customer_id' => $customer->id,
+                ]);
+            } else {
+                $updates['email'] = $email;
+            }
+        }
+
+        if ($updates !== []) {
+            $customer->update($updates);
+        }
+    }
+
     private function searchByEmail(string $email): ?int
     {
         // searchCustomers() propaga las caídas del manager (conexión o status
@@ -180,6 +234,8 @@ class ErpCustomerLinkerService
 
         foreach ($results as $r) {
             if (isset($r['email']) && strtolower($r['email']) === strtolower($email)) {
+                $this->matchedRecord = $r;
+
                 return (int) $r['id'];
             }
         }
@@ -230,6 +286,8 @@ class ErpCustomerLinkerService
 
             return null;
         }
+
+        $this->matchedRecord = $results[0];
 
         return $erpId;
     }

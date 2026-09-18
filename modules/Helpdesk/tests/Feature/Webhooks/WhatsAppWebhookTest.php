@@ -363,6 +363,45 @@ class WhatsAppWebhookTest extends TestCase
         );
     }
 
+    public function test_whatsapp_message_reuses_customer_that_only_has_phone(): void
+    {
+        // Contacto importado del ERP / creado a mano: teléfono en `phone`,
+        // sin whatsapp_phone. Antes el webhook creaba un segundo contacto.
+        $customer = Customer::factory()->create([
+            'phone' => '34629852446',
+            'whatsapp_phone' => null,
+            'name' => 'Importado ERP',
+        ]);
+
+        $event = $this->buildParsedEvent('34629852446', 'wamid.phoneonly001', 'Hola');
+
+        (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
+            $this->app->make(FacebookMessengerService::class),
+        );
+
+        $this->assertSame(1, Customer::where('phone', '34629852446')->count());
+        $this->assertSame('34629852446', $customer->fresh()->whatsapp_phone);
+    }
+
+    public function test_whatsapp_message_matches_customer_stored_in_another_format(): void
+    {
+        // La importación ERP guarda "+34…"; Meta entrega "34…" sin '+'.
+        $customer = Customer::factory()->create([
+            'whatsapp_phone' => '+34629852447',
+            'name' => 'Formato E164',
+        ]);
+
+        $event = $this->buildParsedEvent('34629852447', 'wamid.format001', 'Hola');
+
+        (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
+            $this->app->make(FacebookMessengerService::class),
+        );
+
+        $this->assertSame(1, Customer::where('name', 'Formato E164')->count());
+        $this->assertSame(1, Customer::whereIn('whatsapp_phone', ['+34629852447', '34629852447'])->count());
+        $this->assertSame($customer->id, Conversation::where('customer_id', $customer->id)->value('customer_id'));
+    }
+
     // ─── Group 3: Conversation management ────────────────────────────────────
 
     public function test_new_whatsapp_message_creates_open_conversation_with_whatsapp_channel(): void

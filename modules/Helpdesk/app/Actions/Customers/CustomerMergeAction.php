@@ -105,7 +105,10 @@ class CustomerMergeAction
     {
         $updates = [];
 
-        foreach (['name', 'email', 'phone', 'avatar_url', 'country', 'state', 'city', 'language', 'timezone'] as $field) {
+        // whatsapp_phone/facebook_psid/instagram_id: sin traspasarlos, el
+        // siguiente mensaje entrante del contacto fusionado no encontraba al
+        // base y volvía a crear el duplicado.
+        foreach (['name', 'email', 'phone', 'whatsapp_phone', 'facebook_psid', 'instagram_id', 'avatar_url', 'country', 'state', 'city', 'language', 'timezone'] as $field) {
             if (empty($this->base->{$field}) && ! empty($this->mergee->{$field})) {
                 $updates[$field] = $this->mergee->{$field};
             }

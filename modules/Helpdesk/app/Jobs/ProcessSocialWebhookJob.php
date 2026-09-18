@@ -264,10 +264,13 @@ class ProcessSocialWebhookJob implements ShouldQueue
         $event = $this->event;
 
         try {
-            $customer = Customer::firstOrCreate(
-                ['whatsapp_phone' => $event['phone']],
-                ['name' => $event['name'], 'phone' => $event['phone'], 'whatsapp_phone' => $event['phone'], 'email' => null],
-            );
+            $customer = Customer::findByWhatsappPhone($event['phone']);
+
+            if ($customer === null) {
+                $customer = Customer::create(['name' => $event['name'], 'phone' => $event['phone'], 'whatsapp_phone' => $event['phone'], 'email' => null]);
+            } elseif (blank($customer->whatsapp_phone)) {
+                $customer->update(['whatsapp_phone' => $event['phone']]);
+            }
 
             // Build body label only — media downloads happen in the background.
             [$body, $pendingAttachment] = $this->buildWhatsAppBody($event);
