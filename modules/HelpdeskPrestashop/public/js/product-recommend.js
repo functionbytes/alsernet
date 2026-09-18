@@ -557,15 +557,19 @@
     }
 
     // ── Fallback de imagen rota → icono ───────────────────────────────────────
+    // El evento "error" de <img> no burbujea, así que un listener delegado en
+    // document vía $(document).on(...) nunca se disparaba: se necesita fase de
+    // captura (tercer argumento true), que jQuery .on() no ofrece.
 
-    $(document).on('error', '.ps-img-safe', function () {
-        var $wrap = $(this).closest('.ps-prc-thumb, .ps-pc-thumb, .at');
+    document.addEventListener('error', function (e) {
+        if (!e.target.classList || !e.target.classList.contains('ps-img-safe')) { return; }
+        var $wrap = $(e.target).closest('.ps-prc-thumb, .ps-pc-thumb, .at');
         if ($wrap.length) {
             $wrap.html('<i class="fas fa-box"></i>');
         } else {
-            $(this).replaceWith('<i class="fas fa-box"></i>');
+            $(e.target).replaceWith('<i class="fas fa-box"></i>');
         }
-    });
+    }, true);
 
     // ── Carga de recomendados / historial ─────────────────────────────────────
 
