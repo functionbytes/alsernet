@@ -80,6 +80,10 @@ Route::post('/customers/{customer}/ps/orders/{order}/email', [PsOrderActionsCont
 Route::get('/customers/{customer}/ps/addresses', [ProductSearchController::class, 'addresses'])
     ->name('manager.helpdesk.customers.ps.addresses');
 
+// Pedidos PS del cliente — carga diferida desde los tabs "Tienda"/"Carritos" del inbox
+Route::get('/customers/{customer}/ps/orders', [ProductSearchController::class, 'orders'])
+    ->name('manager.helpdesk.customers.ps.orders');
+
 // Categorías PS para el filtro de búsqueda
 Route::get('/ps/categories', [ProductSearchController::class, 'categories'])
     ->name('manager.helpdesk.ps.categories');
