@@ -5,6 +5,8 @@ namespace Modules\HelpdeskTranslate\Concerns;
 use Illuminate\Support\Facades\Schema;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Setting;
+use Modules\HelpdeskTranslate\Events\ItemTranslated;
+use Throwable;
 
 /**
  * Shared helpers for the auto-translation listeners.
@@ -142,5 +144,19 @@ trait TranslatesMessage
             'helpdesktranslate.default_target',
             config('helpdesktranslate.default_target', 'es')
         );
+    }
+
+    /**
+     * Avisa al inbox abierto de que la traducción está lista. Estos
+     * listeners corren en cola, DESPUÉS del broadcast del propio mensaje, así
+     * que sin esto la burbuja en vivo se quedaba sin traducir hasta F5.
+     */
+    protected function broadcastTranslation($item, string $field, string $translated): void
+    {
+        try {
+            broadcast(new ItemTranslated((int) $item->id, (int) $item->conversation_id, $field, $translated));
+        } catch (Throwable) {
+            // Sin broadcast la traducción sigue guardada: se ve al recargar.
+        }
     }
 }

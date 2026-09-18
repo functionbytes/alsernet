@@ -83,6 +83,8 @@ class TranslateIncomingMessage implements ShouldQueue
                 'translated_body' => $translated,
                 'source_locale' => $sourceLocale,
             ])->saveQuietly();
+
+            $this->broadcastTranslation($item, 'translated_body', $translated);
         }
     }
 
