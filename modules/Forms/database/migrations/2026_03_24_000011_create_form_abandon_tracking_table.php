@@ -16,8 +16,13 @@ return new class extends Migration
             $table->json('partial_data')->nullable();
             $table->unsignedTinyInteger('current_step')->default(1);
             $table->string('last_field_key', 100)->nullable();
-            $table->timestamp('started_at');
-            $table->timestamp('last_activity_at');
+            // NOT NULL sin default explicito: con explicit_defaults_for_timestamp=ON
+            // (este MySQL) solo la primera columna timestamp de la tabla puede
+            // vivir sin default — la segunda revienta con error 1067. La app
+            // igual las setea siempre al crear/actualizar la fila; useCurrent()
+            // solo cubre el CREATE TABLE en si.
+            $table->timestamp('started_at')->useCurrent();
+            $table->timestamp('last_activity_at')->useCurrent();
             $table->timestamp('reminder_sent_at')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->timestamps();

@@ -131,8 +131,17 @@ class HelpdeskServiceProvider extends ServiceProvider
         }
 
         $registry = $this->app->make(EntityPanelRegistry::class);
-        $registry->register(new CustomerEmailLogPanelRenderer);
-        $registry->register(new ConversationEmailLogPanelRenderer);
+
+        // TODO: faltan estos dos archivos en el repo (bug del commit
+        // b6103097) - hasta que se creen, cada panel queda desactivado en
+        // vez de tumbar el arranque de la app.
+        if (class_exists(CustomerEmailLogPanelRenderer::class)) {
+            $registry->register(new CustomerEmailLogPanelRenderer);
+        }
+
+        if (class_exists(ConversationEmailLogPanelRenderer::class)) {
+            $registry->register(new ConversationEmailLogPanelRenderer);
+        }
     }
 
     /**

@@ -75,6 +75,7 @@ class DocumentsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         // Register routes directly (Laravel 12 compatible)
+        $this->registerRoutes();
 
         $this->registerEmailLogPanel();
     }
@@ -97,9 +98,15 @@ class DocumentsServiceProvider extends ServiceProvider
             return;
         }
 
+        // TODO: falta este archivo en el repo (bug del commit b6103097) -
+        // hasta que se cree, el panel de email queda desactivado en vez de
+        // tumbar el arranque de la app.
+        if (! class_exists(DocumentEmailLogPanelRenderer::class)) {
+            return;
+        }
+
         $this->app->make(EntityPanelRegistry::class)
             ->register(new DocumentEmailLogPanelRenderer);
-        $this->registerRoutes();
     }
 
     /**

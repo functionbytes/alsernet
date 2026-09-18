@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -59,8 +61,27 @@ return new class extends Migration
         }
 
         foreach (array_keys(self::REDUNDANT) as $index) {
-            if ($this->indexExists($index)) {
+            if (! $this->indexExists($index)) {
+                continue;
+            }
+
+            try {
                 DB::connection($this->connection)->statement("ALTER TABLE `helpdesk_tickets` DROP INDEX `{$index}`");
+            } catch (QueryException $e) {
+                // El supuesto "duplicado" de este indice (ver REDUNDANT) puede
+                // no existir en este entorno concreto -- el historial de
+                // migraciones diverge entre copias. Si MySQL se niega porque el
+                // indice sostiene una FK (error 1553) y no hay otro que la
+                // cubra, no es seguro borrarlo aqui: se deja tal cual y sigue
+                // con el resto en vez de tumbar todo el deploy por una
+                // optimizacion de escritura que no aplica en esta copia.
+                if (str_contains($e->getMessage(), '1553')) {
+                    Log::warning("No se pudo eliminar el indice redundante {$index} de helpdesk_tickets: sostiene una FK y no hay otro indice equivalente en este entorno. Se deja como esta.");
+
+                    continue;
+                }
+
+                throw $e;
             }
         }
     }
