@@ -77,7 +77,7 @@ class BusinessHour extends Model
                     'is_open' => ! in_array($day, $closedDays),
                     'opens_at' => '09:00:00',
                     'closes_at' => '18:00:00',
-                    'timezone' => 'America/Mexico_City',
+                    'timezone' => 'Europe/Madrid',
                 ]
             );
         }

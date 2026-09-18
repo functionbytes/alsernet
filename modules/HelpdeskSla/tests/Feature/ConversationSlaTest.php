@@ -50,6 +50,7 @@ class ConversationSlaTest extends TestCase
         $this->service = app(ConversationSlaService::class);
         $this->openStatus = $this->ensureOpenStatus();
         $this->disableOtherActiveGlobalPolicies();
+        $this->disableActivePriorityPolicies();
     }
 
     protected function tearDown(): void
@@ -72,6 +73,27 @@ class ConversationSlaTest extends TestCase
     {
         SlaPolicy::query()
             ->whereNull('priority_id')
+            ->whereNull('category_id')
+            ->update(['is_active' => false]);
+    }
+
+    /**
+     * getApplicablePolicy() also prefers a category-agnostic policy scoped
+     * to the conversation's exact priority over the global fallback above,
+     * and the shared test DB has one of those active for every real
+     * priority (baja/normal/alta/urgente/critico). Conversation::factory()
+     * assigns a random priority, so whichever real policy matched it (with
+     * its own real hours/business_hours_only) would silently win over the
+     * policy a test builds with makeGlobalPolicy()/makeBusinessHoursPolicy(),
+     * making assertions that compare against a specific due date/threshold
+     * flaky (or passing "by luck" whenever the real policy's numbers
+     * happened to agree). Deactivate every priority-specific policy so only
+     * what a test creates for itself is ever resolved.
+     */
+    private function disableActivePriorityPolicies(): void
+    {
+        SlaPolicy::query()
+            ->whereNotNull('priority_id')
             ->whereNull('category_id')
             ->update(['is_active' => false]);
     }

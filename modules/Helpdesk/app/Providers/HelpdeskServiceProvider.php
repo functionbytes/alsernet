@@ -313,6 +313,10 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Notificaciones', 'route' => 'settings.helpdesk.notifications', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Panel de administración', 'route' => 'settings.helpdesk.business.features', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Horarios de atención', 'route' => 'settings.helpdesk.business.hours', 'permission' => 'helpdesk.settings.view'],
+                // Ruta de HelpdeskSla (no de este módulo): un festivo también cierra el
+                // horario de atención (BusinessHoursService), así que vive aquí al lado
+                // para que se encuentre junto al horario, no solo bajo "Helpdesk · SLA".
+                ['label' => 'Festivos', 'route' => 'helpdesksla.holidays.index', 'permission' => 'helpdesksla.view'],
                 ['label' => 'Fuera de horario', 'route' => 'settings.helpdesk.business.off-hours', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Bienvenida', 'route' => 'settings.helpdesk.business.greeting', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Despedida', 'route' => 'settings.helpdesk.business.farewell', 'permission' => 'helpdesk.settings.view'],

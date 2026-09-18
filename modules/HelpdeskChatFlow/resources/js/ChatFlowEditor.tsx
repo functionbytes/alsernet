@@ -1471,7 +1471,7 @@ function TypeFields({ draft, allNodes, agents, groups, setData }: TypeFieldsProp
                         placeholder="Europe/Madrid"
                         value={d.timezone || ''}
                         onChange={e => setData({ timezone: e.target.value })} />
-                    <p style={hintStyle}>Guarda <code>within_business_hours</code> (sí/no) en el contexto. Pon un nodo <strong>Condición</strong> después para ramificar dentro/fuera de horario.</p>
+                    <p style={hintStyle}>Guarda <code>within_business_hours</code> (sí/no) en el contexto. Pon un nodo <strong>Condición</strong> después para ramificar dentro/fuera de horario. Un festivo cargado en <em>Festivos</em> también cuenta como fuera de horario, aunque caiga dentro del rango de días/horas de arriba.</p>
                 </div>
             );
         }

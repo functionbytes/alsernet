@@ -131,7 +131,7 @@ class BusinessHoursCalculator
      * Zona horaria del calendario de negocio. Sale del propio calendario
      * cacheado (columna helpdesk_business_hours.timezone) para no asumir la
      * zona por defecto de config() cuando las filas reales usan otra distinta
-     * (p.ej. initializeDefaults() siembra America/Mexico_City).
+     * (p.ej. initializeDefaults() siembra Europe/Madrid).
      *
      * @param  array<int|string, mixed>  $schedule
      */

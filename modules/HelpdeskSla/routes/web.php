@@ -24,6 +24,9 @@ Route::name('helpdesksla.')
         Route::post('holidays', [HolidaysController::class, 'store'])
             ->middleware('can:helpdesksla.manage')
             ->name('holidays.store');
+        Route::post('holidays/import', [HolidaysController::class, 'import'])
+            ->middleware('can:helpdesksla.manage')
+            ->name('holidays.import');
         Route::delete('holidays/{holiday}', [HolidaysController::class, 'destroy'])
             ->middleware('can:helpdesksla.manage')
             ->name('holidays.destroy');

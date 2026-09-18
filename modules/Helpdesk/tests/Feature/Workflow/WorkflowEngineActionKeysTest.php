@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Tests\Feature\Workflow;
 use App\Models\User;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
+use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Workflow;
 use Modules\Helpdesk\Models\WorkflowRun;
@@ -133,5 +134,32 @@ class WorkflowEngineActionKeysTest extends HelpdeskTestCase
         ]);
 
         $this->assertSame($agent->id, $this->conversation->fresh()->assignee_id);
+    }
+
+    /** El bug real: 'value' trae un NOMBRE de etiqueta, no el 'tag_id' numérico que se leía antes. */
+    public function test_add_tag_reads_the_value_key_as_tag_name(): void
+    {
+        $this->runNodes([
+            ['id' => 'n1', 'type' => 'action', 'config' => ['action' => 'add_tag', 'value' => 'nuevo-contacto'], 'next' => 'n2'],
+            ['id' => 'n2', 'type' => 'end'],
+        ]);
+
+        $tag = ConversationTag::where('name', 'nuevo-contacto')->first();
+
+        $this->assertNotNull($tag);
+        $this->assertTrue($this->conversation->fresh()->conversationTags->contains($tag->id));
+    }
+
+    public function test_send_text_marks_the_message_as_an_automated_reply(): void
+    {
+        $this->runNodes([
+            ['id' => 'n1', 'type' => 'action', 'config' => ['action' => 'send_text', 'value' => 'Gracias por escribirnos.'], 'next' => 'n2'],
+            ['id' => 'n2', 'type' => 'end'],
+        ]);
+
+        $item = $this->conversation->items()->where('body', 'Gracias por escribirnos.')->first();
+
+        $this->assertNotNull($item);
+        $this->assertSame('workflow', data_get($item->metadata, 'auto_reply'));
     }
 }

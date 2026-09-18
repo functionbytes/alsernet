@@ -2,6 +2,10 @@
 
 namespace Modules\HelpdeskChatFlow\Services\Concerns;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
+
 /**
  * Evaluates whether "now" falls within a configured business-hours window
  * (active weekdays + time range in a given timezone). Shared by the live
@@ -22,6 +26,12 @@ trait EvaluatesBusinessHours
         try {
             $now = now()->setTimezone($timezone);
         } catch (\Throwable) {
+            // Timezone inválida escrita a mano en el editor visual (input de
+            // texto libre, sin validar): antes caía en la del servidor sin
+            // dejar rastro. Se mantiene el fallback, pero ahora queda avisado.
+            Log::warning('EvaluatesBusinessHours: timezone inválida en el nodo de horario de atención, se usa la del servidor.', [
+                'timezone' => $timezone,
+            ]);
             $now = now();
         }
 
@@ -31,12 +41,13 @@ trait EvaluatesBusinessHours
         // after the start (yesterday's shift) or before the end (today, pre-dawn).
         if ($end <= $start) {
             if ($current >= $start) {
-                return in_array((int) $now->isoWeekday(), $days, true);
+                return $this->isActiveBusinessDay($now, $days);
             }
 
             if ($current < $end) {
-                // Pre-dawn stretch belongs to the shift that began the previous day.
-                return in_array((int) $now->copy()->subDay()->isoWeekday(), $days, true);
+                // Pre-dawn stretch belongs to the shift that began the previous day:
+                // tanto el día de la semana como el festivo se comprueban sobre ayer.
+                return $this->isActiveBusinessDay($now->copy()->subDay(), $days);
             }
 
             return false;
@@ -46,7 +57,34 @@ trait EvaluatesBusinessHours
             return false;
         }
 
-        return in_array((int) $now->isoWeekday(), $days, true);
+        return $this->isActiveBusinessDay($now, $days);
+    }
+
+    /**
+     * ¿Ese día cae en un día activo del nodo y no es festivo? El calendario de
+     * festivos es el de HelpdeskSla (dependencia blanda: sin ese módulo
+     * instalado nunca hay festivos, igual que el comportamiento previo).
+     *
+     * @param  array<int>  $days
+     */
+    private function isActiveBusinessDay(Carbon $day, array $days): bool
+    {
+        if (! in_array((int) $day->isoWeekday(), $days, true)) {
+            return false;
+        }
+
+        return ! $this->isHoliday($day);
+    }
+
+    private function isHoliday(Carbon $day): bool
+    {
+        if (! class_exists(BusinessHoursCalculator::class)) {
+            return false;
+        }
+
+        $calculator = app(BusinessHoursCalculator::class);
+
+        return $calculator->isHoliday($day, $calculator->holidays());
     }
 
     /**

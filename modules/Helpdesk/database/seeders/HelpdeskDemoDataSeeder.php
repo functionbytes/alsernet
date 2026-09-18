@@ -38,7 +38,7 @@ class HelpdeskDemoDataSeeder extends Seeder
         foreach ($schedule as $day => $data) {
             BusinessHour::updateOrCreate(
                 ['day_of_week' => $day],
-                array_merge($data, ['timezone' => 'America/Mexico_City'])
+                array_merge($data, ['timezone' => 'Europe/Madrid'])
             );
         }
     }

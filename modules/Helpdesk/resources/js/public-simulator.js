@@ -558,7 +558,7 @@
             '<p class="mb-2 fw-semibold small">¿Cómo te atendimos? <span class="text-muted fw-normal">(Califica del 1 al 5)</span><' + '/p>' +
             '<div class="sim-csat-stars d-flex gap-2 mb-2">' +
                 [1,2,3,4,5].map(function (i) {
-                    return '<button type="button" class="sim-star-btn btn btn-sm btn-outline-secondary" data-val="' + i + '" title="' + i + ' estrella' + (i > 1 ? 's' : '') + '">⭐<' + '/button>';
+                    return '<button type="button" class="sim-star-btn" data-val="' + i + '" title="' + i + ' estrella' + (i > 1 ? 's' : '') + '">⭐<' + '/button>';
                 }).join('') +
             '<' + '/div>' +
             '<textarea class="form-control form-control-sm mb-2" id="sim-csat-comment" rows="2" placeholder="Comentario opcional…" maxlength="500"><' + '/textarea>' +
@@ -1038,10 +1038,10 @@
 
     // ── Sessions list ──
     const CHANNEL_ICONS = {
-        whatsapp:  'fab fa-whatsapp text-success',
-        facebook:  'fab fa-facebook-messenger text-primary',
-        instagram: 'fab fa-instagram text-danger',
-        web:       'fas fa-globe text-info',
+        whatsapp:  'fab fa-whatsapp sim-ico-whatsapp',
+        facebook:  'fab fa-facebook-messenger sim-ico-facebook',
+        instagram: 'fab fa-instagram sim-ico-instagram',
+        web:       'fas fa-globe sim-ico-web',
     };
 
     let allSessions = [];
@@ -1083,10 +1083,10 @@
             const iconClass   = CHANNEL_ICONS[s.channel] || 'fas fa-circle text-secondary';
             const statusClass = s.is_closed ? 'closed' : '';
             const isActive    = conv && conv.id === s.id;
-            const chLabel     = (s.channel || 'web').charAt(0).toUpperCase() + (s.channel || 'web').slice(1);
+            const chLabel     = (LABELS[s.channel] || {}).name || (s.channel || 'web');
 
             const $card = $('<div>')
-                .addClass('sim-session-card' + (isActive ? ' active' : ''))
+                .addClass('sim-session-card sim-session-' + (s.channel || 'web') + (isActive ? ' active' : ''))
                 .attr('data-id', s.id)
                 .html(
                     '<div class="sim-session-ch"><i class="' + iconClass + ' me-1"></i>' + chLabel + '</div>' +

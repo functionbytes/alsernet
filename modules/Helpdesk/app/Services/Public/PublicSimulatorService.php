@@ -155,7 +155,14 @@ class PublicSimulatorService
      */
     public function present(ConversationItem $item): array
     {
-        $isAgent = ! empty($item->user_id) || data_get($item->metadata, 'injected_as_agent', false);
+        // Las respuestas automaticas (SendGreetingOnConversationCreated,
+        // RespondOffHoursOnConversationCreated, SendFarewellOnConversationClosed) se crean
+        // con user_id null porque no hay un agente humano al que atribuirlas — sin este
+        // check, present() las marcaba 'from' => 'customer' y el hilo del simulador las
+        // pintaba como si el propio cliente se las hubiera escrito a si mismo.
+        $isAgent = ! empty($item->user_id)
+            || data_get($item->metadata, 'injected_as_agent', false)
+            || data_get($item->metadata, 'auto_reply') !== null;
 
         $attachments = $item->attachment_urls ?? [];
         if (! is_array($attachments)) {
@@ -166,7 +173,9 @@ class PublicSimulatorService
             'id' => $item->id,
             'body' => (string) $item->body,
             'from' => $isAgent ? 'agent' : 'customer',
-            'sender_name' => $isAgent ? ($item->user?->name ?? 'Agente') : 'Tú',
+            // User no tiene columna/accessor 'name' — el nombre completo (deduplicado
+            // cuando firstname == lastname) vive en full_name, ver HasUserAttributes.
+            'sender_name' => $isAgent ? ($item->user?->full_name ?? 'Agente') : 'Tú',
             'created_at' => optional($item->created_at)->toIso8601String(),
             'attachments' => $attachments,
             'link_preview' => $item->metadata['link_preview'] ?? null,
