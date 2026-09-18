@@ -67,7 +67,25 @@
             </div>
 
             {{-- ============================================================ --}}
-            {{-- SECCIÓN 2: URLs de referencia para generar contenido --}}
+            {{-- SECCIÓN 2: URLs de extracción de catálogo --}}
+            {{-- ============================================================ --}}
+            <h6 class="fw-semibold mb-1 mt-4">URLs de extracción de catálogo</h6>
+            <p class="text-muted small mb-3">
+                Web(s) del proveedor desde donde "Procesar ahora" extrae el catálogo de
+                productos. Esta es la fuente real de datos de la extracción.
+            </p>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label mb-0">URLs de extracción</label>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addExtractionUrlBtn" title="Agregar URL">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="extractionUrlsContainer">
+                {{-- filas añadidas por JS --}}
+            </div>
+
+            {{-- ============================================================ --}}
+            {{-- SECCIÓN 3: URLs de referencia para generar contenido --}}
             {{-- ============================================================ --}}
             <h6 class="fw-semibold mb-1 mt-4">URLs de referencia para generar contenido</h6>
             <p class="text-muted small mb-3">
@@ -105,6 +123,42 @@
 <script>
 (function () {
     'use strict';
+
+    // ============================================================
+    // Extraction URLs (configuration.urls — fuente real de "Procesar ahora")
+    // ============================================================
+    function buildExtractionUrlRow(index) {
+        return `
+            <div class="input-group mb-2 extraction-url-row" data-index="${index}">
+                <input type="url" class="form-control" name="configuration[urls][${index}][url]"
+                       placeholder="https://proveedor.com">
+                <button type="button" class="btn btn-outline-danger remove-extraction-url-btn"
+                        style="display: none;" title="Eliminar" onclick="removeExtractionUrlRow(this)">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    let extractionUrlIndex = 0;
+
+    $(document).on('click', '#addExtractionUrlBtn', function () {
+        extractionUrlIndex++;
+        $('#extractionUrlsContainer').append(buildExtractionUrlRow(extractionUrlIndex));
+        updateExtractionRemoveButtons();
+    });
+
+    window.removeExtractionUrlRow = function (btn) {
+        $(btn).closest('.extraction-url-row').remove();
+        updateExtractionRemoveButtons();
+    };
+
+    function updateExtractionRemoveButtons() {
+        const $rows = $('.extraction-url-row');
+        $rows.find('.remove-extraction-url-btn').toggle($rows.length > 1);
+    }
+
+    $('#extractionUrlsContainer').append(buildExtractionUrlRow(0));
 
     // ============================================================
     // Content reference URLs (para generación de contenido IA)
