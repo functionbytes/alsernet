@@ -201,8 +201,47 @@
     var results   = document.getElementById('gs-results');
     if (!trigger || !dialog) return;
 
-    var searchUrl  = '{{ \Illuminate\Support\Facades\Route::has("search.global") ? route("search.global") : "" }}';
+    // Bug real encontrado en QA: apuntaba a la ruta "search.global", que no
+    // existe (el endpoint real es "manager.helpdesk.search.global", ver
+    // modules/Helpdesk/routes/managers.php). Route::has() siempre devolvia
+    // false, searchUrl quedaba vacio, y $.get('', {q}) reenviaba la busqueda
+    // contra la URL de la pagina actual (ej. .../kanban?q=...) en vez del
+    // endpoint JSON — "Sin resultados" en todas partes salvo por casualidad.
+    var searchUrl  = '{{ \Illuminate\Support\Facades\Route::has("manager.helpdesk.search.global") ? route("manager.helpdesk.search.global") : "" }}';
     var colorClass = { primary:'c-primary', info:'c-info', success:'c-success', warning:'c-warning', danger:'c-danger', secondary:'c-secondary' };
+    // GlobalSearchController devuelve grupos {customers, conversations,
+    // tickets, tags} (mismo contrato que ya consume conversations-thread.js
+    // para "Reenviar archivo"), no una lista plana "results" con
+    // title/subtitle/icon/color/type_label como esperaba este archivo.
+    var groupMeta = {
+        customers:     { icon: 'fas fa-user',          color: 'info',      label: 'Cliente' },
+        conversations: { icon: 'fas fa-comment-dots',  color: 'primary',   label: 'Conversación' },
+        tickets:       { icon: 'fas fa-ticket',        color: 'success',   label: 'Ticket' },
+        tags:          { icon: 'fas fa-tag',           color: 'warning',   label: 'Etiqueta' },
+    };
+
+    function flattenResults(data) {
+        var out = [];
+        Object.keys(groupMeta).forEach(function (group) {
+            (data[group] || []).forEach(function (r) {
+                var meta = groupMeta[group];
+                var title = r.name || r.subject || r.ticket_number || '(sin título)';
+                var subtitle = group === 'customers' ? (r.email || r.phone || '')
+                    : group === 'conversations' ? (r.customer_name || r.snippet || '')
+                    : group === 'tickets' ? ('#' + r.ticket_number + (r.customer_name ? ' · ' + r.customer_name : ''))
+                    : '';
+                out.push({
+                    url: r.url,
+                    icon: meta.icon,
+                    color: meta.color,
+                    type_label: meta.label,
+                    title: title,
+                    subtitle: subtitle,
+                });
+            });
+        });
+        return out;
+    }
     var timer, activeIdx = -1, items = [];
 
     function esc(s) {
@@ -260,9 +299,14 @@
             items = [];
             return;
         }
+        if (!searchUrl) {
+            results.innerHTML = '<div class="gs-empty"><i class="fas fa-circle-exclamation"></i>Búsqueda no disponible</div>';
+            items = [];
+            return;
+        }
         results.innerHTML = '<div class="gs-loading"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
         $.get(searchUrl, { q: q }, function (data) {
-            render(data.results || []);
+            render(flattenResults(data || {}));
         }).fail(function () {
             results.innerHTML = '<div class="gs-empty"><i class="fas fa-circle-exclamation"></i>Error al buscar. Intenta de nuevo.</div>';
         });
