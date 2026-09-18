@@ -105,7 +105,14 @@ class ConversationStatus extends Model
      */
     public static function getDefault(): ?self
     {
-        return static::where('is_default', true)->first();
+        // Sin ningún estado marcado como predeterminado (así está hoy en
+        // producción) esto devolvía null y las conversaciones creadas desde
+        // el panel nacían SIN estado: el webhook entrante solo busca
+        // conversaciones en estado abierto, no las encontraba y metía la
+        // respuesta del cliente en otra conversación. Se cae al primer estado
+        // abierto por orden ("Nuevo").
+        return static::where('is_default', true)->first()
+            ?? static::where('is_open', true)->orderBy('order')->orderBy('id')->first();
     }
 
     /**

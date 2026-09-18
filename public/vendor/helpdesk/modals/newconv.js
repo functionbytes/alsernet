@@ -246,6 +246,11 @@
                 if (!convId) {
                     return;
                 }
+                // El cliente ya tenía una conversación abierta en ese canal:
+                // el servidor la devuelve en vez de crear otra.
+                if (resp.reused && resp.message) {
+                    toastr.info(resp.message);
+                }
                 if (tpl) {
                     sendInitialHsm(convId, tpl);
                 } else {

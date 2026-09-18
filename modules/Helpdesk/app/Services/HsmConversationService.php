@@ -28,8 +28,11 @@ class HsmConversationService
     {
         $existing = $customer->conversations()
             ->where('channel', 'whatsapp')
-            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-            ->latest('id')
+            // Sin estado cuenta como abierta (ver ConversationStatus::getDefault()).
+            ->where(fn ($q) => $q->whereNull('status_id')
+                ->orWhereHas('status', fn ($s) => $s->where('is_open', true)))
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->first();
 
         if ($existing) {

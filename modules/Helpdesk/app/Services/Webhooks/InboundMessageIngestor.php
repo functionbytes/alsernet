@@ -87,16 +87,28 @@ class InboundMessageIngestor
 
     private function resolveConversation(string $channel, string $externalSenderId, int $customerId): Conversation
     {
+        // Abierta = estado abierto o sin estado (las creadas desde el panel
+        // nacían sin estado, ver ConversationStatus::getDefault()). Con varias
+        // abiertas se continúa la de actividad más reciente — p. ej. aquella
+        // en la que el agente acaba de mandar una plantilla — y no la más
+        // antigua.
         $existing = Conversation::query()
             ->where('channel', $channel)
             ->where('external_sender_id', $externalSenderId)
-            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-            ->latest()
+            ->where(fn ($q) => $q->whereNull('status_id')
+                ->orWhereHas('status', fn ($s) => $s->where('is_open', true)))
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->first();
 
         if ($existing) {
             return $existing;
         }
+
+        // Resuelta, cerrada o archivada: el agente ya la dio por terminada, así
+        // que un mensaje nuevo del cliente abre una conversación nueva en vez
+        // de reabrir aquella. (Se probó reabrir la última de las 24 h previas y
+        // no es lo que se quiere: reabría la que se acababa de cerrar.)
 
         // Cache the default status ID and per-channel inbox ID for 30 minutes —
         // these almost never change and saved 2 DB queries per webhook.

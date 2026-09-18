@@ -19,6 +19,28 @@ class ConversationItem extends Model
 
     protected $table = 'helpdesk_conversation_items';
 
+    /**
+     * La bandeja ordena por last_message_at, y hasta ahora solo lo escribían
+     * algunos flujos sueltos (respuestas automáticas, adjuntos, API): un
+     * mensaje entrante de WhatsApp lo dejaba a null, así que la conversación
+     * del cliente que acababa de escribir caía al final de la lista en vez de
+     * subir. Se centraliza aquí para que valga igual para cliente, agente y
+     * automatismos. Con update() directo (sin eventos) no dispara los
+     * observers de Conversation ni toca updated_at dos veces.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (self $item): void {
+            if ($item->type !== 'message' || $item->conversation_id === null) {
+                return;
+            }
+
+            Conversation::query()
+                ->whereKey($item->conversation_id)
+                ->update(['last_message_at' => $item->created_at ?? now()]);
+        });
+    }
+
     protected $fillable = [
         'conversation_id',
         'author_id',

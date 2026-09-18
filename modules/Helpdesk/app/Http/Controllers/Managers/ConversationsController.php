@@ -640,12 +640,58 @@ class ConversationsController extends Controller
             return back()->withInput()->with('error', $error['message']);
         }
 
+        // Si el cliente ya tiene una conversación abierta en ese canal se
+        // continúa esa (la plantilla/primer mensaje va ahí) en vez de abrir
+        // otra en paralelo: con dos abiertas la respuesta del cliente acababa
+        // en una y la plantilla en la otra. Solo canales con remitente
+        // externo (WhatsApp/Messenger/Instagram): son un único hilo por cliente.
+        $externalSenderId = $this->resolveExternalSenderId($channel, $customer);
+        $open = $externalSenderId === null ? null : Conversation::query()
+            ->where('customer_id', $customer->id)
+            ->where('channel', $channel)
+            ->where(fn ($q) => $q->whereNull('status_id')
+                ->orWhereHas('status', fn ($s) => $s->where('is_open', true)))
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($open) {
+            $this->authorize('view', $open);
+
+            if ($request->boolean('assign_self') && $open->assignee_id === null) {
+                $open->assignTo(auth()->id());
+            }
+
+            if (filled($validated['first_message'] ?? null)) {
+                app(ConversationMessageService::class)->store($open, [
+                    'body' => $validated['first_message'],
+                    'is_internal' => false,
+                ]);
+            }
+
+            $message = __('Ya había una conversación abierta con este cliente (#:id): se continúa en ella.', ['id' => $open->id]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'reused' => true,
+                    'message' => $message,
+                    'conversation' => [
+                        'id' => $open->id,
+                        'url' => route('manager.helpdesk.conversations.index', ['selected' => $open->id]),
+                    ],
+                ]);
+            }
+
+            return redirect()->route('manager.helpdesk.conversations.show', $open)->with('success', $message);
+        }
+
         $conversation = Conversation::create([
             'customer_id' => $customer->id,
             'subject' => $validated['subject'],
             'priority' => $validated['priority'],
             'channel' => $channel,
-            'external_sender_id' => $this->resolveExternalSenderId($channel, $customer),
+            'external_sender_id' => $externalSenderId,
             // Sin esto la conversacion nacia con inbox_id NULL: ConversationPolicy
             // y AgentInboxCapacity la vuelven invisible para agentes restringidos
             // por bandeja (incluido el propio creador), y rompe el aislamiento que
