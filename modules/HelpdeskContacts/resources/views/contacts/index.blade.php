@@ -116,7 +116,7 @@
 
                 <div class="d-flex align-items-center gap-2">
                     <input type="search" name="q" class="form-control flex-grow-1"
-                           placeholder="Buscar por nombre, email, telefono o ID de ERP/PrestaShop..."
+                           placeholder="Buscar por nombre, email, teléfono o ID de ERP/PrestaShop..."
                            value="{{ request('q') }}">
 
                     <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
@@ -159,12 +159,16 @@
                     <tbody>
                         @forelse($customers as $customer)
                             @php
-                                $convCount = $customer->total_conversations ?? 0;
+                                $convCount = $customer->conversations_count ?? 0;
                             @endphp
                             <tr>
                                 <td class="ps-3"><input type="checkbox" class="form-check-input contact-check" value="{{ $customer->id }}"></td>
                                 <td>
-                                    <div class="d-block fw-semibold">
+                                    {{-- Único acceso a la ficha 360 antes de este cambio era el
+                                         "..." > Ver ficha 360, dos clics para la acción principal
+                                         de esta pantalla — el resto del sistema siempre enlaza el
+                                         nombre en las listas de clientes/contactos. --}}
+                                    <a href="{{ route('contacts.show', $customer) }}" class="d-block fw-semibold text-reset text-decoration-none">
                                         {{ $customer->name ?: 'Sin nombre' }}
                                         @if($customer->email_verified_at ?? false)
                                             <i class="fas fa-circle-check text-success ms-1"></i>
@@ -172,7 +176,7 @@
                                         @if($customer->banned_at ?? false)
                                             <span class="badge bg-brand-subtle text-brand ms-1">Suspendido</span>
                                         @endif
-                                    </div>
+                                    </a>
                                     <small class="text-muted">{{ $customer->email ?: '—' }}</small>
                                 </td>
                                 <td class="small">{{ $customer->phone ?: ($customer->whatsapp_phone ?? '—') }}</td>

@@ -1,6 +1,6 @@
 /**
- * Listado de contactos (contacts/index.blade.php) — filtros, paginacion,
- * acciones masivas (toolbar flotante + modal) y filtros avanzados. Extraido
+ * Listado de contactos (contacts/index.blade.php) — filtros, paginación,
+ * acciones masivas (toolbar flotante + modal) y filtros avanzados. Extraído
  * de los <script> inline de esa vista.
  *
  * Depende de:

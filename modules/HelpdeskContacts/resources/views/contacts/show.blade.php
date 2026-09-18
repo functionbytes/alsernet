@@ -291,9 +291,13 @@
 
     </div>
 
-@endsection
+    {{-- Los 4 modales de abajo vivían fuera de @section('content'): contenido
+         suelto en una vista con @extends se renderiza en cuanto Blade lo
+         ejecuta, antes de que el layout compagine el resto — se colaban
+         delante del <!DOCTYPE html>, metiendo la página entera en Quirks
+         Mode. Movidos dentro de la sección para que salgan donde deben. --}}
 
-{{-- Modal: editar contacto --}}
+    {{-- Modal: editar contacto --}}
 <div class="modal fade" id="contact-edit-modal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -402,10 +406,12 @@
     </div>
 </div>
 
-@include('contacts::contacts.partials._send-hsm-modal')
-@if(helpdesk_integration_enabled())
-    @include('contacts::contacts.partials._external-search-modal')
-@endif
+    @include('contacts::contacts.partials._send-hsm-modal')
+    @if(helpdesk_integration_enabled())
+        @include('contacts::contacts.partials._external-search-modal')
+    @endif
+
+@endsection
 
 @push('scripts')
     <script src="{{ asset('modules/contacts/js/contacts-360.js') }}?v={{ filemtime(public_path('modules/contacts/js/contacts-360.js')) }}"></script>

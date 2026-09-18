@@ -102,7 +102,14 @@ class ContactAggregatorService
             'timezone' => $customer->timezone,
             'lastSeenAt' => $customer->last_seen_at?->toIso8601String(),
             'stats' => [
-                'totalConversations' => (int) ($customer->total_conversations ?? $lifetime['conversations']),
+                // $customer->total_conversations es un contador denormalizado
+                // que solo se incrementa (Customer::incrementConversationCount())
+                // y nunca se decrementa al borrar/reasignar conversaciones —
+                // encontrado desincronizado en vivo (15 cacheado vs 0 real),
+                // contradiciendo a la propia pestaña "Conversaciones" de al
+                // lado. $lifetime ya hace el COUNT(*) real más abajo, así que
+                // usarlo aquí siempre no cuesta una consulta extra.
+                'totalConversations' => (int) $lifetime['conversations'],
                 'totalPageVisits' => (int) ($customer->total_page_visits ?? 0),
                 'healthScore' => $healthScore,
                 // null real (nunca encuestado) preservado, no colapsado a

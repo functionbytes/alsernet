@@ -40,6 +40,20 @@ class ContactCartController extends Controller
     {
         $this->assertVisible($customer);
 
+        // A diferencia de las acciones de escritura de abajo (que sí deben
+        // fallar con 422 si el carrito no está disponible), esta es una
+        // simple carga de estado: 200 + available:false, mismo contrato que
+        // ContactAggregatorService::erp()/prestashop() para integraciones no
+        // conectadas. contacts-360.js YA sabía pintar este estado
+        // (renderCarrito espera cart.available === false) pero nunca lo
+        // recibía — loadCart() trataba cualquier 422 como fallo genérico y
+        // mostraba "Error al cargar" con un botón "Reintentar" que nunca
+        // podía funcionar (el carrito asistido depende de Modules\Ecommerce,
+        // que no existe en este entorno).
+        if (! $this->prestashopAvailable()) {
+            return response()->json(['success' => true, 'cart' => ['available' => false]]);
+        }
+
         return $this->withService(function (object $service) use ($request, $customer): JsonResponse {
             $cart = $service->getOrCreateCart(
                 $customer,
@@ -227,8 +241,18 @@ class ContactCartController extends Controller
 
     private function prestashopAvailable(): bool
     {
+        // class_exists(self::SERVICE) por sí solo no basta: AssistedCartService
+        // inyecta Modules\Ecommerce\Services\OrderService en su constructor, y
+        // ese módulo no existe en este entorno (carpeta modules/Ecommerce
+        // ausente). class_exists() autocarga AssistedCartService.php sin
+        // problema (el "use" no resuelve OrderService en ese momento), así
+        // que este guard pasaba igual — y app(self::SERVICE) fallaba después
+        // en CADA operación, incluso abrir la pestaña, con un genérico
+        // "No se pudo procesar la operación del carrito" que parecía un
+        // fallo transitorio en vez de una funcionalidad no disponible.
         return (Module::find('HelpdeskPrestashop')?->isEnabled() ?? false)
-            && class_exists(self::SERVICE);
+            && class_exists(self::SERVICE)
+            && class_exists('Modules\\Ecommerce\\Services\\OrderService');
     }
 
     private function businessError(RuntimeException $e): JsonResponse

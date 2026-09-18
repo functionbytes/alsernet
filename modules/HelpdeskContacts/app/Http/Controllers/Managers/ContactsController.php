@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Jobs\SendBulkHsmTemplateJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
@@ -43,7 +44,12 @@ class ContactsController extends Controller
 
         // Orden fijo (sin sorting por columna en la UI) — mismo patrón que
         // UsersController::index(), que usa latest() sin parámetros de sort.
+        // withCount() en vez de leer total_conversations: esa columna solo se
+        // incrementa (Customer::incrementConversationCount()) y nunca se
+        // decrementa al borrar/reasignar conversaciones — encontrada
+        // desincronizada en vivo (mostraba 15 con 0 conversaciones reales).
         $customers = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
+            ->withCount('conversations')
             ->orderByDesc('last_seen_at')
             ->paginate($perPage)
             ->appends($request->query());
@@ -154,7 +160,11 @@ class ContactsController extends Controller
             return back()->withErrors(['file' => 'El CSV está vacío o no tiene cabecera.']);
         }
 
-        $headers = array_map('strtolower', array_map('trim', $headerRow));
+        // Str::ascii() quita tildes ademas de minusculas/trim: una cabecera
+        // "Teléfono" (la forma natural en español) nunca casaba con el
+        // 'telefono' sin tilde de abajo y la columna se importaba vacia
+        // en silencio.
+        $headers = array_map(fn (string $header): string => Str::ascii(strtolower(trim($header))), $headerRow);
         $nameCol = array_search('name', $headers) !== false ? array_search('name', $headers) : array_search('nombre', $headers);
         $emailCol = array_search('email', $headers) !== false ? array_search('email', $headers) : array_search('correo', $headers);
         $phoneCol = array_search('phone', $headers) !== false ? array_search('phone', $headers) : array_search('telefono', $headers);
