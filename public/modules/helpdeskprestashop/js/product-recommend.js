@@ -908,13 +908,29 @@
             });
         }
 
-        // MEJORA 8: nota interna opcional
+        // MEJORA 8: nota interna opcional — crea una nota real contra el mismo
+        // endpoint que usa el composer para "Nota interna" (is_internal:1).
+        // Antes disparaba un evento 'helpdesk:internal-note' que ningún
+        // archivo del proyecto escuchaba: el texto se perdía en silencio y el
+        // agente creía haber dejado una nota para su equipo.
         var note = $('#prInternalNote').val().trim();
-        if (note) {
-            $(document).trigger('helpdesk:internal-note', {
-                conversationId: HDCommerce.conversationId(),
-                text: '[PS] Nota sobre producto recomendado (' + (_selected ? _selected.name : '') + '): ' + note,
-            });
+        if (note && convId) {
+            var sendUrl = $('.bv-composer').data('bv-send-url');
+            if (sendUrl) {
+                $.ajax({
+                    url: sendUrl,
+                    method: 'POST',
+                    dataType: 'json',
+                    data: {
+                        body: '[PS] Nota sobre producto recomendado (' + (_selected ? _selected.name : '') + '): ' + note,
+                        is_internal: 1,
+                        action: 'send',
+                    },
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+                }).fail(function () {
+                    toastr.error('No se pudo guardar la nota interna.');
+                });
+            }
         }
         $('#prInternalNote').val('');
 
@@ -966,7 +982,7 @@
         if (!_selected) { return; }
         var ref   = (_selectedCombo && _selectedCombo.reference) || _selected.sku || '';
         var price = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
-        var url   = _selected.url || '';
+        var url   = _pendingUrl || '';
         var text  = _selected.name;
         if (ref)   { text += '\nRef: ' + ref; }
         if (price) { text += '\nPrecio: ' + price; }
@@ -984,22 +1000,42 @@
         });
     });
 
-    // ── Mejora 6: Filtro "Solo en stock" ─────────────────────────────────────
+    // ── Mejora 6: Filtro "Solo en stock" + Mejora 5: Ordenar ──────────────────
+    // Los dos controles no se componían: cambiar el orden volvía a partir de
+    // _pool completo e ignoraba silenciosamente el checkbox "Solo en stock"
+    // (los productos sin stock reaparecían sin que el checkbox se desmarcara).
+    // Ahora ambos leen el estado de los dos controles y aplican los dos.
+
+    function applyStockAndSort(pool) {
+        var onlyStock = $('#prInStockOnly').is(':checked');
+        var sort      = $('#prSortBy').val();
+        var list      = onlyStock ? pool.filter(function (p) { return p.in_stock; }) : pool.slice();
+        if (sort === 'name_asc')  { list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
+        if (sort === 'name_desc') { list.sort(function (a, b) { return (b.name || '').localeCompare(a.name || ''); }); }
+        if (sort === 'price_asc') { list.sort(function (a, b) { return (a.price_with_tax || 0) - (b.price_with_tax || 0); }); }
+        if (sort === 'price_desc'){ list.sort(function (a, b) { return (b.price_with_tax || 0) - (a.price_with_tax || 0); }); }
+        if (sort === 'stock_desc'){ list.sort(function (a, b) { return (b.stock || 0) - (a.stock || 0); }); }
+        return { list: list, onlyStock: onlyStock, sort: sort };
+    }
 
     $(document).on('change', '#prInStockOnly', function () {
-        var onlyStock = $(this).is(':checked');
         if (!_pool.length) { return; }
-        var filtered = onlyStock ? _pool.filter(function (p) { return p.in_stock; }) : _pool;
-        if (onlyStock && !filtered.length) {
+        var res = applyStockAndSort(_pool);
+        if (res.onlyStock && !res.list.length) {
             // Sin resultados en pool: lanzar nueva búsqueda con in_stock=1
             var base = HDCommerce.base();
             if (!base) { renderListFiltered([], false); return; }
             $('#prProductList').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Buscando en stock…</div>');
             HDCommerce.ajax({ url: base + '/ps/products', method: 'GET', data: { q: _searchQuery, in_stock: 1 } })
-                .done(function (r) { renderListFiltered(r.products || [], false); })
+                .done(function (r) {
+                    // renderList() (no renderListFiltered) para que _pool quede
+                    // reemplazado por esta lista ya filtrada — si no, cambiar el
+                    // orden justo después volvería a partir de la lista vieja.
+                    renderList(r.products || [], false);
+                })
                 .fail(function () { renderListFiltered([], false); });
         } else {
-            renderListFiltered(filtered, _hasMore && !onlyStock);
+            renderListFiltered(res.list, _hasMore && !res.onlyStock && !res.sort);
         }
     });
 
@@ -1047,18 +1083,12 @@
         });
     });
 
-    // ── MEJORA 5: Ordenar resultados ─────────────────────────────────────────
+    // ── MEJORA 5: Ordenar resultados (compone con "Solo en stock", ver arriba) ─
 
     $(document).on('change', '#prSortBy', function () {
-        var sort = $(this).val();
         if (!_pool.length) { return; }
-        var sorted = _pool.slice();
-        if (sort === 'name_asc')  { sorted.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
-        if (sort === 'name_desc') { sorted.sort(function (a, b) { return (b.name || '').localeCompare(a.name || ''); }); }
-        if (sort === 'price_asc') { sorted.sort(function (a, b) { return (a.price_with_tax || 0) - (b.price_with_tax || 0); }); }
-        if (sort === 'price_desc'){ sorted.sort(function (a, b) { return (b.price_with_tax || 0) - (a.price_with_tax || 0); }); }
-        if (sort === 'stock_desc'){ sorted.sort(function (a, b) { return (b.stock || 0) - (a.stock || 0); }); }
-        renderListFiltered(sorted, _hasMore && !sort);
+        var res = applyStockAndSort(_pool);
+        renderListFiltered(res.list, _hasMore && !res.sort && !res.onlyStock);
     });
 
     // ── MEJORA 6: Filtro por categoría ──────────────────────────────────────
@@ -1085,7 +1115,7 @@
         if (!_selected) { return; }
         var ref     = (_selectedCombo && _selectedCombo.reference) || _selected.sku || '';
         var price   = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
-        var url     = _selected.url || '';
+        var url     = _pendingUrl || '';
         var subject = 'Producto recomendado: ' + _selected.name;
         var body    = _selected.name;
         if (ref)   { body += '\nReferencia: ' + ref; }
