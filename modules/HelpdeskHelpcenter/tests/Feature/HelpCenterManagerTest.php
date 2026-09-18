@@ -14,7 +14,7 @@ class HelpCenterManagerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $superAdmin;
 
@@ -142,13 +142,19 @@ class HelpCenterManagerTest extends TestCase
     public function test_api_categories_only_returns_root_categories(): void
     {
         $category = HelpCenterCategory::factory()->create(['is_section' => false, 'parent_id' => null]);
-        HelpCenterCategory::factory()->section($category)->create();
+        $section = HelpCenterCategory::factory()->section($category)->create();
 
         $response = $this->actingAs($this->superAdmin)
             ->getJson(route('manager.helpcenter.api.categories'))
             ->assertOk();
 
-        $this->assertCount(1, $response->json('categories'));
+        // No "solo hay 1" a secas: la BD de desarrollo ya trae categorías
+        // raíz reales (Pedidos y envíos, Licencias...), así que el total
+        // nunca es 1. Lo que hay que probar es que la sección creada aquí
+        // no aparece entre las raíces devueltas.
+        $ids = collect($response->json('categories'))->pluck('id');
+        $this->assertTrue($ids->contains($category->id));
+        $this->assertFalse($ids->contains($section->id));
     }
 
     public function test_guest_cannot_access_api_categories(): void

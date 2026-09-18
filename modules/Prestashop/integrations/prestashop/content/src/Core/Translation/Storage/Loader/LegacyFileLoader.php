@@ -50,13 +50,10 @@ final class LegacyFileLoader implements LoaderInterface
      */
     private $domainNormalizer;
 
-    /**
-     * @param LegacyFileReader $fileReader
-     */
     public function __construct(LegacyFileReader $fileReader)
     {
         $this->fileReader = $fileReader;
-        $this->domainNormalizer = new DomainNormalizer();
+        $this->domainNormalizer = new DomainNormalizer;
     }
 
     /**
@@ -83,10 +80,6 @@ final class LegacyFileLoader implements LoaderInterface
 
     /**
      * Builds the domain using information in the translation key
-     *
-     * @param LegacyTranslationKey $translationKey
-     *
-     * @return string
      */
     private function buildDomain(LegacyTranslationKey $translationKey): string
     {

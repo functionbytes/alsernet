@@ -2,10 +2,10 @@
 
 namespace AlsernetShopping\Carriers;
 
-use Context;
 use Cart;
+use Context;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -16,23 +16,24 @@ if (!defined('_PS_VERSION_')) {
 class CarrierAvailabilityManager
 {
     private static $instance;
-    
+
     public static function getInstance()
     {
-        if (!self::$instance) {
-            self::$instance = new self();
+        if (! self::$instance) {
+            self::$instance = new self;
         }
+
         return self::$instance;
     }
 
     public function filterAvailableCarriers(array $carriers_available, Cart $cart, Context $context): array
     {
         $registry = CarrierRegistry::getInstance();
-        
+
         // Obtener todos los handlers que tienen reglas especiales
         $specialHandlers = [];
         foreach ($carriers_available as $carrierId => $carrierData) {
-            $handler = $registry->getHandler((int)$carrierId);
+            $handler = $registry->getHandler((int) $carrierId);
             if ($handler && method_exists($handler, 'isAvailableForCart')) {
                 $specialHandlers[$carrierId] = $handler;
             }
@@ -41,13 +42,13 @@ class CarrierAvailabilityManager
         // Aplicar reglas de exclusión
         $excludeOtherCarriers = false;
         $availableSpecialCarriers = [];
-        
+
         foreach ($specialHandlers as $carrierId => $handler) {
             if ($handler->isAvailableForCart($cart)) {
                 $availableSpecialCarriers[] = $carrierId;
-                
+
                 // Si este handler requiere exclusión de otros carriers
-                if (method_exists($handler, 'shouldExcludeOtherCarriers') && 
+                if (method_exists($handler, 'shouldExcludeOtherCarriers') &&
                     $handler->shouldExcludeOtherCarriers($cart)) {
                     $excludeOtherCarriers = true;
                 }
@@ -63,17 +64,18 @@ class CarrierAvailabilityManager
                     $filtered[$carrierId] = $carriers_available[$carrierId];
                 }
             }
+
             return $filtered;
         }
 
         // Si hay carriers especiales disponibles pero no excluyen otros
-        if (!empty($availableSpecialCarriers)) {
+        if (! empty($availableSpecialCarriers)) {
             return $carriers_available; // Mantener todos disponibles
         }
 
         // Eliminar carriers especiales que no están disponibles para este carrito
         foreach ($specialHandlers as $carrierId => $handler) {
-            if (!$handler->isAvailableForCart($cart)) {
+            if (! $handler->isAvailableForCart($cart)) {
                 unset($carriers_available[$carrierId]);
             }
         }
@@ -83,17 +85,17 @@ class CarrierAvailabilityManager
 
     /**
      * Verifica si un carrier específico está disponible para un carrito
-     * 
-     * @param int $carrierId ID del carrier
-     * @param Cart $cart Carrito
+     *
+     * @param  int  $carrierId  ID del carrier
+     * @param  Cart  $cart  Carrito
      * @return bool true si está disponible
      */
     public function isCarrierAvailableForCart(int $carrierId, Cart $cart): bool
     {
         $registry = CarrierRegistry::getInstance();
         $handler = $registry->getHandler($carrierId);
-        
-        if (!$handler) {
+
+        if (! $handler) {
             return true; // Si no hay handler, asumimos que está disponible
         }
 
@@ -106,9 +108,9 @@ class CarrierAvailabilityManager
 
     /**
      * Obtiene información de debugging sobre la disponibilidad
-     * 
-     * @param array $carriers_available Carriers disponibles
-     * @param Cart $cart Carrito
+     *
+     * @param  array  $carriers_available  Carriers disponibles
+     * @param  Cart  $cart  Carrito
      * @return array Información de debug
      */
     public function getAvailabilityDebugInfo(array $carriers_available, Cart $cart): array
@@ -117,20 +119,20 @@ class CarrierAvailabilityManager
             'total_carriers' => count($carriers_available),
             'cart_id' => $cart->id,
             'cart_products_count' => count($cart->getProducts()),
-            'handlers_info' => []
+            'handlers_info' => [],
         ];
 
         $registry = CarrierRegistry::getInstance();
-        
+
         foreach ($carriers_available as $carrierId => $carrierData) {
-            $handler = $registry->getHandler((int)$carrierId);
+            $handler = $registry->getHandler((int) $carrierId);
             $handlerInfo = [
                 'carrier_id' => $carrierId,
-                'has_handler' => !is_null($handler),
+                'has_handler' => ! is_null($handler),
                 'handler_class' => $handler ? get_class($handler) : null,
                 'is_enabled' => $handler ? $handler->isEnabled() : null,
                 'available_for_cart' => null,
-                'should_exclude_others' => null
+                'should_exclude_others' => null,
             ];
 
             if ($handler && method_exists($handler, 'isAvailableForCart')) {

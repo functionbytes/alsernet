@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,6 @@ class ZoneType extends AbstractType
 
     /**
      * ZoneType constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param bool $isMultistoreEnabled
      */
     public function __construct(TranslatorInterface $translator, bool $isMultistoreEnabled)
     {

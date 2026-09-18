@@ -88,6 +88,51 @@ class TicketOpsAutomationsTest extends TestCase
         $this->assertSame([['type' => 'add_tag', 'value' => 'escalado-test']], $mia['actions']);
     }
 
+    /**
+     * helpdesk_automations es la misma tabla física que usa el motor de
+     * Conversaciones (Modules\Helpdesk\Models\AutomationRule, disparadores
+     * conversation.* / message.*). Antes del scope, el modal de escalado las
+     * listaba también y las marcaba como "disparador que el motor no
+     * conoce", cuando en realidad sí las ejecuta el otro motor. Ver
+     * Automation::scopeTicketDomain() (8-sep-2026).
+     */
+    public function test_una_regla_de_conversaciones_no_aparece_en_el_listado_de_tickets(): void
+    {
+        $ajena = Automation::create([
+            'name' => 'Regla de conversaciones ajena',
+            'trigger_event' => 'conversation.created',
+            'conditions' => [],
+            'actions' => [['type' => 'add_label', 'params' => ['label' => 'x']]],
+            'is_active' => true,
+            'order' => 999,
+        ]);
+
+        $rules = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.automations.index'))
+            ->assertOk()
+            ->json('rules');
+
+        $this->assertNull(collect($rules)->firstWhere('id', $ajena->id));
+    }
+
+    public function test_no_se_puede_pausar_una_regla_de_conversaciones_desde_tickets(): void
+    {
+        $ajena = Automation::create([
+            'name' => 'Regla de conversaciones ajena',
+            'trigger_event' => 'conversation.created',
+            'conditions' => [],
+            'actions' => [['type' => 'add_label', 'params' => ['label' => 'x']]],
+            'is_active' => true,
+            'order' => 999,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.automations.toggle', $ajena))
+            ->assertNotFound();
+
+        $this->assertTrue($ajena->refresh()->is_active);
+    }
+
     public function test_quien_no_es_gestor_no_llega_a_las_reglas(): void
     {
         // El grupo de rutas de manager exige `role:super-admin|super-settings`

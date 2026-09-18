@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,67 +86,61 @@ final class EditLanguageHandler extends AbstractLanguageHandler implements EditL
 
     /**
      * Update legacy language only with data that is set
-     *
-     * @param Language $language
-     * @param EditLanguageCommand $command
      */
     private function updateLanguageWithCommandData(Language $language, EditLanguageCommand $command)
     {
-        if (null !== $command->getName()) {
+        if ($command->getName() !== null) {
             $language->name = $command->getName();
         }
 
-        if (null !== $command->getIsoCode()) {
+        if ($command->getIsoCode() !== null) {
             $language->iso_code = $command->getIsoCode()->getValue();
             if (false !== ($languageDetails = Language::getLangDetails($command->getIsoCode()->getValue()))) {
                 $language->locale = $languageDetails['locale'];
             }
         }
 
-        if (null !== $command->getTagIETF()) {
+        if ($command->getTagIETF() !== null) {
             $language->language_code = $command->getTagIETF()->getValue();
         }
 
-        if (null !== $command->getShortDateFormat()) {
+        if ($command->getShortDateFormat() !== null) {
             $language->date_format_lite = $command->getShortDateFormat();
         }
 
-        if (null !== $command->getFullDateFormat()) {
+        if ($command->getFullDateFormat() !== null) {
             $language->date_format_full = $command->getFullDateFormat();
         }
 
-        if (null !== $command->isRtl()) {
+        if ($command->isRtl() !== null) {
             $language->is_rtl = $command->isRtl();
         }
 
-        if (null !== $command->isActive()) {
+        if ($command->isActive() !== null) {
             $language->active = $command->isActive();
         }
 
-        if (false === $language->validateFields(false)) {
+        if ($language->validateFields(false) === false) {
             throw new LanguageException('Cannot add language with invalid data');
         }
 
-        if (false === $language->update()) {
+        if ($language->update() === false) {
             throw new LanguageException(sprintf('Cannot update language with id "%s"', $language->id));
         }
     }
 
     /**
      * Only copy new "No picture" if it's being updated
-     *
-     * @param Language $language
-     * @param EditLanguageCommand $command
      */
     private function copyNoPictureIfChanged(Language $language, EditLanguageCommand $command)
     {
-        if (null === $command->getNoPictureImagePath()) {
+        if ($command->getNoPictureImagePath() === null) {
             return;
         }
 
         $isoCode = $command->getIsoCode();
 
-        if (!$isoCode instanceof IsoCode) {
+        if (! $isoCode instanceof IsoCode) {
             $isoCode = new IsoCode($language->iso_code);
         }
 
@@ -157,12 +152,10 @@ final class EditLanguageHandler extends AbstractLanguageHandler implements EditL
 
     /**
      * Default language cannot be disabled
-     *
-     * @param EditLanguageCommand $command
      */
     private function assertDefaultLanguageIsNotDisabled(EditLanguageCommand $command)
     {
-        if (false === $command->isActive()
+        if ($command->isActive() === false
             && $command->getLanguageId()->getValue() === (int) Configuration::get('PS_LANG_DEFAULT')
         ) {
             throw new CannotDisableDefaultLanguageException(sprintf('Language with id "%s" is default language and thus it cannot be disabled', $command->getLanguageId()->getValue()));
@@ -173,42 +166,33 @@ final class EditLanguageHandler extends AbstractLanguageHandler implements EditL
      * If language that is being updated is disabled
      * and there are employees that use this language
      * then their language has to be updated to default
-     *
-     * @param EditLanguageCommand $command
      */
     private function updateEmployeeLanguage(EditLanguageCommand $command)
     {
-        if (false === $command->isActive()) {
+        if ($command->isActive() === false) {
             Db::getInstance()->execute(
-                'UPDATE `' . _DB_PREFIX_ . 'employee`
-                 SET `id_lang`=' . (int) Configuration::get('PS_LANG_DEFAULT') . '
-                 WHERE `id_lang`=' . (int) $command->getLanguageId()->getValue()
+                'UPDATE `'._DB_PREFIX_.'employee`
+                 SET `id_lang`='.(int) Configuration::get('PS_LANG_DEFAULT').'
+                 WHERE `id_lang`='.(int) $command->getLanguageId()->getValue()
             );
         }
     }
 
     /**
      * Move translation files if language's ISO code has changed
-     *
-     * @param Language $language
-     * @param EditLanguageCommand $command
      */
     private function moveTranslationsIfIsoChanged(Language $language, EditLanguageCommand $command)
     {
-        if (null !== $command->getIsoCode()
+        if ($command->getIsoCode() !== null
             && $language->iso_code !== $command->getIsoCode()->getValue()
         ) {
             $language->moveToIso($command->getLanguageId()->getValue());
         }
     }
 
-    /**
-     * @param Language $language
-     * @param EditLanguageCommand $command
-     */
     private function updateShopAssociationIfChanged(Language $language, EditLanguageCommand $command)
     {
-        if (null === $command->getShopAssociation()) {
+        if ($command->getShopAssociation() === null) {
             return;
         }
 
@@ -220,13 +204,10 @@ final class EditLanguageHandler extends AbstractLanguageHandler implements EditL
 
     /**
      * Update language's flag image if it has changed
-     *
-     * @param Language $language
-     * @param EditLanguageCommand $command
      */
     private function uploadFlagImageIfChanged(Language $language, EditLanguageCommand $command)
     {
-        if (null === $command->getFlagImagePath()) {
+        if ($command->getFlagImagePath() === null) {
             return;
         }
 
@@ -235,19 +216,16 @@ final class EditLanguageHandler extends AbstractLanguageHandler implements EditL
         $this->uploadImage(
             $command->getLanguageId()->getValue(),
             $command->getFlagImagePath(),
-            'l' . DIRECTORY_SEPARATOR
+            'l'.DIRECTORY_SEPARATOR
         );
     }
 
     /**
      * Assert that language with updated ISO code does not exist
-     *
-     * @param Language $language
-     * @param EditLanguageCommand $command
      */
     private function assertLanguageWithIsoCodeDoesNotExist(Language $language, EditLanguageCommand $command)
     {
-        if (null !== $command->getIsoCode()) {
+        if ($command->getIsoCode() !== null) {
             return;
         }
 

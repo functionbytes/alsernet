@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,13 +55,10 @@ class CombinationDataProvider
      */
     private $locale;
 
-    /**
-     * @param Locale $locale
-     */
     public function __construct(Locale $locale)
     {
-        $this->context = new LegacyContext();
-        $this->productAdapter = new ProductDataProvider();
+        $this->context = new LegacyContext;
+        $this->productAdapter = new ProductDataProvider;
         $this->locale = $locale;
     }
 
@@ -69,8 +67,7 @@ class CombinationDataProvider
      *
      * @deprecated since 1.7.3.1 really slow, use getFormCombinations instead.
      *
-     * @param int $combinationId The id_product_attribute
-     *
+     * @param  int  $combinationId  The id_product_attribute
      * @return array combinations
      */
     public function getFormCombination($combinationId)
@@ -89,9 +86,7 @@ class CombinationDataProvider
     /**
      * Retrieve combinations data for a specific language id.
      *
-     * @param array $combinationIds
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array a list of formatted combinations
      *
      * @throws \PrestaShopDatabaseException
@@ -117,9 +112,8 @@ class CombinationDataProvider
     }
 
     /**
-     * @param array $attributesCombinations
-     * @param Product $product
-     *
+     * @param  array  $attributesCombinations
+     * @param  Product  $product
      * @return array
      */
     public function completeCombination($attributesCombinations, $product)
@@ -207,8 +201,7 @@ class CombinationDataProvider
     }
 
     /**
-     * @param array $attributesCombinations
-     *
+     * @param  array  $attributesCombinations
      * @return string
      */
     private function getCombinationName($attributesCombinations)
@@ -216,7 +209,7 @@ class CombinationDataProvider
         $name = [];
 
         foreach ($attributesCombinations as $attribute) {
-            $name[] = $attribute['group_name'] . ' - ' . $attribute['attribute_name'];
+            $name[] = $attribute['group_name'].' - '.$attribute['attribute_name'];
         }
 
         return implode(', ', $name);

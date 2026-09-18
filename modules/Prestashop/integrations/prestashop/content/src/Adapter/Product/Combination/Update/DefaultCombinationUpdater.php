@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ class DefaultCombinationUpdater
      */
     private $combinationRepository;
 
-    /**
-     * @param CombinationRepository $combinationRepository
-     */
     public function __construct(
         CombinationRepository $combinationRepository
     ) {
@@ -58,8 +56,6 @@ class DefaultCombinationUpdater
     }
 
     /**
-     * @param CombinationId $defaultCombinationId
-     *
      * @throws CoreException
      * @throws CannotAddCombinationException
      * @throws CombinationNotFoundException
@@ -79,9 +75,6 @@ class DefaultCombinationUpdater
     }
 
     /**
-     * @param Combination $combination
-     * @param bool $isDefault
-     *
      * @throws CannotAddCombinationException
      */
     private function updateCombinationDefaultProperty(Combination $combination, bool $isDefault): void

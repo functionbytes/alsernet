@@ -3,8 +3,11 @@
    Movido de Helpdesk core (conversations.js): carga lazy de los
    tabs ERP (Gestión/Finanzas/Fidelización) y el detalle de pedido.
    Corre una vez en document ready (equivalente al init original).
-   Deps del core re-obtenidas aquí; setAddressTab (compartido con el
-   modal de pedido de PrestaShop) se consume vía window.HDInbox.
+
+   El click en una fila de pedido ERP (.rp3-erp-order) abre el workspace
+   de solo lectura definido en modals/order-workspace.blade.php
+   (window.openErpOrderWorkspace) en vez de un modal propio: no hay
+   detalle de pedido que pintar aquí, solo enrutar el click.
    ============================================================ */
 (function () {
     'use strict';
@@ -18,24 +21,16 @@
         var $aside = $('.bv-right');
         var csrf   = $('meta[name="csrf-token"]').attr('content');
         var esc    = function (s) { return $('<i>').text(s == null ? '' : String(s)).html(); };
-        var setAddressTab = function (shipping, billing) {
-            return (window.HDInbox && window.HDInbox.setAddressTab)
-                ? window.HDInbox.setAddressTab(shipping, billing) : null;
-        };
 
             if (!$aside.data('has-erp')) { return; }
 
             var $erpTab    = $('#bv-erp-orders');
             var contextUrl = $erpTab.data('erp-context-url') || '';
-            var detailBase = $erpTab.data('erp-order-detail-url-base') || '';
             if (!contextUrl) { return; }
 
             var erpCache         = null;
             var erpFetching      = false;
             var erpDeferreds     = [];
-            var erpDetailCache   = {};
-            var erpDetailDefers  = {};
-            var erpDetailPrewarm = {};
 
             function showErpSkeleton(tabName) {
                 var skRow = '<div class="bv-tab-sk-row"><div class="bv-sk-circle"></div><div class="bv-sk-body"><div class="bv-sk-line w60"></div><div class="bv-sk-line w40"></div></div></div>';
@@ -106,7 +101,7 @@
                         '<div class="bv-tab-empty-sub">No hay pedidos en gestión</div></div>';
                 }
                 $t.html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderErpFinanceTab(data) {
@@ -146,7 +141,7 @@
                         '<div class="bv-tab-empty-sub">No hay información financiera disponible</div></div>';
                 }
                 $('#bv-erp-finance').html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderErpLoyaltyTab(data) {
@@ -164,7 +159,7 @@
                         '<div class="bv-tab-empty-sub">No hay puntos registrados</div></div>';
                 }
                 $('#bv-erp-loyalty').html(html + '</div>');
-                syncRightTabVisibility();
+                if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
             }
 
             function renderForTab(tabName, data) {
@@ -174,7 +169,7 @@
                         '<div class="bv-tab-empty-title">Error al cargar</div>' +
                         '<div class="bv-tab-empty-sub">No se pudo obtener el contexto ERP</div></div>'
                     );
-                    syncRightTabVisibility();
+                    if (window.bvSyncRightTabVisibility) { window.bvSyncRightTabVisibility(); }
                     return;
                 }
                 if (tabName === 'erp-orders') { renderErpOrdersTab(data); }
@@ -182,8 +177,25 @@
                 else if (tabName === 'erp-loyalty') { renderErpLoyaltyTab(data); }
             }
 
-            // Pre-warm context when panel loads — avoids wait on first tab click
-            fetchErpContext(null);
+            // Pre-warm context when panel loads — avoids wait on first tab click.
+            //
+            // Antes este pre-warm solo rellenaba erpCache sin pintar nada. El
+            // markup inicial de erp-orders/finance/loyalty (right-panel-erp-tabs.
+            // blade.php) es siempre un .bv-tab-empty estático, así que
+            // syncRightTabVisibility() —que corre en initRightPanelTabs() al
+            // cargar la página, antes de que este fetch en segundo plano
+            // termine— ocultaba los 3 botones de pestaña. Como el único gatillo
+            // para pintar contenido real es el propio click, y un botón con
+            // display:none no es clicable, los tabs ERP quedaban inaccesibles
+            // para cualquier cliente vinculado, aunque el contexto se hubiera
+            // descargado correctamente. Pintar (o re-vaciar) las 3 pestañas en
+            // cuanto llega el contexto deja que syncRightTabVisibility() las
+            // muestre de nuevo cuando sí hay datos reales.
+            fetchErpContext(function (data) {
+                renderForTab('erp-orders', data);
+                renderForTab('erp-finance', data);
+                renderForTab('erp-loyalty', data);
+            });
 
             // Lazy-load on tab click
             // Usar capture phase nativo: el click en erp-orders/finance/loyalty siempre dispara primero
@@ -199,136 +211,83 @@
                 fetchErpContext(function (data) { renderForTab(tabName, data); });
             }, true);
 
-            // Fetch ERP order detail (reutilizable para prefetch y click)
-            function fetchErpOrderDetail(orderId, custId, onDone) {
-                if (!orderId || !detailBase || !custId) { if (onDone) { onDone(null); } return; }
-                if (erpDetailCache[orderId]) { if (onDone) { onDone(erpDetailCache[orderId]); } return; }
-                if (erpDetailPrewarm[orderId]) { if (onDone) { erpDetailPrewarm[orderId].push(onDone); } return; }
-                erpDetailPrewarm[orderId] = onDone ? [onDone] : [];
-                $.ajax({
-                    url: detailBase + custId + '/' + orderId,
-                    method: 'GET',
-                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                    success: function (resp) {
-                        if (resp.success && resp.data) { erpDetailCache[orderId] = resp.data; }
-                        var cbs = (erpDetailPrewarm[orderId] || []).splice(0);
-                        delete erpDetailPrewarm[orderId];
-                        cbs.forEach(function (cb) { cb(resp.success ? resp.data : null); });
-                    },
-                    error: function () {
-                        var cbs = (erpDetailPrewarm[orderId] || []).splice(0);
-                        delete erpDetailPrewarm[orderId];
-                        cbs.forEach(function (cb) { cb(null); });
-                    },
-                });
-            }
-
-            // Prefetch en hover — igual que PS
-            $(document).on('mouseenter', '.rp3-erp-order', function () {
-                var orderId = String($(this).data('order-id') || '');
-                var custId  = String($(this).data('erp-customer-id') || $erpTab.data('erp-customer-id') || '');
-                fetchErpOrderDetail(orderId, custId, null);
-            });
-
-            // ERP order card click → modal con datos ya cacheados o skeleton mientras carga
+            // ERP order card click → abre el workspace de pedido ERP (solo lectura).
+            // Captura para ganarle a cualquier otro handler de .rp3-erp-order que
+            // pudiera registrarse más tarde (p.ej. el genérico de PrestaShop).
             document.addEventListener('click', function (e) {
                 var $el = $(e.target).closest('.rp3-erp-order');
                 if (!$el.length) { return; }
+                if (typeof window.openErpOrderWorkspace !== 'function') { return; }
 
                 var orderId = String($el.data('order-id') || '');
                 var custId  = String($el.data('erp-customer-id') || $erpTab.data('erp-customer-id') || '');
-                var ref     = $el.data('order-ref')    || '#—';
-                var status  = $el.data('order-status') || '—';
-                var date    = $el.data('order-date')   || '—';
+                if (!orderId || !custId) { return; }
 
-                // Si ya está en caché: abrir con datos inmediatamente
-                if (erpDetailCache[orderId]) {
-                    showErpBasicModal(ref, status, date);
-                    populateErpDetail(erpDetailCache[orderId]);
-                    openOrderModal();
-                    return;
-                }
-
-                // Si no: mostrar skeleton, abrir modal y cargar datos
-                showErpBasicModal(ref, status, date);
-                openOrderModal();
-                fetchErpOrderDetail(orderId, custId, function (data) {
-                    populateErpDetail(data);
-                });
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                window.openErpOrderWorkspace(custId, orderId);
             }, true);
-
-            function showErpBasicModal(ref, status, date) {
-                var skLine = '<div class="bv-om-prod-skeleton"><div class="bv-sk-thumb"></div><div class="bv-sk-body"><div class="bv-sk-line w70"></div><div class="bv-sk-line w40"></div></div></div>';
-                $('#bv-order-modal-chip').text(ref);
-                $('#bv-order-modal-cust-name').text(($('.bv-cp-name-btn').first().text() || '—').trim());
-                $('#bv-order-modal-order-id').text(ref);
-                $('#bv-order-modal-reference').text(ref);
-                $('#bv-order-modal-date').text(date || '—');
-                $('#bv-order-modal-status').text(status || '—').attr('class', 'bv-ov-st ' + window.bvOrderStatusClass(status || ''));
-                $('#bv-order-modal-payment').text('—');
-                setAddressTab(null, null);
-                $('#bv-order-modal-subtotal').text('—');
-                $('#bv-order-modal-shipping-val').text('—');
-                $('#bv-order-modal-total').text('—');
-                $('#bv-order-modal-tax-row').addClass('bv-hidden');
-                $('#bv-order-modal-discount-row').addClass('bv-hidden');
-                $('#bv-order-modal-tracking-field').addClass('bv-hidden');
-                $('#bv-order-modal-tracking-empty').removeClass('bv-hidden');
-                $('#bv-order-modal-history-field').addClass('bv-hidden');
-                $('#bv-order-modal-states-empty').removeClass('bv-hidden');
-                $('#bv-order-modal-external-link').addClass('bv-hidden');
-                $('[data-bv-modal-name="order"] [data-bv-om-tab]').removeClass('is-active');
-                $('[data-bv-modal-name="order"] [data-bv-om-tab="info"]').addClass('is-active');
-                $('[data-bv-modal-name="order"] [data-bv-om-panel]').removeClass('is-active');
-                $('[data-bv-modal-name="order"] [data-bv-om-panel="info"]').addClass('is-active');
-                $('#bv-order-modal-products').html(skLine + skLine);
-                $('#bv-order-modal-products-count').text('');
-            }
-
-            function populateErpDetail(detail) {
-                if (!detail) {
-                    $('#bv-order-modal-products').html('<div class="bv-oc-empty"><i class="fas fa-box-open"></i><div class="title">Sin detalle</div></div>');
-                    return;
-                }
-                var lines   = detail.lines || detail.lineas || detail.products || [];
-                var total   = detail.total != null ? detail.total : (detail.importe || null);
-                var payment = detail.payment_method || detail.formadepago || null;
-                // Construir objetos de dirección desde los campos del ERP
-                var rawAddr = detail.shipping_address || detail.address || detail.direccion || null;
-                var erpShipping = rawAddr && typeof rawAddr === 'object'
-                    ? rawAddr
-                    : (rawAddr ? { address1: String(rawAddr), phone: detail.phone || detail.telefono || null } : null);
-                var erpBilling = detail.billing_address || null;
-
-                if (lines.length) {
-                    var lHtml = '';
-                    lines.forEach(function (l) {
-                        var name  = l.name || l.descripcion || l.articulo || 'Artículo';
-                        var qty   = parseInt(l.qty  || l.cantidad  || l.quantity || 1, 10);
-                        var price = parseFloat(l.price || l.precio || l.importe  || 0);
-                        var dto   = parseFloat(l.discount || l.dto || 0);
-                        var linePrice = dto > 0 ? price * (1 - dto / 100) : price;
-                        lHtml +=
-                            '<div class="bv-om-prod-card">' +
-                                '<div class="bv-om-pc-thumb"><i class="fas fa-box"></i></div>' +
-                                '<div class="bv-om-pc-info">' +
-                                    '<div class="bv-om-pc-name">' + esc(name) + '</div>' +
-                                    '<div class="bv-om-pc-meta">\xd7' + qty +
-                                        (price > 0 ? ' \xb7 ' + linePrice.toFixed(2) + ' €' : '') +
-                                        (dto > 0 ? ' <span class="text-success">-' + dto + '%</span>' : '') +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="bv-om-pc-price">' + (linePrice * qty).toFixed(2) + ' €</div>' +
-                            '</div>';
-                    });
-                    $('#bv-order-modal-products').html(lHtml);
-                    $('#bv-order-modal-products-count').text(lines.length + (lines.length === 1 ? ' artículo' : ' artículos'));
-                } else {
-                    $('#bv-order-modal-products').html('<div class="bv-oc-empty"><i class="fas fa-box-open"></i><div class="title">Sin productos registrados</div></div>');
-                }
-                if (total != null)   { $('#bv-order-modal-total').text(parseFloat(total).toFixed(2) + ' €'); }
-                setAddressTab(erpShipping, erpBilling);
-                if (payment)         { $('#bv-order-modal-payment').text(String(payment)); }
-            }
     });
 })();
+
+/**
+ * Reintento manual de la búsqueda del cliente en gestión.
+ *
+ * El aviso "Este remitente no está en gestión" del panel derecho lo pinta
+ * right-panel.blade.php cuando helpdesk_customers.erp_lookup_status dice que la
+ * búsqueda automática ya corrió y falló. Aquí solo se relanza el trabajo
+ * saltándose el enfriamiento.
+ *
+ * Delegación en document porque el panel derecho se sustituye entero al cambiar
+ * de conversación (SPA pane).
+ */
+(function ($) {
+    'use strict';
+
+    if (!$) { return; }
+
+    $(document).on('click', '[data-bv-erp-relink]', function () {
+        var $btn = $(this);
+        var $box = $btn.closest('.rsp-erp-missing');
+        var url = $box.data('relink-url');
+
+        if (!url || $btn.prop('disabled')) { return; }
+
+        $btn.prop('disabled', true).text('Buscando…');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            timeout: 15000,
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || ''
+            }
+        }).done(function (resp) {
+            if (window.toastr) {
+                window.toastr.success((resp && resp.message) || 'Buscando el cliente en gestión…');
+            }
+
+            // El trabajo es asíncrono: no se puede pintar el resultado aquí. Se
+            // deja constancia de que se pidió y se invita a recargar, en vez de
+            // fingir que ya está resuelto.
+            $box.find('.rsp-erp-missing-text span').text('Búsqueda enviada. Recarga en unos segundos para ver el resultado.');
+            $btn.text('Enviado');
+        }).fail(function (xhr, textStatus) {
+            var msg;
+
+            if (textStatus === 'timeout') {
+                msg = 'La petición tardó demasiado.';
+            } else if (xhr && xhr.status === 429) {
+                msg = 'Demasiados reintentos seguidos, espera un minuto.';
+            } else {
+                msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo pedir la búsqueda.';
+            }
+
+            if (window.toastr) { window.toastr.error(msg); }
+
+            $btn.prop('disabled', false).text('Reintentar');
+        });
+    });
+
+}(window.jQuery));

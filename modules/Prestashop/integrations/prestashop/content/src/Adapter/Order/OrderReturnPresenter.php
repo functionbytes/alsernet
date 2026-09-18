@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,4 @@ namespace PrestaShop\PrestaShop\Adapter\Order;
  * @deprecated since 1.7.4.0
  * @see \PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderReturnPresenter
  */
-class OrderReturnPresenter extends \PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderReturnPresenter
-{
-}
+class OrderReturnPresenter extends \PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderReturnPresenter {}

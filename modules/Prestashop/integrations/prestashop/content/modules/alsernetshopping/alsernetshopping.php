@@ -1,34 +1,37 @@
 <?php
 
-use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
 use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
+use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
 class Alsernetshopping extends Module implements WidgetInterface
 {
-    public function __construct(){
+    public function __construct()
+    {
 
         $this->name = 'alsernetshopping';
         $this->author = 'Alsernet';
         $this->version = '2.0.4';
         $this->need_instance = 0;
-        $this->controllers = array('productscompare', 'mywishlist', 'viewwishlist');
+        $this->controllers = ['productscompare', 'mywishlist', 'viewwishlist'];
 
         parent::__construct();
 
         // Load carrier system
-        require_once dirname(__FILE__) . '/controllers/front/Carriers/load_carriers.php';
+        require_once dirname(__FILE__).'/controllers/front/Carriers/load_carriers.php';
 
-        //$this->secure_key = Tools::encrypt($this->name);
-        $this->displayName = "Alsernet shopping";
+        // $this->secure_key = Tools::encrypt($this->name);
+        $this->displayName = 'Alsernet shopping';
         $this->description = $this->getTranslator()->trans('Make your customers feel at home on your store, invite them to sign in!', [], 'modules.Customersignin.Admin');
         $this->ps_versions_compliancy = ['min' => '1.7.1.0', 'max' => _PS_VERSION_];
 
     }
-    public function install(){
+
+    public function install()
+    {
 
         return parent::install() &&
             $this->registerHook('header')
@@ -39,39 +42,41 @@ class Alsernetshopping extends Module implements WidgetInterface
 
     }
 
-
-    public function getWidgetVariables($hookName, array $configuration){
+    public function getWidgetVariables($hookName, array $configuration)
+    {
 
         $url = $this->getCartSummaryURL();
 
         return [
-            'cart' => (new CartPresenter())->present(isset($params['cart']) ? $params['cart'] : $this->context->cart),
+            'cart' => (new CartPresenter)->present(isset($params['cart']) ? $params['cart'] : $this->context->cart),
             'refresh' => $this->context->link->getModuleLink('alsernetshopping', 'ajax', [], null, null, null, true),
             'url' => $url,
         ];
 
     }
 
-    private function getCartSummaryURL(){
-        return $this->context->link->getPageLink('cart', null, $this->context->language->id,['action' => 'show',],false,null,true);
+    private function getCartSummaryURL()
+    {
+        return $this->context->link->getPageLink('cart', null, $this->context->language->id, ['action' => 'show'], false, null, true);
     }
 
-    public function renderWidget($hookName, array $configuration){
+    public function renderWidget($hookName, array $configuration)
+    {
 
         if ($hookName == 'displayFooterProduct') {
 
-            $this->smarty->assign(array(
+            $this->smarty->assign([
                 'product' => $configuration['product'],
                 'category' => $configuration['category'],
-            ));
+            ]);
 
-            //return $this->fetch('module:alsernetshopping/views/templates/hook/partial/product-sticky.tpl');
+            // return $this->fetch('module:alsernetshopping/views/templates/hook/partial/product-sticky.tpl');
 
-        }elseif($hookName == 'displayNav2' && $configuration['action'] == 'shopping') {
+        } elseif ($hookName == 'displayNav2' && $configuration['action'] == 'shopping') {
             return $this->fetch('module:alsernetshopping/views/templates/hook/shopping/shopping.tpl');
-        }elseif(isset($configuration['type'])) {
+        } elseif (isset($configuration['type'])) {
 
-            if($configuration['type'] == 'reassurance') {
+            if ($configuration['type'] == 'reassurance') {
                 return $this->fetch('module:alsernetshopping/views/templates/hook/view/reassurance.tpl');
             }
 
@@ -79,28 +84,28 @@ class Alsernetshopping extends Module implements WidgetInterface
 
     }
 
-    public function hookHeader($params){
+    public function hookHeader($params)
+    {
 
-        $this->context->controller->addCSS($this->_path.'views/css/front/style.css','all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/style.css', 'all');
 
-        $this->context->controller->addCSS($this->_path.'views/css/front/orders/confirmation.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/checkout.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/cart.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/orders/order.css','all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/orders/confirmation.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/checkout.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/cart.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/orders/order.css', 'all');
 
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/cart.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/minipupup.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/modal.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/sticky.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/header.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/components/dropdown.css','all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/cart.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/minipupup.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/modal.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/sticky.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/header.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/components/dropdown.css', 'all');
 
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/guard-pickup.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/store-pickup.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/delivery-address.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/correosexpress-carrier.css','all');
-        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/mondialrelay.css','all');
-
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/guard-pickup.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/store-pickup.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/delivery-address.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/correosexpress-carrier.css', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front/checkout/carriers/mondialrelay.css', 'all');
 
         // ========================================
         // ✅ ORDEN CORRECTO DE CARGA - CRÍTICO
@@ -109,7 +114,7 @@ class Alsernetshopping extends Module implements WidgetInterface
         // 1. LIBRERÍAS BASE (TOP - primera carga)
         $this->context->controller->registerJavascript(
             'alsernet-toastrs',
-            $this->_path . 'views/vendor/toastr/toastr.min.js',
+            $this->_path.'views/vendor/toastr/toastr.min.js',
             ['position' => 'top', 'priority' => 1]
         );
 
@@ -193,19 +198,19 @@ class Alsernetshopping extends Module implements WidgetInterface
         // 7. CARRIERS (dependen de delivery-step)
         $this->context->controller->registerJavascript(
             'alsernet-guard-pickup',
-            $this->_path . 'views/js/front/checkout/steps/delivery/carriers/guard-pickup.js',
+            $this->_path.'views/js/front/checkout/steps/delivery/carriers/guard-pickup.js',
             ['position' => 'bottom', 'priority' => 55]
         );
 
         $this->context->controller->registerJavascript(
             'alsernet-correosexpress-carrier',
-            $this->_path . 'views/js/front/checkout/steps/delivery/carriers/correosexpress-carrier.js',
+            $this->_path.'views/js/front/checkout/steps/delivery/carriers/correosexpress-carrier.js',
             ['position' => 'bottom', 'priority' => 56]
         );
 
         $this->context->controller->registerJavascript(
             'alsernet-delivery-address-carrier',
-            $this->_path . 'views/js/front/checkout/steps/delivery/carriers/delivery-address.js',
+            $this->_path.'views/js/front/checkout/steps/delivery/carriers/delivery-address.js',
             ['position' => 'bottom', 'priority' => 57]
         );
 
@@ -219,37 +224,41 @@ class Alsernetshopping extends Module implements WidgetInterface
             ['position' => 'bottom', 'priority' => 60]
         );
 
-
     }
 
-    public function isTokenValid(){
-        if (!Configuration::get('PS_TOKEN_ENABLE')) {
+    public function isTokenValid()
+    {
+        if (! Configuration::get('PS_TOKEN_ENABLE')) {
             return true;
         }
+
         return strcasecmp(Tools::getToken(false), Tools::getValue('token')) == 0;
     }
 
-    protected function createTables(){
+    protected function createTables()
+    {
         $res = 1;
-        include_once(dirname(__FILE__) . '/install/install.php');
+        include_once dirname(__FILE__).'/install/install.php';
+
         return $res;
     }
 
-    public function deleteTables(){
+    public function deleteTables()
+    {
         return Db::getInstance()->execute('
             DROP TABLE IF EXISTS
-            `' . _DB_PREFIX_ . 'alsernetshopping_product_review`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_criterion`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_criterion_product`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_criterion_lang`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_criterion_category`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_grade`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_usefulness`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_product_review_report`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_compare`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_compare_product`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_wishlist`,
-			`' . _DB_PREFIX_ . 'alsernetshopping_wishlist_product`
+            `'._DB_PREFIX_.'alsernetshopping_product_review`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_criterion`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_criterion_product`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_criterion_lang`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_criterion_category`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_grade`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_usefulness`,
+			`'._DB_PREFIX_.'alsernetshopping_product_review_report`,
+			`'._DB_PREFIX_.'alsernetshopping_compare`,
+			`'._DB_PREFIX_.'alsernetshopping_compare_product`,
+			`'._DB_PREFIX_.'alsernetshopping_wishlist`,
+			`'._DB_PREFIX_.'alsernetshopping_wishlist_product`
 		');
 
     }
@@ -264,14 +273,14 @@ class Alsernetshopping extends Module implements WidgetInterface
         $relevantPages = ['order', 'cart', 'module-alsernetshopping'];
         $currentPage = $this->context->controller->php_self ?? '';
 
-        if (!in_array($currentPage, $relevantPages) &&
+        if (! in_array($currentPage, $relevantPages) &&
             strpos($this->context->controller->page_name ?? '', 'checkout') === false) {
             return; // No cargar en páginas irrelevantes
         }
 
         $hipayModule = Module::getInstanceByName('hipay_enterprise');
 
-        if (!$hipayModule || !$hipayModule->active) {
+        if (! $hipayModule || ! $hipayModule->active) {
             return; // HiPay no está disponible
         }
 
@@ -279,7 +288,7 @@ class Alsernetshopping extends Module implements WidgetInterface
             $hipayConfig = $hipayModule->hipayConfigTool->getConfigHipay();
             $sdkUrl = $hipayConfig['payment']['global']['sdk_js_url'] ?? '';
 
-            if (!$sdkUrl) {
+            if (! $sdkUrl) {
                 return; // No hay URL del SDK configurada
             }
 
@@ -346,11 +355,10 @@ class Alsernetshopping extends Module implements WidgetInterface
             }
 
             // Log para debug
-            error_log('✅ HiPay SDK loaded via alsernetshopping module - UX Mode: ' . $uxMode);
+            error_log('✅ HiPay SDK loaded via alsernetshopping module - UX Mode: '.$uxMode);
 
         } catch (Exception $e) {
-            error_log('❌ Error loading HiPay SDK via alsernetshopping: ' . $e->getMessage());
+            error_log('❌ Error loading HiPay SDK via alsernetshopping: '.$e->getMessage());
         }
     }
-
 }

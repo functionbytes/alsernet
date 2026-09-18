@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,7 @@ interface GridActionInterface
     /**
      * Set action name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return self
      */
     public function setName($name);
@@ -64,8 +64,7 @@ interface GridActionInterface
     /**
      * Set action icon name.
      *
-     * @param string $icon
-     *
+     * @param  string  $icon
      * @return self
      */
     public function setIcon($icon);
@@ -87,7 +86,6 @@ interface GridActionInterface
     /**
      * Set action options.
      *
-     * @param array $options
      *
      * @return self
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,37 +52,23 @@ class ProductFeatureValue
      */
     private $localizedCustomValues;
 
-    /**
-     * @param int $featureId
-     * @param int|null $featureValueId
-     * @param array|null $localizedCustomValues
-     */
     public function __construct(int $featureId, ?int $featureValueId = null, ?array $localizedCustomValues = null)
     {
         $this->featureId = new FeatureId($featureId);
-        $this->featureValueId = null !== $featureValueId ? new FeatureValueId($featureValueId) : null;
+        $this->featureValueId = $featureValueId !== null ? new FeatureValueId($featureValueId) : null;
         $this->localizedCustomValues = $localizedCustomValues;
     }
 
-    /**
-     * @return FeatureId
-     */
     public function getFeatureId(): FeatureId
     {
         return $this->featureId;
     }
 
-    /**
-     * @return FeatureValueId|null
-     */
     public function getFeatureValueId(): ?FeatureValueId
     {
         return $this->featureValueId;
     }
 
-    /**
-     * @param FeatureValueId $featureValueId
-     */
     public function setFeatureValueId(FeatureValueId $featureValueId): void
     {
         $this->featureValueId = $featureValueId;

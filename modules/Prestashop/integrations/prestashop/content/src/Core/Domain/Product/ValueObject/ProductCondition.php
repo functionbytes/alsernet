@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,9 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductConstraintExcepti
 class ProductCondition
 {
     public const NEW = 'new';
+
     public const USED = 'used';
+
     public const REFURBISHED = 'refurbished';
 
     /**
@@ -53,31 +56,23 @@ class ProductCondition
      */
     private $value;
 
-    /**
-     * @param string $value
-     */
     public function __construct(string $value)
     {
         $this->assertValueIsAllowed($value);
         $this->value = $value;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
     }
 
     /**
-     * @param string $value
-     *
      * @throws ProductConstraintException
      */
     private function assertValueIsAllowed(string $value): void
     {
-        if (!in_array($value, self::AVAILABLE_CONDITIONS, true)) {
+        if (! in_array($value, self::AVAILABLE_CONDITIONS, true)) {
             throw new ProductConstraintException(
                 sprintf(
                     'Invalid product condition "%s". Allowed conditions are: "%s"',

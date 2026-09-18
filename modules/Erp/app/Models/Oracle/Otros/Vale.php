@@ -3,6 +3,8 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -51,7 +53,7 @@ class Vale extends Model
      */
     public function vale()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Vale::class, 'idvale', 'idvale');
+        return $this->belongsTo(Vale::class, 'idvale', 'idvale');
     }
 
     /**
@@ -60,7 +62,7 @@ class Vale extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -69,6 +71,6 @@ class Vale extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 }

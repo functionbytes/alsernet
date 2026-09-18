@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,8 @@
 
 namespace PrestaShopBundle\Kernel;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
 use PrestaShop\PrestaShop\Adapter\Environment;
 
@@ -68,35 +71,34 @@ class ModuleRepositoryFactory
 
     public static function getInstance()
     {
-        if (!self::$instance) {
-            self::$instance = new ModuleRepositoryFactory();
+        if (! self::$instance) {
+            self::$instance = new ModuleRepositoryFactory;
         }
 
         return self::$instance;
     }
 
     /**
-     * @param array|null $parameters
-     * @param string|null $environment
+     * @param  string|null  $environment
      */
-    public function __construct(array $parameters = null, $environment = null)
+    public function __construct(?array $parameters = null, $environment = null)
     {
         $this->parameters = $parameters;
         $this->environment = $environment;
-        if (null === $environment) {
-            $this->environment = (new Environment())->getName();
+        if ($environment === null) {
+            $this->environment = (new Environment)->getName();
         }
     }
 
     /**
      * @return ModuleRepository
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      */
     public function getRepository()
     {
         $parameters = $this->getParameters();
-        if (null !== $parameters && null === $this->moduleRepository) {
+        if ($parameters !== null && $this->moduleRepository === null) {
             $databasePrefix = $parameters['database_prefix'];
             $this->moduleRepository = new ModuleRepository(
                 $this->getConnection($parameters),
@@ -108,11 +110,9 @@ class ModuleRepositoryFactory
     }
 
     /**
-     * @param array $parameters
+     * @return Connection
      *
-     * @return \Doctrine\DBAL\Connection
-     *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      */
     private function getConnection(array $parameters)
     {
@@ -132,8 +132,8 @@ class ModuleRepositoryFactory
      */
     private function getParametersFile()
     {
-        if (empty($this->parametersFile) && file_exists(__DIR__ . '/../../../app/config/parameters.php')) {
-            $this->parametersFile = realpath(__DIR__ . '/../../../app/config/parameters.php');
+        if (empty($this->parametersFile) && file_exists(__DIR__.'/../../../app/config/parameters.php')) {
+            $this->parametersFile = realpath(__DIR__.'/../../../app/config/parameters.php');
         }
 
         return $this->parametersFile;
@@ -144,7 +144,7 @@ class ModuleRepositoryFactory
      */
     private function getParameters()
     {
-        if (null === $this->parameters && !empty($this->getParametersFile())) {
+        if ($this->parameters === null && ! empty($this->getParametersFile())) {
             $config = require $this->getParametersFile();
             $this->parameters = $config['parameters'];
         }

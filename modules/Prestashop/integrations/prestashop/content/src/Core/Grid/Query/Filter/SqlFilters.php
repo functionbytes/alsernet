@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,18 +33,20 @@ namespace PrestaShop\PrestaShop\Core\Grid\Query\Filter;
 final class SqlFilters
 {
     public const WHERE_STRICT = 1;
+
     public const WHERE_LIKE = 2;
+
     public const HAVING_LIKE = 3;
+
     public const WHERE_DATE = 4;
 
     /** @var array */
     private $filters = [];
 
     /**
-     * @param string $filterName
-     * @param string $sqlField
-     * @param int $comparison
-     *
+     * @param  string  $filterName
+     * @param  string  $sqlField
+     * @param  int  $comparison
      * @return self
      */
     public function addFilter($filterName, $sqlField, $comparison = self::WHERE_STRICT)

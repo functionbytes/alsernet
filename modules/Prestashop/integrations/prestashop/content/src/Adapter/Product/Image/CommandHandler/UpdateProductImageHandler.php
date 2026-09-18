@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,12 +59,6 @@ class UpdateProductImageHandler implements UpdateProductImageHandlerInterface
      */
     private $imageValidator;
 
-    /**
-     * @param ProductImageRepository $productImageRepository
-     * @param ProductImageUpdater $productImageUpdater
-     * @param ProductImageUploader $productImageUploader
-     * @param ImageValidator $imageValidator
-     */
     public function __construct(
         ProductImageRepository $productImageRepository,
         ProductImageUpdater $productImageUpdater,
@@ -81,14 +76,14 @@ class UpdateProductImageHandler implements UpdateProductImageHandlerInterface
      */
     public function handle(UpdateProductImageCommand $command): void
     {
-        if (null !== $command->getFilePath()) {
+        if ($command->getFilePath() !== null) {
             $this->imageValidator->assertFileUploadLimits($command->getFilePath());
             $this->imageValidator->assertIsValidImageType($command->getFilePath());
         }
 
         $image = $this->productImageRepository->get($command->getImageId());
 
-        if (null !== $command->getLocalizedLegends()) {
+        if ($command->getLocalizedLegends() !== null) {
             $image->legend = $command->getLocalizedLegends();
             $this->productImageRepository->partialUpdate(
                 $image,
@@ -101,11 +96,11 @@ class UpdateProductImageHandler implements UpdateProductImageHandlerInterface
             $this->productImageUpdater->updateProductCover($image);
         }
 
-        if (null !== $command->getFilePath()) {
+        if ($command->getFilePath() !== null) {
             $this->productImageUploader->upload($image, $command->getFilePath());
         }
 
-        if (null !== $command->getPosition()) {
+        if ($command->getPosition() !== null) {
             $this->productImageUpdater->updatePosition($image, $command->getPosition());
         }
     }

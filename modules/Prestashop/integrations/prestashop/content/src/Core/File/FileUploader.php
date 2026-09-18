@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,8 @@ class FileUploader implements FileUploaderInterface
     protected $downloadDirectory;
 
     /**
-     * @param string $downloadDirectory Server path where the file will be uploaded
-     * @param int $maximumSize Maximum accepted file size
+     * @param  string  $downloadDirectory  Server path where the file will be uploaded
+     * @param  int  $maximumSize  Maximum accepted file size
      */
     public function __construct(
         string $downloadDirectory,
@@ -74,21 +75,20 @@ class FileUploader implements FileUploaderInterface
             return $this->uploadFromBinaryFile($file);
         }
 
-        throw new InvalidArgumentException();
+        throw new InvalidArgumentException;
     }
 
     /**
      * Validate file size
      *
-     * @param array $file
      *
      * @throws InvalidFileException
      * @throws MaximumSizeExceededException
      */
     protected function validateSize(array $file): void
     {
-        if (!isset($file['size'])) {
-            throw new InvalidFileException();
+        if (! isset($file['size'])) {
+            throw new InvalidFileException;
         }
 
         if ($file['size'] > $this->maximumSize) {
@@ -99,35 +99,32 @@ class FileUploader implements FileUploaderInterface
     /**
      * Validate if file is an uploaded file
      *
-     * @param array $file
      *
      * @throws InvalidFileException
      * @throws FileUploadException
      */
     protected function validateIsUploadedFile(array $file): void
     {
-        if (!isset($file['tmp_name'])
-            || !isset($file['type'])
-            || !isset($file['name'])
+        if (! isset($file['tmp_name'])
+            || ! isset($file['type'])
+            || ! isset($file['name'])
         ) {
-            throw new InvalidFileException();
+            throw new InvalidFileException;
         }
 
-        if (!is_uploaded_file($file['tmp_name'])) {
-            throw new FileUploadException();
+        if (! is_uploaded_file($file['tmp_name'])) {
+            throw new FileUploadException;
         }
     }
 
     /**
      * Generate file name from uniqid
-     *
-     * @return string
      */
     protected function generateFileName(): string
     {
         do {
             $uniqid = sha1(uniqid()); // must be a sha1
-        } while (file_exists($this->downloadDirectory . $uniqid));
+        } while (file_exists($this->downloadDirectory.$uniqid));
 
         return $uniqid;
     }
@@ -135,8 +132,7 @@ class FileUploader implements FileUploaderInterface
     /**
      * Upload file from Http Post
      *
-     * @param array{tmp_name: string, type: string, name: string} $file the $_FILES content
-     *
+     * @param  array{tmp_name: string, type: string, name: string}  $file  the $_FILES content
      * @return array{id: string, file_name: string, mime_type: string}
      *
      * @throws FileUploadException
@@ -147,8 +143,8 @@ class FileUploader implements FileUploaderInterface
         $this->validateIsUploadedFile($file);
 
         $fileName = $this->generateFileName();
-        if (!move_uploaded_file($file['tmp_name'], $this->downloadDirectory . $fileName)) {
-            throw new FileUploadException();
+        if (! move_uploaded_file($file['tmp_name'], $this->downloadDirectory.$fileName)) {
+            throw new FileUploadException;
         }
 
         return [
@@ -161,8 +157,7 @@ class FileUploader implements FileUploaderInterface
     /**
      * Upload file from binary request
      *
-     * @param string $content The binary string
-     *
+     * @param  string  $content  The binary string
      * @return array{id: string, file_name: string, mime_type: string}
      *
      * @throws FileUploadException
@@ -178,14 +173,14 @@ class FileUploader implements FileUploaderInterface
         $fileName = $this->generateFileName();
 
         // Ignore warning, we only need to know if everything is ok
-        if (@file_put_contents($this->downloadDirectory . $fileName, $content) === false) {
-            throw new FileUploadException();
+        if (@file_put_contents($this->downloadDirectory.$fileName, $content) === false) {
+            throw new FileUploadException;
         }
 
         return [
             'id' => $fileName,
             'file_name' => uniqid('', true),
-            'mime_type' => ImageManager::getMimeType($this->downloadDirectory . $fileName),
+            'mime_type' => ImageManager::getMimeType($this->downloadDirectory.$fileName),
         ];
     }
 }

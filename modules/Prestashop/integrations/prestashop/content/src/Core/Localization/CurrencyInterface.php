@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,10 +78,10 @@ interface CurrencyInterface
     /**
      * Get the currency symbol for a given locale code.
      *
-     * @param string $localeCode
-     *                           The locale code (simplified IETF tag syntax)
-     *                           Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
-     *                           eg: fr-FR, en-US
+     * @param  string  $localeCode
+     *                              The locale code (simplified IETF tag syntax)
+     *                              Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
+     *                              eg: fr-FR, en-US
      *
      * @see https://en.wikipedia.org/wiki/IETF_language_tag
      * @see https://www.w3.org/International/articles/language-tags
@@ -103,10 +104,10 @@ interface CurrencyInterface
     /**
      * Get the currency's name for a given locale code.
      *
-     * @param string $localeCode
-     *                           The locale code (simplified IETF tag syntax)
-     *                           Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
-     *                           eg: fr-FR, en-US
+     * @param  string  $localeCode
+     *                              The locale code (simplified IETF tag syntax)
+     *                              Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
+     *                              eg: fr-FR, en-US
      *
      * @see https://en.wikipedia.org/wiki/IETF_language_tag
      * @see https://www.w3.org/International/articles/language-tags

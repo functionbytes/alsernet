@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskHelpcenter\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,7 +20,8 @@ class HelpCenterPublicController extends Controller
         $locale = $this->resolveLocale($request);
 
         $query = HelpCenterArticle::query()
-            ->where('is_published', true)
+            ->published()
+            ->visibleToRole($request->user())
             ->select('id', 'title', 'slug', 'description', 'views_count', 'published_at');
 
         if ($request->filled('q')) {
@@ -70,26 +72,30 @@ class HelpCenterPublicController extends Controller
         $locale = $this->resolveLocale($request);
 
         // Try to find by translation slug first, then fall back to article slug
-        $article = $this->findBySlug($slug, $locale);
+        $article = $this->findBySlug($slug, $locale, $request->user());
 
         $article->incrementQuietly('views_count');
 
         $related = HelpCenterArticle::query()
-            ->where('is_published', true)
+            ->published()
+            ->visibleToRole($request->user())
             ->where('id', '!=', $article->id)
             ->select('id', 'title', 'slug', 'description')
             ->orderByDesc('views_count')
             ->take(config('helpdeskhelpcenter.public.related_limit', 5))
             ->get();
 
-        $translation = $article->translation($locale);
+        // translationPublished(), not translation(): a draft translation for an
+        // otherwise-published article must fall back to the base article body,
+        // not leak its draft content (see findBySlug()'s equivalent guard).
+        $translation = $article->translationPublished($locale);
 
         return view('helpdeskhelpcenter::public.helpcenter.show', compact('article', 'related', 'locale', 'translation'));
     }
 
     public function search(Request $request): JsonResponse
     {
-        $q = $request->input('q', '');
+        $q = $this->stringInput($request, 'q');
         $minChars = (int) config('helpdeskhelpcenter.public.search_min_chars', 3);
 
         if (strlen($q) < $minChars) {
@@ -97,7 +103,8 @@ class HelpCenterPublicController extends Controller
         }
 
         $query = HelpCenterArticle::query()
-            ->where('is_published', true)
+            ->published()
+            ->visibleToRole($request->user())
             ->select('id', 'title', 'slug', 'description')
             ->take(5);
 
@@ -136,9 +143,9 @@ class HelpCenterPublicController extends Controller
     private function extractLocaleCandidate(Request $request): ?string
     {
         if ($request->filled('locale')) {
-            $candidate = $request->input('locale');
+            $candidate = $this->stringInput($request, 'locale');
 
-            return strlen($candidate) <= 8 ? $candidate : null;
+            return ($candidate !== '' && strlen($candidate) <= 8) ? $candidate : null;
         }
 
         $acceptLanguage = $request->header('Accept-Language', '');
@@ -153,14 +160,32 @@ class HelpCenterPublicController extends Controller
         return ($candidate && strlen($candidate) <= 8) ? $candidate : null;
     }
 
-    private function findBySlug(string $slug, string $locale): HelpCenterArticle
+    /**
+     * `q`/`locale` llegan del query string y pueden ser arrays (?q[]=a&q[]=b),
+     * lo que hace explotar tanto strlen() (TypeError) como el cast implícito
+     * de $request->string() (Stringable castea con (string) $value, que en
+     * este proyecto error_reporting(-1) convierte el warning "Array to string
+     * conversion" en ErrorException — comprobado en vivo, no es solo teórico).
+     * Un valor array se trata como ausente en vez de intentar castearlo.
+     */
+    private function stringInput(Request $request, string $key, string $default = ''): string
+    {
+        if (is_array($request->input($key))) {
+            return $default;
+        }
+
+        return (string) $request->string($key, $default);
+    }
+
+    private function findBySlug(string $slug, string $locale, ?User $user): HelpCenterArticle
     {
         // Try translation slug. La traducción debe estar publicada además del
         // artículo padre: sin este filtro, una traducción borrador era legible
         // públicamente conociendo/adivinando su slug.
         $byTranslation = HelpCenterArticle::query()
             ->whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale)->where('is_published', true))
-            ->where('is_published', true)
+            ->published()
+            ->visibleToRole($user)
             ->with('translations')
             ->first();
 
@@ -170,7 +195,8 @@ class HelpCenterPublicController extends Controller
 
         return HelpCenterArticle::query()
             ->where('slug', $slug)
-            ->where('is_published', true)
+            ->published()
+            ->visibleToRole($user)
             ->with('translations')
             ->firstOrFail();
     }

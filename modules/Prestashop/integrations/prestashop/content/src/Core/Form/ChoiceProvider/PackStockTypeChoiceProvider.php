@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ final class PackStockTypeChoiceProvider implements FormChoiceProviderInterface
      */
     private $defaultPackStockType;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param int $defaultPackStockType
-     */
     public function __construct(
         TranslatorInterface $translator,
         int $defaultPackStockType

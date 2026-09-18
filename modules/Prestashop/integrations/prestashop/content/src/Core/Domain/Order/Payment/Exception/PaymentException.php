@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use PrestaShop\PrestaShop\Core\Domain\Order\Exception\OrderException;
 /**
  * Is base exception for Payment subdomain
  */
-class PaymentException extends OrderException
-{
-}
+class PaymentException extends OrderException {}

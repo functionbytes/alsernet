@@ -38,7 +38,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="name" class="form-label fw-semibold">
-                                Nombre completo <span class="text-danger">*</span>
+                                Nombre completo <span class="text-brand">*</span>
                             </label>
                             <input type="text"
                                    id="name"
@@ -55,7 +55,7 @@
 
                         <div class="col-md-6">
                             <label for="email" class="form-label fw-semibold">
-                                Correo electrónico <span class="text-danger">*</span>
+                                Correo electrónico <span class="text-brand">*</span>
                             </label>
                             <input type="email"
                                    id="email"
@@ -241,35 +241,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: true,
-        placeholder: function() {
-            return $(this).find('option:first').text();
-        },
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    // Auto-uppercase country code
-    $('#country').on('input', function() {
-        $(this).val($(this).val().toUpperCase());
-    });
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/misc/select2-flash.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/select2-flash.js')) }}" defer></script>
 @endpush

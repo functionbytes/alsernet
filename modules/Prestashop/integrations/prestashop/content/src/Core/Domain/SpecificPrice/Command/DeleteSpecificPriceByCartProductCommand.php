@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,33 +58,21 @@ class DeleteSpecificPriceByCartProductCommand
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getProductAttributeId(): ?int
     {
         return $this->productAttributeId;
     }
 
-    /**
-     * @param int $productAttributeId
-     */
     public function setProductAttributeId(int $productAttributeId): void
     {
         $this->productAttributeId = $productAttributeId;

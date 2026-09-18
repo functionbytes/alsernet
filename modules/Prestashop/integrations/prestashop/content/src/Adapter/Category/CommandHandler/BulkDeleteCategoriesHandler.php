@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class BulkDeleteCategoriesHandler extends AbstractDeleteCategoryHandler im
         foreach ($command->getCategoryIds() as $categoryId) {
             $category = new Category($categoryId->getValue());
 
-            if (!$category->id) {
+            if (! $category->id) {
                 throw new CategoryNotFoundException($categoryId, sprintf('Category with id %s cannot be found.', var_export($categoryId->getValue(), true)));
             }
 
@@ -58,7 +59,7 @@ final class BulkDeleteCategoriesHandler extends AbstractDeleteCategoryHandler im
                 throw new CannotDeleteRootCategoryForShopException(sprintf('Shop\'s root category with id %s cannot be deleted.', var_export($categoryId->getValue(), true)));
             }
 
-            if (!$category->delete()) {
+            if (! $category->delete()) {
                 throw new FailedToDeleteCategoryException(sprintf('Failed to delete category with id %s', var_export($categoryId->getValue(), true)));
             }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class AddFeatureCommand
     private $shopAssociation;
 
     /**
-     * @param string[] $localizedNames
-     * @param int[] $shopAssociation
+     * @param  string[]  $localizedNames
+     * @param  int[]  $shopAssociation
      */
     public function __construct(array $localizedNames, array $shopAssociation = [])
     {
@@ -74,7 +75,7 @@ class AddFeatureCommand
     /**
      * Asserts that feature names are valid.
      *
-     * @param string[] $names
+     * @param  string[]  $names
      *
      * @throws FeatureConstraintException
      */

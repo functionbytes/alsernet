@@ -13,7 +13,12 @@ class WarmErpCacheJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 600;
+    // Debe quedar por debajo del retry_after (90s) de la conexión de cola
+    // redis: si el timeout iguala o supera retry_after, el worker puede
+    // considerar el job "perdido" y otro worker lo recoge mientras el
+    // primero sigue procesándolo — doble ejecución (ver también
+    // RefreshErpContextJob, mismo problema).
+    public int $timeout = 60;
 
     public int $backoff = 30;
 

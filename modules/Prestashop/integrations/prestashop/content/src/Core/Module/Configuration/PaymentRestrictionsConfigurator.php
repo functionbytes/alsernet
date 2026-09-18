@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,10 +56,8 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     private $paymentModuleProvider;
 
     /**
-     * @param Connection $connection
-     * @param string $databasePrefix
-     * @param int $shopId
-     * @param PaymentModuleListProviderInterface $paymentModuleProvider
+     * @param  string  $databasePrefix
+     * @param  int  $shopId
      */
     public function __construct(
         Connection $connection,
@@ -73,8 +72,6 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     }
 
     /**
-     * @param array $currencyRestrictions
-     *
      * @return bool|void
      */
     public function configureCurrencyRestrictions(array $currencyRestrictions)
@@ -83,8 +80,6 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     }
 
     /**
-     * @param array $countryRestrictions
-     *
      * @return bool|void
      */
     public function configureCountryRestrictions(array $countryRestrictions)
@@ -93,8 +88,6 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     }
 
     /**
-     * @param array $groupRestrictions
-     *
      * @return bool|void
      */
     public function configureGroupRestrictions(array $groupRestrictions)
@@ -103,8 +96,6 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     }
 
     /**
-     * @param array $carrierRestrictions
-     *
      * @return bool|void
      */
     public function configureCarrierRestrictions(array $carrierRestrictions)
@@ -113,12 +104,11 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     }
 
     /**
-     * @param string $restrictionType
-     * @param array $restrictions
+     * @param  string  $restrictionType
      */
     private function configureRestrictions($restrictionType, array $restrictions)
     {
-        list($moduleIds, $newConfiguration) = $this->parseRestrictionData($restrictions);
+        [$moduleIds, $newConfiguration] = $this->parseRestrictionData($restrictions);
 
         $this->clearCurrentConfiguration($restrictionType, $moduleIds);
         $this->insertNewConfiguration($restrictionType, $newConfiguration);
@@ -127,16 +117,15 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     /**
      * Clear current configuration for given restriction type.
      *
-     * @param string $restrictionType
-     * @param int[] $moduleIds
-     *
+     * @param  string  $restrictionType
+     * @param  int[]  $moduleIds
      * @return int
      */
     private function clearCurrentConfiguration($restrictionType, array $moduleIds)
     {
         $clearSql = '
-            DELETE FROM ' . $this->getTableNameForRestriction($restrictionType) . '
-            WHERE id_shop = ' . (int) $this->shopId . ' AND id_module IN (' . implode(',', array_map('intval', $moduleIds)) . ')
+            DELETE FROM '.$this->getTableNameForRestriction($restrictionType).'
+            WHERE id_shop = '.(int) $this->shopId.' AND id_module IN ('.implode(',', array_map('intval', $moduleIds)).')
         ';
 
         return $this->connection->executeUpdate($clearSql);
@@ -145,37 +134,35 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
     /**
      * Insert new configuration for given restriction type.
      *
-     * @param string $restrictionType
-     * @param array $newConfiguration
+     * @param  string  $restrictionType
+     * @param  array  $newConfiguration
      */
     private function insertNewConfiguration($restrictionType, $newConfiguration)
     {
-        if (!empty($newConfiguration)) {
-            $fieldName = 'carrier' === $restrictionType ? 'reference' : $restrictionType;
+        if (! empty($newConfiguration)) {
+            $fieldName = $restrictionType === 'carrier' ? 'reference' : $restrictionType;
 
             $this->connection->executeUpdate('
-                INSERT INTO `' . $this->getTableNameForRestriction($restrictionType) . '`
-                (`id_module`, `id_shop`, `id_' . $fieldName . '`)
-                VALUES ' . implode(',', $newConfiguration));
+                INSERT INTO `'.$this->getTableNameForRestriction($restrictionType).'`
+                (`id_module`, `id_shop`, `id_'.$fieldName.'`)
+                VALUES '.implode(',', $newConfiguration));
         }
     }
 
     /**
      * Get table name for module restrictions.
      *
-     * @param string $restrictionType
-     *
+     * @param  string  $restrictionType
      * @return string
      */
     private function getTableNameForRestriction($restrictionType)
     {
-        return $this->databasePrefix . 'module_' . $restrictionType;
+        return $this->databasePrefix.'module_'.$restrictionType;
     }
 
     /**
      * Parse data from restrictions.
      *
-     * @param array $restrictions
      *
      * @return array
      */
@@ -192,12 +179,12 @@ final class PaymentRestrictionsConfigurator implements PaymentRestrictionsConfig
 
                 $moduleIds[] = $moduleId;
 
-                if (!is_array($restriction)) {
+                if (! is_array($restriction)) {
                     $restriction = [$restriction];
                 }
 
                 foreach ($restriction as $restrictionValues) {
-                    $insertValues[] = '(' . (int) $moduleId . ', ' . (int) $this->shopId . ', ' . (int) $restrictionValues . ')';
+                    $insertValues[] = '('.(int) $moduleId.', '.(int) $this->shopId.', '.(int) $restrictionValues.')';
                 }
             }
         }

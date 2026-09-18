@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,12 +58,6 @@ class AddOrderCartRuleType extends AbstractType
      */
     private $contextLangId;
 
-    /**
-     * @param FormChoiceProviderInterface $orderDiscountTypeChoiceProvider
-     * @param ConfigurableFormChoiceProviderInterface $orderInvoiceByIdChoiceProvider
-     * @param int $contextLangId
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         FormChoiceProviderInterface $orderDiscountTypeChoiceProvider,
         ConfigurableFormChoiceProviderInterface $orderInvoiceByIdChoiceProvider,
@@ -112,8 +107,7 @@ class AddOrderCartRuleType extends AbstractType
                 'choices' => $invoices,
                 'required' => false,
                 'placeholder' => false,
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -125,7 +119,6 @@ class AddOrderCartRuleType extends AbstractType
             ->setDefaults([
                 'order_id' => null,
             ])
-            ->setAllowedTypes('order_id', ['int', 'null'])
-        ;
+            ->setAllowedTypes('order_id', ['int', 'null']);
     }
 }

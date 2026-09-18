@@ -165,12 +165,33 @@ button.toast-close-button {
 }
 .toast-error {
   background-color: #9da3aa;
+  /* Este gris es demasiado claro para el texto blanco heredado de
+     "#toast-container > div" de arriba: sobre este fondo el mensaje quedaba
+     casi invisible (a veces del todo, durante el fade in/out del toast).
+     success/warning usan un verde oscuro y sí tienen contraste de sobra con
+     blanco; error/info comparten este mismo gris claro y necesitan texto
+     oscuro en su lugar. */
+  color: #000000;
 }
 .toast-info {
   background-color: #9da3aa;
+  color: #000000;
 }
 .toast-warning {
   background-color: #527c59;
+}
+.toast-error .toast-message a,
+.toast-error .toast-message label,
+.toast-info .toast-message a,
+.toast-info .toast-message label {
+  color: #000000;
+}
+.toast-error .toast-close-button,
+.toast-info .toast-close-button {
+  color: #000000;
+  /* Sin la sombra blanca original: sobre este fondo claro no aporta
+     relieve, solo se ve como un halo raro alrededor de la "x". */
+  text-shadow: none;
 }
 .toast-progress {
   position: absolute;

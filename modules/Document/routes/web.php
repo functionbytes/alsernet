@@ -108,6 +108,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/{documentType}', [DocumentTypeController::class, 'update'])->name('update');
                 Route::delete('/{documentType}', [DocumentTypeController::class, 'destroy'])->name('destroy');
                 Route::post('/{documentType}/toggle-active', [DocumentTypeController::class, 'toggleActive'])->name('toggle-active');
+                Route::post('/bulk-action', [DocumentTypeController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // Validation Conditions
@@ -122,6 +123,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/{condition}', [DocumentValidationConditionController::class, 'update'])->name('update');
                 Route::delete('/{condition}', [DocumentValidationConditionController::class, 'destroy'])->name('destroy');
                 Route::post('/{condition}/toggle-active', [DocumentValidationConditionController::class, 'toggleActive'])->name('toggle-active');
+                Route::post('/bulk-action', [DocumentValidationConditionController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // SLA Policies
@@ -152,7 +154,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::post('/', [DocumentGroupsController::class, 'store'])->name('store');
                 Route::patch('/{group}', [DocumentGroupsController::class, 'update'])->name('update');
                 Route::delete('/{group}', [DocumentGroupsController::class, 'destroy'])->name('destroy');
-                Route::post('/{group}/toggle', [DocumentGroupsController::class, 'toggle'])->name('toggle');
+                Route::patch('/{group}/toggle', [DocumentGroupsController::class, 'toggle'])->name('toggle');
                 Route::post('/{group}/configuration', [DocumentGroupsController::class, 'updateConfiguration'])->name('update-configuration');
                 Route::post('/bulk-action', [DocumentGroupsController::class, 'bulkAction'])->name('bulk-action');
 

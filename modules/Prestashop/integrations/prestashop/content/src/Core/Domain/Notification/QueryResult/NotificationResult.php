@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -93,19 +94,6 @@ class NotificationResult
 
     /**
      * NotificationResult constructor.
-     *
-     * @param int $orderId
-     * @param int $customerId
-     * @param string $customerName
-     * @param int $customerMessageId
-     * @param int $customerThreadId
-     * @param string $customerViewUrl
-     * @param string $totalPaid
-     * @param string $carrier
-     * @param string $isoCode
-     * @param string $company
-     * @param string $status
-     * @param string $dateAdd
      */
     public function __construct(
         int $orderId,
@@ -135,97 +123,61 @@ class NotificationResult
         $this->dateAdd = $dateAdd;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderId(): int
     {
         return $this->orderId;
     }
 
-    /**
-     * @return int
-     */
     public function getCustomerId(): int
     {
         return $this->customerId;
     }
 
-    /**
-     * @return string
-     */
     public function getCustomerName(): string
     {
         return $this->customerName;
     }
 
-    /**
-     * @return int
-     */
     public function getCustomerMessageId(): int
     {
         return $this->customerMessageId;
     }
 
-    /**
-     * @return int
-     */
     public function getCustomerThreadId(): int
     {
         return $this->customerThreadId;
     }
 
-    /**
-     * @return string
-     */
     public function getCustomerViewUrl(): string
     {
         return $this->customerViewUrl;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalPaid(): string
     {
         return $this->totalPaid;
     }
 
-    /**
-     * @return string
-     */
     public function getCarrier(): string
     {
         return $this->carrier;
     }
 
-    /**
-     * @return string
-     */
     public function getIsoCode(): string
     {
         return $this->isoCode;
     }
 
-    /**
-     * @return string
-     */
     public function getCompany(): string
     {
         return $this->company;
     }
 
-    /**
-     * @return string
-     */
     public function getStatus(): string
     {
         return $this->status;
     }
 
-    /**
-     * @return string
-     */
     public function getDateAdd(): string
     {
         return $this->dateAdd;

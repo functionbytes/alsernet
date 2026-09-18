@@ -27,7 +27,7 @@
 
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-save"></i> Guardar cambios
+                            Guardar cambios
                         </button>
                         <a href="{{ route('settings.helpdesk.brands.index') }}" class="btn btn-light w-100">
                             Cancelar
@@ -81,13 +81,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.btn-copy-token').on('click', function () {
-        const token = $(this).closest('.input-group').find('input').val();
-        navigator.clipboard.writeText(token).then(function () {
-        });
-    });
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/brand-edit.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/brand-edit.js')) }}" defer></script>
 @endpush

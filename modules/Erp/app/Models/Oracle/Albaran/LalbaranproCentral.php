@@ -3,6 +3,10 @@
 namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
+use Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya;
+use Modules\Erp\Models\Oracle\Pedido\LpedidoproCentral;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +59,7 @@ class LalbaranproCentral extends Model
      */
     public function lalbaranpro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
+        return $this->belongsTo(LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
     }
 
     /**
@@ -64,7 +68,7 @@ class LalbaranproCentral extends Model
      */
     public function lpedidopro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
+        return $this->belongsTo(LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
     }
 
     /**
@@ -73,7 +77,7 @@ class LalbaranproCentral extends Model
      */
     public function albaranpro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
+        return $this->belongsTo(AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
     }
 
     /**
@@ -82,7 +86,7 @@ class LalbaranproCentral extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -91,7 +95,7 @@ class LalbaranproCentral extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -100,7 +104,7 @@ class LalbaranproCentral extends Model
      */
     public function lalbaranproCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
+        return $this->belongsTo(LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
     }
 
     /**
@@ -109,7 +113,7 @@ class LalbaranproCentral extends Model
      */
     public function albaranproCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
+        return $this->belongsTo(AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
     }
 
     /**
@@ -118,6 +122,6 @@ class LalbaranproCentral extends Model
      */
     public function lpedidoproCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
+        return $this->belongsTo(LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
     }
 }

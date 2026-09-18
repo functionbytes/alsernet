@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,11 +42,6 @@ use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime as DateTimeUtils;
  */
 final class GetCatalogPriceRuleForEditingHandler extends AbstractCatalogPriceRuleHandler implements GetCatalogPriceRuleForEditingHandlerInterface
 {
-    /**
-     * @param GetCatalogPriceRuleForEditing $query
-     *
-     * @return EditableCatalogPriceRule
-     */
     public function handle(GetCatalogPriceRuleForEditing $query): EditableCatalogPriceRule
     {
         $catalogPriceRuleId = $query->getCatalogPriceRuleId();

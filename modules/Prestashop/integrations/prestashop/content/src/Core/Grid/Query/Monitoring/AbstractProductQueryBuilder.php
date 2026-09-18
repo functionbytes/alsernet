@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,12 +70,9 @@ abstract class AbstractProductQueryBuilder extends AbstractDoctrineQueryBuilder
     protected $multistoreContextChecker;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicator $searchCriteriaApplicator
-     * @param int $contextLangId
-     * @param int $contextShopId
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
+     * @param  int  $contextShopId
      */
     public function __construct(
         Connection $connection,
@@ -94,7 +92,6 @@ abstract class AbstractProductQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Provides commonly reusable query for monitoring inventaries lists
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -105,13 +102,13 @@ abstract class AbstractProductQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb = $this->connection
             ->createQueryBuilder()
             ->select(['p.id_product', 'p.reference', 'p.active', 'pl.name'])
-            ->from($this->dbPrefix . 'product', 'p')
+            ->from($this->dbPrefix.'product', 'p')
             ->setParameter('context_lang_id', $this->contextLangId)
             ->setParameter('context_shop_id', $this->contextShopId);
 
         $qb->leftJoin(
             'p',
-            $this->dbPrefix . 'product_lang',
+            $this->dbPrefix.'product_lang',
             'pl',
             $isSingleShopContext ?
                 'p.id_product = pl.id_product AND pl.id_lang = :context_lang_id AND pl.id_shop = :context_shop_id' :
@@ -120,7 +117,7 @@ abstract class AbstractProductQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb->leftJoin(
             'p',
-            $this->dbPrefix . 'product_shop',
+            $this->dbPrefix.'product_shop',
             'ps',
             $isSingleShopContext ?
                 'p.id_product = ps.id_product AND ps.id_shop = :context_shop_id' :
@@ -136,41 +133,37 @@ abstract class AbstractProductQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param array $filters
-     */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
         $allowedFilters = ['id_product', 'reference', 'name', 'active'];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters, true)) {
+            if (! in_array($filterName, $allowedFilters, true)) {
                 continue;
             }
 
-            if ('id_product' === $filterName) {
+            if ($filterName === 'id_product') {
                 $qb->andWhere("p.id_product = :$filterName");
                 $qb->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            if ('reference' === $filterName) {
+            if ($filterName === 'reference') {
                 $qb->andWhere("p.reference LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            if ('name' === $filterName) {
+            if ($filterName === 'name') {
                 $qb->andWhere("pl.name LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            if ('active' === $filterName) {
+            if ($filterName === 'active') {
                 $qb->andWhere("p.active = :$filterName");
                 $qb->setParameter($filterName, $filterValue);
             }

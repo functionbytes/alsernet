@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetmenu}prestashop>category_a0b08145725470f17292f73e420cbe8b'] = 'Voltar a Home';
 $_MODULE['<{alsernetmenu}prestashop>category_59fa222be28cb2370921569cf4235c65'] = 'Voltar a Marcas';
 $_MODULE['<{alsernetmenu}prestashop>category_c5f09f37e1e182ec28fa64732d9b712c'] = 'Voltar a';

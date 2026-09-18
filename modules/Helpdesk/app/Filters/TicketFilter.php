@@ -187,6 +187,9 @@ class TicketFilter
             return $query->where('is_archived', (bool) $this->request->archived);
         }
 
-        return $query->where('is_archived', false);
+        // Ticket::scopeNotArchived() — misma condición que
+        // TicketsCrudController::tabCounts() reutiliza para que los badges
+        // de tabs/vistas no cuenten tickets que esta lista nunca muestra.
+        return $query->notArchived();
     }
 }

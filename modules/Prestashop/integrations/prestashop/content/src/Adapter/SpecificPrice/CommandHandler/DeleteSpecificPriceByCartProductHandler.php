@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,6 @@ use SpecificPrice;
 final class DeleteSpecificPriceByCartProductHandler implements DeleteSpecificPriceByCartProductHandlerInterface
 {
     /**
-     * @param DeleteSpecificPriceByCartProductCommand $command
-     *
      * @throws SpecificPriceException
      */
     public function handle(DeleteSpecificPriceByCartProductCommand $command): void
@@ -49,7 +48,7 @@ final class DeleteSpecificPriceByCartProductHandler implements DeleteSpecificPri
         $productIdValue = $command->getProductId()->getValue();
 
         try {
-            if (false === SpecificPrice::deleteByIdCart($cartIdValue, $productIdValue, $productAttributeId)) {
+            if (SpecificPrice::deleteByIdCart($cartIdValue, $productIdValue, $productAttributeId) === false) {
                 throw new SpecificPriceException(sprintf('Failed to delete specific price for cart #%s product #%s', $cartIdValue, $productIdValue));
             }
         } catch (PrestaShopException $e) {

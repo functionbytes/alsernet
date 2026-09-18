@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,15 +54,10 @@ final class AmountDiscountAction implements CartRuleActionInterface
      */
     private $giftProduct;
 
-    /**
-     * @param MoneyAmountCondition $moneyAmountCondition
-     * @param bool $isFreeShipping
-     * @param GiftProduct|null $giftProduct
-     */
     public function __construct(
         MoneyAmountCondition $moneyAmountCondition,
         bool $isFreeShipping,
-        GiftProduct $giftProduct = null
+        ?GiftProduct $giftProduct = null
     ) {
         $this->moneyAmountCondition = $moneyAmountCondition;
         $this->isFreeShipping = $isFreeShipping;

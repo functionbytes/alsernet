@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,6 @@ class ProductSeoPropertiesFiller
      */
     private $categoryRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param CategoryRepository $categoryRepository
-     */
     public function __construct(
         ProductRepository $productRepository,
         CategoryRepository $categoryRepository
@@ -65,9 +62,6 @@ class ProductSeoPropertiesFiller
     }
 
     /**
-     * @param Product $product
-     * @param RedirectOption $redirectOption
-     *
      * @return string[] updatable properties
      *
      * @throws CategoryNotFoundException
@@ -80,7 +74,7 @@ class ProductSeoPropertiesFiller
 
         if ($redirectType->isProductType()) {
             $this->productRepository->assertProductExists(new ProductId($redirectTarget->getValue()));
-        } elseif ($redirectType->isCategoryType() && !$redirectTarget->isNoTarget()) {
+        } elseif ($redirectType->isCategoryType() && ! $redirectTarget->isNoTarget()) {
             $this->categoryRepository->assertCategoryExists(new CategoryId($redirectTarget->getValue()));
         }
 

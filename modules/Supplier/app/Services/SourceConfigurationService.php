@@ -641,8 +641,15 @@ class SourceConfigurationService
     {
         $result = ValidationResult::success();
 
-        if (empty($config['url']) && empty($config['host']) && empty($config['base_url'])) {
-            $result->addError('Connection endpoint (url/host/base_url) is required');
+        // El formulario de fuente tipo Web guarda 'urls' (plural, lista de
+        // {url: ...}) — no el 'url' singular que esta validación esperaba,
+        // así que toda fuente Web quedaba marcada is_valid=false pese a
+        // tener una o más URLs correctas.
+        $hasUrlsList = ! empty($config['urls']) && is_array($config['urls'])
+            && collect($config['urls'])->contains(fn ($u) => ! empty($u['url'] ?? null));
+
+        if (empty($config['url']) && empty($config['host']) && empty($config['base_url']) && ! $hasUrlsList) {
+            $result->addError('Connection endpoint (url/urls/host/base_url) is required');
         }
 
         if (isset($config['timeout']) && (! is_numeric($config['timeout']) || $config['timeout'] <= 0)) {

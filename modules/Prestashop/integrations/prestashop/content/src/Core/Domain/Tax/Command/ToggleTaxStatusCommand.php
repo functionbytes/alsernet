@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,8 @@ class ToggleTaxStatusCommand
     private $taxId;
 
     /**
-     * @param int $taxId
-     * @param bool $expectedStatus
+     * @param  int  $taxId
+     * @param  bool  $expectedStatus
      *
      * @throws TaxException
      */
@@ -77,13 +78,13 @@ class ToggleTaxStatusCommand
     /**
      * Validates that value is of type boolean
      *
-     * @param mixed $value
+     * @param  mixed  $value
      *
      * @throws TaxConstraintException
      */
     private function assertIsBool($value)
     {
-        if (!is_bool($value)) {
+        if (! is_bool($value)) {
             throw new TaxConstraintException(sprintf('Status must be of type bool, but given %s', var_export($value, true)), TaxConstraintException::INVALID_STATUS);
         }
     }

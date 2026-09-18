@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,14 +70,14 @@ final class EditCustomerAddressHandler extends AbstractAddressHandler implements
                 // We consider this address as necessarily NOT deleted, in case you were editing a deleted address
                 // from an order then the newly edited address should not be deleted, so that you can select it
                 $editedAddress->deleted = false;
-                if (false === $editedAddress->save()) {
+                if ($editedAddress->save() === false) {
                     throw new CannotAddAddressException(sprintf('Failed to add new address "%s"', $command->getAddress()));
                 }
                 // Soft delete the former address
-                if (false === $copyAddress->delete()) {
+                if ($copyAddress->delete() === false) {
                     throw new DeleteAddressException(sprintf('Cannot delete Address object with id "%s".', $copyAddress->id), DeleteAddressException::FAILED_DELETE);
                 }
-            } elseif (false === $editedAddress->update()) {
+            } elseif ($editedAddress->update() === false) {
                 throw new CannotUpdateAddressException(sprintf('Failed to update address "%s"', $editedAddress->id));
             }
         } catch (PrestaShopException $e) {
@@ -87,10 +88,6 @@ final class EditCustomerAddressHandler extends AbstractAddressHandler implements
     }
 
     /**
-     * @param EditCustomerAddressCommand $command
-     *
-     * @return Address
-     *
      * @throws AddressException
      * @throws AddressNotFoundException
      */
@@ -98,69 +95,69 @@ final class EditCustomerAddressHandler extends AbstractAddressHandler implements
     {
         $address = $this->getAddress($command->getAddressId());
 
-        if (null !== $command->getLastName()) {
+        if ($command->getLastName() !== null) {
             $address->lastname = $command->getLastName();
         }
 
-        if (null !== $command->getFirstName()) {
+        if ($command->getFirstName() !== null) {
             $address->firstname = $command->getFirstName();
         }
 
-        if (null !== $command->getAddress()) {
+        if ($command->getAddress() !== null) {
             $address->address1 = $command->getAddress();
         }
 
-        if (null !== $command->getPostCode()) {
+        if ($command->getPostCode() !== null) {
             $address->postcode = $command->getPostCode();
         }
 
-        if (null !== $command->getCountryId()) {
+        if ($command->getCountryId() !== null) {
             $address->id_country = $command->getCountryId()->getValue();
         }
 
-        if (null !== $command->getStateId()) {
+        if ($command->getStateId() !== null) {
             $address->id_state = $command->getStateId()->getValue();
-        } elseif (null !== $command->getCountryId()) {
+        } elseif ($command->getCountryId() !== null) {
             // If country was changed but not state we check if state value needs to be reset
             $country = new Country($command->getCountryId()->getValue());
-            if (!$country->contains_states) {
+            if (! $country->contains_states) {
                 $address->id_state = 0;
             }
         }
 
-        if (null !== $command->getCity()) {
+        if ($command->getCity() !== null) {
             $address->city = $command->getCity();
         }
 
-        if (null !== $command->getAddressAlias()) {
+        if ($command->getAddressAlias() !== null) {
             $address->alias = $command->getAddressAlias();
         }
 
-        if (null !== $command->getAddress2()) {
+        if ($command->getAddress2() !== null) {
             $address->address2 = $command->getAddress2();
         }
 
-        if (null !== $command->getDni()) {
+        if ($command->getDni() !== null) {
             $address->dni = $command->getDni();
         }
 
-        if (null !== $command->getCompany()) {
+        if ($command->getCompany() !== null) {
             $address->company = $command->getCompany();
         }
 
-        if (null !== $command->getVatNumber()) {
+        if ($command->getVatNumber() !== null) {
             $address->vat_number = $command->getVatNumber();
         }
 
-        if (null !== $command->getHomePhone()) {
+        if ($command->getHomePhone() !== null) {
             $address->phone = $command->getHomePhone();
         }
 
-        if (null !== $command->getMobilePhone()) {
+        if ($command->getMobilePhone() !== null) {
             $address->phone_mobile = $command->getMobilePhone();
         }
 
-        if (null !== $command->getOther()) {
+        if ($command->getOther() !== null) {
             $address->other = $command->getOther();
         }
 

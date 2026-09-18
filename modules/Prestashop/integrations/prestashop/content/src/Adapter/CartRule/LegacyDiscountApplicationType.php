@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,5 @@ final class LegacyDiscountApplicationType
     /**
      * Class used only for constants.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

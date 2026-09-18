@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,9 +87,6 @@ class ModuleTabUnregister
         }
     }
 
-    /**
-     * @param Module $module
-     */
     public function disableTabs(Module $module)
     {
         $this->tabRepository->changeEnabledByModuleName($module->get('name'), false);
@@ -97,14 +95,14 @@ class ModuleTabUnregister
     /**
      * Uninstalls a tab given its defined structure.
      *
-     * @param Tab $tab the instance of entity tab
+     * @param  Tab  $tab  the instance of entity tab
      */
     private function unregisterTab(Tab $tab)
     {
         // We need to use the legacy class because of the right management
         $tab_legacy = new TabClass($tab->getId());
 
-        if (!$tab_legacy->delete()) {
+        if (! $tab_legacy->delete()) {
             $this->logger->warning(
                 $this->translator->trans(
                     'Failed to uninstall admin tab "%name%".',
@@ -120,8 +118,6 @@ class ModuleTabUnregister
     /**
      * When we add a level of children in the menu tabs, we created a dummy parent.
      * We must delete it when it has no more children than the original tab.
-     *
-     * @param Tab $tab
      */
     private function removeDuplicatedParent(Tab $tab)
     {
@@ -136,7 +132,7 @@ class ModuleTabUnregister
         $child = end($remainingChildren);
 
         // We know we have a tab to delete if the parent name is the remaining child name+_MTR
-        if ($parent->getClassName() === $child->getClassName() . ModuleTabRegister::SUFFIX) {
+        if ($parent->getClassName() === $child->getClassName().ModuleTabRegister::SUFFIX) {
             $legacyTabParent = new TabClass($parent->getId());
             // Setting a wrong id_parent will prevent the children to move
             $legacyTabParent->id_parent = -1;

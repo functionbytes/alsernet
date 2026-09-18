@@ -1,4 +1,7 @@
 <?php
+
+use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +40,7 @@ class StoresControllerCore extends FrontController
         parent::init();
 
         // StarterTheme: Remove check when google maps v3 is done
-        if (!extension_loaded('Dom')) {
+        if (! extension_loaded('Dom')) {
             $this->errors[] = $this->trans('PHP "Dom" extension has not been loaded.', [], 'Shop.Notifications.Error');
             $this->context->smarty->assign('errors', $this->errors);
         }
@@ -46,8 +49,7 @@ class StoresControllerCore extends FrontController
     /**
      * Get formatted string address.
      *
-     * @param array $store
-     *
+     * @param  array  $store
      * @return string
      */
     protected function processStoreAddress($store)
@@ -70,9 +72,9 @@ class StoresControllerCore extends FrontController
             $data_fields_mod = false;
             foreach ($data_fields as $field_item) {
                 $field_item = trim($field_item);
-                if (!in_array($field_item, $ignore_field) && !empty($store[$field_item])) {
+                if (! in_array($field_item, $ignore_field) && ! empty($store[$field_item])) {
                     $addr_out[] = ($field_item == 'city' && $state && isset($state->iso_code) && strlen($state->iso_code)) ?
-                        $store[$field_item] . ', ' . $state->iso_code : $store[$field_item];
+                        $store[$field_item].', '.$state->iso_code : $store[$field_item];
                     $data_fields_mod = true;
                 }
             }
@@ -90,7 +92,7 @@ class StoresControllerCore extends FrontController
     {
         // StarterTheme: Remove method when google maps v3 is done
         $distance_unit = Configuration::get('PS_DISTANCE_UNIT');
-        if (!in_array($distance_unit, ['km', 'mi'])) {
+        if (! in_array($distance_unit, ['km', 'mi'])) {
             $distance_unit = 'km';
         }
 
@@ -99,22 +101,22 @@ class StoresControllerCore extends FrontController
 
         $stores = Db::getInstance()->executeS('
         SELECT s.*, cl.name country, st.iso_code state,
-        (' . (int) $multiplicator . '
+        ('.(int) $multiplicator.'
             * acos(
-                cos(radians(' . (float) Tools::getValue('latitude') . '))
+                cos(radians('.(float) Tools::getValue('latitude').'))
                 * cos(radians(latitude))
-                * cos(radians(longitude) - radians(' . (float) Tools::getValue('longitude') . '))
-                + sin(radians(' . (float) Tools::getValue('latitude') . '))
+                * cos(radians(longitude) - radians('.(float) Tools::getValue('longitude').'))
+                + sin(radians('.(float) Tools::getValue('latitude').'))
                 * sin(radians(latitude))
             )
         ) distance,
         cl.id_country id_country
-        FROM ' . _DB_PREFIX_ . 'store s
-        ' . Shop::addSqlAssociation('store', 's') . '
-        LEFT JOIN ' . _DB_PREFIX_ . 'country_lang cl ON (cl.id_country = s.id_country)
-        LEFT JOIN ' . _DB_PREFIX_ . 'state st ON (st.id_state = s.id_state)
-        WHERE s.active = 1 AND cl.id_lang = ' . (int) $this->context->language->id . '
-        HAVING distance < ' . (int) $distance . '
+        FROM '._DB_PREFIX_.'store s
+        '.Shop::addSqlAssociation('store', 's').'
+        LEFT JOIN '._DB_PREFIX_.'country_lang cl ON (cl.id_country = s.id_country)
+        LEFT JOIN '._DB_PREFIX_.'state st ON (st.id_state = s.id_state)
+        WHERE s.active = 1 AND cl.id_lang = '.(int) $this->context->language->id.'
+        HAVING distance < '.(int) $distance.'
         ORDER BY distance ASC
         LIMIT 0,20');
 
@@ -136,13 +138,13 @@ class StoresControllerCore extends FrontController
             $newnode->addAttribute('name', $store['name']);
             $address = $this->processStoreAddress($store);
 
-            //$other .= $this->renderStoreWorkingHours($store);
+            // $other .= $this->renderStoreWorkingHours($store);
             $newnode->addAttribute('addressNoHtml', strip_tags(str_replace('<br />', ' ', $address)));
             $newnode->addAttribute('address', $address);
             $newnode->addAttribute('other', $other);
             $newnode->addAttribute('phone', $store['phone']);
             $newnode->addAttribute('id_store', (int) $store['id_store']);
-            $newnode->addAttribute('has_store_picture', file_exists(_PS_STORE_IMG_DIR_ . (int) $store['id_store'] . '.jpg'));
+            $newnode->addAttribute('has_store_picture', file_exists(_PS_STORE_IMG_DIR_.(int) $store['id_store'].'.jpg'));
             $newnode->addAttribute('lat', (float) $store['latitude']);
             $newnode->addAttribute('lng', (float) $store['longitude']);
             if (isset($store['distance'])) {
@@ -163,7 +165,7 @@ class StoresControllerCore extends FrontController
     public function initContent()
     {
         $distance_unit = Configuration::get('PS_DISTANCE_UNIT');
-        if (!in_array($distance_unit, ['km', 'mi'])) {
+        if (! in_array($distance_unit, ['km', 'mi'])) {
             $distance_unit = 'km';
         }
 
@@ -182,12 +184,12 @@ class StoresControllerCore extends FrontController
     {
         $stores = Store::getStores($this->context->language->id);
 
-        $imageRetriever = new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link);
+        $imageRetriever = new ImageRetriever($this->context->link);
 
         foreach ($stores as &$store) {
             unset($store['active']);
             // Prepare $store.address
-            $address = new Address();
+            $address = new Address;
             $store['address'] = [];
             $attr = ['address1', 'address2', 'postcode', 'city', 'id_state', 'id_country'];
             foreach ($attr as $a) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,33 +58,33 @@ class LegacyContext
     private $tools;
 
     /**
-     * @param string|null $mailThemesUri
-     * @param Tools|null $tools
+     * @param  string|null  $mailThemesUri
      */
     public function __construct(
         $mailThemesUri = null,
-        Tools $tools = null
+        ?Tools $tools = null
     ) {
         $this->mailThemesUri = $mailThemesUri;
-        $this->tools = null !== $tools ? $tools : new Tools();
+        $this->tools = $tools !== null ? $tools : new Tools;
     }
 
     /**
      * To be used only in Adapters. Should not been called by Core classes. Prefer to use Core\context class,
      * that will contains all you need in the Core architecture.
      *
-     * @throws LogicException If legacy context is not set properly
      *
      * @return Context the Legacy context, for Adapter use only
+     *
+     * @throws LogicException If legacy context is not set properly
      */
     public function getContext()
     {
-        if (null === static::$instance) {
+        if (static::$instance === null) {
             $legacyContext = Context::getContext();
 
-            if ($legacyContext && !empty($legacyContext->shop) && !isset($legacyContext->controller) && isset($legacyContext->employee)) {
-                //init real legacy shop context
-                $adminController = new AdminController();
+            if ($legacyContext && ! empty($legacyContext->shop) && ! isset($legacyContext->controller) && isset($legacyContext->employee)) {
+                // init real legacy shop context
+                $adminController = new AdminController;
                 $adminController->initShopContext();
             }
             static::$instance = $legacyContext;
@@ -109,16 +110,15 @@ class LegacyContext
      */
     public function getAdminBaseUrl()
     {
-        return __PS_BASE_URI__ . basename(_PS_ADMIN_DIR_) . '/';
+        return __PS_BASE_URI__.basename(_PS_ADMIN_DIR_).'/';
     }
 
     /**
      * Adapter to get Admin HTTP link.
      *
-     * @param string $controller the controller name
-     * @param bool $withToken
-     * @param array<string> $extraParams
-     *
+     * @param  string  $controller  the controller name
+     * @param  bool  $withToken
+     * @param  array<string>  $extraParams
      * @return string
      */
     public function getAdminLink($controller, $withToken = true, $extraParams = [])
@@ -129,10 +129,9 @@ class LegacyContext
     /**
      * Return the controller link in its legacy form, without trying to convert it in symfony url.
      *
-     * @param string $controller
-     * @param bool $withToken
-     * @param array $extraParams
-     *
+     * @param  string  $controller
+     * @param  bool  $withToken
+     * @param  array  $extraParams
      * @return string
      */
     public function getLegacyAdminLink($controller, $withToken = true, $extraParams = [])
@@ -143,8 +142,7 @@ class LegacyContext
     /**
      * Adapter to get Front controller HTTP link.
      *
-     * @param string $controller the controller name
-     *
+     * @param  string  $controller  the controller name
      * @return string
      */
     public function getFrontUrl($controller)
@@ -181,7 +179,7 @@ class LegacyContext
      */
     public function getMailThemesUrl()
     {
-        return $this->tools->getShopDomainSsl(true) . __PS_BASE_URI__ . $this->mailThemesUri;
+        return $this->tools->getShopDomainSsl(true).__PS_BASE_URI__.$this->mailThemesUri;
     }
 
     /**
@@ -189,7 +187,7 @@ class LegacyContext
      * Called by AutoResponseFormatTrait in beforeActionSuggestResponseFormat().
      * So if you do not use this Trait, you must call this method by yourself in the action.
      *
-     * @param string $legacyController
+     * @param  string  $legacyController
      */
     public function setupLegacyTranslationContext($legacyController = 'AdminTab')
     {
@@ -199,18 +197,17 @@ class LegacyContext
     /**
      * Adapter to get admin legacy layout into legacy controller context.
      *
-     * @param string $controllerName The legacy controller name
-     * @param string $title The page title to override default one
-     * @param array $headerToolbarBtn The header toolbar to override
-     * @param string $displayType The legacy display type variable
-     * @param bool $showContentHeader can force header toolbar (buttons and title) to be hidden with false value
-     * @param string $headerTabContent
-     * @param bool $enableSidebar Allow to use right sidebar to display docs for instance
-     * @param string $helpLink If specified, will be used instead of legacy one
-     * @param string[] $jsRouterMetadata array to provide base_url and security token for JS Router
-     * @param string $metaTitle
-     * @param bool $useRegularH1Structure allows complex <h1> structure if set to false
-     *
+     * @param  string  $controllerName  The legacy controller name
+     * @param  string  $title  The page title to override default one
+     * @param  array  $headerToolbarBtn  The header toolbar to override
+     * @param  string  $displayType  The legacy display type variable
+     * @param  bool  $showContentHeader  can force header toolbar (buttons and title) to be hidden with false value
+     * @param  string  $headerTabContent
+     * @param  bool  $enableSidebar  Allow to use right sidebar to display docs for instance
+     * @param  string  $helpLink  If specified, will be used instead of legacy one
+     * @param  string[]  $jsRouterMetadata  array to provide base_url and security token for JS Router
+     * @param  string  $metaTitle
+     * @param  bool  $useRegularH1Structure  allows complex <h1> structure if set to false
      * @return string The html layout
      */
     public function getLegacyLayout(
@@ -247,10 +244,9 @@ class LegacyContext
     /**
      * Return available languages. The first one is the employee default one.
      *
-     * @param bool $active Select only active languages
-     * @param int|bool $id_shop Shop ID
-     * @param bool $ids_only If true, returns an array of language IDs
-     *
+     * @param  bool  $active  Select only active languages
+     * @param  int|bool  $id_shop  Shop ID
+     * @param  bool  $ids_only  If true, returns an array of language IDs
      * @return array<int|array> Languages
      */
     public function getLanguages($active = true, $id_shop = false, $ids_only = false)
@@ -288,7 +284,7 @@ class LegacyContext
      */
     public function getEmployeeCurrency()
     {
-        if (null === $this->employeeCurrency && $this->getContext()->currency) {
+        if ($this->employeeCurrency === null && $this->getContext()->currency) {
             $this->employeeCurrency = $this->getContext()->currency;
         }
 
@@ -306,7 +302,7 @@ class LegacyContext
             return $context->language;
         }
 
-        return new Language();
+        return new Language;
     }
 
     /**
@@ -320,7 +316,7 @@ class LegacyContext
     {
         $employee = $this->getContext()->employee;
 
-        if (!$employee instanceof Employee) {
+        if (! $employee instanceof Employee) {
             throw new RuntimeException('Cannot retrieve default employee tab. Employee does not exist in context!');
         }
 
@@ -347,11 +343,7 @@ class LegacyContext
     }
 
     /**
-     * @param bool $active
-     * @param bool|int $id_shop
-     * @param bool $ids_only
-     *
-     * @return array
+     * @param  bool|int  $id_shop
      */
     private function getLegacyLanguages(bool $active = true, $id_shop = false, bool $ids_only = false): array
     {
@@ -359,8 +351,8 @@ class LegacyContext
     }
 
     /**
-     * @param Context $testInstance
-     *                              Unit testing purpose only
+     * @param  Context  $testInstance
+     *                                 Unit testing purpose only
      */
     public static function setInstanceForTesting(Context $testInstance)
     {

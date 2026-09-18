@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,11 +61,6 @@ class SqlRequestFormHandler
      */
     private $requestSqlFormDataProvider;
 
-    /**
-     * @param FormFactoryInterface $formFactory
-     * @param SqlRequestFormDataValidator $requestSqlFormDataValidator
-     * @param SqlRequestFormDataProvider $requestSqlFormDataProvider
-     */
     public function __construct(
         FormFactoryInterface $formFactory,
         SqlRequestFormDataValidator $requestSqlFormDataValidator,
@@ -88,8 +84,7 @@ class SqlRequestFormHandler
     /**
      * Get for for given RequestSql.
      *
-     * @param int $requestSqlId
-     *
+     * @param  int  $requestSqlId
      * @return FormInterface
      */
     public function getFormFor($requestSqlId)
@@ -102,7 +97,6 @@ class SqlRequestFormHandler
     /**
      * Save RequestSql form data.
      *
-     * @param array $data
      *
      * @return array[] Array of errors if any
      */
@@ -110,7 +104,7 @@ class SqlRequestFormHandler
     {
         $errors = $this->requestSqlFormDataValidator->validate($data['request_sql']);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 
@@ -118,8 +112,6 @@ class SqlRequestFormHandler
     }
 
     /**
-     * @param array $formData
-     *
      * @return FormInterface
      */
     private function getRequestSqlForm(array $formData = [])

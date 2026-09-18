@@ -14,7 +14,7 @@ return [
     'campaign_cancelled' => 'Campaña cancelada. Los envíos pendientes se han descartado.',
     'transition_not_allowed' => 'Esa acción no es posible en el estado actual de la campaña.',
     'settings_saved' => 'Ajustes guardados.',
-    'coupon_missing' => 'No hay ningún código de cupón configurado.',
+    'coupon_missing' => 'Ese pedido no tiene ningún bono que marcar.',
     'recipient_unsubscribed' => 'Se dio de baja a :email de las felicitaciones de cumpleaños.',
     'recipient_requeued' => 'El envío vuelve a la cola.',
     'retry_not_allowed' => 'Solo se pueden reintentar los envíos que fallaron.',
@@ -23,6 +23,9 @@ return [
     'test_send_too_many' => 'Máximo 5 direcciones por prueba.',
     'failed_requeued' => ':count envíos fallidos vuelven a la cola.',
     'no_failed_to_retry' => 'No hay envíos fallidos que reintentar.',
+    'coupon_not_in_campaign' => 'Ese bono no es de esta campaña.',
+    'bonos_retried' => 'Gestión emitió :generated bonos. Sin bono todavía: :failed.',
+    'no_bonos_to_retry' => 'No hay destinatarios esperando un bono.',
 
     'status' => [
         'draft' => 'Borrador',
@@ -47,10 +50,16 @@ return [
         'invalid_email' => 'Email inválido',
         'duplicate' => 'Duplicado',
         'cancelled' => 'Campaña cancelada',
+        'no_coupon' => 'Gestión no le emitió el bono',
+        'expired' => 'Se le pasó el día',
     ],
 
     'source' => [
         'manual' => 'Configurado a mano',
         'erp' => 'Validado con gestión',
     ],
+    'redemptions_unavailable' => 'No se puede consultar la tienda ahora mismo: revisa el bridge de PrestaShop.',
+    'redemptions_synced' => 'Canjes actualizados: :count.',
+    'reconcile_done' => 'Marcados en gestión: :ok. Rechazados: :failed.',
+    'reconcile_nothing' => 'No hay ningún bono pendiente de marcar con código conocido.',
 ];

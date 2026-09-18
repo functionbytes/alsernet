@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,14 +38,14 @@ class OrderInvoiceRepository
      * @var Connection
      */
     private $connection;
+
     /**
      * @var string
      */
     private $tablePrefix;
 
     /**
-     * @param Connection $connection
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      */
     public function __construct(Connection $connection, $tablePrefix)
     {
@@ -55,7 +56,6 @@ class OrderInvoiceRepository
     /**
      * Count number of orders grouped by order state.
      *
-     * @param array $shopIds
      *
      * @return array
      */

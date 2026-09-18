@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ class BulkToggleCurrenciesStatusCommand
     private $expectedStatus;
 
     /**
-     * @param int[] $currencyIds
-     * @param bool $expectedStatus
+     * @param  int[]  $currencyIds
      */
     public function __construct(array $currencyIds, bool $expectedStatus)
     {
@@ -73,7 +73,7 @@ class BulkToggleCurrenciesStatusCommand
     }
 
     /**
-     * @param int[] $currencyIds
+     * @param  int[]  $currencyIds
      */
     private function setCurrencies(array $currencyIds)
     {

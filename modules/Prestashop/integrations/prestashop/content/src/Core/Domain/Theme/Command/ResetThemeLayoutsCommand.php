@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ class ResetThemeLayoutsCommand
      */
     private $themeName;
 
-    /**
-     * @param ThemeName $themeName
-     */
     public function __construct(ThemeName $themeName)
     {
         $this->themeName = $themeName;

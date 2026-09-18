@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ class HeaderType extends TranslatorAwareType
                 'label' => false,
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'attr' => [
@@ -80,8 +81,7 @@ class HeaderType extends TranslatorAwareType
                 'required' => false,
                 // placeholder false is important to avoid empty option in select input despite required being false
                 'placeholder' => false,
-            ])
-        ;
+            ]);
     }
 
     /**

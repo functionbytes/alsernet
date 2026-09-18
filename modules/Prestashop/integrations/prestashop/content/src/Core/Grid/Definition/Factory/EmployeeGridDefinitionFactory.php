@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,9 +66,8 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
     private $redirectUrl;
 
     /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param string $resetUrl
-     * @param string $redirectUrl
+     * @param  string  $resetUrl
+     * @param  string  $redirectUrl
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -100,7 +100,7 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('employee_bulk'))
                     ->setOptions([
@@ -156,16 +156,16 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add((new LinkRowAction('edit'))
-                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                            ->setIcon('edit')
-                            ->setOptions([
-                                'route' => 'admin_employees_edit',
-                                'route_param_name' => 'employeeId',
-                                'route_param_field' => 'id_employee',
-                                'clickable_row' => true,
-                            ])
+                                ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                                ->setIcon('edit')
+                                ->setOptions([
+                                    'route' => 'admin_employees_edit',
+                                    'route_param_name' => 'employeeId',
+                                    'route_param_field' => 'id_employee',
+                                    'clickable_row' => true,
+                                ])
                             )
                             ->add(
                                 $this->buildDeleteAction(
@@ -183,7 +183,7 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_employee', NumberType::class))
                     ->setTypeOptions([
@@ -232,7 +232,7 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
                     ->setAssociatedColumn('profile')
             )
             ->add((new Filter('active', YesAndNoChoiceType::class))
-            ->setAssociatedColumn('active')
+                ->setAssociatedColumn('active')
             )
             ->add(
                 (new Filter('actions', SearchAndResetType::class))
@@ -251,7 +251,7 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -274,7 +274,7 @@ final class EmployeeGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,8 +54,8 @@ final class LanguageActivator implements LanguageActivatorInterface
     /**
      * Enable/disable language.
      *
-     * @param int $langId
-     * @param bool $status
+     * @param  int  $langId
+     * @param  bool  $status
      */
     private function setActive($langId, $status)
     {

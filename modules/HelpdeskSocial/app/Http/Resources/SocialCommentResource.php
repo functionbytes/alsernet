@@ -26,11 +26,14 @@ class SocialCommentResource extends JsonResource
             'is_spam' => $this->is_spam,
             'is_hidden' => $this->is_hidden,
             'assigned_to_user_id' => $this->assigned_to_user_id,
+            // El modelo User de este proyecto no tiene columna `name` (siempre
+            // NULL) — usa firstname/lastname, como el resto de Helpdesk.
             'assigned_user' => $this->whenLoaded('assignedUser', fn () => [
                 'id' => $this->assignedUser->id,
-                'name' => $this->assignedUser->name,
+                'name' => trim($this->assignedUser->firstname.' '.$this->assignedUser->lastname),
             ]),
             'social_account' => $this->whenLoaded('socialAccount', fn () => new SocialAccountResource($this->socialAccount)),
+            'tags' => $this->whenLoaded('tags', fn () => SocialTagResource::collection($this->tags)),
             'posted_at' => $this->posted_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

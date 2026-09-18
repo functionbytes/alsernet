@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ class CombinationFormDataHandler implements FormDataHandlerInterface
      */
     private $commandsBuilder;
 
-    /**
-     * @param CommandBusInterface $bus
-     * @param CombinationCommandsBuilder $commandsBuilder
-     */
     public function __construct(
         CommandBusInterface $bus,
         CombinationCommandsBuilder $commandsBuilder

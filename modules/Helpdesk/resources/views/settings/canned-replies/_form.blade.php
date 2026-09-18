@@ -3,7 +3,7 @@
     {{-- Titulo --}}
     <div class="col-12">
         <label class="form-label">
-            Titulo <span class="text-danger">*</span>
+            Titulo <span class="text-brand">*</span>
         </label>
         <input type="text" name="title" class="form-control @error('title') is-invalid @enderror"
             value="{{ old('title', $cannedReply->title ?? '') }}"
@@ -40,10 +40,25 @@
         @enderror
     </div>
 
+    {{-- Disponible: select y no checkbox, para que acompane a Categoria con el
+         mismo control que el resto de campos del formulario. --}}
+    <div class="col-12">
+        @php($cnIsGlobal = (int) old('is_global', ($cannedReply->is_global ?? false) ? 1 : 0))
+        <label class="form-label" for="is_global">Disponible</label>
+        <select name="is_global" id="is_global" class="form-select select2 @error('is_global') is-invalid @enderror">
+            <option value="1" @selected($cnIsGlobal === 1)>Todos los agentes</option>
+            <option value="0" @selected($cnIsGlobal === 0)>Solo yo</option>
+        </select>
+        <div class="form-text">Con "Solo yo" nadie mas podra ver ni usar esta respuesta</div>
+        @error('is_global')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
     {{-- Cuerpo --}}
     <div class="col-12">
         <label class="form-label">
-            Cuerpo <span class="text-danger">*</span>
+            Cuerpo <span class="text-brand">*</span>
         </label>
         <textarea name="body" rows="8"
             class="form-control @error('body') is-invalid @enderror"
@@ -53,18 +68,8 @@
         @enderror
     </div>
 
-    {{-- Global --}}
-    <div class="col-12">
-        <div class="form-check">
-            <input type="hidden" name="is_global" value="0">
-            <input type="checkbox" class="form-check-input" name="is_global" value="1"
-                id="is_global"
-                @checked(old('is_global', $cannedReply->is_global ?? false))>
-            <label class="form-check-label" for="is_global">
-                Disponible para todos los agentes
-            </label>
-            <div class="form-text">Si no se activa, solo tu podras ver y usar esta respuesta</div>
-        </div>
-    </div>
-
 </div>
+
+@push('scripts')
+<script src="{{ asset('vendor/helpdesk/settings/canned-replies-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/canned-replies-form.js')) }}" defer></script>
+@endpush

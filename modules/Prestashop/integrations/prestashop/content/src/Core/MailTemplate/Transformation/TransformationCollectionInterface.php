@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,22 +31,21 @@ namespace PrestaShop\PrestaShop\Core\MailTemplate\Transformation;
  * TransformationCollectionInterface contains a list of transformations applied
  * on mail templates when they are generated.
  */
-interface TransformationCollectionInterface extends \IteratorAggregate, \Countable
+interface TransformationCollectionInterface extends \Countable, \IteratorAggregate
 {
     /**
-     * @param TransformationInterface $transformation
-     *
+     * @param  TransformationInterface  $transformation
      * @return bool
      */
     public function contains($transformation);
 
     /**
-     * @param TransformationInterface $transformation
+     * @param  TransformationInterface  $transformation
      */
     public function add($transformation);
 
     /**
-     * @param TransformationInterface $transformation
+     * @param  TransformationInterface  $transformation
      */
     public function remove($transformation);
 }

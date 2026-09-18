@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,27 +38,17 @@ class CountryRequiredFields
     /** @var bool */
     private $dniRequired;
 
-    /**
-     * @param bool $stateRequired
-     * @param bool $dniRequired
-     */
     public function __construct(bool $stateRequired, bool $dniRequired)
     {
         $this->stateRequired = $stateRequired;
         $this->dniRequired = $dniRequired;
     }
 
-    /**
-     * @return bool
-     */
     public function isStateRequired(): bool
     {
         return $this->stateRequired;
     }
 
-    /**
-     * @return bool
-     */
     public function isDniRequired(): bool
     {
         return $this->dniRequired;

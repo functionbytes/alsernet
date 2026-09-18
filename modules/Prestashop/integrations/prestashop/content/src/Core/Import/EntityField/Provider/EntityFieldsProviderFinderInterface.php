@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface EntityFieldsProviderFinderInterface
     /**
      * Find the appropriate entity fields provider.
      *
-     * @param int $importEntity import entity ID (@see PrestaShop\PrestaShop\Core\Import\Entity)
-     *
+     * @param  int  $importEntity  import entity ID (@see PrestaShop\PrestaShop\Core\Import\Entity)
      * @return EntityFieldsProviderInterface
      */
     public function find($importEntity);

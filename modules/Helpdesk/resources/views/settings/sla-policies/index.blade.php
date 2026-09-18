@@ -130,10 +130,12 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
+                                                        <button class="dropdown-item delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-id="{{ $policy->id }}"
                                                             data-url="{{ route('settings.helpdesk.sla-policies.destroy', $policy) }}"
-                                                            data-name="{{ $policy->name }}">
+                                                            data-title="Eliminar política: {{ $policy->name }}">
                                                             Eliminar
                                                         </button>
                                                     </li>
@@ -154,7 +156,7 @@
                             <h6 class="mb-1">No hay politicas SLA configuradas</h6>
                             <p class="text-muted mb-3">Crea tu primera politica SLA para gestionar los tiempos de respuesta y resolucion</p>
                             <a href="{{ route('settings.helpdesk.sla-policies.create') }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus"></i> Crear primera politica SLA
+                                Crear primera politica SLA
                             </a>
                         </div>
                     </div>
@@ -181,47 +183,15 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    $(document).on('click', '.btn-toggle-status', function () {
-        const btn = $(this);
-        const url = btn.data('url');
-
-        $.ajax({
-            url: url,
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            },
-            success: function (response) {
-                if (response.is_active) {
-                    btn.attr('title', 'Desactivar');
-                    btn.html('<span class="badge bg-success-subtle text-success">Activo</span>');
-                } else {
-                    btn.attr('title', 'Activar');
-                    btn.html('<span class="badge bg-secondary-subtle text-secondary">Inactivo</span>');
-                }
-            },
-            error: function () {
-                toastr.error('No se pudo actualizar el estado.', 'Error');
-            },
-        });
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+@php
+    $hdSlaPoliciesConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error')
+];
+@endphp
+window.HdSlaPoliciesConfig = @json($hdSlaPoliciesConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/sla-policies-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/sla-policies-index.js')) }}" defer></script>
 @endpush

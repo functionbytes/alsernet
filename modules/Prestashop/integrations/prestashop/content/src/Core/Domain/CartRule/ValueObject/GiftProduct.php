@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,18 +39,16 @@ class GiftProduct
      * @var ProductId
      */
     private $productId;
+
     /**
      * @var int
      */
     private $productAttributeId;
 
     /**
-     * @param int $productId
-     * @param int|null $productAttributeId
-     *
      * @throws CartRuleConstraintException
      */
-    public function __construct(int $productId, int $productAttributeId = null)
+    public function __construct(int $productId, ?int $productAttributeId = null)
     {
         $this->assertGiftProductIsValid($productId, $productAttributeId);
 
@@ -57,35 +56,26 @@ class GiftProduct
         $this->productAttributeId = $productAttributeId;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getProductAttributeId(): ?int
     {
         return $this->productAttributeId;
     }
 
     /**
-     * @param int $productId
-     * @param int|null $productAttributeId
-     *
      * @throws CartRuleConstraintException
      */
     private function assertGiftProductIsValid(int $productId, ?int $productAttributeId): void
     {
-        if (0 >= $productId) {
+        if ($productId <= 0) {
             throw new CartRuleConstraintException('Gift product ID must be a positive integer', CartRuleConstraintException::INVALID_GIFT_PRODUCT);
         }
 
-        if (null !== $productAttributeId && 0 >= $productAttributeId) {
+        if ($productAttributeId !== null && $productAttributeId <= 0) {
             throw new CartRuleConstraintException('Gift product attribute ID must be a positive integer', CartRuleConstraintException::INVALID_GIFT_PRODUCT_ATTRIBUTE);
         }
     }

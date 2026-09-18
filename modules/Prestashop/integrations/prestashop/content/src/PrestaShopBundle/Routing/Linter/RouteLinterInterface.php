@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ use Symfony\Component\Routing\Route;
 interface RouteLinterInterface
 {
     /**
-     * @param Route $route
-     *
      * @throws LinterException when linting error occurs
      */
     public function lint($routeName, Route $route);

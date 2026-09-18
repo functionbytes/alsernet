@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,6 @@ final class PreviewColumn extends AbstractColumn
             ->setAllowedTypes('preview_data_route', 'string')
             ->setAllowedTypes('preview_route_params', 'array')
             ->setAllowedTypes('icon_expand', 'string')
-            ->setAllowedTypes('icon_collapse', 'string')
-        ;
+            ->setAllowedTypes('icon_collapse', 'string');
     }
 }

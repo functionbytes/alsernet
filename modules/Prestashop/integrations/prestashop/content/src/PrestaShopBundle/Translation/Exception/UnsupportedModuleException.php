@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use Symfony\Component\Translation\Exception\NotFoundResourceException;
 final class UnsupportedModuleException extends NotFoundResourceException
 {
     /**
-     * @param string $providerIdentifier the provider identifier
-     *
+     * @param  string  $providerIdentifier  the provider identifier
      * @return self
      */
     public static function moduleNotProvided($providerIdentifier)

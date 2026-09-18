@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,7 +70,7 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
             ),
             $mailVars,
             $customer->email,
-            $customer->firstname . ' ' . $customer->lastname,
+            $customer->firstname.' '.$customer->lastname,
             null,
             null,
             null,
@@ -79,14 +80,12 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
             $cart->id_shop
         );
 
-        if (!$emailWasSent) {
+        if (! $emailWasSent) {
             throw new CartException('Failed to send email to customer.');
         }
     }
 
     /**
-     * @param CartId $cartId
-     *
      * @return Cart
      *
      * @throws CartNotFoundException
@@ -95,7 +94,7 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
     {
         $cart = new Cart($cartId->getValue());
 
-        if (!Validate::isLoadedObject($cart)) {
+        if (! Validate::isLoadedObject($cart)) {
             throw new CartNotFoundException(sprintf('Cart with id "%d" was not found', $cartId->getValue()));
         }
 
@@ -103,8 +102,7 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
     }
 
     /**
-     * @param int $customerId
-     *
+     * @param  int  $customerId
      * @return Customer
      *
      * @throws CartException
@@ -113,7 +111,7 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
     {
         $customer = new Customer($customerId);
 
-        if (!Validate::isLoadedObject($customer)) {
+        if (! Validate::isLoadedObject($customer)) {
             throw new CartException(sprintf('Customer with id "%d" was not found', $customerId));
         }
 
@@ -121,8 +119,6 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
     }
 
     /**
-     * @param Cart $cart
-     *
      * @return string
      */
     private function generateCheckoutUrl(Cart $cart)
@@ -134,7 +130,7 @@ final class SendCartToCustomerHandler implements SendCartToCustomerHanlderInterf
             [
                 'step' => 3,
                 'recover_cart' => $cart->id,
-                'token_cart' => md5(_COOKIE_KEY_ . 'recover_cart_' . (int) $cart->id),
+                'token_cart' => md5(_COOKIE_KEY_.'recover_cart_'.(int) $cart->id),
             ]
         );
     }

@@ -4,7 +4,11 @@ namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Spatie\Health\Facades\Health;
+use Spatie\Health\Models\HealthCheckResultHistoryItem;
 
 class HealthController extends Controller
 {
@@ -94,7 +98,7 @@ class HealthController extends Controller
         $days = $request->input('days', 7);
 
         // Get history from database
-        $history = \Spatie\Health\Models\HealthCheckResultHistoryItem::query()
+        $history = HealthCheckResultHistoryItem::query()
             ->where('created_at', '>=', now()->subDays($days))
             ->orderBy('created_at', 'desc')
             ->get()
@@ -200,7 +204,7 @@ class HealthController extends Controller
 
             // Check if documents table exists
             try {
-                \Illuminate\Support\Facades\DB::table('documents')->limit(1)->get();
+                DB::table('documents')->limit(1)->get();
             } catch (\Exception $e) {
                 $checks['documents_table']['status'] = 'failed';
                 $checks['documents_table']['message'] = 'Documents table not found';
@@ -330,15 +334,15 @@ class HealthController extends Controller
     {
         try {
             // Run schedule command
-            \Illuminate\Support\Facades\Artisan::call('schedule:run');
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('schedule:run');
+            $output = Artisan::output();
 
             // Set schedule check heartbeat to mark it as running
-            \Illuminate\Support\Facades\Artisan::call('health:schedule-check-heartbeat');
+            Artisan::call('health:schedule-check-heartbeat');
 
             // Also dispatch queue check jobs if queue is configured
             if (config('queue.default') !== 'sync') {
-                \Illuminate\Support\Facades\Artisan::call('health:queue-check-heartbeat');
+                Artisan::call('health:queue-check-heartbeat');
             }
 
             return response()->json([
@@ -377,10 +381,10 @@ class HealthController extends Controller
             // Get queue size
             $queueSize = 0;
             if ($queueConnection === 'database') {
-                $queueSize = \Illuminate\Support\Facades\DB::table(config('queue.connections.database.table', 'jobs'))->count();
+                $queueSize = DB::table(config('queue.connections.database.table', 'jobs'))->count();
             } elseif ($queueConnection === 'redis') {
                 try {
-                    $redis = \Illuminate\Support\Facades\Redis::connection(config('queue.connections.redis.connection', 'default'));
+                    $redis = Redis::connection(config('queue.connections.redis.connection', 'default'));
                     $queueSize = $redis->llen('queues:'.config('queue.connections.redis.queue', 'default'));
                 } catch (\Exception $e) {
                     $queueSize = 'N/A';
@@ -388,7 +392,7 @@ class HealthController extends Controller
             }
 
             // Get failed jobs count
-            $failedJobsCount = \Illuminate\Support\Facades\DB::table(config('queue.failed.table', 'failed_jobs'))->count();
+            $failedJobsCount = DB::table(config('queue.failed.table', 'failed_jobs'))->count();
 
             return response()->json([
                 'status' => 'success',
@@ -425,12 +429,12 @@ class HealthController extends Controller
             }
 
             // Process a limited number of jobs
-            \Illuminate\Support\Facades\Artisan::call('queue:work', [
+            Artisan::call('queue:work', [
                 '--once' => true,
                 '--tries' => 3,
             ]);
 
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            $output = Artisan::output();
 
             return response()->json([
                 'status' => 'success',
@@ -453,8 +457,8 @@ class HealthController extends Controller
     public function scheduleList()
     {
         try {
-            \Illuminate\Support\Facades\Artisan::call('schedule:list');
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('schedule:list');
+            $output = Artisan::output();
 
             // Parse schedule list output
             $lines = explode("\n", trim($output));
@@ -495,14 +499,14 @@ class HealthController extends Controller
             $timeout = $request->input('timeout', 300);
 
             // Run the artisan command
-            \Illuminate\Support\Facades\Artisan::call('health:supervisor-config', [
+            Artisan::call('health:supervisor-config', [
                 '--workers' => $workers,
                 '--tries' => $tries,
                 '--timeout' => $timeout,
                 '--force' => true,
             ]);
 
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            $output = Artisan::output();
 
             // Get the generated file path (dentro del módulo Health)
             $appName = str_replace(' ', '-', strtolower(config('app.name', 'laravel')));

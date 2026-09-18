@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,12 +54,6 @@ class ProductFeatureValue
      */
     private $custom;
 
-    /**
-     * @param int $featureId
-     * @param int $featureValueId
-     * @param array $localizedValues
-     * @param bool $custom
-     */
     public function __construct(
         int $featureId,
         int $featureValueId,
@@ -71,17 +66,11 @@ class ProductFeatureValue
         $this->custom = $custom;
     }
 
-    /**
-     * @return int
-     */
     public function getFeatureId(): int
     {
         return $this->featureId;
     }
 
-    /**
-     * @return int
-     */
     public function getFeatureValueId(): int
     {
         return $this->featureValueId;
@@ -95,9 +84,6 @@ class ProductFeatureValue
         return $this->localizedValues;
     }
 
-    /**
-     * @return bool
-     */
     public function isCustom(): bool
     {
         return $this->custom;

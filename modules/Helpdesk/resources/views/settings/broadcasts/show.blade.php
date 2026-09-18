@@ -106,7 +106,7 @@
 
                                 <dt class="col-sm-5 text-muted small mt-2">Fallidos</dt>
                                 <dd class="col-sm-7 mt-2">
-                                    <span class="text-danger fw-semibold">{{ number_format($broadcast->failed_count ?? 0) }}</span>
+                                    <span class="text-dark fw-semibold">{{ number_format($broadcast->failed_count ?? 0) }}</span>
                                 </dd>
 
                                 <dt class="col-sm-5 text-muted small mt-2">Fecha programada</dt>
@@ -221,7 +221,7 @@
                                             </td>
                                             <td>
                                                 @if($recipient->error)
-                                                    <span class="text-danger small" title="{{ $recipient->error }}">
+                                                    <span class="text-dark small" title="{{ $recipient->error }}">
                                                         {{ Str::limit($recipient->error, 60) }}
                                                     </span>
                                                 @else
@@ -264,14 +264,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
 @endpush

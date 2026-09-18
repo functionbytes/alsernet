@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,7 +29,7 @@ class AttachmentControllerCore extends FrontController
     public function postProcess()
     {
         $attachment = new Attachment(Tools::getValue('id_attachment'), $this->context->language->id);
-        if (!$attachment->id) {
+        if (! $attachment->id) {
             Tools::redirect('index.php');
         }
 
@@ -39,11 +40,11 @@ class AttachmentControllerCore extends FrontController
         }
 
         header('Content-Transfer-Encoding: binary');
-        header('Content-Type: ' . $attachment->mime);
-        header('Content-Length: ' . filesize(_PS_DOWNLOAD_DIR_ . $attachment->file));
-        header('Content-Disposition: attachment; filename="' . utf8_decode($attachment->file_name) . '"');
+        header('Content-Type: '.$attachment->mime);
+        header('Content-Length: '.filesize(_PS_DOWNLOAD_DIR_.$attachment->file));
+        header('Content-Disposition: attachment; filename="'.utf8_decode($attachment->file_name).'"');
         @set_time_limit(0);
-        $this->readfileChunked(_PS_DOWNLOAD_DIR_ . $attachment->file);
+        $this->readfileChunked(_PS_DOWNLOAD_DIR_.$attachment->file);
         exit;
     }
 
@@ -61,7 +62,7 @@ class AttachmentControllerCore extends FrontController
         if ($handle === false) {
             return false;
         }
-        while (!feof($handle)) {
+        while (! feof($handle)) {
             $buffer = fread($handle, $chunksize);
             echo $buffer;
             ob_flush();

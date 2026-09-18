@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,6 +36,8 @@ class CannotDeleteImageException extends CategoryException
      * Error codes to specify which type of image were not deleted.
      */
     public const COVER_IMAGE = 1;
+
     public const THUMBNAIL_IMAGE = 2;
+
     public const MENU_THUMBNAIL_IMAGE = 3;
 }

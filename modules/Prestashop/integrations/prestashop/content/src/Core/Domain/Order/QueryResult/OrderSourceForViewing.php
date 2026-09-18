@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,12 +53,6 @@ class OrderSourceForViewing
      */
     private $keywords;
 
-    /**
-     * @param string $httpReferer
-     * @param string $requestUri
-     * @param DateTimeImmutable $addedAt
-     * @param string $keywords
-     */
     public function __construct(string $httpReferer, string $requestUri, DateTimeImmutable $addedAt, string $keywords)
     {
         $this->httpReferer = $httpReferer;
@@ -66,33 +61,21 @@ class OrderSourceForViewing
         $this->keywords = $keywords;
     }
 
-    /**
-     * @return string
-     */
     public function getHttpReferer(): string
     {
         return $this->httpReferer;
     }
 
-    /**
-     * @return string
-     */
     public function getRequestUri(): string
     {
         return $this->requestUri;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getAddedAt(): DateTimeImmutable
     {
         return $this->addedAt;
     }
 
-    /**
-     * @return string
-     */
     public function getKeywords(): string
     {
         return $this->keywords;

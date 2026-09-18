@@ -148,6 +148,87 @@ final class AutomationCatalog
                 'cast' => 'string',
                 'ops' => ['contains', 'not_contains'],
             ],
+            ...self::erpFields(),
+        ];
+    }
+
+    /**
+     * Datos del cliente en gestión (ERP).
+     *
+     * No son columnas del ticket: AutomationEngine los resuelve con
+     * ErpFactsService a partir del cliente. Solo aparecen si el módulo
+     * HelpdeskErp está instalado y encendido — ofrecer condiciones que nunca
+     * van a poder evaluarse confunde más que ayuda.
+     *
+     * El disparador natural para estas condiciones es "El ERP ha respondido"
+     * (ticket.erp_resolved): en ticket.created la búsqueda todavía está en la
+     * cola y erp_linked sería false para todo el mundo.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function erpFields(): array
+    {
+        if (! function_exists('helpdesk_erp_enabled') || ! helpdesk_erp_enabled()) {
+            return [];
+        }
+
+        return [
+            [
+                'field' => 'erp_linked',
+                'label' => 'El cliente está en gestión',
+                'input' => 'bool',
+                'options' => null,
+                'cast' => 'bool',
+                'ops' => ['equals'],
+            ],
+            [
+                'field' => 'erp_balance_pending',
+                'label' => 'La deuda pendiente en gestión (€)',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'float',
+                'ops' => ['greater_than', 'less_than', 'equals'],
+            ],
+            [
+                'field' => 'erp_credit_limit',
+                'label' => 'El límite de crédito en gestión (€)',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'float',
+                'ops' => ['greater_than', 'less_than', 'equals'],
+            ],
+            [
+                'field' => 'erp_loyalty_points',
+                'label' => 'Los puntos de fidelidad',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'int',
+                'ops' => ['greater_than', 'less_than', 'equals'],
+            ],
+            [
+                'field' => 'erp_orders_count',
+                'label' => 'El número de pedidos recientes',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'int',
+                'ops' => ['greater_than', 'less_than', 'equals'],
+            ],
+            [
+                'field' => 'erp_days_since_last_order',
+                'label' => 'Días desde el último pedido',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'int',
+                'ops' => ['greater_than', 'less_than', 'equals', 'is_null'],
+            ],
+            [
+                'field' => 'erp_province',
+                'label' => 'La provincia en gestión',
+                'input' => 'text',
+                'options' => null,
+                'cast' => 'string',
+                'ops' => ['equals', 'contains', 'not_contains'],
+            ],
         ];
     }
 
@@ -241,6 +322,7 @@ final class AutomationCatalog
             'ticket.assigned' => 'Se asigna un ticket',
             'ticket.resolved' => 'Se resuelve un ticket',
             'ticket.closed' => 'Se cierra un ticket',
+            'ticket.erp_resolved' => 'El ERP responde sobre el cliente',
         ];
 
         $out = [];
@@ -277,6 +359,10 @@ final class AutomationCatalog
     {
         return match ($cast) {
             'int' => (int) $value,
+            // Los importes del ERP (deuda, límite de crédito) llegan con
+            // decimales: con 'int' una regla de "más de 150,50 €" se guardaba
+            // como 150.
+            'float' => (float) $value,
             'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'string' => (string) $value,
             default => null,

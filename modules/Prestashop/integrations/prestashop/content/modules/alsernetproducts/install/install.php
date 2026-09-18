@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 2007-2015 Leotheme
  *
@@ -13,8 +14,8 @@
  *  @license   http://leotheme.com - prestashop template provider
  */
 
-//DONGND:: install database for product review
-$res = (bool)Db::getInstance()->execute('
+// DONGND:: install database for product review
+$res = (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review` (
         `id_product_review` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `id_product` int(10) unsigned NOT NULL,
@@ -33,7 +34,7 @@ $res = (bool)Db::getInstance()->execute('
             KEY `id_guest` (`id_guest`)
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_criterion` (
         `id_product_review_criterion` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `id_product_review_criterion_type` tinyint(1) NOT NULL,
@@ -42,7 +43,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_criterion_product` (
         `id_product` int(10) unsigned NOT NULL,
             `id_product_review_criterion` int(10) unsigned NOT NULL,
@@ -51,7 +52,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_criterion_lang` (
       `id_product_review_criterion` INT(11) UNSIGNED NOT NULL ,
       `id_lang` INT(11) UNSIGNED NOT NULL ,
@@ -60,7 +61,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_criterion_category` (
        `id_product_review_criterion` int(10) unsigned NOT NULL,
             `id_category` int(10) unsigned NOT NULL,
@@ -69,7 +70,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_grade` (
             `id_product_review_grade` int(10) unsigned NOT NULL AUTO_INCREMENT,
        `id_product_review` int(10) unsigned NOT NULL,
@@ -79,7 +80,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_usefulness` (
        `id_product_review` int(10) unsigned NOT NULL,
             `id_customer` int(10) unsigned NOT NULL,
@@ -88,7 +89,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_product_review_report` (
        `id_product_review` int(10) unsigned NOT NULL,
             `id_customer` int(10) unsigned NOT NULL,
@@ -99,16 +100,16 @@ $res &= (bool)Db::getInstance()->execute('
 $rows = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('SELECT id_product_review_criterion FROM `'._DB_PREFIX_.'leofeature_product_review_criterion`');
 
 if (count($rows) <= 0) {
-    $res &= (bool)Db::getInstance()->execute('
+    $res &= (bool) Db::getInstance()->execute('
         INSERT INTO `'._DB_PREFIX_.'leofeature_product_review_criterion` VALUES (1, 1, 1)');
     $languages = Language::getLanguages(false);
     foreach ($languages as $lang) {
-        $res &= (bool)Db::getInstance()->execute('INSERT INTO `'._DB_PREFIX_.'leofeature_product_review_criterion_lang` VALUES(1, '.(int)$lang['id_lang'].', \'Quality\')');
+        $res &= (bool) Db::getInstance()->execute('INSERT INTO `'._DB_PREFIX_.'leofeature_product_review_criterion_lang` VALUES(1, '.(int) $lang['id_lang'].', \'Quality\')');
     }
 }
 
-//DONGND:: install database for product compare
-$res &= (bool)Db::getInstance()->execute('
+// DONGND:: install database for product compare
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_compare` (
             `id_compare` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `id_customer` int(10) unsigned NOT NULL,
@@ -116,7 +117,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_compare_product` (
             `id_compare` int(10) unsigned NOT NULL,
             `id_product` int(10) unsigned NOT NULL,
@@ -126,8 +127,8 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-//DONGND:: install database for wishlist
-$res &= (bool)Db::getInstance()->execute('
+// DONGND:: install database for wishlist
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_wishlist` (
             `id_wishlist` int(10) unsigned NOT NULL auto_increment,
             `id_customer` int(10) unsigned NOT NULL,
@@ -143,7 +144,7 @@ $res &= (bool)Db::getInstance()->execute('
     ) ENGINE='._MYSQL_ENGINE_.'  DEFAULT CHARSET=utf8;
 ');
 
-$res &= (bool)Db::getInstance()->execute('
+$res &= (bool) Db::getInstance()->execute('
     CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'leofeature_wishlist_product` (
             `id_wishlist_product` int(10) NOT NULL auto_increment,
             `id_wishlist` int(10) unsigned NOT NULL,

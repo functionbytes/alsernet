@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -79,8 +80,8 @@ class DefaultEmptyDataTransformer implements DataTransformerInterface
      *  new DefaultEmptyDataTransformer(0, null) => the data will be interpreted/replaced by 0 during form handling
      * but null will be used for display, so the input will appear empty
      *
-     * @param mixed $emptyData This value will be used in form view and submit in place of empty value
-     * @param mixed $viewEmptyData This will be used only on the form view (optional)
+     * @param  mixed  $emptyData  This value will be used in form view and submit in place of empty value
+     * @param  mixed  $viewEmptyData  This will be used only on the form view (optional)
      */
     public function __construct($emptyData, $viewEmptyData = null)
     {
@@ -88,7 +89,7 @@ class DefaultEmptyDataTransformer implements DataTransformerInterface
 
         // We use the second parameter only if provided, default value is the same as emptyData
         // This trick is used to allow setting null value
-        $this->viewEmptyData = 2 === func_num_args() ? $viewEmptyData : $emptyData;
+        $this->viewEmptyData = func_num_args() === 2 ? $viewEmptyData : $emptyData;
     }
 
     /**

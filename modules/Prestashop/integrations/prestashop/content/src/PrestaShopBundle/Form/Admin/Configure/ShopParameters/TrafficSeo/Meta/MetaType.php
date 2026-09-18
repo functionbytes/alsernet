@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,6 @@ class MetaType extends AbstractType
      */
     private $modulePageChoices;
 
-    /**
-     * @param array $defaultPageChoices
-     * @param array $modulePageChoices
-     */
     public function __construct(
         array $defaultPageChoices,
         array $modulePageChoices
@@ -155,24 +152,23 @@ class MetaType extends AbstractType
             ->add('url_rewrite', TranslatableType::class, [
                 'options' => [
                     'constraints' => [
-                        new IsUrlRewrite(),
+                        new IsUrlRewrite,
                     ],
                 ],
-            ])
-        ;
+            ]);
 
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $formData = $event->getData();
 
-            if (isset($formData['page_name']) && 'index' !== $formData['page_name']) {
+            if (isset($formData['page_name']) && $formData['page_name'] !== 'index') {
                 $form = $event->getForm();
                 $form->add('url_rewrite', TranslatableType::class, [
                     'constraints' => [
-                        new DefaultLanguage(),
+                        new DefaultLanguage,
                     ],
                     'options' => [
                         'constraints' => [
-                            new IsUrlRewrite(),
+                            new IsUrlRewrite,
                         ],
                     ],
                 ]);

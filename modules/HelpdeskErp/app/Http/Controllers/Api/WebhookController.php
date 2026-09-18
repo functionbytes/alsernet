@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskErp\Services\CustomerTimelineService;
 use Modules\HelpdeskErp\Services\ErpContextService;
@@ -116,7 +117,12 @@ class WebhookController extends Controller
 
         $customerId = $request->input('customer_id');
 
-        $this->service->forgetCache($email);
+        // El cliente pudo quedar cacheado bajo la clave `phone:` si en algún
+        // momento se consultó su contexto sin email (ver ErpContextService::identity).
+        // Invalidamos también esas claves para no dejar una copia stale.
+        $localCustomer = Customer::where('email', $email)->first(['phone', 'whatsapp_phone']);
+
+        $this->service->forgetAllFor($email, [$localCustomer?->phone, $localCustomer?->whatsapp_phone]);
         $this->timelineService->forgetCache($email);
 
         broadcast(new ErpOrdersReady($email, $customerId !== null ? (int) $customerId : null));

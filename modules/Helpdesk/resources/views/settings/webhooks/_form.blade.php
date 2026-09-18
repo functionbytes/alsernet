@@ -3,7 +3,7 @@
     {{-- Name --}}
     <div class="col-12">
         <label class="form-label">
-            Nombre <span class="text-danger">*</span>
+            Nombre <span class="text-brand">*</span>
         </label>
         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
             value="{{ old('name', $webhook->name ?? '') }}"
@@ -16,7 +16,7 @@
     {{-- URL --}}
     <div class="col-12">
         <label class="form-label">
-            URL destino <span class="text-danger">*</span>
+            URL destino <span class="text-brand">*</span>
         </label>
         <input type="url" name="url" class="form-control @error('url') is-invalid @enderror"
             value="{{ old('url', $webhook->url ?? '') }}"
@@ -45,7 +45,7 @@
     {{-- Events --}}
     <div class="col-12">
         <label class="form-label">
-            Eventos <span class="text-danger">*</span>
+            Eventos <span class="text-brand">*</span>
         </label>
         <div class="border rounded p-3 @error('events')  @enderror">
             @foreach($availableEvents as $eventKey => $eventLabel)
@@ -64,7 +64,7 @@
             @endforeach
         </div>
         @error('events')
-            <div class="text-danger small mt-1">{{ $message }}</div>
+            <div class="text-dark small mt-1">{{ $message }}</div>
         @enderror
     </div>
 
@@ -112,3 +112,9 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/webhooks-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/webhooks-form.js')) }}" defer></script>
+@endpush

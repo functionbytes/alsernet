@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,10 @@ class ThemeValidator
     /**
      * Translator.
      *
-     * @var \Symfony\Component\Translation\TranslatorInterface
+     * @var TranslatorInterface
      */
     private $translator;
+
     private $appConfiguration;
 
     private $errors = [];
@@ -63,8 +65,8 @@ class ThemeValidator
         $themeName = $theme->getName();
 
         foreach ($this->getRequiredProperties() as $prop) {
-            if (!$theme->has($prop)) {
-                if (!array_key_exists($themeName, $this->errors)) {
+            if (! $theme->has($prop)) {
+                if (! array_key_exists($themeName, $this->errors)) {
                     $this->errors[$themeName] = [];
                 }
 
@@ -76,7 +78,7 @@ class ThemeValidator
             }
         }
 
-        return !array_key_exists($themeName, $this->errors);
+        return ! array_key_exists($themeName, $this->errors);
     }
 
     public function getRequiredProperties()
@@ -101,17 +103,17 @@ class ThemeValidator
     private function hasRequiredFiles(Theme $theme)
     {
         $themeName = $theme->getName();
-        $parentDir = realpath($this->appConfiguration->get('_PS_ALL_THEMES_DIR_') . $theme->get('parent')) . '/';
+        $parentDir = realpath($this->appConfiguration->get('_PS_ALL_THEMES_DIR_').$theme->get('parent')).'/';
         $parentFile = false;
 
         foreach ($this->getRequiredFiles() as $file) {
-            $childFile = $theme->getDirectory() . $file;
+            $childFile = $theme->getDirectory().$file;
             if ($theme->get('parent')) {
-                $parentFile = $parentDir . $file;
+                $parentFile = $parentDir.$file;
             }
 
-            if (!file_exists($childFile) && !file_exists($parentFile)) {
-                if (!array_key_exists($themeName, $this->errors)) {
+            if (! file_exists($childFile) && ! file_exists($parentFile)) {
+                if (! array_key_exists($themeName, $this->errors)) {
                     $this->errors[$themeName] = [];
                 }
 
@@ -119,7 +121,7 @@ class ThemeValidator
             }
         }
 
-        return !array_key_exists($themeName, $this->errors);
+        return ! array_key_exists($themeName, $this->errors);
     }
 
     public function getRequiredFiles()

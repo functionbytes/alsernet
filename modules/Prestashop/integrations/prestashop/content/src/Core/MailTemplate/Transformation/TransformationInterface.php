@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,9 +37,7 @@ use PrestaShop\PrestaShop\Core\Language\LanguageInterface;
 interface TransformationInterface
 {
     /**
-     * @param string $templateContent
-     * @param array $templateVariables
-     *
+     * @param  string  $templateContent
      * @return string
      */
     public function apply($templateContent, array $templateVariables);
@@ -53,8 +52,6 @@ interface TransformationInterface
     public function getType();
 
     /**
-     * @param LanguageInterface $language
-     *
      * @return $this
      */
     public function setLanguage(LanguageInterface $language);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,8 +82,6 @@ class ProductType
     private $value;
 
     /**
-     * @param string $value
-     *
      * @throws ProductConstraintException
      */
     public function __construct(string $value)
@@ -91,9 +90,6 @@ class ProductType
         $this->value = $value;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
@@ -103,13 +99,11 @@ class ProductType
      * @todo: DTO containing validation looks strange
      *      Consider adding static factories for each type instead of constructor?
      *
-     * @param string $value
-     *
      * @throws ProductConstraintException
      */
     private function assertProductType(string $value): void
     {
-        if (!in_array($value, self::AVAILABLE_TYPES, true)) {
+        if (! in_array($value, self::AVAILABLE_TYPES, true)) {
             throw new ProductConstraintException(
                 sprintf(
                     'Invalid product type %s. Valid types are: [%s]',

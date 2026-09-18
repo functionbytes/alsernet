@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,10 +38,9 @@ class LanguageDataProvider
     /**
      * Return languages data.
      *
-     * @param bool $active
-     * @param bool $shopId
-     * @param bool $onlyIds
-     *
+     * @param  bool  $active
+     * @param  bool  $shopId
+     * @param  bool  $onlyIds
      * @return array
      */
     public function getLanguages($active = true, $shopId = false, $onlyIds = false)
@@ -51,8 +51,7 @@ class LanguageDataProvider
     /**
      * Return language code by iso code.
      *
-     * @param string $isoCode - ISO 3166-2 alpha-2 format code
-     *
+     * @param  string  $isoCode  - ISO 3166-2 alpha-2 format code
      * @return false|string|null
      */
     public function getLanguageCodeByIso($isoCode)
@@ -63,8 +62,7 @@ class LanguageDataProvider
     /**
      * Gets language details from json file.
      *
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return array
      *
      * @throws Exception
@@ -73,7 +71,7 @@ class LanguageDataProvider
     {
         $result = Language::getJsonLanguageDetails($locale);
 
-        if (false === $result) {
+        if ($result === false) {
             return [];
         }
 
@@ -83,11 +81,10 @@ class LanguageDataProvider
     /**
      * Gets the files list for given language, including files from modules.
      *
-     * @param string $isoFrom
-     * @param string $themeFrom
-     * @param string $isoTo
-     * @param string $themeTo
-     *
+     * @param  string  $isoFrom
+     * @param  string  $themeFrom
+     * @param  string  $isoTo
+     * @param  string  $themeTo
      * @return array
      */
     public function getFilesList(

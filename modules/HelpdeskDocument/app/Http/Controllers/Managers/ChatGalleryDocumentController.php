@@ -286,23 +286,33 @@ class ChatGalleryDocumentController extends Controller
             ->all();
     }
 
+    /**
+     * La extensión real del fichero ya resuelto (URL/ruta) manda sobre lo que
+     * reporte el proveedor externo (WhatsApp/Meta): metadata.type/mime viene
+     * de fuera y no está verificada, así que no basta con que diga "image"
+     * para tratarlo como tal si la extensión real no está en la whitelist.
+     * Solo cuando la URL no trae extensión (adjuntos legacy sin ruta
+     * resoluble) se cae de vuelta a la metadata reportada.
+     */
     private function isImageAttachment(mixed $attachment): bool
     {
         $url = is_array($attachment) ? (string) ($attachment['url'] ?? '') : (string) $attachment;
+
+        $path = parse_url($url, PHP_URL_PATH) ?: '';
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        if ($extension !== '') {
+            return in_array($extension, self::IMAGE_EXTENSIONS, true);
+        }
 
         if (is_array($attachment)) {
             $type = strtolower((string) ($attachment['type'] ?? ''));
             $mime = strtolower((string) ($attachment['mime'] ?? $attachment['mime_type'] ?? $attachment['content_type'] ?? ''));
 
-            if ($type === 'image' || str_starts_with($mime, 'image/')) {
-                return true;
-            }
+            return $type === 'image' || str_starts_with($mime, 'image/');
         }
 
-        $path = parse_url($url, PHP_URL_PATH) ?: '';
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-        return in_array($extension, self::IMAGE_EXTENSIONS, true);
+        return false;
     }
 
     /**

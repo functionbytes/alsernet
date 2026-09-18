@@ -5,8 +5,15 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Configuracion\Banco;
+use Modules\Erp\Models\Oracle\Configuracion\Moneda;
 use Modules\Erp\Models\Oracle\Configuracion\Pais;
+use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
+use Modules\Erp\Models\Oracle\Configuracion\Tipoprov;
+use Modules\Erp\Models\Oracle\Otros\Subcuenta;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierErpProvider;
 
 /**
  * Modelo para la tabla PROVEEDOR
@@ -72,7 +79,7 @@ class Proveedor extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -81,7 +88,7 @@ class Proveedor extends Model
      */
     public function tipoprov()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipoprov::class, 'idtipoprov', 'idtipoprov');
+        return $this->belongsTo(Tipoprov::class, 'idtipoprov', 'idtipoprov');
     }
 
     /**
@@ -90,7 +97,7 @@ class Proveedor extends Model
      */
     public function banco()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Banco::class, 'idbanco', 'idbanco');
+        return $this->belongsTo(Banco::class, 'idbanco', 'idbanco');
     }
 
     /**
@@ -99,7 +106,7 @@ class Proveedor extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -108,7 +115,7 @@ class Proveedor extends Model
      */
     public function subcuenta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
+        return $this->belongsTo(Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
     }
 
     /**
@@ -117,7 +124,7 @@ class Proveedor extends Model
      */
     public function moneda()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Moneda::class, 'idmoneda', 'idmoneda');
+        return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
     }
 
     /**
@@ -125,7 +132,7 @@ class Proveedor extends Model
      */
     public function supplierErpProviders(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierErpProvider::class, 'erp_provider_id', 'idproveedor');
+        return $this->hasMany(SupplierErpProvider::class, 'erp_provider_id', 'idproveedor');
     }
 
     /**
@@ -133,7 +140,7 @@ class Proveedor extends Model
      */
     public function artiprovs()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Proveedor\Artiprov::class, 'idproveedor', 'idproveedor');
+        return $this->hasMany(Artiprov::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -142,8 +149,8 @@ class Proveedor extends Model
     public function articulos()
     {
         return $this->hasManyThrough(
-            \Modules\Erp\Models\Oracle\Articulo\Articulo::class,
-            \Modules\Erp\Models\Oracle\Proveedor\Artiprov::class,
+            Articulo::class,
+            Artiprov::class,
             'idproveedor', // FK en artiprov
             'idarticulo',  // FK en articulo
             'idproveedor', // Local key en proveedor

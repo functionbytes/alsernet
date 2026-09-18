@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,19 +38,18 @@ class WarehouseController extends FrameworkBundleAdminController
     /**
      * Refresh the WarehouseCombination data for the given product ID.
      *
-     * @param int $idProduct
-     *
+     * @param  int  $idProduct
      * @return string|Response
      */
     public function refreshProductWarehouseCombinationFormAction($idProduct)
     {
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
         $warehouseAdapter = $this->get('prestashop.adapter.data_provider.warehouse');
-        $response = new Response();
+        $response = new Response;
 
-        //get product and all warehouses
+        // get product and all warehouses
         $product = $productAdapter->getProduct((int) $idProduct);
-        if (!is_object($product) || empty($product->id)) {
+        if (! is_object($product) || empty($product->id)) {
             $response->setStatusCode(400);
 
             return $response;
@@ -76,7 +76,7 @@ class WarehouseController extends FrameworkBundleAdminController
         $simpleSubForm = $form->create('step4', 'form');
 
         foreach ($warehouses as $warehouse) {
-            $simpleSubForm->add('warehouse_combination_' . $warehouse['id_warehouse'], 'Symfony\Component\Form\Extension\Core\Type\CollectionType', [
+            $simpleSubForm->add('warehouse_combination_'.$warehouse['id_warehouse'], 'Symfony\Component\Form\Extension\Core\Type\CollectionType', [
                 'entry_type' => 'PrestaShopBundle\Form\Admin\Product\ProductWarehouseCombination',
                 'entry_options' => [
                     'id_warehouse' => $warehouse['id_warehouse'],

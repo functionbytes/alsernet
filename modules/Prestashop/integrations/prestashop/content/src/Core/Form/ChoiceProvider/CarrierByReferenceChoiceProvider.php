@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ final class CarrierByReferenceChoiceProvider implements FormChoiceProviderInterf
     private $langId;
 
     /**
-     * @param CarrierDataProvider $carrierDataProvider
-     * @param int $langId
+     * @param  int  $langId
      */
     public function __construct(CarrierDataProvider $carrierDataProvider, $langId)
     {
@@ -72,9 +72,9 @@ final class CarrierByReferenceChoiceProvider implements FormChoiceProviderInterf
         );
 
         foreach ($carriers as $carrier) {
-            $choiceId = $carrier['id_carrier'] . ' - ' . $carrier['name'];
+            $choiceId = $carrier['id_carrier'].' - '.$carrier['name'];
             if ($carrier['name']) {
-                $choiceId .= ' (' . $carrier['delay'] . ')';
+                $choiceId .= ' ('.$carrier['delay'].')';
             }
 
             $choices[$choiceId] = $carrier['id_reference'];

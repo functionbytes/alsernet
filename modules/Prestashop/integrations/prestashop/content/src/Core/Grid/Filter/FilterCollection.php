@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,7 @@ final class FilterCollection implements FilterCollectionInterface
     }
 
     /**
-     * @param string $filterName
-     *
+     * @param  string  $filterName
      * @return FilterInterface|null return null if no filter with given filter name
      */
     public function get($filterName)

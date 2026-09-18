@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Webservice\Exception;
 /**
  * Is thrown when duplicate service key is encountered (e.g. when creating new webservice key which already exists)
  */
-class DuplicateWebserviceKeyException extends WebserviceException
-{
-}
+class DuplicateWebserviceKeyException extends WebserviceException {}

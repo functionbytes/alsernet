@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,10 +34,6 @@ use PrestaShop\PrestaShop\Core\Product\ProductPresentationSettings;
 class ProductListingPresenter extends ProductPresenter
 {
     /**
-     * @param ProductPresentationSettings $settings
-     * @param array $product
-     * @param Language $language
-     *
      * @return ProductLazyArray|ProductListingLazyArray
      *
      * @throws \ReflectionException

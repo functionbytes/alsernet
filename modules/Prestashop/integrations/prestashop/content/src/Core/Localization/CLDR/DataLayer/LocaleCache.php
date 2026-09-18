@@ -71,9 +71,8 @@ class LocaleCache extends AbstractDataLayer implements CldrLocaleDataLayerInterf
      *
      * Data is read from passed cache adapter
      *
-     * @param string $localeCode
-     *                           The CLDR LocaleData object identifier
-     *
+     * @param  string  $localeCode
+     *                              The CLDR LocaleData object identifier
      * @return LocaleData|null
      *                         The wanted CLDR LocaleData object (null if not found)
      */
@@ -91,8 +90,8 @@ class LocaleCache extends AbstractDataLayer implements CldrLocaleDataLayerInterf
      */
     public function write($id, $data)
     {
-        if (!($data instanceof LocaleData)) {
-            throw new LocalizationException('$data must be an instance of ' . LocaleData::class);
+        if (! ($data instanceof LocaleData)) {
+            throw new LocalizationException('$data must be an instance of '.LocaleData::class);
         }
 
         return parent::write($id, $data);
@@ -103,10 +102,10 @@ class LocaleCache extends AbstractDataLayer implements CldrLocaleDataLayerInterf
      *
      * Might be a file edit, cache update, DB insert/update...
      *
-     * @param mixed $localeCode
-     *                          The LocaleData object identifier
-     * @param LocaleData $data
-     *                         The CLDR LocaleData object to be written
+     * @param  mixed  $localeCode
+     *                             The LocaleData object identifier
+     * @param  LocaleData  $data
+     *                            The CLDR LocaleData object to be written
      *
      * @throws DataLayerException
      *                            When write fails
@@ -118,7 +117,7 @@ class LocaleCache extends AbstractDataLayer implements CldrLocaleDataLayerInterf
 
         $saved = $this->cache->save($cacheItem);
 
-        if (!$saved) {
+        if (! $saved) {
             throw new DataLayerException('Unable to persist data in cache data layer');
         }
     }

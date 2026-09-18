@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,6 @@ class ExchangeRate
 
     /**
      * Get the default exchange rate as a DecimalNumber
-     *
-     * @return DecimalNumber
      */
     public static function getDefaultExchangeRate(): DecimalNumber
     {
@@ -52,7 +51,7 @@ class ExchangeRate
     private $exchangeRate;
 
     /**
-     * @param float $exchangeRate
+     * @param  float  $exchangeRate
      *
      * @throws CurrencyConstraintException
      */
@@ -71,7 +70,7 @@ class ExchangeRate
     }
 
     /**
-     * @param mixed $exchangeRate
+     * @param  mixed  $exchangeRate
      *
      * @throws CurrencyConstraintException
      */
@@ -79,7 +78,7 @@ class ExchangeRate
     {
         $isIntegerOrFloat = is_int($exchangeRate) || is_float($exchangeRate);
 
-        if (!$isIntegerOrFloat || 0 >= $exchangeRate) {
+        if (! $isIntegerOrFloat || $exchangeRate <= 0) {
             throw new CurrencyConstraintException(sprintf('Given exchange rate %s is not valid. It must be more than 0', var_export($exchangeRate, true)), CurrencyConstraintException::INVALID_EXCHANGE_RATE);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,15 +42,12 @@ use Validate;
  */
 final class ResendOrderEmailHandler extends AbstractOrderCommandHandler implements ResendOrderEmailHandlerInterface
 {
-    /**
-     * @param ResendOrderEmailCommand $command
-     */
     public function handle(ResendOrderEmailCommand $command): void
     {
         $order = $this->getOrder($command->getOrderId());
         $orderState = new OrderState($command->getOrderStatusId());
 
-        if (!Validate::isLoadedObject($orderState)) {
+        if (! Validate::isLoadedObject($orderState)) {
             throw new OrderException(sprintf('An error occurred while loading order status. Order status with "%s" was not found.', $command->getOrderId()->getValue()));
         }
 
@@ -62,7 +60,7 @@ final class ResendOrderEmailHandler extends AbstractOrderCommandHandler implemen
             $templateVars = ['{followup}' => str_replace('@', $order->shipping_number, $carrier->url)];
         }
 
-        if (!$history->sendEmail($order, $templateVars)) {
+        if (! $history->sendEmail($order, $templateVars)) {
             throw new OrderEmailSendException('Failed to resend order email.', OrderEmailSendException::FAILED_RESEND);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,7 @@ class TaxRulesGroupQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -71,13 +69,11 @@ class TaxRulesGroupQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb = $this->getQueryBuilder($searchCriteria->getFilters());
 
         $qb
-            ->select('trg.`id_tax_rules_group`, trg.`name`, trg.`active`')
-        ;
+            ->select('trg.`id_tax_rules_group`, trg.`name`, trg.`active`');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -88,27 +84,22 @@ class TaxRulesGroupQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT trg.`id_tax_rules_group`)')
-        ;
+            ->select('COUNT(DISTINCT trg.`id_tax_rules_group`)');
 
         return $qb;
     }
 
     /**
      * Gets query builder with the common sql used for displaying tax rule groups list and applying filter actions.
-     *
-     * @param array $filters
-     *
-     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters): QueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'tax_rules_group', 'trg')
+            ->from($this->dbPrefix.'tax_rules_group', 'trg')
             ->leftJoin(
                 'trg',
-                $this->dbPrefix . 'tax_rules_group_shop',
+                $this->dbPrefix.'tax_rules_group_shop',
                 'trgs',
                 'trg.`id_tax_rules_group` = trgs.`id_tax_rules_group`'
             );
@@ -124,9 +115,6 @@ class TaxRulesGroupQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Tax rule groups list filtering
-     *
-     * @param QueryBuilder $qb
-     * @param array $filters
      */
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
@@ -137,18 +125,18 @@ class TaxRulesGroupQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap)) {
                 continue;
             }
 
-            if ('name' === $filterName) {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' LIKE :' . $filterName)
-                    ->setParameter($filterName, '%' . $value . '%');
+            if ($filterName === 'name') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' LIKE :'.$filterName)
+                    ->setParameter($filterName, '%'.$value.'%');
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersMap[$filterName] . ' = :' . $filterName)
+            $qb->andWhere($allowedFiltersMap[$filterName].' = :'.$filterName)
                 ->setParameter($filterName, $value);
         }
     }

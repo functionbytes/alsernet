@@ -65,7 +65,7 @@ class MentionNotification extends Notification implements ShouldQueue
     {
         $url = route('manager.helpdesk.conversations.index', ['selected' => $this->conversation->id]);
         $preview = Str::limit(strip_tags($this->message->body ?? ''), 240);
-        $name = trim(($notifiable->firstname ?? '').' '.($notifiable->lastname ?? '')) ?: 'Hola';
+        $name = $notifiable->fullName() ?: 'Hola';
 
         return (new MailMessage)
             ->subject("[@mención] {$this->mentionedByName} te mencionó · #{$this->conversation->id}")

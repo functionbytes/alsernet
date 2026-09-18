@@ -83,7 +83,6 @@ abstract class BaseAction
         return $this->mapResponse($finalResponse);
     }
 
-
     private function checkAvailability($url)
     {
         return $this->availabilityChecker->isEndpointAvailable($url, $this->actionType);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,7 +33,7 @@ use Iterator;
 /**
  * Class AbstractCollection is responsible for providing base collection implementation.
  */
-abstract class AbstractCollection implements Iterator, Countable
+abstract class AbstractCollection implements Countable, Iterator
 {
     /**
      * @var array
@@ -68,7 +69,7 @@ abstract class AbstractCollection implements Iterator, Countable
      */
     public function valid()
     {
-        return false !== $this->current();
+        return $this->current() !== false;
     }
 
     /**

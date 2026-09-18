@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,6 @@ class StockMovementController extends ApiController
     /**
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function listMovementsAction(Request $request)
@@ -70,8 +69,6 @@ class StockMovementController extends ApiController
     /**
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function listMovementsEmployeesAction(Request $request)
@@ -81,8 +78,6 @@ class StockMovementController extends ApiController
 
     /**
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
-     *
-     * @param Request $request
      *
      * @return JsonResponse
      */

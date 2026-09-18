@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\DemoRestricted;
 use PrestaShopBundle\Security\Voter\PageVoter;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -54,11 +56,10 @@ class MemcacheServerController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
+     *
      * @DemoRestricted(redirectRoute="admin_servers_test")
      *
-     * @param Request $request
-     *
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function testAction(Request $request)
     {
@@ -79,15 +80,14 @@ class MemcacheServerController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))", message="Access denied.")
+     *
      * @DemoRestricted(redirectRoute="admin_servers_test")
      *
-     * @param Request $request
-     *
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function addAction(Request $request)
     {
-        if (!in_array(
+        if (! in_array(
             $this->authorizationLevel($this::CONTROLLER_NAME),
             [
                 PageVoter::LEVEL_READ,
@@ -138,15 +138,14 @@ class MemcacheServerController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", message="Access denied.")
+     *
      * @DemoRestricted(redirectRoute="admin_servers_test")
      *
-     * @param Request $request
-     *
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function deleteAction(Request $request)
     {
-        if (!in_array(
+        if (! in_array(
             $this->authorizationLevel($this::CONTROLLER_NAME),
             [
                 PageVoter::LEVEL_READ,

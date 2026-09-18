@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,8 +54,6 @@ class AdminProductDataUpdater implements ProductInterface
 
     /**
      * Constructor. HookDispatcher is injected by Sf container.
-     *
-     * @param HookDispatcherInterface $hookDispatcher
      */
     public function __construct(HookDispatcherInterface $hookDispatcher)
     {
@@ -73,7 +72,7 @@ class AdminProductDataUpdater implements ProductInterface
         $failedIdList = [];
         foreach ($productListId as $productId) {
             $product = new Product($productId);
-            if (!Validate::isLoadedObject($product)
+            if (! Validate::isLoadedObject($product)
                 || $product->validateFields(false, true) !== true
                 || $product->validateFieldsLang(false, true) !== true) {
                 $failedIdList[] = $productId;
@@ -106,7 +105,7 @@ class AdminProductDataUpdater implements ProductInterface
 
         $failedIdList = $productIdList; // Since we have just one call to delete all, cannot have distinctive fails.
         // Hooks: will trigger actionProductDelete multiple times
-        $result = (new Product())->deleteSelection($productIdList);
+        $result = (new Product)->deleteSelection($productIdList);
 
         if ($result === 0) {
             throw new UpdateProductException('Cannot delete many requested inventaries.', 5006);
@@ -148,7 +147,7 @@ class AdminProductDataUpdater implements ProductInterface
     public function deleteProduct($productId)
     {
         $product = new Product($productId);
-        if (!Validate::isLoadedObject($product)) {
+        if (! Validate::isLoadedObject($product)) {
             throw new \Exception('AdminProductDataUpdater->deleteProduct() received an unknown ID.', 5005);
         }
 
@@ -168,9 +167,9 @@ class AdminProductDataUpdater implements ProductInterface
      */
     public function duplicateProduct($productId, $namePattern = 'copy of %s')
     {
-        //TODO : use the $namePattern var to input translated version of 'copy of %s', if translation requested.
+        // TODO : use the $namePattern var to input translated version of 'copy of %s', if translation requested.
         $product = new Product($productId);
-        if (!Validate::isLoadedObject($product)) {
+        if (! Validate::isLoadedObject($product)) {
             throw new \Exception('AdminProductDataUpdater->duplicateProduct() received an unknown ID.', 5005);
         }
 
@@ -200,7 +199,7 @@ class AdminProductDataUpdater implements ProductInterface
 
         // change product name to prefix it
         foreach ($product->name as $langKey => $oldName) {
-            if (!preg_match('/^' . str_replace('%s', '.*', preg_quote($namePattern, '/') . '$/'), $oldName)) {
+            if (! preg_match('/^'.str_replace('%s', '.*', preg_quote($namePattern, '/').'$/'), $oldName)) {
                 $newName = sprintf($namePattern, $oldName);
                 if (mb_strlen($newName, 'UTF-8') <= 127) {
                     $product->name[$langKey] = $newName;
@@ -226,7 +225,7 @@ class AdminProductDataUpdater implements ProductInterface
                 Product::updateDefaultAttribute($product->id);
             }
 
-            if (!Image::duplicateProductImages($id_product_old, $product->id, $combination_images)) {
+            if (! Image::duplicateProductImages($id_product_old, $product->id, $combination_images)) {
                 throw new UpdateProductException('An error occurred while copying images.', 5008);
             } else {
                 $this->hookDispatcher->dispatchWithParameters('actionProductAdd', ['id_product_old' => $id_product_old, 'id_product' => (int) $product->id, 'product' => $product]);
@@ -253,7 +252,7 @@ class AdminProductDataUpdater implements ProductInterface
             return false;
         }
 
-        if (!isset($filterParams['filter_category'])) {
+        if (! isset($filterParams['filter_category'])) {
             throw new \Exception('Cannot sort when filterParams does not contains \'filter_category\'.', 5010);
         }
 
@@ -275,23 +274,23 @@ class AdminProductDataUpdater implements ProductInterface
         /*
          * First request to update position on category_product
          */
-        Db::getInstance()->query('SET @i := ' . (((int) $minPosition) - 1));
-        $updatePositions = 'UPDATE `' . _DB_PREFIX_ . 'category_product` cp ' .
-            'SET cp.`position` = (SELECT @i := @i + 1) ' .
-            'WHERE cp.`id_category` = ' . (int) $categoryId . ' AND cp.`id_product` IN (' . $productsIds . ') ' .
-            'ORDER BY FIELD(cp.`id_product`, ' . $productsIds . ')';
+        Db::getInstance()->query('SET @i := '.(((int) $minPosition) - 1));
+        $updatePositions = 'UPDATE `'._DB_PREFIX_.'category_product` cp '.
+            'SET cp.`position` = (SELECT @i := @i + 1) '.
+            'WHERE cp.`id_category` = '.(int) $categoryId.' AND cp.`id_product` IN ('.$productsIds.') '.
+            'ORDER BY FIELD(cp.`id_product`, '.$productsIds.')';
         Db::getInstance()->query($updatePositions);
 
         /**
          * Second request to update date_upd because
          * ORDER BY is not working on multi-tables update
          */
-        $updateProducts = 'UPDATE `' . _DB_PREFIX_ . 'product` p ' .
-            '' . Shop::addSqlAssociation('product', 'p') . ' ' .
-            'SET ' .
-            '    p.`date_upd` = "' . date('Y-m-d H:i:s') . '", ' .
-            '    product_shop.`date_upd` = "' . date('Y-m-d H:i:s') . '" ' .
-            'WHERE p.`id_product` IN (' . $productsIds . ') ';
+        $updateProducts = 'UPDATE `'._DB_PREFIX_.'product` p '.
+            ''.Shop::addSqlAssociation('product', 'p').' '.
+            'SET '.
+            '    p.`date_upd` = "'.date('Y-m-d H:i:s').'", '.
+            '    product_shop.`date_upd` = "'.date('Y-m-d H:i:s').'" '.
+            'WHERE p.`id_product` IN ('.$productsIds.') ';
         Db::getInstance()->query($updateProducts);
 
         return true;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class Name
     private $pageName;
 
     /**
-     * @param string $pageName
+     * @param  string  $pageName
      *
      * @throws MetaConstraintException
      */
@@ -59,13 +60,13 @@ class Name
     }
 
     /**
-     * @param string $pageName
+     * @param  string  $pageName
      *
      * @throws MetaConstraintException
      */
     private function assertIsValidPageName($pageName)
     {
-        if (!is_string($pageName) || !$pageName || !preg_match('/^[a-zA-Z0-9_.-]+$/', $pageName)) {
+        if (! is_string($pageName) || ! $pageName || ! preg_match('/^[a-zA-Z0-9_.-]+$/', $pageName)) {
             throw new MetaConstraintException(sprintf('Invalid Meta page name %s', var_export($pageName, true)), MetaConstraintException::INVALID_PAGE_NAME);
         }
     }

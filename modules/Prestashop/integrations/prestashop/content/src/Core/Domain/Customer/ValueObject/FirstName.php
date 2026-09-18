@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class FirstName
     private $firstName;
 
     /**
-     * @param string $firstName
+     * @param  string  $firstName
      */
     public function __construct($firstName)
     {
@@ -63,7 +64,7 @@ class FirstName
     }
 
     /**
-     * @param string $firstName
+     * @param  string  $firstName
      *
      * @throws CustomerConstraintException
      */
@@ -71,13 +72,13 @@ class FirstName
     {
         $matchesFirstNamePattern = preg_match('/^[^0-9!<>,;?=+()@#"°{}_$%:¤|]*$/u', stripslashes($firstName));
 
-        if (!$matchesFirstNamePattern) {
+        if (! $matchesFirstNamePattern) {
             throw new CustomerConstraintException(sprintf('Customer first name %s is invalid', var_export($firstName, true)), CustomerConstraintException::INVALID_FIRST_NAME);
         }
     }
 
     /**
-     * @param string $firstName
+     * @param  string  $firstName
      *
      * @throws CustomerConstraintException
      */
@@ -86,7 +87,7 @@ class FirstName
         $firstName = html_entity_decode($firstName, ENT_COMPAT, 'UTF-8');
 
         $length = function_exists('mb_strlen') ? mb_strlen($firstName, 'UTF-8') : strlen($firstName);
-        if (self::MAX_LENGTH < $length) {
+        if ($length > self::MAX_LENGTH) {
             throw new CustomerConstraintException(sprintf('Customer first name is too long. Max allowed length is %s', self::MAX_LENGTH), CustomerConstraintException::INVALID_FIRST_NAME);
         }
     }

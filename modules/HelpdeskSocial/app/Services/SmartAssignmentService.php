@@ -2,13 +2,13 @@
 
 namespace Modules\HelpdeskSocial\Services;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialAgentWorkload;
 use Modules\HelpdeskSocial\Models\SocialAssignmentRule;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class SmartAssignmentService
 {
@@ -215,8 +215,10 @@ class SmartAssignmentService
             return [$rule->assignee_user_id];
         }
 
-        return User::query()
-            ->where('is_active', true)
+        // `users.is_active` no existe (columna real: `available`); reutiliza el
+        // mismo catálogo de agentes que HelpdeskTickets (rol helpdesk-agent +
+        // available) en vez de repetir el filtro a mano.
+        return CatalogCacheService::agents()
             ->pluck('id')
             ->map('intval')
             ->all();

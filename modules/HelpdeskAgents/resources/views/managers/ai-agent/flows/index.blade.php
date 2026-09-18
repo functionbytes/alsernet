@@ -23,7 +23,7 @@
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('helpdesk.ai.flows.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo flujo
+                            Nuevo flujo
                         </a>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Borradores</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['draft']) }}</h4>
-                                <small class="text-muted">Aun no publicados</small>
+                                <small class="text-muted">Aún no publicados</small>
                             </div>
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                                 <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
+                                <input type="search" name="search" class="form-control border-0 ps-0"
                                        placeholder="Buscar por nombre..."
                                        value="{{ request('search') }}">
                             </div>
@@ -123,7 +123,7 @@
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Trigger</th>
-                                    <th>Version</th>
+                                    <th>Versión</th>
                                     <th>Estado</th>
                                     <th>Actualizado</th>
                                     <th class="text-center">Acciones</th>
@@ -139,7 +139,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-info-subtle text-info">
+                                            <span class="badge bg-secondary-subtle text-secondary">
                                                 {{ $triggers[$flow->trigger] ?? $flow->trigger }}
                                             </span>
                                         </td>
@@ -181,9 +181,11 @@
                                                         </li>
                                                     @endif
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('helpdesk.ai.flows.duplicate', $flow) }}">
-                                                            Duplicar
-                                                        </a>
+                                                        {{-- POST de verdad: como <a> era un GET contra una ruta POST → 405. --}}
+                                                        <form action="{{ route('helpdesk.ai.flows.duplicate', $flow) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="dropdown-item">Duplicar</button>
+                                                        </form>
                                                     </li>
                                                     @if($flow->status !== 'archived')
                                                         <li>
@@ -223,7 +225,7 @@
                         </h5>
                         <p class="text-muted mb-4">
                             @if(request('search') || request('status') || request('trigger'))
-                                Prueba ajustando los filtros de busqueda
+                                Prueba ajustando los filtros de búsqueda
                             @else
                                 Crea tu primer flujo para automatizar conversaciones del agente IA
                             @endif
@@ -232,7 +234,7 @@
                             <a href="{{ route('helpdesk.ai.flows.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('helpdesk.ai.flows.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nuevo flujo
+                                Nuevo flujo
                             </a>
                         @endif
                     </div>
@@ -256,24 +258,18 @@
         </div>
     </div>
 
-    @include('core::components.delete')
+    {{-- El modal #delete-modal / #delete-form ya lo pone layouts.theme en
+         cada página — incluirlo otra vez aquí duplicaba su id (mismo gotcha
+         que en managers/ai-agent/settings.blade.php). --}}
 
 @endsection
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
+window.HelpdeskAgentsFlowsIndex = {
+    success: @json(session('success')),
+    error: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdeskagents/js/ai-agent-flows-index.js') }}?v={{ @filemtime(public_path('modules/helpdeskagents/js/ai-agent-flows-index.js')) }}" defer></script>
 @endpush

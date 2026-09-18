@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,11 +45,6 @@ class MultistoreExtension extends AbstractTypeExtension
         return FormType::class;
     }
 
-    /**
-     * @param FormView $view
-     * @param FormInterface $form
-     * @param array $options
-     */
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
         parent::buildView($view, $form, $options);
@@ -56,9 +52,6 @@ class MultistoreExtension extends AbstractTypeExtension
         $view->vars = array_replace($view->vars, ['multistore_dropdown' => $options['multistore_dropdown']]);
     }
 
-    /**
-     * @param OptionsResolver $resolver
-     */
     public function configureOptions(OptionsResolver $resolver): void
     {
         parent::configureOptions($resolver);

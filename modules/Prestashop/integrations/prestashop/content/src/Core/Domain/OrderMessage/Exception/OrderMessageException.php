@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,5 +35,6 @@ use PrestaShop\PrestaShop\Core\Domain\Exception\DomainException;
 class OrderMessageException extends DomainException
 {
     public const FAILED_DELETE = 1;
+
     public const FAILED_BULK_DELETE = 2;
 }

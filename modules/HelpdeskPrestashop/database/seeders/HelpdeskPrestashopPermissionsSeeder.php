@@ -24,6 +24,11 @@ class HelpdeskPrestashopPermissionsSeeder extends Seeder
             // Acciones que MUTAN el pedido en PrestaShop (cambiar estado,
             // asignar seguimiento) desde el workspace del inbox.
             'helpdeskprestashop.orders.manage',
+            // Consulta de NO-clientes (prospectos) en PrestaShop: expone datos
+            // reales (pedidos, carrito) de cualquier email sin Customer local
+            // asociado, así que se reserva a roles de confianza (admins) y NO
+            // se da al rol de agente — mismo criterio que helpdeskerp.prospect.view.
+            'helpdeskprestashop.prospect.view',
         ];
 
         foreach ($permissions as $permission) {

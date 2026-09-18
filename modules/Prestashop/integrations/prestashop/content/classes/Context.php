@@ -98,7 +98,7 @@ class ContextCore
     /** @var Smarty */
     public $smarty;
 
-    /** @var \Mobile_Detect */
+    /** @var Mobile_Detect */
     public $mobile_detect;
 
     /** @var int */

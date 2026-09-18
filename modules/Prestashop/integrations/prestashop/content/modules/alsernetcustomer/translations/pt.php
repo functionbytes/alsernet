@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetcustomer}prestashop>wishlist_641254d77e7a473aa5910574f3f9453c'] = 'Favoritos';
 $_MODULE['<{alsernetcustomer}prestashop>modal-button_54ec7133f5a9120392b7ab65059cb51f'] = 'Iniciar sessão para adicionar a favoritos';
 $_MODULE['<{alsernetcustomer}prestashop>modal-button_73e83b5a2933ff7790d4c6091b65497e'] = 'Para adicionar este produto aos seus favoritos deverá iniciar sessão';

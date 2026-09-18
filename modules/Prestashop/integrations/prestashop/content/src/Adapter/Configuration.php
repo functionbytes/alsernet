@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     public function __construct(array $parameters = [])
     {
         // Do nothing
-        if (!empty($parameters)) {
+        if (! empty($parameters)) {
             throw new \LogicException('No parameter can be handled in constructor. Use method set() instead.');
         }
     }
@@ -60,7 +61,7 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
      */
     public function all()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException;
     }
 
     /**
@@ -93,16 +94,15 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
      * Return constant defined by given $key if exists or check directly into PrestaShop
      * \Configuration.
      *
-     * @param string $key
-     * @param mixed $default The default value if the parameter key does not exist
-     * @param ShopConstraint|null $shopConstraint This parameter should always be given, if not, a ShopConstraint will
-     *                                            be built based on the current shop context
-     *
+     * @param  string  $key
+     * @param  mixed  $default  The default value if the parameter key does not exist
+     * @param  ShopConstraint|null  $shopConstraint  This parameter should always be given, if not, a ShopConstraint will
+     *                                               be built based on the current shop context
      * @return mixed
      */
-    public function get($key, $default = null, ShopConstraint $shopConstraint = null)
+    public function get($key, $default = null, ?ShopConstraint $shopConstraint = null)
     {
-        if (null === $shopConstraint) {
+        if ($shopConstraint === null) {
             $shopConstraint = $this->buildShopConstraintFromContext();
         }
 
@@ -113,8 +113,8 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
         $shopId = $this->getShopId($shopConstraint);
         $shopGroupId = $this->getShopGroupId($shopConstraint);
 
-        //If configuration has never been accessed it is still empty and hasKey/isLangKey will always return false
-        if (!ConfigurationLegacy::configurationIsLoaded()) {
+        // If configuration has never been accessed it is still empty and hasKey/isLangKey will always return false
+        if (! ConfigurationLegacy::configurationIsLoaded()) {
             ConfigurationLegacy::loadConfiguration();
         }
 
@@ -128,11 +128,11 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
         }
 
         // Since hasKey doesn't manage the fallback shop > shop group > global, we handle it manually
-        if (null !== $shopId && ConfigurationLegacy::hasKey($key, null, null, $shopId)) {
+        if ($shopId !== null && ConfigurationLegacy::hasKey($key, null, null, $shopId)) {
             return ConfigurationLegacy::get($key, null, null, $shopId);
         }
 
-        if (null !== $shopGroupId && ConfigurationLegacy::hasKey($key, null, $shopGroupId)) {
+        if ($shopGroupId !== null && ConfigurationLegacy::hasKey($key, null, $shopGroupId)) {
             return ConfigurationLegacy::get($key, null, $shopGroupId);
         }
 
@@ -146,19 +146,18 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     /**
      * Set configuration value.
      *
-     * @param string $key
-     * @param mixed $value
-     * @param ShopConstraint|null $shopConstraint If this parameter is not given, a ShopConstraint will
-     *                                            be built based on the current shop context, except if $this->shop is set
-     * @param array $options Options @deprecated Will be removed in next major
-     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  ShopConstraint|null  $shopConstraint  If this parameter is not given, a ShopConstraint will
+     *                                               be built based on the current shop context, except if $this->shop is set
+     * @param  array  $options  Options @deprecated Will be removed in next major
      * @return $this
      *
      * @throws \Exception
      */
-    public function set($key, $value, ShopConstraint $shopConstraint = null, array $options = [])
+    public function set($key, $value, ?ShopConstraint $shopConstraint = null, array $options = [])
     {
-        if ($this->shop instanceof Shop && null === $shopConstraint) {
+        if ($this->shop instanceof Shop && $shopConstraint === null) {
             $shopGroupId = $this->shop->id_shop_group;
             $shopId = $this->shop->id;
         } else {
@@ -177,7 +176,7 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
             $shopId ?: 0
         );
 
-        if (!$success) {
+        if (! $success) {
             throw new \Exception('Could not update configuration');
         }
 
@@ -185,15 +184,14 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     }
 
     /**
-     * @param string $key
-     * @param ShopConstraint|null $shopConstraint This parameter should always be given, if not, a ShopConstraint will
-     *                                            be built based on the current shop context
-     *
+     * @param  string  $key
+     * @param  ShopConstraint|null  $shopConstraint  This parameter should always be given, if not, a ShopConstraint will
+     *                                               be built based on the current shop context
      * @return bool
      */
-    public function has($key, ShopConstraint $shopConstraint = null)
+    public function has($key, ?ShopConstraint $shopConstraint = null)
     {
-        if (null === $shopConstraint) {
+        if ($shopConstraint === null) {
             $shopConstraint = $this->buildShopConstraintFromContext();
         }
 
@@ -205,12 +203,12 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
         }
 
         $hasKey = ConfigurationLegacy::hasKey($key, null, $shopGroupId, $shopId);
-        if (null !== $shopId && ($hasKey || $shopConstraint->isStrict())) {
+        if ($shopId !== null && ($hasKey || $shopConstraint->isStrict())) {
             return $hasKey;
         }
 
         $hasKey = ConfigurationLegacy::hasKey($key, null, $shopGroupId);
-        if (null !== $shopGroupId && ($shopConstraint->isStrict() || $hasKey)) {
+        if ($shopGroupId !== null && ($shopConstraint->isStrict() || $hasKey)) {
             return $hasKey;
         }
 
@@ -219,13 +217,6 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
 
     /**
      * Same as 'has' method, but for multilang configuration keys
-     *
-     * @param string $key
-     * @param int|null $shopId
-     * @param int|null $shopGroupId
-     * @param bool $isStrict
-     *
-     * @return bool
      */
     private function hasMultilang(string $key, ?int $shopId, ?int $shopGroupId, bool $isStrict): bool
     {
@@ -253,17 +244,16 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     /**
      * Removes a configuration key.
      *
-     * @param string $key
-     *
+     * @param  string  $key
      * @return self
      */
     public function remove($key)
     {
-        $success = \Configuration::deleteByName(
+        $success = ConfigurationLegacy::deleteByName(
             $key
         );
 
-        if (!$success) {
+        if (! $success) {
             throw new \Exception('Could not update configuration');
         }
 
@@ -273,8 +263,7 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     /**
      * Unset configuration value.
      *
-     * @param string $key
-     *
+     * @param  string  $key
      * @return void
      *
      * @throws \Exception
@@ -324,8 +313,6 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
 
     /**
      * Restrict updates of a piece of configuration to a single shop.
-     *
-     * @param Shop $shop
      */
     public function restrictUpdatesTo(Shop $shop)
     {
@@ -335,10 +322,7 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     /**
      * Get localized configuration in all languages
      *
-     * @param string $key
-     * @param int|null $shopId
-     * @param int|null $shopGroupId
-     *
+     * @param  string  $key
      * @return array Array of langId => localizedConfiguration
      */
     private function getLocalized($key, ?int $shopId = null, ?int $shopGroupId = null)
@@ -352,29 +336,18 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
         return $configuration;
     }
 
-    /**
-     * @param ShopConstraint $shopConstraint
-     *
-     * @return int|null
-     */
     private function getShopId(ShopConstraint $shopConstraint): ?int
     {
-        return null !== $shopConstraint->getShopId()
+        return $shopConstraint->getShopId() !== null
             ? $shopConstraint->getShopId()->getValue()
-            : null
-        ;
+            : null;
     }
 
-    /**
-     * @param ShopConstraint $shopConstraint
-     *
-     * @return int|null
-     */
     private function getShopGroupId(ShopConstraint $shopConstraint): ?int
     {
-        if (null !== $shopConstraint->getShopGroupId()) {
+        if ($shopConstraint->getShopGroupId() !== null) {
             return $shopConstraint->getShopGroupId()->getValue();
-        } elseif (null !== $shopConstraint->getShopId()) {
+        } elseif ($shopConstraint->getShopId() !== null) {
             $shopGroupId = Shop::getGroupFromShop((int) $shopConstraint->getShopId()->getValue(), true);
             // $shopGroupId can not be false, it would mean that the shop group was not found for the given shop
             if ($shopGroupId === false) {
@@ -392,10 +365,6 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
         return null;
     }
 
-    /**
-     * @param string $key
-     * @param ShopConstraint $shopConstraint
-     */
     public function deleteFromContext(string $key, ShopConstraint $shopConstraint): void
     {
         $shopId = $shopConstraint->getShopId();
@@ -403,14 +372,11 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
 
         ConfigurationLegacy::deleteFromContext(
             $key,
-            !empty($shopGroupId) ? $shopGroupId->getValue() : null,
-            !empty($shopId) ? $shopId->getValue() : null
+            ! empty($shopGroupId) ? $shopGroupId->getValue() : null,
+            ! empty($shopId) ? $shopId->getValue() : null
         );
     }
 
-    /**
-     * @return ShopConstraint
-     */
     private function buildShopConstraintFromContext(): ShopConstraint
     {
         @trigger_error(
@@ -428,20 +394,17 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     }
 
     /**
-     * @param string $key
-     * @param ShopConstraint $shopConstraint
-     *
      * @return mixed
      */
     private function getStrictValue(string $key, ShopConstraint $shopConstraint)
     {
-        if (null !== $shopConstraint->getShopId()) {
+        if ($shopConstraint->getShopId() !== null) {
             $hasKey = ConfigurationLegacy::hasKey($key, null, null, $shopConstraint->getShopId()->getValue());
 
             return $hasKey ? ConfigurationLegacy::get($key, null, null, $shopConstraint->getShopId()->getValue()) : null;
         }
 
-        if (null !== $shopConstraint->getShopGroupId()) {
+        if ($shopConstraint->getShopGroupId() !== null) {
             $hasKey = ConfigurationLegacy::hasKey($key, null, $shopConstraint->getShopGroupId()->getValue());
 
             return $hasKey ? ConfigurationLegacy::get($key, null, $shopConstraint->getShopGroupId()->getValue()) : null;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,13 +36,19 @@ use PrestaShop\PrestaShop\Core\Exception\InvalidArgumentException;
 class PatternTransformer
 {
     public const NO_BREAK_SPACE = "\u{00A0}";
+
     public const RTL_CHARACTER = "\u{200F}";
+
     public const REGULAR_SPACE = ' ';
+
     public const CURRENCY_SYMBOL = '¤';
 
     public const TYPE_LEFT_SYMBOL_WITH_SPACE = 'leftWithSpace';
+
     public const TYPE_LEFT_SYMBOL_WITHOUT_SPACE = 'leftWithoutSpace';
+
     public const TYPE_RIGHT_SYMBOL_WITH_SPACE = 'rightWithSpace';
+
     public const TYPE_RIGHT_SYMBOL_WITHOUT_SPACE = 'rightWithoutSpace';
 
     public const ALLOWED_TRANSFORMATIONS = [
@@ -52,9 +59,9 @@ class PatternTransformer
     ];
 
     public const CHARACTERS_TO_TRIM =
-        self::CURRENCY_SYMBOL .
-        self::NO_BREAK_SPACE .
-        self::REGULAR_SPACE .
+        self::CURRENCY_SYMBOL.
+        self::NO_BREAK_SPACE.
+        self::REGULAR_SPACE.
         self::RTL_CHARACTER
     ;
 
@@ -66,16 +73,11 @@ class PatternTransformer
     ];
 
     /**
-     * @param string $currencyPattern
-     * @param string $transformationType
-     *
-     * @return string
-     *
      * @throws InvalidArgumentException
      */
     public function transform(string $currencyPattern, string $transformationType): string
     {
-        if (!in_array($transformationType, self::ALLOWED_TRANSFORMATIONS)) {
+        if (! in_array($transformationType, self::ALLOWED_TRANSFORMATIONS)) {
             throw new InvalidArgumentException(sprintf('Invalid transformation type "%s", allowed transformations are: %s', $transformationType, implode(',', self::ALLOWED_TRANSFORMATIONS)));
         }
 
@@ -89,8 +91,6 @@ class PatternTransformer
     }
 
     /**
-     * @param string $currencyPattern
-     *
      * @return string
      */
     public function getTransformationType(string $currencyPattern)
@@ -99,10 +99,10 @@ class PatternTransformer
         $pattern = str_replace(self::RTL_CHARACTER, '', $patterns[0]);
 
         $regexpList = [
-            self::TYPE_LEFT_SYMBOL_WITH_SPACE => '/^¤[ ' . self::NO_BREAK_SPACE . ']+.+/',
-            self::TYPE_LEFT_SYMBOL_WITHOUT_SPACE => '/^¤[^ ' . self::NO_BREAK_SPACE . ']+/',
-            self::TYPE_RIGHT_SYMBOL_WITH_SPACE => '/.+[ ' . self::NO_BREAK_SPACE . ']+¤$/',
-            self::TYPE_RIGHT_SYMBOL_WITHOUT_SPACE => '/[^ ' . self::NO_BREAK_SPACE . ']+¤$/',
+            self::TYPE_LEFT_SYMBOL_WITH_SPACE => '/^¤[ '.self::NO_BREAK_SPACE.']+.+/',
+            self::TYPE_LEFT_SYMBOL_WITHOUT_SPACE => '/^¤[^ '.self::NO_BREAK_SPACE.']+/',
+            self::TYPE_RIGHT_SYMBOL_WITH_SPACE => '/.+[ '.self::NO_BREAK_SPACE.']+¤$/',
+            self::TYPE_RIGHT_SYMBOL_WITHOUT_SPACE => '/[^ '.self::NO_BREAK_SPACE.']+¤$/',
         ];
         foreach ($regexpList as $type => $regexp) {
             if (preg_match($regexp, $pattern)) {
@@ -114,9 +114,6 @@ class PatternTransformer
     }
 
     /**
-     * @param string $basePattern
-     * @param string $transformationType
-     *
      * @return string
      */
     private function transformPattern(string $basePattern, string $transformationType)
@@ -135,13 +132,8 @@ class PatternTransformer
         );
     }
 
-    /**
-     * @param string $currencyPattern
-     *
-     * @return string
-     */
     private function getRtlCharacter(string $currencyPattern): string
     {
-        return (false !== strpos($currencyPattern, self::RTL_CHARACTER)) ? self::RTL_CHARACTER : '';
+        return (strpos($currencyPattern, self::RTL_CHARACTER) !== false) ? self::RTL_CHARACTER : '';
     }
 }

@@ -37,8 +37,7 @@ interface UseDefaultCatalogueInterface
     /**
      * Get the default (aka untranslated) catalogue
      *
-     * @param bool $empty if true, empty the catalogue values (keep the keys)
-     *
+     * @param  bool  $empty  if true, empty the catalogue values (keep the keys)
      * @return MessageCatalogueInterface Return a default catalogue with all keys
      */
     public function getDefaultCatalogue($empty = true);

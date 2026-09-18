@@ -8,7 +8,7 @@ class StoreApiTokenRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['super-admin', 'super-settings']) ?? false;
+        return $this->user()?->can('helpdesk.view') ?? false;
     }
 
     public function rules(): array
@@ -16,7 +16,7 @@ class StoreApiTokenRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:80'],
             'abilities' => ['nullable', 'array'],
-            'abilities.*' => ['string', 'max:64'],
+            'abilities.*' => ['string', 'in:helpdesk.read,helpdesk.write,helpdesk.manage'],
         ];
     }
 
@@ -27,6 +27,7 @@ class StoreApiTokenRequest extends FormRequest
             'name.max' => 'El nombre no puede superar los 80 caracteres.',
             'abilities.array' => 'Los permisos deben ser una lista.',
             'abilities.*.max' => 'Cada permiso no puede superar los 64 caracteres.',
+            'abilities.*.in' => 'El permiso API seleccionado no es válido.',
         ];
     }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Order\Exception;
 /**
  * Thrown on failure to update order
  */
-class CannotUpdateOrderException extends OrderException
-{
-}
+class CannotUpdateOrderException extends OrderException {}

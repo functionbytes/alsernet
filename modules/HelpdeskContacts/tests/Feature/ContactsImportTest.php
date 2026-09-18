@@ -180,6 +180,17 @@ class ContactsImportTest extends TestCase
         $this->assertDatabaseHas('helpdesk_customers', ['email' => 'valido@example.test'], 'helpdesk');
     }
 
+    public function test_import_rejects_an_empty_csv_without_crashing(): void
+    {
+        $inboxA = $this->makeInbox('Inbox A');
+        $agent = $this->makeRestrictedAgent($inboxA);
+
+        $response = $this->import($agent, '');
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('file');
+    }
+
     public function test_manager_import_still_updates_contacts_of_any_inbox(): void
     {
         $manager = User::factory()->create();

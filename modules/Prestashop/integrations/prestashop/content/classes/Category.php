@@ -835,11 +835,11 @@ class CategoryCore extends ObjectModel
     {
         $context = Context::getContext();
         if (count(Category::getCategoriesWithoutParent()) > 1
-            && \Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE')
+            && Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE')
             && count(Shop::getShops(true, null, true)) !== 1) {
-            $idCategoryRoot = (int) \Configuration::get('PS_ROOT_CATEGORY');
+            $idCategoryRoot = (int) Configuration::get('PS_ROOT_CATEGORY');
         } elseif (! $context->shop->id) {
-            $idCategoryRoot = (new Shop(\Configuration::get('PS_SHOP_DEFAULT')))->id_category;
+            $idCategoryRoot = (new Shop(Configuration::get('PS_SHOP_DEFAULT')))->id_category;
         } else {
             $idCategoryRoot = $context->shop->id_category;
         }

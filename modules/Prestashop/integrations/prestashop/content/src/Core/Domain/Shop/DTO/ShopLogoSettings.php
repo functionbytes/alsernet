@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,7 +59,7 @@ class ShopLogoSettings
     {
         $mimeTypes = [];
         foreach (self::AVAILABLE_LOGO_IMAGE_EXTENSIONS as $imageExtension) {
-            $mimeTypes[] = '.' . $imageExtension;
+            $mimeTypes[] = '.'.$imageExtension;
         }
 
         return $mimeTypes;
@@ -71,6 +72,6 @@ class ShopLogoSettings
      */
     public function getIconImageExtensionWithDot()
     {
-        return '.' . self::AVAILABLE_ICON_IMAGE_EXTENSION;
+        return '.'.self::AVAILABLE_ICON_IMAGE_EXTENSION;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,21 +46,18 @@ final class GetProfileForEditingHandler extends AbstractObjectModelHandler imple
      * @var ImageTagSourceParserInterface
      */
     private $imageTagSourceParser;
+
     /**
      * @var string
      */
     private $imgDir;
 
-    /**
-     * @param ImageTagSourceParserInterface|null $imageTagSourceParser
-     * @param string $imgDir
-     */
     public function __construct(
-        ImageTagSourceParserInterface $imageTagSourceParser = null,
+        ?ImageTagSourceParserInterface $imageTagSourceParser = null,
         string $imgDir = _PS_PROFILE_IMG_DIR_
     ) {
         $this->imgDir = $imgDir;
-        if (null === $imageTagSourceParser) {
+        if ($imageTagSourceParser === null) {
             @trigger_error('The $imageTagSourceParser parameter should not be null, inject your main ImageTagSourceParserInterface service', E_USER_DEPRECATED);
         }
         $this->imageTagSourceParser = $imageTagSourceParser ?? new ImageTagSourceParser(__PS_BASE_URI__);
@@ -83,8 +81,6 @@ final class GetProfileForEditingHandler extends AbstractObjectModelHandler imple
     }
 
     /**
-     * @param ProfileId $profileId
-     *
      * @return Profile
      *
      * @throws ProfileNotFoundException
@@ -100,18 +96,13 @@ final class GetProfileForEditingHandler extends AbstractObjectModelHandler imple
         return $profile;
     }
 
-    /**
-     * @param int $imageId
-     *
-     * @return array|null
-     */
     private function getAvatarUrl(int $imageId): ?array
     {
-        $imagePath = $this->imgDir . $imageId . '.jpg';
+        $imagePath = $this->imgDir.$imageId.'.jpg';
         $imageTag = $this->getTmpImageTag($imagePath, $imageId, 'profile');
         $imageSize = $this->getImageSize($imagePath);
 
-        if (empty($imageTag) || null === $imageSize) {
+        if (empty($imageTag) || $imageSize === null) {
             return null;
         }
 

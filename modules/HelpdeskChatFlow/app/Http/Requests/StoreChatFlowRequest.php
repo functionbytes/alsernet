@@ -35,6 +35,11 @@ class StoreChatFlowRequest extends FormRequest
             'trigger_conditions.keywords' => ['sometimes', 'array'],
             'trigger_conditions.keywords.*' => ['string', 'max:100'],
             'trigger_conditions.timeout_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
+            'trigger_conditions.escape_keywords' => ['sometimes', 'array'],
+            'trigger_conditions.escape_keywords.*' => ['string', 'max:100'],
+            // NLU-based intent classification (ChatFlowTriggerResolver::usesNlu/intentLabel).
+            'trigger_conditions.use_nlu' => ['sometimes', 'boolean'],
+            'trigger_conditions.intent' => ['sometimes', 'nullable', 'string', 'max:255'],
             'nodes' => ['required', 'array'],
             'nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::NODE_TYPES)],
             'status' => ['nullable', 'in:draft,active,archived'],

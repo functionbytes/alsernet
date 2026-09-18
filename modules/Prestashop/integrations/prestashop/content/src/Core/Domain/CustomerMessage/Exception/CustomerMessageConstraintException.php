@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,5 +30,6 @@ namespace PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Exception;
 class CustomerMessageConstraintException extends CustomerMessageException
 {
     public const MISSING_MESSAGE = 1;
+
     public const INVALID_MESSAGE = 2;
 }

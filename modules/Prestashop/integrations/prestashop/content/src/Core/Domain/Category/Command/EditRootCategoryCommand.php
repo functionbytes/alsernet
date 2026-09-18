@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,7 +86,7 @@ class EditRootCategoryCommand
     private $associatedShopIds;
 
     /**
-     * @param int $categoryId
+     * @param  int  $categoryId
      */
     public function __construct($categoryId)
     {
@@ -109,8 +110,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedNames
-     *
+     * @param  string[]  $localizedNames
      * @return $this
      *
      * @throws CategoryConstraintException
@@ -135,8 +135,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedLinkRewrites
-     *
+     * @param  string[]  $localizedLinkRewrites
      * @return $this
      *
      * @throws CategoryConstraintException
@@ -161,8 +160,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedDescriptions
-     *
+     * @param  string[]  $localizedDescriptions
      * @return $this
      */
     public function setLocalizedDescriptions(array $localizedDescriptions)
@@ -181,15 +179,14 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param bool $isActive
-     *
+     * @param  bool  $isActive
      * @return $this
      *
      * @throws CategoryConstraintException
      */
     public function setIsActive($isActive)
     {
-        if (!is_bool($isActive)) {
+        if (! is_bool($isActive)) {
             throw new CategoryConstraintException('Invalid Category status supplied', CategoryConstraintException::INVALID_STATUS);
         }
 
@@ -207,8 +204,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedMetaTitles
-     *
+     * @param  string[]  $localizedMetaTitles
      * @return $this
      */
     public function setLocalizedMetaTitles(array $localizedMetaTitles)
@@ -227,8 +223,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedMetaDescriptions
-     *
+     * @param  string[]  $localizedMetaDescriptions
      * @return $this
      */
     public function setLocalizedMetaDescriptions(array $localizedMetaDescriptions)
@@ -247,8 +242,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param string[] $localizedMetaKeywords
-     *
+     * @param  string[]  $localizedMetaKeywords
      * @return $this
      */
     public function setLocalizedMetaKeywords(array $localizedMetaKeywords)
@@ -267,8 +261,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param int[] $associatedGroupIds
-     *
+     * @param  int[]  $associatedGroupIds
      * @return $this
      */
     public function setAssociatedGroupIds(array $associatedGroupIds)
@@ -287,8 +280,7 @@ class EditRootCategoryCommand
     }
 
     /**
-     * @param int[] $associatedShopIds
-     *
+     * @param  int[]  $associatedShopIds
      * @return $this
      */
     public function setAssociatedShopIds(array $associatedShopIds)

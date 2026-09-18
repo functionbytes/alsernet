@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class ContactFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -59,8 +57,7 @@ final class ContactFormDataHandler implements FormDataHandlerInterface
     {
         $addContactCommand = (new AddContactCommand($data['title'], $data['is_messages_saving_enabled']))
             ->setLocalisedDescription($data['description'])
-            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         if ($data['email']) {
             $addContactCommand->setEmail($data['email']);
@@ -83,8 +80,7 @@ final class ContactFormDataHandler implements FormDataHandlerInterface
             ->setLocalisedTitles($data['title'])
             ->setIsMessagesSavingEnabled($data['is_messages_saving_enabled'])
             ->setLocalisedDescription($data['description'])
-            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         if ($data['email']) {
             $editContactCommand->setEmail($data['email']);

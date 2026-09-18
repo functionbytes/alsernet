@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,10 +38,9 @@ use Symfony\Component\Translation\MessageCatalogue;
 trait TranslationFinderTrait
 {
     /**
-     * @param array $paths a list of paths when we can look for translations
-     * @param string $locale the Symfony (not the PrestaShop one) locale
-     * @param string|null $pattern a regular expression
-     *
+     * @param  array  $paths  a list of paths when we can look for translations
+     * @param  string  $locale  the Symfony (not the PrestaShop one) locale
+     * @param  string|null  $pattern  a regular expression
      * @return MessageCatalogue
      *
      * @throws FileNotFoundException
@@ -50,10 +50,10 @@ trait TranslationFinderTrait
     public function getCatalogueFromPaths($paths, $locale, $pattern = null)
     {
         @trigger_error(
-            __FUNCTION__ . 'is deprecated since version 1.7.6.1 Use TranslationFinder::getCatalogueFromPaths() instead.',
+            __FUNCTION__.'is deprecated since version 1.7.6.1 Use TranslationFinder::getCatalogueFromPaths() instead.',
             E_USER_DEPRECATED
         );
 
-        return (new TranslationFinder())->getCatalogueFromPaths($paths, $locale, $pattern);
+        return (new TranslationFinder)->getCatalogueFromPaths($paths, $locale, $pattern);
     }
 }

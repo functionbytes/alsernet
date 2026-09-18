@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,18 +48,17 @@ class CarrierDataProvider
     /**
      * Get all carriers in a given language.
      *
-     * @param int $id_lang Language id
-     * @param bool $active Return only active carriers when true
-     * @param bool $delete
-     * @param bool|int $id_zone
-     * @param string|null $ids_group
-     * @param int $modules_filters Possible values:
-     *                             - PS_CARRIERS_ONLY
-     *                             - CARRIERS_MODULE
-     *                             - CARRIERS_MODULE_NEED_RANGE
-     *                             - PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE
-     *                             - ALL_CARRIERS
-     *
+     * @param  int  $id_lang  Language id
+     * @param  bool  $active  Return only active carriers when true
+     * @param  bool  $delete
+     * @param  bool|int  $id_zone
+     * @param  string|null  $ids_group
+     * @param  int  $modules_filters  Possible values:
+     *                                - PS_CARRIERS_ONLY
+     *                                - CARRIERS_MODULE
+     *                                - CARRIERS_MODULE_NEED_RANGE
+     *                                - PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE
+     *                                - ALL_CARRIERS
      * @return array Carriers
      */
     public function getCarriers($id_lang, $active = false, $delete = false, $id_zone = false, $ids_group = null, $modules_filters = Carrier::PS_CARRIERS_ONLY)
@@ -69,13 +69,12 @@ class CarrierDataProvider
     /**
      * Get all active carriers in given language, usable for choice form type.
      *
-     * @param int|null $languageId if not provided - will use the default language
-     *
+     * @param  int|null  $languageId  if not provided - will use the default language
      * @return array carrier choices
      */
     public function getActiveCarriersChoices($languageId = null)
     {
-        if (null === $languageId) {
+        if ($languageId === null) {
             $languageId = $this->configuration->getInt('PS_LANG_DEFAULT');
         }
 

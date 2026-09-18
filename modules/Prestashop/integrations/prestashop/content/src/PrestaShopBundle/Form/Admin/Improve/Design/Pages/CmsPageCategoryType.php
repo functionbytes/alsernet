@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,11 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class CmsPageCategoryType extends TranslatorAwareType
 {
     public const NAME_MAX_LENGTH = 64;
+
     public const META_TITLE_MAX_LENGTH = 255;
+
     public const META_KEYWORDS_MAX_LENGTH = 255;
+
     public const META_DESCRIPTION_MAX_LENGTH = 512;
 
     /**
@@ -63,10 +67,7 @@ class CmsPageCategoryType extends TranslatorAwareType
     private $isShopFeatureEnabled;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $allCmsCategories
-     * @param bool $isShopFeatureEnabled
+     * @param  bool  $isShopFeatureEnabled
      */
     public function __construct(TranslatorInterface $translator, array $locales, array $allCmsCategories, $isShopFeatureEnabled)
     {
@@ -80,14 +81,14 @@ class CmsPageCategoryType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $invalidCharactersForCatalogLabel = $this->trans('Invalid characters:', 'Admin.Global') . TypedRegexValidator::CATALOG_CHARS;
-        $invalidCharactersForNameLabel = $this->trans('Invalid characters:', 'Admin.Global') . TypedRegexValidator::GENERIC_NAME_CHARS;
+        $invalidCharactersForCatalogLabel = $this->trans('Invalid characters:', 'Admin.Global').TypedRegexValidator::CATALOG_CHARS;
+        $invalidCharactersForNameLabel = $this->trans('Invalid characters:', 'Admin.Global').TypedRegexValidator::GENERIC_NAME_CHARS;
         $builder
             ->add('name', TranslatableType::class, [
                 'label' => $this->trans('Name', 'Admin.Global'),
                 'help' => $invalidCharactersForCatalogLabel,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -121,7 +122,7 @@ class CmsPageCategoryType extends TranslatorAwareType
                 'type' => TextareaType::class,
                 'options' => [
                     'constraints' => [
-                        new CleanHtml(),
+                        new CleanHtml,
                     ],
                 ],
             ])
@@ -192,11 +193,11 @@ class CmsPageCategoryType extends TranslatorAwareType
                 'label' => $this->trans('Friendly URL', 'Admin.Global'),
                 'help' => $this->trans('Unless the \'Accented URL\' option is enabled (in Shop parameters > Traffic & SEO), only letters, numbers, underscores (_), and hyphens (-) are allowed.', 'Admin.Catalog.Help'),
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
-                        new IsUrlRewrite(),
+                        new IsUrlRewrite,
                         new Length([
                             'max' => self::NAME_MAX_LENGTH,
                             'maxMessage' => $this->trans(
@@ -207,8 +208,7 @@ class CmsPageCategoryType extends TranslatorAwareType
                         ]),
                     ],
                 ],
-            ])
-        ;
+            ]);
 
         if ($this->isShopFeatureEnabled) {
             $builder->add('shop_association', ShopChoiceTreeType::class, [

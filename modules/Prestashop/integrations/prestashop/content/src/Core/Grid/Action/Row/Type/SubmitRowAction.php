@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,6 +37,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 final class SubmitRowAction extends AbstractRowAction
 {
     public const MESSAGE_TYPE_STATIC = 'static'; // Static confirmation message type is standard confirmation message type
+
     public const MESSAGE_TYPE_DYNAMIC = 'dynamic'; // Dynamic confirmation message type enables dynamic confirmation message
 
     /**
@@ -76,8 +78,7 @@ final class SubmitRowAction extends AbstractRowAction
             ->setAllowedTypes('confirm_message', 'string')
             ->setAllowedTypes('accessibility_checker', [AccessibilityCheckerInterface::class, 'callable', 'null'])
             ->setAllowedTypes('dynamic_message_field', 'string')
-            ->setAllowedTypes('confirm_message_type', 'string')
-        ;
+            ->setAllowedTypes('confirm_message_type', 'string');
     }
 
     /**

@@ -43,8 +43,8 @@
         '#4f6b0a' => 'Verde oscuro',
         '#90bb13' => 'Verde de marca',
         '#b6d34a' => 'Verde claro',
-        '#d7e8a3' => 'Verde palido',
-        '#333333' => 'Gris carbon',
+        '#d7e8a3' => 'Verde pálido',
+        '#333333' => 'Gris carbón',
         '#555555' => 'Gris medio',
         '#8a8a8a' => 'Gris',
         '#c4c4c4' => 'Gris claro',
@@ -64,7 +64,7 @@
         <input type="text" name="{{ $name }}" id="{{ $ccId }}"
                class="form-control ts-color__hex {{ $ccInvalid ? 'is-invalid' : '' }}"
                value="{{ $ccValue }}" maxlength="7" spellcheck="false" autocomplete="off"
-               placeholder="{{ $ccFallback }}" aria-label="Codigo hexadecimal del color">
+               placeholder="{{ $ccFallback }}" aria-label="Código hexadecimal del color">
 
         @if($ccSwatches)
             <div class="ts-color__swatches" role="group" aria-label="Colores sugeridos">

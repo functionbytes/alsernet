@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,7 @@ class DownloadFileExtension extends AbstractTypeExtension
             ->setDefaults([
                 'download_url' => null,
             ])
-            ->setAllowedTypes('download_url', ['null', 'string'])
-        ;
+            ->setAllowedTypes('download_url', ['null', 'string']);
     }
 
     /**

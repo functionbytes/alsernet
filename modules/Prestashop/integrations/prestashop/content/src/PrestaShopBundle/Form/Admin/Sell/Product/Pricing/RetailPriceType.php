@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,11 +51,6 @@ class RetailPriceType extends TranslatorAwareType
      */
     private $isEcotaxEnabled;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param Currency $defaultCurrency
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -79,7 +75,7 @@ class RetailPriceType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -90,12 +86,11 @@ class RetailPriceType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
-            ])
-        ;
+            ]);
 
         if ($this->isEcotaxEnabled) {
             $builder->add('ecotax', UnavailableType::class, [

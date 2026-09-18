@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,6 @@ use Tools;
 abstract class AbstractImageUploader
 {
     /**
-     * @param UploadedFile $image
-     *
      * @throws UploadedImageConstraintException
      */
     protected function checkImageIsAllowedForUpload(UploadedFile $image)
@@ -57,8 +56,8 @@ abstract class AbstractImageUploader
             throw new UploadedImageConstraintException(sprintf('Max file size allowed is "%s" bytes. Uploaded image size is "%s".', $maxFileSize, $image->getSize()), UploadedImageConstraintException::EXCEEDED_SIZE);
         }
 
-        if (!ImageManager::isRealImage($image->getPathname(), $image->getClientMimeType())
-            || !ImageManager::isCorrectImageFileExt($image->getClientOriginalName())
+        if (! ImageManager::isRealImage($image->getPathname(), $image->getClientMimeType())
+            || ! ImageManager::isCorrectImageFileExt($image->getClientOriginalName())
             || preg_match('/\%00/', $image->getClientOriginalName()) // prevent null byte injection
         ) {
             throw new UploadedImageConstraintException(sprintf('Image format "%s", not recognized, allowed formats are: .gif, .jpg, .png', $image->getClientOriginalExtension()), UploadedImageConstraintException::UNRECOGNIZED_FORMAT);
@@ -68,17 +67,17 @@ abstract class AbstractImageUploader
     /**
      * Creates temporary image from uploaded file
      *
-     * @param UploadedFile $image
      *
-     * @throws ImageUploadException
      *
      * @return string
+     *
+     * @throws ImageUploadException
      */
     protected function createTemporaryImage(UploadedFile $image)
     {
         $temporaryImageName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
 
-        if (!$temporaryImageName || !move_uploaded_file($image->getPathname(), $temporaryImageName)) {
+        if (! $temporaryImageName || ! move_uploaded_file($image->getPathname(), $temporaryImageName)) {
             throw new ImageUploadException('Failed to create temporary image file');
         }
 
@@ -88,19 +87,19 @@ abstract class AbstractImageUploader
     /**
      * Uploads resized image from temporary folder to image destination
      *
-     * @param string $temporaryImageName
-     * @param string $destination
+     * @param  string  $temporaryImageName
+     * @param  string  $destination
      *
      * @throws ImageOptimizationException
      * @throws MemoryLimitException
      */
     protected function uploadFromTemp($temporaryImageName, $destination)
     {
-        if (!ImageManager::checkImageMemoryLimit($temporaryImageName)) {
+        if (! ImageManager::checkImageMemoryLimit($temporaryImageName)) {
             throw new MemoryLimitException('Cannot upload image due to memory restrictions');
         }
 
-        if (!ImageManager::resize($temporaryImageName, $destination)) {
+        if (! ImageManager::resize($temporaryImageName, $destination)) {
             throw new ImageOptimizationException('An error occurred while uploading the image. Check your directory permissions.');
         }
 
@@ -110,10 +109,9 @@ abstract class AbstractImageUploader
     /**
      * Generates different size images
      *
-     * @param int $id
-     * @param string $imageDir
-     * @param string $belongsTo to whom the image belongs (for example 'suppliers' or 'categories')
-     *
+     * @param  int  $id
+     * @param  string  $imageDir
+     * @param  string  $belongsTo  to whom the image belongs (for example 'suppliers' or 'categories')
      * @return bool
      *
      * @throws ImageOptimizationException
@@ -131,7 +129,7 @@ abstract class AbstractImageUploader
         } catch (PrestaShopException $e) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
-        if (!$resized) {
+        if (! $resized) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 
@@ -141,10 +139,8 @@ abstract class AbstractImageUploader
     /**
      * Resizes the image depending on its type
      *
-     * @param int $id
-     * @param string $imageDir
-     * @param array $imageType
-     *
+     * @param  int  $id
+     * @param  string  $imageDir
      * @return bool
      */
     private function resize($id, $imageDir, array $imageType)
@@ -160,8 +156,8 @@ abstract class AbstractImageUploader
         }
 
         return ImageManager::resize(
-            $imageDir . $id . '.jpg',
-            $imageDir . $id . '-' . stripslashes($imageType['name']) . $ext,
+            $imageDir.$id.'.jpg',
+            $imageDir.$id.'-'.stripslashes($imageType['name']).$ext,
             (int) $width,
             (int) $height
         );

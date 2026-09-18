@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class MainCountryKpi implements KpiInterface
     private $sourceLink;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $configuration
-     * @param string $sourceLink a link to refresh KPI
+     * @param  string  $sourceLink  a link to refresh KPI
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -73,15 +72,15 @@ final class MainCountryKpi implements KpiInterface
     {
         $mainCountry = $this->configuration->get('MAIN_COUNTRY');
 
-        $kpi = new HelperKpi();
-        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_ . 'new-theme/template/');
+        $kpi = new HelperKpi;
+        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_.'new-theme/template/');
         $kpi->id = 'box-country';
         $kpi->icon = 'home';
         $kpi->color = 'color2';
         $kpi->title = $this->translator->trans('Main Country', [], 'Admin.International.Feature');
         $kpi->subtitle = $this->translator->trans('30 Days', [], 'Admin.Global');
 
-        if (false !== $mainCountry) {
+        if ($mainCountry !== false) {
             $kpi->value = $mainCountry;
         }
 

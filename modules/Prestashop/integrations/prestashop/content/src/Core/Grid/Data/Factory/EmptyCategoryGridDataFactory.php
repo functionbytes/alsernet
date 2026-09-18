@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class EmptyCategoryGridDataFactory implements GridDataFactoryInterface
      */
     private $doctrineEmptyCategoryDataFactory;
 
-    /**
-     * @param GridDataFactoryInterface $doctrineEmptyCategoryDataFactory
-     */
     public function __construct(GridDataFactoryInterface $doctrineEmptyCategoryDataFactory)
     {
         $this->doctrineEmptyCategoryDataFactory = $doctrineEmptyCategoryDataFactory;
@@ -67,7 +65,6 @@ final class EmptyCategoryGridDataFactory implements GridDataFactoryInterface
     /**
      * Modify empty category records.
      *
-     * @param array $records
      *
      * @return array
      */

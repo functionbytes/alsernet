@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,9 +32,7 @@ interface ValidatorInterface
     /**
      * Check if HTML is clean.
      *
-     * @param string $html
-     * @param array $options
-     *
+     * @param  string  $html
      * @return bool
      */
     public function isCleanHtml($html, array $options = []);
@@ -41,8 +40,7 @@ interface ValidatorInterface
     /**
      * Check if Module name is valid.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public function isModuleName($name);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,13 +70,6 @@ class ProductImageUpdater
      */
     private $positionUpdater;
 
-    /**
-     * @param ProductImageRepository $productImageRepository
-     * @param ProductImageUploader $productImageUploader
-     * @param PositionUpdateFactory $positionUpdateFactory
-     * @param PositionDefinition $positionDefinition
-     * @param GridPositionUpdaterInterface $positionUpdater
-     */
     public function __construct(
         ProductImageRepository $productImageRepository,
         ProductImageUploader $productImageUploader,
@@ -91,8 +85,6 @@ class ProductImageUpdater
     }
 
     /**
-     * @param ImageId $imageId
-     *
      * @throws CannotDeleteProductImageException
      * @throws CannotUnlinkImageException
      */
@@ -113,8 +105,6 @@ class ProductImageUpdater
     }
 
     /**
-     * @param Image $newCover
-     *
      * @throws CannotUpdateProductImageException
      */
     public function updateProductCover(Image $newCover): void
@@ -130,9 +120,6 @@ class ProductImageUpdater
     }
 
     /**
-     * @param Image $image
-     * @param int $newPosition
-     *
      * @throws CannotUpdateProductImageException
      */
     public function updatePosition(Image $image, int $newPosition): void
@@ -142,9 +129,9 @@ class ProductImageUpdater
         // two images with the same position, so we need to add an offset to the new position depending on the way it
         // is being modified
         if ($oldPosition < $newPosition) {
-            ++$newPosition;
+            $newPosition++;
         } elseif ($oldPosition > $newPosition) {
-            --$newPosition;
+            $newPosition--;
         }
 
         $positionsData = [
@@ -161,7 +148,7 @@ class ProductImageUpdater
         try {
             $positionUpdate = $this->positionUpdateFactory->buildPositionUpdate($positionsData, $this->positionDefinition);
             $this->positionUpdater->update($positionUpdate);
-        } catch (PositionDataException | PositionUpdateException $e) {
+        } catch (PositionDataException|PositionUpdateException $e) {
             throw new CannotUpdateProductImageException(
                 'Cannot update image position',
                 CannotUpdateProductImageException::FAILED_UPDATE_POSITION,
@@ -171,9 +158,6 @@ class ProductImageUpdater
     }
 
     /**
-     * @param Image $image
-     * @param bool $isCover
-     *
      * @throws CannotUpdateProductImageException
      */
     private function updateCover(Image $image, bool $isCover): void

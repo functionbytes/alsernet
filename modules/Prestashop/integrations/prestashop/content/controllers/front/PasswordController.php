@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,7 +29,9 @@ use PrestaShop\PrestaShop\Core\Util\InternationalizedDomainNameConverter;
 class PasswordControllerCore extends FrontController
 {
     public $php_self = 'password';
+
     public $auth = false;
+
     public $ssl = true;
 
     /**
@@ -39,7 +42,7 @@ class PasswordControllerCore extends FrontController
     public function __construct()
     {
         parent::__construct();
-        $this->IDNConverter = new InternationalizedDomainNameConverter();
+        $this->IDNConverter = new InternationalizedDomainNameConverter;
     }
 
     /**
@@ -62,28 +65,28 @@ class PasswordControllerCore extends FrontController
 
     protected function sendRenewPasswordLink()
     {
-        if (!($email = $this->IDNConverter->emailToUtf8(trim(Tools::getValue('email')))) || !Validate::isEmail($email)) {
+        if (! ($email = $this->IDNConverter->emailToUtf8(trim(Tools::getValue('email')))) || ! Validate::isEmail($email)) {
             $this->errors[] = $this->trans('Invalid email address.', [], 'Shop.Notifications.Error');
         } else {
-            $customer = new Customer();
+            $customer = new Customer;
             $customer->getByEmail($email);
-            if (null === $customer->email) {
+            if ($customer->email === null) {
                 $customer->email = Tools::getValue('email');
             }
 
-            if (!Validate::isLoadedObject($customer)) {
+            if (! Validate::isLoadedObject($customer)) {
                 $this->success[] = $this->trans(
                     'If this email address has been registered in our shop, you will receive a link to reset your password at %email%.',
                     ['%email%' => $customer->email],
                     'Shop.Notifications.Success'
                 );
                 $this->setTemplate('customer/password-infos');
-            } elseif (!$customer->active) {
+            } elseif (! $customer->active) {
                 $this->errors[] = $this->trans('You cannot regenerate the password for this account.', [], 'Shop.Notifications.Error');
-            } elseif ((strtotime($customer->last_passwd_gen . '+' . ($minTime = (int) Configuration::get('PS_PASSWD_TIME_FRONT')) . ' minutes') - time()) > 0) {
+            } elseif ((strtotime($customer->last_passwd_gen.'+'.($minTime = (int) Configuration::get('PS_PASSWD_TIME_FRONT')).' minutes') - time()) > 0) {
                 $this->errors[] = $this->trans('You can regenerate your password only every %d minute(s)', [(int) $minTime], 'Shop.Notifications.Error');
             } else {
-                if (!$customer->hasRecentResetPasswordToken()) {
+                if (! $customer->hasRecentResetPasswordToken()) {
                     $customer->stampResetPasswordToken();
                     $customer->update();
                 }
@@ -92,7 +95,7 @@ class PasswordControllerCore extends FrontController
                     '{email}' => $customer->email,
                     '{lastname}' => $customer->lastname,
                     '{firstname}' => $customer->firstname,
-                    '{url}' => $this->context->link->getPageLink('password', true, null, 'token=' . $customer->secure_key . '&id_customer=' . (int) $customer->id . '&reset_token=' . $customer->reset_password_token),
+                    '{url}' => $this->context->link->getPageLink('password', true, null, 'token='.$customer->secure_key.'&id_customer='.(int) $customer->id.'&reset_token='.$customer->reset_password_token),
                 ];
 
                 if (
@@ -106,7 +109,7 @@ class PasswordControllerCore extends FrontController
                         ),
                         $mailParams,
                         $customer->email,
-                        $customer->firstname . ' ' . $customer->lastname
+                        $customer->firstname.' '.$customer->lastname
                     )
                 ) {
                     $this->success[] = $this->trans('If this email address has been registered in our shop, you will receive a link to reset your password at %email%.', ['%email%' => $customer->email], 'Shop.Notifications.Success');
@@ -124,15 +127,15 @@ class PasswordControllerCore extends FrontController
         $id_customer = (int) Tools::getValue('id_customer');
         $reset_token = Tools::getValue('reset_token');
         $email = Db::getInstance()->getValue(
-            'SELECT `email` FROM ' . _DB_PREFIX_ . 'customer c WHERE c.`secure_key` = \'' . pSQL($token) . '\' AND c.id_customer = ' . $id_customer
+            'SELECT `email` FROM '._DB_PREFIX_.'customer c WHERE c.`secure_key` = \''.pSQL($token).'\' AND c.id_customer = '.$id_customer
         );
         if ($email) {
-            $customer = new Customer();
+            $customer = new Customer;
             $customer->getByEmail($email);
 
-            if (!Validate::isLoadedObject($customer)) {
+            if (! Validate::isLoadedObject($customer)) {
                 $this->errors[] = $this->trans('Customer account not found', [], 'Shop.Notifications.Error');
-            } elseif (!$customer->active) {
+            } elseif (! $customer->active) {
                 $this->errors[] = $this->trans('You cannot regenerate the password for this account.', [], 'Shop.Notifications.Error');
             } elseif ($customer->getValidResetPasswordToken() !== $reset_token) {
                 $this->errors[] = $this->trans('The password change request expired. You should ask for a new one.', [], 'Shop.Notifications.Error');
@@ -144,11 +147,11 @@ class PasswordControllerCore extends FrontController
 
             if ($isSubmit = Tools::isSubmit('passwd')) {
                 // If password is submitted validate pass and confirmation
-                if (!$passwd = Tools::getValue('passwd')) {
+                if (! $passwd = Tools::getValue('passwd')) {
                     $this->errors[] = $this->trans('The password is missing: please enter your new password.', [], 'Shop.Notifications.Error');
                 }
 
-                if (!$confirmation = Tools::getValue('confirmation')) {
+                if (! $confirmation = Tools::getValue('confirmation')) {
                     $this->errors[] = $this->trans('The confirmation is empty: please fill in the password confirmation as well', [], 'Shop.Notifications.Error');
                 }
 
@@ -157,13 +160,13 @@ class PasswordControllerCore extends FrontController
                         $this->errors[] = $this->trans('The password and its confirmation do not match.', [], 'Shop.Notifications.Error');
                     }
 
-                    if (!Validate::isPasswd($passwd)) {
+                    if (! Validate::isPasswd($passwd)) {
                         $this->errors[] = $this->trans('The password is not in a valid format.', [], 'Shop.Notifications.Error');
                     }
                 }
             }
 
-            if (!$isSubmit || $this->errors) {
+            if (! $isSubmit || $this->errors) {
                 // If password is NOT submitted OR there are errors, shows the form (and errors)
                 $this->context->smarty->assign([
                     'customer_email' => $customer->email,
@@ -175,7 +178,7 @@ class PasswordControllerCore extends FrontController
                 $this->setTemplate('customer/password-new');
             } else {
                 // Both password fields posted. Check if all is right and store new password properly.
-                if (!$reset_token || (strtotime($customer->last_passwd_gen . '+' . (int) Configuration::get('PS_PASSWD_TIME_FRONT') . ' minutes') - time()) > 0) {
+                if (! $reset_token || (strtotime($customer->last_passwd_gen.'+'.(int) Configuration::get('PS_PASSWD_TIME_FRONT').' minutes') - time()) > 0) {
                     Tools::redirect('index.php?controller=authentication&error_regen_pwd');
                 } else {
                     $customer->passwd = $this->get('hashing')->hash($password = Tools::getValue('passwd'), _COOKIE_KEY_);
@@ -203,7 +206,7 @@ class PasswordControllerCore extends FrontController
                                 ),
                                 $mail_params,
                                 $customer->email,
-                                $customer->firstname . ' ' . $customer->lastname
+                                $customer->firstname.' '.$customer->lastname
                             )
                         ) {
                             $this->context->smarty->assign([

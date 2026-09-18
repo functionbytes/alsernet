@@ -66,7 +66,7 @@ abstract class AbstractCarrierHandler implements CarrierHandlerInterface
 
     public function cleanup(): void {}
 
-    public function processSelection(array $requestData, \Context $context): array
+    public function processSelection(array $requestData, Context $context): array
     {
         return $this->processForm($requestData, $context);
     }

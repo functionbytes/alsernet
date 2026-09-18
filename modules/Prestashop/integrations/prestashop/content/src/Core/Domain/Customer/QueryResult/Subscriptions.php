@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,8 @@ class Subscriptions
     private $isPartnerOffersSubscribed;
 
     /**
-     * @param bool $isNewsletterSubscribed
-     * @param bool $isPartnerOffersSubscribed
+     * @param  bool  $isNewsletterSubscribed
+     * @param  bool  $isPartnerOffersSubscribed
      */
     public function __construct($isNewsletterSubscribed, $isPartnerOffersSubscribed)
     {

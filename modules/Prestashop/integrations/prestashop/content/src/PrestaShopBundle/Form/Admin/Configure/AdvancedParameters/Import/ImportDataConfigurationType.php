@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,12 +52,6 @@ class ImportDataConfigurationType extends TranslatorAwareType
      */
     private $entityFieldChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $dataMatchChoices
-     * @param array $entityFieldChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

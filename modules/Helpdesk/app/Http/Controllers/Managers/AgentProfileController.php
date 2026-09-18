@@ -28,7 +28,6 @@ class AgentProfileController extends Controller
      *     agent: array{id:int,name:string,email:string,role:?string,status:string,statusLabel:string,initials:string},
      *     workload: array{open:int,limit:int,percent:int,available:int},
      *     performance: array{resolved7d:int,csat:?float,avgFirstResponse:?int},
-     *     skills: list<array{id:int,name:string}>,
      *     info: array{languages:?string,department:?string,phone:?string,memberSince:?string,tenure:?string},
      *     schedule: array{today:?array{start:string,end:string,enabled:bool},nowMinutes:int,isWorkingDay:bool}
      * }>
@@ -44,7 +43,6 @@ class AgentProfileController extends Controller
             'agent' => $this->agentHeader($agent, $settings),
             'workload' => $this->workload($agent, $settings),
             'performance' => $this->performance($agent),
-            'skills' => $this->skills($agent),
             'info' => $this->info($agent),
             'schedule' => $this->schedule($settings),
         ]);
@@ -55,7 +53,7 @@ class AgentProfileController extends Controller
      */
     private function agentHeader(User $agent, ?AgentSettings $settings): array
     {
-        $name = trim(($agent->firstname ?? '').' '.($agent->lastname ?? '')) ?: $agent->email;
+        $name = $agent->fullName() ?: $agent->email;
 
         [$status, $statusLabel] = $this->presence($agent, $settings);
 
@@ -148,21 +146,6 @@ class AgentProfileController extends Controller
             'csat' => $csat !== null ? round((float) $csat, 1) : null,
             'avgFirstResponse' => $row?->avg_response_sec !== null ? (int) round($row->avg_response_sec) : null,
         ];
-    }
-
-    /**
-     * @return list<array{id:int,name:string}>
-     */
-    private function skills(User $agent): array
-    {
-        return DB::connection('helpdesk')
-            ->table('helpdesk_user_skills as us')
-            ->join('helpdesk_skills as s', 's.id', '=', 'us.skill_id')
-            ->where('us.user_id', $agent->id)
-            ->orderBy('s.name')
-            ->get(['s.id', 's.name'])
-            ->map(fn ($s) => ['id' => (int) $s->id, 'name' => (string) $s->name])
-            ->all();
     }
 
     /**

@@ -85,32 +85,49 @@
                 </div>
             </div>
 
-            {{-- Filtros --}}
+            {{-- Busqueda y filtros --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('manager.helpcenter.categories') }}">
-                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                        <div class="flex-fill">
-                            <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-1">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre..."
-                                       value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search me-1"></i>
+                @php
+                    $activeFilterCount = collect(['visible_to_role', 'content'])->filter(fn ($k) => request()->filled($k))->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                    $contentLabels = ['empty' => 'Vacias', 'with' => 'Con contenido'];
+                @endphp
+
+                <form method="GET" action="{{ route('manager.helpcenter.categories') }}" id="categories-filter-form"
+                      data-bulk-url="{{ route('manager.helpcenter.categories.bulk-action') }}">
+                    <input type="hidden" name="visible_to_role" id="filter-role" value="{{ request('visible_to_role') }}">
+                    <input type="hidden" name="content" id="filter-content" value="{{ request('content') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por nombre..."
+                               value="{{ request('search') }}">
+
+                        <x-filter-button target="categories-filter-modal" :count="$activeFilterCount" />
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
                             </button>
-                            @if(request('search'))
-                                <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-outline-secondary"
-                                   title="Limpiar filtros">
-                                    <i class="fas fa-times"></i>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if(request('visible_to_role'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Rol: {{ request('visible_to_role') }}</span>
+                            @endif
+                            @if(request('content'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">{{ $contentLabels[request('content')] ?? request('content') }}</span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -148,6 +165,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
                                     <th class="text-center">Secciones</th>
@@ -159,10 +177,14 @@
                             <tbody>
                                 @foreach($categories as $category)
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $category->id }}"></td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
                                                 @if($category->icon)
-                                                    <i class="{{ $category->icon }} text-muted"></i>
+                                                    {{-- Los iconos guardados vienen como "fa-truck", sin la clase de
+                                                         estilo: sin ella heredan la fuente del tema y salen en blanco. --}}
+                                                    @php($hcIcon = preg_match('/\b(fa[srlbd]|fa-solid|fa-regular|fa-light|fa-brands|fa-duotone)\b/', $category->icon) ? $category->icon : 'fas '.$category->icon)
+                                                    <i class="{{ $hcIcon }} text-muted"></i>
                                                 @else
                                                     <i class="far fa-folder text-muted"></i>
                                                 @endif
@@ -229,6 +251,7 @@
                                     @if($category->sections_count > 0)
                                         @foreach($category->sections as $section)
                                             <tr class="bg-light-subtle">
+                                                <td></td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2 ps-4">
                                                         <i class="fas fa-arrow-turn-down-right text-muted"></i>
@@ -309,22 +332,75 @@
 
     @include('core::components.delete')
 
+    {{-- Filtros avanzados --}}
+    <x-filter-shell id="categories-filter-modal"
+                    :count="$activeFilterCount"
+                    apply-id="categories-filter-apply-btn"
+                    clear-id="categories-filter-clear-btn">
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Visible para el rol</label>
+            <select id="modal-role" class="form-control select2-filter-modal">
+                <option value="">Cualquier rol</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role }}" @selected(request('visible_to_role') === $role)>{{ $role }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Contenido</label>
+            <select id="modal-content" class="form-control select2-filter-modal">
+                <option value="">Todas</option>
+                <option value="empty" @selected(request('content') === 'empty')>Vacias (se pueden borrar)</option>
+                <option value="with" @selected(request('content') === 'with')>Con secciones o articulos</option>
+            </select>
+        </div>
+    </x-filter-shell>
+
+    {{-- Barra flotante de seleccion --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none hc-bulk-toolbar">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionada(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Accion masiva --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara sobre <strong><span data-bulk-count>0</span> categoria(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2-bulk">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                    <p class="small text-muted mb-0">
+                        Las categorias que tengan secciones o articulos se omiten, igual que al borrarlas de una en una.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
-@push('scripts')
-<script>
-$(document).ready(function () {
-    $('.delete-btn').on('click', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/helpcenter-manager.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/helpcenter-manager.css')) }}">
+@endpush
 
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
-</script>
+@include('helpdeskhelpcenter::partials.common-scripts')
+
+@push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdeskhelpcenter/js/categories-index.js') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/js/categories-index.js')) }}"></script>
 @endpush

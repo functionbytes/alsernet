@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class GridPositionUpdater implements GridPositionUpdaterInterface
      */
     private $updateHandler;
 
-    /**
-     * @param PositionUpdateHandlerInterface $updateHandler
-     */
     public function __construct(PositionUpdateHandlerInterface $updateHandler)
     {
         $this->updateHandler = $updateHandler;
@@ -58,8 +56,6 @@ final class GridPositionUpdater implements GridPositionUpdaterInterface
     }
 
     /**
-     * @param PositionUpdateInterface $positionUpdate
-     *
      * @return array
      */
     private function getNewPositions(PositionUpdateInterface $positionUpdate)
@@ -75,7 +71,7 @@ final class GridPositionUpdater implements GridPositionUpdaterInterface
     }
 
     /**
-     * @param array $positions
+     * @param  array  $positions
      */
     private function sortByPositionValue(&$positions)
     {

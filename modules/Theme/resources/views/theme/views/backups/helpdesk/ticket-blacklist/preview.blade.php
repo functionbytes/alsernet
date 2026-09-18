@@ -33,7 +33,7 @@
                     <div class="preview-wrapper">
                         @if($hit->body_html)
                             <div class="preview-email-container preview-desktop-view" id="previewContainer">
-                                {!! $hit->body_html !!}
+                                {!! clean_html($hit->body_html) !!}
                             </div>
                         @elseif($hit->body_text)
                             <div class="preview-email-container preview-desktop-view preview-plain-text">

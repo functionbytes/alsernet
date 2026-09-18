@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class TaxRulesGroupRepository extends AbstractObjectModelRepository
      */
     private $dbPrefix;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix
@@ -62,22 +59,16 @@ class TaxRulesGroupRepository extends AbstractObjectModelRepository
         $this->dbPrefix = $dbPrefix;
     }
 
-    /**
-     * @param TaxRulesGroupId $taxRulesGroupId
-     *
-     * @return array
-     */
     public function getTaxRulesGroupDetails(TaxRulesGroupId $taxRulesGroupId): array
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('trg.id_tax_rules_group, trg.name, trg.active, trg.deleted, tr.id_country, t.rate')
-            ->from($this->dbPrefix . 'tax_rules_group', 'trg')
-            ->innerJoin('trg', $this->dbPrefix . 'tax_rule', 'tr', 'tr.id_tax_rules_group = trg.id_tax_rules_group')
-            ->innerJoin('tr', $this->dbPrefix . 'tax', 't', 't.id_tax = tr.id_tax')
+            ->from($this->dbPrefix.'tax_rules_group', 'trg')
+            ->innerJoin('trg', $this->dbPrefix.'tax_rule', 'tr', 'tr.id_tax_rules_group = trg.id_tax_rules_group')
+            ->innerJoin('tr', $this->dbPrefix.'tax', 't', 't.id_tax = tr.id_tax')
             ->andWhere('trg.id_tax_rules_group = :taxRulesGroupId')
-            ->setParameter('taxRulesGroupId', $taxRulesGroupId->getValue())
-        ;
+            ->setParameter('taxRulesGroupId', $taxRulesGroupId->getValue());
 
         $rawData = $qb->execute()->fetchAll();
         if (empty($rawData)) {
@@ -99,10 +90,6 @@ class TaxRulesGroupRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param TaxRulesGroupId $taxRulesGroupId
-     *
-     * @return TaxRulesGroup
-     *
      * @throws CoreException
      * @throws TaxRulesGroupNotFoundException
      */
@@ -119,8 +106,6 @@ class TaxRulesGroupRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param TaxRulesGroupId $taxRulesGroupId
-     *
      * @throws CoreException
      * @throws TaxRulesGroupNotFoundException
      */

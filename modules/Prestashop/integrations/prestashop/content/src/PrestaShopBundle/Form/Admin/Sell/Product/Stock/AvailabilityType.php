@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,11 +46,6 @@ class AvailabilityType extends TranslatorAwareType
      */
     private $outOfStockTypeChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FormChoiceProviderInterface $outOfStockTypeChoiceProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -90,8 +86,7 @@ class AvailabilityType extends TranslatorAwareType
                 'attr' => [
                     'placeholder' => 'YYYY-MM-DD',
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**

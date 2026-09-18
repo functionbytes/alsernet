@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,6 @@ class FeatureFlagsType extends TranslatorAwareType
      */
     private $featureFlagsModifier;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FeatureFlagsModifier $featureFlagsModifier
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

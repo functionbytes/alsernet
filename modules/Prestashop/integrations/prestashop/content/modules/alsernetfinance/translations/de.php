@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetfinance}prestashop>alsernetfinance_39ca46ccd96d49f57acb73e25cb2df15'] = 'Persönliche Finanzierung ';
 $_MODULE['<{alsernetfinance}prestashop>alsernetfinance_2d6ee2912319e1f0c1ec69a0d366c329'] = 'Persönliche Finanzierung - Telefonischer Kontakt erforderlich';
 $_MODULE['<{alsernetfinance}prestashop>alsernetfinance_ab9af96271389fef217c0796a741b027'] = 'Wir rufen Sie an, um die Finanzierung zu vereinbaren, die Ihren Bedürfnissen am besten entspricht.';

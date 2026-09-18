@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,8 @@ interface NumberInterface
     /**
      * Get the specified symbols list for a given numbering system.
      *
-     * @param string $numberingSystem
-     *                                Numbering system to use when formatting numbers. @see http://cldr.unicode.org/translation/numbering-systems
-     *
+     * @param  string  $numberingSystem
+     *                                   Numbering system to use when formatting numbers. @see http://cldr.unicode.org/translation/numbering-systems
      * @return NumberSymbolList
      */
     public function getSymbolsByNumberingSystem($numberingSystem = NumberInterface::NUMBERING_SYSTEM_LATIN);
@@ -115,8 +115,6 @@ interface NumberInterface
 
     /**
      * To array function.
-     *
-     * @return array
      */
     public function toArray(): array;
 }

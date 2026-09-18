@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,13 +77,6 @@ class ProductFeatureValueUpdater
      */
     private $featureValueRepository;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param ProductRepository $productRepository
-     * @param FeatureRepository $featureRepository
-     * @param FeatureValueRepository $featureValueRepository
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -98,9 +92,7 @@ class ProductFeatureValueUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param ProductFeatureValue[] $productFeatureValues
-     *
+     * @param  ProductFeatureValue[]  $productFeatureValues
      * @return FeatureValueId[]
      *
      * @throws CannotAddFeatureValueException
@@ -118,7 +110,7 @@ class ProductFeatureValueUpdater
         $previousFeatureIds = [];
         foreach ($productFeatureValues as $productFeatureValue) {
             $this->featureRepository->assertExists($productFeatureValue->getFeatureId());
-            if (null !== $productFeatureValue->getFeatureValueId()) {
+            if ($productFeatureValue->getFeatureValueId() !== null) {
                 $featureValue = $this->featureValueRepository->get($productFeatureValue->getFeatureValueId());
                 if ((int) $featureValue->id_feature !== $productFeatureValue->getFeatureId()->getValue()) {
                     throw new InvalidAssociatedFeatureException('You cannot associate a value to another feature.');
@@ -131,7 +123,7 @@ class ProductFeatureValueUpdater
         }
 
         foreach ($productFeatureValues as $productFeatureValue) {
-            if (null !== $productFeatureValue->getFeatureValueId()) {
+            if ($productFeatureValue->getFeatureValueId() !== null) {
                 $this->updateFeatureValue($productFeatureValue);
             } else {
                 $this->addFeatureValue($productFeatureValue);
@@ -142,9 +134,6 @@ class ProductFeatureValueUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param array $productFeatureValues
-     *
      * @return FeatureValueId[]
      *
      * @throws DBALException
@@ -154,7 +143,7 @@ class ProductFeatureValueUpdater
     {
         // First delete all associations from the product
         $this->connection->delete(
-            $this->dbPrefix . 'feature_product',
+            $this->dbPrefix.'feature_product',
             ['id_product' => $productId->getValue()]
         );
 
@@ -166,7 +155,7 @@ class ProductFeatureValueUpdater
                 'id_feature' => $productFeatureValue->getFeatureId()->getValue(),
                 'id_feature_value' => $productFeatureValue->getFeatureValueId()->getValue(),
             ];
-            $this->connection->insert($this->dbPrefix . 'feature_product', $insertedValues);
+            $this->connection->insert($this->dbPrefix.'feature_product', $insertedValues);
 
             $productFeatureValueIds[] = $productFeatureValue->getFeatureValueId();
         }
@@ -182,14 +171,13 @@ class ProductFeatureValueUpdater
     private function cleanOrphanCustomFeatureValues(): void
     {
         $qb = $this->connection->createQueryBuilder();
-        $qb->from($this->dbPrefix . 'feature_value', 'fv')
+        $qb->from($this->dbPrefix.'feature_value', 'fv')
             ->select('fv.*, fp.id_product')
-            ->leftJoin('fv', $this->dbPrefix . 'feature_product', 'fp', 'fp.id_feature_value = fv.id_feature_value')
+            ->leftJoin('fv', $this->dbPrefix.'feature_product', 'fp', 'fp.id_feature_value = fv.id_feature_value')
             ->where($qb->expr()->andX(
                 $qb->expr()->isNull('fp.id_product')),
                 $qb->expr()->neq('fv.custom', 0)
-            )
-        ;
+            );
 
         $orphanCustomFeatureValues = $qb->execute()->fetchAll();
         if (empty($orphanCustomFeatureValues)) {
@@ -202,15 +190,12 @@ class ProductFeatureValueUpdater
         }
 
         $qb = $this->connection->createQueryBuilder();
-        $qb->delete($this->dbPrefix . 'feature_value')
-            ->where($qb->expr()->in('id_feature_value', $orphanIds))
-        ;
+        $qb->delete($this->dbPrefix.'feature_value')
+            ->where($qb->expr()->in('id_feature_value', $orphanIds));
         $qb->execute();
     }
 
     /**
-     * @param ProductFeatureValue $productFeatureValue
-     *
      * @throws CannotUpdateFeatureValueException
      * @throws CoreException
      * @throws FeatureValueNotFoundException
@@ -218,7 +203,7 @@ class ProductFeatureValueUpdater
     private function updateFeatureValue(ProductFeatureValue $productFeatureValue): void
     {
         // Only custom values need to be updated
-        if (null === $productFeatureValue->getLocalizedCustomValues()) {
+        if ($productFeatureValue->getLocalizedCustomValues() === null) {
             return;
         }
         $featureValue = $this->featureValueRepository->get($productFeatureValue->getFeatureValueId());
@@ -227,17 +212,15 @@ class ProductFeatureValueUpdater
     }
 
     /**
-     * @param ProductFeatureValue $productFeatureValue
-     *
      * @throws CannotAddFeatureValueException
      * @throws CoreException
      */
     private function addFeatureValue(ProductFeatureValue $productFeatureValue): void
     {
-        $featureValue = new FeatureValue();
+        $featureValue = new FeatureValue;
         $featureValue->id_feature = (int) $productFeatureValue->getFeatureId()->getValue();
-        $featureValue->custom = null !== $productFeatureValue->getLocalizedCustomValues();
-        if (null !== $productFeatureValue->getLocalizedCustomValues()) {
+        $featureValue->custom = $productFeatureValue->getLocalizedCustomValues() !== null;
+        if ($productFeatureValue->getLocalizedCustomValues() !== null) {
             $featureValue->value = $productFeatureValue->getLocalizedCustomValues();
         }
         $featureValueId = $this->featureValueRepository->add($featureValue);

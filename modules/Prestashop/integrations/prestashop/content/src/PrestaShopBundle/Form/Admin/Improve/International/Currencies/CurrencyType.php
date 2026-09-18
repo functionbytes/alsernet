@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,10 +64,7 @@ class CurrencyType extends TranslatorAwareType
     private $isShopFeatureEnabled;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $allCurrencies
-     * @param bool $isShopFeatureEnabled
+     * @param  bool  $isShopFeatureEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -84,7 +82,7 @@ class CurrencyType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $newCurrency = !isset($options['data']['id']);
+        $newCurrency = ! isset($options['data']['id']);
         $unofficialCurrency = isset($options['data']['unofficial']) ? (bool) $options['data']['unofficial'] : false;
         if ($newCurrency) {
             $builder
@@ -109,17 +107,15 @@ class CurrencyType extends TranslatorAwareType
                     'attr' => [
                         'material_design' => true,
                     ],
-                ])
-            ;
+                ]);
         } else {
             $builder
                 ->add('unofficial', HiddenType::class, [
                     'required' => false,
-                ])
-            ;
+                ]);
         }
         $isoCodeAttrs = [];
-        if (!$newCurrency && !$unofficialCurrency) {
+        if (! $newCurrency && ! $unofficialCurrency) {
             $isoCodeAttrs['readonly'] = 1;
         }
 
@@ -128,7 +124,7 @@ class CurrencyType extends TranslatorAwareType
                 'label' => $this->trans('Currency name', 'Admin.International.Feature'),
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -166,7 +162,7 @@ class CurrencyType extends TranslatorAwareType
             ->add('iso_code', TextType::class, [
                 'attr' => $isoCodeAttrs,
                 'label' => $this->trans(
-                  'ISO code',
+                    'ISO code',
                     'Admin.International.Feature'
                 ),
                 'help' => $this->trans(
@@ -277,8 +273,7 @@ class CurrencyType extends TranslatorAwareType
                     'class' => 'd-none',
                 ],
                 'type' => HiddenType::class,
-            ])
-        ;
+            ]);
 
         if ($this->isShopFeatureEnabled) {
             $builder->add('shop_association', ShopChoiceTreeType::class, [

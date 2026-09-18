@@ -1,0 +1,11 @@
+{
+    "name": "Questions",
+    "alias": "questions",
+    "description": "Registro, moderación y respuesta de las consultas de producto de la tienda Alvarez.",
+    "keywords": ["questions", "consultas", "prestashop", "webhook", "alsernetquestions"],
+    "priority": 0,
+    "providers": ["Modules\\Questions\\Providers\\QuestionsServiceProvider"],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

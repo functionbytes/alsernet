@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class AddCartRuleToCartCommand
     private $cartRuleId;
 
     /**
-     * @param int $cartId
-     * @param int $cartRuleId
+     * @param  int  $cartId
+     * @param  int  $cartRuleId
      */
     public function __construct($cartId, $cartRuleId)
     {

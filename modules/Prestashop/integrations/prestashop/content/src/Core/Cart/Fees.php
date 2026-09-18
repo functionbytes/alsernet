@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,20 +70,15 @@ class Fees
      */
     protected $orderId;
 
-    /**
-     * @param int|null $orderId
-     */
     public function __construct(?int $orderId = null)
     {
-        $this->shippingFees = new AmountImmutable();
+        $this->shippingFees = new AmountImmutable;
         $this->orderId = $orderId;
     }
 
     /**
-     * @param Cart $cart
-     * @param CartRowCollection $cartRowCollection
-     * @param int $computePrecision
-     * @param int|null $id_carrier
+     * @param  int  $computePrecision
+     * @param  int|null  $id_carrier
      */
     public function processCalculation(
         Cart $cart,
@@ -104,7 +100,7 @@ class Fees
                     null,
                     $products,
                     null,
-                    null !== $this->orderId
+                    $this->orderId !== null
                 ),
                 $cart->getPackageShippingCost(
                     (int) $id_carrier,
@@ -112,7 +108,7 @@ class Fees
                     null,
                     $products,
                     null,
-                    null !== $this->orderId
+                    $this->orderId !== null
                 )
             );
         }
@@ -137,15 +133,14 @@ class Fees
                 )
             );
         } else {
-            $this->wrappingFees = new AmountImmutable();
+            $this->wrappingFees = new AmountImmutable;
         }
         $this->finalWrappingFees = clone $this->wrappingFees;
         $this->isProcessed = true;
     }
 
     /**
-     * @param Cart $cart
-     *
+     * @param  Cart  $cart
      * @return Fees
      */
     public function setCart($cart)

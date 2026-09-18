@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Otros\AsientoCent;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +56,7 @@ class Cierre extends Model
      */
     public function cierre()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Cierre::class, 'idcierre', 'idcierre');
+        return $this->belongsTo(Cierre::class, 'idcierre', 'idcierre');
     }
 
     /**
@@ -64,7 +65,7 @@ class Cierre extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -73,6 +74,6 @@ class Cierre extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
     }
 }

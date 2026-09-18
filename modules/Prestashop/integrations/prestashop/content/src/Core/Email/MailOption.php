@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,7 @@ final class MailOption
     public const METHOD_NATIVE = 1;
 
     /**
-     *  @var int Option defines that emails should be sent using configured SMTP backups
+     * @var int Option defines that emails should be sent using configured SMTP backups
      */
     public const METHOD_SMTP = 2;
 
@@ -64,7 +65,5 @@ final class MailOption
     /**
      * Class should not be initialized as its responsibility is to hold mail method options.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

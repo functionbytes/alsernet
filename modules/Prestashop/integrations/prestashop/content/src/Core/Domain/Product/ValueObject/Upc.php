@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,31 +45,24 @@ class Upc
      * Maximum allowed symbols
      */
     public const MAX_LENGTH = 12;
+
     /**
      * @var string
      */
     private $value;
 
-    /**
-     * @param string $value
-     */
     public function __construct(string $value)
     {
         $this->assertUpcIsValid($value);
         $this->value = $value;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
     }
 
     /**
-     * @param string $value
-     *
      * @throws ProductConstraintException
      */
     private function assertUpcIsValid(string $value): void

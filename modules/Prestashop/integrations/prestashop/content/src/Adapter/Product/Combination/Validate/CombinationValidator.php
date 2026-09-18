@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
  */
 class CombinationValidator extends AbstractObjectModelValidator
 {
-    /**
-     * @param Combination $combination
-     */
     public function validate(Combination $combination): void
     {
         $this->validateDetails($combination);
@@ -50,8 +48,6 @@ class CombinationValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param Combination $combination
-     *
      * @throws CoreException
      * @throws ProductConstraintException
      */
@@ -66,8 +62,6 @@ class CombinationValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param Combination $combination
-     *
      * @throws CoreException
      * @throws ProductConstraintException
      */
@@ -80,8 +74,6 @@ class CombinationValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param Combination $combination
-     *
      * @throws CoreException
      * @throws ProductConstraintException
      */
@@ -100,10 +92,6 @@ class CombinationValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param Combination $combination
-     * @param string $property
-     * @param int $errorCode
-     *
      * @throws CoreException
      * @throws ProductConstraintException
      */

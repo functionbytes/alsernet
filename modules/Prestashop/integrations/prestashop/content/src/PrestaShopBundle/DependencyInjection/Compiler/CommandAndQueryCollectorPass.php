@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class CommandAndQueryCollectorPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        if (!in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
+        if (! in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
             return;
         }
 
@@ -50,7 +51,6 @@ class CommandAndQueryCollectorPass implements CompilerPassInterface
     /**
      * Gets command for each provided handler
      *
-     * @param ContainerBuilder $container
      *
      * @return string[]
      */

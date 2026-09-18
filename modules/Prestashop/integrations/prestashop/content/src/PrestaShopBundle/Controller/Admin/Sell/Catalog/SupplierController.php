@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,9 +68,6 @@ class SupplierController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param SupplierFilters $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, SupplierFilters $filters)
@@ -97,8 +95,6 @@ class SupplierController extends FrameworkBundleAdminController
      *     message="You do not have permission to add this."
      * )
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
@@ -115,7 +111,7 @@ class SupplierController extends FrameworkBundleAdminController
         try {
             $result = $this->getFormHandler()->handle($supplierForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_suppliers_index');
@@ -137,12 +133,12 @@ class SupplierController extends FrameworkBundleAdminController
      *     redirectRoute="admin_suppliers_index",
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_suppliers_index"
      * )
      *
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return RedirectResponse
      */
     public function deleteAction($supplierId)
@@ -169,11 +165,10 @@ class SupplierController extends FrameworkBundleAdminController
      *     redirectRoute="admin_suppliers_index",
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_suppliers_index"
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -209,11 +204,10 @@ class SupplierController extends FrameworkBundleAdminController
      *     redirectRoute="admin_suppliers_index",
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_suppliers_index"
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -248,11 +242,10 @@ class SupplierController extends FrameworkBundleAdminController
      *     redirectRoute="admin_suppliers_index",
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_suppliers_index"
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -288,9 +281,7 @@ class SupplierController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param Request $request
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return Response
      */
     public function editAction(Request $request, $supplierId)
@@ -319,7 +310,7 @@ class SupplierController extends FrameworkBundleAdminController
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
 
-        if (!isset($supplierForm) || !isset($editableSupplier)) {
+        if (! isset($supplierForm) || ! isset($editableSupplier)) {
             return $this->redirectToRoute('admin_suppliers_index');
         }
 
@@ -340,12 +331,12 @@ class SupplierController extends FrameworkBundleAdminController
      *     redirectRoute="admin_suppliers_index",
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_suppliers_index"
      * )
      *
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return RedirectResponse
      */
     public function toggleStatusAction($supplierId)
@@ -369,9 +360,7 @@ class SupplierController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return Response
      */
     public function viewAction(Request $request, $supplierId)
@@ -403,8 +392,6 @@ class SupplierController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param SupplierFilters $filters
-     *
      * @return CsvResponse
      */
     public function exportAction(SupplierFilters $filters)
@@ -431,11 +418,10 @@ class SupplierController extends FrameworkBundleAdminController
             ];
         }
 
-        return (new CsvResponse())
+        return (new CsvResponse)
             ->setData($data)
             ->setHeadersData($headers)
-            ->setFileName('supplier_' . date('Y-m-d_His') . '.csv')
-        ;
+            ->setFileName('supplier_'.date('Y-m-d_His').'.csv');
     }
 
     /**

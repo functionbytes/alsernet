@@ -523,7 +523,7 @@ class SocialSettingsController extends Controller
 
     public function destroyCompetitor(SocialCompetitor $competitor): RedirectResponse
     {
-        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.competitors.manage'), 403);
 
         $competitor->delete();
 

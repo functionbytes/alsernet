@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class AddVirtualProductFileHandler implements AddVirtualProductFileHandler
      */
     private $virtualProductUpdater;
 
-    /**
-     * @param VirtualProductUpdater $virtualProductUpdater
-     */
     public function __construct(
         VirtualProductUpdater $virtualProductUpdater
     ) {
@@ -68,21 +66,15 @@ final class AddVirtualProductFileHandler implements AddVirtualProductFileHandler
         );
     }
 
-    /**
-     * @param AddVirtualProductFileCommand $command
-     *
-     * @return VirtualProductFile
-     */
     private function buildObjectModel(AddVirtualProductFileCommand $command): VirtualProductFile
     {
-        $virtualProductFile = new VirtualProductFile();
+        $virtualProductFile = new VirtualProductFile;
         $virtualProductFile->display_filename = $command->getDisplayName();
         $virtualProductFile->nb_days_accessible = $command->getAccessDays() ?: 0;
         $virtualProductFile->nb_downloadable = $command->getDownloadTimesLimit() ?: 0;
         $virtualProductFile->date_expiration = $command->getExpirationDate() ?
             $command->getExpirationDate()->format(DateTime::DEFAULT_DATETIME_FORMAT) :
-            null
-        ;
+            null;
 
         return $virtualProductFile;
     }

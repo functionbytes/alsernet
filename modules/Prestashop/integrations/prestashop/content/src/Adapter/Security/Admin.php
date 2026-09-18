@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,13 +72,12 @@ class Admin
      * Check if employee is logged in
      * If not logged in, redirect to admin home page.
      *
-     * @param GetResponseEvent $event
      *
      * @return bool or redirect
      */
     public function onKernelRequest(GetResponseEvent $event)
     {
-        //if employee loggdin in legacy context, authenticate him into sf2 security context
+        // if employee loggdin in legacy context, authenticate him into sf2 security context
         if (isset($this->legacyContext->employee) && $this->legacyContext->employee->isLoggedBack()) {
             $user = $this->userProvider->loadUserByUsername($this->legacyContext->employee->email);
             $token = new UsernamePasswordToken($user, null, 'admin', $user->getRoles());
@@ -93,18 +93,18 @@ class Admin
             return true;
         }
 
-        //employee not logged in
+        // employee not logged in
         $event->stopPropagation();
 
-        //if http request - add 403 error
+        // if http request - add 403 error
         $request = Request::createFromGlobals();
         if ($request->isXmlHttpRequest()) {
             header('HTTP/1.1 403 Forbidden');
             exit();
         }
 
-        //redirect to admin home page
-        header('Location: ' . $this->context->getAdminLink('', false));
+        // redirect to admin home page
+        header('Location: '.$this->context->getAdminLink('', false));
         exit();
     }
 }

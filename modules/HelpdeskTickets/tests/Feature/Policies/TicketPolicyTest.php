@@ -4,9 +4,11 @@ namespace Modules\HelpdeskTickets\Tests\Feature\Policies;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Tests\TestCase;
 
@@ -14,7 +16,7 @@ class TicketPolicyTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private Customer $customer;
 
@@ -126,6 +128,16 @@ class TicketPolicyTest extends TestCase
         $this->assertFalse($user->can('assign', $ticket));
     }
 
+    /**
+     * helpdesk.tickets.update a secas ya NO basta para CUALQUIER ticket
+     * (8-sep-2026): TicketPolicy::inScope() acota a helpdesk.tickets.manage
+     * o a un equipo del que el usuario forme parte — el mismo permiso base
+     * que hace falta para trabajar en el propio listado abría antes
+     * cualquier ticket de cualquier equipo. Este test comprobaba justo ese
+     * comportamiento viejo con un ticket sin equipo (createTicket() no le
+     * pone group_id); se actualiza metiendo al usuario y al ticket en el
+     * mismo equipo, que es el caso real que la Policy sí debe dejar pasar.
+     */
     public function test_user_with_update_permission_can_assign(): void
     {
         $user = User::factory()->create();
@@ -136,7 +148,110 @@ class TicketPolicyTest extends TestCase
             $this->markTestSkipped('Permissions not available in test env.');
         }
 
+        // TicketGroup no tiene HasFactory enganchado (TicketGroupFactory
+        // existe pero el modelo no la referencia) — create() directo.
+        $group = TicketGroup::create([
+            'name' => 'Equipo de prueba '.uniqid(),
+            'assignment_mode' => 'manual',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+        DB::connection('helpdesk')->table('helpdesk_group_user')->insert([
+            'group_id' => $group->id,
+            'user_id' => $user->id,
+            'conversation_priority' => 'primary',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $ticket = $this->createTicket(['group_id' => $group->id]);
+
+        $this->assertTrue($user->can('assign', $ticket));
+    }
+
+    /**
+     * helpdesk.tickets.manage sí ve/actúa sobre cualquier ticket, sin
+     * importar el equipo — es el permiso de quien administra el módulo
+     * completo (super-admin, super-settings, helpdesk-admin).
+     */
+    public function test_user_with_manage_permission_can_assign_any_ticket(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo(['helpdesk.tickets.update', 'helpdesk.tickets.manage']);
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        // Sin equipo y sin que el usuario pertenezca a ninguno: manage se
+        // salta el acotado por equipo por completo.
         $ticket = $this->createTicket();
+
+        $this->assertTrue($user->can('assign', $ticket));
+    }
+
+    /**
+     * El mismo permiso base, pero SIN pertenecer al equipo del ticket ni ser
+     * el asignado: la IDOR real que este acotado por equipo cierra — antes
+     * cualquier agente con helpdesk.tickets.update podía asignarse (o
+     * asignar a otro) un ticket de un equipo ajeno tecleando la URL.
+     */
+    public function test_user_with_update_permission_cannot_assign_ticket_of_another_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.update');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $foreignGroup = TicketGroup::create([
+            'name' => 'Equipo ajeno '.uniqid(),
+            'assignment_mode' => 'manual',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+        $ticket = $this->createTicket(['group_id' => $foreignGroup->id]);
+
+        $this->assertFalse($user->can('assign', $ticket));
+    }
+
+    /**
+     * Un ticket SIN equipo (group_id null) es bote compartido: cualquiera con
+     * el permiso base puede verlo/asignárselo, no solo quien tenga
+     * helpdesk.tickets.manage. 8-sep-2026: TicketsCrudController::
+     * scopeToVisibleTickets() ya lo enseñaba en el listado; sin este mismo
+     * caso en inScope(), actuar sobre él (asignar, cerrar, actualizar) daba
+     * 403 pese a que el agente lo veía en su propia lista.
+     */
+    public function test_user_with_view_permission_can_view_ticket_without_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.view');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $ticket = $this->createTicket(); // sin group_id, sin assignee_id
+
+        $this->assertTrue($user->can('view', $ticket));
+    }
+
+    public function test_user_with_update_permission_can_assign_ticket_without_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.update');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $ticket = $this->createTicket(); // sin group_id
 
         $this->assertTrue($user->can('assign', $ticket));
     }

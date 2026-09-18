@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,6 @@ class OrderPreferencesController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(Request $request)
@@ -69,8 +68,6 @@ class OrderPreferencesController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_order_preferences")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processGeneralFormAction(Request $request)
@@ -87,8 +84,6 @@ class OrderPreferencesController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_order_preferences")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processGiftOptionsFormAction(Request $request)
@@ -103,16 +98,13 @@ class OrderPreferencesController extends FrameworkBundleAdminController
     /**
      * Process the Order Preferences configuration form.
      *
-     * @param Request $request
-     * @param FormHandlerInterface $formHandler
-     * @param string $hookName
      *
      * @return RedirectResponse
      */
     protected function processForm(Request $request, FormHandlerInterface $formHandler, string $hookName)
     {
         $this->dispatchHook(
-            'actionAdminShopParametersOrderPreferencesControllerPostProcess' . $hookName . 'Before',
+            'actionAdminShopParametersOrderPreferencesControllerPostProcess'.$hookName.'Before',
             ['controller' => $this]
         );
 
@@ -125,7 +117,7 @@ class OrderPreferencesController extends FrameworkBundleAdminController
             $data = $form->getData();
             $saveErrors = $formHandler->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
             } else {
                 $this->flashErrors($saveErrors);
@@ -135,17 +127,11 @@ class OrderPreferencesController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_order_preferences');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeneralFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.order_preferences.general.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGiftOptionsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.order_preferences.gift_options.form_handler');

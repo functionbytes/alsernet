@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,25 +69,20 @@ class EditableCmsPageCategory
      * @var array
      */
     private $localisedFriendlyUrl;
+
     /**
      * @var array
      */
     private $metaTitle;
+
     /**
      * @var array
      */
     private $shopIds;
 
     /**
-     * @param array $localisedName
-     * @param bool $isDisplayed
-     * @param int $parentId
-     * @param array $localisedDescription
-     * @param array $localisedMetaDescription
-     * @param array $localisedMetaKeywords
-     * @param array $metaTitle
-     * @param array $localisedFriendlyUrl
-     * @param array $shopIds
+     * @param  bool  $isDisplayed
+     * @param  int  $parentId
      *
      * @throws CmsPageCategoryException
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,15 +37,12 @@ class NamingConventionException extends LinterException
      */
     protected $expectedRouteName;
 
-    public function __construct($message = '', $code = 0, \RuntimeException $previous = null, $expectedRouteName = null)
+    public function __construct($message = '', $code = 0, ?\RuntimeException $previous = null, $expectedRouteName = null)
     {
         $this->expectedRouteName = $expectedRouteName;
         parent::__construct($message, $code, $previous);
     }
 
-    /**
-     * @return string
-     */
     public function getExpectedRouteName(): string
     {
         return $this->expectedRouteName;

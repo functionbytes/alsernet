@@ -1,5 +1,8 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Ticket ' . $ticket->ticket_number)
 
 @section('page_header')
@@ -13,7 +16,7 @@
         </a>
         <h5 class="mb-0 fw-bold">{{ $ticket->ticket_number }} — {{ $ticket->subject }}</h5>
         @if($ticket->status)
-            <span class="badge" style="background-color:{{ $ticket->status->color }}">{{ $ticket->status->name }}</span>
+            <span class="badge hdt-dyn-bg" style="--hdt-color:{{ $ticket->status->color }}">{{ $ticket->status->name }}</span>
         @endif
     </div>
 
@@ -118,28 +121,13 @@
 
 @push('scripts')
 @if(isset($ticket))
+{{-- Solo datos: el id del ticket para el canal privado de Echo. La lógica
+     entera vive en agent-ticket-show.js. --}}
 <script>
-if (typeof window.Echo !== 'undefined') {
-    window.Echo.private('helpdesk.ticket.{{ $ticket->id }}')
-        .listen('.ticket.message.new', function(data) {
-            const time = new Date(data.message.created_at).toLocaleTimeString();
-
-            const $author = $('<strong class="small">').text(data.message.author);
-            const $time   = $('<small class="text-muted ms-auto">').text(time);
-            const $header = $('<div class="d-flex align-items-center gap-2 mb-2">').append($author, $time);
-            const $body   = $('<div>').text(data.message.content);
-            const $card   = $('<div class="card shadow-sm mb-2">').append(
-                $('<div class="card-body">').append($header, $body)
-            );
-
-            $('#messages-container').append($card);
-
-            const container = document.getElementById('messages-container');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        });
-}
+window.hdtAgentTicketShowConfig = {
+    ticketId: @json($ticket->id),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/agent-ticket-show.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/agent-ticket-show.js')) }}"></script>
 @endif
 @endpush

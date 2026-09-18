@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,11 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class CmsPageType extends TranslatorAwareType
 {
     public const TITLE_MAX_CHARS = 255;
+
     public const META_DESCRIPTION_MAX_CHARS = 512;
+
     public const META_KEYWORD_MAX_CHARS = 512;
+
     public const FRIENDLY_URL_MAX_CHARS = 128;
 
     /**
@@ -65,10 +69,7 @@ class CmsPageType extends TranslatorAwareType
     private $isMultiShopEnabled;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $allCmsCategories
-     * @param bool $isMultiShopEnabled
+     * @param  bool  $isMultiShopEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -238,7 +239,7 @@ class CmsPageType extends TranslatorAwareType
                         'class' => 'js-copier-destination-friendly-url',
                     ],
                     'constraints' => [
-                        new IsUrlRewrite(),
+                        new IsUrlRewrite,
                         new Length([
                             'max' => self::FRIENDLY_URL_MAX_CHARS,
                             'maxMessage' => $this->trans(
@@ -305,7 +306,6 @@ class CmsPageType extends TranslatorAwareType
             ->setDefaults([
                 'cms_preview_url' => '',
             ])
-            ->setAllowedTypes('cms_preview_url', 'string')
-        ;
+            ->setAllowedTypes('cms_preview_url', 'string');
     }
 }

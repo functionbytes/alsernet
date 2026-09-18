@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,8 +78,6 @@ class UpdateCombinationDetailsCommand
     private $weight;
 
     /**
-     * @param int $combinationId
-     *
      * @throws ProductConstraintException
      */
     public function __construct(
@@ -87,27 +86,16 @@ class UpdateCombinationDetailsCommand
         $this->combinationId = new CombinationId($combinationId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return Ean13|null
-     */
     public function getEan13(): ?Ean13
     {
         return $this->ean13;
     }
 
-    /**
-     * @param string $ean13
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setEan13(string $ean13): UpdateCombinationDetailsCommand
     {
         $this->ean13 = new Ean13($ean13);
@@ -115,19 +103,11 @@ class UpdateCombinationDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Isbn|null
-     */
     public function getIsbn(): ?Isbn
     {
         return $this->isbn;
     }
 
-    /**
-     * @param string $isbn
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setIsbn(string $isbn): UpdateCombinationDetailsCommand
     {
         $this->isbn = new Isbn($isbn);
@@ -135,19 +115,11 @@ class UpdateCombinationDetailsCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMpn(): ?string
     {
         return $this->mpn;
     }
 
-    /**
-     * @param string $mpn
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setMpn(string $mpn): UpdateCombinationDetailsCommand
     {
         $this->mpn = $mpn;
@@ -155,19 +127,11 @@ class UpdateCombinationDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Reference|null
-     */
     public function getReference(): ?Reference
     {
         return $this->reference;
     }
 
-    /**
-     * @param string $reference
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setReference(string $reference): UpdateCombinationDetailsCommand
     {
         $this->reference = new Reference($reference);
@@ -175,19 +139,11 @@ class UpdateCombinationDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Upc|null
-     */
     public function getUpc(): ?Upc
     {
         return $this->upc;
     }
 
-    /**
-     * @param string $upc
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setUpc(string $upc): UpdateCombinationDetailsCommand
     {
         $this->upc = new Upc($upc);
@@ -195,19 +151,11 @@ class UpdateCombinationDetailsCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getWeight(): ?DecimalNumber
     {
         return $this->weight;
     }
 
-    /**
-     * @param string $weight
-     *
-     * @return UpdateCombinationDetailsCommand
-     */
     public function setWeight(string $weight): UpdateCombinationDetailsCommand
     {
         $this->weight = new DecimalNumber($weight);

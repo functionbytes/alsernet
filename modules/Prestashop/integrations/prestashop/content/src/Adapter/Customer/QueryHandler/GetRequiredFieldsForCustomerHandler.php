@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ final class GetRequiredFieldsForCustomerHandler implements GetRequiredFieldsForC
      */
     public function handle(GetRequiredFieldsForCustomer $query)
     {
-        $requiredFields = (new Customer())->getFieldsRequiredDatabase();
+        $requiredFields = (new Customer)->getFieldsRequiredDatabase();
 
         if (empty($requiredFields)) {
             return [];

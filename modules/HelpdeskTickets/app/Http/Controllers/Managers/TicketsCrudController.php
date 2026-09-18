@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -11,23 +12,25 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Filters\TicketFilter;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Exceptions\StaleTicketException;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketMail;
-use Modules\HelpdeskTickets\Models\TicketRead;
-use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTemplate;
 use Modules\HelpdeskTickets\Models\TicketView;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
+use Modules\HelpdeskTickets\Support\TicketFeatures;
 
 class TicketsCrudController extends Controller
 {
@@ -43,7 +46,19 @@ class TicketsCrudController extends Controller
 
         $userId = auth()->id();
 
-        $views = TicketView::forUser($userId)->ordered()->limit(100)->get();
+        // Las propias MÁS las que un compañero haya marcado como compartidas.
+        // La columna is_shared, su cast y hasta el scopeShared() existían desde
+        // el principio en el modelo, pero nadie los usaba aquí: una vista
+        // compartida no la veía nadie más que su autor, así que compartir no
+        // hacía absolutamente nada.
+        $views = TicketView::query()
+            // El autor se pinta en el title de las compartidas: sin el with()
+            // serían hasta 100 consultas sueltas por carga del listado.
+            ->with('user')
+            ->where(fn ($q) => $q->where('user_id', $userId)->orWhere('is_shared', true))
+            ->ordered()
+            ->limit(100)
+            ->get();
 
         $currentView = null;
         if ($request->has('viewId')) {
@@ -68,6 +83,14 @@ class TicketsCrudController extends Controller
                 fn ($q2) => $q2->where('user_id', $userId)
             ), 'messages as message_count'])
             ->latest();
+
+        // Acotar por equipo: un agente sin helpdesk.tickets.manage solo ve lo
+        // suyo (asignado a él) o lo de un equipo al que pertenece — nunca la
+        // tabla entera. Antes el listado no filtraba por equipo en absoluto;
+        // el único gate era el permiso base helpdesk.tickets.view, el mismo
+        // que hace falta para entrar a esta pantalla, así que cualquier
+        // agente veía los tickets de todos los equipos.
+        $this->scopeToVisibleTickets($query, $userId);
 
         // TicketView::applyFilters() (no Filter::applyViewFilters()) es quien
         // entiende las claves reales que guarda tickets-app.js#saveCurrentView()
@@ -130,14 +153,44 @@ class TicketsCrudController extends Controller
         // pidan explícitamente con ?snoozed=1 (vista "Pospuestos").
         $request->boolean('snoozed') ? $query->snoozed() : $query->notSnoozed();
 
+        // Pestañas de la cabecera (Abiertos · Urgentes · Míos · Sin asignar ·
+        // En espera · Resueltos · Todos, más las vistas "Desde email"/"Desde
+        // PrestaShop"). Hasta ahora quick_filter NO lo miraba el servidor:
+        // llegaba al JS como data-initial-filter y passesFilter() cribaba en
+        // cliente los 50 tickets de la página cargada, mientras los badges
+        // (tabCounts) sí contaban contra toda la tabla. De ahí el desajuste
+        // que se veía en pantalla: "Resueltos 340" con seis filas debajo.
+        // Aquí se aplica el MISMO criterio que usa sharedTabCounts() para
+        // contar, así que badge y lista no pueden volver a discrepar.
+        // Default 'unassigned' (antes 'all'): al entrar sin filtro explícito
+        // en la URL, la bandeja arranca en "Sin asignar" — es lo primero que
+        // un agente necesita ver, no la mezcla completa de todos los estados.
+        $this->applyQuickFilter($query, (string) $request->get('quick_filter', 'unassigned'), $userId);
+
         // Los cuatro órdenes del <select> de la cabecera de la lista en el
         // mockup. "SLA más urgente" pone delante los de vencimiento más
         // próximo y manda los que no tienen SLA (null) al final, en vez de
         // intercalarse al azar. "Prioridad" no puede ordenar por la columna
         // tal cual: es un enum textual y alfabéticamente daría
         // alta > baja > normal > urgente, así que se ordena por el peso real.
+        // Sin ?sort manda el ->latest() de la query base (más recientes
+        // primero), que es como se ha comportado siempre el listado. El
+        // <select> de la cabecera decía "SLA más urgente" en esa situación,
+        // que era falso; se ha alineado el CONTROL con el servidor y no al
+        // revés, porque cambiar el orden por defecto no es gratis: 'sla' manda
+        // al final de la lista todo ticket sin vencimiento (IS NULL), y un
+        // ticket sin política de SLA aplicable quedaría enterrado en la última
+        // página en vez de arriba del todo recién creado. Si se decide que el
+        // orden por defecto sea SLA, aquí basta con get('sort', 'sla').
         match ($request->get('sort')) {
-            'sla' => $query->reorder()->orderByRaw('sla_resolution_due_at IS NULL')->orderBy('sla_resolution_due_at'),
+            // El ->latest() final no es decorativo: reorder() borra el orden de
+            // la query base, y sin desempate TODOS los tickets sin SLA (que son
+            // la mayoría: sla_resolution_due_at NULL) quedan empatados. Un
+            // empate sin criterio de ruptura deja el orden en manos del motor,
+            // que no garantiza que sea el mismo entre dos consultas: con LIMIT/
+            // OFFSET eso significa filas repetidas en una página y ausentes en
+            // la siguiente. Ahora, dentro de cada bloque, manda la fecha.
+            'sla' => $query->reorder()->orderByRaw('sla_resolution_due_at IS NULL')->orderBy('sla_resolution_due_at')->latest(),
             'date_asc' => $query->reorder()->oldest(),
             'date_desc' => $query->reorder()->latest(),
             'priority' => $query->reorder()
@@ -157,8 +210,8 @@ class TicketsCrudController extends Controller
         // así que no hay motivo para recalcularla por request. La invalida
         // updateTags() al guardar (CatalogCacheService::invalidateTags()).
         $availableTags = CatalogCacheService::ticketTags();
-        // Para insertar plantilla en la caja de respuesta del Hilo — mismo
-        // criterio que showFull() (globales o del propio usuario, activas).
+        // Para insertar plantilla en la caja de respuesta del Hilo (globales
+        // o del propio usuario, activas — ver TicketCannedReply::availableFor()).
         $cannedReplies = TicketCannedReply::availableFor($userId);
 
         // Modal 44 "Plantillas de ticket": crear un ticket ya relleno desde
@@ -175,11 +228,17 @@ class TicketsCrudController extends Controller
         $selectedTicket = null;
         if ($selectedId = $request->integer('ticket')) {
             $selectedTicket = Ticket::query()
-                ->with(['customer', 'status', 'category', 'assignee'])
+                // Mismo with() que la query principal de arriba: sin
+                // customer.company/group/lastMessage/lastOutboundMail,
+                // toListRow() (llamado más abajo también sobre este ticket)
+                // disparaba ~4 queries lazy adicionales en CADA carga con
+                // ?ticket= y en cada refetch/polling de la pantalla
+                // (14-sep-2026, auditoría de rendimiento).
+                ->with(['customer', 'customer.company', 'status', 'category', 'group', 'assignee', 'lastMessage', 'lastOutboundMail'])
                 ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
                     'reads',
                     fn ($q2) => $q2->where('user_id', $userId)
-                )])
+                ), 'messages as message_count'])
                 ->find($selectedId);
 
             if ($selectedTicket) {
@@ -187,8 +246,60 @@ class TicketsCrudController extends Controller
             }
         }
 
+        // Refetch del listado: MISMO endpoint, misma query, mismos filtros —
+        // solo cambia lo que se devuelve. Con Accept: application/json la
+        // pantalla pide las filas y repinta la lista sin recargar (mismo
+        // patrón que ya usa el modal de Entregabilidad contra la bandeja de
+        // emails). Antes cada clic en un chip o en una pestaña se llevaba por
+        // delante los ~350 KB de la página entera; ahora son ~120 KB de JSON,
+        // y sobre todo permite que las pestañas filtren de verdad en el
+        // servidor en vez de cribar en cliente la página ya cargada.
+        //
+        // Va aquí abajo, después de resolver $selectedTicket, para no
+        // duplicar ni la construcción de la query ni la autorización.
+        $tabCounts = $this->tabCounts($userId, $request->boolean('fresh_counts'));
+
+        if ($request->wantsJson()) {
+            $ticketsPayload = $tickets->getCollection()
+                ->map(fn (Ticket $t) => $t->toListRow())
+                ->values();
+
+            // Igual que en el SSR inicial: si el agente abrió un ticket que
+            // no pertenece a la pestaña activa, se conserva como primera fila
+            // para que un refetch automático no le quite la selección de
+            // debajo del detalle. El total de paginación sigue siendo el
+            // total real filtrado; esta fila adicional es solo contexto del
+            // ticket que el agente está atendiendo.
+            if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
+                $ticketsPayload->prepend($selectedTicket->toListRow());
+            }
+
+            return response()->json([
+                'tickets' => $ticketsPayload,
+                'tab_counts' => $tabCounts,
+                'pagination' => [
+                    'total' => $tickets->total(),
+                    'per_page' => $tickets->perPage(),
+                    'current_page' => $tickets->currentPage(),
+                    'last_page' => $tickets->lastPage(),
+                    'from' => $tickets->firstItem(),
+                    'to' => $tickets->lastItem(),
+                    'prev_url' => $tickets->previousPageUrl(),
+                    'next_url' => $tickets->nextPageUrl(),
+                ],
+            ]);
+        }
+
         return view('helpdesktickets::managers.tickets.index', [
             'tickets' => $tickets,
+            // Vista de detalle (composer/acciones/gestión/pestañas): resuelto
+            // una sola vez aquí y pasado al JS vía #tkt-data → TKA.state.features
+            // — ver Settings → Helpdesk · Tickets → Funcionalidades.
+            'ticketFeatures' => TicketFeatures::resolved(),
+            'ticketAttachmentSettings' => [
+                'max_bytes' => app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024,
+                'extensions' => app(HelpdeskSettings::class)->attachmentExtensions(),
+            ],
             'statuses' => $statuses,
             'categories' => $categories,
             'groups' => $groups,
@@ -223,8 +334,38 @@ class TicketsCrudController extends Controller
                 'status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status',
                 'search', 'archived', 'tag', 'mail_status', 'mail_type', 'mailbox', 'has_attachments',
             ]),
-            'tabCounts' => $this->tabCounts($userId),
+            'tabCounts' => $tabCounts,
         ]);
+    }
+
+    /**
+     * Plantillas de email (TicketCannedReply) con sus variables {{...}} ya
+     * resueltas contra $ticket. index() manda la lista completa en bruto una
+     * sola vez para toda la sesión SPA — en ese momento no se sabe todavía
+     * con qué ticket va a responder el agente, así que no puede interpolar
+     * nada — y el modal "Plantillas de email" pide esto justo al abrirse
+     * para un ticket real. Mismo TicketVariableInterpolator que ya usan
+     * Macros y las plantillas de creación de ticket (fuente única de
+     * variables).
+     */
+    public function cannedReplies(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('view', $ticket);
+
+        $interpolator = app(TicketVariableInterpolator::class);
+
+        $replies = TicketCannedReply::availableFor(auth()->id())
+            ->map(function (TicketCannedReply $reply) use ($interpolator, $ticket) {
+                return [
+                    'id' => $reply->id,
+                    'title' => $reply->title,
+                    'content' => $interpolator->interpolate($reply->content, $ticket),
+                    'html_body' => $interpolator->interpolate($reply->html_body, $ticket),
+                    'short_code' => $reply->short_code,
+                ];
+            });
+
+        return response()->json($replies);
     }
 
     /**
@@ -242,17 +383,26 @@ class TicketsCrudController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'filters' => 'nullable|array',
+            'shared' => 'nullable|boolean',
         ]);
 
+        // Compartir una vista es exponer un conjunto de filtros, no datos: no
+        // hace falta el permiso de administración de la pantalla de ajustes
+        // (ese sigue mandando en las vistas globales del sistema). Mismo
+        // criterio que las macros, donde is_shared lo pone su autor y la
+        // política deja que la vea el resto (MacroPolicy::view()).
         $view = TicketView::create([
             'user_id' => auth()->id(),
             'name' => $validated['name'],
             'filters' => $validated['filters'] ?? [],
-            'is_shared' => false,
+            'is_shared' => (bool) ($validated['shared'] ?? false),
             'is_system' => false,
         ]);
 
-        return response()->json(['success' => true, 'view' => ['id' => $view->id, 'name' => $view->name]], 201);
+        return response()->json([
+            'success' => true,
+            'view' => ['id' => $view->id, 'name' => $view->name, 'is_shared' => $view->is_shared],
+        ], 201);
     }
 
     /**
@@ -304,12 +454,73 @@ class TicketsCrudController extends Controller
         };
     }
 
-    private function tabCounts(?int $userId): array
+    /**
+     * Restringe una query de Ticket a lo que el usuario puede ver: acceso
+     * total con helpdesk.tickets.manage, si no lo suyo (asignado a él, de un
+     * equipo al que pertenece, o SIN equipo asignar). Mismo criterio que
+     * TicketPolicy::inScope(), aplicado aquí como filtro de listado en vez de
+     * gate de una sola fila.
+     *
+     * 8-sep-2026: los tickets con group_id NULL (60 de 62 en dev — casi todo
+     * lo que entra sin enrutar) se sumaron al bote compartido. Dejarlos
+     * visibles solo para helpdesk.tickets.manage rompía la pestaña "Sin
+     * asignar" para cualquier agente base: quedaba prácticamente vacía (un
+     * ticket sin agente casi nunca tiene equipo tampoco), así que nadie podía
+     * ver la cola de triaje ni auto-asignarse un ticket nuevo sin ser
+     * manager. Un ticket SIN equipo es responsabilidad de cualquiera con
+     * permiso base de ver tickets, no de nadie en particular.
+     */
+    private function scopeToVisibleTickets(EloquentBuilder $query, ?int $userId): void
     {
+        $user = auth()->user();
+
+        if (! $user || $user->hasPermissionTo('helpdesk.tickets.manage')) {
+            return;
+        }
+
+        $groupIds = TicketGroup::idsForUser($userId);
+
+        $query->where(function (EloquentBuilder $q) use ($groupIds, $userId) {
+            $q->where('assignee_id', $userId)
+                ->orWhereNull('group_id');
+
+            if ($groupIds !== []) {
+                $q->orWhereIn('group_id', $groupIds);
+            }
+        });
+    }
+
+    /**
+     * Sufijo de caché para tabCounts()/sharedTabCounts(): 'all' para quien ve
+     * la tabla completa (helpdesk.tickets.manage), o el conjunto de equipos
+     * del agente para el resto — dos agentes del mismo equipo comparten
+     * entrada de caché, uno de un equipo distinto no.
+     */
+    private function tabCountsScopeKey(?int $userId): string
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->hasPermissionTo('helpdesk.tickets.manage')) {
+            return 'all';
+        }
+
+        $groupIds = TicketGroup::idsForUser($userId);
+        sort($groupIds);
+
+        return 'groups:'.implode(',', $groupIds);
+    }
+
+    private function tabCounts(?int $userId, bool $fresh = false): array
+    {
+        $cacheKey = self::TAB_COUNTS_CACHE_KEY.':'.$this->tabCountsScopeKey($userId);
+        if ($fresh) {
+            Cache::forget($cacheKey);
+        }
+
         $shared = Cache::remember(
-            self::TAB_COUNTS_CACHE_KEY,
+            $cacheKey,
             self::TAB_COUNTS_CACHE_TTL_SECONDS,
-            fn () => $this->sharedTabCounts(),
+            fn () => $this->sharedTabCounts($userId),
         );
 
         return $shared + ['mine' => $this->mineTabCount($userId)];
@@ -318,7 +529,7 @@ class TicketsCrudController extends Controller
     /**
      * @return array<string, int>
      */
-    private function sharedTabCounts(): array
+    private function sharedTabCounts(?int $userId): array
     {
         // Una sola agregación en vez de traerse la tabla entera. Antes esto era
         // ->get() sobre TODOS los tickets no pospuestos, hidratando un modelo
@@ -346,7 +557,7 @@ class TicketsCrudController extends Controller
         $slaRiskExpr = '(sla_resolution_breached = 1 OR sla_first_response_breached = 1'
             .' OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < ?))';
 
-        $row = Ticket::query()
+        $query = Ticket::query()
             ->notSnoozed()
             // Mismo filtro que TicketFilter::applyArchived() SIEMPRE aplica a
             // la query real del listado (Ticket::scopeNotArchived()) — sin
@@ -356,7 +567,16 @@ class TicketsCrudController extends Controller
             // aquí), desajustando sistemáticamente los badges del header
             // frente al total real de la lista/paginador (bug real
             // reproducido en QA: "Todos 12" vs "1–11 de 11").
-            ->notArchived()
+            ->notArchived();
+
+        // Mismo acotado por equipo que el listado real (scopeToVisibleTickets):
+        // sin esto los badges de cabecera ("Todos 62") seguían contando la
+        // tabla entera aunque las filas de debajo ya estuvieran filtradas por
+        // equipo, reproduciendo el mismo desajuste "Todos 12 con 6 filas"
+        // que el comentario de arriba documenta para los archivados.
+        $this->scopeToVisibleTickets($query, $userId);
+
+        $row = $query
             ->selectRaw(implode(', ', [
                 'COUNT(*) AS c_all',
                 "SUM(CASE WHEN {$openExpr} THEN 1 ELSE 0 END) AS c_open",
@@ -409,6 +629,46 @@ class TicketsCrudController extends Controller
      *
      * @return array<string, array<int>>
      */
+    /**
+     * Traduce la pestaña activa del listado a condiciones sobre la query.
+     *
+     * Los criterios son los mismos que sharedTabCounts() usa para los badges
+     * —de hecho salen del mismo statusIdsByCanonicalSlug()— y los mismos que
+     * passesFilter() aplicaba en cliente en tickets-app.js. Un slug que no
+     * corresponda a ninguna pestaña conocida se trata como slug de estado, que
+     * es lo que hacía el JS con su rama final.
+     */
+    private function applyQuickFilter(EloquentBuilder $query, string $filter, ?int $userId): void
+    {
+        if ($filter === '' || $filter === 'all') {
+            return;
+        }
+
+        $statusIds = $this->statusIdsByCanonicalSlug();
+        $idsFor = fn (string ...$slugs) => array_merge(...array_map(fn ($s) => $statusIds[$s] ?? [], $slugs));
+
+        match ($filter) {
+            'mine' => $query->where('assignee_id', $userId),
+            'unassigned' => $query->whereNull('assignee_id'),
+            // Mismo OR que la columna c_urgent de sharedTabCounts().
+            'urgent' => $query->where(fn ($q) => $q->where('priority', 'urgent')
+                ->orWhere('sla_resolution_breached', true)
+                ->orWhere('sla_first_response_breached', true)),
+            // "En riesgo" = ya incumplido, o vence en menos de 60 minutos:
+            // la misma unión que slaRowKind() devuelve como warn|breach.
+            'sla_risk' => $query->where(fn ($q) => $q->where('sla_resolution_breached', true)
+                ->orWhere('sla_first_response_breached', true)
+                ->orWhere(fn ($q2) => $q2->whereNotNull('sla_resolution_due_at')
+                    ->where('sla_resolution_due_at', '<', now()->addMinutes(60)))),
+            // El formulario público de PrestaShop entra como 'formulario', con
+            // 'web_form' como alias que también acepta Ticket::sourceSlug().
+            'from_presta' => $query->whereIn('source', ['formulario', 'web_form']),
+            'from_email' => $query->where('source', 'email'),
+            'open' => $query->whereIn('status_id', $idsFor('open', 'progress') ?: [0]),
+            default => $query->whereIn('status_id', $idsFor($filter) ?: [0]),
+        };
+    }
+
     private function statusIdsByCanonicalSlug(): array
     {
         return Cache::remember('helpdesk:catalogs:status-ids-by-slug', 3600, function () {
@@ -503,7 +763,9 @@ class TicketsCrudController extends Controller
 
             if ($request->hasFile('attachments')) {
                 $attachmentPaths = [];
+                $attachmentSecurity = app(TicketAttachmentSecurityService::class);
                 foreach ($request->file('attachments') as $file) {
+                    $attachmentSecurity->assertSafe($file);
                     $attachmentPaths[] = $file->store(
                         'helpdesk/tickets/'.$ticket->id,
                         config('helpdesk.attachments.disk', 'local')
@@ -528,7 +790,15 @@ class TicketsCrudController extends Controller
                 ]);
             }
 
-            broadcast(new TicketCreated($ticket));
+            // dispatch(), NO broadcast(): broadcast() entrega el evento SOLO al
+            // broadcaster, así que los siete listeners de TicketCreated
+            // (confirmación al cliente, aviso a agentes, automatizaciones,
+            // auto-clasificación IA, auto-asignación...) nunca corrían para un
+            // ticket dado de alta desde el panel — el cliente no recibía nada.
+            // El evento implementa ShouldBroadcast, así que dispatch() hace las
+            // dos cosas. Mismo arreglo que ya llevan HelpdeskTicketBridgeService
+            // y FetchTicketEmailsJob.
+            TicketCreated::dispatch($ticket);
         });
 
         return redirect()
@@ -540,7 +810,8 @@ class TicketsCrudController extends Controller
      * URL corta /tickets/{ticket} — redirige al listado con el ticket
      * preseleccionado, igual que ConversationsController::show() hace con el
      * inbox de conversaciones. La ficha completa (side-conversations, horas,
-     * fusión, enlaces, historial) sigue disponible en showFull().
+     * enlaces) que existía aparte en showFull() se eliminó el 8-sep-2026 sin
+     * migrar esas 3 funciones al listado; fusión e historial sí están aquí.
      */
     public function show(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -583,82 +854,6 @@ class TicketsCrudController extends Controller
         return response()->json(['success' => true, 'tags' => $tags->all()]);
     }
 
-    public function showFull(Request $request, Ticket $ticket)
-    {
-        $this->authorize('view', $ticket);
-
-        $ticket->load(['customer', 'conversation', 'status', 'category', 'assignee', 'group', 'slaPolicy', 'items.user', 'items.author', 'watchers', 'aiSuggestedCategory']);
-        $ticket->load(['followups' => fn ($q) => $q->where('is_sent', false)->with('user')]);
-
-        $sidebarQuery = Ticket::query()
-            ->with(['customer', 'status', 'category'])
-            ->latest();
-
-        if ($request->has('status') && $request->status !== 'all') {
-            $sidebarQuery->where('status_id', $request->status);
-        }
-
-        $tickets = $sidebarQuery->paginate(20);
-
-        $statuses = CatalogCacheService::statuses();
-        $categories = CatalogCacheService::categories();
-        $groups = CatalogCacheService::groups();
-
-        $userId = auth()->id();
-        TicketRead::markAllReadFor($ticket, $userId);
-
-        $agents = CatalogCacheService::agents();
-
-        $mentionableUsers = $agents
-            ->take(50)
-            ->map(fn ($u) => [
-                'id' => $u->id,
-                'name' => trim($u->firstname.' '.$u->lastname),
-                'email' => $u->email,
-            ])->values();
-
-        $history = $ticket->history()->latest()->limit(50)->get();
-        // reorder(): Ticket::mails() ya trae su propio orderBy('created_at',
-        // 'asc') por defecto — sin limpiarlo antes, latest() encadenado
-        // encima no hace nada (MySQL ignora un 2º ORDER BY sobre la misma
-        // columna) y esta lista salía más-antiguo-primero en vez de
-        // más-reciente-primero. Ver el mismo fix/comentario en
-        // TicketDetailDataController::data().
-        $ticketMails = $ticket->mails()->reorder()->latest()->limit(30)->get();
-        $cannedReplies = TicketCannedReply::availableFor($userId);
-
-        // Para el botón "Bloquear remitente" del panel de acciones: si el email
-        // del cliente ya está cubierto por una regla (exacta o por dominio), la
-        // vista muestra el aviso en vez del botón.
-        $blacklistMatch = $ticket->customer?->email
-            ? TicketEmailBlacklist::matches($ticket->customer->email)
-            : null;
-
-        // Revisión de calidad, si el muestreo alcanzó a este ticket. Se
-        // resuelve aquí y no en la vista para no dejar una consulta en el
-        // Blade; con la función apagada ni siquiera se pregunta.
-        $qualityReview = config('helpdesktickets.quality_review.enabled', false)
-            ? TicketReview::query()->where('ticket_id', $ticket->id)->first()
-            : null;
-
-        return view('helpdesktickets::managers.tickets.show', [
-            'qualityReview' => $qualityReview,
-            'ticket' => $ticket,
-            'tickets' => $tickets,
-            'statuses' => $statuses,
-            'categories' => $categories,
-            'groups' => $groups,
-            // La vista lo recorre para el selector de participantes; sin el, show()
-            // reventaba con "Undefined variable $agents" (500 en el detalle del ticket).
-            'agents' => $agents,
-            'mentionableUsers' => $mentionableUsers,
-            'history' => $history,
-            'ticketMails' => $ticketMails,
-            'cannedReplies' => $cannedReplies,
-            'blacklistMatch' => $blacklistMatch,
-        ]);
-    }
-
     public function edit(Ticket $ticket)
     {
         $this->authorize('update', $ticket);
@@ -688,7 +883,28 @@ class TicketsCrudController extends Controller
         // otra ruta que no pase por ese FormRequest concreto.
         $this->authorize('update', $ticket);
 
-        $this->ticketUpdateService->applyChanges($ticket, $request->getModifiableFields(), auth()->user());
+        try {
+            $this->ticketUpdateService->applyChanges(
+                $ticket,
+                $request->getModifiableFields(),
+                auth()->user(),
+                $request->clientUpdatedAt(),
+            );
+        } catch (StaleTicketException $e) {
+            $message = 'El ticket cambió en otro navegador. Recarga sus datos antes de volver a guardar.';
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'code' => 'stale_ticket',
+                    'conflict_fields' => array_keys($request->getModifiableFields()),
+                    'ticket' => $ticket->fresh(['customer', 'status', 'assignee']),
+                ], 409);
+            }
+
+            return back()->withInput()->withErrors(['ticket' => $message]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -698,10 +914,11 @@ class TicketsCrudController extends Controller
             ]);
         }
 
-        // edit.blade.php (form #ticketForm, sin interceptar por JS) solo se
-        // llega desde la ficha completa — se vuelve ahí, no al listado.
+        // edit.blade.php (form #ticketForm, sin interceptar por JS): la ficha
+        // completa (show-full) se eliminó el 8-sep-2026, así que se vuelve
+        // al listado con el panel superpuesto igual que el resto.
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_updated'));
     }
 

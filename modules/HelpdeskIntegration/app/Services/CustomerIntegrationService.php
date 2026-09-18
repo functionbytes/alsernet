@@ -5,6 +5,7 @@ namespace Modules\HelpdeskIntegration\Services;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\CustomerExternalId;
@@ -360,6 +361,66 @@ class CustomerIntegrationService
     }
 
     /**
+     * Vínculo escrito por un automatismo, no por un agente.
+     *
+     * Es el mismo destino que link() —la fila en helpdesk_customer_external_ids
+     * y la entrada de auditoría— pero sin las dos cosas que solo tienen sentido
+     * cuando alguien teclea un id a mano: el resync() de verificación contra la
+     * plataforma (aquí sobra, el id viene de una búsqueda que acaba de devolver
+     * ese cliente, y repetirlo dobla las llamadas al ERP por cada correo) y la
+     * ValidationException (dentro de un job en cola nadie la lee: un choque de
+     * unicidad significa que ese id ya es de otro cliente, y ahí lo correcto es
+     * no vincular y seguir, no reventar el job).
+     *
+     * @param  string  $via  Cómo se encontró: 'email', 'phone', 'prestashop_email'…
+     * @return bool Si el vínculo quedó escrito.
+     */
+    public function linkAutomatically(Customer $customer, string $platform, string $externalId, string $via): bool
+    {
+        try {
+            $customer->linkExternalId($platform, $externalId, ['linked_via' => $via]);
+        } catch (QueryException $e) {
+            if ($e->getCode() !== '23000') {
+                throw $e;
+            }
+
+            Log::warning('CustomerIntegrationService: el id externo ya pertenece a otro cliente, no se vincula.', [
+                'customer_id' => $customer->id,
+                'platform' => $platform,
+                'external_id' => $externalId,
+            ]);
+
+            return false;
+        }
+
+        $customer->load('externalIds');
+
+        Cache::forget($this->detailCacheKey($platform, $externalId));
+
+        $this->logAudit($customer, $platform, 'linked', $externalId);
+
+        return true;
+    }
+
+    /**
+     * Deja constancia de una búsqueda automática que no vinculó nada.
+     *
+     * Sin esto el intento no existe en ninguna parte: no hay fila en
+     * helpdesk_customer_external_ids (su external_id es NOT NULL) y el
+     * Log::info del linker no es consultable desde la ficha del cliente.
+     *
+     * @param  'not_found'|'error'  $reason
+     */
+    public function logFailedLookup(Customer $customer, string $platform, string $reason): void
+    {
+        $this->logAudit(
+            $customer,
+            $platform,
+            $reason === 'error' ? 'link_error' : 'link_failed',
+        );
+    }
+
+    /**
      * Crea un Customer nuevo a partir de un resultado de búsqueda externa y
      * lo vincula de una — usado por HelpdeskContacts cuando el agente busca
      * en ERP/PrestaShop desde el listado de contactos (sin un Customer
@@ -559,7 +620,14 @@ class CustomerIntegrationService
             return null;
         }
 
-        return $this->registry->get($provider->driver);
+        $driver = $this->registry->get($provider->driver);
+
+        // El registro solo comprueba class_exists() al arrancar (composer
+        // package presente); isAvailable() refleja el estado real del
+        // módulo (instalado+activo+toggle de Settings → Integraciones) —
+        // sin esto, un módulo satélite desactivado seguía resolviendo su
+        // driver como disponible.
+        return $driver->isAvailable() ? $driver : null;
     }
 
     private function providerFor(string $platform): ?IntegrationProvider
@@ -607,6 +675,10 @@ class CustomerIntegrationService
             return null;
         }
 
-        return $this->registry->get($provider->driver);
+        $driver = $this->registry->get($provider->driver);
+
+        // Ver comentario en driverFor(): isAvailable() es la fuente real de
+        // verdad, no el mero registro en el IntegrationDriverRegistry.
+        return $driver->isAvailable() ? $driver : null;
     }
 }

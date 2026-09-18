@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,36 +59,22 @@ class UpdateCombinationPricesCommand
      */
     private $wholesalePrice;
 
-    /**
-     * @param int $combinationId
-     */
     public function __construct(
         int $combinationId
     ) {
         $this->combinationId = new CombinationId($combinationId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getImpactOnPrice(): ?DecimalNumber
     {
         return $this->impactOnPrice;
     }
 
-    /**
-     * @param string $impactOnPrice
-     *
-     * @return UpdateCombinationPricesCommand
-     */
     public function setImpactOnPrice(string $impactOnPrice): UpdateCombinationPricesCommand
     {
         $this->impactOnPrice = new DecimalNumber($impactOnPrice);
@@ -95,19 +82,11 @@ class UpdateCombinationPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getEcoTax(): ?DecimalNumber
     {
         return $this->ecoTax;
     }
 
-    /**
-     * @param string $ecoTax
-     *
-     * @return UpdateCombinationPricesCommand
-     */
     public function setEcoTax(string $ecoTax): UpdateCombinationPricesCommand
     {
         $this->ecoTax = new DecimalNumber($ecoTax);
@@ -115,19 +94,11 @@ class UpdateCombinationPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getImpactOnUnitPrice(): ?DecimalNumber
     {
         return $this->impactOnUnitPrice;
     }
 
-    /**
-     * @param string $impactOnUnitPrice
-     *
-     * @return UpdateCombinationPricesCommand
-     */
     public function setImpactOnUnitPrice(string $impactOnUnitPrice): UpdateCombinationPricesCommand
     {
         $this->impactOnUnitPrice = new DecimalNumber($impactOnUnitPrice);
@@ -135,19 +106,11 @@ class UpdateCombinationPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getWholesalePrice(): ?DecimalNumber
     {
         return $this->wholesalePrice;
     }
 
-    /**
-     * @param string $wholesalePrice
-     *
-     * @return UpdateCombinationPricesCommand
-     */
     public function setWholesalePrice(string $wholesalePrice): UpdateCombinationPricesCommand
     {
         $this->wholesalePrice = new DecimalNumber($wholesalePrice);

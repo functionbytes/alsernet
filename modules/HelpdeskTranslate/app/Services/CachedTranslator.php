@@ -5,7 +5,9 @@ namespace Modules\HelpdeskTranslate\Services;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Support\EncryptedSetting;
 use Modules\HelpdeskTranslate\Models\TranslateUsage;
 use Modules\HelpdeskTranslate\Models\TranslationCache;
 
@@ -51,12 +53,23 @@ class CachedTranslator
         }
 
         $provider = $this->resolveProvider();
+        $fallbackProvider = $provider === 'deepl' ? 'libretranslate' : 'deepl';
         $s = strtolower(trim((string) $sourceLang));
         $source = in_array($s, ['', 'auto'], true) ? 'auto' : $s;
         $target = strtolower($targetLang);
-        $hash = TranslationCache::makeHash($text, $source, $target, $provider);
 
-        $hit = TranslationCache::query()->where('text_hash', $hash)->first();
+        // Se comprueban AMBOS hashes (primario y fallback) en el mismo lookup:
+        // translate() calcula el hash con el proveedor primario, pero si ese
+        // proveedor está caído el resultado se guarda bajo el hash del
+        // fallback que realmente respondió (ver más abajo). Mirar solo el
+        // hash primario dejaba la caché inoperante durante toda una caída —
+        // cada mensaje repetido volvía a pagar al fallback, y el intento de
+        // insertar el mismo hash de fallback ya existente reventaba con una
+        // QueryException silenciosa.
+        $primaryHash = TranslationCache::makeHash($text, $source, $target, $provider);
+        $fallbackHash = TranslationCache::makeHash($text, $source, $target, $fallbackProvider);
+
+        $hit = TranslationCache::query()->whereIn('text_hash', [$primaryHash, $fallbackHash])->first();
         if ($hit) {
             TranslationCache::query()->where('id', $hit->id)->update([
                 'hits' => DB::raw('hits + 1'),
@@ -68,16 +81,16 @@ class CachedTranslator
         }
 
         $translated = $this->callProvider($provider, $text, $target, $sourceLang, $feature);
+        $hash = $primaryHash;
 
         // Fallback: if the configured provider failed (returned null), try the
         // other one before giving up. This makes the system resilient to
         // LibreTranslate container being down or DeepL key missing.
         if ($translated === null) {
-            $fallbackProvider = $provider === 'deepl' ? 'libretranslate' : 'deepl';
             $translated = $this->callProvider($fallbackProvider, $text, $target, $sourceLang, $feature);
             if ($translated !== null) {
                 $provider = $fallbackProvider;
-                $hash = TranslationCache::makeHash($text, $source, $target, $provider);
+                $hash = $fallbackHash;
             }
         }
 
@@ -97,8 +110,19 @@ class CachedTranslator
                 'chars_saved' => 0,
                 'last_used_at' => now(),
             ]);
-        } catch (QueryException) {
-            // Race condition: another process inserted the same hash. Ignore.
+        } catch (QueryException $e) {
+            // Race condition: another process inserted the same hash first.
+            // Debug (not error) on purpose — this is expected under concurrency
+            // and shouldn't page anyone, but it was previously swallowed with
+            // zero trace, which also hid the *actual* bug this fixes (the
+            // primary/fallback hash mismatch above): a fallback translation
+            // saved under the wrong hash reliably collided with itself on the
+            // very next call, in every case, not just under a race.
+            Log::debug('HelpdeskTranslate: cache insert skipped, hash already exists', [
+                'text_hash' => $hash,
+                'provider' => $provider,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return $translated;
@@ -144,7 +168,7 @@ class CachedTranslator
         }
 
         return filled(
-            Setting::get('helpdesktranslate.deepl.key')
+            EncryptedSetting::get('helpdesktranslate.deepl.key')
                 ?: config('helpdesktranslate.deepl.key')
         );
     }
@@ -225,6 +249,86 @@ class CachedTranslator
     }
 
     /**
+     * Devuelve el cargo hecho por quotaExceededForCall() cuando la llamada al
+     * proveedor termina fallando — no se incurrió ningún coste real, así que
+     * no debe seguir descontando contra el límite diario. Antes el cargo se
+     * quedaba hecho para siempre en cualquier fallo (proveedor caído, 4xx,
+     * timeout...), y en el camino de fallback (primario falla → se prueba el
+     * otro proveedor) el texto llegaba a cobrarse DOS veces aunque solo uno
+     * de los dos intentos hubiera costado dinero de verdad.
+     *
+     * También alimenta measureQuotaSavings() para poder medir en producción
+     * cuánto cupo se estaba tirando antes de este fix (ver PERF-04, punto 7).
+     */
+    private function revertQuotaCharge(string $feature, int $chars): void
+    {
+        $limit = (int) config('helpdesktranslate.daily_char_limit', 0);
+
+        if ($limit <= 0 || $chars <= 0) {
+            return;
+        }
+
+        Cache::decrement($this->quotaKey($feature), $chars);
+        $this->measureQuotaSavings($chars);
+    }
+
+    /**
+     * Contador diario "antes/después" del efecto de revertQuotaCharge(): sin
+     * este fix, estos caracteres se quedaban cargados contra el cupo para
+     * siempre pese a no haber costado nada real. No hay forma de medir en
+     * este repo cuánto cupo se estaba desperdiciando en producción antes del
+     * fix (el audit lo estimaba en ~80.000 caracteres/día sin datos reales
+     * detrás) — este contador (Redis, TTL de un día) y el log de debug dejan
+     * ese dato disponible de verdad a partir de ahora.
+     */
+    private function measureQuotaSavings(int $chars): void
+    {
+        $key = 'helpdesktranslate:quota_reverted_chars:'.now()->format('Ymd');
+        Cache::add($key, 0, now()->endOfDay());
+        $total = Cache::increment($key, $chars);
+
+        Log::debug('HelpdeskTranslate: quota charge reverted after a failed provider call', [
+            'chars_reverted' => $chars,
+            'total_reverted_today' => $total,
+        ]);
+    }
+
+    /**
+     * Lectura del contador anterior — pensado para tinker/artisan o para
+     * cablearlo más adelante al informe de consumo existente
+     * (TranslateSettingsController::usage()) sin tener que tocar de nuevo
+     * CachedTranslator.
+     */
+    public function quotaCharsRevertedToday(): int
+    {
+        return (int) Cache::get('helpdesktranslate:quota_reverted_chars:'.now()->format('Ymd'), 0);
+    }
+
+    /**
+     * Actualiza el circuit breaker y revierte el cupo cargado tras una
+     * llamada real al proveedor (cache-miss ya confirmado). `$isDown`
+     * distingue un fallo transitorio del proveedor (SÍ cuenta para el
+     * circuit breaker) de un error de la propia petición — p.ej. un DeepL
+     * 400 por un parámetro inválido — que NO debe abrir el circuito, porque
+     * eso apagaría la traducción de todo el helpdesk por un simple error de
+     * request. Ver DeepLTranslationService::isDownStatus().
+     */
+    private function recordProviderOutcome(string $provider, bool $succeeded, string $feature, int $chars, bool $isDown): void
+    {
+        if ($succeeded) {
+            $this->recordSuccess($provider);
+
+            return;
+        }
+
+        if ($isDown) {
+            $this->recordFailure($provider);
+        }
+
+        $this->revertQuotaCharge($feature, $chars);
+    }
+
+    /**
      * Como translate(), pero cuando el idioma de origen es desconocido
      * devuelve también el idioma detectado — en la MISMA llamada al
      * proveedor, no en una segunda petición aparte. Antes
@@ -245,10 +349,14 @@ class CachedTranslator
         }
 
         $provider = $this->resolveProvider();
+        $fallbackProvider = $provider === 'deepl' ? 'libretranslate' : 'deepl';
         $target = strtolower($targetLang);
-        $hash = TranslationCache::makeHash($text, 'auto', $target, $provider);
 
-        $hit = TranslationCache::query()->where('text_hash', $hash)->first();
+        // Mismo lookup dual que translate() — ver el comentario allí.
+        $primaryHash = TranslationCache::makeHash($text, 'auto', $target, $provider);
+        $fallbackHash = TranslationCache::makeHash($text, 'auto', $target, $fallbackProvider);
+
+        $hit = TranslationCache::query()->whereIn('text_hash', [$primaryHash, $fallbackHash])->first();
         if ($hit) {
             TranslationCache::query()->where('id', $hit->id)->update([
                 'hits' => DB::raw('hits + 1'),
@@ -268,13 +376,13 @@ class CachedTranslator
         }
 
         $result = $this->callProviderWithDetection($provider, $text, $target, $feature);
+        $hash = $primaryHash;
 
         if ($result['translated'] === null) {
-            $fallbackProvider = $provider === 'deepl' ? 'libretranslate' : 'deepl';
             $result = $this->callProviderWithDetection($fallbackProvider, $text, $target, $feature);
             if ($result['translated'] !== null) {
                 $provider = $fallbackProvider;
-                $hash = TranslationCache::makeHash($text, 'auto', $target, $provider);
+                $hash = $fallbackHash;
             }
         }
 
@@ -299,8 +407,19 @@ class CachedTranslator
                 'chars_saved' => 0,
                 'last_used_at' => now(),
             ]);
-        } catch (QueryException) {
-            // Race condition: another process inserted the same hash. Ignore.
+        } catch (QueryException $e) {
+            // Race condition: another process inserted the same hash first.
+            // Debug (not error) on purpose — this is expected under concurrency
+            // and shouldn't page anyone, but it was previously swallowed with
+            // zero trace, which also hid the *actual* bug this fixes (the
+            // primary/fallback hash mismatch above): a fallback translation
+            // saved under the wrong hash reliably collided with itself on the
+            // very next call, in every case, not just under a race.
+            Log::debug('HelpdeskTranslate: cache insert skipped, hash already exists', [
+                'text_hash' => $hash,
+                'provider' => $provider,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return ['translated' => $translated, 'detected_source_language' => $detected];
@@ -315,9 +434,12 @@ class CachedTranslator
             return ['translated' => null, 'detected_source_language' => null];
         }
 
-        if ($this->quotaExceededForCall($feature, mb_strlen($text))) {
+        $chars = mb_strlen($text);
+        if ($this->quotaExceededForCall($feature, $chars)) {
             return ['translated' => null, 'detected_source_language' => null];
         }
+
+        $isDown = true;
 
         if ($provider === 'libretranslate') {
             $result = $this->libretranslate->translate($text, 'auto', $target);
@@ -328,15 +450,11 @@ class CachedTranslator
             $out = $this->deepl->translateWithSource($text, strtoupper($target), null);
             $translated = $out['translated'] ?? null;
             $detected = $out['detected_source_language'] ?? null;
+            $isDown = $out['is_down'] ?? true;
         }
 
-        if ($translated === null) {
-            $this->recordFailure($provider);
-        } else {
-            $this->recordSuccess($provider);
-        }
-
-        $this->logUsage($provider, 'translate', $feature, mb_strlen($text), 'auto', $target, $translated !== null);
+        $this->recordProviderOutcome($provider, $translated !== null, $feature, $chars, $isDown);
+        $this->logUsage($provider, 'translate', $feature, $chars, 'auto', $target, $translated !== null);
 
         return [
             'translated' => $translated,
@@ -395,15 +513,29 @@ class CachedTranslator
 
     private function detectViaProvider(string $provider, string $text, string $feature = 'other'): ?string
     {
+        // Antes detectViaProvider() no miraba el circuit breaker ni registraba
+        // éxito/fallo — un LibreTranslate caído pagaba su timeout completo en
+        // CADA mensaje entrante (nunca abría su propio circuito) y un cupo ya
+        // cargado por quotaExceededForCall() se quedaba gastado aunque la
+        // detección fallara.
+        if ($this->isCircuitOpen($provider)) {
+            return null;
+        }
+
         [$timeout, $retries] = $this->httpBudgetFor($feature);
 
         if ($provider === 'libretranslate') {
-            if ($this->quotaExceededForCall($feature, mb_strlen($text))) {
+            $chars = mb_strlen($text);
+            if ($this->quotaExceededForCall($feature, $chars)) {
                 return null;
             }
 
             $detected = $this->libretranslate->detectLanguage($text, $timeout, $retries);
-            $this->logUsage($provider, 'detect', $feature, mb_strlen($text), null, null, $detected !== null);
+            // LibreTranslate no distingue "petición inválida" de "caído" en su
+            // propio contrato (ver TranslationService::detectLanguage) — todo
+            // fallo cuenta como caída, igual que antes.
+            $this->recordProviderOutcome($provider, $detected !== null, $feature, $chars, isDown: true);
+            $this->logUsage($provider, 'detect', $feature, $chars, null, null, $detected !== null);
 
             return $detected;
         }
@@ -417,14 +549,18 @@ class CachedTranslator
         // pasa por el mismo cupo que una traducción — antes se saltaba por
         // completo, dejando la detección de idioma sin ningún techo de gasto.
         $sample = mb_substr($text, 0, 40);
+        $chars = mb_strlen($sample);
 
-        if ($this->quotaExceededForCall($feature, mb_strlen($sample))) {
+        if ($this->quotaExceededForCall($feature, $chars)) {
             return null;
         }
 
         $result = $this->deepl->translateWithDetection($sample, 'ES', $timeout, $retries);
         $detected = $result['detected_source_language'] ?? null;
-        $this->logUsage($provider, 'detect', $feature, mb_strlen($sample), null, null, $detected !== null);
+        $isDown = $result['is_down'] ?? true;
+
+        $this->recordProviderOutcome($provider, $detected !== null, $feature, $chars, $isDown);
+        $this->logUsage($provider, 'detect', $feature, $chars, null, null, $detected !== null);
 
         return $detected;
     }
@@ -465,22 +601,18 @@ class CachedTranslator
         // Cupo diario: solo se llega aquí en un cache-miss real (translate()
         // ya comprobó la caché antes de invocar callProvider()), así que un
         // acierto de caché nunca descuenta cupo ni puede bloquearse por él.
-        if ($this->quotaExceededForCall($feature, mb_strlen($text))) {
+        $chars = mb_strlen($text);
+        if ($this->quotaExceededForCall($feature, $chars)) {
             return null;
         }
 
         [$timeout, $retries] = $this->httpBudgetFor($feature);
-        $translated = $this->invokeProvider($provider, $text, $target, $source, $timeout, $retries);
+        $outcome = $this->invokeProvider($provider, $text, $target, $source, $timeout, $retries);
 
-        if ($translated === null) {
-            $this->recordFailure($provider);
-        } else {
-            $this->recordSuccess($provider);
-        }
+        $this->recordProviderOutcome($provider, $outcome['translated'] !== null, $feature, $chars, $outcome['is_down']);
+        $this->logUsage($provider, 'translate', $feature, $chars, $source, $target, $outcome['translated'] !== null);
 
-        $this->logUsage($provider, 'translate', $feature, mb_strlen($text), $source, $target, $translated !== null);
-
-        return $translated;
+        return $outcome['translated'];
     }
 
     /**
@@ -505,19 +637,27 @@ class CachedTranslator
         }
     }
 
-    private function invokeProvider(string $provider, string $text, string $target, ?string $source, ?int $timeoutSeconds = null, ?int $retries = null): ?string
+    /**
+     * @return array{translated: ?string, is_down: bool}
+     */
+    private function invokeProvider(string $provider, string $text, string $target, ?string $source, ?int $timeoutSeconds = null, ?int $retries = null): array
     {
         if ($provider === 'libretranslate') {
             $result = $this->libretranslate->translate($text, $source ?? 'auto', $target, $timeoutSeconds, $retries);
 
             if (! is_array($result) || ($result['mocked'] ?? false) || ($result['failed'] ?? false)) {
-                return null;
+                return ['translated' => null, 'is_down' => true];
             }
 
-            return $result['translated'] ?? null;
+            return ['translated' => $result['translated'] ?? null, 'is_down' => false];
         }
 
-        return $this->deepl->translate($text, $target, $source, $timeoutSeconds, $retries);
+        $out = $this->deepl->translateWithSource($text, $target, $source, $timeoutSeconds, $retries);
+
+        return [
+            'translated' => $out['translated'],
+            'is_down' => $out['translated'] === null ? ($out['is_down'] ?? true) : false,
+        ];
     }
 
     /* ── Circuit breaker (por proveedor) ──────────────────────────────────── */

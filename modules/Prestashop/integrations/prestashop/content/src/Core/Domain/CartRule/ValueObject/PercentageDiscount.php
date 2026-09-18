@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ class PercentageDiscount
      */
     private $appliesToDiscountedProducts;
 
-    /**
-     * @param float $percentage
-     * @param bool $appliesToDiscountedProducts
-     */
     public function __construct(float $percentage, bool $appliesToDiscountedProducts)
     {
         if ($percentage <= 0 || $percentage > 100) {
@@ -57,17 +54,11 @@ class PercentageDiscount
         $this->appliesToDiscountedProducts = $appliesToDiscountedProducts;
     }
 
-    /**
-     * @return float
-     */
     public function getPercentage(): float
     {
         return $this->percentage;
     }
 
-    /**
-     * @return bool
-     */
     public function appliesToDiscountedProducts(): bool
     {
         return $this->appliesToDiscountedProducts;

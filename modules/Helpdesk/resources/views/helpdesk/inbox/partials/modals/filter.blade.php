@@ -100,7 +100,7 @@
                         @forelse($inboxTags ?? [] as $tag)
                             <button class="fl-pill" data-key="tag" data-val="{{ $tag->id }}"
                                     style="--bv-tag-color: {{ $tag->color ?? '#6c757d' }}">
-                                <span class="d" style="background:{{ $tag->color ?? '#6c757d' }}"></span>
+                                <span class="d bv-dot-dyn" style="--bv-dot-color: {{ $tag->color ?? '#6c757d' }}"></span>
                                 {{ $tag->name }}
                                 @if($tag->conversations_count)<span class="c">{{ $tag->conversations_count }}</span>@endif
                             </button>
@@ -122,9 +122,9 @@
                     <button class="fl-pill" data-key="date" data-val="custom">{{ __('helpdesk::helpdesk.inbox.modals.filter_date_custom') }}</button>
                 </div>
                 <div class="fl-range">
-                    <input type="date" id="flDateFrom" value="{{ date('Y-m-01') }}">
+                    <input type="date" id="flDateFrom" value="{{ date('Y-m-01') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.filter_date_from') }}">
                     <span class="bv-date-arrow">→</span>
-                    <input type="date" id="flDateTo" value="{{ date('Y-m-d') }}">
+                    <input type="date" id="flDateTo" value="{{ date('Y-m-d') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.filter_date_to') }}">
                 </div>
             </div>
 

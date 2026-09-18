@@ -27,6 +27,4 @@
 
 namespace PrestaShop\PrestaShop\Core\Filter;
 
-class FilterException extends \Exception
-{
-}
+class FilterException extends \Exception {}

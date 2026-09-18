@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class VirtualProductFileUploader
      */
     private $virtualProductFileDir;
 
-    /**
-     * @param VirtualProductFileValidator $virtualProductFileValidator
-     * @param string $downloadDir
-     */
     public function __construct(
         VirtualProductFileValidator $virtualProductFileValidator,
         string $downloadDir
@@ -63,14 +60,13 @@ class VirtualProductFileUploader
     }
 
     /**
-     * @param string $filePath file to upload $filePath
-     *
+     * @param  string  $filePath  file to upload $filePath
      * @return string uploaded file path
      */
     public function upload(string $filePath): string
     {
         $this->virtualProductFileValidator->validate($filePath);
-        $destination = $this->virtualProductFileDir . VirtualProductFile::getNewFilename();
+        $destination = $this->virtualProductFileDir.VirtualProductFile::getNewFilename();
 
         $this->copyFile($filePath, $destination);
         $this->removeFile($filePath);
@@ -78,33 +74,21 @@ class VirtualProductFileUploader
         return $destination;
     }
 
-    /**
-     * @param string $filename
-     */
     public function remove(string $filename): void
     {
-        $this->removeFile($this->virtualProductFileDir . $filename);
+        $this->removeFile($this->virtualProductFileDir.$filename);
     }
 
-    /**
-     * @param string $newFilepath
-     * @param string|null $oldFilename
-     *
-     * @return string
-     */
     public function replace(string $newFilepath, ?string $oldFilename): string
     {
         if ($oldFilename) {
-            $this->removeFile($this->virtualProductFileDir . $oldFilename);
+            $this->removeFile($this->virtualProductFileDir.$oldFilename);
         }
 
         return $this->upload($newFilepath);
     }
 
     /**
-     * @param string $filePath
-     * @param string $destination
-     *
      * @throws FileUploadException
      */
     private function copyFile(string $filePath, string $destination): void
@@ -117,8 +101,6 @@ class VirtualProductFileUploader
     }
 
     /**
-     * @param string $filePath
-     *
      * @throws CannotUnlinkFileException
      */
     private function removeFile(string $filePath): void

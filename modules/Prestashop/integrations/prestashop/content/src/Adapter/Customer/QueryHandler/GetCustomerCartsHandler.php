@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ final class GetCustomerCartsHandler extends AbstractCustomerHandler implements G
      */
     private $locale;
 
-    /**
-     * @param LocaleInterface $locale
-     */
     public function __construct(
         LocaleInterface $locale
     ) {
@@ -67,10 +65,6 @@ final class GetCustomerCartsHandler extends AbstractCustomerHandler implements G
     }
 
     /**
-     * @param int $customerId
-     *
-     * @return array
-     *
      * @throws LocalizationException
      */
     private function getCarts(int $customerId): array

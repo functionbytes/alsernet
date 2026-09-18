@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,12 +63,12 @@ class OrderInformation
     private $totalPaid;
 
     /**
-     * @param int $orderId
-     * @param string $orderPlacedDate
-     * @param string $paymentMethodName
-     * @param string $orderStatus
-     * @param int $orderProductsCount
-     * @param string $totalPaid
+     * @param  int  $orderId
+     * @param  string  $orderPlacedDate
+     * @param  string  $paymentMethodName
+     * @param  string  $orderStatus
+     * @param  int  $orderProductsCount
+     * @param  string  $totalPaid
      */
     public function __construct($orderId, $orderPlacedDate, $paymentMethodName, $orderStatus, $orderProductsCount, $totalPaid)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,8 +27,11 @@
 class IdentityControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'identity';
+
     public $authRedirection = 'identity';
+
     public $ssl = true;
 
     public $passwordRequired = true;
@@ -43,8 +47,7 @@ class IdentityControllerCore extends FrontController
         $should_redirect = false;
 
         $customer_form = $this->makeCustomerForm()->setPasswordRequired($this->passwordRequired);
-        $customer = new Customer();
-
+        $customer = new Customer;
 
         $customer_form->getFormatter()
             ->setAskForNewPassword(true)
@@ -52,12 +55,11 @@ class IdentityControllerCore extends FrontController
             ->setPasswordRequired($this->passwordRequired)
             ->setPartnerOptinRequired($customer->isFieldRequired('optin'));
 
-
         if (Tools::isSubmit('submitCreate')) {
 
             $customer_form->fillWith(Tools::getAllValues());
 
-            if ($customer_form->submit(null,'identify')) {
+            if ($customer_form->submit(null, 'identify')) {
                 $this->success[] = $this->trans('Information successfully updated.', [], 'Shop.Notifications.Success');
                 $should_redirect = true;
             } else {

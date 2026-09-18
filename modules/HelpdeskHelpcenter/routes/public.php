@@ -15,7 +15,7 @@ Route::middleware(['web', 'throttle:60,1'])
         Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')->withoutMiddleware('throttle:60,1');
     });
 
-Route::middleware(['api', 'throttle:5,60'])
+Route::middleware(['api', 'throttle:10,1'])
     ->prefix('api/helpcenter')
     ->name('api.helpcenter.')
     ->group(function () {

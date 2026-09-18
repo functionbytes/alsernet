@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class CategoryDataFactory implements GridDataFactoryInterface
      */
     private $doctrineCategoryDataFactory;
 
-    /**
-     * @param GridDataFactoryInterface $doctrineCategoryDataFactory
-     */
     public function __construct(GridDataFactoryInterface $doctrineCategoryDataFactory)
     {
         $this->doctrineCategoryDataFactory = $doctrineCategoryDataFactory;
@@ -67,7 +65,6 @@ final class CategoryDataFactory implements GridDataFactoryInterface
     /**
      * Modify category records.
      *
-     * @param array $records
      *
      * @return array
      */

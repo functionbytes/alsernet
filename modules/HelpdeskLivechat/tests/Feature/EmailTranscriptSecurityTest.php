@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
@@ -204,5 +205,43 @@ class EmailTranscriptSecurityTest extends TestCase
         )->assertOk();
 
         Mail::assertQueued(ConversationTranscriptMail::class);
+    }
+
+    // -----------------------------------------------------------------------
+    // (d) Internal notes must never leak into the rendered transcript, even
+    //     after the Mailable round-trips through the queue's serialization.
+    // -----------------------------------------------------------------------
+
+    public function test_internal_notes_do_not_leak_into_queued_transcript_html(): void
+    {
+        Mail::fake();
+        $this->buildConversationWithWeb(enableTranscripts: true);
+
+        ConversationItem::factory()->create([
+            'conversation_id' => $this->conversation->id,
+            'body' => 'Hola, necesito ayuda con mi pedido.',
+        ]);
+
+        ConversationItem::factory()->internal()->create([
+            'conversation_id' => $this->conversation->id,
+            'body' => 'NOTA INTERNA: cliente conflictivo, revisar historial.',
+        ]);
+
+        $this->postJson(
+            route('helpdesk-livechat.widget.conversation.email-transcript', $this->conversation->id),
+            [
+                'email' => $this->customer->email,
+                'customer_id' => $this->customer->id,
+            ]
+        )->assertOk();
+
+        Mail::assertQueued(ConversationTranscriptMail::class, function (ConversationTranscriptMail $mail) {
+            $html = $mail->render();
+
+            $this->assertStringNotContainsString('NOTA INTERNA', $html);
+            $this->assertStringContainsString('Hola, necesito ayuda con mi pedido.', $html);
+
+            return true;
+        });
     }
 }

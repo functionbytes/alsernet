@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,14 +51,13 @@ class TimezoneRepository implements RepositoryInterface
     private $timezoneTable;
 
     /**
-     * @param Connection $connection
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      */
     public function __construct(Connection $connection, $tablePrefix)
     {
         $this->connection = $connection;
         $this->tablePrefix = $tablePrefix;
-        $this->timezoneTable = $tablePrefix . 'timezone';
+        $this->timezoneTable = $tablePrefix.'timezone';
     }
 
     /**

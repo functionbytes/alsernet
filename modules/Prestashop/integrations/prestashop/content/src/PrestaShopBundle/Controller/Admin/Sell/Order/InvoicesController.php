@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,9 @@ class InvoicesController extends FrameworkBundleAdminController
     /**
      * Show order preferences page.
      *
-     * @param Request $request
      *
      * @Template("@PrestaShop/Admin/Sell/Order/Invoices/invoices.html.twig")
+     *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
      * @return array Template parameters
@@ -70,7 +71,6 @@ class InvoicesController extends FrameworkBundleAdminController
     /**
      * Action that generates invoices PDF by date interval.
      *
-     * @param Request $request
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
@@ -87,7 +87,6 @@ class InvoicesController extends FrameworkBundleAdminController
     /**
      * Action that generates invoices PDF by order status.
      *
-     * @param Request $request
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
@@ -104,7 +103,6 @@ class InvoicesController extends FrameworkBundleAdminController
     /**
      * Process the Invoice Options configuration form.
      *
-     * @param Request $request
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="Access denied.")
      *
@@ -124,8 +122,6 @@ class InvoicesController extends FrameworkBundleAdminController
     /**
      * Processes the form in a generic way.
      *
-     * @param FormHandlerInterface $formHandler
-     * @param Request $request
      *
      * @return bool false if an error occurred, true otherwise
      */
@@ -149,8 +145,6 @@ class InvoicesController extends FrameworkBundleAdminController
      * Generates PDF of given invoice ID.
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
-     *
-     * @param int $invoiceId
      */
     public function generatePdfByIdAction(int $invoiceId)
     {
@@ -158,6 +152,6 @@ class InvoicesController extends FrameworkBundleAdminController
 
         // When using legacy generator,
         // we want to be sure that displaying PDF is the last thing this controller will do
-        die();
+        exit();
     }
 }

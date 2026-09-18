@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class DeleteTaxRulesGroupCommand
     private $taxRulesGroupId;
 
     /**
-     * @param int $taxRulesGroupId
-     *
      * @throws TaxRulesGroupConstraintException
      */
     public function __construct(int $taxRulesGroupId)
@@ -49,9 +48,6 @@ class DeleteTaxRulesGroupCommand
         $this->taxRulesGroupId = new TaxRulesGroupId($taxRulesGroupId);
     }
 
-    /**
-     * @return TaxRulesGroupId
-     */
     public function getTaxRulesGroupId(): TaxRulesGroupId
     {
         return $this->taxRulesGroupId;

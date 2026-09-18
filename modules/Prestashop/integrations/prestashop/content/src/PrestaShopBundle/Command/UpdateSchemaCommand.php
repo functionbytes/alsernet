@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,6 @@ class UpdateSchemaCommand extends ContainerAwareCommand
             ->setDescription('Update the database');
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -77,16 +74,16 @@ class UpdateSchemaCommand extends ContainerAwareCommand
             'SELECT CONSTRAINT_NAME, TABLE_NAME
                 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
                 WHERE CONSTRAINT_TYPE = "FOREIGN KEY"
-                    AND TABLE_SCHEMA = "' . $this->dbName . '"
-                    AND TABLE_NAME LIKE "' . $this->dbPrefix . '%" '
+                    AND TABLE_SCHEMA = "'.$this->dbName.'"
+                    AND TABLE_NAME LIKE "'.$this->dbPrefix.'%" '
         );
 
         $results = $query->fetchAll();
         foreach ($results as $result) {
-            $drop = 'ALTER TABLE ' . $result['TABLE_NAME'] . ' DROP FOREIGN KEY ' . $result['CONSTRAINT_NAME'];
-            $output->writeln('Executing: ' . $drop);
+            $drop = 'ALTER TABLE '.$result['TABLE_NAME'].' DROP FOREIGN KEY '.$result['CONSTRAINT_NAME'];
+            $output->writeln('Executing: '.$drop);
             $conn->executeQuery($drop);
-            ++$sqls;
+            $sqls++;
         }
 
         $schemaTool = new SchemaTool($this->em);
@@ -166,36 +163,36 @@ class UpdateSchemaCommand extends ContainerAwareCommand
                         $originalFieldName = $fieldName;
                         $fieldName = str_replace('`', '', $fieldName);
                         // get old default value
-                        $query = $conn->query('SHOW FULL COLUMNS FROM ' . $tableName . ' WHERE Field="' . $fieldName . '"');
+                        $query = $conn->query('SHOW FULL COLUMNS FROM '.$tableName.' WHERE Field="'.$fieldName.'"');
                         $results = $query->fetchAll();
                         $oldDefaultValue = $results[0]['Default'];
                         $extra = $results[0]['Extra'];
                         if ($oldDefaultValue !== null
                             && strpos($oldDefaultValue, 'CURRENT_TIMESTAMP') === false) {
-                            $oldDefaultValue = "'" . $oldDefaultValue . "'";
+                            $oldDefaultValue = "'".$oldDefaultValue."'";
                         }
                         if ($oldDefaultValue === null) {
                             $oldDefaultValue = 'NULL';
                         }
                         // set the old default value
-                        if (!($results[0]['Null'] == 'NO' && $results[0]['Default'] === null)
-                            && !($oldDefaultValue === 'NULL'
+                        if (! ($results[0]['Null'] == 'NO' && $results[0]['Default'] === null)
+                            && ! ($oldDefaultValue === 'NULL'
                                 && strpos($matches[0][$matchKey], 'NOT NULL') !== false)
                             && (strpos($matches[0][$matchKey], 'BLOB') === false)
                             && (strpos($matches[0][$matchKey], 'TEXT') === false)
                         ) {
                             if (preg_match('/DEFAULT/', $matches[0][$matchKey])) {
                                 $matches[0][$matchKey] =
-                                    preg_replace('/DEFAULT (.+?)(,|$)/', 'DEFAULT ' .
-                                        $oldDefaultValue . '$2' . ' ' . $extra, $matches[0][$matchKey]);
+                                    preg_replace('/DEFAULT (.+?)(,|$)/', 'DEFAULT '.
+                                        $oldDefaultValue.'$2'.' '.$extra, $matches[0][$matchKey]);
                             } else {
                                 $matches[0][$matchKey] =
-                                    preg_replace('/(.+?)(,|$)/uis', '$1 DEFAULT ' .
-                                        $oldDefaultValue . ' ' . $extra . '$2', $matches[0][$matchKey]);
+                                    preg_replace('/(.+?)(,|$)/uis', '$1 DEFAULT '.
+                                        $oldDefaultValue.' '.$extra.'$2', $matches[0][$matchKey]);
                             }
                         }
                         $updateSchemaSql[$key] = preg_replace(
-                            '/ CHANGE ' . $originalFieldName . ' (.+?)(,|$)/uis',
+                            '/ CHANGE '.$originalFieldName.' (.+?)(,|$)/uis',
                             $matches[0][$matchKey],
                             $updateSchemaSql[$key]
                         );
@@ -208,7 +205,7 @@ class UpdateSchemaCommand extends ContainerAwareCommand
         // Now execute the queries!
         foreach ($updateSchemaSql as $sql) {
             try {
-                $output->writeln('Executing: ' . $sql);
+                $output->writeln('Executing: '.$sql);
                 $conn->executeQuery($sql);
             } catch (\Exception $e) {
                 $conn->rollBack();
@@ -218,7 +215,7 @@ class UpdateSchemaCommand extends ContainerAwareCommand
         }
         $conn->commit();
 
-        $pluralization = (1 > $sqls) ? 'query was' : 'queries were';
+        $pluralization = ($sqls < 1) ? 'query was' : 'queries were';
         $output->writeln(sprintf('Database schema updated successfully! "<info>%s</info>" %s executed', $sqls, $pluralization));
 
         return 0;

@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Supplier\Models\Prompt\Prompt;
@@ -78,7 +79,7 @@ class PromptSelectionService
     /**
      * Get all applicable prompts ordered by priority
      *
-     * @return \Illuminate\Database\Eloquent\Collection<Prompt>
+     * @return Collection<Prompt>
      */
     public function getApplicablePrompts(
         ?int $supplierId = null,

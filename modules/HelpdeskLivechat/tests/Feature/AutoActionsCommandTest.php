@@ -20,7 +20,7 @@ class AutoActionsCommandTest extends TestCase
     use DatabaseTransactions;
     use SeedsOpenConversationStatus;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private ConversationStatus $open;
 

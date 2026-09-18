@@ -5,6 +5,7 @@ namespace Modules\Supplier\Models\Category;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Modules\Supplier\Models\Product\Product;
 use Modules\Supplier\Models\Prompt\Prompt;
 
@@ -23,11 +24,11 @@ class Subfamily extends Model
     ];
 
     protected $casts = [
-        'erp_id'          => 'integer',
-        'category_id'     => 'integer',
+        'erp_id' => 'integer',
+        'category_id' => 'integer',
         'erp_category_id' => 'integer',
-        'available'       => 'boolean',
-        'last_sync_at'    => 'datetime',
+        'available' => 'boolean',
+        'last_sync_at' => 'datetime',
     ];
 
     public function category(): BelongsTo
@@ -46,7 +47,7 @@ class Subfamily extends Model
     }
 
     /** Prompts que incluyen esta subfamilia en su array subfamily_ids */
-    public function promptsMulti(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function promptsMulti(): HasMany
     {
         return $this->hasMany(Prompt::class, 'subfamily_id');
     }
@@ -55,11 +56,11 @@ class Subfamily extends Model
      * Todos los prompts asignados: los que tienen subfamily_id = $this->id
      * O los que tienen this->id dentro de su JSON subfamily_ids.
      */
-    public function allPrompts(): \Illuminate\Support\Collection
+    public function allPrompts(): Collection
     {
         return Prompt::where(function ($q) {
             $q->where('subfamily_id', $this->id)
-              ->orWhereJsonContains('subfamily_ids', $this->id);
+                ->orWhereJsonContains('subfamily_ids', $this->id);
         })->get();
     }
 

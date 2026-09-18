@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ final class UpdateProductPriceInCartHandler extends AbstractCartHandler implemen
 
         $this->deleteSpecificPriceIfExists($command);
 
-        $specificPrice = new SpecificPrice();
+        $specificPrice = new SpecificPrice;
         $specificPrice->id_cart = (int) $cart->id;
         $specificPrice->id_shop = 0;
         $specificPrice->id_shop_group = 0;
@@ -69,8 +70,6 @@ final class UpdateProductPriceInCartHandler extends AbstractCartHandler implemen
 
     /**
      * Deletes specific price for cart & product if it already exists.
-     *
-     * @param UpdateProductPriceInCartCommand $command
      */
     private function deleteSpecificPriceIfExists(UpdateProductPriceInCartCommand $command)
     {

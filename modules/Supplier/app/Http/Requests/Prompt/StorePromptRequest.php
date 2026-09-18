@@ -14,9 +14,9 @@ class StorePromptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supplier_id'  => ['nullable', 'integer', 'exists:suppliers,id'],
-            'category_id'  => ['nullable', 'integer', 'exists:supplier_categories,id'],
-            'subfamily_ids'   => ['nullable', 'array'],
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
+            'category_id' => ['nullable', 'integer', 'exists:supplier_categories,id'],
+            'subfamily_ids' => ['nullable', 'array'],
             'subfamily_ids.*' => ['integer', 'exists:supplier_subfamilies,id'],
             'label' => ['required', 'string', 'max:255'],
             'scope' => ['required', 'string', 'in:global,supplier,category,supplier_category,source'],
@@ -27,7 +27,7 @@ class StorePromptRequest extends FormRequest
             'priority' => ['nullable', 'integer', 'min:0', 'max:100'],
             'seo_focus' => ['boolean'],
             'enable_web_search' => ['boolean'],
-            'ai_model'          => ['nullable', 'string', 'max:60'],
+            'ai_model' => ['nullable', 'string', 'max:60'],
             'is_active' => ['boolean'],
         ];
     }
@@ -72,7 +72,7 @@ class StorePromptRequest extends FormRequest
         $this->merge([
             'seo_focus' => $this->boolean('seo_focus', false),
             'enable_web_search' => $this->boolean('enable_web_search', false),
-            'ai_model'          => $this->input('ai_model') ?: null,
+            'ai_model' => $this->input('ai_model') ?: null,
             'is_active' => $this->boolean('is_active', true),
         ]);
     }

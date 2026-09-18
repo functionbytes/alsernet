@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class GetOrderForViewing
     private $productsSorting;
 
     /**
-     * @param int $orderId
-     * @param string $productsSorting
-     *
      * @throws OrderException
      * @throws InvalidSortingException
      */
@@ -59,17 +57,11 @@ class GetOrderForViewing
         $this->productsSorting = new QuerySorting($productsSorting);
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return QuerySorting
-     */
     public function getProductsSorting(): QuerySorting
     {
         return $this->productsSorting;

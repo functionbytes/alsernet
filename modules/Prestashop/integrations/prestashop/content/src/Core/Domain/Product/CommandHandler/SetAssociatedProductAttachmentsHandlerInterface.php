@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,10 +34,5 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Command\SetAssociatedProductAttach
  */
 interface SetAssociatedProductAttachmentsHandlerInterface
 {
-    /**
-     * @param SetAssociatedProductAttachmentsCommand $command
-     *
-     * @return void
-     */
     public function handle(SetAssociatedProductAttachmentsCommand $command): void;
 }

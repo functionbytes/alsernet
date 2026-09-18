@@ -76,7 +76,8 @@ class HelpdeskSlaServiceProvider extends ServiceProvider
         }
 
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — SLA',
+            'title' => 'Helpdesk · SLA',
+            'order' => 260,
             'items' => [
                 ['label' => 'Incumplimientos SLA', 'route' => 'helpdesksla.breaches.index', 'permission' => 'helpdesksla.view'],
                 ['label' => 'Festivos', 'route' => 'helpdesksla.holidays.index', 'permission' => 'helpdesksla.view'],
@@ -108,7 +109,8 @@ class HelpdeskSlaServiceProvider extends ServiceProvider
             $check = $schedule->command('helpdesksla:check-breaches')
                 ->withoutOverlapping()
                 ->onOneServer()
-                ->when(fn (): bool => helpdesk_sla_enabled());
+                ->when(fn (): bool => helpdesk_sla_enabled())
+                ->runInBackground();
             $checkInterval <= 1 ? $check->everyMinute() : $check->cron("*/{$checkInterval} * * * *");
 
             $warn = $schedule->command('helpdesksla:send-warnings')

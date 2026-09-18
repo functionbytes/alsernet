@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
      *  then no customizations are saved and null returned.
      *  Else, saved customizationId is returned or exception is thrown.
      *
-     * @param AddCustomizationCommand $command
      *
-     * @return CustomizationId|null
      *
      * @throws CartNotFoundException
      * @throws CustomizationConstraintException
@@ -85,7 +84,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
             }
 
             try {
-                if (CustomizationFieldType::TYPE_TEXT === (int) $customizationField['type']) {
+                if ((int) $customizationField['type'] === CustomizationFieldType::TYPE_TEXT) {
                     $this->assertCustomTextField($customizationFieldId, $customizationValues[$customizationFieldId]);
 
                     $customizationId = $cart->addTextFieldToProduct(
@@ -107,7 +106,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
                     );
                 }
 
-                if (false === $customizationId) {
+                if ($customizationId === false) {
                     throw new CustomizationException(sprintf('Failed to add customized data for customization field with id "%s"', $customizationFieldId));
                 }
             } catch (PrestaShopException $e) {
@@ -115,7 +114,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
             }
         }
 
-        if (!isset($customizationId)) {
+        if (! isset($customizationId)) {
             return null;
         }
 
@@ -125,9 +124,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
     /**
      * Uploads image from customized field
      *
-     * @param UploadedFile $file
      *
-     * @return string
      *
      * @throws FileUploadException
      */
@@ -135,21 +132,21 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
     {
         $this->validateUpload($file);
 
-        //@todo: check if copy is okay to use instead of move_uploaded_file(this fails creating new request from global later)
-        //@todo: implement UploadedFile::move() instead of copy();
-        if (!($tmpName = tempnam(_PS_TMP_IMG_DIR_, 'PS')) || !copy($file->getPathname(), $tmpName)) {
+        // @todo: check if copy is okay to use instead of move_uploaded_file(this fails creating new request from global later)
+        // @todo: implement UploadedFile::move() instead of copy();
+        if (! ($tmpName = tempnam(_PS_TMP_IMG_DIR_, 'PS')) || ! copy($file->getPathname(), $tmpName)) {
             throw new FileUploadException('An error occurred during the image upload process.');
         }
         $fileName = md5(uniqid('', true));
-        $resized = ImageManager::resize($tmpName, _PS_UPLOAD_DIR_ . $fileName) &&
+        $resized = ImageManager::resize($tmpName, _PS_UPLOAD_DIR_.$fileName) &&
             ImageManager::resize(
                 $tmpName,
-                _PS_UPLOAD_DIR_ . $fileName . '_small',
+                _PS_UPLOAD_DIR_.$fileName.'_small',
                 (int) Configuration::get('PS_PRODUCT_PICTURE_WIDTH'),
                 (int) Configuration::get('PS_PRODUCT_PICTURE_HEIGHT')
             );
 
-        if (!$resized) {
+        if (! $resized) {
             throw new FileUploadException('An error occurred when resizing the uploaded image');
         }
 
@@ -161,7 +158,6 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
     /**
      * Validates uploaded image
      *
-     * @param UploadedFile $file
      *
      * @throws FileUploadException
      */
@@ -173,7 +169,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
             throw new FileUploadException(sprintf('Image is too large (%s kB). Maximum allowed: %s kB', $file->getSize() / 1024, $maxFileSize / 1024), UPLOAD_ERR_FORM_SIZE);
         }
 
-        if (!ImageManager::isRealImage($file->getPathname(), $file->getType()) || !ImageManager::isCorrectImageFileExt($file->getClientOriginalName(), null) || preg_match('/\%00/', $file->getClientOriginalName())) {
+        if (! ImageManager::isRealImage($file->getPathname(), $file->getType()) || ! ImageManager::isCorrectImageFileExt($file->getClientOriginalName(), null) || preg_match('/\%00/', $file->getClientOriginalName())) {
             throw new FileUploadException('Image format not recognized, allowed formats are: .gif, .jpg, .png', UPLOAD_ERR_EXTENSION);
         }
 
@@ -183,16 +179,13 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
     }
 
     /**
-     * @param int $customFieldId
-     * @param string $value
-     *
      * @throws CustomizationConstraintException
      */
     private function assertCustomTextField(int $customFieldId, string $value)
     {
         $customization = new CustomizationField($customFieldId);
 
-        if ($customization->required && '' === $value) {
+        if ($customization->required && $value === '') {
             throw new CustomizationConstraintException(sprintf('Customization field #%s is required', $customFieldId), CustomizationConstraintException::FIELD_IS_REQUIRED);
         }
 

@@ -1,0 +1,151 @@
+/**
+ * Configuración de LiveChat (settings/livechat/index.blade.php) — estilos
+ * propios del módulo, extraidos del <style> inline de esa vista.
+ */
+
+/* Fix: some theme CSS sets visibility:collapse on .collapse, breaking accordion content */
+#widgetAccordion .accordion-collapse.show,
+#widgetAccordion .accordion-collapse.show .accordion-body,
+.tab-content > .tab-pane.show { visibility: visible !important; }
+
+.lc-settings-header {
+    background: linear-gradient(135deg, #90bb13 0%, #4f6b0a 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+.lc-settings-header h4 { font-weight: 700; margin: 0 0 .25rem; }
+.lc-settings-header p  { opacity: .9; margin: 0; font-size: .9rem; }
+
+.lc-section-title {
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #555;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.lc-section-title i { color: #90bb13; }
+
+/* Icono de acabado de cada sección del acordeon — acento decorativo, no
+   indica error: paleta de marca (verde), nunca rojo. */
+.lc-accent-icon { color: #90bb13; }
+
+.lc-preview-wrap {
+    position: sticky;
+    top: 20px;
+}
+
+.lc-phone-frame {
+    background: #1a1a1a;
+    border-radius: 36px;
+    padding: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    width: 340px;
+    margin: 0 auto;
+}
+.lc-phone-notch {
+    background: #333;
+    height: 24px;
+    border-radius: 12px;
+    margin: 0 auto 10px;
+    width: 100px;
+}
+.lc-phone-screen {
+    border-radius: 24px;
+    overflow: hidden;
+    height: 560px;
+    background: #fff;
+    position: relative;
+}
+.lc-phone-screen iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+.lc-phone-home-bar {
+    background: #333;
+    height: 4px;
+    border-radius: 2px;
+    width: 100px;
+    margin: 10px auto 0;
+}
+
+.preview-screen-tabs .nav-link {
+    font-size: .8rem;
+    padding: .35rem .75rem;
+    color: #666;
+    border-radius: 6px;
+}
+.preview-screen-tabs .nav-link.active {
+    background: #90bb13;
+    color: #fff;
+}
+
+/* Main settings tabs */
+.lc-nav-tabs .nav-link {
+    color: #555;
+    border-bottom: 3px solid transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    padding: .6rem 1rem;
+    font-weight: 500;
+}
+.lc-nav-tabs .nav-link:hover { color: #90bb13; }
+.lc-nav-tabs .nav-link.active {
+    color: #90bb13;
+    border-bottom-color: #90bb13;
+    background: transparent;
+}
+
+/* Timeout toggles */
+.timeout-row {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: .75rem;
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.timeout-row:hover { border-color: #90bb13; }
+.timeout-row.active { border-color: #90bb13; background: #f7fbe8; }
+
+/* Code block */
+.lc-code-block {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: .85rem;
+    position: relative;
+}
+.lc-code-copy {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+}
+
+/* Toggle list items */
+.lc-toggle-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .6rem .75rem;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    background: #f5f6f8;
+    margin-bottom: .5rem;
+}
+.hd-icon-fw { width: 14px; }
+.hd-color-input { max-width: 50px; }
+.hd-num-input-sm { width: 65px; }
+.hd-code-pre { color: inherit; background: transparent; padding: 0; }
+.hd-code-sm { font-size: .8rem; }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,10 +58,7 @@ final class LanguagePackImporter implements LanguagePackImporterInterface
     private $translationsDir;
 
     /**
-     * @param LanguagePackInstallerInterface $languagePack
-     * @param LanguageDataProvider $languageProvider
-     * @param CacheClearerInterface $entireCacheClearer
-     * @param string $translationsDir
+     * @param  string  $translationsDir
      */
     public function __construct(
         LanguagePackInstallerInterface $languagePack,
@@ -81,7 +79,7 @@ final class LanguagePackImporter implements LanguagePackImporterInterface
     {
         $result = $this->languagePack->downloadAndInstallLanguagePack($isoCode);
 
-        if (!empty($result)) {
+        if (! empty($result)) {
             return $result;
         }
 
@@ -93,8 +91,7 @@ final class LanguagePackImporter implements LanguagePackImporterInterface
     /**
      * Gets language code in format of ISO 639-1.
      *
-     * @param string $languageCode - language code to format
-     *
+     * @param  string  $languageCode  - language code to format
      * @return string
      */
     private function getFormattedLanguageCode($languageCode)

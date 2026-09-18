@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -83,13 +84,6 @@ class AddProductToOrderCommand
     /**
      * Add product to an order with new invoice. It applies to orders that were already paid and waiting for payment.
      *
-     * @param int $orderId
-     * @param int $productId
-     * @param int $combinationId
-     * @param string $productPriceTaxIncluded
-     * @param string $productPriceTaxExcluded
-     * @param int $productQuantity
-     * @param bool|null $hasFreeShipping
      *
      * @return self
      *
@@ -123,13 +117,6 @@ class AddProductToOrderCommand
     /**
      * Add product to an order using existing invoice. It applies only for orders that were not yet paid.
      *
-     * @param int $orderId
-     * @param int $orderInvoiceId
-     * @param int $productId
-     * @param int $combinationId
-     * @param string $productPriceTaxIncluded
-     * @param string $productPriceTaxExcluded
-     * @param int $productQuantity
      *
      * @return self
      *
@@ -161,13 +148,6 @@ class AddProductToOrderCommand
     }
 
     /**
-     * @param int $orderId
-     * @param int $productId
-     * @param int $combinationId
-     * @param string $productPriceTaxIncluded
-     * @param string $productPriceTaxExcluded
-     * @param int $productQuantity
-     *
      * @throws InvalidProductQuantityException
      * @throws InvalidAmountException
      * @throws OrderException
@@ -182,83 +162,57 @@ class AddProductToOrderCommand
     ) {
         $this->orderId = new OrderId($orderId);
         $this->productId = new ProductId($productId);
-        $this->combinationId = !empty($combinationId) ? new CombinationId($combinationId) : null;
+        $this->combinationId = ! empty($combinationId) ? new CombinationId($combinationId) : null;
         try {
             $this->productPriceTaxIncluded = new DecimalNumber($productPriceTaxIncluded);
             $this->productPriceTaxExcluded = new DecimalNumber($productPriceTaxExcluded);
         } catch (InvalidArgumentException $e) {
-            throw new InvalidAmountException();
+            throw new InvalidAmountException;
         }
         $this->setProductQuantity($productQuantity);
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return CombinationId|null
-     */
     public function getCombinationId(): ?CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getProductPriceTaxIncluded(): DecimalNumber
     {
         return $this->productPriceTaxIncluded;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getProductPriceTaxExcluded(): DecimalNumber
     {
         return $this->productPriceTaxExcluded;
     }
 
-    /**
-     * @return int
-     */
     public function getProductQuantity(): int
     {
         return $this->productQuantity;
     }
 
-    /**
-     * @return int|null
-     */
     public function getOrderInvoiceId(): ?int
     {
         return $this->orderInvoiceId;
     }
 
-    /**
-     * @return bool|null
-     */
     public function hasFreeShipping(): ?bool
     {
         return $this->hasFreeShipping;
     }
 
     /**
-     * @param int $productQuantity
-     *
      * @throws InvalidProductQuantityException
      */
     private function setProductQuantity(int $productQuantity): void

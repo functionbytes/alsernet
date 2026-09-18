@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,7 @@ class TranslationService
     public $container;
 
     /**
-     * @param string $lang
-     *
+     * @param  string  $lang
      * @return mixed
      */
     public function langToLocale($lang)
@@ -55,8 +55,7 @@ class TranslationService
     }
 
     /**
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return Lang
      *
      * @throws InvalidLanguageException
@@ -68,7 +67,7 @@ class TranslationService
         /** @var Lang|null $lang */
         $lang = $doctrine->getManager()->getRepository('PrestaShopBundle:Lang')->findOneByLocale($locale);
 
-        if (!$lang instanceof Lang) {
+        if (! $lang instanceof Lang) {
             throw InvalidLanguageException::localeNotFound($locale);
         }
 
@@ -84,11 +83,11 @@ class TranslationService
     {
         $translationsDirectory = $this->getResourcesDirectory();
 
-        $legacyToStandardLocalesJson = file_get_contents($translationsDirectory . '/legacy-to-standard-locales.json');
+        $legacyToStandardLocalesJson = file_get_contents($translationsDirectory.'/legacy-to-standard-locales.json');
         $legacyToStandardLocales = json_decode($legacyToStandardLocalesJson, true);
 
         $jsonLastErrorCode = json_last_error();
-        if (JSON_ERROR_NONE !== $jsonLastErrorCode) {
+        if ($jsonLastErrorCode !== JSON_ERROR_NONE) {
             throw new Exception('The legacy to standard locales JSON could not be decoded', $jsonLastErrorCode);
         }
 
@@ -100,15 +99,14 @@ class TranslationService
      */
     private function getResourcesDirectory()
     {
-        return $this->container->getParameter('kernel.root_dir') . '/Resources';
+        return $this->container->getParameter('kernel.root_dir').'/Resources';
     }
 
     /**
-     * @param string $lang
-     * @param string|null $type
-     * @param string $theme
-     * @param null $search
-     *
+     * @param  string  $lang
+     * @param  string|null  $type
+     * @param  string  $theme
+     * @param  null  $search
      * @return array|mixed
      */
     public function getTranslationsCatalogue($lang, $type, $theme, $search = null)
@@ -116,7 +114,7 @@ class TranslationService
         $factory = $this->container->get('ps.translations_factory');
 
         if ($this->requiresThemeTranslationsFactory($theme, $type)) {
-            if ('classic' === $theme) {
+            if ($theme === 'classic') {
                 $type = 'front';
             } else {
                 $type = $theme;
@@ -148,11 +146,7 @@ class TranslationService
      *          ]
      *   ]
      *
-     * @param ProviderDefinitionInterface $providerDefinition
-     * @param string $locale
-     * @param array $search
      *
-     * @return array
      *
      * @throws Exception
      */
@@ -167,28 +161,24 @@ class TranslationService
     }
 
     /**
-     * @param string|null $theme
-     * @param string $type
-     *
+     * @param  string|null  $theme
+     * @param  string  $type
      * @return bool
      */
     private function requiresThemeTranslationsFactory($theme, $type)
     {
-        return $type === 'themes' && null !== $theme;
+        return $type === 'themes' && $theme !== null;
     }
 
     /**
      * List translations for a specific domain.
      *
-     * @param ProviderDefinitionInterface $providerDefinition
-     * @param string $locale
-     * @param string $domain
-     * @param array|null $search
      *
-     * @return array
      *
      * @throws Exception
+     *
      * @todo: we need module information here
+     *
      * @todo: we need to improve the Vuejs application to send the information
      */
     public function listDomainTranslation(
@@ -216,12 +206,11 @@ class TranslationService
     /**
      * Save a translation in database.
      *
-     * @param Lang $lang
-     * @param string $domain
-     * @param string $key
-     * @param string $translationValue
-     * @param null $theme
-     *
+     * @param  Lang  $lang
+     * @param  string  $domain
+     * @param  string  $key
+     * @param  string  $translationValue
+     * @param  null  $theme
      * @return bool
      */
     public function saveTranslationMessage($lang, $domain, $key, $translationValue, $theme = null)
@@ -250,25 +239,25 @@ class TranslationService
             $logger->error($exception->getMessage(), $log_context);
         }
 
-        if (null === $translation) {
-            $translation = new Translation();
+        if ($translation === null) {
+            $translation = new Translation;
             $translation->setDomain($domain);
             $translation->setLang($lang);
             $translation->setKey(htmlspecialchars_decode($key, ENT_QUOTES));
             $translation->setTranslation($translationValue);
-            if (!empty($theme)) {
+            if (! empty($theme)) {
                 $translation->setTheme($theme);
             }
         } else {
-            if (!empty($theme)) {
+            if (! empty($theme)) {
                 $translation->setTheme($theme);
             }
             $translation->setTranslation($translationValue);
         }
 
         $validator = Validation::createValidator();
-        $violations = $validator->validate($translation, new PassVsprintf());
-        if (0 !== count($violations)) {
+        $violations = $validator->validate($translation, new PassVsprintf);
+        if (count($violations) !== 0) {
             foreach ($violations as $violation) {
                 $logger->error($violation->getMessage(), $log_context);
             }
@@ -293,11 +282,10 @@ class TranslationService
     /**
      * Reset translation from database.
      *
-     * @param Lang $lang
-     * @param string $domain
-     * @param string $key
-     * @param null $theme
-     *
+     * @param  Lang  $lang
+     * @param  string  $domain
+     * @param  string  $key
+     * @param  null  $theme
      * @return bool
      */
     public function resetTranslationMessage($lang, $domain, $key, $theme = null)
@@ -310,14 +298,14 @@ class TranslationService
             'domain' => $domain,
             'key' => $key,
         ];
-        if (!empty($theme)) {
+        if (! empty($theme)) {
             $searchTranslation['theme'] = $theme;
         }
 
         $translation = $entityManager->getRepository('PrestaShopBundle:Translation')->findOneBy($searchTranslation);
 
         $resetTranslationSuccessfully = false;
-        if (null === $translation) {
+        if ($translation === null) {
             $resetTranslationSuccessfully = true;
         }
 

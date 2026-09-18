@@ -3,8 +3,8 @@
 namespace Modules\HelpdeskAgents\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Modules\HelpdeskAgents\Http\Requests\StoreOncallRequest;
 use Modules\HelpdeskAgents\Http\Requests\StoreShiftRequest;
@@ -12,6 +12,7 @@ use Modules\HelpdeskAgents\Http\Requests\StoreVacationRequest;
 use Modules\HelpdeskAgents\Models\AgentShift;
 use Modules\HelpdeskAgents\Models\AgentVacation;
 use Modules\HelpdeskAgents\Models\OncallRotation;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class ScheduleController extends Controller
 {
@@ -26,7 +27,12 @@ class ScheduleController extends Controller
         $shifts = AgentShift::query()->with('user')->orderBy('day_of_week')->orderBy('start_time')->get();
         $vacations = AgentVacation::query()->with('user')->latest()->get();
         $oncalls = OncallRotation::query()->with('currentUser')->latest()->get();
-        $agents = User::query()->orderBy('firstname')->orderBy('lastname')->get();
+
+        // Antes: User::query()->get() sin filtro de rol — en un sistema con
+        // fixtures de otros módulos mostraba prácticamente a todo el mundo
+        // como "agente" seleccionable. Mismo catálogo cacheado (rol
+        // helpdesk-agent + available) que ya usa el selector de Tickets.
+        $agents = CatalogCacheService::agents();
 
         return view('helpdeskagents::settings.schedule.index', compact(
             'shifts', 'vacations', 'oncalls', 'agents'
@@ -83,6 +89,14 @@ class ScheduleController extends Controller
         $validated = $request->validated();
 
         $validated['is_active'] = true;
+        $validated['current_user_id'] ??= $validated['user_ids'][0];
+
+        // El handoff se calculaba nunca: la fila se guardaba con
+        // next_handoff_at siempre null, así que AdvanceOncallRotations no
+        // tenía forma de saber cuándo tocaba rotar. Se fija en el alta y se
+        // recalcula en cada rotación (ver AdvanceOncallRotations).
+        $validated['next_handoff_at'] = Carbon::parse($validated['started_at'])
+            ->addHours($validated['shift_duration_hours']);
 
         OncallRotation::create($validated);
 

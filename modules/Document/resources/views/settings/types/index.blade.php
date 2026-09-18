@@ -7,6 +7,11 @@
 @endsection
 
 @section('content')
+    @php
+        $dtFiltering = request()->hasAny(['search', 'status']);
+        $dtActiveFilterCount = collect(['status'])->filter(fn ($k) => request($k) !== null && request($k) !== '')->count();
+    @endphp
+
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')
@@ -21,11 +26,6 @@
                         <p class="small mb-0 text-muted">Gestiona los tipos de documentos con soporte multi-idioma y requisitos personalizados</p>
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
-                        @if(request('search') || request('status'))
-                            <a href="{{ route('settings.documents.types.index') }}" class="btn btn-secondary">
-                                Limpiar búsqueda
-                            </a>
-                        @endif
                         <a href="{{ route('settings.documents.types.create') }}" class="btn btn-primary">
                             Nuevo tipo
                         </a>
@@ -33,31 +33,68 @@
                 </div>
             </div>
 
-            <!-- Search Section -->
+            {{-- Stats --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('settings.documents.types.index') }}">
-                    <div class="row align-items-center g-2">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">
-                                    <i class="fa fa-magnifying-glass"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control"
-                                       placeholder="Buscar por tipo o etiqueta..."
-                                       value="{{ request('search') }}">
+                <div class="row g-3">
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
+                                <small class="text-muted">Tipos registrados</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <select class="form-select select2 select2" name="status" data-minimum-results-for-search="Infinity">
-                                <option value="">Todos los estados</option>
-                                <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Activo</option>
-                                <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactivo</option>
-                            </select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Activos</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['active']) }}</h4>
+                                <small class="text-muted">Disponibles para usar</small>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100">
-                                Buscar
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Inactivos</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['inactive']) }}</h4>
+                                <small class="text-muted">Ocultos en los formularios</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Filtros --}}
+            <div class="card-body border-bottom">
+                <form method="GET" action="{{ route('settings.documents.types.index') }}" id="dt-filter-form">
+                    <input type="hidden" name="status" id="dt-filter-status" value="{{ request('status') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por tipo, etiqueta o descripcion..."
+                               value="{{ request('search') }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#dt-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($dtActiveFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary ts-filter-badge">
+                                    {{ $dtActiveFilterCount }}
+                                </span>
+                            @endif
+                        </button>
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
                             </button>
+                            @if($dtFiltering)
+                                <a href="{{ route('settings.documents.types.index') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </form>
@@ -75,6 +112,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th >Etiqueta</th>
                                     <th >Tipo</th>
                                     <th  class="text-center">Requisitos</th>
@@ -93,6 +131,7 @@
                                         $translationPercentage = $totalLangs > 0 ? round(($completedLangs / $totalLangs) * 100) : 0;
                                     @endphp
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $type->id }}"></td>
                                         <td>
                                             <div>
                                                 <strong>{{ $type->label }}</strong>
@@ -233,15 +272,136 @@
 
     @include('core::components.delete')
 
+    {{-- Filtros avanzados --}}
+    <div class="modal fade" id="dt-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select id="dt-modal-status" class="form-control select2-filter-modal">
+                            <option value="">Activos e inactivos</option>
+                            <option value="1" @selected(request('status') === '1')>Solo activos</option>
+                            <option value="0" @selected(request('status') === '0')>Solo inactivos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="dt-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="dt-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Barra flotante de seleccion --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none ts-bulk-toolbar">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Modal de accion masiva --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> tipo(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
+@push('styles')
+<style>
+    .ts-bulk-toolbar { z-index: 1050; }
+    .ts-filter-badge { font-size: .6rem; }
+</style>
+@endpush
+
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
+    // 'select.select2': el contenedor que genera select2 hereda esa clase y un
+    // selector por clase acabaria reinicializandose sobre si mismo.
+    $('select.select2').select2({
         allowClear: false,
         minimumResultsForSearch: Infinity
+    });
+
+    // --- Filtros avanzados: el modal solo rellena los hidden del formulario ---
+    $('.select2-filter-modal').select2({ dropdownParent: $('#dt-filter-modal'), width: '100%' });
+
+    $('#dt-filter-apply-btn').on('click', function () {
+        $('#dt-filter-status').val($('#dt-modal-status').val());
+        $('#dt-filter-modal').modal('hide');
+        $('#dt-filter-form').submit();
+    });
+
+    $('#dt-filter-clear-btn').on('click', function () {
+        window.location = '{{ route('settings.documents.types.index') }}';
+    });
+
+    // --- Seleccion masiva ---
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids = bulk.getIds();
+
+        if (!action) {
+            toastr.warning('Selecciona una accion.');
+            return;
+        }
+        if (!ids.length) {
+            toastr.warning('No hay tipos seleccionados.');
+            return;
+        }
+
+        const $btn = $(this).prop('disabled', true).text('Aplicando...');
+
+        $.ajax({
+            url: '{{ route('settings.documents.types.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (res) {
+            toastr.success(res.message || 'Accion aplicada.');
+            setTimeout(() => location.reload(), 1000);
+        }).fail(function (xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error al aplicar la accion.');
+            $btn.prop('disabled', false).text('Aplicar');
+        });
     });
 
     // Delete modal functionality

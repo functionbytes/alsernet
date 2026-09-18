@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use PrestaShop\PrestaShop\Core\Domain\Exception\DomainException;
 /**
  * An abstraction for all contact related exceptions. Use this one in catch clause to detect all related exceptions.
  */
-class ContactException extends DomainException
-{
-}
+class ContactException extends DomainException {}

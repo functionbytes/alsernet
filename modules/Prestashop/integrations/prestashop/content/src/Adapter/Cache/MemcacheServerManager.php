@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,19 +49,19 @@ class MemcacheServerManager
     public function __construct(Connection $connection, $dbPrefix)
     {
         $this->connection = $connection;
-        $this->tableName = $dbPrefix . 'memcached_servers';
+        $this->tableName = $dbPrefix.'memcached_servers';
     }
 
     /**
      * Add a memcache server.
      *
-     * @param string $serverIp
-     * @param int $serverPort
-     * @param int $serverWeight
+     * @param  string  $serverIp
+     * @param  int  $serverPort
+     * @param  int  $serverWeight
      */
     public function addServer($serverIp, $serverPort, $serverWeight)
     {
-        $this->connection->executeUpdate('INSERT INTO ' . $this->tableName . ' (ip, port, weight) VALUES(:serverIp, :serverPort, :serverWeight)', [
+        $this->connection->executeUpdate('INSERT INTO '.$this->tableName.' (ip, port, weight) VALUES(:serverIp, :serverPort, :serverWeight)', [
             'serverIp' => $serverIp,
             'serverPort' => (int) $serverPort,
             'serverWeight' => (int) $serverWeight,
@@ -77,38 +78,36 @@ class MemcacheServerManager
     /**
      * Test if a Memcache configuration is valid.
      *
-     * @param string $serverIp
-     * @param string $serverPort
-     *
+     * @param  string  $serverIp
+     * @param  string  $serverPort
      * @return bool
      */
     public function testConfiguration($serverIp, $serverPort)
     {
         if (extension_loaded('memcached')) {
-            $memcached = new Memcached();
+            $memcached = new Memcached;
             $memcached->addServer($serverIp, $serverPort);
             $version = $memcached->getVersion();
 
-            return is_array($version) && false === in_array('255.255.255', $version, true);
+            return is_array($version) && in_array('255.255.255', $version, true) === false;
         }
 
-        $memcache = new Memcache();
+        $memcache = new Memcache;
 
-        return true === $memcache->connect($serverIp, $serverPort);
+        return $memcache->connect($serverIp, $serverPort) === true;
     }
 
     /**
      * Delete a memcache server (a deletion returns the number of rows deleted).
      *
-     * @param int $serverId Server ID (in database)
-     *
+     * @param  int  $serverId  Server ID (in database)
      * @return bool
      */
     public function deleteServer($serverId)
     {
         $deletionSuccess = $this->connection->delete($this->tableName, ['id_memcached_server' => $serverId]);
 
-        return 1 === $deletionSuccess;
+        return $deletionSuccess === 1;
     }
 
     /**
@@ -118,6 +117,6 @@ class MemcacheServerManager
      */
     public function getServers()
     {
-        return $this->connection->fetchAll('SELECT * FROM ' . $this->tableName, []);
+        return $this->connection->fetchAll('SELECT * FROM '.$this->tableName, []);
     }
 }

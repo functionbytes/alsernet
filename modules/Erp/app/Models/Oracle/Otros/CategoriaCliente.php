@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -51,7 +52,7 @@ class CategoriaCliente extends Model
      */
     public function categoriaCliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
+        return $this->belongsTo(CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
     }
 
     /**
@@ -59,7 +60,7 @@ class CategoriaCliente extends Model
      */
     public function clientes()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
+        return $this->hasMany(Cliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
     }
 
     /**
@@ -67,6 +68,6 @@ class CategoriaCliente extends Model
      */
     public function lineas()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\LcategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
+        return $this->hasMany(LcategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
     }
 }

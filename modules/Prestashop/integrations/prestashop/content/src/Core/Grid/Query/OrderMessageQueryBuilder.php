@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,13 +63,6 @@ final class OrderMessageQueryBuilder implements DoctrineQueryBuilderInterface
      */
     private $doctrineSearchCriteriaApplicator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param int $contextLanguageId
-     * @param DoctrineFilterApplicatorInterface $doctrineFilterApplicator
-     * @param DoctrineSearchCriteriaApplicatorInterface $doctrineSearchCriteriaApplicator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -93,8 +87,7 @@ final class OrderMessageQueryBuilder implements DoctrineQueryBuilderInterface
 
         $this->doctrineSearchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -110,31 +103,24 @@ final class OrderMessageQueryBuilder implements DoctrineQueryBuilderInterface
         return $qb;
     }
 
-    /**
-     * @param SearchCriteriaInterface $criteria
-     *
-     * @return QueryBuilder
-     */
     private function buildBaseQuery(SearchCriteriaInterface $criteria): QueryBuilder
     {
         $qb = $this->connection->createQueryBuilder();
 
         $qb
-            ->from($this->dbPrefix . 'order_message', 'om')
+            ->from($this->dbPrefix.'order_message', 'om')
             ->leftJoin(
                 'om',
-                $this->dbPrefix . 'order_message_lang',
+                $this->dbPrefix.'order_message_lang',
                 'oml',
                 'oml.id_order_message = om.id_order_message AND oml.id_lang = :context_lang_id'
             )
-            ->setParameter('context_lang_id', $this->contextLanguageId)
-        ;
+            ->setParameter('context_lang_id', $this->contextLanguageId);
 
-        $sqlFilters = (new SqlFilters())
+        $sqlFilters = (new SqlFilters)
             ->addFilter('id_order_message', 'om.id_order_message', SqlFilters::WHERE_LIKE)
             ->addFilter('name', 'oml.name', SqlFilters::WHERE_LIKE)
-            ->addFilter('message', 'oml.message', SqlFilters::WHERE_LIKE)
-        ;
+            ->addFilter('message', 'oml.message', SqlFilters::WHERE_LIKE);
 
         $this->doctrineFilterApplicator->apply($qb, $sqlFilters, $criteria->getFilters());
 

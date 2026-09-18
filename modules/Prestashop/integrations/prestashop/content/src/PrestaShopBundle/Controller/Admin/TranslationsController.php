@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,8 +65,6 @@ class TranslationsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return BinaryFileResponse
      */
     public function exportThemeAction(Request $request)
@@ -77,7 +76,7 @@ class TranslationsController extends FrameworkBundleAdminController
         $locale = $langRepository->getLocaleByIsoCode($isoCode);
 
         $themeExporter = $this->get('prestashop.translation.theme.exporter');
-        $zipFile = $themeExporter->createZipArchive($themeName, $locale, _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR);
+        $zipFile = $themeExporter->createZipArchive($themeName, $locale, _PS_ROOT_DIR_.DIRECTORY_SEPARATOR);
 
         $response = new BinaryFileResponse($zipFile);
         $response->deleteFileAfterSend(true);
@@ -91,9 +90,8 @@ class TranslationsController extends FrameworkBundleAdminController
      * Show translations backups page.
      *
      * @Template("@PrestaShop/Admin/Improve/International/Translations/translations_settings.html.twig")
-     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
      * @return array
      */
@@ -125,8 +123,6 @@ class TranslationsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller')~'_')")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function modifyTranslationsAction(Request $request)
@@ -149,8 +145,6 @@ class TranslationsController extends FrameworkBundleAdminController
      * Add language pack for new languages and updates for the existing ones action.
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')"))
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -189,8 +183,6 @@ class TranslationsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')")
      *
-     * @param Request $request
-     *
      * @return BinaryFileResponse|RedirectResponse
      */
     public function exportCataloguesAction(Request $request)
@@ -225,7 +217,7 @@ class TranslationsController extends FrameworkBundleAdminController
                     /*
                      * Exporting mails will also export Mails_Body
                      */
-                    if (ProviderDefinitionInterface::TYPE_MAILS === $type) {
+                    if ($type === ProviderDefinitionInterface::TYPE_MAILS) {
                         $selections[] = [
                             'type' => ProviderDefinitionInterface::TYPE_MAILS_BODY,
                             'selected' => null,
@@ -286,8 +278,6 @@ class TranslationsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function copyLanguageAction(Request $request)
@@ -319,33 +309,21 @@ class TranslationsController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_international_langs_show_settings');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getModifyTranslationsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.translations_settings.modify_langs.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getAddUpdateLanguageTranslationsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.translations_settings.add_update_language.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getCopyLanguageTranslationsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.translations_settings.copy_language.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getExportTranslationCataloguesFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.translations_settings.export_catalogues.form_handler');

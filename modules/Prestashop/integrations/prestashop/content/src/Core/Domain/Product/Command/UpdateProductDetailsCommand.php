@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,35 +70,21 @@ class UpdateProductDetailsCommand
      */
     private $reference;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return Isbn|null
-     */
     public function getIsbn(): ?Isbn
     {
         return $this->isbn;
     }
 
-    /**
-     * @param string $isbn
-     *
-     * @return UpdateProductDetailsCommand
-     */
     public function setIsbn(string $isbn): UpdateProductDetailsCommand
     {
         $this->isbn = new Isbn($isbn);
@@ -105,19 +92,11 @@ class UpdateProductDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Upc|null
-     */
     public function getUpc(): ?Upc
     {
         return $this->upc;
     }
 
-    /**
-     * @param string $upc
-     *
-     * @return UpdateProductDetailsCommand
-     */
     public function setUpc(string $upc): UpdateProductDetailsCommand
     {
         $this->upc = new Upc($upc);
@@ -125,19 +104,11 @@ class UpdateProductDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Ean13|null
-     */
     public function getEan13(): ?Ean13
     {
         return $this->ean13;
     }
 
-    /**
-     * @param string $ean13
-     *
-     * @return UpdateProductDetailsCommand
-     */
     public function setEan13(string $ean13): UpdateProductDetailsCommand
     {
         $this->ean13 = new Ean13($ean13);
@@ -145,19 +116,11 @@ class UpdateProductDetailsCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMpn(): ?string
     {
         return $this->mpn;
     }
 
-    /**
-     * @param string $mpn
-     *
-     * @return UpdateProductDetailsCommand
-     */
     public function setMpn(string $mpn): UpdateProductDetailsCommand
     {
         $this->mpn = $mpn;
@@ -165,19 +128,11 @@ class UpdateProductDetailsCommand
         return $this;
     }
 
-    /**
-     * @return Reference|null
-     */
     public function getReference(): ?Reference
     {
         return $this->reference;
     }
 
-    /**
-     * @param string $reference
-     *
-     * @return UpdateProductDetailsCommand
-     */
     public function setReference(string $reference): UpdateProductDetailsCommand
     {
         $this->reference = new Reference($reference);

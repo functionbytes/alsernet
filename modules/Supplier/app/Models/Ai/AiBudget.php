@@ -55,10 +55,10 @@ class AiBudget extends Model
     private function costForPeriod(string $from, string $to): float
     {
         $prefix = match ($this->provider) {
-            'openai'    => 'gpt-%',
+            'openai' => 'gpt-%',
             'anthropic' => 'claude-%',
-            'google'    => 'gemini-%',
-            default     => '%',
+            'google' => 'gemini-%',
+            default => '%',
         };
 
         return (float) AiCost::query()
@@ -131,8 +131,12 @@ class AiBudget extends Model
             return $value;
         }
 
-        if (str_starts_with($value, 'claude')) return 'anthropic';
-        if (str_starts_with($value, 'gemini')) return 'google';
+        if (str_starts_with($value, 'claude')) {
+            return 'anthropic';
+        }
+        if (str_starts_with($value, 'gemini')) {
+            return 'google';
+        }
 
         return 'openai';
     }

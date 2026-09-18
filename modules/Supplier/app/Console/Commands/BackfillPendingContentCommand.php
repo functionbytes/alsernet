@@ -33,6 +33,7 @@ class BackfillPendingContentCommand extends Command
 
         if ($total === 0) {
             $this->warn('No hay productos sin contenido asociado.');
+
             return Command::SUCCESS;
         }
 
@@ -42,8 +43,9 @@ class BackfillPendingContentCommand extends Command
             $query->select('id', 'name')->limit(20)->get()
                 ->each(fn ($p) => $this->line("  → [DRY-RUN] Producto #{$p->id} – {$p->name}"));
             if ($total > 20) {
-                $this->line("  … y " . ($total - 20) . " más.");
+                $this->line('  … y '.($total - 20).' más.');
             }
+
             return Command::SUCCESS;
         }
 

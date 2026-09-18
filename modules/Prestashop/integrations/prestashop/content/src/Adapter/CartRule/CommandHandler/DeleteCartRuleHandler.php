@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ final class DeleteCartRuleHandler extends AbstractCartRuleHandler implements Del
         $cartRuleId = $command->getCartRuleId();
         $cartRule = $this->getCartRule($cartRuleId);
 
-        if (!$this->deleteCartRule($cartRule)) {
+        if (! $this->deleteCartRule($cartRule)) {
             throw new CannotDeleteCartRuleException(
                 sprintf(
                     'Cannot delete SpecificPriceRule object with id "%s".',

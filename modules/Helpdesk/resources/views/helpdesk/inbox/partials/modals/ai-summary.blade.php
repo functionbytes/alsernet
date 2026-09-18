@@ -15,7 +15,7 @@
                 <i class="fas fa-spinner fa-spin"></i>
             </div>
 
-            <div id="aiSummaryContent" style="display:none">
+            <div id="aiSummaryContent" class="bv-step-hidden">
                 <div class="bv-ai-sparkle">
                     <div class="bv-ai-sparkle__ic"><i class="fas fa-wand-magic-sparkles"></i></div>
                     <div>
@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div id="aiSummaryError" class="bv-cv-loading-msg" style="display:none">
+            <div id="aiSummaryError" class="bv-cv-loading-msg bv-step-hidden">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
 
@@ -52,11 +52,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/ai-summary.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/ai-summary.js')) }}" defer></script>
-@endpush
-@endonce

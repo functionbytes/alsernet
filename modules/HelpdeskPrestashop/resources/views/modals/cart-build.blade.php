@@ -5,8 +5,24 @@
 
 {{-- CSS de fichas/pedidos PrestaShop (.ps-*/.po-*/.combo-row), movido desde el core.
      Se carga aquí (primer modal PrestaShop, siempre presente si el módulo está activo)
-     para cubrir tanto los modales como el tab del panel derecho. --}}
-<link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-inbox.css') }}?v={{ @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-inbox.css')) }}"/>
+     para cubrir tanto los modales como el tab del panel derecho.
+
+     prestashop-inbox.min.css (npm run build:module-assets) es OPCIONAL, mismo
+     criterio "cae si está desactualizado" que tickets-app.css (ver
+     scripts/build-module-assets.mjs): se sirve solo si existe Y es más
+     reciente que la copia publicada del CSS sin minificar (el filemtime aquí
+     ya se tomaba de public_path(), no del fuente del módulo — se mantiene
+     ese mismo criterio para el .min.css). --}}
+@php
+    $prestashopCssMtime = @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-inbox.css'));
+    $prestashopCssMinMtime = @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-inbox.min.css'));
+    $usePrestashopCssMin = $prestashopCssMinMtime !== false && $prestashopCssMtime !== false && $prestashopCssMinMtime >= $prestashopCssMtime;
+@endphp
+@if ($usePrestashopCssMin)
+<link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-inbox.min.css') }}?v={{ $prestashopCssMinMtime }}"/>
+@else
+<link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-inbox.css') }}?v={{ $prestashopCssMtime }}"/>
+@endif
 
 <div class="bv-modal" data-bv-modal-name="cart-build">
     <div class="bv-modal-dialog xxl bv-po-dialog">
@@ -125,7 +141,21 @@
 @push('scripts')
     {{-- JS extraido a fichero propio: se cachea en el navegador en vez de
          re-descargarse en cada render del inbox. Fuente en
-         modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar. --}}
-    <script src="{{ asset('modules/helpdeskprestashop/js/cart-build.js') }}?v={{ @filemtime(base_path('modules/HelpdeskPrestashop/public/js/cart-build.js')) }}" defer></script>
+         modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar.
+
+         cart-build.min.js (npm run build:module-assets) es OPCIONAL, mismo
+         criterio "cae si está desactualizado" que tickets-app.js (ver
+         scripts/build-module-assets.mjs): se sirve solo si existe Y es más
+         reciente que su fuente. --}}
+    @php
+        $cartBuildSrcMtime = @filemtime(base_path('modules/HelpdeskPrestashop/public/js/cart-build.js'));
+        $cartBuildMinMtime = @filemtime(base_path('modules/HelpdeskPrestashop/public/js/cart-build.min.js'));
+        $useCartBuildMin = $cartBuildMinMtime !== false && $cartBuildSrcMtime !== false && $cartBuildMinMtime >= $cartBuildSrcMtime;
+    @endphp
+    @if ($useCartBuildMin)
+    <script src="{{ asset('modules/helpdeskprestashop/js/cart-build.min.js') }}?v={{ $cartBuildMinMtime }}" defer></script>
+    @else
+    <script src="{{ asset('modules/helpdeskprestashop/js/cart-build.js') }}?v={{ $cartBuildSrcMtime }}" defer></script>
+    @endif
 @endpush
 @endonce

@@ -17,7 +17,7 @@
             {{-- Búsqueda --}}
             <div class="bv-modal-search bv-modal-search--hint">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="assign-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" autocomplete="off">
+                <input id="assign-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.assign_search_placeholder') }}" autocomplete="off">
                 <span class="bv-kbd asgn-search-hint">↑↓</span>
             </div>
 
@@ -40,7 +40,7 @@
                 @foreach($agents ?? [] as $agent)
                     @php
                         $status    = $agent->helpdesk_status ?? 'offline';
-                        $initials  = strtoupper(substr($agent->firstname ?? '', 0, 1) . substr($agent->lastname ?? '', 0, 1));
+                        $initials  = mb_strtoupper(mb_substr($agent->firstname ?? '', 0, 1) . mb_substr($agent->lastname ?? '', 0, 1));
                         $colorIdx  = ($loop->index % 7) + 1;
                         $subtitle  = trim($agent->role ?? '') ?: ($agent->email ?? '');
                         $openCount = (int) ($agent->open_count ?? 0);
@@ -115,29 +115,8 @@
 
 @once
 @push('scripts')
-<script>
-(function () {
-    $(document).on('click', '[data-bv-modal-name="assign"] .asgn-item', function () {
-        $(this).closest('#assign-unified-list').find('.asgn-item').removeClass('on');
-        $(this).addClass('on');
-    });
-
-    $(document).on('change', '[data-bv-modal-name="assign"] .asgn-notify-opt input', function () {
-        $(this).closest('.asgn-notify-opt').toggleClass('on', this.checked);
-    });
-
-    $(document).on('input', '#assign-search', function () {
-        var q = $(this).val().toLowerCase();
-        $('#assign-unified-list .asgn-item').each(function () {
-            $(this).toggle(!q || $(this).find('.asgn-t').text().toLowerCase().includes(q));
-        });
-        $('#assign-unified-list .asgn-sec-lbl').each(function () {
-            var $lbl = $(this);
-            var $items = $lbl.nextUntil('.asgn-sec-lbl', '.asgn-item');
-            $lbl.toggle(!q || $items.filter(':visible').length > 0);
-        });
-    });
-}());
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/assign.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/assign.js')) }}" defer></script>
 @endpush
 @endonce

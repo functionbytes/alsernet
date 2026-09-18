@@ -2,8 +2,8 @@
 
 namespace Modules\Document\Entities;
 
-use Modules\Document\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Document\Traits\HasUid;
 
 class DocumentValidationCondition extends Model
 {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,6 @@ final class GeolocationWhitelistFormDataProvider implements FormDataProviderInte
      */
     private $validator;
 
-    /**
-     * @param DataConfigurationInterface $dataConfiguration
-     * @param GeoLiteCityCheckerInterface $geoLiteCityChecker
-     * @param ValidatorInterface $validator
-     */
     public function __construct(
         DataConfigurationInterface $dataConfiguration,
         GeoLiteCityCheckerInterface $geoLiteCityChecker,
@@ -81,7 +77,7 @@ final class GeolocationWhitelistFormDataProvider implements FormDataProviderInte
     public function setData(array $data)
     {
         $errors = [];
-        if (!$this->validator->isCleanHtml($data['geolocation_whitelist'])) {
+        if (! $this->validator->isCleanHtml($data['geolocation_whitelist'])) {
             $errors[] = [
                 'key' => 'Invalid whitelist',
                 'parameters' => [],
@@ -89,7 +85,7 @@ final class GeolocationWhitelistFormDataProvider implements FormDataProviderInte
             ];
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 

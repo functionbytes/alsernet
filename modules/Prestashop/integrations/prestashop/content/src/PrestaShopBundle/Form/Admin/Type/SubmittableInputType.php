@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,7 +67,6 @@ class SubmittableInputType extends AbstractType
             ->setDefault('type', NumberType::class)
             ->setDefault('type_options', [])
             ->setAllowedTypes('type', 'string')
-            ->setAllowedTypes('type_options', 'array')
-        ;
+            ->setAllowedTypes('type_options', 'array');
     }
 }

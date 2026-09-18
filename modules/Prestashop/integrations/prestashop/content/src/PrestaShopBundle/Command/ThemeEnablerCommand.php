@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,7 @@ final class ThemeEnablerCommand extends ContainerAwareCommand
      */
     protected function init(InputInterface $input, OutputInterface $output)
     {
-        Context::getContext()->employee = new Employee();
+        Context::getContext()->employee = new Employee;
     }
 
     /**
@@ -62,8 +63,7 @@ final class ThemeEnablerCommand extends ContainerAwareCommand
         $this
             ->setName('prestashop:theme:enable')
             ->setDescription('Manage your themes via command line')
-            ->addArgument('theme', InputArgument::REQUIRED, 'Module on which the action will be executed')
-        ;
+            ->addArgument('theme', InputArgument::REQUIRED, 'Module on which the action will be executed');
     }
 
     /**
@@ -80,10 +80,9 @@ final class ThemeEnablerCommand extends ContainerAwareCommand
             ->enable(
                 $theme,
                 self::USER_ALLOWED_TO_ENABLE
-            )
-        ;
+            );
 
-        if (false === $activationSuccess) {
+        if ($activationSuccess === false) {
             $io->error(sprintf('The selected theme "%s" is invalid', $theme));
 
             return self::RETURN_CODE_FAILED;

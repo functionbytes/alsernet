@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,7 @@ final class AttributeGroupViewDataProvider implements AttributeGroupViewDataProv
     private $configuration;
 
     /**
-     * @param int $contextLangId
-     * @param ConfigurationInterface $configuration
+     * @param  int  $contextLangId
      */
     public function __construct($contextLangId, ConfigurationInterface $configuration)
     {
@@ -76,7 +76,7 @@ final class AttributeGroupViewDataProvider implements AttributeGroupViewDataProv
     {
         $attributeGroup = $this->getAttributeGroupById($attributeGroupId);
 
-        if (!isset($attributeGroup->name[$this->contextLangId])) {
+        if (! isset($attributeGroup->name[$this->contextLangId])) {
             return $attributeGroup->name[$this->configuration->get('PS_LANG_DEFAULT')];
         }
 
@@ -86,8 +86,7 @@ final class AttributeGroupViewDataProvider implements AttributeGroupViewDataProv
     /**
      * Gets legacy AttributeGroup object by provided id
      *
-     * @param int $attributeGroupId
-     *
+     * @param  int  $attributeGroupId
      * @return AttributeGroup
      *
      * @throws AttributeGroupException

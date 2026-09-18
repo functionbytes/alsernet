@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Exception;
  * Class InvalidArgumentException is thrown when the provided argument of
  * a class method is invalid.
  */
-class TypeException extends CoreException
-{
-}
+class TypeException extends CoreException {}

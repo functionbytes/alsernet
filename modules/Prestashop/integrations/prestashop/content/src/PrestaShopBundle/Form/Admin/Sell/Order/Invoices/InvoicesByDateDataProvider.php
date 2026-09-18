@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,7 @@ final class InvoicesByDateDataProvider implements FormDataProviderInterface
      */
     public function getData()
     {
-        $date = (new DateTime())->format('Y-m-d');
+        $date = (new DateTime)->format('Y-m-d');
 
         return [
             'date_from' => $date,
@@ -71,7 +72,6 @@ final class InvoicesByDateDataProvider implements FormDataProviderInterface
     /**
      * Perform validations on form data.
      *
-     * @param array $data
      *
      * @return array Array of errors if any
      */
@@ -82,7 +82,7 @@ final class InvoicesByDateDataProvider implements FormDataProviderInterface
         $dateFrom = date_create($data['date_from']);
         $dateTo = date_create($data['date_to']);
 
-        if (false === $dateFrom) {
+        if ($dateFrom === false) {
             $errors[] = [
                 'key' => 'Invalid "From" date',
                 'domain' => 'Admin.Orderscustomers.Notification',
@@ -90,7 +90,7 @@ final class InvoicesByDateDataProvider implements FormDataProviderInterface
             ];
         }
 
-        if (false === $dateTo) {
+        if ($dateTo === false) {
             $errors[] = [
                 'key' => 'Invalid "To" date',
                 'domain' => 'Admin.Orderscustomers.Notification',
@@ -98,7 +98,7 @@ final class InvoicesByDateDataProvider implements FormDataProviderInterface
             ];
         }
 
-        if (empty($errors) && !$this->orderInvoiceDataProvider->getByDateInterval($dateFrom, $dateTo)) {
+        if (empty($errors) && ! $this->orderInvoiceDataProvider->getByDateInterval($dateFrom, $dateTo)) {
             $errors[] = [
                 'key' => 'No invoice has been found for this period.',
                 'domain' => 'Admin.Orderscustomers.Notification',

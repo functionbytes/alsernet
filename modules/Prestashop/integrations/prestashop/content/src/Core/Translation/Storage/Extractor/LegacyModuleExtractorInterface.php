@@ -39,10 +39,7 @@ interface LegacyModuleExtractorInterface
      * Extracts the wordings from source code and returns the translation messages.
      * Note that domain names will contain separating dots.
      *
-     * @param string $moduleName
-     * @param string $locale The locale used for the message catalogue. Note that wordings won't be translated in this locale.
-     *
-     * @return MessageCatalogue
+     * @param  string  $locale  The locale used for the message catalogue. Note that wordings won't be translated in this locale.
      */
     public function extract(string $moduleName, string $locale): MessageCatalogue;
 }

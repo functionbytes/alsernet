@@ -1,3 +1,5 @@
+@include('helpdesksocial::partials.admin-css')
+
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Bandeja social</h5>
@@ -12,7 +14,7 @@
                 <small class="text-muted">Pendientes</small>
             </div>
             <div class="col-3 py-3 border-end">
-                <div class="h4 mb-0 text-danger">{{ $stats['total_escalated'] }}</div>
+                <div class="h4 mb-0 text-brand">{{ $stats['total_escalated'] }}</div>
                 <small class="text-muted">Escalados</small>
             </div>
             <div class="col-3 py-3 border-end">
@@ -44,7 +46,7 @@
                                 </span>
                                 <strong>{{ $comment->author_name }}</strong>
                             </div>
-                            <p class="mb-0 text-muted text-truncate" style="max-width: 300px;">
+                            <p class="mb-0 text-muted text-truncate hso-truncate-300">
                                 {{ Str::limit($comment->body, 60) }}
                             </p>
                         </div>

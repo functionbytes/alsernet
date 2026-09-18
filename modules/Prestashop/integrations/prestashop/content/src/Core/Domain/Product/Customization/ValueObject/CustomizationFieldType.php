@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,39 +59,28 @@ class CustomizationFieldType
      */
     private $value;
 
-    /**
-     * @param int $value
-     */
     public function __construct(int $value)
     {
         $this->assertAvailableType($value);
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
-    /**
-     * @return bool
-     */
     public function isTextType(): bool
     {
         return $this->value === self::TYPE_TEXT;
     }
 
     /**
-     * @param int $value
-     *
      * @throws CustomizationFieldConstraintException
      */
     private function assertAvailableType(int $value): void
     {
-        if (!in_array($value, self::AVAILABLE_TYPES)) {
+        if (! in_array($value, self::AVAILABLE_TYPES)) {
             throw new CustomizationFieldConstraintException(
                 sprintf(
                     'Invalid customization type "%d". Available types are: %d',

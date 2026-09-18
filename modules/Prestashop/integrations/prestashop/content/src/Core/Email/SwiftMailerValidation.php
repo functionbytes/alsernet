@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,11 @@ class SwiftMailerValidation implements EmailValidation
         if (is_string($email)) {
             $parts = explode('@', $email);
             if (preg_match('/[^\x00-\x7F]/', $parts[0])) {
-                $this->error = new NonASCIIInLocalPartException();
+                $this->error = new NonASCIIInLocalPartException;
             }
         }
 
-        return null === $this->error;
+        return $this->error === null;
     }
 
     /**

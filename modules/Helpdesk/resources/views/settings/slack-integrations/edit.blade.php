@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Editar integracion de Slack')
+@section('title', 'Editar integración de Slack')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Editar integracion de Slack'])
+    @include('core::components.card', ['title' => 'Editar integración de Slack'])
 @endsection
 
 @section('content')
@@ -16,7 +16,7 @@
                     @method('PUT')
 
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Editar integracion de Slack</h5>
+                        <h5 class="mb-0 fw-bold">Editar integración de Slack</h5>
                         <small class="text-muted">#{{ $integration->channel_name }}</small>
                     </div>
 
@@ -27,7 +27,7 @@
 
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-save"></i> Guardar cambios
+                            Guardar cambios
                         </button>
                         <a href="{{ route('settings.helpdesk.slack-integrations.index') }}" class="btn btn-light w-100">
                             Cancelar
@@ -40,7 +40,7 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Informacion de la integracion</h6>
+                    <h6 class="mb-0 fw-bold">Información de la integración</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-2 d-flex justify-content-between">
@@ -64,8 +64,7 @@
             <div class="card">
                 <div class="card-body">
                     <p class="small text-muted mb-0">
-                        <i class="fas fa-lock text-muted me-1"></i>
-                        La URL del webhook esta cifrada. Haz clic en "Cambiar" para actualizarla.
+                        La URL del webhook está cifrada. Haz clic en "Cambiar" para actualizarla.
                     </p>
                 </div>
             </div>

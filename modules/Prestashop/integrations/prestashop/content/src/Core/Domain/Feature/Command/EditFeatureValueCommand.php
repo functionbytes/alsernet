@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,8 +54,6 @@ class EditFeatureValueCommand
     private $localizedValues;
 
     /**
-     * @param int $featureValueId
-     *
      * @throws InvalidFeatureValueIdException
      */
     public function __construct(int $featureValueId)
@@ -62,25 +61,17 @@ class EditFeatureValueCommand
         $this->featureValueId = new FeatureValueId($featureValueId);
     }
 
-    /**
-     * @return FeatureValueId
-     */
     public function getFeatureValueId(): FeatureValueId
     {
         return $this->featureValueId;
     }
 
-    /**
-     * @return FeatureId|null
-     */
     public function getFeatureId(): ?FeatureId
     {
         return $this->featureId;
     }
 
     /**
-     * @param int $featureId
-     *
      * @return $this
      */
     public function setFeatureId(int $featureId): self
@@ -99,8 +90,6 @@ class EditFeatureValueCommand
     }
 
     /**
-     * @param array $localizedValues
-     *
      * @return $this
      */
     public function setLocalizedValues(array $localizedValues): self

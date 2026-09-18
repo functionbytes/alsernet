@@ -78,36 +78,8 @@
 
 @once
 @push('scripts')
-<script>
-(function () {
-    var slaText = {
-        low:    'Al cambiar a Baja se ajustará el SLA a 24 horas. El cliente recibirá atención en el siguiente ciclo.',
-        normal: 'Al cambiar a Normal se ajustará el SLA a 8 horas. Atención estándar dentro del horario laboral.',
-        high:   'Al cambiar a Alta se ajustará el SLA a 4 horas. Se notificará al agente asignado inmediatamente.',
-        urgent: 'Al cambiar a Urgente se ajustará el SLA a 1 hora. Se escalará y notificará al equipo de guardia.'
-    };
-
-    function updateCallout(val) {
-        var txt = slaText[val] || '';
-        $('#prio-callout-text').text(txt);
-        $('#prio-callout').toggleClass('show', !!txt);
-    }
-
-    $(document).on('click', '[data-bv-modal-name="priority"] .prio-opt', function () {
-        $(this).closest('.prio-list').find('.prio-opt').removeClass('on');
-        $(this).addClass('on');
-        updateCallout($(this).data('bv-value'));
-    });
-
-    $(document).on('bv:modal:open', function (e, name) {
-        if (name !== 'priority') { return; }
-        var cur = $('.bv-th-pill[data-bv-modal="priority"]').attr('data-bv-value') || 'normal';
-        $('[data-bv-modal-name="priority"] .prio-opt').removeClass('on');
-        $('[data-bv-modal-name="priority"] .prio-opt[data-bv-value="' + cur + '"]').addClass('on');
-        $('#prio-reason').val('');
-        updateCallout(cur);
-    });
-}());
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/priority.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/priority.js')) }}" defer></script>
 @endpush
 @endonce

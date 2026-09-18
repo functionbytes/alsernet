@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,14 +43,14 @@ final class AddProfileHandler implements AddProfileHandlerInterface
      */
     public function handle(AddProfileCommand $command)
     {
-        $profile = new Profile();
+        $profile = new Profile;
         $profile->name = $command->getLocalizedNames();
 
-        if (false === $profile->validateFieldsLang(false)) {
+        if ($profile->validateFieldsLang(false) === false) {
             throw new ProfileException('Cannot create Profile because it contains invalid data');
         }
 
-        if (false === $profile->add()) {
+        if ($profile->add() === false) {
             throw new ProfileException('Failed to create Profile');
         }
 

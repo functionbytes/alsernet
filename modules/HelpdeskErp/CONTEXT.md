@@ -140,6 +140,39 @@ Facturas del cliente:
 }
 ```
 
+### `GET /api/erp/customer?{filtros}` — listado con segmentación
+
+Listado paginado (`limit` topado en 100, `offset`). Además de los filtros
+clásicos (`id`, `cif`, `email`, `surnames`, `phone`, `birth_date`, `lopd_from`,
+`lopd_to`, …) admite los de segmentación que usa **HelpdeskBirthday**:
+
+| Filtro | Efecto |
+|---|---|
+| `birthday=MM-DD[,MM-DD]` | Cumpleaños por día y mes, sin importar el año. Varias fechas separadas por coma (el 29-feb se consulta junto al 28-feb en años no bisiestos). |
+| `commercial_optin=1` | Excluye a quien marcó `NO_INFORMACION_COMERCIAL_LOPD`. |
+| `lopd_accepted=1` | Solo con `FACEPTACION_LOPD` informada. |
+| `has_email=1` | Solo con email no vacío. |
+
+Los dados de baja (`FBAJA`) quedan siempre fuera. La respuesta incluye
+`birth_date` (`YYYY-MM-DD`) además de los campos habituales.
+
+```
+GET /api/erp/customer?birthday=09-02&commercial_optin=1&has_email=1&limit=100&offset=0
+```
+
+`birthday` se resuelve con `TO_CHAR(FNACIMIENTO,'MM-DD')`, que no usa el índice
+normal de la columna. Corre una vez al día en un job de fondo; si llegara a
+doler, la solución es un índice funcional en Oracle.
+
+> **Ojo:** estos filtros solo existen desde la versión del manager que incluye
+> el cambio en `CustomerController::list()`. Un manager anterior los ignora en
+> silencio y devuelve clientes cualesquiera — HelpdeskBirthday lo detecta y
+> aborta la campaña en vez de enviar.
+
+También existen, aunque esta guía no los documentaba,
+`GET /api/erp/customer/{id}/vouchers` y `/bonuses` (vales y bonos del cliente,
+solo lectura).
+
 ## Flujo del servicio (ErpContextService) y estrategia de caché
 
 1. Consulta el caché Redis por clave `'erp_ctx_' . md5(email)`

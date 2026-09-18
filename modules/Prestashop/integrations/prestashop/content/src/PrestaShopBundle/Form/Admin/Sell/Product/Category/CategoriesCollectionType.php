@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,17 +40,11 @@ class CategoriesCollectionType extends CollectionType
      */
     private $translator;
 
-    /**
-     * @param TranslatorInterface $translator
-     */
     public function __construct(TranslatorInterface $translator)
     {
         $this->translator = $translator;
     }
 
-    /**
-     * @param OptionsResolver $resolver
-     */
     public function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
@@ -69,9 +64,9 @@ class CategoriesCollectionType extends CollectionType
     /**
      * Get the translated chain from key.
      *
-     * @param string $key the key to be translated
-     * @param string $domain the domain to be selected
-     * @param array $parameters Optional, pass parameters if needed (uncommon)
+     * @param  string  $key  the key to be translated
+     * @param  string  $domain  the domain to be selected
+     * @param  array  $parameters  Optional, pass parameters if needed (uncommon)
      *
      * @returns string
      */

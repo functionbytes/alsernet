@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,17 +41,11 @@ class ToggleZoneStatusCommand
      */
     private $zoneId;
 
-    /**
-     * @param int $zoneId
-     */
     public function __construct(int $zoneId)
     {
         $this->zoneId = new ZoneId($zoneId);
     }
 
-    /**
-     * @return ZoneId
-     */
     public function getZoneId(): ZoneId
     {
         return $this->zoneId;

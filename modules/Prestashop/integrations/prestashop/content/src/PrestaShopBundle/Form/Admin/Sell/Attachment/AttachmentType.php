@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,7 @@ class AttachmentType extends TranslatorAwareType
                     ],
                 ],
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
             ])
             ->add('file_description', TranslatableType::class, [
@@ -87,14 +88,13 @@ class AttachmentType extends TranslatorAwareType
                 'label' => $this->trans('Description', 'Admin.Global'),
                 'options' => [
                     'constraints' => [
-                        new CleanHtml(),
+                        new CleanHtml,
                     ],
                 ],
             ])
             ->add('file', FileType::class, [
                 'required' => $required,
                 'label' => $this->trans('File', 'Admin.Global'),
-            ])
-        ;
+            ]);
     }
 }

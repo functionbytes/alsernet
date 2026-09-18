@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,30 +33,33 @@ class ProductSearchResult
      * @var array
      */
     private $products = [];
+
     /**
      * @var int
      */
     private $totalProductsCount;
+
     /**
      * @var FacetCollection
      */
     private $facetCollection;
+
     /**
      * @var string
      */
     private $encodedFacets;
+
     /**
      * @var SortOrder[]
      */
     private $availableSortOrders = [];
+
     /**
      * @var SortOrder
      */
     private $currentSortOrder;
 
     /**
-     * @param array $products
-     *
      * @return $this
      */
     public function setProducts(array $products)
@@ -74,8 +78,7 @@ class ProductSearchResult
     }
 
     /**
-     * @param int $totalProductsCount
-     *
+     * @param  int  $totalProductsCount
      * @return $this
      */
     public function setTotalProductsCount($totalProductsCount)
@@ -94,8 +97,6 @@ class ProductSearchResult
     }
 
     /**
-     * @param FacetCollection $facetCollection
-     *
      * @return $this
      */
     public function setFacetCollection(FacetCollection $facetCollection)
@@ -114,8 +115,7 @@ class ProductSearchResult
     }
 
     /**
-     * @param string $encodedFacets
-     *
+     * @param  string  $encodedFacets
      * @return $this
      */
     public function setEncodedFacets($encodedFacets)
@@ -134,8 +134,6 @@ class ProductSearchResult
     }
 
     /**
-     * @param SortOrder $sortOrder
-     *
      * @return $this
      */
     public function addAvailableSortOrder(SortOrder $sortOrder)
@@ -154,8 +152,6 @@ class ProductSearchResult
     }
 
     /**
-     * @param array $sortOrders
-     *
      * @return $this
      */
     public function setAvailableSortOrders(array $sortOrders)
@@ -170,8 +166,6 @@ class ProductSearchResult
     }
 
     /**
-     * @param SortOrder $currentSortOrder
-     *
      * @return $this
      */
     public function setCurrentSortOrder(SortOrder $currentSortOrder)

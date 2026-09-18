@@ -212,7 +212,7 @@ class SyncStatusService
                 // Recalculate total_items if it was unknown at batch creation
                 if ($batch->total_items === 0) {
                     $finalProcessed = $batchUpdate['processed_items'] ?? $batch->processed_items;
-                    $finalFailed    = $batchUpdate['failed_items']    ?? $batch->failed_items;
+                    $finalFailed = $batchUpdate['failed_items'] ?? $batch->failed_items;
                     $batchUpdate['total_items'] = $finalProcessed + $finalFailed;
                 }
                 if (! empty($batchUpdate)) {

@@ -7,12 +7,15 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Modules\Helpdesk\Concerns\FormatsAgentNames;
 use Modules\Helpdesk\Http\Requests\Managers\CsatReportDataRequest;
 use Modules\Helpdesk\Models\CsatRating;
 use Modules\Helpdesk\Models\Inbox;
 
 class CsatReportController extends Controller
 {
+    use FormatsAgentNames;
+
     public function __construct()
     {
         $this->middleware('can:helpdesk.reports.view');
@@ -86,10 +89,7 @@ class CsatReportController extends Controller
         $users = User::whereIn('id', $userIds)->get(['id', 'firstname', 'lastname'])->keyBy('id');
 
         return $rows->map(function ($row) use ($users) {
-            $u = $users->get($row->agent_id);
-            $name = $u
-                ? (trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: 'Sin nombre')
-                : 'Sin asignar';
+            $name = $this->displayNameFor($users->get($row->agent_id), 'Sin asignar');
 
             return [
                 'agent_id' => $row->agent_id,
@@ -183,10 +183,7 @@ class CsatReportController extends Controller
         $users = User::whereIn('id', $userIds)->get(['id', 'firstname', 'lastname'])->keyBy('id');
 
         return $rows->map(function ($row) use ($users) {
-            $u = $users->get($row->agent_id);
-            $name = $u
-                ? (trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: 'Sin nombre')
-                : 'Sin asignar';
+            $name = $this->displayNameFor($users->get($row->agent_id), 'Sin asignar');
 
             return [
                 'id' => $row->id,

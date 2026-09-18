@@ -80,6 +80,14 @@
             }
         });
 
+        // El rango "Personalizado" necesita los valores de los inputs
+        // Desde/Hasta — el chip por sí solo (date=custom) no le dice nada al
+        // backend qué fechas usar.
+        if (params.date === 'custom') {
+            params.date_from = $(SEL + ' #flDateFrom').val() || null;
+            params.date_to = $(SEL + ' #flDateTo').val() || null;
+        }
+
         // Close modal
         $(SEL).removeClass('on');
         if ($('.bv-modal.on').length === 0) {

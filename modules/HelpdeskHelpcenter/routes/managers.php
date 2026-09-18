@@ -11,6 +11,7 @@ Route::prefix('helpcenter')->group(function () {
     Route::get('/categories', [HelpCenterController::class, 'index'])->name('manager.helpcenter.categories');
     Route::get('/categories/create', [HelpCenterController::class, 'create'])->name('manager.helpcenter.categories.create');
     Route::post('/categories/store', [HelpCenterController::class, 'store'])->name('manager.helpcenter.categories.store');
+    Route::post('/categories/bulk-action', [HelpCenterController::class, 'bulkAction'])->name('manager.helpcenter.categories.bulk-action');
     Route::get('/categories/{id}', [HelpCenterController::class, 'showCategory'])->name('manager.helpcenter.categories.show');
     Route::get('/categories/edit/{id}', [HelpCenterController::class, 'edit'])->name('manager.helpcenter.categories.edit');
     Route::post('/categories/update', [HelpCenterController::class, 'update'])->name('manager.helpcenter.categories.update');
@@ -28,6 +29,7 @@ Route::prefix('helpcenter')->group(function () {
     // Articles
     Route::get('/articles', [HelpCenterController::class, 'articlesIndex'])->name('manager.helpcenter.articles');
     Route::get('/articles/create', [HelpCenterController::class, 'createArticle'])->name('manager.helpcenter.articles.create');
+    Route::post('/articles/bulk-action', [HelpCenterController::class, 'articlesBulkAction'])->name('manager.helpcenter.articles.bulk-action');
     Route::post('/articles/store', [HelpCenterController::class, 'storeArticle'])->name('manager.helpcenter.articles.store');
     Route::get('/articles/edit/{id}', [HelpCenterController::class, 'editArticle'])->name('manager.helpcenter.articles.edit');
     Route::post('/articles/update', [HelpCenterController::class, 'updateArticle'])->name('manager.helpcenter.articles.update');

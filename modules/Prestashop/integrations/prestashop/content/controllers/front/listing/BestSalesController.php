@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,7 @@ class BestSalesControllerCore extends ProductListingFrontController
 
     protected function getProductSearchQuery()
     {
-        $query = new ProductSearchQuery();
+        $query = new ProductSearchQuery;
         $query
             ->setQueryType('best-sales')
             ->setSortOrder(new SortOrder('product', 'name', 'asc'));

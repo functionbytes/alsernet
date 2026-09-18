@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,6 @@ class GeolocationController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(Request $request)
@@ -76,9 +75,8 @@ class GeolocationController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_geolocation"
      * )
-     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
      * @return RedirectResponse
      */
@@ -99,9 +97,8 @@ class GeolocationController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_geolocation"
      * )
-     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
      * @return RedirectResponse
      */
@@ -122,9 +119,8 @@ class GeolocationController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_geolocation"
      * )
-     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_geolocation_index")
      *
      * @return RedirectResponse
      */
@@ -140,16 +136,13 @@ class GeolocationController extends FrameworkBundleAdminController
     /**
      * Process the Performance configuration form.
      *
-     * @param Request $request
-     * @param FormHandlerInterface $formHandler
-     * @param string $hookName
      *
      * @return RedirectResponse
      */
     protected function processForm(Request $request, FormHandlerInterface $formHandler, string $hookName)
     {
         $this->dispatchHook(
-            'actionAdminInternationalGeolocationControllerPostProcess' . $hookName . 'Before',
+            'actionAdminInternationalGeolocationControllerPostProcess'.$hookName.'Before',
             ['controller' => $this]
         );
 
@@ -162,7 +155,7 @@ class GeolocationController extends FrameworkBundleAdminController
             $data = $form->getData();
             $saveErrors = $formHandler->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
             } else {
                 $this->flashErrors($saveErrors);
@@ -172,25 +165,16 @@ class GeolocationController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_geolocation_index');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeolocationByIpAddressFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.geolocation.by_ip_address.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeolocationWhitelistFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.geolocation.whitelist.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeolocationOptionsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.geolocation.options.form_handler');

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,18 +39,17 @@ class SupplierController extends FrameworkBundleAdminController
     /**
      * refreshProductSupplierCombinationFormAction.
      *
-     * @param int $idProduct
-     * @param int|string $supplierIds The suppliers ids separate by "-"
-     *
+     * @param  int  $idProduct
+     * @param  int|string  $supplierIds  The suppliers ids separate by "-"
      * @return string|Response
      */
     public function refreshProductSupplierCombinationFormAction($idProduct, $supplierIds)
     {
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
-        $response = new Response();
+        $response = new Response;
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
         $suppliers = explode('-', $supplierIds);
@@ -57,16 +57,16 @@ class SupplierController extends FrameworkBundleAdminController
             return $response;
         }
 
-        if (!is_object($product) || empty($product->id)) {
+        if (! is_object($product) || empty($product->id)) {
             $response->setStatusCode(400);
 
             return $response;
         }
 
-        //Pre-save of supplier product, needed for well form generation
+        // Pre-save of supplier product, needed for well form generation
         $_POST['supplier_loaded'] = 1;
         foreach ($suppliers as $idSupplier) {
-            $_POST['check_supplier_' . $idSupplier] = 1;
+            $_POST['check_supplier_'.$idSupplier] = 1;
         }
         $adminProductController = $adminProductWrapper->getInstance();
         $adminProductController->processSuppliers($idProduct);
@@ -90,11 +90,11 @@ class SupplierController extends FrameworkBundleAdminController
         $simpleSubForm = $form->create('step6', FormType::class);
 
         foreach ($suppliers as $idSupplier) {
-            if ($idSupplier == 0 || !is_numeric($idSupplier)) {
+            if ($idSupplier == 0 || ! is_numeric($idSupplier)) {
                 continue;
             }
 
-            $simpleSubForm->add('supplier_combination_' . $idSupplier, 'Symfony\Component\Form\Extension\Core\Type\CollectionType', [
+            $simpleSubForm->add('supplier_combination_'.$idSupplier, 'Symfony\Component\Form\Extension\Core\Type\CollectionType', [
                 'entry_type' => 'PrestaShopBundle\Form\Admin\Product\ProductSupplierCombination',
                 'entry_options' => [
                     'id_supplier' => $idSupplier,

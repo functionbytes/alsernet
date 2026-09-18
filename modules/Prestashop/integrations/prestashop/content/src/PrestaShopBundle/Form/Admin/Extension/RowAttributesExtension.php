@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,7 @@ class RowAttributesExtension extends AbstractTypeExtension
             ->setDefaults([
                 'row_attr' => null,
             ])
-            ->setAllowedTypes('row_attr', ['null', 'array'])
-        ;
+            ->setAllowedTypes('row_attr', ['null', 'array']);
     }
 
     /**

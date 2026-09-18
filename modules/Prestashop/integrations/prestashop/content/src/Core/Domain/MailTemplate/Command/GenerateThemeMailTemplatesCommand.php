@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,11 +50,11 @@ class GenerateThemeMailTemplatesCommand
     private $modulesMailFolder = '';
 
     /**
-     * @param string $themeName
-     * @param string $language locale, for example: 'en'
-     * @param bool $overwriteTemplates
-     * @param string $coreMailsFolder Output folder for core emails (if left empty the default mails folder will be used)
-     * @param string $modulesMailFolder Output folder for modules emails (if left empty the module mails folder will be used)
+     * @param  string  $themeName
+     * @param  string  $language  locale, for example: 'en'
+     * @param  bool  $overwriteTemplates
+     * @param  string  $coreMailsFolder  Output folder for core emails (if left empty the default mails folder will be used)
+     * @param  string  $modulesMailFolder  Output folder for modules emails (if left empty the module mails folder will be used)
      */
     public function __construct(
         $themeName,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,15 +67,6 @@ class OrderPreview
      */
     private $shippingAddressFormatted;
 
-    /**
-     * @param OrderPreviewInvoiceDetails $invoiceDetails
-     * @param OrderPreviewShippingDetails $shippingDetails
-     * @param array $productDetails
-     * @param bool $isVirtual
-     * @param bool $taxIncluded
-     * @param string $invoiceAddressFormatted
-     * @param string $shippingAddressFormatted
-     */
     public function __construct(
         OrderPreviewInvoiceDetails $invoiceDetails,
         OrderPreviewShippingDetails $shippingDetails,
@@ -93,17 +85,11 @@ class OrderPreview
         $this->shippingAddressFormatted = $shippingAddressFormatted;
     }
 
-    /**
-     * @return OrderPreviewInvoiceDetails
-     */
     public function getInvoiceDetails(): OrderPreviewInvoiceDetails
     {
         return $this->invoiceDetails;
     }
 
-    /**
-     * @return OrderPreviewShippingDetails
-     */
     public function getShippingDetails(): OrderPreviewShippingDetails
     {
         return $this->shippingDetails;
@@ -117,33 +103,21 @@ class OrderPreview
         return $this->productDetails;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxIncluded(): bool
     {
         return $this->taxIncluded;
     }
 
-    /**
-     * @return bool
-     */
     public function isVirtual(): bool
     {
         return $this->isVirtual;
     }
 
-    /**
-     * @return string
-     */
     public function getInvoiceAddressFormatted(): string
     {
         return $this->invoiceAddressFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getShippingAddressFormatted(): string
     {
         return $this->shippingAddressFormatted;

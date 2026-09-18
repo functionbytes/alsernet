@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,84 +36,51 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class NullDispatcher implements EventDispatcherInterface, HookDispatcherInterface
 {
-    public function addListener($eventName, $listener, $priority = 0)
-    {
-    }
+    public function addListener($eventName, $listener, $priority = 0) {}
 
-    public function addSubscriber(EventSubscriberInterface $subscriber)
-    {
-    }
+    public function addSubscriber(EventSubscriberInterface $subscriber) {}
 
     /**
-     * @param string $eventName
-     * @param Event|null $event
-     *
+     * @param  string  $eventName
      * @return Event|void
      */
-    public function dispatch($eventName, Event $event = null)
-    {
-    }
+    public function dispatch($eventName, ?Event $event = null) {}
 
     /**
-     * @param null $eventName
-     *
+     * @param  null  $eventName
      * @return array|void
      */
-    public function getListeners($eventName = null)
-    {
-    }
+    public function getListeners($eventName = null) {}
 
     /**
-     * @param null $eventName
-     *
+     * @param  null  $eventName
      * @return bool|void
      */
-    public function hasListeners($eventName = null)
-    {
-    }
+    public function hasListeners($eventName = null) {}
 
-    public function removeListener($eventName, $listener)
-    {
-    }
+    public function removeListener($eventName, $listener) {}
 
-    public function removeSubscriber(EventSubscriberInterface $subscriber)
-    {
-    }
+    public function removeSubscriber(EventSubscriberInterface $subscriber) {}
 
     /**
-     * @param string $eventName
-     * @param callable $listener
-     *
+     * @param  string  $eventName
+     * @param  callable  $listener
      * @return int|void|null
      */
-    public function getListenerPriority($eventName, $listener)
-    {
-    }
+    public function getListenerPriority($eventName, $listener) {}
 
-    public function dispatchHook(HookInterface $hook)
-    {
-    }
+    public function dispatchHook(HookInterface $hook) {}
 
-    public function dispatchWithParameters($hookName, array $hookParameters = [])
-    {
-    }
+    public function dispatchWithParameters($hookName, array $hookParameters = []) {}
 
     /**
-     * @param HookInterface $hook
-     *
      * @return RenderedHookInterface|void
      */
-    public function dispatchRendering(HookInterface $hook)
-    {
-    }
+    public function dispatchRendering(HookInterface $hook) {}
 
     /**
-     * @param string $hookName
-     * @param array $hookParameters
-     *
+     * @param  string  $hookName
      * @return RenderedHookInterface|void
      */
-    public function dispatchRenderingWithParameters($hookName, array $hookParameters = [])
-    {
-    }
+    public function dispatchRenderingWithParameters($hookName, array $hookParameters = []) {}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,19 +48,19 @@ final class AddZoneHandler extends AbstractObjectModelHandler implements AddZone
      */
     public function handle(AddZoneCommand $command): ZoneId
     {
-        $zone = new Zone();
+        $zone = new Zone;
         $zone->name = $command->getName();
         $zone->active = $command->isEnabled();
 
         try {
             $errors = $zone->validateFieldsRequiredDatabase();
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $missingFields = array_keys($errors);
 
                 throw new MissingZoneRequiredFieldsException($missingFields, sprintf('One or more required fields for zone are missing. Missing fields are: %s', implode(', ', $missingFields)));
             }
 
-            if (!$zone->add()) {
+            if (! $zone->add()) {
                 throw new ZoneException(sprintf('Failed to add new zone "%s"', $command->getName()));
             }
 

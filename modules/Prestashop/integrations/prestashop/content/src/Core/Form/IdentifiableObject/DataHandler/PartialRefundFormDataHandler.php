@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class PartialRefundFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -51,10 +49,7 @@ final class PartialRefundFormDataHandler implements FormDataHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function create(array $data)
-    {
-        return;
-    }
+    public function create(array $data) {}
 
     /**
      * {@inheritdoc}
@@ -64,9 +59,9 @@ final class PartialRefundFormDataHandler implements FormDataHandlerInterface
         $refunds = [];
         foreach ($data['inventaries'] as $product) {
             $orderDetailId = $product->getOrderDetailId();
-            if (!empty($data['quantity_' . $orderDetailId]) || !empty((float) $data['amount_' . $orderDetailId])) {
-                $refunds[$orderDetailId]['quantity'] = $data['quantity_' . $orderDetailId] ?? 0;
-                $refunds[$orderDetailId]['amount'] = $data['amount_' . $orderDetailId] ?? 0;
+            if (! empty($data['quantity_'.$orderDetailId]) || ! empty((float) $data['amount_'.$orderDetailId])) {
+                $refunds[$orderDetailId]['quantity'] = $data['quantity_'.$orderDetailId] ?? 0;
+                $refunds[$orderDetailId]['amount'] = $data['amount_'.$orderDetailId] ?? 0;
             }
         }
 

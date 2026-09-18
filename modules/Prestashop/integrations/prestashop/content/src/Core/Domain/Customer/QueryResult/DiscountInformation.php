@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,11 +58,11 @@ class DiscountInformation
     private $availableQuantity;
 
     /**
-     * @param int $discountId
-     * @param string $code
-     * @param string $name
-     * @param bool $isActive
-     * @param int $availableQuantity
+     * @param  int  $discountId
+     * @param  string  $code
+     * @param  string  $name
+     * @param  bool  $isActive
+     * @param  int  $availableQuantity
      */
     public function __construct(
         $discountId,

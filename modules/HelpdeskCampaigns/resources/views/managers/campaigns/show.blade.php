@@ -2,8 +2,12 @@
 
 @section('title', $campaign->name . ' — Campañas')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskcampaigns/css/campaigns.css') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/css/campaigns.css')) }}">
+@endpush
+
 @section('page_header')
-    @include('core::components.card', ['title' => 'Detalle de campana'])
+    @include('core::components.card', ['title' => 'Detalle de campaña'])
 @endsection
 
 @section('content')
@@ -44,7 +48,7 @@
                     @endcan
                     <div class="dropdown">
                         <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Mas acciones
+                            Más acciones
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             @can('update', $campaign)
@@ -172,7 +176,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-2">Promedio diario</h6>
                     <h4 class="mb-1 fw-bold">{{ number_format($stats['daily_avg']) }}</h4>
-                    <small class="text-muted">Impresiones por dia</small>
+                    <small class="text-muted">Impresiones por día</small>
                 </div>
             </div>
         </div>
@@ -184,7 +188,7 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header border-bottom p-3">
-                    <h6 class="mb-0 fw-bold">Informacion de la campana</h6>
+                    <h6 class="mb-0 fw-bold">Información de la campaña</h6>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
@@ -201,8 +205,8 @@
                         @if($campaign->published_at)
                             <dt class="col-5 text-muted fw-normal">Publicada</dt>
                             <dd class="col-7">{{ $campaign->published_at->format('d/m/Y H:i') }}</dd>
-                            <dt class="col-5 text-muted fw-normal">Dias activos</dt>
-                            <dd class="col-7">{{ $stats['days_active'] }} dias</dd>
+                            <dt class="col-5 text-muted fw-normal">Días activos</dt>
+                            <dd class="col-7">{{ $stats['days_active'] }} días</dd>
                         @endif
                         @if($campaign->ends_at)
                             <dt class="col-5 text-muted fw-normal">Finaliza</dt>
@@ -229,12 +233,12 @@
                     @if($stats['total_impressions'] > 0)
                         <div class="mb-4">
                             <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted small">Tasa de conversion</span>
+                                <span class="text-muted small">Tasa de conversión</span>
                                 <span class="fw-bold">{{ $stats['ctr'] }}%</span>
                             </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar"
-                                     style="width: {{ min($stats['ctr'], 100) }}%"
+                            <div class="progress hcm-progress-thin">
+                                <div class="progress-bar bg-success hcm-ctr-bar" role="progressbar"
+                                     style="--hcm-ctr: {{ min($stats['ctr'], 100) }}%"
                                      aria-valuenow="{{ $stats['ctr'] }}"
                                      aria-valuemin="0" aria-valuemax="100">
                                 </div>
@@ -256,12 +260,12 @@
                         </div>
                         @if($campaign->published_at)
                             <p class="mb-0 small text-muted mt-3">
-                                Promedio de {{ number_format($stats['daily_avg']) }} impresiones por dia durante {{ $stats['days_active'] }} dias activos.
+                                Promedio de {{ number_format($stats['daily_avg']) }} impresiones por día durante {{ $stats['days_active'] }} días activos.
                             </p>
                         @endif
                     @else
                         <div class="alert alert-info mb-0">
-                            Esta campana aun no tiene impresiones registradas.
+                            Esta campaña aún no tiene impresiones registradas.
                             @if($campaign->status === 'draft')
                                 Publicala para comenzar a recopilar datos.
                             @endif
@@ -292,7 +296,7 @@
         <div class="card-body">
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="tab-chart">
-                    <div style="position: relative; height: 320px;">
+                    <div class="hcm-chart-box">
                         <canvas id="campaign-chart"></canvas>
                     </div>
                 </div>
@@ -312,88 +316,12 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-
-    $(document).on('submit', '.js-campaign-reject-form', function (e) {
-        var reason = window.prompt('Indica el motivo del rechazo:');
-        if (reason === null || reason.trim() === '') {
-            e.preventDefault();
-            return;
-        }
-        $(this).find('input[name="reason"]').val(reason.trim());
-    });
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Load timeline chart
-    $.getJSON('{{ route('helpdesk.campaigns.statistics.timeline', $campaign) }}?days=30', function(data) {
-        const ctx = document.getElementById('campaign-chart');
-        if (!ctx) return;
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [
-                    {
-                        label: 'Impresiones',
-                        data: data.impressions,
-                        borderColor: '#90bb13',
-                        backgroundColor: 'rgba(177, 1, 0, 0.1)',
-                        tension: 0.3,
-                        fill: true,
-                    },
-                    {
-                        label: 'Clics',
-                        data: data.clicks,
-                        borderColor: '#13C672',
-                        backgroundColor: 'rgba(19, 198, 114, 0.1)',
-                        tension: 0.3,
-                        fill: true,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-            }
-        });
-    });
-
-    // Lazy-load activity tab
-    let activityLoaded = false;
-    $('button[data-bs-target="#tab-activity"]').on('shown.bs.tab', function() {
-        if (activityLoaded) return;
-        activityLoaded = true;
-        $.getJSON('{{ route('helpdesk.campaigns.activity', $campaign) }}', function(res) {
-            const list = $('#campaign-activity-list').empty();
-            if (!res.data || res.data.length === 0) {
-                list.html('<div class="text-center text-muted py-4">Sin actividad registrada.</div>');
-                return;
-            }
-            res.data.forEach(item => {
-                const html = `
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <strong>${item.description}</strong>
-                            <small class="text-muted">${item.time_ago}</small>
-                        </div>
-                        <small class="text-muted">${item.causer}</small>
-                    </div>`;
-                list.append(html);
-            });
-        });
-    });
-});
+    window.HcmCampaignShow = {
+        timelineUrl: '{{ route('helpdesk.campaigns.statistics.timeline', $campaign) }}',
+        activityUrl: '{{ route('helpdesk.campaigns.activity', $campaign) }}',
+        flashSuccess: @json(session('success')),
+        flashError: @json(session('error')),
+    };
 </script>
+<script src="{{ asset('modules/helpdeskcampaigns/js/campaign-show.js') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/js/campaign-show.js')) }}" defer></script>
 @endpush

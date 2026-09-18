@@ -11,5 +11,5 @@ return [
     /*
     | Maximo de clientes a puntuar (health score) por rango para los segmentos.
     */
-    'customer_segment_limit' => 500,
+    'customer_segment_limit' => 5000,
 ];

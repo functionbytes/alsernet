@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,14 +50,14 @@ final class BulkToggleZoneStatusHandler implements BulkToggleZoneStatusHandlerIn
         foreach ($command->getZoneIds() as $zoneId) {
             $zone = new Zone($zoneId->getValue());
 
-            if (0 >= $zone->id) {
+            if ($zone->id <= 0) {
                 throw new ZoneNotFoundException(sprintf('Zone object with id "%d" has been not found for status changing', $zoneId->getValue()));
             }
 
             $zone->active = $command->getExpectedStatus();
 
             try {
-                if (!$zone->save()) {
+                if (! $zone->save()) {
                     throw new CannotToggleZoneStatusException(sprintf('Unable to toggle status for zone with id "%d"', $zoneId->getValue()));
                 }
             } catch (PrestaShopException $e) {

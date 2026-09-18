@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,7 @@ class SupplierControllerCore extends ProductListingFrontController
 
     /** @var Supplier */
     protected $supplier;
+
     protected $label;
 
     public function canonicalRedirection($canonicalURL = '')
@@ -54,7 +56,7 @@ class SupplierControllerCore extends ProductListingFrontController
         if ($id_supplier = (int) Tools::getValue('id_supplier')) {
             $this->supplier = new Supplier($id_supplier, $this->context->language->id);
 
-            if (!Validate::isLoadedObject($this->supplier) || !$this->supplier->active) {
+            if (! Validate::isLoadedObject($this->supplier) || ! $this->supplier->active) {
                 $this->redirect_after = '404';
                 $this->redirect();
             } else {
@@ -105,7 +107,7 @@ class SupplierControllerCore extends ProductListingFrontController
 
     protected function getProductSearchQuery()
     {
-        $query = new ProductSearchQuery();
+        $query = new ProductSearchQuery;
         $query
             ->setIdSupplier($this->supplier->id)
             ->setSortOrder(new SortOrder('product', 'position', 'asc'));
@@ -138,7 +140,7 @@ class SupplierControllerCore extends ProductListingFrontController
             $id_shop = null,
             $chain = true
         );
-        if (!empty($filteredSupplier['object'])) {
+        if (! empty($filteredSupplier['object'])) {
             $supplierVar = $filteredSupplier['object'];
         }
 
@@ -154,7 +156,7 @@ class SupplierControllerCore extends ProductListingFrontController
     {
         $suppliersVar = $this->getTemplateVarSuppliers();
 
-        if (!empty($suppliersVar)) {
+        if (! empty($suppliersVar)) {
             foreach ($suppliersVar as $k => $supplier) {
                 $filteredSupplier = Hook::exec(
                     'filterSupplierContent',
@@ -166,7 +168,7 @@ class SupplierControllerCore extends ProductListingFrontController
                     $id_shop = null,
                     $chain = true
                 );
-                if (!empty($filteredSupplier['object'])) {
+                if (! empty($filteredSupplier['object'])) {
                     $suppliersVar[$k] = $filteredSupplier['object'];
                 }
             }

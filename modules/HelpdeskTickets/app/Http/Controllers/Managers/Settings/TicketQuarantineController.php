@@ -65,7 +65,16 @@ class TicketQuarantineController extends Controller
         // Misma transacción que la ingesta real, y por el mismo motivo: el
         // lockForUpdate de generateTicketNumber() solo surte efecto dentro de
         // una transacción.
-        $ticket = DB::connection('helpdesk')->transaction(fn () => Ticket::create([
+        //
+        // Guard inTransaction() igual que el propio generateTicketNumber():
+        // si el PDO de 'helpdesk' ya está en una transacción (SharesHelpdeskPdo
+        // en tests, o cualquier llamador futuro que ya haya abierto una),
+        // pedirle otra revienta con "There is already an active transaction"
+        // ANTES de llegar siquiera al guard interno de generateTicketNumber()
+        // (auditoría de lógica de negocio, 14-sep-2026 — no falla en
+        // producción, cada conexión tiene su propio PDO real ahí).
+        $connection = DB::connection('helpdesk');
+        $create = fn () => Ticket::create([
             'customer_id' => $customer->id,
             'subject' => $quarantine->subject ?: '(sin asunto)',
             'description' => $quarantine->body_text ?: $quarantine->body_html,
@@ -73,7 +82,8 @@ class TicketQuarantineController extends Controller
             'status_id' => TicketStatus::where('is_default', true)->first()?->id ?? 1,
             'priority' => 'normal',
             'ticket_number' => Ticket::generateTicketNumber(),
-        ]));
+        ]);
+        $ticket = $connection->getPdo()->inTransaction() ? $create() : $connection->transaction($create);
 
         // Igual que en la ingesta: sin esto el cliente no recibe la
         // confirmación de que su solicitud ha llegado.

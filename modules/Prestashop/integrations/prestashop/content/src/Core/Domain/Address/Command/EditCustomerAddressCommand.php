@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class EditCustomerAddressCommand extends AbstractEditAddressCommand
     private $addressId;
 
     /**
-     * @param int $addressId
-     *
      * @throws AddressConstraintException
      */
     public function __construct(int $addressId)
@@ -49,9 +48,6 @@ class EditCustomerAddressCommand extends AbstractEditAddressCommand
         $this->addressId = new AddressId($addressId);
     }
 
-    /**
-     * @return AddressId
-     */
     public function getAddressId(): AddressId
     {
         return $this->addressId;

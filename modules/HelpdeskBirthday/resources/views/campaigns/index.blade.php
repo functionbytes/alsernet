@@ -10,21 +10,26 @@
 
 @section('content')
 
-<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-    <h1 class="h4 mb-0 fw-bold">
-        <i class="fas fa-gift text-primary me-2"></i>Campañas de cumpleaños
-    </h1>
-    <p class="text-muted small mb-0 w-100 order-3 mt-1">
-        Cada día se crea una campaña con los clientes que cumplen años y se les envía el cupón,
-        repartido dentro de la ventana horaria configurada para no saturar el servidor de correo.
+{{-- .bd-panel lleva la paleta del módulo: el tema resuelve --bs-primary a negro,
+     así que el verde de marca no puede heredarse de Bootstrap. --}}
+<div class="bd-panel">
+
+{{-- El título ya lo pinta la cabecera de página con su breadcrumb; aquí solo
+     va la explicación y la acción, sin repetirlo. --}}
+<div class="d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+    <p class="text-muted small mb-0 bd-intro">
+        Cada día se crea una campaña con los clientes que cumplen años, gestión emite el bono de
+        cada uno y los correos se reparten dentro de la ventana horaria configurada.
     </p>
-    <div class="ms-auto order-2">
-        <form method="POST" action="{{ route('helpdeskbirthday.campaigns.prepare') }}" class="d-flex gap-2">
-            @csrf
-            <input type="date" name="date" class="form-control form-control-sm" value="{{ now()->toDateString() }}" aria-label="Día a preparar">
-            <button type="submit" class="btn btn-primary btn-sm text-nowrap">Preparar campaña</button>
-        </form>
-    </div>
+
+    <form method="POST" action="{{ route('helpdeskbirthday.campaigns.prepare') }}" class="d-flex align-items-end gap-2">
+        @csrf
+        <div>
+            <label for="bd-prepare-date" class="form-label text-muted small mb-1">Día a preparar</label>
+            <input type="date" id="bd-prepare-date" name="date" class="form-control form-control-sm" value="{{ now()->toDateString() }}">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm text-nowrap">Preparar campaña</button>
+    </form>
 </div>
 
 @include('core::components.alerts')
@@ -37,7 +42,18 @@
 @endphp
 
 {{-- El envío está atascado: los correos se encolan y no sale ninguno. --}}
-@if(! $overview['health']['healthy'])
+{{-- Que hoy no exista campaña es el fallo más silencioso de todos: no hay nada
+     atascado porque no hay nada, y el día pasa sin felicitar a nadie. --}}
+@if($overview['health']['missing_today'])
+    <div class="alert alert-warning">
+        <strong>Hoy no hay campaña.</strong>
+        La preparación de las {{ config('helpdeskbirthday.prepare_at') }} no llegó a crearla,
+        o falló. Se reintenta cada hora hasta el final de la ventana de envío; si no
+        aparece, revisa el registro y prepárala a mano.
+    </div>
+@endif
+
+@if(! $overview['health']['healthy'] && ($overview['health']['stuck_sending'] > 0 || $overview['health']['overdue_pending'] > 0))
     <div class="alert alert-warning">
         <strong>El envío parece atascado.</strong>
         @if($overview['health']['stuck_sending'] > 0)
@@ -60,23 +76,41 @@
                 <div class="text-muted small">Campaña de hoy</div>
                 <div class="fw-bold">
                     {{ __('helpdeskbirthday::messages.status.'.$today['status']) }}
-                    · {{ $today['sent'] }}/{{ $today['total'] }} enviados
+                    · {{ $today['sent'] }}/{{ $today['target'] }} enviados
                 </div>
             </div>
 
+            {{-- Enviados y fallidos apilados sobre el mismo objetivo. Sumarlos en
+                 una sola barra hacía que 139 de 577 enviados se dibujaran como un
+                 60% de avance, con los 209 fallos escondidos dentro. --}}
             <div class="flex-grow-1 bd-today-progress">
-                <div class="progress" role="progressbar" aria-label="Progreso de la campaña de hoy"
-                     aria-valuenow="{{ $today['progress'] }}" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-bar bd-progress-{{ (int) (round($today['progress'] / 10) * 10) }}"></div>
+                <div class="progress">
+                    <div class="progress-bar bd-w-{{ $today['sent_percent'] }}" role="progressbar"
+                         aria-label="Correos enviados" aria-valuenow="{{ $today['sent_percent'] }}"
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-bar progress-bar-striped bd-bar--failed bd-w-{{ $today['failed_percent'] }}" role="progressbar"
+                         aria-label="Envíos fallidos" aria-valuenow="{{ $today['failed_percent'] }}"
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-muted small mt-1">
+                    {{ $today['sent'] }} enviados
+                    @if($today['failed'] > 0)
+                        · <span class="fw-semibold">{{ $today['failed'] }} fallidos</span>
+                    @endif
+                    · {{ $today['pending'] }} pendientes
+                    @if($today['skipped'] > 0)
+                        · {{ $today['skipped'] }} omitidos
+                    @endif
                 </div>
             </div>
 
             <div class="text-end">
                 <div class="text-muted small">
                     @if($today['pending'] > 0)
-                        {{ $today['pending'] }} pendientes
                         @if($today['next_at'])
-                            · siguiente a las {{ \Illuminate\Support\Carbon::parse($today['next_at'])->timezone(config('helpdeskbirthday.timezone'))->format('H:i') }}
+                            Siguiente a las {{ \Illuminate\Support\Carbon::parse($today['next_at'])->timezone(config('helpdeskbirthday.timezone'))->format('H:i') }}
+                        @else
+                            Sin hora asignada
                         @endif
                     @else
                         Sin envíos pendientes
@@ -89,11 +123,14 @@
 @endif
 
 <div class="d-flex align-items-center gap-2 mb-3">
-    <span class="text-muted small">Estadísticas de los últimos</span>
-    @foreach([7, 30, 90] as $option)
-        <a href="{{ route('helpdeskbirthday.campaigns.index', ['days' => $option]) }}"
-           class="btn btn-sm {{ $days === $option ? 'btn-primary' : 'btn-outline-secondary' }}">{{ $option }} días</a>
-    @endforeach
+    <span class="text-muted small" id="bd-range-label">Estadísticas de los últimos</span>
+    <div class="btn-group btn-group-sm" role="group" aria-labelledby="bd-range-label">
+        @foreach([7, 30, 90] as $option)
+            <a href="{{ route('helpdeskbirthday.campaigns.index', ['days' => $option]) }}"
+               class="btn {{ $days === $option ? 'btn-primary' : 'btn-outline-secondary' }}"
+               @if($days === $option) aria-current="true" @endif>{{ $option }} días</a>
+        @endforeach
+    </div>
 </div>
 
 <div class="row g-3 mb-3">
@@ -112,14 +149,14 @@
         // un mal resultado cuando en realidad es "no lo sabemos".
         if ($redemption['available']) {
             $kpis[] = [
-                'label' => 'Cupones usados',
+                'label' => 'Bonos usados',
                 'value' => $redemption['attributed'],
                 'hint' => $redemption['rate'].'% de los enviados',
             ];
             $kpis[] = [
                 'label' => 'Facturado',
                 'value' => number_format($redemption['revenue'], 0, ',', '.').' €',
-                'hint' => $redemption['redemptions'].' pedidos con el cupón',
+                'hint' => $redemption['redemptions'].' pedidos con bono',
             ];
         }
     @endphp
@@ -128,7 +165,7 @@
         <div class="col-6 col-lg-{{ count($kpis) > 6 ? 3 : 2 }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase bd-kpi-label">{{ $kpi['label'] }}</div>
+                    <div class="text-muted text-uppercase bd-kpi-label">{{ $kpi['label'] }}</div>
                     <div class="fw-bold bd-kpi-value">{{ $kpi['value'] }}</div>
                     <div class="text-muted small">{{ $kpi['hint'] }}</div>
                 </div>
@@ -144,16 +181,22 @@
         <p class="text-muted small mb-3">Cuánta gente queda en cada paso y cuánta se pierde por el camino.</p>
 
         @foreach($funnel as $step)
-            <div class="d-flex align-items-center gap-3 mb-2">
+            @php
+                // Un paso con gente nunca se dibuja vacío: 2 aperturas de 1153 es
+                // 0,17% y redondeando a entero desaparecía, así que "casi nadie"
+                // y "nadie" se veían igual.
+                $width = $step['value'] > 0 ? max(1, (int) round($step['percent'])) : 0;
+            @endphp
+            <div class="bd-funnel__row mb-2">
                 <div class="bd-funnel__label text-muted small">{{ $step['label'] }}</div>
-                <div class="flex-grow-1">
+                <div class="bd-funnel__bar">
                     <div class="progress" role="progressbar" aria-label="{{ $step['label'] }}"
                          aria-valuenow="{{ $step['percent'] }}" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar bd-progress-{{ (int) (round($step['percent'] / 10) * 10) }}"></div>
+                        <div class="progress-bar bd-w-{{ $width }}"></div>
                     </div>
                 </div>
-                <div class="bd-funnel__value fw-semibold text-end">{{ $step['value'] }}</div>
-                <div class="bd-funnel__drop text-muted small text-end">
+                <div class="bd-funnel__value fw-semibold">{{ $step['value'] }}</div>
+                <div class="bd-funnel__drop text-muted small">
                     @if($step['drop'] !== null)
                         −{{ $step['drop'] }}%
                     @endif
@@ -168,19 +211,45 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <h6 class="fw-bold mb-1">Envíos por día</h6>
-                <p class="text-muted small mb-3">Cumpleañeros de cada campaña y cuántos correos salieron.</p>
+                <p class="text-muted small mb-3">
+                    Cumpleañeros de cada campaña (la pista) y cuántos correos salieron (el relleno).
+                </p>
 
-                @if($overview['trend'] === [])
+                @php
+                    $peak = max(array_column($overview['trend'], 'total')) ?: 1;
+                    // Una etiqueta cada N columnas: a 90 días no caben 90 fechas.
+                    // Se cuentan desde el final para que el último día, que es el
+                    // que se mira, nunca se quede sin fecha.
+                    $trendCount = count($overview['trend']);
+                    $tickEvery = max(1, (int) ceil($trendCount / 8));
+                @endphp
+
+                @if($totals['count'] === 0)
                     <p class="text-muted small mb-0">Todavía no hay campañas en este periodo.</p>
                 @else
-                    @php $peak = max(array_column($overview['trend'], 'total')) ?: 1; @endphp
-                    <div class="bd-trend">
+                    <div class="bd-trend" role="img"
+                         aria-label="Cumpleañeros y correos enviados por día durante los últimos {{ $days }} días">
                         @foreach($overview['trend'] as $point)
-                            <div class="bd-trend__col" title="{{ $point['label'] }}: {{ $point['sent'] }}/{{ $point['total'] }}">
-                                <div class="bd-trend__bar bd-progress-{{ (int) (round(($point['total'] / $peak) * 100 / 10) * 10) }}"></div>
-                                <small class="text-muted">{{ $point['label'] }}</small>
+                            <div class="bd-trend__col {{ $point['has_campaign'] ? '' : 'bd-trend__col--empty' }}"
+                                 title="{{ $point['label'] }}: {{ $point['has_campaign'] ? $point['sent'].'/'.$point['total'] : 'sin campaña' }}">
+                                <div class="bd-trend__track bd-h-{{ $point['total'] > 0 ? max(1, (int) round(($point['total'] / $peak) * 100)) : 0 }}">
+                                    <div class="bd-trend__fill bd-h-{{ $point['total'] > 0 ? (int) round(($point['sent'] / $point['total']) * 100) : 0 }}"></div>
+                                </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    <div class="bd-trend__axis mt-1">
+                        @foreach($overview['trend'] as $point)
+                            <div class="bd-trend__tick text-muted">
+                                {{ ($trendCount - 1 - $loop->index) % $tickEvery === 0 ? $point['label'] : '' }}
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="d-flex gap-3 mt-3 small text-muted">
+                        <span><span class="bd-trend__legend-swatch bd-trend__legend-swatch--sent me-1"></span>Enviados</span>
+                        <span><span class="bd-trend__legend-swatch bd-trend__legend-swatch--total me-1"></span>Cumpleañeros</span>
                     </div>
                 @endif
             </div>
@@ -219,13 +288,17 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
+        <h6 class="fw-bold mb-1">Historial de campañas</h6>
+        <p class="text-muted small mb-3">Una fila por día, de la más reciente a la más antigua.</p>
+        <p class="text-muted small bd-table-hint">Desliza la tabla para ver el resto de columnas.</p>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Día</th>
                         <th>Estado</th>
-                        <th>Cupón</th>
+                        <th class="text-end">Bonos</th>
                         <th class="text-end">Destinatarios</th>
                         <th class="text-end">Enviados</th>
                         <th class="text-end">Fallidos</th>
@@ -236,30 +309,49 @@
                 </thead>
                 <tbody>
                     @forelse($campaigns as $campaign)
+                        @php
+                            $target = max(0, $campaign->recipients_total - $campaign->skipped_count);
+                            $sentPercent = $target > 0 ? (int) round(($campaign->sent_count / $target) * 100) : 0;
+                            $failedPercent = $target > 0 ? (int) round(($campaign->failed_count / $target) * 100) : 0;
+                        @endphp
                         <tr>
                             <td class="fw-semibold">{{ $campaign->campaign_date->format('d/m/Y') }}</td>
                             <td>
-                                <span class="badge {{ $campaign->status === 'completed' ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' }}">
+                                {{-- Colores propios: bg-*-subtle + text-* del tema dejaban
+                                     "Enviando" en verde sobre verde, a 1.98:1. --}}
+                                <span class="badge bd-badge {{ $campaign->status === 'completed' ? 'bd-badge--done' : 'bd-badge--live' }}">
                                     {{ __('helpdeskbirthday::messages.status.'.$campaign->status) }}
                                 </span>
                             </td>
-                            <td>
-                                <code>{{ $campaign->coupon_code ?: '—' }}</code>
-                                @if($campaign->coupon_source === 'manual' && $campaign->coupon_code)
-                                    <span class="badge bg-secondary-subtle text-secondary ms-1">sin validar</span>
-                                @endif
-                            </td>
+                            {{-- Bonos emitidos, no un código: cada cliente
+                                 recibe el suyo de gestión. --}}
+                            <td class="text-end">{{ $campaign->coupons_count }}</td>
                             <td class="text-end">{{ $campaign->recipients_total }}</td>
                             <td class="text-end">{{ $campaign->sent_count }}</td>
-                            <td class="text-end">{{ $campaign->failed_count }}</td>
+                            <td class="text-end {{ $campaign->failed_count > 0 ? 'fw-semibold' : '' }}">{{ $campaign->failed_count }}</td>
                             <td class="text-end">{{ $campaign->skipped_count }}</td>
                             <td class="w-25">
-                                <div class="progress" role="progressbar" aria-label="Progreso de la campaña"
-                                     aria-valuenow="{{ $campaign->progressPercent() }}" aria-valuemin="0" aria-valuemax="100">
-                                    {{-- Ancho por clase y no por style="": el repo no admite estilos inline, así que se redondea a la decena. --}}
-                                    <div class="progress-bar bd-progress-{{ (int) (round($campaign->progressPercent() / 10) * 10) }}"></div>
+                                @if($target === 0)
+                                    <small class="text-muted">Sin envíos: se omitió a todos</small>
+                                @else
+                                {{-- Ancho por clase y no por style="": el repo no admite estilos inline.
+                                     En pasos de 1, no de 10: redondear a la decena convertía un 96%
+                                     en una barra llena. --}}
+                                <div class="progress">
+                                    <div class="progress-bar bd-w-{{ $sentPercent }}" role="progressbar"
+                                         aria-label="Correos enviados" aria-valuenow="{{ $sentPercent }}"
+                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar progress-bar-striped bd-bar--failed bd-w-{{ $failedPercent }}" role="progressbar"
+                                         aria-label="Envíos fallidos" aria-valuenow="{{ $failedPercent }}"
+                                         aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                                <small class="text-muted">{{ $campaign->progressPercent() }}%</small>
+                                <small class="text-muted">
+                                    {{ $sentPercent }}% enviado
+                                    @if($campaign->failed_count > 0)
+                                        · {{ $failedPercent }}% fallido
+                                    @endif
+                                </small>
+                                @endif
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
@@ -273,7 +365,7 @@
                                         <li>
                                             <a class="dropdown-item" href="{{ route('helpdeskbirthday.campaigns.preview', $campaign) }}" target="_blank" rel="noopener">Previsualizar correo</a>
                                         </li>
-                                        @if($redemption['available'] && $campaign->coupon_code)
+                                        @if($redemption['available'] && $campaign->coupons_count > 0)
                                             <li>
                                                 <a class="dropdown-item" href="{{ route('helpdeskbirthday.campaigns.redemptions', $campaign) }}">Ver los canjes</a>
                                             </li>
@@ -297,6 +389,8 @@
             {{ $campaigns->links() }}
         </div>
     </div>
+</div>
+
 </div>
 
 @endsection

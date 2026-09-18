@@ -31,7 +31,7 @@
                     </div>
                     <div class="ms-auto d-flex gap-2">
                         <a href="{{ route('settings.helpdesk.views.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva vista
+                            Nueva vista
                         </a>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
 
                     <div class="d-flex align-items-center gap-2">
                         <input type="search" name="search" class="form-control flex-grow-1"
-                               placeholder="Buscar por nombre o descripcion..."
+                               placeholder="Buscar por nombre o descripción..."
                                value="{{ request('search') }}">
 
                         <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
@@ -138,8 +138,9 @@
                                 <tr>
                                     <th scope="col" width="36"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th scope="col">Nombre</th>
-                                    <th scope="col">Descripcion</th>
-                                    <th scope="col">Ordenacion</th>
+                                    <th scope="col">Descripción</th>
+                                    <th scope="col">Filtros</th>
+                                    <th scope="col">Ordenación</th>
                                     <th scope="col" class="text-center">Tipo</th>
                                     <th scope="col" class="text-center">Sistema</th>
                                     <th scope="col" class="text-center">Acciones</th>
@@ -163,13 +164,20 @@
                                         </td>
                                         <td>
                                             <small class="text-muted">
-                                                {{ $ticketView->description ? Str::limit($ticketView->description, 60) : '—' }}
+                                                {{ $ticketView->description ? Str::limit($ticketView->description, 45) : '—' }}
                                             </small>
                                         </td>
                                         <td>
+                                            @forelse($ticketView->filterLabels() as $filterLabel)
+                                                <span class="badge bg-light text-secondary border fw-normal me-1 mb-1">{{ $filterLabel }}</span>
+                                            @empty
+                                                <small class="text-muted">Sin filtros</small>
+                                            @endforelse
+                                        </td>
+                                        <td>
                                             @if($ticketView->sort_by)
-                                                <small class="text-muted">
-                                                    {{ $ticketView->sort_by }}
+                                                <small class="text-muted text-nowrap">
+                                                    {{ $sortLabels[$ticketView->sort_by] ?? $ticketView->sort_by }}
                                                     <span class="ms-1">
                                                         @if($ticketView->sort_direction === 'asc')
                                                             <i class="fas fa-arrow-up"></i>
@@ -233,7 +241,7 @@
                     <div class="text-center py-5">
                         <i class="fas fa-filter fa-3x mb-3 text-muted opacity-50"></i>
                         <h5 class="fw-bold mb-2">
-                            @if(request()->hasAny(['search', 'scope']))
+                            @if($hasAnyFilter)
                                 No se encontraron resultados
                             @else
                                 No hay vistas configuradas
@@ -248,11 +256,11 @@
                                 Aun no hay vistas guardadas creadas
                             @endif
                         </p>
-                        @if(request()->hasAny(['search', 'scope']))
+                        @if($hasAnyFilter)
                             <a href="{{ route('settings.helpdesk.views.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('settings.helpdesk.views.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nueva vista
+                                Nueva vista
                             </a>
                         @endif
                     </div>
@@ -345,112 +353,13 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // ── Filter modal ─────────────────────────────────────────────────
-    $('.select2-filter-modal').select2({ dropdownParent: $('#views-filter-modal'), width: '100%' });
-
-    $('#views-filter-apply-btn').on('click', function () {
-        $('#filter-scope').val($('#modal-scope').val());
-        $('#views-filter-modal').modal('hide');
-        $('#views-filter-form').submit();
-    });
-
-    $('#views-filter-clear-btn').on('click', function () {
-        $('#modal-scope').val(null).trigger('change');
-    });
-
-    // ── Bulk actions ──────────────────────────────────────────────────
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        var action = $('#bulk-action-select').val();
-        var ids    = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una vista.'); return; }
-
-        var applyBulkAction = function () {
-            var $btn = $('#bulk-apply-btn');
-            $btn.prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('settings.helpdesk.views.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar la acción.');
-                    $btn.prop('disabled', false).text('Aplicar');
-                },
-            });
-        };
-
-        if (action === 'delete') {
-            window.__confirm('¿Eliminar ' + ids.length + ' vista(s)? Esta acción no se puede deshacer.', applyBulkAction);
-        } else {
-            applyBulkAction();
-        }
-    });
-
-    // ── Drag-drop reorder (jQuery UI Sortable) ────────────────────────
-    if ($('#views-sortable').length) {
-        $('#views-sortable').sortable({
-            // Ver ticket-statuses: la fila entera es el asidero de arrastre.
-            handle: 'tr',
-            cancel: 'input,textarea,button,select,option,a',
-            axis: 'y',
-            cursor: 'grabbing',
-            start: function (e, ui) {
-                ui.item.addClass('table-active');
-            },
-            stop: function (e, ui) {
-                ui.item.removeClass('table-active');
-            },
-            update: function () {
-                const ids = $('#views-sortable tr').map(function () {
-                    return $(this).data('id');
-                }).get();
-
-                $.ajax({
-                    url: '{{ route('settings.helpdesk.views.reorder') }}',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ ids }),
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    success: function (res) {
-                    },
-                    error: function () {
-                        toastr.error('Error al actualizar el orden.');
-                        $('#views-sortable').sortable('cancel');
-                    },
-                });
-            },
-        });
-    }
-});
+window.ViewsIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+    bulkActionUrl: @json(route('settings.helpdesk.views.bulk-action')),
+    reorderUrl: @json(route('settings.helpdesk.views.reorder')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/views-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/views-index.js')) }}" defer></script>
 @endpush

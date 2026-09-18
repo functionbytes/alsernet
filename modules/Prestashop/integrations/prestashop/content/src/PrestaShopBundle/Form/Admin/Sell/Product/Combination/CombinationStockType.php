@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,12 +50,6 @@ class CombinationStockType extends TranslatorAwareType
      */
     private $stockManagementEnabled;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param RouterInterface $router
-     * @param bool $stockManagementEnabled
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -80,8 +75,7 @@ class CombinationStockType extends TranslatorAwareType
                 'attr' => [
                     'placeholder' => 'YYYY-MM-DD',
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**

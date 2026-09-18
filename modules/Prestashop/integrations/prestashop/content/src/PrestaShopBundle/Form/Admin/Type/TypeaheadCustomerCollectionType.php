@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class TypeaheadCustomerCollectionType extends CommonAbstractType
     /**
      * {@inheritdoc}
      *
-     * @param object $customerAdapter
+     * @param  object  $customerAdapter
      */
     public function __construct($customerAdapter)
     {
@@ -63,23 +64,23 @@ class TypeaheadCustomerCollectionType extends CommonAbstractType
         $view->vars['template_collection'] = $options['template_collection'];
         $view->vars['limit'] = $options['limit'];
 
-        //if form is submitted, inject datas to display collection
-        if (!empty($view->vars['value']) && !empty($view->vars['value']['data'])) {
+        // if form is submitted, inject datas to display collection
+        if (! empty($view->vars['value']) && ! empty($view->vars['value']['data'])) {
             $collection = [];
 
             $i = 0;
             foreach ($view->vars['value']['data'] as $id) {
-                if (!$id) {
+                if (! $id) {
                     continue;
                 }
                 $customer = $this->customerAdapter->getCustomer($id);
                 $collection[] = [
                     'id' => $id,
-                    'name' => $customer->firstname . ' ' . $customer->lastname . ' - ' . $customer->email,
+                    'name' => $customer->firstname.' '.$customer->lastname.' - '.$customer->email,
                 ];
-                ++$i;
+                $i++;
 
-                //if collection length is up to limit, break
+                // if collection length is up to limit, break
                 if ($options['limit'] != 0 && $i >= $options['limit']) {
                     break;
                 }

@@ -21,6 +21,7 @@ class SocialAccountResource extends JsonResource
             'comments_enabled' => $this->comments_enabled,
             'messages_enabled' => $this->messages_enabled,
             'auto_reply_enabled' => $this->auto_reply_enabled,
+            'crisis_mode_active' => $this->crisis_mode_active,
             'consecutive_failures' => $this->consecutive_failures,
             'last_synced_at' => $this->last_synced_at?->toIso8601String(),
             'last_error_at' => $this->last_error_at?->toIso8601String(),

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,7 +64,6 @@ final class ChoiceColumn extends AbstractColumn
             ->setAllowedTypes('field', ['string', 'int', 'bool'])
             ->setAllowedTypes('color_field', 'string')
             ->setAllowedTypes('route', 'string')
-            ->setAllowedTypes('record_route_params', 'array')
-        ;
+            ->setAllowedTypes('record_route_params', 'array');
     }
 }

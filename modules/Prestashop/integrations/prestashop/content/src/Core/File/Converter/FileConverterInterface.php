@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ interface FileConverterInterface
     /**
      * Converts a file to a different format.
      *
-     * @param SplFileInfo $sourceFile file to convert
-     *
+     * @param  SplFileInfo  $sourceFile  file to convert
      * @return SplFileInfo converted file
      */
     public function convert(SplFileInfo $sourceFile);

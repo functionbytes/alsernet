@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,6 @@ final class AddContactHandler extends AbstractObjectModelHandler implements AddC
      */
     private $validator;
 
-    /**
-     * @param ValidatorInterface $validator
-     */
     public function __construct(ValidatorInterface $validator)
     {
         $this->validator = $validator;
@@ -70,24 +68,24 @@ final class AddContactHandler extends AbstractObjectModelHandler implements AddC
         $this->assertLocalisedTitleContainsDefaultLanguage($command->getLocalisedTitles());
 
         try {
-            $entity = new Contact();
+            $entity = new Contact;
             $entity->name = $command->getLocalisedTitles();
             $entity->customer_service = $command->isMessageSavingEnabled();
 
-            if (null !== $command->getEmail()) {
+            if ($command->getEmail() !== null) {
                 $entity->email = $command->getEmail()->getValue();
             }
 
-            if (null !== $command->getLocalisedDescription()) {
+            if ($command->getLocalisedDescription() !== null) {
                 $this->assertDescriptionContainsCleanHtmlValues($command->getLocalisedDescription());
                 $entity->description = $command->getLocalisedDescription();
             }
 
-            if (false === $entity->add()) {
+            if ($entity->add() === false) {
                 throw new CannotAddContactException('Unable to add contact');
             }
 
-            if (null !== $command->getShopAssociation()) {
+            if ($command->getShopAssociation() !== null) {
                 $this->associateWithShops($entity, $command->getShopAssociation());
             }
         } catch (PrestaShopException $exception) {
@@ -100,15 +98,14 @@ final class AddContactHandler extends AbstractObjectModelHandler implements AddC
     /**
      * Checks if the localised titles array contains value for the default language.
      *
-     * @param array $localisedTitle
      *
      * @throws ContactConstraintException
      */
     private function assertLocalisedTitleContainsDefaultLanguage(array $localisedTitle)
     {
-        $errors = $this->validator->validate($localisedTitle, new DefaultLanguage());
+        $errors = $this->validator->validate($localisedTitle, new DefaultLanguage);
 
-        if (0 !== count($errors)) {
+        if (count($errors) !== 0) {
             throw new ContactConstraintException('Title field is not found for default language', ContactConstraintException::MISSING_TITLE_FOR_DEFAULT_LANGUAGE);
         }
     }
@@ -116,16 +113,15 @@ final class AddContactHandler extends AbstractObjectModelHandler implements AddC
     /**
      * Assets that the value should not contain script tags or javascript events.
      *
-     * @param array $localisedDescriptions
      *
      * @throws ContactConstraintException
      */
     private function assertDescriptionContainsCleanHtmlValues(array $localisedDescriptions)
     {
         foreach ($localisedDescriptions as $description) {
-            $errors = $this->validator->validate($description, new CleanHtml());
+            $errors = $this->validator->validate($description, new CleanHtml);
 
-            if (0 !== count($errors)) {
+            if (count($errors) !== 0) {
                 throw new ContactConstraintException(sprintf('Given description "%s" contains javascript events or script tags', $description), ContactConstraintException::INVALID_DESCRIPTION);
             }
         }

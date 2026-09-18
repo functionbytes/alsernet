@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,6 @@ final class ProductWithoutPriceQueryBuilder extends AbstractProductQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -72,7 +72,7 @@ final class ProductWithoutPriceQueryBuilder extends AbstractProductQueryBuilder
 
         $specPriceSubQuery = $this->connection->createQueryBuilder()
             ->select(1)
-            ->from($this->dbPrefix . 'specific_price', 'sp')
+            ->from($this->dbPrefix.'specific_price', 'sp')
             ->andWhere('p.id_product = sp.id_product');
 
         if ($this->multistoreContextChecker->isSingleShopContext()) {
@@ -82,7 +82,7 @@ final class ProductWithoutPriceQueryBuilder extends AbstractProductQueryBuilder
 
         $qb->andWhere('p.price = 0')
             ->andWhere('p.wholesale_price = 0')
-            ->andWhere('NOT EXISTS(' . $specPriceSubQuery->getSQL() . ')');
+            ->andWhere('NOT EXISTS('.$specPriceSubQuery->getSQL().')');
 
         return $qb;
     }

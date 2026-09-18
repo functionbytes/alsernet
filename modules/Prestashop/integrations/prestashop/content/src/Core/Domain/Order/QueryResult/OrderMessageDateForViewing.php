@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,17 +50,11 @@ class OrderMessageDateForViewing
         $this->dateFormat = $dateFormat;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getDate(): DateTimeImmutable
     {
         return $this->date;
     }
 
-    /**
-     * @return string
-     */
     public function getFormat(): string
     {
         return $this->date->format($this->dateFormat);

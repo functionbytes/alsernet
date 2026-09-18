@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,9 +51,7 @@ class MaintenanceType extends TranslatorAwareType
     /**
      * MaintenanceType constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param array<int, string> $locales
-     * @param string $currentIp
+     * @param  array<int, string>  $locales
      */
     public function __construct(
         TranslatorInterface $translator,

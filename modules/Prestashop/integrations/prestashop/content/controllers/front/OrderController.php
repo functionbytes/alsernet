@@ -31,8 +31,11 @@ use PrestaShop\PrestaShop\Core\Foundation\Templating\RenderableProxy;
 class OrderControllerCore extends FrontController
 {
     public $ssl = true;
+
     public $php_self = 'order';
+
     public $page_name = 'checkout';
+
     public $checkoutWarning = false;
 
     /**
@@ -67,7 +70,7 @@ class OrderControllerCore extends FrontController
     public function init()
     {
         parent::init();
-        $this->cartChecksum = new CartChecksum(new AddressChecksum());
+        $this->cartChecksum = new CartChecksum(new AddressChecksum);
     }
 
     public function postProcess()
@@ -80,9 +83,9 @@ class OrderControllerCore extends FrontController
         ) {
             $oldCart = new Cart(Order::getCartIdStatic($id_order, $this->context->customer->id));
             $duplication = $oldCart->duplicate();
-            if (!$duplication || !Validate::isLoadedObject($duplication['cart'])) {
+            if (! $duplication || ! Validate::isLoadedObject($duplication['cart'])) {
                 $this->errors[] = $this->trans('Sorry. We cannot renew your order.', [], 'Shop.Notifications.Error');
-            } elseif (!$duplication['success']) {
+            } elseif (! $duplication['success']) {
                 $this->errors[] = $this->trans(
                     'Some items are no longer available, and we are unable to renew your order.',
                     [],
@@ -118,7 +121,7 @@ class OrderControllerCore extends FrontController
             $this->context,
             $this->getTranslator(),
             $this->objectPresenter,
-            new PriceFormatter()
+            new PriceFormatter
         );
 
         $session = new CheckoutSession(
@@ -140,8 +143,6 @@ class OrderControllerCore extends FrontController
 
     /**
      * Persists cart-related data in checkout session.
-     *
-     * @param CheckoutProcess $process
      */
     protected function saveDataToPersist(CheckoutProcess $process)
     {
@@ -166,33 +167,31 @@ class OrderControllerCore extends FrontController
             : null;
 
         Db::getInstance()->execute(
-            'UPDATE ' . _DB_PREFIX_ . 'cart SET checkout_session_data = "' . pSQL(json_encode($data)) . '"
-                WHERE id_cart = ' . (int) $cart->id
+            'UPDATE '._DB_PREFIX_.'cart SET checkout_session_data = "'.pSQL(json_encode($data)).'"
+                WHERE id_cart = '.(int) $cart->id
         );
     }
 
     /**
      * Restores from checkout session some previously persisted cart-related data.
-     *
-     * @param CheckoutProcess $process
      */
     protected function restorePersistedData(CheckoutProcess $process)
     {
         $cart = $this->context->cart;
         $customer = $this->context->customer;
         $rawData = Db::getInstance()->getValue(
-            'SELECT checkout_session_data FROM ' . _DB_PREFIX_ . 'cart WHERE id_cart = ' . (int) $cart->id
+            'SELECT checkout_session_data FROM '._DB_PREFIX_.'cart WHERE id_cart = '.(int) $cart->id
         );
         $data = json_decode($rawData, true);
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             $data = [];
         }
 
-        $addressValidator = new AddressValidator();
+        $addressValidator = new AddressValidator;
         $invalidAddressIds = $addressValidator->validateCartAddresses($cart);
 
         // Build the currently selected address' warning message (if relevant)
-        if (!$customer->isGuest() && !empty($invalidAddressIds)) {
+        if (! $customer->isGuest() && ! empty($invalidAddressIds)) {
             $this->checkoutWarning['address'] = [
                 'id_address' => (int) reset($invalidAddressIds),
                 'exception' => $this->trans(
@@ -270,8 +269,8 @@ class OrderControllerCore extends FrontController
 
         $this->saveDataToPersist($this->checkoutProcess);
 
-        if (!$this->checkoutProcess->hasErrors()) {
-            if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !$this->ajax) {
+        if (! $this->checkoutProcess->hasErrors()) {
+            if ($_SERVER['REQUEST_METHOD'] !== 'GET' && ! $this->ajax) {
                 return $this->redirectWithNotifications(
                     $this->checkoutProcess->getCheckoutSession()->getCheckoutURL()
                 );
@@ -337,16 +336,16 @@ class OrderControllerCore extends FrontController
     {
         $cms = new CMS((int) Configuration::get('PS_CONDITIONS_CMS_ID'), $this->context->language->id);
 
-        if (!Validate::isLoadedObject($cms)) {
+        if (! Validate::isLoadedObject($cms)) {
             return false;
         }
 
         $link = $this->context->link->getCMSLink($cms, $cms->link_rewrite, (bool) Configuration::get('PS_SSL_ENABLED'));
 
-        $termsAndConditions = new TermsAndConditions();
+        $termsAndConditions = new TermsAndConditions;
         $termsAndConditions
             ->setText(
-                '[' . $cms->meta_title . ']',
+                '['.$cms->meta_title.']',
                 $link
             )
             ->setIdentifier('terms-and-conditions-footer');
@@ -355,9 +354,6 @@ class OrderControllerCore extends FrontController
     }
 
     /**
-     * @param CheckoutSession $session
-     * @param $translator
-     *
      * @return CheckoutProcess
      */
     protected function buildCheckoutProcess(CheckoutSession $session, $translator)
@@ -380,7 +376,7 @@ class OrderControllerCore extends FrontController
                 $this->makeAddressForm()
             ));
 
-        if (!$this->context->cart->isVirtualCart()) {
+        if (! $this->context->cart->isVirtualCart()) {
             $checkoutDeliveryStep = new CheckoutDeliveryStep(
                 $this->context,
                 $translator
@@ -390,10 +386,10 @@ class OrderControllerCore extends FrontController
                 ->setRecyclablePackAllowed((bool) Configuration::get('PS_RECYCLABLE_PACK'))
                 ->setGiftAllowed((bool) Configuration::get('PS_GIFT_WRAPPING'))
                 ->setIncludeTaxes(
-                    !Product::getTaxCalculationMethod((int) $this->context->cart->id_customer)
+                    ! Product::getTaxCalculationMethod((int) $this->context->cart->id_customer)
                     && (int) Configuration::get('PS_TAX')
                 )
-                ->setDisplayTaxesLabel((Configuration::get('PS_TAX') && !Configuration::get('AEUC_LABEL_TAX_INC_EXC')))
+                ->setDisplayTaxesLabel((Configuration::get('PS_TAX') && ! Configuration::get('AEUC_LABEL_TAX_INC_EXC')))
                 ->setGiftCost(
                     $this->context->cart->getGiftWrappingPrice(
                         $checkoutDeliveryStep->getIncludeTaxes()
@@ -407,7 +403,7 @@ class OrderControllerCore extends FrontController
             ->addStep(new CheckoutPaymentStep(
                 $this->context,
                 $translator,
-                new PaymentOptionsFinder(),
+                new PaymentOptionsFinder,
                 new ConditionsToApproveFinder(
                     $this->context,
                     $translator

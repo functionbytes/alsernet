@@ -52,9 +52,14 @@
                                 <small>{{ $conversation->last_message_at?->diffForHumans() ?? '-' }}</small>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('helpdesksocial.conversations.show', $conversation) }}" class="btn btn-sm btn-outline-primary" title="Ver conversación">
+                                {{-- No existe una vista "show" para conversaciones sociales (nunca se
+                                     construyó); route('helpdesksocial.conversations.show') solo existe
+                                     como endpoint JSON, no como página. Deshabilitado en vez de enlazar
+                                     a JSON crudo o reventar con RouteNotFoundException. --}}
+                                <button type="button" class="btn btn-sm btn-outline-primary" disabled
+                                        title="Vista de detalle no disponible todavía">
                                     <i class="fas fa-eye"></i>
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         @empty

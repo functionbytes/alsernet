@@ -3,6 +3,7 @@
 namespace Modules\Supplier\Http\Controllers\Settings\Suppliers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -25,17 +26,17 @@ class SupplierAiConfigController extends Controller
         $this->authorize('suppliers.sync.config');
 
         $validated = $request->validate([
-            'openai_api_key'    => 'nullable|string|max:500',
+            'openai_api_key' => 'nullable|string|max:500',
             'anthropic_api_key' => 'nullable|string|max:500',
-            'google_api_key'    => 'nullable|string|max:500',
-            'default_model'     => 'nullable|string|max:100',
+            'google_api_key' => 'nullable|string|max:500',
+            'default_model' => 'nullable|string|max:100',
         ]);
 
         try {
             foreach ([
-                'openai_api_key'    => 'supplier.openai_api_key',
+                'openai_api_key' => 'supplier.openai_api_key',
                 'anthropic_api_key' => 'supplier.anthropic_api_key',
-                'google_api_key'    => 'supplier.google_api_key',
+                'google_api_key' => 'supplier.google_api_key',
             ] as $field => $settingKey) {
                 if ($request->filled($field)) {
                     Setting::set($settingKey, encrypt($validated[$field]));
@@ -52,7 +53,7 @@ class SupplierAiConfigController extends Controller
         }
     }
 
-    public function test(Request $request): \Illuminate\Http\JsonResponse
+    public function test(Request $request): JsonResponse
     {
         $this->authorize('suppliers.sync.config');
 
@@ -104,10 +105,10 @@ class SupplierAiConfigController extends Controller
     private function getConfig(): array
     {
         return [
-            'openai_api_key'    => self::decryptApiKey(Setting::get('supplier.openai_api_key', '')) ?: config('services.openai.api_key', ''),
+            'openai_api_key' => self::decryptApiKey(Setting::get('supplier.openai_api_key', '')) ?: config('services.openai.api_key', ''),
             'anthropic_api_key' => self::decryptApiKey(Setting::get('supplier.anthropic_api_key', '')) ?: config('services.anthropic.api_key', ''),
-            'google_api_key'    => self::decryptApiKey(Setting::get('supplier.google_api_key', '')) ?: config('services.google.api_key', ''),
-            'default_model'     => Setting::get('supplier.ai_default_model', config('supplier.ai.default_model', 'gpt-4o-mini')),
+            'google_api_key' => self::decryptApiKey(Setting::get('supplier.google_api_key', '')) ?: config('services.google.api_key', ''),
+            'default_model' => Setting::get('supplier.ai_default_model', config('supplier.ai.default_model', 'gpt-4o-mini')),
         ];
     }
 

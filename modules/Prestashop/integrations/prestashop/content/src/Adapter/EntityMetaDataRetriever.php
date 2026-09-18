@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,15 +35,14 @@ use PrestaShop\PrestaShop\Core\Foundation\Database\EntityMetaData;
 class EntityMetaDataRetriever
 {
     /**
-     * @param string $className
-     *
+     * @param  string  $className
      * @return EntityMetaData
      *
-     * @throws \PrestaShop\PrestaShop\Adapter\CoreException
+     * @throws CoreException
      */
     public function getEntityMetaData($className)
     {
-        $metaData = new EntityMetaData();
+        $metaData = new EntityMetaData;
 
         $metaData->setEntityClassName($className);
 

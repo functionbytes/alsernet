@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,6 +35,7 @@ use Doctrine\ORM\Mapping as ORM;
  * AttributeGroup.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\AttributeGroupRepository")
  */
 class AttributeGroup
@@ -42,7 +44,9 @@ class AttributeGroup
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_attribute_group", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -77,6 +81,7 @@ class AttributeGroup
 
     /**
      * @ORM\ManyToMany(targetEntity="PrestaShopBundle\Entity\Shop", cascade={"persist"})
+     *
      * @ORM\JoinTable(
      *      joinColumns={@ORM\JoinColumn(name="id_attribute_group", referencedColumnName="id_attribute_group")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="id_shop", referencedColumnName="id_shop", onDelete="CASCADE")}
@@ -100,8 +105,8 @@ class AttributeGroup
     public function __construct()
     {
         $this->groupType = 'select';
-        $this->shops = new ArrayCollection();
-        $this->attributes = new ArrayCollection();
+        $this->shops = new ArrayCollection;
+        $this->attributes = new ArrayCollection;
     }
 
     /**
@@ -117,8 +122,7 @@ class AttributeGroup
     /**
      * Set isColorGroup.
      *
-     * @param bool $isColorGroup
-     *
+     * @param  bool  $isColorGroup
      * @return AttributeGroup
      */
     public function setIsColorGroup($isColorGroup)
@@ -141,13 +145,12 @@ class AttributeGroup
     /**
      * Set groupType.
      *
-     * @param string $groupType
-     *
+     * @param  string  $groupType
      * @return AttributeGroup
      */
     public function setGroupType($groupType)
     {
-        if (!in_array($groupType, $this->groupTypeAvailable)) {
+        if (! in_array($groupType, $this->groupTypeAvailable)) {
             throw new \InvalidArgumentException('Invalid group type');
         }
 
@@ -169,8 +172,7 @@ class AttributeGroup
     /**
      * Set position.
      *
-     * @param int $position
-     *
+     * @param  int  $position
      * @return AttributeGroup
      */
     public function setPosition($position)
@@ -190,9 +192,6 @@ class AttributeGroup
         return $this->position;
     }
 
-    /**
-     * @return Collection
-     */
     public function getAttributes(): Collection
     {
         return $this->attributes;
@@ -201,7 +200,6 @@ class AttributeGroup
     /**
      * Add shop.
      *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      *
      * @return AttributeGroup
      */
@@ -214,8 +212,6 @@ class AttributeGroup
 
     /**
      * Remove shop.
-     *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      */
     public function removeShop(Shop $shop)
     {
@@ -225,7 +221,7 @@ class AttributeGroup
     /**
      * Get shops.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getShops()
     {

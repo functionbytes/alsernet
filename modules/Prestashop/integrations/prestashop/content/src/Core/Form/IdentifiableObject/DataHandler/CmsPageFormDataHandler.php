@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ final class CmsPageFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -54,7 +52,6 @@ final class CmsPageFormDataHandler implements FormDataHandlerInterface
     /**
      * Create object from form data.
      *
-     * @param array $data
      *
      * @return int
      *
@@ -96,9 +93,6 @@ final class CmsPageFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param EditCmsPageCommand $command
-     * @param array $data
-     *
      * @throws CmsPageCategoryException
      */
     private function fillCommandWithData(EditCmsPageCommand $command, array $data)

@@ -102,7 +102,14 @@ class ContactAggregatorService
             'timezone' => $customer->timezone,
             'lastSeenAt' => $customer->last_seen_at?->toIso8601String(),
             'stats' => [
-                'totalConversations' => (int) ($customer->total_conversations ?? $lifetime['conversations']),
+                // $customer->total_conversations es un contador denormalizado
+                // que solo se incrementa (Customer::incrementConversationCount())
+                // y nunca se decrementa al borrar/reasignar conversaciones —
+                // encontrado desincronizado en vivo (15 cacheado vs 0 real),
+                // contradiciendo a la propia pestaña "Conversaciones" de al
+                // lado. $lifetime ya hace el COUNT(*) real más abajo, así que
+                // usarlo aquí siempre no cuesta una consulta extra.
+                'totalConversations' => (int) $lifetime['conversations'],
                 'totalPageVisits' => (int) ($customer->total_page_visits ?? 0),
                 'healthScore' => $healthScore,
                 // null real (nunca encuestado) preservado, no colapsado a
@@ -313,13 +320,18 @@ class ContactAggregatorService
                 ])->all(),
             ]);
 
-        $carts = $cartModel->newQuery()
+        $abandonedCarts = $cartModel->newQuery()
             ->whereIn('customer_id', $customerIds)
             ->where('status', 'abandoned')
             ->latest('abandoned_at')
             ->limit(5)
-            ->get()
-            ->map(fn ($cart): array => $this->mapAbandonedCart($cart));
+            ->get();
+
+        // Resuelve todos los SKUs de los hasta 5 carritos en una sola query en
+        // vez de una por línea de carrito (ver resolveLocalProductIdsMap()).
+        $skuToProductId = $this->resolveLocalProductIdsMap($this->collectCartSkus($abandonedCarts));
+
+        $carts = $abandonedCarts->map(fn ($cart): array => $this->mapAbandonedCart($cart, $skuToProductId));
 
         // Estadísticas sobre TODOS los pedidos del cliente, no sobre los 10
         // que se muestran arriba: calcularlas desde la colección ya limitada
@@ -590,9 +602,10 @@ class ContactAggregatorService
      * POST the lines to the assisted cart. A cart is only 'recoverable' when
      * every line maps to a usable local product id.
      *
+     * @param  array<string, int>  $skuToProductId  precomputed by resolveLocalProductIdsMap()
      * @return array{updatedAt: ?string, itemsCount: int, total: float, recoverable: bool, lines: array<int, array{productId: ?int, name: string, qty: int}>}
      */
-    private function mapAbandonedCart(mixed $cart): array
+    private function mapAbandonedCart(mixed $cart, array $skuToProductId): array
     {
         $rawItems = is_array($cart->items ?? null) ? $cart->items : [];
         $lines = [];
@@ -600,7 +613,7 @@ class ContactAggregatorService
 
         foreach ($rawItems as $item) {
             $sku = is_array($item) ? ($item['sku'] ?? null) : null;
-            $productId = $this->resolveLocalProductId(is_string($sku) ? $sku : null);
+            $productId = is_string($sku) ? ($skuToProductId[$sku] ?? null) : null;
 
             if ($productId === null) {
                 $recoverable = false;
@@ -623,26 +636,66 @@ class ContactAggregatorService
     }
 
     /**
-     * Resolve a Remarketing item SKU to a local Ecommerce product id, matching
-     * either the products.sku or products.reference column. Guarded — returns
-     * null when Ecommerce is unavailable or no product matches.
+     * Collects every line-item SKU across a batch of abandoned carts, so they
+     * can be resolved to local product ids with a single query instead of one
+     * per line (see resolveLocalProductIdsMap()).
+     *
+     * @param  iterable<int, mixed>  $carts
+     * @return array<int, string>
      */
-    private function resolveLocalProductId(?string $sku): ?int
+    private function collectCartSkus(iterable $carts): array
     {
-        if ($sku === null || $sku === '' || ! $this->ecommerceAvailable()) {
-            return null;
+        $skus = [];
+
+        foreach ($carts as $cart) {
+            $rawItems = is_array($cart->items ?? null) ? $cart->items : [];
+
+            foreach ($rawItems as $item) {
+                $sku = is_array($item) ? ($item['sku'] ?? null) : null;
+                if (is_string($sku) && $sku !== '') {
+                    $skus[] = $sku;
+                }
+            }
+        }
+
+        return array_values(array_unique($skus));
+    }
+
+    /**
+     * Resolve a batch of Remarketing item SKUs to local Ecommerce product ids
+     * in one query, matching either the products.sku or products.reference
+     * column. Guarded — returns an empty map when Ecommerce is unavailable or
+     * no SKU was given.
+     *
+     * @param  array<int, string>  $skus
+     * @return array<string, int> the requested value (sku or reference) => product id
+     */
+    private function resolveLocalProductIdsMap(array $skus): array
+    {
+        if ($skus === [] || ! $this->ecommerceAvailable()) {
+            return [];
         }
 
         try {
-            $id = app(self::ECOMMERCE_PRODUCT)->newQuery()
-                ->where('sku', $sku)
-                ->orWhere('reference', $sku)
-                ->value('id');
-
-            return $id !== null ? (int) $id : null;
+            $rows = app(self::ECOMMERCE_PRODUCT)->newQuery()
+                ->whereIn('sku', $skus)
+                ->orWhereIn('reference', $skus)
+                ->get(['id', 'sku', 'reference']);
         } catch (\Throwable) {
-            return null;
+            return [];
         }
+
+        $map = [];
+        foreach ($rows as $row) {
+            if ($row->sku !== null && in_array($row->sku, $skus, true)) {
+                $map[$row->sku] = (int) $row->id;
+            }
+            if ($row->reference !== null && in_array($row->reference, $skus, true)) {
+                $map[$row->reference] = (int) $row->id;
+            }
+        }
+
+        return $map;
     }
 
     private function ecommerceAvailable(): bool
@@ -834,19 +887,22 @@ class ContactAggregatorService
         // indice por completo, degradando a listar los 20 email logs mas
         // recientes de TODOS los clientes cuando no habia match exacto.
         return $model->newQuery()
-            ->where(fn ($q) => $q
-                ->whereRaw('MATCH(recipients_index) AGAINST (?)', [$email])
-                ->orWhere('recipients_index', 'like', '%'.$email.'%'))
+            ->whereRaw('MATCH(recipients_index) AGAINST (? IN BOOLEAN MODE)', ['"'.$email.'"'])
             ->latest('created_at')
             ->limit(20)
             ->get()
+            // Cinturon de seguridad: BOOLEAN MODE con frase exacta ya no
+            // deberia devolver destinatarios ajenos, pero se descarta
+            // explicitamente cualquier fila cuyo recipients_index no
+            // contenga el email literal antes de exponerla.
+            ->filter(fn ($log): bool => str_contains(strtolower((string) $log->recipients_index), $email))
             ->map(fn ($log): array => [
                 'subject' => $log->subject ?? '(sin asunto)',
                 'status' => $log->status_label,
                 'statusClass' => $log->status_color,
                 'at' => $log->display_date?->toIso8601String(),
                 'url' => $log->entity_url,
-            ])->all();
+            ])->values()->all();
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Import\Exception;
 /**
  * Class UnreadableFileException is thrown when the import file cannot be read.
  */
-class UnreadableFileException extends ImportException
-{
-}
+class UnreadableFileException extends ImportException {}

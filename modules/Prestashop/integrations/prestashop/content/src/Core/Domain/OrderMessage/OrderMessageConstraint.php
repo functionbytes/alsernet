@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,5 +33,6 @@ namespace PrestaShop\PrestaShop\Core\Domain\OrderMessage;
 class OrderMessageConstraint
 {
     public const MAX_NAME_LENGTH = 128;
+
     public const MAX_MESSAGE_LENGTH = 1200;
 }

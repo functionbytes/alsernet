@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,15 +45,12 @@ class GenerateByStatusType extends CommonAbstractType
      * @var array
      */
     private $orderCountsByState;
+
     /**
      * @var FormChoiceProviderInterface
      */
     private $orderStateChoiceProvider;
 
-    /**
-     * @param FormChoiceProviderInterface $orderStateChoiceProvider
-     * @param array $orderCountsByState
-     */
     public function __construct(FormChoiceProviderInterface $orderStateChoiceProvider, array $orderCountsByState)
     {
         $this->orderCountsByState = $orderCountsByState;

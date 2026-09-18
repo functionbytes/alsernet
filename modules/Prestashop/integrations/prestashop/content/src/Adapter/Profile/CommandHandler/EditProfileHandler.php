@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,18 +47,16 @@ final class EditProfileHandler implements EditProfileHandlerInterface
         $profile = $this->getProfile($command->getProfileId());
         $profile->name = $command->getLocalizedNames();
 
-        if (false === $profile->validateFieldsLang(false)) {
+        if ($profile->validateFieldsLang(false) === false) {
             throw new ProfileException('Cannot edit Profile because it contains invalid data');
         }
 
-        if (false === $profile->update()) {
+        if ($profile->update() === false) {
             throw new ProfileException('Failed to edit Profile');
         }
     }
 
     /**
-     * @param ProfileId $profileId
-     *
      * @return Profile
      *
      * @throws ProfileNotFoundException

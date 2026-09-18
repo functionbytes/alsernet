@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,11 +58,6 @@ final class UpdateCombinationFromListingHandler implements UpdateCombinationFrom
      */
     private $combinationStockUpdater;
 
-    /**
-     * @param CombinationRepository $combinationRepository
-     * @param DefaultCombinationUpdater $defaultCombinationUpdater
-     * @param CombinationStockUpdater $combinationStockUpdater
-     */
     public function __construct(
         CombinationRepository $combinationRepository,
         DefaultCombinationUpdater $defaultCombinationUpdater,
@@ -84,7 +80,7 @@ final class UpdateCombinationFromListingHandler implements UpdateCombinationFrom
             CannotUpdateCombinationException::FAILED_UPDATE_LISTED_COMBINATION
         );
 
-        if (true === $command->isDefault()) {
+        if ($command->isDefault() === true) {
             $this->defaultCombinationUpdater->setDefaultCombination($command->getCombinationId());
         }
 
@@ -95,26 +91,23 @@ final class UpdateCombinationFromListingHandler implements UpdateCombinationFrom
     }
 
     /**
-     * @param Combination $combination
-     * @param UpdateCombinationFromListingCommand $command
-     *
      * @return array<int, string>
      */
     private function fillUpdatableProperties(Combination $combination, UpdateCombinationFromListingCommand $command): array
     {
         $updatableProperties = [];
 
-        if (null !== $command->getImpactOnPrice()) {
+        if ($command->getImpactOnPrice() !== null) {
             $combination->price = (float) (string) $command->getImpactOnPrice();
             $updatableProperties[] = 'price';
         }
 
-        if (null !== $command->getQuantity()) {
+        if ($command->getQuantity() !== null) {
             $combination->quantity = $command->getQuantity();
             $updatableProperties[] = 'quantity';
         }
 
-        if (null !== $command->getReference()) {
+        if ($command->getReference() !== null) {
             $combination->reference = $command->getReference();
             $updatableProperties[] = 'reference';
         }

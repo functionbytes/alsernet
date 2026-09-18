@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTranslate\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TranslateItemRequest extends FormRequest
 {
@@ -14,7 +15,7 @@ class TranslateItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'target' => ['required', 'string', 'regex:/^[A-Za-z]{2}(-[A-Za-z]{2})?$/'],
+            'target' => ['required', 'string', Rule::in(config('helpdesktranslate.supported_languages', []))],
         ];
     }
 
@@ -22,7 +23,7 @@ class TranslateItemRequest extends FormRequest
     {
         return [
             'target.required' => __('helpdesktranslate::messages.validation.target_required'),
-            'target.regex' => __('helpdesktranslate::messages.validation.target_regex'),
+            'target.in' => __('helpdesktranslate::messages.validation.target_in'),
         ];
     }
 

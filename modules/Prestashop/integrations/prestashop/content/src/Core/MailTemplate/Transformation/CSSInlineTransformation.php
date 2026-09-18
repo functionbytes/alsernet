@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,7 @@ class CSSInlineTransformation extends AbstractTransformation
      */
     public function apply($templateContent, array $templateVariables)
     {
-        if (MailTemplateInterface::HTML_TYPE != $this->type) {
+        if ($this->type != MailTemplateInterface::HTML_TYPE) {
             return $templateContent;
         }
 
@@ -64,7 +65,7 @@ class CSSInlineTransformation extends AbstractTransformation
 
         $cssContent = $this->getCssContent($templateContent);
 
-        $cssToInlineStyles = new CssToInlineStyles();
+        $cssToInlineStyles = new CssToInlineStyles;
         $templateContent = $cssToInlineStyles->convert($templateContent, $cssContent);
 
         $converter = CssToAttributeConverter::fromHtml($templateContent);
@@ -74,8 +75,7 @@ class CSSInlineTransformation extends AbstractTransformation
     }
 
     /**
-     * @param string $templateContent
-     *
+     * @param  string  $templateContent
      * @return string
      */
     private function getCssContent($templateContent)
@@ -93,7 +93,7 @@ class CSSInlineTransformation extends AbstractTransformation
         $cssContents = '';
         foreach ($cssUrls as $cssUrl) {
             $cssContent = @file_get_contents($cssUrl);
-            if (!empty($cssContent)) {
+            if (! empty($cssContent)) {
                 $cssContents .= $cssContent;
             }
         }

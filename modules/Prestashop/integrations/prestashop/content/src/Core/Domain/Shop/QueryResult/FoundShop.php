@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,12 +66,6 @@ class FoundShop
 
     /**
      * FoundShop constructor.
-     *
-     * @param int $id
-     * @param string $color
-     * @param string $name
-     * @param int $groupId
-     * @param string $groupName
      */
     public function __construct(
         int $id,

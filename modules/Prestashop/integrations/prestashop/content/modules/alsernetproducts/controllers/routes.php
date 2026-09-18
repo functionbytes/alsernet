@@ -1,9 +1,9 @@
 <?php
 
-require_once(dirname(__FILE__).'/../../../config/config.inc.php');
-require_once(dirname(__FILE__).'/../../../init.php');
-include_once(dirname(__FILE__).'/front/CategoryController.php');
-include_once(dirname(__FILE__).'/front/ProductController.php');
+require_once dirname(__FILE__).'/../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../init.php';
+include_once dirname(__FILE__).'/front/CategoryController.php';
+include_once dirname(__FILE__).'/front/ProductController.php';
 
 class Routes extends Module
 {
@@ -23,19 +23,19 @@ class Routes extends Module
         $product = Tools::getValue('product');
         $iso = Tools::getValue('iso');
 
-        $controllerCategory = new CategoryController();
-        $controllerProduct = new ProductController();
+        $controllerCategory = new CategoryController;
+        $controllerProduct = new ProductController;
         $response = null;
 
         switch ($type) {
             case 'news':
-                $response = $controllerCategory->news($category,$type);
+                $response = $controllerCategory->news($category, $type);
                 break;
             case 'sales':
-                $response = $controllerCategory->sales($category,$type);
+                $response = $controllerCategory->sales($category, $type);
                 break;
             case 'analytics':
-                $response = $controllerCategory->analytics($category,$type);
+                $response = $controllerCategory->analytics($category, $type);
                 break;
             case 'detail':
                 $response = $controllerProduct->delete();
@@ -50,10 +50,10 @@ class Routes extends Module
                 $response = $controllerProduct->viewProduct();
                 break;
             default:
-                $response = array(
+                $response = [
                     'status' => 'error',
                     'message' => 'Invalid action',
-                );
+                ];
                 break;
         }
 
@@ -67,8 +67,7 @@ class Routes extends Module
         echo json_encode($response);
         exit; // Asegúrate de salir después de enviar la respuesta
     }
-
 }
 
-$routes = new Routes();
+$routes = new Routes;
 $routes->routes();

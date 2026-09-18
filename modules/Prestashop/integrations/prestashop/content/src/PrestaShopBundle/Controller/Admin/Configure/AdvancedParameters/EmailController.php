@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ class EmailController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     * @param EmailLogsFilter $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, EmailLogsFilter $filters)
@@ -89,8 +87,6 @@ class EmailController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -115,9 +111,8 @@ class EmailController extends FrameworkBundleAdminController
      * Process email configuration saving.
      *
      * @DemoRestricted(redirectRoute="admin_emails_index")
-     * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @return RedirectResponse
      */
@@ -130,7 +125,7 @@ class EmailController extends FrameworkBundleAdminController
         if ($emailConfigurationForm->isSubmitted()) {
             $errors = $formHandler->save($emailConfigurationForm->getData());
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $this->flashErrors($errors);
             } else {
                 $this->addFlash(
@@ -147,9 +142,8 @@ class EmailController extends FrameworkBundleAdminController
      * Delete selected email logs.
      *
      * @DemoRestricted(redirectRoute="admin_emails_index")
-     * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @return RedirectResponse
      */
@@ -160,7 +154,7 @@ class EmailController extends FrameworkBundleAdminController
         $mailLogsEraser = $this->get('prestashop.adapter.email.email_log_eraser');
         $errors = $mailLogsEraser->erase($mailLogsToDelete);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -176,6 +170,7 @@ class EmailController extends FrameworkBundleAdminController
      * Delete all email logs.
      *
      * @DemoRestricted(redirectRoute="admin_emails_index")
+     *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @return RedirectResponse
@@ -195,10 +190,10 @@ class EmailController extends FrameworkBundleAdminController
      * Delete single email log.
      *
      * @DemoRestricted(redirectRoute="admin_emails_index")
+     *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param int $mailId
-     *
+     * @param  int  $mailId
      * @return RedirectResponse
      */
     public function deleteAction($mailId)
@@ -206,7 +201,7 @@ class EmailController extends FrameworkBundleAdminController
         $mailLogsEraser = $this->get('prestashop.adapter.email.email_log_eraser');
         $errors = $mailLogsEraser->erase([$mailId]);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -221,7 +216,6 @@ class EmailController extends FrameworkBundleAdminController
     /**
      * Processes test email sending.
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -235,7 +229,7 @@ class EmailController extends FrameworkBundleAdminController
             ]);
         }
 
-        if (!in_array(
+        if (! in_array(
             $this->authorizationLevel($request->attributes->get('_legacy_controller')),
             [
                 PageVoter::LEVEL_READ,

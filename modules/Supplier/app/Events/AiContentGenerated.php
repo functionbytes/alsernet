@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -11,7 +12,7 @@ use Modules\Supplier\Models\Ai\AiContent;
 
 class AiContentGenerated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(public AiContent $content, public ?string $batchId = null) {}
 

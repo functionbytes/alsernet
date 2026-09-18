@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,15 +77,8 @@ class OrderCarrierForViewing
     private $weight;
 
     /**
-     * @param int $orderCarrierId
-     * @param DateTimeImmutable $date
-     * @param string $name Carrier name or null in case of virtual order
-     * @param string $weight
-     * @param int $carrierId
-     * @param string $price Price or null in case of virtual order
-     * @param string|null $trackingUrl
-     * @param string|null $trackingNumber
-     * @param bool $canEdit
+     * @param  string  $name  Carrier name or null in case of virtual order
+     * @param  string  $price  Price or null in case of virtual order
      */
     public function __construct(
         int $orderCarrierId,
@@ -108,73 +102,46 @@ class OrderCarrierForViewing
         $this->weight = $weight;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderCarrierId(): int
     {
         return $this->orderCarrierId;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getDate(): DateTimeImmutable
     {
         return $this->date;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * @return int
-     */
     public function getCarrierId(): int
     {
         return $this->carrierId;
     }
 
-    /**
-     * @return string
-     */
     public function getPrice(): ?string
     {
         return $this->price;
     }
 
-    /**
-     * @return string|null
-     */
     public function getTrackingUrl(): ?string
     {
         return $this->trackingUrl;
     }
 
-    /**
-     * @return string|null
-     */
     public function getTrackingNumber(): ?string
     {
         return $this->trackingNumber;
     }
 
-    /**
-     * @return bool
-     */
     public function canEdit(): bool
     {
         return $this->canEdit;
     }
 
-    /**
-     * @return string
-     */
     public function getWeight(): string
     {
         return $this->weight;

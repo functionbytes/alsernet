@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,18 +41,22 @@ use Symfony\Component\Form\FormEvents;
 class ProductFeature extends CommonAbstractType
 {
     private $featureDataProvider;
+
     private $translator;
+
     private $locales;
+
     private $router;
+
     private $features;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
-     * @param object $router
-     * @param object $featureDataProvider
+     * @param  object  $translator
+     * @param  object  $legacyContext
+     * @param  object  $router
+     * @param  object  $featureDataProvider
      */
     public function __construct($translator, $legacyContext, $router, $featureDataProvider)
     {
@@ -107,7 +112,7 @@ class ProductFeature extends CommonAbstractType
             $form = $event->getForm();
             $data = $event->getData();
 
-            if (!$data || !$data['feature'] || $data['custom_value']) {
+            if (! $data || ! $data['feature'] || $data['custom_value']) {
                 return;
             }
 

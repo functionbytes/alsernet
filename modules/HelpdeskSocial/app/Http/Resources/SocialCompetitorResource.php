@@ -21,6 +21,7 @@ class SocialCompetitorResource extends JsonResource
             'latest_metrics' => $this->whenLoaded('latestMetrics', fn () => $this->latestMetrics->map(fn ($m) => [
                 'metric_type' => $m->metric_type,
                 'value' => $m->value,
+                'source' => $m->source,
                 'captured_at' => $m->captured_at?->toIso8601String(),
             ])),
             'created_at' => $this->created_at?->toIso8601String(),

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class UpdateCombinationPricesHandler implements UpdateCombinationPricesHan
      */
     private $combinationRepository;
 
-    /**
-     * @param CombinationRepository $combinationRepository
-     */
     public function __construct(CombinationRepository $combinationRepository)
     {
         $this->combinationRepository = $combinationRepository;
@@ -63,31 +61,28 @@ final class UpdateCombinationPricesHandler implements UpdateCombinationPricesHan
     }
 
     /**
-     * @param Combination $combination
-     * @param UpdateCombinationPricesCommand $command
-     *
      * @return array<int, string>
      */
     private function fillUpdatableProperties(Combination $combination, UpdateCombinationPricesCommand $command): array
     {
         $updatableProperties = [];
 
-        if (null !== $command->getImpactOnPrice()) {
+        if ($command->getImpactOnPrice() !== null) {
             $combination->price = (float) (string) $command->getImpactOnPrice();
             $updatableProperties[] = 'price';
         }
 
-        if (null !== $command->getEcoTax()) {
+        if ($command->getEcoTax() !== null) {
             $combination->ecotax = (float) (string) $command->getEcoTax();
             $updatableProperties[] = 'ecotax';
         }
 
-        if (null !== $command->getImpactOnUnitPrice()) {
+        if ($command->getImpactOnUnitPrice() !== null) {
             $combination->unit_price_impact = (float) (string) $command->getImpactOnUnitPrice();
             $updatableProperties[] = 'unit_price_impact';
         }
 
-        if (null !== $command->getWholesalePrice()) {
+        if ($command->getWholesalePrice() !== null) {
             $combination->wholesale_price = (float) (string) $command->getWholesalePrice();
             $updatableProperties[] = 'wholesale_price';
         }

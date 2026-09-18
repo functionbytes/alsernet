@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -103,19 +104,19 @@ final class CartRuleActionBuilder implements CartRuleActionBuilderInterface
     {
         $this->assertCartRuleActionsAreValid();
 
-        if (null !== $this->percentageDiscount) {
+        if ($this->percentageDiscount !== null) {
             $action = new PercentageDiscountAction(
                 $this->percentageDiscount,
                 $this->isFreeShipping,
                 $this->giftProduct
             );
-        } elseif (null !== $this->amountDiscount) {
+        } elseif ($this->amountDiscount !== null) {
             $action = new AmountDiscountAction(
                 $this->amountDiscount,
                 $this->isFreeShipping,
                 $this->giftProduct
             );
-        } elseif (true === $this->isFreeShipping) {
+        } elseif ($this->isFreeShipping === true) {
             $action = new FreeShippingAction($this->giftProduct);
         } else {
             $action = new GiftProductAction($this->giftProduct);
@@ -129,14 +130,14 @@ final class CartRuleActionBuilder implements CartRuleActionBuilderInterface
      */
     private function assertCartRuleActionsAreValid()
     {
-        if (null !== $this->percentageDiscount && null !== $this->amountDiscount) {
+        if ($this->percentageDiscount !== null && $this->amountDiscount !== null) {
             throw new CartRuleConstraintException('Cart rule cannot have both percentage and amount discount actions.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
         }
 
-        if (null === $this->percentageDiscount &&
-            null === $this->amountDiscount &&
-            null === $this->giftProduct &&
-            false === $this->isFreeShipping
+        if ($this->percentageDiscount === null &&
+            $this->amountDiscount === null &&
+            $this->giftProduct === null &&
+            $this->isFreeShipping === false
         ) {
             throw new CartRuleConstraintException('Cart rule must have at least one action', CartRuleConstraintException::MISSING_ACTION);
         }

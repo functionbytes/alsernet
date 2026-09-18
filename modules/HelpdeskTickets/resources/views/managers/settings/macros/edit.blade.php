@@ -19,7 +19,7 @@
                     <p class="text-muted small mb-3">El nombre es lo que el agente ve en el selector de macros de la ficha del ticket; la descripcion le ayuda a elegir la correcta.</p>
 
                     <div class="mb-3">
-                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <label class="form-label">Nombre <span class="text-brand">*</span></label>
                         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                                value="{{ old('name', $macro->name) }}" required>
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -160,9 +160,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush

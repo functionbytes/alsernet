@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,6 +39,7 @@ class AddOrderReturnStateCommand
      * @var string[]
      */
     private $localizedNames;
+
     /**
      * @var string
      */
@@ -60,8 +62,7 @@ class AddOrderReturnStateCommand
     }
 
     /**
-     * @param string[] $localizedNames
-     *
+     * @param  string[]  $localizedNames
      * @return $this
      *
      * @throws OrderReturnStateConstraintException

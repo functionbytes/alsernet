@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,8 @@
 
 namespace PrestaShopBundle\Install;
 
+use PrestaShopBundle\Translation\Translator;
+
 abstract class AbstractInstall
 {
     /**
@@ -34,7 +37,7 @@ abstract class AbstractInstall
     public $language;
 
     /**
-     * @var \PrestaShopBundle\Translation\Translator
+     * @var Translator
      */
     public $translator;
 
@@ -50,7 +53,7 @@ abstract class AbstractInstall
 
     public function setError($errors)
     {
-        if (!is_array($errors)) {
+        if (! is_array($errors)) {
             $errors = [$errors];
         }
 

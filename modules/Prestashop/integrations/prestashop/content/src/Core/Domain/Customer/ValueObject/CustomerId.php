@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class CustomerId
     private $customerId;
 
     /**
-     * @param int $customerId
+     * @param  int  $customerId
      */
     public function __construct($customerId)
     {
@@ -57,11 +58,11 @@ class CustomerId
     }
 
     /**
-     * @param int $customerId
+     * @param  int  $customerId
      */
     private function assertIntegerIsGreaterThanZero($customerId)
     {
-        if (!is_int($customerId) || 0 > $customerId) {
+        if (! is_int($customerId) || $customerId < 0) {
             throw new CustomerException(sprintf('Customer id %s is invalid. Customer id must be number that is greater than zero.', var_export($customerId, true)));
         }
     }

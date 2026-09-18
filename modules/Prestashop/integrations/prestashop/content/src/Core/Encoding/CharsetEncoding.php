@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,12 +33,11 @@ namespace PrestaShop\PrestaShop\Core\Encoding;
 final class CharsetEncoding
 {
     public const UTF_8 = 'utf-8';
+
     public const ISO_8859_1 = 'iso-8859-1';
 
     /**
      * This class is not meant to be instantiated as it is used to access encoding constants only.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

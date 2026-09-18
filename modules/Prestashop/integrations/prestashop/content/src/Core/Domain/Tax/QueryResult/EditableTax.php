@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,9 @@ class EditableTax
     /**
      * EditableTax constructor.
      *
-     * @param TaxId $taxId
-     * @param string[] $localizedNames
-     * @param float $rate
-     * @param bool $active
+     * @param  string[]  $localizedNames
+     * @param  float  $rate
+     * @param  bool  $active
      */
     public function __construct(TaxId $taxId, array $localizedNames, $rate, $active)
     {

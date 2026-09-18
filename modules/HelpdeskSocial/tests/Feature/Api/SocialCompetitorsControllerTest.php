@@ -23,6 +23,7 @@ class SocialCompetitorsControllerTest extends TestCase
         $this->user = User::factory()->create();
         $this->user->givePermissionTo([
             'helpdesksocial.analytics.view',
+            'helpdesksocial.competitors.manage',
         ]);
     }
 

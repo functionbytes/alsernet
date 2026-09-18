@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,15 +82,6 @@ class CatalogPriceRuleType extends AbstractType
      */
     private $taxInclusionChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param bool $isMultishopEnabled
-     * @param array $currencyByIdChoices
-     * @param array $countryByIdChoices
-     * @param array $groupByIdChoices
-     * @param array $shopByIdChoices
-     * @param array $taxInclusionChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         bool $isMultishopEnabled,
@@ -116,7 +108,7 @@ class CatalogPriceRuleType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                 ],
             ])
             ->add('id_currency', ChoiceType::class, [
@@ -186,7 +178,7 @@ class CatalogPriceRuleType extends AbstractType
                     new Reduction([
                         'invalidPercentageValueMessage' => $this->translator->trans(
                             'Reduction value "%value%" is invalid. Allowed values from 0 to %max%',
-                            ['%max%' => ReductionVO::MAX_ALLOWED_PERCENTAGE . '%'],
+                            ['%max%' => ReductionVO::MAX_ALLOWED_PERCENTAGE.'%'],
                             'Admin.Notifications.Error'
                         ),
                         'invalidAmountValueMessage' => $this->translator->trans(
@@ -196,8 +188,7 @@ class CatalogPriceRuleType extends AbstractType
                         ),
                     ]),
                 ],
-            ])
-        ;
+            ]);
 
         if ($this->isMultishopEnabled) {
             $builder->add('id_shop', ChoiceType::class, [
@@ -210,8 +201,6 @@ class CatalogPriceRuleType extends AbstractType
 
     /**
      * Prepends 'All currencies' option with id of 0 to currency choices
-     *
-     * @return array
      */
     private function getModifiedCurrencyChoices(): array
     {
@@ -223,8 +212,6 @@ class CatalogPriceRuleType extends AbstractType
 
     /**
      * Prepends 'All countries' option with id of 0 to country choices
-     *
-     * @return array
      */
     private function getModifiedCountryChoices(): array
     {
@@ -236,8 +223,6 @@ class CatalogPriceRuleType extends AbstractType
 
     /**
      * Prepends 'All groups' option with id of 0 to group choices
-     *
-     * @return array
      */
     private function getModifiedGroupChoices(): array
     {

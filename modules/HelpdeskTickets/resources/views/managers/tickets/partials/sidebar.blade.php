@@ -1,4 +1,7 @@
 {{-- Reusable Sidebar Component for Tickets --}}
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 <div class="left-part border-end w-20 flex-shrink-0 d-none d-lg-block">
     {{-- New Ticket Button --}}
     <div class="px-9 pt-4 pb-3">
@@ -36,7 +39,7 @@
             <li class="list-group-item border-0 p-0 mx-9">
                 <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1"
                    href="{{ route('manager.helpdesk.tickets.index', ['category' => $category->id]) }}">
-                    <i class="{{ $category->icon ?? 'fas fa-tag' }} fs-5" style="color: {{ $category->color ?? '#90bb13' }}"></i>{{ $category->name }}
+                    <i class="{{ $category->icon ?? 'fas fa-tag' }} fs-5 hdt-dyn-fg" style="--hdt-color: {{ $category->color ?? '#90bb13' }}"></i>{{ $category->name }}
                 </a>
             </li>
         @empty

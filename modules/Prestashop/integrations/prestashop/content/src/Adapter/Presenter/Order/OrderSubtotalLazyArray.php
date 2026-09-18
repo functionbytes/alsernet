@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,15 +59,13 @@ class OrderSubtotalLazyArray extends AbstractLazyArray
 
     /**
      * OrderSubtotalLazyArray constructor.
-     *
-     * @param Order $order
      */
     public function __construct(Order $order)
     {
         $this->context = Context::getContext();
-        $this->taxConfiguration = new TaxConfiguration();
+        $this->taxConfiguration = new TaxConfiguration;
         $this->includeTaxes = $this->includeTaxes();
-        $this->priceFormatter = new PriceFormatter();
+        $this->priceFormatter = new PriceFormatter;
         $this->translator = Context::getContext()->getTranslator();
         $this->order = $order;
         parent::__construct();
@@ -130,7 +129,7 @@ class OrderSubtotalLazyArray extends AbstractLazyArray
     public function getShipping()
     {
         $cart = new Cart($this->order->id_cart);
-        if (!$cart->isVirtualCart()) {
+        if (! $cart->isVirtualCart()) {
             $shippingCost = ($this->includeTaxes)
                 ? $this->order->total_shipping_tax_incl : $this->order->total_shipping_tax_excl;
 
@@ -161,7 +160,7 @@ class OrderSubtotalLazyArray extends AbstractLazyArray
      */
     public function getTax()
     {
-        if (!Configuration::get('PS_TAX_DISPLAY')) {
+        if (! Configuration::get('PS_TAX_DISPLAY')) {
             return [
                 'type' => 'tax',
                 'label' => null,

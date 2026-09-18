@@ -5,8 +5,17 @@ namespace Modules\HelpdeskSocial\Services;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\HelpdeskSocial\Jobs\SendWebPushNotificationJob;
 
+/**
+ * SendWebPushNotificationJob::handle() sigue siendo un stub (el envío real vía
+ * minishlink/web-push está comentado, pendiente de configurar VAPID) y la
+ * tabla `push_subscriptions` no tiene migración en ningún módulo. Sin este
+ * corte temprano, cada SocialCommentReceived/Replied/Escalated —o sea, cada
+ * comentario— lanzaba una QueryException al consultar una tabla inexistente.
+ * Cortocircuita aquí hasta que exista la tabla y las claves VAPID.
+ */
 class WebPushService
 {
     /**
@@ -17,6 +26,10 @@ class WebPushService
      */
     public function sendToPermission(string $permission, object $notification): void
     {
+        if (! $this->isConfigured()) {
+            return;
+        }
+
         $userIds = $this->getUserIdsWithPermission($permission);
 
         if ($userIds->isEmpty()) {
@@ -46,6 +59,10 @@ class WebPushService
      */
     public function sendRawToPermission(string $permission, array $payload): void
     {
+        if (! $this->isConfigured()) {
+            return;
+        }
+
         $userIds = $this->getUserIdsWithPermission($permission);
 
         if ($userIds->isEmpty()) {
@@ -61,6 +78,24 @@ class WebPushService
         foreach ($subscriptions as $subscription) {
             SendWebPushNotificationJob::dispatch((array) $subscription, $payload);
         }
+    }
+
+    /**
+     * VAPID configurado + tabla de suscripciones presente. Cacheado en memoria
+     * (estático) para no repetir Schema::hasTable() en cada evento dentro del
+     * mismo request/job.
+     */
+    private function isConfigured(): bool
+    {
+        static $configured = null;
+
+        if ($configured !== null) {
+            return $configured;
+        }
+
+        $hasVapidKeys = filled(config('services.webpush.public_key')) && filled(config('services.webpush.private_key'));
+
+        return $configured = $hasVapidKeys && Schema::hasTable('push_subscriptions');
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,6 @@ final class ShopUrlDataConfiguration implements DataConfigurationInterface
 
     /**
      * ShopUrlDataConfiguration constructor.
-     *
-     * @param ShopUrl $mainShopUrl
-     * @param ConfigurationInterface $configuration
      */
     public function __construct(
         ShopUrl $mainShopUrl,
@@ -89,7 +87,7 @@ final class ShopUrlDataConfiguration implements DataConfigurationInterface
 
         try {
             if ($this->validateConfiguration($configuration)) {
-                if (!$this->isValidUri($configuration['physical_uri'])) {
+                if (! $this->isValidUri($configuration['physical_uri'])) {
                     return [
                         [
                             'key' => 'The Base URI is not valid.',
@@ -130,8 +128,7 @@ final class ShopUrlDataConfiguration implements DataConfigurationInterface
     /**
      * Check if it's a valid URI.
      *
-     * @param string $uri
-     *
+     * @param  string  $uri
      * @return bool
      */
     private function isValidUri($uri)

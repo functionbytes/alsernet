@@ -2,10 +2,30 @@
 
 @section('title', 'Gestor de Medios')
 
-@push('styles')
+@push('css')
 <link rel="stylesheet" href="{{ asset('modules/Media/css/media-manager.css') }}">
+
+{{-- Antes esto colgaba de @push('styles') con una nota diciendo que
+     layouts.theme no renderiza ese stack. Es falso: el layout tiene
+     @stack('css') Y @stack('styles') (lineas 95 y 98), asi que el bloque si
+     salia — y encima despues del CSS del modulo, ganando la cascada. Se
+     unifica aqui y se arreglan las reglas que la nota daba por no auditadas. --}}
 <style>
     /* Media Manager Custom Styles */
+
+    /* Paleta del modulo. Los mismos valores que media-manager.css, con nombre
+       para no repartir hexadecimales sueltos por 600 lineas.
+       Va en :root y no acotada a #mediaManagerApp a proposito: el menu
+       contextual y los modales se cuelgan de <body>, fuera del contenedor de
+       la app, y ahi una variable no heredada deja la declaracion invalida y el
+       navegador se la come sin avisar. Los nombres van prefijados --media-*,
+       asi que no chocan con nada del tema. */
+    :root {
+        --media-accent: #F5B754;
+        --media-accent-dark: #C98A1F;
+        --media-accent-soft: #FEF6E9;
+        --media-surface: #f8f9fa;
+    }
 
     .stat-card {
         border: none;
@@ -22,7 +42,10 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: #13C672, var(--stat-color));
+        /* Le faltaba la apertura `linear-gradient(90deg,`: la declaracion era
+           invalida y el navegador la descartaba entera, asi que la franja
+           superior de las tarjetas de estadistica no se pintaba nunca. */
+        background: linear-gradient(90deg, var(--media-accent), var(--stat-color));
     }
 
     .stat-card:hover {
@@ -30,7 +53,7 @@
         transform: translateY(-4px);
     }
 
-    .stat-card.folders { --stat-color: #13C672; }
+    .stat-card.folders { --stat-color: #F5B754; }
     .stat-card.files { --stat-color: #13C672; }
     .stat-card.storage { --stat-color: #FEC90F; }
 
@@ -44,7 +67,7 @@
     .media-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-4px);
-        border-color: #13C672;
+        border-color: var(--media-accent);
     }
 
     .folder-card {
@@ -53,9 +76,9 @@
     }
 
     .folder-card:hover {
-        box-shadow: 0 8px 24px rgba(93, 135, 255, 0.15) !important;
+        box-shadow: 0 8px 24px rgba(245, 183, 84, 0.2) !important;
         transform: translateY(-4px);
-        border-color: #13C672 !important;
+        border-color: var(--media-accent) !important;
     }
 
     .folder-preview {
@@ -77,7 +100,7 @@
         width: 100%;
         overflow: hidden;
         position: relative;
-        background: #f5f6f8;
+        background: #f8f9fa;
     }
 
     .file-image-preview img {
@@ -112,7 +135,7 @@
         position: absolute;
         bottom: 8px;
         right: 8px;
-        background: rgba(93, 135, 255, 0.95);
+        background: rgba(201, 138, 31, 0.95);
         color: white;
         padding: 6px 10px;
         border-radius: 6px;
@@ -125,34 +148,9 @@
         font-size: 0.875rem;
     }
 
-    /* Gradient Backgrounds */
-    .bg-gradient-danger {
-        background: #13C672;
-    }
-
-    .bg-gradient-success {
-        background: #13C672;
-    }
-
-    .bg-gradient-info {
-        background: #13C672;
-    }
-
-    .bg-gradient-warning {
-        background: #13C672;
-    }
-
-    .bg-gradient-purple {
-        background: #13C672;
-    }
-
-    .bg-gradient-dark {
-        background: #13C672;
-    }
-
-    .bg-gradient-secondary {
-        background: #13C672;
-    }
+    /* Aqui vivian siete .bg-gradient-* (danger, success, info, warning, purple,
+       dark, secondary) con el MISMO color, pisando utilidades de Bootstrap y
+       sin que ninguna se usara en el modulo. Eliminadas. */
 
     .text-purple {
         color: #cc5de8;
@@ -186,48 +184,53 @@
     }
 
     .action-btn:hover {
-        background: #f0f4ff;
-        border-color: #13C672;
-        color: #13C672;
-        box-shadow: 0 2px 8px rgba(93, 135, 255, 0.15);
+        background: var(--media-accent-soft);
+        border-color: var(--media-accent);
+        color: var(--media-accent-dark);
+        box-shadow: 0 2px 8px rgba(245, 183, 84, 0.2);
     }
 
+    /* El borde discontinuo y el relleno llevaban el MISMO color: la zona de
+       arrastre salia como un bloque macizo, sin borde visible. El relleno pasa
+       al tono suave y el acento se queda en el borde, que es lo que marca el
+       area. Los azules que habia sueltos aqui eran restos de un tema anterior
+       que el reemplazo masivo de color no llego a tocar. */
     .upload-zone {
-        border: 2px dashed #13C672;
+        border: 2px dashed var(--media-accent);
         border-radius: 12px;
-        background: #13C672;
+        background: var(--media-accent-soft);
         transition: all 0.3s ease;
     }
 
     .upload-zone:hover {
-        border-color: #3E5BDB;
-        background: #13C672;
-        box-shadow: 0 4px 16px rgba(93, 135, 255, 0.12);
+        border-color: var(--media-accent-dark);
+        background: var(--media-accent-soft);
+        box-shadow: 0 4px 16px rgba(245, 183, 84, 0.18);
     }
 
     .upload-zone.drag-over {
-        border-color: #3E5BDB;
-        background: #13C672;
-        box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
+        border-color: var(--media-accent-dark);
+        background: var(--media-accent-soft);
+        box-shadow: 0 6px 20px rgba(245, 183, 84, 0.28);
     }
 
     /* Upload Zone Modern */
     .upload-zone-modern {
-        background: #13C672;
-        border: 2px dashed #e0e7ff;
+        background: var(--media-surface);
+        border: 2px dashed #e5e7eb;
         transition: all 0.3s ease;
     }
 
     .upload-zone-modern:hover {
-        border-color: #13C672;
-        background: #13C672;
-        box-shadow: 0 4px 16px rgba(93, 135, 255, 0.1);
+        border-color: var(--media-accent);
+        background: var(--media-accent-soft);
+        box-shadow: 0 4px 16px rgba(245, 183, 84, 0.14);
     }
 
     .upload-zone-modern.drag-active {
-        border-color: #13C672;
-        background: #13C672;
-        box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
+        border-color: var(--media-accent);
+        background: var(--media-accent-soft);
+        box-shadow: 0 6px 20px rgba(245, 183, 84, 0.28);
         transform: scale(1.01);
     }
 
@@ -237,9 +240,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #13C672;
+        background: var(--media-accent);
         border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(245, 183, 84, 0.35);
     }
 
     .upload-icon-wrapper i {
@@ -253,8 +256,11 @@
         50% { transform: translateY(-5px); }
     }
 
+    /* Pintaba de ambar macizo TODAS las cabeceras de tarjeta de la pagina
+       (.card-header es de Bootstrap, no del modulo). La cabecera vuelve a ser
+       neutra; el acento se reserva para el estado de seleccion de mas abajo. */
     .card-header {
-        background: #13C672;
+        background: #fff;
         border-color: #f0f0f0 !important;
     }
 
@@ -313,14 +319,14 @@
         transition: all 0.3s ease;
         cursor: pointer;
         text-decoration: none;
-        background: #f5f6f8;
+        background: #f8f9fa;
         border-color: #e8e8e8 !important;
     }
 
     .folder-file-item:hover {
-        background: #13C672;
-        border-color: #13C672 !important;
-        box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);
+        background: var(--media-accent-soft);
+        border-color: var(--media-accent) !important;
+        box-shadow: 0 4px 12px rgba(245, 183, 84, 0.2);
         transform: translateY(-2px);
     }
 
@@ -329,7 +335,7 @@
     }
 
     .folder-file-item:hover i {
-        color: #13C672 !important;
+        color: var(--media-accent-dark) !important;
     }
 
     /* Dropdown for folder options */
@@ -344,8 +350,8 @@
     }
 
     .dropdown-item:hover {
-        background: #f0f4ff;
-        color: #13C672;
+        background: var(--media-accent-soft);
+        color: var(--media-accent-dark);
     }
 
     .dropdown-item.text-danger:hover {
@@ -372,14 +378,14 @@
     }
 
     .user-profile-tab .nav-link:hover {
-        color: #13C672;
-        border-bottom-color: rgba(93, 135, 255, 0.3);
-        background: rgba(93, 135, 255, 0.05) !important;
+        color: var(--media-accent-dark);
+        border-bottom-color: rgba(245, 183, 84, 0.4);
+        background: rgba(245, 183, 84, 0.08) !important;
     }
 
     .user-profile-tab .nav-link.active {
-        color: #13C672;
-        border-bottom-color: #13C672;
+        color: var(--media-accent-dark);
+        border-bottom-color: var(--media-accent);
         background: transparent !important;
         font-weight: 600;
     }
@@ -430,8 +436,8 @@
     }
 
     .context-menu-item:hover {
-        background: #f0f4ff;
-        color: #13C672;
+        background: var(--media-accent-soft);
+        color: var(--media-accent-dark);
     }
 
     .context-menu-item.danger:hover {
@@ -464,10 +470,10 @@
     }
 
     .card.selected {
-        border: 3px solid #13C672 !important;
-        background: #13C672;
-        box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.15),
-                    0 8px 24px rgba(93, 135, 255, 0.25) !important;
+        border: 3px solid var(--media-accent) !important;
+        background: var(--media-accent-soft);
+        box-shadow: 0 0 0 4px rgba(245, 183, 84, 0.2),
+                    0 8px 24px rgba(245, 183, 84, 0.3) !important;
         transform: translateY(-2px);
     }
 
@@ -483,10 +489,10 @@
         left: 12px;
         width: 28px;
         height: 28px;
-        background: #13C672;
+        background: var(--media-accent);
         border-radius: 50%;
         z-index: 20;
-        box-shadow: 0 2px 8px rgba(93, 135, 255, 0.5);
+        box-shadow: 0 2px 8px rgba(245, 183, 84, 0.5);
         animation: checkmarkAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -533,7 +539,7 @@
     .media-card:not(.selected):hover,
     .folder-card:not(.selected):hover {
         cursor: pointer;
-        border-color: rgba(93, 135, 255, 0.4);
+        border-color: rgba(245, 183, 84, 0.5);
     }
 
     /* Indicador sutil de que se puede seleccionar (cuando hay selecciones activas) */
@@ -544,7 +550,7 @@
         left: 12px;
         width: 28px;
         height: 28px;
-        border: 2px solid rgba(93, 135, 255, 0.4);
+        border: 2px solid rgba(245, 183, 84, 0.5);
         border-radius: 50%;
         z-index: 20;
         opacity: 0;
@@ -562,13 +568,16 @@
     }
 
     .card-header:has(.text-primary) {
-        background: #13C672 !important;
-        border-bottom: 2px solid #13C672 !important;
+        background: var(--media-accent-soft) !important;
+        border-bottom: 2px solid var(--media-accent) !important;
     }
 
     /* Enhanced sidebar-like navigation */
+    /* Era un ambar macizo detras de toda la barra de pestanas, con lo que el
+       hover y la pestana activa (que van sobre fondo claro) no se distinguian.
+       La barra queda transparente y el acento se ve en el indicador ::before. */
     .user-profile-tab {
-        background: #13C672;
+        background: transparent;
     }
 
     .user-profile-tab .nav-link {
@@ -584,7 +593,7 @@
         transform: translateY(-50%);
         width: 0;
         height: 0;
-        background: #13C672;
+        background: var(--media-accent);
         border-radius: 0 4px 4px 0;
         transition: all 0.3s ease;
     }
@@ -595,7 +604,7 @@
     }
 
     .user-profile-tab .nav-link:hover:not(.active) {
-        background: rgba(93, 135, 255, 0.05);
+        background: rgba(245, 183, 84, 0.08);
     }
 
     /* Badge for counts */
@@ -654,10 +663,6 @@
 @endpush
 @endif
 
-@section('page_header')
-    @include('core::components.card', ['title' => 'Gestor de Medios'])
-@endsection
-
 @section('content')
 @if($pickerMode)
 <div id="media-picker-banner" class="alert alert-primary mb-3 d-flex align-items-center gap-2 py-2">
@@ -667,6 +672,8 @@
 @endif
 <div id="mediaManagerApp">
 
+
+    @include('core::components.card', ['title' => 'Gestor de Medios'])
 
     <div v-if="loading" class="d-flex justify-content-center align-items-center media-loading-container">
         <div class="spinner-border text-primary media-loading-spinner" role="status">
@@ -691,14 +698,12 @@
                     </div>
                     <div class="d-flex gap-2 align-items-center">
                         {{-- Filesystem Selector --}}
-                        <div class="d-flex align-items-center gap-2">
-                            <select id="mediaDiskSelect" class="form-select media-disk-select">
-                                @foreach($availableDisks as $disk)
-                                <option value="{{ $disk['name'] }}">{{ $disk['label'] }} ({{ $disk['driver'] }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button v-if="currentView === 'all'" v-on:click="showNewFolderModal" class="btn btn-primary mb-1 w-100">
+                        <select id="mediaDiskSelect" class="form-select media-disk-select">
+                            @foreach($availableDisks as $disk)
+                            <option value="{{ $disk['name'] }}">{{ $disk['label'] }} ({{ $disk['driver'] }})</option>
+                            @endforeach
+                        </select>
+                        <button v-if="currentView === 'all'" v-on:click="showNewFolderModal" class="btn btn-primary media-toolbar-icon-btn" title="Nueva carpeta">
                             <i class="fas fa-folder-plus"></i>
                         </button>
                     </div>
@@ -747,7 +752,7 @@
                 {{-- Sidebar Navigation --}}
                 <div class="media-sidebar">
                     {{-- Navigation Pills --}}
-            <ul class="nav nav-pills user-profile-tab" id="media-view-tabs" role="tablist">
+            <ul class="nav nav-tabs border-0 user-profile-tab" id="media-view-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button
                         class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
@@ -866,28 +871,29 @@
                             Vaciar papelera
                         </button>
                     </div>
-                    <div class="d-flex gap-2 flex-shrink-0">
-                        <button v-on:click="loadList" class="btn btn-primary" title="Buscar">
+                    <div class="btn-group media-toolbar-group flex-shrink-0" role="group" aria-label="Herramientas de medios">
+                        <button v-on:click="loadList" class="btn btn-primary media-toolbar-icon-btn" title="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openDuplicatesModal" title="Encontrar duplicados">
-                            <i class="fas fa-clone me-1"></i>Duplicados
+                        <button class="btn btn-outline-dark media-toolbar-icon-btn" v-on:click="openDuplicatesModal" title="Encontrar duplicados">
+                            <i class="fas fa-clone"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openHeatmap" title="Actividad reciente">
-                            <i class="fas fa-chart-line me-1"></i>Actividad
+                        <button class="btn btn-outline-dark media-toolbar-icon-btn" v-on:click="openHeatmap" title="Actividad reciente">
+                            <i class="fas fa-chart-line"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" v-on:click="setView('recently_deleted')" title="Últimos eliminados">
-                            <i class="fas fa-clock-rotate-left me-1"></i>Recientes eliminados
+                        <button class="btn btn-outline-dark media-toolbar-icon-btn" v-on:click="setView('recently_deleted')" title="Últimos eliminados">
+                            <i class="fas fa-clock-rotate-left"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openActivityLog" v-if="isAdmin" title="Registro de actividad">
-                            <i class="fas fa-list me-1"></i>Registro
+                        <button class="btn btn-outline-dark media-toolbar-icon-btn" v-on:click="openActivityLog" v-if="isAdmin" title="Registro de actividad">
+                            <i class="fas fa-list"></i>
                         </button>
                         {{-- Tags filter dropdown --}}
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-tags me-1"></i>Tags <span v-if="selectedTagIds.length" class="badge bg-primary ms-1">@{{ selectedTagIds.length }}</span>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-dark media-toolbar-icon-btn position-relative" data-bs-toggle="dropdown" title="Filtrar por tags">
+                                <i class="fas fa-tags"></i>
+                                <span v-if="selectedTagIds.length" class="badge bg-primary rounded-pill media-toolbar-badge">@{{ selectedTagIds.length }}</span>
                             </button>
-                            <ul class="dropdown-menu p-2" style="min-width: 250px; max-height: 300px; overflow-y: auto">
+                            <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 250px; max-height: 300px; overflow-y: auto">
                                 <li v-for="tag in availableTags" :key="tag.id" class="mb-1">
                                     <label class="d-flex align-items-center gap-2 mb-0" >
                                         <input type="checkbox" :value="tag.id" v-model="selectedTagIds" @change="filterByTags">
@@ -903,29 +909,45 @@
                 </div>
             </div>
 
-            {{-- Breadcrumbs --}}
+            {{-- Breadcrumbs + Storage Widget --}}
             <div class="card-body border-bottom">
-                <div v-if="currentView === 'all'">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                <a href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(0)">
-                                    Inicio
-                                </a>
-                            </li>
-                            <li v-for="(item, idx) in breadcrumbs" :key="idx" class="breadcrumb-item" :class="{ active: idx === breadcrumbs.length - 1 }">
-                                <a v-if="idx !== breadcrumbs.length - 1" href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(item.id)">
-                                    @{{ item.name }}
-                                </a>
-                                <span v-else class="fw-semibold">@{{ item.name }}</span>
-                            </li>
-                        </ol>
-                    </nav>
-                </div>
-                <div v-else>
-                    <h6 class="mb-0 fw-bold text-muted">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div v-if="currentView === 'all'">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(0)">
+                                        <i class="fas fa-house me-1"></i>Inicio
+                                    </a>
+                                </li>
+                                <li v-for="(item, idx) in breadcrumbs" :key="idx" class="breadcrumb-item" :class="{ active: idx === breadcrumbs.length - 1 }">
+                                    <a v-if="idx !== breadcrumbs.length - 1" href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(item.id)">
+                                        @{{ item.name }}
+                                    </a>
+                                    <span v-else class="fw-semibold">@{{ item.name }}</span>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <h6 v-else class="mb-0 fw-bold text-muted">
                         @{{ getViewTitle }}
                     </h6>
+
+                    {{-- Storage Widget --}}
+                    <div v-if="quotaEnabled || storageUsed > 0" class="media-storage-widget d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-primary-subtle d-flex align-items-center justify-content-center flex-shrink-0 media-storage-icon">
+                            <i class="fas fa-hdd text-primary"></i>
+                        </div>
+                        <div class="media-storage-info">
+                            <div class="d-flex justify-content-between gap-3 small text-muted mb-1">
+                                <span>Almacenamiento</span>
+                                <span>@{{ formatBytes(storageUsed) }}<span v-if="storageTotal"> / @{{ formatBytes(storageTotal) }}</span></span>
+                            </div>
+                            <div class="progress media-quota-progress">
+                                <div class="progress-bar" :class="quotaBarClass" :style="{ width: quotaPercent + '%' }"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -934,20 +956,6 @@
                 <div class="alert alert-warning d-flex align-items-center mb-0 py-2">
                     <i class="fas fa-triangle-exclamation me-2"></i>
                     Archivos eliminados. Se borrarán permanentemente después de 30 días.
-                </div>
-            </div>
-
-            {{-- Storage Widget --}}
-            <div v-if="quotaEnabled || storageUsed > 0" class="card-body border-bottom py-2">
-                <div class="media-storage-widget d-flex align-items-center gap-2 p-2 bg-light rounded">
-                    <i class="fas fa-hdd text-muted"></i>
-                    <div class="flex-grow-1">
-                        <div class="small text-muted">Almacenamiento</div>
-                        <div class="progress media-quota-progress">
-                            <div class="progress-bar" :class="quotaBarClass" :style="{ width: quotaPercent + '%' }"></div>
-                        </div>
-                        <div class="small">@{{ formatBytes(storageUsed) }}<span v-if="storageTotal"> / @{{ formatBytes(storageTotal) }}</span></div>
-                    </div>
                 </div>
             </div>
 

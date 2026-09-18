@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,13 +71,6 @@ class OrderPaymentType extends AbstractType
      */
     private $installedPaymentModulesChoiceProvider;
 
-    /**
-     * @param ConfigurableFormChoiceProviderInterface $currencySymbolByIdChoiceProvider
-     * @param ConfigurableFormChoiceProviderInterface $orderInvoiceChoiceProvider
-     * @param FormChoiceProviderInterface $installedPaymentModulesChoiceProvider
-     * @param int $contextLanguageId
-     * @param int $contextShopId
-     */
     public function __construct(
         TranslatorInterface $translator,
         ConfigurableFormChoiceProviderInterface $currencySymbolByIdChoiceProvider,
@@ -129,8 +123,7 @@ class OrderPaymentType extends AbstractType
                     'id_order' => $options['id_order'],
                     'id_lang' => $this->contextLanguageId,
                 ]),
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -142,7 +135,6 @@ class OrderPaymentType extends AbstractType
             ->setRequired([
                 'id_order',
             ])
-            ->setAllowedTypes('id_order', 'int')
-        ;
+            ->setAllowedTypes('id_order', 'int');
     }
 }

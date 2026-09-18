@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,23 +51,23 @@ final class EditFeatureHandler extends AbstractObjectModelHandler implements Edi
             throw new FeatureNotFoundException('Feature could not be found.');
         }
 
-        if (null !== $command->getLocalizedNames()) {
+        if ($command->getLocalizedNames() !== null) {
             $feature->name = $command->getLocalizedNames();
         }
 
-        if (null !== $command->getAssociatedShopIds()) {
+        if ($command->getAssociatedShopIds() !== null) {
             $this->associateWithShops($feature, $command->getAssociatedShopIds());
         }
 
-        if (false === $feature->validateFields(false)) {
+        if ($feature->validateFields(false) === false) {
             throw new FeatureConstraintException('Invalid data when updating feature');
         }
 
-        if (false === $feature->validateFieldsLang(false)) {
+        if ($feature->validateFieldsLang(false) === false) {
             throw new FeatureConstraintException('Invalid data when updating feature', FeatureConstraintException::INVALID_NAME);
         }
 
-        if (false === $feature->update()) {
+        if ($feature->update() === false) {
             throw new CannotEditFeatureException(sprintf('Failed to edit Feature with id "%s".', $feature->id));
         }
     }

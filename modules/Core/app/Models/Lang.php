@@ -4,6 +4,9 @@ namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Modules\System\Models\Categorie;
 
 /**
  * @property int $id
@@ -15,9 +18,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $date_format_full
  * @property string|null $date_format_lite
  * @property int $available
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Modules\System\Models\Categorie> $categories
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Categorie> $categories
  * @property-read int|null $categories_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Lang ascending()
@@ -47,7 +50,24 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Lang extends Model
 {
+    private const SELECT_OPTIONS_CACHE_KEY = 'core:lang:select-options';
+
+    /** @var Collection|null */
+    private static $selectOptions = null;
+
     use HasFactory;
+
+    /**
+     * La lista cacheada se invalida sola en cuanto se toca un idioma, venga de
+     * un seeder, de un comando o de un formulario: fiarlo a que cada sitio se
+     * acuerde de llamar a forgetSelectOptions() es como se acaba con un
+     * desplegable que no enseña el idioma recién dado de alta.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => self::forgetSelectOptions());
+        static::deleted(fn () => self::forgetSelectOptions());
+    }
 
     protected $table = 'langs';
 
@@ -99,7 +119,41 @@ class Lang extends Model
         return $query->where('available', 1);
     }
 
+    /**
+     * Opciones del desplegable de idioma.
+     *
+     * Memo por petición + caché de 10 minutos: esto lo pinta cada formulario
+     * con selector de idioma, así que una sola carga de la bandeja de
+     * conversaciones lo llamaba cinco veces y hacía cinco SELECT idénticos a
+     * una tabla que cambia cuando se instala un idioma nuevo. La caché la
+     * invalida forgetSelectOptions() al tocar los idiomas.
+     */
     public static function getSelectOptions()
+    {
+        if (self::$selectOptions !== null) {
+            return self::$selectOptions;
+        }
+
+        return self::$selectOptions = self::buildSelectOptions();
+    }
+
+    /**
+     * Vacía la lista cacheada (alta, baja o cambio de disponibilidad).
+     */
+    public static function forgetSelectOptions(): void
+    {
+        self::$selectOptions = null;
+        cache()->forget(self::SELECT_OPTIONS_CACHE_KEY);
+    }
+
+    private static function buildSelectOptions()
+    {
+        return cache()->remember(self::SELECT_OPTIONS_CACHE_KEY, now()->addMinutes(10), function () {
+            return self::buildSelectOptionsFresh();
+        });
+    }
+
+    private static function buildSelectOptionsFresh()
     {
         $options = self::available()->get()->map(function ($item) {
             return ['value' => $item->id, 'text' => $item->name];

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ class CustomerPreferencesController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(Request $request)
@@ -65,9 +64,8 @@ class CustomerPreferencesController extends FrameworkBundleAdminController
      * Process the Customer Preferences configuration form.
      *
      * @AdminSecurity("is_granted(['update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_customer_preferences")
-     * @DemoRestricted(redirectRoute="admin_customer_preferences")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_customer_preferences")
      *
      * @return Response
      */

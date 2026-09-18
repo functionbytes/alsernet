@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class ControllerResponseBuilder
     /** @var Router */
     private $router;
 
-    /**
-     * @param GridFilterFormFactoryInterface $filterFormFactory
-     * @param Router $router
-     */
     public function __construct(
         GridFilterFormFactoryInterface $filterFormFactory,
         Router $router
@@ -63,11 +60,7 @@ class ControllerResponseBuilder
     }
 
     /**
-     * @param GridDefinitionFactoryInterface $definitionFactory
-     * @param Request $request
-     * @param string $redirectRoute
-     * @param array $queryParamsToKeep
-     *
+     * @param  string  $redirectRoute
      * @return RedirectResponse
      */
     public function buildSearchResponse(

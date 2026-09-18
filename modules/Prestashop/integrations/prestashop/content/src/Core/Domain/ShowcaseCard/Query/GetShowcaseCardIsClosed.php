@@ -40,6 +40,7 @@ class GetShowcaseCardIsClosed
      * @var int
      */
     private $employeeId;
+
     /**
      * @var ShowcaseCard
      */
@@ -48,15 +49,15 @@ class GetShowcaseCardIsClosed
     /**
      * GetShowcaseCardIsClosed constructor.
      *
-     * @param int $employeeId
-     * @param string $showcaseCardName
+     * @param  int  $employeeId
+     * @param  string  $showcaseCardName
      *
      * @throws InvalidShowcaseCardNameException
      * @throws ShowcaseCardException
      */
     public function __construct($employeeId, $showcaseCardName)
     {
-        if (!is_int($employeeId)) {
+        if (! is_int($employeeId)) {
             throw new ShowcaseCardException(sprintf('Expected employee id to be an int, but was %s', gettype($employeeId)));
         }
 

@@ -9,6 +9,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\EmailAccount;
+use Modules\Supplier\Helpers\HtmlSanitizer;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message;
 
@@ -82,7 +83,12 @@ class ImapPullService
         $fromEmail = $from?->mail ?? '';
         $fromName = $from?->personal ?? $fromEmail;
         $subject = (string) ($message->getSubject()?->first() ?? '(sin asunto)');
-        $body = (string) ($message->getTextBody() ?? $message->getHTMLBody() ?? '');
+        // getTextBody()/getHTMLBody() devuelven '' (no null) cuando falta esa
+        // parte, así que el fallback se comprueba por cadena vacía, no por "??".
+        // El HTML crudo del cliente se sanea antes de guardarlo: nunca se
+        // confía en el cuerpo de un email entrante.
+        $textBody = $message->getTextBody();
+        $body = $textBody !== '' ? $textBody : HtmlSanitizer::clean($message->getHTMLBody());
         $messageId = (string) ($message->getMessageId()?->first() ?? '');
 
         if (blank($fromEmail)) {

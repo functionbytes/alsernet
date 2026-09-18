@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,13 +47,13 @@ final class UpdateInvoiceNoteHandler implements UpdateInvoiceNoteHandlerInterfac
         $note = $command->getNote();
         $orderInvoice = new OrderInvoice($command->getOrderInvoiceId()->getValue());
 
-        if (!Validate::isLoadedObject($orderInvoice) && Validate::isCleanHtml($note)) {
+        if (! Validate::isLoadedObject($orderInvoice) && Validate::isCleanHtml($note)) {
             throw new InvoiceNotFoundException(sprintf('Order invoice with id "%d" was not found', $command->getOrderInvoiceId()->getValue()));
         }
 
         $orderInvoice->note = $note;
 
-        if (!$orderInvoice->save()) {
+        if (! $orderInvoice->save()) {
             throw new InvoiceException('The invoice note was not saved.');
         }
     }

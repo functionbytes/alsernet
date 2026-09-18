@@ -263,10 +263,15 @@ class CustomerIntegrationsController extends Controller
 
     /**
      * Ficha completa de una plataforma ya vinculada (widget del panel
-     * derecho) — mismo criterio de identidad que search(): solo consulta.
+     * derecho). A diferencia de search() (que solo devuelve candidatos de
+     * una búsqueda en la plataforma remota), esto expone el mismo perfil
+     * completo que show()->buildPayload() — así que exige el mismo gate de
+     * identidad verificada, y no el de search().
      */
     public function detail(DetailCustomerIntegrationRequest $request, Customer $customer): JsonResponse
     {
+        $this->assertIdentityVerified($customer);
+
         $platform = $request->validated('platform');
 
         return response()->json([

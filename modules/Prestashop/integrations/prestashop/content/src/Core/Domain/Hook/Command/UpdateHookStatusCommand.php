@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,7 @@ use PrestaShop\PrestaShop\Core\Domain\Hook\ValueObject\HookId;
 class UpdateHookStatusCommand
 {
     /**
-     * @var hookId
+     * @var HookId
      */
     private $hookId;
 
@@ -47,9 +48,6 @@ class UpdateHookStatusCommand
 
     /**
      * UpdateHookStatusCommand constructor.
-     *
-     * @param int $hookId
-     * @param bool $status
      */
     public function __construct(int $hookId, bool $status)
     {
@@ -57,17 +55,11 @@ class UpdateHookStatusCommand
         $this->status = $status;
     }
 
-    /**
-     * @return HookId
-     */
     public function getHookId(): HookId
     {
         return $this->hookId;
     }
 
-    /**
-     * @return bool
-     */
     public function getStatus(): bool
     {
         return $this->status;

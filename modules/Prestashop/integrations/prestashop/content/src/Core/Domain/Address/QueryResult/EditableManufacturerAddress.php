@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -104,20 +105,19 @@ class EditableManufacturerAddress
     private $dni;
 
     /**
-     * @param AddressId $addressId
-     * @param string $lastName
-     * @param string $firstName
-     * @param string $address
-     * @param string $city
-     * @param int $manufacturerId
-     * @param int $countryId
-     * @param string $address2
-     * @param string $postCode
-     * @param int $stateId
-     * @param string $homePhone
-     * @param string $mobilePhone
-     * @param string $other
-     * @param string $dni
+     * @param  string  $lastName
+     * @param  string  $firstName
+     * @param  string  $address
+     * @param  string  $city
+     * @param  int  $manufacturerId
+     * @param  int  $countryId
+     * @param  string  $address2
+     * @param  string  $postCode
+     * @param  int  $stateId
+     * @param  string  $homePhone
+     * @param  string  $mobilePhone
+     * @param  string  $other
+     * @param  string  $dni
      */
     public function __construct(
         AddressId $addressId,

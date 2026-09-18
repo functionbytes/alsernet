@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,12 +57,6 @@ class SEOType extends TranslatorAwareType
      */
     private $forceFriendlyUrl;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param RouterInterface $router
-     * @param bool $friendlyUrlEnabled
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -154,8 +149,7 @@ class SEOType extends TranslatorAwareType
                     ],
                 ],
             ])
-            ->add('redirect_option', RedirectOptionType::class)
-        ;
+            ->add('redirect_option', RedirectOptionType::class);
     }
 
     /**
@@ -164,15 +158,15 @@ class SEOType extends TranslatorAwareType
     private function getFriendlyAlterMessages(): array
     {
         $alertMessages = [];
-        $friendlyUrl = $this->router->generate('admin_metas_index') . '#meta_settings_set_up_urls_form';
-        $productPreferencesUrl = $this->router->generate('admin_product_preferences') . '#configuration_fieldset_products';
+        $friendlyUrl = $this->router->generate('admin_metas_index').'#meta_settings_set_up_urls_form';
+        $productPreferencesUrl = $this->router->generate('admin_product_preferences').'#configuration_fieldset_products';
 
         if ($this->friendlyUrlEnabled) {
             $alertMessages[] = sprintf(
                 '<strong>%s</strong> %s',
                 $this->trans('Friendly URLs are currently enabled.', 'Admin.Catalog.Notification'),
                 $this->trans('To disable it, go to [1]SEO and URLs[/1]', 'Admin.Catalog.Notification', [
-                    '[1]' => '<a target="_blank" href="' . $friendlyUrl . '">',
+                    '[1]' => '<a target="_blank" href="'.$friendlyUrl.'">',
                     '[/1]' => '</a>',
                 ])
             );
@@ -181,7 +175,7 @@ class SEOType extends TranslatorAwareType
                 '<strong>%s</strong> %s',
                 $this->trans('Friendly URLs are currently disabled.', 'Admin.Catalog.Notification'),
                 $this->trans('To enable it, go to [1]SEO and URLs[/1]', 'Admin.Catalog.Notification', [
-                    '[1]' => '<a target="_blank" href="' . $friendlyUrl . '">',
+                    '[1]' => '<a target="_blank" href="'.$friendlyUrl.'">',
                     '[/1]' => '</a>',
                 ])
             );
@@ -191,7 +185,7 @@ class SEOType extends TranslatorAwareType
                 '<strong>%s</strong> %s',
                 $this->trans('The "Force update of friendly URL" option is currently enabled.', 'Admin.Catalog.Notification'),
                 $this->trans('To disable it, go to [1]Product Settings[/1]', 'Admin.Catalog.Notification', [
-                    '[1]' => '<a target="_blank" href="' . $productPreferencesUrl . '">',
+                    '[1]' => '<a target="_blank" href="'.$productPreferencesUrl.'">',
                     '[/1]' => '</a>',
                 ])
             );

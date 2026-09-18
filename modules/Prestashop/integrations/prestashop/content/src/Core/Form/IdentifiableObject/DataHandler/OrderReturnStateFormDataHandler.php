@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,16 +86,14 @@ final class OrderReturnStateFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param int $orderReturnStateId
-     *
+     * @param  int  $orderReturnStateId
      * @return EditOrderReturnStateCommand
      */
     private function buildOrderReturnStateEditCommand($orderReturnStateId, array $data)
     {
         $command = (new EditOrderReturnStateCommand($orderReturnStateId))
             ->setName($data['name'])
-            ->setColor($data['color'])
-        ;
+            ->setColor($data['color']);
 
         return $command;
     }

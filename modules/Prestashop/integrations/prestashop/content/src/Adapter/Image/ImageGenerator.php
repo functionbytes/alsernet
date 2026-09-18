@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,7 @@ use PrestaShopException;
 class ImageGenerator
 {
     /**
-     * @param string $imagePath
-     * @param ImageType[] $imageTypes
-     *
-     * @return bool
+     * @param  ImageType[]  $imageTypes
      *
      * @throws ImageOptimizationException
      * @throws ImageUploadException
@@ -61,7 +59,7 @@ class ImageGenerator
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 
-        if (!$resized) {
+        if (! $resized) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 
@@ -70,35 +68,30 @@ class ImageGenerator
 
     /**
      * Resizes the image depending on its type
-     *
-     * @param string $filePath
-     * @param ImageType $imageType
-     *
-     * @return bool
      */
     protected function resize(string $filePath, ImageType $imageType): bool
     {
         $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
 
-        if (!is_file($filePath)) {
+        if (! is_file($filePath)) {
             throw new ImageUploadException(sprintf('File "%s" does not exist', $filePath));
         }
 
-        //@todo: hardcoded extension as it was in legacy code. Changing it would be a huge BC break.
-        //@todo: in future we should consider using extension by mimeType
+        // @todo: hardcoded extension as it was in legacy code. Changing it would be a huge BC break.
+        // @todo: in future we should consider using extension by mimeType
         $destinationExtension = '.jpg';
         $width = $imageType->width;
         $height = $imageType->height;
 
         if (Configuration::get('PS_HIGHT_DPI')) {
-            $destinationExtension = '2x' . $destinationExtension;
+            $destinationExtension = '2x'.$destinationExtension;
             $width *= 2;
             $height *= 2;
         }
 
         return ImageManager::resize(
             $filePath,
-            sprintf('%s-%s%s', rtrim($filePath, '.' . $fileExtension), stripslashes($imageType->name), $destinationExtension),
+            sprintf('%s-%s%s', rtrim($filePath, '.'.$fileExtension), stripslashes($imageType->name), $destinationExtension),
             $width,
             $height,
             trim(mime_content_type($filePath), 'image/')

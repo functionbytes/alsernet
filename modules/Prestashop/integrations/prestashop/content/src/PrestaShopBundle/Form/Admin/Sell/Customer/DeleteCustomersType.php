@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ class DeleteCustomersType extends AbstractType
      */
     private $customerDeleteMethodChoices;
 
-    /**
-     * @param array $customerDeleteMethodChoices
-     */
     public function __construct(array $customerDeleteMethodChoices)
     {
         $this->customerDeleteMethodChoices = $customerDeleteMethodChoices;
@@ -68,7 +66,6 @@ class DeleteCustomersType extends AbstractType
                 'entry_type' => HiddenType::class,
                 'label' => false,
                 'allow_add' => true,
-            ])
-        ;
+            ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskHelpcenter\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,8 +46,21 @@ class HelpCenterController extends Controller
             $query->where('name', 'like', '%'.$request->search.'%');
         }
 
+        if ($request->filled('visible_to_role')) {
+            $query->where('visible_to_role', $request->visible_to_role);
+        }
+
+        // Una categoria vacia es la unica que se puede borrar, asi que
+        // encontrarlas de un vistazo evita ir probando una a una.
+        if ($request->filled('content')) {
+            $request->content === 'empty'
+                ? $query->doesntHave('articles')->doesntHave('sections')
+                : $query->where(fn ($q) => $q->has('articles')->orHas('sections'));
+        }
+
         $categories = $query->orderBy('position', 'asc')
-            ->paginate(config('helpdeskhelpcenter.pagination.managers', 20));
+            ->paginate(config('helpdeskhelpcenter.pagination.managers', 20))
+            ->withQueryString();
 
         $stats = [
             'total_categories' => HelpCenterCategory::query()->whereNull('parent_id')->where('is_section', false)->count(),
@@ -55,7 +69,13 @@ class HelpCenterController extends Controller
             'published_articles' => HelpCenterArticle::query()->where('draft', false)->count(),
         ];
 
-        return view('helpdeskhelpcenter::helpcenter.categories.index', compact('categories', 'stats'));
+        $roles = HelpCenterCategory::query()
+            ->whereNotNull('visible_to_role')
+            ->distinct()
+            ->orderBy('visible_to_role')
+            ->pluck('visible_to_role');
+
+        return view('helpdeskhelpcenter::helpcenter.categories.index', compact('categories', 'stats', 'roles'));
     }
 
     public function create(): View
@@ -151,6 +171,98 @@ class HelpCenterController extends Controller
             'success' => true,
             'message' => 'Categoría eliminada exitosamente',
         ]);
+    }
+
+    /**
+     * Borrado en lote de categorias.
+     *
+     * Respeta la misma proteccion que destroy(): una categoria con secciones o
+     * articulos no se borra, se omite. Un lote no puede ser la via para saltarse
+     * lo que la accion individual impide.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $categories = HelpCenterCategory::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($categories as $category) {
+            if (! auth()->user()->can('delete', $category)) {
+                $skipped++;
+
+                continue;
+            }
+
+            if ($category->sections()->count() > 0 || $category->articles()->count() > 0) {
+                $skipped++;
+
+                continue;
+            }
+
+            $category->delete();
+            $count++;
+        }
+
+        $this->clearWidgetCache();
+
+        $message = $count.' categoria(s) eliminada(s).';
+
+        if ($skipped > 0) {
+            $message .= ' '.$skipped.' omitida(s) por tener contenido o por permisos.';
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
+    }
+
+    /**
+     * Publicar, pasar a borrador o eliminar varios articulos a la vez.
+     */
+    public function articlesBulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:publish,draft,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $articles = HelpCenterArticle::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($articles as $article) {
+            $ability = $validated['action'] === 'delete' ? 'delete' : 'update';
+
+            if (! auth()->user()->can($ability, $article)) {
+                $skipped++;
+
+                continue;
+            }
+
+            match ($validated['action']) {
+                'delete' => $article->delete(),
+                'publish' => $article->update(['draft' => false, 'published_at' => $article->published_at ?? now()]),
+                'draft' => $article->update(['draft' => true]),
+            };
+
+            $count++;
+        }
+
+        $this->clearWidgetCache();
+
+        $labels = ['delete' => 'eliminado(s)', 'publish' => 'publicado(s)', 'draft' => 'pasado(s) a borrador'];
+        $message = $count.' articulo(s) '.$labels[$validated['action']].'.';
+
+        if ($skipped > 0) {
+            $message .= ' '.$skipped.' omitido(s) por permisos.';
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 
     public function createSection(Request $request): View
@@ -276,8 +388,18 @@ class HelpCenterController extends Controller
             $query->where('draft', $request->draft);
         }
 
+        if ($request->filled('category_id')) {
+            $categoryId = $request->category_id;
+            $query->whereHas('categories', fn ($q) => $q->where('helpdesk_helpcenter_categories.id', $categoryId));
+        }
+
+        if ($request->filled('author_id')) {
+            $query->where('author_id', $request->author_id);
+        }
+
         $articles = $query->orderBy('created_at', 'desc')
-            ->paginate(config('helpdeskhelpcenter.pagination.managers', 20));
+            ->paginate(config('helpdeskhelpcenter.pagination.managers', 20))
+            ->withQueryString();
 
         $articleStats = HelpCenterArticle::query()
             ->selectRaw('COUNT(*) as total')
@@ -293,7 +415,14 @@ class HelpCenterController extends Controller
             'total_views' => (int) ($articleStats->total_views ?? 0),
         ];
 
-        return view('helpdeskhelpcenter::helpcenter.articles.index', compact('articles', 'stats'));
+        $categories = HelpCenterCategory::query()->orderBy('name')->get(['id', 'name']);
+
+        $authors = User::query()
+            ->whereIn('id', HelpCenterArticle::query()->whereNotNull('author_id')->distinct()->pluck('author_id'))
+            ->orderBy('firstname')
+            ->get(['id', 'firstname', 'lastname', 'email']);
+
+        return view('helpdeskhelpcenter::helpcenter.articles.index', compact('articles', 'stats', 'categories', 'authors'));
     }
 
     public function createArticle(): View

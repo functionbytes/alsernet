@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,7 @@ use PrestaShopException;
 abstract class AbstractAttributeHandler
 {
     /**
-     * @param AttributeId $attributeId
-     *
+     * @param  AttributeId  $attributeId
      * @return Attribute
      *
      * @throws AttributeException
@@ -62,8 +62,6 @@ abstract class AbstractAttributeHandler
     }
 
     /**
-     * @param Attribute $attribute
-     *
      * @return bool
      *
      * @throws AttributeException

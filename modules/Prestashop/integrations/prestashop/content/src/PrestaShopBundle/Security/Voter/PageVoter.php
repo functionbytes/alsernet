@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,9 +56,8 @@ class PageVoter extends Voter
     /**
      * Indicates if this voter should pronounce on this attribute and subject.
      *
-     * @param string $attribute Rights to test
-     * @param mixed $subject Subject to secure (a controller name)
-     *
+     * @param  string  $attribute  Rights to test
+     * @param  mixed  $subject  Subject to secure (a controller name)
      * @return bool
      */
     protected function supports($attribute, $subject)
@@ -66,10 +66,8 @@ class PageVoter extends Voter
     }
 
     /**
-     * @param string $attribute Access right to test
-     * @param string $subject Controller name
-     * @param TokenInterface $token
-     *
+     * @param  string  $attribute  Access right to test
+     * @param  string  $subject  Controller name
      * @return bool
      */
     protected function voteOnAttribute($attribute, $subject, TokenInterface $token)
@@ -85,24 +83,22 @@ class PageVoter extends Voter
     /**
      * Checks if the provided user profile is allowed to perform the requested action.
      *
-     * @param string $action
-     * @param int $employeeProfileId
-     *
+     * @param  string  $action
+     * @param  int  $employeeProfileId
      * @return bool
      *
      * @throws \Exception
      */
     protected function can($action, $employeeProfileId)
     {
-        return Access::isGranted('ROLE_MOD_TAB_' . strtoupper($action), $employeeProfileId);
+        return Access::isGranted('ROLE_MOD_TAB_'.strtoupper($action), $employeeProfileId);
     }
 
     /**
      * Builds the action name by joining subject and attribute.
      *
-     * @param string $subject Subject the attribute is performed onto (usually a controller name)
-     * @param string $attribute
-     *
+     * @param  string  $subject  Subject the attribute is performed onto (usually a controller name)
+     * @param  string  $attribute
      * @return string
      */
     private function buildAction($subject, $attribute)
@@ -114,6 +110,6 @@ class PageVoter extends Voter
             $action .= '_';
         }
 
-        return $action . $attribute;
+        return $action.$attribute;
     }
 }

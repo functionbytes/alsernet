@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ class SupplierOrderValidator
     /**
      * Checks if the given supplier has pending orders.
      *
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return bool
      */
     public function hasPendingOrders($supplierId)

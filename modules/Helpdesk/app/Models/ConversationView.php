@@ -17,6 +17,12 @@ class ConversationView extends Model
 
     protected $table = 'helpdesk_conversation_views';
 
+    /** @var array<int, string>|null */
+    private static ?array $statusNames = null;
+
+    /** @var array<int, string>|null */
+    private static ?array $groupNames = null;
+
     protected $fillable = [
         'name',
         'description',
@@ -130,22 +136,155 @@ class ConversationView extends Model
     }
 
     /**
-     * Get filter summary for display.
+     * Los criterios de ordenación admitidos, con su nombre en castellano.
+     *
+     * Vive aquí y no en cada Blade porque el listado y los dos formularios
+     * pintaban la misma lista por su cuenta. Las claves son exactamente las que
+     * valida StoreConversationViewRequest.
+     *
+     * @return array<string, string>
+     */
+    public static function sortLabels(): array
+    {
+        return [
+            'created_at' => 'Fecha de creación',
+            'updated_at' => 'Última actualización',
+            'priority' => 'Prioridad',
+            'status' => 'Estado',
+            'assignee_id' => 'Agente asignado',
+        ];
+    }
+
+    /**
+     * Resumen legible de los filtros, para el listado de vistas.
      */
     public function getFilterSummary(): string
     {
-        if (empty($this->filters)) {
-            return 'Sin filtros';
-        }
+        $labels = $this->filterLabels();
 
-        $summary = [];
-        foreach ($this->filters as $key => $value) {
-            if (! empty($value)) {
-                $summary[] = ucfirst(str_replace('_', ' ', $key));
+        return $labels === [] ? 'Sin filtros' : implode(', ', $labels);
+    }
+
+    /**
+     * Los filtros traducidos a etiquetas en castellano, una por filtro activo.
+     *
+     * Descarta exactamente lo mismo que ConversationFilter::isBlank(), no lo
+     * que descarta empty(): en este vocabulario false es significativo
+     * (is_open=false es la vista "solo cerradas"), así que con empty() una
+     * vista perfectamente filtrada se anunciaba como "Sin filtros".
+     *
+     * @return array<int, string>
+     */
+    public function filterLabels(): array
+    {
+        $labels = [];
+
+        foreach ($this->filters ?? [] as $key => $value) {
+            if ($value === null || $value === '' || $value === 'all' || $value === []) {
+                continue;
+            }
+
+            $label = $this->labelFor((string) $key, $value);
+
+            if ($label !== null) {
+                $labels[] = $label;
             }
         }
 
-        return ! empty($summary) ? implode(', ', $summary) : 'Sin filtros';
+        return $labels;
+    }
+
+    /**
+     * @return string|null null = el filtro no pinta nada en el resumen
+     */
+    private function labelFor(string $key, mixed $value): ?string
+    {
+        $isTrue = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+
+        return match ($key) {
+            'is_open' => $isTrue ? 'Abiertas' : 'Cerradas',
+            'is_archived', 'archived' => $isTrue ? 'Archivadas' : 'Sin archivar',
+            'snoozed' => $isTrue ? 'Pospuestas' : null,
+            'unread' => $isTrue ? 'Sin leer' : null,
+            'mine' => $isTrue ? 'Asignadas a mí' : null,
+            'vip' => $isTrue ? 'Clientes VIP' : null,
+            'urgent' => $isTrue ? 'Urgentes' : null,
+            'status_id' => 'Estado: '.(static::statusNames()[(int) $value] ?? "#{$value}"),
+            'status' => 'Estado: '.$this->readableStatus((string) $value),
+            'assignee' => $this->readableAssignee($value),
+            'group' => 'Grupo: '.(static::groupNames()[(int) $value] ?? "#{$value}"),
+            'priority' => 'Prioridad: '.$this->readablePriority((string) $value),
+            'channel' => 'Canal: '.$this->readableChannel((string) $value),
+            'inbox' => "Buzón #{$value}",
+            'tag' => "Etiqueta #{$value}",
+            'search' => 'Busca «'.$value.'»',
+            default => ucfirst(str_replace('_', ' ', $key)),
+        };
+    }
+
+    private function readableAssignee(mixed $value): string
+    {
+        return match ((string) $value) {
+            'unassigned' => 'Sin asignar',
+            'mine' => 'Asignadas a mí',
+            default => "Agente #{$value}",
+        };
+    }
+
+    private function readableStatus(string $value): string
+    {
+        if (is_numeric($value)) {
+            return static::statusNames()[(int) $value] ?? "#{$value}";
+        }
+
+        return match ($value) {
+            'closed' => 'cerradas',
+            'pending' => 'Esperando',
+            'snoozed' => 'pospuestas',
+            default => $value,
+        };
+    }
+
+    private function readablePriority(string $value): string
+    {
+        return match ($value) {
+            'urgent' => 'urgente',
+            'high' => 'alta',
+            'normal' => 'normal',
+            'low' => 'baja',
+            default => $value,
+        };
+    }
+
+    private function readableChannel(string $value): string
+    {
+        return match ($value) {
+            'whatsapp' => 'WhatsApp',
+            'email' => 'Correo',
+            'facebook' => 'Facebook',
+            'instagram' => 'Instagram',
+            'web' => 'Web',
+            default => ucfirst($value),
+        };
+    }
+
+    /**
+     * Nombres de estado y de grupo, cacheados por petición: el listado pinta
+     * una etiqueta por vista y cada una miraría lo mismo (N+1 tonto).
+     *
+     * @return array<int, string>
+     */
+    private static function statusNames(): array
+    {
+        return static::$statusNames ??= ConversationStatus::pluck('name', 'id')->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function groupNames(): array
+    {
+        return static::$groupNames ??= Group::pluck('name', 'id')->all();
     }
 
     /**

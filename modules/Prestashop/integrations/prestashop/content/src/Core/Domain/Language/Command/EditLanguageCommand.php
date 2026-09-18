@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -91,7 +92,7 @@ class EditLanguageCommand
     private $shopAssociation;
 
     /**
-     * @param int $languageId
+     * @param  int  $languageId
      */
     public function __construct($languageId)
     {
@@ -107,8 +108,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param LanguageId $languageId
-     *
+     * @param  LanguageId  $languageId
      * @return self
      */
     public function setLanguageId($languageId)
@@ -127,8 +127,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string|null $name
-     *
+     * @param  string|null  $name
      * @return self
      */
     public function setName($name)
@@ -147,8 +146,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return self
      */
     public function setIsoCode($isoCode)
@@ -167,8 +165,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $tagIETF
-     *
+     * @param  string  $tagIETF
      * @return self
      */
     public function setTagIETF($tagIETF)
@@ -187,8 +184,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $shortDateFormat
-     *
+     * @param  string  $shortDateFormat
      * @return self
      */
     public function setShortDateFormat($shortDateFormat)
@@ -207,8 +203,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $fullDateFormat
-     *
+     * @param  string  $fullDateFormat
      * @return self
      */
     public function setFullDateFormat($fullDateFormat)
@@ -227,8 +222,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $flagImagePath
-     *
+     * @param  string  $flagImagePath
      * @return self
      */
     public function setFlagImagePath($flagImagePath)
@@ -247,8 +241,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param string $noPictureImagePath
-     *
+     * @param  string  $noPictureImagePath
      * @return self
      */
     public function setNoPictureImagePath($noPictureImagePath)
@@ -267,8 +260,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param bool $isRtl
-     *
+     * @param  bool  $isRtl
      * @return self
      */
     public function setIsRtl($isRtl)
@@ -287,8 +279,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param bool $isActive
-     *
+     * @param  bool  $isActive
      * @return self
      */
     public function setIsActive($isActive)
@@ -307,8 +298,7 @@ class EditLanguageCommand
     }
 
     /**
-     * @param int[] $shopAssociation
-     *
+     * @param  int[]  $shopAssociation
      * @return self
      */
     public function setShopAssociation(array $shopAssociation)

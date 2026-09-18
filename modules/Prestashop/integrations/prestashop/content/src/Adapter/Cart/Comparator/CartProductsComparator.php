@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,20 +52,12 @@ class CartProductsComparator
      */
     private $knownUpdates = [];
 
-    /**
-     * @param Cart $cart
-     */
     public function __construct(Cart $cart)
     {
         $this->cart = $cart;
         $this->savedProducts = $cart->getProducts(true);
     }
 
-    /**
-     * @param array $knownUpdates
-     *
-     * @return CartProductsComparator
-     */
     public function setKnownUpdates(array $knownUpdates): self
     {
         $this->knownUpdates = $knownUpdates;
@@ -117,9 +110,7 @@ class CartProductsComparator
     /**
      * Return the list of updates for inventaries that were not in the cart previously
      *
-     * @param array[] $newProducts
-     *
-     * @return array
+     * @param  array[]  $newProducts
      */
     private function getAllAdditionalProducts(array $newProducts): array
     {
@@ -127,7 +118,7 @@ class CartProductsComparator
         foreach ($newProducts as $newProduct) {
             // Then try and find the product in new inventaries
             $oldProduct = $this->getMatchingProduct($this->savedProducts, $newProduct);
-            if (null === $oldProduct) {
+            if ($oldProduct === null) {
                 $additionalProducts[] = new CartProductUpdate(
                     (int) $newProduct['id_product'],
                     (int) $newProduct['id_product_attribute'],
@@ -144,8 +135,7 @@ class CartProductsComparator
     /**
      * Return a list of all inventaries that were updated compared to the creation of this object.
      *
-     * @param array[] $newProducts
-     *
+     * @param  array[]  $newProducts
      * @return CartProductUpdate[]
      */
     private function getAllUpdatedProducts(array $newProducts): array
@@ -154,7 +144,7 @@ class CartProductsComparator
         foreach ($this->savedProducts as $oldProduct) {
             // Then try and find the product in new inventaries
             $newProduct = $this->getMatchingProduct($newProducts, $oldProduct);
-            if (null === $newProduct) {
+            if ($newProduct === null) {
                 $deltaQuantity = -(int) $oldProduct['cart_quantity'];
             } else {
                 $deltaQuantity = (int) $newProduct['cart_quantity'] - (int) $oldProduct['cart_quantity'];
@@ -175,8 +165,7 @@ class CartProductsComparator
     }
 
     /**
-     * @param CartProductUpdate[] $updates
-     *
+     * @param  CartProductUpdate[]  $updates
      * @return CartProductUpdate[]
      */
     private function filterKnownUpdates(array $updates): array
@@ -192,7 +181,7 @@ class CartProductsComparator
                     break;
                 }
             }
-            if (0 !== $updateProduct->getDeltaQuantity()) {
+            if ($updateProduct->getDeltaQuantity() !== 0) {
                 $filteredUpdates[] = $updateProduct;
             }
         }
@@ -200,16 +189,10 @@ class CartProductsComparator
         return $filteredUpdates;
     }
 
-    /**
-     * @param array $products
-     * @param array $searchedProduct
-     *
-     * @return array|null
-     */
     private function getMatchingProduct(array $products, array $searchedProduct): ?array
     {
         return array_reduce($products, function ($carry, $item) use ($searchedProduct) {
-            if (null !== $carry) {
+            if ($carry !== null) {
                 return $carry;
             }
 

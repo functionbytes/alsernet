@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,6 @@ class GeneralFormDataProvider implements FormDataProviderInterface
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -87,7 +87,7 @@ class GeneralFormDataProvider implements FormDataProviderInterface
         $invalidFields = [];
 
         $newDaysNumber = $data['new_days_number'];
-        if (!is_numeric($newDaysNumber) || 0 > $newDaysNumber) {
+        if (! is_numeric($newDaysNumber) || $newDaysNumber < 0) {
             $invalidFields[] = $this->translator->trans(
                 'Number of days for which the product is considered \'new\'',
                 [],
@@ -96,7 +96,7 @@ class GeneralFormDataProvider implements FormDataProviderInterface
         }
 
         $shortDescriptionLimit = $data['short_description_limit'];
-        if (!is_numeric($shortDescriptionLimit) || 0 >= $shortDescriptionLimit) {
+        if (! is_numeric($shortDescriptionLimit) || $shortDescriptionLimit <= 0) {
             $invalidFields[] = $this->translator->trans(
                 'Max size of product summary',
                 [],

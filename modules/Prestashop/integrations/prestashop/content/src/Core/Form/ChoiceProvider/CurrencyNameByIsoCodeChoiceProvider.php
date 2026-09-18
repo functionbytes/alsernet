@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ final class CurrencyNameByIsoCodeChoiceProvider implements FormChoiceProviderInt
     private $cldrAllCurrencies;
 
     /**
-     * @param CurrencyData[] $cldrAllCurrencies
+     * @param  CurrencyData[]  $cldrAllCurrencies
      */
     public function __construct(array $cldrAllCurrencies)
     {
@@ -56,7 +57,7 @@ final class CurrencyNameByIsoCodeChoiceProvider implements FormChoiceProviderInt
         foreach ($this->cldrAllCurrencies as $cldrCurrency) {
             // filter only on active currency
             // we dont need here currencies which were deactivated in all territories
-            if (!$cldrCurrency->isActive()) {
+            if (! $cldrCurrency->isActive()) {
                 continue;
             }
             $currencyNames = $cldrCurrency->getDisplayNames();

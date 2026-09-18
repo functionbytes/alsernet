@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,37 +49,23 @@ class MoneyAmountCondition
      */
     private $shippingExcluded;
 
-    /**
-     * @param Money $money
-     * @param bool $taxExcluded
-     * @param bool|null $shippingExcluded
-     */
-    public function __construct(Money $money, bool $taxExcluded, bool $shippingExcluded = null)
+    public function __construct(Money $money, bool $taxExcluded, ?bool $shippingExcluded = null)
     {
         $this->money = $money;
         $this->taxExcluded = $taxExcluded;
         $this->shippingExcluded = $shippingExcluded;
     }
 
-    /**
-     * @return Money
-     */
     public function getMoneyAmount(): Money
     {
         return $this->money;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxExcluded(): bool
     {
         return $this->taxExcluded;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isShippingExcluded(): ?bool
     {
         return $this->shippingExcluded;

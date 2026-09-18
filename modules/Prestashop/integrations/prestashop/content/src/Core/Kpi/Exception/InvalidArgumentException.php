@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 final class InvalidArgumentException extends CoreException
 {
     /**
-     * @param mixed $kpi
-     *
+     * @param  mixed  $kpi
      * @return InvalidArgumentException
      */
     public static function invalidKpi($kpi)
@@ -49,8 +49,7 @@ final class InvalidArgumentException extends CoreException
     }
 
     /**
-     * @param mixed $identifier
-     *
+     * @param  mixed  $identifier
      * @return InvalidArgumentException
      */
     public static function invalidIdentifier($identifier)

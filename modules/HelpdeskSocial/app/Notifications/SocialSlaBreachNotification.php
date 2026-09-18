@@ -74,7 +74,7 @@ class SocialSlaBreachNotification extends Notification implements ShouldQueue
     {
         $url = route('helpdesksocial.inbox.show', $this->comment);
         $typeLabel = $this->breachType === 'resolution' ? 'resolución' : 'respuesta';
-        $name = trim(($notifiable->firstname ?? '').' '.($notifiable->lastname ?? '')) ?: 'Hola';
+        $name = $notifiable->fullName() ?: 'Hola';
 
         return (new MailMessage)
             ->subject("[Social] SLA de {$typeLabel} incumplido — {$this->comment->platform}")

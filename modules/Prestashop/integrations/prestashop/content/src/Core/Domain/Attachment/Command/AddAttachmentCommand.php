@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,10 +62,6 @@ class AddAttachmentCommand
      */
     private $originalName;
 
-    /**
-     * @param array $localizedNames
-     * @param array $localizedDescriptions
-     */
     public function __construct(
         array $localizedNames,
         array $localizedDescriptions
@@ -73,12 +70,6 @@ class AddAttachmentCommand
         $this->localizedDescriptions = $localizedDescriptions;
     }
 
-    /**
-     * @param string $pathName
-     * @param int $fileSize
-     * @param string $mimeType
-     * @param string $originalName
-     */
     public function setFileInformation(
         string $pathName,
         int $fileSize,
@@ -91,17 +82,11 @@ class AddAttachmentCommand
         $this->originalName = $originalName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getFilePathName(): ?string
     {
         return $this->pathName;
     }
 
-    /**
-     * @return int|null
-     */
     public function getFileSize(): ?int
     {
         return $this->fileSize;
@@ -123,17 +108,11 @@ class AddAttachmentCommand
         return $this->localizedDescriptions;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMimeType(): ?string
     {
         return $this->mimeType;
     }
 
-    /**
-     * @return string|null
-     */
     public function getOriginalName(): ?string
     {
         return $this->originalName;

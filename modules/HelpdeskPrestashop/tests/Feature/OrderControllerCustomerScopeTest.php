@@ -24,7 +24,7 @@ class OrderControllerCustomerScopeTest extends TestCase
     use DatabaseTransactions;
 
     /** Revertir escrituras también en la conexión helpdesk (Customer/Inbox/Conversation). */
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected string $apiUrl = 'http://localhost:8090/modules/alsernetbridge/api.php';
 
@@ -66,7 +66,13 @@ class OrderControllerCustomerScopeTest extends TestCase
 
     public function test_order_detail_succeeds_with_customer_email(): void
     {
-        $user = $this->userWithPermission('helpdeskprestashop.orders.view');
+        // 'owner@example.com' no tiene Customer local (es un prospecto para
+        // este test): el controller exige ADEMÁS helpdeskprestashop.prospect.view
+        // para ese caso (reservado a roles de confianza — ver el seeder). El
+        // camino feliz de este test representa a un actor con autorización
+        // completa, no el límite agente/admin que cubren los tests de
+        // "forbidden for local customer outside inbox".
+        $user = $this->userWithPermission('helpdeskprestashop.orders.view', 'helpdeskprestashop.prospect.view');
 
         Http::fake([
             $this->apiUrl => Http::response(['ok' => true, 'data' => ['id' => 42, 'reference' => 'ABC123']]),
@@ -93,7 +99,10 @@ class OrderControllerCustomerScopeTest extends TestCase
 
     public function test_start_return_succeeds_with_customer_email(): void
     {
-        $user = $this->userWithPermission('helpdeskprestashop.orders.return');
+        // Mismo motivo que test_order_detail_succeeds_with_customer_email():
+        // 'owner@example.com' es un prospecto y ese camino exige el permiso
+        // adicional de prospecto.
+        $user = $this->userWithPermission('helpdeskprestashop.orders.return', 'helpdeskprestashop.prospect.view');
 
         Http::fake([
             $this->apiUrl => Http::response(['ok' => true, 'data' => ['id' => 42, 'status' => 'pending']]),

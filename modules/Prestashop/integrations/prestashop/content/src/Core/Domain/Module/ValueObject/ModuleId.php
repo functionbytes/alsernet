@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,17 +38,11 @@ class ModuleId
      */
     private $moduleId;
 
-    /**
-     * @param int $moduleId
-     */
     public function __construct(int $moduleId)
     {
         $this->moduleId = $moduleId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->moduleId;

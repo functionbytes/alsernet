@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,9 @@ final class EmployeeQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextShopIds;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param string $contextIdLang
-     * @param int[] $contextShopIds
+     * @param  string  $dbPrefix
+     * @param  string  $contextIdLang
+     * @param  int[]  $contextShopIds
      */
     public function __construct(
         Connection $connection,
@@ -97,27 +96,25 @@ final class EmployeeQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
      * @return QueryBuilder
      */
     private function getEmployeeQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $sub = $this->connection->createQueryBuilder()
             ->select(1)
-            ->from($this->dbPrefix . 'employee_shop', 'es')
+            ->from($this->dbPrefix.'employee_shop', 'es')
             ->where('e.id_employee = es.id_employee')
             ->andWhere('es.id_shop IN (:context_shop_ids)');
 
         $qb = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'employee', 'e')
+            ->from($this->dbPrefix.'employee', 'e')
             ->leftJoin(
                 'e',
-                $this->dbPrefix . 'profile_lang',
+                $this->dbPrefix.'profile_lang',
                 'pl',
-                'e.id_profile = pl.id_profile AND pl.id_lang = ' . (int) $this->contextIdLang
+                'e.id_profile = pl.id_profile AND pl.id_lang = '.(int) $this->contextIdLang
             )
-            ->andWhere('EXISTS (' . $sub->getSQL() . ')')
+            ->andWhere('EXISTS ('.$sub->getSQL().')')
             ->setParameter('context_shop_ids', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
 
         $this->applyFilters($qb, $searchCriteria->getFilters());
@@ -127,9 +124,6 @@ final class EmployeeQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply filters for Query builder.
-     *
-     * @param QueryBuilder $queryBuilder
-     * @param array $filters
      */
     private function applyFilters(QueryBuilder $queryBuilder, array $filters)
     {
@@ -143,25 +137,25 @@ final class EmployeeQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
-            if ('id_employee' === $filterName) {
-                $queryBuilder->andWhere('e.id_employee = :' . $filterName);
+            if ($filterName === 'id_employee') {
+                $queryBuilder->andWhere('e.id_employee = :'.$filterName);
                 $queryBuilder->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            if ('profile' === $filterName) {
+            if ($filterName === 'profile') {
                 $queryBuilder->andWhere('pl.id_profile = :id_profile');
                 $queryBuilder->setParameter('id_profile', $filterValue);
 
                 continue;
             }
 
-            if ('active' === $filterName) {
+            if ($filterName === 'active') {
                 $queryBuilder->andWhere('e.active = :active');
                 $queryBuilder->setParameter('active', $filterValue);
 
@@ -169,20 +163,16 @@ final class EmployeeQueryBuilder extends AbstractDoctrineQueryBuilder
             }
 
             $queryBuilder->andWhere("`$filterName` LIKE :$filterName");
-            $queryBuilder->setParameter($filterName, '%' . $filterValue . '%');
+            $queryBuilder->setParameter($filterName, '%'.$filterValue.'%');
         }
     }
 
-    /**
-     * @param SearchCriteriaInterface $searchCriteria
-     * @param QueryBuilder $queryBuilder
-     */
     private function applySorting(SearchCriteriaInterface $searchCriteria, QueryBuilder $queryBuilder)
     {
         if ($searchCriteria->getOrderBy() && $searchCriteria->getOrderWay()) {
             $orderBy = $searchCriteria->getOrderBy();
 
-            if ('profile' === $orderBy) {
+            if ($orderBy === 'profile') {
                 $orderBy = 'pl.name';
             }
 

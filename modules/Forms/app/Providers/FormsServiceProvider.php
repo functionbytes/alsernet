@@ -250,7 +250,7 @@ class FormsServiceProvider extends ServiceProvider
     protected function registerBuilderMenus(): void
     {
         NavService::registerMiniItem('forms-inbox', [
-            'icon' => 'fas fa-inbox',
+            'icon' => 'inbox',
             'tooltip' => 'Formularios',
             'sidebar_id' => 'forms-inbox',
             'order' => 46,
@@ -262,12 +262,6 @@ class FormsServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Dashboard', 'route' => 'forms.inbox.dashboard', 'permission' => 'Forms.inbox.index'],
                 ['label' => 'Todas las submissions', 'route' => 'forms.inbox.index', 'permission' => 'Forms.submissions.index'],
-            ],
-        ]);
-
-        NavService::registerSidebar('settings', [
-            'title' => 'Formularios',
-            'items' => [
                 ['label' => 'Todos los formularios', 'route' => 'settings.forms.index', 'permission' => 'Forms.forms.index'],
                 ['label' => 'Categorias', 'route' => 'settings.forms.categories.index', 'permission' => 'Forms.categories.manage'],
                 ['label' => 'Biblioteca de plantillas', 'route' => 'settings.forms.templates-library.index', 'permission' => 'Forms.templates.manage'],

@@ -13,7 +13,7 @@
 
             <div id="slaConfigLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
 
-            <div id="slaConfigContent" style="display:none">
+            <div id="slaConfigContent" class="bv-step-hidden">
                 <div class="bv-sla-rows" id="slaConfigRows"></div>
 
                 <label class="bv-check bv-x31">
@@ -33,11 +33,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/sla-config.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/sla-config.js')) }}" defer></script>
-@endpush
-@endonce

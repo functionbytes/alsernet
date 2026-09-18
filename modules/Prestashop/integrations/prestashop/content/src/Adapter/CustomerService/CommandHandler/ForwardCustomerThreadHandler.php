@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,10 +63,6 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
      */
     private $configuration;
 
-    /**
-     * @param Context $context
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(Context $context, ConfigurationInterface $configuration)
     {
         $this->context = $context;
@@ -87,8 +84,6 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
 
     /**
      * Forward customer thread to another employee
-     *
-     * @param ForwardCustomerThreadCommand $command
      */
     private function forwardToEmployee(ForwardCustomerThreadCommand $command)
     {
@@ -104,7 +99,7 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
 
         $params = [
             '{messages}' => stripslashes($content),
-            '{employee}' => $this->context->employee->firstname . ' ' . $this->context->employee->lastname,
+            '{employee}' => $this->context->employee->firstname.' '.$this->context->employee->lastname,
             '{comment}' => stripslashes(Tools::nl2br($command->getComment())),
             '{firstname}' => $employee->firstname,
             '{lastname}' => $employee->lastname,
@@ -121,9 +116,9 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
             ),
             $params,
             $employee->email,
-            $employee->firstname . ' ' . $employee->lastname,
+            $employee->firstname.' '.$employee->lastname,
             $this->context->employee->email,
-            $this->context->employee->firstname . ' ' . $this->context->employee->lastname,
+            $this->context->employee->firstname.' '.$this->context->employee->lastname,
             null,
             null,
             _PS_MAIL_DIR_,
@@ -148,8 +143,6 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
 
     /**
      * Forward customer thread to someone else
-     *
-     * @param ForwardCustomerThreadCommand $command
      */
     private function forwardToSomeoneElse(ForwardCustomerThreadCommand $command)
     {
@@ -159,7 +152,7 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
 
         $params = [
             '{messages}' => Tools::nl2br(stripslashes($content)),
-            '{employee}' => $this->context->employee->firstname . ' ' . $this->context->employee->lastname,
+            '{employee}' => $this->context->employee->firstname.' '.$this->context->employee->lastname,
             '{comment}' => stripslashes($command->getComment()),
             '{firstname}' => '',
             '{lastname}' => '',
@@ -180,7 +173,7 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
             $command->getEmail()->getValue(),
             null,
             $this->context->employee->email,
-            $this->context->employee->firstname . ' ' . $this->context->employee->lastname,
+            $this->context->employee->firstname.' '.$this->context->employee->lastname,
             null,
             null,
             _PS_MAIL_DIR_,
@@ -202,15 +195,13 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
     }
 
     /**
-     * @param array $message
-     * @param int|null $id_employee
-     *
+     * @param  int|null  $id_employee
      * @return string
      */
     protected function renderMessage(array $message, $id_employee = null)
     {
         $tpl = $this->context->smarty->createTemplate(
-            'controllers' . DIRECTORY_SEPARATOR . 'customer_threads/message.tpl',
+            'controllers'.DIRECTORY_SEPARATOR.'customer_threads/message.tpl',
             $this->context->smarty
         );
 
@@ -226,7 +217,7 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
 
         $contacts = $contact_array;
 
-        if (!empty($message['id_product'])
+        if (! empty($message['id_product'])
             && empty($message['employee_name'])
         ) {
             $id_order_product = Order::getIdOrderProduct(
@@ -242,13 +233,13 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
         $isValidOrderId = true;
         $order = new Order((int) $message['id_order']);
 
-        if (!Validate::isLoadedObject($order)) {
+        if (! Validate::isLoadedObject($order)) {
             $isValidOrderId = false;
         }
 
         $baseAdminLink = Tools::getAdminUrl(basename(_PS_ADMIN_DIR_));
 
-        $threadUrl = $baseAdminLink . '/' . $this->context->link->getAdminLink('AdminCustomerThreads', true, [], [
+        $threadUrl = $baseAdminLink.'/'.$this->context->link->getAdminLink('AdminCustomerThreads', true, [], [
             'id_customer_thread' => (int) $message['id_customer_thread'],
             'viewcustomer_thread' => 1,
         ]);
@@ -257,14 +248,14 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
             'thread_url' => $threadUrl,
             'link' => $this->context->link,
             'token' => Tools::getAdminToken(
-                'AdminCustomerThreads' . (int) $message['id_customer_thread'] . (int) $this->context->employee->id
+                'AdminCustomerThreads'.(int) $message['id_customer_thread'].(int) $this->context->employee->id
             ),
             'message' => $message,
             'id_order_product' => isset($id_order_product) ? $id_order_product : null,
             'email' => true,
             'id_employee' => $id_employee,
             'PS_SHOP_NAME' => $this->configuration->get('PS_SHOP_NAME'),
-            'file_name' => file_exists(_PS_UPLOAD_DIR_ . $message['file_name']),
+            'file_name' => file_exists(_PS_UPLOAD_DIR_.$message['file_name']),
             'contacts' => $contacts,
             'is_valid_order_id' => $isValidOrderId,
         ]);
@@ -273,8 +264,6 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
     }
 
     /**
-     * @param CustomerThreadId $customerThreadId
-     *
      * @return array
      */
     private function getCustomerThreadMessage(CustomerThreadId $customerThreadId)
@@ -282,33 +271,31 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
         return Db::getInstance()->getRow('
             SELECT ct.*, cm.*, cl.name subject, CONCAT(e.firstname, \' \', e.lastname) employee_name,
                 CONCAT(c.firstname, \' \', c.lastname) customer_name, c.firstname
-            FROM ' . _DB_PREFIX_ . 'customer_thread ct
-            LEFT JOIN ' . _DB_PREFIX_ . 'customer_message cm
+            FROM '._DB_PREFIX_.'customer_thread ct
+            LEFT JOIN '._DB_PREFIX_.'customer_message cm
                 ON (ct.id_customer_thread = cm.id_customer_thread)
-            LEFT JOIN ' . _DB_PREFIX_ . 'contact_lang cl
-                ON (cl.id_contact = ct.id_contact AND cl.id_lang = ' . (int) $this->context->language->id . ')
-            LEFT OUTER JOIN ' . _DB_PREFIX_ . 'employee e
+            LEFT JOIN '._DB_PREFIX_.'contact_lang cl
+                ON (cl.id_contact = ct.id_contact AND cl.id_lang = '.(int) $this->context->language->id.')
+            LEFT OUTER JOIN '._DB_PREFIX_.'employee e
                 ON e.id_employee = cm.id_employee
-            LEFT OUTER JOIN ' . _DB_PREFIX_ . 'customer c
+            LEFT OUTER JOIN '._DB_PREFIX_.'customer c
                 ON (c.email = ct.email)
-            WHERE ct.id_customer_thread = ' . (int) $customerThreadId->getValue() . '
+            WHERE ct.id_customer_thread = '.(int) $customerThreadId->getValue().'
             ORDER BY cm.date_add DESC
 		');
     }
 
     /**
-     * @param ForwardCustomerThreadCommand $command
-     *
      * @return CustomerMessage
      */
     private function createCustomerMessage(ForwardCustomerThreadCommand $command)
     {
-        $customerMessage = new CustomerMessage();
+        $customerMessage = new CustomerMessage;
         $customerMessage->id_employee = (int) $this->context->employee->id;
         $customerMessage->id_customer_thread = (int) $command->getCustomerThreadId()->getValue();
         $customerMessage->ip_address = (string) (int) ip2long(Tools::getRemoteAddr());
 
-        if (false === $customerMessage->validateField('message', $command->getComment())) {
+        if ($customerMessage->validateField('message', $command->getComment()) === false) {
             throw new CustomerServiceException(sprintf('Comment "%s" is not valid.', $command->getComment()));
         }
 
@@ -318,8 +305,7 @@ final class ForwardCustomerThreadHandler implements ForwardCustomerThreadHandler
     /**
      * Replaces URLs with <a> tags in string.
      *
-     * @param string $text
-     *
+     * @param  string  $text
      * @return string
      */
     private function replaceUrlsWithTags($text)

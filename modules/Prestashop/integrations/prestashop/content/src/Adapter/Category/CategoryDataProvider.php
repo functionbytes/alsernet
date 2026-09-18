@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,17 +62,16 @@ class CategoryDataProvider
     /**
      * Get a category.
      *
-     * @param int|null $idCategory
-     * @param int|null $idLang
-     * @param int|null $idShop
+     * @param  int|null  $idCategory
+     * @param  int|null  $idLang
+     * @param  int|null  $idShop
+     * @return Category
      *
      * @throws LogicException If the category id is not set
-     *
-     * @return Category
      */
     public function getCategory($idCategory = null, $idLang = null, $idShop = null)
     {
-        if (!$idCategory) {
+        if (! $idCategory) {
             throw new LogicException('You need to provide a category id', 5002);
         }
 
@@ -84,20 +84,19 @@ class CategoryDataProvider
     /**
      * Get all nested categories.
      *
-     * @param int|null $root_category
-     * @param bool|int $id_lang
-     * @param bool $active
-     * @param int|null $groups
-     * @param bool $use_shop_restriction
-     * @param string $sql_filter
-     * @param string $sql_sort
-     * @param string $sql_limit
-     *
+     * @param  int|null  $root_category
+     * @param  bool|int  $id_lang
+     * @param  bool  $active
+     * @param  int|null  $groups
+     * @param  bool  $use_shop_restriction
+     * @param  string  $sql_filter
+     * @param  string  $sql_sort
+     * @param  string  $sql_limit
      * @return array categories
      */
     public function getNestedCategories($root_category = null, $id_lang = false, $active = true, $groups = null, $use_shop_restriction = true, $sql_filter = '', $sql_sort = '', $sql_limit = '')
     {
-        if (!$id_lang) {
+        if (! $id_lang) {
             $id_lang = $this->languageId;
         }
 
@@ -107,20 +106,19 @@ class CategoryDataProvider
     /**
      * Return available categories Names - excluding Root category.
      *
-     * @param int|null $root_category
-     * @param bool|int $id_lang
-     * @param bool $active return only active categories
-     * @param array|null $groups
-     * @param bool $use_shop_restriction
-     * @param string $sql_filter
-     * @param string $sql_sort
-     * @param string $sql_limit
-     *
+     * @param  int|null  $root_category
+     * @param  bool|int  $id_lang
+     * @param  bool  $active  return only active categories
+     * @param  array|null  $groups
+     * @param  bool  $use_shop_restriction
+     * @param  string  $sql_filter
+     * @param  string  $sql_sort
+     * @param  string  $sql_limit
      * @return array Categories
      */
     public function getAllCategoriesName($root_category = null, $id_lang = false, $active = true, $groups = null, $use_shop_restriction = true, $sql_filter = '', $sql_sort = '', $sql_limit = '')
     {
-        if (!$id_lang) {
+        if (! $id_lang) {
             $id_lang = $this->languageId;
         }
 
@@ -133,8 +131,7 @@ class CategoryDataProvider
     /**
      * Return a simple array id/name of categories for a specified product.
      *
-     * @param \Product $product
-     *
+     * @param  \Product  $product
      * @return array Categories
      */
     public function getCategoriesByProduct(ObjectModel $product)
@@ -179,9 +176,8 @@ class CategoryDataProvider
     /**
      * Construct the breadcrumb using the already constructed list of all categories.
      *
-     * @param int $categoryId
-     * @param string $delimiter
-     *
+     * @param  int  $categoryId
+     * @param  string  $delimiter
      * @return string
      */
     public function getBreadCrumb($categoryId, $delimiter = ' > ')
@@ -193,8 +189,7 @@ class CategoryDataProvider
     }
 
     /**
-     * @param int $categoryId
-     *
+     * @param  int  $categoryId
      * @return array
      */
     public function getParentNamesFromList($categoryId)
@@ -213,10 +208,9 @@ class CategoryDataProvider
     /**
      * Get Categories formatted like ajax_product_file.php using Category::getNestedCategories.
      *
-     * @param string $query
-     * @param int $limit
-     * @param bool $nameAsBreadCrumb
-     *
+     * @param  string  $query
+     * @param  int  $limit
+     * @param  bool  $nameAsBreadCrumb
      * @return array
      */
     public function getAjaxCategories($query, $limit, $nameAsBreadCrumb = false)
@@ -224,12 +218,12 @@ class CategoryDataProvider
         if (empty($query)) {
             $query = '';
         } else {
-            $query = "AND cl.name LIKE '%" . pSQL($query) . "%'";
+            $query = "AND cl.name LIKE '%".pSQL($query)."%'";
         }
 
         $limitParam = '';
         if (is_int($limit)) {
-            $limitParam = 'LIMIT ' . $limit;
+            $limitParam = 'LIMIT '.$limit;
         }
 
         $searchCategories = Category::getAllCategoriesName(
@@ -258,12 +252,10 @@ class CategoryDataProvider
     }
 
     /**
-     * @param int|null $idLang
-     * @param Shop|null $shop
-     *
+     * @param  int|null  $idLang
      * @return Category
      */
-    public function getRootCategory($idLang = null, Shop $shop = null)
+    public function getRootCategory($idLang = null, ?Shop $shop = null)
     {
         return Category::getRootCategory($idLang, $shop);
     }

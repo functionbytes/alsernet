@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -94,6 +96,6 @@ class PH_SimpleBlogSingleModuleFrontControllerOverride extends PH_SimpleBlogSing
     {
         $queryCountArticle = 'SELECT count(*) FROM `'._DB_PREFIX_.'simpleblog_post` sbp INNER JOIN `'._DB_PREFIX_.'simpleblog_post_shop` sbps ON sbp.id_simpleblog_post = sbps.id_simpleblog_post WHERE sbp.active=1 AND sbp.date_add <= \''.SimpleBlogHelper::now(Configuration::get('PH_BLOG_TIMEZONE')).'\' AND sbps.id_shop='.(int) Shop::getContextShopID();
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountArticle);
+        return (int) JprestaUtils::dbGetValue($queryCountArticle);
     }
 }

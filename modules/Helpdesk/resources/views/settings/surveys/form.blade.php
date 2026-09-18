@@ -38,7 +38,7 @@
 
                             <div class="col-12 col-md-7">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name', $survey->name ?? '') }}"
@@ -52,7 +52,7 @@
 
                             <div class="col-12 col-md-5">
                                 <div class="mb-3">
-                                    <label class="form-label">Disparo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Disparo <span class="text-brand">*</span></label>
                                     <select name="trigger_type" class="form-select @error('trigger_type') is-invalid @enderror" required>
                                         @foreach($triggerTypes as $value => $label)
                                             <option value="{{ $value }}" {{ old('trigger_type', $survey->trigger_type ?? '') === $value ? 'selected' : '' }}>
@@ -138,7 +138,7 @@
                         @enderror
 
                         <button type="button" id="addQuestion" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i> Agregar pregunta
+                            Agregar pregunta
                         </button>
 
                     </div>
@@ -177,21 +177,24 @@
                     </ul>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+            {{-- Solo al editar: en el alta no hay registro del que dar fechas. --}}
+            @isset($survey)
+                <div class="card">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="text-muted mb-0">
+                            <li class="mb-2">
+                                <span class="fw-semibold">Creada:</span> {{ $survey->created_at->format('d/m/Y H:i') }}
+                            </li>
+                            <li class="mb-0">
+                                <span class="fw-semibold">Actualizada:</span> {{ $survey->updated_at->format('d/m/Y H:i') }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="text-muted mb-0">
-                        <li class="mb-2">
-                            <span class="fw-semibold">Creada:</span> {{ $survey->created_at->format('d/m/Y H:i') }}
-                        </li>
-                        <li class="mb-0">
-                            <span class="fw-semibold">Actualizada:</span> {{ $survey->updated_at->format('d/m/Y H:i') }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            @endisset
         </div>
 
     </div>
@@ -238,27 +241,8 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    let questionCount = {{ count($existingQuestions ?? []) }};
-
-    $('#addQuestion').on('click', function () {
-        const template = document.getElementById('questionTemplate').innerHTML;
-        const uuid = Math.random().toString(36).substr(2, 9);
-        const html = template.replace(/__IDX__/g, questionCount).replace(/""/g, '"' + uuid + '"');
-        const $el = $(html);
-        $el.find('.question-number').text(questionCount + 1);
-        $el.find('input[type="hidden"][name*="[id]"]').val(uuid);
-        $('#questionsContainer').append($el);
-        questionCount++;
-    });
-
-    $(document).on('click', '.remove-question', function () {
-        $(this).closest('.question-item').remove();
-        $('#questionsContainer .question-item').each(function (i) {
-            $(this).find('.question-number').text(i + 1);
-        });
-    });
-});
-</script>
+<script>window.SurveyFormConfig = { questionCount: {{ count($existingQuestions ?? []) }} };</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/surveys-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/surveys-form.js')) }}" defer></script>
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,6 @@ class AttributeController extends ApiController
     public $featureAttributeRepository;
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function listAttributesAction(Request $request)

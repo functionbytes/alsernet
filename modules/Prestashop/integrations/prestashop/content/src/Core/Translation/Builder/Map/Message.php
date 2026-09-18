@@ -82,14 +82,12 @@ class Message
      */
     public function isTranslated(): bool
     {
-        return null !== $this->fileTranslation || null !== $this->userTranslation;
+        return $this->fileTranslation !== null || $this->userTranslation !== null;
     }
 
     /**
      * Return the translated string
      * UserTranslation OR FileTranslation OR Default key
-     *
-     * @return string
      */
     public function getTranslation(): string
     {
@@ -98,10 +96,6 @@ class Message
 
     /**
      * Check if data contains search word.
-     *
-     * @param array $search
-     *
-     * @return bool
      */
     public function contains(array $search): bool
     {
@@ -110,7 +104,7 @@ class Message
         }
 
         foreach ($search as $s) {
-            if (!$this->containsWord($s)) {
+            if (! $this->containsWord($s)) {
                 return false;
             }
         }
@@ -118,9 +112,6 @@ class Message
         return true;
     }
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [
@@ -135,9 +126,8 @@ class Message
         $s = strtolower($s);
 
         return
-            false !== strpos(strtolower($this->defaultTranslation), $s)
-            || (null !== $this->fileTranslation && false !== strpos(strtolower($this->fileTranslation), $s))
-            || (null !== $this->userTranslation && false !== strpos(strtolower($this->userTranslation), $s))
-        ;
+            strpos(strtolower($this->defaultTranslation), $s) !== false
+            || ($this->fileTranslation !== null && strpos(strtolower($this->fileTranslation), $s) !== false)
+            || ($this->userTranslation !== null && strpos(strtolower($this->userTranslation), $s) !== false);
     }
 }

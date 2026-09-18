@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,7 @@ final class DocumentationLinkProvider implements DocumentationLinkProviderInterf
     private $documentationLinks;
 
     /**
-     * @param string $contextLangIsoCode
-     * @param array $documentationLinks
+     * @param  string  $contextLangIsoCode
      */
     public function __construct(
         $contextLangIsoCode,

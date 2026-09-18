@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class UpdateProductSeoHandler implements UpdateProductSeoHandlerInterface
      */
     private $productSeoPropertiesFiller;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductSeoPropertiesFiller $productSeoPropertiesFiller
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductSeoPropertiesFiller $productSeoPropertiesFiller
@@ -73,17 +70,11 @@ class UpdateProductSeoHandler implements UpdateProductSeoHandlerInterface
         $this->productRepository->partialUpdate($product, $updatableProperties, CannotUpdateProductException::FAILED_UPDATE_SEO);
     }
 
-    /**
-     * @param Product $product
-     * @param UpdateProductSeoCommand $command
-     *
-     * @return array
-     */
     private function fillUpdatableProperties(Product $product, UpdateProductSeoCommand $command): array
     {
         $updatableProperties = [];
 
-        if (null !== $command->getRedirectOption()) {
+        if ($command->getRedirectOption() !== null) {
             $updatableProperties = array_merge(
                 $updatableProperties,
                 $this->productSeoPropertiesFiller->fillWithRedirectOption($product, $command->getRedirectOption())
@@ -91,19 +82,19 @@ class UpdateProductSeoHandler implements UpdateProductSeoHandlerInterface
         }
 
         $localizedMetaDescriptions = $command->getLocalizedMetaDescriptions();
-        if (null !== $localizedMetaDescriptions) {
+        if ($localizedMetaDescriptions !== null) {
             $product->meta_description = $localizedMetaDescriptions;
             $updatableProperties['meta_description'] = array_keys($localizedMetaDescriptions);
         }
 
         $localizedMetaTitles = $command->getLocalizedMetaTitles();
-        if (null !== $localizedMetaTitles) {
+        if ($localizedMetaTitles !== null) {
             $product->meta_title = $localizedMetaTitles;
             $updatableProperties['meta_title'] = array_keys($localizedMetaTitles);
         }
 
         $localizedLinkRewrites = $command->getLocalizedLinkRewrites();
-        if (null !== $localizedLinkRewrites) {
+        if ($localizedLinkRewrites !== null) {
             $product->link_rewrite = $localizedLinkRewrites;
             $updatableProperties['link_rewrite'] = array_keys($localizedLinkRewrites);
         }

@@ -274,22 +274,8 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.btn-view-properties', function () {
-        const raw         = $(this).data('properties');
-        const description = $(this).data('description');
-
-        $('#propertiesDescription').text(description);
-        $('#propertiesContent').text(JSON.stringify(raw, null, 2));
-        $('#propertiesModal').modal('show');
-    });
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/audits-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/audits-index.js')) }}" defer></script>
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ class FilterSearchCriteriaEvent extends Event
      */
     private $searchCriteria;
 
-    /**
-     * @param SearchCriteriaInterface $searchCriteria
-     */
     public function __construct(SearchCriteriaInterface $searchCriteria)
     {
         $this->searchCriteria = $searchCriteria;
@@ -62,9 +60,6 @@ class FilterSearchCriteriaEvent extends Event
         return $this->searchCriteria;
     }
 
-    /**
-     * @param SearchCriteriaInterface $searchCriteria
-     */
     public function setSearchCriteria(SearchCriteriaInterface $searchCriteria)
     {
         $this->searchCriteria = $searchCriteria;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,13 +45,13 @@ final class BackupRepository implements BackupRepositoryInterface
      */
     public function retrieveBackups()
     {
-        $backupFinder = (new Finder())
+        $backupFinder = (new Finder)
             ->files()
             ->in(PrestaShopBackup::getBackupPath())
             ->name('/^([_a-zA-Z0-9\-]*[\d]+-[a-z\d]+)\.sql(\.gz|\.bz2)?$/')
             ->depth(0);
 
-        $backups = new BackupCollection();
+        $backups = new BackupCollection;
 
         /** @var SplFileInfo $file */
         foreach ($backupFinder as $file) {

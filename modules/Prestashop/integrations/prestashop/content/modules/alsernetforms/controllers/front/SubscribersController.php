@@ -1,23 +1,30 @@
 <?php
 
-include_once(dirname(__FILE__).'/../../classes/ApiManager.php');
+include_once dirname(__FILE__).'/../../classes/ApiManager.php';
 
 class SubscribersController extends Module
 {
     public $module;
+
     public $firstname;
+
     public $lastname;
+
     public $email;
+
     public $id_lang;
+
     public $iso;
-    //const URL_ERP = 'http://127.0.0.1:58002/api-gestion/';
+
+    // const URL_ERP = 'http://127.0.0.1:58002/api-gestion/';
     const URL_ERP = 'http://interges:8080/api-gestion/';
-    public function __construct(){
+
+    public function __construct()
+    {
         $this->bootstrap = true;
-        $this->module =  Module::getInstanceByName("alsernetforms");
+        $this->module = Module::getInstanceByName('alsernetforms');
         parent::__construct();
     }
-
 
     public function newslettersubscribe()
     {
@@ -29,7 +36,7 @@ class SubscribersController extends Module
         $sports = Tools::getValue('sports');
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -44,11 +51,11 @@ class SubscribersController extends Module
             'email' => $email,
             'lang' => $iso,
             'sports' => $sports,
-            'parties' => !empty(Tools::getValue('condition')) ? false : true,
-            'commercial' => !empty(Tools::getValue('services')) ? false : true,
+            'parties' => ! empty(Tools::getValue('condition')) ? false : true,
+            'commercial' => ! empty(Tools::getValue('services')) ? false : true,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/v1/subscribers', $data, 'subscription');
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
@@ -59,7 +66,7 @@ class SubscribersController extends Module
                     'action' => $response['response']['data']['action'],
                     'commercial' => $response['response']['data']['subscriber']['commercial'],
                     'parties' => $response['response']['data']['subscriber']['parties'],
-                    'check' => $response['response']['data']['subscriber']['check']!=null ? $response['response']['data']['subscriber']['check'] : null,
+                    'check' => $response['response']['data']['subscriber']['check'] != null ? $response['response']['data']['subscriber']['check'] : null,
                 ],
                 'message' => $this->l('Your subscription has been successfully updated.', 'formcontroller', $iso),
             ];
@@ -72,14 +79,13 @@ class SubscribersController extends Module
         ];
     }
 
-
     public function newsletterdischargersnone()
     {
         $context = Context::getContext();
         $email = trim(Tools::getValue('email'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -92,7 +98,7 @@ class SubscribersController extends Module
             'email' => $email,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/v1/subscribers', $data, 'subscription');
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
@@ -116,7 +122,7 @@ class SubscribersController extends Module
         $email = trim(Tools::getValue('email'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -129,9 +135,8 @@ class SubscribersController extends Module
             'email' => $email,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/v1/subscribers', $data, 'subscription');
-
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
 
@@ -158,7 +163,7 @@ class SubscribersController extends Module
         $iso = trim(Tools::getValue('iso'));
         $sports = trim(Tools::getValue('sports'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -172,7 +177,7 @@ class SubscribersController extends Module
             'sports' => $sports,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/v1/subscribers', $data, 'subscription');
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
@@ -190,24 +195,23 @@ class SubscribersController extends Module
             'data' => $response['response'] ?? [],
         ];
 
-
     }
 
-
-    public function giftvoucher(){
+    public function giftvoucher()
+    {
 
         $context = Context::getContext();
         $firstname = trim(Tools::getValue('firstname'));
         $lastname = trim(Tools::getValue('lastname'));
         $email = trim(Tools::getValue('email'));
         $sports = Tools::getValue('sports');
-        $commercial = !empty(Tools::getValue('commercial')) ? true : false;
-        $parties = !empty(Tools::getValue('parties')) ? true : false;
+        $commercial = ! empty(Tools::getValue('commercial')) ? true : false;
+        $parties = ! empty(Tools::getValue('parties')) ? true : false;
         $iso = trim(Tools::getValue('iso'));
         $action = trim(Tools::getValue('form'));
         $campaigns = trim(Tools::getValue('campaigns'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -223,11 +227,11 @@ class SubscribersController extends Module
             'email' => $email,
             'lang' => $iso,
             'sports' => $sports,
-            'commercial' => $commercial ,
+            'commercial' => $commercial,
             'parties' => $parties,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/subscribers', $data, 'subscription');
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
@@ -248,21 +252,21 @@ class SubscribersController extends Module
 
     }
 
-
-    public function customizeyourexperience(){
+    public function customizeyourexperience()
+    {
 
         $context = Context::getContext();
         $firstname = trim(Tools::getValue('firstname'));
         $lastname = trim(Tools::getValue('lastname'));
         $email = trim(Tools::getValue('email'));
         $sports = Tools::getValue('sports');
-        $commercial = !empty(Tools::getValue('commercial')) ? true : false;
-        $parties = !empty(Tools::getValue('parties')) ? true : false;
+        $commercial = ! empty(Tools::getValue('commercial')) ? true : false;
+        $parties = ! empty(Tools::getValue('parties')) ? true : false;
         $iso = trim(Tools::getValue('iso'));
         $action = trim(Tools::getValue('form'));
         $campaigns = trim(Tools::getValue('campaigns'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -278,11 +282,11 @@ class SubscribersController extends Module
             'email' => $email,
             'lang' => $iso,
             'sports' => $sports,
-            'commercial' => $commercial ,
+            'commercial' => $commercial,
             'parties' => $parties,
         ];
 
-        $apiManager = new ApiManager();
+        $apiManager = new ApiManager;
         $response = $apiManager->sendRequest('POST', 'api/subscribers', $data, 'subscription');
 
         if (isset($response['response']['status']) && $response['response']['status'] === 'success') {
@@ -303,8 +307,8 @@ class SubscribersController extends Module
 
     }
 
-
-    public function l($string, $specific = false, $locale = null){
+    public function l($string, $specific = false, $locale = null)
+    {
 
         return $this->getModuleTranslation(
             $this->module,
@@ -316,7 +320,7 @@ class SubscribersController extends Module
         );
     }
 
-    public  function getModuleTranslation(
+    public function getModuleTranslation(
         $module,
         $originalString,
         $source,
@@ -335,7 +339,7 @@ class SubscribersController extends Module
 
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -343,51 +347,50 @@ class SubscribersController extends Module
             $iso = Context::getContext()->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int) $js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -396,8 +399,8 @@ class SubscribersController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -413,9 +416,9 @@ class SubscribersController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -427,7 +430,6 @@ class SubscribersController extends Module
 
         return $ret;
     }
-
 
     public function registersubscribe($data)
     {
@@ -450,15 +452,14 @@ class SubscribersController extends Module
             'lang' => $iso,
             'ids_sport' => $sports,
             'condition' => $condition,
-            'parties' => $parties
+            'parties' => $parties,
         ];
 
-
-        $sql = "INSERT INTO `"._DB_PREFIX_."susc_newsletter`(`nombre`, `apellidos`, `email`, `ids_alta_baja`, `tipo`, `lopd`, `fecha`, `id_lang`) VALUES ('".$firstname."','".$lastname."','".$email."','".$sports."','0','0','".date('Y-m-d H:i:s')."', ".$id_lang.") ";
+        $sql = 'INSERT INTO `'._DB_PREFIX_."susc_newsletter`(`nombre`, `apellidos`, `email`, `ids_alta_baja`, `tipo`, `lopd`, `fecha`, `id_lang`) VALUES ('".$firstname."','".$lastname."','".$email."','".$sports."','0','0','".date('Y-m-d H:i:s')."', ".$id_lang.') ';
 
         if (Db::getInstance()->execute($sql)) {
 
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'newslettersubscribe',
                 $this->l('Subscription request', 'formcontroller', 'es'),
@@ -466,7 +467,7 @@ class SubscribersController extends Module
                     '{firstname}' => $data['firstname'],
                     '{lastname}' => $data['lastname'],
                     '{email}' => $data['email'],
-                    '{sports}' => implode(', ', $this->processSportsTranslate($data['ids_sport']))
+                    '{sports}' => implode(', ', $this->processSportsTranslate($data['ids_sport'])),
                 ],
                 'formulariosprestashop@a-alvarez.com'
             )) {
@@ -479,13 +480,13 @@ class SubscribersController extends Module
 
             $dataEmail = [
                 '{token}' => md5($data['email'].Configuration::get('NW_SALT')),
-                '{url}' =>  Tools::getShopDomainSsl(true) . __PS_BASE_URI__,
+                '{url}' => Tools::getShopDomainSsl(true).__PS_BASE_URI__,
             ];
 
             $template = 'newslettersubscribecheck';
             $subject = $this->l('Welcome!', 'SubscribersController', $iso);
 
-            if (!Mail::Send($data['id_lang'],$template,$subject,$dataEmail,$data['email'])) {
+            if (! Mail::Send($data['id_lang'], $template, $subject, $dataEmail, $data['email'])) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('An error occurred while sending the notification to the customer.', 'formcontroller', $data['lang']),
@@ -496,8 +497,8 @@ class SubscribersController extends Module
         }
     }
 
-
-    function processSportsTranslate($sports) {
+    public function processSportsTranslate($sports)
+    {
 
         $sports_map = [
             1 => 'GOLF',
@@ -582,14 +583,12 @@ class SubscribersController extends Module
 
         $sportsArray = explode(',', $sports);
 
-        $sports_in_language = array_map(function($id) use ($sports_map, $sports_translation_map) {
+        $sports_in_language = array_map(function ($id) use ($sports_map, $sports_translation_map) {
             $sport_name = $sports_map[$id];
+
             return $sports_translation_map[1][$sport_name] ?? $sport_name;
         }, $sportsArray);
 
         return $sports_in_language;
     }
-
 }
-
-

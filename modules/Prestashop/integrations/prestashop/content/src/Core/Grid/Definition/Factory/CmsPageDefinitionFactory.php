@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -115,7 +116,7 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getName()
     {
-        $cmsCategoryName = $this->queryBus->handle(new GetCmsPageCategoryNameForListing());
+        $cmsCategoryName = $this->queryBus->handle(new GetCmsPageCategoryNameForListing);
 
         return $this->trans(
             'Pages in category "%name%"',
@@ -129,70 +130,69 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        $columnCollection = (new ColumnCollection())
+        $columnCollection = (new ColumnCollection)
             ->add((new BulkActionColumn('bulk'))
-            ->setOptions([
-                'bulk_field' => 'id_cms',
-            ])
+                ->setOptions([
+                    'bulk_field' => 'id_cms',
+                ])
             )
             ->add((new DataColumn('id_cms'))
-            ->setName($this->trans('ID', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'id_cms',
-            ])
+                ->setName($this->trans('ID', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'id_cms',
+                ])
             )
             ->add((new DataColumn('link_rewrite'))
-            ->setName($this->trans('URL', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'link_rewrite',
-            ])
+                ->setName($this->trans('URL', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'link_rewrite',
+                ])
             )
             ->add((new DataColumn('meta_title'))
-            ->setName($this->trans('Title', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'meta_title',
-            ])
+                ->setName($this->trans('Title', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'meta_title',
+                ])
             )
             ->add((new DataColumn('head_seo_title'))
-            ->setName($this->trans('Meta title', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'head_seo_title',
-            ])
+                ->setName($this->trans('Meta title', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'head_seo_title',
+                ])
             )
             ->add((new ToggleColumn('active'))
-            ->setName($this->trans('Displayed', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'active',
-                'route' => 'admin_cms_pages_toggle',
-                'primary_field' => 'id_cms',
-                'route_param_name' => 'cmsId',
-            ])
+                ->setName($this->trans('Displayed', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'active',
+                    'route' => 'admin_cms_pages_toggle',
+                    'primary_field' => 'id_cms',
+                    'route_param_name' => 'cmsId',
+                ])
             )
             ->add((new ActionColumn('actions'))
-            ->setName($this->trans('Actions', [], 'Admin.Global'))
-            ->setOptions([
-                'actions' => (new RowActionCollection())
-                    ->add((new LinkRowAction('edit'))
-                    ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                    ->setIcon('edit')
-                    ->setOptions([
-                        'route' => 'admin_cms_pages_edit',
-                        'route_param_name' => 'cmsPageId',
-                        'route_param_field' => 'id_cms',
-                        'clickable_row' => true,
-                    ])
-                    )
-                    ->add(
-                        $this->buildDeleteAction(
-                            'admin_cms_pages_delete',
-                            'cmsId',
-                            'id_cms',
-                            Request::METHOD_DELETE
+                ->setName($this->trans('Actions', [], 'Admin.Global'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection)
+                        ->add((new LinkRowAction('edit'))
+                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                            ->setIcon('edit')
+                            ->setOptions([
+                                'route' => 'admin_cms_pages_edit',
+                                'route_param_name' => 'cmsPageId',
+                                'route_param_field' => 'id_cms',
+                                'clickable_row' => true,
+                            ])
                         )
-                    ),
-            ])
-            )
-        ;
+                        ->add(
+                            $this->buildDeleteAction(
+                                'admin_cms_pages_delete',
+                                'cmsId',
+                                'id_cms',
+                                Request::METHOD_DELETE
+                            )
+                        ),
+                ])
+            );
 
         if ($this->isAllShopContextOrShopFeatureIsNotUsed()) {
             $columnCollection
@@ -236,64 +236,62 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
             $actionsTypeOptions['reset_route_params']['id_cms_category'] = $this->cmsCategoryParentId;
         }
 
-        $filterCollection = (new FilterCollection())
+        $filterCollection = (new FilterCollection)
             ->add((new Filter('id_cms', TextType::class))
-            ->setTypeOptions([
-                'required' => false,
-                'attr' => [
-                    'placeholder' => $this->trans('ID', [], 'Admin.Global'),
-                ],
-            ])
-            ->setAssociatedColumn('id_cms')
+                ->setTypeOptions([
+                    'required' => false,
+                    'attr' => [
+                        'placeholder' => $this->trans('ID', [], 'Admin.Global'),
+                    ],
+                ])
+                ->setAssociatedColumn('id_cms')
             )
             ->add((new Filter('link_rewrite', TextType::class))
-            ->setTypeOptions([
-                'required' => false,
-                'attr' => [
-                    'placeholder' => $this->trans('URL', [], 'Admin.Global'),
-                ],
-            ])
-            ->setAssociatedColumn('link_rewrite')
+                ->setTypeOptions([
+                    'required' => false,
+                    'attr' => [
+                        'placeholder' => $this->trans('URL', [], 'Admin.Global'),
+                    ],
+                ])
+                ->setAssociatedColumn('link_rewrite')
             )
             ->add((new Filter('meta_title', TextType::class))
-            ->setTypeOptions([
-                'required' => false,
-                'attr' => [
-                    'placeholder' => $this->trans('Title', [], 'Admin.Global'),
-                ],
-            ])
-            ->setAssociatedColumn('meta_title')
+                ->setTypeOptions([
+                    'required' => false,
+                    'attr' => [
+                        'placeholder' => $this->trans('Title', [], 'Admin.Global'),
+                    ],
+                ])
+                ->setAssociatedColumn('meta_title')
             )
             ->add((new Filter('head_seo_title', TextType::class))
-            ->setTypeOptions([
-                'required' => false,
-                'attr' => [
-                    'placeholder' => $this->trans('Meta title', [], 'Admin.Global'),
-                ],
-            ])
-            ->setAssociatedColumn('head_seo_title')
+                ->setTypeOptions([
+                    'required' => false,
+                    'attr' => [
+                        'placeholder' => $this->trans('Meta title', [], 'Admin.Global'),
+                    ],
+                ])
+                ->setAssociatedColumn('head_seo_title')
             )
             ->add((new Filter('active', YesAndNoChoiceType::class))
-            ->setAssociatedColumn('active')
+                ->setAssociatedColumn('active')
             )
             ->add((new Filter('actions', SearchAndResetType::class))
-            ->setTypeOptions($actionsTypeOptions)
-            ->setAssociatedColumn('actions')
-            )
-        ;
+                ->setTypeOptions($actionsTypeOptions)
+                ->setAssociatedColumn('actions')
+            );
 
         if ($this->isAllShopContextOrShopFeatureIsNotUsed()) {
             $filterCollection
                 ->add((new Filter('position', TextType::class))
-                ->setTypeOptions([
-                    'required' => false,
-                    'attr' => [
-                        'placeholder' => $this->trans('Position', [], 'Admin.Global'),
-                    ],
-                ])
-                ->setAssociatedColumn('position')
-                )
-            ;
+                    ->setTypeOptions([
+                        'required' => false,
+                        'attr' => [
+                            'placeholder' => $this->trans('Position', [], 'Admin.Global'),
+                        ],
+                    ])
+                    ->setAssociatedColumn('position')
+                );
         }
 
         return $filterCollection;
@@ -304,20 +302,19 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add((new SimpleGridAction('common_refresh_list'))
-            ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
-            ->setIcon('refresh')
+                ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
+                ->setIcon('refresh')
             )
             ->add((new SimpleGridAction('common_show_query'))
-            ->setName($this->trans('Show SQL query', [], 'Admin.Actions'))
-            ->setIcon('code')
+                ->setName($this->trans('Show SQL query', [], 'Admin.Actions'))
+                ->setIcon('code')
             )
             ->add((new SimpleGridAction('common_export_sql_manager'))
-            ->setName($this->trans('Export to SQL Manager', [], 'Admin.Actions'))
-            ->setIcon('storage')
-            )
-        ;
+                ->setName($this->trans('Export to SQL Manager', [], 'Admin.Actions'))
+                ->setIcon('storage')
+            );
     }
 
     /**
@@ -325,35 +322,32 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add((new SubmitBulkAction('enable_selection'))
-            ->setName($this->trans('Enable selection', [], 'Admin.Actions'))
-            ->setOptions([
-                'submit_route' => 'admin_cms_pages_bulk_enable_status',
-            ])
+                ->setName($this->trans('Enable selection', [], 'Admin.Actions'))
+                ->setOptions([
+                    'submit_route' => 'admin_cms_pages_bulk_enable_status',
+                ])
             )
             ->add((new SubmitBulkAction('disable_selection'))
-            ->setName($this->trans('Disable selection', [], 'Admin.Actions'))
-            ->setOptions([
-                'submit_route' => 'admin_cms_pages_bulk_disable_status',
-            ])
+                ->setName($this->trans('Disable selection', [], 'Admin.Actions'))
+                ->setOptions([
+                    'submit_route' => 'admin_cms_pages_bulk_disable_status',
+                ])
             )
             ->add(
                 $this->buildBulkDeleteAction('admin_cms_pages_bulk_delete')
-            )
-            ;
+            );
     }
 
     /**
      * Sets cms page category parent id directly from request attribute. On not found case, it assigns the default one.
-     *
-     * @param RequestStack $requestStack
      */
     private function setCmsPageCategoryParentId(RequestStack $requestStack)
     {
         $request = $requestStack->getCurrentRequest();
 
-        if (null !== $request && $request->query->getInt('id_cms_category')) {
+        if ($request !== null && $request->query->getInt('id_cms_category')) {
             $this->cmsCategoryParentId = $request->query->getInt('id_cms_category');
         }
     }
@@ -367,6 +361,6 @@ class CmsPageDefinitionFactory extends AbstractGridDefinitionFactory
      */
     private function isAllShopContextOrShopFeatureIsNotUsed()
     {
-        return $this->multistoreContextChecker->isAllShopContext() || !$this->isMultiStoreFeatureUsed;
+        return $this->multistoreContextChecker->isAllShopContext() || ! $this->isMultiStoreFeatureUsed;
     }
 }

@@ -5,6 +5,7 @@ namespace Modules\HelpdeskIntegration\Tests\Feature;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Tests\HelpdeskTestCase;
 use Modules\HelpdeskIntegration\Database\Seeders\HelpdeskIntegrationProvidersSeeder;
+use Modules\HelpdeskIntegration\Models\CustomerIdentityVerification;
 use Modules\HelpdeskIntegration\Support\IntegrationDriverRegistry;
 use Modules\HelpdeskIntegration\Tests\Support\FakeIntegrationDriver;
 
@@ -12,7 +13,10 @@ use Modules\HelpdeskIntegration\Tests\Support\FakeIntegrationDriver;
  * detail() (ficha de una plataforma ya vinculada, widget del panel derecho)
  * ahora valida `platform` contra el catálogo con las mismas reglas que
  * search(), en vez de dejarlo pasar sin comprobar y caer siempre en la rama
- * "no vinculado".
+ * "no vinculado". También exige identidad verificada (SEC-04 #5): expone el
+ * mismo perfil completo que show()->buildPayload(), así que aquí se marca
+ * verificada en setUp para poder probar la mecánica de detail() sin ruido
+ * — igual que hace CustomerIntegrationsControllerTest.
  */
 class CustomerIntegrationDetailTest extends HelpdeskTestCase
 {
@@ -27,6 +31,15 @@ class CustomerIntegrationDetailTest extends HelpdeskTestCase
         $this->seed(HelpdeskIntegrationProvidersSeeder::class);
         FakeIntegrationDriver::reset();
         app(IntegrationDriverRegistry::class)->register('prestashop', FakeIntegrationDriver::class);
+
+        CustomerIdentityVerification::query()->create([
+            'customer_id' => $this->customer->id,
+            'channel' => 'email',
+            'code_hash' => bcrypt('000000'),
+            'expires_at' => now()->addMinutes(10),
+            'verified_at' => now(),
+            'verified_by' => $this->manager->id,
+        ]);
     }
 
     public function test_unknown_platform_returns_validation_error(): void
@@ -49,6 +62,19 @@ class CustomerIntegrationDetailTest extends HelpdeskTestCase
             ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['platform']);
+    }
+
+    public function test_unverified_identity_is_forbidden(): void
+    {
+        $unverified = Customer::factory()->create(['email' => 'unverified.detail@example.com']);
+        $unverified->linkExternalId('prestashop', '999');
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.customers.integrations.detail', [
+                'customer' => $unverified,
+                'platform' => 'prestashop',
+            ]))
+            ->assertForbidden();
     }
 
     public function test_guest_cannot_view_detail(): void

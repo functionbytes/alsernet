@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,16 +88,16 @@ class AddLanguageCommand
     private $shopAssociation;
 
     /**
-     * @param string $name
-     * @param string $isoCode
-     * @param string $tagIETF
-     * @param string $shortDateFormat
-     * @param string $fullDateFormat
-     * @param string $flagImagePath
-     * @param string $noPictureImagePath
-     * @param bool $isRtl
-     * @param bool $isActive
-     * @param int[] $shopAssociation
+     * @param  string  $name
+     * @param  string  $isoCode
+     * @param  string  $tagIETF
+     * @param  string  $shortDateFormat
+     * @param  string  $fullDateFormat
+     * @param  string  $flagImagePath
+     * @param  string  $noPictureImagePath
+     * @param  bool  $isRtl
+     * @param  bool  $isActive
+     * @param  int[]  $shopAssociation
      */
     public function __construct(
         $name,

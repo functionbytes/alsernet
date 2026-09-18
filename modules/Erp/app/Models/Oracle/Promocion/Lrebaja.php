@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Promocion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Models\Oracle\Configuracion\Regpais;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
@@ -70,7 +71,7 @@ class Lrebaja extends Model
      */
     public function lrebaja()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lrebaja::class, 'idlrebaja', 'idlrebaja');
+        return $this->belongsTo(Lrebaja::class, 'idlrebaja', 'idlrebaja');
     }
 
     /**
@@ -79,7 +80,7 @@ class Lrebaja extends Model
      */
     public function rebaja()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Rebaja::class, 'idrebaja', 'idrebaja');
+        return $this->belongsTo(Rebaja::class, 'idrebaja', 'idrebaja');
     }
 
     /**
@@ -88,6 +89,6 @@ class Lrebaja extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

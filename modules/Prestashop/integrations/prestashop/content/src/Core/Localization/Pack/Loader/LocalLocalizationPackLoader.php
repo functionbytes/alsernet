@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ final class LocalLocalizationPackLoader extends AbstractLocalizationPackLoader
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -54,7 +52,7 @@ final class LocalLocalizationPackLoader extends AbstractLocalizationPackLoader
         $rootDir = $this->configuration->get('_PS_ROOT_DIR_');
 
         $localizationFile = sprintf('%s/localization/localization.xml', $rootDir);
-        if (!file_exists($localizationFile)) {
+        if (! file_exists($localizationFile)) {
             return null;
         }
 
@@ -71,7 +69,7 @@ final class LocalLocalizationPackLoader extends AbstractLocalizationPackLoader
             $this->configuration->get('_PS_ROOT_DIR_');
 
         $localizationPackFile = sprintf('%s/localization/%s.xml', $rootDir, $countryIso);
-        if (!file_exists($localizationPackFile)) {
+        if (! file_exists($localizationPackFile)) {
             return null;
         }
 

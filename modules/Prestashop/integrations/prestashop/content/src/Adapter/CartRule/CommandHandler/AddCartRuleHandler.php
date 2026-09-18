@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,10 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
         try {
             $cartRule = $this->buildCartRuleFromCommandData($command);
 
-            if (false === $cartRule->validateFields(false) || false === $cartRule->validateFieldsLang(false)) {
+            if ($cartRule->validateFields(false) === false || $cartRule->validateFieldsLang(false) === false) {
                 throw new CartRuleConstraintException('Cart rule contains invalid field values');
             }
-            if (false === $cartRule->add()) {
+            if ($cartRule->add() === false) {
                 throw new CartRuleException('Failed to add new cart rule');
             }
         } catch (PrestaShopException $e) {
@@ -64,15 +65,11 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
     }
 
     /**
-     * @param AddCartRuleCommand $command
-     *
-     * @return CartRule
-     *
      * @throws PrestaShopException
      */
     private function buildCartRuleFromCommandData(AddCartRuleCommand $command): CartRule
     {
-        $cartRule = new CartRule();
+        $cartRule = new CartRule;
 
         $cartRule->name = $command->getLocalizedNames();
         $cartRule->description = $command->getDescription();
@@ -90,13 +87,10 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
 
     /**
      * Fills cart rule with conditions data from command.
-     *
-     * @param CartRule $cartRule
-     * @param AddCartRuleCommand $command
      */
     private function fillCartRuleConditionsFromCommandData(CartRule $cartRule, AddCartRuleCommand $command): void
     {
-        $cartRule->id_customer = null !== $command->getCustomerId() ? $command->getCustomerId()->getValue() : null;
+        $cartRule->id_customer = $command->getCustomerId() !== null ? $command->getCustomerId()->getValue() : null;
 
         $cartRule->date_from = $command->getValidFrom()->format('Y-m-d H:i:s');
         $cartRule->date_to = $command->getValidTo()->format('Y-m-d H:i:s');
@@ -104,8 +98,8 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
         $minimumAmount = $command->getMinimumAmountCondition();
         $cartRule->minimum_amount = (string) $minimumAmount->getMoneyAmount()->getAmount();
         $cartRule->minimum_amount_currency = $minimumAmount->getMoneyAmount()->getCurrencyId()->getValue();
-        $cartRule->minimum_amount_shipping = !$minimumAmount->isShippingExcluded();
-        $cartRule->minimum_amount_tax = !$minimumAmount->isTaxExcluded();
+        $cartRule->minimum_amount_shipping = ! $minimumAmount->isShippingExcluded();
+        $cartRule->minimum_amount_tax = ! $minimumAmount->isTaxExcluded();
 
         $cartRule->quantity = $command->getTotalQuantity();
         $cartRule->quantity_per_user = $command->getQuantityPerUser();
@@ -120,9 +114,6 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
 
     /**
      * Fills cart rule with actions data from command.
-     *
-     * @param CartRule $cartRule
-     * @param AddCartRuleCommand $command
      */
     private function fillCartRuleActionsFromCommandData(CartRule $cartRule, AddCartRuleCommand $command): void
     {
@@ -132,26 +123,26 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
         $giftProduct = $cartRuleAction->getGiftProduct();
         $cartRule->free_shipping = $cartRuleAction->isFreeShipping();
 
-        $cartRule->gift_product = null !== $giftProduct ? $giftProduct->getProductId()->getValue() : null;
-        $cartRule->gift_product_attribute = null !== $giftProduct ? $giftProduct->getProductAttributeId() : null;
-        $cartRule->reduction_amount = null !== $amountDiscount ?
+        $cartRule->gift_product = $giftProduct !== null ? $giftProduct->getProductId()->getValue() : null;
+        $cartRule->gift_product_attribute = $giftProduct !== null ? $giftProduct->getProductAttributeId() : null;
+        $cartRule->reduction_amount = $amountDiscount !== null ?
             (string) $amountDiscount->getMoneyAmount()->getAmount() :
             null;
-        $cartRule->reduction_currency = null !== $amountDiscount ?
+        $cartRule->reduction_currency = $amountDiscount !== null ?
             $amountDiscount->getMoneyAmount()->getCurrencyId()->getValue() :
             null;
 
         // Legacy reduction_tax property is true when it's tax included, false when tax excluded.
-        $cartRule->reduction_tax = null !== $amountDiscount ? !$amountDiscount->isTaxExcluded() : null;
+        $cartRule->reduction_tax = $amountDiscount !== null ? ! $amountDiscount->isTaxExcluded() : null;
 
-        $cartRule->reduction_percent = null !== $percentageDiscount ? $percentageDiscount->getPercentage() : null;
-        $cartRule->reduction_exclude_special = null !== $percentageDiscount ?
-            !$percentageDiscount->appliesToDiscountedProducts() :
+        $cartRule->reduction_percent = $percentageDiscount !== null ? $percentageDiscount->getPercentage() : null;
+        $cartRule->reduction_exclude_special = $percentageDiscount !== null ?
+            ! $percentageDiscount->appliesToDiscountedProducts() :
             null;
 
         $discountApplicationType = $command->getDiscountApplicationType();
 
-        if (null !== $discountApplicationType) {
+        if ($discountApplicationType !== null) {
             $this->fillDiscountApplicationType(
                 $cartRule,
                 $command,
@@ -162,11 +153,6 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param AddCartRuleCommand $command
-     * @param CartRuleActionInterface $cartRuleAction
-     * @param DiscountApplicationType $discountApplicationType
-     *
      * @throws CartRuleConstraintException
      */
     private function fillDiscountApplicationType(
@@ -175,12 +161,12 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
         CartRuleActionInterface $cartRuleAction,
         DiscountApplicationType $discountApplicationType
     ): void {
-        $hasAmountDiscount = null !== $cartRuleAction->getAmountDiscount();
-        $hasPercentageDiscount = null !== $cartRuleAction->getPercentageDiscount();
+        $hasAmountDiscount = $cartRuleAction->getAmountDiscount() !== null;
+        $hasPercentageDiscount = $cartRuleAction->getPercentageDiscount() !== null;
 
         switch ($discountApplicationType->getValue()) {
             case DiscountApplicationType::SELECTED_PRODUCTS:
-                if (!$hasPercentageDiscount) {
+                if (! $hasPercentageDiscount) {
                     throw new CartRuleConstraintException('Cart rule, which is applied to selected inventaries, must have percent discount type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
                 }
 
@@ -188,7 +174,7 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
 
                 break;
             case DiscountApplicationType::CHEAPEST_PRODUCT:
-                if (!$hasPercentageDiscount) {
+                if (! $hasPercentageDiscount) {
                     throw new CartRuleConstraintException('Cart rule, which is applied to cheapest product, must have percent discount type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
                 }
 
@@ -196,11 +182,11 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
 
                 break;
             case DiscountApplicationType::SPECIFIC_PRODUCT:
-                if (!$hasPercentageDiscount && !$hasAmountDiscount) {
-                    throw new CartRuleConstraintException('Cart rule, which is applied to a specific product, ' . 'must have percentage or amount application type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
+                if (! $hasPercentageDiscount && ! $hasAmountDiscount) {
+                    throw new CartRuleConstraintException('Cart rule, which is applied to a specific product, '.'must have percentage or amount application type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
                 }
 
-                if (null === $command->getDiscountProductId()) {
+                if ($command->getDiscountProductId() === null) {
                     throw new CartRuleConstraintException('Cart rule, which is applied to a specific product, must have a product specified.', CartRuleConstraintException::MISSING_DISCOUNT_APPLICATION_PRODUCT);
                 }
 
@@ -208,8 +194,8 @@ final class AddCartRuleHandler implements AddCartRuleHandlerInterface
 
                 break;
             case DiscountApplicationType::ORDER_WITHOUT_SHIPPING:
-                if (!$hasAmountDiscount && !$hasPercentageDiscount) {
-                    throw new CartRuleConstraintException('Cart rule, which is applied to whole order without shipping, ' . 'must have percentage or amount application type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
+                if (! $hasAmountDiscount && ! $hasPercentageDiscount) {
+                    throw new CartRuleConstraintException('Cart rule, which is applied to whole order without shipping, '.'must have percentage or amount application type.', CartRuleConstraintException::INCOMPATIBLE_CART_RULE_ACTIONS);
                 }
 
                 $cartRule->reduction_product = LegacyDiscountApplicationType::ORDER_WITHOUT_SHIPPING;

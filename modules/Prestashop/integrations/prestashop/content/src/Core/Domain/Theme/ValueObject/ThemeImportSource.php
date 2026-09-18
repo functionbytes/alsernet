@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,7 +36,9 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class ThemeImportSource
 {
     public const FROM_ARCHIVE = 'from_archive';
+
     public const FROM_WEB = 'from_web';
+
     public const FROM_FTP = 'from_ftp';
 
     /**
@@ -50,8 +53,6 @@ class ThemeImportSource
     private $source;
 
     /**
-     * @param UploadedFile $uploadedTheme
-     *
      * @return ThemeImportSource
      */
     public static function fromArchive(UploadedFile $uploadedTheme)
@@ -60,8 +61,7 @@ class ThemeImportSource
     }
 
     /**
-     * @param string $themeUrl
-     *
+     * @param  string  $themeUrl
      * @return ThemeImportSource
      */
     public static function fromWeb($themeUrl)
@@ -70,8 +70,7 @@ class ThemeImportSource
     }
 
     /**
-     * @param string $themeFtp
-     *
+     * @param  string  $themeFtp
      * @return ThemeImportSource
      */
     public static function fromFtp($themeFtp)
@@ -80,8 +79,8 @@ class ThemeImportSource
     }
 
     /**
-     * @param string $sourceType
-     * @param UploadedFile|string $source
+     * @param  string  $sourceType
+     * @param  UploadedFile|string  $source
      *
      * @throws NotSupportedThemeImportSourceException
      */
@@ -110,7 +109,7 @@ class ThemeImportSource
     }
 
     /**
-     * @param string $sourceType
+     * @param  string  $sourceType
      *
      * @throws NotSupportedThemeImportSourceException
      */
@@ -118,7 +117,7 @@ class ThemeImportSource
     {
         $supportedSources = [self::FROM_ARCHIVE, self::FROM_WEB, self::FROM_FTP];
 
-        if (!in_array($sourceType, $supportedSources)) {
+        if (! in_array($sourceType, $supportedSources)) {
             throw new NotSupportedThemeImportSourceException(sprintf('Not supported %s theme import source type supplied. Supported sources are: "%s"', var_export($sourceType, true), implode(',', $supportedSources)));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,6 @@ class SearchProducts
     private $orderId;
 
     /**
-     * @param string $phrase
-     * @param int $resultsLimit
-     * @param string $isoCode
-     * @param int|null $orderId
-     *
      * @throws ProductSearchEmptyPhraseException
      * @throws CurrencyConstraintException
      */
@@ -76,14 +72,11 @@ class SearchProducts
         $this->phrase = $phrase;
         $this->resultsLimit = $resultsLimit;
         $this->alphaIsoCode = new AlphaIsoCode($isoCode);
-        if (null !== $orderId) {
+        if ($orderId !== null) {
             $this->setOrderId($orderId);
         }
     }
 
-    /**
-     * @return AlphaIsoCode
-     */
     public function getAlphaIsoCode(): AlphaIsoCode
     {
         return $this->alphaIsoCode;
@@ -97,25 +90,17 @@ class SearchProducts
         return $this->phrase;
     }
 
-    /**
-     * @return int
-     */
     public function getResultsLimit(): int
     {
         return $this->resultsLimit;
     }
 
-    /**
-     * @return OrderId|null
-     */
     public function getOrderId(): ?OrderId
     {
         return $this->orderId;
     }
 
     /**
-     * @param int $orderId
-     *
      * @throws OrderException
      */
     private function setOrderId(int $orderId): void
@@ -124,8 +109,6 @@ class SearchProducts
     }
 
     /**
-     * @param string $phrase
-     *
      * @throws ProductSearchEmptyPhraseException
      */
     private function assertIsNotEmptyString(string $phrase): void

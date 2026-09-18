@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ final class ProfileAccessChecker implements ProfileAccessCheckerInterface
     private $superAdminProfileId;
 
     /**
-     * @param EmployeeDataProviderInterface $employeeDataProvider
-     * @param int $superAdminProfileId
+     * @param  int  $superAdminProfileId
      */
     public function __construct(
         EmployeeDataProviderInterface $employeeDataProvider,

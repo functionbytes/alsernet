@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class AddSqlRequestCommand
     private $sql;
 
     /**
-     * @param string $name
-     * @param string $sql
+     * @param  string  $name
+     * @param  string  $sql
      *
      * @throws SqlRequestConstraintException
      */
@@ -75,15 +76,14 @@ class AddSqlRequestCommand
     /**
      * Set Request SQL name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return self
      *
      * @throws SqlRequestConstraintException
      */
     private function setName($name)
     {
-        if (!is_string($name) || empty($name)) {
+        if (! is_string($name) || empty($name)) {
             throw new SqlRequestConstraintException(sprintf('Invalid SqlRequest name %s', var_export($name, true)), SqlRequestConstraintException::INVALID_NAME);
         }
 
@@ -95,15 +95,14 @@ class AddSqlRequestCommand
     /**
      * Set Request SQL query.
      *
-     * @param string $sql
-     *
+     * @param  string  $sql
      * @return $this
      *
      * @throws SqlRequestConstraintException
      */
     private function setSql($sql)
     {
-        if (!is_string($sql) || empty($sql)) {
+        if (! is_string($sql) || empty($sql)) {
             throw new SqlRequestConstraintException(sprintf('Invalid SqlRequest SQL query %s', var_export($sql, true)), SqlRequestConstraintException::INVALID_SQL_QUERY);
         }
 

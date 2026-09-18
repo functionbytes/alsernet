@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,6 @@ use Validate;
 abstract class AbstractOrderHandler
 {
     /**
-     * @param OrderId $orderId
-     *
      * @return Order
      */
     protected function getOrder(OrderId $orderId)
@@ -75,21 +74,11 @@ abstract class AbstractOrderHandler
         return $order;
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return bool
-     */
     protected function isTaxIncludedInOrder(Order $order): bool
     {
         return $this->getOrderTaxCalculationMethod($order) === PS_TAX_INC;
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return int
-     */
     protected function getOrderTaxCalculationMethod(Order $order): int
     {
         $customer = new Customer($order->id_customer);
@@ -97,32 +86,25 @@ abstract class AbstractOrderHandler
         return Group::getPriceDisplayMethod((int) $customer->id_default_group);
     }
 
-    /**
-     * @param Cart $cart
-     *
-     * @return int
-     */
     protected function getPrecisionFromCart(Cart $cart): int
     {
-        $computingPrecision = new ComputingPrecision();
+        $computingPrecision = new ComputingPrecision;
         $currency = new Currency((int) $cart->id_currency);
 
         return $computingPrecision->getPrecision($currency->precision);
     }
 
     /**
-     * @param int $combinationId
-     *
      * @return Combination|null
      */
     protected function getCombination(int $combinationId)
     {
         $combination = null;
 
-        if (0 !== $combinationId) {
+        if ($combinationId !== 0) {
             $combination = new Combination($combinationId);
 
-            if (!Validate::isLoadedObject($combination)) {
+            if (! Validate::isLoadedObject($combination)) {
                 throw new OrderException('Product combination not found.');
             }
         }
@@ -131,9 +113,7 @@ abstract class AbstractOrderHandler
     }
 
     /**
-     * @param ProductId $productId
-     * @param int $langId
-     *
+     * @param  int  $langId
      * @return Product
      */
     protected function getProduct(ProductId $productId, $langId)
@@ -147,9 +127,6 @@ abstract class AbstractOrderHandler
         return $product;
     }
 
-    /**
-     * @return string
-     */
     protected function getNumberRoundMode(): string
     {
         return RoundModeConverter::getNumberRoundMode((int) Configuration::get('PS_PRICE_ROUND_MODE'));
@@ -163,10 +140,6 @@ abstract class AbstractOrderHandler
      *
      * However the structure of deliveryOptions is still used with comma in legacy, so
      * this method provides assurance for deliveryOption structure until major refactoring
-     *
-     * @param int $carrierId
-     *
-     * @return string
      */
     protected function formatLegacyDeliveryOptionFromCarrierId(int $carrierId): string
     {

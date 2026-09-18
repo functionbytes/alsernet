@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,15 +55,12 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
      * @var OrderAmountUpdater
      */
     private $orderAmountUpdater;
+
     /**
      * @var ContextStateManager
      */
     private $contextStateManager;
 
-    /**
-     * @param OrderAmountUpdater $orderAmountUpdater
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(OrderAmountUpdater $orderAmountUpdater, ContextStateManager $contextStateManager)
     {
         $this->orderAmountUpdater = $orderAmountUpdater;
@@ -80,8 +78,7 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
         $this->contextStateManager
             ->setCurrency(new Currency($order->id_currency))
             ->setCustomer(new Customer($order->id_customer))
-            ->setShop(new Shop($order->id_shop))
-        ;
+            ->setShop(new Shop($order->id_shop));
 
         try {
             $this->addCartRuleAndUpdateOrder($command, $order);
@@ -91,11 +88,6 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
     }
 
     /**
-     * @param AddCartRuleToOrderCommand $command
-     * @param Order $order
-     *
-     * @return void
-     *
      * @throws InvalidCartRuleDiscountValueException
      * @throws OrderException
      * @throws PrestaShopException
@@ -105,9 +97,9 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
     {
         // If the discount is for only one invoice
         $orderInvoice = null;
-        if ($order->hasInvoice() && null !== $command->getOrderInvoiceId()) {
+        if ($order->hasInvoice() && $command->getOrderInvoiceId() !== null) {
             $orderInvoice = new OrderInvoice($command->getOrderInvoiceId()->getValue());
-            if (!Validate::isLoadedObject($orderInvoice)) {
+            if (! Validate::isLoadedObject($orderInvoice)) {
                 throw new OrderException('Can\'t load Order Invoice object');
             }
         }
@@ -115,7 +107,7 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
         $this->assertFreeShippingCartRule($command, $order, $orderInvoice);
 
         $cart = Cart::getCartByOrderId($order->id);
-        $cartRuleObj = new CartRule();
+        $cartRuleObj = new CartRule;
         $cartRuleObj->date_from = date('Y-m-d H:i:s', strtotime('-1 hour', strtotime($order->date_add)));
         $cartRuleObj->date_to = date('Y-m-d H:i:s', strtotime('+1 hour'));
         $cartRuleObj->name[Configuration::get('PS_LANG_DEFAULT')] = $command->getCartRuleName();
@@ -138,7 +130,7 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
         }
 
         try {
-            if (!$cartRuleObj->add()) {
+            if (! $cartRuleObj->add()) {
                 throw new OrderException('An error occurred during the CartRule creation');
             }
         } catch (PrestaShopException $e) {
@@ -147,24 +139,22 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
 
         try {
             // It's important to add the cart rule to the cart Or it will be ignored when cart performs AutoRemove AddAdd
-            if (!$cart->addCartRule($cartRuleObj->id)) {
+            if (! $cart->addCartRule($cartRuleObj->id)) {
                 throw new OrderException('An error occurred while adding CartRule to cart');
             }
         } catch (PrestaShopException $e) {
             throw new OrderException('An error occurred while adding CartRule to cart', 0, $e);
         }
 
-        $this->orderAmountUpdater->update($order, $cart, null !== $orderInvoice ? (int) $orderInvoice->id : null);
+        $this->orderAmountUpdater->update($order, $cart, $orderInvoice !== null ? (int) $orderInvoice->id : null);
     }
 
     /**
-     * @param AddCartRuleToOrderCommand $command
-     *
      * @throws InvalidCartRuleDiscountValueException
      */
     private function assertPercentCartRule(AddCartRuleToOrderCommand $command): void
     {
-        if (OrderDiscountType::DISCOUNT_PERCENT !== $command->getCartRuleType()) {
+        if ($command->getCartRuleType() !== OrderDiscountType::DISCOUNT_PERCENT) {
             return;
         }
 
@@ -183,19 +173,15 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
     }
 
     /**
-     * @param AddCartRuleToOrderCommand $command
-     * @param Order $order
-     * @param OrderInvoice|null $orderInvoice
-     *
      * @throws InvalidCartRuleDiscountValueException
      */
     private function assertAmountCartRule(AddCartRuleToOrderCommand $command, Order $order, ?OrderInvoice $orderInvoice): void
     {
-        if (OrderDiscountType::DISCOUNT_AMOUNT !== $command->getCartRuleType()) {
+        if ($command->getCartRuleType() !== OrderDiscountType::DISCOUNT_AMOUNT) {
             return;
         }
 
-        if (null === $command->getDiscountValue() || $command->getDiscountValue()->isLowerOrEqualThanZero()) {
+        if ($command->getDiscountValue() === null || $command->getDiscountValue()->isLowerOrEqualThanZero()) {
             throw new InvalidCartRuleDiscountValueException(
                 'Discount amount specified is not positive',
                 InvalidCartRuleDiscountValueException::INVALID_MIN_AMOUNT
@@ -203,12 +189,12 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
         }
 
         $discountValue = (float) (string) $command->getDiscountValue();
-        if (null !== $orderInvoice) {
+        if ($orderInvoice !== null) {
             $orderInvoices = [$orderInvoice];
         } elseif ($order->hasInvoice()) {
             $orderInvoices = $order->getInvoicesCollection()->getResults();
         }
-        if (!empty($orderInvoices)) {
+        if (! empty($orderInvoices)) {
             foreach ($orderInvoices as $invoice) {
                 if ($discountValue > $invoice->total_paid_tax_incl) {
                     throw new InvalidCartRuleDiscountValueException(
@@ -228,24 +214,20 @@ final class AddCartRuleToOrderHandler extends AbstractOrderHandler implements Ad
     }
 
     /**
-     * @param AddCartRuleToOrderCommand $command
-     * @param Order $order
-     * @param OrderInvoice|null $orderInvoice
-     *
      * @throws InvalidCartRuleDiscountValueException
      */
     private function assertFreeShippingCartRule(AddCartRuleToOrderCommand $command, Order $order, ?OrderInvoice $orderInvoice): void
     {
-        if (OrderDiscountType::FREE_SHIPPING !== $command->getCartRuleType()) {
+        if ($command->getCartRuleType() !== OrderDiscountType::FREE_SHIPPING) {
             return;
         }
 
-        if (null !== $orderInvoice) {
+        if ($orderInvoice !== null) {
             $orderInvoices = [$orderInvoice];
         } elseif ($order->hasInvoice()) {
             $orderInvoices = $order->getInvoicesCollection()->getResults();
         }
-        if (!empty($orderInvoices)) {
+        if (! empty($orderInvoices)) {
             foreach ($orderInvoices as $invoice) {
                 if ($invoice->total_paid_tax_incl < $invoice->total_shipping_tax_incl) {
                     throw new InvalidCartRuleDiscountValueException(

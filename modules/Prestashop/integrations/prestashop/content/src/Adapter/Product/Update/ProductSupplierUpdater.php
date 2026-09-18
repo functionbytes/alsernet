@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,12 +68,6 @@ class ProductSupplierUpdater
      */
     private $productSupplierRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param CombinationRepository $combinationRepository
-     * @param SupplierRepository $supplierRepository
-     * @param ProductSupplierRepository $productSupplierRepository
-     */
     public function __construct(
         ProductRepository $productRepository,
         CombinationRepository $combinationRepository,
@@ -86,9 +81,7 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param array<int, ProductSupplier> $productSuppliers
-     *
+     * @param  array<int, ProductSupplier>  $productSuppliers
      * @return array<int, ProductSupplierId>
      */
     public function setProductSuppliers(
@@ -107,10 +100,7 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param CombinationId $combinationId
-     * @param array<int, ProductSupplier> $productSuppliers
-     *
+     * @param  array<int, ProductSupplier>  $productSuppliers
      * @return array<int, ProductSupplierId>
      */
     public function setCombinationSuppliers(
@@ -129,8 +119,6 @@ class ProductSupplierUpdater
 
     /**
      * Removes all product suppliers associated to specified product without combinations
-     *
-     * @param ProductId $productId
      */
     public function removeAllForProduct(ProductId $productId): void
     {
@@ -147,8 +135,6 @@ class ProductSupplierUpdater
 
     /**
      * Removes all product suppliers associated to specified combination
-     *
-     * @param CombinationId $combinationId
      */
     public function removeAllForCombination(CombinationId $combinationId): void
     {
@@ -161,9 +147,6 @@ class ProductSupplierUpdater
         $this->resetDefaultSupplier($product);
     }
 
-    /**
-     * @param Product $product
-     */
     public function resetDefaultSupplier(Product $product): void
     {
         $product->supplier_reference = '';
@@ -177,30 +160,16 @@ class ProductSupplierUpdater
         );
     }
 
-    /**
-     * @param ProductId $productId
-     * @param SupplierId $supplierId
-     */
     public function updateProductDefaultSupplier(ProductId $productId, SupplierId $supplierId): void
     {
         $this->updateDefaultSupplier($productId, $supplierId, null);
     }
 
-    /**
-     * @param ProductId $productId
-     * @param SupplierId $supplierId
-     * @param CombinationId $combinationId
-     */
     public function updateCombinationDefaultSupplier(ProductId $productId, SupplierId $supplierId, CombinationId $combinationId): void
     {
         $this->updateDefaultSupplier($productId, $supplierId, $combinationId);
     }
 
-    /**
-     * @param ProductId $productId
-     * @param SupplierId $supplierId
-     * @param CombinationId|null $combinationId
-     */
     private function updateDefaultSupplier(ProductId $productId, SupplierId $supplierId, ?CombinationId $combinationId): void
     {
         $product = $this->productRepository->get($productId);
@@ -208,7 +177,7 @@ class ProductSupplierUpdater
         $productIdValue = (int) $product->id;
 
         $this->supplierRepository->assertSupplierExists($supplierId);
-        if (null === $combinationId && $product->hasCombinations()) {
+        if ($combinationId === null && $product->hasCombinations()) {
             $this->throwInvalidTypeException($productId);
         }
 
@@ -232,9 +201,7 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param array<int, ProductSupplier> $productSuppliers
-     * @param CombinationId|null $combinationId
+     * @param  array<int, ProductSupplier>  $productSuppliers
      */
     private function persistProductSuppliers(ProductId $productId, array $productSuppliers, ?CombinationId $combinationId = null): void
     {
@@ -252,7 +219,7 @@ class ProductSupplierUpdater
 
         // Check if product has a default supplier if not use the first one
         $defaultSupplierId = $this->productSupplierRepository->getProductDefaultSupplierId($productId);
-        if (null === $defaultSupplierId) {
+        if ($defaultSupplierId === null) {
             /** @var ProductSupplier $defaultSupplier */
             $defaultSupplier = reset($productSuppliers);
             $defaultSupplierId = new SupplierId((int) $defaultSupplier->id_supplier);
@@ -261,10 +228,7 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param array<int, ProductSupplier> $providedProductSuppliers
-     * @param CombinationId|null $combinationId
-     *
+     * @param  array<int, ProductSupplier>  $providedProductSuppliers
      * @return array<int, ProductSupplierId>
      */
     private function getDeletableProductSupplierIds(
@@ -291,9 +255,6 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param CombinationId|null $combinationId
-     *
      * @return array<int, ProductSupplierId>
      */
     private function getProductSupplierIds(ProductId $productId, ?CombinationId $combinationId = null): array
@@ -304,8 +265,6 @@ class ProductSupplierUpdater
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws InvalidProductTypeException
      */
     private function throwInvalidTypeException(ProductId $productId): void

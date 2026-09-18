@@ -76,7 +76,7 @@ class NewSocialCommentNotification extends Notification implements ShouldQueue
     public function toMail(mixed $notifiable): MailMessage
     {
         $url = route('helpdesksocial.inbox.show', $this->comment);
-        $name = trim(($notifiable->firstname ?? '').' '.($notifiable->lastname ?? '')) ?: 'Hola';
+        $name = $notifiable->fullName() ?: 'Hola';
 
         return (new MailMessage)
             ->subject("[Social] Nuevo comentario {$this->comment->urgency} en {$this->comment->platform}")

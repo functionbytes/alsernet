@@ -109,7 +109,7 @@
                         <h5 class="text-muted mb-2">No hay atributos creados</h5>
                         <p class="text-muted mb-4">Crea tu primer atributo personalizado para extender la funcionalidad</p>
                         <a href="{{ route('settings.helpdesk.attributes.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Crear primer atributo
+                            Crear primer atributo
                         </a>
                     </td>
                 </tr>

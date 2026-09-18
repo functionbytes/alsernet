@@ -69,12 +69,71 @@
 
 /* Storage quota widget */
 .media-storage-widget {
-    min-width: 200px;
-    max-width: 400px;
+    min-width: 220px;
+    max-width: 320px;
+}
+
+.media-storage-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.media-storage-icon {
+    width: 36px;
+    height: 36px;
 }
 
 .media-quota-progress {
     height: 6px;
+}
+
+/* Toolbar icon-only buttons (duplicates, activity, trash, log, tags, new folder) */
+.media-toolbar-icon-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+/* Unified action bar: search + quick actions rendered as one continuous toolbar */
+.media-toolbar-group {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+}
+
+/* Bootstrap only auto-rounds direct .btn children; the last action here is a
+   nested .btn-group (dropdown toggle), so its outer corners need rounding explicitly */
+.media-toolbar-group > .btn:last-child,
+.media-toolbar-group > .btn-group:last-child > .btn {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.media-toolbar-group .media-toolbar-icon-btn.btn-outline-secondary {
+    border-color: #e5e7eb;
+    background-color: #fff;
+    color: #8a94a6;
+}
+
+.media-toolbar-group .media-toolbar-icon-btn.btn-outline-secondary:hover,
+.media-toolbar-group .media-toolbar-icon-btn.btn-outline-secondary:focus,
+.media-toolbar-group .media-toolbar-icon-btn.btn-outline-secondary.show {
+    background-color: #FEF6E9;
+    border-color: #F5B754;
+    color: #C98A1F;
+}
+
+/* Badge over the tags filter icon button */
+.media-toolbar-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 0.65rem;
+    padding: 0.25em 0.45em;
 }
 
 /* Duplicate detector card */
@@ -196,7 +255,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #13C672;
+    background: #F5B754;
 }
 
 /* Activity heatmap (GitHub-style calendar) */

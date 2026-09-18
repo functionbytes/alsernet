@@ -48,10 +48,6 @@ class DataLangFactory
      */
     private $translator;
 
-    /**
-     * @param string $dbPrefix
-     * @param TranslatorInterface $translator
-     */
     public function __construct(string $dbPrefix, TranslatorInterface $translator)
     {
         $this->dbPrefix = $dbPrefix;
@@ -61,8 +57,7 @@ class DataLangFactory
     /**
      * Return the appropriate DataLang class name using a table name as source. Note: the class may not exist.
      *
-     * @param string $tableName Table name, accepts with and without db prefix and _lang suffix
-     *
+     * @param  string  $tableName  Table name, accepts with and without db prefix and _lang suffix
      * @return string dataLang class name
      */
     public function getClassNameFromTable(string $tableName): string
@@ -76,16 +71,14 @@ class DataLangFactory
     /**
      * Instantiates the appropriate DataLang class for the provided locale
      *
-     * @param string $className Class name to instantiate
-     * @param string $locale IETF language tag
-     *
-     * @return DataLangCore
+     * @param  string  $className  Class name to instantiate
+     * @param  string  $locale  IETF language tag
      *
      * @throws DataLangClassNameNotFoundException
      */
     public function buildFromClassName(string $className, string $locale): DataLangCore
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new DataLangClassNameNotFoundException(sprintf("Class name \"%s\" doesn't exist", $className));
         }
 
@@ -98,10 +91,8 @@ class DataLangFactory
     /**
      * Instantiates the appropriate DataLang class for the provided table name and locale code
      *
-     * @param string $tableName Table name (accepts with and without db prefix and _lang suffix)
-     * @param string $locale IETF language tag
-     *
-     * @return DataLangCore
+     * @param  string  $tableName  Table name (accepts with and without db prefix and _lang suffix)
+     * @param  string  $locale  IETF language tag
      */
     public function buildFromTableName(string $tableName, string $locale): DataLangCore
     {
@@ -110,10 +101,6 @@ class DataLangFactory
 
     /**
      * Removes the db prefix from the table name if present
-     *
-     * @param string $tableName
-     *
-     * @return string
      */
     private function removeDbPrefixIfPresent(string $tableName): string
     {
@@ -127,10 +114,6 @@ class DataLangFactory
 
     /**
      * Adds the _lang suffix if not present
-     *
-     * @param string $tableName
-     *
-     * @return string
      */
     private function ensureLangSuffix(string $tableName): string
     {

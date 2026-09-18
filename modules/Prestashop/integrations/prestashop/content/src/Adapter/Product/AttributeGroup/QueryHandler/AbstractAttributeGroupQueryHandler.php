@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ abstract class AbstractAttributeGroupQueryHandler
      */
     protected $attributeGroupRepository;
 
-    /**
-     * @param AttributeGroupRepository $attributeGroupRepository
-     */
     public function __construct(
         AttributeGroupRepository $attributeGroupRepository
     ) {
@@ -53,9 +51,6 @@ abstract class AbstractAttributeGroupQueryHandler
     }
 
     /**
-     * @param array $attributeGroupEntities
-     * @param bool $withAttributes
-     *
      * @return AttributeGroup[]
      */
     protected function formatAttributeGroups(array $attributeGroupEntities, bool $withAttributes): array

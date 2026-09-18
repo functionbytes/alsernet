@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShop\PrestaShop\Core\Domain\Tax\Command;
 
+use PrestaShop\PrestaShop\Core\Domain\Tax\Exception\TaxException;
 use PrestaShop\PrestaShop\Core\Domain\Tax\ValueObject\TaxId;
 
 /**
@@ -39,9 +41,9 @@ class DeleteTaxCommand
     private $taxId;
 
     /**
-     * @param int $taxId
+     * @param  int  $taxId
      *
-     * @throws \PrestaShop\PrestaShop\Core\Domain\Tax\Exception\TaxException
+     * @throws TaxException
      */
     public function __construct($taxId)
     {

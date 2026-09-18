@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ final class ShopLogosFormDataProvider implements FormDataProviderInterface
      */
     private $themeMultiStoreSettingsFormDataProvider;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     * @param MultiStoreSettingsFormDataProviderInterface $themeMultiStoreSettingsFormDataProvider
-     */
     public function __construct(
         CommandBusInterface $commandBus,
         MultiStoreSettingsFormDataProviderInterface $themeMultiStoreSettingsFormDataProvider
@@ -68,29 +65,27 @@ final class ShopLogosFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param array $data
-     *
      * @return array
      */
     public function setData(array $data)
     {
         $data = $this->geFilteredFieldsByShopRestriction($data);
 
-        $command = new UploadLogosCommand();
+        $command = new UploadLogosCommand;
 
-        if (!empty($data['header_logo'])) {
+        if (! empty($data['header_logo'])) {
             $command->setUploadedHeaderLogo($data['header_logo']);
         }
 
-        if (!empty($data['mail_logo'])) {
+        if (! empty($data['mail_logo'])) {
             $command->setUploadedMailLogo($data['mail_logo']);
         }
 
-        if (!empty($data['invoice_logo'])) {
+        if (! empty($data['invoice_logo'])) {
             $command->setUploadedInvoiceLogo($data['invoice_logo']);
         }
 
-        if (!empty($data['favicon'])) {
+        if (! empty($data['favicon'])) {
             $command->setUploadedFavicon($data['favicon']);
         }
 
@@ -103,13 +98,12 @@ final class ShopLogosFormDataProvider implements FormDataProviderInterface
      * If shop_restriction argument exists in the post this means that certain shop restrictions are applied.
      * It filters and drops the values which are not being selected for editing for specific shop.
      *
-     * @param array $data - form data
-     *
+     * @param  array  $data  - form data
      * @return array
      */
     private function geFilteredFieldsByShopRestriction(array $data)
     {
-        if (!isset($data['shop_restriction'])) {
+        if (! isset($data['shop_restriction'])) {
             return $data;
         }
 
@@ -120,7 +114,7 @@ final class ShopLogosFormDataProvider implements FormDataProviderInterface
 
         foreach ($shopRestrictionFields as $shopRestrictionField) {
             $doesValueExistsAndNotRestrictedToShop = isset($data[$shopRestrictionField->getFieldName()]) &&
-                !$shopRestrictionField->isRestrictedToContextShop();
+                ! $shopRestrictionField->isRestrictedToContextShop();
 
             if ($doesValueExistsAndNotRestrictedToShop) {
                 unset($data[$shopRestrictionField->getFieldName()]);

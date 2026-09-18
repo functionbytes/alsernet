@@ -69,7 +69,7 @@ class HttpClient
                 'body' => $response,
                 'error' => null,
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             curl_close($ch);
 
             return [

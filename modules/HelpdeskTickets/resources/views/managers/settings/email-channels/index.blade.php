@@ -119,6 +119,9 @@
                                                 <span class="badge bg-primary-subtle text-primary ms-1" title="Se usa para responder tickets sin correo entrante (formularios, widget, alta manual)">Por defecto</span>
                                             @endif
                                             <div><small class="text-muted">{{ $c['username'] }}</small></div>
+                                            @if(! empty($c['sync_since']))
+                                                <div><small class="text-muted"><i class="fas fa-calendar-day me-1"></i>Sincroniza desde {{ \Illuminate\Support\Carbon::parse($c['sync_since'])->format('d/m/Y') }}</small></div>
+                                            @endif
                                         </td>
                                         <td>
                                             <code class="bg-light px-2 py-1 rounded small">{{ $c['host'] }}:{{ $c['port'] }}</code>
@@ -282,78 +285,14 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+{{-- Solo datos: la lógica entera vive en email-channels-index.js. --}}
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // Delete modal
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Sincronizar un canal concreto
-    $(document).on('click', '.btn-sync-channel', function (e) {
-        e.preventDefault();
-        const $link = $(this);
-        const original = $link.text();
-        $link.text('Sincronizando...');
-
-        $.ajax({
-            url: '{{ url('panel/helpdesk/settings/tickets/email-channels') }}/' + $link.data('id') + '/sync',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 1000);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error inesperado al sincronizar el canal.');
-                $link.text(original);
-            },
-        });
-    });
-
-    // Bulk actions
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una accion.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos un canal.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' canal(es) seleccionados?')) { return; }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-        $.ajax({
-            url: '{{ route("manager.helpdesk.settings.email-channels.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
-    });
-});
+window.hdtEmailChannelsIndexConfig = {
+    syncUrlBase: @json(url('panel/helpdesk/settings/tickets/email-channels')),
+    bulkActionUrl: @json(route('manager.helpdesk.settings.email-channels.bulk-action')),
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/email-channels-index.js') }}"></script>
 @endpush

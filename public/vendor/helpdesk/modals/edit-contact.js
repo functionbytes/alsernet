@@ -73,7 +73,7 @@
 
         $.ajax({
             url: updateUrl,
-            method: 'PUT',
+            method: 'POST',
             dataType: 'json',
             data: {
                 name:           name,
@@ -86,6 +86,7 @@
             headers: {
                 'X-CSRF-TOKEN': csrf,
                 'Accept':       'application/json',
+                'X-HTTP-Method-Override': 'PUT',
             },
         })
         .done(function (resp) {

@@ -24,6 +24,7 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use PrestaShop\PrestaShop\Adapter\Assets\AssetUrlGeneratorTrait;
 use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 
 abstract class AbstractAssetManagerCore
@@ -40,7 +41,7 @@ abstract class AbstractAssetManagerCore
 
     const DEFAULT_JS_POSITION = 'bottom';
 
-    use PrestaShop\PrestaShop\Adapter\Assets\AssetUrlGeneratorTrait;
+    use AssetUrlGeneratorTrait;
 
     public function __construct(array $directories, ConfigurationInterface $configuration)
     {

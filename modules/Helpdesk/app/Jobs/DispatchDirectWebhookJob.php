@@ -28,7 +28,7 @@ class DispatchDirectWebhookJob implements ShouldQueue
         private readonly string $url,
         private readonly array $payload,
     ) {
-        $this->onQueue('webhooks');
+        $this->onQueue(config('helpdesk.queue.webhooks', 'helpdesk-webhooks'));
     }
 
     public function handle(): void
@@ -44,7 +44,10 @@ class DispatchDirectWebhookJob implements ShouldQueue
         }
 
         try {
-            Http::timeout(10)->post($this->url, $this->payload);
+            // withoutRedirecting: la URL ya se validó contra el guard SSRF, pero un
+            // redirect no revalidado podría llevar la petición a un host interno.
+            // No hace falta seguir redirecciones legítimas para un webhook saliente.
+            Http::timeout(10)->withoutRedirecting()->post($this->url, $this->payload);
         } catch (\Throwable $e) {
             Log::warning('DispatchDirectWebhookJob: direct POST failed', [
                 'url' => $this->url,

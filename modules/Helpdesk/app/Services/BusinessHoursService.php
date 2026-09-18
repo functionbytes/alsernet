@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\BusinessHour;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 
 class BusinessHoursService
 {
@@ -12,8 +13,11 @@ class BusinessHoursService
 
     /**
      * Determine if the business is open right now based on stored hours.
-     * Returns true when open, false when outside hours or no records found.
-     * Result is cached for 1 minute to avoid repeated DB queries on every webhook.
+     * Returns true when open, false when outside hours, on a holiday, or when
+     * no records found. Los festivos se consultan contra el calendario de
+     * HelpdeskSla si ese módulo está instalado (dependencia blanda); sin él,
+     * ningún día se trata como festivo. Result is cached for 1 minute to
+     * avoid repeated DB queries on every webhook.
      *
      * When the "Horarios de atención" panel toggle (Settings → Business →
      * Features) is OFF, the business is considered always open — no
@@ -42,6 +46,10 @@ class BusinessHoursService
                 $now = Carbon::now(config('app.timezone', 'UTC'));
             }
 
+            if ($this->isHoliday($now)) {
+                return false;
+            }
+
             $opens = Carbon::parse($now->format('Y-m-d').' '.$hour->opens_at, $timezone);
             $closes = Carbon::parse($now->format('Y-m-d').' '.$hour->closes_at, $timezone);
 
@@ -65,5 +73,21 @@ class BusinessHoursService
     public function forgetCache(): void
     {
         Cache::forget('helpdesk:business_hours_open');
+    }
+
+    /**
+     * ¿"Hoy" (ya en la timezone del horario) es festivo según el calendario
+     * de HelpdeskSla? Dependencia blanda: sin ese módulo instalado nunca hay
+     * festivos, igual que el comportamiento previo a este cambio.
+     */
+    private function isHoliday(Carbon $now): bool
+    {
+        if (! class_exists(BusinessHoursCalculator::class)) {
+            return false;
+        }
+
+        $calculator = app(BusinessHoursCalculator::class);
+
+        return $calculator->isHoliday($now, $calculator->holidays());
     }
 }

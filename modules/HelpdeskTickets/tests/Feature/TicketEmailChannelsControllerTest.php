@@ -345,6 +345,41 @@ class TicketEmailChannelsControllerTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/hace \d+ (segundo|minuto|hora|d[ií]a)/u', $response->getContent());
     }
 
+    // ─── Sincronizar desde (sync_since) ───────────────────────────────────────
+
+    public function test_index_shows_the_sync_since_badge_when_configured(): void
+    {
+        $this->makeChannel(['name' => 'Canal con filtro', 'sync_since' => '2026-01-15']);
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.settings.email-channels.index'));
+
+        $response->assertOk();
+        $response->assertSee('Sincroniza desde 15/01/2026');
+    }
+
+    public function test_index_does_not_show_the_badge_when_sync_since_is_not_set(): void
+    {
+        $this->makeChannel(['name' => 'Canal sin filtro']);
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.settings.email-channels.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('Sincroniza desde');
+    }
+
+    public function test_edit_preloads_the_configured_sync_since_value(): void
+    {
+        $channel = $this->makeChannel(['sync_since' => '2026-03-01']);
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.settings.email-channels.edit', $channel['id']));
+
+        $response->assertOk();
+        $response->assertSee('value="2026-03-01"', false);
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

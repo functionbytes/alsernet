@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,10 +37,5 @@ use PrestaShop\PrestaShop\Core\Domain\SpecificPrice\ValueObject\SpecificPriceId;
  */
 interface AddProductSpecificPriceHandlerInterface
 {
-    /**
-     * @param AddProductSpecificPriceCommand $command
-     *
-     * @return SpecificPriceId
-     */
     public function handle(AddProductSpecificPriceCommand $command): SpecificPriceId;
 }

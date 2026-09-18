@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class SetRequiredFieldsForAddressCommand
     private $requiredFields;
 
     /**
-     * @param string[] $requiredFields
+     * @param  string[]  $requiredFields
      */
     public function __construct(array $requiredFields)
     {
@@ -60,7 +61,7 @@ class SetRequiredFieldsForAddressCommand
     /**
      * Check that all provided fields are allowed.
      *
-     * @param string[] $requiredFields
+     * @param  string[]  $requiredFields
      */
     private function assertContainsOnlyAllowedFields(array $requiredFields)
     {
@@ -69,7 +70,7 @@ class SetRequiredFieldsForAddressCommand
         }
 
         foreach ($requiredFields as $requiredField) {
-            if (!in_array($requiredField, RequiredFields::ALLOWED_REQUIRED_FIELDS)) {
+            if (! in_array($requiredField, RequiredFields::ALLOWED_REQUIRED_FIELDS)) {
                 throw new AddressConstraintException(sprintf('Required field %s is invalid. Allowed fields are: %s', $requiredField, implode(',', RequiredFields::ALLOWED_REQUIRED_FIELDS)), AddressConstraintException::INVALID_REQUIRED_FIELDS);
             }
         }

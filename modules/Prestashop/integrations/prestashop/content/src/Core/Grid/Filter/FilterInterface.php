@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,6 @@ interface FilterInterface
     /**
      * Set filter type options.
      *
-     * @param array $filterTypeOptions
      *
      * @return self
      */
@@ -64,8 +64,7 @@ interface FilterInterface
     /**
      * Set column ID if filter is associated with column.
      *
-     * @param string $columnId
-     *
+     * @param  string  $columnId
      * @return self
      */
     public function setAssociatedColumn($columnId);

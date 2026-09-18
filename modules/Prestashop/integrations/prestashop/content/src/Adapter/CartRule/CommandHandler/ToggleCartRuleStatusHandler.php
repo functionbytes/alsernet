@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,7 +46,7 @@ final class ToggleCartRuleStatusHandler extends AbstractCartRuleHandler implemen
     {
         $cartRule = $this->getCartRule($command->getCartRuleId());
 
-        if (!$this->toggleCartRuleStatus($cartRule, $command->getExpectedStatus())) {
+        if (! $this->toggleCartRuleStatus($cartRule, $command->getExpectedStatus())) {
             throw new UpdateCartRuleException(
                 sprintf(
                     'Unable to toggle cart rule status with id "%s"',

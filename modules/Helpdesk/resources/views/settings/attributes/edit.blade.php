@@ -35,7 +35,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Nombre del Atributo
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <input type="text" name="name" class="form-control" value="{{ old('name', $attribute->name) }}" required placeholder="Ej: Prioridad del Cliente">
                             <small class="form-text text-muted">Nombre visible para los usuarios</small>
@@ -49,7 +49,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Clave Única
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <input type="text" name="key" class="form-control bg-light" value="{{ old('key', $attribute->key) }}" readonly>
                             <small class="form-text text-muted">La clave no se puede cambiar una vez creada</small>
@@ -81,7 +81,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Tipo de atributo
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <select name="model_type" class="form-select" required>
                                 <option value="contact" @selected(old('model_type', $attribute->model_type ?? 'contact') === 'contact')>Atributo del contacto</option>
@@ -97,7 +97,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Tipo de campo
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <select name="format" class="form-select select2" id="formatSelect" required>
                                 <option value="text" {{ old('format', $attribute->format) === 'text' ? 'selected' : '' }}>Texto</option>
@@ -120,7 +120,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Permiso
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <select name="permission" class="form-select select2" required>
                                 <option value="agentCanEdit" {{ old('permission', $attribute->permission) === 'agentCanEdit' ? 'selected' : '' }}>
@@ -171,7 +171,7 @@
                                 @endif
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addOption">
-                                <i class="fa fa-plus"></i> Agregar Opción
+                                Agregar Opción
                             </button>
                             <small class="form-text text-muted d-block mt-2">
                                 Define las opciones disponibles para este campo
@@ -258,72 +258,14 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-$(document).ready(function() {
-    let optionCounter = {{ !empty($existingOptions) ? count($existingOptions) : 1 }};
-
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: false,
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    // Format select handler
-    $('#formatSelect').on('change', function() {
-        const format = $(this).val();
-
-        // Hide all config sections
-        $('#optionsContainer').addClass('d-none');
-        $('#numberRangeContainer').addClass('d-none');
-
-        // Show relevant config section
-        if (format === 'select' || format === 'checkboxGroup') {
-            $('#optionsContainer').removeClass('d-none');
-        } else if (format === 'number') {
-            $('#numberRangeContainer').removeClass('d-none');
-        }
-    }).trigger('change');
-
-    // Add option
-    $('#addOption').on('click', function() {
-        optionCounter++;
-        const optionHtml = `
-            <div class="option-item mb-2">
-                <div class="input-group">
-                    <input type="text" name="options[]" class="form-control" placeholder="Opción ${optionCounter}">
-                    <button type="button" class="btn btn-outline-danger remove-option">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        $('#optionsList').append(optionHtml);
-    });
-
-    // Remove option
-    $(document).on('click', '.remove-option', function() {
-        if ($('.option-item').length > 1) {
-            $(this).closest('.option-item').remove();
-        } else {
-            toastr.warning('Debe mantener al menos una opción', 'Advertencia');
-        }
-    });
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
+window.HdAttributesFormConfig = {
+    mode: 'edit',
+    optionCount: {{ !empty($existingOptions) ? count($existingOptions) : 1 }},
+};
 </script>
-@endsection
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/attributes-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/attributes-form.js')) }}" defer></script>
+@endpush

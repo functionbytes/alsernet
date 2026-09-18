@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ final class MailMethodChoiceProvider implements FormChoiceProviderInterface
      */
     private $translator;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         TranslatorInterface $translator
@@ -65,7 +62,7 @@ final class MailMethodChoiceProvider implements FormChoiceProviderInterface
     {
         $choices = [];
 
-        if (null === $this->configuration->get('_PS_HOST_MODE_')) {
+        if ($this->configuration->get('_PS_HOST_MODE_') === null) {
             $choices[
                 $this->trans('Use /usr/sbin/sendmail (recommended; works in most cases)', [], 'Admin.Advparameters.Feature')
             ] = MailOption::METHOD_NATIVE;
@@ -83,10 +80,8 @@ final class MailMethodChoiceProvider implements FormChoiceProviderInterface
     }
 
     /**
-     * @param string $key
-     * @param array $params
-     * @param string $domain
-     *
+     * @param  string  $key
+     * @param  string  $domain
      * @return string
      */
     private function trans($key, array $params, $domain)

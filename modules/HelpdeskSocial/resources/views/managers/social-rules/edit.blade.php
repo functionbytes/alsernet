@@ -25,7 +25,7 @@
                         <h6 class="fw-bold mb-3">Información básica</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                 <input type="text"
                                        class="form-control @error('name') is-invalid @enderror"
                                        name="name"
@@ -85,7 +85,7 @@
                         <h6 class="fw-bold mb-3">Condiciones y acciones</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
-                                <label class="form-label">Condiciones (JSON) <span class="text-danger">*</span></label>
+                                <label class="form-label">Condiciones (JSON) <span class="text-brand">*</span></label>
                                 <textarea class="form-control font-monospace @error('conditions') is-invalid @enderror"
                                           name="conditions"
                                           rows="8">{{ old('conditions', is_array($rule->conditions) ? json_encode($rule->conditions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (string) $rule->conditions) }}</textarea>
@@ -99,7 +99,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Acciones (JSON) <span class="text-danger">*</span></label>
+                                <label class="form-label">Acciones (JSON) <span class="text-brand">*</span></label>
                                 <textarea class="form-control font-monospace @error('actions') is-invalid @enderror"
                                           name="actions"
                                           rows="8">{{ old('actions', is_array($rule->actions) ? json_encode($rule->actions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (string) $rule->actions) }}</textarea>
@@ -190,15 +190,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-
-    $('#deleteRuleBtn').on('click', function () {
-        if (confirm('¿Seguro que quieres eliminar esta regla? Esta acción no se puede deshacer.')) {
-            $('#deleteRuleForm').submit();
-        }
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdesksocial/js/social-rules-form.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-rules-form.js')) }}"></script>
 @endpush

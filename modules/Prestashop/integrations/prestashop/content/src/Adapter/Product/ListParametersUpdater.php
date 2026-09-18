@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,10 +38,9 @@ final class ListParametersUpdater
     /**
      * In case of position ordering all the filters should be reset.
      *
-     * @param array $filterParameters
-     * @param string $orderBy
-     * @param bool $hasCategoryFilter
-     *
+     * @param  array  $filterParameters
+     * @param  string  $orderBy
+     * @param  bool  $hasCategoryFilter
      * @return array $filterParameters
      */
     public function cleanFiltersForPositionOrdering($filterParameters, $orderBy, $hasCategoryFilter)
@@ -57,10 +57,6 @@ final class ListParametersUpdater
     }
 
     /**
-     * @param array $queryFilterParameters
-     * @param array $persistedFilterParameters
-     * @param array $defaultFilterParameters
-     *
      * @return array
      *
      * @throws ProductException
@@ -101,7 +97,7 @@ final class ListParametersUpdater
          * We need to force the sort order when the order by
          * is set to position_ordering
          */
-        if ('position_ordering' === $filters['orderBy']) {
+        if ($filters['orderBy'] === 'position_ordering') {
             $filters['sortOrder'] = 'asc';
         }
 
@@ -109,11 +105,7 @@ final class ListParametersUpdater
     }
 
     /**
-     * @param string $parameterName
-     * @param array $queryFilterParameters
-     * @param array $persistedFilterParameters
-     * @param array $defaultFilterParameters
-     *
+     * @param  string  $parameterName
      * @return string|int
      *
      * @throws ProductException
@@ -134,8 +126,8 @@ final class ListParametersUpdater
             throw new ProductException('Could not find the parameter %s', 'Admin.Notifications.Error', [$parameterName]);
         }
 
-        if ($value === 'last' && isset($persistedFilterParameters['last_' . $parameterName])) {
-            $value = $persistedFilterParameters['last_' . $parameterName];
+        if ($value === 'last' && isset($persistedFilterParameters['last_'.$parameterName])) {
+            $value = $persistedFilterParameters['last_'.$parameterName];
         }
 
         return $value;

@@ -20,6 +20,12 @@ return [
     'default_logo_light' => env('APP_DEFAULT_LOGO_LIGHT', 'images/logo_light.svg'),
     'default_logo_dark' => env('APP_DEFAULT_LOGO_DARK', 'images/logo_dark.svg'),
 
+    // Disposicion del panel de filtros de los listados:
+    //   'grid'  → modal ancho con los campos en dos columnas
+    //   'panel' → panel lateral que no tapa la tabla mientras se ajusta
+    // Se cambia con PANEL_FILTERS_STYLE en el .env, sin tocar las vistas.
+    'filters_style' => env('PANEL_FILTERS_STYLE', 'grid'),
+
     // Beta features
     'woo' => false,
 

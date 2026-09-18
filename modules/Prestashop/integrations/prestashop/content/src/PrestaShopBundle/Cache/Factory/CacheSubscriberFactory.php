@@ -37,12 +37,12 @@ use GuzzleHttp\Subscriber\Cache\CacheSubscriber;
 final class CacheSubscriberFactory
 {
     /**
-     * @param CacheStorageInterface $storage
-     *
      * @return CacheSubscriber
      */
     public function create(CacheStorageInterface $storage)
     {
-        return new CacheSubscriber($storage, function (Request $request) { return true; });
+        return new CacheSubscriber($storage, function (Request $request) {
+            return true;
+        });
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,6 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
      */
     private $defaultCurrencyIsoCode;
 
-    /**
-     * @param Locale $locale
-     * @param string|null $defaultCurrencyIsoCode
-     */
     public function __construct(
         Locale $locale,
         ?string $defaultCurrencyIsoCode = null
@@ -85,8 +82,6 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
     }
 
     /**
-     * @param SupplierId $supplierId
-     *
      * @return Supplier
      *
      * @throws SupplierNotFoundException
@@ -103,9 +98,6 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
     }
 
     /**
-     * @param Supplier $supplier
-     * @param LanguageId $languageId
-     *
      * @return array
      *
      * @throws LocalizationException
@@ -126,7 +118,7 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
 
                 foreach ($productCombinations as $combination) {
                     $attributeId = $combination['id_product_attribute'];
-                    if (!isset($combinations[$attributeId])) {
+                    if (! isset($combinations[$attributeId])) {
                         $productInfo = Supplier::getProductInformationsBySupplier(
                             $supplier->id,
                             $product->id,
@@ -134,7 +126,7 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
                         );
                         $isoCode = Currency::getIsoCodeById((int) $productInfo['id_currency'])
                             ?: $this->defaultCurrencyIsoCode;
-                        $formattedWholesalePrice = null !== $productInfo['product_supplier_price_te']
+                        $formattedWholesalePrice = $productInfo['product_supplier_price_te'] !== null
                             ? $this->locale->formatPrice($productInfo['product_supplier_price_te'], $isoCode)
                             : null;
                         $combinations[$attributeId] = [
@@ -153,7 +145,7 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
                         $combination['attribute_name']
                     );
 
-                    if (!empty($combinations[$attributeId]['attributes'])) {
+                    if (! empty($combinations[$attributeId]['attributes'])) {
                         $attribute = sprintf(', %s', $attribute);
                     }
 
@@ -168,7 +160,7 @@ final class GetSupplierForViewingHandler implements GetSupplierForViewingHandler
                 $product->wholesale_price = $productInfo['product_supplier_price_te'];
                 $product->supplier_reference = $productInfo['product_supplier_reference'];
                 $isoCode = Currency::getIsoCodeById((int) $productInfo['id_currency']) ?: $this->defaultCurrencyIsoCode;
-                $formattedWholesalePrice = null !== $product->wholesale_price
+                $formattedWholesalePrice = $product->wholesale_price !== null
                     ? $this->locale->formatPrice($product->wholesale_price, $isoCode)
                     : null;
                 $products[] = [

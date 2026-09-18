@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,15 +43,10 @@ class LegacyParametersConverter
      * Example with $request being a Symfony Request:
      *
      * $legacyParameters = $converter->getParameters($request->attributes->all(), $request->query->all());
-     *
-     * @param array $requestAttributes
-     * @param array $queryParameters
-     *
-     * @return array|null
      */
     public function getParameters(array $requestAttributes, array $queryParameters): ?array
     {
-        if (!isset($requestAttributes['_legacy_parameters']) && !isset($requestAttributes['_legacy_link'])) {
+        if (! isset($requestAttributes['_legacy_parameters']) && ! isset($requestAttributes['_legacy_link'])) {
             return null;
         }
 
@@ -69,17 +65,17 @@ class LegacyParametersConverter
         // Set controller and action based on _legacy_link
         if (isset($requestAttributes['_legacy_link'])) {
             $legacyLinks = $requestAttributes['_legacy_link'];
-            if (!is_array($legacyLinks)) {
+            if (! is_array($legacyLinks)) {
                 $legacyLinks = [$legacyLinks];
             }
 
             // Loop through the _legacy_link until a controller and action is found
             foreach ($legacyLinks as $legacyLink) {
                 $linkParts = explode(':', $legacyLink);
-                if (!isset($legacyParameters['controller'])) {
+                if (! isset($legacyParameters['controller'])) {
                     $legacyParameters['controller'] = $linkParts[0];
                 }
-                if (!isset($legacyParameters['action']) && count($linkParts) > 1) {
+                if (! isset($legacyParameters['action']) && count($linkParts) > 1) {
                     $legacyParameters['action'] = $linkParts[1];
                 }
                 if (isset($legacyParameters['controller'], $legacyParameters['action'])) {

@@ -2,6 +2,8 @@
 
 namespace Modules\Core\Traits;
 
+use Acelle\Library\Tool;
+
 /**
  * Trait HasQuotaManagement
  *
@@ -200,7 +202,7 @@ trait HasQuotaManagement
      */
     public function totalUploadSize(): float
     {
-        return \Acelle\Library\Tool::getDirectorySize(base_path('public/source/'.$this->user->uid)) / 1048576;
+        return Tool::getDirectorySize(base_path('public/source/'.$this->user->uid)) / 1048576;
     }
 
     /**

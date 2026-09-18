@@ -1,13 +1,14 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include _PS_ADMIN_DIR_ . '/../../config/config.inc.php';
+include _PS_ADMIN_DIR_.'/../../config/config.inc.php';
 
 // Mapeo de número a texto
 $nombreMapeado = [
@@ -27,7 +28,7 @@ $directorio = '/home/alvarez/web/scripts/coding/';
 $datosArchivos = [];
 
 // Buscar archivos con patrón
-foreach (glob($directorio . 'precios_diferencias_*.csv') as $archivo) {
+foreach (glob($directorio.'precios_diferencias_*.csv') as $archivo) {
     // Obtener nombre base del archivo
     $nombreBase = basename($archivo, '.csv'); // precios_diferencias_2
 
@@ -37,7 +38,7 @@ foreach (glob($directorio . 'precios_diferencias_*.csv') as $archivo) {
         $nombreTexto = $nombreMapeado[$numero] ?? 'DESCONOCIDO';
 
         // Corregido: delimitador explícito ';'
-        $contenido = array_map(function($linea) {
+        $contenido = array_map(function ($linea) {
             return str_getcsv($linea, ';');
         }, file($archivo));
 
@@ -56,7 +57,9 @@ foreach ($datosArchivos as $region => $registros) {
     foreach ($registros as $registro) {
 
         // Ignorar filas vacías o mal formateadas
-        if (count($registro) < 1) continue;
+        if (count($registro) < 1) {
+            continue;
+        }
 
         // Verificar si el último valor es '0'
         $ultimoValor = trim(end($registro));
@@ -78,12 +81,12 @@ foreach ($registrosCero as $pais => $registros) {
         $referencia = $registro[1];
 
         // Inicializamos si no existe
-        if (!isset($referenciasPorPais[$referencia])) {
+        if (! isset($referenciasPorPais[$referencia])) {
             $referenciasPorPais[$referencia] = [];
         }
 
         // Evitar repetir países
-        if (!in_array($pais, $referenciasPorPais[$referencia])) {
+        if (! in_array($pais, $referenciasPorPais[$referencia])) {
             $referenciasPorPais[$referencia][] = $pais;
         }
     }
@@ -95,7 +98,6 @@ $referenciasConPaises = [];
 foreach ($referenciasPorPais as $referencia => $paises) {
     $referenciasConPaises[$referencia] = implode(',', $paises);
 }
-
 
 // Comenzamos a construir el HTML en una variable
 $html = "<!DOCTYPE html>
@@ -118,65 +120,66 @@ $html = "<!DOCTYPE html>
 // Tabla por país: $registrosOtros
 foreach ($registrosOtros as $pais => $registros) {
     $html .= "<h3>País: $pais</h3>";
-    $html .= "<table>";
-    $html .= "<tr>
+    $html .= '<table>';
+    $html .= '<tr>
                 <th>id_product</th>
                 <th>reference</th>
                 <th>precio_ps</th>
                 <th>precio_angular</th>
-              </tr>";
+              </tr>';
 
     foreach ($registros as $registro) {
-        if (count($registro) < 4) continue;
+        if (count($registro) < 4) {
+            continue;
+        }
 
-        list($id_product, $reference, $precio_ps, $precio_angular) = $registro;
+        [$id_product, $reference, $precio_ps, $precio_angular] = $registro;
 
-        $html .= "<tr>
-                    <td>" . htmlspecialchars($id_product) . "</td>
-                    <td>" . htmlspecialchars($reference) . "</td>
-                    <td>" . htmlspecialchars($precio_ps) . "</td>
-                    <td>" . htmlspecialchars($precio_angular) . "</td>
-                  </tr>";
+        $html .= '<tr>
+                    <td>'.htmlspecialchars($id_product).'</td>
+                    <td>'.htmlspecialchars($reference).'</td>
+                    <td>'.htmlspecialchars($precio_ps).'</td>
+                    <td>'.htmlspecialchars($precio_angular).'</td>
+                  </tr>';
     }
 
-    $html .= "</table>";
+    $html .= '</table>';
 }
 
 // Segunda tabla: referencias encontradas en múltiples países
-$html .= "<h2>Referencias detectadas en múltiples países</h2>";
-$html .= "<table>";
-$html .= "<tr>
+$html .= '<h2>Referencias detectadas en múltiples países</h2>';
+$html .= '<table>';
+$html .= '<tr>
             <th>Referencia</th>
             <th>Países</th>
-          </tr>";
+          </tr>';
 
 foreach ($referenciasConPaises as $referencia => $paises) {
-    $html .= "<tr>
-                <td>" . htmlspecialchars($referencia) . "</td>
-                <td>" . htmlspecialchars($paises) . "</td>
-              </tr>";
+    $html .= '<tr>
+                <td>'.htmlspecialchars($referencia).'</td>
+                <td>'.htmlspecialchars($paises).'</td>
+              </tr>';
 }
 
-$html .= "</table>
+$html .= '</table>
 </body>
-</html>";
-
+</html>';
 
 $dest = [];
-        $dest[] = "alvarez@alsernet.es";
+$dest[] = 'alvarez@alsernet.es';
 
-        $data=['{message}'=>$html];
-        Mail::Send(    1,
-                        'integracion',
-                        "Integracion",
-                        $data,
-                        $dest,
-                        Configuration::get('PS_SHOP_NAME'),
-                        'desarrollotest@a-alvarez.com',
-                        'desarrollotest',
-                        [],
-                        null,
-                        _PS_MAIL_DIR_,
-                        false,
-                        1
-                    );
+$data = ['{message}' => $html];
+Mail::Send(1,
+    'integracion',
+    'Integracion',
+    $data,
+    $dest,
+    Configuration::get('PS_SHOP_NAME'),
+    'desarrollotest@a-alvarez.com',
+    'desarrollotest',
+    [],
+    null,
+    _PS_MAIL_DIR_,
+    false,
+    1
+);

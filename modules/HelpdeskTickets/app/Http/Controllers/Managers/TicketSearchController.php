@@ -32,8 +32,7 @@ class TicketSearchController extends Controller
             $semanticIds = $semantic->search($q);
 
             $query->where(fn ($b) => $b
-                ->where('title', 'like', "%{$q}%")
-                ->orWhere('subject', 'like', "%{$q}%")
+                ->where('subject', 'like', "%{$q}%")
                 ->orWhere('description', 'like', "%{$q}%")
                 ->orWhere('ticket_number', 'like', "%{$q}%")
                 ->when($semanticIds !== [], fn ($sub) => $sub->orWhereIn('id', $semanticIds))

@@ -37,7 +37,7 @@
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('settings.helpdesk.status.incidents.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo incidente
+                            Nuevo incidente
                         </a>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                                             @if($incident->resolved_at)
                                                 <small class="text-success">{{ $incident->resolved_at->format('d/m/Y H:i') }}</small>
                                             @else
-                                                <small class="text-danger">Pendiente</small>
+                                                <small class="text-dark">Pendiente</small>
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -161,7 +161,7 @@
                         <h5 class="fw-bold mb-2">No hay incidentes registrados</h5>
                         <p class="text-muted mb-4">Registra incidentes para mantener informados a tus clientes sobre interrupciones del servicio</p>
                         <a href="{{ route('settings.helpdesk.status.incidents.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo incidente
+                            Nuevo incidente
                         </a>
                     </div>
                 @endif
@@ -190,18 +190,15 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
+@php
+    $hdStatusIncidentsConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error')
+];
+@endphp
+window.HdStatusIncidentsConfig = @json($hdStatusIncidentsConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/status-incidents-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/status-incidents-index.js')) }}" defer></script>
 @endpush

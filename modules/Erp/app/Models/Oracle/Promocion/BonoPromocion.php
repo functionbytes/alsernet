@@ -3,7 +3,9 @@
 namespace Modules\Erp\Models\Oracle\Promocion;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya;
 use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -93,7 +95,7 @@ class BonoPromocion extends Model
      */
     public function catalogoConsumo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo_consumo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo_consumo', 'idcatalogo');
     }
 
     /**
@@ -102,7 +104,7 @@ class BonoPromocion extends Model
      */
     public function tbonoPromocion()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
+        return $this->belongsTo(TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
     }
 
     /**
@@ -111,7 +113,7 @@ class BonoPromocion extends Model
      */
     public function bonoPromocion()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
+        return $this->belongsTo(BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
     }
 
     /**
@@ -120,7 +122,7 @@ class BonoPromocion extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -129,7 +131,7 @@ class BonoPromocion extends Model
      */
     public function lpromocion()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocion::class, 'idlpromocion', 'idlpromocion');
+        return $this->belongsTo(Lpromocion::class, 'idlpromocion', 'idlpromocion');
     }
 
     /**
@@ -138,7 +140,7 @@ class BonoPromocion extends Model
      */
     public function liquidacionbono()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Liquidacionbono::class, 'idliquidacionbono', 'idliquidacionbono');
+        return $this->belongsTo(Liquidacionbono::class, 'idliquidacionbono', 'idliquidacionbono');
     }
 
     /**
@@ -147,6 +149,6 @@ class BonoPromocion extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 }

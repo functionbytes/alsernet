@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,17 +60,17 @@ final class CategoryThumbnailImageUploader extends AbstractImageUploader impleme
             $this->checkImageIsAllowedForUpload($uploadedImage);
 
             $tmpName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
-            if (!$tmpName) {
+            if (! $tmpName) {
                 throw new ImageUploadException('Failed to create temporary category thumbnail image file');
             }
 
-            if (!move_uploaded_file($uploadedImage->getPathname(), $tmpName)) {
+            if (! move_uploaded_file($uploadedImage->getPathname(), $tmpName)) {
                 throw new ImageUploadException('Failed to upload category thumbnail image');
             }
 
-            if (!ImageManager::resize(
+            if (! ImageManager::resize(
                 $tmpName,
-                _PS_CAT_IMG_DIR_ . $id . '-' . stripslashes($imagesType['name']) . '.jpg',
+                _PS_CAT_IMG_DIR_.$id.'-'.stripslashes($imagesType['name']).'.jpg',
                 (int) $imagesType['width'],
                 (int) $imagesType['height']
             )) {
@@ -79,7 +80,7 @@ final class CategoryThumbnailImageUploader extends AbstractImageUploader impleme
             if (($imageSize = getimagesize($tmpName)) && is_array($imageSize)) {
                 ImageManager::resize(
                     $tmpName,
-                    _PS_CAT_IMG_DIR_ . $id . '_thumb.jpg',
+                    _PS_CAT_IMG_DIR_.$id.'_thumb.jpg',
                     (int) $imageSize[0],
                     (int) $imageSize[1]
                 );

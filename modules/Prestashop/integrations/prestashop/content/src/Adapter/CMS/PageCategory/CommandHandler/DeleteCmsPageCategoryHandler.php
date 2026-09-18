@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,11 +50,11 @@ final class DeleteCmsPageCategoryHandler implements DeleteCmsPageCategoryHandler
         try {
             $entity = new CMSCategory($command->getCmsPageCategoryId()->getValue());
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CmsPageCategoryNotFoundException(sprintf('Cms category object with id "%s" has not been found for deletion.', $command->getCmsPageCategoryId()->getValue()));
             }
 
-            if (false === $entity->delete()) {
+            if ($entity->delete() === false) {
                 throw new CannotDeleteCmsPageCategoryException(sprintf('Unable to delete cms category object with id "%s"', $command->getCmsPageCategoryId()->getValue()), CannotDeleteCmsPageCategoryException::FAILED_DELETE);
             }
         } catch (PrestaShopException $exception) {

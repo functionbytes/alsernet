@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Filters;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -37,7 +38,7 @@ class ConversationFilter
             )
             ->when(
                 $this->request->has('priority') && $this->request->priority !== 'all',
-                fn ($q) => $q->where('priority', $this->request->priority)
+                fn ($q) => $this->applyMultiValue($q, 'priority', $this->request->priority)
             )
             ->when(
                 $this->request->has('search') && ! empty($this->request->search),
@@ -45,11 +46,19 @@ class ConversationFilter
             )
             ->when(
                 $this->request->filled('channel'),
-                fn ($q) => $q->where('channel', $this->request->input('channel'))
+                fn ($q) => $this->applyMultiValue($q, 'channel', $this->request->input('channel'))
             )
             ->when(
                 $this->request->filled('inbox'),
                 fn ($q) => $q->where('inbox_id', (int) $this->request->input('inbox'))
+            )
+            // Vista guardada "Pospuestas" (?snoozed=1): solo se manejaba en
+            // applyViewFilters() (vistas sembradas/con filtros en BD), nunca
+            // aquí — así que un link directo con este query param no filtraba
+            // nada y mostraba el listado completo.
+            ->when(
+                $this->request->boolean('snoozed'),
+                fn ($q) => $q->snoozed()
             )
             // Sidebar "Bloqueados" / "Spam" links (?view=blocked / ?view=spam)
             // used to fall through to the plain default-view query — same
@@ -64,9 +73,37 @@ class ConversationFilter
                 fn ($q) => $q->where('is_spam', true)
             )
             ->when(
+                $this->request->filled('date'),
+                fn ($q) => $this->applyDateValue($q, (string) $this->request->input('date'))
+            )
+            ->when(
                 true,
                 fn ($q) => $this->applyArchived($q)
             );
+    }
+
+    /**
+     * Rango de fechas del modal "Filtrar conversaciones" (?date=today|yesterday|7d|30d|custom),
+     * aplicado sobre `created_at`. "custom" exige date_from/date_to (?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD);
+     * sin ambos no filtra nada, en vez de devolver 0 resultados con un rango vacío.
+     */
+    protected function applyDateValue(Builder $query, string $date): Builder
+    {
+        [$from, $to] = match ($date) {
+            'today' => [now()->startOfDay(), now()->endOfDay()],
+            'yesterday' => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
+            '7d' => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
+            '30d' => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'custom' => [
+                $this->request->filled('date_from') ? Carbon::parse($this->request->input('date_from'))->startOfDay() : null,
+                $this->request->filled('date_to') ? Carbon::parse($this->request->input('date_to'))->endOfDay() : null,
+            ],
+            default => [null, null],
+        };
+
+        return $query
+            ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
+            ->when($to, fn ($q) => $q->where('created_at', '<=', $to));
     }
 
     /**
@@ -117,6 +154,7 @@ class ConversationFilter
                 'mine' => $query->where('assignee_id', auth()->id()),
                 'unread' => $query->whereDoesntHave('reads', fn ($r) => $r->where('user_id', auth()->id())),
                 'vip' => $query->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5)),
+                'date' => $this->applyDateValue($query, (string) $value),
                 default => null,
             };
         }
@@ -133,6 +171,19 @@ class ConversationFilter
         // can't be resolved by a single status name the way "pending" is below.
         if ($status === 'closed') {
             return $query->whereHas('status', fn ($q) => $q->where('is_open', false));
+        }
+
+        // El modal "Filtrar conversaciones" permite marcar varios chips del
+        // mismo tipo (?status=pending,closed) — resolver cada valor por
+        // separado y unirlos en un OR, en vez de tratarlos como un único
+        // nombre/id que nunca matchea nada.
+        $values = $this->splitMulti($status);
+        if (count($values) > 1) {
+            return $query->where(function ($q) use ($values) {
+                foreach ($values as $value) {
+                    $q->orWhere(fn ($qq) => $this->applyStatusValue($qq, $value));
+                }
+            });
         }
 
         // Non-numeric status keywords (the sidebar "En espera" link sends
@@ -159,21 +210,38 @@ class ConversationFilter
             return $query->whereNull('assignee_id');
         }
 
-        return $query->where('assignee_id', $assignee);
+        return $this->applyMultiValue($query, 'assignee_id', $assignee);
+    }
+
+    /**
+     * Selección múltiple del mismo chip (ej. dos prioridades a la vez) llega
+     * como "urgent,high" desde el modal de filtros — antes se comparaba tal
+     * cual con `where($col, $valorCompleto)`, que nunca matchea nada y
+     * devuelve 0 resultados en silencio. Un único valor sigue usando `=`
+     * (más barato/legible que un IN de un elemento).
+     */
+    protected function applyMultiValue(Builder $query, string $column, mixed $value): Builder
+    {
+        $values = $this->splitMulti((string) $value);
+
+        return count($values) > 1
+            ? $query->whereIn($column, $values)
+            : $query->where($column, $values[0] ?? $value);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function splitMulti(string $value): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', $value)), fn ($v) => $v !== ''));
     }
 
     protected function applySearchValue(Builder $query, string $search): Builder
     {
         return $query->where(function ($q) use ($search) {
             $this->applySubjectSearch($q, $search)
-                ->orWhereHas('customer', fn ($c) => $c
-                    // Sin FULLTEXT en estos campos: un agente puede buscar por
-                    // apellido en medio del nombre, dominio del email o los
-                    // últimos dígitos del teléfono, así que se mantiene el
-                    // LIKE '%term%' de siempre (un prefijo rompería esos casos).
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%"));
+                ->orWhereHas('customer', fn ($c) => $this->applyCustomerSearch($c, $search));
 
             // A bare number also matches the conversation id (agents paste it).
             if (ctype_digit($search)) {
@@ -197,6 +265,29 @@ class ConversationFilter
         }
 
         return $q->whereFullText('subject', $fullTextTerm, ['mode' => 'boolean']);
+    }
+
+    /**
+     * Filtra nombre/email de `helpdesk_customers` usando el índice FULLTEXT
+     * compuesto (helpdesk_customers_name_email_fulltext), mismo patrón que
+     * applySubjectSearch(). El teléfono se queda siempre en LIKE '%term%': un
+     * agente busca por los últimos dígitos (SMS/WhatsApp) y FULLTEXT solo
+     * soporta comodín de sufijo (prefijo), nunca resolvería ese caso.
+     */
+    private function applyCustomerSearch(Builder $c, string $search): Builder
+    {
+        $fullTextTerm = $this->fullTextBooleanTerm($search);
+
+        $c->where(function ($q) use ($search, $fullTextTerm) {
+            if ($fullTextTerm === null) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            } else {
+                $q->whereFullText(['name', 'email'], $fullTextTerm, ['mode' => 'boolean']);
+            }
+        });
+
+        return $c->orWhere('phone', 'like', "%{$search}%");
     }
 
     /**
@@ -258,6 +349,7 @@ class ConversationFilter
             'inbox' => $r->filled('inbox'),
             'tag' => $r->filled('tag'),
             'search' => $r->filled('search'),
+            'date' => $r->filled('date'),
             default => false,
         };
     }

@@ -341,13 +341,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    $('[data-copy-webhook-url]').on('click', function () {
-        var $input = $(this).closest('.input-group').find('input');
-        $input.select();
-        navigator.clipboard?.writeText($input.val());
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdeskemailactivity/js/settings-index.js') }}?v={{ filemtime(public_path('modules/helpdeskemailactivity/js/settings-index.js')) }}"></script>
 @endpush

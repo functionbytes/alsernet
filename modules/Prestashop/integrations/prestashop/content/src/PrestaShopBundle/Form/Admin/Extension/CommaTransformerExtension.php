@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,17 +44,14 @@ class CommaTransformerExtension extends AbstractTypeExtension
         return NumberType::class;
     }
 
-    /**
-     * @param OptionsResolver $resolver
-     */
     public function configureOptions(OptionsResolver $resolver): void
     {
         parent::configureOptions($resolver);
 
         $resolver->setNormalizer('attr', function (Options $options, $value) {
             $classes = 'js-comma-transformer';
-            if (!empty($value['class'])) {
-                $classes .= ' ' . $value['class'];
+            if (! empty($value['class'])) {
+                $classes .= ' '.$value['class'];
             }
 
             $value['class'] = $classes;

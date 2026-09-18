@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ final class GetAttachmentInformationListHandler implements GetAttachmentsForList
      */
     private $attachmentDataProvider;
 
-    /**
-     * @param AttachmentDataProvider $attachmentDataProvider
-     */
     public function __construct(AttachmentDataProvider $attachmentDataProvider)
     {
         $this->attachmentDataProvider = $attachmentDataProvider;

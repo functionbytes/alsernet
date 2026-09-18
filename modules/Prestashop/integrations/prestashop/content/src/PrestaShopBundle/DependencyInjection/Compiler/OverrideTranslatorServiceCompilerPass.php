@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class OverrideTranslatorServiceCompilerPass implements CompilerPassInterface
         $definition = $container->getDefinition('translator.default');
         $definition->setClass($container->getParameter('translator.class'));
 
-        if (!in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
+        if (! in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
             return;
         }
         $definition = $container->getDefinition('translator.data_collector');

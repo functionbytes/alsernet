@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,7 +67,7 @@ final class OrdersPerCustomerKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-orders';
         $helper->icon = 'shopping_basket';
         $helper->color = 'color4';
@@ -74,7 +75,7 @@ final class OrdersPerCustomerKpi implements KpiInterface
         $helper->title = $this->translator->trans('Orders per Customer', [], 'Admin.Orderscustomers.Feature');
         $helper->subtitle = $this->translator->trans('All Time', [], 'Admin.Global');
 
-        if (false !== $this->kpiConfiguration->get('ORDERS_PER_CUSTOMER')) {
+        if ($this->kpiConfiguration->get('ORDERS_PER_CUSTOMER') !== false) {
             $helper->value = $this->kpiConfiguration->get('ORDERS_PER_CUSTOMER');
         }
 

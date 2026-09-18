@@ -38,9 +38,8 @@ class InvalidLegacyTranslationKeyException extends \Exception
     private $key = '';
 
     /**
-     * @param string $missingElement The missing element
-     * @param string $key The offending key
-     *
+     * @param  string  $missingElement  The missing element
+     * @param  string  $key  The offending key
      * @return InvalidLegacyTranslationKeyException
      */
     public static function missingElementFromKey($missingElement, $key)
@@ -62,7 +61,7 @@ class InvalidLegacyTranslationKeyException extends \Exception
     }
 
     /**
-     * @param string $key
+     * @param  string  $key
      */
     private function setKey($key)
     {

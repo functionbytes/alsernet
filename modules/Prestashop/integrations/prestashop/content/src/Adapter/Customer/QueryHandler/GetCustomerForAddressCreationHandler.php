@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,6 @@ final class GetCustomerForAddressCreationHandler implements GetCustomerForAddres
     /**
      * {@inheritdoc}
      *
-     * @return AddressCreationCustomerInformation
      *
      * @throws CustomerByEmailNotFoundException
      * @throws CustomerException
@@ -69,7 +69,7 @@ final class GetCustomerForAddressCreationHandler implements GetCustomerForAddres
             $customer['lastname']
         );
 
-        if (null !== $customer['company']) {
+        if ($customer['company'] !== null) {
             $customerInformation->setCompany($customer['company']);
         }
 

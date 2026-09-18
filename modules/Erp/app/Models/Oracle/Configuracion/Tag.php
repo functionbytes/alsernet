@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Otros\Tabla;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -56,7 +57,7 @@ class Tag extends Model
      */
     public function tag()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tag::class, 'idtag', 'idtag');
+        return $this->belongsTo(Tag::class, 'idtag', 'idtag');
     }
 
     /**
@@ -65,6 +66,6 @@ class Tag extends Model
      */
     public function tabla()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tabla::class, 'idtabla', 'idtabla');
+        return $this->belongsTo(Tabla::class, 'idtabla', 'idtabla');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,13 +40,13 @@ class SqlRequestId
     private $value;
 
     /**
-     * @param int $requestSqlId
+     * @param  int  $requestSqlId
      *
      * @throws SqlRequestException
      */
     public function __construct($requestSqlId)
     {
-        if (!is_numeric($requestSqlId) || $requestSqlId <= 0) {
+        if (! is_numeric($requestSqlId) || $requestSqlId <= 0) {
             throw new SqlRequestException(sprintf('Invalid SqlRequest id: %s', var_export($requestSqlId, true)));
         }
 

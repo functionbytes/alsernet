@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Jobs;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -286,7 +287,7 @@ class CleanupExpiredDataJob implements ShouldQueue
      *
      * Creates monthly aggregates of cost data.
      *
-     * @param  \Carbon\Carbon  $cutoffDate
+     * @param  Carbon  $cutoffDate
      */
     protected function aggregateCostDataBeforeDeletion($cutoffDate): void
     {

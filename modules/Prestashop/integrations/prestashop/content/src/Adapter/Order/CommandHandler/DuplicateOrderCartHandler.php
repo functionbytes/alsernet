@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ final class DuplicateOrderCartHandler implements DuplicateOrderCartHandlerInterf
      */
     private $contextStateManager;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(ContextStateManager $contextStateManager)
     {
         $this->contextStateManager = $contextStateManager;
@@ -66,11 +64,10 @@ final class DuplicateOrderCartHandler implements DuplicateOrderCartHandlerInterf
             ->setCustomer(new Customer($cart->id_customer))
             ->setCurrency(new Currency($cart->id_currency))
             ->setLanguage($cart->getAssociatedLanguage())
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
         $result = $cart->duplicate();
 
-        if (false === $result || !isset($result['cart'])) {
+        if ($result === false || ! isset($result['cart'])) {
             $this->contextStateManager->restorePreviousContext();
             throw new DuplicateOrderCartException(sprintf('Cannot duplicate cart from order "%s"', $command->getOrderId()->getValue()));
         }

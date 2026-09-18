@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\Exception;
 /**
  * Is thrown when using pack (e.g. adding to cart) which is out of stock
  */
-class PackOutOfStockException extends ProductOutOfStockException
-{
-}
+class PackOutOfStockException extends ProductOutOfStockException {}

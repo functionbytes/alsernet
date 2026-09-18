@@ -10,6 +10,7 @@ use Modules\HelpdeskAgents\Concerns\InteractsWithDefaultAiAgent;
 use Modules\HelpdeskAgents\Http\Requests\TestAiAgentConnectionRequest;
 use Modules\HelpdeskAgents\Http\Requests\UpdateAiAgentSettingsRequest;
 use Modules\HelpdeskAgents\Models\AiAgent;
+use Modules\HelpdeskAgents\Models\AiUsage;
 use Modules\HelpdeskAgents\Services\LlmConnectionTesterService;
 
 class AgentSettingsController extends Controller
@@ -39,16 +40,39 @@ class AgentSettingsController extends Controller
             'providers' => $providers,
             'statuses' => $statuses,
             'hasAgent' => AiAgent::exists(),
+            'usage' => $this->monthlyUsage(),
         ]);
+    }
+
+    /**
+     * Consumo del mes en curso, para la tarjeta del rail: cuántas llamadas al
+     * modelo y cuántos tokens (entrada + salida) llevan gastados.
+     *
+     * @return array{calls: int, tokens: int}
+     */
+    private function monthlyUsage(): array
+    {
+        $row = AiUsage::query()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->selectRaw('COUNT(*) as calls, COALESCE(SUM(tokens_in + tokens_out), 0) as tokens')
+            ->first();
+
+        return [
+            'calls' => (int) ($row->calls ?? 0),
+            'tokens' => (int) ($row->tokens ?? 0),
+        ];
     }
 
     public function update(UpdateAiAgentSettingsRequest $request): RedirectResponse
     {
-        $this->authorize('update', AiAgent::class);
+        $agent = $this->getDefaultAgent() ?? new AiAgent;
+
+        // Este método hace de alta y edición a la vez: sin agente todavía no
+        // hay instancia que pasarle a la policy de update() (exige AiAgent
+        // $agent, no la clase) — tiraba ArgumentCountError al crear el primero.
+        $this->authorize($agent->exists ? 'update' : 'create', $agent->exists ? $agent : AiAgent::class);
 
         $validated = $request->validated();
-
-        $agent = $this->getDefaultAgent() ?? new AiAgent;
 
         $agent->name = $validated['name'];
         $agent->description = $validated['description'];
@@ -82,6 +106,15 @@ class AgentSettingsController extends Controller
             $agent->enabled_at = now();
         }
 
+        // Este método es la única vía que crea el primer AiAgent del módulo.
+        // Sin is_default=true, getDefaultAgent() lo sigue encontrando por su
+        // fallback a "el más antiguo" — pero un segundo agente creado después
+        // (sin marcar ninguno is_default) le robaría el puesto en cualquier
+        // sitio que filtre por default() primero.
+        if (! $agent->exists) {
+            $agent->is_default = true;
+        }
+
         $agent->save();
 
         $this->forgetDefaultAgent();
@@ -95,8 +128,22 @@ class AgentSettingsController extends Controller
     {
         $this->authorize('manage', AiAgent::class);
 
+        $config = $request->validated();
+
+        // El campo de la clave nunca vuelve a pintar la guardada (a propósito),
+        // así que el caso normal es probar con el campo vacío. Sin este relleno,
+        // el tester caía al setting global (que no suele existir) y "Probar"
+        // respondía "API key no configurada" aunque el agente tuviera clave.
+        if (blank($config['api_key'] ?? null)) {
+            $stored = $this->getDefaultAgent()?->getApiKey();
+
+            if (filled($stored)) {
+                $config['api_key'] = $stored;
+            }
+        }
+
         try {
-            $this->connectionTester->test($request->validated());
+            $this->connectionTester->test($config);
 
             return response()->json(['success' => true, 'message' => 'Conexión exitosa']);
         } catch (\RuntimeException|\InvalidArgumentException $e) {

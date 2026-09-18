@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,7 @@ class PathWithBackUrlExtension extends AbstractExtension
     private $requestStack;
 
     /**
-     * @param RoutingExtension $routingExtension
-     * @param BackUrlProvider $backUrlProvider
-     * @param RequestStack|null $requestStack
+     * @param  RequestStack|null  $requestStack
      */
     public function __construct(
         RoutingExtension $routingExtension,
@@ -83,29 +82,28 @@ class PathWithBackUrlExtension extends AbstractExtension
     /**
      * Gets original path or back url path.
      *
-     * @param string $name - route name
-     * @param array $parameters - route parameters
-     * @param bool $relative
-     *
+     * @param  string  $name  - route name
+     * @param  array  $parameters  - route parameters
+     * @param  bool  $relative
      * @return string
      */
     public function getPathWithBackUrl($name, $parameters = [], $relative = false)
     {
         $fallbackPath = $this->routingExtension->getPath($name, $parameters, $relative);
 
-        if (null === $this->requestStack) {
+        if ($this->requestStack === null) {
             return $fallbackPath;
         }
 
         $request = $this->requestStack->getCurrentRequest();
 
-        if (null === $request) {
+        if ($request === null) {
             return $fallbackPath;
         }
 
         $backUrl = $this->backUrlProvider->getBackUrl($request);
 
-        if (!$backUrl) {
+        if (! $backUrl) {
             return $fallbackPath;
         }
 

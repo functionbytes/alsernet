@@ -30,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\ShowcaseCard\Exception;
 /**
  * Used when referencing an invalid showcase card name
  */
-class InvalidShowcaseCardNameException extends ShowcaseCardException
-{
-}
+class InvalidShowcaseCardNameException extends ShowcaseCardException {}

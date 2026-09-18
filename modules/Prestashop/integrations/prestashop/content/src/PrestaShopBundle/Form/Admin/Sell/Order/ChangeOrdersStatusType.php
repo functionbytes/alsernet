@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ class ChangeOrdersStatusType extends AbstractType
      */
     private $orderStatusChoiceProvider;
 
-    /**
-     * @param FormChoiceProviderInterface $orderStatusChoiceProvider
-     */
     public function __construct(FormChoiceProviderInterface $orderStatusChoiceProvider)
     {
         $this->orderStatusChoiceProvider = $orderStatusChoiceProvider;
@@ -63,8 +61,7 @@ class ChangeOrdersStatusType extends AbstractType
                 'allow_add' => true,
                 'entry_type' => HiddenType::class,
                 'label' => false,
-            ])
-        ;
+            ]);
 
         $builder->get('order_ids')
             ->addModelTransformer(new CallbackTransformer(
@@ -76,7 +73,6 @@ class ChangeOrdersStatusType extends AbstractType
                         return (int) $orderId;
                     }, $orderIds);
                 }
-            ))
-        ;
+            ));
     }
 }

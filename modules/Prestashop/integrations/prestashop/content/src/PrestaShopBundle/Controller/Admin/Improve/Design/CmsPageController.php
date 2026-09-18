@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,10 +82,6 @@ class CmsPageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param CmsPageCategoryFilters $categoryFilters
-     * @param CmsPageFilters $cmsFilters
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(CmsPageCategoryFilters $categoryFilters, CmsPageFilters $cmsFilters, Request $request)
@@ -95,8 +92,7 @@ class CmsPageController extends FrameworkBundleAdminController
         try {
             $viewData = $this
                 ->get('prestashop.core.cms_page.data_provider.cms_page_view')
-                ->getView($cmsCategoryParentId)
-            ;
+                ->getView($cmsCategoryParentId);
         } catch (Exception $exception) {
             $this->addFlash(
                 'error',
@@ -143,8 +139,6 @@ class CmsPageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -180,8 +174,6 @@ class CmsPageController extends FrameworkBundleAdminController
      *     message="You do not have permission to add this."
      * )
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
@@ -201,12 +193,12 @@ class CmsPageController extends FrameworkBundleAdminController
             $result = $this->getCmsPageFormHandler()->handle($form);
             $cmsPageId = $result->getIdentifiableObjectId();
 
-            if (null !== $cmsPageId) {
+            if ($cmsPageId !== null) {
                 $this->addFlash(
                     'success',
                     $this->trans('Successful creation.', 'Admin.Notifications.Success')
                 );
-                if (!$request->request->has('save-and-preview')) {
+                if (! $request->request->has('save-and-preview')) {
                     return $this->redirectToParentIndexPageByCmsPageId($cmsPageId);
                 }
 
@@ -241,9 +233,7 @@ class CmsPageController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param Request $request
-     * @param int $cmsPageId
-     *
+     * @param  int  $cmsPageId
      * @return Response
      */
     public function editAction(Request $request, $cmsPageId)
@@ -319,8 +309,6 @@ class CmsPageController extends FrameworkBundleAdminController
      *     message="You do not have permission to add this."
      * )
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createCmsCategoryAction(Request $request)
@@ -333,7 +321,7 @@ class CmsPageController extends FrameworkBundleAdminController
         try {
             $result = $this->getCmsPageCategoryFormHandler()->handle($cmsPageCategoryForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash(
                     'success',
                     $this->trans('Successful creation.', 'Admin.Notifications.Success')
@@ -368,9 +356,7 @@ class CmsPageController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param int $cmsCategoryId
-     * @param Request $request
-     *
+     * @param  int  $cmsCategoryId
      * @return Response
      */
     public function editCmsCategoryAction($cmsCategoryId, Request $request)
@@ -432,13 +418,13 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
      *
-     * @param int $cmsCategoryId
-     *
+     * @param  int  $cmsCategoryId
      * @return RedirectResponse
      */
     public function deleteCmsCategoryAction($cmsCategoryId)
@@ -471,12 +457,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -485,7 +470,9 @@ class CmsPageController extends FrameworkBundleAdminController
         $cmsCategoriesToDelete = $request->request->get('cms_page_category_bulk');
 
         try {
-            $cmsCategoriesToDelete = array_map(function ($item) { return (int) $item; }, $cmsCategoriesToDelete);
+            $cmsCategoriesToDelete = array_map(function ($item) {
+                return (int) $item;
+            }, $cmsCategoriesToDelete);
 
             $this->getCommandBus()->handle(
                 new BulkDeleteCmsPageCategoryCommand($cmsCategoriesToDelete)
@@ -514,20 +501,18 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
     public function updateCmsCategoryPositionAction(Request $request)
     {
         $cmsCategoryParentId = $request->query->getInt('id_cms_category') ?:
-            CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID
-        ;
+            CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID;
 
         $positionsData = [
             'positions' => $request->request->get('positions'),
@@ -569,6 +554,7 @@ class CmsPageController extends FrameworkBundleAdminController
      *      redirectQueryParamsToKeep={"id_cms_category"},
      *      message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
@@ -579,8 +565,7 @@ class CmsPageController extends FrameworkBundleAdminController
     public function updateCmsPositionAction(Request $request)
     {
         $cmsCategoryParentId = $request->query->getInt('id_cms_category') ?:
-            CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID
-        ;
+            CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID;
 
         $positionsData = [
             'positions' => $request->request->get('positions'),
@@ -621,13 +606,13 @@ class CmsPageController extends FrameworkBundleAdminController
      *      redirectQueryParamsToKeep={"id_cms_category"},
      *      message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
      *
-     * @param int $cmsCategoryId
-     *
+     * @param  int  $cmsCategoryId
      * @return RedirectResponse
      */
     public function toggleCmsCategoryAction($cmsCategoryId)
@@ -660,12 +645,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -674,7 +658,9 @@ class CmsPageController extends FrameworkBundleAdminController
         $cmsCategoriesToEnable = $request->request->get('cms_page_category_bulk');
         $cmsCategoryParentId = null;
         try {
-            $cmsCategoriesToEnable = array_map(function ($item) { return (int) $item; }, $cmsCategoriesToEnable);
+            $cmsCategoriesToEnable = array_map(function ($item) {
+                return (int) $item;
+            }, $cmsCategoriesToEnable);
 
             $this->getCommandBus()->handle(
                 new BulkEnableCmsPageCategoryCommand($cmsCategoriesToEnable)
@@ -703,12 +689,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -749,13 +734,13 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
      *
-     * @param int $cmsId
-     *
+     * @param  int  $cmsId
      * @return RedirectResponse
      */
     public function toggleCmsAction($cmsId)
@@ -786,12 +771,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -800,7 +784,9 @@ class CmsPageController extends FrameworkBundleAdminController
         $cmsPagesToDisable = $request->request->get('cms_page_bulk');
 
         try {
-            $cmsPagesToDisable = array_map(function ($item) { return (int) $item; }, $cmsPagesToDisable);
+            $cmsPagesToDisable = array_map(function ($item) {
+                return (int) $item;
+            }, $cmsPagesToDisable);
 
             $this->getCommandBus()->handle(
                 new BulkDisableCmsPageCommand($cmsPagesToDisable)
@@ -829,12 +815,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to edit this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -877,12 +862,11 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -927,13 +911,13 @@ class CmsPageController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"id_cms_category"},
      *     message="You do not have permission to delete this."
      * )
+     *
      * @DemoRestricted(
      *     redirectRoute="admin_cms_pages_index",
      *     redirectQueryParamsToKeep={"id_cms_category"}
      * )
      *
-     * @param int $cmsId
-     *
+     * @param  int  $cmsId
      * @return RedirectResponse
      */
     public function deleteCmsAction($cmsId)
@@ -979,7 +963,6 @@ class CmsPageController extends FrameworkBundleAdminController
      * This function is used for redirecting to the specific cms page category page. It uses bulk action ids which
      * share the same parent cms category in all cases.
      *
-     * @param array $cmsPageCategoryIds
      *
      * @return RedirectResponse
      */
@@ -995,7 +978,6 @@ class CmsPageController extends FrameworkBundleAdminController
     /**
      * This function is used for redirecting to the specific cms page category page.
      *
-     * @param array $cmsPageIds
      *
      * @return RedirectResponse
      */
@@ -1011,8 +993,7 @@ class CmsPageController extends FrameworkBundleAdminController
     /**
      * This function is used for redirecting to the specific cms page category page.
      *
-     * @param int $cmsPageCategoryId
-     *
+     * @param  int  $cmsPageCategoryId
      * @return RedirectResponse
      */
     private function redirectToParentIndexPage($cmsPageCategoryId)
@@ -1027,8 +1008,7 @@ class CmsPageController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param int $cmsPageId
-     *
+     * @param  int  $cmsPageId
      * @return RedirectResponse
      */
     private function redirectToParentIndexPageByCmsPageId($cmsPageId)
@@ -1045,8 +1025,7 @@ class CmsPageController extends FrameworkBundleAdminController
     /**
      * Redirects to index page by given id.
      *
-     * @param int $cmsPageCategoryId
-     *
+     * @param  int  $cmsPageCategoryId
      * @return RedirectResponse
      */
     private function redirectToIndexPageById($cmsPageCategoryId)
@@ -1065,8 +1044,7 @@ class CmsPageController extends FrameworkBundleAdminController
     /**
      * Gets parent id according to the given child
      *
-     * @param int $cmsPageCategoryChildId
-     *
+     * @param  int  $cmsPageCategoryChildId
      * @return CmsPageCategoryId
      *
      * @throws CmsPageCategoryException

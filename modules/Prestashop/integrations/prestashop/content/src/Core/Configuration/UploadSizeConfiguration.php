@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,9 +34,6 @@ class UploadSizeConfiguration implements UploadSizeConfigurationInterface
      */
     private $iniConfiguration;
 
-    /**
-     * @param IniConfiguration $iniConfiguration
-     */
     public function __construct(IniConfiguration $iniConfiguration)
     {
         $this->iniConfiguration = $iniConfiguration;

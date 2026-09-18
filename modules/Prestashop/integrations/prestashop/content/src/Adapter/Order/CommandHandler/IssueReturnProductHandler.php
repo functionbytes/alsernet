@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,14 +81,6 @@ class IssueReturnProductHandler extends AbstractOrderCommandHandler implements I
      */
     private $contextStateManager;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param OrderRefundCalculator $orderRefundCalculator
-     * @param OrderSlipCreator $orderSlipCreator
-     * @param VoucherGenerator $voucherGenerator
-     * @param OrderRefundUpdater $refundUpdater
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         OrderRefundCalculator $orderRefundCalculator,
@@ -110,11 +103,11 @@ class IssueReturnProductHandler extends AbstractOrderCommandHandler implements I
     public function handle(IssueReturnProductCommand $command): void
     {
         if ((int) $this->configuration->get('PS_ORDER_RETURN') <= 0) {
-            throw new ReturnProductDisabledException();
+            throw new ReturnProductDisabledException;
         }
 
         $order = $this->getOrder($command->getOrderId());
-        if (!$order->hasBeenDelivered()) {
+        if (! $order->hasBeenDelivered()) {
             throw new InvalidOrderStateException(
                 InvalidOrderStateException::DELIVERY_NOT_FOUND,
                 'Can not perform return product on order with not delivered yet'

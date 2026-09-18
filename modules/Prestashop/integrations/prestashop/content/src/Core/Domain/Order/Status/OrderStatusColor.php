@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,7 +65,5 @@ class OrderStatusColor
     /**
      * Class is not meant to be initialized.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

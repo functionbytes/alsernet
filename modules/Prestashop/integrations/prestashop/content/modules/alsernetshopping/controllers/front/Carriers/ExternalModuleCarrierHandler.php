@@ -9,13 +9,15 @@ use Module;
 abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
 {
     protected $externalModule;
+
     protected $externalModuleName;
+
     protected $moduleEnabled = false;
 
     /**
      * Constructor
      */
-    public function __construct(Context $context = null)
+    public function __construct(?Context $context = null)
     {
         parent::__construct($context);
         $this->externalModuleName = $this->getExternalModuleName();
@@ -36,17 +38,17 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
                 $this->moduleEnabled = ($this->externalModule !== false);
 
                 if ($this->moduleEnabled) {
-                    $this->debug("External module initialized", ['module' => $this->externalModuleName]);
+                    $this->debug('External module initialized', ['module' => $this->externalModuleName]);
                 } else {
-                    $this->debug("External module instance failed", ['module' => $this->externalModuleName]);
+                    $this->debug('External module instance failed', ['module' => $this->externalModuleName]);
                 }
             } else {
-                $this->debug("External module not enabled", ['module' => $this->externalModuleName]);
+                $this->debug('External module not enabled', ['module' => $this->externalModuleName]);
             }
         } catch (\Exception $e) {
-            $this->debug("Error initializing external module", [
+            $this->debug('Error initializing external module', [
                 'module' => $this->externalModuleName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -60,27 +62,27 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
     {
         $baseValidation = parent::validateAvailability($context);
 
-        if (!$baseValidation['valid']) {
+        if (! $baseValidation['valid']) {
             return $baseValidation;
         }
 
         // Validar módulo externo
-        if (!$this->moduleEnabled) {
+        if (! $this->moduleEnabled) {
             return [
                 'valid' => false,
-                'message' => "External module '{$this->externalModuleName}' is not available"
+                'message' => "External module '{$this->externalModuleName}' is not available",
             ];
         }
 
         return [
             'valid' => true,
-            'message' => 'External module carrier is available'
+            'message' => 'External module carrier is available',
         ];
     }
 
     public function getExtraContent(Address $address, Context $context): string
     {
-        if (!$this->moduleEnabled) {
+        if (! $this->moduleEnabled) {
             return $this->getErrorTemplate("Module {$this->externalModuleName} not available");
         }
 
@@ -99,21 +101,22 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
             return $this->renderTemplate($this->getTemplatePath(), $templateData);
 
         } catch (\Exception $e) {
-            $this->debug("Error generating extraContent", ['error' => $e->getMessage()]);
+            $this->debug('Error generating extraContent', ['error' => $e->getMessage()]);
+
             return $this->getErrorTemplate('Error loading carrier interface');
         }
     }
 
     public function processSelection(array $data, Context $context): array
     {
-        if (!$this->moduleEnabled) {
+        if (! $this->moduleEnabled) {
             return $this->createResponse('error', '', [], 'External module not available');
         }
 
         try {
-            $this->debug("Processing external module selection", [
+            $this->debug('Processing external module selection', [
                 'module' => $this->externalModuleName,
-                'carrier_id' => $this->getId()
+                'carrier_id' => $this->getId(),
             ]);
 
             // Procesar datos específicos del módulo
@@ -130,12 +133,13 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
             return $this->createResponse('success', $html, [
                 'carrier_id' => $this->getId(),
                 'external_module' => $this->externalModuleName,
-                'module_data' => $moduleData['data'] ?? []
+                'module_data' => $moduleData['data'] ?? [],
             ]);
 
         } catch (\Exception $e) {
-            $this->debug("Error processing external module selection", ['error' => $e->getMessage()]);
-            return $this->createResponse('error', '', [], 'Error processing selection: ' . $e->getMessage());
+            $this->debug('Error processing external module selection', ['error' => $e->getMessage()]);
+
+            return $this->createResponse('error', '', [], 'Error processing selection: '.$e->getMessage());
         }
     }
 
@@ -155,32 +159,32 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
     protected function getExternalModuleAssets(): array
     {
         $assets = [];
-        $moduleDir = _PS_MODULE_DIR_ . $this->externalModuleName . '/';
+        $moduleDir = _PS_MODULE_DIR_.$this->externalModuleName.'/';
 
         // CSS del módulo
-        $cssPath = $moduleDir . 'views/css/front/';
+        $cssPath = $moduleDir.'views/css/front/';
         if (is_dir($cssPath)) {
-            $cssFiles = glob($cssPath . '*.css');
+            $cssFiles = glob($cssPath.'*.css');
             foreach ($cssFiles as $cssFile) {
-                $relativePath = 'modules/' . $this->externalModuleName . '/views/css/front/' . basename($cssFile);
+                $relativePath = 'modules/'.$this->externalModuleName.'/views/css/front/'.basename($cssFile);
                 $assets[] = [
                     'type' => 'css',
                     'path' => $relativePath,
-                    'priority' => 100
+                    'priority' => 100,
                 ];
             }
         }
 
         // JS del módulo
-        $jsPath = $moduleDir . 'views/js/front/';
+        $jsPath = $moduleDir.'views/js/front/';
         if (is_dir($jsPath)) {
-            $jsFiles = glob($jsPath . '*.js');
+            $jsFiles = glob($jsPath.'*.js');
             foreach ($jsFiles as $jsFile) {
-                $relativePath = 'modules/' . $this->externalModuleName . '/views/js/front/' . basename($jsFile);
+                $relativePath = 'modules/'.$this->externalModuleName.'/views/js/front/'.basename($jsFile);
                 $assets[] = [
                     'type' => 'js',
                     'path' => $relativePath,
-                    'priority' => 200
+                    'priority' => 200,
                 ];
             }
         }
@@ -197,7 +201,7 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
             try {
                 $this->externalModule->cleanup();
             } catch (\Exception $e) {
-                $this->debug("Error during external module cleanup", ['error' => $e->getMessage()]);
+                $this->debug('Error during external module cleanup', ['error' => $e->getMessage()]);
             }
         }
     }
@@ -206,7 +210,7 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
     {
         return '<div class="alert alert-warning">
             <i class="fa-solid fa-exclamation-triangle me-2"></i>
-            ' . htmlspecialchars($message) . '
+            '.htmlspecialchars($message).'
         </div>';
     }
 
@@ -219,16 +223,16 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
 
     protected function callExternalMethod(string $methodName, array $params = [])
     {
-        if (!$this->hasExternalMethod($methodName)) {
+        if (! $this->hasExternalMethod($methodName)) {
             throw new \Exception("Method {$methodName} not available in external module {$this->externalModuleName}");
         }
 
         try {
             return call_user_func_array([$this->externalModule, $methodName], $params);
         } catch (\Exception $e) {
-            $this->debug("Error calling external method", [
+            $this->debug('Error calling external method', [
                 'method' => $methodName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -236,7 +240,7 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
 
     public function getExternalModuleInfo(): array
     {
-        if (!$this->moduleEnabled) {
+        if (! $this->moduleEnabled) {
             return ['enabled' => false];
         }
 
@@ -246,8 +250,7 @@ abstract class ExternalModuleCarrierHandler extends AbstractCarrierHandler
             'version' => $this->externalModule->version ?? 'unknown',
             'author' => $this->externalModule->author ?? 'unknown',
             'has_config' => method_exists($this->externalModule, 'getConfigFormValues'),
-            'has_cleanup' => method_exists($this->externalModule, 'cleanup')
+            'has_cleanup' => method_exists($this->externalModule, 'cleanup'),
         ];
     }
-
 }

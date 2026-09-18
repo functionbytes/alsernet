@@ -21,7 +21,7 @@
         <ul class="list-unstyled mb-0">
             @foreach ($relatedTickets as $related)
                 <li class="mb-2">
-                    <a href="{{ route('manager.helpdesk.tickets.show-full', $related->id) }}">
+                    <a href="{{ route('manager.helpdesk.tickets.show', $related->id) }}">
                         {{ $related->ticket_number ?? ('#'.$related->id) }}
                     </a>
                     — {{ $related->subject }}

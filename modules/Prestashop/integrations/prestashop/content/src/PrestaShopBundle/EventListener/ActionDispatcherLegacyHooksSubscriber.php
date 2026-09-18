@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,14 +40,18 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class ActionDispatcherLegacyHooksSubscriber implements EventSubscriberInterface
 {
     public const DISPATCHER_BEFORE_ACTION = 'actionDispatcherBefore';
+
     public const DISPATCHER_AFTER_ACTION = 'actionDispatcherAfter';
 
     /**
      * List of available front controllers types.
      */
     public const FRONT_OFFICE_CONTROLLER = 1;
+
     public const BACK_OFFICE_CONTROLLER = 2;
+
     public const MODULE_CONTROLLER = 3;
+
     public const NA_CONTROLLER = 0;
 
     /**
@@ -73,7 +78,7 @@ class ActionDispatcherLegacyHooksSubscriber implements EventSubscriberInterface
 
     public function callActionDispatcherBeforeHook(FilterControllerEvent $event)
     {
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 
@@ -95,7 +100,7 @@ class ActionDispatcherLegacyHooksSubscriber implements EventSubscriberInterface
 
     public function callActionDispatcherAfterHook(FilterResponseEvent $event)
     {
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 

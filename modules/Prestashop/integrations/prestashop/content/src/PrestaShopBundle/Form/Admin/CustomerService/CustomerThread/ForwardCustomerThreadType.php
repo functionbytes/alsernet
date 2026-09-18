@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class ForwardCustomerThreadType extends AbstractType
      */
     private $employeeChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param FormChoiceProviderInterface $employeeChoiceProvider
-     */
     public function __construct(TranslatorInterface $translator, FormChoiceProviderInterface $employeeChoiceProvider)
     {
         $this->translator = $translator;
@@ -87,7 +84,6 @@ class ForwardCustomerThreadType extends AbstractType
             ])
             ->add('comment', TextareaType::class, [
                 'required' => false,
-            ])
-        ;
+            ]);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,24 +41,24 @@ class AdminLoginControllerCore extends AdminController
         $this->errors = [];
         $this->display_header = false;
         $this->display_footer = false;
-        $this->layout = _PS_ADMIN_DIR_ . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . $this->bo_theme
-            . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . 'controllers' . DIRECTORY_SEPARATOR . 'login'
-            . DIRECTORY_SEPARATOR . 'layout.tpl';
+        $this->layout = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.$this->bo_theme
+            .DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'login'
+            .DIRECTORY_SEPARATOR.'layout.tpl';
 
-        if (!headers_sent()) {
+        if (! headers_sent()) {
             header('Login: true');
         }
-        $this->IDNConverter = new InternationalizedDomainNameConverter();
+        $this->IDNConverter = new InternationalizedDomainNameConverter;
     }
 
     public function setMedia($isNewTheme = false)
     {
-        $this->addJs(_PS_JS_DIR_ . 'jquery/jquery-3.4.1.min.js');
+        $this->addJs(_PS_JS_DIR_.'jquery/jquery-3.4.1.min.js');
         $this->addjqueryPlugin('validate');
-        $this->addJS(_PS_JS_DIR_ . 'jquery/plugins/validate/localization/messages_' . $this->context->language->iso_code . '.js');
-        $this->addCSS(__PS_BASE_URI__ . $this->admin_webpath . '/themes/' . $this->bo_theme . '/public/theme.css', 'all', 0);
-        $this->addJS(_PS_JS_DIR_ . 'vendor/spin.js');
-        $this->addJS(_PS_JS_DIR_ . 'vendor/ladda.js');
+        $this->addJS(_PS_JS_DIR_.'jquery/plugins/validate/localization/messages_'.$this->context->language->iso_code.'.js');
+        $this->addCSS(__PS_BASE_URI__.$this->admin_webpath.'/themes/'.$this->bo_theme.'/public/theme.css', 'all', 0);
+        $this->addJS(_PS_JS_DIR_.'vendor/spin.js');
+        $this->addJS(_PS_JS_DIR_.'vendor/ladda.js');
         Media::addJsDef(['img_dir' => _PS_IMG_]);
         Media::addJsDefL('one_error', $this->trans('There is one error.', [], 'Admin.Notifications.Error'));
         Media::addJsDefL('more_errors', $this->trans('There are several errors.', [], 'Admin.Notifications.Error'));
@@ -70,12 +71,12 @@ class AdminLoginControllerCore extends AdminController
         );
 
         // Specific Admin Theme
-        $this->addCSS(__PS_BASE_URI__ . $this->admin_webpath . '/themes/' . $this->bo_theme . '/css/overrides.css', 'all', PHP_INT_MAX);
+        $this->addCSS(__PS_BASE_URI__.$this->admin_webpath.'/themes/'.$this->bo_theme.'/css/overrides.css', 'all', PHP_INT_MAX);
     }
 
     public function initContent()
     {
-        if (!Tools::usingSecureMode() && Configuration::get('PS_SSL_ENABLED')) {
+        if (! Tools::usingSecureMode() && Configuration::get('PS_SSL_ENABLED')) {
             // You can uncomment these lines if you want to force https even from localhost and automatically redirect
             // header('HTTP/1.1 301 Moved Permanently');
             // header('Location: '.Tools::getShopDomainSsl(true).$_SERVER['REQUEST_URI']);
@@ -85,37 +86,37 @@ class AdminLoginControllerCore extends AdminController
             if ($clientIsMaintenanceOrLocal) {
                 $warningSslMessage = $this->trans('SSL is activated. However, your IP is allowed to enter unsecure mode for maintenance or local IP issues.', [], 'Admin.Login.Notification');
             } else {
-                $url = 'https://' . Tools::safeOutput(Tools::getServerName()) . Tools::safeOutput($_SERVER['REQUEST_URI']);
+                $url = 'https://'.Tools::safeOutput(Tools::getServerName()).Tools::safeOutput($_SERVER['REQUEST_URI']);
                 $warningSslMessage = $this->trans(
                     'SSL is activated. Please connect using the following link to [1]log in to secure mode (https://)[/1]',
-                    ['[1]' => '<a href="' . $url . '">', '[/1]' => '</a>'],
+                    ['[1]' => '<a href="'.$url.'">', '[/1]' => '</a>'],
                     'Admin.Login.Notification'
                 );
             }
             $this->context->smarty->assign('warningSslMessage', $warningSslMessage);
         }
 
-        if (file_exists(_PS_ADMIN_DIR_ . '/../install')) {
+        if (file_exists(_PS_ADMIN_DIR_.'/../install')) {
             $this->context->smarty->assign('wrong_install_name', true);
         }
 
-        if (basename(_PS_ADMIN_DIR_) == 'admin' && file_exists(_PS_ADMIN_DIR_ . '/../admin/')) {
-            $rand = 'admin' . sprintf('%03d', mt_rand(0, 999)) . Tools::strtolower(Tools::passwdGen(6)) . '/';
-            if (@rename(_PS_ADMIN_DIR_ . '/../admin/', _PS_ADMIN_DIR_ . '/../' . $rand)) {
-                Tools::redirectAdmin('../' . $rand);
+        if (basename(_PS_ADMIN_DIR_) == 'admin' && file_exists(_PS_ADMIN_DIR_.'/../admin/')) {
+            $rand = 'admin'.sprintf('%03d', mt_rand(0, 999)).Tools::strtolower(Tools::passwdGen(6)).'/';
+            if (@rename(_PS_ADMIN_DIR_.'/../admin/', _PS_ADMIN_DIR_.'/../'.$rand)) {
+                Tools::redirectAdmin('../'.$rand);
             } else {
                 $this->context->smarty->assign([
                     'wrong_folder_name' => true,
                 ]);
             }
         } else {
-            $rand = basename(_PS_ADMIN_DIR_) . '/';
+            $rand = basename(_PS_ADMIN_DIR_).'/';
         }
 
         $this->context->smarty->assign([
             'randomNb' => $rand,
-            'adminUrl' => Tools::getCurrentUrlProtocolPrefix() . Tools::getShopDomain() . __PS_BASE_URI__ . $rand,
-            'homeUrl' => Tools::getCurrentUrlProtocolPrefix() . Tools::getShopDomain() . __PS_BASE_URI__,
+            'adminUrl' => Tools::getCurrentUrlProtocolPrefix().Tools::getShopDomain().__PS_BASE_URI__.$rand,
+            'homeUrl' => Tools::getCurrentUrlProtocolPrefix().Tools::getShopDomain().__PS_BASE_URI__,
         ]);
 
         // Redirect to admin panel
@@ -159,7 +160,7 @@ class AdminLoginControllerCore extends AdminController
         parent::initContent();
         $this->initFooter();
 
-        //force to disable modals
+        // force to disable modals
         $this->context->smarty->assign('modals', null);
     }
 
@@ -214,25 +215,25 @@ class AdminLoginControllerCore extends AdminController
 
         if (empty($email)) {
             $this->errors[] = $this->trans('Email is empty.', [], 'Admin.Notifications.Error');
-        } elseif (!Validate::isEmail($email)) {
+        } elseif (! Validate::isEmail($email)) {
             $this->errors[] = $this->trans('Invalid email address.', [], 'Admin.Notifications.Error');
         }
 
         if (empty($passwd)) {
             $this->errors[] = $this->trans('The password field is blank.', [], 'Admin.Notifications.Error');
-        } elseif (!Validate::isPasswd($passwd)) {
+        } elseif (! Validate::isPasswd($passwd)) {
             $this->errors[] = $this->trans('Invalid password.', [], 'Admin.Notifications.Error');
         }
 
-        if (!count($this->errors)) {
+        if (! count($this->errors)) {
             // Find employee
-            $this->context->employee = new Employee();
+            $this->context->employee = new Employee;
             $is_employee_loaded = $this->context->employee->getByEmail($email, $passwd);
             $employee_associated_shop = $this->context->employee->getAssociatedShops();
-            if (!$is_employee_loaded) {
+            if (! $is_employee_loaded) {
                 $this->errors[] = $this->trans('The employee does not exist, or the password provided is incorrect.', [], 'Admin.Login.Notification');
                 $this->context->employee->logout();
-            } elseif (empty($employee_associated_shop) && !$this->context->employee->isSuperAdmin()) {
+            } elseif (empty($employee_associated_shop) && ! $this->context->employee->isSuperAdmin()) {
                 $this->errors[] = $this->trans('This employee does not manage the shop anymore (either the shop has been deleted or permissions have been revoked).', [], 'Admin.Login.Notification');
                 $this->context->employee->logout();
             } else {
@@ -246,9 +247,9 @@ class AdminLoginControllerCore extends AdminController
                 $cookie->profile = $this->context->employee->id_profile;
                 $cookie->passwd = $this->context->employee->passwd;
                 $cookie->remote_addr = $this->context->employee->remote_addr;
-                $cookie->registerSession(new EmployeeSession());
+                $cookie->registerSession(new EmployeeSession);
 
-                if (!Tools::getValue('stay_logged_in')) {
+                if (! Tools::getValue('stay_logged_in')) {
                     $cookie->last_activity = time();
                 }
 
@@ -272,14 +273,14 @@ class AdminLoginControllerCore extends AdminController
                 );
 
                 if (Tools::isSubmit('ajax')) {
-                    die(json_encode(['hasErrors' => false, 'redirect' => $url]));
+                    exit(json_encode(['hasErrors' => false, 'redirect' => $url]));
                 } else {
                     $this->redirect_after = $url;
                 }
             }
         }
         if (Tools::isSubmit('ajax')) {
-            die(json_encode(['hasErrors' => true, 'errors' => $this->errors]));
+            exit(json_encode(['hasErrors' => true, 'errors' => $this->errors]));
         }
     }
 
@@ -296,21 +297,21 @@ class AdminLoginControllerCore extends AdminController
 
         if (_PS_MODE_DEMO_) {
             $this->errors[] = $this->trans('This functionality has been disabled.', [], 'Admin.Notifications.Error');
-        } elseif (!$email) {
+        } elseif (! $email) {
             $this->errors[] = $this->trans('Email is empty.', [], 'Admin.Notifications.Error');
-        } elseif (!Validate::isEmail($email)) {
+        } elseif (! Validate::isEmail($email)) {
             $this->errors[] = $this->trans('Invalid email address.', [], 'Admin.Notifications.Error');
         } else {
-            $employee = new Employee();
-            if (!$employee->getByEmail($email) || !$employee) {
+            $employee = new Employee;
+            if (! $employee->getByEmail($email) || ! $employee) {
                 $this->errors[] = $this->trans('This account does not exist.', [], 'Admin.Login.Notification');
-            } elseif ((strtotime($employee->last_passwd_gen . '+' . Configuration::get('PS_PASSWD_TIME_BACK') . ' minutes') - time()) > 0) {
+            } elseif ((strtotime($employee->last_passwd_gen.'+'.Configuration::get('PS_PASSWD_TIME_BACK').' minutes') - time()) > 0) {
                 $this->errors[] = $this->trans('You can reset your password every %interval% minute(s) only. Please try again later.', ['%interval%' => Configuration::get('PS_PASSWD_TIME_BACK')], 'Admin.Login.Notification');
             }
         }
 
-        if (!count($this->errors)) {
-            if (!$employee->hasRecentResetPasswordToken()) {
+        if (! count($this->errors)) {
+            if (! $employee->hasRecentResetPasswordToken()) {
                 $employee->stampResetPasswordToken();
                 $employee->update();
             }
@@ -320,7 +321,7 @@ class AdminLoginControllerCore extends AdminController
                 '{email}' => $employee->email,
                 '{lastname}' => $employee->lastname,
                 '{firstname}' => $employee->firstname,
-                '{url}' => $admin_url . '&id_employee=' . (int) $employee->id . '&reset_token=' . $employee->reset_password_token,
+                '{url}' => $admin_url.'&id_employee='.(int) $employee->id.'&reset_token='.$employee->reset_password_token,
             ];
 
             $employeeLanguage = new Language((int) $employee->id_lang);
@@ -337,7 +338,7 @@ class AdminLoginControllerCore extends AdminController
                     ),
                     $params,
                     $employee->email,
-                    $employee->firstname . ' ' . $employee->lastname
+                    $employee->firstname.' '.$employee->lastname
                 )
             ) {
                 // Update employee only if the mail can be sent
@@ -351,18 +352,18 @@ class AdminLoginControllerCore extends AdminController
                     ]
                 );
 
-                die(Tools::jsonEncode([
+                exit(Tools::jsonEncode([
                     'hasErrors' => false,
                     'confirm' => $this->trans('Please, check your mailbox. A link to reset your password has been sent to you.', [], 'Admin.Login.Notification'),
                 ]));
             } else {
-                die(Tools::jsonEncode([
+                exit(Tools::jsonEncode([
                     'hasErrors' => true,
                     'errors' => [$this->trans('An error occurred while attempting to reset your password.', [], 'Admin.Login.Notification')],
                 ]));
             }
         } elseif (Tools::isSubmit('ajax')) {
-            die(Tools::jsonEncode(['hasErrors' => true, 'errors' => $this->errors]));
+            exit(Tools::jsonEncode(['hasErrors' => true, 'errors' => $this->errors]));
         }
     }
 
@@ -387,27 +388,27 @@ class AdminLoginControllerCore extends AdminController
 
         if (_PS_MODE_DEMO_) {
             $this->errors[] = $this->trans('This functionality has been disabled.', [], 'Admin.Notifications.Error');
-        } elseif (!$reset_token_value) {
+        } elseif (! $reset_token_value) {
             // hidden fields
             $this->errors[] = $this->trans('Some identification information is missing.', [], 'Admin.Login.Notification');
-        } elseif (!$id_employee) {
+        } elseif (! $id_employee) {
             $this->errors[] = $this->trans('Some identification information is missing.', [], 'Admin.Login.Notification');
-        } elseif (!$reset_email) {
+        } elseif (! $reset_email) {
             $this->errors[] = $this->trans('Some identification information is missing.', [], 'Admin.Login.Notification');
-        } elseif (!$reset_password) {
+        } elseif (! $reset_password) {
             // password (twice)
             $this->errors[] = $this->trans('The password is missing: please enter your new password.', [], 'Admin.Login.Notification');
-        } elseif (!Validate::isPasswd($reset_password)) {
+        } elseif (! Validate::isPasswd($reset_password)) {
             $this->errors[] = $this->trans('The password is not in a valid format.', [], 'Admin.Login.Notification');
-        } elseif (!$reset_confirm) {
+        } elseif (! $reset_confirm) {
             $this->errors[] = $this->trans('The confirmation is empty: please fill in the password confirmation as well.', [], 'Admin.Login.Notification');
         } elseif ($reset_password !== $reset_confirm) {
             $this->errors[] = $this->trans('The password and its confirmation do not match. Please double check both passwords.', [], 'Admin.Login.Notification');
         } else {
-            $employee = new Employee();
-            if (!$employee->getByEmail($reset_email) || !$employee || $employee->id != $id_employee) { // check matching employee id with its email
+            $employee = new Employee;
+            if (! $employee->getByEmail($reset_email) || ! $employee || $employee->id != $id_employee) { // check matching employee id with its email
                 $this->errors[] = $this->trans('This account does not exist.', [], 'Admin.Login.Notification');
-            } elseif ((strtotime($employee->last_passwd_gen . '+' . Configuration::get('PS_PASSWD_TIME_BACK') . ' minutes') - time()) > 0) {
+            } elseif ((strtotime($employee->last_passwd_gen.'+'.Configuration::get('PS_PASSWD_TIME_BACK').' minutes') - time()) > 0) {
                 $this->errors[] = $this->trans('You can reset your password every %interval% minute(s) only. Please try again later.', ['%interval%' => Configuration::get('PS_PASSWD_TIME_BACK')], 'Admin.Login.Notification');
             } elseif ($employee->getValidResetPasswordToken() !== $reset_token_value) {
                 // To update password, we must have the temporary reset token that matches.
@@ -415,7 +416,7 @@ class AdminLoginControllerCore extends AdminController
             }
         }
 
-        if (!count($this->errors)) {
+        if (! count($this->errors)) {
             $employee->passwd = $this->get('hashing')->hash($reset_password, _COOKIE_KEY_);
             $employee->last_passwd_gen = date('Y-m-d H:i:s', time());
 
@@ -439,14 +440,14 @@ class AdminLoginControllerCore extends AdminController
                     ),
                     $params,
                     $employee->email,
-                    $employee->firstname . ' ' . $employee->lastname
+                    $employee->firstname.' '.$employee->lastname
                 )
             ) {
                 // Update employee only if the mail can be sent
                 Shop::setContext(Shop::CONTEXT_SHOP, (int) min($employee->getAssociatedShops()));
 
                 $result = $employee->update();
-                if (!$result) {
+                if (! $result) {
                     $this->errors[] = $this->trans('An error occurred while attempting to change your password.', [], 'Admin.Login.Notification');
                 } else {
                     $employee->removeResetPasswordToken(); // Delete temporary reset token
@@ -459,19 +460,19 @@ class AdminLoginControllerCore extends AdminController
                             'employee' => $employee,
                         ]
                     );
-                    die(Tools::jsonEncode([
+                    exit(Tools::jsonEncode([
                         'hasErrors' => false,
                         'confirm' => $this->trans('The password has been changed successfully.', [], 'Admin.Login.Notification'),
                     ]));
                 }
             } else {
-                die(Tools::jsonEncode([
+                exit(Tools::jsonEncode([
                     'hasErrors' => true,
                     'errors' => [$this->trans('An error occurred while attempting to change your password.', [], 'Admin.Login.Notification')],
                 ]));
             }
         } elseif (Tools::isSubmit('ajax')) {
-            die(Tools::jsonEncode(['hasErrors' => true, 'errors' => $this->errors]));
+            exit(Tools::jsonEncode(['hasErrors' => true, 'errors' => $this->errors]));
         }
     }
 }

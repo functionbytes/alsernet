@@ -14,10 +14,33 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
     {{-- ?v=filemtime evita que el navegador sirva una versión en caché tras
          cada cambio (mismo patrón que modules/Helpdesk/.../inbox/index.blade.php) --}}
-    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/tickets-app.css')) }}">
+    @php
+        // Mismo criterio "opcional, cae si está desactualizado" que el JS
+        // (ver el bloque @push('scripts') más abajo y scripts/build-tickets-app.mjs):
+        // tickets-app.min.css SOLO se sirve si existe Y es más reciente que
+        // el .css fuente que minifica.
+        $cssPath = public_path('modules/helpdesktickets/css/tickets-app.css');
+        $cssMinPath = public_path('modules/helpdesktickets/css/tickets-app.min.css');
+        $cssMtime = @filemtime($cssPath);
+        $cssMinMtime = @filemtime($cssMinPath);
+        $useCssMin = $cssMinMtime !== false && $cssMtime !== false && $cssMinMtime >= $cssMtime;
+    @endphp
+    @if ($useCssMin)
+        <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.min.css') }}?v={{ $cssMinMtime }}">
+    @else
+        <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.css') }}?v={{ $cssMtime }}">
+    @endif
 @endpush
 
 @php
+    // Default 'unassigned' (antes 'all'): mismo criterio que
+    // TicketsCrudController::index() — sin filtro explícito en la URL, la
+    // bandeja arranca en "Sin asignar". Una sola variable para las tabs/
+    // pills de abajo Y data-initial-filter: con dos defaults sueltos habría
+    // sido cuestión de tiempo que uno cambiara sin el otro y la tab marcada
+    // como activa dejara de coincidir con los tickets realmente listados.
+    $activeFilter = request('quick_filter', 'unassigned');
+
     // Ticket::toListRow() es la única fuente del contrato de fila (mismo
     // patrón que TicketMail::toListRow() para la bandeja de emails) — la usa
     // tanto esta hidratación SSR como el futuro JSON de refetch.
@@ -50,8 +73,13 @@
     <div id="tkt-data"
          data-tickets="{{ json_encode($ticketsPayload, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-tab-counts="{{ json_encode($tabCounts, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- Settings → Helpdesk · Tickets → Funcionalidades: qué botones/
+              secciones de la vista de detalle debe pintar el JS. --}}
+         data-features="{{ json_encode($ticketFeatures ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         data-attachment-max-bytes="{{ (int) data_get($ticketAttachmentSettings ?? [], 'max_bytes', 10 * 1024 * 1024) }}"
+         data-attachment-extensions="{{ json_encode(data_get($ticketAttachmentSettings ?? [], 'extensions', []), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-user-id="{{ auth()->id() }}"
-         data-initial-filter="{{ request('quick_filter', 'all') }}"
+         data-initial-filter="{{ $activeFilter }}"
          data-initial-view="{{ request('view', 'list') }}"
          data-selected-id="{{ $selectedTicket?->id }}"
          data-bulk-url="{{ route('manager.helpdesk.tickets.bulk') }}"
@@ -81,6 +109,13 @@
          {{-- Modal de carga de agentes: resumen y ajustes de reparto. --}}
          data-workload-overview-url="{{ route('manager.helpdesk.tickets.workload.overview') }}"
          data-workload-assignment-url="{{ route('manager.helpdesk.tickets.workload.assignment') }}"
+         {{-- Presencia en vivo del listado: qué agentes están viendo cada fila ahora mismo. --}}
+         data-presence-overview-url="{{ route('manager.helpdesk.tickets.presence.overview') }}"
+         {{-- Disponibilidad general del agente (módulo Helpdesk hermano) — late
+              mientras el panel de tickets está abierto para que "N agentes en
+              línea" del pie de pantalla deje de dar siempre 0 (QA 14-sep-2026). --}}
+         data-agent-presence-heartbeat-url="{{ route('manager.helpdesk.presence.heartbeat') }}"
+         data-agent-presence-agents-url="{{ route('manager.helpdesk.presence.agents') }}"
          {{-- Modal de buzones de entrada: estado, comportamiento y prueba. --}}
          data-mailboxes-url="{{ route('manager.helpdesk.tickets.mailboxes.index') }}"
          data-mailbox-behavior-url-template="{{ route('manager.helpdesk.tickets.mailboxes.behavior', ['channel' => '__MBX__']) }}"
@@ -121,6 +156,10 @@
               este entorno Docker, así que la plantilla de URL se usa con POST +
               _method=PUT (gotcha ya documentado del proyecto). --}}
          data-canned-update-url-template="{{ route('manager.helpdesk.settings.ticket-canned-replies.update', ['reply' => '__REPLY__']) }}"
+         {{-- Modal 03: "Duplicar como mía" — a diferencia de la de arriba,
+              esta SÍ funciona sin helpdesk.tickets.settings (ver
+              TicketCannedRepliesController::duplicate()). --}}
+         data-canned-duplicate-url-template="{{ route('manager.helpdesk.tickets.canned-replies.duplicate', ['reply' => '__REPLY__']) }}"
          {{-- Remitentes elegibles del modal "Redactar email". Lista cerrada
               (ver TicketMailsController::availableSenders()); el backend
               vuelve a validar contra ella, no se fía de este campo. --}}
@@ -160,7 +199,11 @@
          ]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-categories="{{ json_encode($categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-groups="{{ json_encode($groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
-         data-agents-full="{{ json_encode($agents->map(fn ($a) => ['id' => $a->id, 'name' => trim($a->firstname.' '.$a->lastname)]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- El estado real de cada agente (conectado / no ha entrado nunca / de
+              vacaciones / sin plaza) viaja con la lista: el modal de asignación
+              pintaba "Agente" para todos, incluidos los que no han abierto el
+              panel en su vida. --}}
+         data-agents-full="{{ json_encode(app(\Modules\HelpdeskTickets\Services\AgentAvailabilityService::class)->describe($agents), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-canned-replies="{{ json_encode($cannedReplies->map(fn ($r) => ['id' => $r->id, 'title' => $r->title, 'content' => $r->content, 'short_code' => $r->short_code]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          {{-- Modal 44: crear un ticket ya relleno desde una plantilla. --}}
          data-ticket-templates="{{ json_encode($ticketTemplates->map(fn ($tpl) => ['id' => $tpl->id, 'name' => $tpl->name, 'description' => $tpl->description, 'subject' => $tpl->subject, 'body' => $tpl->body, 'category_id' => $tpl->category_id, 'category_name' => $tpl->category?->name, 'priority' => $tpl->priority]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
@@ -202,12 +245,12 @@
              asignar/Abiertos/Pendientes/Resueltos/Cerrados — Urgentes/Míos
              viven como chips de "Vistas" más abajo, no como tabs de estado) --}}
         <div class="tkt-state-tabs">
-            <button type="button" class="tkt-state-tab on" data-filter="all">Todos <span class="c">{{ $tabCounts['all'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="unassigned">Sin asignar <span class="c">{{ $tabCounts['unassigned'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="open">Abiertos <span class="c">{{ $tabCounts['open'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
-            <button type="button" class="tkt-state-tab" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'all' ? ' on' : '' }}" data-filter="all">Todos <span class="c">{{ $tabCounts['all'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'unassigned' ? ' on' : '' }}" data-filter="unassigned">Sin asignar <span class="c">{{ $tabCounts['unassigned'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'open' ? ' on' : '' }}" data-filter="open">Abiertos <span class="c">{{ $tabCounts['open'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'pending' ? ' on' : '' }}" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'resolved' ? ' on' : '' }}" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
+            <button type="button" class="tkt-state-tab{{ $activeFilter === 'closed' ? ' on' : '' }}" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
             {{-- "Plantillas" cierra la fila de tabs en el mockup. Una auditoría previa
                  lo había quitado por ser un <a> que navegaba fuera de la pantalla en
                  vez de filtrar como sus vecinos, y por duplicar el botón de la barra
@@ -224,31 +267,48 @@
 
         {{-- Filtros --}}
         <form method="get" id="tkt-filter-form" class="tkt-filter-bar">
-            {{-- Chips de filtro: mismo orden, iconos y tipografía que el mockup
+            {{-- Los filtros que NO tienen chip propio aquí (Estado, Grupo, SLA,
+                 Buzón, Tipo de email, Búsqueda…) viven en el modal "Más filtros",
+                 que envía su PROPIO formulario. Como esta barra es un GET, todo
+                 lo que no viaje en ella se pierde: bug real: filtrabas por Estado
+                 en el modal, tocabas el chip "Prioridad" y el Estado desaparecía
+                 sin aviso. Se arrastran como hidden — mismo criterio que el
+                 <select> de orden de la lista, que ya construye su URL con
+                 request()->except(['page','sort']).
+
+                 Fuera de la lista: los siete campos que la barra sí controla (o
+                 se duplicarían) y 'page' (cambiar de filtro tiene que devolver a
+                 la página 1). Solo escalares: un array llegaría aquí como
+                 "Array" y ensuciaría la URL. --}}
+            @foreach(request()->except(['source', 'tag', 'category', 'assignee', 'priority', 'created_from', 'created_to', 'page']) as $carryKey => $carryValue)
+                @if(is_scalar($carryValue) && filled($carryValue))
+                    <input type="hidden" name="{{ $carryKey }}" value="{{ $carryValue }}">
+                @endif
+            @endforeach
+            {{-- Chips de filtro: mismo orden y tipografía que el mockup
                  (Origen · Etiquetas · Categoría · Agente · Prioridad · rango de
-                 fechas · Más filtros). Cada chip lleva el <select> nativo
-                 superpuesto y transparente — ver .tkt-fchip en tickets-app.css. --}}
+                 fechas · Más filtros) — ver .tkt-fsel/.tkt-fchip en
+                 tickets-app.css. El valor visible de cada chip ya no se calcula
+                 aquí: es el texto de la <option> seleccionada, que select2 pinta
+                 dentro del widget (ver el comentario del primer chip). --}}
             @php
                 $sourceLabels = ['email' => 'Email', 'widget' => 'Widget', 'wa' => 'WhatsApp', 'fb' => 'Facebook', 'ig' => 'Instagram', 'formulario' => 'Formulario'];
                 $priorityLabels = ['urgent' => 'Urgente', 'high' => 'Alta', 'normal' => 'Normal', 'low' => 'Baja'];
-                $assigneeLabel = match (true) {
-                    request('assignee') === 'me' => 'Asignados a mí',
-                    request('assignee') === 'unassigned' => 'Sin asignar',
-                    request()->filled('assignee') => trim((string) $agents->firstWhere('id', (int) request('assignee'))?->firstname.' '.(string) $agents->firstWhere('id', (int) request('assignee'))?->lastname) ?: 'todos',
-                    default => 'todos',
-                };
             @endphp
-            <label class="tkt-fchip {{ request()->filled('source') ? 'on' : '' }}">
-                <i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Origen
-                <span class="tkt-fchip-value" aria-hidden="true">{{ $sourceLabels[request('source')] ?? 'todos' }}</span>
-                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
-                <select name="source" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por origen">
-                    <option value="">todos</option>
-                    @foreach($sourceLabels as $sourceValue => $sourceLabel)
-                        <option value="{{ $sourceValue }}" @selected(request('source') === $sourceValue)>{{ $sourceLabel }}</option>
-                    @endforeach
-                </select>
-            </label>
+            {{-- Cada chip es un <select> real con select2 (initSelect2 en
+                 tickets-app.js, rama [data-fchip-label]). Antes era un <select>
+                 nativo transparente superpuesto sobre un <label> pintado: clonaba
+                 el mockup al pixel, pero heredaba el desplegable del sistema —sin
+                 buscador (el chip "Agente" tiene decenas de opciones) y con un
+                 aspecto distinto en cada SO/navegador—. templateSelection
+                 recompone dentro del widget el mismo contenido del chip
+                 (etiqueta + valor en gris), así que el diseño no cambia. --}}
+            <select class="tkt-fsel" name="source" data-fchip-label="Origen" aria-label="Filtrar por origen">
+                <option value="">todos</option>
+                @foreach($sourceLabels as $sourceValue => $sourceLabel)
+                    <option value="{{ $sourceValue }}" @selected(request('source') === $sourceValue)>{{ $sourceLabel }}</option>
+                @endforeach
+            </select>
             {{-- "Etiqueta" en singular a propósito (hallazgo LOW #2): este <select>
                  solo admite UN valor exacto de una lista cerrada, a diferencia del
                  campo de texto libre "Etiquetas" (separadas por coma) del modal "Más
@@ -256,56 +316,49 @@
                  fusionan los dos controles en esta pasada porque no está verificado si
                  el backend interpreta múltiples tags separados por coma; el copy queda
                  así como mínimo diferenciado para no prometer lo mismo en los dos sitios. --}}
-            <label class="tkt-fchip {{ request()->filled('tag') ? 'on' : '' }}">
-                <i class="fa-solid fa-tag" aria-hidden="true"></i> Etiqueta
-                @if(request()->filled('tag'))<span class="tkt-fchip-value" aria-hidden="true">{{ request('tag') }}</span>@endif
-                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
-                <select name="tag" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por etiqueta">
-                    <option value="">todas</option>
-                    @foreach($availableTags as $tagOption)
-                        <option value="{{ $tagOption }}" @selected(request('tag') === $tagOption)>{{ $tagOption }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="tkt-fchip {{ request()->filled('category') ? 'on' : '' }}">
-                <i class="fa-solid fa-folder" aria-hidden="true"></i> Categoría
-                @if(request()->filled('category'))<span class="tkt-fchip-value" aria-hidden="true">{{ $categories->firstWhere('id', (int) request('category'))?->name }}</span>@endif
-                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
-                <select name="category" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por categoría">
-                    <option value="">todas</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="tkt-fchip {{ request()->filled('assignee') ? 'on' : '' }}">
-                <i class="fa-solid fa-user" aria-hidden="true"></i> Agente
-                @if(request()->filled('assignee'))<span class="tkt-fchip-value" aria-hidden="true">{{ $assigneeLabel }}</span>@endif
-                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
-                <select name="assignee" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por agente">
-                    <option value="">todos</option>
-                    <option value="me" @selected(request('assignee') === 'me')>Asignados a mí</option>
-                    <option value="unassigned" @selected(request('assignee') === 'unassigned')>Sin asignar</option>
-                    @foreach($agents as $agent)
-                        <option value="{{ $agent->id }}" @selected(request('assignee') == $agent->id)>{{ trim($agent->firstname.' '.$agent->lastname) }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="tkt-fchip {{ request()->filled('priority') ? 'on' : '' }}">
-                <i class="fa-solid fa-flag" aria-hidden="true"></i> Prioridad
-                <span class="tkt-fchip-value" aria-hidden="true">{{ $priorityLabels[request('priority')] ?? 'todas' }}</span>
-                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
-                <select name="priority" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por prioridad">
-                    <option value="">todas</option>
-                    @foreach($priorityLabels as $priorityValue => $priorityLabel)
-                        <option value="{{ $priorityValue }}" @selected(request('priority') === $priorityValue)>{{ $priorityLabel }}</option>
-                    @endforeach
-                </select>
-            </label>
+            <select class="tkt-fsel" name="tag" data-fchip-label="Etiqueta" aria-label="Filtrar por etiqueta">
+                <option value="">todas</option>
+                {{-- El modal manda varias etiquetas separadas por coma ("vip,urgente",
+                     que TicketsCrudController aplica como AND). Ese valor no existe
+                     como <option> de este desplegable, así que el chip mostraba
+                     "todas" —mintiendo sobre un filtro que sí estaba aplicado— y al
+                     tocar cualquier otro chip lo enviaba vacío, borrándolo. La opción
+                     se añade sobre la marcha para que el chip diga la verdad y el
+                     filtro sobreviva al submit. --}}
+                @if(request()->filled('tag') && ! $availableTags->contains(request('tag')))
+                    <option value="{{ request('tag') }}" selected>{{ request('tag') }}</option>
+                @endif
+                @foreach($availableTags as $tagOption)
+                    <option value="{{ $tagOption }}" @selected(request('tag') === $tagOption)>{{ $tagOption }}</option>
+                @endforeach
+            </select>
+            <select class="tkt-fsel" name="category" data-fchip-label="Categoría" aria-label="Filtrar por categoría">
+                <option value="">todas</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
+                @endforeach
+            </select>
+            <select class="tkt-fsel" name="assignee" data-fchip-label="Agente" aria-label="Filtrar por agente">
+                <option value="">todos</option>
+                <option value="me" @selected(request('assignee') === 'me')>Asignados a mí</option>
+                <option value="unassigned" @selected(request('assignee') === 'unassigned')>Sin asignar</option>
+                @foreach($agents as $agent)
+                    <option value="{{ $agent->id }}" @selected(request('assignee') == $agent->id)>{{ trim($agent->firstname.' '.$agent->lastname) }}</option>
+                @endforeach
+            </select>
+            <select class="tkt-fsel" name="priority" data-fchip-label="Prioridad" aria-label="Filtrar por prioridad">
+                <option value="">todas</option>
+                @foreach($priorityLabels as $priorityValue => $priorityLabel)
+                    <option value="{{ $priorityValue }}" @selected(request('priority') === $priorityValue)>{{ $priorityLabel }}</option>
+                @endforeach
+            </select>
             {{-- Rango de fechas: en el mockup es UN solo chip que resume el periodo
                  ("19 ago – 01 sep 2026"), no dos <input type=date> sueltos. El chip
-                 muestra el rango y despliega los dos campos reales, que siguen
-                 mandando created_from/created_to igual que el modal "Más filtros"
+                 abre el daterangepicker que ya carga el layout del tema (con sus
+                 presets y su locale en español, ver bindDateRangeChip) en vez del
+                 calendario nativo del navegador, que venía con su propia tipografía
+                 y su azul de sistema. Los dos hidden siguen mandando
+                 created_from/created_to igual que el modal "Más filtros"
                  (Modules\Helpdesk\Filters\TicketFilter los valida y aplica). --}}
             @php
                 $rangeFrom = request('created_from') ? \Illuminate\Support\Carbon::parse(request('created_from')) : null;
@@ -318,21 +371,22 @@
                 };
             @endphp
             <div class="tkt-fdate {{ ($rangeFrom || $rangeTo) ? 'on' : '' }}">
-                <button type="button" class="tkt-fchip" id="tkt-daterange-open" aria-expanded="false">
-                    <i class="fa-regular fa-calendar"></i> {{ $rangeLabel }}
+                <button type="button" class="tkt-fchip" id="tkt-daterange-open" aria-haspopup="dialog" aria-expanded="false"
+                        data-from="{{ request('created_from') }}" data-to="{{ request('created_to') }}">
+                    <span class="tkt-fchip-value">{{ $rangeLabel }}</span>
+                    <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
                 </button>
-                <div class="tkt-fdate-pop" id="tkt-daterange-pop" hidden>
-                    <label class="tkt-fdate-field">Desde
-                        <input type="date" name="created_from" value="{{ request('created_from') }}" onchange="this.form.requestSubmit()" aria-label="Fecha desde">
-                    </label>
-                    <label class="tkt-fdate-field">Hasta
-                        <input type="date" name="created_to" value="{{ request('created_to') }}" onchange="this.form.requestSubmit()" aria-label="Fecha hasta">
-                    </label>
-                </div>
+                <input type="hidden" name="created_from" id="tkt-created-from" value="{{ request('created_from') }}">
+                <input type="hidden" name="created_to" id="tkt-created-to" value="{{ request('created_to') }}">
             </div>
-            <button type="button" class="tkt-fchip" id="tkt-filters-modal-open"><i class="fa-solid fa-sliders"></i> Más filtros</button>
+            <button type="button" class="tkt-fchip" id="tkt-filters-modal-open">Más filtros</button>
             <span id="tkt-count" class="mono tkt-count">{{ $tickets->total() }} tickets</span>
-            <a href="{{ route('manager.helpdesk.tickets.index') }}" class="tkt-clear-link">limpiar</a>
+            {{-- "limpiar" quita los FILTROS, no el contexto: la pestaña abierta,
+                 el orden elegido, la vista guardada y el ticket que estés
+                 mirando sobreviven. Antes apuntaba a la ruta pelada y un clic
+                 te devolvía a "Todos", al orden por defecto y con el panel
+                 derecho cerrado — casi nunca era lo que se buscaba. --}}
+            <a href="{{ route('manager.helpdesk.tickets.index', request()->only(['quick_filter', 'view', 'sort', 'ticket', 'viewId'])) }}" class="tkt-clear-link">limpiar</a>
         </form>
 
         @php
@@ -344,13 +398,24 @@
                 'created_from' => 'Desde', 'created_to' => 'Hasta', 'sla_status' => 'SLA',
                 'mail_status' => 'Último correo', 'mail_type' => 'Tipo de email',
                 'mailbox' => 'Buzón', 'has_attachments' => 'Adjuntos',
+                // Estado y Grupo faltaban en esta lista aunque TicketFilter los
+                // aplica de verdad (applyStatus/applyGroup): se filtraba por ellos
+                // desde el modal y no aparecía ningún chip con ✕ — el filtro estaba
+                // activo y era invisible, sin más salida que "limpiar" del todo.
+                'status' => 'Estado', 'group' => 'Grupo',
             ];
             // Bug real de QA: el chip mostraba el valor CRUDO del query
             // param ("Prioridad: urgent", "Agente: 16") en vez de la
             // etiqueta legible — mismas fuentes que ya usan los <select> de
             // esta misma barra, para no duplicar ni desalinear el mapeo.
-            $filterValueLabel = function (string $key, string $value) use ($categories, $agents) {
+            $filterValueLabel = function (string $key, string $value) use ($categories, $agents, $statuses, $groups) {
                 return match ($key) {
+                    // Fecha legible: el chip mostraba el valor crudo del query
+                    // param ("Desde: 2026-08-19") mientras el chip de rango de la
+                    // barra, dos líneas más arriba, ya dice "19 ago – 01 sep 2026".
+                    'created_from', 'created_to' => \Illuminate\Support\Carbon::parse($value)->translatedFormat('d M Y'),
+                    'status' => $statuses->firstWhere('id', (int) $value)?->name ?? $value,
+                    'group' => $groups->firstWhere('id', (int) $value)?->name ?? $value,
                     'priority' => ['urgent' => 'Urgente', 'high' => 'Alta', 'normal' => 'Normal', 'low' => 'Baja'][$value] ?? $value,
                     'source' => ['email' => 'Email', 'widget' => 'Widget', 'wa' => 'WhatsApp', 'fb' => 'Facebook', 'ig' => 'Instagram', 'formulario' => 'Formulario'][$value] ?? $value,
                     'sla_status' => ['breach' => 'Vencido', 'warn' => 'En riesgo', 'ok' => 'En plazo'][$value] ?? $value,
@@ -392,15 +457,23 @@
         <div class="tkt-views-bar">
             <div class="tkt-views-group">
                 <span class="tkt-cap">Vistas</span>
-                <button type="button" class="tkt-view-pill on" data-filter="all">Todos</button>
-                <button type="button" class="tkt-view-pill" data-filter="mine">Míos</button>
-                <button type="button" class="tkt-view-pill" data-filter="unassigned">Sin asignar</button>
-                <button type="button" class="tkt-view-pill" data-filter="sla_risk">SLA en riesgo</button>
-                <button type="button" class="tkt-view-pill" data-filter="from_presta">Desde PrestaShop</button>
-                <button type="button" class="tkt-view-pill" data-filter="from_email">Desde email</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'all' ? ' on' : '' }}" data-filter="all">Todos</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'mine' ? ' on' : '' }}" data-filter="mine">Míos</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'unassigned' ? ' on' : '' }}" data-filter="unassigned">Sin asignar</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'sla_risk' ? ' on' : '' }}" data-filter="sla_risk">SLA en riesgo</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'from_presta' ? ' on' : '' }}" data-filter="from_presta">Desde PrestaShop</button>
+                <button type="button" class="tkt-view-pill{{ $activeFilter === 'from_email' ? ' on' : '' }}" data-filter="from_email">Desde email</button>
+                {{-- Las vistas de otros agentes (is_shared) llevan un icono de
+                     equipo: la lista mezcla las propias con las compartidas y sin
+                     esa marca no habría forma de saber cuáles puedes borrar ni de
+                     dónde ha salido una que no recuerdas haber creado. --}}
                 @foreach($views as $view)
+                    @php $isTeamView = $view->is_shared && $view->user_id !== auth()->id(); @endphp
                     <a href="{{ route('manager.helpdesk.tickets.index', ['viewId' => $view->id]) }}"
-                       class="tkt-view-pill @if($currentView?->id === $view->id) on @endif">{{ $view->name }}</a>
+                       class="tkt-view-pill @if($currentView?->id === $view->id) on @endif"
+                       @if($isTeamView) title="Vista compartida por {{ trim(($view->user->firstname ?? '').' '.($view->user->lastname ?? '')) ?: 'otro agente' }}" @endif>
+                        @if($isTeamView)<i class="fa-solid fa-users tkt-view-pill-icon" aria-hidden="true"></i>@endif{{ $view->name }}
+                    </a>
                 @endforeach
                 <button type="button" class="tkt-view-pill add" id="tkt-save-view">+ guardar vista</button>
             </div>
@@ -426,11 +499,17 @@
             </div>
         </div>
 
+        <div class="tkt-mobile-nav" id="tkt-mobile-nav" role="tablist" aria-label="Panel visible">
+            <button type="button" class="on" data-mobile-pane="list" role="tab" aria-selected="true"><i class="fa-solid fa-list"></i> Lista</button>
+            <button type="button" data-mobile-pane="detail" role="tab" aria-selected="false"><i class="fa-regular fa-message"></i> Ticket</button>
+            <button type="button" data-mobile-pane="side" role="tab" aria-selected="false"><i class="fa-solid fa-sliders"></i> Gestión</button>
+        </div>
+
         <div class="tkt-split-wrap" id="tkt-split-wrap">
         <div class="tkt-split">
 
             {{-- Columna: lista --}}
-            <div class="tkt-split-list">
+            <div class="tkt-split-list" aria-label="Lista de tickets">
                 {{-- Cabecera de la lista, como el mockup: checkbox + "Seleccionar
                      todo" + un <select> de orden (no un enlace que alterna un solo
                      criterio) y, a la derecha, los tres iconos de actualizar,
@@ -438,15 +517,25 @@
                 <div class="tkt-list-head">
                     <input type="checkbox" id="tkt-select-all" aria-label="Seleccionar todos los tickets">
                     <span class="tkt-meta">Seleccionar todo</span>
+                    {{-- Era el último desplegable nativo de la pantalla (llevaba
+                         data-no-select2): con los chips de filtro ya en select2,
+                         desentonaba él solo con el chrome del sistema operativo.
+                         data-fchip-size="sm" mantiene los 10,5px que tenía como
+                         <select> nativo, para no engordar la fila. --}}
                     <select id="tkt-sort" class="tkt-sort-select" aria-label="Ordenar la lista"
-                            data-no-select2
-                            data-base-url="{{ route('manager.helpdesk.tickets.index', request()->except(['page', 'sort'])) }}">
-                        <option value="sla" @selected(request('sort', 'sla') === 'sla')>SLA más urgente</option>
-                        <option value="date_desc" @selected(request('sort') === 'date_desc')>Fecha ↓</option>
+                            data-fchip-label="Orden" data-fchip-size="sm">
+                        {{-- El marcado por defecto es "Fecha ↓" y no "SLA más urgente"
+                             porque es lo que hace el servidor sin ?sort (el ->latest()
+                             de la query base). Antes el control decía SLA de entrada y
+                             la lista venía por fecha: el orden solo se cumplía a partir
+                             del momento en que el agente tocaba el desplegable. --}}
+                        <option value="sla" @selected(request('sort') === 'sla')>SLA más urgente</option>
+                        <option value="date_desc" @selected(request('sort', 'date_desc') === 'date_desc')>Fecha ↓</option>
                         <option value="date_asc" @selected(request('sort') === 'date_asc')>Fecha ↑</option>
                         <option value="priority" @selected(request('sort') === 'priority')>Prioridad</option>
                     </select>
                     <span class="tkt-list-head-icons">
+                        <button type="button" id="tkt-list-density" title="Usar lista compacta" aria-label="Usar lista compacta" aria-pressed="false"><i class="fa-solid fa-compress"></i></button>
                         <button type="button" id="tkt-list-refresh" title="Actualizar" aria-label="Actualizar la lista"><i class="fa-solid fa-rotate"></i></button>
                         <button type="button" id="tkt-list-export" title="Exportar" aria-label="Exportar los tickets del filtro actual"><i class="fa-solid fa-download"></i></button>
                         <button type="button" id="tkt-list-trash" title="Enviar a papelera" aria-label="Enviar los tickets seleccionados a la papelera"><i class="fa-regular fa-trash-can"></i></button>
@@ -487,13 +576,17 @@
                 <div class="tkt-skeleton-list" id="tkt-skeleton">
                     <div class="tkt-skeleton"></div><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>
                 </div>
-                <div class="tkt-list" id="tkt-list"></div>
+                <div class="tkt-list" id="tkt-list" role="list" aria-label="Tickets"></div>
                 {{-- Pie: "1–6 de 218 tickets" y dos chevrones, como el mockup —
                      no el paginador numerado del tema, que no cabe en 380px de
                      columna y desentona con el resto de la pantalla. --}}
+                {{-- El pie lo repinta también el JS tras cada refetch (renderFoot
+                     en tickets-app.js), así que los ids/clases de aquí son
+                     contrato: el SSR pinta la primera carga y el JS las
+                     siguientes, con el mismo markup. --}}
                 <div class="tkt-list-foot">
-                    <span>{{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} de {{ $tickets->total() }} tickets</span>
-                    <span class="tkt-list-foot-nav">
+                    <span id="tkt-foot-range">{{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} de {{ $tickets->total() }} tickets</span>
+                    <span class="tkt-list-foot-nav" id="tkt-foot-nav">
                         @if($tickets->onFirstPage())
                             <span class="off" aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
                         @else
@@ -508,8 +601,12 @@
                 </div>
             </div>
 
+            <button type="button" class="tkt-split-resizer" id="tkt-resizer-list" data-resize-target="list"
+                    role="separator" aria-orientation="vertical" aria-label="Redimensionar lista y detalle"
+                    title="Arrastra para cambiar el ancho de la lista"></button>
+
             {{-- Columna: detalle --}}
-            <div class="tkt-split-detail" id="tkt-detail-col">
+            <div class="tkt-split-detail" id="tkt-detail-col" aria-label="Detalle del ticket">
                 <div class="tkt-empty-state" id="tkt-detail-empty">
                     <div class="tkt-empty-icon"><i class="fa-regular fa-rectangle-list"></i></div>
                     <div class="tkt-empty-title">Ningún ticket seleccionado</div>
@@ -518,17 +615,22 @@
                         <span class="tkt-hint-key">J / K navegar</span>
                         <span class="tkt-hint-key">Enter abrir</span>
                         <span class="tkt-hint-key">C nuevo ticket</span>
+                        <span class="tkt-hint-key">? más atajos</span>
                     </div>
                     @can('helpdesk.tickets.create')
                         <button type="button" class="tkt-btn tkt-btn-primary" id="tkt-empty-create">Crear un ticket</button>
                     @endcan
                 </div>
-                <div id="tkt-detail" style="display:none"></div>
+                <div id="tkt-detail" class="tkt-initially-hidden"></div>
             </div>
+
+            <button type="button" class="tkt-split-resizer" id="tkt-resizer-side" data-resize-target="side"
+                    role="separator" aria-orientation="vertical" aria-label="Redimensionar detalle y gestión"
+                    title="Arrastra para cambiar el ancho del panel de gestión"></button>
 
             {{-- Columna: panel lateral — Fase C: las 8 pestañas ya tienen
                  contenido real (reusan el mismo JSON de data()). --}}
-            <div class="tkt-side" id="tkt-side">
+            <div class="tkt-side" id="tkt-side" aria-label="Gestión del ticket">
                 <div class="tkt-icon-rail top" id="tkt-side-rail">
                     <button type="button" class="tkt-icon-tab on" data-side="gestion" title="Gestión" aria-label="Gestión"><i class="fa-solid fa-sliders"></i></button>
                     <button type="button" class="tkt-icon-tab" data-side="cliente" title="Cliente" aria-label="Cliente"><i class="fa-regular fa-address-card"></i></button>
@@ -542,6 +644,7 @@
                          respondió antes sin salir de la pantalla. --}}
                     <button type="button" class="tkt-icon-tab" data-side="tickets" title="Tickets del cliente" aria-label="Tickets del cliente"><i class="fa-solid fa-ticket"></i></button>
                     <button type="button" class="tkt-icon-tab" data-side="hist" title="Historial" aria-label="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button type="button" class="tkt-side-toggle" id="tkt-side-toggle" title="Ocultar panel de gestión" aria-label="Ocultar panel de gestión" aria-pressed="false"><i class="fa-solid fa-angles-right"></i></button>
                 </div>
                 <div id="tkt-side-content" class="tkt-side-pane">
                     <div class="tkt-empty-box">Sin ticket seleccionado. Aquí verás la gestión (estado, prioridad, categoría, equipo, acciones) del ticket que elijas en la lista.</div>
@@ -554,16 +657,88 @@
         {{-- Modo Kanban: llega en la Fase D --}}
         <div class="tkt-kanban" id="tkt-kanban"></div>
 
+        {{-- Barra de estado: conexión en vivo, quién trabaja ahora mismo y
+             accesos rápidos — misma idea que la barra equivalente de la
+             bandeja de conversaciones de Helpdesk. La rellena
+             renderStatusBar() en tickets-app.js; todos los valores salen de
+             endpoints que la pantalla ya carga (nada aquí es decorativo). --}}
+        <div class="tkt-status-bar" id="tkt-status-bar" role="status" aria-live="polite">
+            <span class="tkt-status-item"><span class="tkt-status-dot" id="tkt-status-conn-dot"></span><span id="tkt-status-conn-text">Conectando…</span></span>
+            <span class="tkt-status-sep">·</span>
+            <span class="tkt-status-item" id="tkt-status-agents"><i class="fa-solid fa-users"></i> —</span>
+            <span class="tkt-status-sep">·</span>
+            <span class="tkt-status-item" id="tkt-status-sla"><i class="fa-regular fa-clock"></i> SLA en riesgo: —</span>
+            <span class="tkt-status-sep">·</span>
+            <span class="tkt-status-item" id="tkt-status-resolved"><i class="fa-solid fa-circle-check"></i> — resueltos</span>
+            <span class="tkt-status-sep">·</span>
+            <button type="button" class="tkt-status-item tkt-status-queue" id="tkt-status-queue" hidden aria-label="Abrir cola de respuestas pendientes"><i class="fa-regular fa-envelope"></i></button>
+            <span class="tkt-undo" id="tkt-undo" hidden aria-live="polite"><span id="tkt-undo-text"></span><button type="button" class="tkt-btn tkt-btn-mini" id="tkt-undo-btn">Deshacer</button></span>
+            <span class="tkt-spacer"></span>
+            <button type="button" class="tkt-status-icon-btn" id="tkt-status-sound" title="Sonido al llegar un mensaje nuevo" aria-label="Alternar sonido de mensaje nuevo" aria-pressed="false"><i class="fa-solid fa-volume-high"></i></button>
+            <button type="button" class="tkt-status-icon-btn" id="tkt-status-shortcuts" title="Atajos de teclado (?)" aria-label="Mostrar atajos de teclado"><i class="fa-solid fa-keyboard"></i></button>
+            <span class="tkt-status-version">v1.0 · Tickets</span>
+        </div>
+
     </div>
     </div>
 
     {{-- Dentro de .tkt a propósito: las variables --tkt-* solo se definen
          bajo ese selector — fuera de él el modal se renderiza transparente
-         (mismo bug ya corregido una vez en openModal(), ver tickets-app.js). --}}
+         (mismo bug ya corregido una vez en openModal(), ver tickets-app/core.js). --}}
     @include('helpdesktickets::managers.tickets.partials._filters-modal')
 </div>
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('modules/helpdesktickets/js/tickets-app.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app.js')) }}"></script>
+    @php
+        // tickets-app.js era un único fichero de 11.304 líneas / 1.001
+        // funciones sin build (ver auditoría 7-sep-2026) — partido en un
+        // núcleo + un fichero por modal el 8-sep-2026. Ya no vive dentro de
+        // un IIFE de un solo archivo: cada <script> de aquí es su propio
+        // scope de nivel superior, así que TKA, openModal(), escapeHtml()…
+        // cuelgan de window y cualquier fichero puede llamarlos con solo
+        // cargarse en la página — nada se ejecuta hasta que el usuario
+        // interactúa (o initTicketsApp() al final, con todo ya cargado), así
+        // que el orden exacto de los modales no importa; 'core' sí va primero
+        // porque ahí vive TKA.
+        //
+        // El orden vive en un manifest.json (no aquí) porque scripts/
+        // build-tickets-app.mjs necesita LEER exactamente la misma lista
+        // para generar tickets-app.min.js — con dos copias del array
+        // (una en PHP, otra en el script de build) habría sido cuestión de
+        // tiempo que una cambiara sin la otra y el bundle minificado
+        // sirviera un modal desincronizado del código fuente en silencio.
+        $manifestPath = public_path('modules/helpdesktickets/js/tickets-app/manifest.json');
+        $ticketsAppFiles = json_decode(@file_get_contents($manifestPath) ?: '{}', true)['files'] ?? [];
+
+        // El bundle minificado (npm run build:tickets-app) es OPCIONAL y
+        // NO es el camino por defecto en desarrollo: aquí se edita y se
+        // prueba en vivo fichero a fichero constantemente (varias sesiones
+        // a la vez), y un bundle desactualizado serviría un modal viejo sin
+        // ningún aviso — el mismo tipo de bug de caché ya sufrido con el
+        // CSS de este módulo. Por eso NO basta con que el bundle exista:
+        // tiene que ser más reciente que TODOS los ficheros fuente que
+        // agrupa, o se ignora y cae al camino de siempre (un <script> por
+        // fichero). En producción, generar el bundle DESPUÉS del último cp
+        // de turno hace que esta condición se cumpla sola.
+        $minPath = public_path('modules/helpdesktickets/js/tickets-app.min.js');
+        $minMtime = @filemtime($minPath);
+        $useMinified = $minMtime !== false;
+        if ($useMinified) {
+            foreach ($ticketsAppFiles as $file) {
+                $srcMtime = @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js'));
+                if ($srcMtime === false || $srcMtime > $minMtime) {
+                    $useMinified = false;
+                    break;
+                }
+            }
+        }
+    @endphp
+    @if ($useMinified)
+        <script src="{{ asset('modules/helpdesktickets/js/tickets-app.min.js') }}?v={{ $minMtime }}"></script>
+    @else
+        @foreach ($ticketsAppFiles as $file)
+            <script src="{{ asset('modules/helpdesktickets/js/tickets-app/'.$file.'.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js')) }}"></script>
+        @endforeach
+    @endif
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,9 +37,7 @@ use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\FormDataProv
 interface FormBuilderFactoryInterface
 {
     /**
-     * @param string $formType
-     * @param FormDataProviderInterface $dataProvider
-     *
+     * @param  string  $formType
      * @return FormBuilderInterface
      */
     public function create($formType, FormDataProviderInterface $dataProvider);

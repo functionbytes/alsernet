@@ -25,9 +25,15 @@ class NotifyAgentsOnNewTicket implements ShouldQueue
 
     public array $backoff = [60, 120];
 
-    public function __construct()
+    /**
+     * La cola va en viaQueue() y no en el constructor: el Dispatcher lee las
+     * opciones del listener sobre una instancia creada SIN constructor, así
+     * que un $this->queue de ahí nunca se aplicaba y el job caía en
+     * 'default' — cola que ningún worker atiende. Ver SendCustomerConfirmation.
+     */
+    public function viaQueue(): string
     {
-        $this->queue = 'notifications';
+        return 'notifications';
     }
 
     public function handle(TicketCreated $event): void

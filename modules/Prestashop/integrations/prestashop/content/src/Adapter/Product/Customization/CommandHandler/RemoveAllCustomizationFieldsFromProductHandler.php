@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,6 @@ final class RemoveAllCustomizationFieldsFromProductHandler implements RemoveAllC
      */
     private $productCustomizationFieldUpdater;
 
-    /**
-     * @param CustomizationFieldDeleter $customizationFieldDeleter
-     * @param ProductRepository $productRepository
-     * @param ProductCustomizationFieldUpdater $productCustomizationFieldUpdater
-     */
     public function __construct(
         CustomizationFieldDeleter $customizationFieldDeleter,
         ProductRepository $productRepository,

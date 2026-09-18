@@ -25,8 +25,23 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
+use Csa\Bundle\GuzzleBundle\CsaGuzzleBundle;
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use FOS\JsRoutingBundle\FOSJsRoutingBundle;
+use League\Tactician\Bundle\TacticianBundle;
 use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\TranslationToolsBundle\TranslationToolsBundle;
+use Sensio\Bundle\DistributionBundle\SensioDistributionBundle;
+use Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle;
+use Symfony\Bundle\DebugBundle\DebugBundle;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Bundle\MonologBundle\MonologBundle;
+use Symfony\Bundle\SecurityBundle\SecurityBundle;
+use Symfony\Bundle\SwiftmailerBundle\SwiftmailerBundle;
+use Symfony\Bundle\TwigBundle\TwigBundle;
+use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
+use Symfony\Bundle\WebServerBundle\WebServerBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
@@ -49,31 +64,31 @@ class AppKernel extends Kernel
     public function registerBundles()
     {
         $bundles = [
-            new Symfony\Bundle\FrameworkBundle\FrameworkBundle,
-            new Symfony\Bundle\SecurityBundle\SecurityBundle,
-            new Symfony\Bundle\TwigBundle\TwigBundle,
-            new Symfony\Bundle\MonologBundle\MonologBundle,
-            new Symfony\Bundle\SwiftmailerBundle\SwiftmailerBundle,
-            new Doctrine\Bundle\DoctrineBundle\DoctrineBundle,
-            new Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle,
+            new FrameworkBundle,
+            new SecurityBundle,
+            new TwigBundle,
+            new MonologBundle,
+            new SwiftmailerBundle,
+            new DoctrineBundle,
+            new SensioFrameworkExtraBundle,
             // PrestaShop Core bundle
             new PrestaShopBundle\PrestaShopBundle,
             // PrestaShop Translation parser
-            new PrestaShop\TranslationToolsBundle\TranslationToolsBundle,
+            new TranslationToolsBundle,
             // REST API consumer
-            new Csa\Bundle\GuzzleBundle\CsaGuzzleBundle,
-            new League\Tactician\Bundle\TacticianBundle,
-            new FOS\JsRoutingBundle\FOSJsRoutingBundle,
+            new CsaGuzzleBundle,
+            new TacticianBundle,
+            new FOSJsRoutingBundle,
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {
-            $bundles[] = new Symfony\Bundle\DebugBundle\DebugBundle;
-            $bundles[] = new Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
-            $bundles[] = new Sensio\Bundle\DistributionBundle\SensioDistributionBundle;
+            $bundles[] = new DebugBundle;
+            $bundles[] = new WebProfilerBundle;
+            $bundles[] = new SensioDistributionBundle;
         }
 
         if ($this->getEnvironment() === 'dev') {
-            $bundles[] = new Symfony\Bundle\WebServerBundle\WebServerBundle;
+            $bundles[] = new WebServerBundle;
         }
 
         /* Will not work until PrestaShop is installed */
@@ -81,7 +96,7 @@ class AppKernel extends Kernel
         if (! empty($activeModules)) {
             try {
                 $this->enableComposerAutoloaderOnModules($activeModules);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
             }
         }
 
@@ -142,7 +157,7 @@ class AppKernel extends Kernel
     /**
      * {@inheritdoc}
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
@@ -206,7 +221,7 @@ class AppKernel extends Kernel
         $activeModules = [];
         try {
             $activeModules = (new ModuleRepository)->getActiveModules();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Do nothing because the modules retrieval must not block the kernel, and it won't work
             // during the installation process
         }

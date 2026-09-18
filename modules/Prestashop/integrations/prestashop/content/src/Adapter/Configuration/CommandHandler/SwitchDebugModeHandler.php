@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class SwitchDebugModeHandler implements SwitchDebugModeHandlerInterface
      */
     private $debugMode;
 
-    /**
-     * @param DebugMode $debugMode
-     */
     public function __construct(DebugMode $debugMode)
     {
         $this->debugMode = $debugMode;
@@ -57,13 +55,13 @@ final class SwitchDebugModeHandler implements SwitchDebugModeHandlerInterface
     {
         $isDebugModeEnabled = $this->debugMode->isDebugModeEnabled();
 
-        if (!$isDebugModeEnabled && $command->enableDebugMode()) {
+        if (! $isDebugModeEnabled && $command->enableDebugMode()) {
             $this->debugMode->enable();
 
             return;
         }
 
-        if ($isDebugModeEnabled && !$command->enableDebugMode()) {
+        if ($isDebugModeEnabled && ! $command->enableDebugMode()) {
             $this->debugMode->disable();
         }
     }

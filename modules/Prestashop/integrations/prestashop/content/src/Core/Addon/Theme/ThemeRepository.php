@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShop\PrestaShop\Core\Addon\Theme;
 
+use PrestaShop\PrestaShop\Core\Addon\AddonInterface;
 use PrestaShop\PrestaShop\Core\Addon\AddonListFilter;
 use PrestaShop\PrestaShop\Core\Addon\AddonListFilterStatus;
 use PrestaShop\PrestaShop\Core\Addon\AddonListFilterType;
@@ -42,20 +44,23 @@ class ThemeRepository implements AddonRepositoryInterface
      * @var ConfigurationInterface
      */
     private $appConfiguration;
+
     /**
      * @var Filesystem
      */
     private $filesystem;
+
     /**
      * @var Shop|null
      */
     private $shop;
+
     /**
      * @var array
      */
     public $themes;
 
-    public function __construct(ConfigurationInterface $configuration, Filesystem $filesystem, Shop $shop = null)
+    public function __construct(ConfigurationInterface $configuration, Filesystem $filesystem, ?Shop $shop = null)
     {
         $this->appConfiguration = $configuration;
         $this->filesystem = $filesystem;
@@ -63,26 +68,25 @@ class ThemeRepository implements AddonRepositoryInterface
     }
 
     /**
-     * @param string $name
-     *
-     * @return \PrestaShop\PrestaShop\Core\Addon\AddonInterface|Theme
+     * @param  string  $name
+     * @return AddonInterface|Theme
      *
      * @throws PrestaShopException
      */
     public function getInstanceByName($name)
     {
-        $dir = $this->appConfiguration->get('_PS_ALL_THEMES_DIR_') . $name;
+        $dir = $this->appConfiguration->get('_PS_ALL_THEMES_DIR_').$name;
 
-        $confDir = $this->appConfiguration->get('_PS_CONFIG_DIR_') . 'themes/' . $name;
-        $jsonConf = $confDir . '/theme.json';
+        $confDir = $this->appConfiguration->get('_PS_CONFIG_DIR_').'themes/'.$name;
+        $jsonConf = $confDir.'/theme.json';
         if ($this->shop) {
-            $jsonConf = $confDir . '/shop' . $this->shop->id . '.json';
+            $jsonConf = $confDir.'/shop'.$this->shop->id.'.json';
         }
 
         if ($this->filesystem->exists($jsonConf)) {
             $data = $this->getConfigFromFile($jsonConf);
         } else {
-            $data = $this->getConfigFromFile($dir . '/config/theme.yml');
+            $data = $this->getConfigFromFile($dir.'/config/theme.yml');
 
             // Write parsed yml data into json conf (faster parsing next time)
             $this->filesystem->dumpFile($jsonConf, json_encode($data));
@@ -95,8 +99,8 @@ class ThemeRepository implements AddonRepositoryInterface
 
     public function getList()
     {
-        if (!isset($this->themes)) {
-            $this->themes = $this->getFilteredList(new AddonListFilter());
+        if (! isset($this->themes)) {
+            $this->themes = $this->getFilteredList(new AddonListFilter);
         }
 
         return $this->themes;
@@ -116,7 +120,7 @@ class ThemeRepository implements AddonRepositoryInterface
 
     public function getListExcluding(array $exclude)
     {
-        $filter = (new AddonListFilter())
+        $filter = (new AddonListFilter)
             ->setExclude($exclude);
 
         return $this->getFilteredList($filter);
@@ -126,7 +130,7 @@ class ThemeRepository implements AddonRepositoryInterface
     {
         $filter->setType(AddonListFilterType::THEME);
 
-        if (!isset($filter->status)) {
+        if (! isset($filter->status)) {
             $filter->setStatus(AddonListFilterStatus::ALL);
         }
 
@@ -144,7 +148,7 @@ class ThemeRepository implements AddonRepositoryInterface
     private function getThemesOnDisk()
     {
         $suffix = 'config/theme.yml';
-        $themeDirectories = glob($this->appConfiguration->get('_PS_ALL_THEMES_DIR_') . '*/' . $suffix, GLOB_NOSORT);
+        $themeDirectories = glob($this->appConfiguration->get('_PS_ALL_THEMES_DIR_').'*/'.$suffix, GLOB_NOSORT);
 
         $themes = [];
         foreach ($themeDirectories as $directory) {
@@ -157,14 +161,14 @@ class ThemeRepository implements AddonRepositoryInterface
 
     private function getConfigFromFile($file)
     {
-        if (!$this->filesystem->exists($file)) {
+        if (! $this->filesystem->exists($file)) {
             throw new PrestaShopException(sprintf('[ThemeRepository] Theme configuration file not found for theme at `%s`.', $file));
         }
 
         $content = file_get_contents($file);
 
         if (preg_match('/.\.(yml|yaml)$/', $file)) {
-            return (new Parser())->parse($content);
+            return (new Parser)->parse($content);
         } elseif (preg_match('/.\.json$/', $file)) {
             return json_decode($content, true);
         }

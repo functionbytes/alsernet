@@ -29,6 +29,7 @@ use PrestaShop\PrestaShop\Core\Feature\TokenInUrls;
 use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecification;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Price as PriceSpecification;
+use PrestaShopBundle\Controller\Admin\MultistoreController;
 
 class AdminControllerCore extends Controller
 {
@@ -582,7 +583,7 @@ class AdminControllerCore extends Controller
     /**
      * Gets the multistore header and assigns its html content to a smarty variable
      *
-     * @see PrestaShopBundle\Controller\Admin\MultistoreController
+     * @see MultistoreController
      *
      * (the decision to display it or not is taken by the MultistoreController)
      */

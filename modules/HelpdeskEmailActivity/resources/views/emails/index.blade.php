@@ -686,7 +686,7 @@
                     data-url="{{ route('helpdeskemailactivity.export-selected') }}">
                 {{ __('helpdeskemailactivity::emaillog.actions.bulk_export') }}
             </button>
-            <button type="button" class="evx-btn evx-btn-danger evx-btn-inline" id="bulk-delete"
+            <button type="button" class="evx-btn evx-btn-brand evx-btn-inline" id="bulk-delete"
                     data-url="{{ route('helpdeskemailactivity.bulk-destroy') }}">
                 {{ __('helpdeskemailactivity::emaillog.actions.bulk_delete') }}
             </button>

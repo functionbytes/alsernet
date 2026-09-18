@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ class OrderDiscountsForViewing
     private $discounts = [];
 
     /**
-     * @param OrderDiscountForViewing[] $discounts
+     * @param  OrderDiscountForViewing[]  $discounts
      */
     public function __construct(array $discounts)
     {
@@ -51,9 +52,6 @@ class OrderDiscountsForViewing
         return $this->discounts;
     }
 
-    /**
-     * @param OrderDiscountForViewing $discount
-     */
     private function addDiscount(OrderDiscountForViewing $discount): void
     {
         $this->discounts[] = $discount;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ class OrderSourcesForViewing
     private $sources = [];
 
     /**
-     * @param OrderSourceForViewing[] $sources
+     * @param  OrderSourceForViewing[]  $sources
      */
     public function __construct(array $sources)
     {
@@ -51,9 +52,6 @@ class OrderSourcesForViewing
         return $this->sources;
     }
 
-    /**
-     * @param OrderSourceForViewing $source
-     */
     private function addSource(OrderSourceForViewing $source): void
     {
         $this->sources[] = $source;

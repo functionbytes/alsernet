@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,8 +32,6 @@ use PrestaShop\PrestaShop\Core\Domain\Address\Query\GetRequiredFieldsForAddress;
 interface GetRequiredFieldsForAddressHandlerInterface
 {
     /**
-     * @param GetRequiredFieldsForAddress $query
-     *
      * @return string[]
      */
     public function handle(GetRequiredFieldsForAddress $query): array;

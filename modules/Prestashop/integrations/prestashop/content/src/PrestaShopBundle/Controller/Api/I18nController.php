@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,6 @@ class I18nController extends ApiController
      *
      * No access restrictions because it is required for VueJs translations
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -48,7 +48,7 @@ class I18nController extends ApiController
             $page = $request->attributes->get('page');
 
             try {
-                $translationClass = $this->container->get('prestashop.translation.api.' . $page);
+                $translationClass = $this->container->get('prestashop.translation.api.'.$page);
             } catch (Exception $exception) {
                 throw new BadRequestHttpException($exception->getMessage());
             }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,10 +55,6 @@ final class SetUpUrlsDataConfiguration implements DataConfigurationInterface
 
     /**
      * SetUpUrlsDataConfiguration constructor.
-     *
-     * @param Configuration $configuration
-     * @param HtaccessFileGenerator $htaccessFileGenerator
-     * @param TranslatorInterface $translator
      */
     public function __construct(
         Configuration $configuration,
@@ -96,7 +93,7 @@ final class SetUpUrlsDataConfiguration implements DataConfigurationInterface
             $this->configuration->set('PS_HTACCESS_DISABLE_MULTIVIEWS', $configuration['disable_apache_multiview']);
             $this->configuration->set('PS_HTACCESS_DISABLE_MODSEC', $configuration['disable_apache_mod_security']);
 
-            if (!$this->htaccessFileGenerator->generateFile($configuration['disable_apache_multiview'])) {
+            if (! $this->htaccessFileGenerator->generateFile($configuration['disable_apache_multiview'])) {
                 $this->configuration->set('PS_REWRITING_SETTINGS', 0);
 
                 $errorMessage = $this->translator

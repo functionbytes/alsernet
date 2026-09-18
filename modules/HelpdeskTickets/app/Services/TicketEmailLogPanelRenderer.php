@@ -97,10 +97,10 @@ class TicketEmailLogPanelRenderer implements EmailLogEntityPanelRenderer, EmailL
             ];
         }
 
-        if ($ticket->assignee?->name) {
+        if ($ticket->assignee?->fullName()) {
             $rows[] = [
                 'label' => __('helpdesktickets::helpdesktickets.email_log_panel.assignee'),
-                'value' => $ticket->assignee->name,
+                'value' => $ticket->assignee->fullName(),
             ];
         }
 

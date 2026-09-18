@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,8 +34,6 @@ namespace PrestaShop\PrestaShop\Core\Domain\Supplier\Command;
 abstract class AbstractBulkSupplierCommand
 {
     /**
-     * @param array $ids
-     *
      * @return bool
      */
     protected function assertIsEmptyOrContainsNonIntegerValues(array $ids)

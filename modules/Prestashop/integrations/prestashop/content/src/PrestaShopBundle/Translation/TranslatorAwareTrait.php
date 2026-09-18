@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ trait TranslatorAwareTrait
 
     /**
      * Set translator instance.
-     *
-     * @param TranslatorInterface $translator
      */
     public function setTranslator(TranslatorInterface $translator)
     {
@@ -51,10 +50,8 @@ trait TranslatorAwareTrait
     /**
      * Shortcut method to translate text.
      *
-     * @param string $id
-     * @param array $options
-     * @param string $domain
-     *
+     * @param  string  $id
+     * @param  string  $domain
      * @return string
      */
     protected function trans($id, array $options, $domain)

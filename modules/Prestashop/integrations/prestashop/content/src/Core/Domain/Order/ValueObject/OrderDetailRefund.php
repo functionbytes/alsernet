@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,12 +54,6 @@ class OrderDetailRefund
     private $refundedAmount;
 
     /**
-     * @param int $orderDetailId
-     * @param int $productQuantity
-     * @param string $refundedAmount
-     *
-     * @return self
-     *
      * @throws InvalidCancelProductException
      * @throws OrderException
      */
@@ -67,7 +62,7 @@ class OrderDetailRefund
         try {
             $decimalRefundedAmount = new DecimalNumber($refundedAmount);
         } catch (InvalidArgumentException $e) {
-            throw new InvalidAmountException();
+            throw new InvalidAmountException;
         }
 
         if ($decimalRefundedAmount->isLowerOrEqualThanZero()) {
@@ -78,11 +73,6 @@ class OrderDetailRefund
     }
 
     /**
-     * @param int $orderDetailId
-     * @param int $productQuantity
-     *
-     * @return self
-     *
      * @throws OrderException
      */
     public static function createStandardRefund(int $orderDetailId, int $productQuantity): self
@@ -91,16 +81,12 @@ class OrderDetailRefund
     }
 
     /**
-     * @param int $orderDetailId
-     * @param int $productQuantity
-     * @param DecimalNumber|null $refundedAmount
-     *
      * @throws OrderException
      */
     private function __construct(int $orderDetailId, int $productQuantity, ?DecimalNumber $refundedAmount)
     {
         $this->assertOrderDetailIdIsGreaterThanZero($orderDetailId);
-        if (0 >= $productQuantity) {
+        if ($productQuantity <= 0) {
             throw new InvalidCancelProductException(InvalidCancelProductException::INVALID_QUANTITY);
         }
         $this->orderDetailId = $orderDetailId;
@@ -108,38 +94,27 @@ class OrderDetailRefund
         $this->refundedAmount = $refundedAmount;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderDetailId(): int
     {
         return $this->orderDetailId;
     }
 
-    /**
-     * @return int
-     */
     public function getProductQuantity(): int
     {
         return $this->productQuantity;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getRefundedAmount(): ?DecimalNumber
     {
         return $this->refundedAmount;
     }
 
     /**
-     * @param int $orderDetailId
-     *
      * @throws OrderException
      */
     private function assertOrderDetailIdIsGreaterThanZero(int $orderDetailId)
     {
-        if (0 > $orderDetailId) {
+        if ($orderDetailId < 0) {
             throw new OrderException(sprintf('Order detail id %s is invalid. Order detail id must be number that is greater than zero.', var_export($orderDetailId, true)));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,12 +46,12 @@ final class DatabaseBackupCreator implements BackupCreatorInterface
     {
         ini_set('max_execution_time', 0);
 
-        if (!is_writable(PrestaShopBackup::getBackupPath())) {
+        if (! is_writable(PrestaShopBackup::getBackupPath())) {
             throw new DirectoryIsNotWritableException('To create backup, its directory must be writable');
         }
 
-        $legacyBackup = new PrestaShopBackup();
-        if (!$legacyBackup->add()) {
+        $legacyBackup = new PrestaShopBackup;
+        if (! $legacyBackup->add()) {
             throw new BackupException('Failed to create backup');
         }
 

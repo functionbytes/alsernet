@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -140,7 +141,7 @@ class EditCustomerCommand
     private $riskId;
 
     /**
-     * @param int $customerId
+     * @param  int  $customerId
      */
     public function __construct($customerId)
     {
@@ -164,8 +165,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $firstName
-     *
+     * @param  string  $firstName
      * @return self
      */
     public function setFirstName($firstName)
@@ -184,8 +184,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $lastName
-     *
+     * @param  string  $lastName
      * @return self
      */
     public function setLastName($lastName)
@@ -204,8 +203,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $email
-     *
+     * @param  string  $email
      * @return self
      */
     public function setEmail($email)
@@ -224,8 +222,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $password
-     *
+     * @param  string  $password
      * @return self
      */
     public function setPassword($password)
@@ -244,8 +241,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param int $defaultGroupId
-     *
+     * @param  int  $defaultGroupId
      * @return self
      */
     public function setDefaultGroupId($defaultGroupId)
@@ -264,8 +260,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param int[] $groupIds
-     *
+     * @param  int[]  $groupIds
      * @return self
      */
     public function setGroupIds(array $groupIds)
@@ -284,8 +279,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param int $genderId
-     *
+     * @param  int  $genderId
      * @return self
      */
     public function setGenderId($genderId)
@@ -304,7 +298,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param bool $isNewsletterSubscribed
+     * @param  bool  $isNewsletterSubscribed
      */
     public function setNewsletterSubscribed($isNewsletterSubscribed)
     {
@@ -320,8 +314,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param bool $isEnabled
-     *
+     * @param  bool  $isEnabled
      * @return self
      */
     public function setIsEnabled($isEnabled)
@@ -340,8 +333,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param bool $isPartnerOffersSubscribed
-     *
+     * @param  bool  $isPartnerOffersSubscribed
      * @return self
      */
     public function setIsPartnerOffersSubscribed($isPartnerOffersSubscribed)
@@ -360,8 +352,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $birthday
-     *
+     * @param  string  $birthday
      * @return self
      */
     public function setBirthday($birthday)
@@ -380,8 +371,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $companyName
-     *
+     * @param  string  $companyName
      * @return self
      */
     public function setCompanyName($companyName)
@@ -400,8 +390,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $siretCode
-     *
+     * @param  string  $siretCode
      * @return self
      */
     public function setSiretCode($siretCode)
@@ -420,8 +409,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $apeCode
-     *
+     * @param  string  $apeCode
      * @return self
      */
     public function setApeCode($apeCode)
@@ -440,8 +428,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param string $website
-     *
+     * @param  string  $website
      * @return self
      */
     public function setWebsite($website)
@@ -460,8 +447,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param float $allowedOutstandingAmount
-     *
+     * @param  float  $allowedOutstandingAmount
      * @return self
      */
     public function setAllowedOutstandingAmount($allowedOutstandingAmount)
@@ -480,8 +466,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param int $maxPaymentDays
-     *
+     * @param  int  $maxPaymentDays
      * @return self
      */
     public function setMaxPaymentDays($maxPaymentDays)
@@ -500,8 +485,7 @@ class EditCustomerCommand
     }
 
     /**
-     * @param int $riskId
-     *
+     * @param  int  $riskId
      * @return self
      */
     public function setRiskId($riskId)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ interface ContainerBuilderExtensionInterface
     /**
      * This method is called by the ContainerBuilder before compiling the container. This is where you
      * can add extension, compiler pass, or parameters to the container.
-     *
-     * @param ContainerBuilder $container
      */
     public function build(ContainerBuilder $container);
 }

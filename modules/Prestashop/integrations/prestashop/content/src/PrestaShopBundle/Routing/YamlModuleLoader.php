@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,14 +57,14 @@ class YamlModuleLoader extends Loader
      */
     public function load($resource, $type = null)
     {
-        if (true === $this->isLoaded) {
+        if ($this->isLoaded === true) {
             throw new RuntimeException('Do not add the "module" loader twice.');
         }
 
-        $routes = new RouteCollection();
+        $routes = new RouteCollection;
 
         foreach ($this->activeModulesPaths as $modulePath) {
-            $routingFile = $modulePath . '/config/routes.yml';
+            $routingFile = $modulePath.'/config/routes.yml';
             if (file_exists($routingFile)) {
                 $loadedRoutes = $this->import($routingFile, 'yaml');
                 $routes->addCollection($loadedRoutes);
@@ -80,7 +81,7 @@ class YamlModuleLoader extends Loader
      */
     public function supports($resource, $type = null)
     {
-        return 'module' === $type;
+        return $type === 'module';
     }
 
     /**
@@ -94,8 +95,6 @@ class YamlModuleLoader extends Loader
     }
 
     /**
-     * @param RouteCollection $routes
-     *
      * @return RouteCollection
      */
     private function modifyRoutes(RouteCollection $routes)
@@ -105,7 +104,7 @@ class YamlModuleLoader extends Loader
                 continue;
             }
 
-            $route->setPath('/modules' . $route->getPath());
+            $route->setPath('/modules'.$route->getPath());
         }
 
         return $routes;

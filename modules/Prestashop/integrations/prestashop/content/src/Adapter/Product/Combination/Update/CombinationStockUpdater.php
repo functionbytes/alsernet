@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,6 @@ class CombinationStockUpdater
      */
     private $stockManager;
 
-    /**
-     * @param StockAvailableRepository $stockAvailableRepository
-     * @param CombinationRepository $combinationRepository
-     * @param StockManager $stockManager
-     */
     public function __construct(
         StockAvailableRepository $stockAvailableRepository,
         CombinationRepository $combinationRepository,
@@ -73,10 +69,6 @@ class CombinationStockUpdater
         $this->stockManager = $stockManager;
     }
 
-    /**
-     * @param CombinationId $combinationId
-     * @param CombinationStockProperties $properties
-     */
     public function update(CombinationId $combinationId, CombinationStockProperties $properties): void
     {
         $combination = $this->combinationRepository->get($combinationId);
@@ -90,41 +82,38 @@ class CombinationStockUpdater
     }
 
     /**
-     * @param Combination $combination
-     * @param CombinationStockProperties $properties
-     *
      * @return string[]
      */
     private function fillUpdatableProperties(Combination $combination, CombinationStockProperties $properties): array
     {
         $updatableProperties = [];
 
-        if (null !== $properties->getQuantity()) {
+        if ($properties->getQuantity() !== null) {
             $combination->quantity = $properties->getQuantity();
             $updatableProperties[] = 'quantity';
         }
 
-        if (null !== $properties->getAvailableDate()) {
+        if ($properties->getAvailableDate() !== null) {
             $combination->available_date = $properties->getAvailableDate()->format(DateTime::DEFAULT_DATE_FORMAT);
             $updatableProperties[] = 'available_date';
         }
 
-        if (null !== $properties->getLocation()) {
+        if ($properties->getLocation() !== null) {
             $combination->location = $properties->getLocation();
             $updatableProperties[] = 'location';
         }
 
-        if (null !== $properties->getLowStockThreshold()) {
+        if ($properties->getLowStockThreshold() !== null) {
             $combination->low_stock_threshold = $properties->getLowStockThreshold();
             $updatableProperties[] = 'low_stock_threshold';
         }
 
-        if (null !== $properties->getMinimalQuantity()) {
+        if ($properties->getMinimalQuantity() !== null) {
             $combination->minimal_quantity = $properties->getMinimalQuantity();
             $updatableProperties[] = 'minimal_quantity';
         }
 
-        if (null !== $properties->isLowStockAlertEnabled()) {
+        if ($properties->isLowStockAlertEnabled() !== null) {
             $combination->low_stock_alert = $properties->isLowStockAlertEnabled();
             $updatableProperties[] = 'low_stock_alert';
         }
@@ -132,16 +121,12 @@ class CombinationStockUpdater
         return $updatableProperties;
     }
 
-    /**
-     * @param Combination $combination
-     * @param CombinationStockProperties $properties
-     */
     private function updateStockAvailable(Combination $combination, CombinationStockProperties $properties): void
     {
-        $updateQuantity = null !== $properties->getQuantity();
-        $updateLocation = null !== $properties->getLocation();
+        $updateQuantity = $properties->getQuantity() !== null;
+        $updateLocation = $properties->getLocation() !== null;
 
-        if (!$updateQuantity && !$updateLocation) {
+        if (! $updateQuantity && ! $updateLocation) {
             return;
         }
 
@@ -163,10 +148,6 @@ class CombinationStockUpdater
     }
 
     /**
-     * @param Combination $combination
-     * @param int $oldQuantity
-     * @param int $newQuantity
-     *
      * @throws CoreException
      */
     private function saveMovement(Combination $combination, int $oldQuantity, int $newQuantity): void
@@ -174,7 +155,7 @@ class CombinationStockUpdater
         $combinationId = $combination->id;
         $deltaQuantity = $newQuantity - $oldQuantity;
 
-        if (0 === $deltaQuantity) {
+        if ($deltaQuantity === 0) {
             return;
         }
 

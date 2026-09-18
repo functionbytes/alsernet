@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,9 +88,9 @@ class Processor
     /**
      * Processor constructor.
      *
-     * @param string $adminDir Path to PrestaShop's admin directory
-     * @param string $themesDir Path to the FO themes directory
-     * @param string[] $defaultModulesToProcess Path to the default modules to process
+     * @param  string  $adminDir  Path to PrestaShop's admin directory
+     * @param  string  $themesDir  Path to the FO themes directory
+     * @param  string[]  $defaultModulesToProcess  Path to the default modules to process
      */
     public function __construct($adminDir, $themesDir, array $defaultModulesToProcess)
     {
@@ -101,8 +102,7 @@ class Processor
     /**
      * Specifies the installed language 2-letter ISO code.
      *
-     * @param string $languageCode
-     *
+     * @param  string  $languageCode
      * @return Processor
      */
     public function setLanguageCode($languageCode)
@@ -115,8 +115,7 @@ class Processor
     /**
      * Specifies if the BO theme should be processed.
      *
-     * @param bool $processBOTheme
-     *
+     * @param  bool  $processBOTheme
      * @return Processor
      */
     public function setProcessBOTheme($processBOTheme)
@@ -129,8 +128,7 @@ class Processor
     /**
      * Specifies the names of the FO themes to process.
      *
-     * @param string[] $processFOThemes
-     *
+     * @param  string[]  $processFOThemes
      * @return Processor
      */
     public function setProcessFOThemes(array $processFOThemes)
@@ -143,8 +141,7 @@ class Processor
     /**
      * Specifies additional paths to process.
      *
-     * @param string[] $processPaths
-     *
+     * @param  string[]  $processPaths
      * @return Processor
      */
     public function setProcessPaths(array $processPaths)
@@ -157,8 +154,7 @@ class Processor
     /**
      * Specifies if this is performed during install.
      *
-     * @param bool $isInstall
-     *
+     * @param  bool  $isInstall
      * @return Processor
      */
     public function setIsInstall($isInstall)
@@ -171,8 +167,7 @@ class Processor
     /**
      * Specifies if the RTL files should be generated even if they already exist.
      *
-     * @param bool $regenerate
-     *
+     * @param  bool  $regenerate
      * @return Processor
      */
     public function setRegenerate($regenerate)
@@ -185,8 +180,7 @@ class Processor
     /**
      * Specifies if the default modules should be processed.
      *
-     * @param bool $processDefaultModules
-     *
+     * @param  bool  $processDefaultModules
      * @return Processor
      */
     public function setProcessDefaultModules($processDefaultModules)
@@ -197,32 +191,32 @@ class Processor
     }
 
     /**
-     * @throws Exception\GenerationException
+     * @throws GenerationException
      * @throws \Exception
      */
     public function process()
     {
         if ($this->languageCode) {
             $lang_pack = Language::getLangDetails($this->languageCode);
-            if (!$lang_pack['is_rtl']) {
+            if (! $lang_pack['is_rtl']) {
                 return;
             }
         }
 
-        $generator = new StylesheetGenerator();
+        $generator = new StylesheetGenerator;
         // generate stylesheets for BO themes
         if ($this->processBOTheme) {
-            if (!is_dir($this->adminDir)) {
+            if (! is_dir($this->adminDir)) {
                 throw new GenerationException("Cannot generate BO themes: \"{$this->adminDir}\" is not a directory");
             }
 
-            $generator->generateInDirectory($this->adminDir . DIRECTORY_SEPARATOR . 'themes');
+            $generator->generateInDirectory($this->adminDir.DIRECTORY_SEPARATOR.'themes');
         }
 
         // generate stylesheets for BO themes
         if ($this->processFOThemes) {
             foreach ($this->processFOThemes as $themeName) {
-                $generator->generateInDirectory($this->themesDir . DIRECTORY_SEPARATOR . $themeName);
+                $generator->generateInDirectory($this->themesDir.DIRECTORY_SEPARATOR.$themeName);
             }
         }
 
@@ -231,9 +225,9 @@ class Processor
             $this->processPaths = array_merge($this->processPaths, $this->defaultModulesToProcess);
         }
 
-        if (!empty($this->processPaths)) {
+        if (! empty($this->processPaths)) {
             foreach ($this->processPaths as $path) {
-                if (!empty($path) && is_dir($path)) {
+                if (! empty($path) && is_dir($path)) {
                     $generator->generateInDirectory($path);
                 }
             }

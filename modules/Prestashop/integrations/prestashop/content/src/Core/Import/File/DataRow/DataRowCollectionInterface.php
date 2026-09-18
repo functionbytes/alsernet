@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,6 @@ interface DataRowCollectionInterface extends ArrayAccess, IteratorAggregate
     /**
      * Add a data row to this collection.
      *
-     * @param DataRowInterface $dataRow
      *
      * @return self
      */

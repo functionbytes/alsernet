@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ final class ShoppingCartTotalKpi implements KpiInterface
      */
     private $options;
 
-    /**
-     * @param Locale $locale
-     */
     public function __construct(Locale $locale)
     {
         $this->locale = $locale;
@@ -64,7 +62,7 @@ final class ShoppingCartTotalKpi implements KpiInterface
         $translator = Context::getContext()->getTranslator();
         $cart = new Cart($this->options['cart_id']);
 
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-kpi-cart';
         $helper->icon = 'shopping_cart';
         $helper->color = 'color1';
@@ -74,15 +72,13 @@ final class ShoppingCartTotalKpi implements KpiInterface
             $cart->getCartTotalPrice(),
             Currency::getIsoCodeById((int) $cart->id_currency)
         );
-        $helper->source = Context::getContext()->link->getAdminLink('AdminStats') . '&ajax=1&action=getKpi&kpi=shopping_cart_total&cartId=' . $cart->id;
+        $helper->source = Context::getContext()->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=shopping_cart_total&cartId='.$cart->id;
 
         return $helper->generate();
     }
 
     /**
      * Sets options for Kpi
-     *
-     * @param array $options
      */
     public function setOptions(array $options)
     {

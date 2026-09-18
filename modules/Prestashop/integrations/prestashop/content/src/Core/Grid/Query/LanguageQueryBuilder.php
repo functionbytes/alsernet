@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,7 @@ final class LanguageQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -79,24 +78,18 @@ final class LanguageQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
      * @return QueryBuilder
      */
     private function getLanguageQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $builder = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'lang', 'l');
+            ->from($this->dbPrefix.'lang', 'l');
 
         $this->applyFilters($builder, $searchCriteria);
 
         return $builder;
     }
 
-    /**
-     * @param QueryBuilder $builder
-     * @param SearchCriteriaInterface $searchCriteria
-     */
     private function applyFilters(QueryBuilder $builder, SearchCriteriaInterface $searchCriteria)
     {
         $allowedFilters = [
@@ -110,19 +103,19 @@ final class LanguageQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($searchCriteria->getFilters() as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
             if (in_array($filterName, ['id_lang', 'active'])) {
-                $builder->andWhere($filterName . ' = :' . $filterName);
+                $builder->andWhere($filterName.' = :'.$filterName);
                 $builder->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            $builder->andWhere($filterName . ' LIKE :' . $filterName);
-            $builder->setParameter($filterName, '%' . $filterValue . '%');
+            $builder->andWhere($filterName.' LIKE :'.$filterName);
+            $builder->setParameter($filterName, '%'.$filterValue.'%');
         }
     }
 }

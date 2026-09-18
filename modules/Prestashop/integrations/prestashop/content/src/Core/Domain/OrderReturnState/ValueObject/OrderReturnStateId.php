@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class OrderReturnStateId
     private $orderReturnStateId;
 
     /**
-     * @param int $orderReturnStateId
+     * @param  int  $orderReturnStateId
      */
     public function __construct($orderReturnStateId)
     {
@@ -58,11 +59,11 @@ class OrderReturnStateId
     }
 
     /**
-     * @param int $orderReturnStateId
+     * @param  int  $orderReturnStateId
      */
     private function assertIntegerIsGreaterThanZero($orderReturnStateId)
     {
-        if (!is_int($orderReturnStateId) || 0 > $orderReturnStateId) {
+        if (! is_int($orderReturnStateId) || $orderReturnStateId < 0) {
             throw new OrderReturnStateException(sprintf('OrderReturnState id %s is invalid. OrderReturnState id must be number that is greater than zero.', var_export($orderReturnStateId, true)));
         }
     }

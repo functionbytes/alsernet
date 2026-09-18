@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ class RemoveXmlCompiledContainerPass implements CompilerPassInterface
     {
         if ($container->getParameter('kernel.debug')) {
             $filename = $container->getParameter('debug.container.dump');
-            $filesystem = new Filesystem();
+            $filesystem = new Filesystem;
 
             try {
                 $filesystem->remove($filename);

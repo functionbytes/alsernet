@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,8 +27,11 @@
 class MyAccountControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'my-account';
+
     public $authRedirection = 'my-account';
+
     public $ssl = true;
 
     /**

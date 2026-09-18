@@ -6,23 +6,21 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\CustomField;
-use Modules\Helpdesk\Models\Skill;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Verifies that the delete modals in custom-fields/index.blade.php
- * and skills/index.blade.php use the correct IDs from core::components.delete
- * (#delete-modal / #delete-form) and NOT the old broken IDs
- * (#deleteModal / #deleteForm).
+ * Verifies that the delete modal in custom-fields/index.blade.php uses the
+ * correct IDs from core::components.delete (#delete-modal / #delete-form)
+ * and NOT the old broken IDs (#deleteModal / #deleteForm).
  *
- * Also tests the DELETE HTTP endpoints for authorization.
+ * Also tests the DELETE HTTP endpoint for authorization.
  */
 class DeleteModalsTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $manager;
 
@@ -84,46 +82,6 @@ class DeleteModalsTest extends TestCase
         $response->assertDontSee('btn-delete', false);
     }
 
-    // ─── Skills index: correct modal IDs ─────────────────────────────────────
-
-    public function test_skills_index_renders_correct_delete_modal_id(): void
-    {
-        $response = $this->actingAs($this->manager)
-            ->get(route('settings.helpdesk.skills.index'));
-
-        $response->assertOk();
-        $response->assertSee('id="delete-modal"', false);
-        $response->assertSee('id="delete-form"', false);
-    }
-
-    public function test_skills_index_does_not_use_old_modal_ids(): void
-    {
-        $response = $this->actingAs($this->manager)
-            ->get(route('settings.helpdesk.skills.index'));
-
-        $response->assertOk();
-        $response->assertDontSee('deleteModal', false);
-        $response->assertDontSee('deleteForm', false);
-        $response->assertDontSee('deleteItemName', false);
-    }
-
-    public function test_skills_index_uses_delete_btn_class_and_correct_data_attributes(): void
-    {
-        Skill::create([
-            'name' => 'Skill de prueba',
-            'slug' => 'skill-de-prueba',
-            'description' => 'Descripcion de prueba',
-        ]);
-
-        $response = $this->actingAs($this->manager)
-            ->get(route('settings.helpdesk.skills.index'));
-
-        $response->assertOk();
-        $response->assertSee('delete-btn', false);
-        $response->assertSee('data-bs-target="#delete-modal"', false);
-        $response->assertDontSee('btn-delete', false);
-    }
-
     // ─── Custom Fields: DELETE endpoint authorization ─────────────────────────
 
     public function test_manager_can_delete_custom_field(): void
@@ -171,47 +129,6 @@ class DeleteModalsTest extends TestCase
         ]);
 
         $this->delete(route('settings.helpdesk.custom-fields.destroy', $field))
-            ->assertRedirect(route('auth.login'));
-    }
-
-    // ─── Skills: DELETE endpoint authorization ────────────────────────────────
-
-    public function test_manager_can_delete_skill(): void
-    {
-        $skill = Skill::create([
-            'name' => 'Skill a eliminar',
-            'slug' => 'skill-a-eliminar',
-        ]);
-
-        $this->actingAs($this->manager)
-            ->delete(route('settings.helpdesk.skills.destroy', $skill))
-            ->assertRedirect(route('settings.helpdesk.skills.index'));
-
-        $this->assertDatabaseMissing('helpdesk_skills', ['id' => $skill->id], 'helpdesk');
-    }
-
-    public function test_unauthorized_user_cannot_delete_skill(): void
-    {
-        $skill = Skill::create([
-            'name' => 'Skill protegido',
-            'slug' => 'skill-protegido',
-        ]);
-
-        $this->actingAs($this->unauthorized)
-            ->delete(route('settings.helpdesk.skills.destroy', $skill))
-            ->assertForbidden();
-
-        $this->assertDatabaseHas('helpdesk_skills', ['id' => $skill->id], 'helpdesk');
-    }
-
-    public function test_guest_cannot_delete_skill(): void
-    {
-        $skill = Skill::create([
-            'name' => 'Skill guest',
-            'slug' => 'skill-guest-test',
-        ]);
-
-        $this->delete(route('settings.helpdesk.skills.destroy', $skill))
             ->assertRedirect(route('auth.login'));
     }
 }

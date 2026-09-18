@@ -30,7 +30,7 @@ class SendSocialEscalationNotification implements ShouldQueue
             fn ($r) => Role::where('name', $r)->where('guard_name', 'web')->exists()
         );
 
-        $recipients = $agentRoles ? User::role(array_values($agentRoles))->where('is_active', true)->get() : collect();
+        $recipients = $agentRoles ? User::role(array_values($agentRoles))->where('available', true)->get() : collect();
 
         if ($recipients->isEmpty()) {
             return;

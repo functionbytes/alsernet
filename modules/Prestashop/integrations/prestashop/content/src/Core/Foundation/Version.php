@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,13 +87,13 @@ class Version
     /**
      * Initialize version data.
      *
-     * @param string $version Version
-     * @param string $majorVersionString Legacy major version in string format (eg. "1.7")
-     * @param int $majorVersion Major version
-     * @param int $minorVersion [default=0] Minor version
-     * @param int $patchVersion [default=0] Patch version
-     * @param string $preReleaseVersion [default=''] Pre release version (eg. "dev", "beta"...)
-     * @param string $buildMetadata [default=''] Build metadata (eg. build number)
+     * @param  string  $version  Version
+     * @param  string  $majorVersionString  Legacy major version in string format (eg. "1.7")
+     * @param  int  $majorVersion  Major version
+     * @param  int  $minorVersion  [default=0] Minor version
+     * @param  int  $patchVersion  [default=0] Patch version
+     * @param  string  $preReleaseVersion  [default=''] Pre release version (eg. "dev", "beta"...)
+     * @param  string  $buildMetadata  [default=''] Build metadata (eg. build number)
      */
     public function __construct(
         $version,
@@ -115,8 +116,7 @@ class Version
     /**
      * Builds an instance form a version string
      *
-     * @param string $version
-     *
+     * @param  string  $version
      * @return self
      *
      * @throws InvalidVersionException If the version is invalid
@@ -126,11 +126,11 @@ class Version
         $matches = [];
         $regex = '/^([\d]+)(?:\.([\d]+))?(?:\.([\d]+))?(?:\.(?<legacy>[\d]+))?(?:-(?<prerelease>[0-9A-Za-z-.]+))?(?:\+(?<build>[0-9A-Za-z-.]+))?$/';
 
-        if (!preg_match($regex, $version, $matches)) {
+        if (! preg_match($regex, $version, $matches)) {
             throw new InvalidVersionException($version);
         }
 
-        if (isset($matches['legacy']) && '' !== $matches['legacy']) {
+        if (isset($matches['legacy']) && $matches['legacy'] !== '') {
             // legacy version like "1.7.5.0"
             $major = (int) $matches[2];
             $minor = (int) $matches[3];
@@ -156,15 +156,14 @@ class Version
     /**
      * Return the current version in legacy format (eg. "1.7.6.0")
      *
-     * @param bool $full [default=false] If true, include pre-release and build metadata (eg. "1.7.6.0-dev+build.1")
-     *
+     * @param  bool  $full  [default=false] If true, include pre-release and build metadata (eg. "1.7.6.0-dev+build.1")
      * @return string
      */
     public function getVersion($full = false)
     {
-        $version = '1.' . $this->version;
+        $version = '1.'.$this->version;
 
-        if (!$full) {
+        if (! $full) {
             // remove extra parts
             return preg_replace('/[-\+].*/', '', $version);
         }
@@ -262,8 +261,7 @@ class Version
     /**
      * Return if the current version is greater than the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -276,8 +274,7 @@ class Version
     /**
      * Return if the current version is greater than or equal to the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -290,8 +287,7 @@ class Version
     /**
      * Return if the current version is less than the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -304,8 +300,7 @@ class Version
     /**
      * Return if the current version is less than or equal to the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -318,8 +313,7 @@ class Version
     /**
      * Return if the current version is equal to the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -332,8 +326,7 @@ class Version
     /**
      * Return if the current version is not equal to the provided version.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
      * @return bool
      *
      * @throws InvalidVersionException If the provided version is invalid
@@ -355,10 +348,9 @@ class Version
      * Compares the current version with the provided version depending on the provided operator.
      * It sanitized both version to have a.
      *
-     * @param string $version Must be a valid version string, for example "1.7.4.0"
-     * @param string $operator Operator for version_compare(),
-     *                         allowed values are: <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
-     *
+     * @param  string  $version  Must be a valid version string, for example "1.7.4.0"
+     * @param  string  $operator  Operator for version_compare(),
+     *                            allowed values are: <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
      * @return bool result of the comparison
      *
      * @throws InvalidVersionException if the provided version is invalid
@@ -378,14 +370,13 @@ class Version
     /**
      * Remove legacy 1.x prefix if needed
      *
-     * @param string $version
-     * @param string $majorVersionString
-     *
+     * @param  string  $version
+     * @param  string  $majorVersionString
      * @return string
      */
     private function removeLegacyPrefix($version, $majorVersionString)
     {
-        if ('1.' === substr($version, 0, 2) && substr($version, 0, strlen($majorVersionString)) === $majorVersionString) {
+        if (substr($version, 0, 2) === '1.' && substr($version, 0, strlen($majorVersionString)) === $majorVersionString) {
             $version = substr($version, 2);
         }
 

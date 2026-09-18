@@ -13,7 +13,7 @@ class IntegrationsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     /**
      * Every toggleable integration key, in the order exposed by the controller.
@@ -21,7 +21,7 @@ class IntegrationsControllerTest extends TestCase
      * @var array<int, string>
      */
     private const array ALL_KEYS = [
-        'tickets', 'livechat', 'chatflow', 'sla', 'compliance', 'erp', 'social',
+        'tickets', 'livechat', 'chatflow', 'sla', 'compliance', 'erp', 'forms', 'social',
         'translate', 'agents', 'campaigns', 'contacts', 'analytics', 'document',
         'prestashop', 'helpcenter', 'emaillog', 'integration',
     ];

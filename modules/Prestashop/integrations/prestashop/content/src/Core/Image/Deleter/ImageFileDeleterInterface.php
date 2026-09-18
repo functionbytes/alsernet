@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,11 +35,10 @@ interface ImageFileDeleterInterface
     /**
      * Recursively deletes all images in the given path and removes empty folders.
      *
-     * @param string $path images directory
-     * @param bool $recursively if true deletes images from subdirectories
-     * @param bool $deleteSubdirectories if true deletes the subdirectories as well
-     * @param string $format image format
-     *
+     * @param  string  $path  images directory
+     * @param  bool  $recursively  if true deletes images from subdirectories
+     * @param  bool  $deleteSubdirectories  if true deletes the subdirectories as well
+     * @param  string  $format  image format
      * @return bool
      */
     public function deleteFromPath($path, $recursively = false, $deleteSubdirectories = false, $format = 'jpg');
@@ -46,8 +46,8 @@ interface ImageFileDeleterInterface
     /**
      * Delete all images from given path.
      *
-     * @param string $path
-     * @param string $format
+     * @param  string  $path
+     * @param  string  $format
      */
     public function deleteAllImages($path, $format = 'jpg');
 }

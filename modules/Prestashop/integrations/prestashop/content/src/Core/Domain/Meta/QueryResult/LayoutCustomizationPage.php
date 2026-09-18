@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ class LayoutCustomizationPage
     private $title;
 
     /**
-     * @param string $page
-     * @param string $title
-     * @param string $description
+     * @param  string  $page
+     * @param  string  $title
+     * @param  string  $description
      */
     public function __construct($page, $title, $description)
     {

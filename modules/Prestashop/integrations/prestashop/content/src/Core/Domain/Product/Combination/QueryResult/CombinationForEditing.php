@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,13 +70,7 @@ class CombinationForEditing
     private $imageIds;
 
     /**
-     * @param int $combinationId
-     * @param int $productId
-     * @param string $name
-     * @param CombinationDetails $options
-     * @param CombinationPrices $prices
-     * @param CombinationStock $stock
-     * @param int[] $imageIds
+     * @param  int[]  $imageIds
      */
     public function __construct(
         int $combinationId,
@@ -95,49 +90,31 @@ class CombinationForEditing
         $this->imageIds = $imageIds;
     }
 
-    /**
-     * @return int
-     */
     public function getCombinationId(): int
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return CombinationDetails
-     */
     public function getDetails(): CombinationDetails
     {
         return $this->details;
     }
 
-    /**
-     * @return CombinationPrices
-     */
     public function getPrices(): CombinationPrices
     {
         return $this->prices;
     }
 
-    /**
-     * @return CombinationStock
-     */
     public function getStock(): CombinationStock
     {
         return $this->stock;

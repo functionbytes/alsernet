@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,8 @@ class AddTaxCommand
     private $enabled;
 
     /**
-     * @param array $localizedNames
-     * @param float $rate
-     * @param bool $enabled
+     * @param  float  $rate
+     * @param  bool  $enabled
      */
     public function __construct(array $localizedNames, $rate, $enabled)
     {
@@ -83,7 +83,7 @@ class AddTaxCommand
     }
 
     /**
-     * @param bool $enabled
+     * @param  bool  $enabled
      */
     public function setEnabled($enabled)
     {

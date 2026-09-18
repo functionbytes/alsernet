@@ -102,7 +102,7 @@ class CustomerFormCore extends AbstractForm
     }
 
     /**
-     * @return \Customer
+     * @return Customer
      */
     public function getCustomer()
     {

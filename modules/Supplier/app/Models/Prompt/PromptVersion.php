@@ -28,9 +28,9 @@ class PromptVersion extends Model
     protected function casts(): array
     {
         return [
-            'version'           => 'integer',
-            'priority'          => 'integer',
-            'seo_focus'         => 'boolean',
+            'version' => 'integer',
+            'priority' => 'integer',
+            'seo_focus' => 'boolean',
             'enable_web_search' => 'boolean',
         ];
     }

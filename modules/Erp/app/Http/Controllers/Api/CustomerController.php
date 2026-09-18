@@ -715,21 +715,21 @@ class CustomerController extends ApiController
             $c = $rows[0];
 
             return response()->json([
-                'success'    => true,
-                'exists'     => true,
+                'success' => true,
+                'exists' => true,
                 'matched_by' => $matchedBy,
-                'data'       => $this->cleanUtf8Array([
-                    'id'            => $c['idcliente'],
-                    'label'         => $c['nombre'],
-                    'surnames'      => $c['apellidos'],
-                    'cif'           => $c['cif'],
-                    'email'         => $c['email'],
+                'data' => $this->cleanUtf8Array([
+                    'id' => $c['idcliente'],
+                    'label' => $c['nombre'],
+                    'surnames' => $c['apellidos'],
+                    'cif' => $c['cif'],
+                    'email' => $c['email'],
                     'code_internet' => $c['codigo_internet'],
-                    'card'          => $c['idtarjeta'],
-                    'available'     => (bool) ($c['estado'] ?? false),
-                    'deleted_at'    => $c['fbaja'],
-                    'created'       => $c['fcreacion'],
-                    'updated'       => $c['fmodificacion'],
+                    'card' => $c['idtarjeta'],
+                    'available' => (bool) ($c['estado'] ?? false),
+                    'deleted_at' => $c['fbaja'],
+                    'created' => $c['fcreacion'],
+                    'updated' => $c['fmodificacion'],
                 ]),
             ], 200, [], JSON_UNESCAPED_UNICODE);
 

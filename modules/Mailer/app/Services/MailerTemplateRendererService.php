@@ -223,11 +223,75 @@ class MailerTemplateRendererService
             $placeholder = str_starts_with($key, '{') ? $key : '{'.$key.'}';
 
             if (! is_array($value) && ! is_object($value)) {
-                $content = str_replace($placeholder, (string) $value, $content);
+                $content = str_replace($placeholder, self::escapeValue($key, (string) $value), $content);
             }
         }
 
         return $content;
+    }
+
+    /**
+     * Claves cuyo valor ES HTML a propósito y no debe escaparse: listas y
+     * bloques que arma el propio servidor (`<ul>`, `<li>`, secciones enteras).
+     *
+     * Cualquier clave que no esté aquí se escapa. Se declara por nombre y no
+     * por "parece HTML" porque justamente lo que hay que impedir es que un
+     * valor de fuera cuele etiquetas.
+     */
+    private const HTML_VALUE_KEYS = [
+        // Listas y bloques que arma el propio servidor.
+        'MERGED_LIST',
+        'NOTES_SECTION',
+        'CUSTOM_CONTENT',
+        'MISSING_DOCUMENTS',
+        'MISSING_DOCUMENTS_LIST',
+        'REQUIRED_DOCUMENTS_LIST',
+        'FIELDS_TABLE',
+        'REMINDER_MESSAGE',
+        // Textos del cliente que el llamante ya escapó y luego pasó por
+        // nl2br(): el valor es HTML porque los saltos de línea son <br>.
+        'MESSAGE_BODY',
+        'QUESTION',
+        'ANSWER',
+    ];
+
+    /**
+     * Escapa el valor de una variable antes de meterlo en el HTML del correo.
+     *
+     * La plantilla ES HTML y viene de un administrador: eso se respeta. Lo que
+     * no se puede consentir es que el VALOR traiga etiquetas, porque muchos
+     * vienen de fuera —el asunto de un ticket lo escribe quien rellena el
+     * formulario público o quien manda el correo entrante, y el nombre del
+     * cliente igual—. Sin escapar, un asunto puede cerrar la tabla de la
+     * plantilla y añadir sus propios enlaces: un correo de phishing con
+     * nuestro remitente, nuestra marca y nuestro dominio, enviado por
+     * nosotros. No hace falta que se ejecute JavaScript para que salga caro.
+     *
+     * Se hace aquí, en el renderizador, y no en cada sitio que compone
+     * variables: el patrón correcto ya existía suelto —NotifyAgentOfAssignment
+     * escapaba el asunto con e()— pero solo en uno de los seis listeners que
+     * mandan ese mismo campo. Cubrirlo en el centro es lo que evita que el
+     * séptimo vuelva a olvidarlo.
+     *
+     * Convención para lo que sí es HTML: además de HTML_VALUE_KEYS, se respeta
+     * cualquier clave terminada en `_HTML`, para que quien añada un bloque
+     * nuevo no tenga que tocar esta lista.
+     */
+    private static function escapeValue(string $key, string $value): string
+    {
+        // Sin distinguir mayúsculas: hay sitios que mandan la misma variable
+        // en las dos formas ('CUSTOM_CONTENT' y 'custom_content').
+        $name = strtoupper(trim($key, '{}'));
+
+        if (in_array($name, self::HTML_VALUE_KEYS, true) || str_ends_with($name, '_HTML')) {
+            return $value;
+        }
+
+        // Doble escape: los pocos sitios que ya escapaban por su cuenta
+        // (e($ticket->subject)) mandarían "&lt;" y volver a escaparlo lo
+        // convertiría en "&amp;lt;" a la vista del cliente. double_encode a
+        // false deja intactas las entidades que ya lo estén.
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false);
     }
 
     /**
@@ -244,6 +308,11 @@ class MailerTemplateRendererService
      */
     private static function renderWithTwig(string $content, array $variables = []): string
     {
+        // El original, para el fallback: unas líneas más abajo $content queda
+        // reescrito a sintaxis Twig y el reemplazo simple ya no reconocería
+        // ningún {VAR} suyo.
+        $originalContent = $content;
+
         try {
             // Convertir sintaxis clásica {VAR} a sintaxis Twig {{ VAR }} para compatibilidad
             // Solo convertir variables que NO estén ya en sintaxis Twig
@@ -260,11 +329,16 @@ class MailerTemplateRendererService
             $twig = self::getTwigEnvironment();
             $twig->getLoader()->setTemplate('template', $content);
 
-            // Normalizar nombres de variables (sin llaves)
+            // Normalizar nombres de variables (sin llaves) y escapar los valores.
+            // Twig corre aquí con autoescape apagado porque la PLANTILLA es HTML
+            // escrito por un administrador. El VALOR no lo es, así que se escapa
+            // con el mismo criterio que en el reemplazo simple; si no, bastaba
+            // con que una plantilla usara un {% if %} para saltarse el escapado
+            // por completo.
             $normalizedVars = [];
             foreach ($variables as $key => $value) {
                 $cleanKey = str_replace(['{', '}'], '', $key);
-                $normalizedVars[$cleanKey] = $value;
+                $normalizedVars[$cleanKey] = self::escapeForTemplate($cleanKey, $value);
             }
 
             // Renderizar con Twig
@@ -278,8 +352,30 @@ class MailerTemplateRendererService
             ]);
 
             // Fallback a reemplazo simple si Twig falla
-            return MailerVariableReplacementService::replaceVariables($content, $variables);
+            return MailerVariableReplacementService::replaceVariables($originalContent, $variables);
         }
+    }
+
+    /**
+     * Aplica el escapado a un valor sea cual sea su forma.
+     *
+     * Los escalares van directos; las listas que una plantilla recorre con
+     * {% for %} se escapan elemento a elemento, que es justo donde suelen ir
+     * los datos de fuera (nombres de documentos, referencias de pedido). Los
+     * objetos se dejan intactos porque el sandbox de Twig no deja leerles ni
+     * propiedades ni métodos: nunca llegan a imprimirse.
+     */
+    private static function escapeForTemplate(string $key, mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn ($item) => self::escapeForTemplate($key, $item), $value);
+        }
+
+        if (is_string($value)) {
+            return self::escapeValue($key, $value);
+        }
+
+        return $value;
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,98 +63,62 @@ class UpdateVirtualProductFileCommand
      */
     private $downloadTimesLimit;
 
-    /**
-     * @param int $virtualProductFileId
-     */
     public function __construct(
         int $virtualProductFileId
     ) {
         $this->virtualProductFileId = new VirtualProductFileId($virtualProductFileId);
     }
 
-    /**
-     * @return VirtualProductFileId
-     */
     public function getVirtualProductFileId(): VirtualProductFileId
     {
         return $this->virtualProductFileId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getFilePath(): ?string
     {
         return $this->filePath;
     }
 
-    /**
-     * @param string|null $filePath
-     */
     public function setFilePath(?string $filePath): void
     {
         $this->filePath = $filePath;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDisplayName(): ?string
     {
         return $this->displayName;
     }
 
-    /**
-     * @param string|null $displayName
-     */
     public function setDisplayName(?string $displayName): void
     {
         $this->displayName = $displayName;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getExpirationDate(): ?DateTimeInterface
     {
         return $this->expirationDate;
     }
 
-    /**
-     * @param DateTimeInterface|null $expirationDate
-     */
     public function setExpirationDate(?DateTimeInterface $expirationDate): void
     {
         $this->expirationDate = $expirationDate;
     }
 
-    /**
-     * @return int|null
-     */
     public function getAccessDays(): ?int
     {
         return $this->accessDays;
     }
 
-    /**
-     * @param int|null $accessDays
-     */
     public function setAccessDays(?int $accessDays): void
     {
         $this->accessDays = $accessDays;
     }
 
-    /**
-     * @return int|null
-     */
     public function getDownloadTimesLimit(): ?int
     {
         return $this->downloadTimesLimit;
     }
 
-    /**
-     * @param int|null $downloadTimesLimit
-     */
     public function setDownloadTimesLimit(?int $downloadTimesLimit): void
     {
         $this->downloadTimesLimit = $downloadTimesLimit;

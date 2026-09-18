@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #e4e4e7; }
+    a { color: #5b7a0d; } a:hover { color: #3f5509; }
+    .mono { font-family: 'JetBrains Mono', 'Menlo', monospace; }
+  </style>
+</helmet>
+
+<div style="display: flex; justify-content: center; padding: 16px; background: #e4e4e7;">
+<div style="width: 380px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.18); color: #18181b;">
+
+  <!-- Cabecera con el estado como banda de color: el ticket se identifica por
+       su situación antes que por su número. -->
+  <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #e8e8e8;">
+    <div style="width: 28px; height: 28px; border-radius: 7px; background: #eef5d9; display: grid; place-items: center; color: #5b7a0d;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/></svg>
+    </div>
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 7px;">
+        <span class="mono" style="font-size: 9.5px; font-weight: 600; color: #71717a;">TCK-2026-00116</span>
+        <span style="width: 3px; height: 3px; border-radius: 50%; background: #d4d4d8;"></span>
+        <span style="font-size: 9.5px; font-weight: 700; color: #5b7a0d; text-transform: uppercase; letter-spacing: .05em;">Nuevo</span>
+      </div>
+      <span style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Pregunta sobre garantía</span>
+    </div>
+    <button style="width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; color: #a1a1aa; border: none; background: transparent; cursor: pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <!-- Tira de tres cifras: lo que se mira sin leer nada -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid #e8e8e8;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border-right: 1px solid #f0f1f4;">
+      <span style="font-size: 12.5px; font-weight: 700; color: #b45309;">2 h 10 m</span>
+      <span style="font-size: 8.5px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: .06em;">para el SLA</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border-right: 1px solid #f0f1f4;">
+      <span style="font-size: 12.5px; font-weight: 700;">4</span>
+      <span style="font-size: 8.5px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: .06em;">mensajes</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px;">
+      <span style="font-size: 12.5px; font-weight: 700;">hace 2 h</span>
+      <span style="font-size: 8.5px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: .06em;">último mov.</span>
+    </div>
+  </div>
+
+  <!-- Pestañas: el modal cabe sin scroll en cualquiera de las dos -->
+  <div style="display: flex; gap: 4px; padding: 10px 14px 0;">
+    <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="2">
+      <button onClick="{{tab.pick}}" style="{{tab.style}}">{{tab.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 11px;">
+
+    <sc-if value="{{showSummary}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid #e8e8e8; border-radius: 10px;">
+          <span style="width: 34px; height: 34px; border-radius: 50%; background: #18181b; color: #fff; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; flex-shrink: 0;">FM</span>
+          <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex-grow: 1;">
+            <span style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Francisco Martínez Ruiz</span>
+            <span class="mono" style="font-size: 10px; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">f.martinez@construcinsa.mx</span>
+          </div>
+          <span style="flex-shrink: 0; padding: 2px 7px; border-radius: 4px; background: #eef5d9; color: #5b7a0d; font-size: 9px; font-weight: 700;">ERP 68</span>
+        </div>
+
+        <div style="font-size: 11.5px; line-height: 1.5; color: #3f3f46; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">El cliente pregunta por la cobertura de garantía del pedido 829575. Compró en junio y el equipo dejó de encender la semana pasada. Adjunta la factura y pide saber si el cambio es en tienda o por mensajería.</div>
+
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; padding: 11px; background: #f5f6f8; border-radius: 8px; font-size: 11px;">
+          <span style="color: #a1a1aa;">Asignado</span>
+          <span style="font-weight: 600; text-align: right;">Sin asignar</span>
+          <span style="color: #a1a1aa;">Equipo</span>
+          <span style="font-weight: 600; text-align: right;">Soporte General</span>
+          <span style="color: #a1a1aa;">Prioridad</span>
+          <span style="font-weight: 600; text-align: right; color: #b45309;">Alta</span>
+          <span style="color: #a1a1aa;">Origen</span>
+          <span style="font-weight: 600; text-align: right;">Widget · web</span>
+          <span style="color: #a1a1aa;">Pedido</span>
+          <span class="mono" style="font-weight: 600; text-align: right;">829575</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+          <span style="padding: 2px 8px; border-radius: 20px; border: 1px solid #e8e8e8; font-size: 10px; color: #52525b;">garantía</span>
+          <span style="padding: 2px 8px; border-radius: 20px; border: 1px solid #e8e8e8; font-size: 10px; color: #52525b;">vip</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showActivity}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        <!-- Actividad REAL: hoy el modal pinta una sola línea fija,
+             "Sistema creó el ticket", aunque el historial exista. -->
+        <sc-for list="{{activity}}" as="ev" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 22px 1fr auto; gap: 0 11px; align-items: start;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%;">
+              <span style="{{ev.dotStyle}}"></span>
+              <span style="{{ev.railStyle}}"></span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1px; padding-bottom: 12px; min-width: 0;">
+              <span style="font-size: 11.5px; color: #18181b;"><b style="font-weight: 600;">{{ev.who}}</b> {{ev.what}}</span>
+              <span style="font-size: 10px; color: #a1a1aa;">{{ev.detail}}</span>
+            </div>
+            <span class="mono" style="font-size: 9.5px; color: #a1a1aa; white-space: nowrap;">{{ev.when}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px 14px; border-top: 1px solid #e8e8e8; background: #f5f6f8;">
+    <button style="width: 100%; padding: 8px 12px; border-radius: 7px; border: none; background: #18181b; color: #fff; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;">Resolver ticket</button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button style="padding: 8px 12px; border-radius: 7px; border: 1px solid #e8e8e8; background: #fff; color: #3f3f46; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;">Asignármelo</button>
+      <button style="padding: 8px 12px; border-radius: 7px; border: 1px solid #e8e8e8; background: #fff; color: #3f3f46; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;">Abrir completo</button>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "$preview": {"width": 412, "height": 780}
+}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'summary' };
+  }
+
+  renderVals() {
+    var self = this;
+    var tab = (this.state && this.state.tab) || 'summary';
+
+    var tabBase = 'padding: 5px 12px; border-radius: 7px; border: none; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;';
+    var tabs = [
+      { id: 'summary', label: 'Resumen' },
+      { id: 'activity', label: 'Actividad' }
+    ].map(function (t) {
+      var on = t.id === tab;
+      return {
+        label: t.label,
+        style: tabBase + (on ? ' background: #18181b; color: #fff;' : ' background: #f5f6f8; color: #71717a;'),
+        pick: function () { self.setState({ tab: t.id }); }
+      };
+    });
+
+    var events = [
+      { who: 'Francisco M.', what: 'escribió desde el widget', detail: '«Sigo sin recibir respuesta sobre la garantía»', when: 'hace 2 h', color: '#3b82f6', last: false },
+      { who: 'Sistema', what: 'aplicó la política de SLA', detail: 'Soporte estándar · resolución en 8 h', when: 'hace 3 h', color: '#a1a1aa', last: false },
+      { who: 'Marta Ruiz', what: 'respondió al cliente', detail: 'Entregado · abierto a las 10:42', when: 'hace 3 h', color: '#90bb13', last: false },
+      { who: 'Sistema', what: 'creó el ticket desde la conversación', detail: 'Widget · #2790', when: 'hace 4 h', color: '#a1a1aa', last: true }
+    ];
+
+    return {
+      tabs: tabs,
+      showSummary: tab === 'summary',
+      showActivity: tab === 'activity',
+      activity: events.map(function (e) {
+        return {
+          who: e.who,
+          what: e.what,
+          detail: e.detail,
+          when: e.when,
+          dotStyle: 'width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; background: ' + e.color + '; flex-shrink: 0;',
+          railStyle: e.last ? 'display: none;' : 'width: 1px; flex-grow: 1; background: #e8e8e8;'
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

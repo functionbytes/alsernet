@@ -14,6 +14,7 @@ use Modules\HelpdeskSocial\Http\Requests\BulkSocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Requests\ReplySocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialCommentResource;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskSocial\Models\SocialTag;
 use Modules\HelpdeskSocial\Services\AuditLogService;
 
 class SocialInboxController extends Controller
@@ -134,6 +135,31 @@ class SocialInboxController extends Controller
         $this->auditLog->log('assign', $comment, $oldValues, ['assigned_to_user_id' => $validated['user_id']]);
 
         return ApiResponse::success(new SocialCommentResource($comment->fresh()->load('assignedUser')));
+    }
+
+    public function attachTag(Request $request, SocialComment $comment): JsonResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
+        $validated = $request->validate(['tag_id' => ['required', 'integer', 'exists:helpdesk_social_tags,id']]);
+
+        $comment->tags()->syncWithoutDetaching([$validated['tag_id']]);
+        // 'update': helpdesk_social_audit_logs.action es un enum cerrado
+        // (create/update/delete/reply/escalate/assign/approve/reject/
+        // crisis_mode_enter/crisis_mode_exit) sin un valor para "etiqueta
+        // añadida" — el detalle real va en new_values.
+        $this->auditLog->log('update', $comment, null, ['tag_attached' => $validated['tag_id']]);
+
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()->load('tags')), 'Etiqueta añadida.');
+    }
+
+    public function detachTag(SocialComment $comment, SocialTag $tag): JsonResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
+
+        $comment->tags()->detach($tag->id);
+        $this->auditLog->log('update', $comment, null, ['tag_detached' => $tag->id]);
+
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()->load('tags')), 'Etiqueta quitada.');
     }
 
     public function bulk(BulkSocialCommentRequest $request): JsonResponse

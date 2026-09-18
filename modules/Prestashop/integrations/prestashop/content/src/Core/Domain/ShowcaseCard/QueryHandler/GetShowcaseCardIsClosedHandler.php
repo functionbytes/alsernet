@@ -41,15 +41,12 @@ final class GetShowcaseCardIsClosedHandler implements GetShowcaseCardIsClosedHan
      * @var ConfigurationInterface
      */
     private $configuration;
+
     /**
      * @var ConfigurationMap
      */
     private $configurationMap;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param ConfigurationMap $configurationMap
-     */
     public function __construct(ConfigurationInterface $configuration, ConfigurationMap $configurationMap)
     {
         $this->configuration = $configuration;
@@ -57,8 +54,6 @@ final class GetShowcaseCardIsClosedHandler implements GetShowcaseCardIsClosedHan
     }
 
     /**
-     * @param GetShowcaseCardIsClosed $query
-     *
      * @return bool
      *
      * @throws ShowcaseCardException

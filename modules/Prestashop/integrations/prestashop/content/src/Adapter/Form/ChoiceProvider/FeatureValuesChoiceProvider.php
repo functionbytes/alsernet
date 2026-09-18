@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,9 +79,9 @@ class FeatureValuesChoiceProvider implements ConfigurableFormChoiceProviderInter
         $featureValues = $this->featureValueRepository->getFeatureValues(null, null, $filters);
         $choices = [];
         foreach ($featureValues as $feature) {
-            if (!empty($feature['localized_values'][$this->contextLanguageId])) {
+            if (! empty($feature['localized_values'][$this->contextLanguageId])) {
                 $featureValueName = $feature['localized_values'][$this->contextLanguageId];
-            } elseif (!empty($feature['localized_values'][$this->defaultLanguageId])) {
+            } elseif (! empty($feature['localized_values'][$this->defaultLanguageId])) {
                 $featureValueName = $feature['localized_values'][$this->defaultLanguageId];
             } else {
                 $featureValueName = reset($feature['localized_values']);

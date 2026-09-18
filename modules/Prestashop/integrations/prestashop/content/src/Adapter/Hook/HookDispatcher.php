@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,9 +63,9 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
     private $requestStack;
 
     /**
-     * @param RequestStack $requestStack (nullable to preserve backward compatibility)
+     * @param  RequestStack  $requestStack  (nullable to preserve backward compatibility)
      */
-    public function __construct(RequestStack $requestStack = null)
+    public function __construct(?RequestStack $requestStack = null)
     {
         $this->requestStack = $requestStack;
     }
@@ -75,14 +76,14 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
      *
      * @throws \Exception if the Event is not HookEvent or a subclass
      */
-    public function dispatch($eventName, Event $event = null)
+    public function dispatch($eventName, ?Event $event = null)
     {
         if ($event === null) {
             $event = $this->createHookEventWithContextParameters();
         }
 
-        if (!$event instanceof HookEvent) {
-            throw new \Exception('HookDispatcher must dispatch a HookEvent subclass only. ' . get_class($event) . ' given.');
+        if (! $event instanceof HookEvent) {
+            throw new \Exception('HookDispatcher must dispatch a HookEvent subclass only. '.get_class($event).' given.');
         }
 
         if ($listeners = $this->getListeners(strtolower($eventName))) {
@@ -108,8 +109,8 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
      *
      * Each event is independent for each hook call. Parameter set is duplicated.
      *
-     * @param array $eventNames the hooks to dispatch to
-     * @param array $eventParameters the parameters set to insert in each HookEvent instance
+     * @param  array  $eventNames  the hooks to dispatch to
+     * @param  array  $eventParameters  the parameters set to insert in each HookEvent instance
      *
      * @throws \Exception if the Event is not HookEvent or a subclass
      */
@@ -155,9 +156,8 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
     /**
      * Creates a HookEvent, sets its parameters, and dispatches it.
      *
-     * @param string $eventName The hook name
-     * @param array $parameters Hook parameters
-     *
+     * @param  string  $eventName  The hook name
+     * @param  array  $parameters  Hook parameters
      * @return Event the event that has been passed to each listener
      *
      * @throws \Exception
@@ -173,16 +173,15 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
     /**
      * Creates a RenderingHookEvent, sets its parameters, and dispatches it. Return the event with the response(s).
      *
-     * @param string $eventName the hook name
-     * @param array $parameters Hook parameters
-     *
+     * @param  string  $eventName  the hook name
+     * @param  array  $parameters  Hook parameters
      * @return RenderingHookEvent The event that has been passed to each listener. Contains the responses.
      *
      * @throws \Exception
      */
     public function renderForParameters($eventName, array $parameters = [])
     {
-        $event = new RenderingHookEvent();
+        $event = new RenderingHookEvent;
         $event->setHookParameters($parameters);
 
         /** @var RenderingHookEvent $eventDispatched */
@@ -221,7 +220,7 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
     }
 
     /**
-     * @return hookEvent
+     * @return HookEvent
      *
      * Context parameters are injected into the new HookEvent
      *
@@ -231,12 +230,12 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
     {
         $globalParameters = ['_ps_version' => \AppKernel::VERSION];
 
-        if (null === $this->requestStack) {
+        if ($this->requestStack === null) {
             return new HookEvent($globalParameters);
         }
 
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if ($request === null) {
             return new HookEvent($globalParameters);
         }
 

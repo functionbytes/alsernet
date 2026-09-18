@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -69,6 +71,6 @@ class Af_SeopagesSeopageModuleFrontControllerOverride extends Af_SeopagesSeopage
     {
         $queryCountPages = 'SELECT COUNT(DISTINCT p.id_seopage) FROM `'._DB_PREFIX_.'af_seopage` p INNER JOIN `'._DB_PREFIX_.'af_seopage_lang` l ON p.id_seopage = l.id_seopage WHERE p.active=1 AND l.id_shop='.(int) Shop::getContextShopID();
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountPages);
+        return (int) JprestaUtils::dbGetValue($queryCountPages);
     }
 }

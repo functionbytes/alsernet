@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShopBundle\Controller\Admin;
 
 use Context;
+use Doctrine\ORM\OptimisticLockException;
 use PrestaShop\PrestaShop\Adapter\Module\AdminModuleDataProvider;
 use PrestaShop\PrestaShop\Core\Addon\AddonsCollection;
 use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
@@ -74,7 +76,6 @@ class CommonController extends FrameworkBundleAdminController
     /**
      * Update the last time a notification type has been seen.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -104,13 +105,11 @@ class CommonController extends FrameworkBundleAdminController
      *
      * @Template("@PrestaShop/Admin/Common/pagination.html.twig")
      *
-     * @param Request $request
-     * @param int $limit
-     * @param int $offset
-     * @param int $total
-     * @param string $view full|quicknav To change default template used to render the content
-     * @param string $prefix Indicates the params prefix (eg: ?limit=10&offset=20 -> ?scope[limit]=10&scope[offset]=20)
-     *
+     * @param  int  $limit
+     * @param  int  $offset
+     * @param  int  $total
+     * @param  string  $view  full|quicknav To change default template used to render the content
+     * @param  string  $prefix  Indicates the params prefix (eg: ?limit=10&offset=20 -> ?scope[limit]=10&scope[offset]=20)
      * @return array|Response
      */
     public function paginationAction(Request $request, $limit = 10, $offset = 0, $total = 0, $view = 'full', $prefix = '')
@@ -134,7 +133,7 @@ class CommonController extends FrameworkBundleAdminController
         }
         $callerParameters += ['_route' => false];
         $routeName = $request->attributes->get('caller_route', $callerParameters['_route']);
-        $nextPageUrl = (!$routeName || ($offset + $limit >= $total)) ? false : $this->generateUrl($routeName, array_merge(
+        $nextPageUrl = (! $routeName || ($offset + $limit >= $total)) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => min($total - 1, $offset + $limit),
@@ -142,35 +141,35 @@ class CommonController extends FrameworkBundleAdminController
             ]
         ));
 
-        $previousPageUrl = (!$routeName || ($offset == 0)) ? false : $this->generateUrl($routeName, array_merge(
+        $previousPageUrl = (! $routeName || ($offset == 0)) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => max(0, $offset - $limit),
                 $limitParam => $limit,
             ]
         ));
-        $firstPageUrl = (!$routeName || ($offset == 0)) ? false : $this->generateUrl($routeName, array_merge(
+        $firstPageUrl = (! $routeName || ($offset == 0)) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => 0,
                 $limitParam => $limit,
             ]
         ));
-        $lastPageUrl = (!$routeName || ($offset + $limit >= $total)) ? false : $this->generateUrl($routeName, array_merge(
+        $lastPageUrl = (! $routeName || ($offset + $limit >= $total)) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => ($pageCount - 1) * $limit,
                 $limitParam => $limit,
             ]
         ));
-        $changeLimitUrl = (!$routeName) ? false : $this->generateUrl($routeName, array_merge(
+        $changeLimitUrl = (! $routeName) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => 0,
                 $limitParam => '_limit',
             ]
         ));
-        $jumpPageUrl = (!$routeName) ? false : $this->generateUrl($routeName, array_merge(
+        $jumpPageUrl = (! $routeName) ? false : $this->generateUrl($routeName, array_merge(
             $callerParameters,
             [
                 $offsetParam => 999999,
@@ -196,7 +195,7 @@ class CommonController extends FrameworkBundleAdminController
             'limit_choices' => $limitChoices,
         ];
         if ($view != 'full') {
-            return $this->render('@PrestaShop/Admin/Common/pagination_' . $view . '.html.twig', $vars);
+            return $this->render('@PrestaShop/Admin/Common/pagination_'.$view.'.html.twig', $vars);
         }
 
         return $vars;
@@ -207,10 +206,9 @@ class CommonController extends FrameworkBundleAdminController
      *
      * @Template("@PrestaShop/Admin/Common/recommendedModules.html.twig")
      *
-     * @param string $domain
-     * @param int $limit
-     * @param int $randomize
-     *
+     * @param  string  $domain
+     * @param  int  $limit
+     * @param  int  $randomize
      * @return array Template vars
      */
     public function recommendedModulesAction($domain, $limit = 0, $randomize = 0)
@@ -250,10 +248,9 @@ class CommonController extends FrameworkBundleAdminController
     /**
      * Render a right sidebar with content from an URL.
      *
-     * @param string $url
-     * @param string $title
-     * @param string $footer
-     *
+     * @param  string  $url
+     * @param  string  $title
+     * @param  string  $footer
      * @return Response
      */
     public function renderSidebarAction($url, $title = '', $footer = '')
@@ -270,7 +267,6 @@ class CommonController extends FrameworkBundleAdminController
     /**
      * Renders a KPI row.
      *
-     * @param KpiRowInterface $kpiRow
      *
      * @return Response
      */
@@ -284,13 +280,12 @@ class CommonController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param string $controller
-     * @param string $action
-     * @param string $filterId
-     *
+     * @param  string  $controller
+     * @param  string  $action
+     * @param  string  $filterId
      * @return JsonResponse
      *
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws OptimisticLockException
      */
     public function resetSearchAction($controller = '', $action = '', $filterId = '')
     {
@@ -299,13 +294,13 @@ class CommonController extends FrameworkBundleAdminController
         $shopId = $this->getContext()->shop->id;
 
         // for compatibility when $controller and $action are used
-        if (!empty($controller) && !empty($action)) {
+        if (! empty($controller) && ! empty($action)) {
             $adminFilter = $adminFiltersRepository->findByEmployeeAndRouteParams(
                 $employeeId, $shopId, $controller, $action
             );
         }
 
-        if (!empty($filterId)) {
+        if (! empty($filterId)) {
             $adminFilter = $adminFiltersRepository->findByEmployeeAndFilterId($employeeId, $shopId, $filterId);
         }
 
@@ -313,17 +308,16 @@ class CommonController extends FrameworkBundleAdminController
             $adminFiltersRepository->unsetFilters($adminFilter);
         }
 
-        return new JsonResponse();
+        return new JsonResponse;
     }
 
     /**
      * Specific action to render a specific field twice.
      *
-     * @param string $formName the form name
-     * @param string $formType the form type FQCN
-     * @param string $fieldName the field name
-     * @param array $fieldData the field data
-     *
+     * @param  string  $formName  the form name
+     * @param  string  $formType  the form type FQCN
+     * @param  string  $fieldName  the field name
+     * @param  array  $fieldData  the field data
      * @return Response
      */
     public function renderFieldAction($formName, $formType, $fieldName, $fieldData)
@@ -339,17 +333,15 @@ class CommonController extends FrameworkBundleAdminController
 
         return $this->render('@PrestaShop/Admin/Common/_partials/_form_field.html.twig', [
             'form' => $form->getForm()->get($formName)->get($fieldName)->createView(),
-            'formId' => $formName . '_' . $fieldName . '_rendered',
+            'formId' => $formName.'_'.$fieldName.'_rendered',
         ]);
     }
 
     /**
      * Process Grid search.
      *
-     * @param Request $request
-     * @param string $gridDefinitionFactoryServiceId
-     * @param string $redirectRoute
-     * @param array $redirectQueryParamsToKeep
+     * @param  string  $gridDefinitionFactoryServiceId
+     * @param  string  $redirectRoute
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
@@ -378,7 +370,7 @@ class CommonController extends FrameworkBundleAdminController
             }
         }
 
-        if (null !== $filterId) {
+        if ($filterId !== null) {
             /** @var ResponseBuilder $responseBuilder */
             $responseBuilder = $this->get('prestashop.bundle.grid.response_builder');
 

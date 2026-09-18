@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class AverageOrderValueKpi implements KpiInterface
     {
         $translator = Context::getContext()->getTranslator();
 
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-average-order';
         $helper->icon = 'account_balance_wallet';
         $helper->color = 'color1';
@@ -59,7 +60,7 @@ final class AverageOrderValueKpi implements KpiInterface
         }
 
         $helper->source = Context::getContext()->link->getAdminLink('AdminStats')
-            . '&ajax=1&action=getKpi&kpi=average_order_value';
+            .'&ajax=1&action=getKpi&kpi=average_order_value';
         $helper->refresh = (bool) (ConfigurationKPI::get('AVG_ORDER_VALUE_EXPIRE') < time());
 
         return $helper->generate();

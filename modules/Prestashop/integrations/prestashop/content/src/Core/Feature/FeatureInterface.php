@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ interface FeatureInterface
     public function disable();
 
     /**
-     * @param bool $status
+     * @param  bool  $status
      */
     public function update($status);
 }

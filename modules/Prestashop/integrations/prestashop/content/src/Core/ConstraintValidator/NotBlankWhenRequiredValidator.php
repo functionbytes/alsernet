@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ class NotBlankWhenRequiredValidator extends NotBlankValidator
 {
     public function validate($value, Constraint $constraint)
     {
-        if ($constraint instanceof NotBlankWhenRequired && true === $constraint->required) {
+        if ($constraint instanceof NotBlankWhenRequired && $constraint->required === true) {
             parent::validate($value, $constraint);
         }
     }

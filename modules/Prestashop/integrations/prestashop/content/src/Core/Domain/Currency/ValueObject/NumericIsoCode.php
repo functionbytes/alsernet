@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class NumericIsoCode
     private $numericIsoCode;
 
     /**
-     * @param string $numericIsoCode
+     * @param  string  $numericIsoCode
      *
      * @throws CurrencyConstraintException
      */
@@ -54,22 +55,19 @@ class NumericIsoCode
         $this->numericIsoCode = $numericIsoCode;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->numericIsoCode;
     }
 
     /**
-     * @param string $numericIsoCode
+     * @param  string  $numericIsoCode
      *
      * @throws CurrencyConstraintException
      */
     private function assertIsValidNumericIsoCode($numericIsoCode)
     {
-        if (!is_string($numericIsoCode) || !preg_match(self::PATTERN, $numericIsoCode)) {
+        if (! is_string($numericIsoCode) || ! preg_match(self::PATTERN, $numericIsoCode)) {
             throw new CurrencyConstraintException(sprintf('Given numeric iso code "%s" is not valid. It must be a string composed of three digits', var_export($numericIsoCode, true)), CurrencyConstraintException::INVALID_NUMERIC_ISO_CODE);
         }
     }

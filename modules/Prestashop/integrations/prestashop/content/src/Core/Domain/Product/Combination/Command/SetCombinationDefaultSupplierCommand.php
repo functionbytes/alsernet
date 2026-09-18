@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,27 +44,17 @@ class SetCombinationDefaultSupplierCommand
      */
     private $defaultSupplierId;
 
-    /**
-     * @param int $combinationId
-     * @param int $defaultSupplierId
-     */
     public function __construct(int $combinationId, int $defaultSupplierId)
     {
         $this->combinationId = new CombinationId($combinationId);
         $this->defaultSupplierId = new SupplierId($defaultSupplierId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return SupplierId
-     */
     public function getDefaultSupplierId(): SupplierId
     {
         return $this->defaultSupplierId;

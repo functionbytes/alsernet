@@ -1,10 +1,10 @@
 <?php
-if (!defined('_PS_VERSION_')) {
+
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/classes/Settings.php';
-
+require_once __DIR__.'/classes/Settings.php';
 
 class AlsernetEtiquetatiendas extends Module
 {
@@ -25,28 +25,28 @@ class AlsernetEtiquetatiendas extends Module
 
     public function install()
     {
-        if (!parent::install()) {
+        if (! parent::install()) {
             return false;
         }
 
         // SQL
-        $sql = file_get_contents(__DIR__ . '/sql/install.sql');
+        $sql = file_get_contents(__DIR__.'/sql/install.sql');
         $sql = str_replace('PREFIX_', _DB_PREFIX_, $sql);
-        if (!$sql || !Db::getInstance()->execute($sql)) {
+        if (! $sql || ! Db::getInstance()->execute($sql)) {
             return false;
         }
 
         // Registrar pestaña de administración (uploader/preview para usuarios no superadmin)
-        $tabId = (int)Tab::getIdFromClassName('AdminAlsernetEtiquetatiendas');
-        if (!$tabId) {
-            $tab = new Tab();
+        $tabId = (int) Tab::getIdFromClassName('AdminAlsernetEtiquetatiendas');
+        if (! $tabId) {
+            $tab = new Tab;
             $tab->class_name = 'AdminAlsernetEtiquetatiendas';
             $tab->module = $this->name;
-            $tab->id_parent = (int)Tab::getIdFromClassName('IMPROVE'); // Menú lateral: Mejora > (puedes cambiar de padre)
+            $tab->id_parent = (int) Tab::getIdFromClassName('IMPROVE'); // Menú lateral: Mejora > (puedes cambiar de padre)
             foreach (Language::getLanguages(false) as $lang) {
                 $tab->name[$lang['id_lang']] = 'Etiquetas Tienda';
             }
-            if (!$tab->add()) {
+            if (! $tab->add()) {
                 return false;
             }
         }
@@ -57,13 +57,13 @@ class AlsernetEtiquetatiendas extends Module
     public function uninstall()
     {
         // Borrar pestaña
-        if ($id = (int)Tab::getIdFromClassName('AdminAlsernetEtiquetatiendas')) {
+        if ($id = (int) Tab::getIdFromClassName('AdminAlsernetEtiquetatiendas')) {
             $tab = new Tab($id);
             $tab->delete();
         }
 
         // SQL
-        $sql = file_get_contents(__DIR__ . '/sql/uninstall.sql');
+        $sql = file_get_contents(__DIR__.'/sql/uninstall.sql');
         $sql = str_replace('PREFIX_', _DB_PREFIX_, $sql);
         if ($sql) {
             Db::getInstance()->execute($sql);
@@ -78,22 +78,22 @@ class AlsernetEtiquetatiendas extends Module
     public function getContent()
     {
         $output = '';
-        if (((bool)Tools::isSubmit('submitAlsernetConfig')) === true) {
+        if (((bool) Tools::isSubmit('submitAlsernetConfig')) === true) {
             $this->postProcess();
             $output .= $this->displayConfirmation($this->l('Configuración guardada.'));
         }
-        $this->context->controller->addJS($this->_path . 'views/js/preview.js');
-        $this->context->controller->addCSS($this->_path . 'views/css/uploader.css');
+        $this->context->controller->addJS($this->_path.'views/js/preview.js');
+        $this->context->controller->addCSS($this->_path.'views/css/uploader.css');
 
         $settings = AlsernetEtiquetatiendasSettings::getSettings();
 
         $adminLink = $this->context->link->getAdminLink('AdminAlsernetEtiquetatiendas');
 
         // URLs para AJAX en el preview (guardar posiciones y generar PDF)
-        $savepos_url   = $adminLink . '&ajax=1&action=SavePositions';
-        $generate_url  = $adminLink . '&ajax=1&action=GeneratePdf';
+        $savepos_url = $adminLink.'&ajax=1&action=SavePositions';
+        $generate_url = $adminLink.'&ajax=1&action=GeneratePdf';
 
-        $fonts = array(
+        $fonts = [
             'helvetica',
             'helveticaB',
             'helveticaI',
@@ -121,19 +121,19 @@ class AlsernetEtiquetatiendas extends Module
             'freeserif',
             'freeserifb',
             'freeserifi',
-            'freeserifbi'
-        );
+            'freeserifbi',
+        ];
 
         $this->context->smarty->assign([
             'module_dir' => $this->_path,
-            'backups'   => $settings,
-            'img_abs'    => $settings['base_image'] ? _PS_BASE_URL_ . _THEME_PROD_DIR_ : '',
-            'savepos_url'    => $savepos_url,
-            'generate_url'   => $generate_url,
+            'backups' => $settings,
+            'img_abs' => $settings['base_image'] ? _PS_BASE_URL_._THEME_PROD_DIR_ : '',
+            'savepos_url' => $savepos_url,
+            'generate_url' => $generate_url,
             'fonts' => $fonts,
         ]);
 
-        return $output . $this->display(__FILE__, 'views/templates/admin/configure.tpl');
+        return $output.$this->display(__FILE__, 'views/templates/admin/configure.tpl');
     }
 
     protected function postProcess()
@@ -142,28 +142,31 @@ class AlsernetEtiquetatiendas extends Module
 
         // === 1) Subidas de imagen base (Vertical y Horizontal) ===
         $uploadImage = function ($inputName, $settingKey) use (&$errors) {
-            if (!isset($_FILES[$inputName]) || empty($_FILES[$inputName]['tmp_name'])) {
+            if (! isset($_FILES[$inputName]) || empty($_FILES[$inputName]['tmp_name'])) {
                 return;
             }
-            if (!is_uploaded_file($_FILES[$inputName]['tmp_name'])) {
-                $errors[] = $this->l('Error al subir la imagen: ') . $inputName;
+            if (! is_uploaded_file($_FILES[$inputName]['tmp_name'])) {
+                $errors[] = $this->l('Error al subir la imagen: ').$inputName;
+
                 return;
             }
             $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
             $mime = @mime_content_type($_FILES[$inputName]['tmp_name']);
-            if (!isset($allowed[$mime])) {
-                $errors[] = $this->l('Formato de imagen no permitido (solo JPG/PNG) en ') . $inputName;
+            if (! isset($allowed[$mime])) {
+                $errors[] = $this->l('Formato de imagen no permitido (solo JPG/PNG) en ').$inputName;
+
                 return;
             }
             $ext = $allowed[$mime];
-            $destDir = _PS_MODULE_DIR_ . $this->name . '/uploads/';
-            if (!is_dir($destDir)) {
+            $destDir = _PS_MODULE_DIR_.$this->name.'/uploads/';
+            if (! is_dir($destDir)) {
                 @mkdir($destDir, 0755, true);
             }
-            $name = $settingKey . '_' . date('Ymd_His') . '.' . $ext; // p.ej. base_image_20250101_120000.jpg
-            $dest = $destDir . $name;
-            if (!move_uploaded_file($_FILES[$inputName]['tmp_name'], $dest)) {
-                $errors[] = $this->l('No se pudo guardar la imagen para ') . $inputName;
+            $name = $settingKey.'_'.date('Ymd_His').'.'.$ext; // p.ej. base_image_20250101_120000.jpg
+            $dest = $destDir.$name;
+            if (! move_uploaded_file($_FILES[$inputName]['tmp_name'], $dest)) {
+                $errors[] = $this->l('No se pudo guardar la imagen para ').$inputName;
+
                 return;
             }
             AlsernetEtiquetatiendasSettings::updateValue($settingKey, pSQL($name));
@@ -182,7 +185,7 @@ class AlsernetEtiquetatiendas extends Module
                 $val = trim($val);
                 if ($val && preg_match('/^#?[0-9a-fA-F]{6}$/', $val)) {
                     if ($val[0] !== '#') {
-                        $val = '#' . $val;
+                        $val = '#'.$val;
                     }
                     AlsernetEtiquetatiendasSettings::updateValue($k, pSQL($val));
                 }
@@ -220,7 +223,7 @@ class AlsernetEtiquetatiendas extends Module
             $v = Tools::getValue($k);
             if ($v !== null && $v !== '') {
                 if (strpos($k, '_size') !== false) {
-                    AlsernetEtiquetatiendasSettings::updateValue($k, (int)$v);
+                    AlsernetEtiquetatiendasSettings::updateValue($k, (int) $v);
                 } else {
                     AlsernetEtiquetatiendasSettings::updateValue($k, pSQL(trim($v)));
                 }
@@ -249,7 +252,7 @@ class AlsernetEtiquetatiendas extends Module
         foreach ($boxKeys as $k) {
             $v = Tools::getValue($k);
             if ($v !== null && $v !== '') {
-                AlsernetEtiquetatiendasSettings::updateValue($k, (int)$v);
+                AlsernetEtiquetatiendasSettings::updateValue($k, (int) $v);
             }
         }
 
@@ -257,7 +260,7 @@ class AlsernetEtiquetatiendas extends Module
         AlsernetEtiquetatiendasSettings::updateValue('updated_at', date('Y-m-d H:i:s'));
 
         // Mostrar errores si hubieran
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             foreach ($errors as $e) {
                 $this->context->controller->errors[] = $e;
             }

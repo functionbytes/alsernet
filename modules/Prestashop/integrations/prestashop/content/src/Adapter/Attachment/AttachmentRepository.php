@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,10 +41,6 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 class AttachmentRepository extends AbstractObjectModelRepository
 {
     /**
-     * @param AttachmentId $attachmentId
-     *
-     * @return Attachment
-     *
      * @throws CoreException
      * @throws AttachmentNotFoundException
      */
@@ -60,8 +57,6 @@ class AttachmentRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param AttachmentId $attachmentId
-     *
      * @throws CoreException
      */
     public function assertAttachmentExists(AttachmentId $attachmentId): void

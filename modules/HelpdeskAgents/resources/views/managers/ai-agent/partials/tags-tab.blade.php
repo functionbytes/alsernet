@@ -9,11 +9,11 @@
 {{-- Header --}}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h5 class="mb-1 fw-bold">Tags del agente</h5>
-        <p class="text-muted mb-0 small">Los tags categorizan conversaciones y modifican el comportamiento del agente</p>
+        <h5 class="mb-1 fw-bold">Etiquetas del agente</h5>
+        <p class="text-muted mb-0 small">Las etiquetas clasifican conversaciones y afinan el comportamiento del agente</p>
     </div>
     <button type="button" class="btn btn-primary" id="btn-new-tag">
-        <i class="fas fa-plus me-1"></i> Nuevo tag
+        Nueva etiqueta
     </button>
 </div>
 
@@ -24,7 +24,7 @@
             <div class="card-body">
                 <h6 class="card-title mb-2">Total</h6>
                 <h4 class="mb-1 fw-bold">{{ number_format($total) }}</h4>
-                <small class="text-muted">Tags registrados</small>
+                <small class="text-muted">Etiquetas registradas</small>
             </div>
         </div>
     </div>
@@ -52,10 +52,10 @@
 @if($tags->isEmpty())
     <div class="text-center py-5">
         <i class="fas fa-tags fa-3x mb-3 text-muted opacity-50"></i>
-        <h5 class="fw-bold mb-2">No hay tags configurados</h5>
-        <p class="text-muted mb-4">Crea tu primer tag para categorizar conversaciones y personalizar el comportamiento del agente.</p>
+        <h5 class="fw-bold mb-2">No hay etiquetas configuradas</h5>
+        <p class="text-muted mb-4">Crea la primera etiqueta para clasificar conversaciones y personalizar el comportamiento del agente.</p>
         <button type="button" class="btn btn-primary" id="btn-new-tag-empty">
-            <i class="fas fa-plus me-1"></i> Nuevo tag
+            Nueva etiqueta
         </button>
     </div>
 @else
@@ -64,7 +64,7 @@
             <thead class="table-light">
                 <tr>
                     <th>Nombre</th>
-                    <th>Descripcion</th>
+                    <th>Descripción</th>
                     <th>Prioridad</th>
                     <th>Estado</th>
                     <th class="text-center">Acciones</th>
@@ -76,7 +76,7 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="rounded-circle d-inline-block flex-shrink-0 tag-color-dot"
-                                      style="background-color:{{ $tag->color ?? '#90bb13' }};"></span>
+                                      style="--tag-color: {{ $tag->color ?? '#90bb13' }}"></span>
                                 <span class="fw-semibold">{{ $tag->name }}</span>
                             </div>
                         </td>
@@ -137,129 +137,8 @@
     </div>
 
     @if($tags->hasPages())
-        <div class="d-flex justify-content-end mt-3">
+        <div class="d-flex justify-content-end mt-3" data-ajax-pagination>
             {{ $tags->links() }}
         </div>
     @endif
 @endif
-
-<script>
-$(function () {
-    const CSRF = $('meta[name="csrf-token"]').attr('content');
-
-    // Open modal for new tag
-    $(document).on('click', '#btn-new-tag, #btn-new-tag-empty', function () {
-        $('#tag_id').val('');
-        $('#tagForm')[0].reset();
-        $('#tag_color').val('#90bb13').trigger('input');
-        $('#tagModalLabel').text('Nuevo tag');
-        $('#tagModal').modal('show');
-    });
-
-    // Open modal to edit tag (data embedded in row)
-    $(document).on('click', '.tag-edit-btn', function (e) {
-        e.preventDefault();
-        const d = $(this).data();
-        $('#tag_id').val(d.id);
-        $('#tag_name').val(d.name);
-        $('#tag_description').val(d.description);
-        $('#tag_color').val(d.color).trigger('input');
-        $('#tag_icon').val(d.icon);
-        $('#tag_priority').val(d.priority);
-        $('#tag_system_prompt_addition').val(d.systemPrompt);
-        $('#tag_is_active').val(d.isActive ? '1' : '0');
-        $('#tagModalLabel').text('Editar tag');
-        $('#tagModal').modal('show');
-    });
-
-    // Toggle active
-    $(document).on('click', '.tag-toggle-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const active = $(this).data('active') == '1' ? 0 : 1;
-
-        $.ajax({
-            url: '{{ route("helpdesk.ai.tags.toggle", "__ID__") }}'.replace('__ID__', id),
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF },
-            data: { is_active: active }
-        }).done(function () {
-            toastr.success(active ? 'Tag activado' : 'Tag desactivado', 'Exito');
-            reloadTagsTab();
-        }).fail(function () {
-            toastr.error('Error al actualizar el tag', 'Error');
-        });
-    });
-
-    // Delete
-    $(document).on('click', '.tag-delete-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const name = $(this).data('name');
-
-        $('#delete-modal .modal-title').text('Eliminar tag: ' + name);
-        $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
-            ev.preventDefault();
-            $.ajax({
-                url: '{{ route("helpdesk.ai.tags.destroy", "__ID__") }}'.replace('__ID__', id),
-                method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': CSRF }
-            }).done(function () {
-                $('#delete-modal').modal('hide');
-                toastr.success('Tag eliminado correctamente', 'Exito');
-                reloadTagsTab();
-            }).fail(function () {
-                toastr.error('Error al eliminar el tag', 'Error');
-            });
-        });
-        $('#delete-modal').modal('show');
-    });
-
-    // Form submit (create / update)
-    $('#tagForm').off('submit').on('submit', function (e) {
-        e.preventDefault();
-        const id = $('#tag_id').val();
-        const url = id
-            ? '{{ route("helpdesk.ai.tags.update", "__ID__") }}'.replace('__ID__', id)
-            : '{{ route("helpdesk.ai.tags.store") }}';
-
-        $('.is-invalid').removeClass('is-invalid');
-
-        $.ajax({
-            url: url,
-            method: id ? 'PUT' : 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF },
-            data: {
-                name: $('#tag_name').val(),
-                description: $('#tag_description').val(),
-                color: $('#tag_color').val(),
-                icon: $('#tag_icon').val(),
-                priority: $('#tag_priority').val(),
-                system_prompt_addition: $('#tag_system_prompt_addition').val(),
-                is_active: $('#tag_is_active').val(),
-            }
-        }).done(function (res) {
-            $('#tagModal').modal('hide');
-            toastr.success(res.message || 'Tag guardado correctamente', 'Exito');
-            reloadTagsTab();
-        }).fail(function (xhr) {
-            if (xhr.status === 422) {
-                $.each(xhr.responseJSON.errors, function (field, messages) {
-                    $('#tag_' + field).addClass('is-invalid')
-                        .siblings('.invalid-feedback').text(messages[0]);
-                });
-            } else {
-                toastr.error(xhr.responseJSON?.message || 'Error al guardar el tag', 'Error');
-            }
-        });
-    });
-
-    function reloadTagsTab() {
-        $.get('{{ route("helpdesk.ai.tags.index") }}', function (html) {
-            $('#tags-container').html(html);
-            const count = $('#tags-container [data-count-item]').length;
-            $('#tags-count').text(count);
-        });
-    }
-});
-</script>

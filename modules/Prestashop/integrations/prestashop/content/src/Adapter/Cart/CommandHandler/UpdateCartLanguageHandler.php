@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +55,7 @@ final class UpdateCartLanguageHandler extends AbstractCartHandler implements Upd
         $cart->id_lang = (int) $language->id;
 
         try {
-            if (false === $cart->update()) {
+            if ($cart->update() === false) {
                 throw new CartException('Failed to update cart language');
             }
         } catch (PrestaShopException $e) {
@@ -63,10 +64,6 @@ final class UpdateCartLanguageHandler extends AbstractCartHandler implements Upd
     }
 
     /**
-     * @param LanguageId $languageId
-     *
-     * @return Language
-     *
      * @throws LanguageException
      * @throws LanguageNotFoundException
      */
@@ -86,13 +83,11 @@ final class UpdateCartLanguageHandler extends AbstractCartHandler implements Upd
     }
 
     /**
-     * @param Language $lang
-     *
      * @throws LanguageException
      */
     private function assertLanguageIsActive(Language $lang): void
     {
-        if (!$lang->active) {
+        if (! $lang->active) {
             throw new LanguageException(sprintf('Language with id "%s" is not active', $lang->id), LanguageException::NOT_ACTIVE);
         }
     }

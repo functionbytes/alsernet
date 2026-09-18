@@ -6,10 +6,10 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
-use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Sync\SyncBatch;
 
 /**
@@ -47,8 +47,8 @@ class ErpCategorySyncService
 
             $syncStartedAt = now();
 
-            $results['sports']      = $this->syncSports($batch, $syncStartedAt);
-            $results['categories']  = $this->syncCategories($batch, $syncStartedAt);
+            $results['sports'] = $this->syncSports($batch, $syncStartedAt);
+            $results['categories'] = $this->syncCategories($batch, $syncStartedAt);
             $results['subfamilies'] = $this->syncSubfamilies($batch, $syncStartedAt);
 
             $results['success'] = true;
@@ -113,9 +113,9 @@ class ErpCategorySyncService
                         $created = ! $category->exists;
 
                         $category->fill([
-                            'name'         => $this->stripPrefix($row['descripcion'] ?? $row['description'] ?? null),
-                            'short_name'   => $this->stripPrefix($row['desc_corta'] ?? $row['description_short'] ?? null),
-                            'available'    => (bool) ($row['estado'] ?? $row['available'] ?? true),
+                            'name' => $this->stripPrefix($row['descripcion'] ?? $row['description'] ?? null),
+                            'short_name' => $this->stripPrefix($row['desc_corta'] ?? $row['description_short'] ?? null),
+                            'available' => (bool) ($row['estado'] ?? $row['available'] ?? true),
                             'last_sync_at' => now(),
                         ]);
 
@@ -181,12 +181,12 @@ class ErpCategorySyncService
                         $categoryId = $erpCategoryId ? $categoryIdByErpId->get($erpCategoryId) : null;
 
                         $subfamily->fill([
-                            'category_id'     => $categoryId,
+                            'category_id' => $categoryId,
                             'erp_category_id' => $erpCategoryId,
-                            'name'            => $this->stripPrefix($row['descripcion'] ?? $row['description'] ?? null),
-                            'short_name'      => $this->stripPrefix($row['desc_corta'] ?? $row['description_short'] ?? null),
-                            'available'       => (bool) ($row['estado'] ?? $row['available'] ?? true),
-                            'last_sync_at'    => now(),
+                            'name' => $this->stripPrefix($row['descripcion'] ?? $row['description'] ?? null),
+                            'short_name' => $this->stripPrefix($row['desc_corta'] ?? $row['description_short'] ?? null),
+                            'available' => (bool) ($row['estado'] ?? $row['available'] ?? true),
+                            'last_sync_at' => now(),
                         ]);
 
                         $subfamily->save();

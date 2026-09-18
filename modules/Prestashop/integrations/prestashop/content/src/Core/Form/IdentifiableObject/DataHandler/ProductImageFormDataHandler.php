@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ class ProductImageFormDataHandler implements FormDataHandlerInterface
      */
     private $bus;
 
-    /**
-     * @param CommandBusInterface $bus
-     */
     public function __construct(
         CommandBusInterface $bus
     ) {
@@ -57,7 +55,7 @@ class ProductImageFormDataHandler implements FormDataHandlerInterface
     public function create(array $data)
     {
         $uploadedFile = $data['file'] ?? null;
-        if (!($uploadedFile instanceof UploadedFile)) {
+        if (! ($uploadedFile instanceof UploadedFile)) {
             throw new FileUploadException('No file was uploaded', UPLOAD_ERR_NO_FILE);
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -84,16 +85,9 @@ class EditableManufacturer
     private $associatedShops;
 
     /**
-     * @param ManufacturerId $manufacturerId
-     * @param string $name
-     * @param bool $enabled
-     * @param array $localizedShortDescriptions
-     * @param array $localizedDescriptions
-     * @param array $localizedMetaTitles
-     * @param array $localizedMetaDescriptions
-     * @param array $localizedMetaKeywords
-     * @param array|null $logoImage
-     * @param array $associatedShops
+     * @param  string  $name
+     * @param  bool  $enabled
+     * @param  array|null  $logoImage
      */
     public function __construct(
         ManufacturerId $manufacturerId,

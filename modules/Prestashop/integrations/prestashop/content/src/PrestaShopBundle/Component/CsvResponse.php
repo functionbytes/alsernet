@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,25 +71,24 @@ class CsvResponse extends StreamedResponse
     /**
      * Constructor.
      *
-     * @param callable|null $callback A valid PHP callback or null to set it later
-     * @param int $status The response status code
-     * @param array $headers An array of response headers
+     * @param  callable|null  $callback  A valid PHP callback or null to set it later
+     * @param  int  $status  The response status code
+     * @param  array  $headers  An array of response headers
      */
     public function __construct($callback = null, $status = 200, $headers = [])
     {
         parent::__construct($callback, $status, $headers);
 
-        if (null === $callback) {
+        if ($callback === null) {
             $this->setCallback([$this, 'processData']);
         }
 
-        $this->setFileName('export_' . date('Y-m-d_His') . '.csv');
+        $this->setFileName('export_'.date('Y-m-d_His').'.csv');
         $this->headers->set('Content-Type', 'text/csv; charset=utf-8');
     }
 
     /**
-     * @param array|callable $data
-     *
+     * @param  array|callable  $data
      * @return $this
      */
     public function setData($data)
@@ -99,8 +99,6 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param array $headersData
-     *
      * @return $this
      */
     public function setHeadersData(array $headersData)
@@ -111,8 +109,7 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param int $modeType
-     *
+     * @param  int  $modeType
      * @return $this
      */
     public function setModeType($modeType)
@@ -123,8 +120,7 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param int $start
-     *
+     * @param  int  $start
      * @return $this
      */
     public function setStart($start)
@@ -135,8 +131,7 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param int $limit
-     *
+     * @param  int  $limit
      * @return $this
      */
     public function setLimit($limit)
@@ -147,8 +142,7 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param string $fileName
-     *
+     * @param  string  $fileName
      * @return $this
      *
      * @throws \InvalidArgumentException
@@ -244,15 +238,15 @@ class CsvResponse extends StreamedResponse
      */
     private function initStart()
     {
-        if (null !== $this->start) {
+        if ($this->start !== null) {
             return;
         }
 
-        if (self::MODE_PAGINATION === $this->modeType) {
+        if ($this->modeType === self::MODE_PAGINATION) {
             $this->setStart(1);
         }
 
-        if (self::MODE_OFFSET === $this->modeType) {
+        if ($this->modeType === self::MODE_OFFSET) {
             $this->setStart(0);
         }
     }
@@ -264,13 +258,13 @@ class CsvResponse extends StreamedResponse
      */
     private function incrementData()
     {
-        if (self::MODE_PAGINATION === $this->modeType) {
+        if ($this->modeType === self::MODE_PAGINATION) {
             $this->setStart($this->start + 1);
 
             return;
         }
 
-        if (self::MODE_OFFSET === $this->modeType) {
+        if ($this->modeType === self::MODE_OFFSET) {
             $this->setStart($this->start + $this->limit);
 
             return;
@@ -280,13 +274,13 @@ class CsvResponse extends StreamedResponse
     }
 
     /**
-     * @param resource $handle file pointer
+     * @param  resource  $handle  file pointer
      */
     private function dumpFile($handle)
     {
         fseek($handle, 0);
 
-        while (!feof($handle)) {
+        while (! feof($handle)) {
             $buffer = fread($handle, 1024);
             echo $buffer;
             flush();

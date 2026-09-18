@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,7 @@ final class CategoryCoverImageUploader extends AbstractImageUploader implements 
     /**
      * Delete old category image.
      *
-     * @param int $id
+     * @param  int  $id
      */
     private function deleteOldImage($id)
     {
@@ -71,8 +72,7 @@ final class CategoryCoverImageUploader extends AbstractImageUploader implements 
     }
 
     /**
-     * @param int $id
-     * @param UploadedFile $image
+     * @param  int  $id
      *
      * @throws ImageOptimizationException
      * @throws ImageUploadException
@@ -81,28 +81,28 @@ final class CategoryCoverImageUploader extends AbstractImageUploader implements 
     private function uploadImage($id, UploadedFile $image)
     {
         $temporaryImageName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
-        if (!$temporaryImageName) {
+        if (! $temporaryImageName) {
             throw new ImageUploadException('Failed to create temporary image file');
         }
         // move_uploaded_file -  also checks that the given file is a file that was uploaded via the POST,
         // this prevents for example that a local file is moved
-        if (!move_uploaded_file($image->getPathname(), $temporaryImageName)) {
+        if (! move_uploaded_file($image->getPathname(), $temporaryImageName)) {
             throw new ImageUploadException('Failed to upload image');
         }
 
-        if (!ImageManager::checkImageMemoryLimit($temporaryImageName)) {
+        if (! ImageManager::checkImageMemoryLimit($temporaryImageName)) {
             throw new MemoryLimitException('Cannot upload image due to memory restrictions');
         }
 
         $optimizationSucceeded = ImageManager::resize(
             $temporaryImageName,
-            _PS_IMG_DIR_ . 'c' . DIRECTORY_SEPARATOR . $id . '.jpg',
+            _PS_IMG_DIR_.'c'.DIRECTORY_SEPARATOR.$id.'.jpg',
             null,
             null,
             'jpg'
         );
 
-        if (!$optimizationSucceeded) {
+        if (! $optimizationSucceeded) {
             throw new ImageOptimizationException('Failed to optimize image after uploading');
         }
 
@@ -110,26 +110,26 @@ final class CategoryCoverImageUploader extends AbstractImageUploader implements 
     }
 
     /**
-     * @param int $id
+     * @param  int  $id
      *
      * @throws ImageUploadException
      */
     private function generateDifferentTypes($id)
     {
-        if (!file_exists(_PS_CAT_IMG_DIR_ . $id . '.jpg')) {
+        if (! file_exists(_PS_CAT_IMG_DIR_.$id.'.jpg')) {
             return;
         }
 
         $imagesTypes = ImageType::getImagesTypes('categories');
         foreach ($imagesTypes as $k => $imageType) {
             $generated = ImageManager::resize(
-                _PS_CAT_IMG_DIR_ . $id . '.jpg',
-                _PS_CAT_IMG_DIR_ . $id . '-' . stripslashes($imageType['name']) . '.jpg',
+                _PS_CAT_IMG_DIR_.$id.'.jpg',
+                _PS_CAT_IMG_DIR_.$id.'-'.stripslashes($imageType['name']).'.jpg',
                 (int) $imageType['width'],
                 (int) $imageType['height']
             );
 
-            if (!$generated) {
+            if (! $generated) {
                 throw new ImageUploadException('Error occurred when uploading image');
             }
         }

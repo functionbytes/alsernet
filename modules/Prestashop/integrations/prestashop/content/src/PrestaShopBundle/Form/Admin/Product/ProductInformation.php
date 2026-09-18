@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,54 +63,67 @@ class ProductInformation extends CommonAbstractType
      * @var array
      */
     public $categories;
+
     /**
      * @var CategoryDataProvider
      */
     public $categoryDataProvider;
+
     /**
      * @var Configuration
      */
     public $configuration;
+
     /**
      * @var LegacyContext
      */
     private $context;
+
     /**
      * @var Currency
      */
     public $currency;
+
     /**
      * @var FeatureDataProvider
      */
     public $featureDataProvider;
+
     /**
      * @var array<int|Language>
      */
     private $locales;
+
     /**
      * @var ManufacturerDataProvider
      */
     private $manufacturerDataProvider;
+
     /**
      * @var array
      */
     private $manufacturers;
+
     /**
      * @var array
      */
     public $nested_categories;
+
     /**
      * @var ProductDataProvider
      */
     private $productAdapter;
+
     /**
      * @var ProductDataProvider
      */
     public $productDataProvider;
+
     /**
      * @var Router
      */
     public $router;
+
     /**
      * @var TranslatorInterface
      */
@@ -118,13 +132,13 @@ class ProductInformation extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param LegacyContext $legacyContext
-     * @param Router $router
-     * @param CategoryDataProvider $categoryDataProvider
-     * @param ProductDataProvider $productDataProvider
-     * @param FeatureDataProvider $featureDataProvider
-     * @param ManufacturerDataProvider $manufacturerDataProvider
+     * @param  TranslatorInterface  $translator
+     * @param  LegacyContext  $legacyContext
+     * @param  Router  $router
+     * @param  CategoryDataProvider  $categoryDataProvider
+     * @param  ProductDataProvider  $productDataProvider
+     * @param  FeatureDataProvider  $featureDataProvider
+     * @param  ManufacturerDataProvider  $manufacturerDataProvider
      */
     public function __construct(
         $translator,
@@ -144,7 +158,7 @@ class ProductInformation extends CommonAbstractType
         $this->manufacturerDataProvider = $manufacturerDataProvider;
         $this->featureDataProvider = $featureDataProvider;
 
-        $this->configuration = new Configuration();
+        $this->configuration = new Configuration;
         $this->locales = $this->context->getLanguages();
         $this->currency = $this->context->getContext()->currency;
 
@@ -203,7 +217,7 @@ class ProductInformation extends CommonAbstractType
             'required' => true,
         ])
             ->add('inputPackItems', TypeaheadProductPackCollectionType::class, [
-                'remote_url' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'excludeVirtuals' => 1, 'limit' => 20]) . '&q=%QUERY',
+                'remote_url' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'excludeVirtuals' => 1, 'limit' => 20]).'&q=%QUERY',
                 'mapping_value' => 'id',
                 'mapping_name' => 'name',
                 'placeholder' => $this->translator->trans('Search for a product', [], 'Admin.Catalog.Help'),
@@ -224,7 +238,7 @@ class ProductInformation extends CommonAbstractType
                             'pattern' => '/[<>;=#{}]/',
                             'match' => false,
                         ]),
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Length(['min' => 3, 'max' => 128]),
                     ],
                     'attr' => [
@@ -274,7 +288,7 @@ class ProductInformation extends CommonAbstractType
                 'label' => $this->translator->trans('Short description', [], 'Admin.Catalog.Feature'),
                 'required' => false,
             ])
-            //FEATURES & ATTRIBUTES
+            // FEATURES & ATTRIBUTES
             ->add('features', FormType\CollectionType::class, [
                 'entry_type' => ProductFeature::class,
                 'prototype' => true,
@@ -291,7 +305,7 @@ class ProductInformation extends CommonAbstractType
                 'label' => $this->translator->trans('Brand', [], 'Admin.Catalog.Feature'),
                 'placeholder' => $this->translator->trans('Choose a brand', [], 'Admin.Catalog.Feature'),
             ])
-            //RIGHT COL
+            // RIGHT COL
             ->add('active', FormType\CheckboxType::class, [
                 'label' => $this->translator->trans('Enabled', [], 'Admin.Global'),
                 'required' => false,
@@ -301,7 +315,7 @@ class ProductInformation extends CommonAbstractType
                 'label' => $this->translator->trans('Pre-tax retail price', [], 'Admin.Catalog.Feature'),
                 'currency' => $this->currency->iso_code,
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'float']),
                 ],
                 'attr' => [],
@@ -317,7 +331,7 @@ class ProductInformation extends CommonAbstractType
                 'required' => false,
                 'label' => $this->translator->trans('Quantity', [], 'Admin.Catalog.Feature'),
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'numeric']),
                 ],
             ]);
@@ -346,7 +360,7 @@ class ProductInformation extends CommonAbstractType
                 'mapped' => false,
             ])
             ->add('related_products', TypeaheadProductCollectionType::class, [
-                'remote_url' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'disableCombination' => 1, 'exclude_packs' => 0, 'excludeVirtuals' => 0, 'limit' => 20]) . '&q=%QUERY',
+                'remote_url' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'disableCombination' => 1, 'exclude_packs' => 0, 'excludeVirtuals' => 0, 'limit' => 20]).'&q=%QUERY',
                 'mapping_value' => 'id',
                 'mapping_name' => 'name',
                 'placeholder' => $this->translator->trans('Search and add a related product', [], 'Admin.Catalog.Help'),
@@ -358,7 +372,7 @@ class ProductInformation extends CommonAbstractType
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $data = $event->getData();
 
-            if (!isset($data['type_product'])) {
+            if (! isset($data['type_product'])) {
                 $data['type_product'] = 0;
                 $event->setData($data);
             }
@@ -384,9 +398,9 @@ class ProductInformation extends CommonAbstractType
                 $event->setData($data);
             }
 
-            //if product type is pack, check if inputPackItems is not empty
+            // if product type is pack, check if inputPackItems is not empty
             if ($data['type_product'] == 1) {
-                if (!isset($data['inputPackItems']) || empty($data['inputPackItems']['data'])) {
+                if (! isset($data['inputPackItems']) || empty($data['inputPackItems']['data'])) {
                     $form = $event->getForm();
                     $error = $this->translator->trans(
                         'This pack is empty. You must add at least one product item.',

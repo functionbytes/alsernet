@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class CombinationController extends FrameworkBundleAdminController
      */
     public function generateCombinationFormAction($combinationIds)
     {
-        $response = new Response();
+        $response = new Response;
 
         $combinationIds = explode('-', $combinationIds);
 
@@ -72,19 +73,18 @@ class CombinationController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], 'ADMINPRODUCTS_')")
      *
-     * @param int $idProduct The product id
-     *
+     * @param  int  $idProduct  The product id
      * @return JsonResponse
      */
     public function getProductCombinationsAction($idProduct)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
-        //get product
+        // get product
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        //get combinations
+        // get combinations
 
         $modelMapper = $this->get('prestashop.adapter.admin.model.product');
 

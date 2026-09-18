@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,12 +68,7 @@ class AddVirtualProductFileCommand
     private $downloadTimesLimit;
 
     /**
-     * @param int $productId
-     * @param string $filePath
-     * @param string $displayName display name of the file
-     * @param int|null $accessDays
-     * @param int|null $downloadTimesLimit
-     * @param DateTimeInterface|null $expirationDate
+     * @param  string  $displayName  display name of the file
      */
     public function __construct(
         int $productId,
@@ -90,49 +86,31 @@ class AddVirtualProductFileCommand
         $this->expirationDate = $expirationDate;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getFilePath(): string
     {
         return $this->filePath;
     }
 
-    /**
-     * @return string
-     */
     public function getDisplayName(): string
     {
         return $this->displayName;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getExpirationDate(): ?DateTimeInterface
     {
         return $this->expirationDate;
     }
 
-    /**
-     * @return int|null
-     */
     public function getAccessDays(): ?int
     {
         return $this->accessDays;
     }
 
-    /**
-     * @return int|null
-     */
     public function getDownloadTimesLimit(): ?int
     {
         return $this->downloadTimesLimit;

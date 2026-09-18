@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,13 +38,12 @@ class SupplierDataProvider
     /**
      * Get all suppliers.
      *
-     * @param bool $get_nb_products
-     * @param int $id_lang
-     * @param bool $active
-     * @param bool $p
-     * @param bool $n
-     * @param bool $all_groups
-     *
+     * @param  bool  $get_nb_products
+     * @param  int  $id_lang
+     * @param  bool  $active
+     * @param  bool  $p
+     * @param  bool  $n
+     * @param  bool  $all_groups
      * @return array Suppliers
      */
     public function getSuppliers($get_nb_products = false, $id_lang = 0, $active = true, $p = false, $n = false, $all_groups = false)
@@ -54,9 +54,8 @@ class SupplierDataProvider
     /**
      * Get product suppliers.
      *
-     * @param int $id_product
-     * @param bool $group_by_supplier
-     *
+     * @param  int  $id_product
+     * @param  bool  $group_by_supplier
      * @return array Suppliers
      */
     public function getProductSuppliers($id_product, $group_by_supplier = true)
@@ -69,10 +68,9 @@ class SupplierDataProvider
     /**
      * For a given product and supplier, gets the product supplier data.
      *
-     * @param int $id_product
-     * @param int $id_product_attribute
-     * @param int $id_supplier
-     *
+     * @param  int  $id_product
+     * @param  int  $id_product_attribute
+     * @param  int  $id_supplier
      * @return array
      */
     public function getProductSupplierData($id_product, $id_product_attribute, $id_supplier)
@@ -83,8 +81,7 @@ class SupplierDataProvider
     /**
      * Get supplier name by id.
      *
-     * @param int $id_supplier
-     *
+     * @param  int  $id_supplier
      * @return string
      */
     public function getNameById($id_supplier)

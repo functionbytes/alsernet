@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,11 @@ final class BulkUpdateCategoriesStatusHandler implements BulkUpdateCategoriesSta
             $entity = new Category($categoryId->getValue());
             $entity->active = $command->getNewStatus();
 
-            if (!$entity->id) {
+            if (! $entity->id) {
                 throw new CategoryNotFoundException($categoryId, sprintf('Category with id "%s" was not found', $categoryId->getValue()));
             }
 
-            if (!$entity->update()) {
+            if (! $entity->update()) {
                 throw new CannotUpdateCategoryStatusException(sprintf('Cannot update status for category with id "%s"', $categoryId->getValue()));
             }
         }

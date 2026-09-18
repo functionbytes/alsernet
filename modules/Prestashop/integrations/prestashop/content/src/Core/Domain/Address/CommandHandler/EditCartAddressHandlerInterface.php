@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,6 @@ use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
 interface EditCartAddressHandlerInterface
 {
     /**
-     * @param EditCartAddressCommand $command
-     *
      * @return AddressId The newly created address id
      */
     public function handle(EditCartAddressCommand $command): AddressId;

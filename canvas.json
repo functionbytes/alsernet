@@ -1,0 +1,38 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 340, "h": 700, "title": "A · Asunto primero", "is_interactive": true },
+    { "file": "OpcionB.dc.html", "x": 460, "y": 0, "w": 340, "h": 700, "title": "B · Agrupado por procedencia", "is_interactive": true },
+    { "file": "OpcionC.dc.html", "x": 920, "y": 0, "w": 340, "h": 700, "title": "C · Lista densa", "is_interactive": true }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -190,
+      "w": 340,
+      "text": "Tab Tickets del panel derecho (340 px).\n\nProblema del diseño actual: \"De esta conversación\" es un badge tan ancho que se come el chip de estado y lo tapa, y como aparece en casi todas las tarjetas no distingue nada. Además el número de ticket ocupa el sitio de honor cuando lo que identifica al ticket es el asunto.\n\nMismos tokens del inbox: Inter, #18181b / #71717a / #e4e4e7, radio 7 px, barra de prioridad de 3 px (índigo, ámbar, azul, verde) y JetBrains Mono para los números.\n\nLos filtros funcionan: púlsalos."
+    },
+    {
+      "id": "nota-a",
+      "x": 0,
+      "y": 740,
+      "w": 340,
+      "text": "A · El asunto sube a primera línea y el estado se queda solo en su esquina. El vínculo con la conversación pasa a ser el eslabón verde delante del número. Tercera línea separada por un filete: agente y categoría.\n\nA favor: es el cambio más pequeño respecto a lo que ya hay.\nEn contra: sigue siendo tarjeta, tres filas por ticket."
+    },
+    {
+      "id": "nota-b",
+      "x": 460,
+      "y": 740,
+      "w": 340,
+      "text": "B · La procedencia deja de repetirse ticket a ticket y se convierte en el encabezado que parte la lista: \"De esta conversación\" arriba, \"Otros del cliente\" debajo. El estado se codifica en el punto de color y su texto baja al renglón de metadatos.\n\nA favor: responde a la pregunta real del agente —¿esto sale de aquí o ya venía?— sin gastar ancho.\nEn contra: dos niveles de jerarquía en 340 px; con un solo grupo el encabezado sobra."
+    },
+    {
+      "id": "nota-c",
+      "x": 920,
+      "y": 740,
+      "w": 340,
+      "text": "C · Filas en vez de tarjetas y cabecera de una línea: caben seis tickets donde antes tres. El número se acorta a #00116 (el prefijo TCK-2026- es el mismo en todos).\n\nA favor: para clientes con historial largo es la única que no obliga a hacer scroll.\nEn contra: pierde el aire; el asunto se recorta a una línea."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

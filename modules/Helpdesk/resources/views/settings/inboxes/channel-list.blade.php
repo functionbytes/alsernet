@@ -140,11 +140,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.hd-inbox-icon[data-color]').each(function () {
-        $(this).css({ background: $(this).data('color'), color: '#fff' });
-    });
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/settings/inbox-channel-list.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/inbox-channel-list.js')) }}" defer></script>
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 class CustomizationFieldValidator extends AbstractObjectModelValidator
 {
     /**
-     * @param CustomizationField $customizationField
-     *
      * @throws CoreException
      */
     public function validate(CustomizationField $customizationField): void

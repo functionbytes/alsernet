@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,29 +51,27 @@ class ModuleRepository
     private $table;
 
     /**
-     * @param Connection $connection
-     * @param string $databasePrefix
+     * @param  string  $databasePrefix
      */
     public function __construct(Connection $connection, $databasePrefix)
     {
         $this->connection = $connection;
         $this->databasePrefix = $databasePrefix;
-        $this->table = $this->databasePrefix . 'module';
+        $this->table = $this->databasePrefix.'module';
     }
 
     /**
      * Find enabled countries for module in shop.
      *
-     * @param int $moduleId
-     * @param int $shopId
-     *
+     * @param  int  $moduleId
+     * @param  int  $shopId
      * @return int[] Array of country IDs
      */
     public function findRestrictedCountryIds($moduleId, $shopId)
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('mc.id_country')
-            ->from($this->table . '_country', 'mc')
+            ->from($this->table.'_country', 'mc')
             ->where('mc.id_module = :id_module')
             ->setParameter('id_module', $moduleId)
             ->andWhere('mc.id_shop = :id_shop')
@@ -84,16 +83,15 @@ class ModuleRepository
     /**
      * Find enabled currencies for module in shop.
      *
-     * @param int $moduleId
-     * @param int $shopId
-     *
+     * @param  int  $moduleId
+     * @param  int  $shopId
      * @return int[] Array of currency IDs
      */
     public function findRestrictedCurrencyIds($moduleId, $shopId)
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('mc.id_currency')
-            ->from($this->table . '_currency', 'mc')
+            ->from($this->table.'_currency', 'mc')
             ->where('mc.id_module = :id_module')
             ->setParameter('id_module', $moduleId)
             ->andWhere('mc.id_shop = :id_shop')
@@ -105,16 +103,15 @@ class ModuleRepository
     /**
      * Find enabled groups for module in shop.
      *
-     * @param int $moduleId
-     * @param int $shopId
-     *
+     * @param  int  $moduleId
+     * @param  int  $shopId
      * @return int[] Array of group IDs
      */
     public function findRestrictedGroupIds($moduleId, $shopId)
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('mg.id_group')
-            ->from($this->table . '_group', 'mg')
+            ->from($this->table.'_group', 'mg')
             ->where('mg.id_module = :id_module')
             ->setParameter('id_module', $moduleId)
             ->andWhere('mg.id_shop = :id_shop')
@@ -126,16 +123,15 @@ class ModuleRepository
     /**
      * Find enabled carriers for module in shop.
      *
-     * @param int $moduleId
-     * @param int $shopId
-     *
+     * @param  int  $moduleId
+     * @param  int  $shopId
      * @return int[] Array of carrier references
      */
     public function findRestrictedCarrierReferenceIds($moduleId, $shopId)
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('mc.id_reference')
-            ->from($this->table . '_carrier', 'mc')
+            ->from($this->table.'_carrier', 'mc')
             ->where('mc.id_module = :id_module')
             ->setParameter('id_module', $moduleId)
             ->andWhere('mc.id_shop = :id_shop')

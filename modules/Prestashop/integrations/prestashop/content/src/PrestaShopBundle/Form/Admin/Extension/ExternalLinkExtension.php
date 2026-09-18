@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,15 +61,14 @@ class ExternalLinkExtension extends AbstractTypeExtension
             ])
             ->setAllowedTypes('external_link', ['null', 'array'])
             ->setNormalizer('external_link', function (Options $options, $value) {
-                if (null === $value) {
+                if ($value === null) {
                     return null;
                 }
 
                 $resolver = $this->getExternalLinkResolver();
 
                 return $resolver->resolve($value);
-            })
-        ;
+            });
     }
 
     /**
@@ -76,7 +76,7 @@ class ExternalLinkExtension extends AbstractTypeExtension
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        if (!empty($options['external_link'])) {
+        if (! empty($options['external_link'])) {
             $view->vars['external_link'] = $options['external_link'];
         }
     }
@@ -89,12 +89,9 @@ class ExternalLinkExtension extends AbstractTypeExtension
         return FormType::class;
     }
 
-    /**
-     * @return OptionsResolver
-     */
     private function getExternalLinkResolver(): OptionsResolver
     {
-        $externalLinkResolver = new OptionsResolver();
+        $externalLinkResolver = new OptionsResolver;
         $externalLinkResolver
             ->setRequired(['href', 'text'])
             ->setDefaults([
@@ -104,8 +101,7 @@ class ExternalLinkExtension extends AbstractTypeExtension
             ->setAllowedTypes('href', 'string')
             ->setAllowedTypes('text', 'string')
             ->setAllowedTypes('align', 'string')
-            ->setAllowedTypes('attr', ['null', 'array'])
-        ;
+            ->setAllowedTypes('attr', ['null', 'array']);
 
         return $externalLinkResolver;
     }

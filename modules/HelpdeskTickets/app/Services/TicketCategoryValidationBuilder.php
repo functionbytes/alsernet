@@ -2,6 +2,10 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use Illuminate\Validation\Rule;
+use Modules\Core\Rules\ValidMimeMagicBytes;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
 class TicketCategoryValidationBuilder
@@ -13,6 +17,8 @@ class TicketCategoryValidationBuilder
      */
     public function buildForSubmission(TicketCategory $category): array
     {
+        $settings = app(HelpdeskSettings::class);
+
         $rules = [
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
@@ -44,8 +50,13 @@ class TicketCategoryValidationBuilder
                 'file' => array_push(
                     $fieldRules,
                     'file',
-                    'max:'.config('helpdesk.attachments.max_size', 10240),
-                    'mimes:'.implode(',', config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'])),
+                    'max:'.$settings->attachmentMaxKilobytes(),
+                    'mimes:'.implode(',', $settings->attachmentExtensions()),
+                    new ValidMimeMagicBytes($settings->attachmentMimeTypes()),
+                    Rule::prohibitedIf(fn () => ! filter_var(
+                        Setting::get('tickets.guest_file_upload_enable', true),
+                        FILTER_VALIDATE_BOOLEAN,
+                    )),
                 ),
                 'select', 'radio' => $field->options
                     ? $fieldRules[] = 'in:'.implode(',', array_column($field->options, 'value'))

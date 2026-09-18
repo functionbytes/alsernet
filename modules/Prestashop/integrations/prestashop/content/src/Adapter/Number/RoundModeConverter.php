@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,15 +43,11 @@ class RoundModeConverter
     ];
 
     /**
-     * @param int $legacyRoundMode
-     *
-     * @return string
-     *
      * @throws CoreException
      */
     public static function getNumberRoundMode(int $legacyRoundMode): string
     {
-        if (!isset(static::MODE_MAP[$legacyRoundMode])) {
+        if (! isset(static::MODE_MAP[$legacyRoundMode])) {
             throw new CoreException(sprintf('Cannot map round mode %d', $legacyRoundMode));
         }
 

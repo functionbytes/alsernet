@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,19 +48,12 @@ class SetProductCustomizationFieldsCommand
      */
     private $customizationFields = [];
 
-    /**
-     * @param int $productId
-     * @param array $customizationFields
-     */
     public function __construct(int $productId, array $customizationFields)
     {
         $this->productId = new ProductId($productId);
         $this->setCustomizationFields($customizationFields);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -73,9 +67,6 @@ class SetProductCustomizationFieldsCommand
         return $this->customizationFields;
     }
 
-    /**
-     * @param array $customizationFields
-     */
     private function setCustomizationFields(array $customizationFields): void
     {
         if (empty($customizationFields)) {

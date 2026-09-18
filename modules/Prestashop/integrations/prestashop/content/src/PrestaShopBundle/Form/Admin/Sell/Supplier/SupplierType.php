@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,12 +77,8 @@ class SupplierType extends TranslatorAwareType
     private $router;
 
     /**
-     * @param ConfigurableFormChoiceProviderInterface $statesChoiceProvider
-     * @param int $contextCountryId
-     * @param TranslatorInterface $translator
-     * @param bool $isMultistoreEnabled
-     * @param Router $router
-     * @param array $locales
+     * @param  int  $contextCountryId
+     * @param  bool  $isMultistoreEnabled
      */
     public function __construct(
         ConfigurableFormChoiceProviderInterface $statesChoiceProvider,
@@ -102,20 +99,20 @@ class SupplierType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $data = $builder->getData();
-        $countryId = 0 !== $data['id_country'] ? $data['id_country'] : $this->contextCountryId;
+        $countryId = $data['id_country'] !== 0 ? $data['id_country'] : $this->contextCountryId;
 
         $invalidCharsText = sprintf(
-            '%s ' . TypedRegexValidator::CATALOG_CHARS,
+            '%s '.TypedRegexValidator::CATALOG_CHARS,
             $this->trans('Invalid characters:', 'Admin.Global')
         );
 
         $invalidGenericNameHint = sprintf(
-            '%s ' . TypedRegexValidator::GENERIC_NAME_CHARS,
+            '%s '.TypedRegexValidator::GENERIC_NAME_CHARS,
             $this->trans('Invalid characters:', 'Admin.Global')
         );
 
         $keywordHint = sprintf(
-            '%s ' . PHP_EOL . $invalidGenericNameHint,
+            '%s '.PHP_EOL.$invalidGenericNameHint,
             $this->trans(
                 'To add tags, click in the field, write something, and then press the "Enter" key.',
                 'Admin.Shopparameters.Help'
@@ -341,8 +338,7 @@ class SupplierType extends TranslatorAwareType
             ->add('is_enabled', SwitchType::class, [
                 'label' => $this->trans('Enabled', 'Admin.Global'),
                 'required' => false,
-            ])
-        ;
+            ]);
 
         if ($this->isMultistoreEnabled) {
             $builder->add('shop_association', ShopChoiceTreeType::class, [

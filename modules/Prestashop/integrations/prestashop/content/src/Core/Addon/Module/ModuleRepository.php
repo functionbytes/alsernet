@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -128,22 +129,22 @@ class ModuleRepository implements ModuleRepositoryInterface
         LoggerInterface $logger,
         TranslatorInterface $translator,
         $modulePath,
-        CacheProvider $cacheProvider = null
+        ?CacheProvider $cacheProvider = null
     ) {
         $this->adminModuleProvider = $adminModulesProvider;
         $this->logger = $logger;
         $this->moduleProvider = $modulesProvider;
         $this->moduleUpdater = $modulesUpdater;
         $this->translator = $translator;
-        $this->finder = new Finder();
+        $this->finder = new Finder;
         $this->modulePath = $modulePath;
 
-        list($isoLang) = explode('-', $translator->getLocale());
+        [$isoLang] = explode('-', $translator->getLocale());
 
         // Cache related variables
-        $this->cacheFilePath = $isoLang . '_local_modules';
+        $this->cacheFilePath = $isoLang.'_local_modules';
         $this->cacheProvider = $cacheProvider;
-        $this->loadedModules = new ArrayCache();
+        $this->loadedModules = new ArrayCache;
 
         if ($this->cacheProvider && $this->cacheProvider->contains($this->cacheFilePath)) {
             $this->cache = $this->cacheProvider->fetch($this->cacheFilePath);
@@ -153,7 +154,6 @@ class ModuleRepository implements ModuleRepositoryInterface
     /**
      * Setter for the optional PrestaTrust checker.
      *
-     * @param PrestaTrustChecker $checker
      *
      * @return $this
      */
@@ -182,9 +182,8 @@ class ModuleRepository implements ModuleRepositoryInterface
     /**
      * Get the **Legacy** Module object from its name.
      *
-     * @param string $name The technical module name to instanciate
-     *
-     * @return \Module|null Instance of legacy Module, if valid
+     * @param  string  $name  The technical module name to instanciate
+     * @return LegacyModule|null Instance of legacy Module, if valid
      */
     public function getInstanceByName($name)
     {
@@ -193,9 +192,7 @@ class ModuleRepository implements ModuleRepositoryInterface
     }
 
     /**
-     * @param AddonListFilter $filter
-     * @param bool $skip_main_class_attributes
-     *
+     * @param  bool  $skip_main_class_attributes
      * @return AddonInterface[] retrieve a list of addons, regarding the $filter used
      */
     public function getFilteredList(AddonListFilter $filter, $skip_main_class_attributes = false)
@@ -218,7 +215,7 @@ class ModuleRepository implements ModuleRepositoryInterface
                 if ($module->attributes->get('productType') == 'service') {
                     $productType = AddonListFilterType::SERVICE;
                 }
-                if (!isset($productType) || $productType & ~$filter->type) {
+                if (! isset($productType) || $productType & ~$filter->type) {
                     unset($modules[$key]);
 
                     continue;
@@ -229,14 +226,14 @@ class ModuleRepository implements ModuleRepositoryInterface
             if ($filter->status != AddonListFilterStatus::ALL) {
                 if ($module->database->get('installed') == 1
                     && ($filter->hasStatus(AddonListFilterStatus::UNINSTALLED)
-                        || !$filter->hasStatus(AddonListFilterStatus::INSTALLED))) {
+                        || ! $filter->hasStatus(AddonListFilterStatus::INSTALLED))) {
                     unset($modules[$key]);
 
                     continue;
                 }
 
                 if ($module->database->get('installed') == 0
-                    && (!$filter->hasStatus(AddonListFilterStatus::UNINSTALLED)
+                    && (! $filter->hasStatus(AddonListFilterStatus::UNINSTALLED)
                         || $filter->hasStatus(AddonListFilterStatus::INSTALLED))) {
                     unset($modules[$key]);
 
@@ -245,7 +242,7 @@ class ModuleRepository implements ModuleRepositoryInterface
 
                 if ($module->database->get('installed') == 1
                     && $module->database->get('active') == 1
-                    && !$filter->hasStatus(AddonListFilterStatus::DISABLED)
+                    && ! $filter->hasStatus(AddonListFilterStatus::DISABLED)
                     && $filter->hasStatus(AddonListFilterStatus::ENABLED)) {
                     unset($modules[$key]);
 
@@ -254,7 +251,7 @@ class ModuleRepository implements ModuleRepositoryInterface
 
                 if ($module->database->get('installed') == 1
                     && $module->database->get('active') == 0
-                    && !$filter->hasStatus(AddonListFilterStatus::ENABLED)
+                    && ! $filter->hasStatus(AddonListFilterStatus::ENABLED)
                     && $filter->hasStatus(AddonListFilterStatus::DISABLED)) {
                     unset($modules[$key]);
 
@@ -264,15 +261,15 @@ class ModuleRepository implements ModuleRepositoryInterface
 
             // Part Three : Remove addons not related to the proper source (ex Addons)
             if ($filter->origin != AddonListFilterOrigin::ALL) {
-                if (!$module->attributes->has('origin_filter_value') &&
-                    !$filter->hasOrigin(AddonListFilterOrigin::DISK)
+                if (! $module->attributes->has('origin_filter_value') &&
+                    ! $filter->hasOrigin(AddonListFilterOrigin::DISK)
                 ) {
                     unset($modules[$key]);
 
                     continue;
                 }
                 if ($module->attributes->has('origin_filter_value') &&
-                    !$filter->hasOrigin($module->attributes->get('origin_filter_value'))
+                    ! $filter->hasOrigin($module->attributes->get('origin_filter_value'))
                 ) {
                     unset($modules[$key]);
 
@@ -302,8 +299,8 @@ class ModuleRepository implements ModuleRepositoryInterface
     {
         static $nativeModules = null;
 
-        if (null === $nativeModules) {
-            $filter = new AddonListFilter();
+        if ($nativeModules === null) {
+            $filter = new AddonListFilter;
             $filter->setOrigin(AddonListFilterOrigin::ADDONS_NATIVE);
 
             /** @var Module[] $nativeModules */
@@ -311,7 +308,7 @@ class ModuleRepository implements ModuleRepositoryInterface
 
             foreach ($nativeModules as $key => $module) {
                 $moduleAuthor = $module->attributes->get('author');
-                if (self::NATIVE_AUTHOR !== $moduleAuthor) {
+                if ($moduleAuthor !== self::NATIVE_AUTHOR) {
                     unset($nativeModules[$key]);
                 }
             }
@@ -325,7 +322,7 @@ class ModuleRepository implements ModuleRepositoryInterface
      */
     public function getPartnersModules()
     {
-        $filter = new AddonListFilter();
+        $filter = new AddonListFilter;
         $filter->setOrigin(AddonListFilterOrigin::ADDONS_NATIVE);
 
         /** @var Module[] $partnersModules */
@@ -333,7 +330,7 @@ class ModuleRepository implements ModuleRepositoryInterface
 
         foreach ($partnersModules as $key => $module) {
             $moduleAuthor = $module->attributes->get('author');
-            if (self::PARTNER_AUTHOR !== $moduleAuthor) {
+            if ($moduleAuthor !== self::PARTNER_AUTHOR) {
                 unset($partnersModules[$key]);
             }
         }
@@ -350,7 +347,7 @@ class ModuleRepository implements ModuleRepositoryInterface
         $partnersModules = $this->getPartnersModules();
 
         foreach ($partnersModules as $key => $module) {
-            if (1 !== $module->database->get('installed')) {
+            if ($module->database->get('installed') !== 1) {
                 unset($partnersModules[$key]);
             }
         }
@@ -367,7 +364,7 @@ class ModuleRepository implements ModuleRepositoryInterface
         $partnersModules = $this->getPartnersModules();
 
         foreach ($partnersModules as $key => $module) {
-            if (0 !== $module->database->get('installed')) {
+            if ($module->database->get('installed') !== 0) {
                 unset($partnersModules[$key]);
             }
         }
@@ -416,9 +413,8 @@ class ModuleRepository implements ModuleRepositoryInterface
      * Get the new module presenter class of the specified name provided.
      * It contains data from its instance, the disk, the database and from the marketplace if exists.
      *
-     * @param string $name The technical name of the module
-     * @param bool $skip_main_class_attributes
-     *
+     * @param  string  $name  The technical name of the module
+     * @param  bool  $skip_main_class_attributes
      * @return Module
      */
     public function getModule($name, $skip_main_class_attributes = false)
@@ -427,8 +423,8 @@ class ModuleRepository implements ModuleRepositoryInterface
             return $this->loadedModules->fetch($name);
         }
 
-        $path = $this->modulePath . $name;
-        $php_file_path = $path . '/' . $name . '.php';
+        $path = $this->modulePath.$name;
+        $php_file_path = $path.'/'.$name.'.php';
 
         /* Data which design the module class */
         $attributes = ['name' => $name];
@@ -472,7 +468,7 @@ class ModuleRepository implements ModuleRepositoryInterface
             ];
             $main_class_attributes = [];
 
-            if (!$skip_main_class_attributes && $this->moduleProvider->isModuleMainClassValid($name)) {
+            if (! $skip_main_class_attributes && $this->moduleProvider->isModuleMainClassValid($name)) {
                 // We load the main class of the module, and get its properties
                 $tmp_module = LegacyModule::getInstanceByName($name);
                 foreach (['warning', 'name', 'tab', 'displayName', 'description', 'author', 'author_address',
@@ -490,7 +486,7 @@ class ModuleRepository implements ModuleRepositoryInterface
                 $disk['version'] = $tmp_module->version;
 
                 $attributes = array_merge($attributes, $main_class_attributes);
-            } elseif (!$skip_main_class_attributes) {
+            } elseif (! $skip_main_class_attributes) {
                 $main_class_attributes['warning'] = 'Invalid module class';
             } else {
                 $disk['is_valid'] = 1;
@@ -522,8 +518,7 @@ class ModuleRepository implements ModuleRepositoryInterface
     /**
      * Send request to get module details on the marketplace, then merge the data received in Module instance.
      *
-     * @param int $moduleId
-     *
+     * @param  int  $moduleId
      * @return Module
      */
     public function getModuleById($moduleId)
@@ -533,7 +528,7 @@ class ModuleRepository implements ModuleRepositoryInterface
         $module = $this->getModule($moduleAttributes['name']);
 
         foreach ($moduleAttributes as $name => $value) {
-            if (!$module->attributes->has($name)) {
+            if (! $module->attributes->has($name)) {
                 $module->attributes->set($name, $value);
             }
         }
@@ -544,9 +539,8 @@ class ModuleRepository implements ModuleRepositoryInterface
     /**
      * Instanciate every module present in the modules folder.
      *
-     * @param bool $skip_main_class_attributes
-     *
-     * @return \PrestaShop\PrestaShop\Adapter\Module\Module[]
+     * @param  bool  $skip_main_class_attributes
+     * @return Module[]
      */
     private function getModulesOnDisk($skip_main_class_attributes = false)
     {
@@ -559,7 +553,7 @@ class ModuleRepository implements ModuleRepositoryInterface
 
         foreach ($modulesDirsList as $moduleDir) {
             $moduleName = $moduleDir->getFilename();
-            if (!file_exists($this->modulePath . $moduleName . '/' . $moduleName . '.php')) {
+            if (! file_exists($this->modulePath.$moduleName.'/'.$moduleName.'.php')) {
                 continue;
             }
 
@@ -601,7 +595,7 @@ class ModuleRepository implements ModuleRepositoryInterface
      */
     public function getInstalledModules()
     {
-        $filters = new AddonListFilter();
+        $filters = new AddonListFilter;
         $filters->setType(AddonListFilterType::MODULE | AddonListFilterType::SERVICE)
             ->setStatus(AddonListFilterStatus::INSTALLED);
 
@@ -628,7 +622,7 @@ class ModuleRepository implements ModuleRepositoryInterface
     public function getInstalledModulesPaths()
     {
         $paths = [];
-        $modulesFiles = Finder::create()->directories()->in(__DIR__ . '/../../../../modules')->depth(0);
+        $modulesFiles = Finder::create()->directories()->in(__DIR__.'/../../../../modules')->depth(0);
         $installedModules = array_keys($this->getInstalledModules());
 
         foreach ($modulesFiles as $moduleFile) {

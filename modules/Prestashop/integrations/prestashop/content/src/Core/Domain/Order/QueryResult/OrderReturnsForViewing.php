@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,7 +33,7 @@ class OrderReturnsForViewing
     private $orderReturns = [];
 
     /**
-     * @param OrderReturnForViewing[] $orderReturns
+     * @param  OrderReturnForViewing[]  $orderReturns
      */
     public function __construct(array $orderReturns = [])
     {
@@ -49,9 +50,6 @@ class OrderReturnsForViewing
         return $this->orderReturns;
     }
 
-    /**
-     * @param OrderReturnForViewing $orderReturn
-     */
     private function add(OrderReturnForViewing $orderReturn): void
     {
         $this->orderReturns[] = $orderReturn;

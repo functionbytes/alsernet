@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class ChangeOrderCurrencyCommand
     private $newCurrencyId;
 
     /**
-     * @param int $orderId
-     * @param int $newCurrencyId
+     * @param  int  $orderId
+     * @param  int  $newCurrencyId
      */
     public function __construct($orderId, $newCurrencyId)
     {

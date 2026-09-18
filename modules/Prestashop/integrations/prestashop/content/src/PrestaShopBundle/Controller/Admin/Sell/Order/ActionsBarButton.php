@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,7 @@ class ActionsBarButton implements ActionsBarButtonInterface
     protected $content;
 
     /**
-     * @param string $class
-     * @param string[] $properties
-     * @param string $content
+     * @param  string[]  $properties
      */
     public function __construct(string $class = '', array $properties = [], string $content = '')
     {
@@ -55,9 +54,6 @@ class ActionsBarButton implements ActionsBarButtonInterface
         $this->content = $content;
     }
 
-    /**
-     * @return string
-     */
     public function getClass(): string
     {
         return $this->class;
@@ -71,9 +67,6 @@ class ActionsBarButton implements ActionsBarButtonInterface
         return $this->properties;
     }
 
-    /**
-     * @return string
-     */
     public function getContent(): string
     {
         return $this->content;

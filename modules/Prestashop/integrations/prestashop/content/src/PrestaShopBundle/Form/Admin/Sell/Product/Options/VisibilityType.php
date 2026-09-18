@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,11 +44,6 @@ class VisibilityType extends TranslatorAwareType
      */
     private $productVisibilityChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FormChoiceProviderInterface $productVisibilityChoiceProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -85,8 +81,7 @@ class VisibilityType extends TranslatorAwareType
             ->add('online_only', SwitchType::class, [
                 'label' => $this->trans('Web only (not sold in your retail store)', 'Admin.Catalog.Feature'),
                 'required' => false,
-            ])
-        ;
+            ]);
     }
 
     /**

@@ -203,7 +203,7 @@
                         @unless(request()->hasAny(['event_name', 'is_active']))
                             <div class="mt-3">
                                 <a href="{{ route('settings.helpdesk.rules.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus"></i> Crear primera regla
+                                    Crear primera regla
                                 </a>
                             </div>
                         @endunless
@@ -224,46 +224,8 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    $(document).on('click', '.toggle-rule', function () {
-        const btn = $(this);
-        $.ajax({
-            url: btn.data('url'),
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'X-HTTP-Method-Override': 'PATCH',
-            },
-            success: function (response) {
-                if (response.is_active) {
-                    btn.removeClass('btn-secondary').addClass('btn-success').text('Activa');
-                } else {
-                    btn.removeClass('btn-success').addClass('btn-secondary').text('Inactiva');
-                }
-            },
-            error: function () {
-                toastr.error('No se pudo cambiar el estado.', 'Error');
-            },
-        });
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/automation-rules-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/automation-rules-index.js')) }}" defer></script>
 @endpush

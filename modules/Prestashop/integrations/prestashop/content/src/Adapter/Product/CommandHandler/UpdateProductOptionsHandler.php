@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,12 +63,6 @@ final class UpdateProductOptionsHandler implements UpdateProductOptionsHandlerIn
      */
     private $configuration;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ManufacturerRepository $manufacturerRepository
-     * @param ProductIndexationUpdater $productIndexationUpdater
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(
         ProductRepository $productRepository,
         ManufacturerRepository $manufacturerRepository,
@@ -89,58 +84,55 @@ final class UpdateProductOptionsHandler implements UpdateProductOptionsHandlerIn
         $updatableProperties = $this->fillUpdatableProperties($product, $command);
 
         $this->productRepository->partialUpdate($product, $updatableProperties, CannotUpdateProductException::FAILED_UPDATE_OPTIONS);
-        if (true === $command->isActive() && $this->configuration->get('PS_SEARCH_INDEXATION')) {
+        if ($command->isActive() === true && $this->configuration->get('PS_SEARCH_INDEXATION')) {
             $this->productIndexationUpdater->updateIndexation($product->id);
         }
     }
 
     /**
-     * @param Product $product
-     * @param UpdateProductOptionsCommand $command
-     *
      * @return string[]|array<string, int[]> updatable properties
      */
     private function fillUpdatableProperties(Product $product, UpdateProductOptionsCommand $command): array
     {
         $updatableProperties = [];
 
-        if (null !== $command->isActive()) {
+        if ($command->isActive() !== null) {
             $product->active = $command->isActive();
             $updatableProperties[] = 'active';
         }
 
-        if (null !== $command->getVisibility()) {
+        if ($command->getVisibility() !== null) {
             $product->visibility = $command->getVisibility()->getValue();
             $updatableProperties[] = 'visibility';
         }
 
-        if (null !== $command->isAvailableForOrder()) {
+        if ($command->isAvailableForOrder() !== null) {
             $product->available_for_order = $command->isAvailableForOrder();
             $updatableProperties[] = 'available_for_order';
         }
 
-        if (null !== $command->isOnlineOnly()) {
+        if ($command->isOnlineOnly() !== null) {
             $product->online_only = $command->isOnlineOnly();
             $updatableProperties[] = 'online_only';
         }
 
-        if (null !== $command->showPrice()) {
+        if ($command->showPrice() !== null) {
             $product->show_price = $command->showPrice();
             $updatableProperties[] = 'show_price';
         }
 
-        if (null !== $command->getCondition()) {
+        if ($command->getCondition() !== null) {
             $product->condition = $command->getCondition()->getValue();
             $updatableProperties[] = 'condition';
         }
 
-        if (null !== $command->showCondition()) {
+        if ($command->showCondition() !== null) {
             $product->show_condition = $command->showCondition();
             $updatableProperties[] = 'show_condition';
         }
 
         $manufacturerId = $command->getManufacturerId();
-        if (null !== $manufacturerId) {
+        if ($manufacturerId !== null) {
             $product->id_manufacturer = $manufacturerId->getValue();
             $updatableProperties[] = 'id_manufacturer';
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,8 @@ class AttributeDataProvider
     /**
      * Get all attributes for a given language.
      *
-     * @param int $id_lang Language id
-     * @param bool $not_null Get only not null fields if true
-     *
+     * @param  int  $id_lang  Language id
+     * @param  bool  $not_null  Get only not null fields if true
      * @return array Attributes
      */
     public static function getAttributes($id_lang, $not_null = false)
@@ -54,26 +54,25 @@ class AttributeDataProvider
     /**
      * Get all attributes ids for a given group.
      *
-     * @param int $id_group Attribute group id
-     * @param bool $not_null Get only not null fields if true
-     *
+     * @param  int  $id_group  Attribute group id
+     * @param  bool  $not_null  Get only not null fields if true
      * @return array Attributes
      */
     public static function getAttributeIdsByGroup($id_group, $not_null = false)
     {
-        if (!Combination::isFeatureActive()) {
+        if (! Combination::isFeatureActive()) {
             return [];
         }
 
         $result = Db::getInstance()->executeS('
 			SELECT DISTINCT a.`id_attribute`
-			FROM `' . _DB_PREFIX_ . 'attribute_group` ag
-			LEFT JOIN `' . _DB_PREFIX_ . 'attribute` a
+			FROM `'._DB_PREFIX_.'attribute_group` ag
+			LEFT JOIN `'._DB_PREFIX_.'attribute` a
 				ON a.`id_attribute_group` = ag.`id_attribute_group`
-			' . Shop::addSqlAssociation('attribute_group', 'ag') . '
-			' . Shop::addSqlAssociation('attribute', 'a') . '
-			WHERE ag.`id_attribute_group` = ' . (int) $id_group . '
-			' . ($not_null ? 'AND a.`id_attribute` IS NOT NULL' : '') . '
+			'.Shop::addSqlAssociation('attribute_group', 'ag').'
+			'.Shop::addSqlAssociation('attribute', 'a').'
+			WHERE ag.`id_attribute_group` = '.(int) $id_group.'
+			'.($not_null ? 'AND a.`id_attribute` IS NOT NULL' : '').'
 			ORDER BY a.`position` ASC
 		');
 
@@ -85,17 +84,16 @@ class AttributeDataProvider
     /**
      * Get combination for a product.
      *
-     * @param int $idProduct
-     *
+     * @param  int  $idProduct
      * @return array|bool
      */
     public function getProductCombinations($idProduct)
     {
         $context = Context::getContext();
 
-        //get product
+        // get product
         $product = new Product((int) $idProduct, false);
-        if (!is_object($product) || empty($product->id)) {
+        if (! is_object($product) || empty($product->id)) {
             return false;
         }
 
@@ -115,17 +113,16 @@ class AttributeDataProvider
     /**
      * Get combination images ids.
      *
-     * @param int $idAttribute
-     *
+     * @param  int  $idAttribute
      * @return array
      */
     public function getImages($idAttribute)
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
 			SELECT a.`id_image` as id
-			FROM `' . _DB_PREFIX_ . 'product_attribute_image` a
-			' . Shop::addSqlAssociation('product_attribute', 'a') . '
-			WHERE a.`id_product_attribute` = ' . (int) $idAttribute . '
+			FROM `'._DB_PREFIX_.'product_attribute_image` a
+			'.Shop::addSqlAssociation('product_attribute', 'a').'
+			WHERE a.`id_product_attribute` = '.(int) $idAttribute.'
 		');
     }
 }

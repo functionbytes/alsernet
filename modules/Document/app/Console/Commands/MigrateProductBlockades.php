@@ -137,8 +137,9 @@ class MigrateProductBlockades extends Command
             $blockadeType = strtolower($label);
 
             // ✅ Validar que existe el document_type_id para este label
-            if (!isset($this->blockadeTypeMapping[$blockadeType])) {
+            if (! isset($this->blockadeTypeMapping[$blockadeType])) {
                 $this->warn("No document type found for label: {$label}. Skipping...");
+
                 continue;
             }
 
@@ -182,9 +183,10 @@ class MigrateProductBlockades extends Command
                     $data['product_id'] = $product->id_product ?? null;
                     $data['product_attribute_id'] = $productAttributeId;
 
-                    if (!$data['product_id']) {
+                    if (! $data['product_id']) {
                         $this->warn("Skipping orphaned combination: id_product_attribute={$productAttributeId}");
                         $skippedCount++;
+
                         continue;
                     }
                 }
@@ -198,6 +200,7 @@ class MigrateProductBlockades extends Command
 
                 if ($exists) {
                     $skippedCount++;
+
                     continue;
                 }
 

@@ -96,13 +96,13 @@ class ShowcaseCard
     /**
      * ShowcaseCardName constructor.
      *
-     * @param string $name Showcase card name
+     * @param  string  $name  Showcase card name
      *
      * @throws InvalidShowcaseCardNameException
      */
     public function __construct($name)
     {
-        if (!$this->isSupported($name)) {
+        if (! $this->isSupported($name)) {
             throw new InvalidShowcaseCardNameException(sprintf('Unsupported showcase card name: %s', print_r($name, true)));
         }
 
@@ -120,8 +120,7 @@ class ShowcaseCard
     /**
      * Indicates if the provided name matches an existing showcase card
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     private function isSupported($name)

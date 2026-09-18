@@ -22,8 +22,6 @@ class ProvidersController extends Controller
     {
         $this->authorize('viewAny', IntegrationProvider::class);
 
-        abort_if(! helpdesk_integration_enabled(), 404);
-
         $providers = IntegrationProvider::query()->orderBy('sort_order')->orderBy('label')->get();
         $identitySmsEnabled = helpdesk_integration_identity_sms_enabled();
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,7 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicator $searchCriteriaApplicator
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -64,7 +63,7 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $queryBuilder = $this->getQueryBuilder()
             ->select('lg.*')
-            ->from($this->dbPrefix . 'log', 'lg');
+            ->from($this->dbPrefix.'log', 'lg');
 
         $this->applyAssociatedQueries($queryBuilder);
         $this->applyFilters($searchCriteria->getFilters(), $queryBuilder);
@@ -83,7 +82,7 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $queryBuilder = $this->getQueryBuilder()
             ->select('COUNT(lg.id_log)')
-            ->from($this->dbPrefix . 'log', 'lg');
+            ->from($this->dbPrefix.'log', 'lg');
         $this->applyAssociatedQueries($queryBuilder);
 
         return $this->applyFilters($searchCriteria->getFilters(), $queryBuilder);
@@ -99,8 +98,6 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Get generic query builder.
-     *
-     * @return QueryBuilder
      */
     private function getQueryBuilder(): QueryBuilder
     {
@@ -109,72 +106,58 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Append "Shop" column to logs query builder.
-     *
-     * @param QueryBuilder $queryBuilder
      */
     private function appendShopQuery(QueryBuilder $queryBuilder): void
     {
         $shopQueryBuilder = $this->getQueryBuilder()
             ->select('s.name')
-            ->from($this->dbPrefix . 'shop', 's')
+            ->from($this->dbPrefix.'shop', 's')
             ->where('s.id_shop = lg.id_shop')
             ->setMaxResults(1);
 
-        $queryBuilder->addSelect('(' . $shopQueryBuilder->getSQL() . ') as shop_name');
+        $queryBuilder->addSelect('('.$shopQueryBuilder->getSQL().') as shop_name');
     }
 
     /**
      * Append "Shop group" column to logs query builder.
-     *
-     * @param QueryBuilder $queryBuilder
      */
     private function appendShopGroupQuery(QueryBuilder $queryBuilder): void
     {
         $shopQueryBuilder = $this->getQueryBuilder()
             ->select('sg.name')
-            ->from($this->dbPrefix . 'shop_group', 'sg')
+            ->from($this->dbPrefix.'shop_group', 'sg')
             ->where('sg.id_shop_group = lg.id_shop_group')
             ->setMaxResults(1);
 
-        $queryBuilder->addSelect('(' . $shopQueryBuilder->getSQL() . ') as shop_group_name');
+        $queryBuilder->addSelect('('.$shopQueryBuilder->getSQL().') as shop_group_name');
     }
 
     /**
      * Append "Lang" column to logs query builder.
-     *
-     * @param QueryBuilder $queryBuilder
      */
     private function appendLangQuery(QueryBuilder $queryBuilder): void
     {
         $shopQueryBuilder = $this->getQueryBuilder()
             ->select('lng.name')
-            ->from($this->dbPrefix . 'lang', 'lng')
+            ->from($this->dbPrefix.'lang', 'lng')
             ->where('lng.id_lang = lg.id_lang')
             ->setMaxResults(1);
 
-        $queryBuilder->addSelect('(' . $shopQueryBuilder->getSQL() . ') as language');
+        $queryBuilder->addSelect('('.$shopQueryBuilder->getSQL().') as language');
     }
 
     /**
      * Append "Employee" column to logs query builder.
-     *
-     * @param QueryBuilder $queryBuilder
      */
     private function appendEmployeeQuery(QueryBuilder $queryBuilder): void
     {
         $queryBuilder
-            ->addSelect($this->getEmployeeField(false) . ' as employee, e.email')
-            ->leftJoin('lg', $this->dbPrefix . 'employee', 'e', 'e.id_employee = lg.id_employee')
-        ;
+            ->addSelect($this->getEmployeeField(false).' as employee, e.email')
+            ->leftJoin('lg', $this->dbPrefix.'employee', 'e', 'e.id_employee = lg.id_employee');
     }
 
     /**
      * Apply filters to log query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
-     *
-     * @return QueryBuilder
      */
     private function applyFilters(array $filters, QueryBuilder $qb): QueryBuilder
     {
@@ -190,11 +173,11 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
-            if ('date_add' === $filterName) {
+            if ($filterName === 'date_add') {
                 if (isset($filterValue['from'])) {
                     $qb->andWhere('lg.date_add >= :date_from');
                     $qb->setParameter('date_from', sprintf('%s 0:0:0', $filterValue['from']));
@@ -208,25 +191,22 @@ final class LogQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            if ('employee' === $filterName) {
+            if ($filterName === 'employee') {
                 $alias = $this->getEmployeeField(true);
 
                 $qb->andWhere("$alias LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            $qb->andWhere('`' . $filterName . '` LIKE :' . $filterName);
-            $qb->setParameter($filterName, '%' . $filterValue . '%');
+            $qb->andWhere('`'.$filterName.'` LIKE :'.$filterName);
+            $qb->setParameter($filterName, '%'.$filterValue.'%');
         }
 
         return $qb;
     }
 
-    /**
-     * @return string
-     */
     private function getEmployeeField(bool $includeFullFirstname = true): string
     {
         if ($includeFullFirstname) {

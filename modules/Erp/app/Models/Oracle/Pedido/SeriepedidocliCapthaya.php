@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Otros\Empresa;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -54,7 +55,7 @@ class SeriepedidocliCapthaya extends Model
      */
     public function seriepedidocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\SeriepedidocliCapthaya::class, 'idseriepedidocli', 'idseriepedidocli');
+        return $this->belongsTo(SeriepedidocliCapthaya::class, 'idseriepedidocli', 'idseriepedidocli');
     }
 
     /**
@@ -63,6 +64,6 @@ class SeriepedidocliCapthaya extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
     }
 }

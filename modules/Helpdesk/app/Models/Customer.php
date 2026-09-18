@@ -6,19 +6,29 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Modules\Helpdesk\Database\Factories\CustomerFactory;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
+use Modules\HelpdeskTickets\Models\Ticket;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Customer extends Model
 {
-    use HasCustomAttributes, HasFactory, LogsActivity, SoftDeletes;
+    // Notifiable añadido en QA 18-sep-2026: StatusChangedNotification::via()
+    // ya declaraba ['mail'] para Customer, pero al no tener este trait
+    // $customer->notify(...) lanzaba "Call to undefined method
+    // Customer::notify()" — en cola 'notifications' (sync en tests, real
+    // worker en dev/prod), así que cerrar/reabrir una conversación desde la
+    // UI nunca fallaba visiblemente para el agente, pero el job siempre
+    // terminaba en failed_jobs sin que el cliente recibiera el email.
+    use HasCustomAttributes, HasFactory, LogsActivity, Notifiable, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -38,6 +48,7 @@ class Customer extends Model
         'city',
         'postal_code',
         'language',
+        'language_detected_at',
         'timezone',
         'custom_attributes',
         'email_verified_at',
@@ -47,6 +58,8 @@ class Customer extends Model
         'total_conversations',
         'total_page_visits',
         'internal_notes',
+        'erp_lookup_status',
+        'erp_lookup_at',
         'whatsapp_phone',
         'facebook_psid',
         'instagram_id',
@@ -64,11 +77,13 @@ class Customer extends Model
     {
         return [
             'email_verified_at' => 'datetime',
+            'language_detected_at' => 'datetime',
             'banned_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'custom_attributes' => 'array',
             'portal_token_expires_at' => 'datetime',
             'erp_synced_at' => 'datetime',
+            'erp_lookup_at' => 'datetime',
             'is_blocked' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
@@ -95,6 +110,17 @@ class Customer extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'customer_id');
+    }
+
+    /**
+     * Empresa a la que pertenece el contacto. La columna company_id ya existía
+     * en $fillable y en la tabla desde el principio, pero sin relación que la
+     * resolviera: cualquier consumidor que quisiera el nombre de la empresa
+     * tenía que consultar helpdesk_companies a mano.
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_id');
     }
 
     /**
@@ -135,6 +161,35 @@ class Customer extends Model
     public function externalIdFor(string $platform): ?string
     {
         return $this->externalIds->firstWhere('platform', $platform)?->external_id;
+    }
+
+    /**
+     * Registra el resultado de la última búsqueda automática en el ERP.
+     *
+     * Se guarda aunque no se encuentre nada: es lo que permite a la UI
+     * distinguir "se buscó y no está" de "no se ha buscado nunca", y lo que
+     * LinkCustomerToErpJob usa como enfriamiento. saveQuietly() porque esto
+     * lo escribe un job de fondo — no tiene por qué mover updated_at ni
+     * disparar el ConversationObserver ni el log de actividad.
+     *
+     * @param  'linked'|'not_found'|'error'  $status
+     */
+    public function recordErpLookup(string $status): void
+    {
+        $this->forceFill([
+            'erp_lookup_status' => $status,
+            'erp_lookup_at' => now(),
+        ])->saveQuietly();
+    }
+
+    /**
+     * El cliente se buscó en el ERP y no apareció (o el ERP falló): es el
+     * estado que hace que el inbox y el ticket pinten el aviso "Sin cliente
+     * en gestión". Un cliente que nunca se ha buscado no muestra nada.
+     */
+    public function erpLookupFailed(): bool
+    {
+        return in_array($this->erp_lookup_status, ['not_found', 'error'], true);
     }
 
     /**

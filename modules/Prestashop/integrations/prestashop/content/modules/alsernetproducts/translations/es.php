@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetproducts}prestashop>alsernetproducts_ac71d8452c267207bcf9f1c93c6419e8'] = 'Novedades';
 $_MODULE['<{alsernetproducts}prestashop>alsernetproducts_dd8c84ae3dc95566dc071d0effc40dd2'] = 'Nuestros Productos';
 $_MODULE['<{alsernetproducts}prestashop>alsernetproducts_bd7929bc6bed5d8ec99db715a980ba04'] = 'Lo mas vendido';

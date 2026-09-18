@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -98,20 +99,6 @@ class CartProduct
 
     /**
      * CartProduct constructor.
-     *
-     * @param int $productId
-     * @param int $attributeId
-     * @param string $name
-     * @param string $attribute
-     * @param string $reference
-     * @param string $unitPrice
-     * @param int $quantity
-     * @param string $price
-     * @param string $imageLink
-     * @param Customization|null $customization
-     * @param int $availableStock
-     * @param bool $availableOutOfStock
-     * @param bool $isGift
      */
     public function __construct(
         int $productId,
@@ -143,105 +130,66 @@ class CartProduct
         $this->isGift = $isGift;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;
     }
 
-    /**
-     * @return string
-     */
     public function getUnitPrice(): string
     {
         return $this->unitPrice;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantity(): int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return string
-     */
     public function getPrice(): string
     {
         return $this->price;
     }
 
-    /**
-     * @return string
-     */
     public function getImageLink(): string
     {
         return $this->imageLink;
     }
 
-    /**
-     * @return int
-     */
     public function getAttributeId(): int
     {
         return $this->attributeId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getAttribute(): string
     {
         return $this->attribute;
     }
 
-    /**
-     * @return Customization|null
-     */
     public function getCustomization(): ?Customization
     {
         return $this->customization;
     }
 
-    /**
-     * @return int
-     */
     public function getAvailableStock(): int
     {
         return $this->availableStock;
     }
 
-    /**
-     * @return bool
-     */
     public function isAvailableOutOfStock(): bool
     {
         return $this->availableOutOfStock;
     }
 
-    /**
-     * @return bool
-     */
     public function isGift(): bool
     {
         return $this->isGift;

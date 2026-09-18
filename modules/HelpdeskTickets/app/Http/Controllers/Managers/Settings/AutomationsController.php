@@ -21,7 +21,12 @@ class AutomationsController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Automation::query();
+        // helpdesk_automations es la misma tabla física que usa el motor de
+        // Conversaciones (Modules\Helpdesk\Models\AutomationRule) — sin este
+        // scope, esta pantalla listaba también sus reglas, con un formulario
+        // de edición que ni siquiera ofrece sus disparadores reales. Ver
+        // Automation::scopeTicketDomain().
+        $query = Automation::query()->ticketDomain();
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -34,10 +39,10 @@ class AutomationsController extends Controller
         $automations = $query->orderBy('order')->paginate(20);
 
         $stats = [
-            'total' => Automation::count(),
-            'active' => Automation::where('is_active', true)->count(),
-            'inactive' => Automation::where('is_active', false)->count(),
-            'total_runs' => (int) Automation::sum('run_count'),
+            'total' => Automation::ticketDomain()->count(),
+            'active' => Automation::ticketDomain()->where('is_active', true)->count(),
+            'inactive' => Automation::ticketDomain()->where('is_active', false)->count(),
+            'total_runs' => (int) Automation::ticketDomain()->sum('run_count'),
         ];
 
         return view('helpdesktickets::managers.settings.automations.index', compact('automations', 'stats'));
@@ -68,6 +73,8 @@ class AutomationsController extends Controller
 
     public function edit(Automation $automation): View
     {
+        $this->abortIfNotTicketDomain($automation);
+
         return view('helpdesktickets::managers.settings.automations.edit', [
             'automation' => $automation,
             'triggerEvents' => Automation::$triggerEvents,
@@ -76,6 +83,8 @@ class AutomationsController extends Controller
 
     public function update(UpdateAutomationRequest $request, Automation $automation): RedirectResponse
     {
+        $this->abortIfNotTicketDomain($automation);
+
         $validated = $request->validated();
 
         $validated['conditions'] = json_decode($validated['conditions'], true);
@@ -91,6 +100,8 @@ class AutomationsController extends Controller
 
     public function destroy(Automation $automation): RedirectResponse
     {
+        $this->abortIfNotTicketDomain($automation);
+
         $automation->delete();
 
         return redirect()
@@ -107,7 +118,7 @@ class AutomationsController extends Controller
         $ids = $request->validated('ids');
         $count = 0;
 
-        $automations = Automation::whereIn('id', $ids)->get();
+        $automations = Automation::ticketDomain()->whereIn('id', $ids)->get();
 
         if ($action === 'delete') {
             foreach ($automations as $automation) {
@@ -128,5 +139,19 @@ class AutomationsController extends Controller
             'message' => "{$count} automatizacion(es) {$labels[$action]}.",
             'count' => $count,
         ]);
+    }
+
+    /**
+     * El route-model-binding de {automation} no filtra por dominio: sin esto
+     * se podía editar/borrar una regla de Conversaciones (misma tabla física,
+     * ver Automation::scopeTicketDomain()) tecleando su id en la URL de esta
+     * pantalla — con un formulario que ni siquiera ofrece sus disparadores
+     * reales como opción, así que guardar la dejaba con un trigger_event de
+     * tickets sin querer. Se trata como si no existiera aquí: esa regla se
+     * gestiona en Ajustes → Reglas de automatización (Conversaciones).
+     */
+    private function abortIfNotTicketDomain(Automation $automation): void
+    {
+        abort_unless(array_key_exists($automation->trigger_event, Automation::$triggerEvents), 404);
     }
 }

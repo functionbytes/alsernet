@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 class CurrencyRepository extends AbstractObjectModelRepository
 {
     /**
-     * @param CurrencyId $currencyId
-     *
      * @throws CoreException
      * @throws CurrencyNotFoundException
      */
@@ -51,10 +50,6 @@ class CurrencyRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param CurrencyId $currencyId
-     *
-     * @return Currency
-     *
      * @throws CoreException
      * @throws CurrencyNotFoundException
      */

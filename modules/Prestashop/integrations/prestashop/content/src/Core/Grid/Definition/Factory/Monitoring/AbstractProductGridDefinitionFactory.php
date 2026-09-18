@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefinitionFactory
 {
-    use DeleteActionTrait;
     use BulkDeleteActionTrait;
+    use DeleteActionTrait;
 
     public const GRID_ID = 'default';
 
@@ -72,7 +73,7 @@ abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefiniti
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('monitoring_products_bulk'))
                     ->setOptions([
@@ -124,7 +125,7 @@ abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefiniti
      */
     protected function getFilters()
     {
-        $filters = (new FilterCollection())
+        $filters = (new FilterCollection)
             ->add(
                 (new Filter('id_product', TextType::class))
                     ->setAssociatedColumn('id_product')
@@ -180,7 +181,7 @@ abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefiniti
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -193,7 +194,7 @@ abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefiniti
      */
     protected function getRowActions()
     {
-        return (new RowActionCollection())
+        return (new RowActionCollection)
             ->add(
                 (new LinkRowAction('edit'))
                     ->setName($this->trans('Edit', [], 'Admin.Actions'))
@@ -220,7 +221,7 @@ abstract class AbstractProductGridDefinitionFactory extends AbstractGridDefiniti
      */
     protected function getBulkActions(): BulkActionCollectionInterface
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 $this->buildBulkDeleteAction('admin_monitoring_products_bulk_delete')
             );

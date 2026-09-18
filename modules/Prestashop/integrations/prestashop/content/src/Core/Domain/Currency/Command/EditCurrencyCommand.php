@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,7 @@ class EditCurrencyCommand
     protected $localizedTransformations = [];
 
     /**
-     * @param int $currencyId
+     * @param  int  $currencyId
      *
      * @throws CurrencyException
      */
@@ -104,8 +105,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param float $exchangeRate
-     *
+     * @param  float  $exchangeRate
      * @return self
      *
      * @throws CurrencyConstraintException
@@ -117,18 +117,13 @@ class EditCurrencyCommand
         return $this;
     }
 
-    /**
-     * @return Precision|null
-     */
     public function getPrecision(): ?Precision
     {
         return $this->precision;
     }
 
     /**
-     * @param int|string $precision
-     *
-     * @return self
+     * @param  int|string  $precision
      *
      * @throws CurrencyConstraintException
      */
@@ -148,8 +143,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedNames currency's localized names, indexed by language id
-     *
+     * @param  string[]  $localizedNames  currency's localized names, indexed by language id
      * @return $this
      *
      * @throws CurrencyConstraintException
@@ -174,8 +168,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedSymbols currency's localized symbols, indexed by language id
-     *
+     * @param  string[]  $localizedSymbols  currency's localized symbols, indexed by language id
      * @return $this
      *
      * @throws CurrencyConstraintException
@@ -200,8 +193,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param bool $isEnabled
-     *
+     * @param  bool  $isEnabled
      * @return self
      */
     public function setIsEnabled($isEnabled)
@@ -220,8 +212,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param int[] $shopIds
-     *
+     * @param  int[]  $shopIds
      * @return self
      */
     public function setShopIds(array $shopIds)
@@ -242,8 +233,7 @@ class EditCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedTransformations currency's localized transformations, indexed by language id
-     *
+     * @param  string[]  $localizedTransformations  currency's localized transformations, indexed by language id
      * @return $this
      */
     public function setLocalizedTransformations(array $localizedTransformations): EditCurrencyCommand

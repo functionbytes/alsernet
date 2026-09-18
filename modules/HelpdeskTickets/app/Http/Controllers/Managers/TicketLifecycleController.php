@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,6 +11,9 @@ use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketResolved;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
+use Modules\HelpdeskTickets\Events\TicketUpdated;
+use Modules\HelpdeskTickets\Events\TicketWatcherChanged;
 use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\SnoozeTicketRequest;
@@ -21,9 +25,56 @@ use Modules\HelpdeskTickets\Services\TicketMergeService;
 
 class TicketLifecycleController extends Controller
 {
+    private function staleTicketResponse(Request $request, Ticket $ticket, array $fields = ['status_id']): JsonResponse|RedirectResponse|null
+    {
+        $expected = $request->input('client_updated_at');
+        if (! $expected || ! $ticket->updated_at) {
+            return null;
+        }
+
+        try {
+            $isStale = Carbon::parse($expected)->getTimestamp() !== $ticket->updated_at->getTimestamp();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $isStale) {
+            return null;
+        }
+
+        $message = 'El ticket cambió en otro navegador. Recarga sus datos antes de volver a guardar.';
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'code' => 'stale_ticket',
+                'conflict_fields' => $fields,
+                'ticket' => $ticket->fresh(['customer', 'status', 'assignee']),
+            ], 409);
+        }
+
+        return back()->withErrors(['ticket' => $message]);
+    }
+
+    private function broadcastStatusChange(Ticket $ticket, $previousStatus): void
+    {
+        $freshTicket = $ticket->fresh(['customer', 'status', 'category', 'assignee']);
+        $newStatus = $freshTicket?->status;
+
+        if (! $freshTicket || ! $previousStatus || ! $newStatus || $previousStatus->id === $newStatus->id) {
+            return;
+        }
+
+        TicketStatusChanged::dispatch($freshTicket, $previousStatus, $newStatus);
+    }
+
     public function close(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
         $this->authorize('close', $ticket);
+        if ($stale = $this->staleTicketResponse($request, $ticket, ['status_id', 'close_reason'])) {
+            return $stale;
+        }
+        $previousStatus = $ticket->status;
 
         // Dependencias: no cerrar si un ticket bloqueante sigue abierto, salvo
         // que el manager fuerce explícitamente (force=1).
@@ -67,6 +118,7 @@ class TicketLifecycleController extends Controller
             // cierre por spam o duplicado preguntar sobra.
             'skip_survey' => $request->boolean('skip_survey'),
         ]);
+        $this->broadcastStatusChange($ticket, $previousStatus);
 
         // Bug real (ago-2026): este endpoint es la vía real del botón "Cerrar
         // ticket" de la UI y nunca disparaba TicketClosed, así que la encuesta
@@ -85,19 +137,26 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Esta rama solo la usa el form clásico de la ficha completa (el panel
-        // superpuesto de /tickets pasa por la rama JSON de arriba vía
-        // execQuickAction) — se vuelve a la ficha completa, no al listado.
+        // Esta rama la usaba el form clásico de la ficha completa (show-full,
+        // eliminada el 8-sep-2026) — el panel superpuesto de /tickets pasa por
+        // la rama JSON de arriba vía execQuickAction. Sin ese form ya no hay
+        // caller conocido que llegue aquí sin ?wantsJson, pero se deja el
+        // fallback y ahora vuelve al listado en vez de a una ruta borrada.
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_closed'));
     }
 
     public function resolve(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
         $this->authorize('resolve', $ticket);
+        if ($stale = $this->staleTicketResponse($request, $ticket, ['status_id'])) {
+            return $stale;
+        }
+        $previousStatus = $ticket->status;
 
         $ticket->resolve();
+        $this->broadcastStatusChange($ticket, $previousStatus);
 
         TicketResolved::dispatch($ticket);
 
@@ -109,17 +168,22 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
+        // Ver comentario en close(): mismo form clásico de show-full (eliminada).
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_resolved'));
     }
 
     public function reopen(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
         $this->authorize('reopen', $ticket);
+        if ($stale = $this->staleTicketResponse($request, $ticket, ['status_id'])) {
+            return $stale;
+        }
+        $previousStatus = $ticket->status;
 
         $ticket->reopen();
+        $this->broadcastStatusChange($ticket, $previousStatus);
 
         // Mismo bug que close() arriba: sin esto SendCustomerReopenNotification
         // nunca notifica al cliente al reabrir desde la ficha real.
@@ -133,9 +197,9 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
-        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
+        // Ver comentario en close(): mismo form clásico de show-full (eliminada).
         return redirect()
-            ->route('manager.helpdesk.tickets.show-full', $ticket)
+            ->route('manager.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_reopened'));
     }
 
@@ -144,6 +208,7 @@ class TicketLifecycleController extends Controller
         $this->authorize('archive', $ticket);
 
         $ticket->archive();
+        TicketUpdated::dispatch($ticket->fresh());
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -162,6 +227,7 @@ class TicketLifecycleController extends Controller
         $this->authorize('update', $ticket);
 
         $ticket->update(['archived_at' => null]);
+        TicketUpdated::dispatch($ticket->fresh());
 
         return back()->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_unarchived'));
     }
@@ -177,8 +243,8 @@ class TicketLifecycleController extends Controller
 
         $merger->merge($ticket, $targetTicket);
 
-        // merge() solo se dispara desde el form de la ficha completa.
-        return redirect()->route('manager.helpdesk.tickets.show-full', $targetTicket)
+        // merge() solo se disparaba desde el form de show-full (eliminada 8-sep-2026).
+        return redirect()->route('manager.helpdesk.tickets.show', $targetTicket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_merged', ['source' => $ticket->ticket_number, 'target' => $targetTicket->ticket_number]));
     }
 
@@ -211,6 +277,11 @@ class TicketLifecycleController extends Controller
                 ], fn ($v) => $v !== null));
         }
 
+        // Antes esto era completamente silencioso: un compañero con el mismo
+        // ticket abierto se quedaba viendo "seguidores: N" desactualizado
+        // hasta recargar a mano — ver el docblock de TicketWatcherChanged.
+        TicketWatcherChanged::dispatch($ticket);
+
         return response()->json(['watching' => true, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_watched')]);
     }
 
@@ -224,6 +295,8 @@ class TicketLifecycleController extends Controller
         }
 
         TicketWatcher::removeWatcher($ticket->id, $userId);
+
+        TicketWatcherChanged::dispatch($ticket);
 
         return response()->json(['watching' => false, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_unwatched')]);
     }
@@ -242,6 +315,7 @@ class TicketLifecycleController extends Controller
         if ($request->boolean('pause_sla')) {
             app(SlaService::class)->pauseSla($ticket);
         }
+        TicketUpdated::dispatch($ticket->fresh());
 
         return response()->json([
             'success' => true,
@@ -262,6 +336,7 @@ class TicketLifecycleController extends Controller
         // Reanudar desplaza los vencimientos por el tiempo pausado, así que
         // el ticket vuelve con el plazo que le quedaba, no con el consumido.
         app(SlaService::class)->resumeSla($ticket);
+        TicketUpdated::dispatch($ticket->fresh());
 
         return response()->json(['success' => true, 'message' => 'Ticket reactivado.']);
     }

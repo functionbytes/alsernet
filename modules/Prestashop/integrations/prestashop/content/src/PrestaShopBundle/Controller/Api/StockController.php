@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,13 +59,11 @@ class StockController extends ApiController
     public $movements;
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function listProductsAction(Request $request)
     {
-        if (!$this->isGranted([PageVoter::READ], $request->get('_legacy_controller'))) {
+        if (! $this->isGranted([PageVoter::READ], $request->get('_legacy_controller'))) {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN);
         }
 
@@ -86,13 +85,11 @@ class StockController extends ApiController
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function editProductAction(Request $request)
     {
-        if (!$this->isGranted([PageVoter::UPDATE], $request->get('_legacy_controller'))) {
+        if (! $this->isGranted([PageVoter::UPDATE], $request->get('_legacy_controller'))) {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN);
         }
 
@@ -119,13 +116,11 @@ class StockController extends ApiController
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function bulkEditProductsAction(Request $request)
     {
-        if (!$this->isGranted([PageVoter::UPDATE], $request->get('_legacy_controller'))) {
+        if (! $this->isGranted([PageVoter::UPDATE], $request->get('_legacy_controller'))) {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN);
         }
 
@@ -148,13 +143,11 @@ class StockController extends ApiController
     }
 
     /**
-     * @param Request $request
-     *
      * @return CsvResponse|JsonResponse
      */
     public function listProductsExportAction(Request $request)
     {
-        if (!$this->isGranted([PageVoter::READ], $request->get('_legacy_controller'))) {
+        if (! $this->isGranted([PageVoter::READ], $request->get('_legacy_controller'))) {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN);
         }
 
@@ -187,16 +180,14 @@ class StockController extends ApiController
             'product_low_stock_alert' => $translator->trans('Send me an email when the quantity is below or equals this level', [], 'Admin.Catalog.Feature'),
         ];
 
-        return (new CsvResponse())
+        return (new CsvResponse)
             ->setData($dataCallback)
             ->setHeadersData($headersData)
             ->setLimit(10000)
-            ->setFileName('stock_' . date('Y-m-d_His') . '.csv');
+            ->setFileName('stock_'.date('Y-m-d_His').'.csv');
     }
 
     /**
-     * @param Request $request
-     *
      * @return void
      */
     private function guardAgainstMissingDeltaParameter(Request $request)
@@ -209,22 +200,21 @@ class StockController extends ApiController
             $request->request->set('delta', $decodedContent['delta']);
         }
 
-        if (!$request->request->has('delta')) {
+        if (! $request->request->has('delta')) {
             throw new BadRequestHttpException($message);
         }
     }
 
     /**
-     * @param string $content
-     * @param string $message
-     *
+     * @param  string  $content
+     * @param  string  $message
      * @return array
      */
     private function guardAgainstInvalidRequestContent($content, $message)
     {
         $decodedContent = $this->guardAgainstInvalidJsonBody($content);
 
-        if (!array_key_exists('delta', $decodedContent)) {
+        if (! array_key_exists('delta', $decodedContent)) {
             throw new BadRequestHttpException(sprintf('Invalid JSON content (%s)', $message));
         }
 
@@ -232,8 +222,6 @@ class StockController extends ApiController
     }
 
     /**
-     * @param Request $request
-     *
      * @return mixed
      */
     private function guardAgainstInvalidBulkEditionRequest(Request $request)
@@ -248,20 +236,18 @@ class StockController extends ApiController
     }
 
     /**
-     * @param Request $request
-     *
      * @return mixed
      */
     private function guardAgainstMissingParametersInBulkEditionRequest(Request $request)
     {
         $decodedContent = $this->guardAgainstInvalidJsonBody($request->getContent());
 
-        $message = 'Each item of JSON-encoded array in the request body should contain ' .
-            'a product id ("product_id"), a quantity delta ("delta"). ' .
+        $message = 'Each item of JSON-encoded array in the request body should contain '.
+            'a product id ("product_id"), a quantity delta ("delta"). '.
             'The item of index #%d is invalid.';
 
         array_walk($decodedContent, function ($item, $index) use ($message) {
-            if (!array_key_exists('product_id', $item) || !array_key_exists('delta', $item) || $item['delta'] == 0) {
+            if (! array_key_exists('product_id', $item) || ! array_key_exists('delta', $item) || $item['delta'] == 0) {
                 throw new BadRequestHttpException(sprintf($message, $index));
             }
         });

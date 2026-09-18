@@ -1,17 +1,17 @@
 <?php
 
-include_once(dirname(__FILE__).'/EndpointLoggerInterface.php');
-use PrestaShop\PrestaShop\Core\Database\Db;
+include_once dirname(__FILE__).'/EndpointLoggerInterface.php';
 
 class DefaultEndpointLogger implements EndpointLoggerInterface
 {
     protected $db;
+
     protected $type;
 
     /**
      * Constructor
      *
-     * @param string $type Tipo de endpoint (form, subscription, chat, etc.)
+     * @param  string  $type  Tipo de endpoint (form, subscription, chat, etc.)
      */
     public function __construct($type = 'default')
     {
@@ -23,22 +23,23 @@ class DefaultEndpointLogger implements EndpointLoggerInterface
     {
         $this->db->insert('alsernet_forms_requests', [
             'endpoint_type' => pSQL($this->getType()),
-            'method'        => pSQL($method),
-            'url'           => pSQL($url),
-            'payload'       => pSQL(json_encode($data)),
-            'status'        => 'pending',
-            'created_at'    => date('Y-m-d H:i:s'),
+            'method' => pSQL($method),
+            'url' => pSQL($url),
+            'payload' => pSQL(json_encode($data)),
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s'),
         ]);
+
         return $this->db->Insert_ID();
     }
 
     public function updateRequestLog($id, $status, array $responseData = [])
     {
         $this->db->update('alsernet_forms_requests', [
-            'status'    => pSQL($status),
-            'response'  => pSQL(json_encode($responseData)),
+            'status' => pSQL($status),
+            'response' => pSQL(json_encode($responseData)),
             'synced_at' => ($status === 'success') ? date('Y-m-d H:i:s') : null,
-        ], 'id_alsernetforms_request = ' . (int) $id);
+        ], 'id_alsernetforms_request = '.(int) $id);
     }
 
     protected function getType()

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,8 +52,7 @@ class IconButtonType extends ButtonType
             ])
             ->setAllowedTypes('icon', ['string', 'null'])
             ->setAllowedTypes('type', 'string')
-            ->setAllowedValues('type', ['button', 'link'])
-        ;
+            ->setAllowedValues('type', ['button', 'link']);
     }
 
     /**

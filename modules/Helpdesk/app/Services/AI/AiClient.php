@@ -225,6 +225,6 @@ class AiClient
 
     public function isEnabled(): bool
     {
-        return (bool) config('helpdesk.ai.enabled', true);
+        return (bool) config('helpdesk.ai.enabled', false);
     }
 }

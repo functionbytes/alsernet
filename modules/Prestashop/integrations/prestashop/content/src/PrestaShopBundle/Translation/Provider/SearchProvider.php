@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,7 +69,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
     public function getDomain()
     {
         @trigger_error(
-            __METHOD__ . ' function is deprecated and will be removed in the next major',
+            __METHOD__.' function is deprecated and will be removed in the next major',
             E_USER_DEPRECATED
         );
 
@@ -80,7 +81,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
      */
     public function getTranslationDomains()
     {
-        return ['^' . preg_quote($this->domain) . '([A-Z]|$)'];
+        return ['^'.preg_quote($this->domain).'([A-Z]|$)'];
     }
 
     /**
@@ -88,7 +89,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
      */
     public function getFilters()
     {
-        return ['#^' . preg_quote($this->domain, '#') . '([A-Z]|\.|$)#'];
+        return ['#^'.preg_quote($this->domain, '#').'([A-Z]|\.|$)#'];
     }
 
     /**
@@ -104,7 +105,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
      */
     public function getDefaultResourceDirectory()
     {
-        return $this->resourceDirectory . DIRECTORY_SEPARATOR . 'default';
+        return $this->resourceDirectory.DIRECTORY_SEPARATOR.'default';
     }
 
     public function getDefaultCatalogue($empty = true)
@@ -144,7 +145,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
     public function getModuleDirectory()
     {
         @trigger_error(
-            __METHOD__ . ' function is deprecated and will be removed in the next major',
+            __METHOD__.' function is deprecated and will be removed in the next major',
             E_USER_DEPRECATED
         );
 
@@ -172,7 +173,6 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
     /**
      * Filters the catalogue so that only domains matching the filters are kept
      *
-     * @param MessageCatalogueInterface $defaultCatalogue
      *
      * @return MessageCatalogueInterface
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,8 @@ use Cache;
 class CacheAdapter
 {
     /**
-     * @param string $key
-     * @param string $value
+     * @param  string  $key
+     * @param  string  $value
      */
     public function store($key, $value)
     {
@@ -43,8 +44,7 @@ class CacheAdapter
     }
 
     /**
-     * @param string $key
-     *
+     * @param  string  $key
      * @return mixed
      */
     public function retrieve($key)
@@ -53,8 +53,7 @@ class CacheAdapter
     }
 
     /**
-     * @param string $key
-     *
+     * @param  string  $key
      * @return bool
      */
     public function isStored($key)

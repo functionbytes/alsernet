@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,7 @@ final class CountryByIsoCodeChoiceProvider implements FormChoiceProviderInterfac
     private $langId;
 
     /**
-     * @param int $langId
-     * @param CountryDataProvider $countryDataProvider
+     * @param  int  $langId
      */
     public function __construct(
         $langId,

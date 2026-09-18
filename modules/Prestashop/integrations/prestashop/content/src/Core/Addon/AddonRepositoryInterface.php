@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,15 +30,12 @@ namespace PrestaShop\PrestaShop\Core\Addon;
 interface AddonRepositoryInterface
 {
     /**
-     * @param string $name theme name
-     *
+     * @param  string  $name  theme name
      * @return AddonInterface the theme or module
      */
     public function getInstanceByName($name);
 
     /**
-     * @param AddonListFilter $filter
-     *
      * @return AddonInterface[] retrieve a list of addons, regarding the $filter used
      */
     public function getFilteredList(AddonListFilter $filter);

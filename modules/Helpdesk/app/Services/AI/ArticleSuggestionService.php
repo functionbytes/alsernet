@@ -34,6 +34,20 @@ class ArticleSuggestionService
     private const MAX_SUGGESTIONS = 5;
 
     /**
+     * Presupuesto de la llamada a embeddings en esta ruta síncrona del
+     * composer. El frontend (kb-suggestions.js) aborta la petición a los
+     * 12s; el timeout/reintentos por defecto de EmbeddingService (30s x 3
+     * intentos) puede tardar hasta ~90s si el proveedor está lento o
+     * inaccesible, dejando el panel en "Buscando artículos relevantes…"
+     * hasta que el frontend corta. Un solo intento corto aquí hace que se
+     * caiga a fulltext (o a los resultados del Helpcenter) muy por debajo
+     * de ese límite.
+     */
+    private const KNOWLEDGE_BASE_TIMEOUT_SECONDS = 4;
+
+    private const KNOWLEDGE_BASE_TRIES = 1;
+
+    /**
      * @return array{query: string, suggestions: array<int, array{id: string, title: string, excerpt: string, url: string|null, source: string}>}
      */
     public function suggest(Conversation $conversation): array
@@ -160,7 +174,7 @@ class ArticleSuggestionService
             }
 
             $docs = app(KnowledgeRetrievalService::class)
-                ->findRelevant($agent, $query, self::MAX_SUGGESTIONS);
+                ->findRelevant($agent, $query, self::MAX_SUGGESTIONS, self::KNOWLEDGE_BASE_TIMEOUT_SECONDS, self::KNOWLEDGE_BASE_TRIES);
         } catch (\Throwable $e) {
             Log::warning('ArticleSuggestionService: knowledge base search failed', ['error' => $e->getMessage()]);
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -72,7 +73,7 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('bulk'))
                     ->setOptions([
@@ -94,19 +95,19 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
                     ])
             )
             ->add((new ToggleColumn('active'))
-            ->setName($this->trans('Enabled', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'active',
-                'primary_field' => 'id_tax_rules_group',
-                'route' => 'admin_tax_rules_groups_toggle_status',
-                'route_param_name' => 'taxRulesGroupId',
-            ])
+                ->setName($this->trans('Enabled', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'active',
+                    'primary_field' => 'id_tax_rules_group',
+                    'route' => 'admin_tax_rules_groups_toggle_status',
+                    'route_param_name' => 'taxRulesGroupId',
+                ])
             )
             ->add(
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add(
                                 (new LinkRowAction('edit'))
                                     ->setName($this->trans('Edit', [], 'Admin.Actions'))
@@ -141,7 +142,7 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
      */
     public function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_tax_rules_group', TextType::class))
                     ->setTypeOptions([
@@ -163,11 +164,11 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
                     ->setAssociatedColumn('name')
             )
             ->add((new Filter('active', YesAndNoChoiceType::class))
-            ->setTypeOptions([
-                'required' => false,
-                'choice_translation_domain' => false,
-            ])
-            ->setAssociatedColumn('active')
+                ->setTypeOptions([
+                    'required' => false,
+                    'choice_translation_domain' => false,
+                ])
+                ->setAssociatedColumn('active')
             )
             ->add(
                 (new Filter('actions', SearchAndResetType::class))
@@ -188,7 +189,7 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -211,7 +212,7 @@ final class TaxRulesGroupGridDefinitionFactory extends AbstractFilterableGridDef
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

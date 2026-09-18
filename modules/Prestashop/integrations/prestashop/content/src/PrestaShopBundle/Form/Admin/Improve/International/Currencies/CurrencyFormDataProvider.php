@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ final class CurrencyFormDataProvider implements FormDataProviderInterface
     private $commandBus;
 
     /**
-     * @param CommandBusInterface $commandBus
-     * @param int $cronExchangeRate
+     * @param  int  $cronExchangeRate
      */
     public function __construct(
         CommandBusInterface $commandBus,
@@ -65,7 +65,7 @@ final class CurrencyFormDataProvider implements FormDataProviderInterface
     {
         return [
             'exchange_rates' => [
-                'live_exchange_rate' => 0 !== (int) $this->cronExchangeRate,
+                'live_exchange_rate' => (int) $this->cronExchangeRate !== 0,
             ],
         ];
     }

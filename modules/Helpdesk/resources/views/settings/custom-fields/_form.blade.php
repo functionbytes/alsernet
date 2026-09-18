@@ -3,7 +3,7 @@
     {{-- Entity type --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Entidad <span class="text-danger">*</span>
+            Entidad <span class="text-brand">*</span>
         </label>
         <select name="entity_type" id="entity_type" class="form-select @error('entity_type') is-invalid @enderror">
             <option value="">Seleccionar entidad</option>
@@ -18,7 +18,7 @@
     {{-- Type --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Tipo <span class="text-danger">*</span>
+            Tipo <span class="text-brand">*</span>
         </label>
         <select name="type" id="field_type" class="form-select @error('type') is-invalid @enderror">
             <option value="">Seleccionar tipo</option>
@@ -34,7 +34,7 @@
     {{-- Label --}}
     <div class="col-12">
         <label class="form-label">
-            Etiqueta <span class="text-danger">*</span>
+            Etiqueta <span class="text-brand">*</span>
         </label>
         <input type="text" name="label" id="field_label"
             class="form-control @error('label') is-invalid @enderror"
@@ -51,7 +51,7 @@
     {{-- Options (solo para select/multi-select) --}}
     <div class="col-12 d-none" id="options_section">
         <label class="form-label">
-            Opciones <span class="text-danger">*</span>
+            Opciones <span class="text-brand">*</span>
         </label>
         <textarea name="options" id="field_options" rows="5"
             class="form-control @error('options') is-invalid @enderror"
@@ -105,30 +105,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    const selectTypes = ['select', 'multi-select'];
-
-    function toggleOptions() {
-        const type = $('#field_type').val();
-        $('#options_section').toggleClass('d-none', ! selectTypes.includes(type));
-    }
-
-    function slugify(text) {
-        return text
-            .toLowerCase()
-            .replace(/[^a-z0-9\s_]/g, '')
-            .trim()
-            .replace(/[\s-]+/g, '_');
-    }
-
-    $('#field_type').on('change', toggleOptions);
-    toggleOptions();
-
-    $('#field_label').on('input', function () {
-        @if(!isset($field) || !$field?->id)
-        $('#key_preview').text(slugify($(this).val()) || '');
-        @endif
-    });
-});
+window.HdCustomFieldFormConfig = {
+    isEditing: @json(isset($field) && $field?->id),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/custom-fields-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/custom-fields-form.js')) }}" defer></script>
 @endpush

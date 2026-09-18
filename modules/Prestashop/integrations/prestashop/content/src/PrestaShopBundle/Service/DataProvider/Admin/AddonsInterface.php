@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,30 +34,20 @@ namespace PrestaShopBundle\Service\DataProvider\Admin;
  */
 interface AddonsInterface
 {
-    /**
-     * @param int $module_id
-     *
-     * @return bool
-     */
     public function downloadModule(int $module_id): bool;
 
-    /**
-     * @return bool
-     */
     public function isAddonsAuthenticated(): bool;
 
     /**
      * Check if a request has already failed.
-     *
-     * @return bool
      */
     public function isAddonsUp(): bool;
 
     /**
      * Send a request to addons.prestashop.com to retrieve modules/Addons data.
      *
-     * @param string $action the query type
-     * @param array $params the request parameters
+     * @param  string  $action  the query type
+     * @param  array  $params  the request parameters
      */
     public function request($action, $params);
 }

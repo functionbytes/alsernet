@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,10 @@ class LogosPaths
     private $faviconPath;
 
     /**
-     * @param string $headerLogoPath
-     * @param string $mailLogoPath
-     * @param string $invoiceLogoPath
-     * @param string $faviconPath
+     * @param  string  $headerLogoPath
+     * @param  string  $mailLogoPath
+     * @param  string  $invoiceLogoPath
+     * @param  string  $faviconPath
      */
     public function __construct(
         $headerLogoPath,

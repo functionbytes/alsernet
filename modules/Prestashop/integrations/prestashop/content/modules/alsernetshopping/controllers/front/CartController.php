@@ -1,11 +1,11 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
 use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
+use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
 use PrestaShop\PrestaShop\Core\Product\ProductListingPresenter;
@@ -13,15 +13,15 @@ use PrestaShop\PrestaShop\Core\Product\ProductListingPresenter;
 class CartController extends Module
 {
     public $module;
+
     private $errors = [];
 
     public function __construct()
     {
         $this->bootstrap = true;
         parent::__construct();
-        $this->module = Module::getInstanceByName("alsernetshopping");
+        $this->module = Module::getInstanceByName('alsernetshopping');
     }
-
 
     public function init()
     {
@@ -74,7 +74,6 @@ class CartController extends Module
         ];
     }
 
-
     public function summary()
     {
         $context = $this->context;
@@ -106,7 +105,7 @@ class CartController extends Module
 
         $translations = $this->getTranslations($iso);
         $isAvailable = $this->areProductsAvailable();
-        $hasError = (true !== $isAvailable);
+        $hasError = ($isAvailable !== true);
 
         $context->smarty->assign([
             'id_cart' => $cart->id,
@@ -127,7 +126,6 @@ class CartController extends Module
             'errors' => $hasError ? $isAvailable : '',
         ]);
 
-
         return [
             'error' => $hasError ? $isAvailable : false,
             'status' => 'success',
@@ -141,13 +139,13 @@ class CartController extends Module
 
     public function add()
     {
-        $id_product = (int)Tools::getValue('id_product');
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute');
-        $quantity = (int)Tools::getValue('minimal_quantity', 1);
+        $id_product = (int) Tools::getValue('id_product');
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute');
+        $quantity = (int) Tools::getValue('minimal_quantity', 1);
         $logged = $this->context->customer->isLogged();
         $cart = $this->context->cart;
         $customization = array_filter(explode(',', Tools::getValue('custom')));
-        $extra         = array_filter(explode('3x7r4', Tools::getValue('extra')));
+        $extra = array_filter(explode('3x7r4', Tools::getValue('extra')));
 
         try {
             $this->validateProductData($id_product, $id_product_attribute, $quantity);
@@ -156,7 +154,7 @@ class CartController extends Module
             $product = new Product($id_product, true, $this->context->language->id);
             $this->validateProduct($product, $cart);
 
-            if (!empty($customization) || !empty($extra)) {
+            if (! empty($customization) || ! empty($extra)) {
                 return $this->addCustomizableProduct($id_product, $id_product_attribute, $customization, $extra, $quantity);
             }
 
@@ -197,9 +195,9 @@ class CartController extends Module
         $context = $this->context;
         $cart = $context->cart;
         $iso = Tools::getValue('iso');
-        $id_product = (int)Tools::getValue('id_product');
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute');
-        $quantity = (int)Tools::getValue('quantity');
+        $id_product = (int) Tools::getValue('id_product');
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute');
+        $quantity = (int) Tools::getValue('quantity');
         $operation = Tools::getValue('op', 'up');
 
         try {
@@ -246,15 +244,15 @@ class CartController extends Module
         $cart = $context->cart;
         $iso = Tools::getValue('iso');
 
-        $id_product = (int)Tools::getValue('id_product');
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute');
-        $id_customization = (int)Tools::getValue('id_customization');
-        $id_address_delivery = (int)$cart->id_address_delivery;
+        $id_product = (int) Tools::getValue('id_product');
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute');
+        $id_customization = (int) Tools::getValue('id_customization');
+        $id_address_delivery = (int) $cart->id_address_delivery;
 
-        if (!$id_product) {
+        if (! $id_product) {
             return [
                 'status' => 'error',
-                'message' => 'Product ID missing'
+                'message' => 'Product ID missing',
             ];
         }
 
@@ -299,25 +297,26 @@ class CartController extends Module
         $cart = $context->cart;
         $iso = Tools::getValue('iso');
 
-        $id_product = (int)Tools::getValue('id_product');
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute');
-        $id_customization = (int)Tools::getValue('id_customization');
-        $id_address_delivery = (int)$cart->id_address_delivery;
+        $id_product = (int) Tools::getValue('id_product');
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute');
+        $id_customization = (int) Tools::getValue('id_customization');
+        $id_address_delivery = (int) $cart->id_address_delivery;
 
         // DEBUG LOGGING
-        error_log("=== CartController::delete() CALLED ===");
-        error_log("Cart ID: " . $cart->id);
-        error_log("Product ID: " . $id_product);
-        error_log("Product Attribute ID: " . $id_product_attribute);
-        error_log("Customization ID: " . $id_customization);
-        error_log("Address Delivery ID: " . $id_address_delivery);
-        error_log("All POST data: " . print_r($_POST, true));
+        error_log('=== CartController::delete() CALLED ===');
+        error_log('Cart ID: '.$cart->id);
+        error_log('Product ID: '.$id_product);
+        error_log('Product Attribute ID: '.$id_product_attribute);
+        error_log('Customization ID: '.$id_customization);
+        error_log('Address Delivery ID: '.$id_address_delivery);
+        error_log('All POST data: '.print_r($_POST, true));
 
-        if (!$id_product) {
-            error_log("ERROR: Product ID missing");
+        if (! $id_product) {
+            error_log('ERROR: Product ID missing');
+
             return [
                 'status' => 'error',
-                'message' => 'Product ID missing'
+                'message' => 'Product ID missing',
             ];
         }
 
@@ -330,8 +329,7 @@ class CartController extends Module
             'id_address_delivery' => $id_address_delivery,
         ];
 
-
-        //Hook::exec('actionObjectProductInCartDeleteBefore', $data, null, true);
+        // Hook::exec('actionObjectProductInCartDeleteBefore', $data, null, true);
 
         // DEBUG: Verificar productos antes de eliminar
         $productsBefore = $cart->getProducts();
@@ -342,14 +340,14 @@ class CartController extends Module
             $isTargetProduct = ($prod['id_product'] == $id_product &&
                 $prod['id_product_attribute'] == $id_product_attribute &&
                 $prod['id_customization'] == $id_customization);
-            error_log("Product {$idx}: ID={$prod['id_product']}, Attr={$prod['id_product_attribute']}, Custom={$prod['id_customization']}, Target=" . ($isTargetProduct ? 'YES' : 'NO'));
+            error_log("Product {$idx}: ID={$prod['id_product']}, Attr={$prod['id_product_attribute']}, Custom={$prod['id_customization']}, Target=".($isTargetProduct ? 'YES' : 'NO'));
         }
 
         error_log("ATTEMPTING DELETE with params: id_product={$id_product}, id_product_attribute={$id_product_attribute}, id_customization={$id_customization}, id_address_delivery={$id_address_delivery}");
 
         $deleteResult = $cart->deleteProduct($id_product, $id_product_attribute, $id_customization, $id_address_delivery);
 
-        error_log("DELETE RESULT: " . ($deleteResult ? 'SUCCESS' : 'FAILED'));
+        error_log('DELETE RESULT: '.($deleteResult ? 'SUCCESS' : 'FAILED'));
 
         // DEBUG: Verificar productos después de eliminar
         $productsAfter = $cart->getProducts();
@@ -373,7 +371,7 @@ class CartController extends Module
                 'data' => $data,
             ];
         } else {
-            error_log("ERROR: deleteProduct returned false");
+            error_log('ERROR: deleteProduct returned false');
             throw new Exception($this->l('Could not delete product from cart.', 'cartcontroller'));
         }
     }
@@ -390,11 +388,11 @@ class CartController extends Module
             $this->validateCouponRequest($cart, $code);
             $this->cleanInvalidCartRules($cart, $context, $code, $verifcode, $iso);
 
-            if (!$cart->canApplyCartRule()) {
+            if (! $cart->canApplyCartRule()) {
                 throw new Exception($this->l('No more coupons can be applied.', 'cartcontroller', $iso));
             }
 
-            if (!empty($verifcode)) {
+            if (! empty($verifcode)) {
                 return $this->handleERPCoupon($code, $verifcode, $cart, $context, $iso);
             } else {
                 return $this->handleStandardCoupon($code, $context, $iso);
@@ -431,8 +429,8 @@ class CartController extends Module
     public function modal()
     {
         $iso = Tools::getValue('iso');
-        $id_product = (int)Tools::getValue('id_product', 0);
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute', Tools::getValue('ipa', 0));
+        $id_product = (int) Tools::getValue('id_product', 0);
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute', Tools::getValue('ipa', 0));
         $id_lang = Language::getIdByIso($iso);
 
         $this->setCountry($id_lang);
@@ -457,8 +455,8 @@ class CartController extends Module
     public function modalcomplementary()
     {
         $iso = Tools::getValue('iso');
-        $id_product = (int)Tools::getValue('id_product', 0);
-        $id_product_attribute = (int)Tools::getValue('id_product_attribute', Tools::getValue('ipa', 0));
+        $id_product = (int) Tools::getValue('id_product', 0);
+        $id_product_attribute = (int) Tools::getValue('id_product_attribute', Tools::getValue('ipa', 0));
         $id_lang = Language::getIdByIso($iso);
 
         $this->setCountry($id_lang);
@@ -519,11 +517,11 @@ class CartController extends Module
         $resta = false;
 
         foreach ($cartPresented['inventaries'] as &$product) {
-            if (in_array((int)$product['id'], [65104, 65102])) {
+            if (in_array((int) $product['id'], [65104, 65102])) {
                 $resta = true;
                 break;
             }
-            $productObject = new Product((int)$product['id'], false, $id_lang);
+            $productObject = new Product((int) $product['id'], false, $id_lang);
             $product['url_product'] = $context->link->getProductLink($productObject, null, null, null, $id_lang);
         }
 
@@ -536,14 +534,14 @@ class CartController extends Module
         $percentage = min(99, round(($productAmount / $freeShippingThreshold) * 99, 2));
 
         $cartPresented['shipping_progress'] = [
-            'active' => !$is_virtual && $cartPresented['subtotals']['inventaries']['amount'] < 100,
+            'active' => ! $is_virtual && $cartPresented['subtotals']['inventaries']['amount'] < 100,
             'resta_applied' => $resta,
             'adjusted_amount' => $productAmount,
             'amount_remaining' => $amountRemaining,
             'percentage' => $percentage,
         ];
 
-        if (!empty($cartPresented['iva'])) {
+        if (! empty($cartPresented['iva'])) {
             foreach ($cartPresented['iva'] as $key => $event) {
                 $cartPresented['iva_message'] = [
                     'amount' => Tools::displayPrice($cartPresented['iva'][$key]['total_discount_iva'], $context->currency),
@@ -557,34 +555,37 @@ class CartController extends Module
     {
         $discount = 0;
         foreach ($products as $product) {
-            $discount += (float)($product['reduction'] ?? 0) * $product['quantity'];
+            $discount += (float) ($product['reduction'] ?? 0) * $product['quantity'];
         }
+
         return number_format(ceil($discount * 100) / 100, 2, '.', '');
     }
 
     private function calculateTotalDiscounts($vouchers)
     {
         $total_discounts = 0;
-        if (!empty($vouchers) && is_array($vouchers)) {
+        if (! empty($vouchers) && is_array($vouchers)) {
             foreach ($vouchers as $coupon) {
                 $formatted_value = $coupon['reduction_formatted'] ?? '0';
                 $numeric_value = str_replace(',', '.', preg_replace('/[^0-9,-]/', '', $formatted_value));
-                $total_discounts += (float)$numeric_value;
+                $total_discounts += (float) $numeric_value;
             }
         }
+
         return Tools::displayPrice(abs($total_discounts), $this->context->currency);
     }
 
     private function calculateTotalSave($vouchers)
     {
         $total_discounts = 0;
-        if (!empty($vouchers) && is_array($vouchers)) {
+        if (! empty($vouchers) && is_array($vouchers)) {
             foreach ($vouchers as $coupon) {
                 $formatted_value = $coupon['reduction_formatted'] ?? '0';
                 $numeric_value = str_replace(',', '.', preg_replace('/[^0-9,-]/', '', $formatted_value));
-                $total_discounts += (float)$numeric_value;
+                $total_discounts += (float) $numeric_value;
             }
         }
+
         return Tools::displayPrice(abs($total_discounts), $this->context->currency);
     }
 
@@ -598,7 +599,7 @@ class CartController extends Module
         $percentage = min(99, round(($productAmount / $freeShippingThreshold) * 99, 2));
 
         return [
-            'active' => !$is_virtual && $productAmount < $freeShippingThreshold,
+            'active' => ! $is_virtual && $productAmount < $freeShippingThreshold,
             'adjusted_amount' => $productAmount,
             'amount_remaining' => $amountRemaining,
             'percentage' => $percentage,
@@ -607,7 +608,7 @@ class CartController extends Module
 
     private function validateProductData($id_product, $id_product_attribute, $quantity)
     {
-        if (!$id_product) {
+        if (! $id_product) {
             throw new Exception($this->l('Product not found', 'cartcontroller'));
         }
         if ($quantity <= 0) {
@@ -617,7 +618,7 @@ class CartController extends Module
 
     private function validateUpdateData($id_product, $quantity)
     {
-        if (!$id_product) {
+        if (! $id_product) {
             throw new Exception($this->l('Product not found', 'cartcontroller'));
         }
         if ($quantity <= 0) {
@@ -627,7 +628,7 @@ class CartController extends Module
 
     private function validateProduct($product, $cart)
     {
-        if (!$product->id || !$product->active || !$product->checkAccess($cart->id_customer)) {
+        if (! $product->id || ! $product->active || ! $product->checkAccess($cart->id_customer)) {
             throw new Exception($this->l(
                 'This product (%product%) is no longer available.',
                 ['%product%' => $product->name],
@@ -638,30 +639,31 @@ class CartController extends Module
 
     private function ensureCartExists($cart)
     {
-        if (!$cart->id) {
+        if (! $cart->id) {
             if (Context::getContext()->cookie->id_guest) {
                 $guest = new Guest(Context::getContext()->cookie->id_guest);
                 $cart->mobile_theme = $guest->mobile_theme;
             }
             $cart->add();
             if ($cart->id) {
-                $this->context->cookie->id_cart = (int)$cart->id;
+                $this->context->cookie->id_cart = (int) $cart->id;
             }
         }
     }
 
     private function resolveProductAttribute($product, $id_product_attribute)
     {
-        if (!$id_product_attribute && $product->hasAttributes()) {
+        if (! $id_product_attribute && $product->hasAttributes()) {
             $minimum_quantity = ($product->out_of_stock == 2)
-                ? !Configuration::get('PS_ORDER_OUT_OF_STOCK')
-                : !$product->out_of_stock;
+                ? ! Configuration::get('PS_ORDER_OUT_OF_STOCK')
+                : ! $product->out_of_stock;
             $id_product_attribute = Product::getDefaultAttribute($product->id, $minimum_quantity);
 
-            if (!$id_product_attribute) {
+            if (! $id_product_attribute) {
                 throw new Exception($this->l('No combination available.', 'cartcontroller'));
             }
         }
+
         return $id_product_attribute;
     }
 
@@ -705,8 +707,8 @@ class CartController extends Module
 
     private function productInCartMatchesCriteria($productInCart, $id_product, $id_product_attribute)
     {
-        return (int)$productInCart['id_product'] === (int)$id_product &&
-            (int)$productInCart['id_product_attribute'] === (int)$id_product_attribute;
+        return (int) $productInCart['id_product'] === (int) $id_product &&
+            (int) $productInCart['id_product_attribute'] === (int) $id_product_attribute;
     }
 
     private function handleAddResult($result)
@@ -716,10 +718,10 @@ class CartController extends Module
                 'status' => 'warning',
                 'message' => $this->l('Not enough stock or invalid quantity.'),
             ];
-        } elseif (!$result) {
+        } elseif (! $result) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Maximum quantity reached.')
+                'message' => $this->l('Maximum quantity reached.'),
             ];
         }
 
@@ -737,7 +739,7 @@ class CartController extends Module
 
     private function cleanupEmptyCart($cart)
     {
-        if (!$cart->getProducts()) {
+        if (! $cart->getProducts()) {
             $cart->setDeliveryOption(null);
             $cart->gift = 0;
             $cart->gift_message = '';
@@ -748,19 +750,19 @@ class CartController extends Module
     private function validateMinimalQuantityForDeletion($id_product, $id_product_attribute, $id_customization, $cart)
     {
         $customization_product = Db::getInstance()->executeS(
-            'SELECT * FROM `' . _DB_PREFIX_ . 'customization`'
-                . ' WHERE `id_cart` = ' . (int)$cart->id
-                . ' AND `id_product` = ' . (int)$id_product
-                . ' AND `id_customization` != ' . (int)$id_customization
-                . ' AND `in_cart` = 1'
-                . ' AND `quantity` > 0'
+            'SELECT * FROM `'._DB_PREFIX_.'customization`'
+                .' WHERE `id_cart` = '.(int) $cart->id
+                .' AND `id_product` = '.(int) $id_product
+                .' AND `id_customization` != '.(int) $id_customization
+                .' AND `in_cart` = 1'
+                .' AND `quantity` > 0'
         );
 
         if (count($customization_product)) {
-            $product = new Product((int)$id_product);
+            $product = new Product((int) $id_product);
             $minimal_quantity = ($id_product_attribute > 0)
-                ? (int)Attribute::getAttributeMinimalQty($id_product_attribute)
-                : (int)$product->minimal_quantity;
+                ? (int) Attribute::getAttributeMinimalQty($id_product_attribute)
+                : (int) $product->minimal_quantity;
 
             $total_quantity = array_sum(array_column($customization_product, 'quantity'));
 
@@ -776,10 +778,10 @@ class CartController extends Module
 
     private function validateCouponRequest($cart, $code)
     {
-        if (!$cart->id) {
+        if (! $cart->id) {
             throw new Exception($this->l('Cart not found.', 'cartcontroller'));
         }
-        if (!$code) {
+        if (! $code) {
             throw new Exception($this->l('You must enter a code.', 'cartcontroller'));
         }
     }
@@ -787,12 +789,12 @@ class CartController extends Module
     private function cleanInvalidCartRules($cart, $context, $code, $verifcode, $iso)
     {
         foreach ($cart->getCartRules() as $cartRule) {
-            if (!($cr = new CartRule($cartRule['id_cart_rule'])) || !Validate::isLoadedObject($cr)) {
+            if (! ($cr = new CartRule($cartRule['id_cart_rule'])) || ! Validate::isLoadedObject($cr)) {
                 continue;
             }
-            if (!empty($verifcode)) {
+            if (! empty($verifcode)) {
                 // === A) ¿Existe ya el CartRule con ese code?
-                $existingId = (int)CartRule::getIdByCode($code . '-' . $verifcode);
+                $existingId = (int) CartRule::getIdByCode($code.'-'.$verifcode);
 
                 // === B) ¿Ya está aplicado al carrito? (antes de tocar nada)
                 $alreadyAppliedBefore = ($existingId > 0) && $this->isCartRuleIdApplied($cart, $existingId);
@@ -809,30 +811,30 @@ class CartController extends Module
 
     private function handleERPCoupon($code, $verifcode, $cart, $context, $iso)
     {
-        if (!class_exists('AlvarezERP')) {
+        if (! class_exists('AlvarezERP')) {
             throw new Exception($this->l('ERP module not available.', 'cartcontroller', $iso));
         }
 
         $cart_total = $cart->getOrderTotal();
         $bono = AlvarezERP::consultabono($code, $verifcode, $cart_total, AlvarezERP::BONO_ORIGEN_WEB);
 
-        if (!$bono || !$bono['success']) {
+        if (! $bono || ! $bono['success']) {
             throw new Exception($this->l($bono['message'] ?? 'Invalid code or not found.', 'cartcontroller', $iso));
         }
 
         $data = $bono['data'] ?? null;
-        if (!$data || !isset($data['estado_extendido'])) {
+        if (! $data || ! isset($data['estado_extendido'])) {
             throw new Exception($this->l('Invalid coupon data.', 'cartcontroller', $iso));
         }
 
         $this->validateERPCouponData($data, $cart_total, $cart, $iso);
 
-        $importe = isset($data['importe']) ? (float)$data['importe'] : 0;
-        $importe_minimo = isset($data['importeminimoventa']) ? (float)$data['importeminimoventa'] : 0;
+        $importe = isset($data['importe']) ? (float) $data['importe'] : 0;
+        $importe_minimo = isset($data['importeminimoventa']) ? (float) $data['importeminimoventa'] : 0;
 
         $cartRuleId = CartRule::createCartRuleAlvarez($code, $verifcode, $importe, $cart_total, $importe_minimo, $data, $context);
 
-        if (!$cartRuleId || !(Validate::isLoadedObject($cr = new CartRule($cartRuleId)))) {
+        if (! $cartRuleId || ! (Validate::isLoadedObject($cr = new CartRule($cartRuleId)))) {
             throw new Exception($this->l('Error generating the coupon.', 'cartcontroller', $iso));
         }
 
@@ -846,12 +848,12 @@ class CartController extends Module
 
     private function handleStandardCoupon($code, $context, $iso)
     {
-        if (!Validate::isCleanHtml($code)) {
+        if (! Validate::isCleanHtml($code)) {
             throw new Exception($this->l('The code is not valid.', 'cartcontroller', $iso));
         }
 
         if (Module::isEnabled('quantitydiscountpro')) {
-            include_once _PS_MODULE_DIR_ . 'quantitydiscountpro/quantitydiscountpro.php';
+            include_once _PS_MODULE_DIR_.'quantitydiscountpro/quantitydiscountpro.php';
             $quantityDiscount = new QuantityDiscountRule(QuantityDiscountRule::getQuantityDiscountRuleByCode($code));
 
             if (Validate::isLoadedObject($quantityDiscount)) {
@@ -862,7 +864,7 @@ class CartController extends Module
         }
 
         $cartRule = new CartRule(CartRule::getIdByCode($code));
-        if (!Validate::isLoadedObject($cartRule)) {
+        if (! Validate::isLoadedObject($cartRule)) {
             throw new Exception($this->l('This coupon does not exist.', 'cartcontroller', $iso));
         }
 
@@ -880,7 +882,7 @@ class CartController extends Module
 
     private function validateERPCouponData($data, $cart_total, $cart, $iso)
     {
-        $estado = (int)$data['estado_extendido'];
+        $estado = (int) $data['estado_extendido'];
 
         if ($estado === 0) {
             throw new Exception($this->l('This coupon is disabled.', 'cartcontroller', $iso));
@@ -895,7 +897,7 @@ class CartController extends Module
             throw new Exception($this->l('This coupon has expired.', 'cartcontroller', $iso));
         }
 
-        $importe_minimo = isset($data['importeminimoventa']) ? (float)$data['importeminimoventa'] : 0;
+        $importe_minimo = isset($data['importeminimoventa']) ? (float) $data['importeminimoventa'] : 0;
         if ($importe_minimo > $cart_total) {
             $msg = sprintf(
                 $this->l('You do not reach the minimum amount of %s to use this coupon.', 'cartcontroller'),
@@ -905,7 +907,7 @@ class CartController extends Module
         }
 
         foreach ($cart->getProducts() as $product) {
-            if (!empty($product['is_virtual'])) {
+            if (! empty($product['is_virtual'])) {
                 throw new Exception($this->l('The Lottery does not allow discounts.', 'cartcontroller', $iso));
             }
         }
@@ -914,19 +916,21 @@ class CartController extends Module
     private function findProductInCart($products, $id_product, $id_product_attribute)
     {
         foreach ($products as $p) {
-            if ((int)$p['id_product'] === $id_product && (int)$p['id_product_attribute'] === $id_product_attribute) {
+            if ((int) $p['id_product'] === $id_product && (int) $p['id_product_attribute'] === $id_product_attribute) {
                 return $p;
             }
         }
+
         return null;
     }
 
     /**
      * Obtiene la información completa del producto usando el ProductPresenter de PrestaShop
      * Maneja tanto productos normales como productos personalizados del módulo idxrcustomproduct
-     * @param int $id_product
-     * @param int $id_product_attribute
-     * @param int $id_lang
+     *
+     * @param  int  $id_product
+     * @param  int  $id_product_attribute
+     * @param  int  $id_lang
      * @return array|null
      */
     private function getProductInformation($id_product, $id_product_attribute, $id_lang)
@@ -935,18 +939,20 @@ class CartController extends Module
             // Cargar el producto completo desde PrestaShop
             $product = new Product($id_product, true, $id_lang);
 
-            if (!Validate::isLoadedObject($product)) {
+            if (! Validate::isLoadedObject($product)) {
                 error_log("ERROR: Product {$id_product} not found");
+
                 return null;
             }
 
-            $targetAttribute = (int)$id_product_attribute;
+            $targetAttribute = (int) $id_product_attribute;
 
             // Validar que la combinación existe si se especificó
             if ($targetAttribute > 0) {
                 $combination = new Combination($targetAttribute);
-                if (!Validate::isLoadedObject($combination) || $combination->id_product != $id_product) {
+                if (! Validate::isLoadedObject($combination) || $combination->id_product != $id_product) {
                     error_log("ERROR: Combination {$targetAttribute} not found or doesn't belong to product {$id_product}");
+
                     return null;
                 }
             }
@@ -965,10 +971,10 @@ class CartController extends Module
 
                 // Verificar directamente en la tabla de clones si este producto es un clon personalizado
                 $cloneCheck = Db::getInstance()->getValue(
-                    'SELECT id_clon FROM `' . _DB_PREFIX_ . 'idxrcustomproduct_clones` WHERE `id_clon` = ' . (int)$id_product
+                    'SELECT id_clon FROM `'._DB_PREFIX_.'idxrcustomproduct_clones` WHERE `id_clon` = '.(int) $id_product
                 );
 
-                $isCustomProduct = (bool)$cloneCheck;
+                $isCustomProduct = (bool) $cloneCheck;
 
                 // error_log("Product is custom (clone check): " . ($isCustomProduct ? 'YES' : 'NO'));
                 // error_log("Clone check result: " . ($cloneCheck ?: 'NOT FOUND'));
@@ -976,7 +982,7 @@ class CartController extends Module
                 if ($isCustomProduct) {
                     // Obtener el precio real del producto personalizado directamente de BD
                     $customProductPrice = Db::getInstance()->getValue(
-                        'SELECT price FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . (int)$id_product
+                        'SELECT price FROM `'._DB_PREFIX_.'product` WHERE `id_product` = '.(int) $id_product
                     );
                     // error_log("Custom product real price from DB: " . $customProductPrice);
                 }
@@ -984,49 +990,50 @@ class CartController extends Module
 
             // Cargar datos completos del producto desde la base de datos
             $productData = Db::getInstance()->getRow(
-                'SELECT * FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . (int)$id_product
+                'SELECT * FROM `'._DB_PREFIX_.'product` WHERE `id_product` = '.(int) $id_product
             );
 
-            if (!$productData) {
-                error_log("ERROR: Could not load product data from database");
+            if (! $productData) {
+                error_log('ERROR: Could not load product data from database');
+
                 return null;
             }
 
             // Si es un producto personalizado, mantener su precio real
             if ($isCustomProduct && $customProductPrice !== null) {
-                $productData['price'] = (float)$customProductPrice;
+                $productData['price'] = (float) $customProductPrice;
                 // error_log("Product data price set to custom price: " . $customProductPrice);
             }
 
             // Si hay combinación específica, cargar sus datos y fusionarlos
             // NOTA: Los productos personalizados NO usan combinaciones, así que esto solo aplica a productos normales
-            if ($targetAttribute > 0 && !$isCustomProduct) {
+            if ($targetAttribute > 0 && ! $isCustomProduct) {
                 $combinationData = Db::getInstance()->getRow(
-                    'SELECT * FROM `' . _DB_PREFIX_ . 'product_attribute`
-                    WHERE `id_product_attribute` = ' . (int)$targetAttribute
+                    'SELECT * FROM `'._DB_PREFIX_.'product_attribute`
+                    WHERE `id_product_attribute` = '.(int) $targetAttribute
                 );
 
                 if ($combinationData) {
                     // Fusionar datos de la combinación con los datos del producto
                     // Esto asegura que ProductAssembler use los valores específicos de la combinación
                     $productData['id_product_attribute'] = $targetAttribute;
-                    $productData['price'] = (float)$productData['price'] + (float)$combinationData['price'];
+                    $productData['price'] = (float) $productData['price'] + (float) $combinationData['price'];
                     $productData['wholesale_price'] = $combinationData['wholesale_price'];
                     $productData['ecotax'] = $combinationData['ecotax'];
                     $productData['quantity'] = $combinationData['quantity'];
-                    $productData['weight'] = (float)$productData['weight'] + (float)$combinationData['weight'];
+                    $productData['weight'] = (float) $productData['weight'] + (float) $combinationData['weight'];
                     $productData['unit_price_impact'] = $combinationData['unit_price_impact'];
-                    $productData['reference'] = !empty($combinationData['reference']) ?
+                    $productData['reference'] = ! empty($combinationData['reference']) ?
                         $combinationData['reference'] : $productData['reference'];
-                    $productData['ean13'] = !empty($combinationData['ean13']) ?
+                    $productData['ean13'] = ! empty($combinationData['ean13']) ?
                         $combinationData['ean13'] : $productData['ean13'];
-                    $productData['upc'] = !empty($combinationData['upc']) ?
+                    $productData['upc'] = ! empty($combinationData['upc']) ?
                         $combinationData['upc'] : $productData['upc'];
 
                     // error_log("Combination data merged - Price impact: " . $combinationData['price']);
                     // error_log("Final price for presentation: " . $productData['price']);
                 } else {
-                    error_log("WARNING: Combination data not found in database");
+                    error_log('WARNING: Combination data not found in database');
                 }
             } else {
                 $productData['id_product_attribute'] = 0;
@@ -1052,9 +1059,9 @@ class CartController extends Module
             $productPresented['id_product_attribute'] = $targetAttribute;
 
             // Obtener la imagen específica de la combinación (solo para productos normales con atributos)
-            if ($targetAttribute > 0 && !$isCustomProduct) {
+            if ($targetAttribute > 0 && ! $isCustomProduct) {
                 $images = Image::getImages($id_lang, $id_product, $targetAttribute);
-                if (!empty($images)) {
+                if (! empty($images)) {
                     $image = array_shift($images);
                     $imageRetriever = new ImageRetriever($this->context->link);
                     $productPresented['cover'] = $imageRetriever->getImage($product, $image['id_image']);
@@ -1069,8 +1076,9 @@ class CartController extends Module
 
             return $productPresented;
         } catch (Exception $e) {
-            error_log("ERROR in getProductInformation: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
+            error_log('ERROR in getProductInformation: '.$e->getMessage());
+            error_log('Stack trace: '.$e->getTraceAsString());
+
             return null;
         }
     }
@@ -1091,13 +1099,13 @@ class CartController extends Module
                 foreach ($complementaryProducts as $product) {
                     $product_exists_in_cart = false;
                     foreach ($cart->getProducts() as $product_cart) {
-                        if ((int)$product_cart['id_product'] == (int)$product['id_product']) {
+                        if ((int) $product_cart['id_product'] == (int) $product['id_product']) {
                             $product_exists_in_cart = true;
                             break;
                         }
                     }
 
-                    if (!$product_exists_in_cart) {
+                    if (! $product_exists_in_cart) {
                         $availableComplementaryProducts[] = $product;
                     }
                 }
@@ -1116,7 +1124,7 @@ class CartController extends Module
 
     private function renderComplementaryProductModal($productItem, $complementaryProducts, $id_lang, $iso)
     {
-        $idretail = ($productItem['id_product_attribute'] == 0) ? "1" . $productItem['id_product'] : "2" . $productItem['id_product'] . $productItem['id_product_attribute'];
+        $idretail = ($productItem['id_product_attribute'] == 0) ? '1'.$productItem['id_product'] : '2'.$productItem['id_product'].$productItem['id_product_attribute'];
 
         $id_category_default = $productItem['id_category_default'];
         $category = new Category($id_category_default, $id_lang);
@@ -1177,7 +1185,7 @@ class CartController extends Module
         $category_relation = null;
 
         if (Module::isEnabled('alvarezcategoriesrelation')) {
-            require_once _PS_MODULE_DIR_ . 'alvarezcategoriesrelation/classes/CategoriesRelation.php';
+            require_once _PS_MODULE_DIR_.'alvarezcategoriesrelation/classes/CategoriesRelation.php';
             $category_relation = CategoriesRelation::getRelationDataByIdcategory($prod->id_category_default, true, $id_lang);
             if ($category_relation) {
                 $id_category_target = $category_relation['id_category_target'];
@@ -1193,7 +1201,7 @@ class CartController extends Module
             $this->context->smarty->assign([
                 'translations' => $translations,
                 'category_relation' => $category_relation,
-                'url_category_target' => $this->context->link->getCategoryLink((int)$id_category_target, null, $id_lang),
+                'url_category_target' => $this->context->link->getCategoryLink((int) $id_category_target, null, $id_lang),
                 'url_checkout' => $this->context->link->getPageLink('order', null, $id_lang, false, null, true),
                 'url_cart' => $this->context->link->getPageLink('cart', null, $id_lang, false, null, true),
                 'product' => $productItem,
@@ -1207,7 +1215,7 @@ class CartController extends Module
 
     public function renderStandardProductModal($productItem, $id_lang, $iso)
     {
-        $idretail = ($productItem['id_product_attribute'] == 0) ? "1" . $productItem['id_product'] : "2" . $productItem['id_product'] . $productItem['id_product_attribute'];
+        $idretail = ($productItem['id_product_attribute'] == 0) ? '1'.$productItem['id_product'] : '2'.$productItem['id_product'].$productItem['id_product_attribute'];
 
         $cart = Context::getContext()->cart;
         $products_data = [];
@@ -1231,12 +1239,12 @@ class CartController extends Module
                 foreach ($product_group as $product) {
                     $product_exists_in_cart = false;
                     foreach ($cart->getProducts() as $product_cart) {
-                        if ((int)$product_cart['id_product'] == (int)$product['id_product']) {
+                        if ((int) $product_cart['id_product'] == (int) $product['id_product']) {
                             $product_exists_in_cart = true;
                         }
                     }
 
-                    if (!$product_exists_in_cart) {
+                    if (! $product_exists_in_cart) {
                         $products[$product['id_product']] = $product;
                     }
                 }
@@ -1333,47 +1341,47 @@ class CartController extends Module
 
     public function getDatosProducto($id_prod, $id_productattribute)
     {
-        $ctx    = $this->context;
-        $idProd = (int)$id_prod;
-        $idLang = (int)$ctx->language->id;
-        $idShop = (int)$ctx->shop->id;
-        $limit  = 5;
+        $ctx = $this->context;
+        $idProd = (int) $id_prod;
+        $idLang = (int) $ctx->language->id;
+        $idShop = (int) $ctx->shop->id;
+        $limit = 5;
 
         // ========= Helpers =========
-        $whereSrc       = $this->jsonArrayContainsInt('source_ids', $idProd);
-        $notInExcluded  = $this->jsonArrayNotContainsInt('excluded_products', $idProd);
+        $whereSrc = $this->jsonArrayContainsInt('source_ids', $idProd);
+        $notInExcluded = $this->jsonArrayNotContainsInt('excluded_products', $idProd);
 
         // Categorías del producto
         $catRows = Db::getInstance()->executeS(
-            'SELECT id_category FROM ' . _DB_PREFIX_ . 'category_product WHERE id_product=' . (int)$idProd
+            'SELECT id_category FROM '._DB_PREFIX_.'category_product WHERE id_product='.(int) $idProd
         );
         $catIds = array_map(function ($r) {
-            return (int)$r['id_category'];
+            return (int) $r['id_category'];
         }, $catRows);
 
         // Marca del producto
         $idManufacturer = Db::getInstance()->executeS('
-        SELECT id_manufacturer FROM ' . _DB_PREFIX_ . 'product
-        WHERE id_product=' . (int)$idProd . ' LIMIT 1
+        SELECT id_manufacturer FROM '._DB_PREFIX_.'product
+        WHERE id_product='.(int) $idProd.' LIMIT 1
     ');
 
         // Refs del producto y combinaciones
         $refsOfProduct = [];
         $prodRef = Db::getInstance()->executeS('
-        SELECT reference FROM ' . _DB_PREFIX_ . 'product
-        WHERE id_product=' . (int)$idProd . ' LIMIT 1
+        SELECT reference FROM '._DB_PREFIX_.'product
+        WHERE id_product='.(int) $idProd.' LIMIT 1
     ');
         if ($prodRef && $prodRef[0]['reference'] !== '') {
             $refsOfProduct[] = $prodRef[0]['reference'];
         }
 
         $paRefs = Db::getInstance()->executeS('
-        SELECT reference FROM ' . _DB_PREFIX_ . 'product_attribute
-        WHERE id_product=' . (int)$idProd . ' AND reference IS NOT NULL AND reference <> ""
+        SELECT reference FROM '._DB_PREFIX_.'product_attribute
+        WHERE id_product='.(int) $idProd.' AND reference IS NOT NULL AND reference <> ""
     ');
         foreach ($paRefs as $r) {
-            if (!empty($r['reference'])) {
-                $refsOfProduct[] = (string)$r['reference'];
+            if (! empty($r['reference'])) {
+                $refsOfProduct[] = (string) $r['reference'];
             }
         }
         $refsOfProduct = array_values(array_unique($refsOfProduct));
@@ -1383,31 +1391,31 @@ class CartController extends Module
         if ($refsOfProduct) {
             $parts = [];
             foreach ($refsOfProduct as $ref) {
-                $parts[] = 'FIND_IN_SET("' . pSQL($ref) . '", REPLACE(source_refs, " ", ""))';
+                $parts[] = 'FIND_IN_SET("'.pSQL($ref).'", REPLACE(source_refs, " ", ""))';
             }
-            $condRefsSource = '(' . implode(' OR ', $parts) . ')';
+            $condRefsSource = '('.implode(' OR ', $parts).')';
         }
 
         // === ETIQUETAS del producto
         $labelsWhere = '0';
         $labelRows = Db::getInstance()->executeS('
         SELECT ci.etiqueta
-        FROM ' . _DB_PREFIX_ . 'combinaciones_import ci
-        INNER JOIN ' . _DB_PREFIX_ . 'product_attribute pa
+        FROM '._DB_PREFIX_.'combinaciones_import ci
+        INNER JOIN '._DB_PREFIX_.'product_attribute pa
             ON pa.id_product_attribute = ci.id_product_attribute
-        WHERE pa.id_product = ' . (int)$idProd . '
+        WHERE pa.id_product = '.(int) $idProd.'
           AND ci.etiqueta IS NOT NULL AND ci.etiqueta <> ""
         UNION
         SELECT cui.etiqueta
-        FROM ' . _DB_PREFIX_ . 'combinacionunica_import cui
-        WHERE cui.id_product = ' . (int)$idProd . '
+        FROM '._DB_PREFIX_.'combinacionunica_import cui
+        WHERE cui.id_product = '.(int) $idProd.'
           AND cui.etiqueta IS NOT NULL AND cui.etiqueta <> ""
     ');
 
         if ($labelRows) {
             $labels = [];
             foreach ($labelRows as $lr) {
-                $parts = $this->splitRefsCsv((string)$lr['etiqueta'], true);
+                $parts = $this->splitRefsCsv((string) $lr['etiqueta'], true);
                 foreach ($parts as $p) {
                     if ($p !== '') {
                         $labels[] = $p;
@@ -1422,16 +1430,16 @@ class CartController extends Module
                     $ors[] = $this->regexpRefExact('source_refs', $lab);
                 }
                 if ($ors) {
-                    $labelsWhere = '(' . implode(' OR ', $ors) . ')';
+                    $labelsWhere = '('.implode(' OR ', $ors).')';
                 }
             }
         }
 
         // ========= Reglas por prioridad =========
         $rulesByType = [
-            'product'  => [],
+            'product' => [],
             'category' => [],
-            'brand'    => [],
+            'brand' => [],
             'etiqueta' => [],
         ];
 
@@ -1440,13 +1448,13 @@ class CartController extends Module
         SELECT id_complementario, type, title,
                complement_ids, complement_refs, excluded_products,
                position
-        FROM ' . _DB_PREFIX_ . 'alsernet_complementarios
+        FROM '._DB_PREFIX_.'alsernet_complementarios
         WHERE type = "product"
           AND (
-                ' . $whereSrc . '
-                OR ' . $condRefsSource . '
+                '.$whereSrc.'
+                OR '.$condRefsSource.'
               )
-          AND ' . $notInExcluded . '
+          AND '.$notInExcluded.'
         ORDER BY position ASC, id_complementario DESC
         LIMIT 50
     ') ?: [];
@@ -1458,19 +1466,19 @@ class CartController extends Module
                     OR source_brand_ids = \'\'
                     OR source_brand_ids = "[]")';
             if ($idManufacturer && isset($idManufacturer[0]['id_manufacturer'])) {
-                $brandGate = '(' . $brandGate . ' OR ' .
-                    $this->jsonArrayContainsInt('source_brand_ids', (int)$idManufacturer[0]['id_manufacturer']) . ')';
+                $brandGate = '('.$brandGate.' OR '.
+                    $this->jsonArrayContainsInt('source_brand_ids', (int) $idManufacturer[0]['id_manufacturer']).')';
             }
 
             $rulesByType['category'] = Db::getInstance()->executeS('
             SELECT id_complementario, type, title,
                    complement_ids, complement_refs, excluded_products,
                    position
-            FROM ' . _DB_PREFIX_ . 'alsernet_complementarios
+            FROM '._DB_PREFIX_.'alsernet_complementarios
             WHERE type = "category"
-              AND ' . $catWhere . '
-              AND ' . $brandGate . '
-              AND ' . $notInExcluded . '
+              AND '.$catWhere.'
+              AND '.$brandGate.'
+              AND '.$notInExcluded.'
             ORDER BY position ASC, id_complementario DESC
             LIMIT 50
         ') ?: [];
@@ -1482,10 +1490,10 @@ class CartController extends Module
             SELECT id_complementario, type, title,
                    complement_ids, complement_refs, excluded_products,
                    position
-            FROM ' . _DB_PREFIX_ . 'alsernet_complementarios
+            FROM '._DB_PREFIX_.'alsernet_complementarios
             WHERE type = "brand"
-              AND ' . $this->jsonArrayContainsInt('source_ids', (int)$idManufacturer[0]['id_manufacturer']) . '
-              AND ' . $notInExcluded . '
+              AND '.$this->jsonArrayContainsInt('source_ids', (int) $idManufacturer[0]['id_manufacturer']).'
+              AND '.$notInExcluded.'
             ORDER BY position ASC, id_complementario DESC
             LIMIT 50
         ') ?: [];
@@ -1497,20 +1505,21 @@ class CartController extends Module
             SELECT id_complementario, type, title, source_refs,
                    complement_ids, complement_refs, excluded_products,
                    position
-            FROM ' . _DB_PREFIX_ . 'alsernet_complementarios
+            FROM '._DB_PREFIX_.'alsernet_complementarios
             WHERE type = "label"
-              AND ' . $labelsWhere . '
-              AND ' . $notInExcluded . '
+              AND '.$labelsWhere.'
+              AND '.$notInExcluded.'
             ORDER BY position ASC, id_complementario DESC
             LIMIT 50
         ') ?: [];
 
-            if (!empty($rulesByType['etiqueta'])) {
+            if (! empty($rulesByType['etiqueta'])) {
                 $rulesByType['etiqueta'] = array_values(array_filter(
                     $rulesByType['etiqueta'],
                     function ($row) use ($idProd, $id_productattribute) {
-                        $labels = $this->splitRefsCsv((string)$row['source_refs'], true);
-                        return $this->labelsApplyToProductAttribute($labels, $idProd, (int)$id_productattribute);
+                        $labels = $this->splitRefsCsv((string) $row['source_refs'], true);
+
+                        return $this->labelsApplyToProductAttribute($labels, $idProd, (int) $id_productattribute);
                     }
                 ));
             }
@@ -1521,22 +1530,22 @@ class CartController extends Module
 
         $pushFrom = function (array $reglas, $from) use (&$candidates, $limit) {
             foreach ($reglas as $row) {
-                $cmpIds = json_decode((string)$row['complement_ids'], true) ?: [];
-                $pos    = isset($row['position']) ? (int)$row['position'] : 0;
+                $cmpIds = json_decode((string) $row['complement_ids'], true) ?: [];
+                $pos = isset($row['position']) ? (int) $row['position'] : 0;
 
                 foreach ($cmpIds as $pid) {
-                    $pid = (int)$pid;
+                    $pid = (int) $pid;
                     if ($pid <= 0) {
                         continue;
                     }
-                    if (!isset($candidates[$pid])) {
+                    if (! isset($candidates[$pid])) {
                         $candidates[$pid] = [];
                     }
                     $candidates[$pid][] = [
-                        'from'        => $from,
-                        'mapping_id'  => (int)$row['id_complementario'],
-                        'refs_blob'   => (string)$row['complement_refs'],
-                        'position'    => $pos, // ← NUEVO
+                        'from' => $from,
+                        'mapping_id' => (int) $row['id_complementario'],
+                        'refs_blob' => (string) $row['complement_refs'],
+                        'position' => $pos, // ← NUEVO
                     ];
                 }
                 if (count($candidates) >= $limit * 4) {
@@ -1545,72 +1554,73 @@ class CartController extends Module
             }
         };
 
-        $pushFrom($rulesByType['product'],  'product');
+        $pushFrom($rulesByType['product'], 'product');
         if (count($candidates) < $limit) {
             $pushFrom($rulesByType['category'], 'category');
         }
         if (count($candidates) < $limit) {
-            $pushFrom($rulesByType['brand'],    'brand');
+            $pushFrom($rulesByType['brand'], 'brand');
         }
         if (count($candidates) < $limit) {
             $pushFrom($rulesByType['etiqueta'], 'etiqueta');
         }
 
-        if (!$candidates) {
+        if (! $candidates) {
             return [];
         }
 
         // Excluir el propio producto y validar activo/visible/stock
         $candIds = array_diff(array_keys($candidates), [$idProd]);
-        if (!$candIds) {
+        if (! $candIds) {
             return [];
         }
 
         $validRows = Db::getInstance()->executeS('
         SELECT p.id_product, p.active, p.visibility, IFNULL(sa.quantity,0) AS qty
-        FROM ' . _DB_PREFIX_ . 'product p
-        LEFT JOIN ' . _DB_PREFIX_ . 'stock_available sa
+        FROM '._DB_PREFIX_.'product p
+        LEFT JOIN '._DB_PREFIX_.'stock_available sa
             ON (sa.id_product = p.id_product
                 AND sa.id_product_attribute = 0
-                AND (sa.id_shop = ' . (int)$idShop . ' OR sa.id_shop = 0))
-        WHERE p.id_product IN (' . implode(',', array_map('intval', $candIds)) . ')
+                AND (sa.id_shop = '.(int) $idShop.' OR sa.id_shop = 0))
+        WHERE p.id_product IN ('.implode(',', array_map('intval', $candIds)).')
     ');
         $valid = [];
         foreach ($validRows as $vr) {
-            if ((int)$vr['active'] == 1 && $vr['visibility'] != 'none' && (int)$vr['qty'] > 0) {
-                $valid[(int)$vr['id_product']] = true;
+            if ((int) $vr['active'] == 1 && $vr['visibility'] != 'none' && (int) $vr['qty'] > 0) {
+                $valid[(int) $vr['id_product']] = true;
             }
         }
 
         // Resolver IPA a partir de refs_blob
         $resolveIPA = function ($idP, $refsBlob) {
-            $refs = preg_split('/[\s,;\r\n\t]+/', (string)$refsBlob, -1, PREG_SPLIT_NO_EMPTY);
+            $refs = preg_split('/[\s,;\r\n\t]+/', (string) $refsBlob, -1, PREG_SPLIT_NO_EMPTY);
             $refs = array_values(array_unique(array_map('trim', $refs)));
 
             if ($refs) {
                 $in = implode(',', array_map(function ($r) {
-                    return '"' . pSQL($r) . '"';
+                    return '"'.pSQL($r).'"';
                 }, $refs));
-                $sql = 'SELECT id_product_attribute FROM ' . _DB_PREFIX_ . 'product_attribute
-                    WHERE id_product=' . (int)$idP . ' AND reference IN (' . $in . ')
+                $sql = 'SELECT id_product_attribute FROM '._DB_PREFIX_.'product_attribute
+                    WHERE id_product='.(int) $idP.' AND reference IN ('.$in.')
                     ORDER BY default_on DESC, id_product_attribute ASC
                     LIMIT 1';
                 $rows = Db::getInstance()->executeS($sql);
                 if ($rows && isset($rows[0]['id_product_attribute'])) {
-                    return (int)$rows[0]['id_product_attribute'];
+                    return (int) $rows[0]['id_product_attribute'];
                 }
             }
 
-            $sql = 'SELECT id_product_attribute FROM ' . _DB_PREFIX_ . 'product_attribute
-                WHERE id_product=' . (int)$idP . '
+            $sql = 'SELECT id_product_attribute FROM '._DB_PREFIX_.'product_attribute
+                WHERE id_product='.(int) $idP.'
                 ORDER BY default_on DESC, id_product_attribute ASC
                 LIMIT 1';
             $rows = Db::getInstance()->executeS($sql);
-            return ($rows && isset($rows[0]['id_product_attribute'])) ? (int)$rows[0]['id_product_attribute'] : 0;
+
+            return ($rows && isset($rows[0]['id_product_attribute'])) ? (int) $rows[0]['id_product_attribute'] : 0;
         };
 
         // Selección con prioridad de tipo, pero guardando position
-        $picked    = []; // cada item: id_product, id_product_attribute, position
+        $picked = []; // cada item: id_product, id_product_attribute, position
         $pickedIds = [];
 
         $pickFrom = function ($from) use (&$picked, &$pickedIds, $candidates, $valid, $resolveIPA, $limit) {
@@ -1618,7 +1628,7 @@ class CartController extends Module
                 if (count($picked) >= $limit) {
                     break;
                 }
-                if (!isset($valid[$pid]) || isset($pickedIds[$pid])) {
+                if (! isset($valid[$pid]) || isset($pickedIds[$pid])) {
                     continue;
                 }
 
@@ -1629,16 +1639,16 @@ class CartController extends Module
                         break;
                     }
                 }
-                if (!$trace) {
+                if (! $trace) {
                     continue;
                 }
 
-                $pos = isset($trace['position']) ? (int)$trace['position'] : 0;
+                $pos = isset($trace['position']) ? (int) $trace['position'] : 0;
 
                 $picked[] = [
-                    'id_product'           => (int)$pid,
-                    'id_product_attribute' => (int)$resolveIPA($pid, $trace['refs_blob']),
-                    'position'             => $pos, // ← NUEVO
+                    'id_product' => (int) $pid,
+                    'id_product_attribute' => (int) $resolveIPA($pid, $trace['refs_blob']),
+                    'position' => $pos, // ← NUEVO
                 ];
                 $pickedIds[$pid] = true;
             }
@@ -1655,7 +1665,7 @@ class CartController extends Module
             $pickFrom('etiqueta');
         }
 
-        if (!$picked) {
+        if (! $picked) {
             return [];
         }
 
@@ -1665,34 +1675,34 @@ class CartController extends Module
         });
 
         // ========= Presentación =========
-        $assembler            = new ProductAssembler($ctx);
-        $presenterFactory     = new ProductPresenterFactory($ctx);
+        $assembler = new ProductAssembler($ctx);
+        $presenterFactory = new ProductPresenterFactory($ctx);
         $presentationSettings = $presenterFactory->getPresentationSettings();
-        $presenter            = new ProductListingPresenter(
+        $presenter = new ProductListingPresenter(
             new ImageRetriever($ctx->link),
             $ctx->link,
-            new PriceFormatter(),
-            new ProductColorsRetriever(),
+            new PriceFormatter,
+            new ProductColorsRetriever,
             $ctx->getTranslator()
         );
 
         $idsOnly = array_map(function ($p) {
-            return (int)$p['id_product'];
+            return (int) $p['id_product'];
         }, $picked);
 
         $raws = Db::getInstance()->executeS('
-        SELECT * FROM ' . _DB_PREFIX_ . 'product
-        WHERE id_product IN (' . implode(',', array_map('intval', $idsOnly)) . ')
+        SELECT * FROM '._DB_PREFIX_.'product
+        WHERE id_product IN ('.implode(',', array_map('intval', $idsOnly)).')
     ');
         $rawById = [];
         foreach ($raws as $rp) {
-            $rawById[(int)$rp['id_product']] = $rp;
+            $rawById[(int) $rp['id_product']] = $rp;
         }
 
         $out = [];
         foreach ($picked as $item) {
-            $pid = (int)$item['id_product'];
-            if (!isset($rawById[$pid])) {
+            $pid = (int) $item['id_product'];
+            if (! isset($rawById[$pid])) {
                 continue;
             }
 
@@ -1704,15 +1714,15 @@ class CartController extends Module
             $ppres = json_decode(json_encode($ppres), true);
 
             // combinación
-            $ipa = (int)$item['id_product_attribute'];
+            $ipa = (int) $item['id_product_attribute'];
             if ($ipa > 0) {
                 $ppres['id_product_attribute'] = $ipa;
                 $combination = new Combination($ipa, $idLang);
                 $attrs = $combination->getAttributesName($idLang);
-                if (!empty($attrs)) {
+                if (! empty($attrs)) {
                     $parts = [];
                     foreach ($attrs as $a) {
-                        if (!empty($a['name'])) {
+                        if (! empty($a['name'])) {
                             $parts[] = $a['name'];
                         }
                     }
@@ -1725,16 +1735,16 @@ class CartController extends Module
 
             // Flag bundle
             $ppres['is_bundle'] = 0;
-            $isBundle = (int)Db::getInstance()->getValue('
-            SELECT id_ps_product FROM `' . _DB_PREFIX_ . 'wk_bundle_product`
-            WHERE id_ps_product = ' . (int)$ppres['id_product'] . '
+            $isBundle = (int) Db::getInstance()->getValue('
+            SELECT id_ps_product FROM `'._DB_PREFIX_.'wk_bundle_product`
+            WHERE id_ps_product = '.(int) $ppres['id_product'].'
         ');
             if ($isBundle) {
                 $ppres['is_bundle'] = 1;
             }
 
             // NUEVO: exponer el orden
-            $ppres['complement_position'] = (int)$item['position'];
+            $ppres['complement_position'] = (int) $item['position'];
 
             if (($ppres['add_to_cart_url'] != null && ($ppres['id_product_attribute'] == 0))
                 || $ppres['id_product_attribute'] != 0
@@ -1745,8 +1755,6 @@ class CartController extends Module
 
         return $out;
     }
-
-
 
     protected function areProductsAvailable()
     {
@@ -1771,7 +1779,7 @@ class CartController extends Module
 
         $productError = $this->context->cart->checkQuantities(true);
 
-        if (true === $productError) {
+        if ($productError === true) {
             return true;
         }
 
@@ -1847,15 +1855,13 @@ class CartController extends Module
 
         $id_country = $countryMap[$lang] ?? 6;
 
-        $country = new Country($id_country, (int)$lang);
+        $country = new Country($id_country, (int) $lang);
         $context->country = $country;
         $context->cookie->iso_code_country = strtoupper($context->country->iso_code);
         $context->language = new Language($lang);
 
         return $context;
     }
-
-
 
     public function l($string, $specific = false, $locale = null)
     {
@@ -1870,8 +1876,7 @@ class CartController extends Module
         );
     }
 
-
-    public  function getModuleTranslation(
+    public function getModuleTranslation(
         $module,
         $originalString,
         $source,
@@ -1890,10 +1895,9 @@ class CartController extends Module
         // $translations_merged is a cache of wether a specific module's translations have already been added to $_MODULES
         static $translationsMerged = [];
 
-
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -1901,51 +1905,50 @@ class CartController extends Module
             $iso = Context::getContext()->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int) $js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -1954,8 +1957,8 @@ class CartController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -1971,9 +1974,9 @@ class CartController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -1993,13 +1996,13 @@ class CartController extends Module
     {
         try {
             // Paso 1: Asegurar que IdxrCustomProduct está disponible
-            if (!Module::isEnabled('idxrcustomproduct')) {
+            if (! Module::isEnabled('idxrcustomproduct')) {
                 throw new Exception('IdxrCustomProduct module not available');
             }
 
             $idxrModule = Module::getInstanceByName('idxrcustomproduct');
 
-            if (!$idxrModule) {
+            if (! $idxrModule) {
                 throw new Exception('IdxrCustomProduct module instance not found');
             }
 
@@ -2031,7 +2034,7 @@ class CartController extends Module
                 false
             );
 
-            if (!$customProductId) {
+            if (! $customProductId) {
                 throw new Exception('Failed to create custom product');
             }
 
@@ -2063,7 +2066,7 @@ class CartController extends Module
                 true
             );
 
-            if (!$result) {
+            if (! $result) {
                 throw new Exception('Failed to add custom product to cart');
             }
 
@@ -2082,12 +2085,12 @@ class CartController extends Module
                 'message' => $this->l('Custom product added successfully', 'cartcontroller'),
                 'custom_product_id' => $finalProductId,
                 'original_product_id' => $id_product,
-                'cart_result' => $result
+                'cart_result' => $result,
             ];
         } catch (Exception $e) {
             // Si falla el flujo personalizado, no intentar fallback
             // porque ya se creó el producto personalizado
-            error_log('Custom product creation failed: ' . $e->getMessage());
+            error_log('Custom product creation failed: '.$e->getMessage());
 
             return [
                 'status' => 'error',
@@ -2099,7 +2102,6 @@ class CartController extends Module
     /**
      * Parsear string de personalización al formato de IdxrCustomProduct
      */
-
     private function parseCustomizationString($customization)
     {
         if (empty($customization)) {
@@ -2108,13 +2110,15 @@ class CartController extends Module
 
         // 🔧 VALIDAR TIPO: Si ya es un array, devolverlo directamente
         if (is_array($customization)) {
-            error_log('🔧 parseCustomizationString: Received array instead of string: ' . print_r($customization, true));
+            error_log('🔧 parseCustomizationString: Received array instead of string: '.print_r($customization, true));
+
             return $customization;
         }
 
         // 🔧 VALIDAR STRING: Asegurar que es string antes de usar explode
-        if (!is_string($customization)) {
-            error_log('🚨 parseCustomizationString: Invalid type received: ' . gettype($customization));
+        if (! is_string($customization)) {
+            error_log('🚨 parseCustomizationString: Invalid type received: '.gettype($customization));
+
             return [];
         }
 
@@ -2126,14 +2130,14 @@ class CartController extends Module
             if (count($parts) >= 2) {
                 // 🔧 FORMATO RECIBIDO: "1_value" -> component=1, option=value
                 $customizationArray[] = [
-                    'id_component' => (int)$parts[0],
+                    'id_component' => (int) $parts[0],
                     'id_option' => $parts[1], // Puede ser texto, no solo número
-                    'qty' => isset($parts[2]) ? (int)$parts[2] : 1
+                    'qty' => isset($parts[2]) ? (int) $parts[2] : 1,
                 ];
             }
         }
 
-        error_log('🎨 parseCustomizationString result: ' . print_r($customizationArray, true));
+        error_log('🎨 parseCustomizationString result: '.print_r($customizationArray, true));
 
         return $customizationArray;
     }
@@ -2149,13 +2153,15 @@ class CartController extends Module
 
         // 🔧 VALIDAR TIPO: Si ya es un array, devolverlo directamente
         if (is_array($extra)) {
-            error_log('🔧 parseExtraString: Received array instead of string: ' . print_r($extra, true));
+            error_log('🔧 parseExtraString: Received array instead of string: '.print_r($extra, true));
+
             return $extra;
         }
 
         // 🔧 VALIDAR STRING: Asegurar que es string antes de usar explode
-        if (!is_string($extra)) {
-            error_log('🚨 parseExtraString: Invalid type received: ' . gettype($extra));
+        if (! is_string($extra)) {
+            error_log('🚨 parseExtraString: Invalid type received: '.gettype($extra));
+
             return [];
         }
 
@@ -2170,8 +2176,8 @@ class CartController extends Module
                 $data = ($decoded !== null) ? $decoded : $parts[1];
 
                 $extraArray[] = [
-                    'id_extra' => (int)$parts[0],
-                    'data' => $data
+                    'id_extra' => (int) $parts[0],
+                    'data' => $data,
                 ];
             }
         }
@@ -2193,7 +2199,8 @@ class CartController extends Module
     protected function jsonArrayContainsInt($col, $n)
     {
         $wrapped = $this->sqlWrapJsonArray($col);
-        $n = (int)$n;
+        $n = (int) $n;
+
         return "$wrapped LIKE '%,{$n},%'";
     }
 
@@ -2201,20 +2208,24 @@ class CartController extends Module
     protected function jsonArrayContainsAny($col, array $ints)
     {
         $ints = array_values(array_unique(array_map('intval', $ints)));
-        if (!$ints) return '0'; // false
+        if (! $ints) {
+            return '0';
+        } // false
         $wrapped = $this->sqlWrapJsonArray($col);
         $ors = [];
         foreach ($ints as $n) {
             $ors[] = "$wrapped LIKE '%,{$n},%'";
         }
-        return '(' . implode(' OR ', $ors) . ')';
+
+        return '('.implode(' OR ', $ors).')';
     }
 
     /** excluded_products NO contiene $n (o está vacío/null) */
     protected function jsonArrayNotContainsInt($col, $n)
     {
         $wrapped = $this->sqlWrapJsonArray("COALESCE($col,'[]')");
-        $n = (int)$n;
+        $n = (int) $n;
+
         return "$wrapped NOT LIKE '%,{$n},%'";
     }
 
@@ -2224,7 +2235,8 @@ class CartController extends Module
         // Usamos [:space:] para soportar espacios/tab/nuevas líneas
         // NOTA: preg_quote para seguridad en el patrón
         $refQuoted = preg_quote($ref, '/');
-        return $field . " REGEXP '(^|[,[:space:]]+)" . $refQuoted . "([,[:space:]]+|$)'";
+
+        return $field." REGEXP '(^|[,[:space:]]+)".$refQuoted."([,[:space:]]+|$)'";
     }
 
     protected function splitRefsCsv($csv, $etiqueta = false)
@@ -2233,7 +2245,7 @@ class CartController extends Module
             return [];
         }
 
-        $csv = trim((string)$csv);
+        $csv = trim((string) $csv);
         if ($csv === '') {
             return [];
         }
@@ -2261,44 +2273,47 @@ class CartController extends Module
         $labels = array_values(array_unique(array_filter(array_map('trim', $labels), function ($s) {
             return $s !== '';
         })));
-        if (!$labels) return false;
+        if (! $labels) {
+            return false;
+        }
 
         // Preparar condiciones LIKE seguras
         $likeParts = [];
         foreach ($labels as $lab) {
             // Escapar % y _ en LIKE
             $safe = pSQL(str_replace(['%', '_'], ['\%', '\_'], $lab));
-            $likeParts[] = "aci.etiqueta LIKE '%" . $safe . "%'";
+            $likeParts[] = "aci.etiqueta LIKE '%".$safe."%'";
         }
-        $condLike = '(' . implode(' OR ', $likeParts) . ')';
+        $condLike = '('.implode(' OR ', $likeParts).')';
 
-        $idProduct          = (int)$idProduct;
-        $idProductAttribute = (int)$idProductAttribute;
-
+        $idProduct = (int) $idProduct;
+        $idProductAttribute = (int) $idProductAttribute;
 
         // 1) Coincidencia en combinaciones (si hay IPA)
         if ($idProductAttribute > 0) {
             $sql1 = '
             SELECT 1
-            FROM ' . _DB_PREFIX_ . 'combinaciones_import aci
-            LEFT JOIN ' . _DB_PREFIX_ . 'product_attribute apa
+            FROM '._DB_PREFIX_.'combinaciones_import aci
+            LEFT JOIN '._DB_PREFIX_.'product_attribute apa
               ON apa.id_product_attribute = aci.id_product_attribute
-            WHERE ' . $condLike . '
-              AND apa.id_product = ' . $idProduct . '
-              AND apa.id_product_attribute = ' . $idProductAttribute . '
+            WHERE '.$condLike.'
+              AND apa.id_product = '.$idProduct.'
+              AND apa.id_product_attribute = '.$idProductAttribute.'
             LIMIT 1';
-            $hit1 = (int)Db::getInstance()->executeS($sql1);
-            if ($hit1) return true;
+            $hit1 = (int) Db::getInstance()->executeS($sql1);
+            if ($hit1) {
+                return true;
+            }
         }
 
         // 2) Coincidencia en producto “único”
         $sql2 = '
         SELECT 1
-        FROM ' . _DB_PREFIX_ . 'combinacionunica_import aci
-        WHERE ' . $condLike . '
-          AND aci.id_product = ' . $idProduct . '
+        FROM '._DB_PREFIX_.'combinacionunica_import aci
+        WHERE '.$condLike.'
+          AND aci.id_product = '.$idProduct.'
         LIMIT 1';
-        $hit2 = (int)Db::getInstance()->executeS($sql2);
+        $hit2 = (int) Db::getInstance()->executeS($sql2);
 
         return $hit2 > 0;
     }

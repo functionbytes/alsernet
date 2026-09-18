@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ final class FeatureValuesCommandsBuilder implements ProductCommandsBuilderInterf
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['basic']['features']['feature_values'])) {
+        if (! isset($formData['basic']['features']['feature_values'])) {
             return [];
         }
 
@@ -56,11 +57,6 @@ final class FeatureValuesCommandsBuilder implements ProductCommandsBuilderInterf
         return [$command];
     }
 
-    /**
-     * @param array $featureValuesData
-     *
-     * @return array
-     */
     private function formatFeatureValues(array $featureValuesData): array
     {
         $featureValues = [];
@@ -72,10 +68,10 @@ final class FeatureValuesCommandsBuilder implements ProductCommandsBuilderInterf
             $formattedFeature = ['feature_id' => (int) $featureValueDatum['feature_id']];
             if ($this->hasCustomValues($featureValueDatum)) {
                 $formattedFeature['custom_values'] = $featureValueDatum['custom_value'];
-                if (!empty($featureValueDatum['custom_value_id'])) {
+                if (! empty($featureValueDatum['custom_value_id'])) {
                     $formattedFeature['feature_value_id'] = (int) $featureValueDatum['custom_value_id'];
                 }
-            } elseif (!empty($featureValueDatum['feature_value_id'])) {
+            } elseif (! empty($featureValueDatum['feature_value_id'])) {
                 $formattedFeature['feature_value_id'] = (int) $featureValueDatum['feature_value_id'];
             }
 
@@ -85,11 +81,6 @@ final class FeatureValuesCommandsBuilder implements ProductCommandsBuilderInterf
         return $featureValues;
     }
 
-    /**
-     * @param array $featureValueDatum
-     *
-     * @return bool
-     */
     private function hasCustomValues(array $featureValueDatum): bool
     {
         if (empty($featureValueDatum['custom_value'])) {
@@ -97,7 +88,7 @@ final class FeatureValuesCommandsBuilder implements ProductCommandsBuilderInterf
         }
 
         foreach ($featureValueDatum['custom_value'] as $localizedValue) {
-            if (!empty($localizedValue)) {
+            if (! empty($localizedValue)) {
                 return true;
             }
         }

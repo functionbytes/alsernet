@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,7 @@ final class ShopTreeChoiceProvider implements FormChoiceProviderInterface
                 $shop = Shop::getShop($shopId['id_shop']);
 
                 // If context employee doesn't have access to a shop, $shop will be false
-                if (false === $shop) {
+                if ($shop === false) {
                     continue;
                 }
 

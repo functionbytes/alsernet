@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,9 @@ final class SetRequiredFieldsForCustomerHandler implements SetRequiredFieldsForC
      */
     public function handle(SetRequiredFieldsForCustomerCommand $command)
     {
-        $customer = new Customer();
+        $customer = new Customer;
 
-        if (!$customer->addFieldsRequiredDatabase($command->getRequiredFields())) {
+        if (! $customer->addFieldsRequiredDatabase($command->getRequiredFields())) {
             throw new CannotSetRequiredFieldsForCustomerException(sprintf('Cannot set "%s" required fields for customer', implode(',', $command->getRequiredFields())));
         }
     }

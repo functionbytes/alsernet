@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -104,13 +105,6 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
      */
     private $orderDetailUpdater;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param ContextStateManager $contextStateManager
-     * @param OrderAmountUpdater $orderAmountUpdater
-     * @param OrderProductQuantityUpdater $orderProductQuantityUpdater
-     * @param OrderDetailUpdater $orderDetailUpdater
-     */
     public function __construct(
         TranslatorInterface $translator,
         ContextStateManager $contextStateManager,
@@ -137,20 +131,19 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
         $this->assertProductNotDuplicate($order, $command);
 
         $cart = Cart::getCartByOrderId($order->id);
-        if (!($cart instanceof Cart)) {
+        if (! ($cart instanceof Cart)) {
             throw new OrderException('Cart linked to the order cannot be found.');
         }
 
         $product = $this->getProduct($command->getProductId(), (int) $order->getAssociatedLanguage()->getId());
-        $combination = null !== $command->getCombinationId() ? $this->getCombination($command->getCombinationId()->getValue()) : null;
-        $combinationId = null !== $combination ? (int) $combination->id : 0;
+        $combination = $command->getCombinationId() !== null ? $this->getCombination($command->getCombinationId()->getValue()) : null;
+        $combinationId = $combination !== null ? (int) $combination->id : 0;
 
         $this->contextStateManager
             ->setCurrency(new Currency($order->id_currency))
             ->setCustomer(new Customer($order->id_customer))
             ->setCart($cart)
-            ->setShop(new Shop($order->id_shop))
-        ;
+            ->setShop(new Shop($order->id_shop));
 
         $this->computingPrecision = $this->getPrecisionFromCart($cart);
         try {
@@ -168,12 +161,13 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
                 // Real creation is naturally a creation update
                 if ($cartProductUpdate->isCreated()) {
                     $creationModifications[] = $cartProductUpdate;
+
                     continue;
                 }
 
                 // Now we check if the update is about the currently added product This is important for multi invoice orders, in case
                 // the added product was already in previous invoices
-                $cartCombinationId = null !== $cartProductUpdate->getCombinationId() ? $cartProductUpdate->getCombinationId()->getValue() : 0;
+                $cartCombinationId = $cartProductUpdate->getCombinationId() !== null ? $cartProductUpdate->getCombinationId()->getValue() : 0;
                 if ($cartProductUpdate->getProductId()->getValue() === (int) $product->id && $cartCombinationId === $combinationId) {
                     $creationModifications[] = $cartProductUpdate;
                 } else {
@@ -205,7 +199,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
             $this->orderDetailUpdater->updateOrderDetailsForProduct(
                 $order,
                 $command->getProductId()->getValue(),
-                null !== $command->getCombinationId() ? $command->getCombinationId()->getValue() : 0,
+                $command->getCombinationId() !== null ? $command->getCombinationId()->getValue() : 0,
                 $command->getProductPriceTaxExcluded(),
                 $command->getProductPriceTaxIncluded()
             );
@@ -217,7 +211,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
             );
 
             // Update totals amount of order
-            $this->orderAmountUpdater->update($order, $cart, null !== $invoice ? (int) $invoice->id : null);
+            $this->orderAmountUpdater->update($order, $cart, $invoice !== null ? (int) $invoice->id : null);
             Hook::exec('actionOrderEdited', ['order' => $order]);
         } finally {
             $this->contextStateManager->restorePreviousContext();
@@ -225,8 +219,6 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param Order $order
-     *
      * @throws OrderException
      */
     private function assertOrderWasNotShipped(Order $order)
@@ -237,23 +229,18 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param Order $order
-     * @param OrderInvoice|null $invoice
-     * @param Cart $cart
-     * @param array $cartProducts
-     *
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
      */
     private function createOrderDetails(Order $order, ?OrderInvoice $invoice, Cart $cart, array $cartProducts): void
     {
-        $orderDetail = new OrderDetail();
+        $orderDetail = new OrderDetail;
         $orderDetail->createList(
             $order,
             $cart,
             $order->getCurrentOrderState(),
             $cartProducts,
-            !empty($invoice->id) ? $invoice->id : 0
+            ! empty($invoice->id) ? $invoice->id : 0
         );
     }
 
@@ -262,8 +249,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
      * add some gift for example) So we update inventaries which have been modified in the cart and
      * update the related OrderDetail
      *
-     * @param Order $order
-     * @param CartProductUpdate[] $updatedProducts
+     * @param  CartProductUpdate[]  $updatedProducts
      *
      * @throws OrderException
      * @throws \PrestaShopDatabaseException
@@ -275,7 +261,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     ): void {
         $orderDetails = $order->getOrderDetailList();
         foreach ($updatedProducts as $updatedProduct) {
-            $updatedCombinationId = null !== $updatedProduct->getCombinationId() ? $updatedProduct->getCombinationId()->getValue() : 0;
+            $updatedCombinationId = $updatedProduct->getCombinationId() !== null ? $updatedProduct->getCombinationId()->getValue() : 0;
             $affectedOrderDetail = null;
             foreach ($orderDetails as $orderDetailData) {
                 if ((int) $orderDetailData['product_id'] === $updatedProduct->getProductId()->getValue()
@@ -298,10 +284,8 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param CartProductUpdate[] $creationUpdates
-     * @param CartProductUpdate[] $cartProducts
-     *
-     * @return array
+     * @param  CartProductUpdate[]  $creationUpdates
+     * @param  CartProductUpdate[]  $cartProducts
      */
     private function getCreatedCartProducts(
         array $creationUpdates,
@@ -310,8 +294,8 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
         $additionalProducts = [];
         foreach ($creationUpdates as $additionalUpdate) {
             $updateProductId = $additionalUpdate->getProductId()->getValue();
-            $updateCombinationId = null !== $additionalUpdate->getCombinationId() ? $additionalUpdate->getCombinationId()->getValue() : 0;
-            $updateCustomizationId = null !== $additionalUpdate->getCustomizationId() ? $additionalUpdate->getCustomizationId()->getValue() : 0;
+            $updateCombinationId = $additionalUpdate->getCombinationId() !== null ? $additionalUpdate->getCombinationId()->getValue() : 0;
+            $updateCustomizationId = $additionalUpdate->getCustomizationId() !== null ? $additionalUpdate->getCustomizationId()->getValue() : 0;
             $cartProduct = $this->getMatchingProduct($cartProducts, [
                 'id_product' => $updateProductId,
                 'id_product_attribute' => $updateCombinationId,
@@ -326,16 +310,11 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
 
     /**
      * Find a specific product among the product array
-     *
-     * @param array $productList
-     * @param array $searchedProduct
-     *
-     * @return array|null
      */
     private function getMatchingProduct(array $productList, array $searchedProduct): ?array
     {
         return array_reduce($productList, function ($carry, $item) use ($searchedProduct) {
-            if (null !== $carry) {
+            if ($carry !== null) {
                 return $carry;
             }
 
@@ -348,10 +327,8 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param Cart $cart
-     * @param Product $product
-     * @param Combination|null $combination
-     * @param int $quantity
+     * @param  Combination|null  $combination
+     * @param  int  $quantity
      */
     private function addProductToCart(Cart $cart, Product $product, $combination, $quantity): void
     {
@@ -384,23 +361,17 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
             // If product has attribute, minimal quantity is set with minimal quantity of attribute
             $minimalQuantity = $combination
                 ? Attribute::getAttributeMinimalQty($combination->id) :
-                $product->minimal_quantity
-            ;
+                $product->minimal_quantity;
 
             throw new OrderException(sprintf('Minimum quantity of "%d" must be added', $minimalQuantity));
         }
 
-        if (!$result) {
+        if (! $result) {
             throw new OrderException(sprintf('Product with id "%s" is out of stock.', $product->id));
         }
     }
 
     /**
-     * @param AddProductToOrderCommand $command
-     * @param Order $order
-     * @param Cart $cart
-     * @param array $products
-     *
      * @return OrderInvoice|null
      */
     private function createNewOrEditExistingInvoice(
@@ -422,14 +393,11 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
      * @todo: Most of this method can be simplified, since OrderAmountUpdater computes everything
      *        the invoice computation here should be removable, as well as $order->addCartRule
      *
-     * @param Order $order
-     * @param Cart $cart
-     * @param bool $isFreeShipping
-     * @param array $newProducts
+     * @param  bool  $isFreeShipping
      */
     private function createNewInvoice(Order $order, Cart $cart, $isFreeShipping, array $newProducts)
     {
-        $invoice = new OrderInvoice();
+        $invoice = new OrderInvoice;
 
         // If we create a new invoice, we calculate shipping cost
         $totalMethod = Cart::BOTH;
@@ -437,7 +405,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
         // Create Cart rule in order to make free shipping
         if ($isFreeShipping) {
             // @todo: use private method to create cart rule
-            $freeShippingCartRule = new CartRule();
+            $freeShippingCartRule = new CartRule;
             $freeShippingCartRule->id_customer = $order->id_customer;
             $freeShippingCartRule->name = [
                 Configuration::get('PS_LANG_DEFAULT') => $this->translator->trans(
@@ -503,7 +471,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
 
         $invoice->saveCarrierTaxCalculator($taxCalculator->getTaxesAmount($invoice->total_shipping_tax_excl));
 
-        $orderCarrier = new OrderCarrier();
+        $orderCarrier = new OrderCarrier;
         $orderCarrier->id_order = (int) $order->id;
         $orderCarrier->id_carrier = (int) $order->id_carrier;
         $orderCarrier->id_order_invoice = (int) $invoice->id;
@@ -518,10 +486,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     /**
      * @todo: this whole method should be removable as well since ALL invoices are updated by OrderAmountUpdater
      *
-     * @param int $orderInvoiceId
-     * @param Cart $cart
-     * @param array $newProducts
-     *
+     * @param  int  $orderInvoiceId
      * @return OrderInvoice
      */
     private function updateExistingInvoice($orderInvoiceId, Cart $cart, array $newProducts)
@@ -553,17 +518,13 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param Product $product
-     * @param AddProductToOrderCommand $command
-     * @param int $shopId
-     *
      * @throws ProductOutOfStockException
      */
     private function checkProductInStock(Product $product, AddProductToOrderCommand $command, int $shopId): void
     {
-        //check if product is available in stock
-        if (!Product::isAvailableWhenOutOfStock(StockAvailable::outOfStock($command->getProductId()->getValue()))) {
-            $combinationId = null !== $command->getCombinationId() ? $command->getCombinationId()->getValue() : 0;
+        // check if product is available in stock
+        if (! Product::isAvailableWhenOutOfStock(StockAvailable::outOfStock($command->getProductId()->getValue()))) {
+            $combinationId = $command->getCombinationId() !== null ? $command->getCombinationId()->getValue() : 0;
             $availableQuantity = StockAvailable::getQuantityAvailableByProduct(
                 $command->getProductId()->getValue(),
                 $combinationId,
@@ -577,9 +538,6 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
     }
 
     /**
-     * @param Order $order
-     * @param AddProductToOrderCommand $command
-     *
      * @throws DuplicateProductInOrderException
      * @throws DuplicateProductInOrderInvoiceException
      */
@@ -590,7 +548,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
             if ($command->getProductId()->getValue() !== (int) $orderDetail['product_id']) {
                 continue;
             }
-            if (!empty($command->getCombinationId()) && $command->getCombinationId()->getValue() !== (int) $orderDetail['product_attribute_id']) {
+            if (! empty($command->getCombinationId()) && $command->getCombinationId()->getValue() !== (int) $orderDetail['product_attribute_id']) {
                 continue;
             }
             $invoicesContainingProduct[] = (int) $orderDetail['id_order_invoice'];
@@ -602,12 +560,12 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
 
         // If it's a new invoice (or no invoice), the ID is null, so we check if the Order has invoice (in which case
         // a new one is going to be created) If it doesn't have invoices we don't allow adding duplicate OrderDetail
-        if (empty($command->getOrderInvoiceId()) && !$order->hasInvoice()) {
+        if (empty($command->getOrderInvoiceId()) && ! $order->hasInvoice()) {
             throw new DuplicateProductInOrderException('You cannot add this product in the order as it is already present');
         }
 
         // If we are targeting a specific invoice check that the ID has not been found in the OrderDetail list
-        if (!empty($command->getOrderInvoiceId()) && in_array((int) $command->getOrderInvoiceId(), $invoicesContainingProduct)) {
+        if (! empty($command->getOrderInvoiceId()) && in_array((int) $command->getOrderInvoiceId(), $invoicesContainingProduct)) {
             $orderInvoice = new OrderInvoice($command->getOrderInvoiceId());
             $invoiceNumber = $orderInvoice->getInvoiceNumberFormatted((int) Configuration::get('PS_LANG_DEFAULT'), $order->id_shop);
             throw new DuplicateProductInOrderInvoiceException($invoiceNumber, 'You cannot add this product in this invoice as it is already present');

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,7 @@ class ProductPreferencesFormHandler extends Handler
             $this->cacheClearer->clearSmartyCache();
             $this->cacheClearer->clearMediaCache();
 
-            if (isset($data['stock_management']) && !$data['stock_management']) {
+            if (isset($data['stock_management']) && ! $data['stock_management']) {
                 $data['allow_ordering_oos'] = 1;
             }
         }
@@ -62,7 +63,7 @@ class ProductPreferencesFormHandler extends Handler
     /**
      * Inject the cache clearer if needed.
      *
-     * @param CacheClearer $cacheClearer the Cache clearer
+     * @param  CacheClearer  $cacheClearer  the Cache clearer
      */
     public function setCacheClearer(CacheClearer $cacheClearer)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,7 @@ final class FolderThemeCatalog implements ThemeCatalogInterface
     private $scanner;
 
     /**
-     * @param string $mailThemesFolder
-     * @param FolderThemeScanner $scanner
-     * @param HookDispatcherInterface $hookDispatcher
+     * @param  string  $mailThemesFolder
      */
     public function __construct(
         $mailThemesFolder,
@@ -67,19 +66,20 @@ final class FolderThemeCatalog implements ThemeCatalogInterface
      * Return the list of found themes (non empty folders, in the mail themes
      * folder).
      *
-     * @throws FileNotFoundException
-     * @throws TypeException
      *
      * @return ThemeCollectionInterface
+     *
+     * @throws FileNotFoundException
+     * @throws TypeException
      */
     public function listThemes()
     {
         $this->checkThemesFolder();
 
-        $finder = new Finder();
+        $finder = new Finder;
         $finder->sortByName();
         $finder->directories()->in($this->mailThemesFolder)->depth(0);
-        $mailThemes = new ThemeCollection();
+        $mailThemes = new ThemeCollection;
         /** @var SplFileInfo $mailThemeFolder */
         foreach ($finder as $mailThemeFolder) {
             $mailTheme = $this->scanner->scan($mailThemeFolder->getRealPath());
@@ -88,7 +88,7 @@ final class FolderThemeCatalog implements ThemeCatalogInterface
             }
         }
 
-        //This hook allows you to add/remove a mail theme
+        // This hook allows you to add/remove a mail theme
         $this->hookDispatcher->dispatchWithParameters(
             ThemeCatalogInterface::LIST_MAIL_THEMES_HOOK,
             ['mailThemes' => $mailThemes]
@@ -98,13 +98,12 @@ final class FolderThemeCatalog implements ThemeCatalogInterface
     }
 
     /**
-     * @param string $theme
+     * @param  string  $theme
+     * @return ThemeInterface
      *
      * @throws FileNotFoundException
      * @throws InvalidArgumentException
      * @throws TypeException
-     *
-     * @return ThemeInterface
      */
     public function getByName($theme)
     {
@@ -127,7 +126,7 @@ final class FolderThemeCatalog implements ThemeCatalogInterface
      */
     private function checkThemesFolder()
     {
-        if (!is_dir($this->mailThemesFolder)) {
+        if (! is_dir($this->mailThemesFolder)) {
             throw new FileNotFoundException(sprintf('Invalid mail themes folder "%s": no such directory', $this->mailThemesFolder));
         }
     }

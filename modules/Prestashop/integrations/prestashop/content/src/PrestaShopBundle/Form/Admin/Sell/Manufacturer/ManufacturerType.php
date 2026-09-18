@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ class ManufacturerType extends TranslatorAwareType
     private $isMultistoreEnabled;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isMultistoreEnabled
+     * @param  bool  $isMultistoreEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -71,8 +70,8 @@ class ManufacturerType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $invalidCharactersForCatalogLabel = $this->trans('Invalid characters:', 'Admin.Global') . '<>;=#{}';
-        $invalidCharactersForNameLabel = $this->trans('Invalid characters:', 'Admin.Global') . '<>={}';
+        $invalidCharactersForCatalogLabel = $this->trans('Invalid characters:', 'Admin.Global').'<>;=#{}';
+        $invalidCharactersForNameLabel = $this->trans('Invalid characters:', 'Admin.Global').'<>={}';
 
         $builder
             ->add('name', TextType::class, [
@@ -177,7 +176,7 @@ class ManufacturerType extends TranslatorAwareType
             ->add('meta_keyword', TranslatableType::class, [
                 'label' => $this->trans('Meta keywords', 'Admin.Global'),
                 'help' => $this->trans('To add tags, click in the field, write something, and then press the "Enter" key.', 'Admin.Shopparameters.Help')
-                 . '<br>' . $invalidCharactersForNameLabel,
+                 .'<br>'.$invalidCharactersForNameLabel,
                 'type' => TextType::class,
                 'required' => false,
                 'options' => [

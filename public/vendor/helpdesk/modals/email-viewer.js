@@ -25,6 +25,90 @@
         else { $(rowId).addClass('d-none'); }
     }
 
+    function evEsc(text) { return $('<span>').text(text || '').html(); }
+
+    function evSwitchTab(tab) {
+        $('.bv-ev-tab').removeClass('on');
+        $('.bv-ev-tab[data-ev-tab="' + tab + '"]').addClass('on');
+        $('.bv-ev-tabpanel').addClass('d-none');
+        $('.bv-ev-tabpanel[data-ev-panel="' + tab + '"]').removeClass('d-none');
+    }
+
+    var EV_TRACE_ICONS = {
+        ok: 'fa-solid fa-check',
+        err: 'fa-solid fa-xmark',
+        warn: 'fa-solid fa-clock',
+        spam: 'fa-solid fa-flag',
+        unknown: 'fa-regular fa-circle-question',
+    };
+
+    function evRenderTrace(steps) {
+        if (!steps || !steps.length) {
+            $('#evTraceList').html('<div class="bv-ev-empty">' + evEsc(window.__evTraceEmptyText || 'Sin datos.') + '</div>');
+            return;
+        }
+        var html = steps.map(function (step) {
+            return '<div class="bv-ev-trace-step">'
+                + '<span class="bv-ev-trace-icon ' + (step.icon || '') + '"><i class="' + (EV_TRACE_ICONS[step.icon] || EV_TRACE_ICONS.unknown) + '" aria-hidden="true"></i></span>'
+                + '<div class="bv-ev-trace-main">'
+                    + '<div class="t">' + evEsc(step.title) + '</div>'
+                    + '<div class="s">' + evEsc(step.meta) + '</div>'
+                + '</div>'
+                + '<div class="bv-ev-trace-time">' + evEsc(step.time) + '</div>'
+                + '</div>';
+        }).join('');
+        $('#evTraceList').html(html);
+    }
+
+    function evRenderEvents(sel, items, emptyText, kind) {
+        var $el = $(sel);
+        if (!items || !items.length) {
+            $el.html('<div class="bv-ev-empty">' + evEsc(emptyText) + '</div>');
+            return;
+        }
+        var html = items.map(function (it) {
+            if (kind === 'click') {
+                var urlHtml = it.url
+                    ? '<a href="' + evEsc(it.url) + '" target="_blank" rel="noopener" class="mono">' + evEsc(it.url) + '</a>'
+                    : '<span class="mono">—</span>';
+                var metaBits = [it.at, it.ip, it.user_agent].filter(Boolean).map(evEsc);
+                return '<div class="bv-ev-event-row">'
+                    + '<span class="bv-ev-event-icon"><i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i></span>'
+                    + '<div class="bv-ev-event-main">' + urlHtml + '<span class="s">' + metaBits.join(' · ') + '</span></div>'
+                    + '</div>';
+            }
+            var openMetaBits = [it.source, it.ip, it.user_agent].filter(Boolean).map(evEsc);
+            return '<div class="bv-ev-event-row">'
+                + '<span class="bv-ev-event-icon"><i class="fa-regular fa-envelope-open" aria-hidden="true"></i></span>'
+                + '<div class="bv-ev-event-main"><span class="t">' + evEsc(it.at) + '</span><span class="s">' + openMetaBits.join(' · ') + '</span></div>'
+                + '</div>';
+        }).join('');
+        $el.html(html);
+    }
+
+    function evRenderTraceAndOpens(e) {
+        window.__evTraceEmptyText = $('#evTabTrace').data('empty-text');
+
+        var hasTrace = Array.isArray(e.trace) && e.trace.length > 0;
+        evRowToggle('#evTabTrace', hasTrace);
+        if (hasTrace) { evRenderTrace(e.trace); }
+
+        var opens = e.opens, clicks = e.clicks;
+        var hasInteractions = !!opens || !!clicks;
+        evRowToggle('#evTabOpens', hasInteractions);
+        evRowToggle('#evOpensSection', !!opens);
+        evRowToggle('#evClicksSection', !!clicks);
+        evRowToggle('#evOpensClicksSep', !!opens && !!clicks);
+        if (opens) { evRenderEvents('#evOpensList', opens.items, $('#evOpensSection').data('empty-text'), 'open'); }
+        if (clicks) { evRenderEvents('#evClicksList', clicks.items, $('#evClicksSection').data('empty-text'), 'click'); }
+
+        evSwitchTab('detail');
+    }
+
+    $(document).on('click', '.bv-ev-tab', function () {
+        if (!$(this).hasClass('d-none')) { evSwitchTab($(this).data('ev-tab')); }
+    });
+
     window.loadEmailViewer = function (uid) {
         var convId = $('.bv-composer').data('bv-conversation-id');
         if (!convId || !uid) { return; }
@@ -48,6 +132,9 @@
             evSetText('#evSubject', e.subject);
             evSetText('#evTo', Array.isArray(e.to) ? e.to.join(', ') : e.to);
 
+            evSetText('#evMetaId', e.id_label);
+            evSetText('#evMetaCreated', e.created_at_formatted);
+
             if (e.cc && e.cc.length) {
                 $('#evCc').text(e.cc.join(', '));
                 evRowToggle('#evCcRow', true);
@@ -62,12 +149,17 @@
                 evRowToggle('#evTypeRow', false);
             }
 
-            var statusClass = e.status === 'sent' ? 'sent' : (e.status === 'failed' ? 'failed' : 'queued');
+            // failed/bounced/complained/suppressed son estados terminales
+            // negativos: se agrupan en "danger" (rojo) en vez de repartirse
+            // entre el gris de "queued" y un indigo que no comunicaba nada.
+            var EV_DANGER_STATUSES = ['failed', 'bounced', 'complained', 'suppressed'];
+            var statusClass = e.status === 'sent' ? 'sent' : (EV_DANGER_STATUSES.indexOf(e.status) !== -1 ? 'danger' : 'queued');
             var statusIco = e.status === 'sent'
                 ? '<i class="fas fa-check"></i> '
-                : (e.status === 'failed' ? '<i class="fas fa-xmark"></i> ' : '<i class="far fa-clock"></i> ');
+                : (statusClass === 'danger' ? '<i class="fas fa-xmark"></i> ' : '<i class="far fa-clock"></i> ');
             $('#evStatus').attr('class', 'bv-ev-status ' + statusClass).html(statusIco + (e.status_label || e.status || '—'));
 
+            evSetText('#evMetaSentBy', e.sent_by);
             if (e.sent_by) {
                 $('#evSentBy').text(e.sent_by);
                 evRowToggle('#evSentByRow', true);
@@ -124,6 +216,12 @@
             evRowToggle('#evDocSection', hasDoc);
             evRowToggle('#evBtnDoc', hasDoc);
 
+            if (e.activity_url) {
+                $('#evBtnActivity').attr('href', e.activity_url).removeClass('d-none');
+            } else {
+                $('#evBtnActivity').addClass('d-none').attr('href', '#');
+            }
+
             if (e.body_html) {
                 var _style = '<style>body{padding:20px!important;box-sizing:border-box}</style>';
                 var _closingHead = '</' + 'head>';
@@ -135,6 +233,8 @@
             } else {
                 $('#evPreview').addClass('d-none');
             }
+
+            evRenderTraceAndOpens(e);
 
             $('#evDetail').removeClass('d-none');
             evRowToggle('#evBottomNote', true);

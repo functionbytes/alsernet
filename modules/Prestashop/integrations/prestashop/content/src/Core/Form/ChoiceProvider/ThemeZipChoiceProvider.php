@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class ThemeZipChoiceProvider implements FormChoiceProviderInterface
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -54,11 +52,10 @@ final class ThemeZipChoiceProvider implements FormChoiceProviderInterface
      */
     public function getChoices()
     {
-        $themeZipsFinder = (new Finder())
+        $themeZipsFinder = (new Finder)
             ->in($this->configuration->get('_PS_ALL_THEMES_DIR_'))
             ->files()
-            ->name('*.zip')
-        ;
+            ->name('*.zip');
 
         $themeZips = [];
 

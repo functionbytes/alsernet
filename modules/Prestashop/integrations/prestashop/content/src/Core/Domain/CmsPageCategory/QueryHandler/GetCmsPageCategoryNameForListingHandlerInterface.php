@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,6 @@ use PrestaShop\PrestaShop\Core\Domain\CmsPageCategory\Query\GetCmsPageCategoryNa
 interface GetCmsPageCategoryNameForListingHandlerInterface
 {
     /**
-     * @param GetCmsPageCategoryNameForListing $query
-     *
      * @return string
      */
     public function handle(GetCmsPageCategoryNameForListing $query);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,10 +56,6 @@ use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime as DateTimeUtils;
 final class GetCartRuleForEditingHandler extends AbstractCartRuleHandler implements GetCartRuleForEditingHandlerInterface
 {
     /**
-     * @param GetCartRuleForEditing $query
-     *
-     * @return EditableCartRule
-     *
      * @throws CartRuleException
      * @throws CartRuleNotFoundException
      */

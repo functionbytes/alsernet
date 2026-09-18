@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,8 +63,6 @@ class OrderDetailLazyArray extends AbstractLazyArray
 
     /**
      * OrderDetailLazyArray constructor.
-     *
-     * @param Order $order
      */
     public function __construct(Order $order)
     {
@@ -113,7 +112,7 @@ class OrderDetailLazyArray extends AbstractLazyArray
      */
     public function getDetailsUrl()
     {
-        return $this->context->link->getPageLink('order-detail', true, null, 'id_order=' . $this->order->id);
+        return $this->context->link->getPageLink('order-detail', true, null, 'id_order='.$this->order->id);
     }
 
     /**
@@ -226,10 +225,10 @@ class OrderDetailLazyArray extends AbstractLazyArray
                 $orderShipping[$shippingId]['shipping_date'] =
                     Tools::displayDate($shipping['date_add'], null, false);
                 $orderShipping[$shippingId]['shipping_weight'] =
-                    ($shipping['weight'] > 0) ? sprintf('%.3f', $shipping['weight']) . ' ' .
+                    ($shipping['weight'] > 0) ? sprintf('%.3f', $shipping['weight']).' '.
                         Configuration::get('PS_WEIGHT_UNIT') : '-';
                 $shippingCost =
-                    (!$order->getTaxCalculationMethod()) ? $shipping['shipping_cost_tax_excl']
+                    (! $order->getTaxCalculationMethod()) ? $shipping['shipping_cost_tax_excl']
                         : $shipping['shipping_cost_tax_incl'];
                 $orderShipping[$shippingId]['shipping_cost'] =
                     ($shippingCost > 0) ? $this->locale->formatPrice($shippingCost, (Currency::getIsoCodeById((int) $order->id_currency)))
@@ -238,11 +237,11 @@ class OrderDetailLazyArray extends AbstractLazyArray
                 $tracking_line = '-';
                 if ($shipping['tracking_number']) {
                     if ($shipping['url']) {
-                        $tracking_line = '<a href="' . str_replace(
+                        $tracking_line = '<a href="'.str_replace(
                             '@',
                             $shipping['tracking_number'],
                             $shipping['url']
-                        ) . '" target="_blank">' . $shipping['tracking_number'] . '</a>';
+                        ).'" target="_blank">'.$shipping['tracking_number'].'</a>';
                     } else {
                         $tracking_line = $shipping['tracking_number'];
                     }

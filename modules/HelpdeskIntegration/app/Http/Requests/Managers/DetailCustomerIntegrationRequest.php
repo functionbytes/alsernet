@@ -8,8 +8,11 @@ use Illuminate\Validation\Rule;
 class DetailCustomerIntegrationRequest extends FormRequest
 {
     /**
-     * Igual que search(): solo consulta la plataforma remota (no persiste
-     * nada), así que deliberadamente NO exige identidad verificada.
+     * A diferencia de search() (candidatos de una búsqueda remota), esto
+     * expone la ficha completa de una integración ya vinculada — mismos
+     * datos que show()->buildPayload(). El gate de identidad verificada se
+     * aplica en el controller (assertIdentityVerified), no aquí: authorize()
+     * solo cubre el permiso base sobre el customer.
      */
     public function authorize(): bool
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -88,35 +89,21 @@ class UpdateProductShippingCommand
      */
     private $localizedDeliveryTimeOutOfStockNotes;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getWidth(): ?DecimalNumber
     {
         return $this->width;
     }
 
-    /**
-     * @param string $width
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setWidth(string $width): UpdateProductShippingCommand
     {
         $width = new DecimalNumber($width);
@@ -126,19 +113,11 @@ class UpdateProductShippingCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getHeight(): ?DecimalNumber
     {
         return $this->height;
     }
 
-    /**
-     * @param string $height
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setHeight(string $height): UpdateProductShippingCommand
     {
         $height = new DecimalNumber($height);
@@ -148,19 +127,11 @@ class UpdateProductShippingCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getDepth(): ?DecimalNumber
     {
         return $this->depth;
     }
 
-    /**
-     * @param string $depth
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setDepth(string $depth): UpdateProductShippingCommand
     {
         $depth = new DecimalNumber($depth);
@@ -170,19 +141,11 @@ class UpdateProductShippingCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getWeight(): ?DecimalNumber
     {
         return $this->weight;
     }
 
-    /**
-     * @param string $weight
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setWeight(string $weight): UpdateProductShippingCommand
     {
         $weight = new DecimalNumber($weight);
@@ -192,19 +155,11 @@ class UpdateProductShippingCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getAdditionalShippingCost(): ?DecimalNumber
     {
         return $this->additionalShippingCost;
     }
 
-    /**
-     * @param string $additionalShippingCost
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setAdditionalShippingCost(string $additionalShippingCost): UpdateProductShippingCommand
     {
         $this->additionalShippingCost = new DecimalNumber($additionalShippingCost);
@@ -221,9 +176,7 @@ class UpdateProductShippingCommand
     }
 
     /**
-     * @param int[] $carrierReferences
-     *
-     * @return UpdateProductShippingCommand
+     * @param  int[]  $carrierReferences
      */
     public function setCarrierReferences(array $carrierReferences): UpdateProductShippingCommand
     {
@@ -232,19 +185,11 @@ class UpdateProductShippingCommand
         return $this;
     }
 
-    /**
-     * @return DeliveryTimeNoteType|null
-     */
     public function getDeliveryTimeNoteType(): ?DeliveryTimeNoteType
     {
         return $this->deliveryTimeNoteType;
     }
 
-    /**
-     * @param int $type
-     *
-     * @return UpdateProductShippingCommand
-     */
     public function setDeliveryTimeNoteType(int $type): UpdateProductShippingCommand
     {
         $this->deliveryTimeNoteType = new DeliveryTimeNoteType($type);
@@ -261,9 +206,7 @@ class UpdateProductShippingCommand
     }
 
     /**
-     * @param string[] $localizedDeliveryTimeInStockNotes
-     *
-     * @return UpdateProductShippingCommand
+     * @param  string[]  $localizedDeliveryTimeInStockNotes
      */
     public function setLocalizedDeliveryTimeInStockNotes(array $localizedDeliveryTimeInStockNotes): UpdateProductShippingCommand
     {
@@ -281,9 +224,7 @@ class UpdateProductShippingCommand
     }
 
     /**
-     * @param string[] $localizedDeliveryTimeOutOfStockNotes
-     *
-     * @return UpdateProductShippingCommand
+     * @param  string[]  $localizedDeliveryTimeOutOfStockNotes
      */
     public function setLocalizedDeliveryTimeOutOfStockNotes(array $localizedDeliveryTimeOutOfStockNotes): UpdateProductShippingCommand
     {
@@ -296,9 +237,6 @@ class UpdateProductShippingCommand
      * @todo: dimensions deserves dedicated VO and might be worth reusing in Carriers page.
      *
      * @todo Check https://github.com/PrestaShop/PrestaShop/issues/19666#issuecomment-756088706
-     *
-     * @param DecimalNumber $value
-     * @param string $dimensionName
      *
      * @throws ProductConstraintException
      */

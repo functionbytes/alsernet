@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,10 +41,12 @@ use Symfony\Component\Finder\Finder;
 class ThemeManagerBuilder
 {
     private $context;
+
     private $db;
+
     private $themeValidator;
 
-    public function __construct(Context $context, Db $db, ThemeValidator $themeValidator = null)
+    public function __construct(Context $context, Db $db, ?ThemeValidator $themeValidator = null)
     {
         $this->context = $context;
         $this->db = $db;
@@ -52,10 +55,10 @@ class ThemeManagerBuilder
 
     public function build()
     {
-        $configuration = new Configuration();
+        $configuration = new Configuration;
         $configuration->restrictUpdatesTo($this->context->shop);
-        if (null === $this->themeValidator) {
-            $this->themeValidator = new ThemeValidator($this->context->getTranslator(), new Configuration());
+        if ($this->themeValidator === null) {
+            $this->themeValidator = new ThemeValidator($this->context->getTranslator(), new Configuration);
         }
 
         return new ThemeManager(
@@ -64,11 +67,11 @@ class ThemeManagerBuilder
             $this->themeValidator,
             $this->context->getTranslator(),
             $this->context->employee,
-            new Filesystem(),
-            new Finder(),
+            new Filesystem,
+            new Finder,
             new HookConfigurator(
                 new HookRepository(
-                    new HookInformationProvider(),
+                    new HookInformationProvider,
                     $this->context->shop,
                     $this->db
                 )
@@ -81,18 +84,18 @@ class ThemeManagerBuilder
         );
     }
 
-    public function buildRepository(Shop $shop = null)
+    public function buildRepository(?Shop $shop = null)
     {
-        if (!$shop instanceof Shop) {
+        if (! $shop instanceof Shop) {
             $shop = $this->context->shop;
         }
 
-        $configuration = new Configuration();
+        $configuration = new Configuration;
         $configuration->restrictUpdatesTo($shop);
 
         return new ThemeRepository(
             $configuration,
-            new Filesystem(),
+            new Filesystem,
             $shop
         );
     }

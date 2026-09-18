@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,7 +31,9 @@ class AddonListFilterType
 {
     /* Bitwise operator */
     public const THEME = 1;
+
     public const MODULE = 2;
+
     public const SERVICE = 4;
 
     public const ALL = 7; /* = 1 | 2 | 4 */

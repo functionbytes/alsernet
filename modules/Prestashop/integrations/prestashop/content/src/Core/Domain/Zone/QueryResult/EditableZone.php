@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,12 +55,6 @@ class EditableZone
      */
     private $associatedShops;
 
-    /**
-     * @param ZoneId $zoneId
-     * @param string $name
-     * @param bool $enabled
-     * @param array $associatedShops
-     */
     public function __construct(ZoneId $zoneId, string $name, bool $enabled, array $associatedShops)
     {
         $this->zoneId = $zoneId;
@@ -68,33 +63,21 @@ class EditableZone
         $this->associatedShops = $associatedShops;
     }
 
-    /**
-     * @return ZoneId
-     */
     public function getZoneId(): ZoneId
     {
         return $this->zoneId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;
     }
 
-    /**
-     * @return array
-     */
     public function getAssociatedShops(): array
     {
         return $this->associatedShops;

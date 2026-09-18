@@ -1,5 +1,6 @@
 <?php
-if (!defined('_PS_VERSION_')) {
+
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -37,47 +38,53 @@ class AlsernetComplementarios extends Module
 
     private function installDb()
     {
-        $sql = file_get_contents(__DIR__ . '/sql/install.sql');
+        $sql = file_get_contents(__DIR__.'/sql/install.sql');
         // Reemplazar placeholder de prefijo
         $sql = str_replace(['PREFIX_', 'PREFIX'], _DB_PREFIX_, $sql);
+
         return Db::getInstance()->execute($sql);
     }
 
     private function uninstallDb()
     {
-        $sql = file_get_contents(__DIR__ . '/sql/uninstall.sql');
+        $sql = file_get_contents(__DIR__.'/sql/uninstall.sql');
         // Reemplazar placeholder de prefijo
         $sql = str_replace(['PREFIX_', 'PREFIX'], _DB_PREFIX_, $sql);
+
         return Db::getInstance()->execute($sql);
     }
 
     private function installTab()
     {
-        $tab = new Tab();
+        $tab = new Tab;
         $tab->active = 1;
         $tab->class_name = 'AdminAlsernetComplementarios';
-        $tab->name = array();
+        $tab->name = [];
         foreach (Language::getLanguages(true) as $lang) {
             $tab->name[$lang['id_lang']] = 'Complementarios';
         }
-        $tab->id_parent = (int)Tab::getIdFromClassName('AdminCatalog');
+        $tab->id_parent = (int) Tab::getIdFromClassName('AdminCatalog');
         $tab->module = $this->name;
+
         return $tab->add();
     }
 
     private function uninstallTab()
     {
-        $id_tab = (int)Tab::getIdFromClassName('AdminAlsernetComplementarios');
+        $id_tab = (int) Tab::getIdFromClassName('AdminAlsernetComplementarios');
         if ($id_tab) {
             $tab = new Tab($id_tab);
+
             return $tab->delete();
         }
+
         return true;
     }
 
     public function getContent()
     {
         Tools::redirectAdmin($this->context->link->getAdminLink('AdminAlsernetComplementarios'));
+
         return ''; // no renderiza nada aquí
     }
 }

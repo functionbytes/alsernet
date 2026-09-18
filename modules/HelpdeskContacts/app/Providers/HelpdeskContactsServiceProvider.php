@@ -40,7 +40,10 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['web', 'auth'])
+        // Gate de un solo punto para todo el modulo: helpdesk_contacts_enabled()
+        // (mismo middleware generico que ChatFlow/Sla/Compliance/...) — antes
+        // cada accion repetia (o se olvidaba de repetir) un abort_if() a mano.
+        Route::middleware(['web', 'auth', 'integration.enabled:contacts'])
             ->prefix('panel/helpdesk/contacts')
             ->group($web);
 
@@ -62,7 +65,7 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
         }
 
         NavService::registerMiniItem('contacts', [
-            'icon' => 'fas fa-address-book',
+            'icon' => 'id-card',
             'tooltip' => 'Contactos',
             'sidebar_id' => 'contacts',
             'order' => 71,

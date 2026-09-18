@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,17 +51,14 @@ final class ExecutedCommandRegistry
      */
     private $commandTypeParser;
 
-    /**
-     * @param CommandTypeParser $commandTypeParser
-     */
     public function __construct(CommandTypeParser $commandTypeParser)
     {
         $this->commandTypeParser = $commandTypeParser;
     }
 
     /**
-     * @param object $command
-     * @param object $handler
+     * @param  object  $command
+     * @param  object  $handler
      */
     public function register($command, $handler): void
     {
@@ -89,17 +87,11 @@ final class ExecutedCommandRegistry
         }
     }
 
-    /**
-     * @return array
-     */
     public function getExecutedCommands(): array
     {
         return $this->registry['commands'];
     }
 
-    /**
-     * @return array
-     */
     public function getExecutedQueries(): array
     {
         return $this->registry['queries'];
@@ -107,8 +99,6 @@ final class ExecutedCommandRegistry
 
     /**
      * Return the file and line that invoked the handle method
-     *
-     * @return array
      */
     private function getTrace(): array
     {

@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Cobro;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -56,7 +57,7 @@ class DeudacliMonte2 extends Model
      */
     public function deudacli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\DeudacliCapthaya::class, 'iddeudacli', 'iddeudacli');
+        return $this->belongsTo(DeudacliCapthaya::class, 'iddeudacli', 'iddeudacli');
     }
 
     /**
@@ -65,7 +66,7 @@ class DeudacliMonte2 extends Model
      */
     public function cobrocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
+        return $this->belongsTo(CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
     }
 
     /**
@@ -74,7 +75,7 @@ class DeudacliMonte2 extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -83,6 +84,6 @@ class DeudacliMonte2 extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 }

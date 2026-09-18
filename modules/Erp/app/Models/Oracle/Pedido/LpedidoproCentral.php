@@ -3,6 +3,9 @@
 namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
+use Modules\Erp\Models\Oracle\Proveedor\Lpropuestapro;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -52,7 +55,7 @@ class LpedidoproCentral extends Model
      */
     public function lpedidoproCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
+        return $this->belongsTo(LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
     }
 
     /**
@@ -61,7 +64,7 @@ class LpedidoproCentral extends Model
      */
     public function lpedidopro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
+        return $this->belongsTo(LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
     }
 
     /**
@@ -70,7 +73,7 @@ class LpedidoproCentral extends Model
      */
     public function pedidoproCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCentral::class, 'idpedidopro_central', 'idpedidopro_central');
+        return $this->belongsTo(PedidoproCentral::class, 'idpedidopro_central', 'idpedidopro_central');
     }
 
     /**
@@ -79,7 +82,7 @@ class LpedidoproCentral extends Model
      */
     public function pedidopro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
+        return $this->belongsTo(PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
     }
 
     /**
@@ -88,7 +91,7 @@ class LpedidoproCentral extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -97,7 +100,7 @@ class LpedidoproCentral extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -106,7 +109,7 @@ class LpedidoproCentral extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -115,6 +118,6 @@ class LpedidoproCentral extends Model
      */
     public function lpropuestapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
+        return $this->belongsTo(Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
     }
 }

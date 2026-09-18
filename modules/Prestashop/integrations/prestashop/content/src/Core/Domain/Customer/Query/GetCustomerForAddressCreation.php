@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,12 @@ class GetCustomerForAddressCreation
 
     /**
      * Query is used for customer search so email string might not be complete so no email validation
-     *
-     * @param string $customerEmail
      */
     public function __construct(string $customerEmail)
     {
         $this->customerEmail = $customerEmail;
     }
 
-    /**
-     * @return string
-     */
     public function getCustomerEmail(): string
     {
         return $this->customerEmail;

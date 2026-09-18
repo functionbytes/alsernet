@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,8 +30,7 @@ namespace PrestaShop\PrestaShop\Core\CommandBus\Parser;
 final class CommandTypeParser
 {
     /**
-     * @param string $commandName Fully-qualified class name of command
-     *
+     * @param  string  $commandName  Fully-qualified class name of command
      * @return string
      */
     public function parse($commandName)

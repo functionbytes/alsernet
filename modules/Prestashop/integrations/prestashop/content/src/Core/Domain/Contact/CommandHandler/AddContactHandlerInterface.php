@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ use PrestaShop\PrestaShop\Core\Domain\Contact\ValueObject\ContactId;
 interface AddContactHandlerInterface
 {
     /**
-     * @param AddContactCommand $command
-     *
      * @return ContactId
      */
     public function handle(AddContactCommand $command);

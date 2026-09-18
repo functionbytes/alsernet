@@ -20,11 +20,11 @@ use Modules\Helpdesk\Listeners\AnalyzeSentimentOnIncoming;
 use Modules\Helpdesk\Listeners\AutoAssignNewConversation;
 use Modules\Helpdesk\Listeners\AutoTagFirstMessage;
 use Modules\Helpdesk\Listeners\BroadcastConversationMessage;
+use Modules\Helpdesk\Listeners\BroadcastInboxSummary;
 use Modules\Helpdesk\Listeners\DispatchConversationWebhooks;
 use Modules\Helpdesk\Listeners\EnrollCustomerDripOnCsat;
 use Modules\Helpdesk\Listeners\EnrollCustomerDripOnTagAdded;
 use Modules\Helpdesk\Listeners\EnrollCustomerToDripCampaigns;
-use Modules\Helpdesk\Listeners\HandleWithAiAgent;
 use Modules\Helpdesk\Listeners\LogActivityOnConversationAssigned;
 use Modules\Helpdesk\Listeners\LogActivityOnConversationStatusChanged;
 use Modules\Helpdesk\Listeners\LogActivityOnConversationTagAdded;
@@ -45,7 +45,9 @@ use Modules\Helpdesk\Listeners\SendNewConversationNotification;
 use Modules\Helpdesk\Listeners\SendStatusChangedNotification;
 use Modules\Helpdesk\Listeners\TriggerWorkflowsOnConversationClosed;
 use Modules\Helpdesk\Listeners\TriggerWorkflowsOnConversationCreated;
+use Modules\Helpdesk\Listeners\TriggerWorkflowsOnErpResolved;
 use Modules\Helpdesk\Listeners\TriggerWorkflowsOnMessageReceived;
+use Modules\HelpdeskErp\Events\CustomerErpResolved;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -72,11 +74,11 @@ class EventServiceProvider extends ServiceProvider
         ],
         ConversationMessageCreated::class => [
             BroadcastConversationMessage::class,
+            // SEC-01: companion lightweight broadcast for the per-inbox
+            // sidebar channel — see ConversationInboxItemCreated.
+            BroadcastInboxSummary::class,
             AnalyzeSentimentOnIncoming::class,
             AutoTagFirstMessage::class,
-            // Autonomous AI agent — inert unless config helpdesk.ai.agent_enabled
-            // (default false); self-guards to incoming customer messages only.
-            HandleWithAiAgent::class,
         ],
         MessageReceived::class => [
             SendMessageReceivedNotification::class,
@@ -119,4 +121,22 @@ class EventServiceProvider extends ServiceProvider
             LogActivityOnConversationUnsnoozed::class,
         ],
     ];
+
+    /**
+     * CustomerErpResolved lo emite HelpdeskErp, que es un módulo aparte y
+     * puede estar desinstalado o apagado. Se registra aquí, y no en el array
+     * estático de arriba, por el mismo motivo que HelpdeskTickets hace lo
+     * propio con la traducción: no referenciar en firme una clase de otro
+     * módulo que quizá no esté.
+     */
+    public function listens(): array
+    {
+        $listen = $this->listen;
+
+        if (function_exists('helpdesk_erp_enabled') && helpdesk_erp_enabled() && class_exists(CustomerErpResolved::class)) {
+            $listen[CustomerErpResolved::class][] = TriggerWorkflowsOnErpResolved::class;
+        }
+
+        return $listen;
+    }
 }

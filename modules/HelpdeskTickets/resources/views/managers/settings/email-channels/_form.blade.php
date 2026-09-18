@@ -21,7 +21,7 @@
 
     <div class="col-12">
         <div class="mb-3">
-            <label for="channelName" class="form-label">Nombre del canal <span class="text-danger">*</span></label>
+            <label for="channelName" class="form-label">Nombre del canal <span class="text-brand">*</span></label>
             <input type="text" name="name" id="channelName"
                    class="form-control @error('name') is-invalid @enderror"
                    value="{{ $field('name') }}"
@@ -36,7 +36,7 @@
 
     <div class="col-12 col-md-8">
         <div class="mb-3">
-            <label for="channelHost" class="form-label">Servidor IMAP <span class="text-danger">*</span></label>
+            <label for="channelHost" class="form-label">Servidor IMAP <span class="text-brand">*</span></label>
             <input type="text" name="host" id="channelHost"
                    class="form-control @error('host') is-invalid @enderror"
                    value="{{ $field('host') }}"
@@ -50,7 +50,7 @@
 
     <div class="col-12 col-md-4">
         <div class="mb-3">
-            <label for="channelPort" class="form-label">Puerto <span class="text-danger">*</span></label>
+            <label for="channelPort" class="form-label">Puerto <span class="text-brand">*</span></label>
             <input type="number" name="port" id="channelPort"
                    class="form-control @error('port') is-invalid @enderror"
                    value="{{ $field('port', 993) }}"
@@ -63,7 +63,7 @@
 
     <div class="col-12 col-md-6">
         <div class="mb-3">
-            <label for="channelUsername" class="form-label">Usuario <span class="text-danger">*</span></label>
+            <label for="channelUsername" class="form-label">Usuario <span class="text-brand">*</span></label>
             <input type="text" name="username" id="channelUsername"
                    class="form-control @error('username') is-invalid @enderror"
                    value="{{ $field('username') }}"
@@ -78,7 +78,7 @@
     <div class="col-12 col-md-6">
         <div class="mb-3">
             <label for="channelPassword" class="form-label">
-                Contrasena @unless($isEdit)<span class="text-danger">*</span>@endunless
+                Contrasena @unless($isEdit)<span class="text-brand">*</span>@endunless
             </label>
             <input type="password" name="password" id="channelPassword"
                    class="form-control @error('password') is-invalid @enderror"
@@ -115,6 +115,19 @@
                 <option value="tls" {{ $field('encryption', 'ssl') === 'tls' ? 'selected' : '' }}>TLS</option>
             </select>
             @error('encryption')
+                <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+            @enderror
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="mb-3">
+            <label for="channelSyncSince" class="form-label">Sincronizar desde</label>
+            <input type="date" name="sync_since" id="channelSyncSince"
+                   class="form-control @error('sync_since') is-invalid @enderror"
+                   value="{{ $field('sync_since') }}">
+            <small class="form-text text-muted">Ignora los correos anteriores a esta fecha al sincronizar. Dejalo vacio para no filtrar</small>
+            @error('sync_since')
                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
             @enderror
         </div>
@@ -229,83 +242,13 @@
 </div>
 
 @push('scripts')
+{{-- Solo datos: las URLs de servidor (fijas, no dependen de $channel). La
+     lógica entera vive en email-channel-form.js. --}}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-    function render(container, ok, message) {
-        container.classList.remove('d-none');
-        container.innerHTML = ok
-            ? '<div class="alert alert-success border-0 mb-0">' + message + '</div>'
-            {{-- alert-warning, no alert-danger: el resto de estados de error de
-                 esta pantalla (badge del listado, aviso del panel lateral) van
-                 en ambar. --}}
-            : '<div class="alert alert-warning border-0 mb-0">' + message + '</div>';
-    }
-
-    function runTest(button, container, url, payload, emptyMessage) {
-        if (!payload) {
-            toastr.warning(emptyMessage);
-            return;
-        }
-
-        const original = button.textContent;
-        button.disabled = true;
-        button.textContent = 'Probando...';
-
-        fetch(url, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(payload),
-        }).then(r => r.json()).then(data => {
-            render(container, data.success, data.message);
-        }).catch(() => {
-            render(container, false, 'Error inesperado al probar la conexion.');
-        }).finally(() => {
-            button.disabled = false;
-            button.textContent = original;
-        });
-    }
-
-    document.getElementById('btn-test-channel')?.addEventListener('click', function () {
-        const host = document.getElementById('channelHost').value;
-        const port = document.getElementById('channelPort').value;
-
-        // Solo servidor y puerto: la prueba abre un socket, no autentica. Antes
-        // se exigian usuario y contrasena y se enviaban al servidor para nada;
-        // al editar un canal el campo de contrasena viene vacio a proposito, asi
-        // que el boton no llegaba a ejecutarse nunca.
-        if (!host || !port) {
-            toastr.warning('Completa servidor y puerto antes de probar.');
-            return;
-        }
-
-        runTest(
-            this,
-            document.getElementById('channelTestResult'),
-            '{{ route('manager.helpdesk.settings.email-channels.test') }}',
-            { host: host, port: port }
-        );
-    });
-
-    document.getElementById('btn-test-smtp-channel')?.addEventListener('click', function () {
-        const smtpHost = document.getElementById('channelSmtpHost').value;
-        const smtpPort = document.getElementById('channelSmtpPort').value;
-
-        if (!smtpHost || !smtpPort) {
-            toastr.warning('Completa servidor y puerto SMTP antes de probar.');
-            return;
-        }
-
-        runTest(
-            this,
-            document.getElementById('channelSmtpTestResult'),
-            '{{ route('manager.helpdesk.settings.email-channels.test-smtp') }}',
-            { smtp_host: smtpHost, smtp_port: smtpPort }
-        );
-    });
-
-    $('.select2').select2({ width: '100%' });
-});
+window.hdtEmailChannelFormConfig = {
+    testImapUrl: @json(route('manager.helpdesk.settings.email-channels.test')),
+    testSmtpUrl: @json(route('manager.helpdesk.settings.email-channels.test-smtp')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/email-channel-form.js') }}"></script>
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,7 @@ final class GetEmployeeForEditingHandler extends AbstractObjectModelHandler impl
      */
     private $imageTagSourceParser;
 
-    /**
-     * @param ImageTagSourceParserInterface $imageTagSourceParser
-     */
-    public function __construct(ImageTagSourceParserInterface $imageTagSourceParser = null)
+    public function __construct(?ImageTagSourceParserInterface $imageTagSourceParser = null)
     {
         $this->imageTagSourceParser = $imageTagSourceParser ?? new ImageTagSourceParser(__PS_BASE_URI__);
     }
@@ -85,18 +83,13 @@ final class GetEmployeeForEditingHandler extends AbstractObjectModelHandler impl
         );
     }
 
-    /**
-     * @param int $imageId
-     *
-     * @return array|null
-     */
     private function getAvatarUrl(int $imageId): ?array
     {
-        $imagePath = _PS_EMPLOYEE_IMG_DIR_ . $imageId . '.jpg';
+        $imagePath = _PS_EMPLOYEE_IMG_DIR_.$imageId.'.jpg';
         $imageTag = $this->getTmpImageTag($imagePath, $imageId, 'employee');
         $imageSize = $this->getImageSize($imagePath);
 
-        if (empty($imageTag) || null === $imageSize) {
+        if (empty($imageTag) || $imageSize === null) {
             return null;
         }
 

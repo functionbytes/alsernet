@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ class CartRuleCollection implements \Iterator
      * @var CartRuleData[]
      */
     protected $cartRules = [];
+
     protected $iteratorPosition = 0;
 
     public function addCartRule(CartRuleData $cartRule)
@@ -59,7 +61,7 @@ class CartRuleCollection implements \Iterator
 
     public function next()
     {
-        ++$this->iteratorPosition;
+        $this->iteratorPosition++;
     }
 
     public function valid()
@@ -74,7 +76,7 @@ class CartRuleCollection implements \Iterator
     protected function getKey($iteratorPosition)
     {
         $keys = array_keys($this->cartRules);
-        if (!isset($keys[$iteratorPosition])) {
+        if (! isset($keys[$iteratorPosition])) {
             return null;
         } else {
             return $keys[$iteratorPosition];

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ use RuntimeException;
  *
  *     @arrayAccess
  *
- *     @return array
+ * @return array
  *
  *     public function getAddresses()
  *
@@ -64,7 +65,7 @@ use RuntimeException;
  * Note if the key already exists as a method, it will be skip. In our example, if getUrl() is defined with the
  * annotation @arrayAccess, the $product['url'] = 'foo'; will be ignored
  */
-abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, JsonSerializable
+abstract class AbstractLazyArray implements ArrayAccess, Countable, Iterator, JsonSerializable
 {
     /**
      * @var ArrayObject
@@ -88,7 +89,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      */
     public function __construct()
     {
-        $this->arrayAccessList = new ArrayObject();
+        $this->arrayAccessList = new ArrayObject;
         $reflectionClass = new ReflectionClass(get_class($this));
         $methods = $reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC);
         foreach ($methods as $method) {
@@ -124,13 +125,13 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     /**
      * Set array key and values from $array into the LazyArray.
      *
-     * @param array $array
+     * @param  array  $array
      */
     public function appendArray($array)
     {
         foreach ($array as $key => $value) {
             // do not override any existing method
-            if (!$this->arrayAccessList->offsetExists($key)) {
+            if (! $this->arrayAccessList->offsetExists($key)) {
                 $this->arrayAccessList->offsetSet(
                     $key,
                     [
@@ -143,8 +144,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     }
 
     /**
-     * @param mixed $key
-     * @param \Closure $closure
+     * @param  mixed  $key
      */
     public function appendClosure($key, \Closure $closure)
     {
@@ -173,8 +173,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      *
      * Check if the index exists inside the lazyArray.
      *
-     * @param string $index
-     *
+     * @param  string  $index
      * @return bool
      */
     public function __isset($index)
@@ -188,8 +187,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      *
      * Get the value associated with the $index from the lazyArray.
      *
-     * @param mixed $index
-     *
+     * @param  mixed  $index
      * @return mixed
      *
      * @throws RuntimeException
@@ -203,8 +201,8 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      * The properties are provided as an array. But callers checking the type of this class (is_object === true)
      * think they must use the object syntax.
      *
-     * @param mixed $name
-     * @param mixed $value
+     * @param  mixed  $name
+     * @param  mixed  $value
      *
      * @throws RuntimeException
      */
@@ -217,7 +215,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      * The properties are provided as an array. But callers checking the type of this class (is_object === true)
      * think they must use the object syntax.
      *
-     * @param mixed $name
+     * @param  mixed  $name
      *
      * @throws RuntimeException
      */
@@ -238,8 +236,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     /**
      * Get the value associated with the $index from the lazyArray.
      *
-     * @param mixed $index
-     *
+     * @param  mixed  $index
      * @return mixed
      *
      * @throws RuntimeException
@@ -252,7 +249,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
                 case 'method':
                     $isResultAvailableInCache = (isset($this->methodCacheResults[$index]));
 
-                    if (!$isResultAvailableInCache) {
+                    if (! $isResultAvailableInCache) {
                         $methodName = $this->arrayAccessList[$index]['value'];
                         $this->methodCacheResults[$index] = $this->{$methodName}();
                     }
@@ -263,7 +260,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
                 case 'closure':
                     $isResultAvailableInCache = (isset($this->methodCacheResults[$index]));
 
-                    if (!$isResultAvailableInCache) {
+                    if (! $isResultAvailableInCache) {
                         $methodName = $this->arrayAccessList[$index]['value'];
                         $this->methodCacheResults[$index] = $methodName();
                     }
@@ -290,8 +287,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     /**
      * Check if the index exists inside the lazyArray.
      *
-     * @param mixed $index
-     *
+     * @param  mixed  $index
      * @return bool
      */
     public function offsetExists($index)
@@ -362,7 +358,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     /**
      * Set the keys not present in the given $array to null.
      *
-     * @param array $array
+     * @param  array  $array
      *
      * @throws RuntimeException
      */
@@ -370,25 +366,25 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     {
         $arrayCopy = $this->arrayAccessList->getArrayCopy();
         foreach ($arrayCopy as $key => $value) {
-            if (!array_key_exists($key, $array)) {
+            if (! array_key_exists($key, $array)) {
                 $this->offsetUnset($key, true);
             }
         }
     }
 
     /**
-     * @param mixed $offset
-     * @param mixed $value
-     * @param bool $force if set, allow override of an existing method
+     * @param  mixed  $offset
+     * @param  mixed  $value
+     * @param  bool  $force  if set, allow override of an existing method
      *
      * @throws RuntimeException
      */
     public function offsetSet($offset, $value, $force = false)
     {
-        if (!$force && $this->arrayAccessList->offsetExists($offset)) {
+        if (! $force && $this->arrayAccessList->offsetExists($offset)) {
             $result = $this->arrayAccessList->offsetGet($offset);
             if ($result['type'] !== 'variable') {
-                throw new RuntimeException('Trying to set the index ' . print_r($offset, true) . ' of the LazyArray ' . get_class($this) . ' already defined by a method is not allowed');
+                throw new RuntimeException('Trying to set the index '.print_r($offset, true).' of the LazyArray '.get_class($this).' already defined by a method is not allowed');
             }
         }
         $this->arrayAccessList->offsetSet($offset, [
@@ -398,8 +394,8 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
     }
 
     /**
-     * @param mixed $offset
-     * @param bool $force if set, allow unset of an existing method
+     * @param  mixed  $offset
+     * @param  bool  $force  if set, allow unset of an existing method
      *
      * @throws RuntimeException
      */
@@ -409,13 +405,12 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
         if ($force || $result['type'] === 'variable') {
             $this->arrayAccessList->offsetUnset($offset);
         } else {
-            throw new RuntimeException('Trying to unset the index ' . print_r($offset, true) . ' of the LazyArray ' . get_class($this) . ' already defined by a method is not allowed');
+            throw new RuntimeException('Trying to unset the index '.print_r($offset, true).' of the LazyArray '.get_class($this).' already defined by a method is not allowed');
         }
     }
 
     /**
-     * @param string $methodName
-     *
+     * @param  string  $methodName
      * @return string
      */
     private function convertMethodNameToIndex($methodName)

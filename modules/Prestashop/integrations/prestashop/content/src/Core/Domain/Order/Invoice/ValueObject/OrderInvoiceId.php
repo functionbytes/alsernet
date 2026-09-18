@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,11 +40,11 @@ class OrderInvoiceId
     private $orderInvoiceId;
 
     /**
-     * @param int $orderInvoiceId
+     * @param  int  $orderInvoiceId
      */
     public function __construct($orderInvoiceId)
     {
-        if (!is_int($orderInvoiceId) || 0 >= $orderInvoiceId) {
+        if (! is_int($orderInvoiceId) || $orderInvoiceId <= 0) {
             throw new InvoiceException('Invalid order invoice id supplied.');
         }
 

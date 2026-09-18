@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class MostCommonCustomersGenderKpi implements KpiInterface
     private $sourceUrl;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $kpiConfiguration
-     * @param string $sourceUrl
+     * @param  string  $sourceUrl
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -71,14 +70,14 @@ final class MostCommonCustomersGenderKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-gender';
         $helper->icon = 'person';
         $helper->color = 'color1';
         $helper->title = $this->translator->trans('Customers', [], 'Admin.Global');
         $helper->subtitle = $this->translator->trans('All Time', [], 'Admin.Global');
 
-        if (false !== $this->kpiConfiguration->get('CUSTOMER_MAIN_GENDER')) {
+        if ($this->kpiConfiguration->get('CUSTOMER_MAIN_GENDER') !== false) {
             $helper->value = $this->kpiConfiguration->get('CUSTOMER_MAIN_GENDER');
         }
 

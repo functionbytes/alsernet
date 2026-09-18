@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ abstract class AbstractColumn implements ColumnInterface
     private $options;
 
     /**
-     * @param string $id
+     * @param  string  $id
      */
     public function __construct($id)
     {
@@ -98,7 +99,7 @@ abstract class AbstractColumn implements ColumnInterface
      */
     public function getOptions()
     {
-        if (null === $this->options) {
+        if ($this->options === null) {
             $this->resolveOptions();
         }
 
@@ -119,8 +120,6 @@ abstract class AbstractColumn implements ColumnInterface
 
     /**
      * Default column options configuration. You can override or extend it needed options.
-     *
-     * @param OptionsResolver $resolver
      */
     protected function configureOptions(OptionsResolver $resolver)
     {
@@ -135,12 +134,10 @@ abstract class AbstractColumn implements ColumnInterface
 
     /**
      * Resolve column options.
-     *
-     * @param array $options
      */
     private function resolveOptions(array $options = [])
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);

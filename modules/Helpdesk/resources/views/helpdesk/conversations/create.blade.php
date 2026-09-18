@@ -38,7 +38,7 @@
                         <!-- Customer Selection -->
                         <div class="col-md-6">
                             <label for="customer_id" class="form-label fw-semibold">
-                                Cliente <span class="text-danger">*</span>
+                                Cliente <span class="text-brand">*</span>
                             </label>
                             @if($customer)
                                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
@@ -76,7 +76,7 @@
                         <!-- Status -->
                         <div class="col-md-6">
                             <label for="status_id" class="form-label fw-semibold">
-                                Estado inicial <span class="text-danger">*</span>
+                                Estado inicial <span class="text-brand">*</span>
                             </label>
                             <select id="status_id"
                                     name="status_id"
@@ -98,7 +98,7 @@
                         <!-- Subject -->
                         <div class="col-12">
                             <label for="subject" class="form-label fw-semibold">
-                                Asunto <span class="text-danger">*</span>
+                                Asunto <span class="text-brand">*</span>
                             </label>
                             <input type="text"
                                    id="subject"
@@ -119,7 +119,7 @@
                         <!-- Priority -->
                         <div class="col-12">
                             <label for="priority" class="form-label fw-semibold">
-                                Prioridad <span class="text-danger">*</span>
+                                Prioridad <span class="text-brand">*</span>
                             </label>
                             <select id="priority"
                                     name="priority"
@@ -148,11 +148,11 @@
                 <!-- Footer Actions -->
                 <div class="card-footer d-flex justify-content-between align-items-center p-4">
                     <a href="{{ route('manager.helpdesk.conversations.index') }}" class="btn btn-light">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Cancelar
+                        Cancelar
                     </a>
 
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-check me-1"></i> Crear conversación
+                        Crear conversación
                     </button>
                 </div>
             </div>
@@ -161,14 +161,6 @@
 
 @endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        // Initialize Select2 for customer dropdown
-        $('.select2').select2({
-            placeholder: '— Seleccionar cliente —',
-            allowClear: true
-        });
-    });
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('vendor/helpdesk/misc/select2-flash.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/select2-flash.js')) }}" defer></script>
+@endpush

@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Services\Extraction\Drivers;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -169,7 +170,7 @@ class FtpDriver implements SourceDriverInterface
      *
      * @param  array<string, mixed>  $config
      */
-    private function buildDisk(string $sourceType, array $config): \Illuminate\Contracts\Filesystem\Filesystem
+    private function buildDisk(string $sourceType, array $config): Filesystem
     {
         $driver = $sourceType === 'sftp' ? 'sftp' : 'ftp';
         $defaultPort = $sourceType === 'sftp' ? 22 : 21;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ class BulkDeleteProfileCommand
      */
     private $profileIds = [];
 
-    /**
-     * @param array $profileIds
-     */
     public function __construct(array $profileIds)
     {
         $this->setProfileIds($profileIds);
@@ -54,9 +52,6 @@ class BulkDeleteProfileCommand
         return $this->profileIds;
     }
 
-    /**
-     * @param array $profileIds
-     */
     private function setProfileIds(array $profileIds)
     {
         foreach ($profileIds as $profileId) {

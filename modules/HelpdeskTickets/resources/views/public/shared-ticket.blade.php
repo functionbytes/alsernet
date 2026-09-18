@@ -46,21 +46,7 @@
         </div>
     </div>
 </div>
-@push('styles')
-<style>
-/* Clases propias en vez de utilidades Bootstrap (.bg-primary/.text-white):
-   dentro de layouts.theme no se resuelven de forma fiable — el bug real
-   encontrado al probar esta página era texto blanco sobre fondo
-   transparente, invisible. */
-.st-thread { display: flex; flex-direction: column; gap: 12px; }
-.st-row { display: flex; }
-.st-row-agent { justify-content: flex-start; }
-.st-row-customer { justify-content: flex-end; }
-.st-bubble { max-width: 80%; padding: 12px 14px; border-radius: 12px; }
-.st-row-agent .st-bubble { background: #f1f2f5; color: #18181b; }
-.st-row-customer .st-bubble { background: #18181b; color: #fff; }
-.st-bubble-meta { font-size: 11px; opacity: .65; margin-bottom: 4px; }
-.st-bubble-body { white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/shared-ticket.css') }}">
 @endpush
 @endsection

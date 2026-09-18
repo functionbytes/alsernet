@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,7 @@ class SetAssociatedProductCategoriesCommand
     private $categoryIds;
 
     /**
-     * @param int $productId
-     * @param int $defaultCategoryId
-     * @param int[] $categoryIds
+     * @param  int[]  $categoryIds
      */
     public function __construct(int $productId, int $defaultCategoryId, array $categoryIds)
     {
@@ -64,17 +63,11 @@ class SetAssociatedProductCategoriesCommand
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return CategoryId
-     */
     public function getDefaultCategoryId(): CategoryId
     {
         return $this->defaultCategoryId;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -89,7 +82,7 @@ class SetAssociatedProductCategoriesCommand
     }
 
     /**
-     * @param int[] $categoryIds
+     * @param  int[]  $categoryIds
      */
     private function setCategoryIds(array $categoryIds): void
     {
@@ -103,7 +96,7 @@ class SetAssociatedProductCategoriesCommand
     }
 
     /**
-     * @param int[] $categoryIds
+     * @param  int[]  $categoryIds
      */
     private function assertCategoryIdsAreNotEmpty(array $categoryIds): void
     {

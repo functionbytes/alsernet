@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,10 +55,6 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
      */
     private $configuration;
 
-    /**
-     * @param Filesystem $filesystem
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(
         Filesystem $filesystem,
         ConfigurationInterface $configuration
@@ -83,9 +80,6 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
     }
 
     /**
-     * @param CategoryId $categoryId
-     * @param Category $category
-     *
      * @throws CategoryNotFoundException
      */
     private function assertCategoryExists(CategoryId $categoryId, Category $category)
@@ -96,25 +90,21 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
     }
 
     /**
-     * @param Category $category
-     *
      * @throws CannotDeleteImageException
      */
     private function deleteCoverImage(Category $category)
     {
-        if (false === $category->deleteImage(true)) {
+        if ($category->deleteImage(true) === false) {
             throw new CannotDeleteImageException(sprintf('Cannot delete cover image for category with id "%s"', $category->id), CannotDeleteImageException::COVER_IMAGE);
         }
     }
 
     /**
-     * @param Category $category
-     *
      * @throws CannotDeleteImageException
      */
     private function deleteThumbnailImage(Category $category)
     {
-        $thumbnailPath = $this->configuration->get('_PS_CAT_IMG_DIR_') . $category->id . '_thumb.jpg';
+        $thumbnailPath = $this->configuration->get('_PS_CAT_IMG_DIR_').$category->id.'_thumb.jpg';
 
         try {
             if ($this->filesystem->exists($thumbnailPath)) {
@@ -126,13 +116,11 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
     }
 
     /**
-     * @param Category $category
-     *
      * @throws CannotDeleteImageException
      */
     private function deleteTemporaryThumbnailImage(Category $category)
     {
-        $temporaryThumbnailPath = $this->configuration->get('_PS_TMP_IMG_DIR_') . 'category_' . $category->id . '-thumb.jpg';
+        $temporaryThumbnailPath = $this->configuration->get('_PS_TMP_IMG_DIR_').'category_'.$category->id.'-thumb.jpg';
 
         try {
             if ($this->filesystem->exists($temporaryThumbnailPath)) {
@@ -144,8 +132,6 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
     }
 
     /**
-     * @param Category $category
-     *
      * @throws CannotDeleteImageException
      */
     private function deleteImagesForAllTypes(Category $category)
@@ -156,7 +142,7 @@ final class DeleteCategoryCoverImageHandler implements DeleteCategoryCoverImageH
 
         try {
             foreach ($imageTypes as $imageType) {
-                $imagePath = $categoryImageDir . $category->id . '-' . $imageType['name'] . '.jpg';
+                $imagePath = $categoryImageDir.$category->id.'-'.$imageType['name'].'.jpg';
 
                 if ($imageTypeFormattedName === $imageType['name']
                     && $this->filesystem->exists($imagePath)

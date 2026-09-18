@@ -661,7 +661,7 @@ class DocumentValidationController extends Controller
      */
     public function getCustomEmailTemplate(): JsonResponse
     {
-        $template = MailerTemplate::where('key', 'custom_document')->first();
+        $template = MailerTemplate::where('key', 'document_custom_email')->first();
 
         if (! $template) {
             return response()->json([
@@ -1021,9 +1021,15 @@ class DocumentValidationController extends Controller
 
             $media->delete();
 
-            // Cambiar estado a "awaiting_documents" cuando se elimina un attachment
-            $document->status_id = DocumentStatus::where('key', 'awaiting_documents')->first()?->id;
-            $document->save();
+            // Cambiar estado a "awaiting_documents" cuando se elimina un attachment,
+            // salvo que el expediente ya esté cerrado (approved/completed): un
+            // adjunto adicional no es un documento requerido, así que borrarlo no
+            // debe reabrir un expediente ya aprobado — mismo criterio que
+            // DocumentFileController::destroy() usa para no tocar expedientes cerrados.
+            if (! in_array($document->status?->key, ['approved', 'completed'], true)) {
+                $document->status_id = DocumentStatus::where('key', 'awaiting_documents')->first()?->id;
+                $document->save();
+            }
 
             // Refrescar datos del documento
             $document->refresh();

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,14 +34,15 @@ class VirtualProductFileSettings
      * Following constants defines maximum characters length constraints for corresponding fields
      */
     public const MAX_DISPLAY_FILENAME_LENGTH = 255;
+
     public const MAX_FILENAME_LENGTH = 255;
+
     public const MAX_ACCESSIBLE_DAYS_LIMIT = 9999999999;
+
     public const MAX_DOWNLOAD_TIMES_LIMIT = 9999999999;
 
     /**
      * Class not supposed to be initialized, it only serves as static storage
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ use PrestaShop\PrestaShop\Core\Domain\Customer\ValueObject\CustomerId;
 abstract class AbstractCustomerHandler
 {
     /**
-     * @param CustomerId $customerId
-     * @param Customer $customer
-     *
      * @throws CustomerNotFoundException
      */
     protected function assertCustomerWasFound(CustomerId $customerId, Customer $customer)
@@ -52,15 +50,13 @@ abstract class AbstractCustomerHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @throws MissingCustomerRequiredFieldsException
      */
     protected function assertRequiredFieldsAreNotMissing(Customer $customer)
     {
         $errors = $customer->validateFieldsRequiredDatabase();
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $missingFields = array_keys($errors);
 
             throw new MissingCustomerRequiredFieldsException($missingFields, sprintf('One or more required fields for customer are missing. Missing fields are: %s', implode(',', $missingFields)));

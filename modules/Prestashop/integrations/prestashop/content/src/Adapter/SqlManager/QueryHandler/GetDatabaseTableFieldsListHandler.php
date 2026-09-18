@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class GetDatabaseTableFieldsListHandler implements GetDatabaseTableFieldsL
      */
     public function handle(GetDatabaseTableFieldsList $query)
     {
-        $attributes = (new RequestSql())->getAttributesByTable($query->getTableName());
+        $attributes = (new RequestSql)->getAttributesByTable($query->getTableName());
         $fields = [];
 
         foreach ($attributes as $attribute) {

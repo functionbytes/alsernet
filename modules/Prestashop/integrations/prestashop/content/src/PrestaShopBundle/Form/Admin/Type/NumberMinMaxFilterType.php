@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,11 @@ final class NumberMinMaxFilterType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        if (!isset($options['min_field_options']['attr']['placeholder'])) {
+        if (! isset($options['min_field_options']['attr']['placeholder'])) {
             $options['min_field_options']['attr']['placeholder'] = $this->trans('Min', [], 'Admin.Global');
         }
 
-        if (!isset($options['max_field_options']['attr']['placeholder'])) {
+        if (! isset($options['max_field_options']['attr']['placeholder'])) {
             $options['max_field_options']['attr']['placeholder'] = $this->trans('Max', [], 'Admin.Global');
         }
 

@@ -79,7 +79,9 @@
 <div class="modal fade" id="assignmentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="assignmentForm" method="POST" action="">
+            <form id="assignmentForm" method="POST" action=""
+                  data-store-url="{{ route('helpdesksocial.assignment-rules.store') }}"
+                  data-update-url-template="{{ route('helpdesksocial.assignment-rules.update', '__ID__') }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="assignmentModalLabel">Nueva regla de asignación</h5>
@@ -123,32 +125,6 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function resetAssignmentForm() {
-        $('#assignmentForm').attr('action', '{{ route('helpdesksocial.assignment-rules.store') }}');
-        $('#assignmentForm').find('input[name="_method"]').remove();
-        $('#assignmentForm')[0].reset();
-        $('#assignmentModalLabel').text('Nueva regla de asignación');
-    }
-
-    function editAssignmentRule(id, name, conditions, assigneeUserId, strategy, priority, isActive) {
-        $('#assignmentForm').attr('action', '{{ route('helpdesksocial.assignment-rules.update', '__ID__') }}'.replace('__ID__', id));
-        if ($('#assignmentForm').find('input[name="_method"]').length === 0) {
-            $('#assignmentForm').prepend('<input type="hidden" name="_method" value="PUT">');
-        }
-        $('#assignmentForm input[name="name"]').val(name);
-        $('#assignmentForm input[name="priority"]').val(priority);
-        $('#assignmentForm select[name="assignee_user_id"]').val(assigneeUserId);
-        $('#assignmentForm select[name="assignment_strategy"]').val(strategy);
-        $('#assignmentForm input[name="is_active"]').prop('checked', isActive === 1);
-        $('#assignmentModalLabel').text('Editar regla de asignación');
-        $('#assignmentModal').modal('show');
-    }
-
-    window.resetAssignmentForm = resetAssignmentForm;
-    window.editAssignmentRule = editAssignmentRule;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-rules-assignment.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-rules-assignment.js')) }}"></script>
+@endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,13 +77,6 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
      */
     private $tools;
 
-    /**
-     * @param int $contextLangId
-     * @param LocaleInterface $contextLocale
-     * @param Tools $tools
-     * @param CurrencyDataProvider $currencyDataProvider
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         int $contextLangId,
         LocaleInterface $contextLocale,
@@ -99,22 +93,16 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
 
     /**
      * {@inheritdoc}
-     *
-     * @param SearchProducts $query
-     *
-     * @return array
      */
     public function handle(SearchProducts $query): array
     {
         $currency = $this->currencyDataProvider->getCurrencyByIsoCode($query->getAlphaIsoCode()->getValue());
         $this->contextStateManager
-            ->setCurrency($currency)
-        ;
-        if (null !== $query->getOrderId()) {
+            ->setCurrency($currency);
+        if ($query->getOrderId() !== null) {
             $order = $this->getOrder($query->getOrderId());
             $this->contextStateManager
-                ->setShop(new Shop($order->id_shop))
-            ;
+                ->setShop(new Shop($order->id_shop));
         }
 
         try {
@@ -126,19 +114,13 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         return $foundProducts;
     }
 
-    /**
-     * @param SearchProducts $query
-     * @param Currency $currency
-     *
-     * @return array
-     */
     private function searchProducts(SearchProducts $query, Currency $currency): array
     {
-        $computingPrecision = new ComputingPrecision();
+        $computingPrecision = new ComputingPrecision;
         $currencyPrecision = $computingPrecision->getPrecision((int) $currency->precision);
 
         $order = $address = null;
-        if (null !== $query->getOrderId()) {
+        if ($query->getOrderId() !== null) {
             $order = $this->getOrder($query->getOrderId());
             $orderAddressId = $order->{Configuration::get('PS_TAX_ADDRESS_TYPE', null, null, $order->id_shop)};
             $address = new Address($orderAddressId);
@@ -168,15 +150,6 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         return $foundProducts;
     }
 
-    /**
-     * @param Product $product
-     * @param string $isoCodeCurrency
-     * @param int $computingPrecision
-     * @param Order|null $order
-     * @param Address|null $address
-     *
-     * @return FoundProduct
-     */
     private function createFoundProductFromLegacy(
         Product $product,
         string $isoCodeCurrency,
@@ -205,8 +178,6 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
     }
 
     /**
-     * @param Product $product
-     *
      * @return ProductCustomizationField[]
      */
     private function getProductCustomizationFields(Product $product): array
@@ -214,7 +185,7 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         $fields = $product->getCustomizationFields();
         $customizationFields = [];
 
-        if (false !== $fields) {
+        if ($fields !== false) {
             foreach ($fields as $typeId => $typeFields) {
                 foreach ($typeFields as $field) {
                     $customizationField = new ProductCustomizationField(
@@ -232,14 +203,6 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         return $customizationFields;
     }
 
-    /**
-     * @param Product $product
-     * @param string $currencyIsoCode
-     * @param int $computingPrecision
-     * @param Order|null $order
-     *
-     * @return array
-     */
     private function getProductCombinations(
         Product $product,
         string $currencyIsoCode,
@@ -249,14 +212,14 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         $productCombinations = [];
         $combinations = $product->getAttributeCombinations();
 
-        if (false !== $combinations) {
+        if ($combinations !== false) {
             foreach ($combinations as $combination) {
                 $productAttributeId = (int) $combination['id_product_attribute'];
                 $attribute = $combination['attribute_name'];
 
                 if (isset($productCombinations[$productAttributeId])) {
                     $existingAttribute = $productCombinations[$productAttributeId]->getAttribute();
-                    $attribute = $existingAttribute . ' - ' . $attribute;
+                    $attribute = $existingAttribute.' - '.$attribute;
                 }
 
                 $priceTaxExcluded = $this->getProductPriceForOrder((int) $product->id, $productAttributeId, false, $computingPrecision, $order);
@@ -281,12 +244,6 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
     }
 
     /**
-     * @param int $productId
-     * @param int|null $productAttributeId
-     * @param bool $withTaxes
-     * @param int $computingPrecision
-     * @param Order|null $order
-     *
      * @return float
      */
     private function getProductPriceForOrder(
@@ -296,7 +253,7 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
         int $computingPrecision,
         ?Order $order)
     {
-        if (null === $order) {
+        if ($order === null) {
             return Product::getPriceStatic($productId, $withTaxes, $productAttributeId, $computingPrecision);
         }
 

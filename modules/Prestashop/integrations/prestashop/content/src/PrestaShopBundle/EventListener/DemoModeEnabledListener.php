@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,11 +72,7 @@ class DemoModeEnabledListener
     /**
      * DemoModeEnabledListener constructor.
      *
-     * @param RouterInterface $router
-     * @param TranslatorInterface $translator
-     * @param Session $session
-     * @param Reader $annotationReader
-     * @param bool $isDemoModeEnabled
+     * @param  bool  $isDemoModeEnabled
      */
     public function __construct(
         RouterInterface $router,
@@ -91,27 +88,24 @@ class DemoModeEnabledListener
         $this->isDemoModeEnabled = $isDemoModeEnabled;
     }
 
-    /**
-     * @param FilterControllerEvent $event
-     */
     public function onKernelController(FilterControllerEvent $event)
     {
-        if (!$this->isDemoModeEnabled
-            || !$event->isMasterRequest()
+        if (! $this->isDemoModeEnabled
+            || ! $event->isMasterRequest()
         ) {
             return;
         }
 
         $controller = $event->getController();
 
-        if (!is_array($controller)) {
+        if (! is_array($controller)) {
             return;
         }
 
-        list($controllerObject, $methodName) = $controller;
+        [$controllerObject, $methodName] = $controller;
         $demoRestricted = $this->getAnnotation($controllerObject, $methodName);
 
-        if (!$demoRestricted instanceof DemoRestricted) {
+        if (! $demoRestricted instanceof DemoRestricted) {
             return;
         }
 
@@ -131,8 +125,6 @@ class DemoModeEnabledListener
 
     /**
      * Send an error message when redirected, will only work on migrated pages.
-     *
-     * @param DemoRestricted $demoRestricted
      */
     private function showNotificationMessage(DemoRestricted $demoRestricted)
     {
@@ -149,9 +141,8 @@ class DemoModeEnabledListener
     /**
      * Retrieve DemoRestricted Annotation.
      *
-     * @param object $controllerObject
-     * @param string $methodName
-     *
+     * @param  object  $controllerObject
+     * @param  string  $methodName
      * @return DemoRestricted|null
      */
     private function getAnnotation($controllerObject, $methodName)
@@ -176,8 +167,6 @@ class DemoModeEnabledListener
     /**
      * Gets query parameters by comparing them to the current request attributes.
      *
-     * @param array $queryParametersToKeep
-     * @param Request $request
      *
      * @return array
      */
@@ -187,7 +176,7 @@ class DemoModeEnabledListener
 
         foreach ($queryParametersToKeep as $queryParameterName) {
             $value = $request->get($queryParameterName);
-            if (null !== $value) {
+            if ($value !== null) {
                 $result[$queryParameterName] = $value;
             }
         }

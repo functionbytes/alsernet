@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,7 @@ final class CurrencyFormDataHandler implements FormDataHandlerInterface
     private $cacheClearerCollection;
 
     /**
-     * @param CommandBusInterface $commandBus
-     * @param CacheClearerInterface[] $cacheClearerCollection
+     * @param  CacheClearerInterface[]  $cacheClearerCollection
      */
     public function __construct(
         CommandBusInterface $commandBus,
@@ -85,8 +85,7 @@ final class CurrencyFormDataHandler implements FormDataHandlerInterface
             ->setLocalizedNames($data['names'])
             ->setLocalizedSymbols($data['symbols'])
             ->setLocalizedTransformations($data['transformations'])
-            ->setShopIds(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopIds(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         /** @var CurrencyId $currencyId */
         $currencyId = $this->commandBus->handle($command);
@@ -103,8 +102,7 @@ final class CurrencyFormDataHandler implements FormDataHandlerInterface
         if ($data['unofficial']) {
             $command = new EditUnofficialCurrencyCommand((int) $id);
             $command
-                ->setIsoCode($data['iso_code'])
-            ;
+                ->setIsoCode($data['iso_code']);
         } else {
             $command = new EditCurrencyCommand((int) $id);
         }
@@ -116,8 +114,7 @@ final class CurrencyFormDataHandler implements FormDataHandlerInterface
             ->setExchangeRate((float) $data['exchange_rate'])
             ->setPrecision((int) $data['precision'])
             ->setIsEnabled($data['active'])
-            ->setShopIds(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopIds(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         $this->commandBus->handle($command);
         $this->clearCache();

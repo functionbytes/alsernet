@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Jobs;
 
+use App\Models\User;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -13,10 +14,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Supplier\Models\Sync\SyncBatch;
 use Modules\Supplier\Models\Sync\SyncSchedule;
+use Modules\Supplier\Notifications\SyncBatchCompletedNotification;
 use Modules\Supplier\Services\Integrations\ErpModelSyncService;
 use Modules\Supplier\Services\SyncStatusService;
 
-class SyncModelsJob implements ShouldQueue, ShouldBeUnique
+class SyncModelsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -71,6 +73,7 @@ class SyncModelsJob implements ShouldQueue, ShouldBeUnique
                 'batch_id' => $this->batch->id,
                 'status' => $this->batch->status,
             ]);
+
             return;
         }
 
@@ -91,9 +94,9 @@ class SyncModelsJob implements ShouldQueue, ShouldBeUnique
 
             if ($result['success']) {
                 $statusService->completeSync($status, [
-                    'models_synced'     => $result['models'] ?? 0,
+                    'models_synced' => $result['models'] ?? 0,
                     'attributes_synced' => $result['attributes'] ?? 0,
-                    'models_skipped'    => $result['skipped'] ?? 0,
+                    'models_skipped' => $result['skipped'] ?? 0,
                 ]);
                 $this->updateSchedule('success');
                 $this->notifyAdmin();
@@ -124,7 +127,8 @@ class SyncModelsJob implements ShouldQueue, ShouldBeUnique
                 // failSync falló: actualizar SyncStatus directamente para evitar que quede en 'running'
                 try {
                     $status->update(['status' => 'failed', 'completed_at' => now()]);
-                } catch (Exception) {}
+                } catch (Exception) {
+                }
             }
 
             $this->updateSchedule('failed');
@@ -179,15 +183,15 @@ class SyncModelsJob implements ShouldQueue, ShouldBeUnique
 
         // Structured INFO log always — independent of trigger type
         Log::info('SyncModelsJob batch summary', [
-            'batch_id'        => $this->batch->id,
-            'batch_uid'       => $this->batch->uid,
-            'batch_name'      => $this->batch->batch_name,
-            'status'          => $this->batch->status,
+            'batch_id' => $this->batch->id,
+            'batch_uid' => $this->batch->uid,
+            'batch_name' => $this->batch->batch_name,
+            'status' => $this->batch->status,
             'processed_items' => $this->batch->processed_items,
-            'failed_items'    => $this->batch->failed_items,
-            'duration_s'      => $this->batch->duration_seconds,
-            'triggered_by'    => $this->batch->triggered_by,
-            'ai_cost_usd'     => round($aiCost, 6),
+            'failed_items' => $this->batch->failed_items,
+            'duration_s' => $this->batch->duration_seconds,
+            'triggered_by' => $this->batch->triggered_by,
+            'ai_cost_usd' => round($aiCost, 6),
         ]);
 
         // In-app DB notification only for manually-triggered batches
@@ -195,22 +199,22 @@ class SyncModelsJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $admins = \App\Models\User::where('role', 'admin')->get();
+        $admins = User::where('role', 'admin')->get();
         if ($admins->isEmpty()) {
-            $first = \App\Models\User::first();
+            $first = User::first();
             if ($first) {
                 $admins = collect([$first]);
             }
         }
 
-        $notification = new \Modules\Supplier\Notifications\SyncBatchCompletedNotification($this->batch);
+        $notification = new SyncBatchCompletedNotification($this->batch);
         foreach ($admins as $admin) {
             try {
                 $admin->notify($notification);
             } catch (\Throwable $e) {
                 Log::warning('SyncModelsJob: failed to notify admin', [
                     'user_id' => $admin->id,
-                    'error'   => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

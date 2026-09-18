@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,7 +70,7 @@ final class OrderReturnStatesGridDefinitionFactory extends AbstractGridDefinitio
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new DataColumn('id_order_return_state'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -78,28 +79,28 @@ final class OrderReturnStatesGridDefinitionFactory extends AbstractGridDefinitio
                     ])
             )
             ->add((new ColorColumn('name'))
-            ->setName($this->trans('Status', [], 'Admin.Global'))
-            ->setOptions([
-                'field' => 'name',
-                'color_field' => 'color',
-            ])
+                ->setName($this->trans('Status', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'name',
+                    'color_field' => 'color',
+                ])
             )
             ->add((new ActionColumn('actions'))
-            ->setName($this->trans('Actions', [], 'Admin.Global'))
-            ->setOptions([
-                'actions' => (new RowActionCollection())
-                    ->add(
-                        (new LinkRowAction('edit'))
-                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                            ->setIcon('edit')
-                            ->setOptions([
-                                'route' => 'admin_order_return_states_edit',
-                                'route_param_name' => 'orderReturnStateId',
-                                'route_param_field' => 'id_order_return_state',
-                                'clickable_row' => true,
-                            ])
-                    ),
-            ])
+                ->setName($this->trans('Actions', [], 'Admin.Global'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection)
+                        ->add(
+                            (new LinkRowAction('edit'))
+                                ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                                ->setIcon('edit')
+                                ->setOptions([
+                                    'route' => 'admin_order_return_states_edit',
+                                    'route_param_name' => 'orderReturnStateId',
+                                    'route_param_field' => 'id_order_return_state',
+                                    'clickable_row' => true,
+                                ])
+                        ),
+                ])
             );
 
         return $columns;
@@ -110,7 +111,7 @@ final class OrderReturnStatesGridDefinitionFactory extends AbstractGridDefinitio
      */
     protected function getFilters()
     {
-        $filters = (new FilterCollection())
+        $filters = (new FilterCollection)
             ->add(
                 (new Filter('id_order_return_state', NumberType::class))
                     ->setTypeOptions([
@@ -151,7 +152,7 @@ final class OrderReturnStatesGridDefinitionFactory extends AbstractGridDefinitio
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))

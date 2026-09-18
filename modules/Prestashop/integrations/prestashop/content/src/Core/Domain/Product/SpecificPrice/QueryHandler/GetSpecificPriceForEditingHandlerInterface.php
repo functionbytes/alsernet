@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,10 +34,5 @@ use PrestaShop\PrestaShop\Core\Domain\Product\SpecificPrice\QueryResult\Specific
 
 interface GetSpecificPriceForEditingHandlerInterface
 {
-    /**
-     * @param GetSpecificPriceForEditing $query
-     *
-     * @return SpecificPriceForEditing
-     */
     public function handle(GetSpecificPriceForEditing $query): SpecificPriceForEditing;
 }

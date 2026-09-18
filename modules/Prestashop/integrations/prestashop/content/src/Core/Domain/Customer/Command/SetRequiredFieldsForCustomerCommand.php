@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class SetRequiredFieldsForCustomerCommand
     private $requiredFields;
 
     /**
-     * @param string[] $requiredFields
+     * @param  string[]  $requiredFields
      */
     public function __construct(array $requiredFields)
     {
@@ -60,7 +61,7 @@ class SetRequiredFieldsForCustomerCommand
     /**
      * Check that all provided fields are allowed.
      *
-     * @param string[] $requiredFields
+     * @param  string[]  $requiredFields
      */
     private function assertContainsOnlyAllowedFields(array $requiredFields)
     {
@@ -68,7 +69,7 @@ class SetRequiredFieldsForCustomerCommand
             return;
         }
 
-        if (!empty(array_diff($requiredFields, RequiredField::ALLOWED_REQUIRED_FIELDS))) {
+        if (! empty(array_diff($requiredFields, RequiredField::ALLOWED_REQUIRED_FIELDS))) {
             throw new InvalidCustomerRequiredFieldsException(sprintf('Invalid customer required fields provided. Allowed fields are: %s', implode(',', RequiredField::ALLOWED_REQUIRED_FIELDS)));
         }
     }

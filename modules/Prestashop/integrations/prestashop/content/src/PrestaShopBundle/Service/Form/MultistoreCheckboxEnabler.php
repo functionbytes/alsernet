@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,11 +78,6 @@ class MultistoreCheckboxEnabler
 
     /**
      * MultistoreCheckboxEnabler constructor.
-     *
-     * @param FeatureInterface $multistoreFeature
-     * @param ShopConfigurationInterface $configuration
-     * @param Context $multiStoreContext
-     * @param MultistoreController $multistoreController
      */
     public function __construct(
         FeatureInterface $multistoreFeature,
@@ -95,12 +91,9 @@ class MultistoreCheckboxEnabler
         $this->multistoreController = $multistoreController;
     }
 
-    /**
-     * @return bool
-     */
     public function shouldAddMultistoreElements(): bool
     {
-        if (!$this->multistoreFeature->isUsed()) {
+        if (! $this->multistoreFeature->isUsed()) {
             return false;
         }
 
@@ -110,13 +103,13 @@ class MultistoreCheckboxEnabler
     /**
      * Adds multistore checkboxes to form fields if needed,
      *
-     * @param FormInterface $form (passed by reference)
+     * @param  FormInterface  $form  (passed by reference)
      */
     public function addMultistoreElements(FormInterface $form): void
     {
         foreach ($form->all() as $child) {
             $options = $child->getConfig()->getOptions();
-            if (!isset($options['multistore_configuration_key'])) {
+            if (! isset($options['multistore_configuration_key'])) {
                 continue;
             }
 
@@ -126,7 +119,7 @@ class MultistoreCheckboxEnabler
             $this->updateCurrentField($form, $child, $options, $isOverriddenInCurrentContext);
 
             // for each field in the configuration form, we add a multistore checkbox (except in all shop context)
-            if (!$this->multiStoreContext->isAllShopContext()) {
+            if (! $this->multiStoreContext->isAllShopContext()) {
                 $this->addCheckbox($form, $child->getName(), $isOverriddenInCurrentContext, $options['multistore_configuration_key']);
             }
         }
@@ -134,10 +127,6 @@ class MultistoreCheckboxEnabler
 
     /**
      * Check if given configuration value is overridden by current shop / group shop context
-     *
-     * @param string $configurationKey
-     *
-     * @return bool
      */
     private function isOverriddenInCurrentContext(string $configurationKey): bool
     {
@@ -148,15 +137,10 @@ class MultistoreCheckboxEnabler
 
     /**
      * Update current field with `disabled` attribute value and multistore dropdown
-     *
-     * @param FormInterface $form
-     * @param FormInterface $childElement
-     * @param array $options
-     * @param bool $isOverriddenInCurrentContext
      */
     private function updateCurrentField(FormInterface $form, FormInterface $childElement, array &$options, bool $isOverriddenInCurrentContext): void
     {
-        $options['attr']['disabled'] = !$this->multiStoreContext->isAllShopContext() && !$isOverriddenInCurrentContext;
+        $options['attr']['disabled'] = ! $this->multiStoreContext->isAllShopContext() && ! $isOverriddenInCurrentContext;
 
         // add multistore dropdown in field option
         if ($this->multiStoreContext->isAllShopContext() || $this->multiStoreContext->isGroupShopContext()) {
@@ -176,15 +160,10 @@ class MultistoreCheckboxEnabler
 
     /**
      * Add multistore checkbox to given related field
-     *
-     * @param FormInterface $form
-     * @param string $relatedFieldName
-     * @param bool $isOverriddenInCurrentContext
-     * @param string $configurationKey
      */
     private function addCheckbox(FormInterface $form, string $relatedFieldName, bool $isOverriddenInCurrentContext, string $configurationKey): void
     {
-        $fieldName = self::MULTISTORE_FIELD_PREFIX . $relatedFieldName;
+        $fieldName = self::MULTISTORE_FIELD_PREFIX.$relatedFieldName;
         $form->add($fieldName, CheckboxType::class, [
             'required' => false,
             'data' => $isOverriddenInCurrentContext,

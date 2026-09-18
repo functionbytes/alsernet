@@ -4,15 +4,21 @@ namespace Modules\HelpdeskAgents\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Modules\HelpdeskAgents\Concerns\InteractsWithDefaultAiAgent;
 use Modules\HelpdeskAgents\Http\Requests\StoreAiAgentFlowRequest;
 use Modules\HelpdeskAgents\Http\Requests\UpdateAiAgentFlowRequest;
 use Modules\HelpdeskAgents\Http\Requests\UpdateAiAgentFlowStructureRequest;
-use Modules\HelpdeskAgents\Models\AiAgent;
 use Modules\HelpdeskAgents\Models\AiAgentFlow;
 
 class AiAgentFlowsController extends Controller
 {
+    // La misma caché del agente por defecto que usan settings, tags, tools y
+    // knowledge. Este controlador tenía la suya propia ('helpdesk:ai-agent:first',
+    // TTL 300) que NADIE invalidaba al guardar el agente: creabas el primer
+    // agente, pinchabas en Flujos y durante 5 minutos te devolvía a ajustes
+    // con "Primero debes configurar un agente IA".
+    use InteractsWithDefaultAiAgent;
+
     /**
      * List flows for an agent
      */
@@ -22,11 +28,7 @@ class AiAgentFlowsController extends Controller
 
         abort_if(! helpdesk_agents_enabled(), 404);
 
-        $agent = Cache::remember(
-            'helpdesk:ai-agent:first',
-            300,
-            fn () => AiAgent::select(['id', 'name'])->oldest()->first()
-        );
+        $agent = $this->getDefaultAgent();
 
         if (! $agent) {
             return redirect()
@@ -74,11 +76,7 @@ class AiAgentFlowsController extends Controller
     {
         $this->authorize('create', AiAgentFlow::class);
 
-        $agent = Cache::remember(
-            'helpdesk:ai-agent:first',
-            300,
-            fn () => AiAgent::select(['id', 'name'])->oldest()->first()
-        );
+        $agent = $this->getDefaultAgent();
 
         if (! $agent) {
             return redirect()->route('helpdesk.ai.settings');
@@ -99,7 +97,7 @@ class AiAgentFlowsController extends Controller
     {
         $this->authorize('create', AiAgentFlow::class);
 
-        $agent = AiAgent::first();
+        $agent = $this->getDefaultAgent();
 
         if (! $agent) {
             return redirect()

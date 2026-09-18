@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,6 @@ class EditOrderAddressCommand extends AbstractEditAddressCommand
     private $addressType;
 
     /**
-     * @param int $orderId
-     * @param string $addressType
-     *
      * @throws InvalidAddressTypeException
      * @throws OrderException
      */
@@ -68,9 +66,6 @@ class EditOrderAddressCommand extends AbstractEditAddressCommand
         $this->setAddressType($addressType);
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
@@ -85,13 +80,11 @@ class EditOrderAddressCommand extends AbstractEditAddressCommand
     }
 
     /**
-     * @param string $addressType
-     *
      * @throws InvalidAddressTypeException
      */
     private function setAddressType(string $addressType): void
     {
-        if (!in_array($addressType, self::ALLOWED_ADDRESS_TYPES)) {
+        if (! in_array($addressType, self::ALLOWED_ADDRESS_TYPES)) {
             throw new InvalidAddressTypeException(sprintf(
                 'Invalid address type %s, allowed values are: %s',
                 $addressType,

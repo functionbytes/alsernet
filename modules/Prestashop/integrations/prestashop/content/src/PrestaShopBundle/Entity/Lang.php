@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,11 +28,13 @@
 namespace PrestaShopBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use PrestaShop\PrestaShop\Core\Language\LanguageInterface;
 
 /**
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\LangRepository")
  */
 class Lang implements LanguageInterface
@@ -40,7 +43,9 @@ class Lang implements LanguageInterface
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_lang", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -108,6 +113,7 @@ class Lang implements LanguageInterface
 
     /**
      * @ORM\ManyToMany(targetEntity="PrestaShopBundle\Entity\Shop", cascade={"remove", "persist"})
+     *
      * @ORM\JoinTable(
      *      joinColumns={@ORM\JoinColumn(name="id_lang", referencedColumnName="id_lang", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="id_shop", referencedColumnName="id_shop", onDelete="CASCADE")}
@@ -120,7 +126,7 @@ class Lang implements LanguageInterface
      */
     public function __construct()
     {
-        $this->shops = new ArrayCollection();
+        $this->shops = new ArrayCollection;
     }
 
     /**
@@ -136,8 +142,7 @@ class Lang implements LanguageInterface
     /**
      * Set name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return Lang
      */
     public function setName($name)
@@ -160,8 +165,7 @@ class Lang implements LanguageInterface
     /**
      * Set active.
      *
-     * @param int $active
-     *
+     * @param  int  $active
      * @return Lang
      */
     public function setActive($active)
@@ -184,8 +188,7 @@ class Lang implements LanguageInterface
     /**
      * Set isoCode.
      *
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return Lang
      */
     public function setIsoCode($isoCode)
@@ -208,8 +211,7 @@ class Lang implements LanguageInterface
     /**
      * Set languageCode.
      *
-     * @param string $languageCode
-     *
+     * @param  string  $languageCode
      * @return Lang
      */
     public function setLanguageCode($languageCode)
@@ -232,8 +234,7 @@ class Lang implements LanguageInterface
     /**
      * Set dateFormatLite.
      *
-     * @param string $dateFormatLite
-     *
+     * @param  string  $dateFormatLite
      * @return Lang
      */
     public function setDateFormatLite($dateFormatLite)
@@ -256,8 +257,7 @@ class Lang implements LanguageInterface
     /**
      * Set dateFormatFull.
      *
-     * @param string $dateFormatFull
-     *
+     * @param  string  $dateFormatFull
      * @return Lang
      */
     public function setDateFormatFull($dateFormatFull)
@@ -280,8 +280,7 @@ class Lang implements LanguageInterface
     /**
      * Set isRtl.
      *
-     * @param bool $isRtl
-     *
+     * @param  bool  $isRtl
      * @return Lang
      */
     public function setIsRtl($isRtl)
@@ -314,12 +313,11 @@ class Lang implements LanguageInterface
      */
     public function getLocale()
     {
-        return !empty($this->locale) ? $this->locale : $this->getLanguageCode();
+        return ! empty($this->locale) ? $this->locale : $this->getLanguageCode();
     }
 
     /**
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return Lang
      */
     public function setLocale($locale)
@@ -332,7 +330,6 @@ class Lang implements LanguageInterface
     /**
      * Add shop.
      *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      *
      * @return Lang
      */
@@ -345,8 +342,6 @@ class Lang implements LanguageInterface
 
     /**
      * Remove shop.
-     *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      */
     public function removeShop(Shop $shop)
     {
@@ -356,7 +351,7 @@ class Lang implements LanguageInterface
     /**
      * Get shops.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getShops()
     {

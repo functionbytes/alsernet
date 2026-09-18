@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,18 +52,22 @@ class ProductQuantity extends CommonAbstractType
      * @var Configuration
      */
     public $configuration;
+
     /**
      * @var LegacyContext
      */
     public $legacyContext;
+
     /**
      * @var array<int|Language>
      */
     public $locales;
+
     /**
      * @var Router
      */
     private $router;
+
     /**
      * @var TranslatorInterface
      */
@@ -71,9 +76,9 @@ class ProductQuantity extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param Router $router
-     * @param LegacyContext $legacyContext
+     * @param  TranslatorInterface  $translator
+     * @param  Router  $router
+     * @param  LegacyContext  $legacyContext
      */
     public function __construct($translator, $router, $legacyContext)
     {
@@ -127,7 +132,7 @@ class ProductQuantity extends CommonAbstractType
             ->add(
                 'pack_stock_type',
                 FormType\ChoiceType::class
-            )//see eventListener for details
+            )// see eventListener for details
             ->add(
                 'depends_on_stock',
                 FormType\ChoiceType::class,
@@ -158,7 +163,7 @@ class ProductQuantity extends CommonAbstractType
                     'required' => true,
                     'label' => $this->translator->trans('Quantity', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -176,7 +181,7 @@ class ProductQuantity extends CommonAbstractType
                     'required' => true,
                     'label' => $this->translator->trans('Minimum quantity for sale', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -268,12 +273,12 @@ class ProductQuantity extends CommonAbstractType
             function (FormEvent $event) {
                 $form = $event->getForm();
 
-                //Manage out_of_stock field with contextual values/label
+                // Manage out_of_stock field with contextual values/label
                 $defaultChoiceLabel = $this->translator->trans(
                     'Use default behavior',
                     [],
                     'Admin.Catalog.Feature'
-                ) . ' (';
+                ).' (';
                 $defaultChoiceLabel .= $this->configuration->get('PS_ORDER_OUT_OF_STOCK') == 1 ?
                     $this->translator->trans('Allow orders', [], 'Admin.Catalog.Feature') :
                     $this->translator->trans('Deny orders', [], 'Admin.Catalog.Feature');
@@ -295,9 +300,9 @@ class ProductQuantity extends CommonAbstractType
                     ]
                 );
 
-                //Manage out_of_stock field with contextual values/label
+                // Manage out_of_stock field with contextual values/label
                 $pack_stock_type = $this->configuration->get('PS_PACK_STOCK_TYPE');
-                $defaultChoiceLabel = $this->translator->trans('Default', [], 'Admin.Global') . ': ';
+                $defaultChoiceLabel = $this->translator->trans('Default', [], 'Admin.Global').': ';
                 if ($pack_stock_type == Pack::STOCK_TYPE_PACK_ONLY) {
                     $defaultChoiceLabel .= $this->translator->trans(
                         'Decrement pack only.',

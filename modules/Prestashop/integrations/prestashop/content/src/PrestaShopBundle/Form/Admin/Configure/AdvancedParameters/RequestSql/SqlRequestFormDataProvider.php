@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,10 +64,6 @@ class SqlRequestFormDataProvider
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(
         CommandBusInterface $commandBus,
         CommandBusInterface $queryBus
@@ -78,8 +75,7 @@ class SqlRequestFormDataProvider
     /**
      * Get RequestSql form data.
      *
-     * @param int $requestSqlId
-     *
+     * @param  int  $requestSqlId
      * @return array
      */
     public function getData($requestSqlId)
@@ -103,7 +99,6 @@ class SqlRequestFormDataProvider
     /**
      * Save form data for RequestSql.
      *
-     * @param array $requestSqlData
      *
      * @return array Array of errors if any
      */
@@ -125,8 +120,6 @@ class SqlRequestFormDataProvider
     }
 
     /**
-     * @param array $requestSqlData
-     *
      * @return AddSqlRequestCommand
      *
      * @throws SqlRequestConstraintException
@@ -140,8 +133,6 @@ class SqlRequestFormDataProvider
     }
 
     /**
-     * @param array $requestSqlData
-     *
      * @return EditSqlRequestCommand
      *
      * @throws SqlRequestException
@@ -156,7 +147,6 @@ class SqlRequestFormDataProvider
     /**
      * Transform exception into translatable errors.
      *
-     * @param SqlRequestException $e
      *
      * @return array Errors
      */
@@ -164,7 +154,7 @@ class SqlRequestFormDataProvider
     {
         $exceptionType = get_class($e);
 
-        if (SqlRequestConstraintException::class === $exceptionType) {
+        if ($exceptionType === SqlRequestConstraintException::class) {
             return $this->getConstraintError($e);
         }
 
@@ -174,7 +164,6 @@ class SqlRequestFormDataProvider
     /**
      * Get error for constraint exception.
      *
-     * @param SqlRequestConstraintException $e
      *
      * @return array
      */
@@ -208,7 +197,6 @@ class SqlRequestFormDataProvider
     /**
      * Get error for exception.
      *
-     * @param SqlRequestException $e
      *
      * @return array
      */

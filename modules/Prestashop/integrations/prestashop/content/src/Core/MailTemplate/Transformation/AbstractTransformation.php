@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ abstract class AbstractTransformation implements TransformationInterface
     protected $type;
 
     /**
-     * @param string $type
+     * @param  string  $type
      *
      * @throws InvalidArgumentException
      */
@@ -52,7 +53,7 @@ abstract class AbstractTransformation implements TransformationInterface
             MailTemplateInterface::HTML_TYPE,
             MailTemplateInterface::TXT_TYPE,
         ];
-        if (!in_array($type, $availableTypes)) {
+        if (! in_array($type, $availableTypes)) {
             throw new InvalidArgumentException(sprintf('Invalid type %s, available types are: %s', $type, implode(', ', $availableTypes)));
         }
 

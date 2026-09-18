@@ -45,15 +45,46 @@ class BirthdayQueueHealthService
             ->where('scheduled_at', '<', now()->subMinutes(self::STUCK_MINUTES))
             ->count();
 
+        $missingToday = $this->missingToday();
+
         return [
             'queue' => $queue,
             'pending_in_redis' => $this->queueSize($queue),
             'stuck_sending' => $stuck,
             'overdue_pending' => $overdue,
+            // La campaña del día no existe o no llegó a prepararse. Es el fallo
+            // que más caro sale y el más silencioso: no hay nada atascado
+            // porque no hay nada, y el día pasa sin que salte ninguna alarma.
+            'missing_today' => $missingToday,
             // Reservados sin procesar es la señal inequívoca de que el worker
             // no está consumiendo esta cola.
-            'healthy' => $stuck === 0 && $overdue === 0,
+            'healthy' => $stuck === 0 && $overdue === 0 && ! $missingToday,
         ];
+    }
+
+    /**
+     * ¿Se ha quedado hoy sin campaña?
+     *
+     * Solo cuenta a partir de la hora de preparación: antes de esa hora la
+     * ausencia es normal, no una avería.
+     */
+    private function missingToday(): bool
+    {
+        $timezone = (string) config('helpdeskbirthday.timezone', config('app.timezone', 'UTC'));
+        $prepareAt = (string) config('helpdeskbirthday.prepare_at', '06:00');
+
+        $local = now()->timezone($timezone);
+
+        // Un margen prudencial sobre la hora de preparación: el comando tarda
+        // en resolver la audiencia y no queremos avisar mientras corre.
+        if ($local->format('H:i') < $prepareAt) {
+            return false;
+        }
+
+        return ! BirthdayCampaign::query()
+            ->whereDate('campaign_date', $local->toDateString())
+            ->whereNotIn('status', [BirthdayCampaign::STATUS_DRAFT, BirthdayCampaign::STATUS_FAILED])
+            ->exists();
     }
 
     /**

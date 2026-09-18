@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,7 @@ class LabelOptionsExtension extends AbstractTypeExtension
             ])
             ->setAllowedTypes('label_tag_name', ['null', 'string'])
             ->setAllowedTypes('label_subtitle', ['null', 'string'])
-            ->setAllowedTypes('label_help_box', ['null', 'string'])
-        ;
+            ->setAllowedTypes('label_help_box', ['null', 'string']);
     }
 
     /**
@@ -68,13 +68,13 @@ class LabelOptionsExtension extends AbstractTypeExtension
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        if (!empty($options['label_tag_name'])) {
+        if (! empty($options['label_tag_name'])) {
             $view->vars['label_tag_name'] = $options['label_tag_name'];
         }
-        if (!empty($options['label_subtitle'])) {
+        if (! empty($options['label_subtitle'])) {
             $view->vars['label_subtitle'] = $options['label_subtitle'];
         }
-        if (!empty($options['label_help_box'])) {
+        if (! empty($options['label_help_box'])) {
             $view->vars['label_help_box'] = $options['label_help_box'];
         }
     }

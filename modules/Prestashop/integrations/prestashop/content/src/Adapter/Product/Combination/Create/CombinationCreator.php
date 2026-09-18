@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,11 +63,6 @@ class CombinationCreator
      */
     private $productRepository;
 
-    /**
-     * @param CombinationGeneratorInterface $combinationGenerator
-     * @param CombinationRepository $combinationRepository
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         CombinationGeneratorInterface $combinationGenerator,
         CombinationRepository $combinationRepository,
@@ -78,9 +74,7 @@ class CombinationCreator
     }
 
     /**
-     * @param ProductId $productId
-     * @param GroupedAttributeIds[] $groupedAttributeIdsList
-     *
+     * @param  GroupedAttributeIds[]  $groupedAttributeIdsList
      * @return CombinationId[]
      *
      * @todo: multistore
@@ -106,8 +100,7 @@ class CombinationCreator
     }
 
     /**
-     * @param GroupedAttributeIds[] $groupedAttributeIdsList
-     *
+     * @param  GroupedAttributeIds[]  $groupedAttributeIdsList
      * @return array<int, array<int, int>>
      */
     private function formatScalarValues(array $groupedAttributeIdsList): array
@@ -123,9 +116,6 @@ class CombinationCreator
     }
 
     /**
-     * @param Product $product
-     * @param Traversable $generatedCombinations
-     *
      * @return CombinationId[]
      *
      * @throws CoreException
@@ -142,12 +132,12 @@ class CombinationCreator
             if ($alreadyHasCombinations) {
                 $attributeIds = array_values($generatedCombination);
                 $matchingCombinations = $this->combinationRepository->getCombinationIdsByAttributes($productId, $attributeIds);
-                if (!empty($matchingCombinations)) {
+                if (! empty($matchingCombinations)) {
                     continue;
                 }
             }
 
-            $addedCombinationIds[] = $this->persistCombination($productId, $generatedCombination, !$hasDefault);
+            $addedCombinationIds[] = $this->persistCombination($productId, $generatedCombination, ! $hasDefault);
             $hasDefault = true;
         }
 
@@ -155,11 +145,7 @@ class CombinationCreator
     }
 
     /**
-     * @param ProductId $productId
-     * @param int[] $generatedCombination
-     * @param bool $isDefault
-     *
-     * @return CombinationId
+     * @param  int[]  $generatedCombination
      *
      * @throws CoreException
      */
@@ -168,7 +154,7 @@ class CombinationCreator
         $combination = $this->combinationRepository->create($productId, $isDefault);
         $combinationId = new CombinationId((int) $combination->id);
 
-        //@todo: Use DB transaction instead if they are accepted (PR #21740)
+        // @todo: Use DB transaction instead if they are accepted (PR #21740)
         try {
             $this->combinationRepository->saveProductAttributeAssociation($combinationId, $generatedCombination);
         } catch (CoreException $e) {
@@ -192,8 +178,6 @@ class CombinationCreator
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws CoreException
      */
     private function applySpecificPriceRules(ProductId $productId): void

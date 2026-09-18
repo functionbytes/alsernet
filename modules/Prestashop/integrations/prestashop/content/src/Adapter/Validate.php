@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use Validate as ValidateLegacy;
 class Validate
 {
     /**
-     * @param mixed $way
-     *
+     * @param  mixed  $way
      * @return int
      */
     public static function isOrderWay($way)
@@ -44,8 +44,7 @@ class Validate
     }
 
     /**
-     * @param mixed $order
-     *
+     * @param  mixed  $order
      * @return bool
      */
     public static function isOrderBy($order)
@@ -54,8 +53,7 @@ class Validate
     }
 
     /**
-     * @param mixed $date
-     *
+     * @param  mixed  $date
      * @return bool
      */
     public static function isDate($date)
@@ -66,9 +64,8 @@ class Validate
     /**
      * Check if HTML content is clean.
      *
-     * @param string $html
-     * @param bool $allowIframe
-     *
+     * @param  string  $html
+     * @param  bool  $allowIframe
      * @return bool
      */
     public function isCleanHtml($html, $allowIframe = false)
@@ -78,10 +75,6 @@ class Validate
 
     /**
      * Check for a given email validity.
-     *
-     * @param string $email
-     *
-     * @return bool
      */
     public function isEmail(string $email): bool
     {
@@ -91,8 +84,7 @@ class Validate
     /**
      * Check for module name validity.
      *
-     * @param string $name Module name to validate
-     *
+     * @param  string  $name  Module name to validate
      * @return bool
      */
     public function isModuleName($name)
@@ -103,8 +95,7 @@ class Validate
     /**
      * Check if object has been correctly loaded.
      *
-     * @param object $object Object to validate
-     *
+     * @param  object  $object  Object to validate
      * @return bool Validity is ok or not
      */
     public static function isLoadedObject($object)
@@ -115,8 +106,7 @@ class Validate
     /**
      * Check for Language Iso Code.
      *
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return bool
      */
     public function isLangIsoCode($isoCode)
@@ -127,8 +117,7 @@ class Validate
     /**
      * Check for an integer validity (unsigned).
      *
-     * @param int $value Integer to validate
-     *
+     * @param  int  $value  Integer to validate
      * @return bool
      */
     public function isUnsignedInt($value)
@@ -139,8 +128,7 @@ class Validate
     /**
      * Check for a rewritten url validity.
      *
-     * @param string $value
-     *
+     * @param  string  $value
      * @return bool
      */
     public function isLinkRewrite($value)

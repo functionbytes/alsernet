@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,7 +67,7 @@ final class CustomerDiscountGridDefinitionFactory extends AbstractGridDefinition
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new DataColumn('id_cart_rule'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -103,34 +104,34 @@ final class CustomerDiscountGridDefinitionFactory extends AbstractGridDefinition
                     ])
             )
             ->add((new ActionColumn('actions'))
-            ->setName($this->trans('Actions', [], 'Admin.Global'))
-            ->setOptions([
-                'actions' => (new RowActionCollection())
-                    ->add(
-                        (new EditCustomerDiscountRowAction('edit'))
-                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                            ->setIcon('edit')
-                            ->setOptions([
-                                'id_cart_rule' => 'id_cart_rule',
-                            ])
-                    )
-                    ->add(
-                        (new DeleteCustomerDiscountRowAction('delete'))
-                            ->setName($this->trans('Delete', [], 'Admin.Actions'))
-                            ->setIcon('delete')
-                            ->setOptions([
-                                'id_cart_rule' => 'id_cart_rule',
-                                'confirm_message' => $this->trans('Are you sure you want to delete the selected item(s)?', [], 'Admin.Global'),
-                                'method' => 'POST',
-                                'modal_options' => new ModalOptions([
-                                    'title' => $this->trans('Delete selection', [], 'Admin.Actions'),
-                                    'confirm_button_label' => $this->trans('Delete', [], 'Admin.Actions'),
-                                    'close_button_label' => $this->trans('Cancel', [], 'Admin.Actions'),
-                                    'confirm_button_class' => 'btn-danger',
-                                ]),
-                            ])
-                    ),
-            ])
+                ->setName($this->trans('Actions', [], 'Admin.Global'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection)
+                        ->add(
+                            (new EditCustomerDiscountRowAction('edit'))
+                                ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                                ->setIcon('edit')
+                                ->setOptions([
+                                    'id_cart_rule' => 'id_cart_rule',
+                                ])
+                        )
+                        ->add(
+                            (new DeleteCustomerDiscountRowAction('delete'))
+                                ->setName($this->trans('Delete', [], 'Admin.Actions'))
+                                ->setIcon('delete')
+                                ->setOptions([
+                                    'id_cart_rule' => 'id_cart_rule',
+                                    'confirm_message' => $this->trans('Are you sure you want to delete the selected item(s)?', [], 'Admin.Global'),
+                                    'method' => 'POST',
+                                    'modal_options' => new ModalOptions([
+                                        'title' => $this->trans('Delete selection', [], 'Admin.Actions'),
+                                        'confirm_button_label' => $this->trans('Delete', [], 'Admin.Actions'),
+                                        'close_button_label' => $this->trans('Cancel', [], 'Admin.Actions'),
+                                        'confirm_button_class' => 'btn-danger',
+                                    ]),
+                                ])
+                        ),
+                ])
             );
     }
 
@@ -139,7 +140,7 @@ final class CustomerDiscountGridDefinitionFactory extends AbstractGridDefinition
      */
     public function getViewOptions()
     {
-        return (new ViewOptionsCollection())
+        return (new ViewOptionsCollection)
             ->add('display_name', false);
     }
 }

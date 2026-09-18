@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ class ProfileChoiceType extends AbstractType
      */
     private $profileChoices;
 
-    /**
-     * @param array $profileChoices
-     */
     public function __construct(array $profileChoices)
     {
         $this->profileChoices = $profileChoices;

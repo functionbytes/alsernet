@@ -55,7 +55,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-danger mb-2">En riesgo</h6>
+                            <h6 class="card-title text-dark mb-2">En riesgo</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['at_risk'] }}</h4>
                             <small class="text-muted">Health score &lt; 50</small>
                         </div>
@@ -89,7 +89,7 @@
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-filter"></i> Filtrar
+                            Filtrar
                         </button>
                     </div>
                 </div>
@@ -174,12 +174,13 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button class="dropdown-item btn-delete"
-                                                            data-id="{{ $company->id }}"
+                                                        <a class="dropdown-item delete-btn" href="#"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#delete-modal"
                                                             data-url="{{ route('settings.helpdesk.companies.destroy', $company) }}"
-                                                            data-name="{{ $company->name }}">
+                                                            data-title="Eliminar empresa: {{ $company->name }}">
                                                             Eliminar
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endcan
                                             </ul>
@@ -207,7 +208,7 @@
                         @if(! request('search'))
                             @can('helpdesk.companies.manage')
                                 <a href="{{ route('settings.helpdesk.companies.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus"></i> Crear primera empresa
+                                    Crear primera empresa
                                 </a>
                             @endcan
                         @endif
@@ -236,22 +237,12 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#deleteForm').attr('action', url);
-        $('#deleteItemName').text(name);
-        $('#deleteModal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdSettingsPageConfig = {
+    flashSuccess: @json(session('success')),
+    flashError: @json(session('error')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-standard-bootstrap.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-standard-bootstrap.js')) }}" defer></script>
 @endpush

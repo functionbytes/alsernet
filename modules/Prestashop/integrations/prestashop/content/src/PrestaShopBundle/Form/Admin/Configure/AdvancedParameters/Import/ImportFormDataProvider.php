@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ final class ImportFormDataProvider implements ImportFormDataProviderInterface
      */
     private $session;
 
-    /**
-     * @param FileFinder $importFileFinder
-     * @param SessionInterface $session
-     */
     public function __construct(
         FileFinder $importFileFinder,
         SessionInterface $session
@@ -108,7 +105,6 @@ final class ImportFormDataProvider implements ImportFormDataProviderInterface
     /**
      * Get selected file after confirming that it is available in file system.
      *
-     * @param ImportConfigInterface $importConfig
      *
      * @return string|null
      */
@@ -116,7 +112,7 @@ final class ImportFormDataProvider implements ImportFormDataProviderInterface
     {
         $importFiles = $this->importFileFinder->getImportFileNames();
         $selectedFile = $importConfig->getFileName();
-        if ($selectedFile && !in_array($selectedFile, $importFiles)) {
+        if ($selectedFile && ! in_array($selectedFile, $importFiles)) {
             $selectedFile = null;
         }
 

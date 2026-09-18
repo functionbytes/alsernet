@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,8 +52,7 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
     private $defaultCurrency;
 
     /**
-     * @param ConfigurationInterface $configuration
-     * @param int $shopId
+     * @param  int  $shopId
      */
     public function __construct(ConfigurationInterface $configuration, $shopId)
     {
@@ -90,7 +90,7 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
     public function getCurrencyByIsoCode($isoCode, $idLang = null)
     {
         $currencyId = Currency::getIdByIsoCode($isoCode, 0, false, true);
-        if (!$currencyId) {
+        if (! $currencyId) {
             return null;
         }
 
@@ -102,9 +102,8 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
     }
 
     /**
-     * @param string $isoCode
-     * @param string $locale
-     *
+     * @param  string  $isoCode
+     * @param  string  $locale
      * @return Currency|null
      */
     public function getCurrencyByIsoCodeAndLocale($isoCode, $locale)
@@ -121,8 +120,8 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
     {
         // Soft deleted currencies are not kept duplicated any more, so if one try to recreate it the one in database is reused
         $currency = $this->getCurrencyByIsoCode($isoCode, $idLang);
-        if (null === $currency) {
-            if (null === $idLang) {
+        if ($currency === null) {
+            if ($idLang === null) {
                 $idLang = $this->configuration->get('PS_LANG_DEFAULT');
             }
             $currency = new Currency(null, $idLang);
@@ -136,7 +135,7 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
      */
     public function saveCurrency(Currency $currencyEntity)
     {
-        if (false === $currencyEntity->save()) {
+        if ($currencyEntity->save() === false) {
             throw new Exception('Failed saving Currency entity');
         }
     }
@@ -164,7 +163,7 @@ class CurrencyDataProvider implements CurrencyDataProviderInterface
      */
     public function getDefaultCurrency()
     {
-        if (null === $this->defaultCurrency) {
+        if ($this->defaultCurrency === null) {
             $this->defaultCurrency = new Currency((int) $this->configuration->get('PS_CURRENCY_DEFAULT'), null, $this->shopId);
         }
 

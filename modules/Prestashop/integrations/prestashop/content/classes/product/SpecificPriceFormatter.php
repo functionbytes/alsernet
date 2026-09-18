@@ -99,7 +99,7 @@ class SpecificPriceFormatterCore
             // Since this price is set in default currency,
             // we need to convert it into current currency
             $this->specificPrice['id_currency'];
-            $currentPriceCurrentCurrency = \Tools::convertPrice($currentPriceDefaultCurrency, $this->currency, true);
+            $currentPriceCurrentCurrency = Tools::convertPrice($currentPriceDefaultCurrency, $this->currency, true);
 
             if ($this->specificPrice['reduction_type'] == 'amount') {
                 $currentPriceCurrentCurrency -= ($this->specificPrice['reduction_tax'] ? $this->specificPrice['reduction'] : $this->specificPrice['reduction'] / (1 + $tax_rate / 100));

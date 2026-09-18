@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,11 +60,9 @@ class ProductSeoOptions
     private $redirectTargetId;
 
     /**
-     * @param string[] $localizedMetaTitles
-     * @param string[] $localizedMetaDescriptions
-     * @param string[] $localizedLinkRewrites
-     * @param string $redirectType
-     * @param int $redirectTargetId
+     * @param  string[]  $localizedMetaTitles
+     * @param  string[]  $localizedMetaDescriptions
+     * @param  string[]  $localizedLinkRewrites
      */
     public function __construct(
         array $localizedMetaTitles,
@@ -103,17 +102,11 @@ class ProductSeoOptions
         return $this->localizedLinkRewrites;
     }
 
-    /**
-     * @return string
-     */
     public function getRedirectType(): string
     {
         return $this->redirectType;
     }
 
-    /**
-     * @return int
-     */
     public function getRedirectTargetId(): int
     {
         return $this->redirectTargetId;

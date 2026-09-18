@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,7 @@ final class UrlFileChecker implements UrlFileCheckerInterface
     private $fileDir;
 
     /**
-     * @param string $fileDir
+     * @param  string  $fileDir
      */
     public function __construct($fileDir)
     {
@@ -61,13 +62,12 @@ final class UrlFileChecker implements UrlFileCheckerInterface
     }
 
     /**
-     * @param string $fileName
-     *
+     * @param  string  $fileName
      * @return bool
      */
     private function isFileWritable($fileName)
     {
-        $filePath = $this->fileDir . DIRECTORY_SEPARATOR . $fileName;
+        $filePath = $this->fileDir.DIRECTORY_SEPARATOR.$fileName;
 
         if (file_exists($filePath)) {
             return is_writable($filePath);

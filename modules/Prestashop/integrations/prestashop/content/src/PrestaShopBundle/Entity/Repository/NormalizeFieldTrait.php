@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,8 +30,7 @@ namespace PrestaShopBundle\Entity\Repository;
 trait NormalizeFieldTrait
 {
     /**
-     * @param array $rows
-     *
+     * @param  array  $rows
      * @return mixed
      */
     protected function castNumericToInt($rows)
@@ -47,8 +47,7 @@ trait NormalizeFieldTrait
     }
 
     /**
-     * @param array $rows
-     *
+     * @param  array  $rows
      * @return mixed
      */
     protected function castIdsToArray($rows)
@@ -65,14 +64,13 @@ trait NormalizeFieldTrait
     }
 
     /**
-     * @param string $columnName
-     * @param string|null $columnValue
-     *
+     * @param  string  $columnName
+     * @param  string|null  $columnValue
      * @return bool
      */
     private function shouldCastToInt($columnName, $columnValue)
     {
-        if (null === $columnValue || 'N/A' === $columnValue) {
+        if ($columnValue === null || $columnValue === 'N/A') {
             return false;
         }
 

@@ -23,8 +23,8 @@ class CampaignResource extends JsonResource
             'endsAt' => $this->ends_at?->toIso8601String(),
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
-            'impressionsCount' => $this->whenCounted('impressions'),
-            'clicksCount' => $this->when(isset($this->clicks_count), $this->clicks_count),
+            'impressionsCount' => $this->impressions_count,
+            'clicksCount' => $this->clicks_count,
             'urls' => [
                 'show' => route('helpdesk.campaigns.show', $this->resource),
                 'edit' => route('helpdesk.campaigns.edit', $this->resource),

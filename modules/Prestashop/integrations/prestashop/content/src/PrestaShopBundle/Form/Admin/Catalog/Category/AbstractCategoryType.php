@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,13 +68,6 @@ abstract class AbstractCategoryType extends TranslatorAwareType
      */
     private $configuration;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $customerGroupChoices
-     * @param FeatureInterface $multistoreFeature
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -97,7 +91,7 @@ abstract class AbstractCategoryType extends TranslatorAwareType
             ->add('name', TranslatableType::class, [
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -216,7 +210,7 @@ abstract class AbstractCategoryType extends TranslatorAwareType
             ->add('link_rewrite', TranslatableType::class, [
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [

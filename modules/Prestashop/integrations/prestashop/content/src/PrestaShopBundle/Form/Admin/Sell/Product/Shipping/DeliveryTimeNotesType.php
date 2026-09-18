@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,8 +67,7 @@ class DeliveryTimeNotesType extends TranslatorAwareType
                     ],
                 ],
                 'help' => $this->trans('Leave empty to disable', 'Admin.Catalog.Help'),
-            ])
-        ;
+            ]);
     }
 
     /**

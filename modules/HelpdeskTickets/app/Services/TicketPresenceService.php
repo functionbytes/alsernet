@@ -60,6 +60,31 @@ class TicketPresenceService
     }
 
     /**
+     * Lee (sin heartbeat, sin escribir nada) los agentes activos en varios
+     * tickets a la vez — para el listado, que no puede latir contra un
+     * ticket que no tiene abierto. Mismo TTL/purga que heartbeat()/leave();
+     * los tickets sin nadie viéndolos ahora mismo no aparecen en el
+     * resultado (evita mandar de vuelta un array vacío por cada fila).
+     *
+     * @param  array<int, int>  $ticketIds
+     * @return array<int, array<int, array{user_id: int, name: string, action: string, at: int}>> ticket_id => viewers
+     */
+    public function viewersForMany(array $ticketIds, int $now): array
+    {
+        $result = [];
+
+        foreach ($ticketIds as $ticketId) {
+            $viewers = $this->prune($this->all($ticketId), $now);
+
+            if ($viewers !== []) {
+                $result[$ticketId] = array_values($viewers);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return array<int, array{user_id: int, name: string, action: string, at: int}>
      */
     private function all(int $ticketId): array

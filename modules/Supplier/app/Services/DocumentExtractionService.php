@@ -4,6 +4,7 @@ namespace Modules\Supplier\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Ai\AiCost;
 
 /**
@@ -33,7 +34,7 @@ class DocumentExtractionService
 
     public function __construct()
     {
-        $this->openaiApiKey = self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.openai_api_key')) ?: config('services.openai.api_key');
+        $this->openaiApiKey = self::decryptApiKey(Setting::get('supplier.openai_api_key')) ?: config('services.openai.api_key');
     }
 
     private static function decryptApiKey(?string $value): string

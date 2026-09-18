@@ -3,9 +3,7 @@
 @section('title', 'Reportes de contactos')
 
 @push('css')
-    <style>
-        .avatar-placeholder-32 { width: 32px; height: 32px; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/contacts/css/contacts.css') }}?v={{ filemtime(public_path('modules/contacts/css/contacts.css')) }}">
 @endpush
 
 @section('page_header')
@@ -51,7 +49,7 @@
         <div class="col-6 col-md-3">
             <div class="card text-center h-100">
                 <div class="card-body">
-                    <i class="fas fa-ban fa-2x text-danger mb-2"></i>
+                    <i class="fas fa-ban fa-2x text-brand mb-2"></i>
                     <h4 class="fw-bold mb-0">{{ number_format($stats['banned']) }}</h4>
                     <small class="text-muted">Suspendidos</small>
                 </div>

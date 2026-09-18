@@ -174,20 +174,19 @@ final class Locale implements LocaleInterface
     /**
      * Get the number symbols to use for a given numbering system.
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return NumberSymbolsData The wanted number symbols
      *
      * @throws LocalizationException When passed $numberingSystem is invalid
      */
     public function getNumberSymbolsByNumberingSystem($numberingSystem = null)
     {
-        if (null === $numberingSystem) {
+        if ($numberingSystem === null) {
             $numberingSystem = $this->getDefaultNumberingSystem();
         }
-        if (!isset($this->getAllNumberSymbols()[$numberingSystem])) {
-            throw new LocalizationException('Invalid numbering system: ' . $numberingSystem);
+        if (! isset($this->getAllNumberSymbols()[$numberingSystem])) {
+            throw new LocalizationException('Invalid numbering system: '.$numberingSystem);
         }
 
         return $this->getAllNumberSymbols()[$numberingSystem];
@@ -196,20 +195,19 @@ final class Locale implements LocaleInterface
     /**
      * Get the pattern to use when formatting a decimal number (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The decimal pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
      */
     public function getDecimalPattern($numberingSystem = null)
     {
-        if (null === $numberingSystem) {
+        if ($numberingSystem === null) {
             $numberingSystem = $this->getDefaultNumberingSystem();
         }
-        if (!isset($this->decimalPatterns[$numberingSystem])) {
-            throw new LocalizationException('No decimal pattern found for numbering system: ' . $numberingSystem);
+        if (! isset($this->decimalPatterns[$numberingSystem])) {
+            throw new LocalizationException('No decimal pattern found for numbering system: '.$numberingSystem);
         }
 
         return $this->decimalPatterns[$numberingSystem];
@@ -218,20 +216,19 @@ final class Locale implements LocaleInterface
     /**
      * Get the pattern to use when formatting a percentage (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The percent pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
      */
     public function getPercentPattern($numberingSystem = null)
     {
-        if (null === $numberingSystem) {
+        if ($numberingSystem === null) {
             $numberingSystem = $this->getDefaultNumberingSystem();
         }
-        if (!isset($this->percentPatterns[$numberingSystem])) {
-            throw new LocalizationException('No percent pattern found for numbering system: ' . $numberingSystem);
+        if (! isset($this->percentPatterns[$numberingSystem])) {
+            throw new LocalizationException('No percent pattern found for numbering system: '.$numberingSystem);
         }
 
         return $this->percentPatterns[$numberingSystem];
@@ -240,20 +237,19 @@ final class Locale implements LocaleInterface
     /**
      * Get the pattern to use when formatting a price (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The currency pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
      */
     public function getCurrencyPattern($numberingSystem = null)
     {
-        if (null === $numberingSystem) {
+        if ($numberingSystem === null) {
             $numberingSystem = $this->getDefaultNumberingSystem();
         }
-        if (!isset($this->currencyPatterns[$numberingSystem])) {
-            throw new LocalizationException('No currency pattern found for numbering system: ' . $numberingSystem);
+        if (! isset($this->currencyPatterns[$numberingSystem])) {
+            throw new LocalizationException('No currency pattern found for numbering system: '.$numberingSystem);
         }
 
         return $this->currencyPatterns[$numberingSystem];
@@ -262,14 +258,13 @@ final class Locale implements LocaleInterface
     /**
      * Get a given CLDR Currency.
      *
-     * @param string $currencyCode An ISO 4217 currency code
-     *
+     * @param  string  $currencyCode  An ISO 4217 currency code
      * @return CurrencyInterface|null The wanted CLDR Currency. Null if this currency is not available for this locale.
      */
     public function getCurrency($currencyCode)
     {
         $currencyData = $this->getCurrencyData($currencyCode);
-        if (!empty($currencyData)) {
+        if (! empty($currencyData)) {
             return new Currency($currencyData);
         }
 
@@ -279,13 +274,12 @@ final class Locale implements LocaleInterface
     /**
      * Get CLDR data of a given currency.
      *
-     * @param string $currencyCode An ISO 4217 currency code
-     *
+     * @param  string  $currencyCode  An ISO 4217 currency code
      * @return CurrencyData|null The wanted currency data. Null if this currency is not available for this locale.
      */
     public function getCurrencyData($currencyCode)
     {
-        if (!empty($this->currencies[$currencyCode])) {
+        if (! empty($this->currencies[$currencyCode])) {
             return $this->currencies[$currencyCode];
         }
 

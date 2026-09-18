@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,6 +29,7 @@ namespace PrestaShopBundle\Command;
 
 use PrestaShopBundle\Routing\Linter\Exception\LinterException;
 use PrestaShopBundle\Routing\Linter\SecurityAnnotationLinter;
+use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -38,16 +40,16 @@ use Symfony\Component\Routing\Route;
 /**
  * Checks if all admin routes have @AdminSecurity configured
  *
- * @see \PrestaShopBundle\Security\Annotation\AdminSecurity
+ * @see AdminSecurity
  */
 final class SecurityAnnotationLinterCommand extends ContainerAwareCommand
 {
     public const ACTION_LIST_ALL = 'list';
+
     public const ACTION_FIND_MISSING = 'find-missing';
 
     /**
-     * @param string $expression
-     *
+     * @param  string  $expression
      * @return string
      */
     public static function parseExpression($expression)
@@ -101,11 +103,11 @@ final class SecurityAnnotationLinterCommand extends ContainerAwareCommand
     {
         $actionToPerform = $input->getArgument('action');
 
-        if (!in_array($actionToPerform, self::getAvailableActions())) {
+        if (! in_array($actionToPerform, self::getAvailableActions())) {
             throw new \InvalidArgumentException(sprintf(
-                    'Action must be one of: %s',
-                    implode(', ', self::getAvailableActions())
-                )
+                'Action must be one of: %s',
+                implode(', ', self::getAvailableActions())
+            )
             );
         }
 
@@ -124,10 +126,6 @@ final class SecurityAnnotationLinterCommand extends ContainerAwareCommand
         return 0;
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     private function listAllRoutesAndRelatedPermissions(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -166,10 +164,6 @@ final class SecurityAnnotationLinterCommand extends ContainerAwareCommand
         $io->table($headers, $listing);
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     private function findRoutesWithMissingSecurityAnnotations(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -193,7 +187,7 @@ final class SecurityAnnotationLinterCommand extends ContainerAwareCommand
 
         $io = new SymfonyStyle($input, $output);
 
-        if (!empty($notConfiguredRoutes)) {
+        if (! empty($notConfiguredRoutes)) {
             $io->warning(sprintf(
                 '%s routes are not configured with @AdminSecurity annotation:',
                 count($notConfiguredRoutes)

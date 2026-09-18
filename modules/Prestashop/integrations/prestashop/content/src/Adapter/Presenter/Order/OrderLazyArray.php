@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,11 +81,11 @@ class OrderLazyArray extends AbstractLazyArray
     public function __construct(Order $order)
     {
         $this->order = $order;
-        $this->cartPresenter = new CartPresenter();
-        $this->objectPresenter = new ObjectPresenter();
-        $this->priceFormatter = new PriceFormatter();
+        $this->cartPresenter = new CartPresenter;
+        $this->objectPresenter = new ObjectPresenter;
+        $this->priceFormatter = new PriceFormatter;
         $this->translator = Context::getContext()->getTranslator();
-        $this->taxConfiguration = new TaxConfiguration();
+        $this->taxConfiguration = new TaxConfiguration;
         $this->subTotals = new OrderSubtotalLazyArray($this->order);
         parent::__construct();
     }
@@ -195,8 +196,8 @@ class OrderLazyArray extends AbstractLazyArray
                 if ($product_download->display_filename != '') {
                     $orderProduct['download_link'] =
                         $product_download->getTextLink(false, $orderProduct['download_hash'])
-                        . '&id_order=' . (int) $order->id
-                        . '&secure_key=' . $order->secure_key;
+                        .'&id_order='.(int) $order->id
+                        .'&secure_key='.$order->secure_key;
                 }
             }
 
@@ -311,7 +312,7 @@ class OrderLazyArray extends AbstractLazyArray
             $orderHistory[$historyId]['contrast'] = (Tools::getBrightness($history['color']) > 128) ? 'dark' : 'bright';
         }
 
-        if (!isset($orderHistory['current'])) {
+        if (! isset($orderHistory['current'])) {
             $orderHistory['current'] = $this->getDefaultHistory();
         }
 
@@ -335,9 +336,9 @@ class OrderLazyArray extends AbstractLazyArray
             $messages[$cmId]['message'] = nl2br($customerMessage['message']);
             $messages[$cmId]['message_date'] = Tools::displayDate($customerMessage['date_add'], null, true);
             if (isset($customerMessage['elastname']) && $customerMessage['elastname']) {
-                $messages[$cmId]['name'] = $customerMessage['efirstname'] . ' ' . $customerMessage['elastname'];
+                $messages[$cmId]['name'] = $customerMessage['efirstname'].' '.$customerMessage['elastname'];
             } elseif ($customerMessage['clastname']) {
-                $messages[$cmId]['name'] = $customerMessage['cfirstname'] . ' ' . $customerMessage['clastname'];
+                $messages[$cmId]['name'] = $customerMessage['cfirstname'].' '.$customerMessage['clastname'];
             } else {
                 $messages[$cmId]['name'] = Configuration::get('PS_SHOP_NAME');
             }
@@ -380,7 +381,7 @@ class OrderLazyArray extends AbstractLazyArray
         $addressDelivery = new Address((int) $order->id_address_delivery);
         $addressInvoice = new Address((int) $order->id_address_invoice);
 
-        if (!$order->isVirtual()) {
+        if (! $order->isVirtual()) {
             $orderAddresses['delivery'] = $this->objectPresenter->present($addressDelivery);
             $orderAddresses['delivery']['formatted'] =
                 AddressFormat::generateAddress($addressDelivery, [], '<br />');
@@ -402,7 +403,7 @@ class OrderLazyArray extends AbstractLazyArray
         $order = $this->order;
 
         $carrier = $this->getCarrier();
-        if (!empty($carrier['url']) && !empty($order->shipping_number)) {
+        if (! empty($carrier['url']) && ! empty($order->shipping_number)) {
             return str_replace('@', $order->shipping_number, $carrier['url']);
         }
 

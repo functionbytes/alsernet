@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,10 +35,5 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Image\QueryResult\ProductImage;
  */
 interface GetProductImageHandlerInterface
 {
-    /**
-     * @param GetProductImage $query
-     *
-     * @return ProductImage
-     */
     public function handle(GetProductImage $query): ProductImage;
 }

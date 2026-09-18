@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,6 @@ class CategoryController extends ApiController
     public $categoryRepository;
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function listCategoriesAction(Request $request)

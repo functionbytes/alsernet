@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,11 +66,11 @@ class UpdateProductQuantityInCartCommand
     private $customizationId;
 
     /**
-     * @param int $cartId
-     * @param int $productId
-     * @param int $quantity
-     * @param int|null $combinationId
-     * @param int|null $customizationId
+     * @param  int  $cartId
+     * @param  int  $productId
+     * @param  int  $quantity
+     * @param  int|null  $combinationId
+     * @param  int|null  $customizationId
      *
      * @throws CartConstraintException
      * @throws CartException
@@ -114,40 +115,28 @@ class UpdateProductQuantityInCartCommand
         return $this->newQuantity;
     }
 
-    /**
-     * @return CombinationId|null
-     */
     public function getCombinationId(): ?CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return CustomizationId|null
-     */
     public function getCustomizationId(): ?CustomizationId
     {
         return $this->customizationId;
     }
 
-    /**
-     * @param int|null $combinationId
-     */
     private function setCombinationId(?int $combinationId)
     {
-        if (null !== $combinationId) {
+        if ($combinationId !== null) {
             $combinationId = new CombinationId($combinationId);
         }
 
         $this->combinationId = $combinationId;
     }
 
-    /**
-     * @param int|null $customizationId
-     */
     private function setCustomizationId(?int $customizationId)
     {
-        if (null !== $customizationId) {
+        if ($customizationId !== null) {
             $customizationId = new CustomizationId($customizationId);
         }
 
@@ -155,13 +144,11 @@ class UpdateProductQuantityInCartCommand
     }
 
     /**
-     * @param int $qty
-     *
      * @throws CartConstraintException
      */
     private function assertQuantityIsPositive(int $qty)
     {
-        if (0 >= $qty) {
+        if ($qty <= 0) {
             throw new CartConstraintException(sprintf('Quantity must be positive integer. "%s" given.', $qty), CartConstraintException::INVALID_QUANTITY);
         }
     }

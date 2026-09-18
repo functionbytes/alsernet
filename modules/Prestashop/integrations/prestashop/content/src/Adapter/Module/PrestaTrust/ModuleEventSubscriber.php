@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,12 +67,10 @@ class ModuleEventSubscriber implements EventSubscriberInterface
      * Event executed on module download (coming from the marketplace or the employee disk)
      * If the feature is enabled in the project configuration, we will trigger our class PrestaTrustChecker to verify
      * if the module is compliant.
-     *
-     * @param ModuleZipManagementEvent $event
      */
     public function onNewModule(ModuleZipManagementEvent $event)
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return;
         }
 
@@ -91,8 +90,7 @@ class ModuleEventSubscriber implements EventSubscriberInterface
     /**
      * Enable / disable the PrestaTrust feature.
      *
-     * @param bool $enabled
-     *
+     * @param  bool  $enabled
      * @return $this
      */
     public function setEnabled($enabled)

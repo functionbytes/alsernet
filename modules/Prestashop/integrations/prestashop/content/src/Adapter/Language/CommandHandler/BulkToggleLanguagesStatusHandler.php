@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ use PrestaShop\PrestaShop\Core\Domain\Language\Exception\LanguageException;
  */
 final class BulkToggleLanguagesStatusHandler extends AbstractLanguageHandler implements BulkToggleLanguagesStatusHandlerInterface
 {
-    /**
-     * @param BulkToggleLanguagesStatusCommand $command
-     */
     public function handle(BulkToggleLanguagesStatusCommand $command)
     {
         foreach ($command->getLanguageIds() as $languageId) {
@@ -50,7 +48,7 @@ final class BulkToggleLanguagesStatusHandler extends AbstractLanguageHandler imp
 
             $language->active = $command->getStatus();
 
-            if (false === $language->update()) {
+            if ($language->update() === false) {
                 throw new LanguageException(sprintf('Failed to toggle language "%s" to status %s', $language->id, var_export($command->getStatus(), true)));
             }
         }

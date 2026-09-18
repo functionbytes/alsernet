@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,10 +54,7 @@ final class AddUnofficialCurrencyHandler extends AbstractCurrencyHandler impleme
     private $currencyDataProvider;
 
     /**
-     * @param LocaleRepository $localeRepoCLDR
-     * @param LanguageInterface[] $languages
-     * @param CurrencyCommandValidator $validator
-     * @param CurrencyDataProviderInterface $currencyDataProvider
+     * @param  LanguageInterface[]  $languages
      */
     public function __construct(
         LocaleRepository $localeRepoCLDR,
@@ -88,7 +86,7 @@ final class AddUnofficialCurrencyHandler extends AbstractCurrencyHandler impleme
 
             $entity->unofficial = true;
             $entity->numeric_iso_code = null;
-            if (null !== $command->getPrecision()) {
+            if ($command->getPrecision() !== null) {
                 $entity->precision = $command->getPrecision()->getValue();
             }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface LanguagePackImporterInterface
     /**
      * Imports language pack.
      *
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return array - returns array with error messages or an empty array on success case
      */
     public function import($isoCode);

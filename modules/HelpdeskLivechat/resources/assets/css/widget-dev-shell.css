@@ -1,0 +1,10 @@
+/**
+ * Shell de desarrollo del widget via Vite/HMR (public/widget/index.blade.php
+ * — entry .tsx servido directo, sin el bundle de produccion). Extraido del
+ * <style> inline de esa vista.
+ */
+body { margin: 0; padding: 0; }
+
+/* Modo "inline" (widget embebido en el flujo de la pagina en vez de en un
+   iframe flotante): sin scroll propio, ocupa toda la altura visible. */
+body.widget-inline { overflow: hidden; height: 100vh; }

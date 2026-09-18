@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use LogicException;
 /**
  * Class MissingColumnInRowException.
  */
-class MissingColumnInRowException extends LogicException implements ExceptionInterface
-{
-}
+class MissingColumnInRowException extends LogicException implements ExceptionInterface {}

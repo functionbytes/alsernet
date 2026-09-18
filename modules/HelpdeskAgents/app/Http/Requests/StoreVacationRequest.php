@@ -2,7 +2,9 @@
 
 namespace Modules\HelpdeskAgents\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\HelpdeskAgents\Models\AgentVacation;
 
 class StoreVacationRequest extends FormRequest
 {
@@ -47,5 +49,54 @@ class StoreVacationRequest extends FormRequest
             'reason' => 'motivo',
             'status' => 'estado',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            if ($this->isDuplicateSubmission()) {
+                $validator->errors()->add('starts_at', 'Esta ausencia ya fue registrada; evita enviar el formulario dos veces.');
+
+                return;
+            }
+
+            if ($this->overlapsExistingVacation()) {
+                $validator->errors()->add('starts_at', 'Este agente ya tiene una ausencia registrada que se solapa con ese periodo.');
+            }
+        });
+    }
+
+    /**
+     * Basic double-submit protection: an identical vacation (same agent and
+     * dates) created moments ago is treated as a duplicate resubmission
+     * rather than a second, legitimate entry.
+     */
+    private function isDuplicateSubmission(): bool
+    {
+        return AgentVacation::query()
+            ->where('user_id', $this->integer('user_id'))
+            ->whereDate('starts_at', $this->input('starts_at'))
+            ->whereDate('ends_at', $this->input('ends_at'))
+            ->where('created_at', '>=', now()->subMinute())
+            ->exists();
+    }
+
+    /**
+     * Overlap against the same agent's other time off, excluding rejected
+     * entries (those never blocked availability, so they should not block
+     * new requests either).
+     */
+    private function overlapsExistingVacation(): bool
+    {
+        return AgentVacation::query()
+            ->where('user_id', $this->integer('user_id'))
+            ->where('status', '!=', 'rejected')
+            ->whereDate('starts_at', '<=', $this->input('ends_at'))
+            ->whereDate('ends_at', '>=', $this->input('starts_at'))
+            ->exists();
     }
 }

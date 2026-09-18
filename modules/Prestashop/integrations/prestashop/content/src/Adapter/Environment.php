@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,18 +48,18 @@ class Environment implements EnvironmentInterface
     private $name;
 
     /**
-     * @param bool|null $isDebug
-     * @param string|null $name
+     * @param  bool|null  $isDebug
+     * @param  string|null  $name
      */
     public function __construct($isDebug = null, $name = null)
     {
-        if (null === $isDebug) {
+        if ($isDebug === null) {
             $this->isDebug = defined(_PS_MODE_DEV_) ? _PS_MODE_DEV_ : true;
         } else {
             $this->isDebug = $isDebug;
         }
 
-        if (null !== $name) {
+        if ($name !== null) {
             $this->name = $name;
         } else {
             if (defined(_PS_ENV_)) {
@@ -94,6 +95,6 @@ class Environment implements EnvironmentInterface
             return _PS_CACHE_DIR_;
         }
 
-        return _PS_ROOT_DIR_ . '/var/cache/' . $this->getName() . '/';
+        return _PS_ROOT_DIR_.'/var/cache/'.$this->getName().'/';
     }
 }

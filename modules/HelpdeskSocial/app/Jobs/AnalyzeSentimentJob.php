@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Services\SentimentAnalysisService;
+use Modules\HelpdeskSocial\Services\SocialListeningService;
 
 class AnalyzeSentimentJob implements ShouldQueue
 {
@@ -27,7 +28,7 @@ class AnalyzeSentimentJob implements ShouldQueue
         $this->onQueue(config('helpdesksocial.queues.processing', 'helpdesk-social-processing'));
     }
 
-    public function handle(SentimentAnalysisService $sentimentService): void
+    public function handle(SentimentAnalysisService $sentimentService, SocialListeningService $listeningService): void
     {
         $comment = SocialComment::find($this->commentId);
 
@@ -45,6 +46,11 @@ class AnalyzeSentimentJob implements ShouldQueue
 
             throw $e;
         }
+
+        // El escaneo de listening (keywords) se hace aquí, no en ProcessSocialCommentJob:
+        // filtra por SocialListeningKeyword::sentiment_filter contra $comment->sentiment,
+        // que solo existe a partir de esta línea.
+        $listeningService->scanComment($comment->fresh());
     }
 
     public function failed(\Throwable $exception): void

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class BulkDeleteSqlRequestCommand
     private $sqlRequestIds = [];
 
     /**
-     * @param int[] $sqlRequestIds
+     * @param  int[]  $sqlRequestIds
      *
      * @throws SqlRequestException
      */
@@ -59,11 +60,9 @@ class BulkDeleteSqlRequestCommand
     }
 
     /**
-     * @param array $sqlRequestIds
+     * @return self
      *
      * @throws SqlRequestException
-     *
-     * @return self
      */
     private function setSqlRequestIds(array $sqlRequestIds)
     {

@@ -238,19 +238,6 @@ class Conversation extends Model
     }
 
     /**
-     * Skills required to handle this conversation (used by SkillsRoutingService).
-     */
-    public function skills(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Skill::class,
-            'helpdesk_conversation_skills',
-            'conversation_id',
-            'skill_id'
-        );
-    }
-
-    /**
      * Get tags assigned to this conversation
      */
     public function conversationTags(): BelongsToMany
@@ -309,6 +296,37 @@ class Conversation extends Model
     public function scopeClosed($query)
     {
         return $query->whereHas('status', fn ($q) => $q->where('is_open', false));
+    }
+
+    /**
+     * Scope: conversations visible in the default inbox view ("Todas las
+     * abiertas": open + not archived) — the single source of truth for every
+     * sidebar badge that is supposed to match what the agent sees when they
+     * land on the inbox with no explicit filter (Todas / Mías / Urgentes /
+     * Sin leer).
+     *
+     * This criterion was already fixed once, ad hoc, directly inside
+     * ConversationInboxMetricsService::sidebarCounters()'s "unread" count
+     * after the sidebar badge and the real ?unread=1 list disagreed (badge
+     * said N, list was empty). ConversationsController::listJson() kept its
+     * own duplicated "unread" count without it, and neither "unread" count
+     * applied it to "total"/"mine"/"urgent", so the same class of mismatch
+     * resurfaced for those badges too (e.g. "Todas" said 41, the list showed
+     * 21; "Urgentes" said 5, the list showed 3). Route every "default view"
+     * count through this scope instead of re-deriving the criteria.
+     */
+    public function scopeDefaultViewVisible(Builder $query): Builder
+    {
+        return $query->open()->where('is_archived', false);
+    }
+
+    /**
+     * Scope: conversations counted as "unread" for a given agent.
+     */
+    public function scopeUnreadFor(Builder $query, int $userId): Builder
+    {
+        return $query->defaultViewVisible()
+            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId));
     }
 
     /**
@@ -471,7 +489,18 @@ class Conversation extends Model
      */
     public function close()
     {
-        $closedStatus = Cache::remember('helpdesk:conv-closed-status', 3600, fn () => ConversationStatus::where('is_open', false)->orderBy('order')->first());
+        // Mismo colapso que ChangeStatusAction::resolveStatus() ya documenta y
+        // arregla para las automatizaciones: "el primer is_open=false por
+        // order" no es "cerrado", es cualquier estado no-abierto que tenga el
+        // order más bajo. En la instalación real eso es 'resolved' (order 4),
+        // que queda ANTES que 'closed' (order 5) — un cierre por inactividad
+        // marcaba la conversación como Resuelta, no Cerrada. Se busca primero
+        // por slug/nombre 'closed' y solo si la instalación no lo tiene
+        // asignado cae al heurístico antiguo, para no romper otros entornos.
+        $closedStatus = Cache::remember('helpdesk:conv-closed-status', 3600, fn () => ConversationStatus::where('slug', 'closed')
+            ->orWhere('name', 'closed')
+            ->first()
+            ?? ConversationStatus::where('is_open', false)->orderBy('order')->first());
 
         $this->update([
             'status_id' => $closedStatus->id ?? $this->status_id,

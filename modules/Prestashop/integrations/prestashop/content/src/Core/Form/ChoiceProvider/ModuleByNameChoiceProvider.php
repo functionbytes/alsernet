@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class ModuleByNameChoiceProvider implements FormChoiceProviderInterface
      */
     private $installedModules;
 
-    /**
-     * @param AddonsCollection $installedModules
-     */
     public function __construct(AddonsCollection $installedModules)
     {
         $this->installedModules = $installedModules;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,12 +42,11 @@ class CannotBulkDeleteCombinationException extends CombinationException
     private $combinationIds;
 
     /**
-     * @param int[] $combinationIds ids of combinations which cannot be deleted
-     * @param string $message
-     * @param int $code
-     * @param Throwable|null $previous
+     * @param  int[]  $combinationIds  ids of combinations which cannot be deleted
+     * @param  string  $message
+     * @param  int  $code
      */
-    public function __construct(array $combinationIds, $message = '', $code = 0, Throwable $previous = null)
+    public function __construct(array $combinationIds, $message = '', $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
         $this->combinationIds = $combinationIds;

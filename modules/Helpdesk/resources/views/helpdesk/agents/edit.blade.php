@@ -81,7 +81,7 @@
                             ];
                         @endphp
 
-                        <div id="schedule-block" class="mb-4" style="display:none">
+                        <div id="schedule-block" class="mb-4 bv-step-hidden">
                             <label class="form-label fw-semibold">Horario semanal</label>
                             <p class="text-muted small mb-3">Define los días y horas en que el agente acepta conversaciones</p>
 
@@ -161,7 +161,7 @@
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i> Guardar cambios
+                                Guardar cambios
                             </button>
                             <a href="{{ route('manager.helpdesk.agents.show', $agent) }}" class="btn btn-outline-secondary">
                                 Cancelar
@@ -176,26 +176,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    const $sel   = $('#accepts_conversations');
-    const $block = $('#schedule-block');
-
-    function toggleSchedule() {
-        $block.toggle($sel.val() === 'working_hours');
-    }
-
-    function toggleDayInputs($row, enabled) {
-        $row.find('.day-time').prop('disabled', !enabled);
-    }
-
-    // Bind day toggle switches
-    $(document).on('change', '.day-toggle', function () {
-        toggleDayInputs($(this).closest('.row'), this.checked);
-    });
-
-    toggleSchedule();
-    $sel.on('change', toggleSchedule);
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/misc/agent-edit.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/agent-edit.js')) }}" defer></script>
 @endpush

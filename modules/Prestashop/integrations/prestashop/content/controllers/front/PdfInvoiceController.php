@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,22 +27,25 @@
 class PdfInvoiceControllerCore extends FrontController
 {
     public $php_self = 'pdf-invoice';
+
     protected $display_header = false;
+
     protected $display_footer = false;
 
     public $content_only = true;
 
     protected $template;
+
     public $filename;
 
     public function postProcess()
     {
-        if (!$this->context->customer->isLogged() && !Tools::getValue('secure_key')) {
+        if (! $this->context->customer->isLogged() && ! Tools::getValue('secure_key')) {
             Tools::redirect('index.php?controller=authentication&back=pdf-invoice');
         }
 
-        if (!(int) Configuration::get('PS_INVOICE')) {
-            die($this->trans('Invoices are disabled in this shop.', [], 'Shop.Notifications.Error'));
+        if (! (int) Configuration::get('PS_INVOICE')) {
+            exit($this->trans('Invoices are disabled in this shop.', [], 'Shop.Notifications.Error'));
         }
 
         $id_order = (int) Tools::getValue('id_order');
@@ -49,16 +53,16 @@ class PdfInvoiceControllerCore extends FrontController
             $order = new Order((int) $id_order);
         }
 
-        if (!isset($order) || !Validate::isLoadedObject($order)) {
-            die($this->trans('The invoice was not found.', [], 'Shop.Notifications.Error'));
+        if (! isset($order) || ! Validate::isLoadedObject($order)) {
+            exit($this->trans('The invoice was not found.', [], 'Shop.Notifications.Error'));
         }
 
         if ((isset($this->context->customer->id) && $order->id_customer != $this->context->customer->id) || (Tools::isSubmit('secure_key') && $order->secure_key != Tools::getValue('secure_key'))) {
-            die($this->trans('The invoice was not found.', [], 'Shop.Notifications.Error'));
+            exit($this->trans('The invoice was not found.', [], 'Shop.Notifications.Error'));
         }
 
-        if (!OrderState::invoiceAvailable($order->getCurrentState()) && !$order->invoice_number) {
-            die($this->trans('No invoice is available.', [], 'Shop.Notifications.Error'));
+        if (! OrderState::invoiceAvailable($order->getCurrentState()) && ! $order->invoice_number) {
+            exit($this->trans('No invoice is available.', [], 'Shop.Notifications.Error'));
         }
 
         $this->order = $order;

@@ -1,0 +1,70 @@
+/**
+ * Gestor de categorias/secciones/articulos del Centro de Ayuda — estilos
+ * propios del módulo, extraidos de <style> inline en:
+ *   - helpcenter/index.blade.php (arbol categorias > secciones > articulos)
+ *   - helpcenter/categories/index.blade.php (listado + acciones masivas)
+ *   - helpcenter/articles/index.blade.php (listado + acciones masivas)
+ */
+
+/* ── Arbol categorias/secciones/articulos (index) ─────────────────── */
+.hc-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent !important;
+}
+
+.hc-item:hover {
+    border-left-color: var(--bs-primary) !important;
+    background-color: var(--bs-primary-bg-subtle);
+    transform: translateX(2px);
+}
+
+.hc-item.sortable-ghost {
+    opacity: 0.4;
+    background-color: var(--bs-light);
+}
+
+.hc-item.sortable-drag {
+    opacity: 1;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.hc-item-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+.hc-item-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.hc-item:hover .hc-item-actions {
+    opacity: 1;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--bs-secondary);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* ── Listados (categories/index, articles/index) ──────────────────── */
+
+/* Ancho del <select> de estado en el filtro rapido de la cabecera. */
+.helpcenter-filter-status { min-width: 180px; }
+
+/* Toolbar flotante de acciones masivas — mismo z-index que el resto de
+   toolbars .position-fixed del panel. */
+.hc-bulk-toolbar { z-index: 1050; }

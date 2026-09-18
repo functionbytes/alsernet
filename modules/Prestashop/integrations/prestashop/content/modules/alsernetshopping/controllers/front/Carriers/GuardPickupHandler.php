@@ -20,7 +20,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
     public function __construct(?Context $context = null)
     {
         parent::__construct($context);
-        $this->context = $this->context ?: \Context::getContext(); // fallback
+        $this->context = $this->context ?: Context::getContext(); // fallback
 
         // error_log("=== GuardPickupHandler: Constructor called for carrier 78 ===");
         // error_log("GuardPickupHandler: Context cart ID: " . ($context && $context->cart ? $context->cart->id : 'none'));
@@ -96,8 +96,8 @@ class GuardPickupHandler extends AbstractCarrierHandler
 
         // Usar exactamente el código original del Store Locator
         try {
-            $storeLocatorConfig = \Tools::jsonDecode(\Configuration::get('KB_STORE_LOCATOR_GENERAL_SETTING'), true);
-            $pickup_settings = \Tools::jsonDecode(\Configuration::get('KB_PICKUP_TIME_SETTINGS'), true);
+            $storeLocatorConfig = \Tools::jsonDecode(Configuration::get('KB_STORE_LOCATOR_GENERAL_SETTING'), true);
+            $pickup_settings = \Tools::jsonDecode(Configuration::get('KB_PICKUP_TIME_SETTINGS'), true);
 
             if (empty($storeLocatorConfig)) {
                 $storeLocatorConfig = $this->getDefaultStoreConfig();
@@ -132,11 +132,11 @@ class GuardPickupHandler extends AbstractCarrierHandler
 
             // Si no hay tienda Por defecto, usar la primera disponible
             if (empty($storeLocatorConfig['default_store'])) {
-                $firstStore = \Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
+                $firstStore = Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
                 $storeLocatorConfig['default_store'] = $firstStore ? $firstStore['id_store'] : 1;
             }
 
-            \Configuration::updateValue('KB_STORE_LOCATOR_GENERAL_SETTING', json_encode($storeLocatorConfig));
+            Configuration::updateValue('KB_STORE_LOCATOR_GENERAL_SETTING', json_encode($storeLocatorConfig));
             // error_log("GuardPickupHandler: Fixed store locator configuration");
         }
 
@@ -153,7 +153,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
         $longitude = $store->longitude;
         $selected_store = new \Store($default_store);
         $selected_store = (array) $selected_store;
-        $selected_store['country'] = \Country::getNameById($context->language->id, $selected_store['id_country']);
+        $selected_store['country'] = Country::getNameById($context->language->id, $selected_store['id_country']);
         $default_latitude = $store->latitude;
         $default_longitude = $store->longitude;
         $current_selected_shipping = null;
@@ -161,7 +161,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
         $current_selected_shipping = current($context->cart->getDeliveryOption(null, false, false));
         if (isset($storeLocatorConfig['enable_all_store']) && $storeLocatorConfig['enable_all_store'] == 1) {
             if (version_compare(_PS_VERSION_, '1.7.4.0', '>=')) {
-                $available_store = \Db::getInstance()->executeS(
+                $available_store = Db::getInstance()->executeS(
                     'SELECT s.id_store,ss.name FROM `'._DB_PREFIX_.'store` s '
                     .'INNER JOIN '._DB_PREFIX_.'store_lang ss '
                     .'on (s.id_store=ss.id_store AND ss.id_lang='
@@ -260,7 +260,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
 
             if (isset($storeLocatorConfig['enable_all_store']) && $storeLocatorConfig['enable_all_store'] == 1) {
                 if (version_compare(_PS_VERSION_, '1.7.4.0', '>=')) {
-                    $available_store = \Db::getInstance()->executeS(
+                    $available_store = Db::getInstance()->executeS(
                         'SELECT s.id_store,ss.name FROM `'._DB_PREFIX_.'store` s '
                         .'INNER JOIN '._DB_PREFIX_.'store_lang ss '
                         .'on (s.id_store=ss.id_store AND ss.id_lang='
@@ -512,7 +512,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
         // error_log("GuardPickupHandler: Request data: " . json_encode($requestData));
 
         // Procesar selección de tienda si es necesario
-        $address = isset($requestData['delivery_address']) ? $requestData['delivery_address'] : new \Address($requestData['id_address']);
+        $address = isset($requestData['delivery_address']) ? $requestData['delivery_address'] : new Address($requestData['id_address']);
 
         // error_log("GuardPickupHandler: Getting extra content for address ID: " . $requestData['id_address']);
 
@@ -573,7 +573,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
         parent::cleanup();
     }
 
-    public function processSelection(array $requestData, \Context $context): array
+    public function processSelection(array $requestData, Context $context): array
     {
 
         $payload = $requestData['payload'];
@@ -597,7 +597,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
         ];
     }
 
-    public function persistSelection(\Context $context, array $requestData, array $handlerResult): bool
+    public function persistSelection(Context $context, array $requestData, array $handlerResult): bool
     {
         $payload = $requestData['payload'];
         $preferred_store = $payload['preferred_store'] ?? '';
@@ -639,7 +639,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
     {
         // error_log("GuardPickupHandler: getRegularStorePickupData called for address: $id_address_delivery");
 
-        $storeLocatorConfig = \Tools::jsonDecode(\Configuration::get('KB_STORE_LOCATOR_GENERAL_SETTING'), true);
+        $storeLocatorConfig = \Tools::jsonDecode(Configuration::get('KB_STORE_LOCATOR_GENERAL_SETTING'), true);
         $cart = $context->cart;
         $iso = \Tools::getValue('iso') ?: $context->language->iso_code;
 
@@ -669,9 +669,9 @@ class GuardPickupHandler extends AbstractCarrierHandler
             // error_log("GuardPickupHandler: Forced enablement config: " . print_r($storeLocatorConfig, true));
         }
 
-        $delivery_address = new \Address($id_address_delivery);
-        $country = new \Country($delivery_address->id_country);
-        $state = new \State($delivery_address->id_state);
+        $delivery_address = new Address($id_address_delivery);
+        $country = new Country($delivery_address->id_country);
+        $state = new State($delivery_address->id_state);
 
         // Get available pickup locations
         $stores = $this->getAvailableStores($delivery_address, $storeLocatorConfig);
@@ -847,11 +847,11 @@ class GuardPickupHandler extends AbstractCarrierHandler
     {
         // Configuración Store Locator - usar keys correctas del módulo original
         $configKey = 'KB_STORE_LOCATOR_GENERAL_SETTING';
-        $existingConfig = \Configuration::get($configKey);
+        $existingConfig = Configuration::get($configKey);
 
         if (empty($existingConfig)) {
             // Obtener la primera tienda disponible para configuración Por defecto
-            $firstStore = \Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
+            $firstStore = Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
             $defaultStoreId = $firstStore ? $firstStore['id_store'] : 1;
 
             // Configuración Por defecto para Store Locator original
@@ -874,7 +874,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
             ];
 
             $configJson = json_encode($defaultConfig);
-            \Configuration::updateValue($configKey, $configJson);
+            Configuration::updateValue($configKey, $configJson);
             // error_log("GuardPickupHandler: Created default Store Locator configuration with store ID: $defaultStoreId");
         } else {
             // error_log("GuardPickupHandler: Store Locator configuration already exists: " . $existingConfig);
@@ -896,7 +896,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
                 $needsUpdate = true;
             }
             if (empty($config['default_store'])) {
-                $firstStore = \Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
+                $firstStore = Db::getInstance()->getRow('SELECT id_store FROM `'._DB_PREFIX_.'store` WHERE active = 1 ORDER BY id_store LIMIT 1');
                 $config['default_store'] = $firstStore ? $firstStore['id_store'] : 1;
                 $needsUpdate = true;
             }
@@ -917,14 +917,14 @@ class GuardPickupHandler extends AbstractCarrierHandler
             }
 
             if ($needsUpdate) {
-                \Configuration::updateValue($configKey, json_encode($config));
+                Configuration::updateValue($configKey, json_encode($config));
                 // error_log("GuardPickupHandler: Updated existing Store Locator configuration with forced values");
             }
         }
 
         // Configuración Pickup Time Settings
         $pickupConfigKey = 'KB_PICKUP_TIME_SETTINGS';
-        $existingPickupConfig = \Configuration::get($pickupConfigKey);
+        $existingPickupConfig = Configuration::get($pickupConfigKey);
 
         if (empty($existingPickupConfig)) {
             $defaultPickupConfig = [
@@ -937,16 +937,16 @@ class GuardPickupHandler extends AbstractCarrierHandler
             ];
 
             $pickupConfigJson = json_encode($defaultPickupConfig);
-            \Configuration::updateValue($pickupConfigKey, $pickupConfigJson);
+            Configuration::updateValue($pickupConfigKey, $pickupConfigJson);
             // error_log("GuardPickupHandler: Created default Pickup Time Settings configuration");
         } else {
             // error_log("GuardPickupHandler: Pickup Time Settings configuration already exists");
         }
 
         // Configurar también el carrier ID para pickup si no existe
-        $pickupCarrierId = \Configuration::get('KB_GC_PICKUP_AT_STORE_SHIPPING');
+        $pickupCarrierId = Configuration::get('KB_GC_PICKUP_AT_STORE_SHIPPING');
         if (empty($pickupCarrierId)) {
-            \Configuration::updateValue('KB_GC_PICKUP_AT_STORE_SHIPPING', $this->carrierId);
+            Configuration::updateValue('KB_GC_PICKUP_AT_STORE_SHIPPING', $this->carrierId);
             // error_log("GuardPickupHandler: Set pickup carrier ID to " . $this->carrierId);
         }
     }
@@ -1277,7 +1277,7 @@ class GuardPickupHandler extends AbstractCarrierHandler
 
         try {
             // Use the same logic as the order confirmation hook
-            $pickup = \Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'kb_gc_pickup_at_store_time WHERE id_cart='.(int) $id_cart.' AND id_shop='.(int) $id_shop.' AND id_customer='.(int) $id_customer);
+            $pickup = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'kb_gc_pickup_at_store_time WHERE id_cart='.(int) $id_cart.' AND id_shop='.(int) $id_shop.' AND id_customer='.(int) $id_customer);
 
             if (! empty($pickup)) {
                 // Get store data using Store class like in the original logic

@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Proveedor\Proveedor;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +54,7 @@ class ImportacionArticulo extends Model
      */
     public function importacionArticulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
+        return $this->belongsTo(ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
     }
 
     /**
@@ -62,6 +63,6 @@ class ImportacionArticulo extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
     }
 }

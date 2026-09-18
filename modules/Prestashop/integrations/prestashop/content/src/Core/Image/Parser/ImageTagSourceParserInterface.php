@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,7 @@ namespace PrestaShop\PrestaShop\Core\Image\Parser;
 interface ImageTagSourceParserInterface
 {
     /**
-     * @param string $imageTag Example '<img src="..path/to/image.jpg">'
-     *
+     * @param  string  $imageTag  Example '<img src="..path/to/image.jpg">'
      * @return string|null Parsed "src" attribute
      */
     public function parse(string $imageTag): ?string;

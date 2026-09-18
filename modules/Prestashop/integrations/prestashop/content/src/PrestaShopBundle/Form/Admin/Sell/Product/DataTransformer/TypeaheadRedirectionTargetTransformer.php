@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,7 @@ class TypeaheadRedirectionTargetTransformer implements DataTransformerInterface
      */
     public function transform($targetId)
     {
-        if (null === $targetId) {
+        if ($targetId === null) {
             return null;
         }
 
@@ -55,7 +56,7 @@ class TypeaheadRedirectionTargetTransformer implements DataTransformerInterface
     {
         // TypeaheadProductCollectionType contains a collection of hidden inputs, for redirection
         // only one target is selected and we just want to retrieve the first (and only) selected ID
-        if (!isset($targetData['data'][0])) {
+        if (! isset($targetData['data'][0])) {
             return null;
         }
 

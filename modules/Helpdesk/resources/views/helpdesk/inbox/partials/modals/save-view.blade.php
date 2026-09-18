@@ -28,24 +28,8 @@
 
 @once
 @push('scripts')
-<script>
-(function () {
-    // conversations.js handles: open (#bv-save-view-btn), primary cancel (#bv-save-view-cancel), confirm (#bv-save-view-confirm)
-    // We handle: second cancel button, backdrop click, keyboard shortcuts
-
-    $(document).on('click', '#bv-save-view-cancel-2', function () {
-        $('#bv-save-view-modal').css('display', 'none');
-    });
-
-    $(document).on('click', '#bv-save-view-modal', function (e) {
-        if (e.target === this) { $(this).css('display', 'none'); }
-    });
-
-    $(document).on('keydown', '#bv-save-view-name', function (e) {
-        if (e.key === 'Enter') { $('#bv-save-view-confirm').trigger('click'); }
-        if (e.key === 'Escape') { $('#bv-save-view-modal').css('display', 'none'); }
-    });
-}());
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/save-view.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/save-view.js')) }}" defer></script>
 @endpush
 @endonce

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,10 +36,8 @@ use Symfony\Component\Translation\Exception\NotFoundResourceException;
 final class UnsupportedLocaleException extends NotFoundResourceException
 {
     /**
-     * @param string $filePath the expected file path of the translations
-     * @param string $locale the translation locale
-     *
-     * @return self
+     * @param  string  $filePath  the expected file path of the translations
+     * @param  string  $locale  the translation locale
      */
     public static function fileNotFound(string $filePath, string $locale): self
     {
@@ -53,8 +52,7 @@ final class UnsupportedLocaleException extends NotFoundResourceException
     }
 
     /**
-     * @param string $locale the translation locale
-     *
+     * @param  string  $locale  the translation locale
      * @return self
      */
     public static function invalidLocale($locale)

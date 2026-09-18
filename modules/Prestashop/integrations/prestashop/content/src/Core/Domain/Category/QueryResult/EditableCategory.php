@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -115,22 +116,19 @@ class EditableCategory
     private $subCategories;
 
     /**
-     * @param CategoryId $id
-     * @param string[] $name
-     * @param bool $isActive
-     * @param string[] $description
-     * @param int $parentId
-     * @param string[] $metaTitle
-     * @param string[] $metaDescription
-     * @param string[] $metaKeywords
-     * @param string[] $linkRewrite
-     * @param int[] $groupAssociationIds
-     * @param int[] $shopAssociationIds
-     * @param bool $isRootCategory
-     * @param mixed $coverImage
-     * @param mixed $thumbnailImage
-     * @param array $menuThumbnailImages
-     * @param array $subCategories
+     * @param  string[]  $name
+     * @param  bool  $isActive
+     * @param  string[]  $description
+     * @param  int  $parentId
+     * @param  string[]  $metaTitle
+     * @param  string[]  $metaDescription
+     * @param  string[]  $metaKeywords
+     * @param  string[]  $linkRewrite
+     * @param  int[]  $groupAssociationIds
+     * @param  int[]  $shopAssociationIds
+     * @param  bool  $isRootCategory
+     * @param  mixed  $coverImage
+     * @param  mixed  $thumbnailImage
      */
     public function __construct(
         CategoryId $id,

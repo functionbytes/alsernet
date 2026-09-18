@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ class DeleteCarrierHandler extends AbstractCarrierHandler implements DeleteCarri
         $carrier = $this->getCarrier($command->getCarrierId());
 
         try {
-            if (!$carrier->delete()) {
+            if (! $carrier->delete()) {
                 throw new CannotDeleteCarrierException(sprintf('Cannot delete carrier object with id "%d"', $command->getCarrierId()->getValue()), CannotDeleteCarrierException::SINGLE_DELETE);
             }
         } catch (PrestaShopException $e) {

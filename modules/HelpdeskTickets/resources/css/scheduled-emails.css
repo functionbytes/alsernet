@@ -1,0 +1,52 @@
+/**
+ * Pantalla "Correos programados" (managers/emails/scheduled.blade.php) —
+ * propiedad de HelpdeskTickets.
+ *
+ * Vivía como <style> suelto dentro del propio Blade. Se mantiene como hoja
+ * APARTE de tickets-app.css a propósito: el selector raíz de ese bundle
+ * (`.tkt`) trae `body:has(.tkt) .mc-content { margin:0!important; height:
+ * calc(100vh - 80px)!important; ... }`, pensado para el shell de app a
+ * pantalla completa del detalle de ticket — cargarlo aquí rompería el layout
+ * normal de tarjeta que usa esta pantalla. Los valores de color/radio se
+ * toman "a mano" de las variables --tkt-* (mismo vocabulario visual del
+ * módulo, ver .tkt-kcol/.tkt-kcard de tickets/index.blade.php).
+ *
+ * Tras editar, copiar a public/modules/helpdesktickets/css/scheduled-emails.css.
+ */
+
+.sched-mode-switch { display: inline-flex; align-items: center; gap: 2px; background: #f4f4f5; border-radius: 8px; padding: 3px; }
+.sched-mode-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: none; background: transparent; border-radius: 6px; color: #52525b; font-size: 11.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: .12s; }
+.sched-mode-btn i { font-size: 10px; }
+.sched-mode-btn:hover { color: #18181b; }
+.sched-mode-btn.on { background: #fff; color: #18181b; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.sched-mode-hidden { display: none !important; }
+
+/* Densidad compacta — mismo criterio que el selector de HelpdeskEmailActivity:
+   menos padding vertical en las celdas, sin tocar la estructura de la
+   tabla (misma tabla que en modo Lista). */
+#sched-list-view.sched-compact .table > tbody > tr > td { padding-top: 5.5px; padding-bottom: 5.5px; }
+
+/* ── Kanban por franja horaria ──────────────────────────────────────────
+   "Atrasado" (rojo, --tkt-danger) es la única columna que de verdad pide
+   acción: scheduled_at ya pasó y el correo sigue sin enviarse (cola
+   atascada). "Hoy" en ámbar (--tkt-warn) son los que aún pueden revisarse
+   antes de salir. "Esta semana"/"Más adelante" bajan en urgencia hacia
+   azul (--tkt-info) y gris (--tkt-text-faint). El color de cada punto lo
+   pone el JS vía la variable --dot-color (var(), no un valor suelto),
+   igual que .evx-kcol-dot. */
+#sched-kanban-view { display: flex; align-items: flex-start; gap: 12px; padding: 16px; overflow-x: auto; }
+.sched-kcol { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; background: #f4f4f5; border-radius: 10px; }
+.sched-kcol-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #e8e8e8; font-size: 12px; font-weight: 700; color: #18181b; }
+.sched-kcol-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background-color: var(--dot-color, #72727b); }
+.sched-kcol-count { margin-left: auto; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; color: #72727b; }
+.sched-kcol-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 10px; max-height: 62vh; overflow-y: auto; }
+.sched-kcard { display: block; background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 11px; box-shadow: 0 1px 2px rgba(0,0,0,.04); text-decoration: none; color: inherit; transition: .12s; }
+.sched-kcard:hover { border-color: #d4d4d8; color: inherit; }
+.sched-kcard-subject { font-size: 12px; font-weight: 700; line-height: 1.35; color: #18181b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sched-kcard-recipient { margin-top: 3px; font-size: 11px; color: #52525b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched-kcard-meta { margin-top: 5px; font-size: 10px; color: #72727b; }
+.sched-kanban-empty { width: 100%; }
+
+/* Utilidades genéricas de columna de tabla — antes style="width:1%" suelto
+   en el <th> de la casilla de selección y del menú de acciones. */
+.sched-col-shrink { width: 1%; }

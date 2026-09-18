@@ -25,6 +25,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
+use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 
 /**
  * @since 1.5.0.1
@@ -38,14 +39,14 @@ class TaxRulesTaxManagerCore implements TaxManagerInterface
     public $tax_calculator;
 
     /**
-     * @var \PrestaShop\PrestaShop\Core\ConfigurationInterface
+     * @var ConfigurationInterface
      */
     private $configurationManager;
 
     /**
      * @param  mixed  $type  An additional parameter for the tax manager (ex: tax rules id for TaxRuleTaxManager)
      */
-    public function __construct(Address $address, $type, ?PrestaShop\PrestaShop\Core\ConfigurationInterface $configurationManager = null)
+    public function __construct(Address $address, $type, ?ConfigurationInterface $configurationManager = null)
     {
         if ($configurationManager === null) {
             $this->configurationManager = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\ConfigurationInterface');

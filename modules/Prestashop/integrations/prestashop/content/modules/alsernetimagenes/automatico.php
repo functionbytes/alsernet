@@ -1,7 +1,8 @@
 <?php
+
 // Incluir los archivos de configuración y de inicialización de PrestaShop
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../init.php');
+include dirname(__FILE__).'/../../config/config.inc.php';
+include dirname(__FILE__).'/../../init.php';
 
 // Realizar una consulta a la base de datos para obtener un modelo de producto sin imagen asociada.
 // Se buscan modelos en la tabla 'aalv_product_attribute' y se excluyen aquellos que ya tienen imágenes en 'aalv_product_attribute_image'.

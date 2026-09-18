@@ -3,6 +3,8 @@
 namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Helpdesk\Models\Macro;
 
 class BulkApplyMacroRequest extends FormRequest
 {
@@ -14,7 +16,10 @@ class BulkApplyMacroRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'macro_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_macros,id'],
+            // El `exists` no pasa por el modelo, asi que el global scope de
+            // origen no lo alcanza: hay que repetir el filtro a mano para que
+            // no valide ids de macros de HelpdeskTickets.
+            'macro_id' => ['required', 'integer', Rule::exists('helpdesk.helpdesk_macros', 'id')->where('module', Macro::MODULE)],
             'conversation_ids' => ['required', 'array', 'min:1', 'max:100'],
             'conversation_ids.*' => ['integer', 'exists:helpdesk.helpdesk_conversations,id'],
         ];

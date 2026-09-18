@@ -5,6 +5,7 @@ namespace Modules\HelpdeskHelpcenter\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Services\VectorMath;
@@ -19,7 +20,7 @@ class EmbeddingsService
      */
     public function generateForArticle(HelpCenterArticle $article, string $locale = 'es'): int
     {
-        $body = strip_tags($article->body ?? $article->content ?? '');
+        $body = $this->resolveArticleBody($article, $locale);
 
         if (empty(trim($body))) {
             return 0;
@@ -60,6 +61,21 @@ class EmbeddingsService
         }
 
         return $created;
+    }
+
+    /**
+     * Embeddings for the base locale use the article's own body; any other
+     * locale must embed its published translation instead — otherwise a
+     * search filtered by locale (see search()) would rank the base-language
+     * body under a locale it was never written in.
+     */
+    private function resolveArticleBody(HelpCenterArticle $article, string $locale): string
+    {
+        $translatedBody = $locale !== config('app.locale')
+            ? $article->translationPublished($locale)?->body
+            : null;
+
+        return strip_tags($translatedBody ?? $article->body ?? $article->content ?? '');
     }
 
     /**
@@ -113,9 +129,16 @@ class EmbeddingsService
      * Call the OpenAI Embeddings API for a single text.
      * Returns an empty array when the API key is missing or the request fails.
      *
+     * Indexing (generateForArticle, run from a background job) keeps the
+     * resilient defaults: a long timeout and retries on transient errors.
+     * The interactive widget search instead passes a short timeout and no
+     * retries — see queryEmbedding() — because a slow OpenAI response there
+     * blocks the customer-facing request, and a retry would only make that
+     * wait longer for no benefit.
+     *
      * @return array{embedding: list<float>, model: string, dimensions: int}|array{}
      */
-    public function callEmbeddingApi(string $text): array
+    public function callEmbeddingApi(string $text, int $timeoutSeconds = 30, int $retries = 3): array
     {
         $apiKey = config('services.openai.key', '');
         $model = config('services.openai.embedding_model', 'text-embedding-3-small');
@@ -127,17 +150,20 @@ class EmbeddingsService
         }
 
         try {
-            $response = Http::timeout(30)
-                ->retry(3, 250, function (\Throwable $exception, PendingRequest $request) {
+            $request = Http::timeout($timeoutSeconds)->withToken($apiKey);
+
+            if ($retries > 0) {
+                $request = $request->retry($retries, 250, function (\Throwable $exception, PendingRequest $req) {
                     return $exception instanceof ConnectionException
                         || ($exception instanceof RequestException
                             && in_array($exception->response->status(), [429, 500, 502, 503, 504], true));
-                }, throw: false)
-                ->withToken($apiKey)
-                ->post('https://api.openai.com/v1/embeddings', [
-                    'model' => $model,
-                    'input' => $text,
-                ]);
+                }, throw: false);
+            }
+
+            $response = $request->post('https://api.openai.com/v1/embeddings', [
+                'model' => $model,
+                'input' => $text,
+            ]);
 
             if ($response->failed()) {
                 Log::warning('EmbeddingsService: OpenAI API error', [
@@ -179,6 +205,32 @@ class EmbeddingsService
     }
 
     /**
+     * Embeds a search query for the interactive widget path: short timeout,
+     * no retries (see callEmbeddingApi's docblock), and cached for an hour
+     * so repeated/autocomplete searches for the same text don't re-bill
+     * OpenAI or re-pay its latency on every keystroke-triggered request.
+     *
+     * Queries shorter than 3 characters are rejected before ever reaching
+     * OpenAI — too short to carry any semantic meaning worth embedding.
+     *
+     * @return array{embedding: list<float>, model: string, dimensions: int}|array{}
+     */
+    private function queryEmbedding(string $query): array
+    {
+        $normalized = mb_strtolower(trim($query));
+
+        if (mb_strlen($normalized) <= 2) {
+            return [];
+        }
+
+        return Cache::remember(
+            'hc:qemb:'.sha1($normalized),
+            3600,
+            fn () => $this->callEmbeddingApi($normalized, timeoutSeconds: 5, retries: 0),
+        );
+    }
+
+    /**
      * Semantic search: embed query, pre-filter with fulltext, rank by cosine similarity.
      *
      * @return array<int, array{article_id: int, similarity: float, chunk_text: string}>
@@ -189,7 +241,7 @@ class EmbeddingsService
             return [];
         }
 
-        $queryEmbedding = $this->callEmbeddingApi($query);
+        $queryEmbedding = $this->queryEmbedding($query);
 
         if (empty($queryEmbedding['embedding'])) {
             return [];

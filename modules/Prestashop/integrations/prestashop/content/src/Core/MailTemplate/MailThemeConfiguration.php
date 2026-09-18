@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ final class MailThemeConfiguration implements DataConfigurationInterface
     /** @var ThemeCatalogInterface */
     private $themeCatalog;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param ThemeCatalogInterface $themeCatalog
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         ThemeCatalogInterface $themeCatalog
@@ -91,6 +88,6 @@ final class MailThemeConfiguration implements DataConfigurationInterface
             throw new InvalidArgumentException('Default theme can not be empty');
         }
 
-        return null !== $this->themeCatalog->getByName($configuration['defaultTheme']);
+        return $this->themeCatalog->getByName($configuration['defaultTheme']) !== null;
     }
 }

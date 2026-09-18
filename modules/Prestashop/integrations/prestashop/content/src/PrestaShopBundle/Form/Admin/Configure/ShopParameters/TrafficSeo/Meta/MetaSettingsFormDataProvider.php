@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,14 +79,6 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
 
     /**
      * MetaFormDataProvider constructor.
-     *
-     * @param DataConfigurationInterface $setUpUrlDataConfiguration
-     * @param DataConfigurationInterface $shopUrlsDataConfiguration
-     * @param DataConfigurationInterface $urlSchemaDataConfiguration
-     * @param DataConfigurationInterface $seoOptionsDataConfiguration
-     * @param TranslatorInterface $translator
-     * @param RouteValidator $routeValidator
-     * @param Validate $validate
      */
     public function __construct(
         DataConfigurationInterface $setUpUrlDataConfiguration,
@@ -125,7 +118,7 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
     {
         $errors = $this->validateData($data);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 
@@ -140,7 +133,6 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
     /**
      * Implements custom validation for configuration form.
      *
-     * @param array $data
      *
      * @return array - if array is not empty then error strings are returned
      *
@@ -160,7 +152,6 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
     /**
      * Validates if configuration matches route pattern and if route has mandatory fields.
      *
-     * @param array $configuration
      *
      * @return array
      *
@@ -171,19 +162,19 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
         $patternErrors = [];
         $requiredFieldErrors = [];
         foreach ($configuration as $routeId => $rule) {
-            if (!$this->routeValidator->isRoutePattern($rule)) {
+            if (! $this->routeValidator->isRoutePattern($rule)) {
                 $patternErrors[] = $this->translator->trans(
-                  'The route %routeRule% is not valid',
-                  [
-                      '%routeRule%' => htmlspecialchars($rule),
-                  ],
-                  'Admin.Shopparameters.Feature'
+                    'The route %routeRule% is not valid',
+                    [
+                        '%routeRule%' => htmlspecialchars($rule),
+                    ],
+                    'Admin.Shopparameters.Feature'
                 );
             }
 
             $missingKeywords = $this->routeValidator->doesRouteContainsRequiredKeywords($routeId, $rule);
 
-            if (!empty($missingKeywords)) {
+            if (! empty($missingKeywords)) {
                 foreach ($missingKeywords as $keyword) {
                     $requiredFieldErrors[] = $this->translator->trans(
                         'Keyword "{%keyword%}" required for route "%routeName%" (rule: "%routeRule%")',
@@ -198,7 +189,7 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
             }
         }
 
-        if (!empty($patternErrors)) {
+        if (! empty($patternErrors)) {
             return $patternErrors;
         }
 
@@ -208,14 +199,13 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
     /**
      * Validates shop url form data.
      *
-     * @param array $configuration
      *
      * @return array
      */
     private function validateShopUrl(array $configuration)
     {
         $errors = [];
-        if (!$this->validate->isCleanHtml($configuration['domain'])) {
+        if (! $this->validate->isCleanHtml($configuration['domain'])) {
             $errors[] = $this->translator->trans(
                 'This domain is not valid.',
                 [],
@@ -223,7 +213,7 @@ final class MetaSettingsFormDataProvider implements FormDataProviderInterface
             );
         }
 
-        if (!$this->validate->isCleanHtml($configuration['domain_ssl'])) {
+        if (! $this->validate->isCleanHtml($configuration['domain_ssl'])) {
             $errors[] = $this->translator->trans(
                 'The SSL domain is not valid.',
                 [],

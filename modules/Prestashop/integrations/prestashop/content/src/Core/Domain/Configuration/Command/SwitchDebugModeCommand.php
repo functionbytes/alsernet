@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,7 @@ class SwitchDebugModeCommand
     private $enableDebugMode;
 
     /**
-     * @param bool $enableDebugMode
+     * @param  bool  $enableDebugMode
      */
     public function __construct($enableDebugMode)
     {
@@ -49,6 +50,6 @@ class SwitchDebugModeCommand
      */
     public function enableDebugMode()
     {
-        return true === $this->enableDebugMode;
+        return $this->enableDebugMode === true;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,17 +45,14 @@ class TinyMceMaxLengthValidator extends ConstraintValidator
     /** @var TranslatorInterface */
     private $translator;
 
-    /**
-     * @param TranslatorInterface $translator
-     */
     public function __construct(TranslatorInterface $translator)
     {
         $this->translator = $translator;
     }
 
     /**
-     * @param mixed $value
-     * @param TinyMceMaxLength $constraint
+     * @param  mixed  $value
+     * @param  TinyMceMaxLength  $constraint
      */
     public function validate($value, Constraint $constraint)
     {

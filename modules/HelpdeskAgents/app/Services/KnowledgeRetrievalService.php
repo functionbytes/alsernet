@@ -14,7 +14,7 @@ class KnowledgeRetrievalService
         private readonly EmbeddingService $embeddingService
     ) {}
 
-    public function findRelevant(AiAgent $agent, string $query, ?int $topK = null): Collection
+    public function findRelevant(AiAgent $agent, string $query, ?int $topK = null, ?int $embeddingTimeoutSeconds = null, ?int $embeddingTries = null): Collection
     {
         $topK ??= config('helpdeskagents.embeddings.top_k', 5);
 
@@ -23,7 +23,7 @@ class KnowledgeRetrievalService
         }
 
         try {
-            return $this->findBySimilarity($agent, $query, $topK, config('helpdeskagents.embeddings.min_similarity', 0.65));
+            return $this->findBySimilarity($agent, $query, $topK, config('helpdeskagents.embeddings.min_similarity', 0.65), $embeddingTimeoutSeconds, $embeddingTries);
         } catch (\Throwable $e) {
             Log::warning('KnowledgeRetrievalService: similarity search failed, falling back to fulltext', [
                 'agent_id' => $agent->id,
@@ -55,9 +55,9 @@ class KnowledgeRetrievalService
      * columna VECTOR — migrar el esquema es el paso natural si el corpus
      * supera max_candidates de forma habitual.
      */
-    private function findBySimilarity(AiAgent $agent, string $query, int $topK, float $minSimilarity): Collection
+    private function findBySimilarity(AiAgent $agent, string $query, int $topK, float $minSimilarity, ?int $embeddingTimeoutSeconds = null, ?int $embeddingTries = null): Collection
     {
-        $queryEmbedding = $this->embeddingService->embed($query);
+        $queryEmbedding = $this->embeddingService->embed($query, $embeddingTimeoutSeconds, $embeddingTries);
         $queryNorm = $this->norm($queryEmbedding);
 
         if ($queryNorm === 0.0) {

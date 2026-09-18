@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,6 @@ class CartRuleController extends FrameworkBundleAdminController
      * Displays cart rule listing page.
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
-     * @param CartRuleFilters $cartRuleFilters
-     *
-     * @return Response
      */
     public function indexAction(
         Request $request,
@@ -79,10 +75,6 @@ class CartRuleController extends FrameworkBundleAdminController
      * Searches for cart rules by provided search phrase
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function searchAction(Request $request): JsonResponse
     {
@@ -109,11 +101,8 @@ class CartRuleController extends FrameworkBundleAdminController
      * Deletes cart rule
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_cart_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_cart_rules_index")
-     *
-     * @param int $cartRuleId
-     *
-     * @return RedirectResponse
      */
     public function deleteAction(int $cartRuleId): RedirectResponse
     {
@@ -134,11 +123,8 @@ class CartRuleController extends FrameworkBundleAdminController
      * Deletes cartRules on bulk action
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_cart_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_cart_rules_index")
-     *
-     * @param Request $request
-     *
-     * @return RedirectResponse
      */
     public function bulkDeleteAction(Request $request): RedirectResponse
     {
@@ -161,11 +147,8 @@ class CartRuleController extends FrameworkBundleAdminController
      * Toggles cart rule status
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_cart_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_cart_rules_index")
-     *
-     * @param int $cartRuleId
-     *
-     * @return RedirectResponse
      */
     public function toggleStatusAction(int $cartRuleId): RedirectResponse
     {
@@ -173,7 +156,7 @@ class CartRuleController extends FrameworkBundleAdminController
             /** @var EditableCartRule $editableCartRule */
             $editableCartRule = $this->getQueryBus()->handle(new GetCartRuleForEditing((int) $cartRuleId));
             $this->getCommandBus()->handle(
-                new ToggleCartRuleStatusCommand((int) $cartRuleId, !$editableCartRule->getInformation()->isEnabled())
+                new ToggleCartRuleStatusCommand((int) $cartRuleId, ! $editableCartRule->getInformation()->isEnabled())
             );
             $this->addFlash(
                 'success',
@@ -188,16 +171,12 @@ class CartRuleController extends FrameworkBundleAdminController
 
     /**
      * Provides cart rule ids from request of bulk action
-     *
-     * @param Request $request
-     *
-     * @return array
      */
     private function getBulkCartRulesFromRequest(Request $request): array
     {
         $cartRuleIds = $request->request->get('cart_rule_bulk');
 
-        if (!is_array($cartRuleIds)) {
+        if (! is_array($cartRuleIds)) {
             return [];
         }
 
@@ -208,11 +187,8 @@ class CartRuleController extends FrameworkBundleAdminController
      * Enables cart rules on bulk action
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_cart_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_cart_rules_index")
-     *
-     * @param Request $request
-     *
-     * @return RedirectResponse
      */
     public function bulkEnableAction(Request $request): RedirectResponse
     {
@@ -236,11 +212,8 @@ class CartRuleController extends FrameworkBundleAdminController
      * Disables cart rules on bulk action
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_cart_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_cart_rules_index")
-     *
-     * @param Request $request
-     *
-     * @return RedirectResponse
      */
     public function bulkDisableAction(Request $request): RedirectResponse
     {

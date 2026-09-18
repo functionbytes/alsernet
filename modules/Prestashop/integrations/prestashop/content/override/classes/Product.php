@@ -172,7 +172,7 @@ class Product extends ProductCore
     public static function getEventIva($product)
     {
 
-        $module = \Module::getInstanceByName('alserneteventmanager');
+        $module = Module::getInstanceByName('alserneteventmanager');
 
         if ($module && $module->active) {
             $events = $module->getActiveEvents();

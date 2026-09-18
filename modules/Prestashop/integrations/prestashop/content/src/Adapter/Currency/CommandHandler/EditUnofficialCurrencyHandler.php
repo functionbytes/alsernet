@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,12 +63,12 @@ final class EditUnofficialCurrencyHandler extends AbstractCurrencyHandler implem
     {
         try {
             $entity = new Currency($command->getCurrencyId()->getValue());
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CurrencyNotFoundException(sprintf('Currency object with id "%s" was not found for currency update', $command->getCurrencyId()->getValue()));
             }
             $this->verify($entity, $command);
 
-            if (null !== $command->getIsoCode()) {
+            if ($command->getIsoCode() !== null) {
                 $entity->iso_code = $command->getIsoCode()->getValue();
             }
             $this->updateEntity($entity, $command);
@@ -77,9 +78,6 @@ final class EditUnofficialCurrencyHandler extends AbstractCurrencyHandler implem
     }
 
     /**
-     * @param Currency $entity
-     * @param EditUnofficialCurrencyCommand $command
-     *
      * @throws CannotDisableDefaultCurrencyException
      * @throws CurrencyConstraintException
      * @throws DefaultCurrencyInMultiShopException
@@ -88,7 +86,7 @@ final class EditUnofficialCurrencyHandler extends AbstractCurrencyHandler implem
     private function verify(Currency $entity, EditUnofficialCurrencyCommand $command)
     {
         $this->validator->assertDefaultCurrencyIsNotBeingDisabled($command);
-        if (null !== $command->getIsoCode()) {
+        if ($command->getIsoCode() !== null) {
             $this->validator->assertCurrencyIsNotInReference($command->getIsoCode()->getValue());
             if ($entity->iso_code !== $command->getIsoCode()->getValue()) {
                 $this->validator->assertCurrencyIsNotAvailableInDatabase($command->getIsoCode()->getValue());

@@ -2,30 +2,27 @@
 
 namespace Checkout;
 
-require_once(dirname(__FILE__) . '/../../../classes/CheckoutValidationService.php');
-require_once _PS_MODULE_DIR_ . 'alsernetforms/controllers/front/NewslettersController.php';
-require_once dirname(__FILE__) . '/../BaseController.php';
+require_once dirname(__FILE__).'/../../../classes/CheckoutValidationService.php';
+require_once _PS_MODULE_DIR_.'alsernetforms/controllers/front/NewslettersController.php';
+require_once dirname(__FILE__).'/../BaseController.php';
 
-use NewslettersController;
 use Configuration;
-use Customer;
 use Context;
+use Customer;
+use Hook;
 use Language;
-use Currency;
+use Mail;
 use Module;
+use NewslettersController;
 use Tools;
 use Validate;
-use Hook;
-use Mail;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
 class CheckoutAuthenticationController extends \BaseController
 {
-
-
     public function __construct()
     {
         parent::__construct();
@@ -39,7 +36,7 @@ class CheckoutAuthenticationController extends \BaseController
         $customer = $this->customer;
         $iso = $this->language->iso_code;
         $isLogged = $customer->isLogged();
-        $showLoginForm = !$isLogged;
+        $showLoginForm = ! $isLogged;
         $customerArray = [];
 
         if ($isLogged) {
@@ -54,7 +51,6 @@ class CheckoutAuthenticationController extends \BaseController
             $customerArray['optin'] = $customer->optin;
         }
 
-
         $checkoutUrls = [
             'pages' => [
                 'identity' => $context->link->getPageLink('identity', null, $lang),
@@ -65,33 +61,32 @@ class CheckoutAuthenticationController extends \BaseController
             ],
             'actions' => [
                 'logout' => $context->link->getPageLink('index', true, $lang, 'mylogout'),
-                'login' => '/modules/alsernetshopping/controllers/routes.php?modalitie=checkout&action=authlogin&iso=' . $iso,
-                'register' => '/modules/alsernetshopping/controllers/routes.php?modalitie=checkout&action=authregister&iso=' . $iso,
-                'password' =>  $this->context->link->getPageLink('password', true, $lang)
+                'login' => '/modules/alsernetshopping/controllers/routes.php?modalitie=checkout&action=authlogin&iso='.$iso,
+                'register' => '/modules/alsernetshopping/controllers/routes.php?modalitie=checkout&action=authregister&iso='.$iso,
+                'password' => $this->context->link->getPageLink('password', true, $lang),
             ],
         ];
 
-
         $configuration = [
             'guest_allowed' => (bool) Configuration::get('PS_GUEST_CHECKOUT_ENABLED'),
-            'empty_cart_on_logout' => !Configuration::get('PS_CART_FOLLOWING'),
-            'account_creation_required' => !Configuration::get('PS_GUEST_CHECKOUT_ENABLED'),
+            'empty_cart_on_logout' => ! Configuration::get('PS_CART_FOLLOWING'),
+            'account_creation_required' => ! Configuration::get('PS_GUEST_CHECKOUT_ENABLED'),
             'password_policy' => [
                 'length' => Configuration::get('PS_PASSWD_MIN_LENGTH') ?: 8,
                 'score' => Configuration::get('PS_PASSWD_SCORE') ?: 2,
-            ]
+            ],
         ];
 
         $translations = [
             'email' => $this->l('Email'),
             'password' => $this->l('Password'),
-            'forgot_password' => $this->l('Forgot your password?','checkoutauthenticationcontroller'),
-            'firstname' => $this->l('First name','checkoutauthenticationcontroller'),
-            'lastname' => $this->l('Last name','checkoutauthenticationcontroller'),
-            'birthday' => $this->l('Birthdate','checkoutauthenticationcontroller'),
-            'newsletter' => $this->l('Sign up for our newsletter','checkoutauthenticationcontroller'),
-            'privacy_policy' => $this->l('I agree to the privacy policy','checkoutauthenticationcontroller'),
-            'terms_conditions' => $this->l('I agree to the terms and conditions','checkoutauthenticationcontroller'),
+            'forgot_password' => $this->l('Forgot your password?', 'checkoutauthenticationcontroller'),
+            'firstname' => $this->l('First name', 'checkoutauthenticationcontroller'),
+            'lastname' => $this->l('Last name', 'checkoutauthenticationcontroller'),
+            'birthday' => $this->l('Birthdate', 'checkoutauthenticationcontroller'),
+            'newsletter' => $this->l('Sign up for our newsletter', 'checkoutauthenticationcontroller'),
+            'privacy_policy' => $this->l('I agree to the privacy policy', 'checkoutauthenticationcontroller'),
+            'terms_conditions' => $this->l('I agree to the terms and conditions', 'checkoutauthenticationcontroller'),
         ];
 
         $cartInfo = [
@@ -104,7 +99,7 @@ class CheckoutAuthenticationController extends \BaseController
             $errors[] = $this->l('Authentication failed.');
         }
         if (Tools::getValue('create_account_error')) {
-            $errors[] = $this->l('An error occurred while creating your account.','checkoutauthenticationcontroller');
+            $errors[] = $this->l('An error occurred while creating your account.', 'checkoutauthenticationcontroller');
         }
 
         $context->smarty->assign([
@@ -134,10 +129,10 @@ class CheckoutAuthenticationController extends \BaseController
         $customer = $this->customer;
         $cart = $this->cart;
 
-        if (!$customer|| !$customer->isLogged()) {
+        if (! $customer || ! $customer->isLogged()) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Unauthorized access.','checkoutauthenticationcontroller'),
+                'message' => $this->l('Unauthorized access.', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         }
@@ -146,10 +141,10 @@ class CheckoutAuthenticationController extends \BaseController
         $address_invoide = (int) Tools::getValue('address_invoide');
         $this->forceSingleDeliveryAddressForCart($cart);
 
-        if (!$cart->id_address_delivery) {
+        if (! $cart->id_address_delivery) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Delivery address is required.','checkoutauthenticationcontroller'),
+                'message' => $this->l('Delivery address is required.', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         }
@@ -163,25 +158,24 @@ class CheckoutAuthenticationController extends \BaseController
         $cart->need_invoice = $need_invoice;
         $cart->step = 'address';
 
-        if (!$cart->update()) {
+        if (! $cart->update()) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Failed to update cart with address data.','checkoutauthenticationcontroller'),
+                'message' => $this->l('Failed to update cart with address data.', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         }
 
         return [
             'status' => 'success',
-            'message' => $this->l('Addresses saved successfully.','checkoutauthenticationcontroller'),
-            'operation' => $this->l('Step completed','checkoutauthenticationcontroller'),
+            'message' => $this->l('Addresses saved successfully.', 'checkoutauthenticationcontroller'),
+            'operation' => $this->l('Step completed', 'checkoutauthenticationcontroller'),
             'data' => [
                 'id_address_delivery' => $cart->id_address_delivery,
                 'id_address_invoice' => $cart->id_address_invoice,
                 'need_invoice' => $cart->need_invoice,
             ],
         ];
-
 
     }
 
@@ -193,35 +187,35 @@ class CheckoutAuthenticationController extends \BaseController
         $iso = trim(Tools::getValue('iso'));
         $id_lang = Language::getIdByIso($iso);
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid email address','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid email address', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!Validate::isPasswd($password)) {
+        } elseif (! Validate::isPasswd($password)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid password','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid password', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!Tools::getValue('remember')) {
+        } elseif (! Tools::getValue('remember')) {
             $context->cookie->customer_last_activity = time();
         }
 
-        $customer = new Customer();
+        $customer = new Customer;
         $authentication = $customer->getByEmail($email, $password);
 
-        if (isset($authentication->active) && !$authentication->active) {
+        if (isset($authentication->active) && ! $authentication->active) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Your account isn\'t available at this time, please contact us','checkoutauthenticationcontroller'),
+                'message' => $this->l('Your account isn\'t available at this time, please contact us', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!$authentication || !$customer->id || $customer->is_guest) {
+        } elseif (! $authentication || ! $customer->id || $customer->is_guest) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Authentication failed.','checkoutauthenticationcontroller'),
+                'message' => $this->l('Authentication failed.', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         } else {
@@ -230,7 +224,7 @@ class CheckoutAuthenticationController extends \BaseController
 
             return [
                 'status' => 'success',
-                'message' => $this->l('You have successfully logged in','checkoutauthenticationcontroller'),
+                'message' => $this->l('You have successfully logged in', 'checkoutauthenticationcontroller'),
                 'data' => [],
                 'url' => $context->link->getPageLink('my-account', true, $id_lang),
             ];
@@ -253,45 +247,45 @@ class CheckoutAuthenticationController extends \BaseController
         $condition = Tools::getValue('condition');
         $services = Tools::getValue('services');
 
-        if (!is_array($sports)) {
+        if (! is_array($sports)) {
             $sports = [];
         }
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid email address','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid email address', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!$guestCheckoutEnabled && !Validate::isPasswd($password)) {
+        } elseif (! $guestCheckoutEnabled && ! Validate::isPasswd($password)) {
             // Only validate password if guest checkout is disabled
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid password','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid password', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!Validate::isName($firstname)) {
+        } elseif (! Validate::isName($firstname)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid first name','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid first name', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
-        } elseif (!Validate::isName($lastname)) {
+        } elseif (! Validate::isName($lastname)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Invalid last name','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid last name', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         } elseif (empty($sports) || count($sports) === 0) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('Please select at least one sport','checkoutauthenticationcontroller'),
+                'message' => $this->l('Please select at least one sport', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         } elseif (empty($condition) || $condition !== 'on') {
             return [
                 'status' => 'warning',
-                'message' => $this->l('You must accept the terms and conditions','checkoutauthenticationcontroller'),
+                'message' => $this->l('You must accept the terms and conditions', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         }
@@ -299,12 +293,12 @@ class CheckoutAuthenticationController extends \BaseController
         if (Customer::customerExists($email, true, true)) {
             return [
                 'status' => 'warning',
-                'message' => $this->l('This email is already used, please choose another one or sign in','checkoutauthenticationcontroller'),
+                'message' => $this->l('This email is already used, please choose another one or sign in', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         } else {
 
-            $customer = new Customer();
+            $customer = new Customer;
             $customer->firstname = $firstname;
             $customer->lastname = $lastname;
             $customer->email = $email;
@@ -321,16 +315,16 @@ class CheckoutAuthenticationController extends \BaseController
             if ($customer->save()) {
 
                 $context->updateCustomer($customer);
-                $context->cart->id_customer = (int)$customer->id;
+                $context->cart->id_customer = (int) $customer->id;
                 $context->cart->update();
 
                 $subject = $this->l('Welcome!');
 
-                $mailParams = array(
+                $mailParams = [
                     '{email}' => $customer->email,
                     '{lastname}' => $customer->lastname,
                     '{firstname}' => $customer->firstname,
-                );
+                ];
 
                 Mail::Send(
                     $this->context->language->id,
@@ -338,24 +332,26 @@ class CheckoutAuthenticationController extends \BaseController
                     $subject,
                     $mailParams,
                     $customer->email,
-                    $customer->firstname . ' ' . $customer->lastname
+                    $customer->firstname.' '.$customer->lastname
                 );
 
-                Hook::exec('actionCustomerAccountAdd', array(
+                Hook::exec('actionCustomerAccountAdd', [
                     'newCustomer' => $customer,
-                ));
+                ]);
 
                 if (class_exists('NewslettersController')) {
 
                     $sportsRaw = is_array($sports ?? null)
                         ? $sports
-                        : preg_split('/[,\s;]+/', (string)($sports ?? Tools::getValue('sports', '')), -1, PREG_SPLIT_NO_EMPTY);
+                        : preg_split('/[,\s;]+/', (string) ($sports ?? Tools::getValue('sports', '')), -1, PREG_SPLIT_NO_EMPTY);
 
-                    $sportsIds = array_values(array_unique(array_filter(array_map('intval', $sportsRaw), function ($v) { return $v > 0; })));
+                    $sportsIds = array_values(array_unique(array_filter(array_map('intval', $sportsRaw), function ($v) {
+                        return $v > 0;
+                    })));
 
                     $sportsCsv = implode(',', $sportsIds);
 
-                    $controller = new NewslettersController();
+                    $controller = new NewslettersController;
                     $controller->registersubscribe([
                         'firstname' => $firstname,
                         'lastname' => $lastname,
@@ -370,7 +366,7 @@ class CheckoutAuthenticationController extends \BaseController
 
                 return [
                     'status' => 'success',
-                    'message' => $this->l('You have successfully created a new account.','checkoutauthenticationcontroller'),
+                    'message' => $this->l('You have successfully created a new account.', 'checkoutauthenticationcontroller'),
                     'url' => $this->context->link->getPageLink('my-account', true, $id_lang),
                     'data' => [],
                 ];
@@ -378,7 +374,7 @@ class CheckoutAuthenticationController extends \BaseController
             } else {
                 return [
                     'status' => 'warning',
-                    'message' => $this->l('An error occurred while creating the new account.','checkoutauthenticationcontroller'),
+                    'message' => $this->l('An error occurred while creating the new account.', 'checkoutauthenticationcontroller'),
                     'url' => $this->context->link->getPageLink('my-account', true, $id_lang),
                     'data' => [],
                 ];
@@ -390,19 +386,19 @@ class CheckoutAuthenticationController extends \BaseController
     {
         $email = trim(Tools::getValue('email'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'success' => 'warning',
-                'message' => $this->l('Invalid email address','checkoutauthenticationcontroller'),
+                'message' => $this->l('Invalid email address', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         }
 
-        $customer = new Customer();
+        $customer = new Customer;
         if ($customer->getByEmail($email)) {
             return [
                 'status' => 'success',
-                'message' => $this->l('Your email is already registered in our system','checkoutauthenticationcontroller'),
+                'message' => $this->l('Your email is already registered in our system', 'checkoutauthenticationcontroller'),
                 'data' => [],
             ];
         } else {
@@ -414,9 +410,8 @@ class CheckoutAuthenticationController extends \BaseController
         }
     }
 
-
-
-    public function l($string, $specific = false, $locale = null){
+    public function l($string, $specific = false, $locale = null)
+    {
 
         return $this->getModuleTranslation(
             $this->module,
@@ -428,8 +423,7 @@ class CheckoutAuthenticationController extends \BaseController
         );
     }
 
-
-    public  function getModuleTranslation(
+    public function getModuleTranslation(
         $module,
         $originalString,
         $source,
@@ -448,10 +442,9 @@ class CheckoutAuthenticationController extends \BaseController
         // $translations_merged is a cache of wether a specific module's translations have already been added to $_MODULES
         static $translationsMerged = [];
 
-
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -459,51 +452,50 @@ class CheckoutAuthenticationController extends \BaseController
             $iso = Context::getContext()->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int) $js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -512,8 +504,8 @@ class CheckoutAuthenticationController extends \BaseController
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -529,9 +521,9 @@ class CheckoutAuthenticationController extends \BaseController
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -543,10 +535,4 @@ class CheckoutAuthenticationController extends \BaseController
 
         return $ret;
     }
-
-
-
 }
-
-
-

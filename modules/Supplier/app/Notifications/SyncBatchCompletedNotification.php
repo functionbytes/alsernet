@@ -30,7 +30,7 @@ class SyncBatchCompletedNotification extends Notification
             $aiCost > 0 ? sprintf(', coste IA $%.4f', $aiCost) : ''
         );
 
-        if (!$isOk) {
+        if (! $isOk) {
             $summary = sprintf(
                 'Sync fallido: %d procesados, %d fallidos%s',
                 $this->batch->processed_items,
@@ -40,20 +40,20 @@ class SyncBatchCompletedNotification extends Notification
         }
 
         return [
-            'type'       => 'sync_batch_completed',
-            'icon'       => $icon,
-            'color'      => $color,
-            'title'      => $isOk ? 'Sincronización completada' : 'Sincronización fallida',
-            'message'    => $summary,
-            'batch_id'   => $this->batch->id,
-            'batch_uid'  => $this->batch->uid,
+            'type' => 'sync_batch_completed',
+            'icon' => $icon,
+            'color' => $color,
+            'title' => $isOk ? 'Sincronización completada' : 'Sincronización fallida',
+            'message' => $summary,
+            'batch_id' => $this->batch->id,
+            'batch_uid' => $this->batch->uid,
             'batch_name' => $this->batch->batch_name,
-            'status'     => $this->batch->status,
-            'models'     => $this->batch->processed_items,
-            'failed'     => $this->batch->failed_items,
-            'duration'   => $this->batch->duration_seconds,
-            'ai_cost'    => $aiCost,
-            'url'        => '/settings/suppliers/sync/' . $this->batch->id,
+            'status' => $this->batch->status,
+            'models' => $this->batch->processed_items,
+            'failed' => $this->batch->failed_items,
+            'duration' => $this->batch->duration_seconds,
+            'ai_cost' => $aiCost,
+            'url' => '/settings/suppliers/sync/'.$this->batch->id,
         ];
     }
 

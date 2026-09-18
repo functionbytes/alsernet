@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -73,16 +74,14 @@ final class GetManufacturerForEditingHandler extends AbstractManufacturerHandler
     }
 
     /**
-     * @param ManufacturerId $manufacturerId
-     *
      * @return array|null
      */
     private function getLogoImage(ManufacturerId $manufacturerId)
     {
-        $pathToImage = _PS_MANU_IMG_DIR_ . $manufacturerId->getValue() . '.jpg';
+        $pathToImage = _PS_MANU_IMG_DIR_.$manufacturerId->getValue().'.jpg';
         $imageTag = ImageManager::thumbnail(
             $pathToImage,
-            'manufacturer_' . $manufacturerId->getValue() . '.jpg',
+            'manufacturer_'.$manufacturerId->getValue().'.jpg',
             350,
             'jpg',
             true,

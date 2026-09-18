@@ -18,7 +18,7 @@
                     <div class="row g-2">
                         <div class="col-md-3">
                             <a href="{{ route('settings.helpdesk.attributes.create') }}" class="btn btn-primary w-100">
-                                <i class="fas fa-plus me-1"></i>Nuevo atributo
+                                Nuevo atributo
                             </a>
                         </div>
                     </div>
@@ -40,7 +40,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Formato</label>
-                            <select name="format" class="form-select select2" id="formatSelect">
+                            <select name="format" class="form-select select2" id="formatSelect" data-select2-allow-clear="1">
                                 <option value="">Todos los formatos</option>
                                 <option value="text"          {{ request('format') === 'text'          ? 'selected' : '' }}>Texto</option>
                                 <option value="textarea"      {{ request('format') === 'textarea'      ? 'selected' : '' }}>Área de texto</option>
@@ -54,7 +54,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Permisos</label>
-                            <select name="permission" class="form-select select2" id="permissionSelect">
+                            <select name="permission" class="form-select select2" id="permissionSelect" data-select2-allow-clear="1">
                                 <option value="">Todos los permisos</option>
                                 <option value="userCanView"  {{ request('permission') === 'userCanView'  ? 'selected' : '' }}>Usuario puede ver</option>
                                 <option value="userCanEdit"  {{ request('permission') === 'userCanEdit'  ? 'selected' : '' }}>Usuario puede editar</option>
@@ -64,7 +64,7 @@
                         <div class="col-md-2">
                             <label class="form-label fw-semibold">&nbsp;</label>
                             <button type="submit" class="btn btn-primary w-100 d-block">
-                                <i class="fas fa-search me-1"></i>Filtrar
+                                Filtrar
                             </button>
                         </div>
                     </div>
@@ -109,51 +109,8 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('#formatSelect, #permissionSelect').select2({
-        placeholder: 'Selecciona una opción',
-        allowClear: true,
-        width: '100%',
-    });
-
-    $('#filterForm select').on('change', function () {
-        $('#filterForm').submit();
-    });
-
-    $(document).on('change', '.attribute-toggle', function () {
-        var $toggle = $(this);
-        var url     = $toggle.data('url');
-
-        $toggle.prop('disabled', true);
-
-        $.ajax({
-            url: url,
-            method: 'PATCH',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (response) {
-                toastr.success(response.message || 'Estado actualizado', 'Éxito');
-            },
-            error: function (xhr) {
-                // Revert the visual state on failure
-                $toggle.prop('checked', !$toggle.prop('checked'));
-                var msg = xhr.responseJSON && xhr.responseJSON.message
-                    ? xhr.responseJSON.message
-                    : 'Error al actualizar el estado';
-                toastr.error(msg, 'Error');
-            },
-            complete: function () {
-                $toggle.prop('disabled', false);
-            },
-        });
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/attributes-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/attributes-index.js')) }}" defer></script>
 @endpush

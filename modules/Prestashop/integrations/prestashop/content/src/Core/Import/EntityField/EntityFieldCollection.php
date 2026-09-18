@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -89,7 +90,7 @@ final class EntityFieldCollection implements EntityFieldCollectionInterface
      */
     public static function createFromArray(array $entityFields)
     {
-        $collection = new self();
+        $collection = new self;
 
         foreach ($entityFields as $entityField) {
             $collection->addEntityField($entityField);

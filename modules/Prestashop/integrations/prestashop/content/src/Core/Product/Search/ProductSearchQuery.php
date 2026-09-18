@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -93,8 +94,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param string $queryType
-     *
+     * @param  string  $queryType
      * @return $this
      */
     public function setQueryType($queryType)
@@ -113,8 +113,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param int $idCategory
-     *
+     * @param  int  $idCategory
      * @return $this
      */
     public function setIdCategory($idCategory)
@@ -133,8 +132,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param int $idManufacturer
-     *
+     * @param  int  $idManufacturer
      * @return $this
      */
     public function setIdManufacturer($idManufacturer)
@@ -153,8 +151,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param int $idSupplier
-     *
+     * @param  int  $idSupplier
      * @return $this
      */
     public function setIdSupplier($idSupplier)
@@ -173,8 +170,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param int $resultsPerPage
-     *
+     * @param  int  $resultsPerPage
      * @return $this
      */
     public function setResultsPerPage($resultsPerPage)
@@ -193,8 +189,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param int $page
-     *
+     * @param  int  $page
      * @return $this
      */
     public function setPage($page)
@@ -213,8 +208,6 @@ class ProductSearchQuery
     }
 
     /**
-     * @param SortOrder $sortOrder
-     *
      * @return $this
      */
     public function setSortOrder(SortOrder $sortOrder)
@@ -233,8 +226,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param string $searchString
-     *
+     * @param  string  $searchString
      * @return $this
      */
     public function setSearchString($searchString)
@@ -253,8 +245,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param string $searchTag
-     *
+     * @param  string  $searchTag
      * @return $this
      */
     public function setSearchTag($searchTag)
@@ -273,8 +264,7 @@ class ProductSearchQuery
     }
 
     /**
-     * @param array|string $encodedFacets
-     *
+     * @param  array|string  $encodedFacets
      * @return $this
      */
     public function setEncodedFacets($encodedFacets)

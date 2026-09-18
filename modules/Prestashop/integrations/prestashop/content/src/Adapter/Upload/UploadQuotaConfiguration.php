@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -111,8 +112,7 @@ class UploadQuotaConfiguration implements DataConfigurationInterface
     /**
      * Map array key to the related configuration property.
      *
-     * @param string $key
-     *
+     * @param  string  $key
      * @return string the related configuration key
      */
     private function getConfigurationKey($key)

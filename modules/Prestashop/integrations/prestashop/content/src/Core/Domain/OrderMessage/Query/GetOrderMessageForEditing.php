@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class GetOrderMessageForEditing
      */
     private $orderMessageId;
 
-    /**
-     * @param int $orderMessageId
-     */
     public function __construct(int $orderMessageId)
     {
         $this->orderMessageId = new OrderMessageId($orderMessageId);
     }
 
-    /**
-     * @return OrderMessageId
-     */
     public function getOrderMessageId(): OrderMessageId
     {
         return $this->orderMessageId;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -120,8 +121,6 @@ class EditSupplierCommand
     private $dni;
 
     /**
-     * @param int $supplierId
-     *
      * @throws SupplierException
      */
     public function __construct(int $supplierId)
@@ -129,27 +128,16 @@ class EditSupplierCommand
         $this->supplierId = new SupplierId($supplierId);
     }
 
-    /**
-     * @return SupplierId
-     */
     public function getSupplierId(): SupplierId
     {
         return $this->supplierId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * @param string $name
-     *
-     * @return EditSupplierCommand
-     */
     public function setName(string $name): self
     {
         $this->name = $name;
@@ -166,9 +154,7 @@ class EditSupplierCommand
     }
 
     /**
-     * @param string[] $localizedDescriptions
-     *
-     * @return EditSupplierCommand
+     * @param  string[]  $localizedDescriptions
      */
     public function setLocalizedDescriptions(array $localizedDescriptions): self
     {
@@ -177,19 +163,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    /**
-     * @param string $address
-     *
-     * @return EditSupplierCommand
-     */
     public function setAddress(string $address): self
     {
         $this->address = $address;
@@ -197,19 +175,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCity(): ?string
     {
         return $this->city;
     }
 
-    /**
-     * @param string $city
-     *
-     * @return EditSupplierCommand
-     */
     public function setCity(string $city): self
     {
         $this->city = $city;
@@ -217,19 +187,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAddress2(): ?string
     {
         return $this->address2;
     }
 
-    /**
-     * @param string $address2
-     *
-     * @return EditSupplierCommand
-     */
     public function setAddress2(string $address2): self
     {
         $this->address2 = $address2;
@@ -237,19 +199,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCountryId(): ?int
     {
         return $this->countryId;
     }
 
-    /**
-     * @param int $countryId
-     *
-     * @return EditSupplierCommand
-     */
     public function setCountryId(int $countryId): self
     {
         $this->countryId = $countryId;
@@ -257,19 +211,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPostCode(): ?string
     {
         return $this->postCode;
     }
 
-    /**
-     * @param string $postCode
-     *
-     * @return EditSupplierCommand
-     */
     public function setPostCode(string $postCode): self
     {
         $this->postCode = $postCode;
@@ -277,19 +223,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getStateId(): ?int
     {
         return $this->stateId;
     }
 
-    /**
-     * @param int $stateId
-     *
-     * @return EditSupplierCommand
-     */
     public function setStateId(int $stateId): self
     {
         $this->stateId = $stateId;
@@ -297,19 +235,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPhone(): ?string
     {
         return $this->phone;
     }
 
-    /**
-     * @param string $phone
-     *
-     * @return EditSupplierCommand
-     */
     public function setPhone(string $phone): self
     {
         $this->phone = $phone;
@@ -317,19 +247,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMobilePhone(): ?string
     {
         return $this->mobilePhone;
     }
 
-    /**
-     * @param string $mobilePhone
-     *
-     * @return EditSupplierCommand
-     */
     public function setMobilePhone(string $mobilePhone): self
     {
         $this->mobilePhone = $mobilePhone;
@@ -346,9 +268,7 @@ class EditSupplierCommand
     }
 
     /**
-     * @param string[] $localizedMetaTitles
-     *
-     * @return EditSupplierCommand
+     * @param  string[]  $localizedMetaTitles
      */
     public function setLocalizedMetaTitles(array $localizedMetaTitles): self
     {
@@ -366,9 +286,7 @@ class EditSupplierCommand
     }
 
     /**
-     * @param string[] $localizedMetaDescriptions
-     *
-     * @return EditSupplierCommand
+     * @param  string[]  $localizedMetaDescriptions
      */
     public function setLocalizedMetaDescriptions(array $localizedMetaDescriptions): self
     {
@@ -386,9 +304,7 @@ class EditSupplierCommand
     }
 
     /**
-     * @param string[] $localizedMetaKeywords
-     *
-     * @return EditSupplierCommand
+     * @param  string[]  $localizedMetaKeywords
      */
     public function setLocalizedMetaKeywords(array $localizedMetaKeywords): self
     {
@@ -397,19 +313,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isEnabled(): ?bool
     {
         return $this->enabled;
     }
 
-    /**
-     * @param bool $enabled
-     *
-     * @return EditSupplierCommand
-     */
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
@@ -417,19 +325,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return array|null
-     */
     public function getAssociatedShops(): ?array
     {
         return $this->associatedShops;
     }
 
-    /**
-     * @param array $associatedShops
-     *
-     * @return EditSupplierCommand
-     */
     public function setAssociatedShops(array $associatedShops): self
     {
         $this->associatedShops = $associatedShops;
@@ -437,19 +337,11 @@ class EditSupplierCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDni(): ?string
     {
         return $this->dni;
     }
 
-    /**
-     * @param string $dni
-     *
-     * @return EditSupplierCommand
-     */
     public function setDni(string $dni): self
     {
         $this->dni = $dni;

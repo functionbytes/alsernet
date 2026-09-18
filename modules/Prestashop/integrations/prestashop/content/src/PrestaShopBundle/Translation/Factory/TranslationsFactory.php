@@ -72,9 +72,6 @@ class TranslationsFactory implements TranslationsFactoryInterface
         throw new ProviderNotFoundException($domainIdentifier);
     }
 
-    /**
-     * @param AbstractProvider $provider
-     */
     public function addProvider(AbstractProvider $provider)
     {
         $this->providers[] = $provider;

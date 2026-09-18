@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,12 +44,12 @@ class Theme implements ThemeInterface
     private $layouts;
 
     /**
-     * @param string $name
+     * @param  string  $name
      */
     public function __construct($name)
     {
         $this->name = $name;
-        $this->layouts = new LayoutCollection();
+        $this->layouts = new LayoutCollection;
     }
 
     /**
@@ -68,8 +69,7 @@ class Theme implements ThemeInterface
     }
 
     /**
-     * @param LayoutCollectionInterface $layouts
-     *
+     * @param  LayoutCollectionInterface  $layouts
      * @return $this
      */
     public function setLayouts($layouts)

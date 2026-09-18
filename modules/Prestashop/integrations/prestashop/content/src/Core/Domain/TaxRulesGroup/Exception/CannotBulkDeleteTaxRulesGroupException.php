@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,7 @@ class CannotBulkDeleteTaxRulesGroupException extends TaxRulesGroupException
      */
     private $taxRulesGroupsIds;
 
-    public function __construct(array $taxRulesGroupsIds, $message = '', $code = 0, Exception $previous = null)
+    public function __construct(array $taxRulesGroupsIds, $message = '', $code = 0, ?Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
 

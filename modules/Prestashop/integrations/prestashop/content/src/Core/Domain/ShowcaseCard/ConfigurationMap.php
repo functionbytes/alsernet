@@ -62,7 +62,6 @@ class ConfigurationMap
     /**
      * Return the ps_configuration configuration name for "closed status" of the provided card
      *
-     * @param ShowcaseCard $cardName
      *
      * @return string
      *
@@ -72,7 +71,7 @@ class ConfigurationMap
     {
         $name = $cardName->getName();
 
-        if (!isset($this->closedCardConfiguration[$name])) {
+        if (! isset($this->closedCardConfiguration[$name])) {
             throw new ShowcaseCardException(sprintf('No closed status configuration found for showcase card "%s"', $name));
         }
 

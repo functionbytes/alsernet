@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ class AddProductImageCommand
      */
     private $filePath;
 
-    /**
-     * @param int $productId
-     * @param string $pathName
-     */
     public function __construct(
         int $productId,
         string $pathName
@@ -57,17 +54,11 @@ class AddProductImageCommand
         $this->filePath = $pathName;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getFilePath(): string
     {
         return $this->filePath;

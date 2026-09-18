@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -92,17 +93,11 @@ class EditableEmployee
     private $hasEnabledGravatar;
 
     /**
-     * @param EmployeeId $employeeId
-     * @param FirstName $firstName
-     * @param LastName $lastName
-     * @param Email $email
-     * @param string $avatarUrl
-     * @param int $defaultPageId
-     * @param int $languageId
-     * @param bool $active
-     * @param int $profileId
-     * @param array $shopAssociation
-     * @param bool $hasEnabledGravatar
+     * @param  string  $avatarUrl
+     * @param  int  $defaultPageId
+     * @param  int  $languageId
+     * @param  bool  $active
+     * @param  int  $profileId
      */
     public function __construct(
         EmployeeId $employeeId,

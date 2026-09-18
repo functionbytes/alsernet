@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,16 +54,14 @@ class ImportFormHandler implements ImportFormHandlerInterface
      * @var ImportFormDataProviderInterface
      */
     private $formDataProvider;
+
     /**
      * @var string
      */
     private $hookName;
 
     /**
-     * @param FormBuilderInterface $formBuilder
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param ImportFormDataProviderInterface $formDataProvider
-     * @param string $hookName
+     * @param  string  $hookName
      */
     public function __construct(
         FormBuilderInterface $formBuilder,

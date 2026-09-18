@@ -219,6 +219,7 @@ class SupplierProductChatController extends Controller
             } elseif (str_contains($msg, '429')) {
                 $msg = 'Límite de peticiones alcanzado. Espera unos segundos e inténtalo de nuevo.';
             }
+
             return response()->json(['success' => false, 'message' => $msg], 500);
         }
     }
@@ -345,13 +346,13 @@ class SupplierProductChatController extends Controller
         }
 
         $generationMeta = [
-            'source'        => 'chat',
-            'product_id'    => $product->id,
-            'chat_uid'      => $chat->uid,
-            'model'         => $chat->model,
-            'total_cost'    => (float) $chat->total_cost,
-            'total_tokens'  => (int) $chat->total_tokens,
-            'generated_at'  => now()->toIso8601String(),
+            'source' => 'chat',
+            'product_id' => $product->id,
+            'chat_uid' => $chat->uid,
+            'model' => $chat->model,
+            'total_cost' => (float) $chat->total_cost,
+            'total_tokens' => (int) $chat->total_tokens,
+            'generated_at' => now()->toIso8601String(),
         ];
 
         // Upsert: reutilizar el único registro del producto si existe, nunca crear duplicados.
@@ -367,38 +368,38 @@ class SupplierProductChatController extends Controller
             if (! empty($sources)) {
                 $history[] = [
                     'saved_at' => now()->toIso8601String(),
-                    'sources'  => $sources,
+                    'sources' => $sources,
                 ];
             }
 
             $aiContent->update([
-                'status'              => AiContent::STATUS_PENDING_VALIDATION,
-                'prompt_id'           => $promptId,
-                'generated_name'      => ! empty($data['name']) ? $data['name'] : $aiContent->generated_name,
-                'long_description'    => $data['content'],
-                'source_attributes'   => $sourceAttributes,
+                'status' => AiContent::STATUS_PENDING_VALIDATION,
+                'prompt_id' => $promptId,
+                'generated_name' => ! empty($data['name']) ? $data['name'] : $aiContent->generated_name,
+                'long_description' => $data['content'],
+                'source_attributes' => $sourceAttributes,
                 'generation_metadata' => $generationMeta,
-                'sources_used'        => ! empty($sources) ? $sources : $aiContent->sources_used,
-                'sources_history'     => $history,
-                'rejection_reason'    => null,
-                'validated_by'        => null,
-                'validated_at'        => null,
+                'sources_used' => ! empty($sources) ? $sources : $aiContent->sources_used,
+                'sources_history' => $history,
+                'rejection_reason' => null,
+                'validated_by' => null,
+                'validated_at' => null,
             ]);
         } else {
             $history = ! empty($sources) ? [['saved_at' => now()->toIso8601String(), 'sources' => $sources]] : [];
 
             $aiContent = AiContent::create([
-                'supplier_id'         => $product->supplier_id,
+                'supplier_id' => $product->supplier_id,
                 'supplier_product_id' => $product->id,
-                'erp_reference'       => $product->code,
-                'status'              => AiContent::STATUS_PENDING_VALIDATION,
-                'prompt_id'           => $promptId,
-                'generated_name'      => ! empty($data['name']) ? $data['name'] : null,
-                'long_description'    => $data['content'],
-                'source_attributes'   => $sourceAttributes,
+                'erp_reference' => $product->code,
+                'status' => AiContent::STATUS_PENDING_VALIDATION,
+                'prompt_id' => $promptId,
+                'generated_name' => ! empty($data['name']) ? $data['name'] : null,
+                'long_description' => $data['content'],
+                'source_attributes' => $sourceAttributes,
                 'generation_metadata' => $generationMeta,
-                'sources_used'        => $sources,
-                'sources_history'     => $history,
+                'sources_used' => $sources,
+                'sources_history' => $history,
             ]);
         }
 

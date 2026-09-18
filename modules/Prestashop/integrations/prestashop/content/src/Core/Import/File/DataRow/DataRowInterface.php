@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,12 +35,11 @@ use PrestaShop\PrestaShop\Core\Import\File\DataCell\DataCellInterface;
 /**
  * Interface DataRowInterface describes a data row from imported file.
  */
-interface DataRowInterface extends ArrayAccess, IteratorAggregate, Countable
+interface DataRowInterface extends ArrayAccess, Countable, IteratorAggregate
 {
     /**
      * Add a cell to this row.
      *
-     * @param DataCellInterface $cell
      *
      * @return self
      */
@@ -48,15 +48,13 @@ interface DataRowInterface extends ArrayAccess, IteratorAggregate, Countable
     /**
      * Create a data row from given array.
      *
-     * @param array $data
      *
      * @return self
      */
     public static function createFromArray(array $data);
 
     /**
-     * @param mixed $offset
-     *
+     * @param  mixed  $offset
      * @return DataCellInterface
      */
     public function offsetGet($offset);

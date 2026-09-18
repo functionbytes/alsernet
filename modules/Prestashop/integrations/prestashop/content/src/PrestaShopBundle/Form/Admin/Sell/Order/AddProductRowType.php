@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -100,7 +101,7 @@ class AddProductRowType extends TranslatorAwareType
                 'label' => false,
                 'unit' => sprintf('%s %s',
                     $options['symbol'],
-                        $this->trans('tax excl.', 'Admin.Global')
+                    $this->trans('tax excl.', 'Admin.Global')
                 ),
             ])
             ->add('price_tax_included', TextWithUnitType::class, [
@@ -150,8 +151,7 @@ class AddProductRowType extends TranslatorAwareType
                     'class' => 'btn btn-sm btn-primary js-product-add-action-btn mt-2 mb-2',
                     'data-order-id' => $options['order_id'],
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -167,7 +167,6 @@ class AddProductRowType extends TranslatorAwareType
             ])
             ->setAllowedTypes('order_id', ['int', 'null'])
             ->setAllowedTypes('currency_id', ['int', 'null'])
-            ->setAllowedTypes('symbol', ['string'])
-        ;
+            ->setAllowedTypes('symbol', ['string']);
     }
 }

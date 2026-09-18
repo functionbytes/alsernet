@@ -157,11 +157,19 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
+                                                        <form method="POST" action="{{ route('manager.helpdesk.tickets.canned-replies.duplicate', $reply->id) }}">
+                                                            @csrf
+                                                            <button type="submit" class="dropdown-item">
+                                                                Duplicar como mía
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
                                                         <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.ticket-canned-replies.edit', $reply->id) }}">
                                                             Editar
                                                         </a>
                                                     </li>
-                                                    <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item delete-btn" href="#"
                                                            data-bs-toggle="modal"
@@ -227,7 +235,7 @@
     @include('core::components.delete')
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>

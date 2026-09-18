@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,8 @@ class NullDateTime extends DateTimeImmutable
     public static function getSupportedFormats(): array
     {
         return [
-            DateTime::DEFAULT_DATE_FORMAT => DateTime::NULL_DATE,
-            DateTime::DEFAULT_DATETIME_FORMAT => DateTime::NULL_DATETIME,
+            DateTimeUtil::DEFAULT_DATE_FORMAT => DateTimeUtil::NULL_DATE,
+            DateTimeUtil::DEFAULT_DATETIME_FORMAT => DateTimeUtil::NULL_DATETIME,
         ];
     }
 
@@ -206,11 +207,6 @@ class NullDateTime extends DateTimeImmutable
         throw static::buildUnusableMethodException('createFromInterface');
     }
 
-    /**
-     * @param string $method
-     *
-     * @return RuntimeException
-     */
     private static function buildUnusableMethodException(string $method): RuntimeException
     {
         return new RuntimeException(sprintf(

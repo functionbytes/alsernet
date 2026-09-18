@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,7 @@ class ListCommandsAndQueriesCommand extends ContainerAwareCommand
     {
         $this
             ->setName('prestashop:list:commands-and-queries')
-            ->setDescription('Lists available CQRS commands and queries')
-        ;
+            ->setDescription('Lists available CQRS commands and queries');
     }
 
     /**
@@ -61,10 +61,10 @@ class ListCommandsAndQueriesCommand extends ContainerAwareCommand
         foreach ($commands as $key => $commandName) {
             $commandDefinition = $commandDefinitionParser->parseDefinition($commandName);
 
-            $output->writeln(++$key . '.');
-            $output->writeln('<blue>Class: </blue><info>' . $commandDefinition->getClassName() . '</info>');
-            $output->writeln('<blue>Type: </blue><info>' . $commandDefinition->getCommandType() . '</info>');
-            $output->writeln('<comment>' . $commandDefinition->getDescription() . '</comment>');
+            $output->writeln(++$key.'.');
+            $output->writeln('<blue>Class: </blue><info>'.$commandDefinition->getClassName().'</info>');
+            $output->writeln('<blue>Type: </blue><info>'.$commandDefinition->getCommandType().'</info>');
+            $output->writeln('<comment>'.$commandDefinition->getDescription().'</comment>');
             $output->writeln('');
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,7 @@ final class ContactFormDataProvider implements FormDataProviderInterface
     private $stringArrayToIntegerArrayDataTransformer;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param DataTransformerInterface $stringArrayToIntegerArrayDataTransformer
-     * @param int[] $contextShopIds
+     * @param  int[]  $contextShopIds
      */
     public function __construct(
         CommandBusInterface $queryBus,
@@ -80,7 +79,7 @@ final class ContactFormDataProvider implements FormDataProviderInterface
 
         return [
             'title' => $editableContact->getLocalisedTitles(),
-            'email' => null !== $editableContact->getEmail() ? $editableContact->getEmail()->getValue() : '',
+            'email' => $editableContact->getEmail() !== null ? $editableContact->getEmail()->getValue() : '',
             'is_messages_saving_enabled' => $editableContact->isMessagesSavingEnabled(),
             'description' => $editableContact->getLocalisedDescription(),
             'shop_association' => $editableContact->getShopAssociation(),

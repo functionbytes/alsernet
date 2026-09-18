@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,7 @@ class ChangeCurrencyControllerCore extends FrontController
     public function initContent()
     {
         $currency = new Currency((int) Tools::getValue('id_currency'));
-        if (Validate::isLoadedObject($currency) && !$currency->deleted) {
+        if (Validate::isLoadedObject($currency) && ! $currency->deleted) {
             $this->context->cookie->id_currency = (int) $currency->id;
             $this->ajaxRender('1');
 

@@ -624,7 +624,7 @@ class ChatFlowEngine
 
         $lastItemId = (int) ($session->conversation?->items()->max('id') ?? 0);
 
-        HandleNodeTimeoutJob::dispatch($session->id, $node['id'], $lastItemId)
+        HandleNodeTimeoutJob::dispatch($session->id, $node['id'], $lastItemId, $session->conversation_id)
             ->delay(now()->addMinutes($minutes));
     }
 
@@ -733,7 +733,11 @@ class ChatFlowEngine
             return $flow;
         }
 
-        return ChatFlow::query()->find($variantId) ?? $flow;
+        // La variante debe estar publicada igual que el flujo base (que ya
+        // llega filtrado por active() desde el resolver): si no, o si el id
+        // guardado ya no existe, se cae al flujo base en vez de ejecutar un
+        // árbol draft/archivado contra un cliente real.
+        return ChatFlow::query()->active()->find($variantId) ?? $flow;
     }
 
     public function hasActiveSession(Conversation $conversation): bool

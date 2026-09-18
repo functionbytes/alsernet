@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,8 +61,8 @@ class CheckTranslationDuplicatesCommand extends ContainerAwareCommand
             $messages = array_keys($messages);
 
             // We compare strings from the same array, so we have two for() loops
-            for ($i = 0; $i < $nbOfMessages; ++$i) {
-                for ($j = ($i + 1); $j < $nbOfMessages; ++$j) {
+            for ($i = 0; $i < $nbOfMessages; $i++) {
+                for ($j = ($i + 1); $j < $nbOfMessages; $j++) {
                     if ($this->check($messages[$i], $messages[$j])) {
                         $duplicates[$domain][] = [$i => $messages[$i], $j => $messages[$j]];
                     }
@@ -90,9 +91,8 @@ class CheckTranslationDuplicatesCommand extends ContainerAwareCommand
     /**
      * We consider strings as equals if they have the same value after params cleanup.
      *
-     * @param string $message1
-     * @param string $message2
-     *
+     * @param  string  $message1
+     * @param  string  $message2
      * @return bool
      */
     protected function check($message1, $message2)
@@ -105,8 +105,7 @@ class CheckTranslationDuplicatesCommand extends ContainerAwareCommand
      * This allow the algorithm to check if the strings are the same once the parameters made generic
      * i.e: Error when disabling module %module% ==> Error when disabling module ~.
      *
-     * @param string $message
-     *
+     * @param  string  $message
      * @return string with replaced parameters
      */
     protected function removeParams($message)

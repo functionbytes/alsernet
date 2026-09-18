@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Support\EncryptedSetting;
 
 class TranslationService
 {
@@ -27,7 +28,7 @@ class TranslationService
         $this->endpoint = (string) (Setting::get('helpdesktranslate.libretranslate.endpoint')
             ?: config('helpdesktranslate.libretranslate.endpoint')
             ?: config('helpdesk.translation.endpoint', ''));
-        $this->apiKey = (string) (Setting::get('helpdesktranslate.libretranslate.api_key')
+        $this->apiKey = (string) (EncryptedSetting::get('helpdesktranslate.libretranslate.api_key')
             ?: config('helpdesktranslate.libretranslate.api_key')
             ?: config('helpdesk.translation.api_key', ''));
     }

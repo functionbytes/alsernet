@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,8 +58,7 @@ class ColumnsNumberExtension extends AbstractTypeExtension
                 'column_breaker' => false,
             ])
             ->setAllowedTypes('columns_number', ['null', 'int'])
-            ->setAllowedTypes('column_breaker', ['bool'])
-        ;
+            ->setAllowedTypes('column_breaker', ['bool']);
     }
 
     /**
@@ -66,7 +66,7 @@ class ColumnsNumberExtension extends AbstractTypeExtension
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        if (!empty($options['columns_number'])) {
+        if (! empty($options['columns_number'])) {
             $view->vars['columns_number'] = $options['columns_number'];
         }
         $view->vars['column_breaker'] = $options['column_breaker'];

@@ -8,7 +8,7 @@
     {{-- Nombre --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Nombre <span class="text-danger">*</span>
+            Nombre <span class="text-brand">*</span>
         </label>
         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
             value="{{ old('name', $brand->name ?? '') }}"

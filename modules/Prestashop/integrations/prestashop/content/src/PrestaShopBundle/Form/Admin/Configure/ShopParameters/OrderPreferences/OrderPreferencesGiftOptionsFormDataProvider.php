@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,7 +78,7 @@ class OrderPreferencesGiftOptionsFormDataProvider implements FormDataProviderInt
     public function setData(array $data)
     {
         // If gift wrapping tax rules group was not submitted - reset it to 0
-        if (!isset($data['gift_wrapping_tax_rules_group'])) {
+        if (! isset($data['gift_wrapping_tax_rules_group'])) {
             $data['gift_wrapping_tax_rules_group'] = 0;
         }
 
@@ -91,7 +92,6 @@ class OrderPreferencesGiftOptionsFormDataProvider implements FormDataProviderInt
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -100,7 +100,7 @@ class OrderPreferencesGiftOptionsFormDataProvider implements FormDataProviderInt
         $giftWrappingPrice = $data['gift_wrapping_price'] ?? null;
 
         // Check if purchase minimum value is a positive number
-        if (!empty($giftWrappingPrice) && (!is_numeric($giftWrappingPrice) || $giftWrappingPrice < 0)) {
+        if (! empty($giftWrappingPrice) && (! is_numeric($giftWrappingPrice) || $giftWrappingPrice < 0)) {
             return [
                 [
                     'key' => 'The %s field is invalid.',

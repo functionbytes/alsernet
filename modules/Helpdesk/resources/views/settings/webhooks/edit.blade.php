@@ -27,7 +27,7 @@
 
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-save"></i> Guardar cambios
+                            Guardar cambios
                         </button>
                         <a href="{{ route('settings.helpdesk.webhooks.index') }}" class="btn btn-light w-100">
                             Cancelar
@@ -49,7 +49,7 @@
                     </div>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Envios fallidos</span>
-                        <span class="fw-semibold text-danger">{{ number_format($webhook->failure_count) }}</span>
+                        <span class="fw-semibold text-dark">{{ number_format($webhook->failure_count) }}</span>
                     </div>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Ultimo envio</span>
@@ -63,7 +63,7 @@
                     <h6 class="mb-0 fw-bold">Ultimo error</h6>
                 </div>
                 <div class="card-body">
-                    <p class="small text-danger mb-0">{{ $webhook->last_error }}</p>
+                    <p class="small text-dark mb-0">{{ $webhook->last_error }}</p>
                     @endif
                 </div>
             </div>

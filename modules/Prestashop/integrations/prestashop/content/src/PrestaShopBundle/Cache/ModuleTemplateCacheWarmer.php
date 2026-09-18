@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,12 +44,12 @@ class ModuleTemplateCacheWarmer extends TemplateCacheCacheWarmer
     /**
      * {@inheritdoc}
      */
-    public function __construct(ContainerInterface $container, TemplateFinderInterface $finder = null, $paths = [])
+    public function __construct(ContainerInterface $container, ?TemplateFinderInterface $finder = null, $paths = [])
     {
         $this->paths = [];
         $keyToRemove = array_search('modules', $paths);
         // If the key was found, move it in a new array
-        if (false !== $keyToRemove) {
+        if ($keyToRemove !== false) {
             $exceptionPath = $paths[$keyToRemove];
             unset($paths[$keyToRemove]);
             $this->paths = [$keyToRemove => $exceptionPath];
@@ -72,7 +73,7 @@ class ModuleTemplateCacheWarmer extends TemplateCacheCacheWarmer
         }
 
         foreach ($templates as $template) {
-            if ('twig' !== $template->get('engine')) {
+            if ($template->get('engine') !== 'twig') {
                 continue;
             }
 
@@ -87,19 +88,18 @@ class ModuleTemplateCacheWarmer extends TemplateCacheCacheWarmer
     /**
      * Find templates from *.twig files in the given directory.
      *
-     * @param string $namespace The namespace for these templates
-     * @param string $dir The folder where to look for templates
-     *
+     * @param  string  $namespace  The namespace for these templates
+     * @param  string  $dir  The folder where to look for templates
      * @return array An array of templates of type TemplateReferenceInterface
      */
     private function findTemplatesInFolder($namespace, $dir)
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return [];
         }
 
         $templates = [];
-        $finder = new Finder();
+        $finder = new Finder;
 
         foreach ($finder->files()->followLinks()->name('*.twig')->in($dir) as $file) {
             $name = $file->getRelativePathname();

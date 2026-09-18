@@ -4,6 +4,7 @@ namespace Modules\HelpdeskErp\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskErp\Http\Requests\CustomerContextRequest;
 use Modules\HelpdeskErp\Http\Requests\ErpHealthRequest;
@@ -65,7 +66,13 @@ class ErpContextController extends Controller
         $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
 
         $phone = $request->query('phone') ? (string) $request->query('phone') : null;
-        $customerId = $request->query('customer_id') ? (int) $request->query('customer_id') : null;
+
+        // customer_id se resuelve server-side a partir del email ya validado
+        // arriba, en vez de confiar en el query string: antes un customer_id
+        // arbitrario se persistía como vínculo ERP de este email sin
+        // comprobar que le perteneciera, corrompiendo de forma permanente
+        // helpdesk_customer_external_ids (caché de hasta 10 min).
+        $customerId = Customer::where('email', $email)->value('id');
 
         $data = $this->service->getCustomerContext($email, $phone, $customerId);
 
@@ -107,8 +114,11 @@ class ErpContextController extends Controller
     {
         $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
 
-        $this->service->forgetCache($email);
-        $data = $this->service->getCustomerContext($email);
+        $phone = $request->query('phone') ? (string) $request->query('phone') : null;
+        $customerId = Customer::where('email', $email)->value('id');
+
+        $this->service->forgetCache($email, $phone);
+        $data = $this->service->getCustomerContext($email, $phone, $customerId);
 
         return response()->json([
             'success' => true,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,7 +64,7 @@ final class BackupDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('backup_bulk_file_names'))
                     ->setOptions([
@@ -105,7 +106,7 @@ final class BackupDefinitionFactory extends AbstractGridDefinitionFactory
             ->add(
                 (new ActionColumn('actions'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add(
                                 (new LinkRowAction('view'))
                                     ->setIcon('cloud_download')
@@ -132,7 +133,7 @@ final class BackupDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 $this->buildBulkDeleteAction('admin_backups_bulk_delete')
             );

@@ -39,14 +39,19 @@ use SimpleXMLElement;
 class Reader implements ReaderInterface
 {
     public const CLDR_ROOT = 'localization/CLDR/';
+
     public const CLDR_MAIN = 'localization/CLDR/core/common/main/';
+
     public const CLDR_SUPPLEMENTAL = 'localization/CLDR/core/common/supplemental/';
 
     public const CLDR_ROOT_LOCALE = 'root';
 
     public const SUPPL_DATA_CURRENCY = 'currencyData';
+
     public const SUPPL_DATA_LANGUAGE = 'languageData';
+
     public const SUPPL_DATA_NUMBERING = 'numberingSystems';
+
     public const SUPPL_DATA_PARENT_LOCALES = 'parentLocales'; // For specific locales hierarchy
 
     public const DEFAULT_CURRENCY_DIGITS = 2;
@@ -79,11 +84,10 @@ class Reader implements ReaderInterface
     /**
      * Read locale data by locale code.
      *
-     * @param string $localeCode The locale code (simplified IETF tag syntax)
-     *                           Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
-     *                           eg: fr-FR, en-US
-     *                           The underscore notation is also accepted (fr_FR, en_US...)
-     *
+     * @param  string  $localeCode  The locale code (simplified IETF tag syntax)
+     *                              Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
+     *                              eg: fr-FR, en-US
+     *                              The underscore notation is also accepted (fr_FR, en_US...)
      * @return LocaleData A LocaleData object
      *
      * @throws LocalizationException When the locale code is unknown or invalid
@@ -96,7 +100,7 @@ class Reader implements ReaderInterface
         $this->validateLocaleCodeForFilenames($localeCode);
         $this->initSupplementalData();
 
-        $finalData = new LocaleData();
+        $finalData = new LocaleData;
         $lookup = $this->getLookup($localeCode);
         foreach ($lookup as $thisLocaleCode) {
             try {
@@ -119,13 +123,13 @@ class Reader implements ReaderInterface
      * If the passed code doesn't respect the CLDR files naming style, an exception will be raised
      * e.g.: "fr_FR" and "en_001" are valid
      *
-     * @param string $localeCode Locale code to be validated
+     * @param  string  $localeCode  Locale code to be validated
      *
      * @throws LocalizationException When locale code is invalid
      */
     protected function validateLocaleCodeForFilenames($localeCode)
     {
-        if (!preg_match('#^[a-zA-Z0-9]+(_[a-zA-Z0-9]+)*$#', $localeCode)) {
+        if (! preg_match('#^[a-zA-Z0-9]+(_[a-zA-Z0-9]+)*$#', $localeCode)) {
             throw new LocalizationException(sprintf('Invalid locale code: "%s"', $localeCode));
         }
     }
@@ -136,21 +140,21 @@ class Reader implements ReaderInterface
     protected function initSupplementalData()
     {
         // Supplemental data about currencies, languages and parent locales
-        if (!isset($this->supplementalXml)) {
+        if (! isset($this->supplementalXml)) {
             $supplementalPath = realpath(
-                _PS_ROOT_DIR_ . '/'
-                . self::CLDR_SUPPLEMENTAL
-                . 'supplementalData.xml'
+                _PS_ROOT_DIR_.'/'
+                .self::CLDR_SUPPLEMENTAL
+                .'supplementalData.xml'
             );
             $this->supplementalXml = simplexml_load_file($supplementalPath);
         }
 
         // This file contains special digits for non-occidental numbering systems
-        if (!isset($this->numberingSystemsXml)) {
+        if (! isset($this->numberingSystemsXml)) {
             $numberingSystemsPath = realpath(
-                _PS_ROOT_DIR_ . '/'
-                . self::CLDR_SUPPLEMENTAL
-                . 'numberingSystems.xml'
+                _PS_ROOT_DIR_.'/'
+                .self::CLDR_SUPPLEMENTAL
+                .'numberingSystems.xml'
             );
             $this->numberingSystemsXml = simplexml_load_file($numberingSystemsPath);
         }
@@ -159,8 +163,7 @@ class Reader implements ReaderInterface
     /**
      * Build lookup files stack for a given locale code.
      *
-     * @param string $localeCode The given locale code (simplified IETF notation)
-     *
+     * @param  string  $localeCode  The given locale code (simplified IETF notation)
      * @return array The lookup ['root', <intermediate codes>, $localeCode]
      *
      * @throws LocalizationException When locale code is invalid or unknown
@@ -181,8 +184,7 @@ class Reader implements ReaderInterface
     /**
      * Get the parent locale for a given locale code.
      *
-     * @param string $localeCode CLDR filenames' style locale code (with underscores) eg.: en, fr, en_GB, fr_FR...
-     *
+     * @param  string  $localeCode  CLDR filenames' style locale code (with underscores) eg.: en, fr, en_GB, fr_FR...
      * @return string|null The parent locale code (CLDR filenames' style). Null if no parent.
      *
      * @throws LocalizationException
@@ -190,7 +192,7 @@ class Reader implements ReaderInterface
     protected function getParentLocale($localeCode)
     {
         // root is the... root of all CLDR locales' data. Then no parent.
-        if (self::CLDR_ROOT_LOCALE == $localeCode) {
+        if ($localeCode == self::CLDR_ROOT_LOCALE) {
             return null;
         }
 
@@ -204,7 +206,7 @@ class Reader implements ReaderInterface
 
         // The common case with truncation
         $pos = strrpos($localeCode, '_');
-        if (false !== $pos) {
+        if ($pos !== false) {
             return substr($localeCode, 0, $pos);
         }
 
@@ -217,31 +219,29 @@ class Reader implements ReaderInterface
      *
      * The locale tag can be either an IETF tag (en-GB) or a simple language code (en)
      *
-     * @param string $localeCode The locale code
-     *
+     * @param  string  $localeCode  The locale code
      * @return SimpleXMLElement The locale data
      *
      * @throws LocalizationFileNotFoundException If this locale code has no corresponding xml file
      */
     protected function getMainXmlData($localeCode)
     {
-        return simplexml_load_file($this->mainPath($localeCode . '.xml'));
+        return simplexml_load_file($this->mainPath($localeCode.'.xml'));
     }
 
     /**
      * Get the real path for CLDR main data folder
      * If a filename is provided, it will be added at the end of the path.
      *
-     * @param string $filename (Optional) The filename to be added to the path
-     *
+     * @param  string  $filename  (Optional) The filename to be added to the path
      * @return string The realpath of CLDR main data folder
      *
      * @throws LocalizationFileNotFoundException
      */
     protected function mainPath($filename = '')
     {
-        $path = realpath(_PS_ROOT_DIR_ . '/' . self::CLDR_MAIN . ($filename ? $filename : ''));
-        if (false === $path) {
+        $path = realpath(_PS_ROOT_DIR_.'/'.self::CLDR_MAIN.($filename ? $filename : ''));
+        if ($path === false) {
             throw new LocalizationFileNotFoundException("The file $filename does not exist");
         }
 
@@ -252,8 +252,7 @@ class Reader implements ReaderInterface
      * Extracts locale data from CLDR xml data.
      * XML data will be mapped in a LocaleData object.
      *
-     * @param string $localeTag The wanted locale. Can be either a language code (e.g.: fr) of an IETF tag (e.g.: en-US)
-     *
+     * @param  string  $localeTag  The wanted locale. Can be either a language code (e.g.: fr) of an IETF tag (e.g.: en-US)
      * @return LocaleData
      */
     protected function getLocaleData($localeTag)
@@ -268,11 +267,10 @@ class Reader implements ReaderInterface
     /**
      * Maps locale data from SimplexmlElement to a LocaleData object.
      *
-     * @param SimplexmlElement $xmlLocaleData
-     *                                        XML locale data
-     * @param array $supplementalData
-     *                                Supplemental locale data
-     *
+     * @param  SimpleXMLElement  $xmlLocaleData
+     *                                           XML locale data
+     * @param  array  $supplementalData
+     *                                   Supplemental locale data
      * @return LocaleData
      *                    The mapped locale data
      *
@@ -282,7 +280,7 @@ class Reader implements ReaderInterface
      */
     protected function mapLocaleData(SimpleXMLElement $xmlLocaleData, $supplementalData)
     {
-        $localeData = new LocaleData();
+        $localeData = new LocaleData;
 
         // Geo
         if (isset($xmlLocaleData->identity->language)) {
@@ -290,7 +288,7 @@ class Reader implements ReaderInterface
         }
         if (isset($xmlLocaleData->identity->territory)) {
             $localeData->setLocaleCode(
-                $localeData->getLocaleCode() . '-' . $xmlLocaleData->identity->territory['type']
+                $localeData->getLocaleCode().'-'.$xmlLocaleData->identity->territory['type']
             );
         }
 
@@ -322,7 +320,7 @@ class Reader implements ReaderInterface
             $numberSymbols = $localeData->getNumberSymbols();
             /** @var SimpleXMLElement $symbolsNode */
             foreach ($numbersData->symbols as $symbolsNode) {
-                if (!isset($symbolsNode['numberSystem'])) {
+                if (! isset($symbolsNode['numberSystem'])) {
                     continue;
                 }
                 $thisNumberingSystem = (string) $symbolsNode['numberSystem'];
@@ -337,7 +335,7 @@ class Reader implements ReaderInterface
                     $symbolsNode = $results[0];
                 }
 
-                $symbolsList = new NumberSymbolsData();
+                $symbolsList = new NumberSymbolsData;
                 if (isset($symbolsNode->decimal)) {
                     $symbolsList->setDecimal((string) $symbolsNode->decimal);
                 }
@@ -388,9 +386,9 @@ class Reader implements ReaderInterface
         // Decimal patterns (by numbering system)
         if (isset($numbersData->decimalFormats)) {
             $decimalPatterns = $localeData->getDecimalPatterns();
-            /** @var SimplexmlElement $format */
+            /** @var SimpleXMLElement $format */
             foreach ($numbersData->decimalFormats as $format) {
-                /** @var SimplexmlElement $format */
+                /** @var SimpleXMLElement $format */
                 $numberSystem = (string) $format['numberSystem'];
                 $patternResult = $format->xpath('decimalFormatLength[not(@type)]/decimalFormat/pattern');
                 if (isset($patternResult[0])) {
@@ -401,15 +399,15 @@ class Reader implements ReaderInterface
             // We browse aliases after all regular patterns have been defined, and duplicate data for target number
             // systems.
             foreach ($numbersData->decimalFormats as $format) {
-                /** @var SimplexmlElement $format */
+                /** @var SimpleXMLElement $format */
                 $numberSystem = (string) $format['numberSystem'];
                 // If alias is set, we just copy data from another numbering system:
                 $alias = $format->alias;
                 if (isset($alias['path']) && preg_match(
-                        "#^\.\.\/decimalFormats\[@numberSystem='([^)]+)'\]$#",
-                        (string) $alias['path'],
-                        $matches
-                    )
+                    "#^\.\.\/decimalFormats\[@numberSystem='([^)]+)'\]$#",
+                    (string) $alias['path'],
+                    $matches
+                )
                 ) {
                     $aliasNumSys = $matches[1];
                     $decimalPatterns[$numberSystem] = $decimalPatterns[$aliasNumSys];
@@ -433,15 +431,15 @@ class Reader implements ReaderInterface
             // We browse aliases after all regular patterns have been defined, and duplicate data for target number
             // systems.
             foreach ($numbersData->percentFormats as $format) {
-                /** @var SimplexmlElement $format */
+                /** @var SimpleXMLElement $format */
                 $numberSystem = (string) $format['numberSystem'];
                 // If alias is set, we just copy data from another numbering system:
                 $alias = $format->alias;
                 if (isset($alias['path']) && preg_match(
-                        "#^\.\.\/percentFormats\[@numberSystem='([^)]+)'\]$#",
-                        (string) $alias['path'],
-                        $matches
-                    )
+                    "#^\.\.\/percentFormats\[@numberSystem='([^)]+)'\]$#",
+                    (string) $alias['path'],
+                    $matches
+                )
                 ) {
                     $aliasNumSys = $matches[1];
                     $percentPatterns[$numberSystem] = $percentPatterns[$aliasNumSys];
@@ -455,7 +453,7 @@ class Reader implements ReaderInterface
         if (isset($numbersData->currencyFormats)) {
             $currencyPatterns = $localeData->getCurrencyPatterns();
             foreach ($numbersData->currencyFormats as $format) {
-                /** @var SimplexmlElement $format */
+                /** @var SimpleXMLElement $format */
                 $numberSystem = (string) $format['numberSystem'];
                 $patternResult = $format->xpath(
                     'currencyFormatLength[not(@*)]/currencyFormat[@type="standard"]/pattern'
@@ -468,15 +466,15 @@ class Reader implements ReaderInterface
             // We browse aliases after all regular patterns have been defined, and duplicate data for target number
             // systems.
             foreach ($numbersData->currencyFormats as $format) {
-                /** @var SimplexmlElement $format */
+                /** @var SimpleXMLElement $format */
                 $numberSystem = (string) $format['numberSystem'];
                 // If alias is set, we just copy data from another numbering system:
                 $alias = $format->alias;
                 if (isset($alias['path']) && preg_match(
-                        "#^\.\.\/currencyFormats\[@numberSystem='([^)]+)'\]$#",
-                        (string) $alias['path'],
-                        $matches
-                    )
+                    "#^\.\.\/currencyFormats\[@numberSystem='([^)]+)'\]$#",
+                    (string) $alias['path'],
+                    $matches
+                )
                 ) {
                     $aliasNumSys = $matches[1];
                     $currencyPatterns[$numberSystem] = $currencyPatterns[$aliasNumSys];
@@ -499,12 +497,12 @@ class Reader implements ReaderInterface
                     continue;
                 }
 
-                $currencyData = new CurrencyData();
+                $currencyData = new CurrencyData;
                 $currencyData->setIsoCode($currencyCode);
 
                 // check if currency is still active in one territory
-                $currencyDates = $this->supplementalXml->supplementalData->xpath('//region/currency[@iso4217="' . $currencyCode . '"]');
-                if (!empty($currencyDates) && $this->isCurrencyActiveSomewhere($currencyDates, $currencyActiveDateThreshold)) {
+                $currencyDates = $this->supplementalXml->supplementalData->xpath('//region/currency[@iso4217="'.$currencyCode.'"]');
+                if (! empty($currencyDates) && $this->isCurrencyActiveSomewhere($currencyDates, $currencyActiveDateThreshold)) {
                     $currencyData->setActive(true);
                 } else {
                     // no territory with dates means currency was never used
@@ -526,7 +524,7 @@ class Reader implements ReaderInterface
                 $displayNames = $currencyData->getDisplayNames();
                 foreach ($currencyNode->displayName as $nameNode) {
                     $countContext = 'default';
-                    if (!empty($nameNode['count'])) {
+                    if (! empty($nameNode['count'])) {
                         $countContext = (string) $nameNode['count'];
                     }
                     $displayNames[$countContext] = (string) $nameNode;
@@ -535,11 +533,11 @@ class Reader implements ReaderInterface
 
                 // Supplemental (fraction digits and numeric iso code)
                 $codesMapping = $this->supplementalXml->supplementalData->xpath(
-                    '//codeMappings/currencyCodes[@type="' . $currencyCode . '"]'
+                    '//codeMappings/currencyCodes[@type="'.$currencyCode.'"]'
                 );
 
-                if (!empty($codesMapping)) {
-                    /** @var SimplexmlElement $codesMapping */
+                if (! empty($codesMapping)) {
+                    /** @var SimpleXMLElement $codesMapping */
                     $codesMapping = $codesMapping[0];
                     $numericIsoCode = (string) $codesMapping->attributes()->numeric;
                     if (strlen($numericIsoCode) < 3) {
@@ -549,7 +547,7 @@ class Reader implements ReaderInterface
                 }
 
                 $fractionsData = $this->supplementalXml->supplementalData->xpath(
-                    '//currencyData/fractions/info[@iso4217="' . $currencyCode . '"]'
+                    '//currencyData/fractions/info[@iso4217="'.$currencyCode.'"]'
                 );
 
                 if (empty($fractionsData)) {
@@ -558,8 +556,8 @@ class Reader implements ReaderInterface
                     );
                 }
 
-                if (!empty($fractionsData)) {
-                    /** @var SimplexmlElement $fractionsData */
+                if (! empty($fractionsData)) {
+                    /** @var SimpleXMLElement $fractionsData */
                     $fractionsData = $fractionsData[0];
                     $currencyData->setDecimalDigits((int) (string) $fractionsData->attributes()->digits);
                 }
@@ -597,20 +595,19 @@ class Reader implements ReaderInterface
     }
 
     /**
-     * @param string $currencyCode currency iso code
-     * @param SimpleXMLElement $supplementalData xml bloc from CLDR
-     * @param int $currencyActiveDateThreshold timestamp after which currency should be used
-     *
+     * @param  string  $currencyCode  currency iso code
+     * @param  SimpleXMLElement  $supplementalData  xml bloc from CLDR
+     * @param  int  $currencyActiveDateThreshold  timestamp after which currency should be used
      * @return bool
      */
-    protected function shouldCurrencyBeReturned($currencyCode, SimplexmlElement $supplementalData, $currencyActiveDateThreshold)
+    protected function shouldCurrencyBeReturned($currencyCode, SimpleXMLElement $supplementalData, $currencyActiveDateThreshold)
     {
         // dont store test currency
         if ($currencyCode == self::CURRENCY_CODE_TEST) {
             return false;
         }
         // check if currency is still active in one territory
-        $currencyDates = $supplementalData->xpath('//region/currency[@iso4217="' . $currencyCode . '"]');
+        $currencyDates = $supplementalData->xpath('//region/currency[@iso4217="'.$currencyCode.'"]');
         if (empty($currencyDates)) {
             // no territory with dates means currency was never used
             return false;
@@ -622,9 +619,7 @@ class Reader implements ReaderInterface
     /**
      * check if currency is still in use in some territory
      *
-     * @param array $currencyDates
-     * @param int $currencyActiveDateThreshold timestamp after which currency should be used
-     *
+     * @param  int  $currencyActiveDateThreshold  timestamp after which currency should be used
      * @return bool
      */
     protected function isCurrencyActiveSomewhere(array $currencyDates, $currencyActiveDateThreshold)
@@ -637,7 +632,7 @@ class Reader implements ReaderInterface
 
             // date "to" given: check if currency was active in near past to propose it
             $dateTo = \DateTime::createFromFormat('Y-m-d', $currencyDate->attributes()->to);
-            if (false !== $dateTo && $dateTo->getTimestamp() > $currencyActiveDateThreshold) {
+            if ($dateTo !== false && $dateTo->getTimestamp() > $currencyActiveDateThreshold) {
                 return true;
             }
         }

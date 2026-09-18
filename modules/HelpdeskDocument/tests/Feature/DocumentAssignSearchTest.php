@@ -36,12 +36,17 @@ class DocumentAssignSearchTest extends TestCase
         Permission::findOrCreate('helpdesk.manage', 'web');
         Permission::findOrCreate('helpdesk.customers.manage', 'web');
         Permission::findOrCreate('helpdesk.documents.manage', 'web');
+        Permission::findOrCreate('helpdesk.documents.force-link', 'web');
         Permission::findOrCreate('helpdesk.customers.view', 'web');
 
         $inbox = Inbox::create(['name' => 'Inbox A', 'channel_type' => 'web', 'is_active' => true]);
 
         $agent = User::factory()->create();
-        $agent->givePermissionTo(['helpdesk.documents.manage', 'helpdesk.customers.view']);
+        // El expediente del fixture (ver abajo) tiene email/nombre distintos al
+        // cliente de la conversación a propósito: prueba el caso "buscar y
+        // asignar" que NO auto-coincide, así que el agente necesita el permiso
+        // de vínculo forzado además del genérico de gestión de expedientes.
+        $agent->givePermissionTo(['helpdesk.documents.manage', 'helpdesk.documents.force-link', 'helpdesk.customers.view']);
         AgentInboxCapacity::create([
             'user_id' => $agent->id,
             'inbox_id' => $inbox->id,
@@ -121,5 +126,59 @@ class DocumentAssignSearchTest extends TestCase
             ->assertJson(['success' => true]);
 
         $this->assertSame($document->id, (int) ($conversation->fresh()->metadata['document_id'] ?? null));
+
+        $this->assertDatabaseHas('document_actions', [
+            'document_id' => $document->id,
+            'action_type' => 'forced_link',
+        ]);
+    }
+
+    /**
+     * P0 — un agente con helpdesk.documents.manage pero SIN el permiso elevado
+     * helpdesk.documents.force-link no puede vincular a la fuerza un expediente
+     * de otro cliente (email/teléfono no coincide con el de la conversación).
+     */
+    public function test_asignar_expediente_de_otro_cliente_sin_permiso_de_vinculo_forzado_devuelve_404(): void
+    {
+        [, $conversation, $document] = $this->scenario();
+
+        $limitedAgent = User::factory()->create();
+        $limitedAgent->givePermissionTo(['helpdesk.documents.manage', 'helpdesk.customers.view']);
+        AgentInboxCapacity::create([
+            'user_id' => $limitedAgent->id,
+            'inbox_id' => $conversation->inbox_id,
+            'max_concurrent' => 10,
+            'accepts_new' => true,
+        ]);
+
+        $this->actingAs($limitedAgent)
+            ->postJson(route('manager.helpdesk.conversations.documents.link', [$conversation, $document]))
+            ->assertNotFound();
+
+        $this->assertNull($conversation->fresh()->metadata['document_id'] ?? null);
+    }
+
+    /**
+     * P0 — sin el permiso elevado, la búsqueda queda restringida a expedientes
+     * del cliente de la conversación y no expone customer_email de terceros.
+     */
+    public function test_busqueda_sin_permiso_elevado_no_encuentra_expedientes_de_otro_cliente(): void
+    {
+        [, $conversation, $document] = $this->scenario();
+
+        $limitedAgent = User::factory()->create();
+        $limitedAgent->givePermissionTo(['helpdesk.documents.manage', 'helpdesk.customers.view']);
+        AgentInboxCapacity::create([
+            'user_id' => $limitedAgent->id,
+            'inbox_id' => $conversation->inbox_id,
+            'max_concurrent' => 10,
+            'accepts_new' => true,
+        ]);
+
+        $response = $this->actingAs($limitedAgent)
+            ->getJson(route('manager.helpdesk.conversations.documents.search', $conversation).'?q=rosa.jimenez.assign')
+            ->assertOk();
+
+        $this->assertNotContains($document->id, $this->ids($response->json('results')));
     }
 }

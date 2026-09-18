@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,13 +58,13 @@ final class EditSupplierHandler extends AbstractSupplierHandler implements EditS
         try {
             $this->validateFields($supplier, $address);
 
-            if (false === $supplier->update()) {
+            if ($supplier->update() === false) {
                 throw new SupplierException(sprintf('Cannot update supplier with id "%s"', $supplier->id));
             }
-            if (false === $address->update()) {
+            if ($address->update() === false) {
                 throw new SupplierException(sprintf('Cannot update supplier address with id "%s"', $address->id));
             }
-            if (null !== $command->getAssociatedShops()) {
+            if ($command->getAssociatedShops() !== null) {
                 $this->associateWithShops($supplier, $command->getAssociatedShops());
             }
         } catch (PrestaShopException $e) {
@@ -73,28 +74,25 @@ final class EditSupplierHandler extends AbstractSupplierHandler implements EditS
 
     /**
      * Populates Supplier object with given data
-     *
-     * @param Supplier $supplier
-     * @param EditSupplierCommand $command
      */
     private function populateSupplierWithData(Supplier $supplier, EditSupplierCommand $command)
     {
-        if (null !== $command->getName()) {
+        if ($command->getName() !== null) {
             $supplier->name = $command->getName();
         }
-        if (null !== $command->getLocalizedDescriptions()) {
+        if ($command->getLocalizedDescriptions() !== null) {
             $supplier->description = $command->getLocalizedDescriptions();
         }
-        if (null !== $command->getLocalizedMetaDescriptions()) {
+        if ($command->getLocalizedMetaDescriptions() !== null) {
             $supplier->meta_description = $command->getLocalizedMetaDescriptions();
         }
-        if (null !== $command->getLocalizedMetaKeywords()) {
+        if ($command->getLocalizedMetaKeywords() !== null) {
             $supplier->meta_keywords = $command->getLocalizedMetaKeywords();
         }
-        if (null !== $command->getLocalizedMetaTitles()) {
+        if ($command->getLocalizedMetaTitles() !== null) {
             $supplier->meta_title = $command->getLocalizedMetaTitles();
         }
-        if (null !== $command->isEnabled()) {
+        if ($command->isEnabled() !== null) {
             $supplier->active = $command->isEnabled();
         }
         $supplier->date_upd = date('Y-m-d H:i:s');
@@ -102,37 +100,34 @@ final class EditSupplierHandler extends AbstractSupplierHandler implements EditS
 
     /**
      * Populates Supplier address with given data
-     *
-     * @param Address $address
-     * @param EditSupplierCommand $command
      */
     private function populateAddressWithData(Address $address, EditSupplierCommand $command)
     {
-        if (null !== $command->getAddress()) {
+        if ($command->getAddress() !== null) {
             $address->address1 = $command->getAddress();
         }
-        if (null !== $command->getAddress2()) {
+        if ($command->getAddress2() !== null) {
             $address->address2 = $command->getAddress2();
         }
-        if (null !== $command->getPostCode()) {
+        if ($command->getPostCode() !== null) {
             $address->postcode = $command->getPostCode();
         }
-        if (null !== $command->getPhone()) {
+        if ($command->getPhone() !== null) {
             $address->phone = $command->getPhone();
         }
-        if (null !== $command->getMobilePhone()) {
+        if ($command->getMobilePhone() !== null) {
             $address->phone_mobile = $command->getMobilePhone();
         }
-        if (null !== $command->getCity()) {
+        if ($command->getCity() !== null) {
             $address->city = $command->getCity();
         }
-        if (null !== $command->getCountryId()) {
+        if ($command->getCountryId() !== null) {
             $address->id_country = $command->getCountryId();
         }
-        if (null !== $command->getStateId()) {
+        if ($command->getStateId() !== null) {
             $address->id_state = $command->getStateId();
         }
-        if (null !== $command->getDni()) {
+        if ($command->getDni() !== null) {
             $address->dni = $command->getDni();
         }
     }

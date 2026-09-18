@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,10 @@ interface ThemeCatalogInterface
     public function listThemes();
 
     /**
-     * @param string $theme
+     * @param  string  $theme
+     * @return ThemeInterface
      *
      * @throws InvalidArgumentException
-     *
-     * @return ThemeInterface
      */
     public function getByName($theme);
 }

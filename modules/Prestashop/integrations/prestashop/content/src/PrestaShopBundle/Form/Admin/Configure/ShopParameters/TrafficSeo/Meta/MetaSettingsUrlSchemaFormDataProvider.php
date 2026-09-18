@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,11 +63,6 @@ final class MetaSettingsUrlSchemaFormDataProvider implements FormDataProviderInt
 
     /**
      * MetaFormDataProvider constructor.
-     *
-     * @param DataConfigurationInterface $urlSchemaDataConfiguration
-     * @param TranslatorInterface $translator
-     * @param RouteValidator $routeValidator
-     * @param Validate $validate
      */
     public function __construct(
         DataConfigurationInterface $urlSchemaDataConfiguration,
@@ -95,7 +91,7 @@ final class MetaSettingsUrlSchemaFormDataProvider implements FormDataProviderInt
     {
         $errors = $this->validateData($data);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 
@@ -105,7 +101,6 @@ final class MetaSettingsUrlSchemaFormDataProvider implements FormDataProviderInt
     /**
      * Implements custom validation for configuration form.
      *
-     * @param array $data
      *
      * @return array - if array is not empty then error strings are returned
      *
@@ -116,19 +111,19 @@ final class MetaSettingsUrlSchemaFormDataProvider implements FormDataProviderInt
         $patternErrors = [];
         $requiredFieldErrors = [];
         foreach ($data as $routeId => $rule) {
-            if (!$this->routeValidator->isRoutePattern($rule)) {
+            if (! $this->routeValidator->isRoutePattern($rule)) {
                 $patternErrors[] = $this->translator->trans(
-                  'The route %routeRule% is not valid',
-                  [
-                      '%routeRule%' => htmlspecialchars($rule),
-                  ],
-                  'Admin.Shopparameters.Feature'
+                    'The route %routeRule% is not valid',
+                    [
+                        '%routeRule%' => htmlspecialchars($rule),
+                    ],
+                    'Admin.Shopparameters.Feature'
                 );
             }
 
             $missingKeywords = $this->routeValidator->doesRouteContainsRequiredKeywords($routeId, $rule);
 
-            if (!empty($missingKeywords)) {
+            if (! empty($missingKeywords)) {
                 foreach ($missingKeywords as $keyword) {
                     $requiredFieldErrors[] = $this->translator->trans(
                         'Keyword "{%keyword%}" required for route "%routeName%" (rule: "%routeRule%")',
@@ -143,7 +138,7 @@ final class MetaSettingsUrlSchemaFormDataProvider implements FormDataProviderInt
             }
         }
 
-        if (!empty($patternErrors)) {
+        if (! empty($patternErrors)) {
             return $patternErrors;
         }
 

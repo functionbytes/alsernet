@@ -3,6 +3,7 @@
 namespace Modules\Erp\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -142,7 +143,7 @@ class ProveedorController extends Controller
                 'data' => $data,
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Proveedor no encontrado',
@@ -290,7 +291,7 @@ class ProveedorController extends Controller
                 ],
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Proveedor no encontrado',
@@ -363,7 +364,7 @@ class ProveedorController extends Controller
                 ],
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Proveedor no encontrado',
@@ -435,7 +436,7 @@ class ProveedorController extends Controller
                 ],
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Proveedor no encontrado',

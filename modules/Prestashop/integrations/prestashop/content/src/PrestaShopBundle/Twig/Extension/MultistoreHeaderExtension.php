@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,6 @@ class MultistoreHeaderExtension extends AbstractExtension
 
     /**
      * MultistoreHeaderExtension constructor.
-     *
-     * @param MultistoreController $multistoreController
      */
     public function __construct(MultistoreController $multistoreController)
     {
@@ -71,11 +70,6 @@ class MultistoreHeaderExtension extends AbstractExtension
         )];
     }
 
-    /**
-     * @param bool $lockedToAllShopContext
-     *
-     * @return string
-     */
     public function getMultistoreHeader(bool $lockedToAllShopContext = false): string
     {
         return $this->multistoreController->header($lockedToAllShopContext)->getContent();

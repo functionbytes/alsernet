@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class CommandsAndQueriesDataCollector extends DataCollector
      */
     private $executedCommandRegistry;
 
-    /**
-     * @param ExecutedCommandRegistry $executedCommandRegistry
-     */
     public function __construct(ExecutedCommandRegistry $executedCommandRegistry)
     {
         $this->executedCommandRegistry = $executedCommandRegistry;
@@ -52,7 +50,7 @@ final class CommandsAndQueriesDataCollector extends DataCollector
     /**
      * {@inheritdoc}
      */
-    public function collect(Request $request, Response $response, \Exception $exception = null)
+    public function collect(Request $request, Response $response, ?\Exception $exception = null)
     {
         $this->data = [
             'executed_commands' => $this->executedCommandRegistry->getExecutedCommands(),

@@ -14,9 +14,12 @@ class SitemapController extends Controller
     public function index(): Response
     {
         $xml = Cache::remember(self::CACHE_KEY, 3600, function () {
+            // Sitemap is crawled anonymously; role-restricted articles must never
+            // be listed here regardless of who last warmed the cache.
             $articles = HelpCenterArticle::query()
                 ->with('translations')
-                ->where('is_published', true)
+                ->published()
+                ->visibleToRole(null)
                 ->orderByDesc('updated_at')
                 ->get();
 

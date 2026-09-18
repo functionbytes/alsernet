@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,13 +51,13 @@ final class BulkDisableSupplierHandler implements BulkDisableSupplierHandlerInte
             foreach ($command->getSupplierIds() as $supplierId) {
                 $entity = new Supplier($supplierId->getValue());
 
-                if (0 >= $entity->id) {
+                if ($entity->id <= 0) {
                     throw new SupplierNotFoundException(sprintf('Supplier object with id "%s" has not been found for disabling status.', $supplierId->getValue()));
                 }
 
                 $entity->active = false;
 
-                if (false === $entity->update()) {
+                if ($entity->update() === false) {
                     throw new CannotUpdateSupplierStatusException(sprintf('Unable to disable supplier object with id "%s"', $supplierId->getValue()));
                 }
             }

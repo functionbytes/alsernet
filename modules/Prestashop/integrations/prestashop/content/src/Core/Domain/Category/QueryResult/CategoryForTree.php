@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,7 @@ class CategoryForTree
     private $children;
 
     /**
-     * @param int $categoryId
-     * @param array<int, string> $localizedNames
-     * @param array $children
+     * @param  array<int, string>  $localizedNames
      */
     public function __construct(
         int $categoryId,
@@ -59,9 +58,6 @@ class CategoryForTree
         $this->children = $children;
     }
 
-    /**
-     * @return int
-     */
     public function getCategoryId(): int
     {
         return $this->categoryId;

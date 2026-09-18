@@ -27,6 +27,7 @@
 
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\ContainerBuilder;
+use PrestaShopBundle\Cache\LocalizationWarmer;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerAggregate;
@@ -39,7 +40,7 @@ ServiceLocator::setServiceContainerInstance($legacyContainer);
 if (! file_exists(_PS_CACHE_DIR_)) {
     @mkdir(_PS_CACHE_DIR_);
     $warmer = new CacheWarmerAggregate([
-        new PrestaShopBundle\Cache\LocalizationWarmer(_PS_VERSION_, 'en'), // @replace hard-coded Lang
+        new LocalizationWarmer(_PS_VERSION_, 'en'), // @replace hard-coded Lang
     ]);
     $warmer->warmUp(_PS_CACHE_DIR_);
 }

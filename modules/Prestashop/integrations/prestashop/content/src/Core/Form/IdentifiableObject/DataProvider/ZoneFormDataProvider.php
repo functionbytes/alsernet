@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,6 @@ final class ZoneFormDataProvider implements FormDataProviderInterface
      */
     private $defaultShopAssociation;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     * @param bool $multistoreEnabled
-     * @param array $defaultShopAssociation
-     */
     public function __construct(
         CommandBusInterface $queryBus,
         bool $multistoreEnabled,

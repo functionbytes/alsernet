@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,27 +46,17 @@ class ToggleCartRuleStatusCommand
      */
     private $expectedStatus;
 
-    /**
-     * @param int $cartRuleId
-     * @param bool $expectedStatus
-     */
     public function __construct(int $cartRuleId, bool $expectedStatus)
     {
         $this->expectedStatus = $expectedStatus;
         $this->cartRuleId = new CartRuleId($cartRuleId);
     }
 
-    /**
-     * @return CartRuleId
-     */
     public function getCartRuleId(): CartRuleId
     {
         return $this->cartRuleId;
     }
 
-    /**
-     * @return bool
-     */
     public function getExpectedStatus(): bool
     {
         return $this->expectedStatus;

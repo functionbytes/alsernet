@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\Banco;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -57,7 +58,7 @@ class ClientecuentaCent extends Model
      */
     public function clientecuenta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
+        return $this->belongsTo(ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
     }
 
     /**
@@ -66,7 +67,7 @@ class ClientecuentaCent extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -75,6 +76,6 @@ class ClientecuentaCent extends Model
      */
     public function banco()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Banco::class, 'idbanco', 'idbanco');
+        return $this->belongsTo(Banco::class, 'idbanco', 'idbanco');
     }
 }

@@ -4,6 +4,12 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
+use Modules\Erp\Models\Oracle\Catalogo\Modelo;
+use Modules\Erp\Models\Oracle\Configuracion\Impuesto;
+use Modules\Erp\Models\Oracle\Otros\GrupoCl;
+use Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +61,7 @@ class Lpropuestapro extends Model
      */
     public function lpropuestapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
+        return $this->belongsTo(Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
     }
 
     /**
@@ -64,7 +70,7 @@ class Lpropuestapro extends Model
      */
     public function propuestapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Propuestapro::class, 'idpropuestapro', 'idpropuestapro');
+        return $this->belongsTo(Propuestapro::class, 'idpropuestapro', 'idpropuestapro');
     }
 
     /**
@@ -73,7 +79,7 @@ class Lpropuestapro extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -82,7 +88,7 @@ class Lpropuestapro extends Model
      */
     public function grupoCl()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
+        return $this->belongsTo(GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
     }
 
     /**
@@ -91,7 +97,7 @@ class Lpropuestapro extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -100,7 +106,7 @@ class Lpropuestapro extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 
     /**
@@ -109,7 +115,7 @@ class Lpropuestapro extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -118,6 +124,6 @@ class Lpropuestapro extends Model
      */
     public function modelo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Modelo::class, 'idmodelo', 'idmodelo');
+        return $this->belongsTo(Modelo::class, 'idmodelo', 'idmodelo');
     }
 }

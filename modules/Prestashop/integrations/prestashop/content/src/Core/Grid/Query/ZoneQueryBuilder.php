@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,12 +48,6 @@ final class ZoneQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     private $contextShopIds;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -88,18 +83,13 @@ final class ZoneQueryBuilder extends AbstractDoctrineQueryBuilder
         return $this->getQueryBuilder($searchCriteria)->select('COUNT(DISTINCT z.id_zone)');
     }
 
-    /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
-     * @return QueryBuilder
-     */
     private function getQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         $qb = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'zone', 'z')
+            ->from($this->dbPrefix.'zone', 'z')
             ->innerJoin(
                 'z',
-                $this->dbPrefix . 'zone_shop',
+                $this->dbPrefix.'zone_shop',
                 'zs',
                 'z.id_zone = zs.id_zone'
             )
@@ -111,10 +101,6 @@ final class ZoneQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $builder
-     * @param SearchCriteriaInterface $criteria
-     */
     private function applyFilters(QueryBuilder $builder, SearchCriteriaInterface $criteria): void
     {
         $allowedFilters = [
@@ -124,18 +110,19 @@ final class ZoneQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($criteria->getFilters() as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
             if (in_array($filterName, ['id_zone', 'active'])) {
-                $builder->andWhere('z.' . $filterName . ' = :' . $filterName);
+                $builder->andWhere('z.'.$filterName.' = :'.$filterName);
                 $builder->setParameter($filterName, $filterValue);
+
                 continue;
             }
 
-            $builder->andWhere('z.' . $filterName . ' LIKE :' . $filterName);
-            $builder->setParameter($filterName, '%' . $filterValue . '%');
+            $builder->andWhere('z.'.$filterName.' LIKE :'.$filterName);
+            $builder->setParameter($filterName, '%'.$filterValue.'%');
         }
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,16 +69,15 @@ final class ToggleColumn extends AbstractColumn
             ->setAllowedTypes('route', 'string')
             ->setAllowedTypes('route_param_name', 'string')
             ->setAllowedTypes('sortable', 'bool')
-            ->setAllowedTypes('route_param_id', 'string')
-        ;
+            ->setAllowedTypes('route_param_id', 'string');
 
         $resolver->setNormalizer('route_param_name', static function (Options $options, $value) {
-            if (!empty($value)) {
+            if (! empty($value)) {
                 return $value;
             }
 
             // Fallback on route_param_id if it's specified
-            if (!empty($options['route_param_id'])) {
+            if (! empty($options['route_param_id'])) {
                 return $options['route_param_id'];
             }
 

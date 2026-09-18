@@ -10,7 +10,6 @@ return [
             'app_secret' => env('HELPDESK_SOCIAL_META_APP_SECRET'),
             'api_version' => env('HELPDESK_SOCIAL_META_API_VERSION', 'v25.0'),
             'verify_token' => env('HELPDESK_SOCIAL_META_VERIFY_TOKEN'),
-            'webhook_path' => env('HELPDESK_SOCIAL_META_WEBHOOK_PATH', '/webhooks/meta'),
         ],
         // El chat de WhatsApp (mensajes entrantes) lo gestiona el módulo Helpdesk
         // core vía `helpdesk.integrations.whatsapp`. Este módulo solo cubre
@@ -19,39 +18,40 @@ return [
 
     'auto_reply' => [
         'enabled' => env('HELPDESK_SOCIAL_AUTO_REPLY_ENABLED', true),
-        'max_rules_per_account' => 50,
-        'default_reply_delay_seconds' => 5,
-        'human_override_keyword' => 'humano',
     ],
 
     'intent_classification' => [
-        'enabled' => env('HELPDESK_SOCIAL_INTENT_ENABLED', true),
         'provider' => env('HELPDESK_SOCIAL_INTENT_PROVIDER', 'rules'), // rules, openai, hybrid
         'openai_api_key' => env('HELPDESK_SOCIAL_OPENAI_API_KEY'),
         'openai_model' => env('HELPDESK_SOCIAL_OPENAI_MODEL', 'gpt-4o-mini'),
         'confidence_threshold' => 0.75,
-        'cache_ttl_minutes' => 60,
     ],
 
     'comments' => [
         'enabled' => env('HELPDESK_SOCIAL_COMMENTS_ENABLED', true),
         'sync_interval_minutes' => 15,
-        'max_comments_per_sync' => 100,
         'max_posts_per_sync' => 20,
-        'reply_to_comments_enabled' => true,
-        'hide_spam_comments' => true,
     ],
 
     'queues' => [
-        'webhooks' => 'helpdesk-social-webhooks',
         'processing' => 'helpdesk-social-processing',
         'analytics' => 'helpdesk-social-analytics',
         'ai' => 'helpdesk-social-ai',
     ],
 
-    'analytics' => [
-        'retention_days' => 365,
-        'aggregation_interval' => 'daily',
+    /*
+    |--------------------------------------------------------------------------
+    | Benchmarking de competidores
+    |--------------------------------------------------------------------------
+    | demo_mode: permite que SyncCompetitorMetricsJob genere métricas
+    | simuladas (etiquetadas source=simulated) cuando no hay integración real
+    | disponible. Forzado a false en producción sin importar el env.
+    | metrics_retention_days: días que se conservan las métricas antes de
+    | purgarlas (helpdesksocial:prune). 0 o menos desactiva la limpieza.
+    */
+    'competitors' => [
+        'demo_mode' => env('HELPDESKSOCIAL_COMPETITORS_DEMO_MODE', true),
+        'metrics_retention_days' => (int) env('HELPDESKSOCIAL_COMPETITORS_METRICS_RETENTION_DAYS', 180),
     ],
 
     /*

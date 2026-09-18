@@ -39,17 +39,21 @@ class RunAiSentimentAnalysis implements ShouldQueue
             return;
         }
 
-        $item = TicketItem::query()
-            ->where('ticket_id', $message->ticket_id)
-            ->where('is_internal', false)
-            ->latest()
-            ->first();
-
-        if (! $item) {
+        // Antes volvía a consultar "el último mensaje público del ticket" en
+        // vez de usar $event->message directamente: con dos mensajes
+        // seguidos del cliente (A, luego B) encolados antes de que un worker
+        // procesara el primero, ambos jobs resolvían el MISMO "último" (B) —
+        // A se quedaba sin sentiment para siempre y B se etiquetaba dos
+        // veces, descuadrando refreshAverage() del ticket (14-sep-2026,
+        // auditoría de lógica de negocio). $event->message es TicketMessage|
+        // TicketItem por firma, pero en la práctica todos los
+        // MessageAdded::dispatch() de este módulo mandan un TicketItem — el
+        // guard de tipo es solo defensivo.
+        if (! $message instanceof TicketItem) {
             return;
         }
 
-        $this->sentiment->tagItem($item);
+        $this->sentiment->tagItem($message);
     }
 
     public function failed(MessageAdded $event, \Throwable $exception): void

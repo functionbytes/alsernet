@@ -1,5 +1,6 @@
 <?php
-if (!defined('_PS_VERSION_')) {
+
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -36,5 +37,4 @@ class AlsernetFormCategories extends Module
     {
         return parent::uninstall();
     }
-        
 }

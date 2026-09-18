@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ final class DeleteSupplierHandler extends AbstractDeleteSupplierHandler implemen
         try {
             $this->removeSupplier($supplierId);
         } catch (SupplierException $e) {
-            if (SupplierException::class === get_class($e)) {
+            if (get_class($e) === SupplierException::class) {
                 throw new CannotDeleteSupplierException(sprintf('Cannot delete Supplier object with id "%s".', $supplierId->getValue()), CannotDeleteSupplierException::FAILED_DELETE);
             }
 

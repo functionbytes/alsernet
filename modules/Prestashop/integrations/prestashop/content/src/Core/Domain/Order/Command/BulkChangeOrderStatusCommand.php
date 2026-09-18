@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,12 +46,12 @@ class BulkChangeOrderStatusCommand
     private $newOrderStatusId;
 
     /**
-     * @param int[] $orderIds
-     * @param int $newOrderStatusId
+     * @param  int[]  $orderIds
+     * @param  int  $newOrderStatusId
      */
     public function __construct(array $orderIds, $newOrderStatusId)
     {
-        if (!is_int($newOrderStatusId) || 0 >= $newOrderStatusId) {
+        if (! is_int($newOrderStatusId) || $newOrderStatusId <= 0) {
             throw new OrderException(sprintf('Order status Id must be integer greater than 0, but %s given.', var_export($newOrderStatusId, true)));
         }
 
@@ -75,7 +76,7 @@ class BulkChangeOrderStatusCommand
     }
 
     /**
-     * @param int[] $orderIds
+     * @param  int[]  $orderIds
      */
     private function setOrderIds(array $orderIds)
     {

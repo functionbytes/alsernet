@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,44 +38,26 @@ interface CartRuleActionBuilderInterface
 {
     /**
      * Set free shipping for cart rule action.
-     *
-     * @param bool $freeShipping
-     *
-     * @return CartRuleActionBuilderInterface
      */
     public function setFreeShipping(bool $freeShipping): CartRuleActionBuilderInterface;
 
     /**
      * Set percentage discount for cart rule action.
-     *
-     * @param PercentageDiscount $percentageDiscount
-     *
-     * @return CartRuleActionBuilderInterface
      */
     public function setPercentageDiscount(PercentageDiscount $percentageDiscount): CartRuleActionBuilderInterface;
 
     /**
      * Set amount discount for cart rule action.
-     *
-     * @param MoneyAmountCondition $amount
-     *
-     * @return CartRuleActionBuilderInterface
      */
     public function setAmountDiscount(MoneyAmountCondition $amount): CartRuleActionBuilderInterface;
 
     /**
      * Set the gift product for cart rule action.
-     *
-     * @param GiftProduct $giftProduct
-     *
-     * @return CartRuleActionBuilderInterface
      */
     public function setGiftProduct(GiftProduct $giftProduct): CartRuleActionBuilderInterface;
 
     /**
      * Build the cart rule action.
-     *
-     * @return CartRuleActionInterface
      */
     public function build(): CartRuleActionInterface;
 }

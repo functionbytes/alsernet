@@ -5,16 +5,19 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Modules\Helpdesk\Http\Responses\ApiResponse;
+use Modules\HelpdeskSocial\Http\Requests\EnterCrisisModeRequest;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialAccountResource;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Services\AuditLogService;
+use Modules\HelpdeskSocial\Services\CrisisModeService;
 
 class SocialAccountsController extends Controller
 {
     public function __construct(
         private readonly AuditLogService $auditLog,
+        private readonly CrisisModeService $crisisMode,
     ) {}
 
     public function index(): JsonResponse
@@ -82,5 +85,29 @@ class SocialAccountsController extends Controller
         $this->auditLog->log('update', $account, $oldValues, ['is_active' => $account->is_active]);
 
         return ApiResponse::success(new SocialAccountResource($account));
+    }
+
+    public function enterCrisisMode(EnterCrisisModeRequest $request, SocialAccount $account): JsonResponse
+    {
+        if ($account->isInCrisisMode()) {
+            return ApiResponse::success(new SocialAccountResource($account), 'La cuenta ya está en modo crisis.');
+        }
+
+        $this->crisisMode->enterCrisisMode($account, $request->string('reason')->toString(), (int) auth()->id());
+
+        return ApiResponse::success(new SocialAccountResource($account->refresh()), 'Modo crisis activado: las auto-respuestas quedan en pausa para esta cuenta.');
+    }
+
+    public function exitCrisisMode(SocialAccount $account): JsonResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
+
+        if (! $account->isInCrisisMode()) {
+            return ApiResponse::success(new SocialAccountResource($account), 'La cuenta no está en modo crisis.');
+        }
+
+        $this->crisisMode->exitCrisisMode($account);
+
+        return ApiResponse::success(new SocialAccountResource($account->refresh()), 'Modo crisis desactivado.');
     }
 }

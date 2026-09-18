@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,47 +47,37 @@ abstract class AbstractAttachmentHandler
      */
     private $validator;
 
-    /**
-     * @param ValidatorInterface $validator
-     */
     public function __construct(ValidatorInterface $validator)
     {
         $this->validator = $validator;
     }
 
     /**
-     * @param array $localizedTexts
-     *
      * @throws AttachmentConstraintException
      */
     protected function assertHasDefaultLanguage(array $localizedTexts)
     {
-        $errors = $this->validator->validate($localizedTexts, new DefaultLanguage());
+        $errors = $this->validator->validate($localizedTexts, new DefaultLanguage);
 
-        if (0 !== count($errors)) {
+        if (count($errors) !== 0) {
             throw new AttachmentConstraintException('Missing name in default language', AttachmentConstraintException::MISSING_NAME_IN_DEFAULT_LANGUAGE);
         }
     }
 
     /**
-     * @param array $localizedDescription
-     *
      * @throws AttachmentConstraintException
      */
     protected function assertDescriptionContainsCleanHtml(array $localizedDescription)
     {
         foreach ($localizedDescription as $description) {
-            $errors = $this->validator->validate($description, new CleanHtml());
+            $errors = $this->validator->validate($description, new CleanHtml);
 
-            if (0 !== count($errors)) {
+            if (count($errors) !== 0) {
                 throw new AttachmentConstraintException(sprintf('Given description "%s" contains javascript events or script tags', $description), AttachmentConstraintException::INVALID_DESCRIPTION);
             }
         }
     }
 
-    /**
-     * @return string
-     */
     protected function getUniqueFileName(): string
     {
         $uniqueFileName = sha1(uniqid());
@@ -95,23 +86,17 @@ abstract class AbstractAttachmentHandler
     }
 
     /**
-     * @param Attachment $attachment
-     *
      * @throws AttachmentConstraintException
      * @throws PrestaShopException
      */
     protected function assertValidFields(Attachment $attachment)
     {
-        if (!$attachment->validateFields(false) && !$attachment->validateFieldsLang(false)) {
+        if (! $attachment->validateFields(false) && ! $attachment->validateFieldsLang(false)) {
             throw new AttachmentConstraintException('Attachment contains invalid field values', AttachmentConstraintException::INVALID_FIELDS);
         }
     }
 
     /**
-     * @param AttachmentId $attachmentId
-     *
-     * @return Attachment
-     *
      * @throws AttachmentNotFoundException
      */
     protected function getAttachment(AttachmentId $attachmentId): Attachment
@@ -133,9 +118,7 @@ abstract class AbstractAttachmentHandler
     /**
      * Deletes legacy Attachment
      *
-     * @param Attachment $attachment
      *
-     * @return bool
      *
      * @throws DeleteAttachmentException
      */

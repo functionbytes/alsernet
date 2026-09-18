@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 class FeatureValueValidator extends AbstractObjectModelValidator
 {
     /**
-     * @param FeatureValue $featureValue
-     *
      * @throws CoreException
      * @throws FeatureValueConstraintException
      */
@@ -51,10 +50,6 @@ class FeatureValueValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param FeatureValue $featureValue
-     * @param string $property
-     * @param int $errorCode
-     *
      * @throws CoreException
      * @throws FeatureValueConstraintException
      */

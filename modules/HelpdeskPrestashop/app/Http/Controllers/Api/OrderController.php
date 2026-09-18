@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
+use Modules\HelpdeskPrestashop\Http\Controllers\Concerns\BuildsIdempotencyKey;
 use Modules\HelpdeskPrestashop\Http\Requests\OrderDetailRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\StartReturnRequest;
 use Modules\HelpdeskPrestashop\Http\Resources\OrderDetailResource;
@@ -14,7 +15,7 @@ use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
 class OrderController extends Controller
 {
-    use ScopesCustomerByInbox;
+    use BuildsIdempotencyKey, ScopesCustomerByInbox;
 
     public function __construct(
         private readonly PrestashopContextService $service
@@ -29,7 +30,7 @@ class OrderController extends Controller
         // helpdeskprestashop.orders.view bastaba para leer el pedido de cualquier
         // cliente aportando su email + iterando {order} (mismo guard que el
         // Managers PsOrderDetailController y CustomerContextController).
-        $this->assertScopedToCustomerEmail($email);
+        $this->assertScopedToCustomerEmail($email, 'helpdeskprestashop.prospect.view');
 
         try {
             $data = $this->service->getOrderDetail($order, $email);
@@ -61,14 +62,14 @@ class OrderController extends Controller
         $items = $request->validated('items');
         $email = $request->validated('customer_email');
 
-        $this->assertScopedToCustomerEmail($email);
+        $this->assertScopedToCustomerEmail($email, 'helpdeskprestashop.prospect.view');
 
         try {
             $data = $this->service->startOrderReturn(
                 $order,
                 $items,
                 $email,
-                $this->idempotencyKey($request, $order, $items),
+                $this->idempotencyKey($request, $order, 'order.start_return', $items),
             );
         } catch (PsUpstreamException $e) {
             return response()->json([
@@ -91,27 +92,5 @@ class OrderController extends Controller
             'message' => 'Devolución iniciada.',
             'data' => new OrderReturnResource($data),
         ]);
-    }
-
-    /**
-     * Build a stable idempotency key for the start-return action.
-     * Prefers the client-supplied header; falls back to a deterministic hash
-     * of user + order + items so accidental double-submits don't duplicate
-     * the return on PrestaShop.
-     */
-    private function idempotencyKey(StartReturnRequest $request, int $order, array $items): string
-    {
-        $header = trim((string) $request->header('Idempotency-Key', ''));
-
-        if ($header !== '') {
-            return $header;
-        }
-
-        return sha1(sprintf(
-            '%s:%d:%s',
-            (string) ($request->user()?->getAuthIdentifier() ?? 'anon'),
-            $order,
-            json_encode($items),
-        ));
     }
 }

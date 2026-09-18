@@ -15,9 +15,8 @@
             <div class="d-flex align-items-start gap-3">
                 {{-- Channel icon --}}
                 @php $channelInfo = $conversation->channel_info @endphp
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:44px;height:44px;background:#f0f0f0;">
-                    <i class="{{ $channelInfo['icon'] }} fa-lg" style="color:{{ $channelInfo['color'] }};"></i>
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 bv-wh-44 bv-channel-icon-bg">
+                    <i class="{{ $channelInfo['icon'] }} fa-lg bv-icon-dyn" style="--bv-icon-color: {{ $channelInfo['color'] }};"></i>
                 </div>
 
                 <div class="flex-grow-1">
@@ -26,8 +25,8 @@
                     </h5>
                     <div class="d-flex flex-wrap align-items-center gap-2">
                         @if ($conversation->status)
-                            <span class="badge rounded-pill"
-                                  style="background-color: {{ $conversation->status->is_open ? '#13C672' : '#6c757d' }}">
+                            <span class="badge rounded-pill bv-badge-dyn"
+                                  style="--bv-badge-color: {{ $conversation->status->is_open ? '#13C672' : '#6c757d' }}">
                                 {{ $conversation->status->name }}
                             </span>
                         @endif
@@ -71,7 +70,7 @@
                                             @foreach ($item->attachment_urls as $url)
                                                 <a href="{{ $url }}" target="_blank"
                                                    class="btn btn-sm btn-light text-dark">
-                                                    <i class="fas fa-paperclip me-1"></i>Adjunto
+                                                    Adjunto
                                                 </a>
                                             @endforeach
                                         </div>
@@ -81,17 +80,15 @@
                                     Tú · {{ $item->created_at->format('d/m H:i') }}
                                 </small>
                             </div>
-                            <div class="avatar-initials flex-shrink-0"
-                                 style="background:#90bb13;color:#fff;">
+                            <div class="avatar-initials flex-shrink-0 bv-avatar-customer">
                                 {{ mb_strtoupper(mb_substr($customer->name, 0, 1)) }}
                             </div>
                         </div>
                     @else
                         {{-- Agent message (left-aligned) --}}
                         <div class="d-flex justify-content-start align-items-end gap-2">
-                            <div class="avatar-initials flex-shrink-0"
-                                 style="background:#e9ecef;color:#495057;">
-                                <i class="fas fa-headset" style="font-size:.8rem;"></i>
+                            <div class="avatar-initials flex-shrink-0 bv-avatar-agent">
+                                <i class="fas fa-headset bv-fs-80"></i>
                             </div>
                             <div class="d-flex flex-column gap-1">
                                 <div class="message-bubble from-agent">
@@ -101,7 +98,7 @@
                                             @foreach ($item->attachment_urls as $url)
                                                 <a href="{{ $url }}" target="_blank"
                                                    class="btn btn-sm btn-outline-secondary btn-sm">
-                                                    <i class="fas fa-paperclip me-1"></i>Adjunto
+                                                    Adjunto
                                                 </a>
                                             @endforeach
                                         </div>
@@ -151,7 +148,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted" id="charCount">0 / 5000</small>
                         <button type="submit" class="btn btn-primary-portal px-4">
-                            <i class="far fa-paper-plane me-2"></i>Enviar respuesta
+                            Enviar respuesta
                         </button>
                     </div>
                 </form>
@@ -166,20 +163,5 @@
 @endsection
 
 @section('scripts')
-<script>
-    // Auto-scroll thread to bottom
-    const thread = document.getElementById('messageThread');
-    if (thread) {
-        thread.scrollTop = thread.scrollHeight;
-    }
-
-    // Character counter
-    const input = document.getElementById('messageInput');
-    const counter = document.getElementById('charCount');
-    if (input && counter) {
-        input.addEventListener('input', function () {
-            counter.textContent = this.value.length + ' / 5000';
-        });
-    }
-</script>
+<script src="{{ asset('vendor/helpdesk/portal/conversation.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/portal/conversation.js')) }}" defer></script>
 @endsection

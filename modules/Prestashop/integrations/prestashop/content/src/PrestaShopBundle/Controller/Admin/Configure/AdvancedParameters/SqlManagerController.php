@@ -48,6 +48,7 @@ use PrestaShop\PrestaShop\Core\Form\FormHandlerInterface;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilderInterface;
 use PrestaShop\PrestaShop\Core\Search\Filters\RequestSqlFilters;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Entity\Repository\RequestSqlRepository;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\DemoRestricted;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -411,7 +412,7 @@ class SqlManagerController extends FrameworkBundleAdminController
     /**
      * Get request SQL repository.
      *
-     * @return \PrestaShopBundle\Entity\Repository\RequestSqlRepository
+     * @return RequestSqlRepository
      */
     protected function getRepository()
     {

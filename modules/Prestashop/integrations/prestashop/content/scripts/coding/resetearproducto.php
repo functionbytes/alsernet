@@ -1,14 +1,15 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include (dirname(__FILE__).'/../config/config.inc.php');
-include (dirname(__FILE__).'/../init.php');
+include dirname(__FILE__).'/../config/config.inc.php';
+include dirname(__FILE__).'/../init.php';
 
 /********************** LIMPIA PRODUCTOS */
 
@@ -35,7 +36,6 @@ include (dirname(__FILE__).'/../init.php');
 //             $nn2 .= $valuue['id_product_attribute'].',';
 //             Db::getInstance()->ExecuteS("DELETE FROM aalv_combinaciones_import WHERE id_product_attribute = ".$valuue['id_product_attribute']);
 //         }
-
 
 //         Db::getInstance()->ExecuteS("DELETE FROM aalv_tarifa_cabecera_import WHERE id_product = ".$value['id_product']);
 

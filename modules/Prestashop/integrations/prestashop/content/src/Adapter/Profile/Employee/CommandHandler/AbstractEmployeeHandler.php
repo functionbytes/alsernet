@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,22 +43,17 @@ use Warehouse;
 abstract class AbstractEmployeeHandler extends AbstractObjectModelHandler
 {
     /**
-     * @param EmployeeId $employeeId
-     * @param Employee $employee
-     *
      * @throws EmployeeNotFoundException
      */
     protected function assertEmployeeWasFoundById(EmployeeId $employeeId, Employee $employee)
     {
-        if (!$employee->id) {
+        if (! $employee->id) {
             throw new EmployeeNotFoundException($employeeId, sprintf('Employee with id "%s" cannot be found.', $employeeId->getValue()));
         }
     }
 
     /**
      * If employee is admin and no other admins exists, then terminate command execution.
-     *
-     * @param Employee $employee
      */
     protected function assertEmployeeIsNotTheOnlyAdminInShop(Employee $employee)
     {
@@ -68,8 +64,6 @@ abstract class AbstractEmployeeHandler extends AbstractObjectModelHandler
 
     /**
      * If logged in employee is trying to toggle itself, then terminate execution.
-     *
-     * @param Employee $employee
      */
     protected function assertLoggedInEmployeeIsNotTheSameAsBeingUpdatedEmployee(Employee $employee)
     {
@@ -84,8 +78,6 @@ abstract class AbstractEmployeeHandler extends AbstractObjectModelHandler
      * Even though Warehouse feature was removed in 1.7
      * but the code related to it still exists
      * thus assertion is kept for BC i guess.
-     *
-     * @param Employee $employee
      */
     protected function assertEmployeeDoesNotManageWarehouse(Employee $employee)
     {

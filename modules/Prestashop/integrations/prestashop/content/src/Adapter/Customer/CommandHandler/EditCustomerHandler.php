@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,7 @@ final class EditCustomerHandler extends AbstractCustomerHandler implements EditC
     private $legacyCookieKey;
 
     /**
-     * @param Hashing $hashing
-     * @param string $legacyCookieKey
+     * @param  string  $legacyCookieKey
      */
     public function __construct(Hashing $hashing, $legacyCookieKey)
     {
@@ -90,45 +90,41 @@ final class EditCustomerHandler extends AbstractCustomerHandler implements EditC
         // and set their current values (only if it is not being modified: if it is not in $_POST)
         $requiredFields = $customer->getFieldsRequiredDatabase();
         foreach ($requiredFields as $field) {
-            if (!array_key_exists($field['field_name'], $_POST)) {
+            if (! array_key_exists($field['field_name'], $_POST)) {
                 $_POST[$field['field_name']] = $customer->{$field['field_name']};
             }
         }
 
         $this->assertRequiredFieldsAreNotMissing($customer);
 
-        if (false === $customer->validateFields(false)) {
+        if ($customer->validateFields(false) === false) {
             throw new CustomerException('Customer contains invalid field values');
         }
 
-        if (false === $customer->update()) {
+        if ($customer->update() === false) {
             throw new CustomerException('Failed to update customer');
         }
     }
 
-    /**
-     * @param Customer $customer
-     * @param EditCustomerCommand $command
-     */
     private function updateCustomerWithCommandData(Customer $customer, EditCustomerCommand $command)
     {
-        if (null !== $command->getGenderId()) {
+        if ($command->getGenderId() !== null) {
             $customer->id_gender = $command->getGenderId();
         }
 
-        if (null !== $command->getFirstName()) {
+        if ($command->getFirstName() !== null) {
             $customer->firstname = $command->getFirstName()->getValue();
         }
 
-        if (null !== $command->getLastName()) {
+        if ($command->getLastName() !== null) {
             $customer->lastname = $command->getLastName()->getValue();
         }
 
-        if (null !== $command->getEmail()) {
+        if ($command->getEmail() !== null) {
             $customer->email = $command->getEmail()->getValue();
         }
 
-        if (null !== $command->getPassword()) {
+        if ($command->getPassword() !== null) {
             $hashedPassword = $this->hashing->hash(
                 $command->getPassword()->getValue(),
                 $this->legacyCookieKey
@@ -137,77 +133,69 @@ final class EditCustomerHandler extends AbstractCustomerHandler implements EditC
             $customer->passwd = $hashedPassword;
         }
 
-        if (null !== $command->getBirthday()) {
+        if ($command->getBirthday() !== null) {
             $customer->birthday = $command->getBirthday()->getValue();
         }
 
-        if (null !== $command->isEnabled()) {
+        if ($command->isEnabled() !== null) {
             $customer->active = $command->isEnabled();
         }
 
-        if (null !== $command->isPartnerOffersSubscribed()) {
+        if ($command->isPartnerOffersSubscribed() !== null) {
             $customer->optin = $command->isPartnerOffersSubscribed();
         }
 
-        if (null !== $command->getGroupIds()) {
+        if ($command->getGroupIds() !== null) {
             $customer->groupBox = $command->getGroupIds();
         }
 
-        if (null !== $command->getDefaultGroupId()) {
+        if ($command->getDefaultGroupId() !== null) {
             $customer->id_default_group = $command->getDefaultGroupId();
         }
 
-        if (null !== $command->isNewsletterSubscribed()) {
+        if ($command->isNewsletterSubscribed() !== null) {
             $customer->newsletter = $command->isNewsletterSubscribed();
         }
 
         $this->updateCustomerB2bData($customer, $command);
     }
 
-    /**
-     * @param Customer $customer
-     * @param EditCustomerCommand $command
-     */
     private function updateCustomerB2bData(Customer $customer, EditCustomerCommand $command)
     {
-        if (null !== $command->getCompanyName()) {
+        if ($command->getCompanyName() !== null) {
             $customer->company = $command->getCompanyName();
         }
 
-        if (null !== $command->getSiretCode()) {
+        if ($command->getSiretCode() !== null) {
             $customer->siret = $command->getSiretCode();
         }
 
-        if (null !== $command->getApeCode()) {
+        if ($command->getApeCode() !== null) {
             $customer->ape = $command->getApeCode()->getValue();
         }
 
-        if (null !== $command->getWebsite()) {
+        if ($command->getWebsite() !== null) {
             $customer->website = $command->getWebsite();
         }
 
-        if (null !== $command->getAllowedOutstandingAmount()) {
+        if ($command->getAllowedOutstandingAmount() !== null) {
             $customer->outstanding_allow_amount = $command->getAllowedOutstandingAmount();
         }
 
-        if (null !== $command->getMaxPaymentDays()) {
+        if ($command->getMaxPaymentDays() !== null) {
             $customer->max_payment_days = $command->getMaxPaymentDays();
         }
 
-        if (null !== $command->getRiskId()) {
+        if ($command->getRiskId() !== null) {
             $customer->id_risk = $command->getRiskId();
         }
     }
 
-    /**
-     * @param Customer $customer
-     * @param EditCustomerCommand $command
-     */
     private function assertCustomerWithUpdatedEmailDoesNotExist(Customer $customer, EditCustomerCommand $command)
     {
         // if email is not being updated
         // then assertion is not needed
-        if (null === $command->getEmail()) {
+        if ($command->getEmail() === null) {
             return;
         }
 
@@ -215,7 +203,7 @@ final class EditCustomerHandler extends AbstractCustomerHandler implements EditC
             return;
         }
 
-        $customerByEmail = new Customer();
+        $customerByEmail = new Customer;
         $customerByEmail->getByEmail($command->getEmail()->getValue());
 
         if ($customerByEmail->id) {
@@ -223,22 +211,18 @@ final class EditCustomerHandler extends AbstractCustomerHandler implements EditC
         }
     }
 
-    /**
-     * @param Customer $customer
-     * @param EditCustomerCommand $command
-     */
     private function assertCustomerCanAccessDefaultGroup(Customer $customer, EditCustomerCommand $command)
     {
         // if neither default group
         // nor group ids are being edited
         // then no need to assert
-        if (null === $command->getDefaultGroupId()
-            || null === $command->getGroupIds()
+        if ($command->getDefaultGroupId() === null
+            || $command->getGroupIds() === null
         ) {
             return;
         }
 
-        if (!in_array($command->getDefaultGroupId(), $command->getGroupIds())) {
+        if (! in_array($command->getDefaultGroupId(), $command->getGroupIds())) {
             throw new CustomerDefaultGroupAccessException(sprintf('Customer default group with id "%s" must be in access groups', $command->getDefaultGroupId()));
         }
     }

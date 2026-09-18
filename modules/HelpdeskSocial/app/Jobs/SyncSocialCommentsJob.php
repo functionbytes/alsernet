@@ -2,7 +2,6 @@
 
 namespace Modules\HelpdeskSocial\Jobs;
 
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,7 +9,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
-use Modules\HelpdeskSocial\Events\SocialCommentReceived;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialComment;
 
@@ -89,11 +87,12 @@ class SyncSocialCommentsJob implements ShouldQueue
             return;
         }
 
-        // Antes: 1 SELECT de existencia por comentario (hasta 100 por post,
-        // hasta 2000 en una sola ejecución de syncKnownPosts() con 20 posts) —
-        // ahora un único whereIn() precarga los external_comment_id ya
-        // existentes de ESTE lote, usando el mismo índice único
-        // (platform, external_comment_id) en una sola ida a BD.
+        // Pre-filtra en bloque los ya conocidos con un único whereIn() (mismo
+        // índice único platform+external_comment_id) para no despachar un job
+        // por cada comentario que este fallback de polling ya vio en una
+        // sincronización anterior. ProcessSocialCommentJob hace su propia
+        // comprobación de dedupe final (por si hay una carrera), así que este
+        // filtro es solo una optimización, no la fuente de verdad.
         $externalIds = array_column($comments, 'id');
         $existingIds = SocialComment::where('platform', $account->platform)
             ->whereIn('external_comment_id', $externalIds)
@@ -108,20 +107,22 @@ class SyncSocialCommentsJob implements ShouldQueue
                 continue;
             }
 
-            $comment = SocialComment::create([
-                'social_account_id' => $account->id,
+            // Despacha por el mismo pipeline que el webhook (dedupe, threading,
+            // SLA, asignación, clasificación) en vez de crear el SocialComment a
+            // pelo — si no, este fallback de polling deja los comentarios sin
+            // SLA/hilo/asignación/clasificación.
+            ProcessSocialCommentJob::dispatch([
                 'platform' => $account->platform,
+                'page_id' => $account->external_id,
                 'external_comment_id' => $externalId,
                 'external_post_id' => $postId,
                 'external_parent_id' => $commentData['parent']['id'] ?? null,
                 'external_user_id' => $commentData['from']['id'] ?? null,
                 'author_name' => $commentData['from']['name'] ?? 'Usuario',
                 'body' => $commentData['message'] ?? '',
-                'status' => 'pending',
-                'posted_at' => isset($commentData['created_time']) ? Carbon::parse($commentData['created_time']) : now(),
+                'is_mention' => false,
+                'created_at' => $commentData['created_time'] ?? null,
             ]);
-
-            SocialCommentReceived::dispatch($comment);
         }
     }
 

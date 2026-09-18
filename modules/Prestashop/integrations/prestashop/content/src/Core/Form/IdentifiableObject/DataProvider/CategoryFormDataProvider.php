@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,10 +58,8 @@ final class CategoryFormDataProvider implements FormDataProviderInterface
     private $defaultGroupsProvider;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param int $contextShopId
-     * @param int $contextShopRootCategoryId
-     * @param DefaultGroupsProviderInterface $defaultGroupsProvider
+     * @param  int  $contextShopId
+     * @param  int  $contextShopRootCategoryId
      */
     public function __construct(
         CommandBusInterface $queryBus,

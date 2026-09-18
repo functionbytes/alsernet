@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,13 +40,13 @@ class CurrencyId
     private $currencyId;
 
     /**
-     * @param int $currencyId
+     * @param  int  $currencyId
      *
      * @throws CurrencyException
      */
     public function __construct($currencyId)
     {
-        if (!is_int($currencyId) || $currencyId <= 0) {
+        if (! is_int($currencyId) || $currencyId <= 0) {
             throw new CurrencyException(sprintf('Invalid Currency id: %s', var_export($currencyId, true)));
         }
 

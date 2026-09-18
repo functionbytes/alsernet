@@ -11,11 +11,11 @@ use Illuminate\View\View;
 use Modules\Supplier\Http\Requests\Prompt\BulkActionPromptRequest;
 use Modules\Supplier\Http\Requests\Prompt\StorePromptRequest;
 use Modules\Supplier\Http\Requests\Prompt\UpdatePromptRequest;
+use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
 use Modules\Supplier\Models\Product\Product;
-use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Prompt\Prompt;
 use Modules\Supplier\Models\Prompt\PromptVersion;
 use Modules\Supplier\Models\Supplier\Supplier;
@@ -94,7 +94,7 @@ class SupplierPromptsController extends Controller
             $promptStats[$id] = [
                 'total_generated' => $generated,
                 'total_validated' => $validated,
-                'approval_rate'   => $rate,
+                'approval_rate' => $rate,
             ];
         }
 
@@ -111,15 +111,15 @@ class SupplierPromptsController extends Controller
         $pageTitle = 'Crear Prompt de IA';
         $breadcrumb = 'Configuración / Proveedores / Prompts / Crear';
 
-        $suppliers     = Supplier::orderBy('label')->get();
-        $sports        = Sport::active()->orderBy('name')->get();
+        $suppliers = Supplier::orderBy('label')->get();
+        $sports = Sport::active()->orderBy('name')->get();
         $erpcategorias = Category::whereNotNull('erp_categoria_id')
-                            ->select('erp_categoria_id', 'erp_categoria_name', 'sport_id')
-                            ->groupBy('erp_categoria_id', 'erp_categoria_name', 'sport_id')
-                            ->orderBy('erp_categoria_name')
-                            ->get();
-        $categories    = Category::active()->orderBy('name')->get();
-        $subfamilies   = Subfamily::active()->orderBy('name')->get();
+            ->select('erp_categoria_id', 'erp_categoria_name', 'sport_id')
+            ->groupBy('erp_categoria_id', 'erp_categoria_name', 'sport_id')
+            ->orderBy('erp_categoria_name')
+            ->get();
+        $categories = Category::active()->orderBy('name')->get();
+        $subfamilies = Subfamily::active()->orderBy('name')->get();
 
         $categoryId = $request->input('category_id');
         $supplierId = $request->input('supplier_id');
@@ -157,7 +157,7 @@ class SupplierPromptsController extends Controller
     public function checkSubfamilyConflicts(Request $request): JsonResponse
     {
         $subfamilyIds = array_filter(array_map('intval', (array) $request->input('subfamily_ids', [])));
-        $excludeUid   = $request->input('exclude_uid'); // UID del prompt actual (edit)
+        $excludeUid = $request->input('exclude_uid'); // UID del prompt actual (edit)
 
         if (empty($subfamilyIds)) {
             return response()->json(['conflicts' => []]);
@@ -167,12 +167,12 @@ class SupplierPromptsController extends Controller
             // Subfamilia en campo singular
             $q->whereIn('subfamily_id', $subfamilyIds)
               // O en el array JSON
-              ->orWhere(function ($q2) use ($subfamilyIds) {
-                  foreach ($subfamilyIds as $id) {
-                      $q2->orWhereJsonContains('subfamily_ids', $id)
-                         ->orWhereJsonContains('subfamily_ids', (string) $id);
-                  }
-              });
+                ->orWhere(function ($q2) use ($subfamilyIds) {
+                    foreach ($subfamilyIds as $id) {
+                        $q2->orWhereJsonContains('subfamily_ids', $id)
+                            ->orWhereJsonContains('subfamily_ids', (string) $id);
+                    }
+                });
         });
 
         if ($excludeUid) {
@@ -198,10 +198,10 @@ class SupplierPromptsController extends Controller
 
             foreach ($conflictedIds as $sfId) {
                 $conflicts[] = [
-                    'subfamily_id'   => $sfId,
+                    'subfamily_id' => $sfId,
                     'subfamily_name' => $subfamilyNames[$sfId] ?? "Subfamilia #{$sfId}",
-                    'prompt_uid'     => $prompt->uid,
-                    'prompt_label'   => $prompt->label,
+                    'prompt_uid' => $prompt->uid,
+                    'prompt_label' => $prompt->label,
                 ];
             }
         }
@@ -219,6 +219,7 @@ class SupplierPromptsController extends Controller
             $conflicts = $this->findSubfamilyConflicts(array_map('intval', $subfamilyIds));
             if (! empty($conflicts)) {
                 $names = implode(', ', array_column($conflicts, 'subfamily_name'));
+
                 return back()->withErrors(['subfamily_ids' => "Las subfamilias ya están asignadas a otro prompt: {$names}"])->withInput();
             }
         }
@@ -230,10 +231,10 @@ class SupplierPromptsController extends Controller
         $subfamilyIds = $subfamilyIds ? array_map('intval', $subfamilyIds) : null;
 
         Prompt::create([
-            'supplier_id'    => $validated['supplier_id'] ?? null,
-            'category_id'    => $validated['category_id'] ?? null,
-            'subfamily_id'   => $subfamilyIds ? $subfamilyIds[0] : null,
-            'subfamily_ids'  => $subfamilyIds ?: null,
+            'supplier_id' => $validated['supplier_id'] ?? null,
+            'category_id' => $validated['category_id'] ?? null,
+            'subfamily_id' => $subfamilyIds ? $subfamilyIds[0] : null,
+            'subfamily_ids' => $subfamilyIds ?: null,
             'subfamily_mode' => $subfamilyMode,
             'label' => $validated['label'],
             'scope' => $validated['scope'],
@@ -244,7 +245,7 @@ class SupplierPromptsController extends Controller
             'priority' => $validated['priority'] ?? 0,
             'seo_focus' => $validated['seo_focus'],
             'enable_web_search' => $validated['enable_web_search'],
-                'ai_model'          => $validated['ai_model'] ?? null,
+            'ai_model' => $validated['ai_model'] ?? null,
             'is_active' => $validated['is_active'],
             'version' => 1,
         ]);
@@ -286,15 +287,15 @@ class SupplierPromptsController extends Controller
         $pageTitle = "Editar Prompt: {$prompt->label}";
         $breadcrumb = 'Configuración / Proveedores / Prompts / Editar';
 
-        $suppliers     = Supplier::orderBy('label')->get();
-        $sports        = Sport::active()->orderBy('name')->get();
+        $suppliers = Supplier::orderBy('label')->get();
+        $sports = Sport::active()->orderBy('name')->get();
         $erpcategorias = Category::whereNotNull('erp_categoria_id')
-                            ->select('erp_categoria_id', 'erp_categoria_name', 'sport_id')
-                            ->groupBy('erp_categoria_id', 'erp_categoria_name', 'sport_id')
-                            ->orderBy('erp_categoria_name')
-                            ->get();
-        $categories    = Category::active()->orderBy('name')->get();
-        $subfamilies   = Subfamily::active()->orderBy('name')->get();
+            ->select('erp_categoria_id', 'erp_categoria_name', 'sport_id')
+            ->groupBy('erp_categoria_id', 'erp_categoria_name', 'sport_id')
+            ->orderBy('erp_categoria_name')
+            ->get();
+        $categories = Category::active()->orderBy('name')->get();
+        $subfamilies = Subfamily::active()->orderBy('name')->get();
 
         $templates = Prompt::templates()
             ->orderBy('template_category')
@@ -318,18 +319,18 @@ class SupplierPromptsController extends Controller
 
         if ($incrementVersion) {
             PromptVersion::create([
-                'prompt_id'        => $prompt->id,
-                'version'          => $prompt->version,
-                'label'            => $prompt->label,
-                'scope'            => $prompt->scope,
-                'content_type'     => $prompt->content_type,
-                'output_language'  => $prompt->output_language,
-                'tone'             => $prompt->tone,
-                'priority'         => $prompt->priority,
-                'seo_focus'        => $prompt->seo_focus,
-                'enable_web_search'=> $prompt->enable_web_search,
-                'prompt_template'  => $prompt->prompt_template,
-                'saved_by'         => auth()->id(),
+                'prompt_id' => $prompt->id,
+                'version' => $prompt->version,
+                'label' => $prompt->label,
+                'scope' => $prompt->scope,
+                'content_type' => $prompt->content_type,
+                'output_language' => $prompt->output_language,
+                'tone' => $prompt->tone,
+                'priority' => $prompt->priority,
+                'seo_focus' => $prompt->seo_focus,
+                'enable_web_search' => $prompt->enable_web_search,
+                'prompt_template' => $prompt->prompt_template,
+                'saved_by' => auth()->id(),
             ]);
         }
 
@@ -340,6 +341,7 @@ class SupplierPromptsController extends Controller
             $conflicts = $this->findSubfamilyConflicts(array_map('intval', $subfamilyIds), $prompt->id);
             if (! empty($conflicts)) {
                 $names = implode(', ', array_column($conflicts, 'subfamily_name'));
+
                 return back()->withErrors(['subfamily_ids' => "Las subfamilias ya están asignadas a otro prompt: {$names}"])->withInput();
             }
         }
@@ -351,10 +353,10 @@ class SupplierPromptsController extends Controller
         $subfamilyIds = $subfamilyIds ? array_map('intval', $subfamilyIds) : null;
 
         $prompt->update([
-            'supplier_id'    => $validated['supplier_id'] ?? null,
-            'category_id'    => $validated['category_id'] ?? null,
-            'subfamily_id'   => $subfamilyIds ? $subfamilyIds[0] : null,
-            'subfamily_ids'  => $subfamilyIds ?: null,
+            'supplier_id' => $validated['supplier_id'] ?? null,
+            'category_id' => $validated['category_id'] ?? null,
+            'subfamily_id' => $subfamilyIds ? $subfamilyIds[0] : null,
+            'subfamily_ids' => $subfamilyIds ?: null,
             'subfamily_mode' => $subfamilyMode,
             'label' => $validated['label'],
             'scope' => $validated['scope'],
@@ -365,7 +367,7 @@ class SupplierPromptsController extends Controller
             'priority' => $validated['priority'] ?? 0,
             'seo_focus' => $validated['seo_focus'],
             'enable_web_search' => $validated['enable_web_search'],
-                'ai_model'          => $validated['ai_model'] ?? null,
+            'ai_model' => $validated['ai_model'] ?? null,
             'is_active' => $validated['is_active'],
             'version' => $incrementVersion ? $prompt->version + 1 : $prompt->version,
         ]);
@@ -384,18 +386,18 @@ class SupplierPromptsController extends Controller
         return response()->json([
             'success' => true,
             'version' => [
-                'id'               => $version->id,
-                'version'          => $version->version,
-                'label'            => $version->label,
-                'prompt_template'  => $version->prompt_template,
-                'scope'            => $version->scope,
-                'content_type'     => $version->content_type,
-                'output_language'  => $version->output_language,
-                'tone'             => $version->tone,
-                'seo_focus'        => $version->seo_focus,
-                'enable_web_search'=> $version->enable_web_search,
-                'saved_by'         => $version->savedBy?->full_name,
-                'created_at'       => $version->created_at?->format('d/m/Y H:i'),
+                'id' => $version->id,
+                'version' => $version->version,
+                'label' => $version->label,
+                'prompt_template' => $version->prompt_template,
+                'scope' => $version->scope,
+                'content_type' => $version->content_type,
+                'output_language' => $version->output_language,
+                'tone' => $version->tone,
+                'seo_focus' => $version->seo_focus,
+                'enable_web_search' => $version->enable_web_search,
+                'saved_by' => $version->savedBy?->full_name,
+                'created_at' => $version->created_at?->format('d/m/Y H:i'),
             ],
         ]);
     }
@@ -626,12 +628,12 @@ class SupplierPromptsController extends Controller
     {
         $query = Prompt::where(function ($q) use ($ids) {
             $q->whereIn('subfamily_id', $ids)
-              ->orWhere(function ($q2) use ($ids) {
-                  foreach ($ids as $id) {
-                      $q2->orWhereJsonContains('subfamily_ids', $id)
-                         ->orWhereJsonContains('subfamily_ids', (string) $id);
-                  }
-              });
+                ->orWhere(function ($q2) use ($ids) {
+                    foreach ($ids as $id) {
+                        $q2->orWhereJsonContains('subfamily_ids', $id)
+                            ->orWhereJsonContains('subfamily_ids', (string) $id);
+                    }
+                });
         });
         if ($excludePromptId) {
             $query->where('id', '!=', $excludePromptId);
@@ -641,12 +643,13 @@ class SupplierPromptsController extends Controller
             $assigned = array_unique(array_merge($prompt->subfamily_ids ?? [], $prompt->subfamily_id ? [$prompt->subfamily_id] : []));
             foreach (array_intersect(array_map('intval', $assigned), $ids) as $sfId) {
                 $conflicts[] = [
-                    'subfamily_id'   => $sfId,
+                    'subfamily_id' => $sfId,
                     'subfamily_name' => Subfamily::find($sfId)?->name ?? "#{$sfId}",
-                    'prompt_label'   => $prompt->label,
+                    'prompt_label' => $prompt->label,
                 ];
             }
         }
+
         return $conflicts;
     }
 
@@ -656,12 +659,12 @@ class SupplierPromptsController extends Controller
 
         $query = Prompt::where(function ($q) use ($ids) {
             $q->whereIn('subfamily_id', $ids)
-              ->orWhere(function ($q2) use ($ids) {
-                  foreach ($ids as $id) {
-                      $q2->orWhereJsonContains('subfamily_ids', $id)
-                         ->orWhereJsonContains('subfamily_ids', (string) $id);
-                  }
-              });
+                ->orWhere(function ($q2) use ($ids) {
+                    foreach ($ids as $id) {
+                        $q2->orWhereJsonContains('subfamily_ids', $id)
+                            ->orWhereJsonContains('subfamily_ids', (string) $id);
+                    }
+                });
         });
 
         if ($excludePromptId) {
@@ -673,7 +676,7 @@ class SupplierPromptsController extends Controller
             $updated = array_values(array_filter($current, fn ($id) => ! in_array($id, $ids)));
 
             $prompt->update([
-                'subfamily_id'  => count($updated) ? $updated[0] : null,
+                'subfamily_id' => count($updated) ? $updated[0] : null,
                 'subfamily_ids' => count($updated) ? $updated : null,
             ]);
         }

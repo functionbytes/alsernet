@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use Supplier;
 class SupplierRepository extends AbstractObjectModelRepository
 {
     /**
-     * @param SupplierId $supplierId
-     *
      * @throws SupplierNotFoundException
      */
     public function assertSupplierExists(SupplierId $supplierId): void
@@ -49,10 +48,6 @@ class SupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param SupplierId $supplierId
-     *
-     * @return Supplier
-     *
      * @throws SupplierNotFoundException
      */
     public function get(SupplierId $supplierId): Supplier

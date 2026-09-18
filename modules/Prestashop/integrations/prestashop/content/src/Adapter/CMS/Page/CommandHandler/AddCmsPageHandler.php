@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,11 @@ final class AddCmsPageHandler extends AbstractCmsPageHandler implements AddCmsPa
         $cms = $this->createCmsFromCommand($command);
 
         try {
-            if (false === $cms->validateFields(false) || false === $cms->validateFieldsLang(false)) {
+            if ($cms->validateFields(false) === false || $cms->validateFieldsLang(false) === false) {
                 throw new CmsPageException('Cms page contains invalid field values');
             }
 
-            if (false === $cms->add()) {
+            if ($cms->add() === false) {
                 throw new CannotAddCmsPageException('Failed to add cms page');
             }
             $this->associateWithShops($cms, $command->getShopAssociation());
@@ -63,8 +64,6 @@ final class AddCmsPageHandler extends AbstractCmsPageHandler implements AddCmsPa
     }
 
     /**
-     * @param AddCmsPageCommand $command
-     *
      * @return CMS
      */
     protected function createCmsFromCommand(AddCmsPageCommand $command)
@@ -72,7 +71,7 @@ final class AddCmsPageHandler extends AbstractCmsPageHandler implements AddCmsPa
         $cmsCategoryId = $command->getCmsPageCategory()->getValue();
         $this->assertCmsCategoryExists($cmsCategoryId);
 
-        $cms = new CMS();
+        $cms = new CMS;
         $cms->id_cms_category = $cmsCategoryId;
         $cms->meta_title = $command->getLocalizedTitle();
         $cms->head_seo_title = $command->getLocalizedMetaTitle();

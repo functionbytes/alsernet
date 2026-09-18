@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,9 +33,6 @@ namespace PrestaShop\PrestaShop\Core\Translation\Storage\Provider\Definition;
  */
 abstract class AbstractCoreProviderDefinition implements ProviderDefinitionInterface
 {
-    /**
-     * @return string
-     */
     abstract public function getType(): string;
 
     /**

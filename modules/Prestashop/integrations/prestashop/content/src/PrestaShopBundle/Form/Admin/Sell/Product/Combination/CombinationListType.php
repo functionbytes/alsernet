@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,6 @@ class CombinationListType extends TranslatorAwareType
                 'allow_delete' => true,
                 'prototype_name' => '__COMBINATION_INDEX__',
             ])
-            ->add('total_combinations_count', HiddenType::class)
-        ;
+            ->add('total_combinations_count', HiddenType::class);
     }
 }

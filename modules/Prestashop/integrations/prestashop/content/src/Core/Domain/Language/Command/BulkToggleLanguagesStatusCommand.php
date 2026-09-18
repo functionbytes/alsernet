@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class BulkToggleLanguagesStatusCommand implements ToggleLanguageStatusCommandInt
     private $expectedStatus;
 
     /**
-     * @param int[] $languageIds
-     * @param bool $expectedStatus
+     * @param  int[]  $languageIds
+     * @param  bool  $expectedStatus
      */
     public function __construct(array $languageIds, $expectedStatus)
     {
@@ -73,7 +74,7 @@ class BulkToggleLanguagesStatusCommand implements ToggleLanguageStatusCommandInt
     }
 
     /**
-     * @param int[] $languageIds
+     * @param  int[]  $languageIds
      */
     private function setLanguages(array $languageIds)
     {
@@ -87,13 +88,13 @@ class BulkToggleLanguagesStatusCommand implements ToggleLanguageStatusCommandInt
     }
 
     /**
-     * @param bool $status
+     * @param  bool  $status
      *
      * @throws LanguageConstraintException
      */
     private function assertStatusIsBool($status)
     {
-        if (!is_bool($status)) {
+        if (! is_bool($status)) {
             throw new LanguageConstraintException('Invalid status provided, language status must be type of "bool"');
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,6 @@ abstract class AbstractManufacturerHandler extends AbstractObjectModelHandler
     /**
      * Gets legacy Manufacturer
      *
-     * @param ManufacturerId $manufacturerId
      *
      * @return Manufacturer
      *

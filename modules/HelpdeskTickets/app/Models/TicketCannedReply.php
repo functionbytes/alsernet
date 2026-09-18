@@ -163,10 +163,11 @@ class TicketCannedReply extends Model
     /**
      * Canned replies available to a user for composing a reply (globals +
      * the user's own, active only), ordered for a picker dropdown. Single
-     * point of truth for both the ticket list quick-reply picker
-     * (TicketsCrudController::index()) and the full ticket detail view
-     * (::showFull()) — they used to select a different column list, so the
-     * list view's picker was silently missing html_body.
+     * point of truth for the ticket list quick-reply picker
+     * (TicketsCrudController::index()) — used to also serve the full ticket
+     * detail view (::showFull(), removed 8-sep-2026); the two selected a
+     * different column list, so the list view's picker was silently
+     * missing html_body.
      */
     public static function availableFor(int $userId): Collection
     {

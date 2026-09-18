@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,12 +29,19 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
 class OrderConfirmationControllerCore extends FrontController
 {
     public $ssl = true;
+
     public $php_self = 'order-confirmation';
+
     public $id_cart;
+
     public $id_module;
+
     public $id_order;
+
     public $reference;
+
     public $secure_key;
+
     public $order_presenter;
 
     /**
@@ -45,7 +53,7 @@ class OrderConfirmationControllerCore extends FrontController
     {
         parent::init();
 
-        if (true === (bool) Tools::getValue('free_order')) {
+        if ((bool) Tools::getValue('free_order') === true) {
             $this->checkFreeOrder();
         }
 
@@ -58,18 +66,18 @@ class OrderConfirmationControllerCore extends FrontController
         $this->secure_key = Tools::getValue('key', false);
         $order = new Order((int) ($this->id_order));
 
-        if (!$this->id_order || !$this->id_module || !$this->secure_key || empty($this->secure_key)) {
-            Tools::redirect($redirectLink . (Tools::isSubmit('slowvalidation') ? '&slowvalidation' : ''));
+        if (! $this->id_order || ! $this->id_module || ! $this->secure_key || empty($this->secure_key)) {
+            Tools::redirect($redirectLink.(Tools::isSubmit('slowvalidation') ? '&slowvalidation' : ''));
         }
         $this->reference = $order->reference;
-        if (!Validate::isLoadedObject($order) || $order->id_customer != $this->context->customer->id || $this->secure_key != $order->secure_key) {
+        if (! Validate::isLoadedObject($order) || $order->id_customer != $this->context->customer->id || $this->secure_key != $order->secure_key) {
             Tools::redirect($redirectLink);
         }
         $module = Module::getInstanceById((int) ($this->id_module));
         if ($order->module != $module->name) {
             Tools::redirect($redirectLink);
         }
-        $this->order_presenter = new OrderPresenter();
+        $this->order_presenter = new OrderPresenter;
     }
 
     /**
@@ -111,7 +119,7 @@ class OrderConfirmationControllerCore extends FrontController
      */
     public function displayPaymentReturn($order)
     {
-        if (!Validate::isUnsignedId($this->id_module)) {
+        if (! Validate::isUnsignedId($this->id_module)) {
             return false;
         }
 
@@ -137,7 +145,7 @@ class OrderConfirmationControllerCore extends FrontController
         }
 
         $customer = new Customer($cart->id_customer);
-        if (!Validate::isLoadedObject($customer)) {
+        if (! Validate::isLoadedObject($customer)) {
             Tools::redirect($this->context->link->getPageLink('order'));
         }
 
@@ -146,7 +154,7 @@ class OrderConfirmationControllerCore extends FrontController
             Tools::redirect($this->context->link->getPageLink('order'));
         }
 
-        $order = new PaymentFree();
+        $order = new PaymentFree;
         $order->validateOrder(
             $cart->id,
             Configuration::get('PS_OS_PAYMENT'),

@@ -1,0 +1,349 @@
+/* ==========================================================================
+   Ajustes del Agente IA — /panel/helpdesk/ai/settings
+   --------------------------------------------------------------------------
+   Prefijo .ais- para no pisar Bootstrap ni el tema. Valores de
+   theme/acelle/css/variables.css, con el literal como respaldo. Las pestañas
+   NO se estilan aquí: usan .nav-tabs-underline, que ya vive en components.css
+   del tema. Sin rojos: el acento de alerta es el ámbar --color-warning.
+   ========================================================================== */
+
+.ais-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 20px);
+}
+
+/* Un contenedor con display propio ganaría al [hidden] del navegador. */
+.ais-page [hidden] { display: none !important; }
+
+/* ── Cabecera ─────────────────────────────────────────────────────────── */
+.ais-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4, 16px);
+}
+
+.ais-head-text { flex-grow: 1; min-width: 0; }
+
+.ais-eyebrow {
+    font-size: var(--text-sm, 12px);
+    font-weight: var(--weight-medium, 500);
+    color: var(--color-text-disabled, #999999);
+    letter-spacing: 0.02em;
+    margin-bottom: var(--space-1-5, 6px);
+}
+
+.ais-title {
+    margin: 0 0 var(--space-1, 4px);
+    font-size: var(--text-2xl, 28px);
+    line-height: var(--leading-tight, 1.25);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+}
+
+.ais-subtitle {
+    margin: 0;
+    font-size: var(--text-base, 14px);
+    line-height: var(--leading-normal, 1.5);
+    color: var(--color-text-muted, #555555);
+}
+
+.ais-head-actions {
+    display: flex;
+    gap: var(--space-2, 8px);
+    flex-shrink: 0;
+    padding-top: 26px;
+}
+
+/* ── Tira de estado ───────────────────────────────────────────────────── */
+.ais-status {
+    background: var(--color-card-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E8E8E8);
+    border-radius: var(--radius-card, 12px);
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+    padding: 18px var(--space-6, 24px);
+    display: flex;
+    align-items: center;
+    gap: var(--space-6, 24px);
+}
+
+.ais-status-state {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5, 10px);
+    flex-shrink: 0;
+}
+
+.ais-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full, 9999px);
+    background: var(--color-border-strong, #D5D5D5);
+    flex-shrink: 0;
+}
+
+.ais-dot-active { background: var(--color-teal, #90bb13); }
+.ais-dot-paused { background: var(--color-warning, #E65100); }
+
+.ais-status-label {
+    font-size: var(--text-base, 14px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+}
+
+.ais-status-sep {
+    width: 1px;
+    height: 32px;
+    background: var(--color-border, #E8E8E8);
+    flex-shrink: 0;
+}
+
+.ais-status-body { flex-grow: 1; min-width: 0; }
+
+.ais-status-name {
+    font-size: var(--text-base, 14px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+}
+
+.ais-status-meta,
+.ais-status-hint {
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-muted, #555555);
+}
+
+.ais-status-side {
+    text-align: right;
+    flex-shrink: 0;
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-disabled, #999999);
+}
+
+/* ── Nota junto a las pestañas apagadas ───────────────────────────────── */
+.ais-tabs-note {
+    margin-left: auto;
+    padding-bottom: 13px;
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-disabled, #999999);
+    white-space: nowrap;
+    align-self: flex-end;
+}
+
+.nav-tabs-underline .nav-link.ais-tab-disabled {
+    color: var(--color-text-disabled, #999999);
+    cursor: not-allowed;
+}
+
+.ais-tab-count {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 var(--space-2, 8px);
+    font-size: var(--text-xs, 11px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text-muted, #555555);
+    background: #F0F0F0;
+    border-radius: var(--radius-full, 9999px);
+}
+
+/* ── Cuerpo en dos columnas ───────────────────────────────────────────── */
+.ais-body {
+    display: flex;
+    gap: var(--space-5, 20px);
+    align-items: flex-start;
+}
+
+.ais-main {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 20px);
+}
+
+.ais-rail {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 20px);
+}
+
+@media (max-width: 991.98px) {
+    .ais-body { flex-direction: column; }
+    .ais-rail { width: 100%; }
+}
+
+/* ── Secciones del formulario ─────────────────────────────────────────── */
+.ais-card {
+    background: var(--color-card-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E8E8E8);
+    border-radius: var(--radius-card, 12px);
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+    padding: var(--space-6, 24px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 20px);
+}
+
+.ais-section-title {
+    margin: 0 0 var(--space-1, 4px);
+    font-size: var(--text-md, 16px);
+    line-height: var(--leading-tight, 1.25);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+}
+
+.ais-section-note {
+    margin: 0;
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-muted, #555555);
+}
+
+.ais-required {
+    font-weight: var(--weight-normal, 400);
+    color: var(--color-text-disabled, #999999);
+}
+
+.ais-help {
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-muted, #555555);
+}
+
+.ais-counter {
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-disabled, #999999);
+    white-space: nowrap;
+}
+
+.ais-prompt {
+    font-family: var(--font-mono, "SF Mono", "Fira Code", "Roboto Mono", monospace);
+    font-size: 13px;
+    line-height: var(--leading-relaxed, 1.625);
+}
+
+/* ── Pie de acciones ──────────────────────────────────────────────────── */
+.ais-foot {
+    background: var(--color-card-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E8E8E8);
+    border-radius: var(--radius-card, 12px);
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+    padding: 18px var(--space-6, 24px);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4, 16px);
+}
+
+.ais-foot-hint {
+    font-size: var(--text-sm, 12px);
+    color: var(--color-text-muted, #555555);
+    flex-grow: 1;
+}
+
+/* ── Rail: ayuda y consumo ────────────────────────────────────────────── */
+.ais-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 12px);
+}
+
+.ais-links a {
+    font-size: var(--text-base, 14px);
+    font-weight: var(--weight-medium, 500);
+    text-decoration: none;
+}
+
+.ais-usage-value {
+    font-size: var(--text-2xl, 28px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.ais-usage-line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2, 8px);
+}
+
+.ais-note-card {
+    background: var(--color-subtle-bg, #f5f6f8);
+    border: 1px solid var(--color-border, #E8E8E8);
+    border-radius: var(--radius-card, 12px);
+    padding: var(--space-5, 20px) var(--space-6, 24px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5, 10px);
+}
+
+.ais-note-title {
+    margin: 0;
+    font-size: var(--text-base, 14px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+}
+
+.ais-note-body {
+    margin: 0;
+    font-size: var(--text-sm, 12px);
+    line-height: var(--leading-relaxed, 1.625);
+    color: var(--color-text-muted, #555555);
+}
+
+/* ── Primer arranque ──────────────────────────────────────────────────── */
+.ais-setup {
+    padding: var(--space-8, 32px);
+    gap: var(--space-7, 28px);
+}
+
+.ais-setup-intro { max-width: 62ch; }
+
+.ais-step {
+    display: flex;
+    gap: 18px;
+    padding: var(--space-5, 20px) 0;
+    border-bottom: 1px solid var(--color-border, #E8E8E8);
+}
+
+.ais-step:last-child { border-bottom: none; }
+
+.ais-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full, 9999px);
+    background: var(--color-subtle-bg, #f5f6f8);
+    border: 1px solid var(--color-border, #E8E8E8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm, 12px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text-muted, #555555);
+    flex-shrink: 0;
+}
+
+.ais-step-title {
+    font-size: var(--text-base, 14px);
+    font-weight: var(--weight-semibold, 600);
+    color: var(--color-text, #111111);
+    margin-bottom: var(--space-1, 4px);
+}
+
+.ais-step-body {
+    font-size: var(--text-base, 14px);
+    line-height: var(--leading-normal, 1.5);
+    color: var(--color-text-muted, #555555);
+}
+
+.ais-setup-cta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 12px);
+}
+
+/* ════ FLOWS EDITOR (Nodos y conexiones) ════ */
+.node-item { border-left: 3px solid #90bb13; }
+.node-item .node-handle { cursor: grab; color: #adb5bd; }
+.node-item .node-handle:hover { color: #6c757d; }
+.node-item.sortable-ghost { opacity: 0.4; }

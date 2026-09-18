@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShop\PrestaShop\Core\Search\Builder;
 
+use Doctrine\ORM\OptimisticLockException;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 
 /**
@@ -35,15 +37,13 @@ use PrestaShop\PrestaShop\Core\Search\Filters;
 final class PersistFiltersBuilder extends AbstractRepositoryFiltersBuilder
 {
     /**
-     * @param Filters|null $filters
-     *
      * @return Filters
      *
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws OptimisticLockException
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
-        if (null === $filters || !$this->employeeProvider->getId() || !$this->shopId || !$filters->needsToBePersisted()) {
+        if ($filters === null || ! $this->employeeProvider->getId() || ! $this->shopId || ! $filters->needsToBePersisted()) {
             return $filters;
         }
 
@@ -55,7 +55,7 @@ final class PersistFiltersBuilder extends AbstractRepositoryFiltersBuilder
         $filtersToSave = $filters->all();
         unset($filtersToSave['offset']);
 
-        if (!empty($filterId)) {
+        if (! empty($filterId)) {
             $this->adminFilterRepository->createOrUpdateByEmployeeAndFilterId(
                 $this->employeeProvider->getId(),
                 $this->shopId,

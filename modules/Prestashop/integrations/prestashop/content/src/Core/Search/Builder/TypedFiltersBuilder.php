@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,7 @@ class TypedFiltersBuilder extends AbstractFiltersBuilder
     private $config = null;
 
     /**
-     * @param FiltersBuilderInterface $defaultBuilder
-     * @param iterable|TypedFiltersBuilderInterface[]|null $typedBuilders
+     * @param  iterable|TypedFiltersBuilderInterface[]|null  $typedBuilders
      */
     public function __construct(
         FiltersBuilderInterface $defaultBuilder,
@@ -68,22 +68,17 @@ class TypedFiltersBuilder extends AbstractFiltersBuilder
     ) {
         $this->defaultBuilder = $defaultBuilder;
 
-        if (!empty($typedBuilders)) {
+        if (! empty($typedBuilders)) {
             foreach ($typedBuilders as $typedBuilder) {
                 $this->addTypedBuilder($typedBuilder);
             }
         }
     }
 
-    /**
-     * @param TypedFiltersBuilderInterface $typedFiltersBuilder
-     *
-     * @return self
-     */
     public function addTypedBuilder(TypedFiltersBuilderInterface $typedFiltersBuilder): self
     {
         $this->typedBuilders[] = $typedFiltersBuilder;
-        if (null !== $this->config) {
+        if ($this->config !== null) {
             $typedFiltersBuilder->setConfig($this->config);
         }
 
@@ -112,17 +107,15 @@ class TypedFiltersBuilder extends AbstractFiltersBuilder
     /**
      * {@inheritDoc}
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
         $typedBuilder = $this->findTypedBuilder();
+
         // When a typed builder matches it MUST be used in priority, do not try to manually a filters class that might
         // need some special inputs
         return $typedBuilder ? $typedBuilder->buildFilters($filters) : $this->defaultBuilder->buildFilters($filters);
     }
 
-    /**
-     * @return TypedFiltersBuilderInterface|null
-     */
     private function findTypedBuilder(): ?TypedFiltersBuilderInterface
     {
         if (empty($this->filtersClass)) {

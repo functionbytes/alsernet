@@ -43,7 +43,7 @@ class CustomerFilter extends HashMapWhitelistFilter
             'company',
             'email',
             'firstname',
-            'gender' => (new HashMapWhitelistFilter())
+            'gender' => (new HashMapWhitelistFilter)
                 ->whitelist([
                     'type',
                     'name',

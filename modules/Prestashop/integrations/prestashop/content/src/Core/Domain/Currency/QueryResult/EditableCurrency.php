@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,16 +86,11 @@ class EditableCurrency
     private $associatedShopIds;
 
     /**
-     * @param int $currencyId
-     * @param string $isoCode
-     * @param array $names
-     * @param array $symbols
-     * @param array $transformations
-     * @param float $exchangeRate
-     * @param int $precision
-     * @param bool $isEnabled
-     * @param bool $isUnofficial
-     * @param int[] $associatedShopIds
+     * @param  int  $currencyId
+     * @param  string  $isoCode
+     * @param  float  $exchangeRate
+     * @param  bool  $isEnabled
+     * @param  int[]  $associatedShopIds
      *
      * @throws CurrencyException
      */
@@ -142,8 +138,6 @@ class EditableCurrency
 
     /**
      * Currency's names, indexed by language id.
-     *
-     * @return array
      */
     public function getNames(): array
     {
@@ -152,8 +146,6 @@ class EditableCurrency
 
     /**
      * Currency's names, indexed by language id.
-     *
-     * @return array
      */
     public function getSymbols(): array
     {
@@ -162,8 +154,6 @@ class EditableCurrency
 
     /**
      * Currency's transformations, indexed by language id.
-     *
-     * @return array
      */
     public function getTransformations(): array
     {
@@ -182,8 +172,6 @@ class EditableCurrency
 
     /**
      * Currency decimal precision
-     *
-     * @return int
      */
     public function getPrecision(): int
     {
@@ -202,8 +190,6 @@ class EditableCurrency
 
     /**
      * Whether the currency is an unofficial one (custom created)
-     *
-     * @return bool
      */
     public function isUnofficial(): bool
     {

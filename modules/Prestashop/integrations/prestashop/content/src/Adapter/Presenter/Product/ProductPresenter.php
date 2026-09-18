@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,16 +81,16 @@ class ProductPresenter
         PriceFormatter $priceFormatter,
         ProductColorsRetriever $productColorsRetriever,
         TranslatorInterface $translator,
-        HookManager $hookManager = null,
-        Configuration $configuration = null
+        ?HookManager $hookManager = null,
+        ?Configuration $configuration = null
     ) {
         $this->imageRetriever = $imageRetriever;
         $this->link = $link;
         $this->priceFormatter = $priceFormatter;
         $this->productColorsRetriever = $productColorsRetriever;
         $this->translator = $translator;
-        $this->hookManager = $hookManager ?? new HookManager();
-        $this->configuration = $configuration ?? new Configuration();
+        $this->hookManager = $hookManager ?? new HookManager;
+        $this->configuration = $configuration ?? new Configuration;
     }
 
     public function present(

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,8 +56,6 @@ final class GetManufacturerForViewingHandler implements GetManufacturerForViewin
     }
 
     /**
-     * @param ManufacturerId $manufacturerId
-     *
      * @return Manufacturer
      */
     private function getManufacturer(ManufacturerId $manufacturerId)
@@ -71,9 +70,6 @@ final class GetManufacturerForViewingHandler implements GetManufacturerForViewin
     }
 
     /**
-     * @param Manufacturer $manufacturer
-     * @param LanguageId $languageId
-     *
      * @return array
      */
     private function getManufacturerProducts(Manufacturer $manufacturer, LanguageId $languageId)
@@ -91,7 +87,7 @@ final class GetManufacturerForViewingHandler implements GetManufacturerForViewin
             foreach ($productCombinations as $combination) {
                 $attributeId = $combination['id_product_attribute'];
 
-                if (!isset($combinations[$attributeId])) {
+                if (! isset($combinations[$attributeId])) {
                     $combinations[$attributeId] = [
                         'reference' => $combination['reference'],
                         'ean13' => $combination['ean13'],
@@ -108,7 +104,7 @@ final class GetManufacturerForViewingHandler implements GetManufacturerForViewin
                     $combination['attribute_name']
                 );
 
-                if (!empty($combinations[$attributeId]['attributes'])) {
+                if (! empty($combinations[$attributeId]['attributes'])) {
                     $attribute = sprintf(', %s', $attribute);
                 }
 
@@ -131,9 +127,6 @@ final class GetManufacturerForViewingHandler implements GetManufacturerForViewin
     }
 
     /**
-     * @param Manufacturer $manufacturer
-     * @param LanguageId $languageId
-     *
      * @return array
      */
     private function getManufacturerAddresses(Manufacturer $manufacturer, LanguageId $languageId)

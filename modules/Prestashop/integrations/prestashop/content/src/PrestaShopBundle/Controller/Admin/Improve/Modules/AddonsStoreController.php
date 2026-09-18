@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,7 @@ namespace PrestaShopBundle\Controller\Admin\Improve\Modules;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Responsible of "Improve > modules > modules Catalog" page display.
@@ -38,15 +40,13 @@ class AddonsStoreController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function indexAction(Request $request)
     {
         $pageContent = @file_get_contents($this->getAddonsUrl($request));
 
-        if (!$pageContent) {
+        if (! $pageContent) {
             $this->addFlash('error', $this->trans(
                 'It looks like we have trouble connecting to Addons. Please refresh the page or check your firewall configuration.',
                 'Admin.Notifications.Error'
@@ -70,8 +70,6 @@ class AddonsStoreController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @return string
      */
     private function getAddonsUrl(Request $request)

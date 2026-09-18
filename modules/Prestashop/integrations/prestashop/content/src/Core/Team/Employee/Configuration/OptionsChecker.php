@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,10 +45,6 @@ final class OptionsChecker implements OptionsCheckerInterface
      */
     private $multistoreContextChecker;
 
-    /**
-     * @param FeatureInterface $multistoreFeature
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     */
     public function __construct(
         FeatureInterface $multistoreFeature,
         MultistoreContextCheckerInterface $multistoreContextChecker
@@ -61,7 +58,7 @@ final class OptionsChecker implements OptionsCheckerInterface
      */
     public function canBeChanged()
     {
-        if (!$this->multistoreFeature->isUsed()
+        if (! $this->multistoreFeature->isUsed()
             && $this->multistoreContextChecker->isSingleShopContext()
         ) {
             return true;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,8 +29,11 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderReturnPresenter;
 class OrderFollowControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'order-follow';
+
     public $authRedirection = 'order-follow';
+
     public $ssl = true;
 
     /**
@@ -44,29 +48,29 @@ class OrderFollowControllerCore extends FrontController
             $order_qte_input = Tools::getValue('order_qte_input');
             $customizationIds = Tools::getValue('customization_ids');
 
-            if (!$id_order = (int) Tools::getValue('id_order')) {
+            if (! $id_order = (int) Tools::getValue('id_order')) {
                 Tools::redirect('index.php?controller=history');
             }
-            if (!($ids_order_detail = Tools::getValue('ids_order_detail')) && !$customizationQtyInput && !$customizationIds) {
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $id_order . '&errorDetail1');
+            if (! ($ids_order_detail = Tools::getValue('ids_order_detail')) && ! $customizationQtyInput && ! $customizationIds) {
+                Tools::redirect('index.php?controller=order-detail&id_order='.$id_order.'&errorDetail1');
             }
-            if (!$customizationIds && !$order_qte_input) {
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $id_order . '&errorDetail2');
+            if (! $customizationIds && ! $order_qte_input) {
+                Tools::redirect('index.php?controller=order-detail&id_order='.$id_order.'&errorDetail2');
             }
 
             $order = new Order((int) $id_order);
-            if (!$order->isReturnable()) {
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $id_order . '&errorNotReturnable');
+            if (! $order->isReturnable()) {
+                Tools::redirect('index.php?controller=order-detail&id_order='.$id_order.'&errorNotReturnable');
             }
             if ($order->id_customer != $this->context->customer->id) {
-                die(Tools::displayError());
+                exit(Tools::displayError());
             }
-            $orderReturn = new OrderReturn();
+            $orderReturn = new OrderReturn;
             $orderReturn->id_customer = (int) $this->context->customer->id;
             $orderReturn->id_order = $id_order;
             $orderReturn->question = htmlspecialchars(Tools::getValue('returnText'));
             if (empty($orderReturn->question)) {
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $id_order . '&errorMsg&' .
+                Tools::redirect('index.php?controller=order-detail&id_order='.$id_order.'&errorMsg&'.
                     http_build_query([
                         'ids_order_detail' => $ids_order_detail,
                         'order_qte_input' => $order_qte_input,
@@ -74,8 +78,8 @@ class OrderFollowControllerCore extends FrontController
                     ]));
             }
 
-            if (!$orderReturn->checkEnoughProduct($ids_order_detail, $order_qte_input, $customizationIds, $customizationQtyInput)) {
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $id_order . '&errorQuantity');
+            if (! $orderReturn->checkEnoughProduct($ids_order_detail, $order_qte_input, $customizationIds, $customizationQtyInput)) {
+                Tools::redirect('index.php?controller=order-detail&id_order='.$id_order.'&errorQuantity');
             }
 
             $orderReturn->state = 1;

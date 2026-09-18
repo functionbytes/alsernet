@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,6 @@ class JsRouterMetadataExtension extends AbstractExtension
      */
     private $username;
 
-    /**
-     * @param RequestStack $requestStack
-     * @param CsrfTokenManagerInterface $tokenManager
-     * @param string $username
-     */
     public function __construct(
         RequestStack $requestStack,
         CsrfTokenManagerInterface $tokenManager,
@@ -86,7 +82,7 @@ class JsRouterMetadataExtension extends AbstractExtension
         return [
             // base url for javascript router
             'base_url' => $this->requestStack->getCurrentRequest()->getBaseUrl(),
-            //security token for javascript router
+            // security token for javascript router
             'token' => $this->tokenManager->getToken($this->username)->getValue(),
         ];
     }

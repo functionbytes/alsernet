@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,7 @@ final class ControllerAction
      * Retrieve the Controller's action and name from a FQCN notation of Symfony controller.
      * This function expects a string like MyNamespace\Foo\FooController::bazAction.
      *
-     * @param string $controller
-     *
+     * @param  string  $controller
      * @return array
      */
     public static function fromString($controller)
@@ -50,28 +50,26 @@ final class ControllerAction
     /**
      * Get current controller name.
      *
-     * @param string $controller the full controller name
-     *
+     * @param  string  $controller  the full controller name
      * @return string
      */
     private static function getControllerName($controller)
     {
         preg_match('~(\w+)Controller(?:::(?:\w+)Action)?$~', $controller, $matches);
 
-        return !empty($matches) ? strtolower($matches[1]) : 'N/A';
+        return ! empty($matches) ? strtolower($matches[1]) : 'N/A';
     }
 
     /**
      * Get current action name.
      *
-     * @param string $controller the full controller name
-     *
+     * @param  string  $controller  the full controller name
      * @return string
      */
     private static function getActionName($controller)
     {
         preg_match('~::(\w+)Action$~', $controller, $matches);
 
-        return !empty($matches) ? strtolower($matches[1]) : 'N/A';
+        return ! empty($matches) ? strtolower($matches[1]) : 'N/A';
     }
 }

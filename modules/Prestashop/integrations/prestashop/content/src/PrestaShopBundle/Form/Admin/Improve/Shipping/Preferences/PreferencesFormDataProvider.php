@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -93,7 +94,6 @@ class PreferencesFormDataProvider implements FormDataProviderInterface
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -117,7 +117,7 @@ class PreferencesFormDataProvider implements FormDataProviderInterface
 
         // Check if all numeric fields are positive numbers
         foreach ($numericFields as $field) {
-            if (!is_numeric($field['value']) || $field['value'] < 0) {
+            if (! is_numeric($field['value']) || $field['value'] < 0) {
                 $errors[] = [
                     'key' => 'The %s field is invalid.',
                     'domain' => 'Admin.Notifications.Error',

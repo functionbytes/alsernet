@@ -55,7 +55,10 @@ class FrequencyCapService
 
         if ($campaign->cooldown_minutes && $data['last']) {
             $lastSeen = Carbon::parse($data['last']);
-            if (now()->diffInMinutes($lastSeen) < $campaign->cooldown_minutes) {
+            // Carbon 3 devuelve diferencias con signo: now()->diffInMinutes($lastSeen)
+            // sale negativo (lastSeen es anterior a now()), así que la comparación
+            // `< cooldown_minutes` daba true SIEMPRE y el cap nunca se liberaba.
+            if ($lastSeen->diffInMinutes(now()) < $campaign->cooldown_minutes) {
                 return false;
             }
         }

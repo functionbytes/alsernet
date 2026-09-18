@@ -30,7 +30,7 @@ namespace PrestaShop\PrestaShop\Core\Localization\Currency\DataLayer;
 use PrestaShop\PrestaShop\Core\Data\Layer\AbstractDataLayer;
 use PrestaShop\PrestaShop\Core\Localization\CLDR\CurrencyInterface as CldrCurrency;
 use PrestaShop\PrestaShop\Core\Localization\CLDR\LocaleRepository as CldrLocaleRepository;
-use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyData as CurrencyData;
+use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyData;
 use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyDataLayerInterface;
 use PrestaShop\PrestaShop\Core\Localization\Currency\LocalizedCurrencyId;
 use PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException;
@@ -73,9 +73,8 @@ class CurrencyReference extends AbstractDataLayer implements CurrencyDataLayerIn
      *
      * Data is read from official CLDR files (via the CLDR LocaleRepository)
      *
-     * @param LocalizedCurrencyId $currencyDataId
-     *                                            The CurrencyData object identifier
-     *
+     * @param  LocalizedCurrencyId  $currencyDataId
+     *                                               The CurrencyData object identifier
      * @return CurrencyData|null
      *                           The wanted CurrencyData object (null if not found)
      *
@@ -85,7 +84,7 @@ class CurrencyReference extends AbstractDataLayer implements CurrencyDataLayerIn
      */
     protected function doRead($currencyDataId)
     {
-        if (!$currencyDataId instanceof LocalizedCurrencyId) {
+        if (! $currencyDataId instanceof LocalizedCurrencyId) {
             throw new LocalizationException('$currencyDataId must be a CurrencyDataIdentifier object');
         }
 
@@ -102,7 +101,7 @@ class CurrencyReference extends AbstractDataLayer implements CurrencyDataLayerIn
             return null;
         }
 
-        $currencyData = new CurrencyData();
+        $currencyData = new CurrencyData;
         $currencyData->setIsoCode($cldrCurrency->getIsoCode());
         $currencyData->setNumericIsoCode($cldrCurrency->getNumericIsoCode());
         $currencyData->setSymbols([$localeCode => $cldrCurrency->getSymbol(CldrCurrency::SYMBOL_TYPE_NARROW)]);
@@ -115,10 +114,10 @@ class CurrencyReference extends AbstractDataLayer implements CurrencyDataLayerIn
     /**
      * CLDR files are read only. Nothing can be written there.
      *
-     * @param LocalizedCurrencyId $currencyDataId
-     *                                            The LocaleData object identifier
-     * @param CurrencyData $currencyData
-     *                                   The CurrencyData object to be written
+     * @param  LocalizedCurrencyId  $currencyDataId
+     *                                               The LocaleData object identifier
+     * @param  CurrencyData  $currencyData
+     *                                      The CurrencyData object to be written
      */
     protected function doWrite($currencyDataId, $currencyData)
     {

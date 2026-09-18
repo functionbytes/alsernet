@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,20 +34,11 @@ interface FormOptionsProviderInterface
 {
     /**
      * Get form options for given object with given id.
-     *
-     * @param int $id
-     * @param array $data
-     *
-     * @return array
      */
     public function getOptions(int $id, array $data): array;
 
     /**
      * Get default form options.
-     *
-     * @param array $data
-     *
-     * @return array
      */
     public function getDefaultOptions(array $data): array;
 }

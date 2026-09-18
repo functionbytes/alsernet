@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class SaveSqlRequestSettingsCommand
     private $fileEncoding;
 
     /**
-     * @param string $fileEncoding
+     * @param  string  $fileEncoding
      *
      * @throws SqlRequestSettingsConstraintException
      */
@@ -59,15 +60,14 @@ class SaveSqlRequestSettingsCommand
     }
 
     /**
-     * @param string $fileEncoding
-     *
+     * @param  string  $fileEncoding
      * @return self
      *
      * @throws SqlRequestSettingsConstraintException
      */
     private function setFileEncoding($fileEncoding)
     {
-        if (!is_string($fileEncoding) || empty($fileEncoding)) {
+        if (! is_string($fileEncoding) || empty($fileEncoding)) {
             throw new SqlRequestSettingsConstraintException(sprintf('Invalid File Encoding %s supplied', var_export($fileEncoding, true)), SqlRequestSettingsConstraintException::INVALID_FILE_ENCODING);
         }
 
@@ -76,7 +76,7 @@ class SaveSqlRequestSettingsCommand
             CharsetEncoding::UTF_8,
         ];
 
-        if (!in_array($fileEncoding, $supportedFileEncodings)) {
+        if (! in_array($fileEncoding, $supportedFileEncodings)) {
             throw new SqlRequestSettingsConstraintException(sprintf('Not supported File Encoding %s supplied. Supported encodings are %s', var_export($fileEncoding, true), var_export(implode(',', $supportedFileEncodings), true)), SqlRequestSettingsConstraintException::NOT_SUPPORTED_FILE_ENCODING);
         }
 

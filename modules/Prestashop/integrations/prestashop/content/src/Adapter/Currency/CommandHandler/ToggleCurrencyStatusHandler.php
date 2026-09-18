@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,7 @@ final class ToggleCurrencyStatusHandler implements ToggleCurrencyStatusHandlerIn
     private $defaultCurrencyId;
 
     /**
-     * @param int $defaultCurrencyId
+     * @param  int  $defaultCurrencyId
      */
     public function __construct($defaultCurrencyId)
     {
@@ -67,7 +68,7 @@ final class ToggleCurrencyStatusHandler implements ToggleCurrencyStatusHandlerIn
     {
         $entity = new Currency($command->getCurrencyId()->getValue());
 
-        if (0 >= $entity->id) {
+        if ($entity->id <= 0) {
             throw new CurrencyNotFoundException(sprintf('Currency object with id "%s" has not been found for toggling.', $command->getCurrencyId()->getValue()));
         }
 
@@ -77,7 +78,7 @@ final class ToggleCurrencyStatusHandler implements ToggleCurrencyStatusHandlerIn
         }
 
         try {
-            if (false === $entity->toggleStatus()) {
+            if ($entity->toggleStatus() === false) {
                 throw new CannotToggleCurrencyException(sprintf('Unable to toggle Currency with id "%s"', $command->getCurrencyId()->getValue()));
             }
         } catch (PrestaShopException $e) {
@@ -86,8 +87,6 @@ final class ToggleCurrencyStatusHandler implements ToggleCurrencyStatusHandlerIn
     }
 
     /**
-     * @param Currency $currency
-     *
      * @throws CannotDisableDefaultCurrencyException
      */
     private function assertDefaultCurrencyIsNotBeingDisabled(Currency $currency)
@@ -98,8 +97,6 @@ final class ToggleCurrencyStatusHandler implements ToggleCurrencyStatusHandlerIn
     }
 
     /**
-     * @param Currency $currency
-     *
      * @throws DefaultCurrencyInMultiShopException
      */
     private function assertDefaultCurrencyIsNotBeingDisabledFromAnyShop(Currency $currency)

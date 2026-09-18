@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,6 @@ interface FiltersBuilderInterface
      * be called before buildFilters, it returns the builder for convenience so
      * you can chain both calls (e.g: $builder->setConfig($config)->buildFilters())
      *
-     * @param array $config
      *
      * @return $this
      */
@@ -63,9 +63,8 @@ interface FiltersBuilderInterface
      * mind as they can be used consecutively with other builders and must not drop
      * existing values carelessly.
      *
-     * @param Filters|null $filters
      *
      * @return Filters
      */
-    public function buildFilters(Filters $filters = null);
+    public function buildFilters(?Filters $filters = null);
 }

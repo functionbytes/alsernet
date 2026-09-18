@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,17 +40,11 @@ interface MailTemplateRendererInterface
     public const GET_MAIL_LAYOUT_TRANSFORMATIONS = 'actionGetMailLayoutTransformations';
 
     /**
-     * @param LayoutInterface $layout
-     * @param LanguageInterface $language
-     *
      * @return string
      */
     public function renderTxt(LayoutInterface $layout, LanguageInterface $language);
 
     /**
-     * @param LayoutInterface $layout
-     * @param LanguageInterface $language
-     *
      * @return string
      */
     public function renderHtml(LayoutInterface $layout, LanguageInterface $language);
@@ -58,7 +53,6 @@ interface MailTemplateRendererInterface
      * Adds a transformer to the renderer, when template is rendered all transformers
      * matching its type (html or txt) are applied to the output content.
      *
-     * @param TransformationInterface $transformer
      *
      * @return $this
      */

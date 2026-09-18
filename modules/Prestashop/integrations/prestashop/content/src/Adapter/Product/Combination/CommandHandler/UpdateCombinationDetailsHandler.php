@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class UpdateCombinationDetailsHandler implements UpdateCombinationDetailsH
      */
     private $combinationRepository;
 
-    /**
-     * @param CombinationRepository $combinationRepository
-     */
     public function __construct(
         CombinationRepository $combinationRepository
     ) {
@@ -69,43 +67,40 @@ final class UpdateCombinationDetailsHandler implements UpdateCombinationDetailsH
     }
 
     /**
-     * @param Combination $combination
-     * @param UpdateCombinationDetailsCommand $command
-     *
      * @return string[]|array<string, int[]>
      */
     private function fillUpdatableProperties(Combination $combination, UpdateCombinationDetailsCommand $command): array
     {
-        //@todo: ps_stock table contains properties(reference, ean13 etc.) that should be updated too depending if we still support ADVANCED_STOCK_MANAGEMENT
+        // @todo: ps_stock table contains properties(reference, ean13 etc.) that should be updated too depending if we still support ADVANCED_STOCK_MANAGEMENT
         //  check Product::updateAttribute L 2165
         $updatableProperties = [];
 
-        if (null !== $command->getEan13()) {
+        if ($command->getEan13() !== null) {
             $combination->ean13 = $command->getEan13()->getValue();
             $updatableProperties[] = 'ean13';
         }
 
-        if (null !== $command->getIsbn()) {
+        if ($command->getIsbn() !== null) {
             $combination->isbn = $command->getIsbn()->getValue();
             $updatableProperties[] = 'isbn';
         }
 
-        if (null !== $command->getMpn()) {
+        if ($command->getMpn() !== null) {
             $combination->mpn = $command->getMpn();
             $updatableProperties[] = 'mpn';
         }
 
-        if (null !== $command->getReference()) {
+        if ($command->getReference() !== null) {
             $combination->reference = $command->getReference()->getValue();
             $updatableProperties[] = 'reference';
         }
 
-        if (null !== $command->getUpc()) {
+        if ($command->getUpc() !== null) {
             $combination->upc = $command->getUpc()->getValue();
             $updatableProperties[] = 'upc';
         }
 
-        if (null !== $command->getWeight()) {
+        if ($command->getWeight() !== null) {
             $combination->weight = (float) (string) $command->getWeight();
         }
 

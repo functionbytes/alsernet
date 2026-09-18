@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,6 @@ interface FormHandlerInterface
     /**
      * Handles form by creating new object.
      *
-     * @param FormInterface $form
      *
      * @return FormHandlerResultInterface
      */
@@ -45,9 +45,7 @@ interface FormHandlerInterface
     /**
      * Handles form for given object.
      *
-     * @param int $id
-     * @param FormInterface $form
-     *
+     * @param  int  $id
      * @return FormHandlerResultInterface
      */
     public function handleFor($id, FormInterface $form);

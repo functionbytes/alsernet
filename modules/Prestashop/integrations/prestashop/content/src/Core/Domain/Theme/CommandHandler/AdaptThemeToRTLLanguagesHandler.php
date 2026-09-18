@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class AdaptThemeToRTLLanguagesHandler implements AdaptThemeToRTLLanguagesH
      */
     private $stylesheetProcessorFactory;
 
-    /**
-     * @param StyleSheetProcessorFactoryInterface $stylesheetProcessorFactory
-     */
     public function __construct(StyleSheetProcessorFactoryInterface $stylesheetProcessorFactory)
     {
         $this->stylesheetProcessorFactory = $stylesheetProcessorFactory;
@@ -61,8 +59,7 @@ final class AdaptThemeToRTLLanguagesHandler implements AdaptThemeToRTLLanguagesH
                 ->create()
                 ->setProcessFOThemes([$plainThemeName])
                 ->setRegenerate(true)
-                ->process()
-            ;
+                ->process();
         } catch (GenerationException $e) {
             throw new CannotAdaptThemeToRTLLanguagesException(sprintf('Cannot adapt "%s" theme to RTL languages.', $plainThemeName), 0, $e);
         }

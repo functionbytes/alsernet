@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,8 +52,8 @@ final class YamlParser
     /**
      * YamlParser constructor.
      *
-     * @param string $cacheDir
-     * @param bool $useCache
+     * @param  string  $cacheDir
+     * @param  bool  $useCache
      */
     public function __construct($cacheDir, $useCache = true)
     {
@@ -63,9 +64,8 @@ final class YamlParser
     /**
      * Parse a YAML File and return the result
      *
-     * @param string $sourceFile
-     * @param bool $forceRefresh
-     *
+     * @param  string  $sourceFile
+     * @param  bool  $forceRefresh
      * @return mixed The YAML converted to a PHP value
      *
      * @throws InvalidArgumentException
@@ -74,14 +74,14 @@ final class YamlParser
      */
     public function parse($sourceFile, $forceRefresh = false)
     {
-        if (!$this->useCache) {
+        if (! $this->useCache) {
             return Yaml::parseFile($sourceFile);
         }
 
         $phpConfigFile = $this->getCacheFile($sourceFile);
         // we set the debug flag to true to force the cache freshness check
         $configCache = new ConfigCache($phpConfigFile, true);
-        if (!$forceRefresh && $configCache->isFresh()) {
+        if (! $forceRefresh && $configCache->isFresh()) {
             return require $phpConfigFile;
         }
 
@@ -89,14 +89,13 @@ final class YamlParser
         $resources = [
             new FileResource($sourceFile),
         ];
-        $configCache->write('<?php return ' . var_export($config, true) . ';' . PHP_EOL, $resources);
+        $configCache->write('<?php return '.var_export($config, true).';'.PHP_EOL, $resources);
 
         return $config;
     }
 
     /**
-     * @param string $sourceFile
-     *
+     * @param  string  $sourceFile
      * @return string
      */
     public function getCacheFile($sourceFile)

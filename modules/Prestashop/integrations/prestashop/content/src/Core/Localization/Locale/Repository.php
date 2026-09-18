@@ -135,7 +135,7 @@ class Repository implements RepositoryInterface
         $this->currencyDisplayType = $currencyDisplayType;
         $this->numberGroupingUsed = $groupingUsed;
         $this->maxFractionDigits = $maxFractionDigits;
-        $this->specificationFactory = new SpecificationFactory();
+        $this->specificationFactory = new SpecificationFactory;
     }
 
     /**
@@ -143,7 +143,7 @@ class Repository implements RepositoryInterface
      */
     public function getLocale($localeCode)
     {
-        if (!isset($this->locales[$localeCode])) {
+        if (! isset($this->locales[$localeCode])) {
             $this->locales[$localeCode] = new Locale(
                 $localeCode,
                 $this->getNumberSpecification($localeCode),
@@ -158,11 +158,10 @@ class Repository implements RepositoryInterface
     /**
      * Get the Number specification for a given locale.
      *
-     * @param string $localeCode
-     *                           The locale code (simplified IETF tag syntax)
-     *                           Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
-     *                           eg: fr-FR, en-US
-     *
+     * @param  string  $localeCode
+     *                              The locale code (simplified IETF tag syntax)
+     *                              Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
+     *                              eg: fr-FR, en-US
      * @return NumberSpecification
      *                             A Number specification
      *
@@ -172,8 +171,8 @@ class Repository implements RepositoryInterface
     {
         $cldrLocale = $this->cldrLocaleRepository->getLocale($localeCode);
 
-        if (null === $cldrLocale) {
-            throw new LocalizationException('CLDR locale not found for locale code "' . $localeCode . '"');
+        if ($cldrLocale === null) {
+            throw new LocalizationException('CLDR locale not found for locale code "'.$localeCode.'"');
         }
 
         return $this->specificationFactory->buildNumberSpecification(
@@ -187,11 +186,10 @@ class Repository implements RepositoryInterface
      * Get all the Price specifications for a given locale.
      * Each installed currency has its own Price specification.
      *
-     * @param string $localeCode
-     *                           The locale code (simplified IETF tag syntax)
-     *                           Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
-     *                           eg: fr-FR, en-US
-     *
+     * @param  string  $localeCode
+     *                              The locale code (simplified IETF tag syntax)
+     *                              Combination of ISO 639-1 (2-letters language code) and ISO 3166-2 (2-letters region code)
+     *                              eg: fr-FR, en-US
      * @return PriceSpecificationMap
      *                               All installed currencies' Price specifications
      *
@@ -200,16 +198,16 @@ class Repository implements RepositoryInterface
     protected function getPriceSpecifications($localeCode)
     {
         $cldrLocale = $this->cldrLocaleRepository->getLocale($localeCode);
-        if (null === $cldrLocale) {
-            throw new LocalizationException('CLDR locale not found for locale code "' . $localeCode . '"');
+        if ($cldrLocale === null) {
+            throw new LocalizationException('CLDR locale not found for locale code "'.$localeCode.'"');
         }
 
         $currencies = $this->currencyRepository->getAllInstalledCurrencies($localeCode);
 
-        $priceSpecifications = new PriceSpecificationMap();
+        $priceSpecifications = new PriceSpecificationMap;
         foreach ($currencies as $currency) {
             // Build the spec
-            $thisPriceSpecification = (new SpecificationFactory())->buildPriceSpecification(
+            $thisPriceSpecification = (new SpecificationFactory)->buildPriceSpecification(
                 $localeCode,
                 $cldrLocale,
                 $currency,

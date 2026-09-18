@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,6 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
      */
     private $locale;
 
-    /**
-     * @param ImageManager $imageManager
-     * @param Locale $locale
-     */
     public function __construct(ImageManager $imageManager, Locale $locale)
     {
         $this->imageManager = $imageManager;
@@ -191,10 +188,6 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
     }
 
     /**
-     * @param array $products
-     * @param Currency $currency
-     * @param int $languageId
-     *
      * @return array
      */
     private function prepareProductForView(array $products, Currency $currency, int $languageId)
@@ -255,16 +248,16 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
                         ];
 
                         foreach ($customization['datas'] as $type => $data) {
-                            if (Product::CUSTOMIZE_FILE === $type) {
+                            if ($type === Product::CUSTOMIZE_FILE) {
                                 foreach ($data as $item) {
                                     $productCustomization['fields'][] = [
                                         'name' => $item['name'],
                                         'value' => $item['value'],
                                         'type' => 'customizable_file',
-                                        'image' => _THEME_PROD_PIC_DIR_ . $item['value'] . '_small',
+                                        'image' => _THEME_PROD_PIC_DIR_.$item['value'].'_small',
                                     ];
                                 }
-                            } elseif (Product::CUSTOMIZE_TEXTFIELD === $type) {
+                            } elseif ($type === Product::CUSTOMIZE_TEXTFIELD) {
                                 foreach ($data as $item) {
                                     $productCustomization['fields'][] = [
                                         'name' => $item['name'],
@@ -287,8 +280,6 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
     }
 
     /**
-     * @param Cart $cart
-     *
      * @return array
      */
     private function getCartRulesForView(Cart $cart)
@@ -302,7 +293,7 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
             $cartRulesView[] = [
                 'id' => $cartRule['id_cart_rule'],
                 'name' => $cartRule['name'],
-                'is_free_shipping' => !$cartRule['value_real'] && $cartRule['free_shipping'],
+                'is_free_shipping' => ! $cartRule['value_real'] && $cartRule['free_shipping'],
                 'formatted_value' => $this->locale->formatPrice(
                     $cartRule['value_real'],
                     $cartCurrency->iso_code

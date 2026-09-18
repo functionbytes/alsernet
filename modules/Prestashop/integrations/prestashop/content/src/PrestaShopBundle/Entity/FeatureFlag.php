@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity()
+ *
  * @ORM\Table()
+ *
  * @UniqueEntity("name")
  */
 class FeatureFlag
@@ -43,7 +46,9 @@ class FeatureFlag
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_feature_flag", type="integer", options={"unsigned":true})
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -90,12 +95,9 @@ class FeatureFlag
      */
     private $descriptionDomain;
 
-    /**
-     * @param string $name
-     */
     public function __construct(string $name)
     {
-        if ('' === $name) {
+        if ($name === '') {
             throw new InvalidArgumentException('Feature flag name cannot be empty');
         }
         $this->name = $name;
@@ -106,33 +108,21 @@ class FeatureFlag
         $this->labelDomain = '';
     }
 
-    /**
-     * @return int
-     */
     public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->state;
     }
 
-    /**
-     * @return self
-     */
     public function disable(): self
     {
         $this->state = false;
@@ -140,9 +130,6 @@ class FeatureFlag
         return $this;
     }
 
-    /**
-     * @return self
-     */
     public function enable(): self
     {
         $this->state = true;
@@ -150,19 +137,11 @@ class FeatureFlag
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getLabelWording(): string
     {
         return $this->labelWording;
     }
 
-    /**
-     * @param string $labelWording
-     *
-     * @return self
-     */
     public function setLabelWording(string $labelWording): self
     {
         $this->labelWording = $labelWording;
@@ -170,19 +149,11 @@ class FeatureFlag
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getLabelDomain(): string
     {
         return $this->labelDomain;
     }
 
-    /**
-     * @param string $labelDomain
-     *
-     * @return self
-     */
     public function setLabelDomain(string $labelDomain): self
     {
         $this->labelDomain = $labelDomain;
@@ -190,19 +161,11 @@ class FeatureFlag
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDescriptionWording(): string
     {
         return $this->descriptionWording;
     }
 
-    /**
-     * @param string $descriptionWording
-     *
-     * @return self
-     */
     public function setDescriptionWording(string $descriptionWording): self
     {
         $this->descriptionWording = $descriptionWording;
@@ -210,19 +173,11 @@ class FeatureFlag
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDescriptionDomain(): string
     {
         return $this->descriptionDomain;
     }
 
-    /**
-     * @param string $descriptionDomain
-     *
-     * @return self
-     */
     public function setDescriptionDomain(string $descriptionDomain): self
     {
         $this->descriptionDomain = $descriptionDomain;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,14 +57,14 @@ class AdminAttributeGeneratorControllerWrapper
     /**
      * Generate product attributes.
      *
-     * @param object $product The product
-     * @param array $options The array with all attributes combinations
+     * @param  object  $product  The product
+     * @param  array  $options  The array with all attributes combinations
      */
     public function processGenerate($product, $options)
     {
         SpecificPriceRule::disableAnyApplication();
 
-        //add combination if not already exists
+        // add combination if not already exists
         $combinations = array_values(AdminAttributeGeneratorController::createCombinations(array_values($options)));
         $combinationsValues = array_values(array_map(function () use ($product) {
             return [
@@ -81,14 +82,13 @@ class AdminAttributeGeneratorControllerWrapper
     /**
      * Delete a product attribute.
      *
-     * @param int $idAttribute The attribute ID
-     * @param int $idProduct The product ID
-     *
+     * @param  int  $idAttribute  The attribute ID
+     * @param  int  $idProduct  The product ID
      * @return array|bool
      */
     public function ajaxProcessDeleteProductAttribute($idAttribute, $idProduct)
     {
-        if (!Combination::isFeatureActive()) {
+        if (! Combination::isFeatureActive()) {
             return false;
         }
 
@@ -102,14 +102,14 @@ class AdminAttributeGeneratorControllerWrapper
                 $product->deleteAttributeCombination((int) $idAttribute);
                 $product->checkDefaultAttributes();
                 Tools::clearColorListCache((int) $product->id);
-                if (!$product->hasAttributes()) {
+                if (! $product->hasAttributes()) {
                     $product->cache_default_attribute = 0;
                     $product->update();
                 } else {
                     Product::updateDefaultAttribute($idProduct);
                 }
 
-                if ($depends_on_stock && !Stock::deleteStockByIds($idProduct, $idAttribute)) {
+                if ($depends_on_stock && ! Stock::deleteStockByIds($idProduct, $idAttribute)) {
                     return [
                         'status' => 'error',
                         'message' => $this->translator->trans('Error while deleting the stock', [], 'Admin.Catalog.Notification'),

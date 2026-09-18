@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,8 @@ final class ImportRequestValidator implements ImportRequestValidatorInterface
      */
     public function validate(Request $request)
     {
-        if (!$request->request->has('csv')) {
-            throw new UnavailableImportFileException();
+        if (! $request->request->has('csv')) {
+            throw new UnavailableImportFileException;
         }
     }
 }

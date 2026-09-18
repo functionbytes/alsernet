@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,15 +30,13 @@ namespace PrestaShopBundle\Api;
 class QueryStockParamsCollection extends QueryParamsCollection
 {
     /**
-     * @param array $queryParams
-     *
      * @return array|mixed
      */
     protected function parseOrderParams(array $queryParams)
     {
         $queryParams = parent::parseOrderParams($queryParams);
 
-        if (array_key_exists('low_stock', $queryParams) && 1 == $queryParams['low_stock']) {
+        if (array_key_exists('low_stock', $queryParams) && $queryParams['low_stock'] == 1) {
             array_unshift($queryParams['order'], 'product_low_stock_alert desc');
         }
 
@@ -77,8 +76,7 @@ class QueryStockParamsCollection extends QueryParamsCollection
     }
 
     /**
-     * @param array $queryParams
-     *
+     * @param  array  $queryParams
      * @return mixed
      */
     protected function setDefaultOrderParam($queryParams)

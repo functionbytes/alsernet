@@ -14,7 +14,7 @@ return [
     'campaign_cancelled' => 'Campaign cancelled. Pending emails were discarded.',
     'transition_not_allowed' => 'That action is not possible in the campaign current state.',
     'settings_saved' => 'Settings saved.',
-    'coupon_missing' => 'No coupon code is configured.',
+    'coupon_missing' => 'That order has no coupon to mark.',
     'recipient_unsubscribed' => ':email was unsubscribed from birthday emails.',
     'recipient_requeued' => 'The email is back in the queue.',
     'retry_not_allowed' => 'Only failed emails can be retried.',
@@ -23,6 +23,9 @@ return [
     'test_send_too_many' => 'At most 5 addresses per test.',
     'failed_requeued' => ':count failed emails are back in the queue.',
     'no_failed_to_retry' => 'There are no failed emails to retry.',
+    'coupon_not_in_campaign' => 'That coupon does not belong to this campaign.',
+    'bonos_retried' => 'Gestión issued :generated coupons. Still without one: :failed.',
+    'no_bonos_to_retry' => 'No recipients are waiting for a coupon.',
 
     'status' => [
         'draft' => 'Draft',
@@ -47,10 +50,16 @@ return [
         'invalid_email' => 'Invalid email',
         'duplicate' => 'Duplicate',
         'cancelled' => 'Campaign cancelled',
+        'no_coupon' => 'No coupon issued',
+        'expired' => 'Birthday already passed',
     ],
 
     'source' => [
         'manual' => 'Set manually',
         'erp' => 'Validated with ERP',
     ],
+    'redemptions_unavailable' => 'The shop cannot be queried right now: check the PrestaShop bridge.',
+    'redemptions_synced' => 'Redemptions updated: :count.',
+    'reconcile_done' => 'Marked in the ERP: :ok. Rejected: :failed.',
+    'reconcile_nothing' => 'No pending voucher with a known code to mark.',
 ];

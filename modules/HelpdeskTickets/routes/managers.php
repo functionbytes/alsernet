@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\ApplyAiSuggestionController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\BulkTicketsController;
-use Modules\HelpdeskTickets\Http\Controllers\Managers\ConversationTicketBridgeController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\HelpdeskReportsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\MacroApplyController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\RecurringTicketsController;
@@ -15,6 +14,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketCategoriesC
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketCategoryFieldsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketEmailBlacklistController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketEmailChannelsController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketFeaturesSettingsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketGeneralSettingsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketGroupsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketPrioritiesController;
@@ -46,8 +46,26 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketsCrudController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSearchController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketUnificationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 
+/*
+ * Los 15 permisos `helpdesk.tickets.*` se sembraban y se podían asignar desde
+ * el panel de roles, pero NINGUNA ruta los consultaba: quitarle
+ * `helpdesk.tickets.delete` a un rol no le impedía borrar nada. Servían solo
+ * para pintar el menú.
+ *
+ * Se cablean donde el daño es irreversible o el alcance excede el trabajo
+ * diario —borrar tickets, borrar correos, configurar el módulo— y NO como
+ * permiso único de entrada al grupo. Se probó lo segundo y bloquea un caso
+ * legítimo: quien tiene `helpdesk.tickets.update` pero no `.view` (462 y 498
+ * usuarios en esta base de datos, y no son los mismos) trabaja tickets sin
+ * tener marcado el permiso de verlos. Un permiso de acción implica poder
+ * entrar; exigir `.view` por encima les cerraría el módulo entero.
+ *
+ * Quién entra sigue decidiéndolo `role:super-admin|super-settings`, declarado
+ * al montar el grupo en HelpdeskTicketsServiceProvider.
+ */
 Route::group(['prefix' => ''], function () {
 
     // Advanced search
@@ -63,6 +81,23 @@ Route::group(['prefix' => ''], function () {
 
     // Artículos del centro de ayuda sugeridos al responder (deflexión)
     Route::get('/tickets/{ticket}/suggested-articles', [SuggestedArticlesController::class, 'index'])->name('manager.helpdesk.tickets.suggested-articles');
+
+    // Plantillas de email (TicketCannedReply) con las variables {{...}} ya
+    // resueltas contra ESTE ticket. index() manda la lista en bruto una sola
+    // vez para toda la sesión SPA (no sabe con qué ticket se va a responder
+    // todavía); el modal "Plantillas de email" pide esto al abrirse para
+    // insertar el texto ya interpolado en vez del placeholder sin resolver
+    // (bug reportado 11-sep-2026: {{cliente.nombre}} llegaba tal cual).
+    Route::get('/tickets/{ticket}/canned-replies', [TicketsCrudController::class, 'cannedReplies'])->name('manager.helpdesk.tickets.canned-replies');
+
+    // "Duplicar como mía" (TicketCannedReply) — a propósito FUERA del grupo
+    // 'settings/tickets' (más abajo, gateado por can:helpdesk.tickets.settings):
+    // cualquier agente sin ese permiso puede querer su propia copia editable
+    // de una plantilla global desde el modal "Plantillas de email" del propio
+    // ticket, no solo quien administra plantillas. Mismo controlador que la
+    // pantalla de ajustes (TicketCannedRepliesController::duplicate()), que
+    // excluye esta acción de su middleware de permiso en el constructor.
+    Route::post('/tickets/canned-replies/{reply}/duplicate', [TicketCannedRepliesController::class, 'duplicate'])->name('manager.helpdesk.tickets.canned-replies.duplicate');
 
     // Traducción de texto del ticket (mensaje entrante / borrador de respuesta)
     Route::post('/tickets/{ticket}/translate', [TicketTranslationController::class, 'translate'])->name('manager.helpdesk.tickets.translate');
@@ -122,6 +157,12 @@ Route::group(['prefix' => ''], function () {
     Route::delete('/tickets/{ticket}/presence', [TicketPresenceController::class, 'leave'])->name('manager.helpdesk.tickets.presence.leave');
     // Modal 23 "Bandeja compartida": avisar a un agente presente en el ticket.
     Route::post('/tickets/{ticket}/presence/nudge', [TicketPresenceController::class, 'nudge'])->name('manager.helpdesk.tickets.presence.nudge');
+    // Presencia de VARIOS tickets a la vez (listado) — segmento literal
+    // 'presence' antes que 'overview', así que tiene que ir aquí arriba,
+    // antes del Route::get('/tickets/{ticket}') de la línea ~291 (mismo
+    // motivo que /tickets/search, /tickets/ops/* etc. — ver comentario
+    // "un solo segmento los captura" más abajo).
+    Route::get('/tickets/presence/overview', [TicketPresenceController::class, 'overview'])->name('manager.helpdesk.tickets.presence.overview');
 
     // Respuestas programadas del ticket (send later)
     Route::get('/tickets/{ticket}/scheduled-replies', [ScheduledRepliesController::class, 'index'])->name('manager.helpdesk.tickets.scheduled-replies.index');
@@ -187,17 +228,26 @@ Route::group(['prefix' => ''], function () {
     // se conserva como redirect (TicketMailsController::index(), rama no-JSON)
     // porque enlaces/menú/marcadores existentes lo siguen usando. Las demás
     // rutas de aquí NO son la bandeja retirada — son la API que consume el
-    // composer reubicado dentro de la ficha del ticket
-    // (TicketsCrudController::showFull) y el modal de "Entregabilidad de
-    // correo"/refetch de stats de tickets-app.js (ambos con Accept: json).
+    // composer del listado (tickets-app.js; vivió un tiempo dentro de la
+    // ficha del ticket, TicketsCrudController::showFull, retirada el
+    // 8-sep-2026) y el modal de "Entregabilidad de correo"/refetch de
+    // stats de tickets-app.js (ambos con Accept: json).
     Route::get('/tickets/emails', [TicketMailsController::class, 'index'])->name('manager.helpdesk.tickets.emails.index');
     Route::get('/tickets/scheduled', [TicketMailsController::class, 'scheduled'])->name('manager.helpdesk.tickets.scheduled');
     Route::get('/tickets/emails/export', [TicketMailsController::class, 'export'])->name('manager.helpdesk.tickets.emails.export');
     Route::get('/tickets/emails/templates', [TicketMailsController::class, 'templates'])->name('manager.helpdesk.tickets.emails.templates');
-    Route::post('/tickets/emails', [TicketMailsController::class, 'store'])->name('manager.helpdesk.tickets.emails.store');
-    Route::post('/tickets/emails/bulk', [TicketMailsController::class, 'bulk'])->name('manager.helpdesk.tickets.emails.bulk');
-    Route::get('/tickets/emails/{mail}', [TicketMailDetailDataController::class, 'data'])->name('manager.helpdesk.tickets.emails.data');
-    Route::post('/tickets/emails/{mail}/resend', [TicketMailsController::class, 'resend'])->name('manager.helpdesk.tickets.emails.resend');
+    Route::post('/tickets/emails', [TicketMailsController::class, 'store'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.emails.store');
+    Route::post('/tickets/emails/bulk', [TicketMailsController::class, 'bulk'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.emails.bulk');
+    Route::get('/tickets/emails/{mail}', [TicketMailDetailDataController::class, 'data'])
+        ->middleware('throttle:helpdesk-read')
+        ->name('manager.helpdesk.tickets.emails.data');
+    Route::post('/tickets/emails/{mail}/resend', [TicketMailsController::class, 'resend'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.emails.resend');
     // Modales 16/28/29/30: lectura agrupada de la configuración que consultan.
     Route::get('/tickets/settings-snapshot', [TicketOpsController::class, 'settingsSnapshot'])->name('manager.helpdesk.tickets.settings-snapshot');
     // Modal 39: separa mensajes del hilo en un ticket nuevo.
@@ -220,12 +270,14 @@ Route::group(['prefix' => ''], function () {
     Route::patch('/tickets/emails/{mail}/tags', [TicketMailsController::class, 'updateTags'])->name('manager.helpdesk.tickets.emails.tags');
     Route::post('/tickets/emails/{mail}/translate', [TicketMailsController::class, 'translate'])->name('manager.helpdesk.tickets.emails.translate');
     Route::get('/tickets/emails/{mail}/summary', [TicketMailsController::class, 'summary'])->name('manager.helpdesk.tickets.emails.summary');
-    Route::delete('/tickets/emails/{mail}', [TicketMailsController::class, 'destroy'])->name('manager.helpdesk.tickets.emails.destroy');
+    Route::delete('/tickets/emails/{mail}', [TicketMailsController::class, 'destroy'])->name('manager.helpdesk.tickets.emails.destroy')->middleware('can:helpdesk.tickets.emails.delete');
 
     // Tickets CRUD (listado de vuelta en /tickets — ver comentario arriba)
     Route::get('/tickets', [TicketsCrudController::class, 'index'])->name('manager.helpdesk.tickets.index');
     Route::get('/tickets/create', [TicketsCrudController::class, 'create'])->name('manager.helpdesk.tickets.create');
-    Route::post('/tickets', [TicketsCrudController::class, 'store'])->name('manager.helpdesk.tickets.store');
+    Route::post('/tickets', [TicketsCrudController::class, 'store'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.store');
     // Guardado rápido de vista personal desde el listado — a diferencia de
     // Settings/TicketViewsController (gestión admin, permiso
     // helpdesk.tickets.settings, sin scoping por usuario), este endpoint es
@@ -243,26 +295,32 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/queue/retry', [TicketOpsController::class, 'retryFailedJobs'])->name('manager.helpdesk.tickets.queue.retry');
     Route::post('/tickets/queue/flush', [TicketOpsController::class, 'flushFailedJobs'])->name('manager.helpdesk.tickets.queue.flush');
     Route::get('/tickets/{ticket}', [TicketsCrudController::class, 'show'])->name('manager.helpdesk.tickets.show');
-    // Ficha completa (side-conversations, registro de horas, fusión, enlaces,
-    // historial): funciones que el panel superpuesto de /tickets aún no cubre.
-    Route::get('/tickets/{ticket}/full', [TicketsCrudController::class, 'showFull'])->name('manager.helpdesk.tickets.show-full');
     // JSON de detalle para el panel de "Gestión de tickets" (Fase B): hilo,
     // actividad, archivos y correo — mismo patrón que
     // manager.helpdesk.tickets.emails.data.
-    Route::get('/tickets/{ticket}/data', [TicketDetailDataController::class, 'data'])->name('manager.helpdesk.tickets.data');
+    Route::get('/tickets/{ticket}/data', [TicketDetailDataController::class, 'data'])
+        ->middleware('throttle:helpdesk-read')
+        ->name('manager.helpdesk.tickets.data');
+    // Sonda ligera para el refresco automático del panel: dice si hay
+    // algo nuevo sin armar el hilo entero. Ver TicketDetailDataController::pulse().
+    Route::get('/tickets/{ticket}/pulse', [TicketDetailDataController::class, 'pulse'])
+        ->middleware('throttle:helpdesk-read')
+        ->name('manager.helpdesk.tickets.pulse');
     Route::get('/tickets/{ticket}/summary', [TicketOpsController::class, 'summary'])->name('manager.helpdesk.tickets.summary');
     Route::patch('/tickets/{ticket}/tags', [TicketsCrudController::class, 'tags'])->name('manager.helpdesk.tickets.tags');
     Route::get('/tickets/{ticket}/edit', [TicketsCrudController::class, 'edit'])->name('manager.helpdesk.tickets.edit');
-    Route::put('/tickets/{ticket}', [TicketsCrudController::class, 'update'])->name('manager.helpdesk.tickets.update');
-    Route::delete('/tickets/{ticket}', [TicketsCrudController::class, 'destroy'])->name('manager.helpdesk.tickets.destroy');
+    Route::put('/tickets/{ticket}', [TicketsCrudController::class, 'update'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.update');
+    Route::delete('/tickets/{ticket}', [TicketsCrudController::class, 'destroy'])->name('manager.helpdesk.tickets.destroy')->middleware('can:helpdesk.tickets.delete');
     Route::post('/tickets/{ticket}/restore', [TicketsCrudController::class, 'restore'])->name('manager.helpdesk.tickets.restore')->withTrashed();
-    Route::delete('/tickets/{ticket}/force-delete', [TicketsCrudController::class, 'forceDelete'])->name('manager.helpdesk.tickets.force-delete')->withTrashed();
+    Route::delete('/tickets/{ticket}/force-delete', [TicketsCrudController::class, 'forceDelete'])->name('manager.helpdesk.tickets.force-delete')->withTrashed()->middleware('can:helpdesk.tickets.delete');
 
     // Ticket lifecycle
-    Route::post('/tickets/{ticket}/close', [TicketLifecycleController::class, 'close'])->name('manager.helpdesk.tickets.close');
-    Route::post('/tickets/{ticket}/resolve', [TicketLifecycleController::class, 'resolve'])->name('manager.helpdesk.tickets.resolve');
-    Route::post('/tickets/{ticket}/reopen', [TicketLifecycleController::class, 'reopen'])->name('manager.helpdesk.tickets.reopen');
-    Route::post('/tickets/{ticket}/archive', [TicketLifecycleController::class, 'archive'])->name('manager.helpdesk.tickets.archive');
+    Route::post('/tickets/{ticket}/close', [TicketLifecycleController::class, 'close'])->middleware('throttle:helpdesk-write')->name('manager.helpdesk.tickets.close');
+    Route::post('/tickets/{ticket}/resolve', [TicketLifecycleController::class, 'resolve'])->middleware('throttle:helpdesk-write')->name('manager.helpdesk.tickets.resolve');
+    Route::post('/tickets/{ticket}/reopen', [TicketLifecycleController::class, 'reopen'])->middleware('throttle:helpdesk-write')->name('manager.helpdesk.tickets.reopen');
+    Route::post('/tickets/{ticket}/archive', [TicketLifecycleController::class, 'archive'])->middleware('throttle:helpdesk-write')->name('manager.helpdesk.tickets.archive');
     Route::post('/tickets/{ticket}/csat/send', [TicketOpsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.tickets.csat.send');
     // Modal 32 "Portal del cliente": enviar el enlace mágico de acceso.
     Route::post('/tickets/{ticket}/portal/send-access', [TicketOpsController::class, 'sendPortalAccess'])->name('manager.helpdesk.tickets.portal.send-access');
@@ -270,6 +328,18 @@ Route::group(['prefix' => ''], function () {
     Route::get('/tickets/{ticket}/csat', [TicketOpsController::class, 'csat'])->name('manager.helpdesk.tickets.csat.show');
     Route::post('/tickets/{ticket}/unarchive', [TicketLifecycleController::class, 'unarchive'])->name('manager.helpdesk.tickets.unarchive');
     Route::post('/tickets/{ticket}/merge', [TicketLifecycleController::class, 'merge'])->name('manager.helpdesk.tickets.merge');
+
+    /*
+     * Unificar duplicados (v2 del aviso de duplicados). La v1 —fusionar de uno
+     * en uno desde el banner— sigue viva en la ruta de arriba; esto cubre el
+     * caso de varios correos del mismo cliente el mismo día: resumen de cada
+     * ticket, se conserva uno y el resto se cierran avisando al cliente.
+     */
+    Route::get('/tickets/{ticket}/unify/summary', [TicketUnificationController::class, 'summary'])->name('manager.helpdesk.tickets.unify.summary');
+    Route::post('/tickets/{ticket}/unify', [TicketUnificationController::class, 'unify'])->name('manager.helpdesk.tickets.unify');
+
+    // Bloquear al remitente (correo y/o dominio) y borrar el ticket de una vez.
+    Route::post('/tickets/{ticket}/blacklist', [TicketUnificationController::class, 'blacklist'])->name('manager.helpdesk.tickets.blacklist');
     Route::post('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'watch'])->name('manager.helpdesk.tickets.watch');
     Route::delete('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'unwatch'])->name('manager.helpdesk.tickets.unwatch');
     Route::post('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'snooze'])->name('manager.helpdesk.tickets.snooze');
@@ -278,9 +348,15 @@ Route::group(['prefix' => ''], function () {
     Route::delete('/tickets/{ticket}/link/{linkId}', [TicketLifecycleController::class, 'unlinkTicket'])->name('manager.helpdesk.tickets.unlink');
 
     // Ticket messaging
-    Route::post('/tickets/bulk-reply', [TicketMessagingController::class, 'bulkReply'])->name('manager.helpdesk.tickets.bulk-reply');
-    Route::post('/tickets/{ticket}/messages', [TicketMessagingController::class, 'storeMessage'])->name('manager.helpdesk.tickets.messages.store');
-    Route::post('/tickets/{ticket}/typing', [TicketMessagingController::class, 'typing'])->name('manager.helpdesk.tickets.typing');
+    Route::post('/tickets/bulk-reply', [TicketMessagingController::class, 'bulkReply'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.bulk-reply');
+    Route::post('/tickets/{ticket}/messages', [TicketMessagingController::class, 'storeMessage'])
+        ->middleware('throttle:helpdesk-write')
+        ->name('manager.helpdesk.tickets.messages.store');
+    Route::post('/tickets/{ticket}/typing', [TicketMessagingController::class, 'typing'])
+        ->middleware('throttle:helpdesk-msg-actions')
+        ->name('manager.helpdesk.tickets.typing');
 
     // Attachment download (private disk — authorised agents only)
     Route::get('/tickets/{ticket}/attachments/{item}/{index}', [TicketAttachmentDownloadController::class, 'download'])
@@ -330,11 +406,22 @@ Route::group(['prefix' => ''], function () {
     Route::post('recurring-tickets/{recurringTicket}/toggle', [RecurringTicketsController::class, 'toggle'])->name('manager.helpdesk.recurring-tickets.toggle');
 
     // General ticket configuration
-    Route::get('settings/tickets/general', [TicketGeneralSettingsController::class, 'index'])->name('manager.helpdesk.settings.tickets.general');
-    Route::put('settings/tickets/general', [TicketGeneralSettingsController::class, 'update'])->name('manager.helpdesk.settings.tickets.general.update');
+    Route::get('settings/tickets/general', [TicketGeneralSettingsController::class, 'index'])->name('manager.helpdesk.settings.tickets.general')->middleware('can:helpdesk.settings.view');
+    Route::put('settings/tickets/general', [TicketGeneralSettingsController::class, 'update'])->name('manager.helpdesk.settings.tickets.general.update')->middleware('can:helpdesk.settings.update');
+
+    // Funcionalidades de la vista de ticket (14-sep-2026) — contraparte de
+    // settings.helpdesk.features.index (Conversaciones), pero para el
+    // detalle del ticket. Catálogo en Modules\HelpdeskTickets\Support\TicketFeatures.
+    Route::get('settings/tickets/features', [TicketFeaturesSettingsController::class, 'index'])->name('manager.helpdesk.settings.tickets.features')->middleware('can:helpdesk.settings.view');
+    Route::put('settings/tickets/features', [TicketFeaturesSettingsController::class, 'update'])->name('manager.helpdesk.settings.tickets.features.update')->middleware('can:helpdesk.settings.update');
 
     // Ticket settings
-    Route::prefix('settings/tickets')->name('manager.helpdesk.settings.')->group(function () {
+    //
+    // Permiso propio: configurar categorías, estados, SLA, buzones o listas
+    // negras no es lo mismo que trabajar tickets, y ninguno de estos
+    // controladores autoriza por su cuenta — la única barrera era el rol de la
+    // ruta. `helpdesk.tickets.settings` ya existía sembrado y sin usar.
+    Route::prefix('settings/tickets')->middleware('can:helpdesk.tickets.settings')->name('manager.helpdesk.settings.')->group(function () {
 
         // Categories
         Route::prefix('categories')->name('ticket-categories.')->group(function () {
@@ -485,15 +572,14 @@ Route::group(['prefix' => ''], function () {
 });
 
 /*
- * Bridge endpoints between Helpdesk's inbox UI and HelpdeskTickets.
- * Routes registered in this module so Helpdesk does not import HelpdeskTickets.
- * URLs and route names are kept identical to the previous Helpdesk-owned ones
- * for transparent migration (frontend keeps calling the same route() helpers).
+ * Los endpoints puente con la bandeja (conversations/{c}/ticket y
+ * ticket-detail) VIVÍAN AQUÍ, y este archivo entero va detrás de
+ * role:super-admin|super-settings. La bandeja, en cambio, se sirve con
+ * ['web','auth'] y decide por policies, así que un helpdesk-agent veía el
+ * botón "Crear ticket" del hilo y recibía un 403 al enviarlo. Se han movido a
+ * routes/conversation-bridge.php, con el mismo gate de rol amplio que
+ * ticket-templates.php y el permiso fino (TicketPolicy) en el controlador.
  */
-Route::post('/conversations/{conversation}/ticket', [ConversationTicketBridgeController::class, 'create'])
-    ->name('manager.helpdesk.conversations.ticket');
-Route::get('/conversations/{conversation}/ticket-detail/{ticket}', [ConversationTicketBridgeController::class, 'show'])
-    ->name('manager.helpdesk.conversations.ticket-detail');
 
 /*
  * Ticket reports endpoints. These were previously in Helpdesk's managers.php

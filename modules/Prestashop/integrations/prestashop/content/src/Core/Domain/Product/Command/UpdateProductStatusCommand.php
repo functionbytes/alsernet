@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class UpdateProductStatusCommand
 
     /**
      * UpdateProductStatusCommand constructor.
-     *
-     * @param int $productId
-     * @param bool $enable
      */
     public function __construct(int $productId, bool $enable)
     {
@@ -57,17 +55,11 @@ class UpdateProductStatusCommand
         $this->enable = $enable;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return bool
-     */
     public function getEnable(): bool
     {
         return $this->enable;

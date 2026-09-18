@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,10 +58,8 @@ final class EnabledLanguagesKpi implements KpiInterface
     private $sourceLink;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $configuration
-     * @param string $clickLink a link for clicking on the KPI
-     * @param string $sourceLink a link to refresh KPI
+     * @param  string  $clickLink  a link for clicking on the KPI
+     * @param  string  $sourceLink  a link to refresh KPI
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -81,15 +80,15 @@ final class EnabledLanguagesKpi implements KpiInterface
     {
         $enabledLanguages = $this->configuration->get('ENABLED_LANGUAGES');
 
-        $kpi = new HelperKpi();
-        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_ . 'new-theme/template/');
+        $kpi = new HelperKpi;
+        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_.'new-theme/template/');
         $kpi->id = 'box-languages';
         $kpi->icon = 'mic';
         $kpi->color = 'color1';
         $kpi->href = $this->clickLink;
         $kpi->title = $this->translator->trans('Enabled Languages', [], 'Admin.International.Feature');
 
-        if (false !== $enabledLanguages) {
+        if ($enabledLanguages !== false) {
             $kpi->value = $enabledLanguages;
         }
 

@@ -1,5 +1,8 @@
 <?php
 
+use PrestaShop\PrestaShop\Core\ConfigurationInterface;
+use PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface;
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +37,7 @@ class AverageTaxOfProductsTaxCalculator
 
     public $computation_method = 'average_tax_of_products';
 
-    public function __construct(PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface $db, PrestaShop\PrestaShop\Core\ConfigurationInterface $configuration)
+    public function __construct(DatabaseInterface $db, ConfigurationInterface $configuration)
     {
         $this->db = $db;
         $this->configuration = $configuration;

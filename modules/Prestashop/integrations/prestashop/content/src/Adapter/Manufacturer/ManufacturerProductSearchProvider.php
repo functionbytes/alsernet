@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,9 @@ use Symfony\Component\Translation\TranslatorInterface;
 class ManufacturerProductSearchProvider implements ProductSearchProviderInterface
 {
     private $translator;
+
     private $manufacturer;
+
     private $sortOrderFactory;
 
     public function __construct(
@@ -50,10 +53,7 @@ class ManufacturerProductSearchProvider implements ProductSearchProviderInterfac
     }
 
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchQuery $query
-     * @param string $type
-     *
+     * @param  string  $type
      * @return array|bool
      */
     private function getProductsOrCount(
@@ -73,9 +73,6 @@ class ManufacturerProductSearchProvider implements ProductSearchProviderInterfac
     }
 
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchQuery $query
-     *
      * @return ProductSearchResult
      */
     public function runQuery(
@@ -85,9 +82,9 @@ class ManufacturerProductSearchProvider implements ProductSearchProviderInterfac
         $products = $this->getProductsOrCount($context, $query, 'inventaries');
         $count = $this->getProductsOrCount($context, $query, 'count');
 
-        $result = new ProductSearchResult();
+        $result = new ProductSearchResult;
 
-        if (!empty($products)) {
+        if (! empty($products)) {
             $result
                 ->setProducts($products)
                 ->setTotalProductsCount($count);

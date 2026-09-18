@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,7 +32,9 @@ use ReflectionClass;
 class Container
 {
     private $bindings = [];
+
     private $instances = [];
+
     private $namespaceAliases = [];
 
     public function knows($serviceName)
@@ -72,12 +75,12 @@ class Container
     public function resolveClassName($className)
     {
         $colonPos = strpos($className, ':');
-        if (0 !== $colonPos && false !== $colonPos) {
+        if ($colonPos !== 0 && $colonPos !== false) {
             $alias = substr($className, 0, $colonPos);
             if ($this->knowsNamespaceAlias($alias)) {
                 $class = ltrim(substr($className, $colonPos + 1), '\\');
 
-                return $this->namespaceAliases[$alias] . '\\' . $class;
+                return $this->namespaceAliases[$alias].'\\'.$class;
             }
         }
 
@@ -132,7 +135,7 @@ class Container
 
         $alreadySeen[$serviceName] = true;
 
-        if (!$this->knows($serviceName)) {
+        if (! $this->knows($serviceName)) {
             $this->bind($serviceName, $serviceName);
         }
 
@@ -145,7 +148,7 @@ class Container
 
             if (is_callable($constructor)) {
                 $service = call_user_func($constructor);
-            } elseif (!is_string($constructor)) {
+            } elseif (! is_string($constructor)) {
                 // user already provided the value, no need to construct it.
                 $service = $constructor;
             } else {

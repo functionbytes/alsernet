@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,7 +54,7 @@ class MaterialMultipleChoiceTableType extends AbstractType
 
             $builder->get($choices['name'])->addModelTransformer(new CallbackTransformer(
                 function ($value) use ($choices) {
-                    if (is_array($value) && false === $choices['multiple']) {
+                    if (is_array($value) && $choices['multiple'] === false) {
                         return reset($value);
                     }
 
@@ -112,8 +113,7 @@ class MaterialMultipleChoiceTableType extends AbstractType
                 'headers_to_disable' => [],
                 'headers_fixed' => false,
                 'table_label' => false,
-            ])
-        ;
+            ]);
 
         $resolver->setAllowedTypes('choices', 'array');
         $resolver->setAllowedTypes('multiple_choices', 'array');

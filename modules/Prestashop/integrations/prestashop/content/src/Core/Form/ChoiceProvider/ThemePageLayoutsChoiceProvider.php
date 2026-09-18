@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class ThemePageLayoutsChoiceProvider implements FormChoiceProviderInterfac
      */
     private $theme;
 
-    /**
-     * @param Theme $theme
-     */
     public function __construct(Theme $theme)
     {
         $this->theme = $theme;

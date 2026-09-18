@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,11 @@ final class ToggleZoneStatusHandler implements ToggleZoneStatusHandlerInterface
         try {
             $zone = new Zone($command->getZoneId()->getValue());
 
-            if (0 >= $zone->id) {
+            if ($zone->id <= 0) {
                 throw new ZoneNotFoundException(sprintf('Zone object with id "%d" has been not found for status changing', $command->getZoneId()->getValue()));
             }
 
-            if (false === $zone->toggleStatus()) {
+            if ($zone->toggleStatus() === false) {
                 throw new CannotToggleZoneStatusException(sprintf('Unable to toggle status of zone with id "%d"', $command->getZoneId()->getValue()));
             }
         } catch (PrestaShopException $e) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class BulkDeleteZoneCommand
     private $zoneIds;
 
     /**
-     * @param array<int, int> $zoneIds
+     * @param  array<int, int>  $zoneIds
      */
     public function __construct(array $zoneIds)
     {
@@ -57,7 +58,7 @@ class BulkDeleteZoneCommand
     }
 
     /**
-     * @param array<int, int> $zoneIds
+     * @param  array<int, int>  $zoneIds
      */
     private function setZoneIds(array $zoneIds): void
     {

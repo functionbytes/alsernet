@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,9 +62,6 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
 
     /**
      * WebserviceKeyDefinitionFactory constructor.
-     *
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param array $statusChoices
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -94,7 +92,7 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('bulk_action'))
                     ->setOptions([
@@ -130,7 +128,7 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add(
                                 (new LinkRowAction('edit'))
                                     ->setIcon('edit')
@@ -158,7 +156,7 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('key', TextType::class))
                     ->setTypeOptions([
@@ -206,7 +204,7 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -229,7 +227,7 @@ final class WebserviceKeyDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('webservice_enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\SpecificPrice\Exception;
 /**
  * Exception thrown when SpecificPrice could not be created
  */
-class CannotAddSpecificPriceException extends SpecificPriceException
-{
-}
+class CannotAddSpecificPriceException extends SpecificPriceException {}

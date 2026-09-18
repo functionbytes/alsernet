@@ -24,9 +24,13 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use PrestaShop\PrestaShop\Adapter\EntityMapper;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
+use PrestaShop\PrestaShop\Core\Crypto\Hashing;
+use PrestaShop\PrestaShop\Core\Foundation\Database\EntityInterface;
+use PrestaShopBundle\Translation\Translator;
 
-abstract class ObjectModelCore implements \PrestaShop\PrestaShop\Core\Foundation\Database\EntityInterface
+abstract class ObjectModelCore implements EntityInterface
 {
     /**
      * List of field types.
@@ -153,7 +157,7 @@ abstract class ObjectModelCore implements \PrestaShop\PrestaShop\Core\Foundation
     /** @var string file type of image files. */
     protected $image_format = 'jpg';
 
-    /** @var PrestaShopBundle\Translation\Translator */
+    /** @var Translator */
     protected $translator;
 
     /**
@@ -230,7 +234,7 @@ abstract class ObjectModelCore implements \PrestaShop\PrestaShop\Core\Foundation
      * @param  int|null  $id  if specified, loads and existing object from DB (optional)
      * @param  int|null  $id_lang  required if object is multilingual (optional)
      * @param  int|null  $id_shop  ID shop for objects with multishop tables
-     * @param PrestaShopBundle\Translation\Translator
+     * @param Translator
      *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -270,7 +274,7 @@ abstract class ObjectModelCore implements \PrestaShop\PrestaShop\Core\Foundation
         }
 
         if ($id) {
-            /** @var \PrestaShop\PrestaShop\Adapter\EntityMapper $entity_mapper */
+            /** @var EntityMapper $entity_mapper */
             $entity_mapper = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Adapter\\EntityMapper');
             $entity_mapper->load($id, $this->id_lang, $this, $this->def, $this->id_shop, self::$cache_objects);
         }
@@ -1295,7 +1299,7 @@ abstract class ObjectModelCore implements \PrestaShop\PrestaShop\Core\Foundation
                         continue;
                     }
                     if ($field == 'passwd') {
-                        /** @var \PrestaShop\PrestaShop\Core\Crypto\Hashing $crypto */
+                        /** @var Hashing $crypto */
                         $crypto = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
                         if ($value = Tools::getValue($field)) {
                             $this->{$field} = $crypto->hash($value, _COOKIE_KEY_);

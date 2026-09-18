@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,11 +60,7 @@ class CustomizationField
     private $addedByModule;
 
     /**
-     * @param int $customizationFieldId
-     * @param int $type
-     * @param string[] $localizedNames
-     * @param bool $required
-     * @param bool $addedByModule
+     * @param  string[]  $localizedNames
      */
     public function __construct(
         int $customizationFieldId,
@@ -79,17 +76,11 @@ class CustomizationField
         $this->addedByModule = $addedByModule;
     }
 
-    /**
-     * @return int
-     */
     public function getCustomizationFieldId(): int
     {
         return $this->customizationFieldId;
     }
 
-    /**
-     * @return int
-     */
     public function getType(): int
     {
         return $this->type;
@@ -103,17 +94,11 @@ class CustomizationField
         return $this->localizedNames;
     }
 
-    /**
-     * @return bool
-     */
     public function isRequired(): bool
     {
         return $this->required;
     }
 
-    /**
-     * @return bool
-     */
     public function isAddedByModule(): bool
     {
         return $this->addedByModule;

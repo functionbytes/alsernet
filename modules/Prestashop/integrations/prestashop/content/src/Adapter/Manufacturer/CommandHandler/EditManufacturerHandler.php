@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,15 +51,15 @@ final class EditManufacturerHandler extends AbstractManufacturerHandler implemen
         $this->populateManufacturerWithData($manufacturer, $command);
 
         try {
-            if (false === $manufacturer->validateFields(false)) {
+            if ($manufacturer->validateFields(false) === false) {
                 throw new ManufacturerException('Manufacturer contains invalid field values');
             }
 
-            if (!$manufacturer->update()) {
+            if (! $manufacturer->update()) {
                 throw new ManufacturerException(sprintf('Cannot update manufacturer with id "%s"', $manufacturer->id));
             }
 
-            if (null !== $command->getAssociatedShops()) {
+            if ($command->getAssociatedShops() !== null) {
                 $this->associateWithShops($manufacturer, $command->getAssociatedShops());
             }
         } catch (PrestaShopException $e) {
@@ -68,31 +69,28 @@ final class EditManufacturerHandler extends AbstractManufacturerHandler implemen
 
     /**
      * Populates Manufacturer object with given data
-     *
-     * @param Manufacturer $manufacturer
-     * @param EditManufacturerCommand $command
      */
     private function populateManufacturerWithData(Manufacturer $manufacturer, EditManufacturerCommand $command)
     {
-        if (null !== $command->getName()) {
+        if ($command->getName() !== null) {
             $manufacturer->name = $command->getName();
         }
-        if (null !== $command->getLocalizedShortDescriptions()) {
+        if ($command->getLocalizedShortDescriptions() !== null) {
             $manufacturer->short_description = $command->getLocalizedShortDescriptions();
         }
-        if (null !== $command->getLocalizedDescriptions()) {
+        if ($command->getLocalizedDescriptions() !== null) {
             $manufacturer->description = $command->getLocalizedDescriptions();
         }
-        if (null !== $command->getLocalizedMetaDescriptions()) {
+        if ($command->getLocalizedMetaDescriptions() !== null) {
             $manufacturer->meta_description = $command->getLocalizedMetaDescriptions();
         }
-        if (null !== $command->getLocalizedMetaKeywords()) {
+        if ($command->getLocalizedMetaKeywords() !== null) {
             $manufacturer->meta_keywords = $command->getLocalizedMetaKeywords();
         }
-        if (null !== $command->getLocalizedMetaTitles()) {
+        if ($command->getLocalizedMetaTitles() !== null) {
             $manufacturer->meta_title = $command->getLocalizedMetaTitles();
         }
-        if (null !== $command->isEnabled()) {
+        if ($command->isEnabled() !== null) {
             $manufacturer->active = $command->isEnabled();
         }
     }

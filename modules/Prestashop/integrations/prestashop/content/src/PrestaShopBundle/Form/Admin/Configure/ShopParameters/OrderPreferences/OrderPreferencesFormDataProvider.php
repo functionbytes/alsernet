@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -89,12 +90,12 @@ class OrderPreferencesFormDataProvider implements FormDataProviderInterface
     public function setData(array $data)
     {
         // If TOS option is disabled - reset the cms id as well
-        if (!$data['general']['enable_tos']) {
+        if (! $data['general']['enable_tos']) {
             $data['general']['tos_cms_id'] = 0;
         }
 
         // If gift wrapping tax rules group was not submitted - reset it to 0
-        if (!isset($data['gift_options']['gift_wrapping_tax_rules_group'])) {
+        if (! isset($data['gift_options']['gift_wrapping_tax_rules_group'])) {
             $data['gift_options']['gift_wrapping_tax_rules_group'] = 0;
         }
 
@@ -111,7 +112,6 @@ class OrderPreferencesFormDataProvider implements FormDataProviderInterface
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -123,7 +123,7 @@ class OrderPreferencesFormDataProvider implements FormDataProviderInterface
         $giftWrappingPrice = $data['gift_options']['gift_wrapping_price'];
 
         // Check if purchase minimum value is a positive number
-        if (!is_numeric($purchaseMinimumValue) || $purchaseMinimumValue < 0) {
+        if (! is_numeric($purchaseMinimumValue) || $purchaseMinimumValue < 0) {
             $invalidFields[] = $this->translator->trans(
                 'Minimum purchase total required in order to validate the order',
                 [],
@@ -138,7 +138,7 @@ class OrderPreferencesFormDataProvider implements FormDataProviderInterface
             $tosCmsId = $data['general']['tos_cms_id'];
             $tosCms = $this->cmsDataProvider->getCMSById($tosCmsId);
 
-            if (!$tosCms->id) {
+            if (! $tosCms->id) {
                 $errors[] = [
                     'key' => 'Assign a valid page if you want it to be read.',
                     'domain' => 'Admin.Shopparameters.Notification',
@@ -148,7 +148,7 @@ class OrderPreferencesFormDataProvider implements FormDataProviderInterface
         }
 
         // Check if purchase minimum value is a positive number
-        if (!empty($giftWrappingPrice) && (!is_numeric($giftWrappingPrice) || $giftWrappingPrice < 0)) {
+        if (! empty($giftWrappingPrice) && (! is_numeric($giftWrappingPrice) || $giftWrappingPrice < 0)) {
             $invalidFields[] = $this->translator->trans(
                 'Gift-wrapping price',
                 [],

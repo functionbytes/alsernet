@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,7 @@ interface SessionInterface
     /**
      * Set session user id
      *
-     * @param int $id
-     *
+     * @param  int  $id
      * @return void
      */
     public function setUserId($id);
@@ -57,8 +57,7 @@ interface SessionInterface
     /**
      * Set session token
      *
-     * @param string $string
-     *
+     * @param  string  $string
      * @return void
      */
     public function setToken($string);

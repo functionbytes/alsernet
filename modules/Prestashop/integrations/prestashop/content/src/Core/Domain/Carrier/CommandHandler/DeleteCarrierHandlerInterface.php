@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,5 @@ use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\DeleteCarrierCommand;
  */
 interface DeleteCarrierHandlerInterface
 {
-    /**
-     * @param DeleteCarrierCommand $command
-     */
     public function handle(DeleteCarrierCommand $command);
 }

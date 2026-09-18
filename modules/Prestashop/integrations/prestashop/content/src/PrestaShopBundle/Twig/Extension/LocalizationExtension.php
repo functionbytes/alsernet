@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ class LocalizationExtension extends AbstractExtension
      */
     private $dateFormatLight;
 
-    /**
-     * @param string $contextDateFormatFull
-     * @param string $contextDateFormatLight
-     */
     public function __construct(string $contextDateFormatFull, string $contextDateFormatLight)
     {
         $this->dateFormatFull = $contextDateFormatFull;
@@ -62,13 +59,11 @@ class LocalizationExtension extends AbstractExtension
     }
 
     /**
-     * @param DateTimeInterface|string $date
-     *
-     * @return string
+     * @param  DateTimeInterface|string  $date
      */
     public function dateFormatFull($date): string
     {
-        if (!$date instanceof DateTimeInterface) {
+        if (! $date instanceof DateTimeInterface) {
             $date = new DateTime($date);
         }
 
@@ -76,13 +71,11 @@ class LocalizationExtension extends AbstractExtension
     }
 
     /**
-     * @param DateTimeInterface|string $date
-     *
-     * @return string
+     * @param  DateTimeInterface|string  $date
      */
     public function dateFormatLite($date): string
     {
-        if (!$date instanceof DateTimeInterface) {
+        if (! $date instanceof DateTimeInterface) {
             $date = new DateTime($date);
         }
 

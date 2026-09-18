@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,6 @@ final class TaxFormDataHandler implements FormDataHandlerInterface
     /**
      * Create object from form data.
      *
-     * @param array $data
      *
      * @return mixed
      */
@@ -78,8 +78,7 @@ final class TaxFormDataHandler implements FormDataHandlerInterface
         $command = (new EditTaxCommand($id))
             ->setLocalizedNames($data['name'])
             ->setRate((float) $data['rate'])
-            ->setEnabled((bool) $data['is_enabled'])
-        ;
+            ->setEnabled((bool) $data['is_enabled']);
 
         $this->commandBus->handle($command);
     }

@@ -3,6 +3,7 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Document\Entities\DocumentLang;
@@ -24,18 +25,90 @@ class DocumentTypeController extends Controller
     /**
      * Display list of document types
      */
-    public function index()
+    public function index(Request $request)
     {
-        $documentTypes = DocumentType::with('requirements')
-            ->orderBy('sort_order')
+        $query = DocumentType::with('requirements');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('label', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // '1'/'0' y no active/inactive: es lo que ya mandaba el buscador de esta
+        // pantalla, asi que los enlaces guardados siguen valiendo.
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->input('status') === '1');
+        }
+
+        $documentTypes = $query->orderBy('sort_order')
             ->orderBy('slug')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends($request->query());
 
         $langs = DocumentLang::all();
 
         return view('documents::settings.types.index', [
             'documentTypes' => $documentTypes,
             'langs' => $langs,
+            'stats' => [
+                'total' => DocumentType::count(),
+                'active' => DocumentType::where('is_active', true)->count(),
+                'inactive' => DocumentType::where('is_active', false)->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Activar, desactivar o eliminar varios tipos a la vez desde la barra de
+     * seleccion del listado. Mismo contrato que el resto de listados con
+     * seleccion masiva: recibe ids + accion y responde JSON.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $types = DocumentType::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($types as $type) {
+                if ($validated['action'] === 'delete') {
+                    // Misma cascada que destroy(): los requisitos se van con el tipo.
+                    $type->requirements()->delete();
+                    $type->delete();
+                } else {
+                    $type->update(['is_active' => $validated['action'] === 'activate']);
+                }
+                $count++;
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Error en accion masiva de tipos de documento', [
+                'error' => $e->getMessage(),
+                'action' => $validated['action'],
+            ]);
+
+            return response()->json(['message' => 'No se pudo completar la accion masiva.'], 500);
+        }
+
+        $labels = ['activate' => 'activado(s)', 'deactivate' => 'desactivado(s)', 'delete' => 'eliminado(s)'];
+
+        return response()->json([
+            'message' => "{$count} tipo(s) de documento {$labels[$validated['action']]}.",
+            'count' => $count,
         ]);
     }
 

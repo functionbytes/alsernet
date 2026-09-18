@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,7 @@ final class WebserviceKeyQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * WebserviceKeyQueryBuilder constructor.
      *
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
-     * @param DoctrineFilterApplicatorInterface $doctrineFilterApplicator
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -84,7 +81,7 @@ final class WebserviceKeyQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb->select('wa.`id_webservice_account`, wa.`key`, wa.`description`, wa.`active`');
 
         $orderBy = $searchCriteria->getOrderBy();
-        if (!empty($orderBy)) {
+        if (! empty($orderBy)) {
             $qb->orderBy(
                 $this->getModifiedOrderBy($orderBy),
                 $searchCriteria->getOrderWay()
@@ -112,7 +109,6 @@ final class WebserviceKeyQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with the common sql used for displaying webservice list and applying filter actions.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -120,22 +116,20 @@ final class WebserviceKeyQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'webservice_account', 'wa')
+            ->from($this->dbPrefix.'webservice_account', 'wa')
             ->innerJoin(
                 'wa',
-                $this->dbPrefix . 'webservice_account_shop',
+                $this->dbPrefix.'webservice_account_shop',
                 'was',
                 'was.`id_webservice_account` = wa.`id_webservice_account`'
             )
             ->andWhere('was.`id_shop` IN (:shops)')
-            ->setParameter('shops', $this->contextShopIds, Connection::PARAM_INT_ARRAY)
-        ;
+            ->setParameter('shops', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
 
-        $sqlFilters = (new SqlFilters())
+        $sqlFilters = (new SqlFilters)
             ->addFilter('key', 'wa.key', SqlFilters::WHERE_LIKE)
             ->addFilter('active', 'wa.active', SqlFilters::WHERE_STRICT)
-            ->addFilter('description', 'wa.description', SqlFilters::WHERE_LIKE)
-        ;
+            ->addFilter('description', 'wa.description', SqlFilters::WHERE_LIKE);
 
         $this->doctrineFilterApplicator->apply($qb, $sqlFilters, $filters);
 
@@ -145,12 +139,11 @@ final class WebserviceKeyQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets modified order by which components an alias for reserved keyword.
      *
-     * @param string $orderBy - original order by value
-     *
+     * @param  string  $orderBy  - original order by value
      * @return string
      */
     private function getModifiedOrderBy($orderBy)
     {
-        return 'wa.' . $orderBy;
+        return 'wa.'.$orderBy;
     }
 }

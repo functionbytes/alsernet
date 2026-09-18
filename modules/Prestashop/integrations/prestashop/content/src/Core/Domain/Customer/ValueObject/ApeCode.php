@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class ApeCode
     private $code;
 
     /**
-     * @param mixed $code
+     * @param  mixed  $code
      */
     public function __construct($code)
     {
@@ -65,7 +66,7 @@ class ApeCode
 
         $isApeCode = is_string($code) && (bool) preg_match('/^\d{3,4}[a-zA-Z]{1}$/', $code);
 
-        if (!$isApeCode) {
+        if (! $isApeCode) {
             throw new CustomerConstraintException(sprintf('Invalid ape code %s provided', var_export($code, true)), CustomerConstraintException::INVALID_APE_CODE);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,12 +59,12 @@ final class UpdateOrderStatusHandler extends AbstractOrderHandler implements Upd
         }
 
         // Create new OrderHistory
-        $history = new OrderHistory();
+        $history = new OrderHistory;
         $history->id_order = $order->id;
         $history->id_employee = (int) Context::getContext()->employee->id;
 
         $useExistingPayments = false;
-        if (!$order->hasInvoice()) {
+        if (! $order->hasInvoice()) {
             $useExistingPayments = true;
         }
 
@@ -98,8 +99,7 @@ final class UpdateOrderStatusHandler extends AbstractOrderHandler implements Upd
     }
 
     /**
-     * @param int $orderStatusId
-     *
+     * @param  int  $orderStatusId
      * @return OrderState
      */
     private function getOrderStateObject($orderStatusId)

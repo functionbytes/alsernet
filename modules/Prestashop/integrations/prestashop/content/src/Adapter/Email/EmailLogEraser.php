@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,7 @@ final class EmailLogEraser implements EmailLogEraserInterface
 
         /** @var Mail $emailLog */
         foreach ($emailLogs->getResults() as $emailLog) {
-            if (!$emailLog->delete()) {
+            if (! $emailLog->delete()) {
                 $errors[] = [
                     'key' => 'Can\'t delete #%id%',
                     'parameters' => [

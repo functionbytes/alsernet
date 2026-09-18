@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,8 +81,7 @@ class ChangePasswordType extends AbstractType
                 'disabled' => true,
             ])
             ->add('generate_password_button', ButtonType::class)
-            ->add('cancel_button', ButtonType::class)
-        ;
+            ->add('cancel_button', ButtonType::class);
     }
 
     /**
@@ -95,9 +95,8 @@ class ChangePasswordType extends AbstractType
     }
 
     /**
-     * @param int $maxLength
-     * @param int|null $minLength
-     *
+     * @param  int  $maxLength
+     * @param  int|null  $minLength
      * @return Length
      */
     private function getLengthConstraint($maxLength, $minLength = null)
@@ -107,7 +106,7 @@ class ChangePasswordType extends AbstractType
             'maxMessage' => $this->getMaxLengthValidationMessage($maxLength),
         ];
 
-        if (null !== $minLength) {
+        if ($minLength !== null) {
             $options['min'] = $minLength;
             $options['minMessage'] = $this->getMinLengthValidationMessage($minLength);
         }
@@ -116,8 +115,7 @@ class ChangePasswordType extends AbstractType
     }
 
     /**
-     * @param int $minLength
-     *
+     * @param  int  $minLength
      * @return string
      */
     private function getMinLengthValidationMessage($minLength)
@@ -130,8 +128,7 @@ class ChangePasswordType extends AbstractType
     }
 
     /**
-     * @param int $maxLength
-     *
+     * @param  int  $maxLength
      * @return string
      */
     private function getMaxLengthValidationMessage($maxLength)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,6 @@ class ShopGroupId
     private $shopGroupId;
 
     /**
-     * @param int $shopGroupId
-     *
      * @throws ShopException
      */
     public function __construct(int $shopGroupId)
@@ -49,22 +48,17 @@ class ShopGroupId
         $this->shopGroupId = $shopGroupId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->shopGroupId;
     }
 
     /**
-     * @param int $shopGroupId
-     *
      * @throws ShopException
      */
     private function assertIsGreaterThanZero(int $shopGroupId): void
     {
-        if (0 >= $shopGroupId) {
+        if ($shopGroupId <= 0) {
             throw new ShopException(
                 sprintf(
                     'Shop group id %s is invalid. Shop group id must be a number that is greater than zero.',

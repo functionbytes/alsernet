@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\Supplier\Exception;
 /**
  * Exception thrown when trying to set a default supplier which is not associated
  */
-class DefaultProductSupplierNotAssociatedException extends ProductSupplierException
-{
-}
+class DefaultProductSupplierNotAssociatedException extends ProductSupplierException {}

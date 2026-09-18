@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,9 +62,6 @@ class LanguageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param LanguageFilters $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, LanguageFilters $filters)
@@ -90,8 +88,6 @@ class LanguageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchGridAction(Request $request)
@@ -112,8 +108,6 @@ class LanguageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
@@ -127,7 +121,7 @@ class LanguageController extends FrameworkBundleAdminController
         try {
             $result = $languageFormHandler->handle($languageForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_languages_index');
@@ -148,9 +142,7 @@ class LanguageController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param int $languageId
-     * @param Request $request
-     *
+     * @param  int  $languageId
      * @return Response
      */
     public function editAction($languageId, Request $request)
@@ -206,10 +198,10 @@ class LanguageController extends FrameworkBundleAdminController
      * Deletes language
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_languages_index")
+     *
      * @DemoRestricted(redirectRoute="admin_languages_index")
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return RedirectResponse
      */
     public function deleteAction($languageId)
@@ -229,9 +221,8 @@ class LanguageController extends FrameworkBundleAdminController
      * Deletes languages in bulk action
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_languages_index")
-     * @DemoRestricted(redirectRoute="admin_languages_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_languages_index")
      *
      * @return RedirectResponse
      */
@@ -257,10 +248,10 @@ class LanguageController extends FrameworkBundleAdminController
      * Toggles language status
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_languages_index")
+     *
      * @DemoRestricted(redirectRoute="admin_languages_index")
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return RedirectResponse
      */
     public function toggleStatusAction($languageId)
@@ -271,7 +262,7 @@ class LanguageController extends FrameworkBundleAdminController
 
             $this->getCommandBus()->handle(new ToggleLanguageStatusCommand(
                 (int) $languageId,
-                !$editableLanguage->isActive()
+                ! $editableLanguage->isActive()
             ));
 
             $this->addFlash(
@@ -289,17 +280,16 @@ class LanguageController extends FrameworkBundleAdminController
      * Toggles languages status in bulk action
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_languages_index")
+     *
      * @DemoRestricted(redirectRoute="admin_languages_index")
      *
-     * @param Request $request
-     * @param string $status
-     *
+     * @param  string  $status
      * @return RedirectResponse
      */
     public function bulkToggleStatusAction(Request $request, $status)
     {
         $languageIds = $this->getBulkLanguagesFromRequest($request);
-        $expectedStatus = 'enable' === $status;
+        $expectedStatus = $status === 'enable';
 
         try {
             $this->getCommandBus()->handle(new BulkToggleLanguagesStatusCommand(
@@ -319,8 +309,6 @@ class LanguageController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Exception $e
-     *
      * @return array
      */
     private function getErrorMessages(Exception $e)
@@ -414,7 +402,6 @@ class LanguageController extends FrameworkBundleAdminController
     /**
      * Get language ids from request for bulk action
      *
-     * @param Request $request
      *
      * @return int[]
      */
@@ -422,7 +409,7 @@ class LanguageController extends FrameworkBundleAdminController
     {
         $languageIds = $request->request->get('language_language_bulk');
 
-        if (!is_array($languageIds)) {
+        if (! is_array($languageIds)) {
             return [];
         }
 

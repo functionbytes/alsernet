@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,9 +37,8 @@ class GroupDataProvider
     /**
      * Return available groups.
      *
-     * @param int $id_lang
-     * @param bool $id_shop
-     *
+     * @param  int  $id_lang
+     * @param  bool  $id_shop
      * @return array Groups
      */
     public function getGroups($id_lang, $id_shop = false)

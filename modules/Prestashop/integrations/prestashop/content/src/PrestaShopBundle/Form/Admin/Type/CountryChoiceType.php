@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,9 +64,6 @@ class CountryChoiceType extends AbstractType
      */
     private $needPostcode = false;
 
-    /**
-     * @param FormChoiceProviderInterface $countriesChoiceProvider
-     */
     public function __construct(FormChoiceProviderInterface $countriesChoiceProvider, FormChoiceAttributeProviderInterface $countriesAttrChoicesProvider)
     {
         $this->countriesChoiceProvider = $countriesChoiceProvider;

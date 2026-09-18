@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: thomasleviandier
@@ -21,9 +22,13 @@ use PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException;
 interface CurrencyInterface
 {
     public const SYMBOL_TYPE_NARROW = 'narrow';
+
     public const DISPLAY_NAME_COUNT_DEFAULT = 'default';
+
     public const SYMBOL_TYPE_DEFAULT = 'default';
+
     public const DISPLAY_NAME_COUNT_ONE = 'one';
+
     public const DISPLAY_NAME_COUNT_OTHER = 'other';
 
     /**
@@ -53,12 +58,11 @@ interface CurrencyInterface
     /**
      * Get the display name for the passed count context.
      *
-     * @param string $countContext
-     *                             The count context
-     *                             "default" = talking about the currency (e.g.: "used currency is Euro")
-     *                             "one"     = talking about one unit of this currency (e.g.: "one euro")
-     *                             "other"   = talking about several units of this currency (e.g.: "ten euros")
-     *
+     * @param  string  $countContext
+     *                                The count context
+     *                                "default" = talking about the currency (e.g.: "used currency is Euro")
+     *                                "one"     = talking about one unit of this currency (e.g.: "one euro")
+     *                                "other"   = talking about several units of this currency (e.g.: "ten euros")
      * @return string
      *                The wanted display name
      */
@@ -67,9 +71,8 @@ interface CurrencyInterface
     /**
      * Get the symbol of this currency. Narrow symbol is returned by default.
      *
-     * @param string $type
-     *                     Possible value: "default" ("$") and "narrow" ("US$")
-     *
+     * @param  string  $type
+     *                        Possible value: "default" ("$") and "narrow" ("US$")
      * @return string
      *                The currency's symbol
      *

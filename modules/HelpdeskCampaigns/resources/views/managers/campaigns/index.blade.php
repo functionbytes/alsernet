@@ -2,6 +2,10 @@
 
 @section('title', 'Campañas')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskcampaigns/css/campaigns.css') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/css/campaigns.css')) }}">
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Campañas'])
 @endsection
@@ -48,7 +52,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Activas</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($campaigns->where('status', 'active')->count()) }}</h4>
-                                <small class="text-muted">En ejecucion</small>
+                                <small class="text-muted">En ejecución</small>
                             </div>
                         </div>
                     </div>
@@ -87,7 +91,7 @@
                                        value="{{ $filters['search'] ?? '' }}">
                             </div>
                         </div>
-                        <select name="status" class="form-select flex-shrink-0" style="width: auto;">
+                        <select name="status" class="form-select flex-shrink-0 w-auto">
                             <option value="">Todos los estados</option>
                             @foreach($statuses as $key => $label)
                                 <option value="{{ $key }}" {{ ($filters['status'] ?? '') === $key ? 'selected' : '' }}>
@@ -95,7 +99,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <select name="type" class="form-select flex-shrink-0" style="width: auto;">
+                        <select name="type" class="form-select flex-shrink-0 w-auto">
                             <option value="">Todos los tipos</option>
                             @foreach($types as $key => $label)
                                 <option value="{{ $key }}" {{ ($filters['type'] ?? '') === $key ? 'selected' : '' }}>
@@ -121,7 +125,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <strong><span id="bulk-count">0</span> campaña(s) seleccionada(s)</strong>
                     <div class="ms-auto d-flex gap-2">
-                        <select id="bulk-action" class="form-select form-select-sm" style="width: auto;">
+                        <select id="bulk-action" class="form-select form-select-sm w-auto">
                             <option value="">— Acción —</option>
                             <option value="pause">Pausar</option>
                             <option value="end">Finalizar</option>
@@ -197,7 +201,7 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('helpdesk.campaigns.show', $campaign) }}">
-                                                            Ver estadisticas
+                                                            Ver estadísticas
                                                         </a>
                                                     </li>
                                                     @can('update', $campaign)
@@ -318,55 +322,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success(@json(session('success')), 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error(@json(session('error')), 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Bulk actions
-    function refreshBulkBar() {
-        const checked = $('.bulk-row:checked').length;
-        $('#bulk-count').text(checked);
-        $('#bulk-bar').toggleClass('d-none', checked === 0);
-        $('#bulk-apply').prop('disabled', checked === 0 || !$('#bulk-action').val());
-    }
-
-    $('#bulk-select-all').on('change', function () {
-        $('.bulk-row').prop('checked', $(this).is(':checked'));
-        refreshBulkBar();
-    });
-
-    $(document).on('change', '.bulk-row, #bulk-action', refreshBulkBar);
-
-    $('#bulk-apply').on('click', function () {
-        const action = $('#bulk-action').val();
-        const ids = $('.bulk-row:checked').map((_, el) => parseInt(el.value, 10)).get();
-        if (!action || ids.length === 0) return;
-
-        if (action === 'delete' && !confirm(`¿Eliminar ${ids.length} campaña(s)?`)) return;
-
-        $.ajax({
-            url: '{{ route('helpdesk.campaigns.bulk-action') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { action, ids },
-            success: function (res) {
-                toastr.success(res.message || 'Acción aplicada');
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Error en la acción masiva');
-            }
-        });
-    });
-});
+    window.HcmCampaignsList = {
+        bulkActionUrl: '{{ route('helpdesk.campaigns.bulk-action') }}',
+        flashSuccess: @json(session('success')),
+        flashError: @json(session('error')),
+    };
 </script>
+<script src="{{ asset('modules/helpdeskcampaigns/js/campaigns-list.js') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/js/campaigns-list.js')) }}" defer></script>
 @endpush

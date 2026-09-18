@@ -3,7 +3,10 @@
 namespace Modules\HelpdeskTickets\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Validation\Rule;
 use Modules\Core\Rules\ValidMimeMagicBytes;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 
 class StoreTicketRequest extends BaseTicketRequest
 {
@@ -22,6 +25,8 @@ class StoreTicketRequest extends BaseTicketRequest
      */
     public function rules(): array
     {
+        $settings = app(HelpdeskSettings::class);
+
         return [
             'subject' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:50000'],
@@ -36,12 +41,20 @@ class StoreTicketRequest extends BaseTicketRequest
             // el mismo valor que pinta la fila del listado y el Kanban, y un
             // valor libre saldría ahí sin traducir.
             'source' => ['nullable', 'string', 'in:manual,agent,email,widget,wa,fb,ig,form,formulario,prestashop,phone,api'],
-            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments' => [
+                'nullable',
+                'array',
+                'max:10',
+                Rule::prohibitedIf(fn () => ! filter_var(
+                    Setting::get('tickets.user_file_upload_enable', true),
+                    FILTER_VALIDATE_BOOLEAN,
+                )),
+            ],
             'attachments.*' => [
                 'file',
-                'max:'.config('helpdesk.attachments.max_size', 10240),
-                'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip,rar,txt',
-                new ValidMimeMagicBytes(config('helpdesk.attachments.allowed_mime_types', [])),
+                'max:'.$settings->attachmentMaxKilobytes(),
+                'mimes:'.implode(',', $settings->attachmentExtensions()),
+                new ValidMimeMagicBytes($settings->attachmentMimeTypes()),
             ],
         ];
     }

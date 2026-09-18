@@ -69,6 +69,8 @@ return [
 
         'libre_key_ph_saved' => '•••••••• (key guardada — déjalo vacío para no cambiarla)',
 
+        'remove_key_label' => 'Eliminar clave guardada',
+
         'btn_save' => 'Guardar configuración',
         'btn_test' => 'Probar conexión',
 
@@ -150,10 +152,10 @@ return [
         'text_max' => 'El texto no puede superar los 2000 caracteres.',
         'from_in' => 'El idioma de origen no es válido.',
         'to_required' => 'El idioma de destino es obligatorio.',
-        'to_regex' => 'El idioma de destino no es válido (usa un código ISO como `es` o `en-US`).',
+        'to_in' => 'El idioma de destino seleccionado no está soportado.',
         // TranslateItemRequest
         'target_required' => 'El idioma de destino es obligatorio.',
-        'target_regex' => 'El idioma de destino no es válido (usa un código ISO como `es` o `en-US`).',
+        'target_in' => 'El idioma de destino seleccionado no está soportado.',
         // UpdateTranslateSettingsRequest
         'provider_required' => 'El proveedor de traducción es obligatorio.',
         'provider_in' => 'El proveedor seleccionado no es válido.',

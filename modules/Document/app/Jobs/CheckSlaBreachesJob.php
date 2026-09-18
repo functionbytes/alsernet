@@ -7,6 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentSlaBreach;
+use Modules\Document\Entities\DocumentSlaPolicy;
 use Modules\Document\Entities\DocumentStatus;
 
 class CheckSlaBreachesJob implements ShouldQueue
@@ -196,7 +197,7 @@ class CheckSlaBreachesJob implements ShouldQueue
 
     private function escalateBreach(
         DocumentSlaBreach $breach,
-        \Modules\Document\Entities\DocumentSlaPolicy $slaPolicy,
+        DocumentSlaPolicy $slaPolicy,
         Document $document
     ): void {
         try {

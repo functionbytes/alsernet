@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ class ProductPricePropertiesFiller
      */
     private $numberExtractor;
 
-    /**
-     * @param NumberExtractor $numberExtractor
-     */
     public function __construct(
         NumberExtractor $numberExtractor
     ) {
@@ -55,21 +53,17 @@ class ProductPricePropertiesFiller
      * Wraps following properties filling: price, unit_price, unit_price_ratio, wholesale_price
      * as most of them (price, unit_price, unit_price_ratio) are highly coupled & depends on each other
      *
-     * @param Product $product
-     * @param DecimalNumber|null $price
-     * @param DecimalNumber|null $unitPrice
-     * @param DecimalNumber|null $wholesalePrice
      *
      * @return string[] updatable properties
      */
     public function fillWithPrices(Product $product, ?DecimalNumber $price, ?DecimalNumber $unitPrice, ?DecimalNumber $wholesalePrice): array
     {
-        if (null !== $wholesalePrice) {
+        if ($wholesalePrice !== null) {
             $product->wholesale_price = (string) $wholesalePrice;
             $updatableProperties[] = 'wholesale_price';
         }
 
-        if (null !== $price) {
+        if ($price !== null) {
             $product->price = (float) (string) $price;
             $updatableProperties[] = 'price';
         } else {
@@ -82,11 +76,6 @@ class ProductPricePropertiesFiller
         return $updatableProperties;
     }
 
-    /**
-     * @param Product $product
-     * @param DecimalNumber $price
-     * @param DecimalNumber|null $unitPrice
-     */
     private function fillUnitPriceRatio(Product $product, DecimalNumber $price, ?DecimalNumber $unitPrice): void
     {
         // if price was reset then also reset unit_price_ratio
@@ -96,7 +85,7 @@ class ProductPricePropertiesFiller
             return;
         }
 
-        if (null === $unitPrice) {
+        if ($unitPrice === null) {
             $unitPrice = $this->numberExtractor->extract($product, 'unit_price');
         }
 
@@ -104,11 +93,6 @@ class ProductPricePropertiesFiller
         $this->setUnitPriceRatio($product, $price, $unitPrice);
     }
 
-    /**
-     * @param Product $product
-     * @param DecimalNumber $price
-     * @param DecimalNumber $unitPrice
-     */
     private function setUnitPriceRatio(Product $product, DecimalNumber $price, DecimalNumber $unitPrice): void
     {
         // If unit price or price is zero, then reset ratio to zero too
@@ -121,7 +105,7 @@ class ProductPricePropertiesFiller
         // however - unit_price is not saved to database. When loading product it is calculated depending on price and unit_price_ratio
         // so there is no static values saved, that's why unit_price is inaccurate
         $product->unit_price_ratio = (float) (string) $ratio;
-        //set unit_price to go through validation
+        // set unit_price to go through validation
         $product->unit_price = (float) (string) $unitPrice;
     }
 }

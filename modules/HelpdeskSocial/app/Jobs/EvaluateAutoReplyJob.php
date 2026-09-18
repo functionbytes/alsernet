@@ -67,9 +67,11 @@ class EvaluateAutoReplyJob implements ShouldQueue
         }
 
         // If not auto-replied and not spam, keep as pending for human review
-        if ($comment->status === 'pending' && ! $comment->is_spam) {
-            $this->createConversationFromComment($comment);
+        if ($comment->status !== 'pending' || $comment->is_spam) {
+            return;
         }
+
+        $this->createConversationFromComment($comment);
     }
 
     public function failed(\Throwable $exception): void
@@ -82,6 +84,12 @@ class EvaluateAutoReplyJob implements ShouldQueue
 
     private function createConversationFromComment(SocialComment $comment): void
     {
+        // Evita crear una segunda Conversation si este job se reintenta (o se
+        // reprocesa el comentario) después de ya haber creado una.
+        if ($comment->helpdesk_conversation_id) {
+            return;
+        }
+
         try {
             $safeEmail = 'social_'.md5($comment->external_user_id).'@social.local';
             $customer = Customer::firstOrCreate(

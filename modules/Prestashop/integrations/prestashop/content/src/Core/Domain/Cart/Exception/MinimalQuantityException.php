@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,22 +40,13 @@ class MinimalQuantityException extends CartException
      */
     protected $minimalQuantity;
 
-    /**
-     * @param string $message
-     * @param int $minimalQuantity
-     * @param int $code
-     * @param Throwable|null $previous
-     */
-    public function __construct(string $message, int $minimalQuantity, int $code = 0, Throwable $previous = null)
+    public function __construct(string $message, int $minimalQuantity, int $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
 
         $this->minimalQuantity = $minimalQuantity;
     }
 
-    /**
-     * @return int
-     */
     public function getMinimalQuantity(): int
     {
         return $this->minimalQuantity;

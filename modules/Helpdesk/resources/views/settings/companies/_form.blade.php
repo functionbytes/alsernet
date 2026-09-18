@@ -8,7 +8,7 @@
     {{-- Nombre --}}
     <div class="col-12">
         <label class="form-label">
-            Nombre <span class="text-danger">*</span>
+            Nombre <span class="text-brand">*</span>
         </label>
         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
             value="{{ old('name', $company->name ?? '') }}"
@@ -97,3 +97,14 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+window.HdSettingsPageConfig = {
+    select2Selector: '.form-select',
+};
+</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-standard-bootstrap.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-standard-bootstrap.js')) }}" defer></script>
+@endpush

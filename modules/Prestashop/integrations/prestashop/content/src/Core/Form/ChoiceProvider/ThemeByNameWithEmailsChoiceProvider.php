@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class ThemeByNameWithEmailsChoiceProvider implements FormChoiceProviderInt
      */
     private $themeCollection;
 
-    /**
-     * @param ThemeCollection $themeCollection
-     */
     public function __construct(ThemeCollection $themeCollection)
     {
         $this->themeCollection = $themeCollection;
@@ -58,8 +56,8 @@ final class ThemeByNameWithEmailsChoiceProvider implements FormChoiceProviderInt
 
         /** @var Theme $theme */
         foreach ($this->themeCollection as $theme) {
-            $coreMailsFolder = $theme->getDirectory() . '/mails';
-            $modulesMailFolder = $theme->getDirectory() . '/modules';
+            $coreMailsFolder = $theme->getDirectory().'/mails';
+            $modulesMailFolder = $theme->getDirectory().'/modules';
             if (is_dir($coreMailsFolder) || is_dir($modulesMailFolder)) {
                 $themeChoices[$theme->getName()] = $theme->getName();
             }

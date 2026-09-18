@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,9 +56,8 @@ use Warehouse;
 abstract class AbstractOrderCommandHandler extends AbstractOrderHandler
 {
     /**
-     * @param OrderDetail $orderDetail
-     * @param int $productQuantity
-     * @param bool $delete
+     * @param  int  $productQuantity
+     * @param  bool  $delete
      */
     protected function reinjectQuantity(OrderDetail $orderDetail, $productQuantity, $delete = false)
     {
@@ -162,7 +162,7 @@ abstract class AbstractOrderCommandHandler extends AbstractOrderHandler
             );
 
             // sync all stock
-            (new StockManager())->updatePhysicalProductQuantity(
+            (new StockManager)->updatePhysicalProductQuantity(
                 (int) $orderDetail->id_shop,
                 (int) Configuration::get('PS_OS_ERROR'),
                 (int) Configuration::get('PS_OS_CANCELED'),
@@ -178,10 +178,6 @@ abstract class AbstractOrderCommandHandler extends AbstractOrderHandler
         }
     }
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     * @param Cart $cart
-     */
     protected function setCartContext(ContextStateManager $contextStateManager, Cart $cart): void
     {
         $contextStateManager
@@ -191,14 +187,9 @@ abstract class AbstractOrderCommandHandler extends AbstractOrderHandler
             ->setCurrency(new Currency($cart->id_currency))
             ->setLanguage($cart->getAssociatedLanguage())
             ->setCountry($this->getCartTaxCountry($cart))
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
     }
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     * @param Order $order
-     */
     protected function setOrderContext(ContextStateManager $contextStateManager, Order $order): void
     {
         $cart = new Cart($order->id_cart);
@@ -206,10 +197,6 @@ abstract class AbstractOrderCommandHandler extends AbstractOrderHandler
     }
 
     /**
-     * @param Cart $cart
-     *
-     * @return Country
-     *
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
      */

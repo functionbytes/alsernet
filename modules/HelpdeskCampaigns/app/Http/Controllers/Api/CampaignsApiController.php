@@ -5,10 +5,6 @@ namespace Modules\HelpdeskCampaigns\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\HelpdeskCampaigns\Events\CampaignEnded;
-use Modules\HelpdeskCampaigns\Events\CampaignPaused;
-use Modules\HelpdeskCampaigns\Events\CampaignPublished;
-use Modules\HelpdeskCampaigns\Events\CampaignResumed;
 use Modules\HelpdeskCampaigns\Http\Requests\Api\StoreCampaignApiRequest;
 use Modules\HelpdeskCampaigns\Http\Requests\Api\UpdateCampaignApiRequest;
 use Modules\HelpdeskCampaigns\Http\Resources\CampaignResource;
@@ -28,11 +24,12 @@ class CampaignsApiController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $perPage = min(max($perPage, 1), 100);
 
+        // impressions_count / clicks_count son columnas denormalizadas que
+        // UpdateCampaignImpressionCounters mantiene al día — un withCount()
+        // aquí añadía un alias `clicks_count` que pisaba en memoria la columna
+        // real del mismo nombre (CampaignResource leía lo que quedara de esa
+        // colisión, no lo uno ni lo otro de forma fiable).
         $campaigns = Campaign::query()
-            ->withCount([
-                'impressions',
-                'impressions as clicks_count' => fn ($q) => $q->whereNotNull('clicked_at'),
-            ])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->type))
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
@@ -45,11 +42,6 @@ class CampaignsApiController extends Controller
     public function show(Campaign $campaign): CampaignResource
     {
         $this->authorize('view', $campaign);
-
-        $campaign->loadCount([
-            'impressions',
-            'impressions as clicks_count' => fn ($q) => $q->whereNotNull('clicked_at'),
-        ]);
 
         return new CampaignResource($campaign);
     }
@@ -98,7 +90,10 @@ class CampaignsApiController extends Controller
 
         // Máquina de estados (Campaign::STATUS_TRANSITIONS): antes estos
         // endpoints aceptaban cualquier estado origen — p.ej. publish/resume
-        // sobre una campaña `ended` la reactivaba silenciosamente.
+        // sobre una campaña `ended` la reactivaba silenciosamente. La
+        // validación y el update()+dispatch() ahora viven en el modelo
+        // (Campaign::publish); aquí solo se traducen sus dos motivos de
+        // rechazo a las respuestas 422 que ya prometía este endpoint.
         if (! $campaign->canTransitionTo(Campaign::STATUS_ACTIVE)) {
             return $this->invalidTransition($campaign, Campaign::STATUS_ACTIVE);
         }
@@ -110,12 +105,7 @@ class CampaignsApiController extends Controller
             ], 422);
         }
 
-        $campaign->update([
-            'status' => 'active',
-            'published_at' => $campaign->published_at ?? now(),
-        ]);
-
-        CampaignPublished::dispatch($campaign);
+        $campaign->publish();
 
         return response()->json([
             'success' => true,
@@ -132,8 +122,7 @@ class CampaignsApiController extends Controller
             return $this->invalidTransition($campaign, Campaign::STATUS_PAUSED);
         }
 
-        $campaign->update(['status' => 'paused']);
-        CampaignPaused::dispatch($campaign);
+        $campaign->pause();
 
         return response()->json([
             'success' => true,
@@ -152,8 +141,7 @@ class CampaignsApiController extends Controller
             return $this->invalidTransition($campaign, Campaign::STATUS_ACTIVE);
         }
 
-        $campaign->update(['status' => 'active']);
-        CampaignResumed::dispatch($campaign);
+        $campaign->resume();
 
         return response()->json([
             'success' => true,
@@ -170,12 +158,7 @@ class CampaignsApiController extends Controller
             return $this->invalidTransition($campaign, Campaign::STATUS_ENDED);
         }
 
-        $campaign->update([
-            'status' => 'ended',
-            'ends_at' => now(),
-        ]);
-
-        CampaignEnded::dispatch($campaign);
+        $campaign->end();
 
         return response()->json([
             'success' => true,

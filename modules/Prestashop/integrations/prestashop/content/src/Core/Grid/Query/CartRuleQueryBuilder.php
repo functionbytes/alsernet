@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,12 +61,8 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     private $multistoreFeature;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextIdLang
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     * @param FeatureInterface $multistoreFeature
+     * @param  string  $dbPrefix
+     * @param  int  $contextIdLang
      */
     public function __construct(
         Connection $connection,
@@ -89,18 +86,17 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
             ->select(
-            'cr.id_cart_rule,
+                'cr.id_cart_rule,
             crl.name,
             cr.priority,
             cr.code,
             cr.quantity,
             cr.date_to,
             cr.active'
-        );
+            );
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -111,29 +107,23 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT cr.`id_cart_rule`)')
-        ;
+            ->select('COUNT(DISTINCT cr.`id_cart_rule`)');
 
         return $qb;
     }
 
     /**
      * Gets query builder with the common sql for catalog price rule listing.
-     *
-     * @param array $filters
-     *
-     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters): QueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'cart_rule', 'cr')
-        ;
+            ->from($this->dbPrefix.'cart_rule', 'cr');
 
         $qb->leftJoin(
             'cr',
-            $this->dbPrefix . 'cart_rule_lang',
+            $this->dbPrefix.'cart_rule_lang',
             'crl',
             'cr.id_cart_rule = crl.id_cart_rule AND crl.id_lang = :contextLangId'
         );
@@ -144,10 +134,6 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param array $filters
-     */
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
         $allowedFiltersAliasMap = [
@@ -163,31 +149,31 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
         $exactMatchFilters = ['id_cart_rule', 'quantity', 'priority', 'active'];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersAliasMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersAliasMap)) {
                 return;
             }
 
             if (in_array($filterName, $exactMatchFilters, true)) {
-                $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' = :' . $filterName);
+                $qb->andWhere($allowedFiltersAliasMap[$filterName].' = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            if ('date_to' === $filterName) {
+            if ($filterName === 'date_to') {
                 if (isset($value['from'])) {
-                    $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' >= :' . $filterName . '_from');
-                    $qb->setParameter($filterName . '_from', $value['from']);
+                    $qb->andWhere($allowedFiltersAliasMap[$filterName].' >= :'.$filterName.'_from');
+                    $qb->setParameter($filterName.'_from', $value['from']);
                 }
                 if (isset($value['to'])) {
-                    $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' <= :' . $filterName . '_to');
-                    $qb->setParameter($filterName . '_to', $value['to']);
+                    $qb->andWhere($allowedFiltersAliasMap[$filterName].' <= :'.$filterName.'_to');
+                    $qb->setParameter($filterName.'_to', $value['to']);
                 }
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' LIKE :' . $filterName);
+            $qb->andWhere($allowedFiltersAliasMap[$filterName].' LIKE :'.$filterName);
             $qb->setParameter($filterName, "%$value%");
         }
     }

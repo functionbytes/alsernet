@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -74,13 +75,9 @@ class TranslatableType extends TranslatorAwareType
     private $defaultShopLanguageId;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $availableLocales
-     * @param UrlGeneratorInterface $urlGenerator
-     * @param bool $saveFormLocaleChoice
-     * @param int $defaultFormLanguageId
-     * @param int $defaultShopLanguageId
+     * @param  bool  $saveFormLocaleChoice
+     * @param  int  $defaultFormLanguageId
+     * @param  int  $defaultShopLanguageId
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -109,7 +106,7 @@ class TranslatableType extends TranslatorAwareType
             $typeOptions = $options['options'];
             $typeOptions['label'] = $locale['iso_code'];
 
-            if (!isset($typeOptions['required'])) {
+            if (! isset($typeOptions['required'])) {
                 $typeOptions['required'] = false;
             }
 
@@ -145,7 +142,7 @@ class TranslatableType extends TranslatorAwareType
         $view->vars['errors'] = new FormErrorIterator($varsForm, $errors);
         $view->vars['locales'] = $options['locales'];
         $view->vars['default_locale'] = $this->getDefaultLocale($options['locales']);
-        $view->vars['hide_locales'] = 1 >= count($options['locales']);
+        $view->vars['hide_locales'] = count($options['locales']) <= 1;
 
         if ($this->saveFormLocaleChoice) {
             $view->vars['change_form_language_url'] = $this->urlGenerator->generate(
@@ -153,9 +150,9 @@ class TranslatableType extends TranslatorAwareType
             );
         }
 
-        if (!empty($options['use_tabs'])) {
+        if (! empty($options['use_tabs'])) {
             $view->vars['use_tabs'] = true;
-        } elseif (!empty($options['use_dropdown'])) {
+        } elseif (! empty($options['use_dropdown'])) {
             $view->vars['use_tabs'] = false;
         } else {
             $view->vars['use_tabs'] = ($options['type'] === FormattedTextareaType::class);
@@ -175,8 +172,7 @@ class TranslatableType extends TranslatorAwareType
             'locales' => function (Options $options) {
                 return $options['only_enabled_locales'] ?
                     $this->enabledLocales :
-                    $this->availableLocales
-                ;
+                    $this->availableLocales;
             },
             // These two options allow to override the default choice of the component between tab and dropdown (by
             // default it is based on input type being a textarea)
@@ -204,9 +200,6 @@ class TranslatableType extends TranslatorAwareType
      * If there are more then one locale it gets nested errors and if found prepares the errors for usage in twig.
      * If there are only one error which is not assigned to the default language then the error is being localised.
      *
-     * @param FormView $view
-     * @param FormInterface $form
-     * @param array $locales
      *
      * @return array|null
      */
@@ -222,14 +215,14 @@ class TranslatableType extends TranslatorAwareType
             return null;
         }
 
-        if (1 === count($formErrors)) {
+        if (count($formErrors) === 1) {
             $errorByLocale = $this->getSingleTranslatableErrorExcludingDefaultLocale(
                 $formErrors,
                 $form,
                 $locales
             );
 
-            if (!$errorByLocale) {
+            if (! $errorByLocale) {
                 return null;
             }
 
@@ -249,9 +242,6 @@ class TranslatableType extends TranslatorAwareType
      * Gets single error excluding the default locales error since for default locale a language name prefix is not
      * required.
      *
-     * @param FormErrorIterator $formErrors
-     * @param FormInterface $form
-     * @param array $locales
      *
      * @return array|null
      */
@@ -272,7 +262,7 @@ class TranslatableType extends TranslatorAwareType
                 break;
             }
 
-            ++$iteration;
+            $iteration++;
         }
 
         if (isset($locales[$nonDefaultLanguageFormKey])) {
@@ -288,9 +278,6 @@ class TranslatableType extends TranslatorAwareType
     /**
      * Gets translatable errors ready for popover display and assigned to each language
      *
-     * @param FormErrorIterator $formErrors
-     * @param FormInterface $form
-     * @param array $locales
      *
      * @return array|null
      */
@@ -302,7 +289,7 @@ class TranslatableType extends TranslatorAwareType
         $errorsByLocale = null;
         $iteration = 0;
         foreach ($form as $formItem) {
-            $doesLocaleExistForInvalidForm = isset($locales[$iteration]) && !$formItem->isValid();
+            $doesLocaleExistForInvalidForm = isset($locales[$iteration]) && ! $formItem->isValid();
 
             if ($doesLocaleExistForInvalidForm) {
                 foreach ($formErrors as $formError) {
@@ -315,7 +302,7 @@ class TranslatableType extends TranslatorAwareType
                 }
             }
 
-            ++$iteration;
+            $iteration++;
         }
 
         return $errorsByLocale;
@@ -324,8 +311,6 @@ class TranslatableType extends TranslatorAwareType
     /**
      * Determines if the error form matches the given form. Used for mapping the locales for the form fields.
      *
-     * @param FormInterface $errorForm
-     * @param FormInterface $currentForm
      *
      * @return bool
      */
@@ -337,7 +322,6 @@ class TranslatableType extends TranslatorAwareType
     /**
      * Get default locale.
      *
-     * @param array $locales
      *
      * @return array
      */
@@ -365,7 +349,6 @@ class TranslatableType extends TranslatorAwareType
     /**
      * Filters only enabled locales
      *
-     * @param array $availableLocales
      *
      * @return array
      */

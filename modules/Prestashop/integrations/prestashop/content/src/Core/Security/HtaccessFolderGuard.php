@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,13 +42,13 @@ class HtaccessFolderGuard implements FolderGuardInterface
     private $htaccessContent;
 
     /**
-     * @param string $htaccessTemplatePath
+     * @param  string  $htaccessTemplatePath
      *
      * @throws FileNotFoundException
      */
     public function __construct($htaccessTemplatePath)
     {
-        if (!file_exists($htaccessTemplatePath)) {
+        if (! file_exists($htaccessTemplatePath)) {
             throw new FileNotFoundException(sprintf('Could not find file %s', $htaccessTemplatePath));
         }
         $this->htaccessContent = file_get_contents($htaccessTemplatePath);
@@ -58,13 +59,13 @@ class HtaccessFolderGuard implements FolderGuardInterface
      */
     public function protectFolder($folderPath)
     {
-        if (!is_dir($folderPath)) {
+        if (! is_dir($folderPath)) {
             throw new FileNotFoundException(sprintf('Cannot protect nonexistent folder %s', $folderPath));
         }
 
-        $htaccessPath = $folderPath . DIRECTORY_SEPARATOR . '.htaccess';
-        if (!file_exists($htaccessPath)) {
-            if (!is_writable($folderPath)) {
+        $htaccessPath = $folderPath.DIRECTORY_SEPARATOR.'.htaccess';
+        if (! file_exists($htaccessPath)) {
+            if (! is_writable($folderPath)) {
                 throw new IOException('Could not write into module folder', 0, null, $folderPath);
             }
 

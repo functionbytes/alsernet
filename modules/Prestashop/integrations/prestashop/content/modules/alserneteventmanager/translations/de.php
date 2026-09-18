@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetcontents}prestashop>sticky_26e34d45989949c3cb7be286d8ab21c3'] = 'Startseite';
 $_MODULE['<{alsernetcontents}prestashop>sticky_54ee9e0cddf32e651a9197ca4b041caf'] = 'Kategorien';
 $_MODULE['<{alsernetcontents}prestashop>sticky_6c95ab7a4d8672d43f8271f002d06302'] = 'Konto';

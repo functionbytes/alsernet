@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,15 +37,14 @@ use Symfony\Component\Process\Exception\LogicException;
 class CustomerDataProvider
 {
     /**
-     * @param int $id
+     * @param  int  $id
+     * @return object customer
      *
      * @throws LogicException If the customer id is not set
-     *
-     * @return object customer
      */
     public function getCustomer($id)
     {
-        if (!$id) {
+        if (! $id) {
             throw new LogicException('You need to provide a customer id', 5002);
         }
 
@@ -57,7 +57,7 @@ class CustomerDataProvider
     {
         $id = null;
         $customers = Customer::getCustomersByEmail($email);
-        if (!empty($customers)) {
+        if (! empty($customers)) {
             $id = current($customers)['id_customer'];
         }
 
@@ -65,9 +65,8 @@ class CustomerDataProvider
     }
 
     /**
-     * @param int $customerId
-     * @param int $langId
-     *
+     * @param  int  $customerId
+     * @param  int  $langId
      * @return array
      */
     public function getCustomerAddresses($customerId, $langId)
@@ -80,8 +79,7 @@ class CustomerDataProvider
     /**
      * Get Default Customer Group ID.
      *
-     * @param int $idCustomer Customer ID
-     *
+     * @param  int  $idCustomer  Customer ID
      * @return mixed|string|null
      */
     public function getDefaultGroupId($idCustomer)
@@ -91,24 +89,22 @@ class CustomerDataProvider
 
     /**
      * Provides customer messages
-     *
-     * @param int $customerId
      */
     public function getCustomerMessages(int $customerId, ?int $orderId = null, ?int $limit = null)
     {
         $mainSql = 'SELECT cm.*, c.`firstname` AS cfirstname, c.`lastname` AS clastname,
             e.`firstname` AS efirstname, e.`lastname` AS elastname
-            FROM ' . _DB_PREFIX_ . 'customer_thread ct
-			LEFT JOIN ' . _DB_PREFIX_ . 'customer_message cm
+            FROM '._DB_PREFIX_.'customer_thread ct
+			LEFT JOIN '._DB_PREFIX_.'customer_message cm
 				ON ct.id_customer_thread = cm.id_customer_thread
-            LEFT JOIN `' . _DB_PREFIX_ . 'customer` c
+            LEFT JOIN `'._DB_PREFIX_.'customer` c
                 ON ct.`id_customer` = c.`id_customer`
-            LEFT OUTER JOIN `' . _DB_PREFIX_ . 'employee` e
+            LEFT OUTER JOIN `'._DB_PREFIX_.'employee` e
                 ON e.`id_employee` = cm.`id_employee`
-			WHERE ct.id_customer = ' . $customerId;
+			WHERE ct.id_customer = '.$customerId;
 
         if ($orderId) {
-            $mainSql .= ' AND ct.`id_order` = ' . $orderId;
+            $mainSql .= ' AND ct.`id_order` = '.$orderId;
         }
 
         $mainSql .= ' GROUP BY cm.id_customer_message

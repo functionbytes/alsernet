@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,16 +42,11 @@ use PrestaShopException;
  */
 final class AddOrderMessageHandler implements AddOrderMessageHandlerInterface
 {
-    /**
-     * @param AddOrderMessageCommand $command
-     *
-     * @return OrderMessageId
-     */
     public function handle(AddOrderMessageCommand $command): OrderMessageId
     {
         $this->assertNameIsNotAlreadyUsed($command);
 
-        $orderMessage = new OrderMessage();
+        $orderMessage = new OrderMessage;
 
         $orderMessage->name = $command->getLocalizedName();
         $orderMessage->message = $command->getLocalizedMessage();
@@ -63,7 +59,7 @@ final class AddOrderMessageHandler implements AddOrderMessageHandlerInterface
         }
 
         try {
-            if (false === $orderMessage->add()) {
+            if ($orderMessage->add() === false) {
                 throw new OrderMessageException('Failed to add order message');
             }
         } catch (PrestaShopException $e) {
@@ -77,7 +73,7 @@ final class AddOrderMessageHandler implements AddOrderMessageHandlerInterface
     {
         foreach ($command->getLocalizedName() as $langId => $langName) {
             $orderMessages = OrderMessage::getOrderMessages($langId);
-            if (!is_array($orderMessages)) {
+            if (! is_array($orderMessages)) {
                 continue;
             }
             foreach ($orderMessages as $orderMessage) {

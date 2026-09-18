@@ -48,9 +48,6 @@ final class CloseShowcaseCardHandler implements CloseShowcaseCardHandlerInterfac
 
     /**
      * CloseShowcaseCardHandler constructor.
-     *
-     * @param ConfigurationInterface $configuration
-     * @param ConfigurationMap $configurationMap
      */
     public function __construct(ConfigurationInterface $configuration, ConfigurationMap $configurationMap)
     {
@@ -58,9 +55,6 @@ final class CloseShowcaseCardHandler implements CloseShowcaseCardHandlerInterfac
         $this->configurationMap = $configurationMap;
     }
 
-    /**
-     * @param CloseShowcaseCardCommand $command
-     */
     public function handle(CloseShowcaseCardCommand $command)
     {
         $configurationName = $this->configurationMap->getConfigurationNameForClosedStatus($command->getShowcaseCard());

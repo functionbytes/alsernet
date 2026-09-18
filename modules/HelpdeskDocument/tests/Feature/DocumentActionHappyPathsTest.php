@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Modules\Document\Entities\Document;
+use Modules\Document\Entities\DocumentStatus;
 use Modules\Document\Jobs\MailTemplateJob;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
@@ -143,6 +144,33 @@ class DocumentActionHappyPathsTest extends HelpdeskTestCase
             ->assertJson(['success' => true]);
 
         $this->assertCount(0, $document->fresh()->getMedia('additional_attachments'));
+    }
+
+    /**
+     * BUG-04: un adjunto adicional no es un documento requerido — borrarlo no
+     * debe reabrir un expediente ya aprobado/completado devolviéndolo a
+     * "awaiting_documents" (root cause en DocumentValidationController::
+     * deleteAdditionalAttachment, que cambiaba el estado incondicionalmente).
+     */
+    public function test_deleting_internal_attachment_does_not_reopen_an_approved_document(): void
+    {
+        [$conversation, $document] = $this->makeOwnedExpediente();
+
+        $media = $document
+            ->addMedia(UploadedFile::fake()->create('borrar.pdf', 80, 'application/pdf'))
+            ->toMediaCollection('additional_attachments');
+
+        $approvedStatus = DocumentStatus::query()->where('key', 'approved')->first()
+            ?? DocumentStatus::query()->create(['key' => 'approved', 'label' => 'Aprobado']);
+        $document->update(['status_id' => $approvedStatus->id]);
+
+        $this->actingAs($this->manager)
+            ->deleteJson($this->urlFor('delete-attachment', $conversation, $document, $media->id))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertCount(0, $document->fresh()->getMedia('additional_attachments'));
+        $this->assertSame($approvedStatus->id, $document->fresh()->status_id);
     }
 
     // ─── Subida de documentación del expediente ───────────────────────────────

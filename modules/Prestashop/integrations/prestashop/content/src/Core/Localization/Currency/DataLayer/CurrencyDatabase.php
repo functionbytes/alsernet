@@ -55,9 +55,6 @@ class CurrencyDatabase extends AbstractDataLayer implements CurrencyDataLayerInt
      */
     protected $isWritable = false;
 
-    /**
-     * @param CurrencyDataProvider $dataProvider
-     */
     public function __construct(
         CurrencyDataProvider $dataProvider
     ) {
@@ -69,8 +66,7 @@ class CurrencyDatabase extends AbstractDataLayer implements CurrencyDataLayerInt
      * When reading data, if nothing is found then it will try to read in the lower data layer
      * When writing data, the data will also be written in the lower data layer.
      *
-     * @param currencyDataLayerInterface $lowerLayer The lower data layer
-     *
+     * @param  CurrencyDataLayerInterface  $lowerLayer  The lower data layer
      * @return self
      */
     public function setLowerLayer(CurrencyDataLayerInterface $lowerLayer)
@@ -85,27 +81,26 @@ class CurrencyDatabase extends AbstractDataLayer implements CurrencyDataLayerInt
      *
      * Data is read into database
      *
-     * @param LocalizedCurrencyId $currencyDataId The CurrencyData object identifier (currency code + locale code)
-     *
+     * @param  LocalizedCurrencyId  $currencyDataId  The CurrencyData object identifier (currency code + locale code)
      * @return CurrencyData|null The wanted CurrencyData object (null if not found)
      *
      * @throws LocalizationException When $currencyDataId is invalid
      */
     protected function doRead($currencyDataId)
     {
-        if (!$currencyDataId instanceof LocalizedCurrencyId) {
-            throw new LocalizationException('First parameter must be an instance of ' . LocalizedCurrencyId::class);
+        if (! $currencyDataId instanceof LocalizedCurrencyId) {
+            throw new LocalizationException('First parameter must be an instance of '.LocalizedCurrencyId::class);
         }
 
         $localeCode = $currencyDataId->getLocaleCode();
         $currencyCode = $currencyDataId->getCurrencyCode();
         $currencyEntity = $this->dataProvider->getCurrencyByIsoCodeAndLocale($currencyCode, $localeCode);
 
-        if (null === $currencyEntity) {
+        if ($currencyEntity === null) {
             return null;
         }
 
-        $currencyData = new CurrencyData();
+        $currencyData = new CurrencyData;
         $currencyData->setIsoCode($currencyEntity->iso_code);
         $currencyData->setNumericIsoCode($currencyEntity->numeric_iso_code);
         $currencyData->setPrecision($currencyEntity->precision);
@@ -114,7 +109,7 @@ class CurrencyDatabase extends AbstractDataLayer implements CurrencyDataLayerInt
 
         $idLang = Language::getIdByLocale($localeCode, true);
         $currencyPattern = $currencyEntity->getPattern($idLang);
-        if (!empty($currencyPattern)) {
+        if (! empty($currencyPattern)) {
             $currencyData->setPatterns([$localeCode => $currencyEntity->getPattern($idLang)]);
         }
 
@@ -125,8 +120,8 @@ class CurrencyDatabase extends AbstractDataLayer implements CurrencyDataLayerInt
      * Actually write a data object into the current layer
      * Here, this is a DB insert/update...
      *
-     * @param LocalizedCurrencyId $currencyDataId The CurrencyData object identifier (currency code + locale code)
-     * @param CurrencyData $currencyData The data object to be written
+     * @param  LocalizedCurrencyId  $currencyDataId  The CurrencyData object identifier (currency code + locale code)
+     * @param  CurrencyData  $currencyData  The data object to be written
      *
      * @throws DataLayerException If something goes wrong when trying to write into DB
      * @throws LocalizationException When $currencyDataId is invalid

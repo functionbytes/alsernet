@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,8 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextIdLang;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
-     * @param int $contextIdLang
+     * @param  string  $dbPrefix
+     * @param  int  $contextIdLang
      */
     public function __construct(
         Connection $connection,
@@ -113,7 +111,6 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with the common sql for catalog price rule listing.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -121,28 +118,28 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'specific_price_rule', 'pr')
+            ->from($this->dbPrefix.'specific_price_rule', 'pr')
             ->leftJoin(
                 'pr',
-                $this->dbPrefix . 'shop',
+                $this->dbPrefix.'shop',
                 'pr_shop',
                 'pr_shop.`id_shop` = pr.`id_shop` AND pr.`id_shop` IN (:contextShopIds)'
             )
             ->leftJoin(
                 'pr',
-                $this->dbPrefix . 'currency_lang',
+                $this->dbPrefix.'currency_lang',
                 'pr_currency',
                 'pr_currency.`id_currency` = pr.`id_currency` AND pr_currency.`id_lang` = :contextLangId'
             )
             ->leftJoin(
                 'pr',
-                $this->dbPrefix . 'country_lang',
+                $this->dbPrefix.'country_lang',
                 'pr_country',
                 'pr_country.`id_country` = pr.`id_country` AND pr_country.`id_lang` = :contextLangId'
             )
             ->leftJoin(
                 'pr',
-                $this->dbPrefix . 'group_lang',
+                $this->dbPrefix.'group_lang',
                 'pr_group',
                 'pr_group.`id_group` = pr.`id_group` AND pr_group.`id_lang` = :contextLangId'
             );
@@ -154,10 +151,6 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param array $filters
-     */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
         $allowedFiltersAliasMap = [
@@ -177,25 +170,25 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
         $exactMatchFilters = ['id_specific_price_rule', 'from_quantity', 'reduction_type'];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersAliasMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersAliasMap)) {
                 return;
             }
 
             if (in_array($filterName, $exactMatchFilters, true)) {
-                $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' = :' . $filterName);
+                $qb->andWhere($allowedFiltersAliasMap[$filterName].' = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            if ('date_from' === $filterName || 'date_to' === $filterName) {
+            if ($filterName === 'date_from' || $filterName === 'date_to') {
                 if (isset($value['from'])) {
-                    $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' >= :' . $filterName . '_from');
-                    $qb->setParameter($filterName . '_from', $value['from']);
+                    $qb->andWhere($allowedFiltersAliasMap[$filterName].' >= :'.$filterName.'_from');
+                    $qb->setParameter($filterName.'_from', $value['from']);
                 }
                 if (isset($value['to'])) {
-                    $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' <= :' . $filterName . '_to');
-                    $qb->setParameter($filterName . '_to', $value['to']);
+                    $qb->andWhere($allowedFiltersAliasMap[$filterName].' <= :'.$filterName.'_to');
+                    $qb->setParameter($filterName.'_to', $value['to']);
                 }
 
                 continue;
@@ -208,24 +201,23 @@ final class CatalogPriceRuleQueryBuilder extends AbstractDoctrineQueryBuilder
                 // searching for "10" will return both 10.0, 10.1 and 10.2
                 // searching for "10.0" will only return 10.0
                 // searching for "10.1" will only return 10.1
-                $qb->andWhere('TRUNCATE(' . $allowedFiltersAliasMap[$filterName] . ',' . $numberOfDecimals . ') = :' . $filterName);
+                $qb->andWhere('TRUNCATE('.$allowedFiltersAliasMap[$filterName].','.$numberOfDecimals.') = :'.$filterName);
                 $qb->setParameter($filterName, $value);
+
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersAliasMap[$filterName] . ' LIKE :' . $filterName);
+            $qb->andWhere($allowedFiltersAliasMap[$filterName].' LIKE :'.$filterName);
             $qb->setParameter($filterName, "%$value%");
         }
     }
 
     /**
-     * @param string $value
-     *
-     * @return int
+     * @param  string  $value
      */
     private function findNumberOfDecimals($value): int
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new InvalidArgumentException('Expected string');
         }
 

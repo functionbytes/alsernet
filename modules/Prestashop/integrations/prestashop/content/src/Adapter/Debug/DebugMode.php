@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,10 +35,15 @@ use Tools;
 class DebugMode
 {
     public const DEBUG_MODE_SUCCEEDED = 0;
+
     public const DEBUG_MODE_ERROR_NO_READ_ACCESS = 1;
+
     public const DEBUG_MODE_ERROR_NO_READ_ACCESS_CUSTOM = 2;
+
     public const DEBUG_MODE_ERROR_NO_WRITE_ACCESS = 3;
+
     public const DEBUG_MODE_ERROR_NO_WRITE_ACCESS_CUSTOM = 4;
+
     public const DEBUG_MODE_ERROR_NO_DEFINITION_FOUND = 5;
 
     /**
@@ -48,21 +54,21 @@ class DebugMode
     public function isDebugModeEnabled()
     {
         $definesClean = '';
-        $customDefinesPath = _PS_ROOT_DIR_ . '/config/defines_custom.inc.php';
-        $definesPath = _PS_ROOT_DIR_ . '/config/defines.inc.php';
+        $customDefinesPath = _PS_ROOT_DIR_.'/config/defines_custom.inc.php';
+        $definesPath = _PS_ROOT_DIR_.'/config/defines.inc.php';
 
         if (is_readable($customDefinesPath)) {
             $definesClean = php_strip_whitespace($customDefinesPath);
         }
 
-        if (!preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $definesClean, $debugModeValue)) {
+        if (! preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $definesClean, $debugModeValue)) {
             $definesClean = php_strip_whitespace($definesPath);
-            if (!preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $definesClean, $debugModeValue)) {
+            if (! preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $definesClean, $debugModeValue)) {
                 return false;
             }
         }
 
-        return 'true' === Tools::strtolower($debugModeValue[1]);
+        return Tools::strtolower($debugModeValue[1]) === 'true';
     }
 
     /**
@@ -92,7 +98,7 @@ class DebugMode
      */
     private function isCustomDefinesReadable()
     {
-        return is_readable(_PS_ROOT_DIR_ . '/config/defines_custom.inc.php');
+        return is_readable(_PS_ROOT_DIR_.'/config/defines_custom.inc.php');
     }
 
     /**
@@ -102,28 +108,27 @@ class DebugMode
      */
     private function isMainDefinesReadable()
     {
-        return is_readable(_PS_ROOT_DIR_ . '/config/defines.inc.php');
+        return is_readable(_PS_ROOT_DIR_.'/config/defines.inc.php');
     }
 
     /**
      * Update Debug Mode value in main defines file.
      *
-     * @param string $value should be "true" or "false"
-     *
+     * @param  string  $value  should be "true" or "false"
      * @return int the debug mode
      */
     private function updateDebugModeValueInMainFile($value)
     {
-        $filename = _PS_ROOT_DIR_ . '/config/defines.inc.php';
+        $filename = _PS_ROOT_DIR_.'/config/defines.inc.php';
         $cleanedFileContent = php_strip_whitespace($filename);
         $fileContent = Tools::file_get_contents($filename);
 
-        if (!preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $cleanedFileContent)) {
+        if (! preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $cleanedFileContent)) {
             return self::DEBUG_MODE_ERROR_NO_DEFINITION_FOUND;
         }
 
-        $fileContent = preg_replace('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', 'define(\'_PS_MODE_DEV_\', ' . $value . ');', $fileContent);
-        if (!@file_put_contents($filename, $fileContent)) {
+        $fileContent = preg_replace('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', 'define(\'_PS_MODE_DEV_\', '.$value.');', $fileContent);
+        if (! @file_put_contents($filename, $fileContent)) {
             return self::DEBUG_MODE_ERROR_NO_WRITE_ACCESS;
         }
 
@@ -137,22 +142,21 @@ class DebugMode
     /**
      * Update Debug Mode value in custom defines file.
      *
-     * @param string $value should be "true" or "false"
-     *
+     * @param  string  $value  should be "true" or "false"
      * @return int Debug mode
      */
     private function updateDebugModeValueInCustomFile($value)
     {
-        $customFileName = _PS_ROOT_DIR_ . '/config/defines_custom.inc.php';
+        $customFileName = _PS_ROOT_DIR_.'/config/defines_custom.inc.php';
         $cleanedFileContent = php_strip_whitespace($customFileName);
         $fileContent = Tools::file_get_contents($customFileName);
 
-        if (!preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $cleanedFileContent)) {
+        if (! preg_match('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', $cleanedFileContent)) {
             return self::DEBUG_MODE_ERROR_NO_DEFINITION_FOUND;
         }
-        $fileContent = preg_replace('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', 'define(\'_PS_MODE_DEV_\', ' . $value . ');', $fileContent);
+        $fileContent = preg_replace('/define\(\'_PS_MODE_DEV_\', ([a-zA-Z]+)\);/Ui', 'define(\'_PS_MODE_DEV_\', '.$value.');', $fileContent);
 
-        if (!@file_put_contents($customFileName, $fileContent)) {
+        if (! @file_put_contents($customFileName, $fileContent)) {
             return self::DEBUG_MODE_ERROR_NO_WRITE_ACCESS_CUSTOM;
         }
 
@@ -166,8 +170,7 @@ class DebugMode
     /**
      * Change value of _PS_MODE_DEV_ constant.
      *
-     * @param string $value should be "true" or "false"
-     *
+     * @param  string  $value  should be "true" or "false"
      * @return int the debug mode
      */
     private function changePsModeDevValue($value)

@@ -19,16 +19,34 @@ use Throwable;
  * cualificada por nombre, sin conexión Eloquent propia, porque la conexión
  * 'prestashop' de config/database.php no está configurada en este entorno).
  *
- * LIMITACIÓN CONOCIDA: el cupón del día es el mismo para todos, así que
- * PrestaShop no sabe "a quién se lo mandamos". La atribución se hace cruzando
- * el email del pedido con los destinatarios de la campaña; quien lo reenvíe a
- * un amigo cuenta como canje del cupón pero no como canje atribuido.
+ * Gestión emite un bono POR CLIENTE, así que lo que se busca en PrestaShop son
+ * los códigos de los destinatarios («{idbono}-{cv}»), no un código de campaña:
+ * ese solo existe en las promociones antiguas de código único, y se sigue
+ * incluyendo para no perderlas.
+ *
+ * La atribución se hace igualmente cruzando el email del pedido con los
+ * destinatarios: quien reenvíe su código a un amigo cuenta como canje del bono
+ * pero no como canje atribuido.
  */
 class BirthdayRedemptionService
 {
+    /** Códigos por consulta: con un bono por cliente, la lista es larga. */
+    private const CODES_PER_QUERY = 2000;
+
     private string $db;
 
     private string $prefix;
+
+    /**
+     * Filas de canje ya leídas en esta petición, por campaña.
+     *
+     * El detalle de campaña pedía redeemersFor() y forCampaign(), y cada uno
+     * lanzaba el mismo JOIN de cuatro tablas contra PrestaShop con los mismos
+     * códigos: dos veces la consulta más cara de la pantalla para pintarla una.
+     *
+     * @var array<int, array<int, object>>
+     */
+    private array $rowsByCampaign = [];
 
     public function __construct()
     {
@@ -39,6 +57,49 @@ class BirthdayRedemptionService
     public function isAvailable(): bool
     {
         return $this->db !== '';
+    }
+
+    /**
+     * Los códigos con los que se puede haber canjeado esta campaña.
+     *
+     * Gestión emite un bono POR CLIENTE, así que lo que hay que buscar en
+     * PrestaShop son los códigos de los destinatarios —«{idbono}-{cv}», que es
+     * como se crea el cart_rule—, no el de la campaña. Ese solo existe en las
+     * promociones antiguas que repartían un único código a todo el mundo, y se
+     * incluye para no perderlas.
+     *
+     * @return array<int, string>
+     */
+    public function codesFor(BirthdayCampaign $campaign): array
+    {
+        $codes = $campaign->recipients()
+            ->withCoupon()
+            ->get(['coupon_code', 'coupon_verification_code'])
+            ->map(static fn (BirthdayRecipient $r): ?string => $r->publicCode())
+            ->filter()
+            ->all();
+
+        if ($campaign->coupon_code) {
+            $codes[] = (string) $campaign->coupon_code;
+        }
+
+        return array_values(array_unique($codes));
+    }
+
+    /**
+     * Desde cuándo buscar canjes de esta campaña.
+     *
+     * Con bono por cliente la validez vive en cada destinatario; se usa la más
+     * temprana, y como respaldo el día de la campaña. Acotar por fecha es lo
+     * que impide contar canjes de un código reutilizado en otra promoción.
+     */
+    private function since(BirthdayCampaign $campaign): ?string
+    {
+        $desde = $campaign->recipients()->withCoupon()->min('coupon_valid_from');
+
+        return $desde
+            ?? $campaign->coupon_valid_from?->toDateString()
+            ?? $campaign->campaign_date?->toDateString();
     }
 
     /**
@@ -58,15 +119,18 @@ class BirthdayRedemptionService
             'rate' => 0.0,
         ];
 
-        if (! $this->isAvailable() || ! $campaign->coupon_code) {
+        $codes = $this->isAvailable() ? $this->codesFor($campaign) : [];
+
+        if ($codes === []) {
             return $empty;
         }
 
         try {
-            $rows = $this->redemptionRows($campaign->coupon_code, $campaign->coupon_valid_from?->toDateString());
+            $rows = $this->rowsFor($campaign, $codes);
         } catch (Throwable $e) {
             Log::warning('[HelpdeskBirthday] No se pudieron leer los canjes en PrestaShop', [
-                'coupon' => $campaign->coupon_code,
+                'campaign_id' => $campaign->id,
+                'codes' => count($codes),
                 'error' => $e->getMessage(),
             ]);
 
@@ -120,22 +184,42 @@ class BirthdayRedemptionService
     {
         $empty = ['available' => false, 'redemptions' => 0, 'attributed' => 0, 'revenue' => 0.0, 'discount' => 0.0, 'rate' => 0.0];
 
-        $withCoupon = $campaigns->filter(fn (BirthdayCampaign $c): bool => (bool) $c->coupon_code);
-
-        if (! $this->isAvailable() || $withCoupon->isEmpty()) {
+        if (! $this->isAvailable() || $campaigns->isEmpty()) {
             return $empty;
         }
 
-        // La ventana arranca en el inicio de validez más antiguo: acotar por
-        // fecha es lo que impide contar canjes de campañas anteriores que
-        // reutilizaran el mismo código.
-        $since = $withCoupon
-            ->map(fn (BirthdayCampaign $c): ?string => $c->coupon_valid_from?->toDateString())
+        // Todos los bonos emitidos en el periodo, de una consulta: con bono por
+        // cliente son los códigos de los destinatarios, no los de las campañas.
+        $codes = BirthdayRecipient::query()
+            ->whereIn('campaign_id', $campaigns->pluck('id'))
+            ->withCoupon()
+            ->get(['coupon_code', 'coupon_verification_code'])
+            ->map(static fn (BirthdayRecipient $r): ?string => $r->publicCode())
+            ->filter()
+            ->all();
+
+        foreach ($campaigns as $campaign) {
+            if ($campaign->coupon_code) {
+                $codes[] = (string) $campaign->coupon_code;
+            }
+        }
+
+        $codes = array_values(array_unique($codes));
+
+        if ($codes === []) {
+            return $empty;
+        }
+
+        // La ventana arranca en la campaña más antigua: acotar por fecha es lo
+        // que impide contar canjes de promociones anteriores que reutilizaran
+        // el mismo código.
+        $since = $campaigns
+            ->map(fn (BirthdayCampaign $c): ?string => $c->coupon_valid_from?->toDateString() ?? $c->campaign_date?->toDateString())
             ->filter()
             ->min();
 
         try {
-            $rows = $this->redemptionRowsForCodes($withCoupon->pluck('coupon_code')->unique()->all(), $since);
+            $rows = $this->redemptionRowsForCodes($codes, $since);
         } catch (Throwable $e) {
             Log::warning('[HelpdeskBirthday] No se pudieron leer los canjes agregados', ['error' => $e->getMessage()]);
 
@@ -144,7 +228,7 @@ class BirthdayRedemptionService
 
         // Destinatarios de todas las campañas del periodo, de una consulta.
         $sentTo = BirthdayRecipient::query()
-            ->whereIn('campaign_id', $withCoupon->pluck('id'))
+            ->whereIn('campaign_id', $campaigns->pluck('id'))
             ->where('status', BirthdayRecipient::STATUS_SENT)
             ->pluck('email')
             ->map(static fn (string $e): string => mb_strtolower($e))
@@ -163,7 +247,7 @@ class BirthdayRedemptionService
             }
         }
 
-        $sent = (int) $withCoupon->sum('sent_count');
+        $sent = (int) $campaigns->sum('sent_count');
 
         return [
             'available' => true,
@@ -182,12 +266,14 @@ class BirthdayRedemptionService
      */
     public function redeemersFor(BirthdayCampaign $campaign): array
     {
-        if (! $this->isAvailable() || ! $campaign->coupon_code) {
+        $codes = $this->isAvailable() ? $this->codesFor($campaign) : [];
+
+        if ($codes === []) {
             return [];
         }
 
         try {
-            $rows = $this->redemptionRows($campaign->coupon_code, $campaign->coupon_valid_from?->toDateString());
+            $rows = $this->rowsFor($campaign, $codes);
         } catch (Throwable) {
             return [];
         }
@@ -219,44 +305,60 @@ class BirthdayRedemptionService
      */
     public function detailFor(BirthdayCampaign $campaign): array
     {
-        if (! $this->isAvailable() || ! $campaign->coupon_code) {
+        $codes = $this->isAvailable() ? $this->codesFor($campaign) : [];
+
+        if ($codes === []) {
             return [];
         }
 
         $db = $this->db;
         $pfx = $this->prefix;
-        $since = $campaign->coupon_valid_from?->toDateString();
+        $since = $this->since($campaign);
 
         try {
-            $rows = DB::table("{$db}.{$pfx}order_cart_rule as ocr")
-                ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
-                ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
-                ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
-                ->leftJoin("{$db}.{$pfx}order_state_lang as osl", function ($j): void {
-                    $j->on('osl.id_order_state', '=', 'o.current_state')->where('osl.id_lang', '=', 1);
-                })
-                // El canje del bono contra gestión: puede no existir si el
-                // cupón se aplicó sin pasar por el flujo del ERP.
-                ->leftJoin("{$db}.{$pfx}marcarbono as mb", function ($j): void {
-                    $j->on('mb.id_order', '=', 'o.id_order')->where('mb.deleted', '=', 0);
-                })
-                ->where('cr.code', $campaign->coupon_code)
-                ->where('ocr.deleted', 0)
-                ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
-                ->orderByDesc('o.date_add')
-                ->select([
-                    'c.email', 'c.id_customer',
-                    'o.id_order', 'o.reference', 'o.total_paid', 'o.date_add', 'o.valid',
-                    'osl.name as order_state',
-                    'ocr.value as discount',
-                    'mb.operacion as erp_operation',
-                    'mb.erp_response',
-                    'mb.date_add as erp_marked_at',
-                ])
-                ->get();
+            // Por bloques, igual que redemptionRowsForCodes(): era el único
+            // sitio que montaba el IN entero, y con un bono por cliente esta
+            // lista ya no son 30 códigos sino uno por cumpleañero.
+            $rows = collect();
+
+            foreach (array_chunk($codes, self::CODES_PER_QUERY) as $chunk) {
+                $batch = DB::table("{$db}.{$pfx}order_cart_rule as ocr")
+                    ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
+                    ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
+                    ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
+                    ->leftJoin("{$db}.{$pfx}order_state_lang as osl", function ($j): void {
+                        $j->on('osl.id_order_state', '=', 'o.current_state')->where('osl.id_lang', '=', 1);
+                    })
+                    // El canje del bono contra gestión: puede no existir si el
+                    // cupón se aplicó sin pasar por el flujo del ERP.
+                    ->leftJoin("{$db}.{$pfx}marcarbono as mb", function ($j): void {
+                        $j->on('mb.id_order', '=', 'o.id_order')->where('mb.deleted', '=', 0);
+                    })
+                    ->whereIn('cr.code', $chunk)
+                    ->where('ocr.deleted', 0)
+                    ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
+                    ->select([
+                        'cr.code as coupon_code',
+                        'c.email', 'c.id_customer',
+                        'o.id_order', 'o.reference', 'o.total_paid', 'o.date_add', 'o.valid',
+                        'osl.name as order_state',
+                        'ocr.value as discount',
+                        'mb.operacion as erp_operation',
+                        'mb.erp_response',
+                        'mb.date_add as erp_marked_at',
+                    ])
+                    ->get();
+
+                $rows = $rows->concat($batch);
+            }
+
+            // El orden se aplica sobre el total: ordenar cada bloque dejaba la
+            // tabla agrupada por bloque, no por fecha.
+            $rows = $rows->sortByDesc('date_add')->values();
         } catch (Throwable $e) {
             Log::warning('[HelpdeskBirthday] No se pudo leer el detalle de canjes', [
-                'coupon' => $campaign->coupon_code,
+                'campaign_id' => $campaign->id,
+                'codes' => count($codes),
                 'error' => $e->getMessage(),
             ]);
 
@@ -277,6 +379,9 @@ class BirthdayRedemptionService
                 'email' => $email,
                 'name' => $recipient->name ?? null,
                 'attributed' => $recipient !== null,
+                // Con bono por cliente, cuál fue el que se gastó: es lo que
+                // hace falta para reintentar el marcado en Gestión.
+                'coupon_code' => (string) $row->coupon_code,
                 'erp_customer_id' => $recipient->erp_customer_id ?? null,
                 'ps_customer_id' => (int) $row->id_customer,
                 'order_id' => (int) $row->id_order,
@@ -296,14 +401,28 @@ class BirthdayRedemptionService
     }
 
     /**
+     * Las filas de canje de una campaña, leídas UNA vez por petición.
+     *
+     * forCampaign() y redeemersFor() necesitan exactamente lo mismo y el
+     * detalle de campaña llama a los dos, así que sin esto la pantalla lanzaba
+     * dos veces el JOIN más caro que tiene contra PrestaShop.
+     *
+     * La memoria vive lo que vive la instancia del servicio —una petición—, así
+     * que no hay riesgo de servir un canje viejo en la siguiente carga.
+     *
+     * @param  array<int, string>  $codes
      * @return array<int, object>
      */
-    private function redemptionRows(string $code, ?string $since): array
+    private function rowsFor(BirthdayCampaign $campaign, array $codes): array
     {
-        return $this->redemptionRowsForCodes([$code], $since);
+        return $this->rowsByCampaign[$campaign->id] ??= $this->redemptionRowsForCodes($codes, $this->since($campaign));
     }
 
     /**
+     * Con bono por cliente esta lista ya no son 30 códigos sino uno por
+     * cumpleañero: 90 días de campañas pasan de 50.000. Se consulta por bloques
+     * para no armar un IN que MySQL rechace ni una consulta de megabytes.
+     *
      * @param  array<int, string>  $codes
      * @return array<int, object>
      */
@@ -315,24 +434,31 @@ class BirthdayRedemptionService
 
         $db = $this->db;
         $pfx = $this->prefix;
+        $rows = [];
 
-        return DB::table("{$db}.{$pfx}order_cart_rule as ocr")
-            ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
-            ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
-            ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
-            ->whereIn('cr.code', $codes)
-            ->where('ocr.deleted', 0)
-            // El código del cupón puede reutilizarse entre campañas; acotar
-            // desde el inicio de validez evita contar canjes de otro día.
-            ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
-            ->select([
-                'c.email',
-                'o.id_order',
-                'o.total_paid',
-                'o.date_add',
-                'ocr.value',
-            ])
-            ->get()
-            ->all();
+        foreach (array_chunk($codes, self::CODES_PER_QUERY) as $chunk) {
+            $batch = DB::table("{$db}.{$pfx}order_cart_rule as ocr")
+                ->join("{$db}.{$pfx}cart_rule as cr", 'cr.id_cart_rule', '=', 'ocr.id_cart_rule')
+                ->join("{$db}.{$pfx}orders as o", 'o.id_order', '=', 'ocr.id_order')
+                ->join("{$db}.{$pfx}customer as c", 'c.id_customer', '=', 'o.id_customer')
+                ->whereIn('cr.code', $chunk)
+                ->where('ocr.deleted', 0)
+                // El código del cupón puede reutilizarse entre campañas; acotar
+                // desde el inicio de validez evita contar canjes de otro día.
+                ->when($since !== null, fn ($q) => $q->whereDate('o.date_add', '>=', $since))
+                ->select([
+                    'c.email',
+                    'o.id_order',
+                    'o.total_paid',
+                    'o.date_add',
+                    'ocr.value',
+                ])
+                ->get()
+                ->all();
+
+            $rows = array_merge($rows, $batch);
+        }
+
+        return $rows;
     }
 }

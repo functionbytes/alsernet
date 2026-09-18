@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,12 +67,7 @@ class TranslationCatalogueBuilder
      * Each domain will have counters (number of items and missing translations) as metadata.
      * 'Normalization' will add extra data.
      *
-     * @param ProviderDefinitionInterface $providerDefinition Translation storage provider configuration
-     * @param string $locale
-     * @param string $domain
-     * @param array $search
-     *
-     * @return array
+     * @param  ProviderDefinitionInterface  $providerDefinition  Translation storage provider configuration
      *
      * @throws TranslationFilesNotFoundException
      * @throws UnexpectedTranslationTypeException
@@ -99,7 +95,7 @@ class TranslationCatalogueBuilder
             $catalogueDomain
         )->getDomain($catalogueDomain);
 
-        if (null === $domainTranslation) {
+        if ($domainTranslation === null) {
             $domainTranslation = new Domain($catalogueDomain);
         }
 
@@ -122,11 +118,7 @@ class TranslationCatalogueBuilder
      * User-translated will override file-translated, which will override default catalogue.
      * Each domain will have counters (number of items and missing translations) as metadata.
      *
-     * @param ProviderDefinitionInterface $providerDefinition Translation storage provider configuration
-     * @param string $locale
-     * @param array $search
-     *
-     * @return array
+     * @param  ProviderDefinitionInterface  $providerDefinition  Translation storage provider configuration
      *
      * @throws TranslationFilesNotFoundException
      * @throws UnexpectedTranslationTypeException
@@ -150,12 +142,7 @@ class TranslationCatalogueBuilder
      * User-translated will override file-translated, which will override default catalogue.
      * Each domain will have counters (number of items and missing translations) as metadata.
      *
-     * @param ProviderDefinitionInterface $providerDefinition Translation storage provider configuration
-     * @param string $locale
-     * @param array $search
-     * @param string|null $domain
-     *
-     * @return Catalogue
+     * @param  ProviderDefinitionInterface  $providerDefinition  Translation storage provider configuration
      *
      * @throws TranslationFilesNotFoundException
      * @throws UnexpectedTranslationTypeException
@@ -171,18 +158,18 @@ class TranslationCatalogueBuilder
         $provider = $this->catalogueProviderFactory->getProvider($providerDefinition);
 
         $defaultCatalogue = $provider->getDefaultCatalogue($locale);
-        if (null === $domain) {
+        if ($domain === null) {
             $defaultCatalogueMessages = $defaultCatalogue->all();
         } else {
             $defaultCatalogueMessages = [$domain => $defaultCatalogue->all($domain)];
         }
         if (empty($defaultCatalogueMessages)) {
-            return new Catalogue();
+            return new Catalogue;
         }
         $fileTranslatedCatalogue = $provider->getFileTranslatedCatalogue($locale);
         $userTranslatedCatalogue = $provider->getUserTranslatedCatalogue($locale);
 
-        $catalogue = new Catalogue();
+        $catalogue = new Catalogue;
         foreach ($defaultCatalogueMessages as $domainName => $messages) {
             $domainName = (string) $domainName;
             $domainTranslation = new Domain($domainName);
@@ -209,10 +196,7 @@ class TranslationCatalogueBuilder
     }
 
     /**
-     * @param ProviderDefinitionInterface $providerDefinition Translation storage provider configuration
-     * @param string $locale
-     * @param array $search
-     * @param string|null $domain
+     * @param  ProviderDefinitionInterface  $providerDefinition  Translation storage provider configuration
      *
      * @throws UnexpectedTranslationTypeException
      */
@@ -222,10 +206,10 @@ class TranslationCatalogueBuilder
         array $search,
         ?string $domain = null
     ): void {
-        if (!in_array($providerDefinition->getType(), ProviderDefinitionInterface::ALLOWED_TYPES)) {
+        if (! in_array($providerDefinition->getType(), ProviderDefinitionInterface::ALLOWED_TYPES)) {
             throw new UnexpectedTranslationTypeException('This \'type\' param is not valid.');
         }
-        if (null !== $domain && empty($domain)) {
+        if ($domain !== null && empty($domain)) {
             throw new InvalidArgumentException('The given \'domain\' is not valid.');
         }
     }

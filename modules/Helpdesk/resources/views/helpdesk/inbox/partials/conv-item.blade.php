@@ -6,6 +6,9 @@
         request()->only(['inbox', 'channel', 'tag', 'urgent', 'vip', 'mine', 'unread', 'archived', 'status', 'group', 'priority', 'search', 'viewId']),
         ['selected' => $conv['id']]
     );
+
+    // Same map used in thread.blade.php / kanban.blade.php / right-panel.blade.php.
+    $priorityLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
 @endphp
 <div class="bv-conv {{ ($conv['on'] ?? false) ? 'on' : '' }} {{ ($conv['unread'] ?? 0) > 0 ? 'unread' : '' }} {{ ($conv['urgent'] ?? false) ? 'urgent' : '' }}"
      draggable="true"
@@ -34,7 +37,7 @@
                     </span>
                 @endif
                 @if(!empty($conv['priority']) && $conv['priority'] !== 'normal')
-                    <span class="bv-tag {{ $conv['priority'] }}">{{ $conv['priority'] }}</span>
+                    <span class="bv-tag {{ $conv['priority'] }}">{{ $priorityLabels[$conv['priority']] ?? $conv['priority'] }}</span>
                 @endif
                 @if(($conv['unread'] ?? 0) > 0)
                     <span class="bv-ucount">{{ ($conv['unread'] ?? 0) > 9 ? '9+' : $conv['unread'] }}</span>

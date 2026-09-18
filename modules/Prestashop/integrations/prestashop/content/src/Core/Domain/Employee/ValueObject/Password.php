@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ class Password
     private $password;
 
     /**
-     * @param string $password
+     * @param  string  $password
      */
     public function __construct($password)
     {
@@ -67,13 +68,13 @@ class Password
     }
 
     /**
-     * @param string $password
+     * @param  string  $password
      */
     private function assertPasswordIsWithinAllowedLength($password)
     {
         $length = function_exists('mb_strlen') ? mb_strlen($password, 'UTF-8') : strlen($password);
 
-        if (self::MIN_LENGTH > $length || $length > self::MAX_LENGTH) {
+        if ($length < self::MIN_LENGTH || $length > self::MAX_LENGTH) {
             throw new EmployeeConstraintException(sprintf('Employee password length must be between %s and %s', self::MIN_LENGTH, self::MAX_LENGTH), EmployeeConstraintException::INVALID_PASSWORD);
         }
     }

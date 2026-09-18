@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,10 +39,9 @@ interface TranslatorInterface extends SymfonyTranslatorInterface
      * Performs a reverse search in the catalogue and returns the translation key if found.
      * AVOID USING THIS, IT PROVIDES APPROXIMATE RESULTS.
      *
-     * @param string $translated Translated string
-     * @param string $domain Translation domain
-     * @param string|null $locale Unused
-     *
+     * @param  string  $translated  Translated string
+     * @param  string  $domain  Translation domain
+     * @param  string|null  $locale  Unused
      * @return string The translation
      *
      * @deprecated This method should not be used and will be removed
@@ -49,14 +49,13 @@ interface TranslatorInterface extends SymfonyTranslatorInterface
     public function getSourceString($translated, $domain, $locale = null);
 
     /**
-     * @param string $locale Locale code for the catalogue to check if loaded
-     *
+     * @param  string  $locale  Locale code for the catalogue to check if loaded
      * @return bool
      */
     public function isLanguageLoaded($locale);
 
     /**
-     * @param string $locale Locale code for the catalogue to be cleared
+     * @param  string  $locale  Locale code for the catalogue to be cleared
      */
     public function clearLanguage($locale);
 }

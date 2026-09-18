@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,13 +59,13 @@ final class GetLanguageForEditingHandler implements GetLanguageForEditingHandler
             $language->date_format_full,
             (bool) $language->is_rtl,
             (bool) $language->active,
-            array_map(function ($shopId) { return (int) $shopId; }, $language->getAssociatedShops())
+            array_map(function ($shopId) {
+                return (int) $shopId;
+            }, $language->getAssociatedShops())
         );
     }
 
     /**
-     * @param LanguageId $languageId
-     *
      * @return Language
      */
     private function getLegacyLanguageObject(LanguageId $languageId)

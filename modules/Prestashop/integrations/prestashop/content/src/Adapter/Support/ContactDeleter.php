@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,7 +38,6 @@ final class ContactDeleter
     /**
      * Delete contacts by given IDs.
      *
-     * @param array $contactIds
      *
      * @return array of errors
      */
@@ -59,7 +59,7 @@ final class ContactDeleter
         $contactCollection->where('id_contact', 'in', $contactIds);
 
         foreach ($contactCollection as $contact) {
-            if (!$contact->delete()) {
+            if (! $contact->delete()) {
                 $errors[] = [
                     'key' => 'Can\'t delete #%id%',
                     'parameters' => [

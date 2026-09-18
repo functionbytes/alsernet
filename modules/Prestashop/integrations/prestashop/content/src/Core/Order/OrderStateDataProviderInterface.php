@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface OrderStateDataProviderInterface
     /**
      * Get order states in given language.
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array
      */
     public function getOrderStates($languageId);

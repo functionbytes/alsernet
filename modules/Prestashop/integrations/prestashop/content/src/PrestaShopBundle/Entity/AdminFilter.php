@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ use Doctrine\ORM\Mapping as ORM;
  * AdminFilter.
  *
  * @ORM\Table(uniqueConstraints={@ORM\UniqueConstraint(name="admin_filter_search_id_idx", columns={"employee", "shop", "controller", "action", "filter_id"})})
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\AdminFilterRepository")
  */
 class AdminFilter
@@ -40,7 +42,9 @@ class AdminFilter
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -100,8 +104,7 @@ class AdminFilter
     /**
      * Set employee.
      *
-     * @param int $employee
-     *
+     * @param  int  $employee
      * @return AdminFilter
      */
     public function setEmployee($employee)
@@ -124,8 +127,7 @@ class AdminFilter
     /**
      * Set shop.
      *
-     * @param int $shop
-     *
+     * @param  int  $shop
      * @return AdminFilter
      */
     public function setShop($shop)
@@ -148,8 +150,7 @@ class AdminFilter
     /**
      * Set controller.
      *
-     * @param string $controller
-     *
+     * @param  string  $controller
      * @return AdminFilter
      */
     public function setController($controller)
@@ -172,8 +173,7 @@ class AdminFilter
     /**
      * Set action.
      *
-     * @param string $action
-     *
+     * @param  string  $action
      * @return AdminFilter
      */
     public function setAction($action)
@@ -196,8 +196,7 @@ class AdminFilter
     /**
      * Set filter.
      *
-     * @param string $filter
-     *
+     * @param  string  $filter
      * @return AdminFilter
      */
     public function setFilter($filter)
@@ -226,8 +225,7 @@ class AdminFilter
     }
 
     /**
-     * @param string $filterId
-     *
+     * @param  string  $filterId
      * @return AdminFilter
      */
     public function setFilterId($filterId)
@@ -285,8 +283,7 @@ class AdminFilter
      *
      * Filters input data to keep only Product catalog filters, and encode it.
      *
-     * @param array $filter
-     *
+     * @param  array  $filter
      * @return AdminFilter tis object for fluent chaining
      */
     public function setProductCatalogFilter($filter)
@@ -303,7 +300,6 @@ class AdminFilter
     /**
      * Sanitize filter parameters.
      *
-     * @param array $filter
      *
      * @return mixed
      */
@@ -313,17 +309,17 @@ class AdminFilter
             return function ($subject) use ($filter) {
                 $operator = null;
 
-                if (false !== strpos($subject, '<=')) {
+                if (strpos($subject, '<=') !== false) {
                     $operator = '<=';
                 }
 
-                if (false !== strpos($subject, '>=')) {
+                if (strpos($subject, '>=') !== false) {
                     $operator = '>=';
                 }
 
-                if (null === $operator) {
+                if ($operator === null) {
                     $pattern = '#BETWEEN (?P<min>\d+\.?\d*) AND (?P<max>\d+\.?\d*)#';
-                    if (0 === preg_match($pattern, $subject, $matches)) {
+                    if (preg_match($pattern, $subject, $matches) === 0) {
                         return '';
                     }
 
@@ -337,11 +333,11 @@ class AdminFilter
                     }
 
                     $filteredSubjectWithoutOperator = filter_var($subjectWithoutOperator, $filter, $flag);
-                    if (!$filteredSubjectWithoutOperator) {
+                    if (! $filteredSubjectWithoutOperator) {
                         $filteredSubjectWithoutOperator = 0;
                     }
 
-                    return $operator . $filteredSubjectWithoutOperator;
+                    return $operator.$filteredSubjectWithoutOperator;
                 }
             };
         };

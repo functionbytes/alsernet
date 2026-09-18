@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,8 @@ class SetPackProductsCommand
     private $products;
 
     /**
-     * @param int $packId
-     * @param array $products array of elements where each element contains product information
-     *                        which allows building @var QuantifiedProduct
+     * @param  array  $products  array of elements where each element contains product information
+     *                           which allows building @var QuantifiedProduct
      */
     public function __construct(int $packId, array $products)
     {
@@ -59,9 +59,6 @@ class SetPackProductsCommand
         $this->setProducts($products);
     }
 
-    /**
-     * @return PackId
-     */
     public function getPackId(): PackId
     {
         return $this->packId;
@@ -75,9 +72,6 @@ class SetPackProductsCommand
         return $this->products;
     }
 
-    /**
-     * @param array $products
-     */
     private function setProducts(array $products): void
     {
         if (empty($products)) {
@@ -100,8 +94,6 @@ class SetPackProductsCommand
     }
 
     /**
-     * @param int $quantity
-     *
      * @throws ProductPackConstraintException
      */
     private function assertQuantity(int $quantity): void

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,7 +33,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 /**
  * Class Employee is used for Symfony security components to authenticate the user.
  */
-class Employee implements UserInterface, EquatableInterface
+class Employee implements EquatableInterface, UserInterface
 {
     /**
      * @var int
@@ -64,7 +65,7 @@ class Employee implements UserInterface, EquatableInterface
     /**
      * Constructor.
      *
-     * @param object $data The employee legacy object
+     * @param  object  $data  The employee legacy object
      */
     public function __construct($data)
     {
@@ -143,13 +144,9 @@ class Employee implements UserInterface, EquatableInterface
     /**
      * Used by Symfony to ensure credentials are removed when logout.
      */
-    public function eraseCredentials()
-    {
-    }
+    public function eraseCredentials() {}
 
     /**
-     * @param array $roles
-     *
      * @return Employee
      */
     public function setRoles(array $roles)
@@ -163,13 +160,12 @@ class Employee implements UserInterface, EquatableInterface
      * Test equality between two Employee entities
      * (instance of class, password, salt and username).
      *
-     * @param UserInterface $user
      *
      * @return bool
      */
     public function isEqualTo(UserInterface $user)
     {
-        if (!$user instanceof static) {
+        if (! $user instanceof static) {
             return false;
         }
 

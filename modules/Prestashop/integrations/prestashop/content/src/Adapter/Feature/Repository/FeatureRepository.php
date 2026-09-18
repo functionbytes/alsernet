@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class FeatureRepository extends AbstractObjectModelRepository
      */
     protected $dbPrefix;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix
@@ -63,8 +60,6 @@ class FeatureRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param FeatureId $featureId
-     *
      * @throws FeatureNotFoundException
      * @throws CoreException
      */
@@ -78,10 +73,6 @@ class FeatureRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param int|null $limit
-     * @param int|null $offset
-     * @param array|null $filters
-     *
      * @return array<int, array<string, mixed>>
      */
     public function getFeatures(?int $limit = null, ?int $offset = null, ?array $filters = []): array
@@ -89,8 +80,7 @@ class FeatureRepository extends AbstractObjectModelRepository
         $qb = $this->getFeaturesQueryBuilder($filters)
             ->select('f.*, fl.*')
             ->setFirstResult($offset)
-            ->setMaxResults($limit)
-        ;
+            ->setMaxResults($limit);
 
         $results = $qb->execute()->fetchAll();
         $localizedNames = [];
@@ -116,34 +106,22 @@ class FeatureRepository extends AbstractObjectModelRepository
         return $features;
     }
 
-    /**
-     * @param array|null $filters
-     *
-     * @return int
-     */
     public function getFeaturesCount(?array $filters = []): int
     {
         $qb = $this->getFeaturesQueryBuilder($filters)
             ->select('COUNT(f.id_feature_value) AS total_feature_values')
-            ->addGroupBy('f.id_feature_value')
-        ;
+            ->addGroupBy('f.id_feature_value');
 
         return (int) $qb->execute()->fetch()['total_feature_values'];
     }
 
-    /**
-     * @param array|null $filters
-     *
-     * @return QueryBuilder
-     */
     private function getFeaturesQueryBuilder(?array $filters): QueryBuilder
     {
-        //@todo: filters are not handled.
+        // @todo: filters are not handled.
         $qb = $this->connection->createQueryBuilder();
-        $qb->from($this->dbPrefix . 'feature', 'f')
-            ->leftJoin('f', $this->dbPrefix . 'feature_lang', 'fl', 'fl.id_feature = f.id_feature')
-            ->addOrderBy('f.position', 'ASC')
-        ;
+        $qb->from($this->dbPrefix.'feature', 'f')
+            ->leftJoin('f', $this->dbPrefix.'feature_lang', 'fl', 'fl.id_feature = f.id_feature')
+            ->addOrderBy('f.position', 'ASC');
 
         return $qb;
     }

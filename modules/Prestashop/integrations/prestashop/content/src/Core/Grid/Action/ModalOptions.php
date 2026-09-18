@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,30 +39,19 @@ class ModalOptions
      */
     private $options;
 
-    /**
-     * @param array $options
-     */
     public function __construct(array $options = [])
     {
         $this->setOptions($options);
     }
 
-    /**
-     * @return array
-     */
     public function getOptions(): array
     {
         return $this->options;
     }
 
-    /**
-     * @param array $options
-     *
-     * @return ModalOptions
-     */
     public function setOptions(array $options): ModalOptions
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);
@@ -69,9 +59,6 @@ class ModalOptions
         return $this;
     }
 
-    /**
-     * @param OptionsResolver $resolver
-     */
     protected function configureOptions(OptionsResolver $resolver)
     {
         $resolver
@@ -83,7 +70,6 @@ class ModalOptions
             ])
             ->setAllowedTypes('title', ['string', 'null'])
             ->setAllowedTypes('confirm_button_label', ['string', 'null'])
-            ->setAllowedTypes('confirm_button_class', 'string')
-        ;
+            ->setAllowedTypes('confirm_button_class', 'string');
     }
 }

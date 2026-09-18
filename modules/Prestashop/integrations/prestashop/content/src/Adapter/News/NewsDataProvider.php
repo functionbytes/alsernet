@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,10 +43,13 @@ class NewsDataProvider
     public const NUM_ARTICLES = 2;
 
     public const CLOSED_ALLOWED_FAILURES = 3;
+
     public const CLOSED_TIMEOUT_SECONDS = 3;
 
     public const OPEN_ALLOWED_FAILURES = 3;
+
     public const OPEN_TIMEOUT_SECONDS = 3;
+
     public const OPEN_THRESHOLD_SECONDS = 86400; // 24 hours
 
     /**
@@ -81,12 +85,7 @@ class NewsDataProvider
     /**
      * NewsDataProvider constructor.
      *
-     * @param CircuitBreakerInterface $circuitBreaker
-     * @param CountryDataProvider $countryDataProvider
-     * @param Tools $tools
-     * @param Configuration $configuration
-     * @param Validate $validate
-     * @param int $contextMode
+     * @param  int  $contextMode
      */
     public function __construct(
         CircuitBreakerInterface $circuitBreaker,
@@ -105,8 +104,7 @@ class NewsDataProvider
     }
 
     /**
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return array
      *
      * @throws \PrestaShopException
@@ -116,7 +114,7 @@ class NewsDataProvider
         $data = ['has_errors' => true, 'rss' => []];
         $apiUrl = $this->configuration->get('_PS_API_URL_');
 
-        $blogXMLResponse = $this->circuitBreaker->call($apiUrl . '/rss/blog/blog-' . $isoCode . '.xml');
+        $blogXMLResponse = $this->circuitBreaker->call($apiUrl.'/rss/blog/blog-'.$isoCode.'.xml');
 
         if (empty($blogXMLResponse)) {
             $data['has_errors'] = false;
@@ -125,7 +123,7 @@ class NewsDataProvider
         }
 
         $rss = @simplexml_load_string($blogXMLResponse);
-        if (!$rss) {
+        if (! $rss) {
             return $data;
         }
 
@@ -136,7 +134,7 @@ class NewsDataProvider
         $analytics_params = [
             'utm_source' => 'back-office',
             'utm_medium' => 'rss',
-            'utm_campaign' => 'back-office-' . $shop_default_iso_country,
+            'utm_campaign' => 'back-office-'.$shop_default_iso_country,
         ];
 
         /** @var stdClass $item */
@@ -144,8 +142,8 @@ class NewsDataProvider
             if ($articles_limit == 0) {
                 break;
             }
-            if (!$this->validate->isCleanHtml((string) $item->title)
-                || !$this->validate->isCleanHtml((string) $item->description)
+            if (! $this->validate->isCleanHtml((string) $item->title)
+                || ! $this->validate->isCleanHtml((string) $item->description)
                 || empty($item->link)
                 || empty($item->title)) {
                 continue;
@@ -160,7 +158,7 @@ class NewsDataProvider
             $full_url_params = array_merge($link_query_params, $analytics_params);
             $base_url = explode('?', (string) $item->link);
             $base_url = (string) $base_url[0];
-            $article_link = $base_url . '?' . http_build_query($full_url_params);
+            $article_link = $base_url.'?'.http_build_query($full_url_params);
             $date = strtotime($item->pubDate);
             $data['rss'][] = [
                 'date' => $this->tools->displayDate(date('Y-m-d H:i:s', $date), null, false),
@@ -168,7 +166,7 @@ class NewsDataProvider
                 'short_desc' => $this->tools->truncateString(strip_tags((string) $item->description), 150),
                 'link' => (string) $article_link,
             ];
-            --$articles_limit;
+            $articles_limit--;
         }
         $data['has_errors'] = false;
 

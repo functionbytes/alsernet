@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,10 @@ class PrestaShopExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $configuration = new AddOnsConfiguration();
+        $configuration = new AddOnsConfiguration;
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new YamlFileLoader($container, new FileLocator(dirname(__DIR__) . '/Resources/config'));
+        $loader = new YamlFileLoader($container, new FileLocator(dirname(__DIR__).'/Resources/config'));
         $loader->load('services.yml');
 
         $container->setParameter('prestashop.addons.categories', $config['addons']['categories']);
@@ -59,7 +60,7 @@ class PrestaShopExtension extends Extension
         }
 
         $container->setParameter('prestashop.addons.api_client.verify_ssl', $verifySsl);
-        if (!$container->hasParameter('prestashop.addons.api_client.ttl')) {
+        if (! $container->hasParameter('prestashop.addons.api_client.ttl')) {
             $container->setParameter('prestashop.addons.api_client.ttl', $config['addons']['api_client']['ttl']);
         }
     }
@@ -69,7 +70,7 @@ class PrestaShopExtension extends Extension
      */
     public function getConfiguration(array $config, ContainerBuilder $container)
     {
-        return new AddOnsConfiguration();
+        return new AddOnsConfiguration;
     }
 
     /**

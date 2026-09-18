@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,7 @@ namespace PrestaShopBundle\Controller\Admin\Improve\Design;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Displays themes from Addons under "Improve > Design > Themes Catalog".
@@ -40,9 +42,7 @@ class ThemeCatalogController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function indexAction(Request $request)
     {
@@ -62,8 +62,6 @@ class ThemeCatalogController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @return string
      */
     private function getAddonsUrl(Request $request)
@@ -77,11 +75,11 @@ class ThemeCatalogController extends FrameworkBundleAdminController
         $activity = $this->get('prestashop.adapter.legacy.configuration')->getInt('PS_SHOP_ACTIVITY');
 
         return "https://addons.prestashop.com/iframe/search-1.7.php?psVersion=$psVersion"
-            . "&isoLang=$languageCode"
-            . "&isoCurrency=$currencyCode"
-            . "&isoCountry=$countryCode"
-            . "&activity=$activity"
-            . "&parentUrl=$parent_domain"
-            . '&onlyThemes=1';
+            ."&isoLang=$languageCode"
+            ."&isoCurrency=$currencyCode"
+            ."&isoCountry=$countryCode"
+            ."&activity=$activity"
+            ."&parentUrl=$parent_domain"
+            .'&onlyThemes=1';
     }
 }

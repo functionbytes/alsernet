@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,8 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
      * Shows import data page where the configuration of importable data and the final step of import is handled.
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return RedirectResponse|Response
      */
@@ -61,7 +61,7 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
         $formHandler = $this->get('prestashop.admin.import_data_configuration.form_handler');
         $importConfigFactory = $this->get('prestashop.core.import.config_factory');
 
-        $importFile = new SplFileInfo($importDirectory . $request->getSession()->get('csv'));
+        $importFile = new SplFileInfo($importDirectory.$request->getSession()->get('csv'));
         $importConfig = $importConfigFactory->buildFromRequest($request);
         $form = $formHandler->getForm($importConfig);
 
@@ -98,9 +98,8 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
      * Create import data match configuration.
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_import")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return JsonResponse
      */
@@ -120,7 +119,7 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
         $errors = $formHandler->save($form->getData());
         $matches = [];
 
-        if (!$errors) {
+        if (! $errors) {
             $importMatchRepository = $this->get('prestashop.core.admin.import_match.repository');
             $matches = $importMatchRepository->findAll();
         }
@@ -135,9 +134,8 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
      * Delete import data match configuration.
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_import")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return JsonResponse
      */
@@ -156,8 +154,6 @@ class ImportDataConfigurationController extends FrameworkBundleAdminController
      *     "is_granted('read', request.get('_legacy_controller'))",
      *     redirectRoute="admin_import"
      * )
-     *
-     * @param Request $request
      *
      * @return JsonResponse
      */

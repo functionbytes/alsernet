@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class AddOrderMessageCommand
     private $localizedMessage;
 
     /**
-     * @param string[] $localizedName
-     * @param string[] $localizedMessage
+     * @param  string[]  $localizedName
+     * @param  string[]  $localizedMessage
      */
     public function __construct(array $localizedName, array $localizedMessage)
     {

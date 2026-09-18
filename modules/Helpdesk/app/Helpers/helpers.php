@@ -30,6 +30,38 @@ if (! function_exists('helpdesk_feature_enabled')) {
     }
 }
 
+if (! function_exists('helpdesk_ticket_feature_enabled')) {
+    /**
+     * Check whether a HelpdeskTickets UI/behavior feature is enabled —
+     * mismo patrón que helpdesk_feature_enabled() (Conversaciones), pero
+     * grupo y caché propios para no colisionar: son dos pantallas de
+     * ajustes independientes (Settings → Helpdesk → Funcionalidades es el
+     * inbox; Settings → Helpdesk · Tickets → Funcionalidades es esta).
+     *
+     * Feature keys map to `ticket_features.feature_{$feature}_enabled` en
+     * helpdesk_settings. Por defecto true: toda funcionalidad está visible
+     * mientras no exista fila en BD (14-sep-2026).
+     */
+    function helpdesk_ticket_feature_enabled(string $feature): bool
+    {
+        $settings = cache()->remember('helpdesk_ticket_features', now()->addMinutes(10), function () {
+            try {
+                return Setting::allAsArray('ticket_features');
+            } catch (Throwable) {
+                return [];
+            }
+        });
+
+        $key = "ticket_features.feature_{$feature}_enabled";
+
+        if (! array_key_exists($key, $settings)) {
+            return true;
+        }
+
+        return filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
+    }
+}
+
 if (! function_exists('helpdesk_setting_bool')) {
     /**
      * Read a boolean toggle from helpdesk_settings, tolerating an unavailable
@@ -176,6 +208,21 @@ if (! function_exists('helpdesk_sla_enabled')) {
         }
 
         return helpdesk_setting_bool('sla.integration_enabled', '1');
+    }
+}
+
+if (! function_exists('helpdesk_birthday_enabled')) {
+    /**
+     * Check whether the HelpdeskBirthday integration is active: module
+     * installed+enabled and the admin toggle in Settings → Integraciones.
+     */
+    function helpdesk_birthday_enabled(): bool
+    {
+        if (! (Module::find('HelpdeskBirthday')?->isEnabled() ?? false)) {
+            return false;
+        }
+
+        return helpdesk_setting_bool('birthday.integration_enabled', '1');
     }
 }
 

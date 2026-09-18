@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -79,13 +80,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
     private $imageUploader;
 
     /**
-     * @param CommandBusInterface $bus
-     * @param array $defaultShopAssociation
-     * @param int $superAdminProfileId
-     * @param EmployeeFormAccessCheckerInterface $employeeFormAccessChecker
-     * @param EmployeeDataProviderInterface $employeeDataProvider
-     * @param Hashing $hashing
-     * @param ImageUploaderInterface|null $imageUploader
+     * @param  int  $superAdminProfileId
      */
     public function __construct(
         CommandBusInterface $bus,
@@ -94,7 +89,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
         EmployeeFormAccessCheckerInterface $employeeFormAccessChecker,
         EmployeeDataProviderInterface $employeeDataProvider,
         Hashing $hashing,
-        ImageUploaderInterface $imageUploader = null
+        ?ImageUploaderInterface $imageUploader = null
     ) {
         $this->bus = $bus;
         $this->defaultShopAssociation = $defaultShopAssociation;
@@ -102,7 +97,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
         $this->employeeFormAccessChecker = $employeeFormAccessChecker;
         $this->employeeDataProvider = $employeeDataProvider;
         $this->hashing = $hashing;
-        $this->imageUploader = $imageUploader ?? new EmployeeImageUploader();
+        $this->imageUploader = $imageUploader ?? new EmployeeImageUploader;
     }
 
     /**
@@ -131,7 +126,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
 
         /** @var UploadedFile $uploadedAvatar */
         $uploadedAvatar = $data['avatarUrl'] ?? null;
-        if (!empty($uploadedAvatar) && $uploadedAvatar instanceof UploadedFile) {
+        if (! empty($uploadedAvatar) && $uploadedAvatar instanceof UploadedFile) {
             $this->imageUploader->upload($employeeId->getValue(), $uploadedAvatar);
         }
 
@@ -157,8 +152,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
             ->setLanguageId((int) $data['language'])
             ->setActive((bool) $data['active'])
             ->setProfileId((int) $data['profile'])
-            ->setHasEnabledGravatar((bool) $data['has_enabled_gravatar'])
-        ;
+            ->setHasEnabledGravatar((bool) $data['has_enabled_gravatar']);
 
         if ($this->employeeFormAccessChecker->isRestrictedAccess((int) $id)) {
             if ($this->shouldChangePassword($data)) {
@@ -176,7 +170,9 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
         if (isset($data['shop_association'])) {
             $shopAssociation = $data['shop_association'] ?: [];
             $command->setShopAssociation(
-                array_map(function ($shopId) { return (int) $shopId; }, $shopAssociation)
+                array_map(function ($shopId) {
+                    return (int) $shopId;
+                }, $shopAssociation)
             );
         }
 
@@ -186,8 +182,8 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
     /**
      * Asserts if given password is the same as employee's password.
      *
-     * @param string $plainPassword
-     * @param int $employeeId
+     * @param  string  $plainPassword
+     * @param  int  $employeeId
      *
      * @throws EmployeeConstraintException
      */
@@ -195,7 +191,7 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
     {
         $oldPassword = $this->employeeDataProvider->getEmployeeHashedPassword($employeeId);
 
-        if (!$this->hashing->checkHash($plainPassword, $oldPassword)) {
+        if (! $this->hashing->checkHash($plainPassword, $oldPassword)) {
             throw new EmployeeConstraintException('Old and new passwords do not match.', EmployeeConstraintException::INCORRECT_PASSWORD);
         }
     }
@@ -203,19 +199,17 @@ final class EmployeeFormDataHandler implements FormDataHandlerInterface
     /**
      * Checks if all required fields are present in form data for changing the password.
      *
-     * @param array $formData
      *
      * @return bool
      */
     private function shouldChangePassword(array $formData)
     {
-        if (!isset($formData['change_password'])) {
+        if (! isset($formData['change_password'])) {
             return false;
         }
 
         return
-            null !== $formData['change_password']['old_password'] &&
-            null !== $formData['change_password']['new_password']
-        ;
+            $formData['change_password']['old_password'] !== null &&
+            $formData['change_password']['new_password'] !== null;
     }
 }

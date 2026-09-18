@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,26 +33,34 @@ use Symfony\Component\Intl\Intl;
 class Language
 {
     public $id;
+
     public $name;
+
     public $locale;
+
     public $iso_code;
+
     public $language_code;
+
     public $is_rtl;
+
     public $date_format_lite;
+
     public $date_format_full;
+
     public $countries;
 
     public function __construct($iso)
     {
         $this->iso_code = strtolower($iso);
-        $xmlPath = _PS_INSTALL_LANGS_PATH_ . $iso . '/';
+        $xmlPath = _PS_INSTALL_LANGS_PATH_.$iso.'/';
         $this->setPropertiesFromXml($xmlPath);
         $this->is_rtl = ($this->is_rtl === 'true') ? true : false;
     }
 
     public function setPropertiesFromXml($xmlPath)
     {
-        $xml = @simplexml_load_file($xmlPath . '/language.xml');
+        $xml = @simplexml_load_file($xmlPath.'/language.xml');
         if ($xml) {
             foreach ($xml->children() as $node) {
                 $this->{$node->getName()} = (string) $node;
@@ -121,7 +130,7 @@ class Language
 
     public function getCountries()
     {
-        if (!is_array($this->countries)) {
+        if (! is_array($this->countries)) {
             Locale::setDefault($this->getLocale());
             $this->countries = Intl::getRegionBundle()->getCountryNames();
             $this->countries = array_change_key_case($this->countries, CASE_LOWER);

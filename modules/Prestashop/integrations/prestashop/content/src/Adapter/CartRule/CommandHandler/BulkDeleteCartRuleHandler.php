@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class BulkDeleteCartRuleHandler extends AbstractCartRuleHandler implements
             try {
                 $cartRule = $this->getCartRule($cartRuleId);
 
-                if (!$this->deleteCartRule($cartRule)) {
+                if (! $this->deleteCartRule($cartRule)) {
                     $errors[] = $cartRuleId->getValue();
                 }
             } catch (CartRuleException $e) {
@@ -58,7 +59,7 @@ final class BulkDeleteCartRuleHandler extends AbstractCartRuleHandler implements
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new BulkDeleteCartRuleException($errors, 'Failed to delete all of selected cart rules');
         }
     }

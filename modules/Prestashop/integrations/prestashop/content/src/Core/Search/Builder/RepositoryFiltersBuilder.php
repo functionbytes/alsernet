@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,20 +39,20 @@ final class RepositoryFiltersBuilder extends AbstractRepositoryFiltersBuilder
     /**
      * {@inheritdoc}
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
-        if (!$this->employeeProvider->getId() || !$this->shopId) {
+        if (! $this->employeeProvider->getId() || ! $this->shopId) {
             return $filters;
         }
 
-        if (null !== $filters && !$filters->needsToBePersisted()) {
+        if ($filters !== null && ! $filters->needsToBePersisted()) {
             return $filters;
         }
 
         $filterId = $this->getFilterId($filters);
         $parameters = $this->getParametersFromRepository($filterId);
 
-        if (null !== $filters) {
+        if ($filters !== null) {
             $filters->add($parameters);
         } else {
             $filters = new Filters($parameters, $filterId);
@@ -61,8 +62,7 @@ final class RepositoryFiltersBuilder extends AbstractRepositoryFiltersBuilder
     }
 
     /**
-     * @param string $filterId
-     *
+     * @param  string  $filterId
      * @return array
      */
     private function getParametersFromRepository($filterId)
@@ -71,7 +71,7 @@ final class RepositoryFiltersBuilder extends AbstractRepositoryFiltersBuilder
             return [];
         }
 
-        if (!empty($filterId)) {
+        if (! empty($filterId)) {
             $adminFilter = $this->adminFilterRepository->findByEmployeeAndFilterId(
                 $this->employeeProvider->getId(),
                 $this->shopId,
@@ -86,7 +86,7 @@ final class RepositoryFiltersBuilder extends AbstractRepositoryFiltersBuilder
             );
         }
 
-        if (!$adminFilter) {
+        if (! $adminFilter) {
             return [];
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ use PrestaShopException;
 class ProductPackRepository
 {
     /**
-     * @param PackId $packId
-     * @param QuantifiedProduct $productForPacking
-     *
      * @throws CoreException
      * @throws ProductPackException
      */
@@ -58,7 +56,7 @@ class ProductPackRepository
                     $productForPacking->getCombinationId()->getValue() :
                     CombinationId::NO_COMBINATION
             );
-            if (!$packed) {
+            if (! $packed) {
                 throw new ProductPackException(
                     $this->appendIdsToMessage('Failed to add product to pack.', $productForPacking, $packIdValue),
                     ProductPackException::FAILED_ADDING_TO_PACK
@@ -74,8 +72,6 @@ class ProductPackRepository
     }
 
     /**
-     * @param PackId $packId
-     *
      * @throws CoreException
      * @throws ProductPackException
      */
@@ -84,7 +80,7 @@ class ProductPackRepository
         $packIdValue = $packId->getValue();
 
         try {
-            if (!Pack::deleteItems($packIdValue)) {
+            if (! Pack::deleteItems($packIdValue)) {
                 throw new ProductPackException(
                     sprintf('Failed to remove inventaries from pack #%d', $packIdValue),
                     ProductPackException::FAILED_DELETING_PRODUCTS_FROM_PACK
@@ -101,12 +97,6 @@ class ProductPackRepository
 
     /**
      * Builds string with ids, that will help to identify objects that was being updated in case of error
-     *
-     * @param string $messageBody
-     * @param QuantifiedProduct $product
-     * @param int $packId
-     *
-     * @return string
      */
     private function appendIdsToMessage(string $messageBody, QuantifiedProduct $product, int $packId): string
     {

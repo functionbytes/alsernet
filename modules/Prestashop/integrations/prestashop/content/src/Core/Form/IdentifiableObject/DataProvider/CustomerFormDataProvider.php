@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,10 +59,7 @@ final class CustomerFormDataProvider implements FormDataProviderInterface
     private $isB2bFeatureEnabled;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param ConfigurationInterface $configuration
-     * @param DefaultGroupsProviderInterface $defaultGroupsProvider
-     * @param bool $isB2bFeatureEnabled
+     * @param  bool  $isB2bFeatureEnabled
      */
     public function __construct(
         CommandBusInterface $queryBus,

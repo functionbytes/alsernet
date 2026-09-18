@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,8 +29,11 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
 class GuestTrackingControllerCore extends FrontController
 {
     public $ssl = true;
+
     public $auth = false;
+
     public $php_self = 'guest-tracking';
+
     protected $order;
 
     /**
@@ -56,9 +60,9 @@ class GuestTrackingControllerCore extends FrontController
         $order_reference = current(explode('#', Tools::getValue('order_reference')));
         $email = Tools::getValue('email');
 
-        if (!$email && !$order_reference) {
+        if (! $email && ! $order_reference) {
             return;
-        } elseif (!$email || !$order_reference) {
+        } elseif (! $email || ! $order_reference) {
             $this->errors[] = $this->getTranslator()->trans(
                 'Please provide the required information',
                 [],
@@ -69,12 +73,12 @@ class GuestTrackingControllerCore extends FrontController
         }
 
         $this->order = Order::getByReferenceAndEmail($order_reference, $email);
-        if (!Validate::isLoadedObject($this->order)) {
+        if (! Validate::isLoadedObject($this->order)) {
             $this->errors[] = $this->getTranslator()->trans(
-                    'We couldn\'t find your order with the information provided, please try again',
-                    [],
-                    'Shop.Notifications.Error'
-                );
+                'We couldn\'t find your order with the information provided, please try again',
+                [],
+                'Shop.Notifications.Error'
+            );
         }
 
         if (Tools::isSubmit('submitTransformGuestToCustomer') && Tools::getValue('password')) {
@@ -112,7 +116,7 @@ class GuestTrackingControllerCore extends FrontController
     {
         parent::initContent();
 
-        if (!Validate::isLoadedObject($this->order)) {
+        if (! Validate::isLoadedObject($this->order)) {
             return $this->setTemplate('customer/guest-login');
         }
 
@@ -124,7 +128,7 @@ class GuestTrackingControllerCore extends FrontController
             );
         }
 
-        $presented_order = (new OrderPresenter())->present($this->order);
+        $presented_order = (new OrderPresenter)->present($this->order);
 
         $this->context->smarty->assign([
             'order' => $presented_order,

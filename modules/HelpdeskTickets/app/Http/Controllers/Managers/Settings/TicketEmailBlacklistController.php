@@ -33,7 +33,7 @@ class TicketEmailBlacklistController extends Controller
             });
         }
 
-        $entries = $query->with('addedBy:id,name')
+        $entries = $query->with('addedBy:id,firstname,lastname')
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -116,7 +116,7 @@ class TicketEmailBlacklistController extends Controller
         // al índice de Settings — redirect_ticket_id (no pasa por validated(),
         // no se guarda en el modelo) lo indica.
         if ($request->filled('redirect_ticket_id')) {
-            return redirect()->route('manager.helpdesk.tickets.show-full', $request->integer('redirect_ticket_id'))
+            return redirect()->route('manager.helpdesk.tickets.show', $request->integer('redirect_ticket_id'))
                 ->with('success', __('helpdesktickets::helpdesktickets.settings.blacklist.sender_added'));
         }
 

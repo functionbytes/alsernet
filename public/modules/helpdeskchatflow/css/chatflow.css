@@ -1,0 +1,149 @@
+/**
+ * chatflow.css — HelpdeskChatFlow module
+ *
+ * Consolidated styles for the module's own admin pages (list, analytics,
+ * editor test panel, session replay). None of the rules below collide
+ * between pages, so they share a single stylesheet loaded on every view.
+ *
+ * Not included: ChatFlowEditor.tsx (React canvas) ships its own styles via
+ * Vite and is out of scope for this file.
+ */
+
+/* ==========================================================================
+   Chat flows list (index.blade.php)
+   ========================================================================== */
+.chatflow-search-input { min-width: 200px; }
+
+.template-card { background: #fff; transition: border-color .15s, box-shadow .15s; cursor: pointer; }
+.template-card:hover { border-color: #90bb13 !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .08); }
+
+.template-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+}
+
+/* ==========================================================================
+   Analíticas (analytics.blade.php)
+   ========================================================================== */
+.dropoff-rate-col { min-width: 180px; }
+.dropoff-bar { height: 8px; }
+.dropoff-rate-val { min-width: 42px; }
+
+/* ==========================================================================
+   Editor — panel de prueba (editor.blade.php)
+   ========================================================================== */
+.editor-full-height { height: calc(100vh - 70px); }
+
+/* Test button in the React top bar is handled by React inline styles */
+.btn-test-flow { background: #fff; color: #90bb13; border: 1.5px solid #90bb13; font-weight: 500; }
+.btn-test-flow:hover { background: #90bb13; color: #fff; }
+
+.test-panel {
+    width: 340px;
+    min-width: 340px;
+    border-left: 1px solid #dee2e6;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.test-panel-header { background: #f5f6f8; flex-shrink: 0; }
+
+.test-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f4f6fb;
+}
+
+/* Bot bubble */
+.tchat-bot { display: flex; align-items: flex-end; gap: 6px; }
+.tchat-bot .tchat-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #90bb13;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.tchat-bot .tchat-bubble {
+    background: #fff;
+    border: 1px solid #e0e4ee;
+    border-radius: 0 12px 12px 12px;
+    padding: 8px 12px;
+    max-width: 260px;
+    font-size: .86rem;
+    line-height: 1.45;
+    color: #212529;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+.tchat-bot .tchat-bubble.tchat-system {
+    background: #f0f3ff;
+    color: #5b7a0c;
+    font-size: .78rem;
+    border-color: #d0d8f5;
+}
+
+/* User bubble */
+.tchat-user { display: flex; justify-content: flex-end; }
+.tchat-user .tchat-bubble {
+    background: #90bb13;
+    color: #fff;
+    border-radius: 12px 12px 0 12px;
+    padding: 8px 12px;
+    max-width: 240px;
+    font-size: .86rem;
+    line-height: 1.45;
+}
+
+/* Quick reply chips */
+.tchat-qr { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 34px; }
+.tchat-qr-btn {
+    background: #fff;
+    border: 1.5px solid #90bb13;
+    color: #90bb13;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+}
+.tchat-qr-btn:hover { background: #90bb13; color: #fff; }
+.tchat-qr-btn:disabled { opacity: .5; pointer-events: none; }
+
+/* Loading dots */
+.tchat-typing .dot { display: inline-block; width: 6px; height: 6px; background: #adb5bd; border-radius: 50%; margin: 0 2px; animation: cf-bounce .9s infinite; }
+.tchat-typing .dot:nth-child(2) { animation-delay: .15s; }
+.tchat-typing .dot:nth-child(3) { animation-delay: .3s; }
+@keyframes cf-bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+
+/* Send button */
+.btn-test-send { background: #90bb13; color: #fff; border-color: #90bb13; border-radius: 0 4px 4px 0; }
+.btn-test-send:hover { background: #7aa00f; border-color: #7aa00f; color: #fff; }
+.btn-test-send:disabled { opacity: .5; }
+
+/* Input bar */
+.test-input-bar { flex-shrink: 0; background: #fff; }
+
+/* ==========================================================================
+   Reproducción de sesión (replay.blade.php)
+   ========================================================================== */
+.chatflow-replay { background: #f3f4f6; border-radius: 8px; padding: 16px; }
+.replay-bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 13.5px; white-space: pre-wrap; word-break: break-word; }
+.replay-customer { background: #90bb13; color: #fff; border-bottom-right-radius: 3px; }
+.replay-bot { background: #fff; color: #1e293b; border: 1px solid #e5e7eb; border-bottom-left-radius: 3px; }
+.replay-system { background: #fef9c3; color: #854d0e; border-color: #fde68a; font-size: 12px; }

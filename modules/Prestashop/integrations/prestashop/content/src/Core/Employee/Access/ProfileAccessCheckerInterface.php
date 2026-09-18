@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,8 @@ interface ProfileAccessCheckerInterface
     /**
      * Checks if given employee can access given profile.
      *
-     * @param int $employeeId
-     * @param int $profileId
-     *
+     * @param  int  $employeeId
+     * @param  int  $profileId
      * @return bool
      */
     public function canEmployeeAccessProfile($employeeId, $profileId);

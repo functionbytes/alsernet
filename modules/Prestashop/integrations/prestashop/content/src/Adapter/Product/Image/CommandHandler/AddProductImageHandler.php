@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,12 +61,6 @@ final class AddProductImageHandler implements AddProductImageHandlerInterface
      */
     private $imageValidator;
 
-    /**
-     * @param ProductImageUploader $productImageUploader
-     * @param ProductImageRepository $productImageRepository
-     * @param ImageValidator $imageValidator
-     * @param array $contextShopIds
-     */
     public function __construct(
         ProductImageUploader $productImageUploader,
         ProductImageRepository $productImageRepository,

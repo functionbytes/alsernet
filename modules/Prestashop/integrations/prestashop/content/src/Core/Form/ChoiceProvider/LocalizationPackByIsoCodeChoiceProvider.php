@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,12 +58,6 @@ final class LocalizationPackByIsoCodeChoiceProvider implements FormChoiceProvide
      */
     private $translator;
 
-    /**
-     * @param LocalizationPackLoaderInterface $remoteLocalizationPackLoader
-     * @param LocalizationPackLoaderInterface $localLocalizationPackLoader
-     * @param ConfigurationInterface $configuration
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         LocalizationPackLoaderInterface $remoteLocalizationPackLoader,
         LocalizationPackLoaderInterface $localLocalizationPackLoader,
@@ -83,7 +78,7 @@ final class LocalizationPackByIsoCodeChoiceProvider implements FormChoiceProvide
     public function getChoices()
     {
         $localizationPacks = $this->remoteLocalizationPackLoader->getLocalizationPackList();
-        if (null === $localizationPacks) {
+        if ($localizationPacks === null) {
             $localizationPacks = $this->localLocalizationPackLoader->getLocalizationPackList();
         }
 
@@ -97,18 +92,18 @@ final class LocalizationPackByIsoCodeChoiceProvider implements FormChoiceProvide
 
         $rootDir = $this->configuration->get('_PS_ROOT_DIR_');
 
-        $finder = (new Finder())
+        $finder = (new Finder)
             ->files()
             ->depth('0')
-            ->in($rootDir . '/localization')
+            ->in($rootDir.'/localization')
             ->name('/^([a-z]{2})\.xml$/');
 
         foreach ($finder as $file) {
-            list($iso) = explode('.', $file->getFilename());
+            [$iso] = explode('.', $file->getFilename());
 
             // if localization pack was not loaded yet and it exists locally
             // then add it to choices list
-            if (!in_array($iso, $choices)) {
+            if (! in_array($iso, $choices)) {
                 $pack = $this->localLocalizationPackLoader->getLocalizationPack($iso);
                 $packName = $this->translator->trans(
                     '%s (local)',

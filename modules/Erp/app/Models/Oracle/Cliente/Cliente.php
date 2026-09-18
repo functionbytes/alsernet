@@ -4,6 +4,19 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Albaran\AlbarancliCentral;
+use Modules\Erp\Models\Oracle\Cobro\Formapago;
+use Modules\Erp\Models\Oracle\Configuracion\Idioma;
+use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
+use Modules\Erp\Models\Oracle\Configuracion\Regpais;
+use Modules\Erp\Models\Oracle\Configuracion\Tipocliente;
+use Modules\Erp\Models\Oracle\Otros\CategoriaCliente;
+use Modules\Erp\Models\Oracle\Otros\Subcuenta;
+use Modules\Erp\Models\Oracle\Otros\Tarjetas;
+use Modules\Erp\Models\Oracle\Otros\Ttarifa;
+use Modules\Erp\Models\Oracle\Otros\Vale;
+use Modules\Erp\Models\Oracle\Pedido\PedidocliCentral;
+use Modules\Erp\Models\Oracle\Promocion\BonoPromocion;
 use Modules\Erp\Models\Oracle\Promocion\LgeneracionBonoPromocion;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
@@ -104,7 +117,7 @@ class Cliente extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -113,7 +126,7 @@ class Cliente extends Model
      */
     public function tipocliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipocliente::class, 'idtipocliente', 'idtipocliente');
+        return $this->belongsTo(Tipocliente::class, 'idtipocliente', 'idtipocliente');
     }
 
     /**
@@ -122,7 +135,7 @@ class Cliente extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -131,7 +144,7 @@ class Cliente extends Model
      */
     public function ttarifa()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Ttarifa::class, 'idttarifa', 'idttarifa');
+        return $this->belongsTo(Ttarifa::class, 'idttarifa', 'idttarifa');
     }
 
     /**
@@ -140,7 +153,7 @@ class Cliente extends Model
      */
     public function subcuenta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
+        return $this->belongsTo(Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
     }
 
     /**
@@ -149,7 +162,7 @@ class Cliente extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -158,7 +171,7 @@ class Cliente extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
     }
 
     /**
@@ -167,7 +180,7 @@ class Cliente extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -176,7 +189,7 @@ class Cliente extends Model
      */
     public function tarjeta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tarjetas::class, 'idtarjeta', 'idtarjeta');
+        return $this->belongsTo(Tarjetas::class, 'idtarjeta', 'idtarjeta');
     }
 
     /**
@@ -185,7 +198,7 @@ class Cliente extends Model
      */
     public function categoriaCliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
+        return $this->belongsTo(CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
     }
 
     /**
@@ -194,7 +207,7 @@ class Cliente extends Model
      */
     public function pedidos()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Pedido\PedidocliCentral::class, 'idcliente', 'idcliente');
+        return $this->hasMany(PedidocliCentral::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -203,7 +216,7 @@ class Cliente extends Model
      */
     public function albaranes()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCentral::class, 'idcliente', 'idcliente');
+        return $this->hasMany(AlbarancliCentral::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -212,7 +225,7 @@ class Cliente extends Model
      */
     public function bonos()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Promocion\BonoPromocion::class, 'idcliente', 'idcliente');
+        return $this->hasMany(BonoPromocion::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -221,7 +234,7 @@ class Cliente extends Model
      */
     public function vales()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\Vale::class, 'idcliente', 'idcliente');
+        return $this->hasMany(Vale::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -229,6 +242,6 @@ class Cliente extends Model
      */
     public function catalogos()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Cliente\ClientecatalogoCent::class, 'idcliente', 'idcliente');
+        return $this->hasMany(ClientecatalogoCent::class, 'idcliente', 'idcliente');
     }
 }

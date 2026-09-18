@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,13 +61,6 @@ class RedirectOptionType extends TranslatorAwareType
      */
     private $targetTransformer;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param LegacyContext $context
-     * @param RouterInterface $router
-     * @param DataTransformerInterface $targetTransformer
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -90,7 +84,7 @@ class RedirectOptionType extends TranslatorAwareType
                 'label' => $this->trans('Target product', 'Admin.Catalog.Feature'),
                 'placeholder' => $this->trans('To which product the page should redirect?', 'Admin.Catalog.Help'),
                 'help' => '',
-                'searchUrl' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'disableCombination' => 1, 'exclude_packs' => 0, 'excludeVirtuals' => 0, 'limit' => 20]) . '&q=__QUERY__',
+                'searchUrl' => $this->context->getLegacyAdminLink('AdminProducts', true, ['ajax' => 1, 'action' => 'productsList', 'forceJson' => 1, 'disableCombination' => 1, 'exclude_packs' => 0, 'excludeVirtuals' => 0, 'limit' => 20]).'&q=__QUERY__',
             ],
             'category' => [
                 'label' => $this->trans('Target category', 'Admin.Catalog.Feature'),
@@ -133,8 +127,7 @@ class RedirectOptionType extends TranslatorAwareType
                     'data-category-help' => $entityAttributes['category']['help'],
                     'data-category-search-url' => $entityAttributes['category']['searchUrl'],
                 ],
-            ])
-        ;
+            ]);
 
         // This will transform the target ID from model data into an array adapted for TypeaheadProductCollectionType
         $builder->get('target')->addModelTransformer($this->targetTransformer);
@@ -166,12 +159,12 @@ class RedirectOptionType extends TranslatorAwareType
             $targetOptions['placeholder'] = $entityAttributes[$dataEntity]['placeholder'];
             $targetOptions['help'] = $entityAttributes[$dataEntity]['help'];
             $targetOptions['remote_url'] = $entityAttributes[$dataEntity]['searchUrl'];
-            if (RedirectType::TYPE_NOT_FOUND === $dataType) {
+            if ($dataType === RedirectType::TYPE_NOT_FOUND) {
                 $targetOptions['row_attr']['class'] = 'd-none';
             }
 
             // Replace existing field with new one with adapted options
-            $cloner = new FormCloner();
+            $cloner = new FormCloner;
             $clonedForm = $cloner->cloneForm($targetField, $targetOptions);
             $form->add($clonedForm);
         });
@@ -196,9 +189,6 @@ class RedirectOptionType extends TranslatorAwareType
         ]);
     }
 
-    /**
-     * @return array
-     */
     private function getRedirectionAlertMessages(): array
     {
         return [

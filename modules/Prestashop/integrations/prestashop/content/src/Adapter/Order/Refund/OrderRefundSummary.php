@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -73,16 +74,6 @@ class OrderRefundSummary
      */
     private $precision;
 
-    /**
-     * @param array $orderDetails
-     * @param array $productRefunds
-     * @param float $refundedAmount
-     * @param float $refundedShipping
-     * @param float $voucherAmount
-     * @param bool $voucherChosen
-     * @param bool $isTaxIncluded
-     * @param int $precision
-     */
     public function __construct(
         array $orderDetails,
         array $productRefunds,
@@ -111,67 +102,41 @@ class OrderRefundSummary
         return $this->orderDetails;
     }
 
-    /**
-     * @return array
-     */
     public function getProductRefunds(): array
     {
         return $this->productRefunds;
     }
 
-    /**
-     * @return float
-     */
     public function getRefundedAmount(): float
     {
         return $this->refundedAmount;
     }
 
-    /**
-     * @return float
-     */
     public function getRefundedShipping(): float
     {
         return $this->refundedShipping;
     }
 
-    /**
-     * @return float
-     */
     public function getVoucherAmount(): float
     {
         return $this->voucherAmount;
     }
 
-    /**
-     * @return bool
-     */
     public function isVoucherChosen(): bool
     {
         return $this->voucherChosen;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxIncluded(): bool
     {
         return $this->isTaxIncluded;
     }
 
-    /**
-     * @return int
-     */
     public function getPrecision(): int
     {
         return $this->precision;
     }
 
-    /**
-     * @param int $orderDetailId
-     *
-     * @return OrderDetail|null
-     */
     public function getOrderDetailById(int $orderDetailId): ?OrderDetail
     {
         return isset($this->orderDetails[$orderDetailId]) ? $this->orderDetails[$orderDetailId] : null;

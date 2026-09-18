@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,11 +67,6 @@ final class LogDataFactory implements GridDataFactoryInterface
      */
     private $avatars = [];
 
-    /**
-     * @param GridDataFactoryInterface $dataFactory
-     * @param TranslatorInterface $translator
-     * @param AvatarProviderInterface $avatarProvider
-     */
     public function __construct(
         GridDataFactoryInterface $dataFactory,
         TranslatorInterface $translator,
@@ -99,10 +95,6 @@ final class LogDataFactory implements GridDataFactoryInterface
 
     /**
      * Modify log records.
-     *
-     * @param array $records
-     *
-     * @return array
      */
     private function modifyRecords(array $records): array
     {
@@ -117,27 +109,23 @@ final class LogDataFactory implements GridDataFactoryInterface
 
     /**
      * Format shop context for grid.
-     *
-     * @param array $record
-     *
-     * @return string
      */
     private function ShopContextFormatted(array $record): string
     {
-        if (!empty($record['in_all_shops'])) {
+        if (! empty($record['in_all_shops'])) {
             return $this->translator->trans('All shops', [], 'Admin.Global');
         }
 
-        if (!empty($record['id_shop']) && empty($record['id_shop_group'])) {
+        if (! empty($record['id_shop']) && empty($record['id_shop_group'])) {
             $shop_name = $this->translator->trans('Shop', [], 'Admin.Global');
-            $shop_name .= ' ' . $record['shop_name'] . ' (id : ' . $record['id_shop'] . ')';
+            $shop_name .= ' '.$record['shop_name'].' (id : '.$record['id_shop'].')';
 
             return $shop_name;
         }
 
-        if (empty($record['id_shop']) && !empty($record['id_shop_group'])) {
+        if (empty($record['id_shop']) && ! empty($record['id_shop_group'])) {
             $shop_name = $this->translator->trans('Shop group', [], 'Admin.Global');
-            $shop_name .= ' ' . $record['shop_group_name'] . ' (id : ' . $record['id_shop_group'] . ')';
+            $shop_name .= ' '.$record['shop_group_name'].' (id : '.$record['id_shop_group'].')';
 
             return $shop_name;
         }
@@ -145,14 +133,9 @@ final class LogDataFactory implements GridDataFactoryInterface
         return self::DEFAULT_EMPTY_DATA;
     }
 
-    /**
-     * @param int $idEmployee
-     *
-     * @return string
-     */
     private function getEmployeeAvatar(int $idEmployee): string
     {
-        if (!isset($this->avatars[$idEmployee])) {
+        if (! isset($this->avatars[$idEmployee])) {
             $employee = new Employee($idEmployee);
             if (Validate::isLoadedObject($employee)) {
                 $this->avatars[$idEmployee] = $employee->getImage();

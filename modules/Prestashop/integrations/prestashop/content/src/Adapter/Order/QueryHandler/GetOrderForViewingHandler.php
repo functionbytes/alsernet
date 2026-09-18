@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -137,14 +138,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
      */
     private $addressFormatter;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param int $contextLanguageId
-     * @param Locale $locale
-     * @param Context $context
-     * @param CustomerDataProvider $customerDataProvider
-     * @param GetOrderProductsForViewingHandlerInterface $getOrderProductsForViewingHandler
-     */
     public function __construct(
         TranslatorInterface $translator,
         int $contextLanguageId,
@@ -153,7 +146,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         CustomerDataProvider $customerDataProvider,
         GetOrderProductsForViewingHandlerInterface $getOrderProductsForViewingHandler,
         Configuration $configuration,
-        AddressFormatterInterface $addressFormatter = null
+        ?AddressFormatterInterface $addressFormatter = null
     ) {
         $this->translator = $translator;
         $this->contextLanguageId = $contextLanguageId;
@@ -163,7 +156,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         $this->customerDataProvider = $customerDataProvider;
         $this->getOrderProductsForViewingHandler = $getOrderProductsForViewingHandler;
         $this->configuration = $configuration;
-        $this->addressFormatter = $addressFormatter ?? new AddressFormatter();
+        $this->addressFormatter = $addressFormatter ?? new AddressFormatter;
     }
 
     /**
@@ -226,11 +219,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderCustomerForViewing
-     */
     private function getOrderCustomer(Order $order, OrderInvoiceAddressForViewing $invoiceAddress): OrderCustomerForViewing
     {
         $currency = new Currency($order->id_currency);
@@ -238,7 +226,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         $genderName = '';
         $totalSpentSinceRegistration = null;
 
-        if (!Validate::isLoadedObject($customer)) {
+        if (! Validate::isLoadedObject($customer)) {
             $customer = $this->buildFakeCustomerObject($order, $invoiceAddress);
             $customerStats = ['nb_orders' => 1]; // Count this current order as loaded
         } else {
@@ -270,11 +258,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderShippingAddressForViewing
-     */
     public function getOrderShippingAddress(Order $order): OrderShippingAddressForViewing
     {
         $address = new Address($order->id_address_delivery);
@@ -307,11 +290,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderInvoiceAddressForViewing
-     */
     private function getOrderInvoiceAddress(Order $order): OrderInvoiceAddressForViewing
     {
         $address = new Address($order->id_address_invoice);
@@ -344,11 +322,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderHistoryForViewing
-     */
     private function getOrderHistory(Order $order): OrderHistoryForViewing
     {
         $history = $order->getHistory($this->contextLanguageId);
@@ -375,10 +348,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param Order $order
-     *
-     * @return OrderDocumentsForViewing
-     *
      * @throws LocalizationException
      */
     private function getOrderDocuments(Order $order): OrderDocumentsForViewing
@@ -403,7 +372,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
                 $type = OrderDocumentType::CREDIT_SLIP;
             }
 
-            if (OrderDocumentType::INVOICE === $type) {
+            if ($type === OrderDocumentType::INVOICE) {
                 $number = $document->getInvoiceNumberFormatted(
                     $this->contextLanguageId,
                     $order->id_shop
@@ -430,7 +399,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
                         );
                     }
                 }
-            } elseif (OrderDocumentType::DELIVERY_SLIP === $type) {
+            } elseif ($type === OrderDocumentType::DELIVERY_SLIP) {
                 $conf = $this->configuration->get(
                     'PS_DELIVERY_PREFIX',
                     null,
@@ -446,7 +415,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
                     $currency->iso_code
                 );
                 $numericAmount = $document->total_paid_tax_incl;
-            } elseif (OrderDocumentType::CREDIT_SLIP === $type) {
+            } elseif ($type === OrderDocumentType::CREDIT_SLIP) {
                 $conf = $this->configuration->get('PS_CREDIT_SLIP_PREFIX');
                 $number = sprintf(
                     '%s%06d',
@@ -487,10 +456,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param Order $order
-     *
-     * @return OrderShippingForViewing
-     *
      * @throws LocalizationException
      */
     private function getOrderShipping(Order $order): OrderShippingForViewing
@@ -512,7 +477,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
             }
         }
 
-        if (!$order->isVirtual()) {
+        if (! $order->isVirtual()) {
             foreach ($shipping as $item) {
                 if ($taxCalculationMethod == PS_TAX_INC) {
                     $price = Tools::displayPrice($item['shipping_cost_tax_incl'], $currency);
@@ -552,17 +517,12 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderReturnsForViewing
-     */
     private function getOrderReturns(Order $order): OrderReturnsForViewing
     {
         $returns = $order->getReturn();
 
         if ($order->isVirtual()) {
-            return new OrderReturnsForViewing();
+            return new OrderReturnsForViewing;
         }
 
         $orderReturns = [];
@@ -594,10 +554,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param Order $order
-     *
-     * @return OrderPaymentsForViewing
-     *
      * @throws LocalizationException
      */
     private function getOrderPayments(Order $order): OrderPaymentsForViewing
@@ -615,7 +571,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
             $noPaymentMismatch = round($order->getOrdersTotalPaid(), 2) == round($order->getTotalPaid(), 2)
                 || ($currentState && $currentState->id == 6);
 
-            if (!$noPaymentMismatch) {
+            if (! $noPaymentMismatch) {
                 $orderAmountToPay = $this->locale->formatPrice($order->getOrdersTotalPaid(), $currency->iso_code);
                 $orderAmountPaid = $this->locale->formatPrice($order->getTotalPaid(), $currency->iso_code);
 
@@ -657,11 +613,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderMessagesForViewing
-     */
     private function getOrderMessages(Order $order): OrderMessagesForViewing
     {
         $orderMessagesForOrderPage = $this->customerDataProvider->getCustomerMessages(
@@ -696,10 +647,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param Order $order
-     *
-     * @return OrderPricesForViewing
-     *
      * @throws LocalizationException
      */
     private function getOrderPrices(Order $order): OrderPricesForViewing
@@ -707,7 +654,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         $currency = new Currency($order->id_currency);
         $customer = $order->getCustomer();
 
-        $isTaxExcluded = !$this->isTaxIncludedInOrder($order);
+        $isTaxExcluded = ! $this->isTaxIncludedInOrder($order);
 
         $shipping_refundable_tax_excl = $order->total_shipping_tax_excl;
         $shipping_refundable_tax_incl = $order->total_shipping_tax_incl;
@@ -754,10 +701,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param Order $order
-     *
-     * @return OrderDiscountsForViewing
-     *
      * @throws LocalizationException
      */
     private function getOrderDiscounts(Order $order): OrderDiscountsForViewing
@@ -780,11 +723,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         return new OrderDiscountsForViewing($discountsForViewing);
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return OrderSourcesForViewing
-     */
     private function getOrderSources(Order $order): OrderSourcesForViewing
     {
         $sourcesData = ConnectionsSource::getOrderSources($order->id);
@@ -802,16 +740,13 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         return new OrderSourcesForViewing($sources);
     }
 
-    /**
-     * @return LinkedOrdersForViewing
-     */
     private function getLinkedOrders(Order $order): LinkedOrdersForViewing
     {
         $brothersData = $order->getBrother();
         $brothers = [];
         /** @var Order $brotherItem */
         foreach ($brothersData as $brotherItem) {
-            $isTaxExcluded = !$this->isTaxIncludedInOrder($brotherItem);
+            $isTaxExcluded = ! $this->isTaxIncludedInOrder($brotherItem);
 
             $currency = new Currency($brotherItem->id_currency);
 
@@ -834,11 +769,6 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     }
 
     /**
-     * @param OrderId $orderId
-     * @param string $productsOrder
-     *
-     * @return OrderProductsForViewing
-     *
      * @throws OrderException
      * @throws InvalidSortingException
      */
@@ -854,16 +784,15 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
      * from the database. We then create a fake customer object, using the invoice address data
      * and cart language.
      *
-     * @param Order $order Order object
-     * @param OrderInvoiceAddressForViewing $invoiceAddress Invoice address information
-     *
+     * @param  Order  $order  Order object
+     * @param  OrderInvoiceAddressForViewing  $invoiceAddress  Invoice address information
      * @return Customer The created customer
      */
     private function buildFakeCustomerObject(Order $order, OrderInvoiceAddressForViewing $invoiceAddress): Customer
     {
         $cart = new Cart($order->id_cart);
 
-        $customer = new Customer();
+        $customer = new Customer;
         $customer->firstname = $invoiceAddress->getFirstName();
         $customer->lastname = $invoiceAddress->getLastName();
         $customer->email = '';

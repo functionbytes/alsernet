@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetcustomer}prestashop>addresscontroller_e9c9b8e704ae316b396fa2851a834a0c'] = 'Unauthorized access.';
 $_MODULE['<{alsernetcustomer}prestashop>addresscontroller_d5a03ec61f5c7abfbd1ab4bc06b3216a'] = 'Please fill in all required fields.';
 $_MODULE['<{alsernetcustomer}prestashop>addresscontroller_3d68f2e5e3915897d0c25bce3b6e9472'] = 'Error creating address.';

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,6 +38,7 @@ use Symfony\Component\Validator\Constraints\Choice;
 class ChangeOrderAddressType extends AbstractType
 {
     public const SHIPPING_TYPE = 'shipping';
+
     public const INVOICE_TYPE = 'invoice';
 
     /**
@@ -44,9 +46,6 @@ class ChangeOrderAddressType extends AbstractType
      */
     private $customerAddressProvider;
 
-    /**
-     * @param ConfigurableFormChoiceProviderInterface $customerAddressProvider
-     */
     public function __construct(ConfigurableFormChoiceProviderInterface $customerAddressProvider)
     {
         $this->customerAddressProvider = $customerAddressProvider;

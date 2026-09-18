@@ -2,13 +2,17 @@
 
 namespace Modules\HelpdeskSocial\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Modules\HelpdeskSocial\Database\Factories\SocialAccountFactory;
+use Modules\HelpdeskSocial\Notifications\SocialAccountHealthAlertNotification;
 
 class SocialAccount extends Model
 {
@@ -128,7 +132,7 @@ class SocialAccount extends Model
 
     public function needsTokenRefresh(): bool
     {
-        return $this->token_expires_at && $this->token_expires_at->diffInDays(now()) < 7;
+        return $this->isTokenExpiringSoon(7);
     }
 
     public function scopeActive($query)
@@ -158,13 +162,42 @@ class SocialAccount extends Model
     {
         $this->increment('consecutive_failures');
 
-        // Circuit breaker: disable after 5 consecutive failures
-        if ($this->consecutive_failures >= 5) {
+        // Circuit breaker: disable after 5 consecutive failures. circuit_breaker_active
+        // se deja registrado aparte de is_active (columna que existía pero nunca se
+        // escribía) y dispara una notificación obligatoria a los admins — sin retry
+        // half-open por ahora: reactivar la cuenta sigue siendo una acción manual
+        // (ResetSocialAccountCommand / panel de cuentas).
+        if ($this->consecutive_failures >= 5 && ! $this->circuit_breaker_active) {
             $this->update([
                 'is_active' => false,
+                'circuit_breaker_active' => true,
                 'last_error_message' => 'Desactivado automáticamente tras 5 fallos consecutivos.',
             ]);
+
+            $this->notifyCircuitBreakerTripped();
         }
+    }
+
+    private function notifyCircuitBreakerTripped(): void
+    {
+        try {
+            $admins = User::role(['manager', 'super-admin'])->get();
+        } catch (\Throwable $e) {
+            Log::warning('SocialAccount: could not resolve admins for circuit breaker alert', [
+                'account_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        Notification::send($admins, new SocialAccountHealthAlertNotification([
+            "[CIRCUIT] {$this->name} ({$this->platform}) desactivada tras {$this->consecutive_failures} fallos consecutivos",
+        ]));
     }
 
     public function recordSuccess(): void
@@ -176,6 +209,10 @@ class SocialAccount extends Model
 
     public function isTokenExpiringSoon(int $days = 7): bool
     {
-        return $this->token_expires_at && $this->token_expires_at->diffInDays(now()) < $days;
+        // Carbon 3 devuelve diferencias con signo: token_expires_at->diffInDays(now())
+        // es SIEMPRE negativo cuando el token aún no ha expirado (now() es anterior),
+        // así que la comparación `< $days` daba true permanentemente. now()->diffInDays(
+        // token_expires_at) es positivo mientras falte para expirar.
+        return $this->token_expires_at && now()->diffInDays($this->token_expires_at) < $days;
     }
 }

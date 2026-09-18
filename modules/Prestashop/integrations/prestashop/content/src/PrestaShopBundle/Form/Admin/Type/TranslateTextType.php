@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,7 +62,7 @@ class TranslateTextType extends AbstractType
             $localeOptions = $options['options'];
             $localeOptions['label'] = $locale['iso_code'];
 
-            if (!isset($localeOptions['required'])) {
+            if (! isset($localeOptions['required'])) {
                 $localeOptions['required'] = false;
             }
 
@@ -76,7 +77,7 @@ class TranslateTextType extends AbstractType
     {
         $view->vars['locales'] = $options['locales'];
         $view->vars['default_locale'] = reset($options['locales']);
-        $view->vars['hide_locales'] = 1 >= count($options['locales']);
+        $view->vars['hide_locales'] = count($options['locales']) <= 1;
     }
 
     /**

@@ -18,6 +18,7 @@ use Modules\HelpdeskLivechat\Http\Middleware\VerifyWidgetHmac;
 use Modules\HelpdeskLivechat\Jobs\PruneLivestreamEventsJob;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
+use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskLivechatServiceProvider extends ServiceProvider
@@ -116,8 +117,16 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
-        // La configuración del chat web (livechat) se accede desde
-        // Settings > Helpdesk > Bandejas > canal Web — no necesita entrada directa en sidebar.
+        // La entrada la registraba el provider de Helpdesk dentro de su seccion
+        // "Canales", asi que seguia apareciendo con este modulo desactivado.
+        // Ahora vive aqui: sale y desaparece con el modulo.
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk · Chat en vivo',
+            'order' => 230,
+            'items' => [
+                ['label' => 'Configuración', 'route' => 'settings.helpdesk-livechat.index', 'permission' => 'helpdesk.settings.view'],
+            ],
+        ]);
     }
 
     protected function registerConfig(): void

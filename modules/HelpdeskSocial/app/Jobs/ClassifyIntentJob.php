@@ -24,7 +24,12 @@ class ClassifyIntentJob implements ShouldQueue
     public function __construct(
         public readonly int $commentId,
     ) {
-        $this->onQueue(config('helpdesksocial.queues.processing', 'helpdesk-social-processing'));
+        // Debe coincidir con la cola de EvaluateAutoReplyJob (queues.ai): en
+        // Laravel 12 el onQueue() del constructor de cada Job de la cadena gana
+        // sobre el onQueue() de Bus::chain(...). Con `queues.processing` aquí,
+        // las llamadas a OpenAI (hasta 30s) bloqueaban la cola rápida de
+        // ingesta en vez de la cola de IA.
+        $this->onQueue(config('helpdesksocial.queues.ai', 'helpdesk-social-ai'));
     }
 
     public function failed(\Throwable $exception): void

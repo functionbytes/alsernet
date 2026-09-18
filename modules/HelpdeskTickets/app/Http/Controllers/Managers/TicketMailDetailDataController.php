@@ -206,7 +206,7 @@ class TicketMailDetailDataController extends Controller
                 'ticket_number' => $t->ticket_number,
                 'subject' => $t->subject,
                 'status' => $t->status?->name,
-                'url_full' => route('manager.helpdesk.tickets.show-full', $t),
+                'url_full' => route('manager.helpdesk.tickets.show', $t),
             ])
             ->values()
             ->all();
@@ -235,7 +235,7 @@ class TicketMailDetailDataController extends Controller
             'tags' => $ticket->tags ?? [],
             'source' => $ticket->source,
             'sla' => $this->mapSla($ticket),
-            'url_full' => route('manager.helpdesk.tickets.show-full', $ticket),
+            'url_full' => route('manager.helpdesk.tickets.show', $ticket),
         ];
     }
 

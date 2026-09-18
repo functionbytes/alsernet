@@ -5,11 +5,13 @@ namespace Modules\HelpdeskSocial\Tests\Unit\Services;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Modules\HelpdeskSocial\Events\IntentClassified;
 use Modules\HelpdeskSocial\Events\SocialCommentReceived;
 use Modules\HelpdeskSocial\Events\SocialCommentReplied;
 use Modules\HelpdeskSocial\Listeners\SendNewSocialCommentNotification;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskSocial\Models\SocialIntent;
 use Modules\HelpdeskSocial\Tests\TestCase;
 
 class BroadcastEventsTest extends TestCase
@@ -61,8 +63,9 @@ class BroadcastEventsTest extends TestCase
             'social_account_id' => $account->id,
             'urgency' => 'low',
         ]);
+        $intent = SocialIntent::factory()->make(['urgency' => 'low']);
 
-        $event = new SocialCommentReceived($comment);
+        $event = new IntentClassified($comment, $intent);
         $listener = new SendNewSocialCommentNotification;
         $listener->handle($event);
 

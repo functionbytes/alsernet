@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ class GetProductImage
         $this->imageId = new ImageId($imageId);
     }
 
-    /**
-     * @return ImageId
-     */
     public function getImageId(): ImageId
     {
         return $this->imageId;

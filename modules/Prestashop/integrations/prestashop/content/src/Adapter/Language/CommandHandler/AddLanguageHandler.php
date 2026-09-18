@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,8 +82,6 @@ final class AddLanguageHandler extends AbstractLanguageHandler implements AddLan
     }
 
     /**
-     * @param IsoCode $isoCode
-     *
      * @throws LanguageConstraintException
      */
     private function assertLanguageWithIsoCodeDoesNotExist(IsoCode $isoCode)
@@ -94,9 +93,6 @@ final class AddLanguageHandler extends AbstractLanguageHandler implements AddLan
 
     /**
      * Add language and shop association
-     *
-     * @param Language $language
-     * @param AddLanguageCommand $command
      */
     private function addShopAssociation(Language $language, AddLanguageCommand $command)
     {
@@ -107,13 +103,11 @@ final class AddLanguageHandler extends AbstractLanguageHandler implements AddLan
     }
 
     /**
-     * @param AddLanguageCommand $command
-     *
      * @return Language
      */
     private function createLegacyLanguageObjectFromCommand(AddLanguageCommand $command)
     {
-        $language = new Language();
+        $language = new Language;
         $language->name = $command->getName();
         $language->iso_code = $command->getIsoCode()->getValue();
         if (false !== ($languageDetails = Language::getLangDetails($command->getIsoCode()->getValue()))) {
@@ -125,27 +119,23 @@ final class AddLanguageHandler extends AbstractLanguageHandler implements AddLan
         $language->is_rtl = $command->isRtl();
         $language->active = $command->isActive();
 
-        if (false === $language->validateFields(false)) {
+        if ($language->validateFields(false) === false) {
             throw new LanguageException('Cannot add language with invalid data');
         }
 
-        if (false === $language->add()) {
+        if ($language->add() === false) {
             throw new LanguageException(sprintf('Failed to add new language "%s"', $command->getName()));
         }
 
         return $language;
     }
 
-    /**
-     * @param Language $language
-     * @param AddLanguageCommand $command
-     */
     private function uploadFlagImage(Language $language, AddLanguageCommand $command)
     {
         $this->uploadImage(
             $language->id,
             $command->getFlagImagePath(),
-            'l' . DIRECTORY_SEPARATOR
+            'l'.DIRECTORY_SEPARATOR
         );
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,54 +39,65 @@ class AddOrderStateCommand
      * @var string[]
      */
     private $localizedNames;
+
     /**
      * @var string
      */
     private $color;
+
     /**
      * @var bool
      */
     private $loggable;
+
     /**
      * @var bool
      */
     private $invoice;
+
     /**
      * @var bool
      */
     private $hidden;
+
     /**
      * @var bool
      */
     private $sendEmail;
+
     /**
      * @var bool
      */
     private $pdfInvoice;
+
     /**
      * @var bool
      */
     private $pdfDelivery;
+
     /**
      * @var bool
      */
     private $shipped;
+
     /**
      * @var bool
      */
     private $paid;
+
     /**
      * @var bool
      */
     private $delivery;
+
     /**
      * @var array
      */
     private $localizedTemplates;
 
     /**
-     * @param string[] $localizedNames
-     * @param string[] $localizedTemplates
+     * @param  string[]  $localizedNames
+     * @param  string[]  $localizedTemplates
      */
     public function __construct(
         array $localizedNames,
@@ -124,8 +136,7 @@ class AddOrderStateCommand
     }
 
     /**
-     * @param string[] $localizedNames
-     *
+     * @param  string[]  $localizedNames
      * @return $this
      *
      * @throws OrderStateConstraintException

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,16 +58,14 @@ class ConfigYamlLoader extends FileLoader
      */
     public function supports($resource, $type = null)
     {
-        return is_string($resource) && 'yml' === pathinfo(
-                $resource,
-                PATHINFO_EXTENSION
-            );
+        return is_string($resource) && pathinfo(
+            $resource,
+            PATHINFO_EXTENSION
+        ) === 'yml';
     }
 
     /**
      * Return the parsed config after the YAML file has been loaded.
-     *
-     * @return array
      */
     public function getConfig(): array
     {
@@ -76,25 +75,24 @@ class ConfigYamlLoader extends FileLoader
     /**
      * Parses all imports.
      *
-     * @param array $content
-     * @param string $file
+     * @param  string  $file
      */
     private function parseImports(array $content, $file)
     {
-        if (!isset($content['imports'])) {
+        if (! isset($content['imports'])) {
             return;
         }
 
-        if (!\is_array($content['imports'])) {
+        if (! \is_array($content['imports'])) {
             throw new InvalidArgumentException(sprintf('The "imports" key should contain an array in %s. Check your YAML syntax.', $file));
         }
 
         $defaultDirectory = \dirname($file);
         foreach ($content['imports'] as $import) {
-            if (!\is_array($import)) {
+            if (! \is_array($import)) {
                 $import = ['resource' => $import];
             }
-            if (!isset($import['resource'])) {
+            if (! isset($import['resource'])) {
                 throw new InvalidArgumentException(sprintf('An import should provide a resource in %s. Check your YAML syntax.', $file));
             }
 

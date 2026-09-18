@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,7 @@ final class ImportDataFormatter
     }
 
     /**
-     * @param string|int $value
-     *
+     * @param  string|int  $value
      * @return bool
      */
     public function getBoolean($value)
@@ -64,8 +64,7 @@ final class ImportDataFormatter
     }
 
     /**
-     * @param string $field
-     *
+     * @param  string  $field
      * @return float
      */
     public function getPrice($field)
@@ -79,8 +78,7 @@ final class ImportDataFormatter
     /**
      * Create a multilang field.
      *
-     * @param string $field
-     *
+     * @param  string  $field
      * @return array
      */
     public function createMultiLangField($field)
@@ -97,9 +95,8 @@ final class ImportDataFormatter
     /**
      * Split the field by separator.
      *
-     * @param string|null $field
-     * @param string $separator
-     *
+     * @param  string|null  $field
+     * @param  string  $separator
      * @return array
      */
     public function split($field, $separator)
@@ -115,9 +112,9 @@ final class ImportDataFormatter
         $uniqidPath = false;
 
         // try data:// protocol. If failed, old school file on filesystem.
-        if (false === ($fd = @fopen('data://text/plain;base64,' . base64_encode($field), 'rb'))) {
+        if (false === ($fd = @fopen('data://text/plain;base64,'.base64_encode($field), 'rb'))) {
             do {
-                $uniqidPath = $this->configuration->get('_PS_UPLOAD_DIR_') . uniqid();
+                $uniqidPath = $this->configuration->get('_PS_UPLOAD_DIR_').uniqid();
             } while (file_exists($uniqidPath));
             file_put_contents($uniqidPath, $field);
             $fd = fopen($uniqidPath, 'r');
@@ -134,7 +131,7 @@ final class ImportDataFormatter
             @unlink($uniqidPath);
         }
 
-        if (empty($content) || !is_array($content)) {
+        if (empty($content) || ! is_array($content)) {
             return [];
         }
 
@@ -144,8 +141,7 @@ final class ImportDataFormatter
     /**
      * Transform given value into a friendly url string.
      *
-     * @param string $value
-     *
+     * @param  string  $value
      * @return string
      */
     public function createFriendlyUrl($value)

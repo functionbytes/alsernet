@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,7 @@ class SetCombinationSuppliersCommand
     private $combinationSuppliers;
 
     /**
-     * @param int $combinationId
-     * @param array<int, array<string, string|int|null>> $combinationSuppliers
+     * @param  array<int, array<string, string|int|null>>  $combinationSuppliers
      */
     public function __construct(
         int $combinationId,
@@ -61,9 +61,6 @@ class SetCombinationSuppliersCommand
         $this->setCombinationSuppliers($combinationSuppliers);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
@@ -78,7 +75,7 @@ class SetCombinationSuppliersCommand
     }
 
     /**
-     * @param array<int, array<string, string|int|null>> $productSuppliers
+     * @param  array<int, array<string, string|int|null>>  $productSuppliers
      */
     private function setCombinationSuppliers(array $productSuppliers): void
     {

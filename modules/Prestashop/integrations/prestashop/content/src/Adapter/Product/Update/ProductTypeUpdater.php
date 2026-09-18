@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,11 +61,6 @@ class ProductTypeUpdater
      */
     private $virtualProductUpdater;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductPackUpdater $productPackUpdater
-     * @param CombinationRemover $combinationRemover
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductPackUpdater $productPackUpdater,
@@ -78,9 +74,6 @@ class ProductTypeUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param ProductType $productType
-     *
      * @throws CannotUpdateProductException
      * @throws ProductConstraintException
      */
@@ -107,8 +100,8 @@ class ProductTypeUpdater
         ];
 
         $product->product_type = $productType->getValue();
-        $product->is_virtual = ProductType::TYPE_VIRTUAL === $productType->getValue();
-        $product->cache_is_pack = ProductType::TYPE_PACK === $productType->getValue();
+        $product->is_virtual = $productType->getValue() === ProductType::TYPE_VIRTUAL;
+        $product->cache_is_pack = $productType->getValue() === ProductType::TYPE_PACK;
         if ($productType->getValue() !== ProductType::TYPE_COMBINATIONS) {
             $product->cache_default_attribute = 0;
             $updatedProperties[] = 'cache_default_attribute';

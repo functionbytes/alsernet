@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,6 +49,7 @@ use PrestaShopBundle\Form\Admin\Improve\Design\MailTheme\TranslateMailsBodyType;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Service\TranslationService;
 use Symfony\Component\Form\Form;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -64,8 +66,6 @@ class MailThemeController extends FrameworkBundleAdminController
      * Show mail theme backups and generation page.
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
      *
      * @return Response
      */
@@ -95,8 +95,6 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function generateMailsAction(Request $request)
@@ -105,7 +103,7 @@ class MailThemeController extends FrameworkBundleAdminController
         $generateThemeMailsForm->handleRequest($request);
 
         if ($generateThemeMailsForm->isSubmitted()) {
-            if (!$generateThemeMailsForm->isValid()) {
+            if (! $generateThemeMailsForm->isValid()) {
                 $this->flashErrors($this->getFormErrorsForJS($generateThemeMailsForm));
 
                 return $this->redirectToRoute('admin_mail_theme_index');
@@ -115,14 +113,14 @@ class MailThemeController extends FrameworkBundleAdminController
             try {
                 $coreMailsFolder = '';
                 $modulesMailFolder = '';
-                //Overwrite theme folder if selected
-                if (!empty($data['theme'])) {
-                    $themeFolder = $this->getParameter('themes_dir') . '/' . $data['theme'];
-                    if (is_dir($themeFolder . '/mails')) {
-                        $coreMailsFolder = $themeFolder . '/mails';
+                // Overwrite theme folder if selected
+                if (! empty($data['theme'])) {
+                    $themeFolder = $this->getParameter('themes_dir').'/'.$data['theme'];
+                    if (is_dir($themeFolder.'/mails')) {
+                        $coreMailsFolder = $themeFolder.'/mails';
                     }
-                    if (is_dir($themeFolder . '/modules')) {
-                        $modulesMailFolder = $themeFolder . '/modules';
+                    if (is_dir($themeFolder.'/modules')) {
+                        $modulesMailFolder = $themeFolder.'/modules';
                     }
                 }
 
@@ -186,8 +184,6 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      *
      * @throws \Exception
@@ -200,7 +196,7 @@ class MailThemeController extends FrameworkBundleAdminController
         $form = $formHandler->getForm()->handleRequest($request);
 
         if ($form->isSubmitted()) {
-            if (!$form->isValid()) {
+            if (! $form->isValid()) {
                 $this->flashErrors($this->getFormErrorsForJS($form));
 
                 return $this->redirectToRoute('admin_mail_theme_index');
@@ -228,9 +224,7 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param string $theme
-     *
+     * @param  string  $theme
      * @return Response
      *
      * @throws InvalidArgumentException
@@ -265,11 +259,10 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param string $theme
-     * @param string $layout
-     * @param string $locale
-     * @param string $module
-     *
+     * @param  string  $theme
+     * @param  string  $layout
+     * @param  string  $locale
+     * @param  string  $module
      * @return Response
      *
      * @throws InvalidArgumentException
@@ -298,14 +291,14 @@ class MailThemeController extends FrameworkBundleAdminController
         /** @var LanguageRepositoryInterface $languageRepository */
         $languageRepository = $this->get('prestashop.core.admin.lang.repository');
         $language = $languageRepository->getOneByLocaleOrIsoCode($locale);
-        if (null === $language) {
+        if ($language === null) {
             throw new InvalidArgumentException(sprintf('Cannot find Language with locale or isoCode %s', $locale));
         }
 
         if (empty($module)) {
             $templatePath = _PS_MAIL_DIR_;
         } else {
-            $templatePath = _PS_MODULE_DIR_ . $module . '/mails/';
+            $templatePath = _PS_MODULE_DIR_.$module.'/mails/';
         }
 
         /** @var MailPreviewVariablesBuilder $variablesBuilder */
@@ -319,9 +312,9 @@ class MailThemeController extends FrameworkBundleAdminController
             $this->trans('Test email %template%', 'Admin.Design.Feature', ['%template%' => $layout]),
             $mailVariables,
             $employeeData['email'],
-            $employeeData['firstname'] . ' ' . $employeeData['lastname'],
+            $employeeData['firstname'].' '.$employeeData['lastname'],
             $employeeData['email'],
-            $employeeData['firstname'] . ' ' . $employeeData['lastname'],
+            $employeeData['firstname'].' '.$employeeData['lastname'],
             null,
             null,
             $templatePath
@@ -361,16 +354,14 @@ class MailThemeController extends FrameworkBundleAdminController
      *     message="You do not have permission to update this."
      * )
      *
-     * @param Request $request
-     *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @return RedirectResponse
      */
     public function translateBodyAction(Request $request)
     {
         $translateMailsBodyForm = $this->createForm(TranslateMailsBodyType::class);
         $translateMailsBodyForm->handleRequest($request);
 
-        if (!$translateMailsBodyForm->isSubmitted() || !$translateMailsBodyForm->isValid()) {
+        if (! $translateMailsBodyForm->isSubmitted() || ! $translateMailsBodyForm->isValid()) {
             $this->addFlash(
                 'error',
                 $this->trans(
@@ -400,12 +391,11 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param string $theme
-     * @param string $layout
-     * @param string $type
-     * @param string $locale
-     * @param string $module
-     *
+     * @param  string  $theme
+     * @param  string  $layout
+     * @param  string  $type
+     * @param  string  $locale
+     * @param  string  $module
      * @return Response
      *
      * @throws FileNotFoundException
@@ -423,12 +413,11 @@ class MailThemeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param string $theme
-     * @param string $layout
-     * @param string $type
-     * @param string $locale
-     * @param string $module
-     *
+     * @param  string  $theme
+     * @param  string  $layout
+     * @param  string  $type
+     * @param  string  $locale
+     * @param  string  $module
      * @return Response
      *
      * @throws FileNotFoundException
@@ -449,12 +438,11 @@ class MailThemeController extends FrameworkBundleAdminController
      * Dynamically display an email template, this is usually used by the MailGenerator but this action
      * allows to display preview before generating the file (handy when you are developing an email theme)
      *
-     * @param string $themeName
-     * @param string $layoutName
-     * @param string $type
-     * @param string $locale
-     * @param string $module
-     *
+     * @param  string  $themeName
+     * @param  string  $layoutName
+     * @param  string  $type
+     * @param  string  $locale
+     * @param  string  $module
      * @return string
      *
      * @throws FileNotFoundException
@@ -470,7 +458,7 @@ class MailThemeController extends FrameworkBundleAdminController
             $locale = $this->getContext()->language->locale;
         }
         $language = $languageRepository->getOneByLocaleOrIsoCode($locale);
-        if (null === $language) {
+        if ($language === null) {
             throw new InvalidArgumentException(sprintf('Cannot find Language with locale or isoCode %s', $locale));
         }
 
@@ -480,7 +468,7 @@ class MailThemeController extends FrameworkBundleAdminController
 
         /** @var MailTemplateRendererInterface $renderer */
         $renderer = $this->get('prestashop.core.mail_template.mail_template_renderer');
-        //Special case for preview, we fill the mail variables
+        // Special case for preview, we fill the mail variables
         $renderer->addTransformation(new MailVariablesTransformation(MailTemplateInterface::HTML_TYPE, $mailLayoutVariables));
         $renderer->addTransformation(new MailVariablesTransformation(MailTemplateInterface::TXT_TYPE, $mailLayoutVariables));
 
@@ -499,10 +487,9 @@ class MailThemeController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param string $themeName
-     * @param string $layoutName
-     * @param string $module
-     *
+     * @param  string  $themeName
+     * @param  string  $layoutName
+     * @param  string  $module
      * @return LayoutInterface
      *
      * @throws FileNotFoundException
@@ -527,16 +514,13 @@ class MailThemeController extends FrameworkBundleAdminController
             }
         }
 
-        if (null === $layout) {
-            throw new FileNotFoundException(sprintf('Cannot find layout %s%s in theme %s', empty($module) ? '' : $module . ':', $layoutName, $themeName));
+        if ($layout === null) {
+            throw new FileNotFoundException(sprintf('Cannot find layout %s%s in theme %s', empty($module) ? '' : $module.':', $layoutName, $themeName));
         }
 
         return $layout;
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getMailThemeFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.mail_theme.form_handler');

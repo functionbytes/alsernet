@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ class FeatureFlagsModifier implements DataConfigurationInterface
     /** @var TranslatorInterface */
     private $translator;
 
-    /**
-     * @param EntityManagerInterface $doctrineEntityManager
-     * @param TranslatorInterface $translator
-     */
     public function __construct(EntityManagerInterface $doctrineEntityManager, TranslatorInterface $translator)
     {
         $this->doctrineEntityManager = $doctrineEntityManager;
@@ -84,15 +81,15 @@ class FeatureFlagsModifier implements DataConfigurationInterface
      */
     public function updateConfiguration(array $configuration): array
     {
-        if (!$this->validateConfiguration($configuration)) {
+        if (! $this->validateConfiguration($configuration)) {
             throw new InvalidArgumentException('Invalid feature flag configuration submitted');
         }
 
-        /** @var array<string, boolean> $configuration */
+        /** @var array<string, bool> $configuration */
         foreach ($configuration as $flagName => $flagState) {
             $featureFlag = $this->getOneFeatureFlagByName($flagName);
 
-            if (null === $featureFlag) {
+            if ($featureFlag === null) {
                 throw new InvalidArgumentException(sprintf('Invalid feature flag configuration submitted, flag %s does not exist', $flagName));
             }
 
@@ -113,13 +110,13 @@ class FeatureFlagsModifier implements DataConfigurationInterface
      */
     public function validateConfiguration(array $configuration): bool
     {
-        /** @var array<string, boolean> $configuration */
+        /** @var array<string, bool> $configuration */
         foreach ($configuration as $flagName => $flagState) {
-            if (!is_string($flagName)) {
+            if (! is_string($flagName)) {
                 return false;
             }
 
-            if (!is_bool($flagState)) {
+            if (! is_bool($flagState)) {
                 return false;
             }
         }
@@ -128,8 +125,6 @@ class FeatureFlagsModifier implements DataConfigurationInterface
     }
 
     /**
-     * @param string $featureFlagName
-     *
      * @return FeatureFlag|null return null if feature flag cannot be found
      */
     public function getOneFeatureFlagByName(string $featureFlagName): ?FeatureFlag

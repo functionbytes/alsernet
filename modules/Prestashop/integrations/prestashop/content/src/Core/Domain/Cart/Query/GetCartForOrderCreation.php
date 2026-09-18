@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,6 @@ class GetCartForOrderCreation
     private $hideDiscounts = false;
 
     /**
-     * @param int $cartId
-     *
      * @throws CartConstraintException
      */
     public function __construct(int $cartId)
@@ -54,17 +53,11 @@ class GetCartForOrderCreation
         $this->cartId = new CartId($cartId);
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;
     }
 
-    /**
-     * @return bool
-     */
     public function hideDiscounts(): bool
     {
         return $this->hideDiscounts;
@@ -79,10 +72,6 @@ class GetCartForOrderCreation
      * Otherwise,
      * There is one line per product type, any gift inventaries will be included in the quantity of charged inventaries, but the price of gift inventaries will appear as a discount
      * Shipping has its original price, and if it's free, the shipping value will be added as a discount
-     *
-     * @param bool $hideDiscounts
-     *
-     * @return GetCartForOrderCreation
      */
     public function setHideDiscounts(bool $hideDiscounts): self
     {

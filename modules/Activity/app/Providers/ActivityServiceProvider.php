@@ -49,6 +49,7 @@ class ActivityServiceProvider extends ServiceProvider
         // Sidebar con los items del módulo
         NavService::registerSidebar('settings', [
             'title' => 'Historial de actividad',
+            'order' => 100,
             'items' => [
                 ['label' => 'Registro de cambios', 'route' => 'activity.logs'],
                 ['label' => 'Auditoría', 'route' => 'activity.audit'],

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,8 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLangId
-     * @param array $contextShopIds
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
      */
     public function __construct(
         Connection $connection,
@@ -93,8 +91,7 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->searchCriteriaApplicator
             ->applySorting($searchCriteria, $qb)
-            ->applyPagination($searchCriteria, $qb)
-        ;
+            ->applyPagination($searchCriteria, $qb);
 
         return $qb;
     }
@@ -119,7 +116,7 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
             $alias = 's';
         }
 
-        $qb->select('COUNT(DISTINCT ' . $alias . '.`id_supplier`)');
+        $qb->select('COUNT(DISTINCT '.$alias.'.`id_supplier`)');
 
         return $qb;
     }
@@ -133,34 +130,32 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         return $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'supplier', 's')
+            ->from($this->dbPrefix.'supplier', 's')
             ->innerJoin(
                 's',
-                $this->dbPrefix . 'supplier_lang',
+                $this->dbPrefix.'supplier_lang',
                 'sl',
                 'sl.`id_supplier` = s.`id_supplier`'
             )
             ->innerJoin(
                 's',
-                $this->dbPrefix . 'supplier_shop',
+                $this->dbPrefix.'supplier_shop',
                 'ss',
                 'ss.`id_supplier` = s.`id_supplier`'
             )
             ->leftJoin(
                 's',
-                $this->dbPrefix . 'product_supplier',
+                $this->dbPrefix.'product_supplier',
                 'ps',
                 'ps.`id_supplier` = s.`id_supplier`'
             )
             ->andWhere('sl.`id_lang` = :contextLangId')
-            ->andWhere('ss.`id_shop` IN (:contextShopIds)')
-        ;
+            ->andWhere('ss.`id_shop` IN (:contextShopIds)');
     }
 
     /**
      * Gets query builder by product count which uses the main query as the sub-query in FROM condition.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -174,11 +169,10 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb = $this->connection
             ->createQueryBuilder()
             ->from(
-                '(' . $subQuery->getSQL() . ')',
+                '('.$subQuery->getSQL().')',
                 $alias
             )
-            ->where('subQuery.`products_count` = :productsCountFilter')
-        ;
+            ->where('subQuery.`products_count` = :productsCountFilter');
 
         $qb->setParameter('productsCountFilter', $filters['products_count']);
 
@@ -187,37 +181,29 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Adds select and group by statements.
-     *
-     * @param QueryBuilder $qb
      */
     private function applyListQuerySelection(QueryBuilder $qb)
     {
         $qb
             ->select('s.`id_supplier`, s.`name`, s.`active`')
             ->addSelect('COUNT(DISTINCT ps.`id_product`) AS `products_count`')
-            ->groupBy('s.`id_supplier`')
-        ;
+            ->groupBy('s.`id_supplier`');
     }
 
     /**
      * Sets the parameters which are used in the queries.
-     *
-     * @param QueryBuilder $qb
      */
     private function applyListQueryParameters(QueryBuilder $qb)
     {
         $qb
             ->setParameter('contextLangId', $this->contextLangId)
-            ->setParameter('contextShopIds', $this->contextShopIds, Connection::PARAM_INT_ARRAY)
-        ;
+            ->setParameter('contextShopIds', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
     }
 
     /**
      * Adds filter restrictions.
      *
-     * @param QueryBuilder $qb
-     * @param array $filters
-     * @param string $alias
+     * @param  string  $alias
      */
     private function applyFilters(QueryBuilder $qb, array $filters, $alias)
     {
@@ -228,19 +214,19 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!in_array($filterName, $availableFilters, true)) {
+            if (! in_array($filterName, $availableFilters, true)) {
                 continue;
             }
 
             if (in_array($filterName, ['id_supplier', 'active'], true)) {
-                $qb->andWhere($alias . '.`' . $filterName . '` = :' . $filterName);
+                $qb->andWhere($alias.'.`'.$filterName.'` = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            $qb->andWhere($alias . '.`name` LIKE :' . $filterName);
-            $qb->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere($alias.'.`name` LIKE :'.$filterName);
+            $qb->setParameter($filterName, '%'.$value.'%');
         }
     }
 }

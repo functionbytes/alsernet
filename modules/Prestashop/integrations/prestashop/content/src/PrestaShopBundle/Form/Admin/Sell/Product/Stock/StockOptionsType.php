@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,11 +46,6 @@ class StockOptionsType extends TranslatorAwareType
      */
     private $router;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param RouterInterface $router
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -98,8 +94,7 @@ class StockOptionsType extends TranslatorAwareType
                         '[/1]' => '</a>',
                     ]
                 ),
-            ])
-        ;
+            ]);
     }
 
     /**

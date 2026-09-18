@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ use ProductDownload as VirtualProductFile;
  */
 class VirtualProductFileValidator extends AbstractObjectModelValidator
 {
-    /**
-     * @param VirtualProductFile $virtualProductFile
-     */
     public function validate(VirtualProductFile $virtualProductFile): void
     {
         $this->validateVirtualProductFileProperty($virtualProductFile, 'id_product');
@@ -55,10 +53,6 @@ class VirtualProductFileValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param VirtualProductFile $virtualProductFile
-     * @param string $propertyName
-     * @param int $errorCode
-     *
      * @throws VirtualProductFileConstraintException
      */
     private function validateVirtualProductFileProperty(VirtualProductFile $virtualProductFile, string $propertyName, int $errorCode = 0): void

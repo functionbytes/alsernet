@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,6 +39,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Exception;
  * UPLOAD_ERR_CANT_WRITE,
  * UPLOAD_ERR_EXTENSION
  */
-class FileUploadException extends DomainException
-{
-}
+class FileUploadException extends DomainException {}

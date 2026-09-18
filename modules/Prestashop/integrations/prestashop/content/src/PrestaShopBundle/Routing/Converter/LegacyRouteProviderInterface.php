@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,8 +62,7 @@ interface LegacyRouteProviderInterface
     /**
      * Return the list of actions for a defined controller.
      *
-     * @param string $controller
-     *
+     * @param  string  $controller
      * @return string[]
      */
     public function getActionsByController($controller);
@@ -70,9 +70,8 @@ interface LegacyRouteProviderInterface
     /**
      * Return the LegacyRoute object matching $controller and $action.
      *
-     * @param string $controller
-     * @param string $action
-     *
+     * @param  string  $controller
+     * @param  string  $action
      * @return LegacyRoute
      *
      * @throws RouteNotFoundException

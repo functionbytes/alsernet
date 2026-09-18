@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,6 @@ final class ChangeOrderInvoiceAddressHandler extends AbstractOrderHandler implem
      */
     private $orderDetailTaxUpdater;
 
-    /**
-     * @param OrderAmountUpdater $orderAmountUpdater
-     * @param OrderDetailUpdater $orderDetailTaxUpdater
-     */
     public function __construct(
         OrderAmountUpdater $orderAmountUpdater,
         OrderDetailUpdater $orderDetailTaxUpdater
@@ -73,7 +70,7 @@ final class ChangeOrderInvoiceAddressHandler extends AbstractOrderHandler implem
 
         $cart = Cart::getCartByOrderId($order->id);
 
-        if (!Validate::isLoadedObject($address)) {
+        if (! Validate::isLoadedObject($address)) {
             throw new OrderException('New invoice address is not valid');
         }
 

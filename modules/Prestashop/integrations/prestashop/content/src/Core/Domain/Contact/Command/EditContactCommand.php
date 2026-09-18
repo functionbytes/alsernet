@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,7 +69,7 @@ class EditContactCommand extends AbstractContactCommand
     private $shopAssociation;
 
     /**
-     * @param int $contactId
+     * @param  int  $contactId
      *
      * @throws ContactException
      */
@@ -94,20 +95,19 @@ class EditContactCommand extends AbstractContactCommand
     }
 
     /**
-     * @param string[] $localisedTitles
-     *
+     * @param  string[]  $localisedTitles
      * @return self
      *
      * @throws ContactConstraintException
      */
     public function setLocalisedTitles(array $localisedTitles)
     {
-        if (!$this->assertIsNotEmptyAndContainsAllNonEmptyStringValues($localisedTitles)) {
+        if (! $this->assertIsNotEmptyAndContainsAllNonEmptyStringValues($localisedTitles)) {
             throw new ContactConstraintException(sprintf('Expected to have not empty titles array but received %s', var_export($localisedTitles, true)), ContactConstraintException::INVALID_TITLE);
         }
 
         foreach ($localisedTitles as $title) {
-            if (!$this->assertIsGenericName($title)) {
+            if (! $this->assertIsGenericName($title)) {
                 throw new ContactConstraintException(sprintf('Expected value %s to match given regex /^[^<>={}]*$/u but failed', var_export($title, true)), ContactConstraintException::INVALID_TITLE);
             }
         }
@@ -126,8 +126,7 @@ class EditContactCommand extends AbstractContactCommand
     }
 
     /**
-     * @param string $email
-     *
+     * @param  string  $email
      * @return self
      *
      * @throws DomainConstraintException
@@ -148,8 +147,7 @@ class EditContactCommand extends AbstractContactCommand
     }
 
     /**
-     * @param bool $isMessagesSavingEnabled
-     *
+     * @param  bool  $isMessagesSavingEnabled
      * @return self
      */
     public function setIsMessagesSavingEnabled($isMessagesSavingEnabled)
@@ -168,8 +166,7 @@ class EditContactCommand extends AbstractContactCommand
     }
 
     /**
-     * @param string[] $localisedDescription
-     *
+     * @param  string[]  $localisedDescription
      * @return self
      */
     public function setLocalisedDescription(array $localisedDescription)
@@ -188,15 +185,14 @@ class EditContactCommand extends AbstractContactCommand
     }
 
     /**
-     * @param int[] $shopAssociation
-     *
+     * @param  int[]  $shopAssociation
      * @return self
      *
      * @throws ContactConstraintException
      */
     public function setShopAssociation(array $shopAssociation)
     {
-        if (!$this->assertArrayContainsAllIntegerValues($shopAssociation)) {
+        if (! $this->assertArrayContainsAllIntegerValues($shopAssociation)) {
             throw new ContactConstraintException(sprintf('Given shop association %s must contain all integer values', var_export($shopAssociation, true)), ContactConstraintException::INVALID_SHOP_ASSOCIATION);
         }
 

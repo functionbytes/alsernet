@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,12 +50,6 @@ class DimensionsType extends TranslatorAwareType
      */
     private $weightUnit;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param string $dimensionUnit
-     * @param string $weightUnit
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -77,7 +72,7 @@ class DimensionsType extends TranslatorAwareType
                 'label' => $this->trans('Width', 'Admin.Catalog.Feature'),
                 'unit' => $this->dimensionUnit,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type([
                         'type' => 'numeric',
                         'message' => $this->trans(
@@ -85,7 +80,7 @@ class DimensionsType extends TranslatorAwareType
                             'Admin.Notifications.Error'
                         ),
                     ]),
-                    new PositiveOrZero(),
+                    new PositiveOrZero,
                 ],
                 'default_empty_data' => 0,
             ])
@@ -94,7 +89,7 @@ class DimensionsType extends TranslatorAwareType
                 'label' => $this->trans('Height', 'Admin.Catalog.Feature'),
                 'unit' => $this->dimensionUnit,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type([
                         'type' => 'numeric',
                         'message' => $this->trans(
@@ -102,7 +97,7 @@ class DimensionsType extends TranslatorAwareType
                             'Admin.Notifications.Error'
                         ),
                     ]),
-                    new PositiveOrZero(),
+                    new PositiveOrZero,
                 ],
                 'default_empty_data' => 0,
             ])
@@ -111,7 +106,7 @@ class DimensionsType extends TranslatorAwareType
                 'label' => $this->trans('Depth', 'Admin.Catalog.Feature'),
                 'unit' => $this->dimensionUnit,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type([
                         'type' => 'numeric',
                         'message' => $this->trans(
@@ -119,7 +114,7 @@ class DimensionsType extends TranslatorAwareType
                             'Admin.Notifications.Error'
                         ),
                     ]),
-                    new PositiveOrZero(),
+                    new PositiveOrZero,
                 ],
                 'default_empty_data' => 0,
             ])
@@ -128,7 +123,7 @@ class DimensionsType extends TranslatorAwareType
                 'label' => $this->trans('Weight', 'Admin.Catalog.Feature'),
                 'unit' => $this->weightUnit,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type([
                         'type' => 'numeric',
                         'message' => $this->trans(
@@ -136,11 +131,10 @@ class DimensionsType extends TranslatorAwareType
                             'Admin.Notifications.Error'
                         ),
                     ]),
-                    new PositiveOrZero(),
+                    new PositiveOrZero,
                 ],
                 'default_empty_data' => 0,
-            ])
-        ;
+            ]);
     }
 
     /**

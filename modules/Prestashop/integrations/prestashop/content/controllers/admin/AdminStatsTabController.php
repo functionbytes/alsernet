@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -91,11 +92,11 @@ abstract class AdminStatsTabControllerCore extends AdminController
         }
 
         $action = Context::getContext()->link->getAdminLink('AdminStats');
-        $action .= ($action && $table ? '&' . Tools::safeOutput($action) : '');
-        $action .= ($identifier && $id ? '&' . Tools::safeOutput($identifier) . '=' . (int) $id : '');
+        $action .= ($action && $table ? '&'.Tools::safeOutput($action) : '');
+        $action .= ($identifier && $id ? '&'.Tools::safeOutput($identifier).'='.(int) $id : '');
         $module = Tools::getValue('module');
-        $action .= ($module ? '&module=' . Tools::safeOutput($module) : '');
-        $action .= (($id_product = Tools::getValue('id_product')) ? '&id_product=' . Tools::safeOutput($id_product) : '');
+        $action .= ($module ? '&module='.Tools::safeOutput($module) : '');
+        $action .= (($id_product = Tools::getValue('id_product')) ? '&id_product='.Tools::safeOutput($id_product) : '');
         $tpl->assign([
             'current' => self::$currentIndex,
             'token' => $token,
@@ -175,7 +176,9 @@ abstract class AdminStatsTabControllerCore extends AdminController
     protected function getModules()
     {
         return array_map(
-            function ($moduleArray) {return ['name' => $moduleArray['module']]; },
+            function ($moduleArray) {
+                return ['name' => $moduleArray['module']];
+            },
             Hook::getHookModuleExecList('displayAdminStatsModules')
         );
     }
@@ -184,14 +187,14 @@ abstract class AdminStatsTabControllerCore extends AdminController
     {
         $tpl = $this->createTemplate('stats.tpl');
 
-        if ((!($module_name = Tools::getValue('module')) || !Validate::isModuleName($module_name)) && ($module_instance = Module::getInstanceByName('statsforecast')) && $module_instance->active) {
+        if ((! ($module_name = Tools::getValue('module')) || ! Validate::isModuleName($module_name)) && ($module_instance = Module::getInstanceByName('statsforecast')) && $module_instance->active) {
             $module_name = 'statsforecast';
         }
 
         if ($module_name) {
             $_GET['module'] = $module_name;
 
-            if (!isset($module_instance)) {
+            if (! isset($module_instance)) {
                 $module_instance = Module::getInstanceByName($module_name);
             }
 
@@ -217,7 +220,7 @@ abstract class AdminStatsTabControllerCore extends AdminController
 
         if (Tools::getValue('submitSettings')) {
             if ($this->access('edit')) {
-                self::$currentIndex .= '&module=' . Tools::getValue('module');
+                self::$currentIndex .= '&module='.Tools::getValue('module');
                 Configuration::updateValue('PS_STATS_RENDER', Tools::getValue('PS_STATS_RENDER', Configuration::get('PS_STATS_RENDER')));
                 Configuration::updateValue('PS_STATS_GRID_RENDER', Tools::getValue('PS_STATS_GRID_RENDER', Configuration::get('PS_STATS_GRID_RENDER')));
                 Configuration::updateValue('PS_STATS_OLD_CONNECT_AUTO_CLEAN', Tools::getValue('PS_STATS_OLD_CONNECT_AUTO_CLEAN', Configuration::get('PS_STATS_OLD_CONNECT_AUTO_CLEAN')));
@@ -230,7 +233,7 @@ abstract class AdminStatsTabControllerCore extends AdminController
     public function processDateRange()
     {
         if (Tools::isSubmit('submitDatePicker')) {
-            if ((!Validate::isDate($from = Tools::getValue('datepickerFrom')) || !Validate::isDate($to = Tools::getValue('datepickerTo'))) || (strtotime($from) > strtotime($to))) {
+            if ((! Validate::isDate($from = Tools::getValue('datepickerFrom')) || ! Validate::isDate($to = Tools::getValue('datepickerTo'))) || (strtotime($from) > strtotime($to))) {
                 $this->errors[] = $this->trans('The specified date is invalid.', [], 'Admin.Stats.Notification');
             }
         }
@@ -250,22 +253,22 @@ abstract class AdminStatsTabControllerCore extends AdminController
         if (Tools::isSubmit('submitDateMonthPrev')) {
             $m = (date('m') == 1 ? 12 : date('m') - 1);
             $y = ($m == 12 ? date('Y') - 1 : date('Y'));
-            $from = $y . '-' . $m . '-01';
-            $to = $y . '-' . $m . date('-t', mktime(12, 0, 0, $m, 15, $y));
+            $from = $y.'-'.$m.'-01';
+            $to = $y.'-'.$m.date('-t', mktime(12, 0, 0, $m, 15, $y));
         }
         if (Tools::isSubmit('submitDateYear')) {
             $from = date('Y-01-01');
             $to = date('Y-12-31');
         }
         if (Tools::isSubmit('submitDateYearPrev')) {
-            $from = (date('Y') - 1) . date('-01-01');
-            $to = (date('Y') - 1) . date('-12-31');
+            $from = (date('Y') - 1).date('-01-01');
+            $to = (date('Y') - 1).date('-12-31');
         }
-        if (isset($from, $to) && !count($this->errors)) {
+        if (isset($from, $to) && ! count($this->errors)) {
             $this->context->employee->stats_date_from = $from;
             $this->context->employee->stats_date_to = $to;
             $this->context->employee->update();
-            if (!$this->isXmlHttpRequest()) {
+            if (! $this->isXmlHttpRequest()) {
                 Tools::redirectAdmin($_SERVER['REQUEST_URI']);
             }
         }
@@ -277,7 +280,7 @@ abstract class AdminStatsTabControllerCore extends AdminController
 
         if ($this->isXmlHttpRequest()) {
             if (is_array($this->errors) && count($this->errors)) {
-                die(json_encode(
+                exit(json_encode(
                     [
                         'has_errors' => true,
                         'errors' => [$this->errors],
@@ -285,12 +288,12 @@ abstract class AdminStatsTabControllerCore extends AdminController
                         'date_to' => $this->context->employee->stats_date_to, ]
                 ));
             } else {
-                die(json_encode(
+                exit(json_encode(
                     [
                         'has_errors' => false,
                         'date_from' => $this->context->employee->stats_date_from,
                         'date_to' => $this->context->employee->stats_date_to, ]
-                    ));
+                ));
             }
         }
     }
@@ -301,6 +304,6 @@ abstract class AdminStatsTabControllerCore extends AdminController
         $month = isset($this->context->cookie->stats_month) ? sprintf('%02d', $this->context->cookie->stats_month) : '%';
         $day = isset($this->context->cookie->stats_day) ? sprintf('%02d', $this->context->cookie->stats_day) : '%';
 
-        return $year . '-' . $month . '-' . $day;
+        return $year.'-'.$month.'-'.$day;
     }
 }

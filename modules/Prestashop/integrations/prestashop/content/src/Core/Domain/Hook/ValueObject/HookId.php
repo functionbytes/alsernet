@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class HookId
     private $hookId;
 
     /**
-     * @param int $hookId
+     * @param  int  $hookId
      */
     public function __construct($hookId)
     {
@@ -59,11 +60,11 @@ class HookId
     }
 
     /**
-     * @param int $hookId
+     * @param  int  $hookId
      */
     private function assertIntegerIsGreaterThanZero($hookId)
     {
-        if (!is_int($hookId) || 0 > $hookId) {
+        if (! is_int($hookId) || $hookId < 0) {
             throw new HookConstraintException(sprintf('Hook id %d is invalid. Hook id must be number that is greater than zero.', var_export($hookId, true)));
         }
     }

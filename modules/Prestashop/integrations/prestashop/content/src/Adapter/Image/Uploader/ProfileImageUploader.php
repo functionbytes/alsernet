@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ final class ProfileImageUploader extends AbstractImageUploader implements ImageU
      */
     private $tmpImageDir;
 
-    /**
-     * @param string $profileImageDir
-     * @param string $tmpImageDir
-     */
     public function __construct(
         string $profileImageDir = _PS_PROFILE_IMG_DIR_,
         string $tmpImageDir = _PS_TMP_IMG_DIR_
@@ -68,21 +65,21 @@ final class ProfileImageUploader extends AbstractImageUploader implements ImageU
         $tempImageName = $this->createTemporaryImage($image);
         $this->deleteOldImage($profileId);
 
-        $destination = $this->profileImageDir . $profileId . '.jpg';
+        $destination = $this->profileImageDir.$profileId.'.jpg';
         $this->uploadFromTemp($tempImageName, $destination);
     }
 
     /**
      * Deletes old image
      *
-     * @param int $id
+     * @param  int  $id
      */
     private function deleteOldImage($id): void
     {
         $profile = new Profile($id);
         $profile->deleteImage();
 
-        $currentImage = $this->tmpImageDir . 'profile_mini_' . $id . '.jpg';
+        $currentImage = $this->tmpImageDir.'profile_mini_'.$id.'.jpg';
 
         if (file_exists($currentImage)) {
             unlink($currentImage);

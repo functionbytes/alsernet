@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class VirtualProductFileCommandsBuilder implements ProductCommandsBuilderI
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['stock']['virtual_product_file'])) {
+        if (! isset($formData['stock']['virtual_product_file'])) {
             return [];
         }
 
@@ -65,14 +66,11 @@ final class VirtualProductFileCommandsBuilder implements ProductCommandsBuilderI
     }
 
     /**
-     * @param ProductId $productId
-     * @param array<string, mixed> $virtualProductFileData
-     *
-     * @return AddVirtualProductFileCommand|null
+     * @param  array<string, mixed>  $virtualProductFileData
      */
     public function buildAddCommand(ProductId $productId, array $virtualProductFileData): ?AddVirtualProductFileCommand
     {
-        if (empty($virtualProductFileData['has_file']) || !empty($virtualProductFileData['virtual_product_file_id'])) {
+        if (empty($virtualProductFileData['has_file']) || ! empty($virtualProductFileData['virtual_product_file_id'])) {
             return null;
         }
 
@@ -94,9 +92,7 @@ final class VirtualProductFileCommandsBuilder implements ProductCommandsBuilderI
     }
 
     /**
-     * @param array<string, mixed> $virtualProductFileData
-     *
-     * @return UpdateVirtualProductFileCommand|null
+     * @param  array<string, mixed>  $virtualProductFileData
      */
     private function buildUpdateCommand(array $virtualProductFileData): ?UpdateVirtualProductFileCommand
     {
@@ -130,7 +126,7 @@ final class VirtualProductFileCommandsBuilder implements ProductCommandsBuilderI
             $update = true;
             $command->setExpirationDate(
                 empty($virtualProductFileData['expiration_date']) ?
-                    new NullDateTime() :
+                    new NullDateTime :
                     new DateTimeImmutable($virtualProductFileData['expiration_date'])
             );
         }
@@ -139,13 +135,11 @@ final class VirtualProductFileCommandsBuilder implements ProductCommandsBuilderI
     }
 
     /**
-     * @param array<string, mixed> $virtualProductFileData
-     *
-     * @return DeleteVirtualProductFileCommand|null
+     * @param  array<string, mixed>  $virtualProductFileData
      */
     private function buildDeleteCommand(array $virtualProductFileData): ?DeleteVirtualProductFileCommand
     {
-        if (!empty($virtualProductFileData['has_file']) || empty($virtualProductFileData['virtual_product_file_id'])) {
+        if (! empty($virtualProductFileData['has_file']) || empty($virtualProductFileData['virtual_product_file_id'])) {
             return null;
         }
 

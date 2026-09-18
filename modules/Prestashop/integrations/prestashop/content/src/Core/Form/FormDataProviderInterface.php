@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,6 @@ interface FormDataProviderInterface
     /**
      * Persists form Data in Database and Filesystem.
      *
-     * @param array $data
      *
      * @return array $errors if data can't persisted an array of errors messages
      *

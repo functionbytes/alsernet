@@ -163,7 +163,7 @@ class MetaWebhookParser implements WebhookParserInterface
         $attachments = [];
         foreach ($message['attachments'] ?? [] as $att) {
             $attachments[] = [
-                'type' => $att['type'],
+                'type' => $att['type'] ?? 'unknown',
                 'url' => $att['payload']['url'] ?? null,
             ];
         }
@@ -216,7 +216,7 @@ class MetaWebhookParser implements WebhookParserInterface
         $attachments = [];
         foreach ($message['attachments'] ?? [] as $att) {
             $attachments[] = [
-                'type' => $att['type'],
+                'type' => $att['type'] ?? 'unknown',
                 'url' => $att['payload']['url'] ?? null,
             ];
         }

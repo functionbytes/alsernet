@@ -36,7 +36,7 @@ class ConversationsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $manager;
 
@@ -111,6 +111,42 @@ class ConversationsControllerTest extends TestCase
 
         $this->assertSame(3, $sidebarInboxes->firstWhere('id', $inboxA->id)->conversations_count);
         $this->assertSame(1, $sidebarInboxes->firstWhere('id', $inboxB->id)->conversations_count);
+    }
+
+    /**
+     * listJson() es el endpoint que el listener de Echo ya llama (debounced)
+     * en cada evento en tiempo real que puede afectar a los contadores de
+     * BANDEJAS/EQUIPOS/ETIQUETAS del sidebar — ver conversations-list.js
+     * (scheduleSidebarCountersRefresh/patchSidebarStructureCounts). Cerrar la
+     * conversación la saca del filtro is_open=true que usan esos contadores;
+     * sin invalidar la caché global (ConversationObserver::updated() ->
+     * ConversationInboxMetricsService::invalidateSidebarStructureCaches()),
+     * este segundo request seguiría sirviendo el valor cacheado durante 60s.
+     */
+    public function test_list_json_exposes_and_refreshes_sidebar_structure_counts(): void
+    {
+        $inbox = Inbox::create([
+            'name' => 'Inbox A', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true,
+        ]);
+        $conversation = $this->createConversation(['inbox_id' => $inbox->id]);
+
+        $before = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.conversations.list'))
+            ->assertOk()
+            ->json('sidebar.inboxes');
+
+        $this->assertSame(1, collect($before)->firstWhere('id', $inbox->id)['count']);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.close', $conversation))
+            ->assertOk();
+
+        $after = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.conversations.list'))
+            ->assertOk()
+            ->json('sidebar.inboxes');
+
+        $this->assertSame(0, collect($after)->firstWhere('id', $inbox->id)['count']);
     }
 
     // ─── create ───────────────────────────────────────────────────────────────
@@ -360,6 +396,13 @@ class ConversationsControllerTest extends TestCase
         // no se revierte con DatabaseTransactions) — se limpia para que el inbox
         // creado en este test sea el que efectivamente se resuelva.
         Cache::forget('helpdesk:inbox_id:whatsapp');
+
+        // La resolución real (Inbox::query()->where('channel_type', $channel)
+        // ->value('id')) no tiene orderBy: con más de un inbox de whatsapp
+        // devuelve el que MySQL prefiera, y la BD de desarrollo ya trae uno
+        // real. Se retira aquí dentro de la transacción del test para que el
+        // inbox de este test sea, sin ambigüedad, el único candidato.
+        Inbox::where('channel_type', Inbox::CHANNEL_WHATSAPP)->delete();
 
         $inbox = Inbox::create(['name' => 'WhatsApp Soporte', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
         $customer = Customer::factory()->create();
@@ -771,8 +814,12 @@ class ConversationsControllerTest extends TestCase
 
         $conversation = $this->createConversation();
 
+        // 'subject' es obligatorio desde que ConversationTicketBridgeController
+        // valida el payload (antes iba sin validar directo a Ticket::create()).
         $this->actingAs($this->manager)
-            ->postJson(route('manager.helpdesk.conversations.ticket', $conversation))
+            ->postJson(route('manager.helpdesk.conversations.ticket', $conversation), [
+                'subject' => 'Ticket creado desde la conversación',
+            ])
             ->assertOk()
             ->assertJsonPath('success', true);
 
@@ -955,14 +1002,19 @@ class ConversationsControllerTest extends TestCase
     {
         Http::fake(['graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST123']]], 200)]);
 
-        WhatsAppTemplate::create([
-            'external_id' => 'hello_world',
-            'display_name' => 'hello_world',
-            'language' => 'en_US',
-            'category' => 'utility',
-            'status' => 'approved',
-            'body_template' => 'Welcome!',
-        ]);
+        // updateOrCreate: 'hello_world' es la plantilla de bienvenida por
+        // defecto de Meta y ya existe sembrada en la BD de desarrollo —
+        // create() a secas chocaba con esa fila real (external_id es único).
+        WhatsAppTemplate::updateOrCreate(
+            ['external_id' => 'hello_world'],
+            [
+                'display_name' => 'hello_world',
+                'language' => 'en_US',
+                'category' => 'utility',
+                'status' => 'approved',
+                'body_template' => 'Welcome!',
+            ]
+        );
 
         $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
         $conversation = Conversation::factory()->create([
@@ -977,7 +1029,12 @@ class ConversationsControllerTest extends TestCase
             ])
             ->assertCreated();
 
-        Http::assertSent(fn ($request) => $request['template']['language']['code'] === 'en_US');
+        // El envío también dispara la auto-traducción del cuerpo (DeepL) hacia
+        // api.deepl.com — un segundo request sin la forma de un mensaje de
+        // WhatsApp. Sin el isset(), $request['template'] revienta con
+        // "Undefined array key" al evaluar ESE request, no el de Meta.
+        Http::assertSent(fn ($request) => isset($request['template']['language']['code'])
+            && $request['template']['language']['code'] === 'en_US');
     }
 
     public function test_send_hsm_falls_back_to_placeholder_when_template_not_found_locally(): void
@@ -1128,20 +1185,26 @@ class ConversationsControllerTest extends TestCase
     {
         $langId = $this->ensureTestLang();
 
-        $template = MailerTemplate::create([
-            'key' => $key,
-            'name' => $key,
-            'is_enabled' => true,
-            'is_protected' => false,
-            'module' => 'helpdesk',
-        ]);
+        // updateOrCreate, no create(): 'key' es único y estas son claves REALES
+        // de producción (helpdesk.new_ticket_agent, helpdesk.ticket_created) ya
+        // sembradas en la BD de desarrollo — un create() a secas chocaba con esa
+        // fila existente. Sobrescribir su traducción dentro de la transacción del
+        // test (revertida al terminar) deja el resultado determinista sin
+        // importar qué contenido real tenga la plantilla ahora mismo.
+        $template = MailerTemplate::updateOrCreate(
+            ['key' => $key],
+            [
+                'name' => $key,
+                'is_enabled' => true,
+                'is_protected' => false,
+                'module' => 'helpdesk',
+            ]
+        );
 
-        MailerTemplateLang::create([
-            'mailer_template_id' => $template->id,
-            'lang_id' => $langId,
-            'subject' => $subject,
-            'content' => $content,
-        ]);
+        MailerTemplateLang::updateOrCreate(
+            ['mailer_template_id' => $template->id, 'lang_id' => $langId],
+            ['subject' => $subject, 'content' => $content]
+        );
 
         return $template;
     }

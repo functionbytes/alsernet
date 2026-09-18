@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,16 +61,16 @@ class ProductAdminDrawer implements HookContentClassInterface
 
     public function __construct(array $data = [])
     {
-        if (!empty($data['icon'])) {
+        if (! empty($data['icon'])) {
             $this->setIcon($data['icon']);
         }
-        if (!empty($data['id'])) {
+        if (! empty($data['id'])) {
             $this->setId($data['id']);
         }
-        if (!empty($data['link'])) {
+        if (! empty($data['link'])) {
             $this->setLink($data['link']);
         }
-        if (!empty($data['title'])) {
+        if (! empty($data['title'])) {
             $this->setTitle($data['title']);
         }
     }

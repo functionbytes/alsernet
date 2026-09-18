@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,9 +60,7 @@ final class CreditSlipPdfGenerator implements PDFGeneratorInterface
     private $connection;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param string $dbPrefix
-     * @param Connection $connection
+     * @param  string  $dbPrefix
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -76,7 +75,7 @@ final class CreditSlipPdfGenerator implements PDFGeneratorInterface
     /**
      * Generates PDF from given data using legacy object models
      *
-     * @param CreditSlipId[] $creditSlipIds
+     * @param  CreditSlipId[]  $creditSlipIds
      *
      * @throws PdfException
      */
@@ -101,26 +100,24 @@ final class CreditSlipPdfGenerator implements PDFGeneratorInterface
     /**
      * Gets credit slips array from sql
      *
-     * @param int[] $creditSlipIds
-     *
+     * @param  int[]  $creditSlipIds
      * @return OrderSlip[]
      *
      * @throws MissingDataException
      */
     private function getCreditSlipsList($creditSlipIds)
     {
-        if (!empty($creditSlipIds)) {
+        if (! empty($creditSlipIds)) {
             $qb = $this->connection->createQueryBuilder()
                 ->select('*')
-                ->from($this->dbPrefix . 'order_slip', 'os')
+                ->from($this->dbPrefix.'order_slip', 'os')
                 ->where('id_order_slip IN (:creditSlipIds)')
-                ->setParameter('creditSlipIds', $creditSlipIds, Connection::PARAM_INT_ARRAY)
-            ;
+                ->setParameter('creditSlipIds', $creditSlipIds, Connection::PARAM_INT_ARRAY);
 
             $slipsList = $qb->execute()->fetchAll();
         }
 
-        if (!empty($slipsList)) {
+        if (! empty($slipsList)) {
             return $slipsList;
         }
 

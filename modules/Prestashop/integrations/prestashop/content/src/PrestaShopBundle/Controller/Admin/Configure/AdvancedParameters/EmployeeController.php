@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,9 +67,6 @@ class EmployeeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param EmployeeFilters $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, EmployeeFilters $filters)
@@ -103,9 +101,8 @@ class EmployeeController extends FrameworkBundleAdminController
      * Save employee options.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
-     * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))")
      *
      * @return RedirectResponse
      */
@@ -118,7 +115,7 @@ class EmployeeController extends FrameworkBundleAdminController
         if ($employeeOptionsForm->isSubmitted()) {
             $errors = $employeeOptionsFormHandler->save($employeeOptionsForm->getData());
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $this->flashErrors($errors);
 
                 return $this->redirectToRoute('admin_employees_index');
@@ -134,10 +131,10 @@ class EmployeeController extends FrameworkBundleAdminController
      * Toggle given employee status.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
+     *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_employees_index")
      *
-     * @param int $employeeId
-     *
+     * @param  int  $employeeId
      * @return RedirectResponse
      */
     public function toggleStatusAction($employeeId)
@@ -160,9 +157,8 @@ class EmployeeController extends FrameworkBundleAdminController
      * Bulk enables employee status action.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
-     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
      * @return RedirectResponse
      */
@@ -190,9 +186,8 @@ class EmployeeController extends FrameworkBundleAdminController
      * Bulk disables employee status action.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
-     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
      * @return RedirectResponse
      */
@@ -220,10 +215,10 @@ class EmployeeController extends FrameworkBundleAdminController
      * Delete employee.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
+     *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))")
      *
-     * @param int $employeeId
-     *
+     * @param  int  $employeeId
      * @return RedirectResponse
      */
     public function deleteAction($employeeId)
@@ -243,9 +238,8 @@ class EmployeeController extends FrameworkBundleAdminController
      * Delete employees in bulk actions.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
-     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
      * @return RedirectResponse
      */
@@ -271,9 +265,8 @@ class EmployeeController extends FrameworkBundleAdminController
      * Show employee creation form page and handle it's submit.
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
-     * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))")
      *
      * @return Response
      */
@@ -285,7 +278,7 @@ class EmployeeController extends FrameworkBundleAdminController
         try {
             $result = $this->getEmployeeFormHandler()->handle($employeeForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_employees_index');
@@ -311,9 +304,7 @@ class EmployeeController extends FrameworkBundleAdminController
      *
      * @DemoRestricted(redirectRoute="admin_employees_index")
      *
-     * @param int $employeeId
-     * @param Request $request
-     *
+     * @param  int  $employeeId
      * @return Response
      */
     public function editAction($employeeId, Request $request)
@@ -322,7 +313,7 @@ class EmployeeController extends FrameworkBundleAdminController
 
         // If employee is editing his own profile - he doesn't need to have access to the edit form.
         if ($contextEmployeeProvider->getId() != $employeeId) {
-            if (!$this->isGranted(PageVoter::UPDATE, $request->get('_legacy_controller'))) {
+            if (! $this->isGranted(PageVoter::UPDATE, $request->get('_legacy_controller'))) {
                 $this->addFlash(
                     'error',
                     $this->trans(
@@ -337,7 +328,7 @@ class EmployeeController extends FrameworkBundleAdminController
 
         $formAccessChecker = $this->get('prestashop.adapter.employee.form_access_checker');
 
-        if (!$formAccessChecker->canAccessEditFormFor($employeeId)) {
+        if (! $formAccessChecker->canAccessEditFormFor($employeeId)) {
             $this->addFlash(
                 'error',
                 $this->trans('You cannot edit the SuperAdmin profile.', 'Admin.Advparameters.Notification')
@@ -398,7 +389,6 @@ class EmployeeController extends FrameworkBundleAdminController
     /**
      * Change navigation menu status for employee.
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -413,7 +403,6 @@ class EmployeeController extends FrameworkBundleAdminController
     /**
      * Change employee form language.
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -436,8 +425,6 @@ class EmployeeController extends FrameworkBundleAdminController
      *     "is_granted(['update'], request.get('_legacy_controller'))",
      *     redirectRoute="admin_employees_index"
      * )
-     *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -471,7 +458,6 @@ class EmployeeController extends FrameworkBundleAdminController
     /**
      * Get human readable error messages.
      *
-     * @param Exception $e
      *
      * @return array
      */
@@ -548,7 +534,6 @@ class EmployeeController extends FrameworkBundleAdminController
     /**
      * Get template variables that are same between create and edit forms.
      *
-     * @param Request $request
      *
      * @return array
      */

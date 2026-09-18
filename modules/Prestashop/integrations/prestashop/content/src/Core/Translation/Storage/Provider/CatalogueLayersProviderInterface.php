@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ interface CatalogueLayersProviderInterface
      * As the default language in templates is english, the default catalogue will have the same values for translationKey and translationValue
      * We only keep the translation keys in the returned Catalogue.
      *
-     * @param string $locale the language for which you need translations
-     *
-     * @return MessageCatalogue
+     * @param  string  $locale  the language for which you need translations
      */
     public function getDefaultCatalogue(string $locale): MessageCatalogue;
 
@@ -62,21 +61,14 @@ interface CatalogueLayersProviderInterface
      * Gets the file translated catalogue : it's the translations in a specific language.
      * It's stored in filesystem and given by language pack or a module developer.
      *
-     * @param string $locale
      *
      * @throws TranslationFilesNotFoundException
-     *
-     * @return MessageCatalogue
      */
     public function getFileTranslatedCatalogue(string $locale): MessageCatalogue;
 
     /**
      * Gets the User modified catalogue : It's the translations made by the user himself.
      * It's done from the Admin and stored in DB.
-     *
-     * @param string $locale
-     *
-     * @return MessageCatalogue
      */
     public function getUserTranslatedCatalogue(string $locale): MessageCatalogue;
 }

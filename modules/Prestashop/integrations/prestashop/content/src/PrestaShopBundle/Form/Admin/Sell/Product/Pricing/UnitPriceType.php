@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,11 +46,6 @@ class UnitPriceType extends TranslatorAwareType
      */
     private $defaultCurrency;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param Currency $defaultCurrency
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -72,7 +68,7 @@ class UnitPriceType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -80,8 +76,7 @@ class UnitPriceType extends TranslatorAwareType
             ->add('unity', TextType::class, [
                 'required' => false,
                 'attr' => ['placeholder' => $this->trans('Per kilo, per litre', 'Admin.Catalog.Help')],
-            ])
-        ;
+            ]);
     }
 
     /**

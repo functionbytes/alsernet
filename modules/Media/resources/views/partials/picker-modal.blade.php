@@ -2,36 +2,32 @@
 <div id="mp-modal" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
+
+            {{-- Header: mismo patron que el resto de modales del panel (titulo +
+                 btn-close). Antes el titulo vivia dentro del sidebar junto a un
+                 icono, y el modal no tenia boton de cerrar: solo se podia salir
+                 con "Cancelar" del footer o con Esc. --}}
+            <div class="modal-header">
+                <h5 class="modal-title">Gestor de Medios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
             <div class="d-flex flex-grow-1 overflow-hidden">
 
                 {{-- Sidebar --}}
                 <div class="mp-sidebar d-flex flex-column p-3">
 
-                    {{-- Brand --}}
-                    <div class="d-flex align-items-center gap-2 mb-4">
-                        <i class="fas fa-photo-video mp-sidebar-brand-icon"></i>
-                        <span class="mp-sidebar-brand">Media Manager</span>
-                    </div>
-
                     {{-- Add folder --}}
                     <button id="mp-new-folder-btn" type="button" class="mp-add-folder-btn mb-4">
-                        <i class="fas fa-plus me-1"></i>Nueva carpeta
+                        Nueva carpeta
                     </button>
 
                     {{-- Nav --}}
                     <nav class="d-flex flex-column gap-1 mb-4" id="mp-sidebar-tabs">
-                        <button class="mp-nav-btn mp-tab-btn active" data-view="all_media">
-                            <i class="fas fa-folder-open mp-nav-icon"></i>Biblioteca
-                        </button>
-                        <button class="mp-nav-btn mp-tab-btn" data-view="recent">
-                            <i class="fas fa-clock mp-nav-icon"></i>Recientes
-                        </button>
-                        <button class="mp-nav-btn mp-tab-btn" data-view="favorites">
-                            <i class="fas fa-star mp-nav-icon"></i>Favoritos
-                        </button>
-                        <button class="mp-nav-btn mp-tab-btn" data-view="trash">
-                            <i class="fas fa-trash mp-nav-icon"></i>Papelera
-                        </button>
+                        <button class="mp-nav-btn mp-tab-btn active" data-view="all_media">Biblioteca</button>
+                        <button class="mp-nav-btn mp-tab-btn" data-view="recent">Recientes</button>
+                        <button class="mp-nav-btn mp-tab-btn" data-view="favorites">Favoritos</button>
+                        <button class="mp-nav-btn mp-tab-btn" data-view="trash">Papelera</button>
                     </nav>
 
                     {{-- Disco --}}

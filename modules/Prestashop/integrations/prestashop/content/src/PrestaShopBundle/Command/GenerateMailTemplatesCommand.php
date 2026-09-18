@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,30 +48,26 @@ class GenerateMailTemplatesCommand extends ContainerAwareCommand
             ->addArgument('locale', InputArgument::REQUIRED, 'Which locale to use for the templates.')
             ->addArgument('coreOutputFolder', InputArgument::OPTIONAL, 'Output folder to export core templates.')
             ->addArgument('modulesOutputFolder', InputArgument::OPTIONAL, 'Output folder to export modules templates (by default same as core).')
-            ->addOption('overwrite', 'o', InputOption::VALUE_OPTIONAL, 'Overwrite existing templates', false)
-        ;
+            ->addOption('overwrite', 'o', InputOption::VALUE_OPTIONAL, 'Overwrite existing templates', false);
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
      * @return int|void|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $themeName = $input->getArgument('theme');
         $coreOutputFolder = $input->getArgument('coreOutputFolder');
-        if (!empty($coreOutputFolder) && file_exists($coreOutputFolder)) {
+        if (! empty($coreOutputFolder) && file_exists($coreOutputFolder)) {
             $coreOutputFolder = realpath($coreOutputFolder);
         }
         $modulesOutputFolder = $input->getArgument('modulesOutputFolder');
-        if (!empty($modulesOutputFolder) && file_exists($modulesOutputFolder)) {
+        if (! empty($modulesOutputFolder) && file_exists($modulesOutputFolder)) {
             $modulesOutputFolder = realpath($modulesOutputFolder);
         } else {
             $modulesOutputFolder = $coreOutputFolder;
         }
-        $overwrite = false !== $input->getOption('overwrite');
+        $overwrite = $input->getOption('overwrite') !== false;
 
         $this->initContext();
 
@@ -98,10 +95,10 @@ class GenerateMailTemplatesCommand extends ContainerAwareCommand
     {
         /** @var LegacyContext $legacyContext */
         $legacyContext = $this->getContainer()->get('prestashop.adapter.legacy.context');
-        //We need to have an employee or the module hooks don't work
-        //see LegacyHookSubscriber
-        if (!$legacyContext->getContext()->employee) {
-            //Even a non existing employee is fine
+        // We need to have an employee or the module hooks don't work
+        // see LegacyHookSubscriber
+        if (! $legacyContext->getContext()->employee) {
+            // Even a non existing employee is fine
             $legacyContext->getContext()->employee = new Employee(42);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -93,7 +94,7 @@ class EditEmployeeCommand
     private $hasEnabledGravatar = false;
 
     /**
-     * @param int $employeeId
+     * @param  int  $employeeId
      */
     public function __construct($employeeId)
     {
@@ -109,8 +110,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param EmployeeId $employeeId
-     *
+     * @param  EmployeeId  $employeeId
      * @return EditEmployeeCommand
      */
     public function setEmployeeId($employeeId)
@@ -129,8 +129,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param string $firstName
-     *
+     * @param  string  $firstName
      * @return EditEmployeeCommand
      */
     public function setFirstName($firstName)
@@ -149,8 +148,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param string $lastName
-     *
+     * @param  string  $lastName
      * @return EditEmployeeCommand
      */
     public function setLastName($lastName)
@@ -169,8 +167,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param string $email
-     *
+     * @param  string  $email
      * @return EditEmployeeCommand
      */
     public function setEmail($email)
@@ -189,8 +186,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param int $defaultPageId
-     *
+     * @param  int  $defaultPageId
      * @return EditEmployeeCommand
      */
     public function setDefaultPageId($defaultPageId)
@@ -209,8 +205,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return EditEmployeeCommand
      */
     public function setLanguageId($languageId)
@@ -229,8 +224,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param bool $active
-     *
+     * @param  bool  $active
      * @return EditEmployeeCommand
      */
     public function setActive($active)
@@ -249,8 +243,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param int $profileId
-     *
+     * @param  int  $profileId
      * @return EditEmployeeCommand
      */
     public function setProfileId($profileId)
@@ -269,8 +262,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param array $shopAssociation
-     *
+     * @param  array  $shopAssociation
      * @return EditEmployeeCommand
      */
     public function setShopAssociation($shopAssociation)
@@ -289,8 +281,7 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param string $plainPassword
-     *
+     * @param  string  $plainPassword
      * @return EditEmployeeCommand
      */
     public function setPlainPassword($plainPassword)
@@ -309,8 +300,6 @@ class EditEmployeeCommand
     }
 
     /**
-     * @param bool $hasEnabledGravatar
-     *
      * @return EditEmployeeCommand
      */
     public function setHasEnabledGravatar(bool $hasEnabledGravatar)

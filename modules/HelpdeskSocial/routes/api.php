@@ -15,11 +15,21 @@ use Modules\HelpdeskSocial\Http\Controllers\Api\SocialSlaPoliciesController;
 use Modules\HelpdeskSocial\Http\Controllers\Api\SocialTagsController;
 use Modules\HelpdeskSocial\Http\Controllers\Api\SocialTemplatesController;
 
-Route::prefix('helpdesk/social')->middleware(['auth:sanctum', 'log.social.api', 'throttle:helpdesk-social-api'])->group(function () {
+// name('api.'): evita que estos nombres de ruta choquen con los de
+// routes/web.php (accounts.index, tags.index, etc. existen en ambos
+// ficheros). web.php se registra antes que este archivo, así que sin el
+// prefijo route('helpdesksocial.X.Y') resolvía SIEMPRE a la version JSON
+// de aquí — los enlaces de navegación y los redirects tras guardar en
+// TODO el panel de ajustes de HelpdeskSocial llevaban apuntando a
+// endpoints JSON en vez de a las páginas HTML, sin que nadie lo notara
+// porque el módulo estuvo deshabilitado desde su creación.
+Route::prefix('helpdesk/social')->name('api.')->middleware(['auth:sanctum', 'log.social.api', 'throttle:helpdesk-social-api'])->group(function () {
 
     // Accounts
     Route::apiResource('accounts', SocialAccountsController::class)->names('helpdesksocial.accounts');
     Route::post('accounts/{account}/toggle', [SocialAccountsController::class, 'toggleActive'])->name('helpdesksocial.accounts.toggle');
+    Route::post('accounts/{account}/crisis-mode/enter', [SocialAccountsController::class, 'enterCrisisMode'])->name('helpdesksocial.accounts.crisis-mode.enter');
+    Route::post('accounts/{account}/crisis-mode/exit', [SocialAccountsController::class, 'exitCrisisMode'])->name('helpdesksocial.accounts.crisis-mode.exit');
 
     // Inbox
     Route::get('inbox', [SocialInboxController::class, 'index'])->name('helpdesksocial.inbox.index');
@@ -29,6 +39,8 @@ Route::prefix('helpdesk/social')->middleware(['auth:sanctum', 'log.social.api', 
     Route::post('inbox/{comment}/spam', [SocialInboxController::class, 'markAsSpam'])->name('helpdesksocial.inbox.spam');
     Route::post('inbox/{comment}/escalate', [SocialInboxController::class, 'markAsEscalated'])->name('helpdesksocial.inbox.escalate');
     Route::post('inbox/{comment}/assign', [SocialInboxController::class, 'assign'])->name('helpdesksocial.inbox.assign');
+    Route::post('inbox/{comment}/tags', [SocialInboxController::class, 'attachTag'])->name('helpdesksocial.inbox.tags.attach');
+    Route::delete('inbox/{comment}/tags/{tag}', [SocialInboxController::class, 'detachTag'])->name('helpdesksocial.inbox.tags.detach');
     Route::post('inbox/bulk', [SocialInboxController::class, 'bulk'])->name('helpdesksocial.inbox.bulk');
 
     // Tags

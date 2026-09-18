@@ -12,8 +12,11 @@ use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Compliance\GdprController;
 use Modules\Helpdesk\Http\Controllers\Managers\Compliance\TwoFactorController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationAttachmentsController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationEmailController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationExportController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationMacrosController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationViewsController;
@@ -31,9 +34,12 @@ use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\RemindersController;
 use Modules\Helpdesk\Http\Controllers\Managers\RightPanelTabController;
+use Modules\Helpdesk\Http\Controllers\Managers\RolePermissionsController;
 use Modules\Helpdesk\Http\Controllers\Managers\SearchController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlaConfigController;
 use Modules\Helpdesk\Http\Controllers\Managers\SlaBreachesReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\SuggestedArticlesController;
+use Modules\Helpdesk\Http\Controllers\Managers\SupervisorReviewController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\WebRtcAgentController;
 
@@ -110,13 +116,13 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/kanban', [HelpdeskConversationsController::class, 'kanban'])->name('manager.helpdesk.conversations.kanban');
     Route::get('/conversations', [HelpdeskConversationsController::class, 'index'])->name('manager.helpdesk.conversations.index');
     Route::get('/conversations/create', [HelpdeskConversationsController::class, 'create'])->name('manager.helpdesk.conversations.create');
-    Route::get('/conversations/email-templates', [HelpdeskConversationsController::class, 'emailTemplates'])
+    Route::get('/conversations/email-templates', [ConversationEmailController::class, 'emailTemplates'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.email-templates');
     Route::post('/conversations', [HelpdeskConversationsController::class, 'store'])->name('manager.helpdesk.conversations.store');
     // Active macros list for the inbox bulk picker (?sort=used = most used first).
     // Declared before the {conversation} catch-all so "macros-picker" isn't swallowed.
-    Route::get('/conversations/macros-picker', [HelpdeskConversationsController::class, 'macrosForPicker'])
+    Route::get('/conversations/macros-picker', [ConversationMacrosController::class, 'macrosForPicker'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.macros-picker');
     Route::get('/conversations/{conversation}', [HelpdeskConversationsController::class, 'show'])->name('manager.helpdesk.conversations.show');
@@ -142,6 +148,18 @@ Route::group(['prefix' => ''], function () {
     // Estrategia global de auto-asignación (#78 ve-auto-assign)
     Route::get('/auto-assignment', [AutoAssignmentController::class, 'show'])->name('manager.helpdesk.auto-assignment.show');
     Route::put('/auto-assignment', [AutoAssignmentController::class, 'update'])->name('manager.helpdesk.auto-assignment.update');
+
+    // Adaptador del modal "sla-config" (#76 ve-sla-config) hacia las políticas
+    // SLA reales — ver SlaConfigController para el porqué. POST en vez de PUT
+    // real: ver reference_put_ajax_405_docker.
+    Route::get('/settings/sla', [SlaConfigController::class, 'show'])->name('manager.helpdesk.settings.sla.show');
+    Route::post('/settings/sla', [SlaConfigController::class, 'update'])->name('manager.helpdesk.settings.sla.update');
+
+    // Matriz reducida de permisos por rol (#75 ve-role-perms). POST en vez de
+    // PUT real: ver reference_put_ajax_405_docker — PUT vía AJAX da 405 aquí.
+    Route::get('/roles', [RolePermissionsController::class, 'index'])->name('manager.helpdesk.roles.index');
+    Route::get('/roles/{role}/permissions', [RolePermissionsController::class, 'show'])->name('manager.helpdesk.roles.permissions.show');
+    Route::post('/roles/{role}/permissions', [RolePermissionsController::class, 'update'])->name('manager.helpdesk.roles.permissions.update');
 
     // Banco de pruebas omnicanal (simulador de canales + contexto PrestaShop/gestion)
     Route::get('/simulator', [HelpdeskSimulatorController::class, 'index'])->name('manager.helpdesk.simulator.index');
@@ -190,23 +208,24 @@ Route::group(['prefix' => ''], function () {
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1,suggested-articles'])
         ->name('manager.helpdesk.conversations.suggested-articles');
 
-    Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
-    Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
-    Route::post('/conversations/{conversation}/contact', [HelpdeskConversationsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
-    Route::post('/conversations/{conversation}/location', [HelpdeskConversationsController::class, 'storeLocation'])->name('manager.helpdesk.conversations.location.store');
-    Route::get('/conversations/{conversation}/email-templates/preview', [HelpdeskConversationsController::class, 'previewEmailTemplate'])
+    Route::post('/conversations/{conversation}/attachments', [ConversationAttachmentsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
+    Route::post('/conversations/{conversation}/attachments/forward', [ConversationAttachmentsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
+    Route::post('/conversations/{conversation}/contact', [ConversationAttachmentsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
+    Route::post('/conversations/{conversation}/location', [ConversationAttachmentsController::class, 'storeLocation'])->name('manager.helpdesk.conversations.location.store');
+    Route::post('/conversations/{conversation}/supervisor-review', [SupervisorReviewController::class, 'store'])->name('manager.helpdesk.conversations.supervisor-review.store');
+    Route::get('/conversations/{conversation}/email-templates/preview', [ConversationEmailController::class, 'previewEmailTemplate'])
         ->middleware('throttle:30,1')
         ->name('manager.helpdesk.conversations.email-templates.preview');
     Route::get('/conversations/{conversation}/preview', [HelpdeskConversationsController::class, 'previewJson'])
         ->middleware('throttle:120,1')
         ->name('manager.helpdesk.conversations.preview');
-    Route::post('/conversations/{conversation}/send-email', [HelpdeskConversationsController::class, 'sendEmail'])
+    Route::post('/conversations/{conversation}/send-email', [ConversationEmailController::class, 'sendEmail'])
         ->middleware('throttle:30,1')
         ->name('manager.helpdesk.conversations.send-email');
-    Route::get('/conversations/{conversation}/emails', [HelpdeskConversationsController::class, 'emailLogIndex'])
+    Route::get('/conversations/{conversation}/emails', [ConversationEmailController::class, 'emailLogIndex'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.emails.index');
-    Route::get('/conversations/{conversation}/emails/{emailLog}', [HelpdeskConversationsController::class, 'emailLogShow'])
+    Route::get('/conversations/{conversation}/emails/{emailLog}', [ConversationEmailController::class, 'emailLogShow'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.emails.show');
     // Carga perezosa de pestañas del panel derecho (ver RightPanelTabController) —
@@ -220,6 +239,9 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/{conversation}/right-panel/activity', [RightPanelTabController::class, 'activity'])
         ->middleware('throttle:120,1')
         ->name('manager.helpdesk.conversations.right-panel.activity');
+    Route::get('/conversations/{conversation}/right-panel/customer-360', [RightPanelTabController::class, 'customer360'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.right-panel.customer-360');
     Route::get('/conversations/{conversation}/viewer-items', [HelpdeskConversationsController::class, 'conversationViewerItems'])
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:60,1'])
         ->name('manager.helpdesk.conversations.viewer-items');
@@ -248,9 +270,9 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/mark-spam', [HelpdeskConversationsController::class, 'markSpam'])->name('manager.helpdesk.conversations.mark-spam');
     Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
     Route::post('/conversations/{conversation}/send-csat', [HelpdeskConversationsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.conversations.send-csat')->middleware('throttle:10,1');
-    Route::post('/conversations/{conversation}/macros/{macro}', [HelpdeskConversationsController::class, 'applyMacro'])->name('manager.helpdesk.conversations.macros.apply');
+    Route::post('/conversations/{conversation}/macros/{macro}', [ConversationMacrosController::class, 'applyMacro'])->name('manager.helpdesk.conversations.macros.apply');
     // Apply one macro to many selected conversations (inbox bulk action bar)
-    Route::post('/conversations/bulk-macro', [HelpdeskConversationsController::class, 'bulkApplyMacro'])
+    Route::post('/conversations/bulk-macro', [ConversationMacrosController::class, 'bulkApplyMacro'])
         ->middleware('can:helpdesk.conversations.update')
         ->name('manager.helpdesk.conversations.bulk-macro');
     // /conversations/{c}/ticket and /conversations/{c}/ticket-detail/{t} are

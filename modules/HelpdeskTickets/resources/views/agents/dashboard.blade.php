@@ -70,14 +70,14 @@
                     <div class="row align-items-center">
                         <div class="col-8">
                             <h5 class="card-title fw-semibold mb-3">SLA incumplido</h5>
-                            <h4 class="fw-semibold mb-2 {{ $stats['my_sla_breached'] > 0 ? 'text-danger' : '' }}">
+                            <h4 class="fw-semibold mb-2 {{ $stats['my_sla_breached'] > 0 ? 'text-brand' : '' }}">
                                 {{ $stats['my_sla_breached'] }}
                             </h4>
                             <p class="fs-3 mb-0 text-muted">Requieren atención</p>
                         </div>
                         <div class="col-4 d-flex justify-content-end">
-                            <span class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center stat-icon">
-                                <i class="fas fa-exclamation-triangle text-danger"></i>
+                            <span class="rounded-circle bg-brand-subtle d-flex align-items-center justify-content-center stat-icon">
+                                <i class="fas fa-exclamation-triangle text-brand"></i>
                             </span>
                         </div>
                     </div>
@@ -197,8 +197,8 @@
                                             <td class="text-muted">{{ $ticket->customer?->name ?? '—' }}</td>
                                             <td>
                                                 @if($ticket->status)
-                                                    <span class="badge rounded-pill"
-                                                          style="background-color: {{ $ticket->status->color ?? '#6c757d' }}">
+                                                    <span class="badge rounded-pill hdt-dyn-bg"
+                                                          style="--hdt-color: {{ $ticket->status->color ?? '#6c757d' }}">
                                                         {{ $ticket->status->name }}
                                                     </span>
                                                 @endif
@@ -237,8 +237,8 @@
                             @endphp
                             <div class="d-flex align-items-center justify-content-between {{ $isLast ? '' : 'mb-4' }}">
                                 <div class="d-flex align-items-center">
-                                    <div class="p-2 bg-danger-subtle rounded-2 d-flex align-items-center justify-content-center me-3 hdt-avatar-36">
-                                        <i class="fas fa-exclamation-circle text-danger"></i>
+                                    <div class="p-2 bg-brand-subtle rounded-2 d-flex align-items-center justify-content-center me-3 hdt-avatar-36">
+                                        <i class="fas fa-exclamation-circle text-brand"></i>
                                     </div>
                                     <div>
                                         <h6 class="mb-0 fw-semibold text-truncate hdt-truncate-140">
@@ -247,7 +247,7 @@
                                         <p class="fs-3 mb-0 text-muted">{{ $ticket->ticket_number }}</p>
                                     </div>
                                 </div>
-                                <span class="small {{ $isPast ? 'text-danger fw-semibold' : 'text-warning' }}">
+                                <span class="small {{ $isPast ? 'text-brand fw-semibold' : 'text-warning' }}">
                                     {{ $ticket->sla_resolution_due_at?->format('d/m H:i') ?? '—' }}
                                 </span>
                             </div>
@@ -261,9 +261,3 @@
 
 @endsection
 
-@push('css')
-<style>
-    .btn-icon-sm { width: 30px; height: 30px; background: #f5f6f8; }
-    .stat-icon   { width: 44px; height: 44px; }
-</style>
-@endpush

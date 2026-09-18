@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,17 +36,11 @@ class GetOrderPreview
      */
     private $orderId;
 
-    /**
-     * @param int $orderId
-     */
     public function __construct(int $orderId)
     {
         $this->orderId = new OrderId($orderId);
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;

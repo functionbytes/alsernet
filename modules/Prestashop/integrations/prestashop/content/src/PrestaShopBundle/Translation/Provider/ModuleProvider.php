@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class ModuleProvider extends AbstractProvider implements SearchProviderInterface
      */
     public function getTranslationDomains()
     {
-        return ['^' . preg_quote(DomainHelper::buildModuleBaseDomain($this->moduleName)) . '([A-Z]|$)'];
+        return ['^'.preg_quote(DomainHelper::buildModuleBaseDomain($this->moduleName)).'([A-Z]|$)'];
     }
 
     /**
@@ -52,7 +53,7 @@ class ModuleProvider extends AbstractProvider implements SearchProviderInterface
      */
     public function getFilters()
     {
-        return ['#^' . preg_quote(DomainHelper::buildModuleBaseDomain($this->moduleName)) . '([A-Z]|\.|$)#'];
+        return ['#^'.preg_quote(DomainHelper::buildModuleBaseDomain($this->moduleName)).'([A-Z]|\.|$)#'];
     }
 
     /**
@@ -78,6 +79,6 @@ class ModuleProvider extends AbstractProvider implements SearchProviderInterface
      */
     public function getDefaultResourceDirectory()
     {
-        return $this->resourceDirectory . DIRECTORY_SEPARATOR . 'default';
+        return $this->resourceDirectory.DIRECTORY_SEPARATOR.'default';
     }
 }

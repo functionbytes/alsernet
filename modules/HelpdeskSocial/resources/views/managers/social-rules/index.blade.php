@@ -2,6 +2,8 @@
 
 @section('title', 'Reglas automáticas')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Reglas automáticas'])
 @endsection
@@ -52,7 +54,7 @@
                                         <td>
                                             <div class="small fw-semibold">{{ $rule->name }}</div>
                                             @if($rule->description)
-                                                <small class="text-muted d-block text-truncate" style="max-width: 320px;">{{ $rule->description }}</small>
+                                                <small class="text-muted d-block text-truncate hso-truncate-320">{{ $rule->description }}</small>
                                             @endif
                                         </td>
                                         <td>
@@ -141,21 +143,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).on('click', '.delete-btn', function (e) {
-    e.preventDefault();
-    var url = $(this).data('url');
-    var title = $(this).data('title') || 'Confirmar eliminación';
-    $('#delete-form').attr('action', url);
-    $('#delete-modal .modal-title').text(title);
-    new bootstrap.Modal(document.getElementById('delete-modal')).show();
-});
-
-@if(session('success'))
-    toastr.success(@json(session('success')), 'Éxito');
-@endif
-@if(session('error'))
-    toastr.error(@json(session('error')), 'Error');
-@endif
-</script>
+<script>window.SocialRulesFlash = @json(['success' => session('success'), 'error' => session('error')]);</script>
+<script src="{{ asset('modules/helpdesksocial/js/social-rules-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-rules-index.js')) }}"></script>
 @endpush

@@ -4,19 +4,22 @@ namespace Modules\HelpdeskSocial\Providers;
 
 use App\Console\Commands\AnonymizeSocialUserCommand;
 use App\Console\Commands\ExportSocialUserDataCommand;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\HelpdeskSocial\Console\Commands\CheckSlaBreachesCommand;
 use Modules\HelpdeskSocial\Console\Commands\ExportSocialCommentsCommand;
 use Modules\HelpdeskSocial\Console\Commands\ImportSocialCommentsCommand;
 use Modules\HelpdeskSocial\Console\Commands\PruneSocialContentCommand;
+use Modules\HelpdeskSocial\Console\Commands\RenewExpiringSocialTokensCommand;
 use Modules\HelpdeskSocial\Console\Commands\ResetSocialAccountCommand;
 use Modules\HelpdeskSocial\Console\Commands\SocialHealthCheckCommand;
 use Modules\HelpdeskSocial\Console\Commands\SyncCompetitorMetricsCommand;
 use Modules\HelpdeskSocial\Console\Commands\SyncSocialCommentsCommand;
-use Modules\HelpdeskSocial\Console\Commands\SyncSocialMentionsCommand;
 use Modules\HelpdeskSocial\Contracts\AutoReplyEngineInterface;
 use Modules\HelpdeskSocial\Contracts\IntentClassifierInterface;
 use Modules\HelpdeskSocial\Contracts\Repositories\SocialRuleRepositoryInterface;
@@ -82,6 +85,7 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->registerTranslations();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerRateLimiters();
         $this->registerRoutes();
         $this->registerMiddleware();
         $this->registerBindings();
@@ -93,15 +97,58 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         $this->registerObservers();
     }
 
+    /**
+     * Antes solo se agendaba `prune`: check-sla-breaches, sync-comments,
+     * health-check y sync-competitors existían como comandos/jobs pero nunca
+     * se disparaban solos (había que invocarlos a mano). sync-mentions se
+     * retiró (ver SyncSocialMentionsJob/Command, eliminados: SocialListeningService
+     * nunca implementó una búsqueda real contra la API de Meta) y por tanto no
+     * se agenda.
+     */
     protected function registerSchedules(): void
     {
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $enabled = fn (): bool => helpdesk_social_enabled();
+
             $schedule->command('helpdesksocial:prune')
                 ->daily()
                 ->at('03:50')
                 ->withoutOverlapping()
                 ->onOneServer()
-                ->when(fn (): bool => helpdesk_social_enabled());
+                ->when($enabled);
+
+            $schedule->command('helpdesksocial:check-sla-breaches', ['--notify' => true])
+                ->everyFiveMinutes()
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when($enabled);
+
+            $syncIntervalMinutes = max(1, (int) config('helpdesksocial.comments.sync_interval_minutes', 15));
+            $schedule->command('helpdesk-social:sync-comments')
+                ->cron("*/{$syncIntervalMinutes} * * * *")
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when($enabled);
+
+            $schedule->command('helpdesk-social:health-check', ['--notify' => true])
+                ->hourly()
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when($enabled);
+
+            $schedule->command('helpdesksocial:sync-competitors')
+                ->daily()
+                ->at('04:30')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when($enabled);
+
+            $schedule->command('helpdesk-social:renew-tokens')
+                ->daily()
+                ->at('02:00')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when($enabled);
         });
     }
 
@@ -122,7 +169,6 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
     {
         $this->commands([
             SyncSocialCommentsCommand::class,
-            SyncSocialMentionsCommand::class,
             SyncCompetitorMetricsCommand::class,
             CheckSlaBreachesCommand::class,
             SocialHealthCheckCommand::class,
@@ -132,6 +178,7 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
             ExportSocialUserDataCommand::class,
             AnonymizeSocialUserCommand::class,
             PruneSocialContentCommand::class,
+            RenewExpiringSocialTokensCommand::class,
         ]);
     }
 
@@ -201,6 +248,17 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         Gate::policy(SocialTemplate::class, SocialTemplatePolicy::class);
     }
 
+    /**
+     * Named limiter para modules/HelpdeskSocial/routes/api.php (throttle:helpdesk-social-api).
+     * Sin este registro, Laravel lanza un 500 al resolver la ruta en cuanto
+     * el módulo se reactive en modules_statuses.json.
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('helpdesk-social-api', fn (Request $request): Limit => Limit::perMinute(120)
+            ->by(optional($request->user())->id ?: $request->ip()));
+    }
+
     protected function registerRoutes(): void
     {
         Route::middleware('web')
@@ -237,7 +295,7 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         }
 
         NavService::registerMiniItem('helpdesk-social', [
-            'icon' => 'fa-duotone fa-thin fa-comments',
+            'icon' => 'chat',
             'tooltip' => 'Social Helpdesk',
             'sidebar_id' => 'helpdesk-social',
             'order' => 75,
@@ -263,7 +321,8 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         ]);
 
         NavService::registerSidebar('settings', [
-            'title' => 'Social Helpdesk',
+            'title' => 'Helpdesk · Social',
+            'order' => 250,
             'items' => [
                 ['label' => 'Configuración general', 'route' => 'settings.helpdesk.social.index', 'permission' => 'helpdesksocial.rules.manage'],
             ],

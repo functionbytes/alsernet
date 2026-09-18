@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +55,6 @@ final class InvoicesByStatusDataProvider implements FormDataProviderInterface
     /**
      * Perform validations on form data.
      *
-     * @param array $data
      *
      * @return array Array of errors if any
      */
@@ -63,7 +63,7 @@ final class InvoicesByStatusDataProvider implements FormDataProviderInterface
         $errors = [];
         $orderStates = $data['order_states'];
 
-        if (!is_array($orderStates) || !count($orderStates)) {
+        if (! is_array($orderStates) || ! count($orderStates)) {
             $errors[] = [
                 'key' => 'You must select at least one order status.',
                 'domain' => 'Admin.Orderscustomers.Notification',

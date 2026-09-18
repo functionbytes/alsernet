@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class CombinationSuppliersCommandsBuilder implements CombinationCommandsBuilderI
      */
     public function buildCommands(CombinationId $combinationId, array $formData): array
     {
-        if (!isset($formData['suppliers']['product_suppliers']) && !isset($formData['suppliers']['default_supplier_id'])) {
+        if (! isset($formData['suppliers']['product_suppliers']) && ! isset($formData['suppliers']['default_supplier_id'])) {
             return [];
         }
 
@@ -66,7 +67,7 @@ class CombinationSuppliersCommandsBuilder implements CombinationCommandsBuilderI
             ),
         ];
 
-        if (!empty($formData['suppliers']['default_supplier_id'])) {
+        if (! empty($formData['suppliers']['default_supplier_id'])) {
             $commands[] = new SetCombinationDefaultSupplierCommand(
                 $combinationId->getValue(),
                 (int) $formData['suppliers']['default_supplier_id']
@@ -77,9 +78,6 @@ class CombinationSuppliersCommandsBuilder implements CombinationCommandsBuilderI
     }
 
     /**
-     * @param int $supplierId
-     * @param array $productSupplierData
-     *
      * @return array<string, mixed>
      */
     private function formatProductSupplier(int $supplierId, array $productSupplierData): array

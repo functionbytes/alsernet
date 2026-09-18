@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,19 +44,14 @@ class SetCombinationImagesCommand
      */
     private $imageIds;
 
-    /**
-     * @param int $combinationId
-     * @param array $imageIds
-     */
     public function __construct(int $combinationId, array $imageIds)
     {
         $this->combinationId = new CombinationId($combinationId);
-        $this->imageIds = array_map(function (int $imageId) { return new ImageId($imageId); }, $imageIds);
+        $this->imageIds = array_map(function (int $imageId) {
+            return new ImageId($imageId);
+        }, $imageIds);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;

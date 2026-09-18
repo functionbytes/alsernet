@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ class SetRelatedProductsCommand
     private $relatedProductIds;
 
     /**
-     * @param int $productId
-     * @param int[] $relatedProductIds
+     * @param  int[]  $relatedProductIds
      */
     public function __construct(
         int $productId,
@@ -58,9 +58,6 @@ class SetRelatedProductsCommand
         $this->setRelatedProductIds($relatedProductIds);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -75,7 +72,7 @@ class SetRelatedProductsCommand
     }
 
     /**
-     * @param int[] $ids
+     * @param  int[]  $ids
      */
     private function setRelatedProductIds(array $ids): void
     {

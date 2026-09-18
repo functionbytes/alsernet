@@ -8,7 +8,9 @@
     $titleId     — (opcional) ID del <span> de título para manipulación JS
     $titleText   — Texto por defecto del título
     $chipId      — (opcional) ID del badge chip (oculto por defecto, JS lo muestra)
-    $iconVariant — (opcional) Variante de color del círculo: 'primary' (defecto), 'danger', 'warning', 'success'
+    $iconVariant — (opcional) Variante de color del círculo: 'primary' (defecto), 'warning', 'success'
+                   (evitar 'danger': bg-brand-subtle/text-brand no están en la paleta de la casa —
+                   sin uso real hoy, se documenta para no reintroducirlo)
 --}}
 @php
     $iconVariant = $iconVariant ?? 'primary';

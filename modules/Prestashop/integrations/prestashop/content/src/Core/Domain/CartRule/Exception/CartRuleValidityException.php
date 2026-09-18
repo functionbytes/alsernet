@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,4 @@ use PrestaShop\PrestaShop\Core\Exception\TranslatedException;
  * Thrown when cart rule validation fails.
  * This exception must contain already translated error message, which can be displayed to end-user
  */
-class CartRuleValidityException extends TranslatedException
-{
-}
+class CartRuleValidityException extends TranslatedException {}

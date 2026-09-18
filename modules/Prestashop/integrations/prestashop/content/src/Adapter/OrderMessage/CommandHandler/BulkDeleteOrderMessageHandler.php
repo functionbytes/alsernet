@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,16 +40,13 @@ use PrestaShopException;
  */
 final class BulkDeleteOrderMessageHandler extends AbstractOrderMessageHandler implements BulkDeleteOrderMessageHandlerInterface
 {
-    /**
-     * @param BulkDeleteOrderMessageCommand $command
-     */
     public function handle(BulkDeleteOrderMessageCommand $command): void
     {
         foreach ($command->getOrderMessageIds() as $orderMessageId) {
             $orderMessage = $this->getOrderMessage($orderMessageId);
 
             try {
-                if (false === $orderMessage->delete()) {
+                if ($orderMessage->delete() === false) {
                     throw new OrderMessageException(sprintf('Failed to delete Order message with id "%d" during bulk delete', $orderMessage->id), OrderMessageException::FAILED_BULK_DELETE);
                 }
             } catch (PrestaShopException $e) {

@@ -59,7 +59,10 @@ class TicketAttachmentDownloadController extends Controller
 
         $filename = basename($path);
 
-        return Storage::disk($disk)->download($path, $filename);
+        $response = Storage::disk($disk)->download($path, $filename);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 
     /**
@@ -84,9 +87,12 @@ class TicketAttachmentDownloadController extends Controller
 
         abort_unless(Storage::disk($disk)->exists((string) $attachment->path), 404);
 
-        return Storage::disk($disk)->download(
+        $response = Storage::disk($disk)->download(
             $attachment->path,
             $attachment->original_filename ?: $attachment->filename ?: basename((string) $attachment->path),
         );
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 }

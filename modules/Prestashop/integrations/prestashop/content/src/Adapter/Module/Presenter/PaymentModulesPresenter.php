@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,12 +71,6 @@ class PaymentModulesPresenter
      */
     private $moduleRepository;
 
-    /**
-     * @param TabModuleListProviderInterface $tabModuleListProvider
-     * @param ModuleDataProvider $moduleDataProvider
-     * @param PresenterInterface $modulePresenter
-     * @param ModuleRepository $moduleRepository
-     */
     public function __construct(
         TabModuleListProviderInterface $tabModuleListProvider,
         ModuleDataProvider $moduleDataProvider,
@@ -102,8 +97,8 @@ class PaymentModulesPresenter
 
         $paymentModulesToDisplay = [];
         foreach ($tabModuleNames as $moduleName) {
-            if (!in_array($moduleName, $installedModuleNames) ||
-                !$this->moduleDataProvider->can('configure', $moduleName)
+            if (! in_array($moduleName, $installedModuleNames) ||
+                ! $this->moduleDataProvider->can('configure', $moduleName)
             ) {
                 continue;
             }

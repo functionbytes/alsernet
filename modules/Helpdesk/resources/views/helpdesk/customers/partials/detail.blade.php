@@ -28,16 +28,16 @@
         <div class="bv-page-hero-sub">{{ $selected->email }}</div>
         <div class="bv-page-hero-actions">
             <a href="{{ route('manager.helpdesk.customers.show', $selected) }}" class="bv-page-hero-btn">
-                <i class="fas fa-expand"></i> Ver completo
+                Ver completo
             </a>
             <a href="{{ route('manager.helpdesk.customers.edit', $selected) }}" class="bv-page-hero-btn">
-                <i class="fas fa-pen"></i> Editar
+                Editar
             </a>
             @if($selected->banned_at)
                 <form method="POST" action="{{ route('manager.helpdesk.customers.unban', $selected) }}" class="d-inline">
                     @csrf
                     <button type="submit" class="bv-page-hero-btn bv-text-success">
-                        <i class="fas fa-circle-check"></i> Reactivar
+                        Reactivar
                     </button>
                 </form>
             @else
@@ -45,7 +45,7 @@
                       data-confirm-msg="¿Suspender a {{ addslashes($selected->name) }}?">
                     @csrf
                     <button type="submit" class="bv-page-hero-btn bv-text-warning">
-                        <i class="fas fa-ban"></i> Suspender
+                        Suspender
                     </button>
                 </form>
             @endif
@@ -182,7 +182,9 @@
 
         @elseif($activeTab === 'conversations')
 
-            <div id="conv-list-container">
+            <div id="conv-list-container"
+                 data-conversations-url="{{ route('manager.helpdesk.customers.conversations', $selected->id) }}"
+                 data-conversation-link-base="{{ route('manager.helpdesk.conversations.show', '') }}">
                 <div class="d-flex align-items-center justify-content-center py-4">
                     <span class="bv-text-muted-12">Cargando conversaciones…</span>
                 </div>
@@ -200,7 +202,8 @@
                 @endif
             </div>
 
-            <div id="email-list-container">
+            <div id="email-list-container"
+                 data-emails-url="{{ route('manager.helpdesk.customers.emails-data', $selected->id) }}">
                 <div class="d-flex align-items-center justify-content-center py-4">
                     <span class="bv-text-muted-12">Cargando emails…</span>
                 </div>
@@ -218,7 +221,7 @@
                     <div class="title bv-text-13">Sin notas internas</div>
                     <div class="hint">Agrega notas privadas desde el perfil completo del contacto.</div>
                     <a href="{{ route('manager.helpdesk.customers.edit', $selected) }}" class="bv-page-hero-btn mt-2">
-                        <i class="fas fa-pen"></i> Editar contacto
+                        Editar contacto
                     </a>
                 </div>
             @endif
@@ -228,80 +231,8 @@
     </div>
 </div>
 
-@if($activeTab === 'conversations')
+@if(in_array($activeTab, ['conversations', 'emails']))
 @push('scripts')
-<script>
-$(function () {
-    $.getJSON('{{ route("manager.helpdesk.customers.conversations", $selected->id) }}', function (res) {
-        if (!res.success || !res.data.length) {
-            $('#conv-list-container').html(
-                '<div class="bv-page-empty bv-py-32">' +
-                '<div class="icon bv-av-44"><i class="fas fa-comments"></i></div>' +
-                '<div class="title bv-text-13">Sin conversaciones</div>' +
-                '<div class="hint">Este contacto aún no ha iniciado conversaciones.</div>' +
-                '</div>'
-            );
-            return;
-        }
-        var html = '';
-        $.each(res.data, function (i, c) {
-            var statusClass = c.status_open ? 'bv-status-open' : 'bv-status-closed';
-            html += '<a href="{{ route("manager.helpdesk.conversations.show", "") }}/' + c.id + '" ' +
-                'class="bv-conv text-decoration-none bv-d-flex">' +
-                '<div class="bv-av c3 bv-text-11"><i class="fas fa-comment"></i></div>' +
-                '<div class="body">' +
-                '<div class="row1"><span class="name">' + (c.subject || '#' + c.id) + '</span><span class="time">' + c.time + '</span></div>' +
-                '<div class="row2"><span class="preview">' + (c.preview || '—') + '</span>' +
-                '<span class="bv-status-pill ' + statusClass + '">' + (c.status || '—') + '</span>' +
-                '</div></div></a>';
-        });
-        $('#conv-list-container').html(html);
-    }).fail(function () {
-        $('#conv-list-container').html('<div class="bv-error-box">Error al cargar conversaciones.</div>');
-    });
-});
-</script>
-@endpush
-@endif
-
-@if($activeTab === 'emails')
-@push('scripts')
-<script>
-$(function () {
-    $.getJSON('{{ route("manager.helpdesk.customers.emails-data", $selected->id) }}', function (res) {
-        if (!res.success || !res.data.length) {
-            $('#email-list-container').html(
-                '<div class="bv-page-empty bv-py-32">' +
-                '<div class="icon bv-av-44"><i class="fas fa-envelope-open"></i></div>' +
-                '<div class="title bv-text-13">Sin emails enviados</div>' +
-                '<div class="hint">No se han enviado emails a este contacto.</div>' +
-                '</div>'
-            );
-            return;
-        }
-        var statusColors = { sent: 'c5', failed: 'c1', queued: 'c4' };
-        var html = '';
-        $.each(res.data, function (i, m) {
-            var avColor = statusColors[m.status] || 'c3';
-            var icon = m.status === 'sent' ? 'fa-check' : (m.status === 'failed' ? 'fa-times' : 'fa-clock');
-            html += '<a href="' + m.preview_url + '" target="_blank" ' +
-                'class="bv-conv text-decoration-none bv-d-flex">' +
-                '<div class="bv-av ' + avColor + ' bv-text-11"><i class="fas ' + icon + '"></i></div>' +
-                '<div class="body">' +
-                '<div class="row1"><span class="name">' + escHtml(m.subject) + '</span><span class="time">' + m.time + '</span></div>' +
-                '<div class="row2"><span class="preview">' + (m.module || '—') + '</span>' +
-                '<span class="bv-status-pill ' + (m.status === 'sent' ? 'bv-status-open' : 'bv-status-closed') + '">' + m.status_label + '</span>' +
-                '</div></div></a>';
-        });
-        $('#email-list-container').html(html);
-    }).fail(function () {
-        $('#email-list-container').html('<div class="bv-error-box">Error al cargar emails.</div>');
-    });
-
-    function escHtml(str) {
-        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-});
-</script>
+<script src="{{ asset('vendor/helpdesk/misc/customer-detail-tabs.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/customer-detail-tabs.js')) }}" defer></script>
 @endpush
 @endif

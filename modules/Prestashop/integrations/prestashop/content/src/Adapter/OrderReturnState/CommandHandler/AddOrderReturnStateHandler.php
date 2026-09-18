@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,12 +46,12 @@ final class AddOrderReturnStateHandler extends AbstractOrderReturnStateHandler i
      */
     public function handle(AddOrderReturnStateCommand $command)
     {
-        $orderReturnState = new OrderReturnState();
+        $orderReturnState = new OrderReturnState;
 
         $this->fillOrderReturnStateWithCommandData($orderReturnState, $command);
         $this->assertRequiredFieldsAreNotMissing($orderReturnState);
 
-        if (false === $orderReturnState->validateFields(false)) {
+        if ($orderReturnState->validateFields(false) === false) {
             throw new OrderReturnStateException('Order status contains invalid field values');
         }
 

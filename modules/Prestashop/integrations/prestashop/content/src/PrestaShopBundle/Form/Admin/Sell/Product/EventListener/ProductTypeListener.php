@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,38 +52,32 @@ class ProductTypeListener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * @param FormEvent $event
-     */
     public function adaptProductForm(FormEvent $event): void
     {
         $form = $event->getForm();
         $data = $event->getData();
         $productType = $data['header']['type'];
 
-        if (ProductType::TYPE_COMBINATIONS === $productType) {
+        if ($productType === ProductType::TYPE_COMBINATIONS) {
             $this->removeSuppliers($form);
             $this->removeStock($form);
         } else {
             if ($form->has('stock')) {
                 $stock = $form->get('stock');
-                if (ProductType::TYPE_PACK !== $productType) {
+                if ($productType !== ProductType::TYPE_PACK) {
                     $stock->remove('pack_stock_type');
                 }
-                if (ProductType::TYPE_VIRTUAL !== $productType) {
+                if ($productType !== ProductType::TYPE_VIRTUAL) {
                     $stock->remove('virtual_product_file');
                 }
             }
 
-            if (ProductType::TYPE_VIRTUAL === $productType) {
+            if ($productType === ProductType::TYPE_VIRTUAL) {
                 $form->remove('shipping');
             }
         }
     }
 
-    /**
-     * @param FormInterface $form
-     */
     private function removeSuppliers(FormInterface $form): void
     {
         if ($form->has('options')) {
@@ -92,9 +87,6 @@ class ProductTypeListener implements EventSubscriberInterface
         }
     }
 
-    /**
-     * @param FormInterface $form
-     */
     private function removeStock(FormInterface $form): void
     {
         $form->remove('stock');

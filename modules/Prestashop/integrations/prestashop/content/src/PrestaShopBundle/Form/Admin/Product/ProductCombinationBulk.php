@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,9 @@ use Symfony\Component\Translation\TranslatorInterface;
 class ProductCombinationBulk extends CommonAbstractType
 {
     private $isoCode;
+
     private $translator;
+
     private $configuration;
 
     public function __construct(TranslatorInterface $translator, Configuration $configuration)

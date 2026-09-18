@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ final class CategoryMenuThumbnailUploader implements ImageUploaderInterface
      */
     private $cacheClearer;
 
-    /**
-     * @param CacheClearer $cacheClearer
-     */
     public function __construct(CacheClearer $cacheClearer)
     {
         $this->cacheClearer = $cacheClearer;
@@ -61,14 +59,14 @@ final class CategoryMenuThumbnailUploader implements ImageUploaderInterface
      */
     public function upload($categoryId, UploadedFile $uploadedImage)
     {
-        //Get total of image already present in directory
+        // Get total of image already present in directory
         $files = scandir(_PS_CAT_IMG_DIR_, SCANDIR_SORT_NONE);
         $usedKeys = [];
 
         foreach ($files as $file) {
             $matches = [];
 
-            if (preg_match('/^' . $categoryId . '-([0-9])?_thumb.jpg/i', $file, $matches) === 1) {
+            if (preg_match('/^'.$categoryId.'-([0-9])?_thumb.jpg/i', $file, $matches) === 1) {
                 $usedKeys[] = (int) $matches[1];
             }
         }
@@ -96,13 +94,13 @@ final class CategoryMenuThumbnailUploader implements ImageUploaderInterface
             $key = array_shift($availableKeys);
 
             // Evaluate the memory required to resize the image: if it's too much, you can't resize it.
-            if (isset($uploadedFile['save_path']) && !ImageManager::checkImageMemoryLimit($uploadedFile['save_path'])) {
+            if (isset($uploadedFile['save_path']) && ! ImageManager::checkImageMemoryLimit($uploadedFile['save_path'])) {
                 throw new MemoryLimitException(sprintf('Cannot resize menu thumbnail for category with id "%s" due to reached memory limit.', $categoryId));
             }
 
             // Copy new image
-            if (!isset($uploadedFile['save_path'])
-                || !ImageManager::resize($uploadedFile['save_path'], _PS_CAT_IMG_DIR_ . $categoryId . '-' . $key . '_thumb.jpg')
+            if (! isset($uploadedFile['save_path'])
+                || ! ImageManager::resize($uploadedFile['save_path'], _PS_CAT_IMG_DIR_.$categoryId.'-'.$key.'_thumb.jpg')
             ) {
                 throw new ImageUploadException('An error occurred while uploading the image.');
             }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,11 +67,6 @@ class VirtualProductFileType extends TranslatorAwareType implements EventSubscri
      */
     private $formCloner;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param int $maxFileSizeInMegabytes
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -101,12 +97,12 @@ class VirtualProductFileType extends TranslatorAwareType implements EventSubscri
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $virtualProductFileDownloadUrl = null;
-        if (!empty($options['virtual_product_file_id'])) {
+        if (! empty($options['virtual_product_file_id'])) {
             $virtualProductFileDownloadUrl = $this->router->generate('admin_products_v2_download_virtual_product_file', [
                 'virtualProductFileId' => (int) $options['virtual_product_file_id'],
             ]);
         }
-        $maxUploadSize = $this->maxFileSizeInMegabytes . 'M';
+        $maxUploadSize = $this->maxFileSizeInMegabytes.'M';
 
         $builder
             ->add('has_file', SwitchType::class, [
@@ -131,7 +127,7 @@ class VirtualProductFileType extends TranslatorAwareType implements EventSubscri
                 'label' => $this->trans('Filename', 'Admin.Global'),
                 'label_help_box' => $this->trans('The full filename with its extension (e.g. Book.pdf)', 'Admin.Catalog.Help'),
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new TypedRegex(TypedRegex::TYPE_GENERIC_NAME),
                     new Length([
                         'max' => VirtualProductFileSettings::MAX_DISPLAY_FILENAME_LENGTH,
@@ -184,16 +180,12 @@ class VirtualProductFileType extends TranslatorAwareType implements EventSubscri
                         ),
                     ]),
                 ],
-            ])
-        ;
+            ]);
 
         // The form type acts as its own listener to dynamize some field options
         $builder->addEventSubscriber($this);
     }
 
-    /**
-     * @param FormEvent $event
-     */
     public function adaptSelf(FormEvent $event): void
     {
         $form = $event->getForm();

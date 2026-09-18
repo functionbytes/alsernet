@@ -43,7 +43,7 @@ class InboundMessageIngestor
         $conversation = $this->findOrCreateConversation($channel, $externalSenderId, $customer->id);
 
         $externalId = $itemAttributes['external_id'] ?? null;
-        if ($externalId !== null && $this->isDuplicate($conversation->id, $externalId)) {
+        if ($externalId !== null && $this->isDuplicate($channel, $externalSenderId, $externalId)) {
             return null;
         }
 
@@ -62,6 +62,7 @@ class InboundMessageIngestor
         $this->broadcastSafely($item, $conversation->wasRecentlyCreated);
 
         if ($conversation->wasRecentlyCreated) {
+            $customer->incrementConversationCount();
             ConversationCreated::dispatch($conversation);
         }
 
@@ -72,7 +73,19 @@ class InboundMessageIngestor
         return $item;
     }
 
+    /**
+     * El find+create se serializa con un lock por remitente/canal: dos
+     * reintentos del mismo webhook (Meta) o dos workers en paralelo podrían,
+     * si no, pasar ambos el "no existe" y crear dos conversaciones para el
+     * mismo cliente.
+     */
     private function findOrCreateConversation(string $channel, string $externalSenderId, int $customerId): Conversation
+    {
+        return Cache::lock("helpdesk:ingest:{$channel}:{$externalSenderId}", 10)
+            ->block(5, fn () => $this->resolveConversation($channel, $externalSenderId, $customerId));
+    }
+
+    private function resolveConversation(string $channel, string $externalSenderId, int $customerId): Conversation
     {
         $existing = Conversation::query()
             ->where('channel', $channel)
@@ -114,15 +127,23 @@ class InboundMessageIngestor
         ]);
     }
 
-    private function isDuplicate(int $conversationId, ?string $externalId): bool
+    /**
+     * Busca el external_id en CUALQUIER conversación del mismo remitente/canal,
+     * no solo en la ya resuelta: si el cliente tiene conversaciones cerradas y
+     * abiertas, un reintento del webhook podría mapear a una conversación
+     * distinta de aquella donde el mensaje ya se guardó.
+     */
+    private function isDuplicate(string $channel, string $externalSenderId, ?string $externalId): bool
     {
         if (blank($externalId)) {
             return false;
         }
 
         return ConversationItem::query()
-            ->where('conversation_id', $conversationId)
             ->where('external_id', $externalId)
+            ->whereHas('conversation', fn ($q) => $q
+                ->where('channel', $channel)
+                ->where('external_sender_id', $externalSenderId))
             ->exists();
     }
 

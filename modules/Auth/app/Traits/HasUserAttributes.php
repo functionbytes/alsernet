@@ -17,7 +17,44 @@ trait HasUserAttributes
      */
     public function getFullNameAttribute(): string
     {
-        return "{$this->firstname} {$this->lastname}";
+        return $this->fullName();
+    }
+
+    /**
+     * Nombre completo del usuario, sin marcado ni escapado — para JSON,
+     * texto plano (correos, consola) y como entrada de un {{ }} de Blade
+     * (que ya escapa por su cuenta).
+     *
+     * Varios agentes reales de esta base tienen el mismo valor en firstname
+     * y lastname ("Ángeles Ángeles", "Helena Helena"): concatenar a ciegas
+     * duplicaba el nombre en pantalla. Nació como una corrección puntual en
+     * un informe (SlaBreachesReportController) y se fue copiando sin el
+     * arreglo en más de veinte sitios — controladores, notificaciones,
+     * vistas, el widget de chat en vivo — porque no existía un único lugar
+     * canónico donde ponerlo. Este es ese lugar: el modelo User, no un
+     * trait de un módulo satélite, así que cualquier módulo lo hereda gratis.
+     */
+    public function fullName(): string
+    {
+        [$first, $last] = $this->deduplicatedNameParts();
+
+        return $last === '' ? $first : trim($first.' '.$last);
+    }
+
+    /**
+     * @return array{0: string, 1: string} [nombre, apellido] — apellido
+     *                                     vacío cuando coincide con el nombre
+     */
+    private function deduplicatedNameParts(): array
+    {
+        $first = trim((string) ($this->firstname ?? ''));
+        $last = trim((string) ($this->lastname ?? ''));
+
+        if ($last === '' || mb_strtolower($first) === mb_strtolower($last)) {
+            return [$first !== '' ? $first : $last, ''];
+        }
+
+        return [$first, $last];
     }
 
     /**
@@ -92,12 +129,13 @@ trait HasUserAttributes
     public function displayName(): string
     {
         $lastNameFirst = get_localization_config('show_last_name_first', $this->getLanguageCode());
+        [$first, $last] = $this->deduplicatedNameParts();
 
-        if ($lastNameFirst) {
-            return htmlspecialchars(trim($this->lastname.' '.$this->firstname));
-        } else {
-            return htmlspecialchars(trim($this->firstname.' '.$this->lastname));
-        }
+        $name = $lastNameFirst && $last !== ''
+            ? trim($last.' '.$first)
+            : trim($first.' '.$last);
+
+        return htmlspecialchars($name);
     }
 
     /**
@@ -140,7 +178,7 @@ trait HasUserAttributes
     public function unlock(): void
     {
         $this->update([
-            'locked_until'       => null,
+            'locked_until' => null,
             'failed_login_count' => 0,
         ]);
     }

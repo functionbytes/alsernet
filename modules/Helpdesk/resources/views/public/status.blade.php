@@ -11,13 +11,18 @@
         .status-card { border:1px solid #e7e7ee; border-radius:10px; }
         .status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
         .status-operational .status-dot { background:#13C672; }
-        .status-degraded .status-dot { background:#FEC90F; }
-        .status-partial_outage .status-dot, .status-major_outage .status-dot { background:#FA896B; }
+        .status-degraded .status-dot { background:#b6d34a; }
+        .status-partial_outage .status-dot, .status-major_outage .status-dot { background:#4f6b0a; }
         .status-maintenance .status-dot { background:#6c757d; }
+
+        /* Esta pagina es un documento HTML autonomo (no extiende layouts.theme
+           ni carga conversations.css), asi que sus utilidades .bv-* se
+           definen aqui en vez de depender del CSS interno del panel. */
+        .bv-maxw-780 { max-width: 780px; }
     </style>
 </head>
 <body class="py-5">
-    <div class="container" style="max-width:780px">
+    <div class="container bv-maxw-780">
         <div class="text-center mb-5">
             <h1 class="display-5"><i class="fas fa-heart-pulse text-primary"></i> Estado del servicio</h1>
             <p class="text-muted">Última actualización: {{ now()->format('d M Y H:i') }}</p>

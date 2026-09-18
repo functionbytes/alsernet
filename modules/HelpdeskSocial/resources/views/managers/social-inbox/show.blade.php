@@ -2,12 +2,14 @@
 
 @section('title', 'Responder comentario')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Responder comentario'])
 @endsection
 
 @section('content')
-    <div class="row">
+    <div class="row" id="social-comment-show" data-comment-id="{{ $comment->id }}" data-platform="{{ $comment->platform }}">
         <div class="col-lg-8">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -43,10 +45,10 @@
                         <label class="form-label small text-muted">Etiquetas</label>
                         <div id="tagsContainer" class="d-flex flex-wrap gap-1">
                             @foreach($comment->tags as $tag)
-                            <span class="badge" style="background-color: {{ $tag->color }}; color: #fff;">
+                            <span class="badge hso-tag-badge" data-tag-id="{{ $tag->id }}" data-tag-color="{{ $tag->color }}">
                                 {{ $tag->name }}
                                 <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-white" onclick="removeTag({{ $comment->id }}, {{ $tag->id }})" title="Quitar">
-                                    <i class="fas fa-times" style="font-size: 10px;"></i>
+                                    <i class="fas fa-times hso-remove-tag-icon"></i>
                                 </button>
                             </span>
                             @endforeach
@@ -83,14 +85,6 @@
                                 <li><span class="dropdown-item-text text-muted">Cargando...</span></li>
                             </ul>
                         </div>
-                        <div id="aiSuggestionBox" class="alert alert-light border mb-2 d-none">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fas fa-robot text-primary"></i>
-                                <strong class="small">Sugerencia IA</strong>
-                            </div>
-                            <p class="mb-1 small mt-1" id="aiSuggestionText"></p>
-                            <button type="button" class="btn btn-sm btn-link p-0" onclick="useAiSuggestion()">Usar sugerencia</button>
-                        </div>
                         <form id="replyForm" action="{{ route('helpdesksocial.inbox.reply', $comment) }}" method="POST">
                             @csrf
                             <textarea name="body" id="replyBody" class="form-control" rows="4" maxlength="2000" required></textarea>
@@ -119,7 +113,9 @@
                                 @forelse($comment->internalNotes as $note)
                                 <div class=" border-3 border-secondary ps-2 mb-2">
                                     <p class="mb-1 small">{{ $note->body }}</p>
-                                    <small class="text-muted">{{ $note->user?->name ?? 'Sistema' }} · {{ $note->created_at->diffForHumans() }}</small>
+                                    {{-- El modelo User de este proyecto no tiene columna `name` (siempre
+                                         NULL) — usa firstname/lastname, como el resto de Helpdesk. --}}
+                                    <small class="text-muted">{{ $note->user ? trim($note->user->firstname.' '.$note->user->lastname) : 'Sistema' }} · {{ $note->created_at->diffForHumans() }}</small>
                                 </div>
                                 @empty
                                 <p class="text-muted small mb-0" id="noNotesText">No hay notas internas.</p>
@@ -204,16 +200,6 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/social-inbox-enhanced.js') }}"></script>
-<script>
-(function () {
-    window.currentCommentId = {{ $comment->id }};
-    window.currentPlatform = '{{ $comment->platform }}';
-
-    $(document).ready(function () {
-        loadSavedReplies();
-        loadAvailableTags();
-    });
-})();
-</script>
+<script src="{{ asset('modules/helpdesksocial/js/social-inbox-enhanced.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-inbox-enhanced.js')) }}"></script>
+<script src="{{ asset('modules/helpdesksocial/js/social-inbox-show.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-inbox-show.js')) }}"></script>
 @endpush

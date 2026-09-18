@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class ToggleExchangeRateAutomatizationCommand
     private $exchangeRateStatus;
 
     /**
-     * @param bool $exchangeRateStatus
+     * @param  bool  $exchangeRateStatus
      *
      * @throws CurrencyConstraintException
      */
@@ -61,13 +62,13 @@ class ToggleExchangeRateAutomatizationCommand
     }
 
     /**
-     * @param bool $isExchangeRateEnabled
+     * @param  bool  $isExchangeRateEnabled
      *
      * @throws CurrencyConstraintException
      */
     private function assertIsBool($isExchangeRateEnabled)
     {
-        if (!is_bool($isExchangeRateEnabled)) {
+        if (! is_bool($isExchangeRateEnabled)) {
             throw new CurrencyConstraintException(sprintf('Unexpected type of live exchange rates. Expected bool, got "%s"', var_export($isExchangeRateEnabled, true)), CurrencyConstraintException::INVALID_LIVE_EXCHANGE_RATES);
         }
     }

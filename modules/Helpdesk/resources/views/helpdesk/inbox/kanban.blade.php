@@ -73,6 +73,9 @@
             height: 10px;
             border-radius: 50%;
             flex-shrink: 0;
+            /* Esta pagina no carga conversations.css (solo -identity.css),
+               asi que .bv-dot-dyn se define aqui tambien para el color dinamico. */
+            background: var(--bv-dot-color);
         }
 
         .hd-kanban-col-name {
@@ -221,8 +224,10 @@
             padding: 2px 6px;
         }
 
-        .hd-kanban-priority.urgent { background: #fef2f2; color: #dc2626; }
-        .hd-kanban-priority.high   { background: #fffbeb; color: #d97706; }
+        /* Sin rojos/ámbar en la paleta de la casa: "urgent"/"high" van en
+           verde de marca, dos tonos distintos solo por saturación. */
+        .hd-kanban-priority.urgent { background: rgba(144,187,19,.12); color: #5e7a0d; }
+        .hd-kanban-priority.high   { background: rgba(182,211,74,.18); color: #4f6b0a; }
         .hd-kanban-priority.normal { background: #f0f9ff; color: #0284c7; }
         .hd-kanban-priority.low    { background: #f9fafb; color: #9ca3af; }
 
@@ -289,7 +294,7 @@
         </div>
         <div class="hd-kanban-actions">
             <a href="{{ route('manager.helpdesk.conversations.index') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-list-ul me-1"></i>Vista lista
+                Vista lista
             </a>
         </div>
     </div>
@@ -300,7 +305,7 @@
         <h5>Vista no disponible en móvil</h5>
         <p class="mb-3">Usa la vista de lista para gestionar conversaciones en pantallas pequeñas.</p>
         <a href="{{ route('manager.helpdesk.conversations.index') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-list-ul me-1"></i>Ir a vista lista
+            Ir a vista lista
         </a>
     </div>
 
@@ -315,7 +320,7 @@
                  data-status-name="{{ e($status->name) }}">
 
                 <div class="hd-kanban-col-head">
-                    <span class="hd-kanban-col-dot" style="background:{{ $status->color ?? '#6c757d' }}"></span>
+                    <span class="hd-kanban-col-dot bv-dot-dyn" style="--bv-dot-color: {{ $status->color ?? '#6c757d' }}"></span>
                     <span class="hd-kanban-col-name">{{ $status->name }}</span>
                     <span class="hd-kanban-col-count">{{ $cards->count() }}</span>
                 </div>
@@ -390,87 +395,5 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script>
-(function () {
-    'use strict';
-
-    const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    // Init SortableJS on each column's card list
-    document.querySelectorAll('.hd-kanban-cards').forEach(function (el) {
-        Sortable.create(el, {
-            group: 'kanban',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            draggable: '.hd-kanban-card',
-            onEnd: function (evt) {
-                const card = evt.item;
-                const toColumn = evt.to;
-                const newStatusId = toColumn.dataset.statusId;
-                const convId = card.dataset.convId;
-                const updateUrl = card.dataset.updateUrl;
-
-                if (!newStatusId || !convId || !updateUrl) return;
-
-                // Optimistic: card already moved by SortableJS
-                // Update column counts
-                updateColumnCount(evt.from);
-                updateColumnCount(evt.to);
-
-                $.ajax({
-                    url: updateUrl,
-                    method: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ status_id: parseInt(newStatusId) }),
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                    },
-                    success: function (resp) {
-                    },
-                    error: function (xhr) {
-                        // Revert: move card back to original column
-                        const fromColumn = evt.from;
-                        const originalNext = evt.oldIndex < fromColumn.children.length
-                            ? fromColumn.children[evt.oldIndex]
-                            : null;
-
-                        if (originalNext) {
-                            fromColumn.insertBefore(card, originalNext);
-                        } else {
-                            fromColumn.appendChild(card);
-                        }
-
-                        updateColumnCount(evt.from);
-                        updateColumnCount(evt.to);
-
-                        const msg = xhr?.responseJSON?.message || 'No se pudo actualizar el estado';
-                        if (window.toastr) {
-                            toastr.error(msg);
-                        }
-                    },
-                });
-            },
-        });
-    });
-
-    // Click on card → open conversation
-    $(document).on('click', '.hd-kanban-card', function (e) {
-        if ($(e.target).closest('.hd-kanban-card').length) {
-            const url = $(this).data('show-url');
-            if (url) window.location.href = url;
-        }
-    });
-
-    function updateColumnCount(colEl) {
-        const count = colEl.querySelectorAll('.hd-kanban-card').length;
-        const col = colEl.closest('.hd-kanban-col');
-        if (col) {
-            const countEl = col.querySelector('.hd-kanban-col-count');
-            if (countEl) countEl.textContent = count;
-        }
-    }
-})();
-</script>
+<script src="{{ asset('vendor/helpdesk/conversations-kanban.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-kanban.js')) }}" defer></script>
 @endpush

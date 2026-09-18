@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,6 @@ class PageFormDataProvider implements FormDataProviderInterface
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -86,7 +86,7 @@ class PageFormDataProvider implements FormDataProviderInterface
     {
         $errors = [];
         $displayLastQuantities = $data['display_last_quantities'];
-        if (!is_numeric($displayLastQuantities) || 0 > $displayLastQuantities) {
+        if (! is_numeric($displayLastQuantities) || $displayLastQuantities < 0) {
             $errors[] = [
                 'key' => 'The %s field is invalid.',
                 'domain' => 'Admin.Notifications.Error',

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class BulkDeleteCurrenciesCommand
     private $currencyIds = [];
 
     /**
-     * @param int[] $currencyIds
+     * @param  int[]  $currencyIds
      */
     public function __construct(array $currencyIds)
     {
@@ -58,7 +59,7 @@ class BulkDeleteCurrenciesCommand
     }
 
     /**
-     * @param int[] $currencyIds
+     * @param  int[]  $currencyIds
      */
     private function setCurrencyIds(array $currencyIds)
     {

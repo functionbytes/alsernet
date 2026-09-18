@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,13 +56,6 @@ class ExportCataloguesType extends TranslatorAwareType
      */
     private $moduleChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $themeChoices
-     * @param array $exportTranslationCoreTypeChoices
-     * @param array $moduleChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -132,11 +126,6 @@ class ExportCataloguesType extends TranslatorAwareType
         ]);
     }
 
-    /**
-     * @param array $themeChoices
-     *
-     * @return array
-     */
     private function excludeDefaultThemeFromChoices(array $themeChoices): array
     {
         unset($themeChoices[ThemeProviderDefinition::DEFAULT_THEME_NAME]);

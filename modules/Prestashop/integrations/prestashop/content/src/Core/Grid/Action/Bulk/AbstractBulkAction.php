@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ abstract class AbstractBulkAction implements BulkActionInterface
     private $options;
 
     /**
-     * @param string $id
+     * @param  string  $id
      */
     public function __construct($id)
     {
@@ -94,7 +95,7 @@ abstract class AbstractBulkAction implements BulkActionInterface
      */
     public function getOptions()
     {
-        if (null === $this->options) {
+        if ($this->options === null) {
             $this->resolveOptions();
         }
 
@@ -103,21 +104,15 @@ abstract class AbstractBulkAction implements BulkActionInterface
 
     /**
      * Default bulk action options configuration. You can override it if options are needed.
-     *
-     * @param OptionsResolver $resolver
      */
-    protected function configureOptions(OptionsResolver $resolver)
-    {
-    }
+    protected function configureOptions(OptionsResolver $resolver) {}
 
     /**
      * Resolve bulk action options.
-     *
-     * @param array $options
      */
     private function resolveOptions(array $options = [])
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);

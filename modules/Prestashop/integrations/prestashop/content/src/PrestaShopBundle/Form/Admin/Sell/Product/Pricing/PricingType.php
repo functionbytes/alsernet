@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,14 +65,6 @@ class PricingType extends TranslatorAwareType
      */
     private $router;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $taxRuleGroupChoices
-     * @param array $taxRuleGroupChoicesAttributes
-     * @param Currency $defaultCurrency
-     * @param RouterInterface $router
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -87,10 +80,6 @@ class PricingType extends TranslatorAwareType
         $this->router = $router;
     }
 
-    /**
-     * @param FormBuilderInterface $builder
-     * @param array $options
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
@@ -137,8 +126,7 @@ class PricingType extends TranslatorAwareType
                 'label' => $this->trans('Priority management', 'Admin.Catalog.Feature'),
                 'label_tag_name' => 'h2',
                 'label_help_box' => $this->trans('Sometimes one customer can fit into multiple price rules. Priorities allow you to define which rules apply first.', 'Admin.Catalog.Help'),
-            ])
-        ;
+            ]);
     }
 
     /**

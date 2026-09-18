@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskSla\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -15,7 +16,7 @@ use Modules\Helpdesk\Models\Conversation;
  */
 class SlaWarningThreshold implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly Conversation $conversation,

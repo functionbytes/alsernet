@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ class BulkToggleCarrierStatusHandler extends AbstractCarrierHandler implements B
             $carrier->active = $command->getExpectedStatus();
 
             try {
-                if (!$carrier->save()) {
+                if (! $carrier->save()) {
                     throw new CannotToggleCarrierStatusException(sprintf('Cannot toggle status of carrier with id "%d"', $carrierId->getValue()), CannotToggleCarrierStatusException::BULK_TOGGLE);
                 }
             } catch (PrestaShopException $e) {

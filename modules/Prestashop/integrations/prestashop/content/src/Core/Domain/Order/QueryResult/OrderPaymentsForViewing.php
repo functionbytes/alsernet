@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,8 @@ class OrderPaymentsForViewing
     private $paymentMismatchOrderIds;
 
     /**
-     * @param OrderPaymentForViewing[] $payments
-     * @param string|null $amountToPay
-     * @param string|null $paidAmount
-     * @param int[] $paymentMismatchOrderIds
+     * @param  OrderPaymentForViewing[]  $payments
+     * @param  int[]  $paymentMismatchOrderIds
      */
     public function __construct(
         array $payments,
@@ -79,33 +78,21 @@ class OrderPaymentsForViewing
         return $this->payments;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAmountToPay(): ?string
     {
         return $this->amountToPay;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPaidAmount(): ?string
     {
         return $this->paidAmount;
     }
 
-    /**
-     * @return array
-     */
     public function getPaymentMismatchOrderIds(): array
     {
         return $this->paymentMismatchOrderIds;
     }
 
-    /**
-     * @param OrderPaymentForViewing $payment
-     */
     private function add(OrderPaymentForViewing $payment): void
     {
         $this->payments[] = $payment;

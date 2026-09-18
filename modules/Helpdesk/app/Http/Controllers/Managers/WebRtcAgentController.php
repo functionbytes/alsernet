@@ -26,6 +26,7 @@ class WebRtcAgentController extends Controller
             'answer',
             ['sdp' => $request->validated('sdp'), 'type' => 'answer'],
             'to-widget',
+            $this->widgetPubsubToken($conversation),
         );
 
         return response()->json(['success' => true], 201);
@@ -42,6 +43,7 @@ class WebRtcAgentController extends Controller
             'ice',
             ['candidate' => $request->validated('candidate')],
             'to-widget',
+            $this->widgetPubsubToken($conversation),
         );
 
         return response()->json(['success' => true], 201);
@@ -53,7 +55,7 @@ class WebRtcAgentController extends Controller
             return response()->json(['success' => false], 403);
         }
 
-        WebRtcSignal::dispatch($conversation->id, 'end', [], 'to-widget');
+        WebRtcSignal::dispatch($conversation->id, 'end', [], 'to-widget', $this->widgetPubsubToken($conversation));
 
         return response()->json(['success' => true]);
     }
@@ -71,6 +73,7 @@ class WebRtcAgentController extends Controller
             'request',
             ['agent_name' => $agent?->name ?? 'Agente'],
             'to-widget',
+            $this->widgetPubsubToken($conversation),
         );
 
         return response()->json(['success' => true]);
@@ -105,6 +108,21 @@ class WebRtcAgentController extends Controller
             'events' => $events,
             'count' => count($events),
         ]);
+    }
+
+    /**
+     * The 'to-widget' direction broadcasts on a per-visitor token-guarded
+     * channel (see WebRtcSignal::broadcastOn()); without the real token the
+     * signal is emitted on a channel the widget never subscribes to. Same
+     * metadata read as EngagementBridgeListener::resolveSessionToken().
+     */
+    private function widgetPubsubToken(Conversation $conversation): ?string
+    {
+        $meta = is_array($conversation->metadata)
+            ? $conversation->metadata
+            : (json_decode((string) ($conversation->metadata ?? '{}'), true) ?? []);
+
+        return $meta['widget_pubsub_token'] ?? null;
     }
 
     private function user()

@@ -25,11 +25,10 @@ class HelpdeskIntegrationProvidersSeeder extends Seeder
                 'is_active' => true,
                 'is_linkable' => true,
                 'is_critical' => false,
-                'search_types' => [
-                    ['value' => 'email', 'label' => 'Email'],
-                    ['value' => 'name', 'label' => 'Nombre'],
-                    ['value' => 'id', 'label' => 'ID numérico'],
-                ],
+                // null: CustomerIntegrationService::presentLinkable() cae en
+                // PrestashopIntegrationDriver::defaultSearchTypes(), la fuente
+                // de verdad de lo que el driver realmente matchea.
+                'search_types' => null,
                 'sort_order' => 10,
             ],
         );
@@ -45,11 +44,10 @@ class HelpdeskIntegrationProvidersSeeder extends Seeder
                 'is_active' => true,
                 'is_linkable' => true,
                 'is_critical' => true,
-                'search_types' => [
-                    ['value' => 'email', 'label' => 'Email'],
-                    ['value' => 'phone', 'label' => 'Teléfono'],
-                    ['value' => 'id', 'label' => 'NIF / DNI'],
-                ],
+                // null: CustomerIntegrationService::presentLinkable() cae en
+                // ErpIntegrationDriver::defaultSearchTypes(), la fuente de
+                // verdad de lo que el driver realmente matchea.
+                'search_types' => null,
                 'sort_order' => 20,
             ],
         );

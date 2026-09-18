@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,6 @@ class ModuleRepository extends AbstractObjectModelRepository
     private $activeModulesPaths;
 
     /**
-     * @param ModuleId $moduleId
-     *
      * @throws CoreException
      * @throws ModuleNotFoundException
      */
@@ -58,19 +57,17 @@ class ModuleRepository extends AbstractObjectModelRepository
 
     /**
      * Return active modules.
-     *
-     * @return array
      */
     public function getActiveModules(): array
     {
-        if (!defined('_DB_PREFIX_')) {
+        if (! defined('_DB_PREFIX_')) {
             return []; // getActiveModules() can be called during install BEFORE the database configuration has been defined
         }
 
         $activeModules = [];
         try {
             $modulesData = \Db::getInstance()->executeS(
-                'SELECT m.* FROM `' . _DB_PREFIX_ . 'module` m WHERE m.`active` = 1'
+                'SELECT m.* FROM `'._DB_PREFIX_.'module` m WHERE m.`active` = 1'
             );
 
             if (is_array($modulesData)) {
@@ -92,7 +89,7 @@ class ModuleRepository extends AbstractObjectModelRepository
      */
     public function getActiveModulesPaths(): array
     {
-        if (null === $this->activeModulesPaths) {
+        if ($this->activeModulesPaths === null) {
             $this->activeModulesPaths = [];
             $modulesFiles = Finder::create()->directories()->in(_PS_MODULE_DIR_)->depth(0);
             $activeModules = $this->getActiveModules();

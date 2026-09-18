@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -83,57 +84,36 @@ class EditableCartRuleInformation
         $this->enabled = $enabled;
     }
 
-    /**
-     * @return array
-     */
     public function getLocalizedNames(): array
     {
         return $this->localizedNames;
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * @return string
-     */
     public function getCode(): string
     {
         return $this->code;
     }
 
-    /**
-     * @return bool
-     */
     public function isHighlight(): bool
     {
         return $this->highlight;
     }
 
-    /**
-     * @return bool
-     */
     public function isPartialUse(): bool
     {
         return $this->partialUse;
     }
 
-    /**
-     * @return int
-     */
     public function getPriority(): int
     {
         return $this->priority;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;

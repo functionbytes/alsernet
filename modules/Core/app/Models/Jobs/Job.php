@@ -3,6 +3,7 @@
 namespace Modules\Core\Models\Jobs;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $attempts
  * @property int|null $reserved_at
  * @property int $available_at
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Job newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Job newQuery()

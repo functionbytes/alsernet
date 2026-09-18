@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class MerchandiseReturnOptionsConfiguration implements DataConfigurationIn
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -66,7 +64,7 @@ final class MerchandiseReturnOptionsConfiguration implements DataConfigurationIn
     {
         $errors = [];
 
-        if (!$this->validateConfiguration($configuration)) {
+        if (! $this->validateConfiguration($configuration)) {
             $errors[] = [
                 'key' => 'Invalid configuration',
                 'parameters' => [],

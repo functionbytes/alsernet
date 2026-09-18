@@ -277,25 +277,6 @@
                                                             <i class="fas fa-pencil me-2 text-muted"></i>Editar
                                                         </a>
                                                     </li>
-                                                    <li>
-                                                        <button class="dropdown-item test-source" data-uid="{{ $source->uid }}">
-                                                            <i class="fas fa-flask me-2 text-muted"></i>Probar conexión
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <button class="dropdown-item extract-source
-                                                                {{ (!$source->is_active || in_array($batchStatus, ['processing','pending'])) ? 'disabled' : '' }}"
-                                                                data-uid="{{ $source->uid }}"
-                                                                data-label="{{ $source->label }}"
-                                                                data-active="{{ $source->is_active ? '1' : '0' }}"
-                                                                {{ (!$source->is_active || in_array($batchStatus, ['processing','pending'])) ? 'disabled' : '' }}>
-                                                            @if(in_array($batchStatus, ['processing','pending']))
-                                                                <i class="fas fa-circle-notch fa-spin me-2 text-primary"></i>Procesando...
-                                                            @else
-                                                                <i class="fas fa-play me-2 text-success"></i>Procesar ahora
-                                                            @endif
-                                                        </button>
-                                                    </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item confirm-delete text-danger"

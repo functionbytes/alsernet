@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,6 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Customization\ValueObject\Customiz
 interface SetProductCustomizationFieldsHandlerInterface
 {
     /**
-     * @param SetProductCustomizationFieldsCommand $command
-     *
      * @return CustomizationFieldId[]
      */
     public function handle(SetProductCustomizationFieldsCommand $command): array;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use Symfony\Component\HttpFoundation\Response;
 class ProductPreferencesController extends FrameworkBundleAdminController
 {
     /**
-     * @param Request $request
-     *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
      * @return Response
@@ -76,8 +75,6 @@ class ProductPreferencesController extends FrameworkBundleAdminController
      *     redirectRoute="admin_product_preferences"
      * )
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processGeneralFormAction(Request $request)
@@ -94,8 +91,6 @@ class ProductPreferencesController extends FrameworkBundleAdminController
      *     message="You do not have permission to update this.",
      *     redirectRoute="admin_product_preferences"
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -114,8 +109,6 @@ class ProductPreferencesController extends FrameworkBundleAdminController
      *     redirectRoute="admin_product_preferences"
      * )
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processPaginationFormAction(Request $request)
@@ -133,8 +126,6 @@ class ProductPreferencesController extends FrameworkBundleAdminController
      *     redirectRoute="admin_product_preferences"
      * )
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processStockFormAction(Request $request)
@@ -149,16 +140,13 @@ class ProductPreferencesController extends FrameworkBundleAdminController
     /**
      * Process the Product Preferences configuration form.
      *
-     * @param Request $request
-     * @param FormHandlerInterface $formHandler
-     * @param string $hookName
      *
      * @return RedirectResponse
      */
     protected function processForm(Request $request, FormHandlerInterface $formHandler, string $hookName)
     {
         $this->dispatchHook(
-            'actionAdminShopParametersProductPreferencesControllerPostProcess' . $hookName . 'Before',
+            'actionAdminShopParametersProductPreferencesControllerPostProcess'.$hookName.'Before',
             ['controller' => $this]
         );
 
@@ -171,7 +159,7 @@ class ProductPreferencesController extends FrameworkBundleAdminController
             $data = $form->getData();
             $saveErrors = $formHandler->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
             } else {
                 $this->flashErrors($saveErrors);
@@ -181,33 +169,21 @@ class ProductPreferencesController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_product_preferences');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeneralFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.product_preferences.general.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getPaginationFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.product_preferences.pagination.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getPageFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.product_preferences.page.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getStockFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.product_preferences.stock.form_handler');

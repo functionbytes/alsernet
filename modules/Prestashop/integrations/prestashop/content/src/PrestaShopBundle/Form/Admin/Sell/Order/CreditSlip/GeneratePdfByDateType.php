@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ final class GeneratePdfByDateType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $dateFormat = 'Y-m-d';
-        $nowDate = (new \DateTime())->format($dateFormat);
+        $nowDate = (new \DateTime)->format($dateFormat);
 
         $blankMessage = $this->trans('This field is required', 'Admin.Notifications.Error');
         $invalidDateMessage = $this->trans('Invalid date format.', 'Admin.Notifications.Error');
@@ -91,7 +92,7 @@ final class GeneratePdfByDateType extends TranslatorAwareType
     {
         $resolver->setDefaults([
             'constraints' => [
-                new Valid(),
+                new Valid,
             ],
         ]);
     }

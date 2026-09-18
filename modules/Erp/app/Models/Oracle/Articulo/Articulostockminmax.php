@@ -3,6 +3,7 @@
 namespace Modules\Erp\Models\Oracle\Articulo;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -39,7 +40,7 @@ class Articulostockminmax extends Model
      */
     public function articulostockminmax()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulostockminmax::class, 'idarticulostockminmax', 'idarticulostockminmax');
+        return $this->belongsTo(Articulostockminmax::class, 'idarticulostockminmax', 'idarticulostockminmax');
     }
 
     /**
@@ -48,7 +49,7 @@ class Articulostockminmax extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -57,6 +58,6 @@ class Articulostockminmax extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

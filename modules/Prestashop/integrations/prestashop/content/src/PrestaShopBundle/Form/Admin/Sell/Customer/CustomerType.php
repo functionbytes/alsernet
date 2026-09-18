@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -79,11 +80,8 @@ class CustomerType extends TranslatorAwareType
     private $isPartnerOffersEnabled;
 
     /**
-     * @param array $genderChoices
-     * @param array $groupChoices
-     * @param array $riskChoices
-     * @param bool $isB2bFeatureEnabled
-     * @param bool $isPartnerOffersEnabled
+     * @param  bool  $isB2bFeatureEnabled
+     * @param  bool  $isPartnerOffersEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -228,7 +226,7 @@ class CustomerType extends TranslatorAwareType
                     'Admin.Orderscustomers.Help'
                 ),
                 'required' => false,
-                'disabled' => !$this->isPartnerOffersEnabled,
+                'disabled' => ! $this->isPartnerOffersEnabled,
             ])
             ->add('group_ids', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Group access', 'Admin.Orderscustomers.Feature'),
@@ -255,8 +253,7 @@ class CustomerType extends TranslatorAwareType
                 'required' => false,
                 'placeholder' => null,
                 'choices' => $this->groupChoices,
-            ])
-        ;
+            ]);
 
         if ($this->isB2bFeatureEnabled) {
             $builder
@@ -312,8 +309,7 @@ class CustomerType extends TranslatorAwareType
                     'required' => false,
                     'placeholder' => null,
                     'choices' => $this->riskChoices,
-                ])
-            ;
+                ]);
         }
     }
 
@@ -328,7 +324,6 @@ class CustomerType extends TranslatorAwareType
                 // so it may be optional when editing customer
                 'is_password_required' => true,
             ])
-            ->setAllowedTypes('is_password_required', 'bool')
-        ;
+            ->setAllowedTypes('is_password_required', 'bool');
     }
 }

@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Catalogo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\Idioma;
 use Modules\Erp\Models\Oracle\Otros\CambioPublicidadEmail;
 use Modules\Erp\Models\Oracle\Promocion\BonoPromocion;
 use Modules\Erp\Models\Oracle\Promocion\Promocion;
@@ -80,7 +81,7 @@ class Catalogo extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -89,6 +90,6 @@ class Catalogo extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
     }
 }

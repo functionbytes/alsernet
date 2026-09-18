@@ -440,7 +440,7 @@ class LinkCore
         } elseif (is_int($category) or ctype_digit($category)) {
             $params['id'] = (int) $category;
         } else {
-            throw new \InvalidArgumentException('Invalid category parameter');
+            throw new InvalidArgumentException('Invalid category parameter');
         }
 
         // Selected filters is used by the module ps_facetedsearch
@@ -1431,7 +1431,7 @@ class LinkCore
      * @param  array  $params
      * @return string
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public static function getUrlSmarty($params)
     {
@@ -1534,7 +1534,7 @@ class LinkCore
                 break;
             case 'sf':
                 if (! array_key_exists('route', $params)) {
-                    throw new \InvalidArgumentException('You need to setup a `route` attribute.');
+                    throw new InvalidArgumentException('You need to setup a `route` attribute.');
                 }
 
                 $sfContainer = SymfonyContainer::getInstance();
@@ -1547,7 +1547,7 @@ class LinkCore
                     }
                     $link = $sfRouter->generate($params['route'], [], UrlGeneratorInterface::ABSOLUTE_URL);
                 } else {
-                    throw new \InvalidArgumentException('You can\'t use Symfony router in legacy context.');
+                    throw new InvalidArgumentException('You can\'t use Symfony router in legacy context.');
                 }
 
                 break;

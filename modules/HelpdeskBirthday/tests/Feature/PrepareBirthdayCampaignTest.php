@@ -93,19 +93,6 @@ class PrepareBirthdayCampaignTest extends TestCase
         $this->assertTrue($slots[1]->greaterThan($slots[0]));
     }
 
-    public function test_el_cupon_se_congela_con_los_datos_de_gestion(): void
-    {
-        $this->fakeManager([$this->customer(1, 'ana@ejemplo.test', 'Ana', '1990-11-17')]);
-
-        $campaign = app(BirthdayCampaignService::class)->prepare($this->date);
-
-        $this->assertSame(BirthdayCampaign::SOURCE_ERP, $campaign->coupon_source);
-        $this->assertSame('CUMPLE10-XYZ', $campaign->coupon_code);
-        $this->assertSame('2026-09-01', $campaign->coupon_valid_from->toDateString());
-        $this->assertSame('2026-09-30', $campaign->coupon_valid_to->toDateString());
-        $this->assertSame('10.00', $campaign->coupon_amount);
-    }
-
     public function test_los_suprimidos_quedan_omitidos_y_no_se_les_programa_envio(): void
     {
         EmailSuppression::create([
@@ -183,17 +170,17 @@ class PrepareBirthdayCampaignTest extends TestCase
         $this->assertStringContainsString('no está desplegado en el manager', $campaign->error_message);
     }
 
-    public function test_sin_cupon_configurado_no_se_envia_nada(): void
+    public function test_sin_tipo_de_bono_configurado_no_se_envia_nada(): void
     {
-        $this->app->instance(BirthdaySettings::class, $this->settings(['coupon_code' => '']));
+        $this->app->instance(BirthdaySettings::class, $this->settings(['bono_type_id' => 0]));
         $this->fakeManager([$this->customer(1, 'ana@ejemplo.test', 'Ana', '1990-11-17')]);
 
         $campaign = app(BirthdayCampaignService::class)->prepare($this->date);
 
-        // Sin cupón la campaña SÍ se prepara —quién cumple años hoy es un dato
-        // que caduca— pero queda en pausa: reúne y programa, no envía.
+        // Sin tipo de bono la campaña SÍ se prepara —quién cumple años hoy es un
+        // dato que caduca— pero queda en pausa: reúne y programa, no envía.
         $this->assertSame(BirthdayCampaign::STATUS_PAUSED, $campaign->status);
-        $this->assertStringContainsString('cupón', $campaign->error_message);
+        $this->assertStringContainsString('tipo de bono', $campaign->error_message);
         $this->assertFalse($campaign->isActive(), 'Una campaña en pausa no debe enviar.');
         $this->assertSame(1, $campaign->recipients()->count());
     }
@@ -222,20 +209,23 @@ class PrepareBirthdayCampaignTest extends TestCase
         ];
     }
 
+    /**
+     * Gestión emitiendo el bono de cada cliente: acepta el lote y luego dice
+     * qué bono le tocó a quién.
+     */
     private function fakeErpCoupon(): void
     {
         $erp = Mockery::mock(ErpService::class);
-        $erp->shouldReceive('consultaBono')->andReturn([
-            'success' => true,
-            'data' => [
-                'fvalidez_desde' => '2026-09-01',
-                'fvalidez_hasta' => '2026-09-30',
-                'importe' => '10.00',
-                'importeminimoventa' => '50.00',
-                'descripcion_tipo' => 'Cupón cumpleaños',
-                'estado_extendido' => 'activo',
-            ],
-        ]);
+        $erp->shouldReceive('generarBonos')->andReturn(['success' => true, 'batch_id' => '777']);
+        $erp->shouldReceive('consultarGeneracionBono')->andReturnUsing(
+            fn (): array => [
+                'success' => true,
+                'lines' => [
+                    ['idcliente' => '1', 'bono' => ['idbono_promocion' => '910001', 'codigo_verificacion' => 'AAA', 'importe' => '5.00']],
+                    ['idcliente' => '2', 'bono' => ['idbono_promocion' => '910002', 'codigo_verificacion' => 'BBB', 'importe' => '5.00']],
+                ],
+            ]
+        );
 
         $this->app->instance(ErpService::class, $erp);
     }
@@ -259,13 +249,8 @@ class PrepareBirthdayCampaignTest extends TestCase
                     'max_recipients' => 2000,
                     'leap_day_policy' => 'feb28',
                     'template_key' => 'birthday-coupon',
-                    'coupon_code' => 'CUMPLE10',
-                    'coupon_verification_code' => 'XYZ',
-                    'coupon_valid_from' => '',
-                    'coupon_valid_to' => '',
-                    'coupon_amount' => '',
-                    'coupon_min_purchase' => '',
-                    'validate_against_erp' => true,
+                    'audience_source' => 'api',
+                    'bono_type_id' => 4,
                     'commercial_optin' => true,
                     'lopd_accepted' => false,
                     'has_email' => true,

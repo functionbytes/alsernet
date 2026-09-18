@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class TabChoiceProvider implements FormChoiceProviderInterface
      */
     private $tabs;
 
-    /**
-     * @param array $tabs
-     */
     public function __construct(array $tabs)
     {
         $this->tabs = $tabs;
@@ -56,7 +54,7 @@ final class TabChoiceProvider implements FormChoiceProviderInterface
         $choices = [];
 
         foreach ($this->tabs as $tab) {
-            if (!empty($tab['children'])) {
+            if (! empty($tab['children'])) {
                 $choices[$tab['name']] = [];
 
                 foreach ($tab['children'] as $childTab) {

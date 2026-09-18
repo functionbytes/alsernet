@@ -11,7 +11,6 @@ use Modules\HelpdeskSocial\Listeners\AnalyzeSentimentListener;
 use Modules\HelpdeskSocial\Listeners\ApplySlaPolicyListener;
 use Modules\HelpdeskSocial\Listeners\AutoAssignCommentListener;
 use Modules\HelpdeskSocial\Listeners\AutoTagOnIntentClassified;
-use Modules\HelpdeskSocial\Listeners\BroadcastSocialComment;
 use Modules\HelpdeskSocial\Listeners\CreateTicketOnSocialEscalation;
 use Modules\HelpdeskSocial\Listeners\LogSocialCommentReply;
 use Modules\HelpdeskSocial\Listeners\SendNewSocialCommentNotification;
@@ -22,8 +21,6 @@ class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
         SocialCommentReceived::class => [
-            BroadcastSocialComment::class,
-            SendNewSocialCommentNotification::class,
             SendSocialWebPush::class,
             AnalyzeSentimentListener::class,
             ApplySlaPolicyListener::class,
@@ -31,6 +28,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         IntentClassified::class => [
             AutoTagOnIntentClassified::class,
+            // La urgencia solo existe a partir de aquí (la fija
+            // ClassifyIntentJob); ver SendNewSocialCommentNotification.
+            SendNewSocialCommentNotification::class,
         ],
         SocialCommentReplied::class => [
             LogSocialCommentReply::class,

@@ -2,36 +2,53 @@
 
 namespace Modules\Helpdesk\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Modules\Engagement\Models\Event;
-use Modules\Engagement\Models\RecommendationProfile;
-use Modules\Engagement\Models\Segment;
-use Modules\Engagement\Models\VisitorScore;
-use Modules\Engagement\Services\CustomerDataOrchestrator;
 use Modules\Helpdesk\Contracts\TicketServiceContract;
 use Modules\Helpdesk\Models\CsatRating;
 use Modules\Helpdesk\Models\Customer;
 use Nwidart\Modules\Facades\Module;
 
 /**
- * Aggregates Customer 360 data from Helpdesk, Engagement, and external platforms.
+ * Agrega los datos de "Cliente 360" para el panel derecho del inbox: perfil,
+ * resumen de soporte (Helpdesk) y pedidos reales vía ERP/PrestaShop.
  *
- * The `platforms` section requires an inbox_id so the CustomerDataOrchestrator
- * knows which integrations are active. When inbox_id is absent or Engagement
- * is disabled, those sections return null / empty arrays.
+ * No depende del módulo Engagement: no existe en este proyecto (solo
+ * degradaba con gracia a secciones vacías). Los pedidos se obtienen
+ * directamente de ErpContextService/PrestashopContextService — los mismos
+ * servicios que ya alimentan las pestañas "Gestión" y "Pedidos de tienda" —
+ * en vez de pasar por el CustomerDataOrchestrator de Engagement.
+ *
+ * Los nombres de clase de los módulos opcionales se guardan como literales
+ * de texto (nunca `use` ni `::class` al principio del archivo), igual que
+ * en ContactAggregatorService, para que este módulo nunca se rompa si
+ * HelpdeskErp/HelpdeskPrestashop están desactivados.
  */
 class Customer360Service
 {
+    private const ERP_CONTEXT_SERVICE = 'Modules\\HelpdeskErp\\Services\\ErpContextService';
+
+    private const PRESTASHOP_CONTEXT_SERVICE = 'Modules\\HelpdeskPrestashop\\Services\\PrestashopContextService';
+
+    private const ERP_STATUS_LABELS = [
+        0 => 'Pendiente',
+        1 => 'Confirmado',
+        2 => 'En preparación',
+        3 => 'Enviado',
+        5 => 'Entregado',
+        7 => 'Servido',
+        9 => 'Cancelado',
+    ];
+
     /**
-     * @return array{customer: array, engagement: array|null, platforms: array, helpdesk: array}
+     * @return array{customer: array, helpdesk: array, orders: array}
      */
-    public function aggregate(Customer $customer, ?int $inboxId, bool $force = false): array
+    public function aggregate(Customer $customer, bool $force = false): array
     {
         return [
             'customer' => $this->customerData($customer),
-            'engagement' => $this->engagementData($customer, $inboxId),
-            'platforms' => $this->platformsData($customer, $inboxId, $force),
             'helpdesk' => $this->helpdeskData($customer),
+            'orders' => $this->ordersData($customer, $force),
         ];
     }
 
@@ -50,111 +67,6 @@ class Customer360Service
             'avatar_url' => $customer->getAvatarUrl(),
             'created_at' => $customer->created_at->toIso8601String(),
         ];
-    }
-
-    // ── Engagement ────────────────────────────────────────────────────────────
-
-    /**
-     * Returns engagement data if the Engagement module is active; null otherwise.
-     *
-     * @return array{score: int|null, segment: string|null, segment_names: array, last_activity_at: string|null, top_events: array, recommendations: array}|null
-     */
-    private function engagementData(Customer $customer, ?int $inboxId): ?array
-    {
-        if (! $this->engagementEnabled()) {
-            return null;
-        }
-
-        $visitorScore = VisitorScore::query()
-            ->where('customer_id', $customer->id)
-            ->when($inboxId, fn ($q) => $q->where('inbox_id', $inboxId))
-            ->orderByDesc('last_recalc_at')
-            ->first();
-
-        $segmentNames = Segment::query()
-            ->whereHas('customers', fn ($q) => $q->where('helpdesk_customers.id', $customer->id))
-            ->when($inboxId, fn ($q) => $q->where('inbox_id', $inboxId))
-            ->active()
-            ->pluck('name')
-            ->values()
-            ->all();
-
-        $topEvents = Event::query()
-            ->where('customer_id', $customer->id)
-            ->when($inboxId, fn ($q) => $q->where('inbox_id', $inboxId))
-            ->selectRaw('event_name, COUNT(*) as occurrences, MAX(occurred_at) as last_at')
-            ->groupBy('event_name')
-            ->orderByDesc('occurrences')
-            ->limit(5)
-            ->get()
-            ->map(fn ($e) => [
-                'event_name' => $e->event_name,
-                'occurrences' => (int) $e->occurrences,
-                'last_at' => $e->last_at,
-            ])
-            ->all();
-
-        $profile = RecommendationProfile::query()
-            ->where('customer_id', $customer->id)
-            ->first();
-
-        $recommendations = [];
-        if ($profile) {
-            $viewed = $profile->viewed_products ?? [];
-            usort($viewed, fn ($a, $b) => ($b['count'] ?? 0) <=> ($a['count'] ?? 0));
-            $recommendations = array_slice($viewed, 0, 5);
-        }
-
-        return [
-            'score' => $visitorScore?->score,
-            'segment' => $visitorScore?->segment,
-            'segment_names' => $segmentNames,
-            'last_activity_at' => $visitorScore?->last_event_at?->toIso8601String(),
-            'top_events' => $topEvents,
-            'recommendations' => $recommendations,
-        ];
-    }
-
-    // ── Platforms (ERP / PrestaShop) ──────────────────────────────────────────
-
-    /**
-     * Fetches cross-platform data via CustomerDataOrchestrator.
-     * Returns empty array when Engagement is disabled or inbox_id is absent.
-     *
-     * @return array<int, array{ok: bool, data: array|null, error: string|null, cached_at: string|null, platform: string}>
-     */
-    private function platformsData(Customer $customer, ?int $inboxId, bool $force): array
-    {
-        if (! $this->engagementEnabled() || ! $inboxId) {
-            return [];
-        }
-
-        /** @var CustomerDataOrchestrator $orchestrator */
-        $orchestrator = app(CustomerDataOrchestrator::class);
-
-        $lookup = array_filter([
-            'email' => $customer->email,
-            'external_id' => $customer->externalIds->first()?->external_id,
-        ], fn ($v) => $v !== null && $v !== '');
-
-        if (empty($lookup)) {
-            return [];
-        }
-
-        $results = [];
-
-        foreach (['profile', 'orders', 'balance', 'loyaltyPoints'] as $action) {
-            $actionResults = $orchestrator->fetchAcrossInbox($inboxId, $action, $lookup, $force);
-            foreach ($actionResults as $integrationId => $result) {
-                $results[$integrationId][$action] = $result;
-                // Store platform name once
-                if (! isset($results[$integrationId]['platform'])) {
-                    $results[$integrationId]['platform'] = $result['platform'];
-                }
-            }
-        }
-
-        return $results;
     }
 
     // ── Helpdesk ──────────────────────────────────────────────────────────────
@@ -177,22 +89,20 @@ class Customer360Service
             ->whereNotNull('answered_at')
             ->avg('rating');
 
-        $recentTickets = $this->recentTickets($customer);
-
         return [
             'total_conversations' => (int) ($conversationStats->total ?? 0),
             'open_conversations' => (int) ($conversationStats->open_count ?? 0),
             'avg_csat' => $avgCsat !== null ? round((float) $avgCsat, 2) : null,
-            'recent_tickets' => $recentTickets,
+            'recent_tickets' => $this->recentTickets($customer),
         ];
     }
 
     /**
-     * Loads recent tickets if the HelpdeskTickets integration is enabled.
-     * Goes through TicketServiceContract — no direct dependency on the
-     * HelpdeskTickets module at the import level.
+     * Carga los tickets recientes si la integración HelpdeskTickets está
+     * activa. Pasa por TicketServiceContract — sin dependencia directa del
+     * módulo HelpdeskTickets a nivel de import.
      *
-     * @return array<int, array{id: int, ticket_number: string, subject: string, status: string, priority: string, created_at: string}>
+     * @return array<int, array{id: int, ticket_number: string, subject: string, status: string, priority: string, created_at_human: string}>
      */
     private function recentTickets(Customer $customer): array
     {
@@ -207,18 +117,153 @@ class Customer360Service
                 'ticket_number' => $t->ticket_number,
                 'subject' => $t->subject,
                 'status' => $t->status?->name ?? '—',
-                'status_color' => $t->status?->color ?? 'secondary',
                 'priority' => $t->priority,
-                'created_at' => $t->created_at->toIso8601String(),
                 'created_at_human' => $t->created_at->diffForHumans(),
             ])
             ->all();
     }
 
+    // ── Pedidos (ERP / PrestaShop) ───────────────────────────────────────────
+
+    /**
+     * @return array<int, array{platform: string, label: string, connected: bool, orders: array}>
+     */
+    private function ordersData(Customer $customer, bool $force): array
+    {
+        if (! $customer->email) {
+            return [];
+        }
+
+        $customer->loadMissing('externalIds');
+
+        $platforms = [];
+
+        if ($this->erpAvailable()) {
+            $platforms[] = $this->erpPlatform($customer, $force);
+        }
+
+        if ($this->prestashopAvailable()) {
+            $platforms[] = $this->prestashopPlatform($customer, $force);
+        }
+
+        return $platforms;
+    }
+
+    private function erpPlatform(Customer $customer, bool $force): array
+    {
+        $service = app(self::ERP_CONTEXT_SERVICE);
+
+        if ($force) {
+            $service->forgetCache($customer->email);
+        }
+
+        $context = $service->getCustomerContext($customer->email, null, $customer->id);
+        $externalId = $customer->externalIdFor('erp');
+
+        return [
+            'platform' => 'erp',
+            'label' => 'Gestión (ERP)',
+            'connected' => (bool) $externalId,
+            'external_id' => $externalId,
+            'orders' => $this->normalizeErpOrders($context['orders'] ?? []),
+        ];
+    }
+
+    private function prestashopPlatform(Customer $customer, bool $force): array
+    {
+        $service = app(self::PRESTASHOP_CONTEXT_SERVICE);
+
+        if ($force) {
+            $service->forgetCache($customer->email);
+        }
+
+        $context = $service->getCustomerContext($customer->email);
+        $externalId = $customer->externalIdFor('prestashop');
+
+        return [
+            'platform' => 'prestashop',
+            'label' => 'PrestaShop',
+            'connected' => (bool) $externalId,
+            'external_id' => $externalId,
+            'orders' => $this->normalizePrestashopOrders($context['orders'] ?? []),
+        ];
+    }
+
+    /**
+     * Mismo mapeo de campos que erp-inbox.js (pedido ERP: sin total, el
+     * status es un código numérico de Oracle).
+     */
+    private function normalizeErpOrders(array $orders): array
+    {
+        return collect($orders)
+            ->take(5)
+            ->map(function ($o) {
+                $statusCode = $o['status'] ?? null;
+                $status = is_numeric($statusCode)
+                    ? (self::ERP_STATUS_LABELS[(int) $statusCode] ?? 'Estado '.$statusCode)
+                    : ($statusCode ?: 'Pedido');
+
+                return [
+                    'reference' => $o['number'] ?? $o['id'] ?? '—',
+                    'status' => $status,
+                    'date_human' => $this->formatOrderDate($o['date'] ?? null),
+                    'total' => null,
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * Mismo mapeo de campos que right-panel-prestashop-tabs.blade.php (ya
+     * verificado en producción: reference/state.name, totals.total con
+     * fallback a totals.products para pedidos con descuento completo).
+     */
+    private function normalizePrestashopOrders(array $orders): array
+    {
+        return collect($orders)
+            ->take(5)
+            ->map(function ($o) {
+                $status = $o['state']['name'] ?? ($o['status'] ?? 'Pendiente');
+
+                $total = (float) ($o['totals']['total'] ?? $o['total'] ?? 0);
+                if ($total <= 0 && isset($o['totals']['products'])) {
+                    $total = (float) $o['totals']['products'];
+                }
+
+                return [
+                    'reference' => $o['reference'] ?? $o['id'] ?? '—',
+                    'status' => $status,
+                    'date_human' => $this->formatOrderDate($o['placed_at'] ?? null),
+                    'total' => $total > 0 ? number_format($total, 2, ',', '.') : null,
+                ];
+            })
+            ->all();
+    }
+
+    private function formatOrderDate(?string $date): string
+    {
+        if (! $date) {
+            return '—';
+        }
+
+        try {
+            return Carbon::parse($date)->translatedFormat('d M Y');
+        } catch (\Throwable) {
+            return '—';
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function engagementEnabled(): bool
+    private function erpAvailable(): bool
     {
-        return Module::find('Engagement')?->isEnabled() === true;
+        return Module::find('HelpdeskErp')?->isEnabled() === true
+            && class_exists(self::ERP_CONTEXT_SERVICE);
+    }
+
+    private function prestashopAvailable(): bool
+    {
+        return Module::find('HelpdeskPrestashop')?->isEnabled() === true
+            && class_exists(self::PRESTASHOP_CONTEXT_SERVICE);
     }
 }

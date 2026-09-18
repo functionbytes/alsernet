@@ -33,17 +33,22 @@ use Exception;
 class DatabaseDump
 {
     private $host;
+
     private $port;
+
     private $user;
+
     private $password;
+
     private $databaseName;
+
     private $dumpFile;
 
     /**
      * Constructor extracts database connection info from PrestaShop's configuration,
      * but we use mysqldump and mysql for dump / restore.
      *
-     * @param string $dumpFile dump file name
+     * @param  string  $dumpFile  dump file name
      */
     private function __construct($dumpFile = null)
     {
@@ -70,9 +75,7 @@ class DatabaseDump
     /**
      * Wrapper to easily build mysql commands: sets password, port, user.
      *
-     * @param string $executable
-     * @param array $arguments
-     *
+     * @param  string  $executable
      * @return string
      */
     private function buildMySQLCommand($executable, array $arguments = [])
@@ -85,7 +88,7 @@ class DatabaseDump
         ];
 
         if ($this->password) {
-            $parts[] = '-p' . escapeshellarg($this->password);
+            $parts[] = '-p'.escapeshellarg($this->password);
         }
 
         $parts = array_merge($parts, array_map('escapeshellarg', $arguments));
@@ -96,8 +99,7 @@ class DatabaseDump
     /**
      * Like exec, but will raise an exception if the command failed.
      *
-     * @param string $command
-     *
+     * @param  string  $command
      * @return array
      *
      * @throws Exception
@@ -121,7 +123,7 @@ class DatabaseDump
     private function dump()
     {
         $dumpCommand = $this->buildMySQLCommand('mysqldump', [$this->databaseName]);
-        $dumpCommand .= ' > ' . escapeshellarg($this->dumpFile) . ' 2> /dev/null';
+        $dumpCommand .= ' > '.escapeshellarg($this->dumpFile).' 2> /dev/null';
         $this->exec($dumpCommand);
     }
 
@@ -131,7 +133,7 @@ class DatabaseDump
     public function restore()
     {
         $restoreCommand = $this->buildMySQLCommand('mysql', [$this->databaseName]);
-        $restoreCommand .= ' < ' . escapeshellarg($this->dumpFile) . ' 2> /dev/null';
+        $restoreCommand .= ' < '.escapeshellarg($this->dumpFile).' 2> /dev/null';
         $this->exec($restoreCommand);
     }
 
@@ -140,7 +142,7 @@ class DatabaseDump
      */
     public static function create()
     {
-        $dump = new static();
+        $dump = new static;
 
         $dump->dump();
     }
@@ -150,7 +152,7 @@ class DatabaseDump
      */
     public static function restoreDb()
     {
-        $dump = new static();
+        $dump = new static;
 
         $dump->restore();
     }

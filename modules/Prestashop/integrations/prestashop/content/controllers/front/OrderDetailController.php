@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,8 +29,11 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
 class OrderDetailControllerCore extends FrontController
 {
     public $php_self = 'order-detail';
+
     public $auth = true;
+
     public $authRedirection = 'history';
+
     public $ssl = true;
 
     protected $order_to_display;
@@ -47,22 +51,22 @@ class OrderDetailControllerCore extends FrontController
             $idOrder = (int) Tools::getValue('id_order');
             $msgText = Tools::getValue('msgText');
 
-            if (!$idOrder || !Validate::isUnsignedId($idOrder)) {
+            if (! $idOrder || ! Validate::isUnsignedId($idOrder)) {
                 $this->errors[] = $this->trans('The order is no longer valid.', [], 'Shop.Notifications.Error');
             } elseif (empty($msgText)) {
                 $this->errors[] = $this->trans('The message cannot be blank.', [], 'Shop.Notifications.Error');
-            } elseif (!Validate::isMessage($msgText)) {
+            } elseif (! Validate::isMessage($msgText)) {
                 $this->errors[] = $this->trans('This message is invalid (HTML is not allowed).', [], 'Shop.Notifications.Error');
             }
-            if (!count($this->errors)) {
+            if (! count($this->errors)) {
                 $order = new Order($idOrder);
                 if (Validate::isLoadedObject($order) && $order->id_customer == $this->context->customer->id) {
-                    //check if a thread already exist
+                    // check if a thread already exist
                     $id_customer_thread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($this->context->customer->email, $order->id);
                     $id_product = (int) Tools::getValue('id_product');
-                    $cm = new CustomerMessage();
-                    if (!$id_customer_thread) {
-                        $ct = new CustomerThread();
+                    $cm = new CustomerMessage;
+                    if (! $id_customer_thread) {
+                        $ct = new CustomerThread;
                         $ct->id_contact = 0;
                         $ct->id_customer = (int) $order->id_customer;
                         $ct->id_shop = (int) $this->context->shop->id;
@@ -87,7 +91,7 @@ class OrderDetailControllerCore extends FrontController
                     $cm->ip_address = (int) ip2long($client_ip_address);
                     $cm->add();
 
-                    if (!Configuration::get('PS_MAIL_EMAIL_MESSAGE')) {
+                    if (! Configuration::get('PS_MAIL_EMAIL_MESSAGE')) {
                         $to = (string) Configuration::get('PS_SHOP_EMAIL');
                     } else {
                         $to = new Contact((int) Configuration::get('PS_MAIL_EMAIL_MESSAGE'));
@@ -123,7 +127,7 @@ class OrderDetailControllerCore extends FrontController
                             $to,
                             $toName,
                             (string) Configuration::get('PS_SHOP_EMAIL'),
-                            $customer->firstname . ' ' . $customer->lastname,
+                            $customer->firstname.' '.$customer->lastname,
                             null,
                             null,
                             _PS_MAIL_DIR_,
@@ -134,7 +138,7 @@ class OrderDetailControllerCore extends FrontController
                         );
                     }
 
-                    Tools::redirect('index.php?controller=order-detail&id_order=' . $idOrder . '&messagesent');
+                    Tools::redirect('index.php?controller=order-detail&id_order='.$idOrder.'&messagesent');
                 } else {
                     $this->redirect_after = '404';
                     $this->redirect();
@@ -157,14 +161,14 @@ class OrderDetailControllerCore extends FrontController
         $id_order = (int) Tools::getValue('id_order');
         $id_order = $id_order && Validate::isUnsignedId($id_order) ? $id_order : false;
 
-        if (!$id_order) {
+        if (! $id_order) {
             $reference = Tools::getValue('reference');
             $reference = $reference && Validate::isReference($reference) ? $reference : false;
             $order = $reference ? Order::getByReference($reference)->getFirst() : false;
             $id_order = $order ? $order->id : false;
         }
 
-        if (!$id_order) {
+        if (! $id_order) {
             $this->redirect_after = '404';
             $this->redirect();
         } else {
@@ -184,7 +188,7 @@ class OrderDetailControllerCore extends FrontController
 
             $order = new Order($id_order);
             if (Validate::isLoadedObject($order) && $order->id_customer == $this->context->customer->id) {
-                $this->order_to_display = (new OrderPresenter())->present($order);
+                $this->order_to_display = (new OrderPresenter)->present($order);
 
                 $this->reference = $order->reference;
 
@@ -213,7 +217,7 @@ class OrderDetailControllerCore extends FrontController
             'url' => $this->context->link->getPageLink('history'),
         ];
 
-        if (!empty($this->reference)) {
+        if (! empty($this->reference)) {
             $breadcrumb['links'][] = [
                 'title' => $this->reference,
                 'url' => '#',

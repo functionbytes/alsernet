@@ -3,7 +3,7 @@
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
+    background: linear-gradient(135deg, #90bb13 0%, #4f6b0a 100%);
     color: #fff;
     display: flex;
     align-items: center;
@@ -26,7 +26,7 @@
 }
 
 .ht-stat-card {
-    background: #f8f9fa;
+    background: #f5f6f8;
     border: 1px solid #e9ecef;
     border-radius: 10px;
     padding: 14px 16px;
@@ -58,3 +58,14 @@
     transition: opacity 0.2s ease;
 }
 
+
+/*
+ * Altura fija para el lienzo del grafico de consumo. Chart.js con
+ * maintainAspectRatio:false toma la altura del contenedor; sin una definida,
+ * el canvas crecia en cada reflow hasta ocupar toda la pantalla (se midieron
+ * 1891px). El atributo height del canvas no sirve: responsive lo sobrescribe.
+ */
+.ht-usage-chart-wrap {
+    position: relative;
+    height: 260px;
+}

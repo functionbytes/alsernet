@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,6 @@ namespace PrestaShop\PrestaShop\Core\Kpi\Row;
 interface KpiRowPresenterInterface
 {
     /**
-     * @param KpiRowInterface $kpiRow
-     *
      * @return array
      */
     public function present(KpiRowInterface $kpiRow);

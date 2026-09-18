@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,25 +39,19 @@ class CombinationCommandsBuilder implements CombinationCommandsBuilderInterface
     private $commandBuilders;
 
     /**
-     * @param CombinationCommandsBuilderInterface[] $commandBuilders
+     * @param  CombinationCommandsBuilderInterface[]  $commandBuilders
      */
     public function __construct(iterable $commandBuilders)
     {
         $this->commandBuilders = $commandBuilders;
     }
 
-    /**
-     * @param CombinationId $combinationId
-     * @param array $formData
-     *
-     * @return array
-     */
     public function buildCommands(CombinationId $combinationId, array $formData): array
     {
         $commandCollection = [];
         foreach ($this->commandBuilders as $commandBuilder) {
             $commands = $commandBuilder->buildCommands($combinationId, $formData);
-            if (!empty($commands)) {
+            if (! empty($commands)) {
                 $commandCollection = array_merge($commandCollection, $commands);
             }
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,18 +50,18 @@ final class AddSupplierHandler extends AbstractSupplierHandler implements AddSup
      */
     public function handle(AddSupplierCommand $command)
     {
-        $supplier = new Supplier();
+        $supplier = new Supplier;
         $this->fillSupplierWithData($supplier, $command);
         $address = $this->fetchSupplierAddressFromCommand($command);
 
         try {
             $this->validateFields($supplier, $address);
 
-            if (!$address->add()) {
+            if (! $address->add()) {
                 throw new SupplierException(sprintf('Failed to add new supplier address "%s"', $address->address1));
             }
 
-            if (!$supplier->add()) {
+            if (! $supplier->add()) {
                 throw new SupplierException(sprintf('Failed to add new supplier "%s"', $command->getName()));
             }
 
@@ -77,8 +78,6 @@ final class AddSupplierHandler extends AbstractSupplierHandler implements AddSup
     /**
      * Add supplier and shop association
      *
-     * @param Supplier $supplier
-     * @param AddSupplierCommand $command
      *
      * @throws PrestaShopDatabaseException
      */
@@ -90,10 +89,6 @@ final class AddSupplierHandler extends AbstractSupplierHandler implements AddSup
         );
     }
 
-    /**
-     * @param Supplier $supplier
-     * @param AddSupplierCommand $command
-     */
     private function fillSupplierWithData(Supplier $supplier, AddSupplierCommand $command)
     {
         $currentDateTime = date('Y-m-d H:i:s');
@@ -111,13 +106,12 @@ final class AddSupplierHandler extends AbstractSupplierHandler implements AddSup
     /**
      * Creates legacy address from given command data
      *
-     * @param AddSupplierCommand $command
      *
      * @return Address
      */
     private function fetchSupplierAddressFromCommand(AddSupplierCommand $command)
     {
-        $address = new Address();
+        $address = new Address;
         $address->alias = 'supplier';
         $address->firstname = 'supplier';
         $address->lastname = 'supplier';

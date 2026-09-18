@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class AttributeGroupGridDataFactory implements GridDataFactoryInterface
      */
     private $attributeDataFactory;
 
-    /**
-     * @param GridDataFactoryInterface $attributeDataFactory
-     */
     public function __construct(GridDataFactoryInterface $attributeDataFactory)
     {
         $this->attributeDataFactory = $attributeDataFactory;
@@ -63,15 +61,10 @@ final class AttributeGroupGridDataFactory implements GridDataFactoryInterface
         );
     }
 
-    /**
-     * @param array $records
-     *
-     * @return array
-     */
     private function modifyRecords(array $records): array
     {
         foreach ($records as &$record) {
-            if (null === $record['values']) {
+            if ($record['values'] === null) {
                 $record['values'] = '0';
             }
         }

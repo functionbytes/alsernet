@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,48 +53,31 @@ class OrderProductCustomizationForViewing
      */
     private $image;
 
-    /**
-     * @param int $type
-     * @param string $name
-     * @param string $value
-     */
     public function __construct(int $type, string $name, string $value)
     {
         $this->type = $type;
         $this->name = $name;
         $this->value = $value;
-        if (Product::CUSTOMIZE_FILE === $this->type) {
-            $this->image = _THEME_PROD_PIC_DIR_ . $this->value . '_small';
+        if ($this->type === Product::CUSTOMIZE_FILE) {
+            $this->image = _THEME_PROD_PIC_DIR_.$this->value.'_small';
         }
     }
 
-    /**
-     * @return int
-     */
     public function getType(): int
     {
         return $this->type;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
     }
 
-    /**
-     * @return string|null
-     */
     public function getImage(): ?string
     {
         return $this->image;

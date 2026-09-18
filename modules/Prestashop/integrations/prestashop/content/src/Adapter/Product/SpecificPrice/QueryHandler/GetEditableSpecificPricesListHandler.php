@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class GetEditableSpecificPricesListHandler implements GetEditableSpecificPricesL
      */
     private $specificPriceRepository;
 
-    /**
-     * @param SpecificPriceRepository $specificPriceRepository
-     */
     public function __construct(
         SpecificPriceRepository $specificPriceRepository
     ) {
@@ -75,15 +73,13 @@ class GetEditableSpecificPricesListHandler implements GetEditableSpecificPricesL
     }
 
     /**
-     * @param array $specificPrices
-     *
      * @return SpecificPriceForEditing[]
      */
     private function formatSpecificPricesForEditing(array $specificPrices): array
     {
         return array_map(function (array $specificPrice): SpecificPriceForEditing {
-            $dateFrom = DateTimeUtil::NULL_VALUE !== $specificPrice['from'] ? new DateTime($specificPrice['from']) : null;
-            $dateTo = DateTimeUtil::NULL_VALUE !== $specificPrice['to'] ? new DateTime($specificPrice['to']) : null;
+            $dateFrom = $specificPrice['from'] !== DateTimeUtil::NULL_VALUE ? new DateTime($specificPrice['from']) : null;
+            $dateTo = $specificPrice['to'] !== DateTimeUtil::NULL_VALUE ? new DateTime($specificPrice['to']) : null;
 
             return new SpecificPriceForEditing(
                 (int) $specificPrice['id_specific_price'],

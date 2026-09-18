@@ -18,7 +18,7 @@ class WidgetConversationAgentInfoTest extends TestCase
     use DatabaseTransactions;
     use SeedsOpenConversationStatus;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private Customer $customer;
 

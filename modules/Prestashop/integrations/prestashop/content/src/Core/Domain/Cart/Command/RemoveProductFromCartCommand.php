@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,18 +57,13 @@ class RemoveProductFromCartCommand
     private $customizationId;
 
     /**
-     * @param int $cartId
-     * @param int $productId
-     * @param int|null $combinationId
-     * @param int|null $customizationId
-     *
      * @throws CartConstraintException
      */
     public function __construct(
         int $cartId,
         int $productId,
-        int $combinationId = null,
-        int $customizationId = null
+        ?int $combinationId = null,
+        ?int $customizationId = null
     ) {
         $this->cartId = new CartId($cartId);
         $this->productId = new ProductId($productId);

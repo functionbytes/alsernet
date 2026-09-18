@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,6 +36,7 @@ use PrestaShop\PrestaShop\Core\Domain\Exception\InvalidSortingException;
 class QuerySorting
 {
     public const ASC = 'ASC';
+
     public const DESC = 'DESC';
 
     /**
@@ -43,8 +45,6 @@ class QuerySorting
     private $sorting;
 
     /**
-     * @param string $sorting
-     *
      * @throws InvalidSortingException
      */
     public function __construct(string $sorting)
@@ -55,23 +55,18 @@ class QuerySorting
         $this->sorting = $sorting;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->sorting;
     }
 
     /**
-     * @param string $sorting
-     *
      * @throws InvalidSortingException
      */
     private function assertSortingSupported(string $sorting): void
     {
-        if (!in_array($sorting, [self::ASC, self::DESC], true)) {
-            throw new InvalidSortingException();
+        if (! in_array($sorting, [self::ASC, self::DESC], true)) {
+            throw new InvalidSortingException;
         }
     }
 }

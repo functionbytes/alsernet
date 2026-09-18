@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,8 +61,7 @@ class QueryStockMovementParamsCollection extends QueryStockParamsCollection
     }
 
     /**
-     * @param array $queryParams
-     *
+     * @param  array  $queryParams
      * @return mixed
      */
     protected function setDefaultOrderParam($queryParams)

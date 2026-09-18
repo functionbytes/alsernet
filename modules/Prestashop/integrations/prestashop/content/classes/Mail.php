@@ -505,7 +505,7 @@ class MailCore extends ObjectModel
             ShopUrl::cacheMainDomainForShop((int) $idShop);
             /* don't attach the logo as */
             if (isset($logo)) {
-                $templateVars['{shop_logo}'] = $message->embed(\Swift_Image::fromPath($logo));
+                $templateVars['{shop_logo}'] = $message->embed(Swift_Image::fromPath($logo));
             }
 
             if ((Context::getContext()->link instanceof Link) === false) {
@@ -754,7 +754,7 @@ class MailCore extends ObjectModel
             if ($swift->send($message)) {
                 $result = true;
             }
-        } catch (\Swift_SwiftException $e) {
+        } catch (Swift_SwiftException $e) {
             $result = $e->getMessage();
         }
 

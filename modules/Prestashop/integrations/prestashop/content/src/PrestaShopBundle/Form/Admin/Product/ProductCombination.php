@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,14 +54,17 @@ class ProductCombination extends CommonAbstractType
      * @var Configuration
      */
     private $configuration;
+
     /**
      * @var Context
      */
     public $contextLegacy;
+
     /**
      * @var Currency
      */
     public $currency;
+
     /**
      * @var TranslatorInterface
      */
@@ -69,8 +73,8 @@ class ProductCombination extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param LegacyContext $legacyContext
+     * @param  TranslatorInterface  $translator
+     * @param  LegacyContext  $legacyContext
      */
     public function __construct($translator, $legacyContext)
     {
@@ -154,7 +158,7 @@ class ProductCombination extends CommonAbstractType
                 'label' => $this->translator->trans('Ecotax (tax incl.)', [], 'Admin.Catalog.Feature'),
                 'currency' => $this->currency->iso_code,
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'float']),
                 ],
                 'attr' => [
@@ -176,7 +180,7 @@ class ProductCombination extends CommonAbstractType
                 'required' => false,
                 'label' => $this->translator->trans('Min. quantity for sale', [], 'Admin.Catalog.Feature'),
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'numeric']),
                 ],
             ])
@@ -220,7 +224,7 @@ class ProductCombination extends CommonAbstractType
                     'required' => true,
                     'label' => $this->translator->trans('Quantity', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -245,7 +249,7 @@ class ProductCombination extends CommonAbstractType
             $data = $event->getData();
 
             $choices = [];
-            if (!empty($data['id_image_attr'])) {
+            if (! empty($data['id_image_attr'])) {
                 foreach ($data['id_image_attr'] as $id) {
                     $choices[$id] = $id;
                 }

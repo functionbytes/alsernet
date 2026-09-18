@@ -58,10 +58,7 @@ final class LegacyModuleExtractor implements LegacyModuleExtractorInterface
     private $modulesDirectory;
 
     /**
-     * @param ExtractorInterface $phpExtractor
-     * @param ExtractorInterface $smartyExtractor
-     * @param ExtractorInterface $twigExtractor
-     * @param string $modulesDirectory
+     * @param  string  $modulesDirectory
      */
     public function __construct(
         ExtractorInterface $phpExtractor,
@@ -84,11 +81,11 @@ final class LegacyModuleExtractor implements LegacyModuleExtractorInterface
     {
         $extractedCatalogue = new MessageCatalogue($locale);
 
-        $this->phpExtractor->extract($this->modulesDirectory . '/' . $moduleName, $extractedCatalogue);
+        $this->phpExtractor->extract($this->modulesDirectory.'/'.$moduleName, $extractedCatalogue);
         $extractedCatalogue = $this->postprocessPhpCatalogue($extractedCatalogue, $moduleName);
 
-        $this->smartyExtractor->extract($this->modulesDirectory . '/' . $moduleName, $extractedCatalogue);
-        $this->twigExtractor->extract($this->modulesDirectory . '/' . $moduleName, $extractedCatalogue);
+        $this->smartyExtractor->extract($this->modulesDirectory.'/'.$moduleName, $extractedCatalogue);
+        $this->twigExtractor->extract($this->modulesDirectory.'/'.$moduleName, $extractedCatalogue);
 
         return $extractedCatalogue;
     }
@@ -98,16 +95,14 @@ final class LegacyModuleExtractor implements LegacyModuleExtractorInterface
      * Therefore, the PHP extractor will stores those calls in the default domain named "messages".
      * This process moves all wordings in the "messages" domain to the inferred module domain.
      *
-     * @param MessageCatalogue $extractedCatalogue
-     * @param string $moduleName
-     *
+     * @param  string  $moduleName
      * @return MessageCatalogue
      */
     private function postprocessPhpCatalogue(MessageCatalogue $extractedCatalogue, $moduleName)
     {
         $defaultDomain = 'messages';
 
-        if (!in_array($defaultDomain, $extractedCatalogue->getDomains())) {
+        if (! in_array($defaultDomain, $extractedCatalogue->getDomains())) {
             return $extractedCatalogue;
         }
 

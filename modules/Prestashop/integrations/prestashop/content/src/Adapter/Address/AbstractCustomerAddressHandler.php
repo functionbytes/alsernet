@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ abstract class AbstractCustomerAddressHandler extends AbstractAddressHandler
     protected function getRequiredFields(): array
     {
         try {
-            $requiredFields = (new CustomerAddress())->getFieldsRequiredDatabase();
+            $requiredFields = (new CustomerAddress)->getFieldsRequiredDatabase();
         } catch (PrestaShopDatabaseException $e) {
             throw new AddressException('Something went wrong while retrieving required fields for address', 0, $e);
         }

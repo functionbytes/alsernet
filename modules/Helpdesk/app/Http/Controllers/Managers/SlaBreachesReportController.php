@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Modules\Helpdesk\Concerns\FormatsAgentNames;
 use Modules\Helpdesk\Http\Requests\Managers\SlaBreachesReportDataRequest;
 use Nwidart\Modules\Facades\Module;
 
@@ -22,7 +23,11 @@ use Nwidart\Modules\Facades\Module;
  */
 class SlaBreachesReportController extends Controller
 {
+    use FormatsAgentNames;
+
     private const SLA_SERVICE = 'Modules\\HelpdeskTickets\\Services\\SlaService';
+
+    private const CATALOG_SERVICE = 'Modules\\HelpdeskTickets\\Services\\CatalogCacheService';
 
     public function __construct()
     {
@@ -34,7 +39,44 @@ class SlaBreachesReportController extends Controller
      */
     public function index(): View
     {
-        return view('helpdesk::helpdesk.reports.sla-breaches');
+        // Reasignación masiva reusa el endpoint bulk de HelpdeskTickets (el
+        // mismo que consume la bulk-bar del listado de tickets) en vez de
+        // duplicar assignTo()/TicketAssigned aquí. Sin el módulo, la ruta no
+        // existe y la vista oculta los checkboxes.
+        $bulkUrl = app('router')->has('manager.helpdesk.tickets.bulk')
+            ? route('manager.helpdesk.tickets.bulk')
+            : null;
+
+        return view('helpdesk::helpdesk.reports.sla-breaches', [
+            'bulkUrl' => $bulkUrl,
+            'bulkAgents' => $bulkUrl ? $this->bulkAgents() : [],
+        ]);
+    }
+
+    /**
+     * Agentes disponibles para reasignar en masa. Deliberadamente la lista
+     * completa de agentes del sistema (vía CatalogCacheService), no solo los
+     * que ya aparecen en este reporte: la gracia de reasignar desde aquí es
+     * poder repartir tickets "Sin asignar" hacia cualquier agente, no solo
+     * hacia los que ya están sobrecargados.
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function bulkAgents(): array
+    {
+        $catalogClass = self::CATALOG_SERVICE;
+
+        if (! class_exists($catalogClass)) {
+            return [];
+        }
+
+        return $catalogClass::agents()
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $this->formatAgentName($user->firstname, $user->lastname),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -66,9 +108,12 @@ class SlaBreachesReportController extends Controller
 
         return response()->json([
             'available' => true,
+            // Total de tickets abiertos: el panel enseña "11 incumplidos de 21
+            // abiertos" — sin el denominador el recuento no dice nada.
+            'openTotal' => $sla->getOpenTicketCount(),
             'breachedByAgent' => $this->groupBreachedByAgent($breached, $agentNames),
             'upcoming' => $upcoming
-                ->map(fn ($ticket): array => $this->mapTicket($ticket))
+                ->map(fn ($ticket): array => $this->mapTicket($ticket, $agentNames))
                 ->values()
                 ->all(),
         ]);
@@ -92,7 +137,7 @@ class SlaBreachesReportController extends Controller
                         : 'Sin asignar',
                     'count' => $tickets->count(),
                     'tickets' => $tickets
-                        ->map(fn ($ticket): array => $this->mapTicket($ticket))
+                        ->map(fn ($ticket): array => $this->mapTicket($ticket, $agentNames))
                         ->values()
                         ->all(),
                 ];
@@ -103,16 +148,24 @@ class SlaBreachesReportController extends Controller
     }
 
     /**
-     * @return array{id: int, number: ?string, subject: string, dueAt: ?string, overdueMinutes: int, url: ?string}
+     * @param  array<int, string>  $agentNames
+     * @return array{id: int, number: ?string, subject: string, agentId: ?int, agentName: string, dueAt: ?string, overdueMinutes: int, url: ?string}
      */
-    private function mapTicket(mixed $ticket): array
+    private function mapTicket(mixed $ticket, array $agentNames = []): array
     {
         $dueAt = $ticket->sla_resolution_due_at ?? null;
+        $agentId = $ticket->assignee_id ? (int) $ticket->assignee_id : null;
 
         return [
             'id' => (int) $ticket->id,
             'number' => $ticket->ticket_number,
             'subject' => $ticket->subject ?? 'Sin asunto',
+            // El agente viaja en cada fila y no solo en el grupo: la tabla del
+            // panel es plana (una fila por ticket) y lo necesita por fila.
+            'agentId' => $agentId,
+            'agentName' => $agentId
+                ? ($agentNames[$agentId] ?? 'Agente #'.$agentId)
+                : 'Sin asignar',
             'dueAt' => $dueAt?->toIso8601String(),
             'overdueMinutes' => ($dueAt && $dueAt->isPast())
                 ? (int) $dueAt->diffInMinutes(now())
@@ -134,7 +187,7 @@ class SlaBreachesReportController extends Controller
         return User::whereIn('id', $ids)
             ->get(['id', 'firstname', 'lastname'])
             ->mapWithKeys(fn (User $user): array => [
-                $user->id => trim(($user->firstname ?? '').' '.($user->lastname ?? '')) ?: 'Sin nombre',
+                $user->id => $this->formatAgentName($user->firstname, $user->lastname),
             ])
             ->all();
     }

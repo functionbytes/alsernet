@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,22 +41,20 @@ class AttachementProductController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create', 'update'], 'ADMINPRODUCTS_')")
      *
-     * @param int $idProduct
-     * @param Request $request
-     *
+     * @param  int  $idProduct
      * @return JsonResponse
      */
     public function addAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $legacyContext = $this->get('prestashop.adapter.legacy.context');
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        if (!$product || !$request->isXmlHttpRequest()) {
+        if (! $product || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 

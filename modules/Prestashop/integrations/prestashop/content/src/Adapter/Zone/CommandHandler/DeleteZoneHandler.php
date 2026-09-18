@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,11 +47,11 @@ final class DeleteZoneHandler implements DeleteZoneHandlerInterface
     {
         $zone = new Zone($command->getZoneId()->getValue());
 
-        if (0 >= $zone->id) {
+        if ($zone->id <= 0) {
             throw new ZoneNotFoundException(sprintf('Unable to find zone with id "%d" for deletion', $command->getZoneId()->getValue()));
         }
 
-        if (!$zone->delete()) {
+        if (! $zone->delete()) {
             throw new DeleteZoneException(sprintf('Cannot delete zone with id "%d"', $command->getZoneId()->getValue()), DeleteZoneException::FAILED_DELETE);
         }
     }

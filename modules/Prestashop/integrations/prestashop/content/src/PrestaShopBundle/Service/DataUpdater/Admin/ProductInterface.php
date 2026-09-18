@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,8 @@
 
 namespace PrestaShopBundle\Service\DataUpdater\Admin;
 
+use PrestaShopBundle\Exception\UpdateProductException;
+
 /**
  * Data updater for new Architecture, about Product object model.
  *
@@ -36,45 +39,41 @@ interface ProductInterface
     /**
      * Activate or deactivate a list of inventaries.
      *
-     * @param array $productListId The ID list of inventaries to (de)activate
-     * @param bool $activate true to activate, false to deactivate
-     *
-     * @throws \PrestaShopBundle\Exception\UpdateProductException If an error occured during update (not really blocking since its just activation flag)
-     *
+     * @param  array  $productListId  The ID list of inventaries to (de)activate
+     * @param  bool  $activate  true to activate, false to deactivate
      * @return bool true when succeed
+     *
+     * @throws UpdateProductException If an error occured during update (not really blocking since its just activation flag)
      */
     public function activateProductIdList(array $productListId, $activate = true);
 
     /**
      * Do a safe delete on given product IDs.
      *
-     * @param array $productIdList The ID list of inventaries to delete
-     *
-     * @throws \PrestaShopBundle\Exception\UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
-     *
+     * @param  array  $productIdList  The ID list of inventaries to delete
      * @return bool true when succeed
+     *
+     * @throws UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
      */
     public function deleteProductIdList(array $productIdList);
 
     /**
      * Duplicates the given product IDs.
      *
-     * @param array $productIdList The ID list of inventaries to delete
-     *
-     * @throws \PrestaShopBundle\Exception\UpdateProductException if duplication failed
-     *
+     * @param  array  $productIdList  The ID list of inventaries to delete
      * @return bool true when succeed
+     *
+     * @throws UpdateProductException if duplication failed
      */
     public function duplicateProductIdList(array $productIdList);
 
     /**
      * Do a safe delete on given product ID.
      *
-     * @param int $productId The product ID to delete
-     *
-     * @throws \PrestaShopBundle\Exception\UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
-     *
+     * @param  int  $productId  The product ID to delete
      * @return bool
+     *
+     * @throws UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
      */
     public function deleteProduct($productId);
 
@@ -83,8 +82,7 @@ interface ProductInterface
      *
      * Code comes from Legacy controller!
      *
-     * @param int $productId The product ID to duplicate
-     *
+     * @param  int  $productId  The product ID to duplicate
      * @return int The new product ID (duplicate)
      */
     public function duplicateProduct($productId);
@@ -95,12 +93,11 @@ interface ProductInterface
      * Since the sort can be partial (only one page, with offset and limit), we MUST sort only the given IDs,
      * and keep the others safely sorted without any functional change (even if we can bulk shift positions to fix gaps and duplicates).
      *
-     * @param array $productList the list of inventaries to sort (keys: ID, values: old positions) The natural order of the array is the new order to update
-     * @param array $filterParams Contains the ID of the category to sort. Take it from AdminProductDataProvider::getPersistedFilterParameters().
-     *
-     * @throws \PrestaShopBundle\Exception\UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
-     *
+     * @param  array  $productList  the list of inventaries to sort (keys: ID, values: old positions) The natural order of the array is the new order to update
+     * @param  array  $filterParams  Contains the ID of the category to sort. Take it from AdminProductDataProvider::getPersistedFilterParameters().
      * @return bool true when succeed
+     *
+     * @throws UpdateProductException If deletion failed (some normal cases can brings this, it's not a Development error)
      */
     public function sortProductIdList(array $productList, $filterParams);
 }

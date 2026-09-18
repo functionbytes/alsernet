@@ -6,7 +6,18 @@
     <title>Helpdesk Widget Demo · {{ config('app.name') }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @php
+        // Color del tenant (dinamico) — se resuelve una sola vez aqui y se
+        // expone como variables CSS; el resto de la hoja y el HTML lo
+        // consumen con var(), sin repetir el fallback ni usar style="" con
+        // un valor fijo en ningun punto de la pagina.
+        $lcDemoPrimary = $config['primary_color'] ?? '#90bb13';
+    @endphp
     <style>
+        :root {
+            --lc-demo-primary: {{ $lcDemoPrimary }};
+            --lc-demo-primary-soft: {{ $lcDemoPrimary }}dd;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -26,7 +37,7 @@
             overflow: hidden;
         }
         .demo-header {
-            background: linear-gradient(135deg, {{ $config['primary_color'] ?? '#90bb13' }} 0%, {{ $config['primary_color'] ?? '#90bb13' }}dd 100%);
+            background: linear-gradient(135deg, var(--lc-demo-primary) 0%, var(--lc-demo-primary-soft) 100%);
             color: white;
             padding: 40px;
             text-align: center;
@@ -47,7 +58,7 @@
             background: #f7fafc;
             padding: 18px;
             border-radius: 8px;
-            border-left: 4px solid {{ $config['primary_color'] ?? '#90bb13' }};
+            border-left: 4px solid var(--lc-demo-primary);
         }
         .config-item h3 {
             font-size: 0.85rem;
@@ -57,6 +68,7 @@
             margin-bottom: 6px;
         }
         .config-item p { margin: 0; font-weight: 500; color: #2d3748; }
+        .config-item .lc-demo-color-value { color: var(--lc-demo-primary); }
         .badge {
             display: inline-block;
             background: #48bb78;
@@ -77,6 +89,7 @@
             font-size: 0.88rem;
             line-height: 1.5;
         }
+        .lc-demo-install-note { margin-top: 18px; font-size: 0.95rem; color: #718096; }
     </style>
 </head>
 <body>
@@ -105,7 +118,7 @@
                         </div>
                         <div class="config-item">
                             <h3>Color</h3>
-                            <p style="color: {{ $config['primary_color'] ?? '#90bb13' }}">{{ $config['primary_color'] ?? '#90bb13' }}</p>
+                            <p class="lc-demo-color-value">{{ $lcDemoPrimary }}</p>
                         </div>
                         <div class="config-item">
                             <h3>Pre-chat form</h3>
@@ -124,7 +137,7 @@
                 <h2>Install on your site</h2>
                 <p>Paste this snippet before the closing <code>&lt;/body&gt;</code> tag of your website:</p>
                 <pre><code>&lt;script async src="{{ url('/widget/helpdesk/script/'.($websiteToken ?? 'YOUR_TOKEN')) }}"&gt;&lt;/script&gt;</code></pre>
-                <p style="margin-top: 18px; font-size: 0.95rem; color: #718096;">
+                <p class="lc-demo-install-note">
                     The widget loader auto-injects <code>window.HELPDESK_WIDGET_CONFIG</code> with the tenant's color, welcome text, pre-chat form and offline message.
                 </p>
             </div>

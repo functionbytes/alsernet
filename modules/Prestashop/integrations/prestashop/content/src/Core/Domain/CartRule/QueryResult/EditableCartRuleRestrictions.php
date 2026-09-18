@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,49 +77,31 @@ class EditableCartRuleRestrictions
         $this->shopRestriction = $shopRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isCountryRestriction(): bool
     {
         return $this->countryRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isCarrierRestriction(): bool
     {
         return $this->carrierRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isGroupRestriction(): bool
     {
         return $this->groupRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isCartRuleRestriction(): bool
     {
         return $this->cartRuleRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isProductRestriction(): bool
     {
         return $this->productRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function isShopRestriction(): bool
     {
         return $this->shopRestriction;

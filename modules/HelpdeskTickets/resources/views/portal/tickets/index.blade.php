@@ -45,8 +45,8 @@
                                 <td class="align-middle">
                                     @if ($ticket->status)
                                         <span
-                                            class="badge"
-                                            style="background-color: {{ $ticket->status->color ?? '#6c757d' }}"
+                                            class="badge hdt-dyn-bg"
+                                            style="--hdt-color: {{ $ticket->status->color ?? '#6c757d' }}"
                                         >
                                             {{ $ticket->status->name }}
                                         </span>

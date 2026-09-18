@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -89,13 +90,9 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
     private $translator;
 
     /**
-     * @param Configuration $configuration
-     * @param Shop $contextShop
-     * @param ShopUrlDataProvider $shopUrlDataProvider
-     * @param TranslatorInterface $translator
-     * @param bool $isCronJobModuleInstalled
-     * @param string $adminBaseUrl
-     * @param string $dbPrefix
+     * @param  bool  $isCronJobModuleInstalled
+     * @param  string  $adminBaseUrl
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Configuration $configuration,
@@ -122,7 +119,7 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
      */
     public function handle(ToggleExchangeRateAutomatizationCommand $command)
     {
-        if (!$this->isCronJobModuleInstalled) {
+        if (! $this->isCronJobModuleInstalled) {
             throw new AutomateExchangeRatesUpdateException('Live exchange rates feature cannot be modified because "cronjob" module is not installed', AutomateExchangeRatesUpdateException::CRON_TASK_MANAGER_MODULE_NOT_INSTALLED);
         }
 
@@ -138,13 +135,13 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
                 return;
             }
 
-            if (!$thereIsOneCronRunning && $command->exchangeRateStatus()) {
+            if (! $thereIsOneCronRunning && $command->exchangeRateStatus()) {
                 $this->enableExchangeRatesScheduler();
 
                 return;
             }
 
-            if ($thereIsOneCronRunning && !$command->exchangeRateStatus()) {
+            if ($thereIsOneCronRunning && ! $command->exchangeRateStatus()) {
                 $this->disableExchangeRatesScheduler($cronId);
 
                 return;
@@ -165,15 +162,14 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
         $shopDomain = $this->shopUrlDataProvider->getMainShopUrl()->domain;
         $cronFileLink = sprintf(
             'cron_currency_rates.php?secure_key=%s',
-            md5($this->configuration->get('_COOKIE_KEY_') . $this->configuration->get('PS_SHOP_NAME'))
+            md5($this->configuration->get('_COOKIE_KEY_').$this->configuration->get('PS_SHOP_NAME'))
         );
 
-        return $protocol . $shopDomain . $this->adminBaseUrl . $cronFileLink;
+        return $protocol.$shopDomain.$this->adminBaseUrl.$cronFileLink;
     }
 
     /**
-     * @param string $cronUrl
-     *
+     * @param  string  $cronUrl
      * @return bool
      *
      * @throws Exception
@@ -206,23 +202,22 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
      * It checks if the given cronjob exists or is active. If it does not exist or it is not active when the configura
      * tion value is being reset.
      *
-     * @param int $cronId
+     * @param  int  $cronId
      *
      * @throws Exception
      */
     private function removeConfigurationIfNotFoundOrIsDeactivated($cronId)
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query
             ->select('*')
             ->from('cronjobs')
-            ->where('`id_cronjob`=' . (int) $cronId)
-        ;
+            ->where('`id_cronjob`='.(int) $cronId);
 
         /** @var array $row */
         $row = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow($query);
 
-        if (!is_array($row) || empty($row['active'])) {
+        if (! is_array($row) || empty($row['active'])) {
             $this->configuration->set('PS_ACTIVE_CRONJOB_EXCHANGE_RATE', 0);
         }
     }
@@ -238,7 +233,7 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
     {
         $cronUrl = $this->getCronUrl();
 
-        if (false === $this->createCronJob($cronUrl)) {
+        if ($this->createCronJob($cronUrl) === false) {
             throw new AutomateExchangeRatesUpdateException('Failed to create a cron task for live exchange rate update', AutomateExchangeRatesUpdateException::CRON_TASK_CREATION_FAILED);
         }
     }
@@ -246,7 +241,7 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
     /**
      * Removes given cronjob from  configuration and also from cronjobs table.
      *
-     * @param int $cronId
+     * @param  int  $cronId
      *
      * @throws Exception
      */
@@ -255,7 +250,7 @@ final class ToggleExchangeRateAutomatizationHandler implements ToggleExchangeRat
         $this->configuration->set('PS_ACTIVE_CRONJOB_EXCHANGE_RATE', 0);
 
         Db::getInstance()->execute(
-            'DELETE FROM ' . $this->dbPrefix . 'cronjobs WHERE `id_cronjob`=' . (int) $cronId
+            'DELETE FROM '.$this->dbPrefix.'cronjobs WHERE `id_cronjob`='.(int) $cronId
         );
     }
 }

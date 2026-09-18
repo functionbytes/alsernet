@@ -141,6 +141,20 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // QA (18-sep-2026): Log::channel('helpdesk') se usa en varios puntos de
+        // ConversationsController (close/markSpam/forwardMessage) pero el canal
+        // nunca se definió aquí — cualquier código que pasara por esas líneas
+        // (ej. un fallo de CSAT/webhook capturado en un try/catch) lanzaba
+        // "Log [helpdesk] is not defined" y devolvía 500 en vez de solo loguear
+        // el warning y continuar.
+        'helpdesk' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/helpdesk.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

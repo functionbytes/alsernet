@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class SqlRequestFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $bus
-     */
     public function __construct(CommandBusInterface $bus)
     {
         $this->commandBus = $bus;

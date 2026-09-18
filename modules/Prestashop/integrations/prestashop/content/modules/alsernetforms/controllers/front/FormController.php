@@ -1,9 +1,8 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
-
 
 class FormController extends Module
 {
@@ -12,7 +11,7 @@ class FormController extends Module
     public function __construct()
     {
         $this->bootstrap = true;
-        $this->module = Module::getInstanceByName("alsernetforms");
+        $this->module = Module::getInstanceByName('alsernetforms');
         parent::__construct();
     }
 
@@ -24,22 +23,20 @@ class FormController extends Module
         $phone = trim(Tools::getValue('phone'));
         $iso = trim(Tools::getValue('iso'));
 
-
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
                 'data' => [],
             ];
 
-        } elseif (!Validate::isPhoneNumber($phone)) {
+        } elseif (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
                 'data' => [],
             ];
         }
-
 
         if (isset($email) && isset($phone)) {
 
@@ -54,7 +51,7 @@ class FormController extends Module
             ];
 
             // Enviar correo a notificationAlvarez
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'fitting_alert',
                 $subjectAlert,
@@ -68,7 +65,6 @@ class FormController extends Module
                 ];
             }
 
-
             $token = md5($customerEmail); // Este es un ejemplo, asegúrate de usar el método correcto para obtener el token
             $verificationLink = $this->context->link->getModuleLink('ps_emailsubscription', 'verification', ['token' => $token], true);
 
@@ -77,8 +73,8 @@ class FormController extends Module
             ];
 
             // Enviar correo al cliente
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'fitting_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -107,22 +103,20 @@ class FormController extends Module
         $phone = trim(Tools::getValue('phone'));
         $iso = trim(Tools::getValue('iso'));
 
-
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
                 'data' => [],
             ];
 
-        } elseif (!Validate::isPhoneNumber($phone)) {
+        } elseif (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
                 'data' => [],
             ];
         }
-
 
         if (isset($email) && isset($phone)) {
 
@@ -137,7 +131,7 @@ class FormController extends Module
             ];
 
             // Enviar correo a notificationAlvarez
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'fitting_alert',
                 $subjectAlert,
@@ -151,7 +145,6 @@ class FormController extends Module
                 ];
             }
 
-
             $token = md5($customerEmail); // Este es un ejemplo, asegúrate de usar el método correcto para obtener el token
             $verificationLink = $this->context->link->getModuleLink('ps_emailsubscription', 'verification', ['token' => $token], true);
 
@@ -160,8 +153,8 @@ class FormController extends Module
             ];
 
             // Enviar correo al cliente
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'fitting_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -198,7 +191,7 @@ class FormController extends Module
             'group_192' => Tools::getValue('group_192'),
             'group_193' => Tools::getValue('group_193'),
             'group_194' => Tools::getValue('group_194'),
-            'group_195' => Tools::getValue('group_195')
+            'group_195' => Tools::getValue('group_195'),
         ];
 
         // Check for the required date variant
@@ -213,19 +206,19 @@ class FormController extends Module
         // Dynamically construct the SQL query based on available group values
         $attributes_conditions = [];
         foreach ($groups as $key => $group) {
-            if (!empty($group)) {
-                $attributes_conditions[] = "EXISTS(SELECT 1 FROM `" . _DB_PREFIX_ . "product_attribute_combination` pac WHERE pac.`id_product_attribute`=pa.`id_product_attribute` AND pac.`id_attribute`=" . (int)$group . ")";
+            if (! empty($group)) {
+                $attributes_conditions[] = 'EXISTS(SELECT 1 FROM `'._DB_PREFIX_.'product_attribute_combination` pac WHERE pac.`id_product_attribute`=pa.`id_product_attribute` AND pac.`id_attribute`='.(int) $group.')';
             }
         }
 
         $sql = 'SELECT pa.`id_product_attribute`
-            FROM `' . _DB_PREFIX_ . 'product_attribute` pa
-            WHERE pa.`id_product` = ' . (int)$id_product . '
-            AND ' . implode(' AND ', $attributes_conditions);
+            FROM `'._DB_PREFIX_.'product_attribute` pa
+            WHERE pa.`id_product` = '.(int) $id_product.'
+            AND '.implode(' AND ', $attributes_conditions);
 
         $id_product_attribute = Db::getInstance()->getValue($sql);
 
-        if (!$id_product_attribute) {
+        if (! $id_product_attribute) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('No valid product attributes found.', 'formcontroller', $iso),
@@ -236,60 +229,59 @@ class FormController extends Module
         // Fetch names of selected attributes
         $attribute_names = [];
         foreach ($groups as $key => $group) {
-            if (!empty($group)) {
-                $sql = "SELECT name FROM " . _DB_PREFIX_ . "attribute_lang WHERE id_attribute = " . (int)$group;
+            if (! empty($group)) {
+                $sql = 'SELECT name FROM '._DB_PREFIX_.'attribute_lang WHERE id_attribute = '.(int) $group;
                 $attribute_names[$key] = Db::getInstance()->getValue($sql);
             }
         }
 
-
         $description = [];
 
-        if (!empty($attribute_names['group_192'])) {
-            $description[] = 'Fecha ' . $attribute_names['group_192'];
+        if (! empty($attribute_names['group_192'])) {
+            $description[] = 'Fecha '.$attribute_names['group_192'];
         }
-        if (!empty($attribute_names['group_193'])) {
-            $description[] = 'en horario de ' . $attribute_names['group_193'];
+        if (! empty($attribute_names['group_193'])) {
+            $description[] = 'en horario de '.$attribute_names['group_193'];
         }
-        if (!empty($attribute_names['group_194'])) {
-            $description[] = 'en la tienda ' . $attribute_names['group_194'];
+        if (! empty($attribute_names['group_194'])) {
+            $description[] = 'en la tienda '.$attribute_names['group_194'];
         }
-        if (!empty($attribute_names['group_195'])) {
-            $description[] = 'de la marca ' . $attribute_names['group_195'];
+        if (! empty($attribute_names['group_195'])) {
+            $description[] = 'de la marca '.$attribute_names['group_195'];
         }
 
         // Prepare product details
-        $product = new Product((int)$id_product, true, $id_lang);
-        $product->id_product = (int)$id_product;
-        $product->id_product_attribute = (int)$id_product_attribute;
+        $product = new Product((int) $id_product, true, $id_lang);
+        $product->id_product = (int) $id_product;
+        $product->id_product_attribute = (int) $id_product_attribute;
         // $product->name = 'Demo Day';
         $product->attributes = implode(' ', $description);
         $product->price = 0;
         $product->cart_quantity = 1;
 
         // Create Cart and add the product
-        $customer = new Customer((int)$id_customer);
-        $currency = new Currency((int)$context->currency->id, null, (int)$id_shop);
-        $cart = new Cart();
+        $customer = new Customer((int) $id_customer);
+        $currency = new Currency((int) $context->currency->id, null, (int) $id_shop);
+        $cart = new Cart;
         $cart->id_currency = $currency->id;
         $cart->id_lang = $id_lang;
         $cart->add();
         $cart->updateQty(1, $id_product, $id_product_attribute, false, 'up', $id_address);
 
         // Update stock
-        $qty_disponible = StockAvailable::getQuantityAvailableByProduct((int)$id_product, (int)$id_product_attribute);
-        StockAvailable::setQuantity((int)$id_product, $id_product_attribute, (int)$qty_disponible - 1);
+        $qty_disponible = StockAvailable::getQuantityAvailableByProduct((int) $id_product, (int) $id_product_attribute);
+        StockAvailable::setQuantity((int) $id_product, $id_product_attribute, (int) $qty_disponible - 1);
 
         // Create the order
-        $order = new Order();
+        $order = new Order;
         $order->product_list = $product;
-        $order->id_customer = (int)$id_customer;
-        $order->id_address_invoice = (int)$id_address;
-        $order->id_address_delivery = (int)$id_address;
+        $order->id_customer = (int) $id_customer;
+        $order->id_address_invoice = (int) $id_address;
+        $order->id_address_delivery = (int) $id_address;
         $order->id_currency = $currency->id;
-        $order->id_cart = (int)$cart->id;
+        $order->id_cart = (int) $cart->id;
         $order->reference = $order->generateReference();
-        $order->id_shop = (int)$id_shop;
+        $order->id_shop = (int) $id_shop;
         $order->secure_key = $customer->secure_key;
         $order->payment = 'Demo Day';
         $order->module = 'AddisDemoday';
@@ -317,7 +309,7 @@ class FormController extends Module
         $order->invoice_date = '0000-00-00 00:00:00';
         $order->delivery_date = '0000-00-00 00:00:00';
 
-        if (!$order->add()) {
+        if (! $order->add()) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('There was an error creating the order.', 'formcontroller', $iso),
@@ -329,14 +321,13 @@ class FormController extends Module
         $order_detail = new OrderDetail(null, null, $context);
         $order_detail->createListDemoday($order, $cart, $id_order_state, $order->product_list);
 
-        $new_history = new OrderHistory();
-        $new_history->id_order = (int)$order->id;
-        $new_history->changeIdOrderState((int)$id_order_state, $order, true);
-
+        $new_history = new OrderHistory;
+        $new_history->id_order = (int) $order->id;
+        $new_history->changeIdOrderState((int) $id_order_state, $order, true);
 
         if (Validate::isEmail($customer->email)) {
 
-            $attributes_array_custom = Product::getAttributesArray((int)$product->id, (int)$product->id_product_attribute, Context::getContext()->language->id, Context::getContext()->shop->id);
+            $attributes_array_custom = Product::getAttributesArray((int) $product->id, (int) $product->id_product_attribute, Context::getContext()->language->id, Context::getContext()->shop->id);
 
             /*$data = array(
                 '{firstname}' => $customer->firstname,
@@ -352,7 +343,7 @@ class FormController extends Module
                 '{demoday_manufacturer_name}' => $product->manufacturer_name,
             );*/
 
-            $data = array(
+            $data = [
                 '{firstname}' => $customer->firstname,
                 '{lastname}' => $customer->lastname,
                 '{email}' => $customer->email,
@@ -360,16 +351,15 @@ class FormController extends Module
                 '{id_order}' => $order->id,
                 '{product_description_short}' => $product->description_short,
                 '{demoday_name}' => $product->name,
-                '{demoday_hour}' => 'Hora: ' . $attributes_array_custom[1]['attribute_name'],
-                '{demoday_location}' => 'Día y Lugar: ' . $attributes_array_custom[0]['attribute_name'],
+                '{demoday_hour}' => 'Hora: '.$attributes_array_custom[1]['attribute_name'],
+                '{demoday_location}' => 'Día y Lugar: '.$attributes_array_custom[0]['attribute_name'],
                 '{demoday_manufacturer_name}' => $product->manufacturer_name,
-            );
+            ];
 
-
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'demoday',
-                $this->l('Inscripción en ', 'formcontroller', $iso) . ' ' . $product->name,
+                $this->l('Inscripción en ', 'formcontroller', $iso).' '.$product->name,
                 $data,
                 $customer->email,
             )) {
@@ -380,18 +370,16 @@ class FormController extends Module
                 ];
             }
 
-
             return [
                 'status' => 'success',
                 'message' => $this->l('Se ha creado la reserva del Demo Day.', 'formcontroller', $iso),
                 'data' => [
                     'order_reference' => $order->reference,
-                    'order_id' => $order->id
+                    'order_id' => $order->id,
                 ],
             ];
 
         }
-
 
     }
 
@@ -406,7 +394,7 @@ class FormController extends Module
         $iso = trim(Tools::getValue('iso'));
 
         // Validar email
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -415,7 +403,7 @@ class FormController extends Module
         }
 
         // Validar número de teléfono
-        if (!Validate::isPhoneNumber($phone)) {
+        if (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -424,7 +412,7 @@ class FormController extends Module
         }
 
         // Verificar si email y teléfono están presentes
-        if (!$email || !$phone) {
+        if (! $email || ! $phone) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('There was an error creating the order', 'formcontroller', $iso),
@@ -435,15 +423,15 @@ class FormController extends Module
         // Si el cliente ya existe
         if (Customer::getCustomersByEmail($email)) {
 
-            $id_customer = Customer::getCustomersByEmail($email)[0]['id_customer'];;
+            $id_customer = Customer::getCustomersByEmail($email)[0]['id_customer'];
 
             $id_address = Db::getInstance()->getValue(
-                'SELECT id_address FROM ' . _DB_PREFIX_ . 'address WHERE id_customer = ' . (int)$id_customer . ' AND alias LIKE "%Demo Day%"'
+                'SELECT id_address FROM '._DB_PREFIX_.'address WHERE id_customer = '.(int) $id_customer.' AND alias LIKE "%Demo Day%"'
             );
 
-            if (!$id_address) {
+            if (! $id_address) {
 
-                $address = new Address();
+                $address = new Address;
                 $address->id_customer = $id_customer;
                 $address->firstname = $firstname;
                 $address->lastname = $lastname;
@@ -490,7 +478,7 @@ class FormController extends Module
         }
 
         // Crear nuevo cliente
-        $customer = new Customer();
+        $customer = new Customer;
         $customer->firstname = $firstname;
         $customer->lastname = $lastname;
         $customer->email = $email;
@@ -498,12 +486,12 @@ class FormController extends Module
         $customer->id_shop = 1;
         $customer->id_shop_group = 1;
         $customer->id_default_group = 3;
-        $customer->passwd = "$2y$10\$NL.ogAgYuVWPl9fw.1w0juoHU1Qh0aazBNN6TPDvyYLoiH8tqhC4O"; // Password predefinida
+        $customer->passwd = '$2y$10$NL.ogAgYuVWPl9fw.1w0juoHU1Qh0aazBNN6TPDvyYLoiH8tqhC4O'; // Password predefinida
         $customer->secure_key = md5(uniqid(rand(), true));
 
         if ($customer->add()) {
             // Crear dirección para el nuevo cliente
-            $address = new Address();
+            $address = new Address;
             $address->id_customer = $customer->id;
             $address->firstname = $firstname;
             $address->lastname = $lastname;
@@ -567,7 +555,7 @@ class FormController extends Module
         $iso = trim(Tools::getValue('iso'));
 
         // Validar email
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -576,7 +564,7 @@ class FormController extends Module
         }
 
         // Validar número de teléfono
-        if (!Validate::isPhoneNumber($phone)) {
+        if (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -585,7 +573,7 @@ class FormController extends Module
         }
 
         // Verificar si email y teléfono están presentes
-        if (!$email || !$phone) {
+        if (! $email || ! $phone) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('There was an error creating the order', 'formcontroller', $iso),
@@ -593,57 +581,55 @@ class FormController extends Module
             ];
         }
 
+        //        $address = new Address();
+        //        $address->firstname = $firstname;
+        //        $address->lastname = $lastname;
+        //        $address->number = $number;
+        //        $address->phone = $phone;
+        //        $address->email = $email;
+        //        $address->message = $message;
+        //        $address->reason = $reason;
+        //        $address->code = $code;
+        //        $address->location = $location;
+        //        $address->address = $address;
+        //        $address->country = $country;
+        //        $address->preferred = $preferred;
+        //        $address->sports = $sports;
 
-//        $address = new Address();
-//        $address->firstname = $firstname;
-//        $address->lastname = $lastname;
-//        $address->number = $number;
-//        $address->phone = $phone;
-//        $address->email = $email;
-//        $address->message = $message;
-//        $address->reason = $reason;
-//        $address->code = $code;
-//        $address->location = $location;
-//        $address->address = $address;
-//        $address->country = $country;
-//        $address->preferred = $preferred;
-//        $address->sports = $sports;
-
-        $preferred_select = "";
+        $preferred_select = '';
 
         switch ($preferred) {
-            case "morning":
-                $preferred_select = "Mañana";
+            case 'morning':
+                $preferred_select = 'Mañana';
                 break;
-            case "afternoon":
-                $preferred_select = "Tarde";
+            case 'afternoon':
+                $preferred_select = 'Tarde';
                 break;
-            case "indifferent":
-                $preferred_select = "Indiferente";
+            case 'indifferent':
+                $preferred_select = 'Indiferente';
                 break;
             default:
-                $preferred_select = "opción no válida";
+                $preferred_select = 'opción no válida';
                 break;
         }
 
-
-        $reason_select = "";
+        $reason_select = '';
 
         switch ($reason) {
-            case "exchange":
-                $reason_select = "Necesito cambiarlo por otro producto";
+            case 'exchange':
+                $reason_select = 'Necesito cambiarlo por otro producto';
                 break;
-            case "notreceived":
-                $reason_select = "No he recibido el producto solicitado";
+            case 'notreceived':
+                $reason_select = 'No he recibido el producto solicitado';
                 break;
-            case "conditions":
-                $reason_select = "Producto en malas condiciones";
+            case 'conditions':
+                $reason_select = 'Producto en malas condiciones';
                 break;
-            case "interests":
-                $reason_select = "El producto ya no me interesa";
+            case 'interests':
+                $reason_select = 'El producto ya no me interesa';
                 break;
             default:
-                $reason_select = "Razón no válida";
+                $reason_select = 'Razón no válida';
                 break;
         }
 
@@ -664,15 +650,13 @@ class FormController extends Module
             '{sports}' => $sports,
         ];
 
-
         $subjectAlert = 'FORMULARIO DE DEVOLUCIÓN';
         $notificationAlvarez = 'clientes@a-alvarez.com';
-        //$notificationAlvarez = 'alsernet@alsernet.es';
-
+        // $notificationAlvarez = 'alsernet@alsernet.es';
 
         // Enviar correo a notificationAlvarez
-        if (!Mail::Send(
-            (int)$this->context->language->id, // ID del idioma
+        if (! Mail::Send(
+            (int) $this->context->language->id, // ID del idioma
             'exchangesandreturns_alert',       // Nombre de la plantilla
             $subjectAlert,                     // Asunto del correo
             $dataAlert,                        // Datos del correo (placeholders para la plantilla)
@@ -702,8 +686,8 @@ class FormController extends Module
         ];
 
         // Enviar correo al cliente
-        if (!Mail::Send(
-            (int)$this->context->language->id,
+        if (! Mail::Send(
+            (int) $this->context->language->id,
             'exchangesandreturns',
             $subjectNotification,
             $dataNotification,
@@ -722,7 +706,6 @@ class FormController extends Module
             'data' => [],
         ];
 
-
     }
 
     public function giftvoucher()
@@ -738,7 +721,7 @@ class FormController extends Module
         $iso = trim(Tools::getValue('iso'));
         $id_lang = Language::getIdByIso($iso);
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -754,8 +737,8 @@ class FormController extends Module
             'id_lang' => $id_lang,
             'iso' => $iso,
             'categories' => $sports,
-            'condition' => !empty(Tools::getValue('condition')) ? false : true,
-            'services' => !empty(Tools::getValue('services')) ? false : true,
+            'condition' => ! empty(Tools::getValue('condition')) ? false : true,
+            'services' => ! empty(Tools::getValue('services')) ? false : true,
         ];
 
         // Inicializa cURL
@@ -787,13 +770,12 @@ class FormController extends Module
 
         $response_data = json_decode($response, true);
 
-
         if (isset($response_data['status']) && $response_data['status'] == 'success') {
 
             $subjectcampaigns = 'Aquí tienes tu cheque regalo 10€!!!';
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'campaigns_giftvoucher',
                 $subjectcampaigns,
                 [],
@@ -818,13 +800,14 @@ class FormController extends Module
             $message = $this->l('Unknown error.', 'formcontroller', $iso);
 
             switch ($response_data['type']) {
-                case "send":
+                case 'send':
                     $message = $this->l('The email has already been verified in the current campaign', 'formcontroller', $iso);
                     break;
-                case "exist":
+                case 'exist':
                     $message = $this->l('The email does not exist in our records.', 'formcontroller', $iso);
                     break;
             }
+
             return [
                 'status' => 'warning',
                 'message' => $message,
@@ -832,9 +815,7 @@ class FormController extends Module
             ];
         }
 
-
     }
-
 
     public function processyoursalenow()
     {
@@ -861,87 +842,85 @@ class FormController extends Module
         $subtypeshotgun = trim(Tools::getValue('subtypeshotgun'));
         $iso = trim(Tools::getValue('iso'));
 
-
         switch ($type) {
-            case "shotgun":
-                $type = "Escopeta";
+            case 'shotgun':
+                $type = 'Escopeta';
 
                 switch ($subtypeshotgun) {
-                    case "parallel":
-                        $subtype = "Paralela";
+                    case 'parallel':
+                        $subtype = 'Paralela';
                         break;
-                    case "overandabove":
-                        $subtype = "Superpuesta";
+                    case 'overandabove':
+                        $subtype = 'Superpuesta';
                         break;
-                    case "semiautomatic":
-                        $subtype = "Sautomaticas";
+                    case 'semiautomatic':
+                        $subtype = 'Sautomaticas';
                         break;
-                    case "sliding":
-                        $subtype = "Corredera";
+                    case 'sliding':
+                        $subtype = 'Corredera';
                         break;
-                    case "singleshot":
-                        $subtype = "Monotiro";
+                    case 'singleshot':
+                        $subtype = 'Monotiro';
                         break;
                 }
 
                 break;
-            case "rifle":
+            case 'rifle':
 
-                $type = "Rifle";
+                $type = 'Rifle';
 
                 switch ($subtyperifle) {
-                    case "boltaction":
-                        $subtype = "Cerrojo";
+                    case 'boltaction':
+                        $subtype = 'Cerrojo';
                         break;
-                    case "semiautomatic":
-                        $subtype = "Semiautomatica";
+                    case 'semiautomatic':
+                        $subtype = 'Semiautomatica';
                         break;
-                    case "lever":
-                        $subtype = "Palanca";
+                    case 'lever':
+                        $subtype = 'Palanca';
                         break;
-                    case "singleshot":
-                        $subtype = "Monitiro";
+                    case 'singleshot':
+                        $subtype = 'Monitiro';
                         break;
-                    case "express":
-                        $subtype = "Express";
+                    case 'express':
+                        $subtype = 'Express';
                         break;
                 }
 
                 break;
-            case "handgun":
-                $type = "Arma corta";
-                $subtype = "No tiene";
+            case 'handgun':
+                $type = 'Arma corta';
+                $subtype = 'No tiene';
                 break;
-            case "canon":
-                $type = "Canon";
-                $subtype = "No tiene";
+            case 'canon':
+                $type = 'Canon';
+                $subtype = 'No tiene';
                 break;
-            case "optics":
-                $type = "Opticas";
+            case 'optics':
+                $type = 'Opticas';
 
                 switch ($subtypeoptics) {
-                    case "scope":
-                        $subtype = "Visor";
+                    case 'scope':
+                        $subtype = 'Visor';
                         break;
-                    case "binoculars":
-                        $subtype = "Prismaticos";
+                    case 'binoculars':
+                        $subtype = 'Prismaticos';
                         break;
-                    case "nightvision":
-                        $subtype = "Vision nocturna";
+                    case 'nightvision':
+                        $subtype = 'Vision nocturna';
                         break;
-                    case "telescope":
-                        $subtype = "Telescopico";
+                    case 'telescope':
+                        $subtype = 'Telescopico';
                         break;
-                    case "distancemeter":
-                        $subtype = "Medidor de distancia";
+                    case 'distancemeter':
+                        $subtype = 'Medidor de distancia';
                         break;
                 }
 
                 break;
         }
 
-
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -949,7 +928,7 @@ class FormController extends Module
             ];
         }
 
-        if (!Validate::isPhoneNumber($phone)) {
+        if (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -957,7 +936,7 @@ class FormController extends Module
             ];
         }
 
-        if (!$email || !$phone) {
+        if (! $email || ! $phone) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('There was an error creating the order', 'formcontroller', $iso),
@@ -965,20 +944,18 @@ class FormController extends Module
             ];
         }
 
-
         $uploadedFiles = [];
-        $uploadDir = _PS_ROOT_DIR_ . '/themes/alvarez/assets/upload/internalinformations/';
+        $uploadDir = _PS_ROOT_DIR_.'/themes/alvarez/assets/upload/internalinformations/';
 
         // if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
 
-        //$files = is_array($_FILES['file']['name']) ? $_FILES['file'] : [
+        // $files = is_array($_FILES['file']['name']) ? $_FILES['file'] : [
         //     'name' => [$_FILES['file']['name']],
         //     'type' => [$_FILES['file']['type']],
         //    'tmp_name' => [$_FILES['file']['tmp_name']],
         //    'error' => [$_FILES['file']['error']],
         //     'size' => [$_FILES['file']['size']],
         // ];
-
 
         // foreach ($files['name'] as $key => $name) {
         //    if ($files['error'][$key] !== UPLOAD_ERR_OK) {
@@ -1008,12 +985,12 @@ class FormController extends Module
         //  }
 
         $html = '';
-        if (!empty($uploadedFiles)) {
+        if (! empty($uploadedFiles)) {
             $html .= '<ul>';
             $html .= 'Archivos:';
             foreach ($uploadedFiles as $fileUrl) {
                 $fileName = basename($fileUrl); // Obtener el nombre del archivo
-                $html .= '<li><a href="' . htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8') . '</a></li>';
+                $html .= '<li><a href="'.htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8').'</a></li>';
             }
             $html .= '</ul>';
         } else {
@@ -1044,7 +1021,7 @@ class FormController extends Module
             '{urls}' => $html,
         ];
 
-        if (!Mail::Send(
+        if (! Mail::Send(
             1,
             'processyoursalenow_alert',
             $subjectAlert,
@@ -1078,8 +1055,8 @@ class FormController extends Module
         ];
 
         // Enviar correo al cliente
-        if (!Mail::Send(
-            (int)$this->context->language->id,
+        if (! Mail::Send(
+            (int) $this->context->language->id,
             'processyoursalenow_notification',
             $subjectNotification,
             $dataNotification,
@@ -1099,7 +1076,6 @@ class FormController extends Module
         ];
 
     }
-
 
     public function workwithus()
     {
@@ -1122,7 +1098,7 @@ class FormController extends Module
         $iso = trim(Tools::getValue('iso'));
 
         // Validar email
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -1131,7 +1107,7 @@ class FormController extends Module
         }
 
         // Validar número de teléfono
-        if (!Validate::isPhoneNumber($phone)) {
+        if (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -1140,7 +1116,7 @@ class FormController extends Module
         }
 
         // Verificar si email y teléfono están presentes
-        if (!$email || !$phone) {
+        if (! $email || ! $phone) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('There was an error creating the order', 'formcontroller', $iso),
@@ -1148,57 +1124,55 @@ class FormController extends Module
             ];
         }
 
+        //        $address = new Address();
+        //        $address->firstname = $firstname;
+        //        $address->lastname = $lastname;
+        //        $address->number = $number;
+        //        $address->phone = $phone;
+        //        $address->email = $email;
+        //        $address->message = $message;
+        //        $address->reason = $reason;
+        //        $address->code = $code;
+        //        $address->location = $location;
+        //        $address->address = $address;
+        //        $address->country = $country;
+        //        $address->preferred = $preferred;
+        //        $address->sports = $sports;
 
-//        $address = new Address();
-//        $address->firstname = $firstname;
-//        $address->lastname = $lastname;
-//        $address->number = $number;
-//        $address->phone = $phone;
-//        $address->email = $email;
-//        $address->message = $message;
-//        $address->reason = $reason;
-//        $address->code = $code;
-//        $address->location = $location;
-//        $address->address = $address;
-//        $address->country = $country;
-//        $address->preferred = $preferred;
-//        $address->sports = $sports;
-
-        $preferred_select = "";
+        $preferred_select = '';
 
         switch ($preferred) {
-            case "morning":
-                $preferred_select = "Mañana";
+            case 'morning':
+                $preferred_select = 'Mañana';
                 break;
-            case "afternoon":
-                $preferred_select = "Tarde";
+            case 'afternoon':
+                $preferred_select = 'Tarde';
                 break;
-            case "indifferent":
-                $preferred_select = "Indiferente";
+            case 'indifferent':
+                $preferred_select = 'Indiferente';
                 break;
             default:
-                $preferred_select = "opción no válida";
+                $preferred_select = 'opción no válida';
                 break;
         }
 
-
-        $reason_select = "";
+        $reason_select = '';
 
         switch ($reason) {
-            case "exchange":
-                $reason_select = "Necesito cambiarlo por otro producto";
+            case 'exchange':
+                $reason_select = 'Necesito cambiarlo por otro producto';
                 break;
-            case "notreceived":
-                $reason_select = "No he recibido el producto solicitado";
+            case 'notreceived':
+                $reason_select = 'No he recibido el producto solicitado';
                 break;
-            case "conditions":
-                $reason_select = "Producto en malas condiciones";
+            case 'conditions':
+                $reason_select = 'Producto en malas condiciones';
                 break;
-            case "interests":
-                $reason_select = "El producto ya no me interesa";
+            case 'interests':
+                $reason_select = 'El producto ya no me interesa';
                 break;
             default:
-                $reason_select = "Razón no válida";
+                $reason_select = 'Razón no válida';
                 break;
         }
 
@@ -1219,14 +1193,12 @@ class FormController extends Module
             '{sports}' => $sports,
         ];
 
-
         $subjectAlert = 'FORMULARIO DE DEVOLUCIÓN';
         $notificationAlvarez = 'clientes@a-alvarez.com';
-        //$notificationAlvarez = 'alsernet@alsernet.es';
-
+        // $notificationAlvarez = 'alsernet@alsernet.es';
 
         // Enviar correo a notificationAlvarez
-        if (!Mail::Send(
+        if (! Mail::Send(
             1,
             'exchangesandreturns_alert',
             $subjectAlert,
@@ -1257,8 +1229,8 @@ class FormController extends Module
         ];
 
         // Enviar correo al cliente
-        if (!Mail::Send(
-            (int)$this->context->language->id,
+        if (! Mail::Send(
+            (int) $this->context->language->id,
             'exchangesandreturns',
             $subjectNotification,
             $dataNotification,
@@ -1277,9 +1249,7 @@ class FormController extends Module
             'data' => [],
         ];
 
-
     }
-
 
     public function doubtsshipping()
     {
@@ -1291,7 +1261,7 @@ class FormController extends Module
         $question = trim(Tools::getValue('question'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -1312,7 +1282,7 @@ class FormController extends Module
                 '{phone}' => $phone,
             ];
 
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'doubtsshipping_alert',
                 $subjectAlert,
@@ -1336,8 +1306,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'doubtsshipping_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1369,7 +1339,7 @@ class FormController extends Module
         $question = trim(Tools::getValue('question'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -1390,7 +1360,7 @@ class FormController extends Module
                 '{phone}' => $phone,
             ];
 
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'paymentmethods_alert',
                 $subjectAlert,
@@ -1414,8 +1384,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'paymentmethods_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1437,7 +1407,6 @@ class FormController extends Module
 
     }
 
-
     public function internalinformationsystem()
     {
         $context = Context::getContext();
@@ -1449,7 +1418,7 @@ class FormController extends Module
         $address = trim(Tools::getValue('address'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -1460,18 +1429,17 @@ class FormController extends Module
         if (isset($email)) {
 
             $uploadedFiles = [];
-            $uploadDir = _PS_ROOT_DIR_ . '/themes/alvarez/assets/upload/internalinformations/';
+            $uploadDir = _PS_ROOT_DIR_.'/themes/alvarez/assets/upload/internalinformations/';
 
             // if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
 
-            //$files = is_array($_FILES['file']['name']) ? $_FILES['file'] : [
+            // $files = is_array($_FILES['file']['name']) ? $_FILES['file'] : [
             //     'name' => [$_FILES['file']['name']],
             //     'type' => [$_FILES['file']['type']],
             //    'tmp_name' => [$_FILES['file']['tmp_name']],
             //    'error' => [$_FILES['file']['error']],
             //     'size' => [$_FILES['file']['size']],
             // ];
-
 
             // foreach ($files['name'] as $key => $name) {
             //    if ($files['error'][$key] !== UPLOAD_ERR_OK) {
@@ -1501,12 +1469,12 @@ class FormController extends Module
             //  }
 
             $html = '';
-            if (!empty($uploadedFiles)) {
+            if (! empty($uploadedFiles)) {
                 $html .= '<ul>';
                 $html .= 'Archivos:';
                 foreach ($uploadedFiles as $fileUrl) {
                     $fileName = basename($fileUrl); // Obtener el nombre del archivo
-                    $html .= '<li><a href="' . htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8') . '</a></li>';
+                    $html .= '<li><a href="'.htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8').'</a></li>';
                 }
                 $html .= '</ul>';
             } else {
@@ -1526,7 +1494,7 @@ class FormController extends Module
                 '{urls}' => $html,
             ];
 
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'internalinformationsystem_alert',
                 $subjectAlert,
@@ -1550,8 +1518,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'internalinformationsystem_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1573,7 +1541,6 @@ class FormController extends Module
 
     }
 
-
     public function wecallyouus()
     {
         $context = Context::getContext();
@@ -1584,14 +1551,14 @@ class FormController extends Module
         $id_product = trim(Tools::getValue('product'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
                 'data' => [],
             ];
 
-        } elseif (!Validate::isPhoneNumber($phone)) {
+        } elseif (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -1646,8 +1613,7 @@ class FormController extends Module
                 '{email}' => $email,
             ];
 
-
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'wecallyouus_alert',
                 $subjectAlert,
@@ -1671,8 +1637,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'wecallyouus_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1687,7 +1653,7 @@ class FormController extends Module
 
             /**TODO INSERTAR EN TABLA CONTACT PARA QUE FUNCIONE EL ENVÍO A TRAVEZ DE LA INTRANET LUEGO ELIMINAR ESTE BLOQUE*/
             $mailContent = "<p>Producto: $product_url</p><p>Usuario: $firstname $lastname ($customerEmail)</p><p>Teléfono: $phone</p></p><p>Esta consulta entrará en el Panel de consultasweb.a-alvarez.com.</p>";
-            $sql = "INSERT INTO " . _DB_PREFIX_ . "ets_ctf_contact_message
+            $sql = 'INSERT INTO '._DB_PREFIX_."ets_ctf_contact_message
                     (id_contact, id_customer, replied, readed, special, subject, sender, body, recipient, attachments, reply_to, date_add, date_upd)
                     VALUES(2, 0, 0, 0, 0, 'Solicitud de llamada para consultar precio', 'Alvarez Web <web@a-alvarez.com>',
                     '$mailContent', 'Alvarez Web <$notificationAlvarez>', '', '$customerEmail', NOW(), NOW());";
@@ -1701,9 +1667,7 @@ class FormController extends Module
 
         }
 
-
     }
-
 
     public function contact()
     {
@@ -1715,7 +1679,7 @@ class FormController extends Module
         $message = Tools::getValue('message');
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
@@ -1736,7 +1700,7 @@ class FormController extends Module
                 '{phone}' => $phone,
             ];
 
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'contact_alert',
                 $subjectAlert,
@@ -1760,8 +1724,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'contact_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1783,7 +1747,6 @@ class FormController extends Module
 
     }
 
-
     public function interestfreefinancing()
     {
         $context = Context::getContext();
@@ -1794,14 +1757,14 @@ class FormController extends Module
         $id_product = trim(Tools::getValue('product'));
         $iso = trim(Tools::getValue('iso'));
 
-        if (!Validate::isEmail($email)) {
+        if (! Validate::isEmail($email)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
                 'data' => [],
             ];
 
-        } elseif (!Validate::isPhoneNumber($phone)) {
+        } elseif (! Validate::isPhoneNumber($phone)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid phone', 'formcontroller', $iso),
@@ -1813,7 +1776,6 @@ class FormController extends Module
 
         $product_name = $product->name;
         $product_id = $id_product;
-
 
         if (isset($email) && isset($phone)) {
 
@@ -1841,8 +1803,7 @@ class FormController extends Module
                 '{email}' => $email,
             ];
 
-
-            if (!Mail::Send(
+            if (! Mail::Send(
                 1,
                 'interestfreefinancing_alert',
                 $subjectAlert,
@@ -1866,8 +1827,8 @@ class FormController extends Module
                 '{verification_link}' => $verificationLink,
             ];
 
-            if (!Mail::Send(
-                (int)$this->context->language->id,
+            if (! Mail::Send(
+                (int) $this->context->language->id,
                 'interestfreefinancing_notification',
                 $subjectNotification,
                 $dataNotification,
@@ -1887,71 +1848,69 @@ class FormController extends Module
             ];
         }
 
-
     }
-
 
     public function huntingLicense()
     {
-        $uid            = trim(Tools::getValue('uid'));
-        $firstname      = trim(Tools::getValue('firstname'));
-        $lastname       = trim(Tools::getValue('lastname'));
-        $dni            = trim(Tools::getValue('dni'));
-        $phone          = trim(Tools::getValue('phone'));
-        $email          = trim(Tools::getValue('email'));
-        $address        = trim(Tools::getValue('address'));
-        $licenseNumber  = trim(Tools::getValue('license_number'));
-        $iso            = trim(Tools::getValue('iso'));
+        $uid = trim(Tools::getValue('uid'));
+        $firstname = trim(Tools::getValue('firstname'));
+        $lastname = trim(Tools::getValue('lastname'));
+        $dni = trim(Tools::getValue('dni'));
+        $phone = trim(Tools::getValue('phone'));
+        $email = trim(Tools::getValue('email'));
+        $address = trim(Tools::getValue('address'));
+        $licenseNumber = trim(Tools::getValue('license_number'));
+        $iso = trim(Tools::getValue('iso'));
 
         if (empty($uid)) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Missing document identifier.', 'formcontroller', $iso),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
         if (empty($licenseNumber)) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Please provide your hunting federation license number.', 'formcontroller', $iso),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
-        if (!empty($email) && !Validate::isEmail($email)) {
+        if (! empty($email) && ! Validate::isEmail($email)) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Invalid email address', 'formcontroller', $iso),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
-        include_once dirname(__FILE__) . '/../../classes/ApiManager.php';
-        $api = new ApiManager();
+        include_once dirname(__FILE__).'/../../classes/ApiManager.php';
+        $api = new ApiManager;
 
-        $result = $api->sendRequestWithoutLogging('POST', '/api/documents/' . $uid . '/submit', [
-            'firstname'      => $firstname,
-            'lastname'       => $lastname,
-            'dni'            => $dni,
-            'phone'          => $phone,
-            'email'          => $email,
-            'address'        => $address,
+        $result = $api->sendRequestWithoutLogging('POST', '/api/documents/'.$uid.'/submit', [
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'dni' => $dni,
+            'phone' => $phone,
+            'email' => $email,
+            'address' => $address,
             'license_number' => $licenseNumber,
         ]);
 
         if ($result['status'] === 200) {
             return [
-                'status'  => 'success',
+                'status' => 'success',
                 'message' => $this->l('Your license number has been submitted successfully. Our team will review it shortly.', 'formcontroller', $iso),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
         return [
-            'status'  => 'warning',
+            'status' => 'warning',
             'message' => $this->l('There was an error submitting your license. Please try again or contact us.', 'formcontroller', $iso),
-            'data'    => ['api_status' => $result['status']],
+            'data' => ['api_status' => $result['status']],
         ];
     }
 
@@ -1968,7 +1927,6 @@ class FormController extends Module
         );
     }
 
-
     public function getModuleTranslation(
         $module,
         $originalString,
@@ -1978,8 +1936,7 @@ class FormController extends Module
         $locale = null,
         $fallback = true,
         $escape = true
-    )
-    {
+    ) {
         global $_MODULES, $_MODULE, $_LANGADM;
 
         static $langCache = [];
@@ -1989,10 +1946,9 @@ class FormController extends Module
         // $translations_merged is a cache of wether a specific module's translations have already been added to $_MODULES
         static $translationsMerged = [];
 
-
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -2000,51 +1956,50 @@ class FormController extends Module
             $iso = Context::getContext()->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int)$js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -2053,8 +2008,8 @@ class FormController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -2070,9 +2025,9 @@ class FormController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -2084,7 +2039,4 @@ class FormController extends Module
 
         return $ret;
     }
-
-
 }
-

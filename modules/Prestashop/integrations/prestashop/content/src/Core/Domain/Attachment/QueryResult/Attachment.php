@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,27 +42,17 @@ class Attachment
      */
     private $name;
 
-    /**
-     * @param string $path
-     * @param string $name
-     */
     public function __construct(string $path, string $name)
     {
         $this->path = $path;
         $this->name = $name;
     }
 
-    /**
-     * @return string
-     */
     public function getPath(): string
     {
         return $this->path;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;

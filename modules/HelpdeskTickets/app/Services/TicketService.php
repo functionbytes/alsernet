@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 // (tabla `settings`, usada por ejemplo para incoming_email). Alias explícito
 // para no confundir las dos clases "Setting".
 use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
@@ -355,6 +356,30 @@ class TicketService
         array $messageAttributes = [],
         ?int $maxFileSize = null
     ): TicketMessage {
+        $safeFiles = [];
+        $attachmentSecurity = app(TicketAttachmentSecurityService::class);
+
+        // Keep the service safe even when a caller bypasses a FormRequest
+        // (widget, public form, portal or a queued integration). The request
+        // rules and this final boundary now use the same Settings value.
+        $maxFileSize ??= app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024;
+
+        // Validar y escanear todos los archivos antes de crear el mensaje:
+        // una amenaza o un fallo del antivirus no debe dejar un mensaje
+        // huérfano sin adjuntos en el portal/widget.
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+
+            if ($file->getSize() > $maxFileSize) {
+                continue;
+            }
+
+            $attachmentSecurity->assertSafe($file);
+            $safeFiles[] = $file;
+        }
+
         $message = TicketMessage::create(array_merge([
             'ticket_id' => $ticketId,
             'is_internal' => false,
@@ -363,15 +388,7 @@ class TicketService
         $disk = config('helpdesk.attachments.disk', 'local');
         $path = config('helpdesk.attachments.path', 'helpdesk/attachments');
 
-        foreach ($files as $file) {
-            if (! $file instanceof UploadedFile || ! $file->isValid()) {
-                continue;
-            }
-
-            if ($maxFileSize !== null && $file->getSize() > $maxFileSize) {
-                continue;
-            }
-
+        foreach ($safeFiles as $file) {
             $stored = $file->store($path, $disk);
 
             TicketAttachment::create([

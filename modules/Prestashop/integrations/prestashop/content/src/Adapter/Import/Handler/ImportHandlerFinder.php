@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ final class ImportHandlerFinder implements ImportHandlerFinderInterface
     private $importHandlers;
 
     /**
-     * @param ImportHandlerInterface[] ...$importHandlers
+     * @param  ImportHandlerInterface[]  ...$importHandlers
      */
     public function __construct(ImportHandlerInterface ...$importHandlers)
     {
@@ -59,6 +60,6 @@ final class ImportHandlerFinder implements ImportHandlerFinderInterface
             }
         }
 
-        throw new NotSupportedImportTypeException();
+        throw new NotSupportedImportTypeException;
     }
 }

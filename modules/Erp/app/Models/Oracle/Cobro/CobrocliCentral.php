@@ -4,6 +4,10 @@ namespace Modules\Erp\Models\Oracle\Cobro;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
+use Modules\Erp\Models\Oracle\Configuracion\Transportista;
+use Modules\Erp\Models\Oracle\Otros\AsientoCent;
+use Modules\Erp\Models\Oracle\Otros\Vale;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +59,7 @@ class CobrocliCentral extends Model
      */
     public function cobrocliCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCentral::class, 'idcobrocli_central', 'idcobrocli_central');
+        return $this->belongsTo(CobrocliCentral::class, 'idcobrocli_central', 'idcobrocli_central');
     }
 
     /**
@@ -64,7 +68,7 @@ class CobrocliCentral extends Model
      */
     public function cobrocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
+        return $this->belongsTo(CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
     }
 
     /**
@@ -73,7 +77,7 @@ class CobrocliCentral extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -82,7 +86,7 @@ class CobrocliCentral extends Model
      */
     public function transportista()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Transportista::class, 'idtransportista', 'idtransportista');
+        return $this->belongsTo(Transportista::class, 'idtransportista', 'idtransportista');
     }
 
     /**
@@ -91,7 +95,7 @@ class CobrocliCentral extends Model
      */
     public function vale()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Vale::class, 'idvale', 'idvale');
+        return $this->belongsTo(Vale::class, 'idvale', 'idvale');
     }
 
     /**
@@ -100,7 +104,7 @@ class CobrocliCentral extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -109,6 +113,6 @@ class CobrocliCentral extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
     }
 }

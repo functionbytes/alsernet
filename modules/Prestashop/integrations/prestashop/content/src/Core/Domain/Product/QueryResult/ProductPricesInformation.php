@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,17 +81,6 @@ class ProductPricesInformation
      */
     private $unitPriceRatio;
 
-    /**
-     * @param DecimalNumber $price
-     * @param DecimalNumber $priceTaxIncluded
-     * @param DecimalNumber $ecotax
-     * @param int $taxRulesGroupId
-     * @param bool $onSale
-     * @param DecimalNumber $wholesalePrice
-     * @param DecimalNumber $unitPrice
-     * @param string $unity
-     * @param DecimalNumber $unitPriceRatio
-     */
     public function __construct(
         DecimalNumber $price,
         DecimalNumber $priceTaxIncluded,
@@ -113,73 +103,46 @@ class ProductPricesInformation
         $this->unitPriceRatio = $unitPriceRatio;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPriceTaxIncluded(): DecimalNumber
     {
         return $this->priceTaxIncluded;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getEcotax(): DecimalNumber
     {
         return $this->ecotax;
     }
 
-    /**
-     * @return int
-     */
     public function getTaxRulesGroupId(): int
     {
         return $this->taxRulesGroupId;
     }
 
-    /**
-     * @return bool
-     */
     public function isOnSale(): bool
     {
         return $this->onSale;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getWholesalePrice(): DecimalNumber
     {
         return $this->wholesalePrice;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getUnitPrice(): DecimalNumber
     {
         return $this->unitPrice;
     }
 
-    /**
-     * @return string
-     */
     public function getUnity(): string
     {
         return $this->unity;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getUnitPriceRatio(): DecimalNumber
     {
         return $this->unitPriceRatio;

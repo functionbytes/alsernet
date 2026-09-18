@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\PhpBridgeSessionStorage;
 class SessionHandler implements SessionHandlerInterface
 {
     /**
-     *  @var Session
+     * @var Session
      */
     protected $session;
 
@@ -69,9 +70,9 @@ class SessionHandler implements SessionHandlerInterface
         $this->sameSite = $sameSite;
 
         // Same behaviour as Cookie class
-        $this->path = trim($shopUri, '/\\') . '/';
+        $this->path = trim($shopUri, '/\\').'/';
         if ($this->path[0] != '/') {
-            $this->path = '/' . $this->path;
+            $this->path = '/'.$this->path;
         }
 
         $this->path = rawurlencode($this->path);
@@ -102,7 +103,7 @@ class SessionHandler implements SessionHandlerInterface
         if (PHP_VERSION_ID < 70300) {
             session_set_cookie_params(
                 $this->lifetime,
-                $this->path . ';SameSite=' . $this->sameSite,
+                $this->path.';SameSite='.$this->sameSite,
                 '',
                 $this->isSecure,
                 true
@@ -117,14 +118,12 @@ class SessionHandler implements SessionHandlerInterface
             ]);
         }
 
-        $this->session = new Session(new PhpBridgeSessionStorage());
+        $this->session = new Session(new PhpBridgeSessionStorage);
         $this->session->start();
     }
 
     /**
      * Is session disabled
-     *
-     * @return bool
      */
     protected function isSessionDisabled(): bool
     {
@@ -133,8 +132,6 @@ class SessionHandler implements SessionHandlerInterface
 
     /**
      * Is session started
-     *
-     * @return bool
      */
     protected function isSessionStarted(): bool
     {
@@ -143,8 +140,6 @@ class SessionHandler implements SessionHandlerInterface
 
     /**
      * Get Session status
-     *
-     * @return int
      */
     protected function getSessionStatus(): int
     {

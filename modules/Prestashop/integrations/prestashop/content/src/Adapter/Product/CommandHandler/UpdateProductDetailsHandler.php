@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class UpdateProductDetailsHandler implements UpdateProductDetailsHandlerIn
      */
     private $productRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductRepository $productRepository
     ) {
@@ -65,36 +63,33 @@ final class UpdateProductDetailsHandler implements UpdateProductDetailsHandlerIn
     }
 
     /**
-     * @param Product $product
-     * @param UpdateProductDetailsCommand $command
-     *
      * @return string[] updatable properties
      */
     private function fillUpdatableProperties(Product $product, UpdateProductDetailsCommand $command): array
     {
         $updatableProperties = [];
 
-        if (null !== $command->getEan13()) {
+        if ($command->getEan13() !== null) {
             $product->ean13 = $command->getEan13()->getValue();
             $updatableProperties[] = 'ean13';
         }
 
-        if (null !== $command->getIsbn()) {
+        if ($command->getIsbn() !== null) {
             $product->isbn = $command->getIsbn()->getValue();
             $updatableProperties[] = 'isbn';
         }
 
-        if (null !== $command->getMpn()) {
+        if ($command->getMpn() !== null) {
             $product->mpn = $command->getMpn();
             $updatableProperties[] = 'mpn';
         }
 
-        if (null !== $command->getReference()) {
+        if ($command->getReference() !== null) {
             $product->reference = $command->getReference()->getValue();
             $updatableProperties[] = 'reference';
         }
 
-        if (null !== $command->getUpc()) {
+        if ($command->getUpc() !== null) {
             $product->upc = $command->getUpc()->getValue();
             $updatableProperties[] = 'upc';
         }

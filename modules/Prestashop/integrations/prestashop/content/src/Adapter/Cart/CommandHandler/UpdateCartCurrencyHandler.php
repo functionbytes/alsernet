@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,7 +56,7 @@ final class UpdateCartCurrencyHandler extends AbstractCartHandler implements Upd
         $cart->id_currency = (int) $currency->id;
 
         try {
-            if (false === $cart->update()) {
+            if ($cart->update() === false) {
                 throw new CartException('Failed to update cart currency.');
             }
         } catch (PrestaShopException $e) {
@@ -64,10 +65,6 @@ final class UpdateCartCurrencyHandler extends AbstractCartHandler implements Upd
     }
 
     /**
-     * @param CurrencyId $currencyId
-     *
-     * @return Currency
-     *
      * @throws CurrencyNotFoundException
      */
     private function getCurrencyObject(CurrencyId $currencyId): Currency
@@ -82,20 +79,16 @@ final class UpdateCartCurrencyHandler extends AbstractCartHandler implements Upd
     }
 
     /**
-     * @param Currency $currency
-     *
      * @throws CurrencyException
      */
     private function assertCurrencyIsActive(Currency $currency): void
     {
-        if (!$currency->active) {
+        if (! $currency->active) {
             throw new CurrencyException(sprintf('Currency "%s" cannot be used in cart because it is disabled', $currency->iso_code), CurrencyException::IS_DISABLED);
         }
     }
 
     /**
-     * @param Currency $currency
-     *
      * @throws CurrencyException
      */
     private function assertCurrencyIsNotDeleted(Currency $currency): void

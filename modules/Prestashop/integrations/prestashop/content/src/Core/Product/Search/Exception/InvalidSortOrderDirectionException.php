@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 class InvalidSortOrderDirectionException extends CoreException
 {
     /**
-     * @param string $direction the invalid direction
+     * @param  string  $direction  the invalid direction
      */
     public function __construct($direction)
     {

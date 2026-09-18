@@ -23,7 +23,7 @@
             </p>
         </div>
         <a href="{{ route('manager.helpdesk.agents.edit', $agent) }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-edit me-1"></i> Editar configuración
+            Editar configuración
         </a>
     </div>
 
@@ -88,7 +88,7 @@
                 <div class="col-6 col-xl-3">
                     <div class="card text-center">
                         <div class="card-body py-3">
-                            <div class="fs-3 fw-bold text-danger">{{ $stats['sla_breached'] }}</div>
+                            <div class="fs-3 fw-bold text-dark">{{ $stats['sla_breached'] }}</div>
                             <div class="small text-muted">SLA incumplido</div>
                         </div>
                     </div>

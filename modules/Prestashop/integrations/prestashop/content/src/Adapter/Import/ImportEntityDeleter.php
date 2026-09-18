@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShop\PrestaShop\Adapter\Import;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Core\Image\Deleter\ImageFileDeleterInterface;
 use PrestaShop\PrestaShop\Core\Import\Entity;
@@ -59,10 +61,7 @@ final class ImportEntityDeleter implements ImportEntityDeleterInterface
     private $imageFileDeleter;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param Configuration $configuration
-     * @param ImageFileDeleterInterface $imageFileDeleter
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -276,9 +275,8 @@ final class ImportEntityDeleter implements ImportEntityDeleterInterface
     /**
      * Truncate multiple tables.
      *
-     * @param array $tables
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      */
     private function truncateTables(array $tables)
     {
@@ -290,9 +288,8 @@ final class ImportEntityDeleter implements ImportEntityDeleterInterface
     /**
      * Truncate tables if they exist. Truncates them one by one.
      *
-     * @param array $tables
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      */
     private function truncateTablesIfExist(array $tables)
     {

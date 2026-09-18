@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ class AddPaymentCommand
     /**
      * @var string
      */
-    private const PATTERN_PAYMENT_METHOD_NAME = '/^[^' . self::INVALID_CHARACTERS_NAME . ']*$/u';
+    private const PATTERN_PAYMENT_METHOD_NAME = '/^[^'.self::INVALID_CHARACTERS_NAME.']*$/u';
 
     /**
      * @var OrderId
@@ -84,13 +85,7 @@ class AddPaymentCommand
     private $orderInvoiceId;
 
     /**
-     * @param int $orderId
-     * @param string $paymentDate
-     * @param string $paymentMethod
-     * @param string $paymentAmount
-     * @param int $paymentCurrencyId
-     * @param int|null $orderInvoiceId
-     * @param string|null $transactionId transaction ID, usually payment ID from payment gateway
+     * @param  string|null  $transactionId  transaction ID, usually payment ID from payment gateway
      */
     public function __construct(
         int $orderId,
@@ -168,11 +163,11 @@ class AddPaymentCommand
     }
 
     /**
-     * @param string $paymentMethod
+     * @param  string  $paymentMethod
      */
     private function assertPaymentMethodIsGenericName($paymentMethod)
     {
-        if (empty($paymentMethod) || !preg_match(self::PATTERN_PAYMENT_METHOD_NAME, $paymentMethod)) {
+        if (empty($paymentMethod) || ! preg_match(self::PATTERN_PAYMENT_METHOD_NAME, $paymentMethod)) {
             throw new OrderConstraintException(
                 'The selected payment method is invalid.',
                 OrderConstraintException::INVALID_PAYMENT_METHOD

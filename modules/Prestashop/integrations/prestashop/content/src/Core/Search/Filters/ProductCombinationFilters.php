@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,7 @@ class ProductCombinationFilters extends Filters
     public function __construct(array $filters = [], $filterId = '')
     {
         parent::__construct($filters, $filterId);
-        if (!isset($filters['filters']['product_id'])) {
+        if (! isset($filters['filters']['product_id'])) {
             throw new InvalidArgumentException(sprintf('%s filters expect a product_id filter', static::class));
         }
 
@@ -65,9 +66,6 @@ class ProductCombinationFilters extends Filters
         $this->filterId = static::generateFilterId($this->productId);
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
@@ -87,13 +85,8 @@ class ProductCombinationFilters extends Filters
         ];
     }
 
-    /**
-     * @param int $productId
-     *
-     * @return string
-     */
     public static function generateFilterId(int $productId): string
     {
-        return static::FILTER_PREFIX . $productId;
+        return static::FILTER_PREFIX.$productId;
     }
 }

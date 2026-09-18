@@ -52,7 +52,7 @@
                         <div class="col-md-6">
                             <div class="d-flex gap-3 align-items-start">
                                 <div class="flex-shrink-0">
-                                    <span class="badge bg-danger-subtle text-danger rounded-circle p-2">
+                                    <span class="badge bg-info-subtle text-info rounded-circle p-2">
                                         <i class="fas fa-user-slash"></i>
                                     </span>
                                 </div>
@@ -101,7 +101,7 @@
                 <div class="card-body">
                     <a href="{{ route('manager.helpdesk.customers.index') }}"
                        class="btn btn-primary w-100 mb-2">
-                        <i class="fas fa-users me-1"></i> Ver clientes
+                        Ver clientes
                     </a>
                     <p class="text-muted small mb-0">
                         Desde el perfil de cada cliente encontrarás el panel GDPR con las
@@ -121,7 +121,7 @@
                             <strong>Solicitudes de acceso:</strong> máximo 30 días naturales.
                         </li>
                         <li class="mb-2">
-                            <i class="fas fa-clock text-danger me-1"></i>
+                            <i class="fas fa-clock text-dark me-1"></i>
                             <strong>Eliminación:</strong> máximo 30 días desde la solicitud.
                         </li>
                         <li>

@@ -101,10 +101,54 @@ class HelpCenterArticle extends Model implements HasMedia
         return $this->translations->firstWhere('locale', $locale);
     }
 
-    /** @param Builder<HelpCenterArticle> $query */
+    /**
+     * Same as translation() but never returns a draft translation. Callers
+     * serving the public site must use this one: an unpublished translation
+     * is not meant to be reachable by anonymous visitors even when the base
+     * article is published — falling back to the base article's content is
+     * the caller's responsibility (`$translation?->body ?? $article->body`).
+     */
+    public function translationPublished(string $locale): ?HelpCenterArticleTranslation
+    {
+        return $this->translations->first(
+            fn (HelpCenterArticleTranslation $t) => $t->locale === $locale && $t->is_published
+        );
+    }
+
+    /**
+     * Single source of truth for "is this article visible on the public
+     * help center / widget / sitemap". Both flags are legacy-compatible:
+     * `is_published` is the canonical toggle, `active` is an older one kept
+     * for backwards compatibility — some call sites only checked one of the
+     * two, letting an article published-but-inactive (or vice versa) leak
+     * through in some places but not others.
+     *
+     * @param  Builder<HelpCenterArticle>  $query
+     */
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('is_published', true);
+        return $query->where('is_published', true)->where('active', true);
+    }
+
+    /**
+     * Excludes articles belonging to a category restricted via
+     * `visible_to_role` unless $user holds that role. Passing null (the
+     * anonymous/guest case, and the shared, non-per-user widget cache)
+     * excludes every role-restricted article.
+     *
+     * @param  Builder<HelpCenterArticle>  $query
+     */
+    public function scopeVisibleToRole(Builder $query, ?User $user = null): Builder
+    {
+        $roles = $user?->getRoleNames()->all() ?? [];
+
+        return $query->where(function (Builder $q) use ($roles) {
+            $q->whereDoesntHave('categories', fn (Builder $c) => $c->whereNotNull('visible_to_role'));
+
+            if ($roles !== []) {
+                $q->orWhereHas('categories', fn (Builder $c) => $c->whereIn('visible_to_role', $roles));
+            }
+        });
     }
 
     /** @param Builder<HelpCenterArticle> $query */

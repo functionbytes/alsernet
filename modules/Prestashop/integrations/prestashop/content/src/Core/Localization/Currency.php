@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -113,14 +114,14 @@ class Currency implements CurrencyInterface
     protected $patterns;
 
     /**
-     * @param bool $isActive Is this currency active ?
-     * @param float $conversionRate Conversion rate of this currency against the default shop's currency
-     * @param string $isoCode Currency's alphabetic ISO code (ISO 4217)
-     * @param int $numericIsoCode Currency's numeric ISO code (ISO 4217)
-     * @param string[] $symbols Currency's symbols, by locale code
-     * @param int $precision Number of decimal digits to use with this currency
-     * @param string[] $names the currency's name, by locale code
-     * @param string[] $patterns the currency's pattern, by locale code
+     * @param  bool  $isActive  Is this currency active ?
+     * @param  float  $conversionRate  Conversion rate of this currency against the default shop's currency
+     * @param  string  $isoCode  Currency's alphabetic ISO code (ISO 4217)
+     * @param  int  $numericIsoCode  Currency's numeric ISO code (ISO 4217)
+     * @param  string[]  $symbols  Currency's symbols, by locale code
+     * @param  int  $precision  Number of decimal digits to use with this currency
+     * @param  string[]  $names  the currency's name, by locale code
+     * @param  string[]  $patterns  the currency's pattern, by locale code
      */
     public function __construct(
         $isActive,
@@ -181,8 +182,8 @@ class Currency implements CurrencyInterface
      */
     public function getSymbol($localeCode)
     {
-        if (!isset($this->symbols[$localeCode])) {
-            throw new LocalizationException('Unknown locale code: ' . $localeCode);
+        if (! isset($this->symbols[$localeCode])) {
+            throw new LocalizationException('Unknown locale code: '.$localeCode);
         }
 
         return $this->symbols[$localeCode];
@@ -203,16 +204,15 @@ class Currency implements CurrencyInterface
      */
     public function getName($localeCode)
     {
-        if (!isset($this->names[$localeCode])) {
-            throw new LocalizationException('Unknown locale code: ' . $localeCode);
+        if (! isset($this->names[$localeCode])) {
+            throw new LocalizationException('Unknown locale code: '.$localeCode);
         }
 
         return $this->names[$localeCode];
     }
 
     /**
-     * @param string $localeCode
-     *
+     * @param  string  $localeCode
      * @return string
      */
     public function getPattern($localeCode)

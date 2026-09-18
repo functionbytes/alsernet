@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,10 +88,8 @@ class CoreCatalogueLayersProvider implements CatalogueLayersProviderInterface
     private $translationDomains;
 
     /**
-     * @param DatabaseTranslationLoader $databaseTranslationLoader
-     * @param string $resourceDirectory
-     * @param array<int, string> $filenameFilters
-     * @param array<int, string> $translationDomains
+     * @param  array<int, string>  $filenameFilters
+     * @param  array<int, string>  $translationDomains
      */
     public function __construct(
         DatabaseTranslationLoader $databaseTranslationLoader,
@@ -131,15 +130,13 @@ class CoreCatalogueLayersProvider implements CatalogueLayersProviderInterface
     }
 
     /**
-     * @return DefaultCatalogueFinder
-     *
      * @throws TranslationFilesNotFoundException
      */
     private function getDefaultCatalogueFinder(): DefaultCatalogueFinder
     {
-        if (null === $this->defaultCatalogueFinder) {
+        if ($this->defaultCatalogueFinder === null) {
             $this->defaultCatalogueFinder = new DefaultCatalogueFinder(
-                $this->resourceDirectory . DIRECTORY_SEPARATOR . 'default',
+                $this->resourceDirectory.DIRECTORY_SEPARATOR.'default',
                 $this->filenameFilters
             );
         }
@@ -148,13 +145,11 @@ class CoreCatalogueLayersProvider implements CatalogueLayersProviderInterface
     }
 
     /**
-     * @return FileTranslatedCatalogueFinder
-     *
      * @throws TranslationFilesNotFoundException
      */
     private function getFileTranslatedCatalogueFinder(): FileTranslatedCatalogueFinder
     {
-        if (null === $this->fileTranslatedCatalogueFinder) {
+        if ($this->fileTranslatedCatalogueFinder === null) {
             $this->fileTranslatedCatalogueFinder = new FileTranslatedCatalogueFinder(
                 $this->resourceDirectory,
                 $this->filenameFilters
@@ -164,12 +159,9 @@ class CoreCatalogueLayersProvider implements CatalogueLayersProviderInterface
         return $this->fileTranslatedCatalogueFinder;
     }
 
-    /**
-     * @return UserTranslatedCatalogueFinder
-     */
     private function getUserTranslatedCatalogueFinder(): UserTranslatedCatalogueFinder
     {
-        if (null === $this->userTranslatedCatalogueFinder) {
+        if ($this->userTranslatedCatalogueFinder === null) {
             $this->userTranslatedCatalogueFinder = new UserTranslatedCatalogueFinder(
                 $this->databaseTranslationLoader,
                 $this->translationDomains

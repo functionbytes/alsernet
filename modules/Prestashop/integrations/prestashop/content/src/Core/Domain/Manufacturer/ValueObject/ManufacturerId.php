@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class ManufacturerId implements ManufacturerIdInterface
     protected $id;
 
     /**
-     * @param int $id
+     * @param  int  $id
      *
      * @throws ManufacturerConstraintException
      */
@@ -60,13 +61,13 @@ class ManufacturerId implements ManufacturerIdInterface
     /**
      * Validates that the value is integer and is greater than zero
      *
-     * @param int $value
+     * @param  int  $value
      *
      * @throws ManufacturerConstraintException
      */
     private function assertIsIntegerGreaterThanZero($value)
     {
-        if (!is_int($value) || 0 >= $value) {
+        if (! is_int($value) || $value <= 0) {
             throw new ManufacturerConstraintException(
                 sprintf('Invalid manufacturer id "%s".', var_export($value, true)),
                 ManufacturerConstraintException::INVALID_ID

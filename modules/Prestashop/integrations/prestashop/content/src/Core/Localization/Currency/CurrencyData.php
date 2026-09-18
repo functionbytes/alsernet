@@ -158,7 +158,7 @@ class CurrencyData
     }
 
     /**
-     * @param bool $isActive
+     * @param  bool  $isActive
      */
     public function setIsActive($isActive)
     {
@@ -174,7 +174,7 @@ class CurrencyData
     }
 
     /**
-     * @param float $conversionRate
+     * @param  float  $conversionRate
      */
     public function setConversionRate($conversionRate)
     {
@@ -190,7 +190,7 @@ class CurrencyData
     }
 
     /**
-     * @param string $isoCode
+     * @param  string  $isoCode
      */
     public function setIsoCode($isoCode)
     {
@@ -206,7 +206,7 @@ class CurrencyData
     }
 
     /**
-     * @param string $numericIsoCode
+     * @param  string  $numericIsoCode
      */
     public function setNumericIsoCode($numericIsoCode)
     {
@@ -222,7 +222,7 @@ class CurrencyData
     }
 
     /**
-     * @param string[] $symbols
+     * @param  string[]  $symbols
      */
     public function setSymbols($symbols)
     {
@@ -238,7 +238,7 @@ class CurrencyData
     }
 
     /**
-     * @param int $precision
+     * @param  int  $precision
      */
     public function setPrecision($precision)
     {
@@ -254,7 +254,7 @@ class CurrencyData
     }
 
     /**
-     * @param string[] $names
+     * @param  string[]  $names
      */
     public function setNames($names)
     {
@@ -274,7 +274,7 @@ class CurrencyData
     /**
      * Currency patterns, indexed by locale code
      *
-     * @param string[] $patterns
+     * @param  string[]  $patterns
      */
     public function setPatterns(array $patterns)
     {

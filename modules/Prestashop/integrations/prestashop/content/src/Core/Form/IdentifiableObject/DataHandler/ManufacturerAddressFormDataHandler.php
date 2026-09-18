@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class ManufacturerAddressFormDataHandler implements FormDataHandlerInterfa
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -89,50 +87,48 @@ final class ManufacturerAddressFormDataHandler implements FormDataHandlerInterfa
     /**
      * Fills EditManufacturerAddressCommand with form data
      *
-     * @param EditManufacturerAddressCommand $command
-     * @param array $data
      *
      * @throws AddressConstraintException
      */
     private function fillCommandWithData(EditManufacturerAddressCommand $command, array $data)
     {
-        if (null !== $data['id_manufacturer']) {
+        if ($data['id_manufacturer'] !== null) {
             $command->setManufacturerId($data['id_manufacturer']);
         }
-        if (null !== $data['last_name']) {
+        if ($data['last_name'] !== null) {
             $command->setLastName($data['last_name']);
         }
-        if (null !== $data['first_name']) {
+        if ($data['first_name'] !== null) {
             $command->setFirstName($data['first_name']);
         }
-        if (null !== $data['address']) {
+        if ($data['address'] !== null) {
             $command->setAddress($data['address']);
         }
-        if (null !== $data['id_country']) {
+        if ($data['id_country'] !== null) {
             $command->setCountryId($data['id_country']);
         }
-        if (null !== $data['city']) {
+        if ($data['city'] !== null) {
             $command->setCity($data['city']);
         }
-        if (null !== $data['address2']) {
+        if ($data['address2'] !== null) {
             $command->setAddress2($data['address2']);
         }
-        if (null !== $data['post_code']) {
+        if ($data['post_code'] !== null) {
             $command->setPostCode($data['post_code']);
         }
-        if (null !== $data['id_state']) {
+        if ($data['id_state'] !== null) {
             $command->setStateId($data['id_state']);
         }
-        if (null !== $data['home_phone']) {
+        if ($data['home_phone'] !== null) {
             $command->setHomePhone($data['home_phone']);
         }
-        if (null !== $data['mobile_phone']) {
+        if ($data['mobile_phone'] !== null) {
             $command->setMobilePhone($data['mobile_phone']);
         }
-        if (null !== $data['other']) {
+        if ($data['other'] !== null) {
             $command->setOther($data['other']);
         }
-        if (null !== $data['dni']) {
+        if ($data['dni'] !== null) {
             $command->setDni($data['dni']);
         }
     }

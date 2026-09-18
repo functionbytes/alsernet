@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,19 +28,20 @@
 namespace PrestaShop\PrestaShop\Core;
 
 use PrestaShop\PrestaShop\Core\Foundation\IoC\Container;
+use PrestaShop\PrestaShop\Core\Foundation\IoC\Exception;
 
 class ContainerBuilder
 {
     /**
      * Construct PrestaShop Core Service container.
      *
-     * @return \PrestaShop\PrestaShop\Core\Foundation\IoC\Container
+     * @return Container
      *
-     * @throws \PrestaShop\PrestaShop\Core\Foundation\IoC\Exception
+     * @throws Exception
      */
     public function build()
     {
-        $container = new Container();
+        $container = new Container;
 
         $container->bind('\\PrestaShop\\PrestaShop\\Core\\ConfigurationInterface', '\\PrestaShop\\PrestaShop\\Adapter\\Configuration', true);
         $container->bind('PrestaShop\\PrestaShop\\Core\\ConfigurationInterface', '\\PrestaShop\\PrestaShop\\Adapter\\Configuration', true);

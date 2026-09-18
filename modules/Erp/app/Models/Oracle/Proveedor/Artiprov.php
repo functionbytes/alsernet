@@ -5,7 +5,9 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierProviderProduct;
 
 /**
  * Modelo para la tabla ARTIPROV
@@ -71,7 +73,7 @@ class Artiprov extends Model
      */
     public function artiprov()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Artiprov::class, 'idartiprov', 'idartiprov');
+        return $this->belongsTo(Artiprov::class, 'idartiprov', 'idartiprov');
     }
 
     /**
@@ -80,7 +82,7 @@ class Artiprov extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -89,7 +91,7 @@ class Artiprov extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -97,6 +99,6 @@ class Artiprov extends Model
      */
     public function supplierProviderProducts(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierProviderProduct::class, 'erp_artiprov_id', 'idartiprov');
+        return $this->hasMany(SupplierProviderProduct::class, 'erp_artiprov_id', 'idartiprov');
     }
 }

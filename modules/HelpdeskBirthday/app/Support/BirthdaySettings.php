@@ -32,20 +32,17 @@ class BirthdaySettings
             'throttle_per_hour' => $this->int('throttle_per_hour', (int) config('helpdeskbirthday.throttle_per_hour', 600)),
             'max_recipients' => $this->int('max_recipients', (int) config('helpdeskbirthday.max_recipients', 2000)),
             'leap_day_policy' => $this->string('leap_day_policy', (string) config('helpdeskbirthday.leap_day_policy', 'feb28')),
+
+            // De dónde salen los cumpleañeros: la API de clientes de este panel
+            // ('api', ~3 s) o la de Gestión ('gestion', ~16 s y 880 KB de XML).
+            'audience_source' => $this->string('audience_source', (string) config('helpdeskbirthday.audience_source', 'api')),
             'template_key' => $this->string('template_key', (string) config('helpdeskbirthday.template_key', 'birthday-coupon')),
 
-            // Tipo de bono en Gestión (IDTBONO_PROMOCION): dice QUÉ bono se
-            // emite —importe, validez y compra mínima salen de él— y sin este
-            // valor no se puede generar uno por cliente.
+            // Tipo de bono en Gestión (IDTBONO_PROMOCION): es lo ÚNICO que
+            // define el regalo. Importe, validez y compra mínima salen de él
+            // —los decide Gestión al emitir el bono de cada cliente— y por eso
+            // no hay aquí ningún campo para escribirlos a mano.
             'bono_type_id' => (int) $this->string('bono_type_id', (string) config('helpdeskbirthday.coupon.bono_type_id', 0)),
-
-            'coupon_code' => $this->string('coupon_code', (string) config('helpdeskbirthday.coupon.code', '')),
-            'coupon_verification_code' => $this->string('coupon_verification_code', (string) config('helpdeskbirthday.coupon.verification_code', '')),
-            'coupon_valid_from' => $this->string('coupon_valid_from', ''),
-            'coupon_valid_to' => $this->string('coupon_valid_to', ''),
-            'coupon_amount' => $this->string('coupon_amount', ''),
-            'coupon_min_purchase' => $this->string('coupon_min_purchase', ''),
-            'validate_against_erp' => $this->bool('validate_against_erp', (bool) config('helpdeskbirthday.coupon.validate_against_erp', true)),
 
             'commercial_optin' => $this->bool('commercial_optin', (bool) config('helpdeskbirthday.exclusions.commercial_optin', true)),
             'lopd_accepted' => $this->bool('lopd_accepted', (bool) config('helpdeskbirthday.exclusions.lopd_accepted', false)),

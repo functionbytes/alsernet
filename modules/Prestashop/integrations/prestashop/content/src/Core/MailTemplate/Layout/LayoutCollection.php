@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,7 +59,7 @@ class LayoutCollection extends AbstractTypedCollection implements LayoutCollecti
      */
     public function replace(LayoutInterface $oldLayout, LayoutInterface $newLayout)
     {
-        if (!$this->contains($oldLayout)) {
+        if (! $this->contains($oldLayout)) {
             return false;
         }
 

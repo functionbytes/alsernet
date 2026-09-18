@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,10 +82,8 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     private $shopAssociation;
 
     /**
-     * @param array $localisedName
-     * @param array $localisedFriendlyUrl
-     * @param int $parentId
-     * @param bool $isDisplayed
+     * @param  int  $parentId
+     * @param  bool  $isDisplayed
      *
      * @throws CmsPageCategoryException
      */
@@ -143,8 +142,7 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedDescription
-     *
+     * @param  string[]  $localisedDescription
      * @return self
      */
     public function setLocalisedDescription(array $localisedDescription)
@@ -163,8 +161,7 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaTitle
-     *
+     * @param  string[]  $localisedMetaTitle
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -186,8 +183,7 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaDescription
-     *
+     * @param  string[]  $localisedMetaDescription
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -209,8 +205,7 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaKeywords
-     *
+     * @param  string[]  $localisedMetaKeywords
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -232,8 +227,7 @@ class AddCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param int[] $shopAssociation
-     *
+     * @param  int[]  $shopAssociation
      * @return self
      */
     public function setShopAssociation(array $shopAssociation)

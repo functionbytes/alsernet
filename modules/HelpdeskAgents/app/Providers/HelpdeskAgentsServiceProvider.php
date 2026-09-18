@@ -2,12 +2,15 @@
 
 namespace Modules\HelpdeskAgents\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\HelpdeskAgents\Console\Commands\AdvanceOncallRotations;
 use Modules\HelpdeskAgents\Console\Commands\AiUsageReportCommand;
+use Modules\HelpdeskAgents\Console\Commands\EncryptAiAgentApiKeys;
 use Modules\HelpdeskAgents\Listeners\QueueTicketAiOnTicketCreated;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnAssigned;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnEscalation;
@@ -84,8 +87,14 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 AiUsageReportCommand::class,
+                AdvanceOncallRotations::class,
+                EncryptAiAgentApiKeys::class,
             ]);
         }
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('helpdesk:agents:advance-oncall')->hourly();
+        });
     }
 
     public function provides(): array
@@ -201,22 +210,20 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
             return;
         }
 
-        NavService::registerSidebar('helpdesk', [
-            'title' => 'Agentes IA',
-            'items' => [
-                [
-                    'label' => 'AI Agents',
-                    'route' => 'helpdesk.ai.flows.index',
-                    'icon' => 'fas fa-robot',
-                    'permission' => 'helpdesk.aiagents.view',
-                ],
-            ],
-        ]);
-
+        // "AI Agents" (constructor de flujos, con sus pestañas de
+        // herramientas/conocimiento/ajustes/etiquetas) se movió por completo
+        // a Ajustes: es trabajo de configuración del bot, no una bandeja
+        // operativa del día a día — ya no tiene sección propia aquí.
         NavService::registerSidebar('settings', [
-            'title' => 'Agentes',
+            'title' => 'Helpdesk · Agentes',
+            'order' => 290,
             'items' => [
                 ['label' => 'Turnos y guardias', 'route' => 'settings.helpdesk.schedule.index', 'permission' => 'helpdesk.schedule.view'],
+                ['label' => 'AI Agents', 'route' => 'helpdesk.ai.flows.index', 'permission' => 'helpdesk.aiagents.view'],
+                // No vivía en ningún menú (solo accesible navegando dentro de
+                // la propia sección de AI Agents); ahora es descubrible desde
+                // Ajustes, igual que el resto de configuración del módulo.
+                ['label' => 'Configuración de IA', 'route' => 'helpdesk.ai.settings', 'permission' => 'helpdesk.aiagents.view'],
             ],
         ]);
     }

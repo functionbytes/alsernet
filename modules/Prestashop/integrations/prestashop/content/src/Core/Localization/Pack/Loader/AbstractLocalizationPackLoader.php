@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,7 @@ abstract class AbstractLocalizationPackLoader implements LocalizationPackLoaderI
     /**
      * Loads XML from local or remote file.
      *
-     * @param string $file
-     *
+     * @param  string  $file
      * @return SimpleXMLElement|null
      */
     protected function loadXml($file)
@@ -49,6 +49,6 @@ abstract class AbstractLocalizationPackLoader implements LocalizationPackLoaderI
             return null;
         }
 
-        return false === $xml ? null : $xml;
+        return $xml === false ? null : $xml;
     }
 }

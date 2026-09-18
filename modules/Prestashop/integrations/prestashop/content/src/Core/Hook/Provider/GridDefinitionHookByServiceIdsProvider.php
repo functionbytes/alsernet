@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,10 +40,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class GridDefinitionHookByServiceIdsProvider implements HookByServiceIdsProviderInterface
 {
     public const HOOK_PREFIX = 'action';
+
     public const GRID_DEFINITION_HOOK_SUFFIX = 'GridDefinitionModifier';
+
     public const GRID_QUERY_BUILDER_HOOK_SUFFIX = 'GridQueryBuilderModifier';
+
     public const GRID_DATA_HOOK_SUFFIX = 'GridDataModifier';
+
     public const GRID_FILTER_FORM_SUFFIX = 'GridFilterFormModifier';
+
     public const GRID_PRESENTER_SUFFIX = 'GridPresenterModifier';
 
     /**
@@ -50,9 +56,6 @@ final class GridDefinitionHookByServiceIdsProvider implements HookByServiceIdsPr
      */
     private $container;
 
-    /**
-     * @param ContainerInterface $container
-     */
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
@@ -116,7 +119,6 @@ final class GridDefinitionHookByServiceIdsProvider implements HookByServiceIdsPr
     /**
      * Gets grid definition ids which are used in a grid hook formation.
      *
-     * @param array $gridDefinitionServiceIds
      *
      * @return Generator
      */
@@ -125,7 +127,7 @@ final class GridDefinitionHookByServiceIdsProvider implements HookByServiceIdsPr
         foreach ($gridDefinitionServiceIds as $serviceId) {
             try {
                 $service = $this->container->get($serviceId);
-                if (!$service instanceof GridDefinitionFactoryInterface) {
+                if (! $service instanceof GridDefinitionFactoryInterface) {
                     continue;
                 }
                 $definition = $service->getDefinition();
@@ -141,14 +143,13 @@ final class GridDefinitionHookByServiceIdsProvider implements HookByServiceIdsPr
     /**
      * Formats hook names.
      *
-     * @param string $hookStartsWith
-     * @param string $hookId
-     * @param string $hookEndsWidth
-     *
+     * @param  string  $hookStartsWith
+     * @param  string  $hookId
+     * @param  string  $hookEndsWidth
      * @return string
      */
     private function formatHookName($hookStartsWith, $hookId, $hookEndsWidth)
     {
-        return $hookStartsWith . $hookId . $hookEndsWidth;
+        return $hookStartsWith.$hookId.$hookEndsWidth;
     }
 }

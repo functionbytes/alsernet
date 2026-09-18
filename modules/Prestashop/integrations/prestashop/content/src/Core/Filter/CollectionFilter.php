@@ -40,8 +40,7 @@ class CollectionFilter implements FilterInterface
     /**
      * Sets process queue.
      *
-     * @param FilterInterface[] $filters
-     *
+     * @param  FilterInterface[]  $filters
      * @return $this
      *
      * @throws FilterException
@@ -49,7 +48,7 @@ class CollectionFilter implements FilterInterface
     public function queue(array $filters)
     {
         foreach ($filters as $filter) {
-            if (!$filter instanceof FilterInterface) {
+            if (! $filter instanceof FilterInterface) {
                 throw new FilterException(sprintf('The provided filter is not valid filter: "%s"', print_r($filter, true)));
             }
         }
@@ -72,15 +71,14 @@ class CollectionFilter implements FilterInterface
     /**
      * Filters the provided subject.
      *
-     * @param array $subject Collection to filter
-     *
+     * @param  array  $subject  Collection to filter
      * @return array
      *
      * @throws FilterException
      */
     public function filter($subject)
     {
-        if (!is_array($subject)) {
+        if (! is_array($subject)) {
             throw new FilterException(sprintf('Invalid subject: %s', print_r($subject, true)));
         }
 

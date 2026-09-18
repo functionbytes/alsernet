@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,12 +57,11 @@ final class ProductCsvExporter implements ProductExporterInterface
     /**
      * In this specific case, we don't need to pass a inventaries list.
      *
-     * @param array $products
      *
      * @return CsvResponse
      *
      * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\Translation\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function export(array $products = [])
     {
@@ -88,20 +88,19 @@ final class ProductCsvExporter implements ProductExporterInterface
             'position' => $this->trans('Position', 'Admin.Global'),
         ];
 
-        return (new CsvResponse())
+        return (new CsvResponse)
             ->setData($dataCallback)
             ->setHeadersData($headersData)
             ->setModeType(CsvResponse::MODE_OFFSET)
             ->setLimit(5000)
-            ->setFileName('product_' . date('Y-m-d_His') . '.csv');
+            ->setFileName('product_'.date('Y-m-d_His').'.csv');
     }
 
     /**
      * Translator helper.
      *
-     * @param string $key
-     * @param string $domain
-     *
+     * @param  string  $key
+     * @param  string  $domain
      * @return string
      *
      * @throws InvalidArgumentException

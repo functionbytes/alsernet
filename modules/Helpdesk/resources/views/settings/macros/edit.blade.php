@@ -28,7 +28,7 @@
 
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-save"></i> Guardar cambios
+                            Guardar cambios
                         </button>
                         <a href="{{ route('settings.helpdesk.macros.index') }}" class="btn btn-light w-100">
                             Cancelar

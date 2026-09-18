@@ -1,4 +1,5 @@
 <?php
+
 class AlsernetImagenesController extends ModuleAdminController
 {
     public function __construct()
@@ -14,9 +15,8 @@ class AlsernetImagenesController extends ModuleAdminController
         $this->setTemplate('admin.tpl');
 
         // Incluimos el JS del admin
-        $this->context->controller->addJS($this->module->getPathUri().'views/js/admin.js?v='.date("ymdhis"));
+        $this->context->controller->addJS($this->module->getPathUri().'views/js/admin.js?v='.date('ymdhis'));
 
         parent::initContent();
     }
-
 }

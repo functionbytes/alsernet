@@ -66,6 +66,29 @@ final class PrestashopCatalogDriver implements CatalogDriver
         }
     }
 
+    public function findMany(array $ids): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === []) {
+            return [];
+        }
+
+        try {
+            $rows = $this->baseQuery()->whereIn('ps.id_product', $ids)->get();
+
+            $found = [];
+            foreach ($this->mapRows($rows) as $product) {
+                $found[$product->id] = $product;
+            }
+
+            return $found;
+        } catch (\Throwable $e) {
+            Log::warning('PrestashopCatalogDriver findMany failed', ['error' => $e->getMessage()]);
+
+            return [];
+        }
+    }
+
     public function related(string $id, int $limit = 4): array
     {
         try {

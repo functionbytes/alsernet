@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,14 +27,16 @@
 class PdfOrderSlipControllerCore extends FrontController
 {
     public $php_self = 'pdf-order-slip';
+
     protected $display_header = false;
+
     protected $display_footer = false;
 
     protected $order_slip;
 
     public function postProcess()
     {
-        if (!$this->context->customer->isLogged()) {
+        if (! $this->context->customer->isLogged()) {
             Tools::redirect('index.php?controller=authentication&back=order-follow');
         }
 
@@ -41,10 +44,10 @@ class PdfOrderSlipControllerCore extends FrontController
             $this->order_slip = new OrderSlip($_GET['id_order_slip']);
         }
 
-        if (!isset($this->order_slip) || !Validate::isLoadedObject($this->order_slip)) {
-            die($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
+        if (! isset($this->order_slip) || ! Validate::isLoadedObject($this->order_slip)) {
+            exit($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
         } elseif ($this->order_slip->id_customer != $this->context->customer->id) {
-            die($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
+            exit($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
         }
     }
 

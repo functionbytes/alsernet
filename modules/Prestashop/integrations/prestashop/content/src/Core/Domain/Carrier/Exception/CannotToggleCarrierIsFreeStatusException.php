@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Carrier\Exception;
 /**
  * Thrown when unable to toggle carrier is-free status
  */
-class CannotToggleCarrierIsFreeStatusException extends CarrierException
-{
-}
+class CannotToggleCarrierIsFreeStatusException extends CarrierException {}

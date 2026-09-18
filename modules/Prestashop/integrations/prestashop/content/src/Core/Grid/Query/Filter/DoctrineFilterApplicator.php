@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class DoctrineFilterApplicator implements DoctrineFilterApplicatorInterfac
             $sqlField = $filter['sql_field'];
             $filterName = $filter['filter_name'];
 
-            if (!isset($filterValues[$filterName])) {
+            if (! isset($filterValues[$filterName])) {
                 continue;
             }
 
@@ -57,12 +58,12 @@ final class DoctrineFilterApplicator implements DoctrineFilterApplicatorInterfac
                     break;
                 case SqlFilters::WHERE_LIKE:
                     $qb->andWhere("$sqlField LIKE :$filterName");
-                    $qb->setParameter($filterName, '%' . $value . '%');
+                    $qb->setParameter($filterName, '%'.$value.'%');
 
                     break;
                 case SqlFilters::HAVING_LIKE:
                     $qb->andHaving("$sqlField LIKE :$filterName");
-                    $qb->setParameter($filterName, '%' . $value . '%');
+                    $qb->setParameter($filterName, '%'.$value.'%');
 
                     break;
                 case SqlFilters::WHERE_DATE:

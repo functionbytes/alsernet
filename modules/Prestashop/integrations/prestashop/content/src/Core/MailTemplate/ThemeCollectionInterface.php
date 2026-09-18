@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,28 +32,26 @@ namespace PrestaShop\PrestaShop\Core\MailTemplate;
  * generate mail templates. modules can add/remove their own through the hook:
  *  ThemeCatalogInterface::LIST_MAIL_THEMES_HOOK = actionListMailThemes
  */
-interface ThemeCollectionInterface extends \IteratorAggregate, \Countable
+interface ThemeCollectionInterface extends \Countable, \IteratorAggregate
 {
     /**
-     * @param ThemeInterface $theme
-     *
+     * @param  ThemeInterface  $theme
      * @return bool
      */
     public function contains($theme);
 
     /**
-     * @param ThemeInterface $theme
+     * @param  ThemeInterface  $theme
      */
     public function add($theme);
 
     /**
-     * @param ThemeInterface $theme
+     * @param  ThemeInterface  $theme
      */
     public function remove($theme);
 
     /**
-     * @param string $themeName
-     *
+     * @param  string  $themeName
      * @return ThemeInterface|null
      */
     public function getByName($themeName);

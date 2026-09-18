@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -104,8 +105,7 @@ class ModuleSelfConfigurator
     /**
      * Alias for $module setter.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return $this
      */
     public function module($name)
@@ -116,15 +116,14 @@ class ModuleSelfConfigurator
     /**
      * Set the module to be updated with its name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return $this
      *
      * @throws UnexpectedTypeException
      */
     public function setModule($name)
     {
-        if (!is_string($name)) {
+        if (! is_string($name)) {
             throw new UnexpectedTypeException($name, 'string');
         }
         $this->module = $name;
@@ -147,14 +146,14 @@ class ModuleSelfConfigurator
         }
 
         // If we do not know in which module to search, we cannot go further
-        if (!$this->module) {
+        if (! $this->module) {
             return null;
         }
 
         // Find and store the first config file we find
         $files = Finder::create()
             ->files()
-            ->in(_PS_MODULE_DIR_ . $this->module)
+            ->in(_PS_MODULE_DIR_.$this->module)
             ->name($this->defaultConfigFile);
 
         foreach ($files as $file) {
@@ -169,8 +168,7 @@ class ModuleSelfConfigurator
     /**
      *  Alias for config file setter.
      *
-     * @param string $filepath
-     *
+     * @param  string  $filepath
      * @return $this
      */
     public function file($filepath)
@@ -181,15 +179,14 @@ class ModuleSelfConfigurator
     /**
      * Set the config file to parse.
      *
-     * @param string $filepath
-     *
+     * @param  string  $filepath
      * @return $this
      *
      * @throws UnexpectedTypeException
      */
     public function setFile($filepath)
     {
-        if (!is_string($filepath)) {
+        if (! is_string($filepath)) {
             throw new UnexpectedTypeException($filepath, 'string');
         }
 
@@ -220,7 +217,7 @@ class ModuleSelfConfigurator
 
         if ($file === null) {
             $errors[] = 'No config file to apply';
-        } elseif (!file_exists($file)) {
+        } elseif (! file_exists($file)) {
             $errors[] = 'Specified config file is not found';
         } else {
             try {
@@ -234,7 +231,7 @@ class ModuleSelfConfigurator
             }
         }
 
-        if (!$this->module || !$this->moduleRepository->getModule($this->module)->hasValidInstance()) {
+        if (! $this->module || ! $this->moduleRepository->getModule($this->module)->hasValidInstance()) {
             $errors[] = 'The module specified is invalid';
         }
 
@@ -267,15 +264,14 @@ class ModuleSelfConfigurator
      * Helper function which adds the relative path from the YML config file.
      * Do not alter URLs.
      *
-     * @param string $file
-     *
+     * @param  string  $file
      * @return string
      */
     protected function convertRelativeToAbsolutePaths($file)
     {
         // If we do not deal with any kind of URL, add the path to the YML config file
-        if (!filter_var($file, FILTER_VALIDATE_URL)) {
-            $file = dirname($this->getFile()) . '/' . $file;
+        if (! filter_var($file, FILTER_VALIDATE_URL)) {
+            $file = dirname($this->getFile()).'/'.$file;
         }
 
         return $file;
@@ -285,8 +281,7 @@ class ModuleSelfConfigurator
      * Finds and returns filepath from a config key in the YML config file.
      * Can be a string of a value of "file" key.
      *
-     * @param array|string $data
-     *
+     * @param  array|string  $data
      * @return string
      *
      * @throws Exception if file data not provided
@@ -295,7 +290,7 @@ class ModuleSelfConfigurator
     {
         if (is_scalar($data)) {
             $file = $data;
-        } elseif (is_array($data) && !empty($data['file'])) {
+        } elseif (is_array($data) && ! empty($data['file'])) {
             $file = $data['file'];
         } else {
             throw new Exception('Missing file path');
@@ -307,8 +302,7 @@ class ModuleSelfConfigurator
     /**
      * Require a PHP file and instanciate the class of the same name in it.
      *
-     * @param string $file
-     *
+     * @param  string  $file
      * @return object
      */
     protected function loadPhpFile($file)
@@ -319,14 +313,13 @@ class ModuleSelfConfigurator
         // Load class of same name as the file
         $className = pathinfo($file, PATHINFO_FILENAME);
 
-        return new $className();
+        return new $className;
     }
 
     /**
      * Parse and return the YML content.
      *
-     * @param string $file
-     *
+     * @param  string  $file
      * @return array
      */
     protected function loadYmlFile($file)
@@ -342,7 +335,7 @@ class ModuleSelfConfigurator
     /**
      * Run configuration for "configuration" step.
      *
-     * @param array $config
+     * @param  array  $config
      */
     protected function runConfigurationStep($config)
     {
@@ -362,7 +355,7 @@ class ModuleSelfConfigurator
     /**
      * Run configuration for "file" step.
      *
-     * @param array $config
+     * @param  array  $config
      */
     protected function runFilesStep($config)
     {
@@ -393,7 +386,7 @@ class ModuleSelfConfigurator
     /**
      * Run configuration for "php" step.
      *
-     * @param array $config
+     * @param  array  $config
      */
     protected function runPhpStep($config)
     {
@@ -405,7 +398,7 @@ class ModuleSelfConfigurator
             $file = $this->extractFilePath($data);
 
             $module = $this->moduleRepository->getModule($this->module);
-            $params = !empty($data['params']) ? $data['params'] : [];
+            $params = ! empty($data['params']) ? $data['params'] : [];
 
             $this->loadPhpFile($file)->run($module, $params);
         }
@@ -414,7 +407,7 @@ class ModuleSelfConfigurator
     /**
      * Run configuration for "sql" step.
      *
-     * @param array $config
+     * @param  array  $config
      */
     protected function runSqlStep($config)
     {
@@ -440,7 +433,7 @@ class ModuleSelfConfigurator
     /**
      * Subtask of Sql step. Get and prepare all SQL requests from a file.
      *
-     * @param array $data
+     * @param  array  $data
      */
     protected function runSqlFile($data)
     {
@@ -473,7 +466,7 @@ class ModuleSelfConfigurator
     /**
      * Subtask of configuration step, for all configuration key to update.
      *
-     * @param array $config
+     * @param  array  $config
      *
      * @throws Exception
      */
@@ -495,7 +488,7 @@ class ModuleSelfConfigurator
     /**
      * Subtask of configuration step, for all configuration keys to delete.
      *
-     * @param array $config
+     * @param  array  $config
      */
     protected function runConfigurationDelete($config)
     {

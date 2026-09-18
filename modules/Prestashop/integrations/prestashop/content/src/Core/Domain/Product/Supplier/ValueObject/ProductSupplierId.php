@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,31 +41,23 @@ class ProductSupplierId
      */
     private $value;
 
-    /**
-     * @param int $value
-     */
     public function __construct(int $value)
     {
         $this->assertValueIsGreaterThanZero($value);
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $value
-     *
      * @throws ProductSupplierConstraintException
      */
     private function assertValueIsGreaterThanZero(int $value): void
     {
-        if (0 >= $value) {
+        if ($value <= 0) {
             throw new ProductSupplierConstraintException(
                 sprintf('Invalid product supplier id %d', $value),
                 ProductSupplierConstraintException::INVALID_ID

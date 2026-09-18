@@ -37,6 +37,7 @@ namespace PrestaShop\PrestaShop\Core\Translation\Builder\Map;
 class Catalogue
 {
     public const METADATA_KEY_NAME = '__metadata';
+
     public const EMPTY_META = [
         'count' => 0,
         'missing_langs' => 0,
@@ -47,14 +48,9 @@ class Catalogue
      */
     private $domains = [];
 
-    /**
-     * @param Domain $domain
-     *
-     * @return Catalogue
-     */
     public function addDomain(Domain $domain): self
     {
-        if (!array_key_exists($domain->getDomainName(), $this->domains)) {
+        if (! array_key_exists($domain->getDomainName(), $this->domains)) {
             $this->domains[$domain->getDomainName()] = $domain;
         }
 
@@ -63,9 +59,6 @@ class Catalogue
 
     /** Return a single Domain DTO.
      *
-     * @param string $domainName
-     *
-     * @return Domain|null
      */
     public function getDomain(string $domainName): ?Domain
     {
@@ -98,11 +91,6 @@ class Catalogue
         }, 0);
     }
 
-    /**
-     * @param bool $withMetadata
-     *
-     * @return array
-     */
     public function toArray(bool $withMetadata = true): array
     {
         $data = [];
@@ -140,7 +128,6 @@ class Catalogue
     /**
      * Updates counters of this subtree by adding the sum of children's counters
      *
-     * @param array $subtree
      *
      * @return array Array of [sum of count, sum of missing_langs]
      */
@@ -152,7 +139,7 @@ class Catalogue
             }
 
             // update child and get its counters
-            list($count, $missing) = $this->updateCounters($subtree[$key]);
+            [$count, $missing] = $this->updateCounters($subtree[$key]);
 
             // update this tree's counters by adding the child's
             $subtree[self::METADATA_KEY_NAME]['count'] += $count;

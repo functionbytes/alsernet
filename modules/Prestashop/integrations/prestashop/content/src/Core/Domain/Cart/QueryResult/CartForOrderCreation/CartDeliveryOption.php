@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,11 +47,6 @@ class CartDeliveryOption
      */
     private $carrierDelay;
 
-    /**
-     * @param int $carrierId
-     * @param string $carrierName
-     * @param string $carrierDelay
-     */
     public function __construct(int $carrierId, string $carrierName, string $carrierDelay)
     {
         $this->carrierId = $carrierId;
@@ -58,25 +54,16 @@ class CartDeliveryOption
         $this->carrierDelay = $carrierDelay;
     }
 
-    /**
-     * @return int
-     */
     public function getCarrierId(): int
     {
         return $this->carrierId;
     }
 
-    /**
-     * @return string
-     */
     public function getCarrierName(): string
     {
         return $this->carrierName;
     }
 
-    /**
-     * @return string
-     */
     public function getCarrierDelay(): string
     {
         return $this->carrierDelay;

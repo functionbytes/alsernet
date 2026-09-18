@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,7 +67,7 @@ final class AverageCustomerAgeKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-age';
         $helper->icon = 'calendar_today';
         $helper->color = 'color2';
@@ -74,7 +75,7 @@ final class AverageCustomerAgeKpi implements KpiInterface
         $helper->title = $this->translator->trans('Average Age', [], 'Admin.Orderscustomers.Feature');
         $helper->subtitle = $this->translator->trans('All Time', [], 'Admin.Global');
 
-        if (false !== $this->kpiConfiguration->get('AVG_CUSTOMER_AGE')) {
+        if ($this->kpiConfiguration->get('AVG_CUSTOMER_AGE') !== false) {
             $helper->value = $this->kpiConfiguration->get('AVG_CUSTOMER_AGE');
         }
 

@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetshopping}prestashop>delete_657b135fa2b97aff634a549065355e93'] = ' Delete confirmation';
 $_MODULE['<{alsernetshopping}prestashop>delete_d3d2e617335f08df83599665eef8a418'] = 'Close';
 $_MODULE['<{alsernetshopping}prestashop>delete_2f5dcf1d84048077cb899ce22280cb58'] = 'Are you sure you want to remove this product from the cart?';

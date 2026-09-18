@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ final class PaymentModulePreferencesConfiguration implements DataConfigurationIn
      */
     private $paymentRestrictionsConfigurator;
 
-    /**
-     * @param PaymentModuleListProviderInterface $paymentModuleProvider
-     * @param PaymentRestrictionsConfiguratorInterface $paymentRestrictionsConfigurator
-     */
     public function __construct(
         PaymentModuleListProviderInterface $paymentModuleProvider,
         PaymentRestrictionsConfiguratorInterface $paymentRestrictionsConfigurator

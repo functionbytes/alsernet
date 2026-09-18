@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\Pais;
 use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
@@ -64,7 +65,7 @@ class Subcuenta extends Model
      */
     public function subcuenta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
+        return $this->belongsTo(Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
     }
 
     /**
@@ -73,7 +74,7 @@ class Subcuenta extends Model
      */
     public function ejercicioContable()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
+        return $this->belongsTo(EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
     }
 
     /**
@@ -82,7 +83,7 @@ class Subcuenta extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
     }
 
     /**
@@ -91,6 +92,6 @@ class Subcuenta extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
     }
 }

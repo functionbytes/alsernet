@@ -1,4 +1,5 @@
 <?php
+
 /**
 * 2007-2017 PrestaShop
 *
@@ -23,50 +24,71 @@
 *  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 */
-
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-class SportNewsConfig extends ObjectModel {
-
+class SportNewsConfig extends ObjectModel
+{
     public $id_category_sport;
 
     public $list_days;
+
     public $list_limit;
+
     public $list_min_amount;
+
     public $list_max_amount;
+
     public $list_max_products_brand;
+
     public $list_max_products_category;
+
     public $list_exclude_id_product;
+
     public $list_exclude_feature_family;
+
     public $list_exclude_feature_subfamily;
+
     public $list_exclude_feature_group;
+
     public $list_exclude_id_category;
+
     public $list_include_id_product;
-    
+
     public $home_days;
+
     public $home_limit;
+
     public $home_min_amount;
+
     public $home_max_amount;
+
     public $home_max_products_brand;
+
     public $home_max_products_category;
+
     public $home_exclude_id_product;
+
     public $home_exclude_feature_family;
+
     public $home_exclude_feature_subfamily;
+
     public $home_exclude_feature_group;
+
     public $home_exclude_id_category;
+
     public $home_include_id_product;
 
-    public static $definition = array(
+    public static $definition = [
         'table' => 'sport_news_config',
         'primary' => 'id_sport_news_config',
         'multilang' => false,
         'multishop' => false,
-        'fields' => array(
-            'id_category_sport' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'),
+        'fields' => [
+            'id_category_sport' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
 
-            'list_days' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'),
+            'list_days' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'list_limit' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'list_min_amount' => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice'],
             'list_max_amount' => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice'],
@@ -79,7 +101,7 @@ class SportNewsConfig extends ObjectModel {
             'list_exclude_id_category' => ['type' => self::TYPE_STRING],
             'list_include_id_product' => ['type' => self::TYPE_STRING],
 
-            'home_days' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'),
+            'home_days' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'home_limit' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'home_min_amount' => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice'],
             'home_max_amount' => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice'],
@@ -91,16 +113,19 @@ class SportNewsConfig extends ObjectModel {
             'home_exclude_feature_group' => ['type' => self::TYPE_STRING],
             'home_exclude_id_category' => ['type' => self::TYPE_STRING],
             'home_include_id_product' => ['type' => self::TYPE_STRING],
-        ),
-    );
+        ],
+    ];
 
-    public static function getConfigByIdCategory($id_category_sport) {
+    public static function getConfigByIdCategory($id_category_sport)
+    {
         $sql = 'SELECT * FROM `'._DB_PREFIX_.'sport_news_config` WHERE `id_category_sport`='.(int) pSQL($id_category_sport);
         $config = DB::getInstance()->getRow($sql);
+
         return $config;
     }
 
-    public function convertJson() {
+    public function convertJson()
+    {
         $json = '{';
         $json .= '"'.self::$definition['primary'].'": '.$this->id.', ';
         foreach (self::$definition['fields'] as $key => $field) {
@@ -112,6 +137,7 @@ class SportNewsConfig extends ObjectModel {
         }
         $json = substr($json, 0, -2);
         $json .= '}';
+
         return $json;
     }
 }

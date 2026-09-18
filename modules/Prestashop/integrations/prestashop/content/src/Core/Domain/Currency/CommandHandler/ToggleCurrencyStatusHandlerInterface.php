@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ interface ToggleCurrencyStatusHandlerInterface
 {
     /**
      * Handles currency status toggling logic.
-     *
-     * @param ToggleCurrencyStatusCommand $command
      */
     public function handle(ToggleCurrencyStatusCommand $command);
 }

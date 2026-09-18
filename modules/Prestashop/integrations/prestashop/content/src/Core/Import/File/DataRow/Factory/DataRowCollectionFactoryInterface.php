@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,9 +38,7 @@ interface DataRowCollectionFactoryInterface
     /**
      * Builds a data row collection.
      *
-     * @param SplFileInfo $file
-     * @param int $maxRowsInCollection maximum number of rows this collection can have. Unlimited if not provided.
-     *
+     * @param  int  $maxRowsInCollection  maximum number of rows this collection can have. Unlimited if not provided.
      * @return DataRowCollectionInterface
      */
     public function buildFromFile(SplFileInfo $file, $maxRowsInCollection = null);

@@ -4,6 +4,7 @@ namespace Modules\Document\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Modules\Document\Providers\DocumentsServiceProvider;
 
 /**
  * Document Permission Model
@@ -12,6 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class DocumentPermission extends Model
 {
+    /**
+     * El Gate::before del módulo resuelve contra una lista cacheada de estos
+     * nombres (DocumentsServiceProvider::documentPermissionNames), así que un
+     * permiso nuevo no existiría para el gate hasta que caducara la caché.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => DocumentsServiceProvider::forgetPermissionNames());
+        static::deleted(fn () => DocumentsServiceProvider::forgetPermissionNames());
+    }
+
     protected $fillable = [
         'name',
         'label',
@@ -99,6 +111,4 @@ class DocumentPermission extends Model
 
         return $permission;
     }
-
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ final class EmployeeImageUploader extends AbstractImageUploader implements Image
      */
     private $tmpImageDir;
 
-    /**
-     * @param string $employeeImageDir
-     * @param string $tmpImageDir
-     */
     public function __construct(
         string $employeeImageDir = _PS_EMPLOYEE_IMG_DIR_,
         string $tmpImageDir = _PS_TMP_IMG_DIR_
@@ -68,21 +65,21 @@ final class EmployeeImageUploader extends AbstractImageUploader implements Image
         $tempImageName = $this->createTemporaryImage($image);
         $this->deleteOldImage($employeeId);
 
-        $destination = $this->employeeImageDir . $employeeId . '.jpg';
+        $destination = $this->employeeImageDir.$employeeId.'.jpg';
         $this->uploadFromTemp($tempImageName, $destination);
     }
 
     /**
      * Deletes old image
      *
-     * @param int $id
+     * @param  int  $id
      */
     private function deleteOldImage($id)
     {
         $employee = new Employee($id);
         $employee->deleteImage();
 
-        $currentImage = $this->tmpImageDir . 'employee_mini_' . $id . '.jpg';
+        $currentImage = $this->tmpImageDir.'employee_mini_'.$id.'.jpg';
 
         if (file_exists($currentImage)) {
             unlink($currentImage);

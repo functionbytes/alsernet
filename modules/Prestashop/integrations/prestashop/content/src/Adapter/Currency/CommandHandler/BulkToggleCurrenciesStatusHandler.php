@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class BulkToggleCurrenciesStatusHandler extends AbstractCurrencyHandler im
     private $defaultCurrencyId;
 
     /**
-     * @param int $defaultCurrencyId
+     * @param  int  $defaultCurrencyId
      */
     public function __construct($defaultCurrencyId)
     {
@@ -56,8 +57,6 @@ final class BulkToggleCurrenciesStatusHandler extends AbstractCurrencyHandler im
     }
 
     /**
-     * @param BulkToggleCurrenciesStatusCommand $command
-     *
      * @throws BulkToggleCurrenciesException
      */
     public function handle(BulkToggleCurrenciesStatusCommand $command)
@@ -71,8 +70,9 @@ final class BulkToggleCurrenciesStatusHandler extends AbstractCurrencyHandler im
                 continue;
             }
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 $faileds[] = $currency->getValue();
+
                 continue;
             }
 
@@ -82,12 +82,13 @@ final class BulkToggleCurrenciesStatusHandler extends AbstractCurrencyHandler im
                     $this->assertDefaultCurrencyIsNotBeingRemovedOrDisabledFromAnyShop($entity);
                 } catch (CurrencyException $e) {
                     $faileds[] = $currency->getValue();
+
                     continue;
                 }
             }
 
             try {
-                if (false === $entity->toggleStatus()) {
+                if ($entity->toggleStatus() === false) {
                     $faileds[] = $currency->getValue();
                 }
             } catch (PrestaShopException $e) {
@@ -95,7 +96,7 @@ final class BulkToggleCurrenciesStatusHandler extends AbstractCurrencyHandler im
             }
         }
 
-        if (!empty($faileds)) {
+        if (! empty($faileds)) {
             throw new BulkToggleCurrenciesException($faileds, 'Failed to delete all of selected currencies');
         }
     }

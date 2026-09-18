@@ -2,21 +2,21 @@
 
 namespace AlsernetShopping\Carriers;
 
-use Address;
-use Context;
 use Configuration;
+use Context;
 
 /**
  * Handler independiente para InPost (Carrier 98)
  * Para casos donde InPost tiene su propio módulo separado
  *
- * @package AlsernetShopping\Carriers
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 class InPostIndependentHandler extends ExternalModuleCarrierHandler
 {
     const CARRIER_ID = 98;
+
     const CARRIER_NAME = 'InPost Punto Recogida';
 
     private $inpostConfig = [];
@@ -24,7 +24,7 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
     /**
      * Constructor
      */
-    public function __construct(Context $context = null)
+    public function __construct(?Context $context = null)
     {
         parent::__construct($context);
         $this->loadInPostIndependentConfiguration();
@@ -90,10 +90,10 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             ];
         }
 
-        $this->debug("InPost independent configuration loaded", [
+        $this->debug('InPost independent configuration loaded', [
             'carrier_id' => self::CARRIER_ID,
             'module' => $this->externalModuleName,
-            'config' => $this->inpostConfig
+            'config' => $this->inpostConfig,
         ]);
     }
 
@@ -102,7 +102,7 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
      */
     protected function getExternalModuleConfig(): array
     {
-        if (!$this->moduleEnabled) {
+        if (! $this->moduleEnabled) {
             return [];
         }
 
@@ -123,10 +123,10 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
     {
         try {
             // Verificar disponibilidad del servicio
-            if (!$this->isInPostServiceAvailable()) {
+            if (! $this->isInPostServiceAvailable()) {
                 return [
                     'status' => 'error',
-                    'message' => 'InPost service not available or not configured'
+                    'message' => 'InPost service not available or not configured',
                 ];
             }
 
@@ -146,14 +146,15 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             return [
                 'status' => 'success',
                 'data' => $carrierData,
-                'message' => 'InPost data processed successfully'
+                'message' => 'InPost data processed successfully',
             ];
 
         } catch (\Exception $e) {
-            $this->debug("Error processing InPost independent data", ['error' => $e->getMessage()]);
+            $this->debug('Error processing InPost independent data', ['error' => $e->getMessage()]);
+
             return [
                 'status' => 'error',
-                'message' => 'Error processing InPost data: ' . $e->getMessage()
+                'message' => 'Error processing InPost data: '.$e->getMessage(),
             ];
         }
     }
@@ -165,10 +166,10 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
     {
         if ($this->externalModuleName !== 'mondialrelay') {
             // Módulo InPost independiente
-            return !empty($this->inpostConfig['api_key']);
+            return ! empty($this->inpostConfig['api_key']);
         } else {
             // Usando MondialRelay como fallback
-            return !empty($this->inpostConfig['webservice_key']);
+            return ! empty($this->inpostConfig['webservice_key']);
         }
     }
 
@@ -185,7 +186,7 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
                 'country' => $this->inpostConfig['country'] ?? 'ES',
                 'language' => $this->context->language->iso_code,
                 'service_type' => 'pickup_point',
-                'container_id' => 'inpost-widget-container-98'
+                'container_id' => 'inpost-widget-container-98',
             ];
         } else {
             // Configuración para widget MondialRelay (fallback)
@@ -197,7 +198,7 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
                 'Theme' => 'inpost',
                 'ColLivMod' => 'ESP',
                 'DeliveryType' => 'IP',
-                'OnParcelShopSelected' => 'onInPostIndependentSelected_98'
+                'OnParcelShopSelected' => 'onInPostIndependentSelected_98',
             ];
         }
     }
@@ -214,10 +215,10 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
                 '24/7 availability',
                 'Secure pickup',
                 'Mobile notifications',
-                'Easy location'
+                'Easy location',
             ],
             'supported_countries' => ['ES', 'PL', 'UK', 'IT', 'FR'],
-            'module_type' => $this->externalModuleName
+            'module_type' => $this->externalModuleName,
         ];
     }
 
@@ -226,7 +227,7 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
      */
     private function getSelectedPoint(Context $context): ?array
     {
-        if (!$context->cart || !$context->cart->id) {
+        if (! $context->cart || ! $context->cart->id) {
             return null;
         }
 
@@ -234,14 +235,15 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
         $cookieKey = 'inpost_selected_98';
         if (isset($context->cookie->$cookieKey)) {
             $selectedData = json_decode($context->cookie->$cookieKey, true);
+
             return is_array($selectedData) ? $selectedData : null;
         }
 
         // Fallback a tabla MondialRelay si aplica
         if ($this->externalModuleName === 'mondialrelay') {
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'mondialrelay_selected_relay` 
-                    WHERE `id_cart` = ' . (int)$context->cart->id . '
-                    AND `id_customer` = ' . (int)$context->customer->id;
+            $sql = 'SELECT * FROM `'._DB_PREFIX_.'mondialrelay_selected_relay` 
+                    WHERE `id_cart` = '.(int) $context->cart->id.'
+                    AND `id_customer` = '.(int) $context->customer->id;
 
             $result = \Db::getInstance()->getRow($sql);
 
@@ -271,13 +273,13 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             [
                 'type' => 'css',
                 'path' => 'modules/alsernetshopping/views/css/front/carriers/inpost-independent.css',
-                'priority' => 100
+                'priority' => 100,
             ],
             [
                 'type' => 'js',
                 'path' => 'modules/alsernetshopping/views/js/front/checkout/carriers/InPostIndependentCarrier.js',
-                'priority' => 200
-            ]
+                'priority' => 200,
+            ],
         ];
 
         // Widget específico según el módulo
@@ -286,14 +288,14 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             $inpostAssets[] = [
                 'type' => 'js',
                 'path' => 'https://geowidget.inpost.pl/inpost-geowidget.js',
-                'priority' => 150
+                'priority' => 150,
             ];
         } else {
             // Widget MondialRelay como fallback
             $inpostAssets[] = [
                 'type' => 'js',
                 'path' => 'https://widget.mondialrelay.com/parcelshop-picker/jquery.plugin.mondialrelay.parcelshoppicker.min.js',
-                'priority' => 150
+                'priority' => 150,
             ];
         }
 
@@ -315,30 +317,30 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
     {
         $baseValidation = parent::validateAvailability($context);
 
-        if (!$baseValidation['valid']) {
+        if (! $baseValidation['valid']) {
             return $baseValidation;
         }
 
         // Validaciones específicas de InPost
-        if (!$this->isInPostServiceAvailable()) {
+        if (! $this->isInPostServiceAvailable()) {
             return [
                 'valid' => false,
-                'message' => 'InPost service not configured'
+                'message' => 'InPost service not configured',
             ];
         }
 
         // Verificar país soportado
         $supportedCountries = ['ES', 'PL', 'UK', 'IT', 'FR'];
-        if (!in_array($context->country->iso_code, $supportedCountries)) {
+        if (! in_array($context->country->iso_code, $supportedCountries)) {
             return [
                 'valid' => false,
-                'message' => 'InPost not available in this country'
+                'message' => 'InPost not available in this country',
             ];
         }
 
         return [
             'valid' => true,
-            'message' => 'InPost independent service is available'
+            'message' => 'InPost independent service is available',
         ];
     }
 
@@ -352,11 +354,13 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             $cookieKey = 'inpost_selected_98';
             $context->cookie->$cookieKey = json_encode($pointData);
 
-            $this->debug("InPost independent point saved", array_merge($pointData, ['carrier_id' => self::CARRIER_ID]));
+            $this->debug('InPost independent point saved', array_merge($pointData, ['carrier_id' => self::CARRIER_ID]));
+
             return true;
 
         } catch (\Exception $e) {
-            $this->debug("Error saving InPost independent point", ['error' => $e->getMessage()]);
+            $this->debug('Error saving InPost independent point', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -374,6 +378,6 @@ class InPostIndependentHandler extends ExternalModuleCarrierHandler
             unset($this->context->cookie->$cookieKey);
         }
 
-        $this->debug("InPost independent cleanup completed");
+        $this->debug('InPost independent cleanup completed');
     }
 }

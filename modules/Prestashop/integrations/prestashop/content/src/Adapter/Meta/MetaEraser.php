@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,6 @@ final class MetaEraser
     /**
      * Erases data from meta entity.
      *
-     * @param array $metaIds
      *
      * @return array
      *
@@ -63,7 +63,7 @@ final class MetaEraser
 
         /** @var Meta $item */
         foreach ($metaData->getResults() as $item) {
-            if (!$item->delete()) {
+            if (! $item->delete()) {
                 $errors[] = [
                     'key' => 'Can\'t delete #%id%',
                     'parameters' => [

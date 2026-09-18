@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Support\EncryptedSetting;
 
 class DeepLTranslationService
 {
@@ -39,21 +40,37 @@ class DeepLTranslationService
      * detectLanguage() por separado, dos round-trips HTTP para una sola
      * acción de agente).
      *
-     * @return array{translated: ?string, detected_source_language: ?string}
+     * `is_down` distingue un proveedor caído (timeout, 5xx, 429 rate-limit,
+     * 456 cupo agotado) de una petición inválida (400) — CachedTranslator lo
+     * usa para NO abrir el circuit breaker por un simple error de request,
+     * que apagaría la traducción automática de todo el helpdesk sin motivo.
+     *
+     * @return array{translated: ?string, detected_source_language: ?string, is_down: bool}
      */
     public function translateWithSource(string $text, string $targetLang = 'ES', ?string $sourceLang = null, ?int $timeoutSeconds = null, ?int $retries = null): array
     {
         if (empty(trim($text))) {
-            return ['translated' => null, 'detected_source_language' => null];
+            return ['translated' => null, 'detected_source_language' => null, 'is_down' => true];
         }
 
         $apiKey = $this->resolveApiKey();
 
         if (empty($apiKey)) {
-            return ['translated' => null, 'detected_source_language' => null];
+            return ['translated' => null, 'detected_source_language' => null, 'is_down' => true];
         }
 
         return $this->callDeepL($text, strtoupper($targetLang), $sourceLang ? strtoupper($sourceLang) : null, $apiKey, $timeoutSeconds, $retries);
+    }
+
+    /**
+     * "Caído" (cuenta para el circuit breaker): sin conexión, 5xx, 429 (rate
+     * limit) o 456 (cupo de DeepL agotado). Todo lo demás (400 petición mal
+     * formada, 403 clave inválida, etc.) es un problema de la petición/config,
+     * no de disponibilidad del proveedor, y no debe tumbar el circuito.
+     */
+    private function isDownStatus(int $status): bool
+    {
+        return $status >= 500 || in_array($status, [429, 456], true);
     }
 
     /**
@@ -67,7 +84,7 @@ class DeepLTranslationService
     {
         $apiKey = $this->resolveApiKey();
         if (empty($apiKey) || trim($text) === '') {
-            return ['translated' => null, 'detected_source_language' => null];
+            return ['translated' => null, 'detected_source_language' => null, 'is_down' => true];
         }
 
         $cacheKey = 'helpdesk:ai:detect:'.md5($text.$targetLang);
@@ -83,7 +100,7 @@ class DeepLTranslationService
                     ]);
 
                 if ($response->failed()) {
-                    return null;
+                    return ['translated' => null, 'detected_source_language' => null, 'is_down' => $this->isDownStatus($response->status())];
                 }
 
                 $detected = $response->json('translations.0.detected_source_language');
@@ -91,17 +108,19 @@ class DeepLTranslationService
                 return [
                     'translated' => $response->json('translations.0.text'),
                     'detected_source_language' => $detected ? strtolower($detected) : null,
+                    'is_down' => false,
                 ];
             } catch (\Throwable) {
-                return null;
+                return ['translated' => null, 'detected_source_language' => null, 'is_down' => true];
             }
         });
 
-        // Do not keep null in cache — next call might succeed.
-        if ($result === null) {
+        // Do not keep a failed result in cache — next call might succeed (or
+        // might be a different, transient reason). Checking `translated`
+        // (not `$result === null`) because the closure always returns an
+        // array now, never a bare null.
+        if ($result['translated'] === null) {
             Cache::forget($cacheKey);
-
-            return ['translated' => null, 'detected_source_language' => null];
         }
 
         return $result;
@@ -113,7 +132,7 @@ class DeepLTranslationService
             return $this->apiKey === '' ? null : $this->apiKey;
         }
 
-        $this->apiKey = Setting::get('helpdesktranslate.deepl.key')
+        $this->apiKey = EncryptedSetting::get('helpdesktranslate.deepl.key')
             ?: config('helpdesktranslate.deepl.key')
             ?: config('services.deepl.key')
             ?: '';
@@ -171,7 +190,11 @@ class DeepLTranslationService
                     'body' => $response->body(),
                 ]);
 
-                return ['translated' => null, 'detected_source_language' => null];
+                return [
+                    'translated' => null,
+                    'detected_source_language' => null,
+                    'is_down' => $this->isDownStatus($response->status()),
+                ];
             }
 
             $detected = $response->json('translations.0.detected_source_language');
@@ -179,11 +202,12 @@ class DeepLTranslationService
             return [
                 'translated' => $response->json('translations.0.text'),
                 'detected_source_language' => $detected ? strtolower($detected) : null,
+                'is_down' => false,
             ];
         } catch (\Throwable $e) {
             Log::error('DeepLTranslationService: exception', ['error' => $e->getMessage()]);
 
-            return ['translated' => null, 'detected_source_language' => null];
+            return ['translated' => null, 'detected_source_language' => null, 'is_down' => true];
         }
     }
 }

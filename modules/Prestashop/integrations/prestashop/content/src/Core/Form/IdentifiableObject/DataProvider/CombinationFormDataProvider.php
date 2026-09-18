@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class CombinationFormDataProvider implements FormDataProviderInterface
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(
         CommandBusInterface $queryBus
     ) {
@@ -77,11 +75,6 @@ class CombinationFormDataProvider implements FormDataProviderInterface
         ];
     }
 
-    /**
-     * @param CombinationForEditing $combinationForEditing
-     *
-     * @return array
-     */
     private function extractStockData(CombinationForEditing $combinationForEditing): array
     {
         $stockInformation = $combinationForEditing->getStock();
@@ -101,11 +94,6 @@ class CombinationFormDataProvider implements FormDataProviderInterface
         ];
     }
 
-    /**
-     * @param CombinationForEditing $combinationForEditing
-     *
-     * @return array
-     */
     private function extractPriceImpactData(CombinationForEditing $combinationForEditing): array
     {
         $priceImpactInformation = $combinationForEditing->getPrices();
@@ -120,11 +108,6 @@ class CombinationFormDataProvider implements FormDataProviderInterface
         ];
     }
 
-    /**
-     * @param CombinationForEditing $combinationForEditing
-     *
-     * @return array
-     */
     private function extractReferencesData(CombinationForEditing $combinationForEditing): array
     {
         $details = $combinationForEditing->getDetails();
@@ -139,8 +122,6 @@ class CombinationFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param CombinationForEditing $combinationForEditing
-     *
      * @return array<string, int|array<int, int|array<string, string|int>>>
      */
     private function extractSuppliersData(CombinationForEditing $combinationForEditing): array

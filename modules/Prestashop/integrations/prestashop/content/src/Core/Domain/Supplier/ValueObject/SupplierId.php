@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class SupplierId
     private $value;
 
     /**
-     * @param int $supplierId
+     * @param  int  $supplierId
      *
      * @throws SupplierException
      */
@@ -58,13 +59,13 @@ class SupplierId
     }
 
     /**
-     * @param int $supplierId
+     * @param  int  $supplierId
      *
      * @throws SupplierException
      */
     private function assertIsIntegerGreaterThanZero($supplierId)
     {
-        if (!is_int($supplierId) || 0 >= $supplierId) {
+        if (! is_int($supplierId) || $supplierId <= 0) {
             throw new SupplierException(sprintf('Invalid Supplier id: %s', var_export($supplierId, true)));
         }
     }

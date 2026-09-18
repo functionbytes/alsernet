@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,7 @@ class LegacyRoute
     private $controllersActions;
 
     /**
-     * @param string $routeName
-     * @param array $legacyLinks
-     * @param array $routeParameters
+     * @param  string  $routeName
      */
     public function __construct($routeName, array $legacyLinks, array $routeParameters)
     {
@@ -67,8 +66,7 @@ class LegacyRoute
     }
 
     /**
-     * @param string|null $action
-     *
+     * @param  string|null  $action
      * @return bool
      */
     public static function isIndexAction($action)
@@ -79,20 +77,18 @@ class LegacyRoute
     }
 
     /**
-     * @param string $routeName
-     * @param array $routeDefaults
-     *
+     * @param  string  $routeName
      * @return LegacyRoute
      */
     public static function buildLegacyRoute($routeName, array $routeDefaults)
     {
         $legacyLinks = $routeDefaults['_legacy_link'];
-        if (!is_array($legacyLinks)) {
+        if (! is_array($legacyLinks)) {
             $legacyLinks = [$legacyLinks];
         }
 
         $legacyParameters = [];
-        if (!empty($routeDefaults['_legacy_parameters']) && is_array($routeDefaults['_legacy_parameters'])) {
+        if (! empty($routeDefaults['_legacy_parameters']) && is_array($routeDefaults['_legacy_parameters'])) {
             $legacyParameters = $routeDefaults['_legacy_parameters'];
         }
 
@@ -132,8 +128,6 @@ class LegacyRoute
     }
 
     /**
-     * @param array $legacyLinks
-     *
      * @return array
      */
     private function buildLegacyLinks(array $legacyLinks)
@@ -153,9 +147,7 @@ class LegacyRoute
     }
 
     /**
-     * @param array $legacyLinks
-     * @param string $routeName
-     *
+     * @param  string  $routeName
      * @return array
      */
     private function buildControllerActions(array $legacyLinks, $routeName)
@@ -163,7 +155,7 @@ class LegacyRoute
         $controllersActions = [];
         foreach ($legacyLinks as $legacyLink) {
             $controller = $legacyLink['controller'];
-            if (!isset($controllersActions[$controller])) {
+            if (! isset($controllersActions[$controller])) {
                 $controllersActions[$controller] = [];
             }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,12 +78,7 @@ class ManufacturerAddressType extends TranslatorAwareType
     private $router;
 
     /**
-     * @param array $manufacturerChoices
-     * @param array $countryChoices
-     * @param ConfigurableFormChoiceProviderInterface $statesChoiceProvider
-     * @param int $contextCountryId
-     * @param TranslatorInterface $translator
-     * @param array $countryChoicesAttributes
+     * @param  int  $contextCountryId
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -108,11 +104,11 @@ class ManufacturerAddressType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $nameHint = $this->trans('Invalid characters:', 'Admin.Global') . ' 0-9!<>,;?=+()@#"�{}_$%:';
+        $nameHint = $this->trans('Invalid characters:', 'Admin.Global').' 0-9!<>,;?=+()@#"�{}_$%:';
         $data = $builder->getData();
-        $countryId = 0 !== $data['id_country'] ? $data['id_country'] : $this->contextCountryId;
+        $countryId = $data['id_country'] !== 0 ? $data['id_country'] : $this->contextCountryId;
         $stateChoices = $this->statesChoiceProvider->getChoices(['id_country' => $countryId]);
-        $otherHint = $this->trans('Invalid characters:', 'Admin.Global') . ' <>{}';
+        $otherHint = $this->trans('Invalid characters:', 'Admin.Global').' <>{}';
 
         $builder
             ->add('id_manufacturer', ChoiceType::class, [
@@ -341,8 +337,7 @@ class ManufacturerAddressType extends TranslatorAwareType
                         ),
                     ]),
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**

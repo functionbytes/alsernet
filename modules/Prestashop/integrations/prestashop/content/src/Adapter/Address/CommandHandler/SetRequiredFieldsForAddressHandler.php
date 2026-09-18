@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ final class SetRequiredFieldsForAddressHandler implements SetRequiredFieldsForAd
      */
     public function handle(SetRequiredFieldsForAddressCommand $command)
     {
-        $address = new CustomerAddress();
+        $address = new CustomerAddress;
 
         try {
             if ($address->addFieldsRequiredDatabase($command->getRequiredFields())) {

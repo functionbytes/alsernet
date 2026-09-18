@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ class ShopInformation
      */
     private $context;
 
-    /**
-     * @param LegacyContext $legacyContext
-     */
     public function __construct(LegacyContext $legacyContext)
     {
         $this->context = $legacyContext->getContext();
@@ -63,9 +61,6 @@ class ShopInformation
         ];
     }
 
-    /**
-     * @return array
-     */
     public function getOverridesList(): array
     {
         return array_filter(Tools::scandir(_PS_OVERRIDE_DIR_, 'php', '', true), function ($file) {

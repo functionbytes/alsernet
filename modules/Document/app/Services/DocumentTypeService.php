@@ -2,7 +2,6 @@
 
 namespace Modules\Document\Services;
 
-use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\DocumentConfiguration;
 use Modules\Document\Entities\DocumentType;
 

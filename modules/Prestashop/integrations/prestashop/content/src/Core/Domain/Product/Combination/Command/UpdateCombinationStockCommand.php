@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,36 +72,22 @@ class UpdateCombinationStockCommand
      */
     private $availableDate;
 
-    /**
-     * @param int $combinationId
-     */
     public function __construct(
         int $combinationId
     ) {
         $this->combinationId = new CombinationId($combinationId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getQuantity(): ?int
     {
         return $this->quantity;
     }
 
-    /**
-     * @param int $quantity
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setQuantity(int $quantity): UpdateCombinationStockCommand
     {
         $this->quantity = $quantity;
@@ -108,19 +95,11 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getMinimalQuantity(): ?int
     {
         return $this->minimalQuantity;
     }
 
-    /**
-     * @param int $minimalQuantity
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setMinimalQuantity(int $minimalQuantity): UpdateCombinationStockCommand
     {
         $this->minimalQuantity = $minimalQuantity;
@@ -128,19 +107,11 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getLocation(): ?string
     {
         return $this->location;
     }
 
-    /**
-     * @param string $location
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setLocation(string $location): UpdateCombinationStockCommand
     {
         $this->location = $location;
@@ -148,19 +119,11 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLowStockThreshold(): ?int
     {
         return $this->lowStockThreshold;
     }
 
-    /**
-     * @param int $lowStockThreshold
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setLowStockThreshold(int $lowStockThreshold): UpdateCombinationStockCommand
     {
         $this->lowStockThreshold = $lowStockThreshold;
@@ -168,19 +131,11 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isLowStockAlertEnabled(): ?bool
     {
         return $this->lowStockAlertEnabled;
     }
 
-    /**
-     * @param bool $enabled
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setLowStockAlert(bool $enabled): UpdateCombinationStockCommand
     {
         $this->lowStockAlertEnabled = $enabled;
@@ -188,19 +143,11 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getAvailableDate(): ?DateTimeInterface
     {
         return $this->availableDate;
     }
 
-    /**
-     * @param DateTimeInterface $availableDate
-     *
-     * @return UpdateCombinationStockCommand
-     */
     public function setAvailableDate(DateTimeInterface $availableDate): UpdateCombinationStockCommand
     {
         $this->availableDate = $availableDate;
@@ -208,9 +155,6 @@ class UpdateCombinationStockCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function getLowStockAlertEnabled(): ?bool
     {
         return $this->lowStockAlertEnabled;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,25 +42,19 @@ class ProductCommandsBuilder implements ProductCommandsBuilderInterface
     private $commandBuilders;
 
     /**
-     * @param ProductCommandsBuilderInterface[] $commandBuilders
+     * @param  ProductCommandsBuilderInterface[]  $commandBuilders
      */
     public function __construct(iterable $commandBuilders)
     {
         $this->commandBuilders = $commandBuilders;
     }
 
-    /**
-     * @param ProductId $productId
-     * @param array $formData
-     *
-     * @return array
-     */
     public function buildCommands(ProductId $productId, array $formData): array
     {
         $commandCollection = [];
         foreach ($this->commandBuilders as $commandBuilder) {
             $commands = $commandBuilder->buildCommands($productId, $formData);
-            if (!empty($commands)) {
+            if (! empty($commands)) {
                 $commandCollection = array_merge($commandCollection, $commands);
             }
         }

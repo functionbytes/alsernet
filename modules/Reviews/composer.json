@@ -1,0 +1,15 @@
+{
+    "name": "inoqualab/reviews",
+    "description": "Registro y moderación de las opiniones de producto de la tienda Alvarez.",
+    "type": "laravel-module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Reviews\\": "app/",
+            "Modules\\Reviews\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Reviews\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "nwidart/laravel-modules": "^12.0"
+    }
+}

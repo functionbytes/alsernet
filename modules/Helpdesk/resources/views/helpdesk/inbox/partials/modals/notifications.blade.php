@@ -5,7 +5,7 @@
             <div class="bv-modal-icon-box"><i class="far fa-bell"></i></div>
             <div class="bv-modal-title-wrap">
                 <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.notifications_label') }}</span>
-                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.notifications_title') }} <span class="bv-chip-id" id="notifCount" style="display:none"></span></div>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.notifications_title') }} <span class="bv-chip-id bv-step-hidden" id="notifCount"></span></div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -18,11 +18,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/notifications.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/notifications.js')) }}" defer></script>
-@endpush
-@endonce

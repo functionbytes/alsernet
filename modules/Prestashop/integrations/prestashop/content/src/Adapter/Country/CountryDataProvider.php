@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,11 +40,10 @@ class CountryDataProvider
     /**
      * Return available countries.
      *
-     * @param int $id_lang Language ID
-     * @param bool $active return only active coutries
-     * @param bool $contain_states return only country with states
-     * @param bool $list_states Include the states list with the returned list
-     *
+     * @param  int  $id_lang  Language ID
+     * @param  bool  $active  return only active coutries
+     * @param  bool  $contain_states  return only country with states
+     * @param  bool  $list_states  Include the states list with the returned list
      * @return array Countries and corresponding zones
      */
     public function getCountries($id_lang, $active = false, $contain_states = false, $list_states = true)
@@ -58,15 +58,16 @@ class CountryDataProvider
      */
     public function getCountriesIdWhichNeedDni()
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query
             ->select('c.`id_country`')
             ->from('country', 'c')
-            ->where('c.`need_identification_number` = 1')
-        ;
+            ->where('c.`need_identification_number` = 1');
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query);
 
-        return array_map(function ($country) { return $country['id_country']; }, $result);
+        return array_map(function ($country) {
+            return $country['id_country'];
+        }, $result);
     }
 
     /**
@@ -78,15 +79,16 @@ class CountryDataProvider
      */
     public function getCountriesIdWhichNeedPostcode()
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query
             ->select('c.`id_country`')
             ->from('country', 'c')
-            ->where('c.`need_zip_code` = 1')
-        ;
+            ->where('c.`need_zip_code` = 1');
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query);
 
-        return array_map(function ($country) { return $country['id_country']; }, $result);
+        return array_map(function ($country) {
+            return $country['id_country'];
+        }, $result);
     }
 
     /**
@@ -98,27 +100,27 @@ class CountryDataProvider
      */
     public function getCountriesIdWhichNeedState()
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query
             ->select('c.`id_country`')
             ->from('country', 'c')
-            ->where('c.`contains_states` = 1')
-        ;
+            ->where('c.`contains_states` = 1');
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query);
 
-        return array_map(function ($country) { return $country['id_country']; }, $result);
+        return array_map(function ($country) {
+            return $country['id_country'];
+        }, $result);
     }
 
     /**
      * Get Country IsoCode by Id.
      *
-     * @param int $id Country Id
-     *
+     * @param  int  $id  Country Id
      * @return string the related iso code
      */
     public function getIsoCodebyId($id = null)
     {
-        $countryId = (null === $id) ? Configuration::get('PS_COUNTRY_DEFAULT') : $id;
+        $countryId = ($id === null) ? Configuration::get('PS_COUNTRY_DEFAULT') : $id;
 
         return Country::getIsoById($countryId);
     }
@@ -126,8 +128,7 @@ class CountryDataProvider
     /**
      * Get country Id by ISO code.
      *
-     * @param string $isoCode Country ISO code
-     *
+     * @param  string  $isoCode  Country ISO code
      * @return int
      */
     public function getIdByIsoCode($isoCode)

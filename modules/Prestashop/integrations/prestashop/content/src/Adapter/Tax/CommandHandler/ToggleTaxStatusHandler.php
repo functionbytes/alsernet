@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class ToggleTaxStatusHandler extends AbstractTaxHandler implements ToggleT
         $tax->active = $command->getExpectedStatus();
 
         try {
-            if (!$tax->save()) {
+            if (! $tax->save()) {
                 throw new UpdateTaxException(sprintf('Unable to toggle Tax with id "%s"', $taxIdValue), UpdateTaxException::FAILED_UPDATE_STATUS);
             }
         } catch (PrestaShopException $e) {

@@ -8,9 +8,46 @@
  * Convencion del modulo core: su JS se sirve desde public/vendor/helpdesk/ y no
  * tiene copia fuente aparte (igual que conversations.js y kb-suggestions.js).
  */
+// Vista previa de fusión: paneles "Conversación actual" / "Conversación
+// destino" del markup vienen con burbujas de ejemplo estáticas (Blade). Se
+// sustituyen aquí por los últimos mensajes reales de cada conversación —
+// antes se dejaban tal cual, mostrando siempre el mismo texto de muestra sin
+// relación con lo que realmente se iba a fusionar (acción irreversible).
+function bvMergePanel(index) {
+    return $('[data-bv-modal-name="merge"] .bv-merge-conv-panel').eq(index);
+}
+
+function bvRenderMergePreview($panel, items) {
+    $panel.find('.bv-bubble, .bv-empty-hint').remove();
+    var real = (items || []).filter(function (it) {
+        return it && it.type !== 'day_separator' && !it.is_internal && String(it.body || '').trim() !== '';
+    }).slice(-3);
+    if (!real.length) {
+        $panel.append('<div class="bv-empty-hint">Sin mensajes para mostrar</div>');
+        return;
+    }
+    real.forEach(function (it, i) {
+        var cls = 'bv-bubble ' + (i === real.length - 1 ? 'bv-merge-bubble-last' : 'bv-merge-bubble');
+        $panel.append($('<div>', { class: cls }).text(it.body));
+    });
+}
+
+function bvLoadMergePreview(convId, $panel) {
+    if (!convId) { return; }
+    $panel.find('.bv-bubble, .bv-empty-hint').remove();
+    $panel.append('<div class="bv-empty-hint"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>');
+    $.get('/panel/helpdesk/conversations/' + convId + '/viewer-items').done(function (resp) {
+        bvRenderMergePreview($panel, resp?.items || []);
+    }).fail(function () {
+        $panel.find('.bv-bubble, .bv-empty-hint').remove();
+        $panel.append('<div class="bv-empty-hint">No se pudo cargar la vista previa</div>');
+    });
+}
+
 $(document).on('click', '[data-bv-modal-name="merge"] .bv-opt', function () {
     $('[data-bv-modal-name="merge"] .bv-opt').removeClass('on');
     $(this).addClass('on');
+    bvLoadMergePreview($(this).data('conv-id'), bvMergePanel(1));
 });
 
 $(document).on('input', '#merge-search', function () {
@@ -25,10 +62,13 @@ $(document).on('input', '#merge-search', function () {
 $(document).on('click', '[data-bv-modal="merge"]', function () {
     var convId = $('.bv-composer').data('bv-conversation-id');
     if (!convId) return;
+    bvLoadMergePreview(convId, bvMergePanel(0));
     $.get('/panel/helpdesk/conversations/' + convId + '/merge-candidates').done(function (resp) {
         var $list = $('#merge-list');
         if (!Array.isArray(resp?.data) || !resp.data.length) {
             $list.html('<div class="bv-empty-hint">No hay otras conversaciones de este contacto.</div>');
+            bvMergePanel(1).find('.bv-bubble, .bv-empty-hint').remove();
+            bvMergePanel(1).append('<div class="bv-empty-hint">Selecciona una conversación destino</div>');
             return;
         }
         $list.empty();
@@ -50,6 +90,7 @@ $(document).on('click', '[data-bv-modal="merge"]', function () {
             );
             $list.append($opt);
         });
+        bvLoadMergePreview(resp.data[0].id, bvMergePanel(1));
     });
 });
 

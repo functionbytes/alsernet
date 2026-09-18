@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface MetaDataProviderInterface
     /**
      * Gets id by page.
      *
-     * @param string $pageName
-     *
+     * @param  string  $pageName
      * @return int
      */
     public function getIdByPage($pageName);
@@ -43,8 +43,7 @@ interface MetaDataProviderInterface
     /**
      * Gets default page by  meta id.
      *
-     * @param int $metaId
-     *
+     * @param  int  $metaId
      * @return string|null
      */
     public function getDefaultMetaPageNameById($metaId);
@@ -52,8 +51,7 @@ interface MetaDataProviderInterface
     /**
      * Gets module page by meta id.
      *
-     * @param int $metaId
-     *
+     * @param  int  $metaId
      * @return string|null
      */
     public function getModuleMetaPageNameById($metaId);

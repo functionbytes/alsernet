@@ -129,7 +129,7 @@
         return '<div class="text-center text-muted py-5">' +
             '<i class="fas fa-triangle-exclamation fa-2x mb-3 d-block text-warning"></i>' +
             '<div class="fw-semibold">Error al cargar</div>' +
-            '<div class="small">No se pudo obtener la informacion. Intentalo de nuevo.</div>' +
+            '<div class="small">No se pudo obtener la información. Inténtalo de nuevo.</div>' +
             retry +
             '</div>';
     }
@@ -383,7 +383,7 @@
         } else {
             html += '<span class="ct-meta">Sin etiquetas</span>';
         }
-        html += '<button type="button" class="ct-tag ct-tag-add" disabled title="Aun no disponible">' +
+        html += '<button type="button" class="ct-tag ct-tag-add" disabled title="Aún no disponible">' +
             '<i class="fas fa-plus"></i> Añadir</button>';
         html += '</div></div>';
 
@@ -394,7 +394,7 @@
             (data.internal_notes ? esc(data.internal_notes) : 'Sin notas internas registradas.') + '</span></div>';
         html += '</div>';
 
-        // Empresa: solo si el backend la incluye (aun no la devuelve el tab resumen).
+        // Empresa: solo si el backend la incluye (aún no la devuelve el tab resumen).
         if (data.company) {
             var company = data.company;
             html += '<div class="ct-card">';
@@ -1252,7 +1252,7 @@
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
         }).done(function (resp) {
-            notifySuccess((resp && resp.message) || 'Sincronizacion completada');
+            notifySuccess((resp && resp.message) || 'Sincronización completada');
             loadTab('resumen', true);
         }).fail(function (xhr) {
             if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
@@ -1477,7 +1477,7 @@
             cartWrite('POST', '/items', {
                 product_id: $(this).find('[name="product_id"]').val(),
                 quantity: $(this).find('[name="quantity"]').val()
-            }, 'No se pudo anadir el producto').done(function () {
+            }, 'No se pudo añadir el producto').done(function () {
                 $('#cart-add-form')[0].reset();
                 $('#cart-quantity').val(1);
             });
@@ -1492,7 +1492,7 @@
         // Cart: apply discount.
         $root.on('submit', '#cart-discount-form', function (e) {
             e.preventDefault();
-            cartWrite('POST', '/discount', { code: $(this).find('[name="code"]').val() }, 'No se pudo aplicar el cupon');
+            cartWrite('POST', '/discount', { code: $(this).find('[name="code"]').val() }, 'No se pudo aplicar el cupón');
         });
 
         // Cart: generate order / send link.
@@ -1535,8 +1535,15 @@
             var $btn = $form.find('[type="submit"]').prop('disabled', true).text('Guardando...');
             $.ajax({
                 url: $root.data('update-url'),
-                method: 'PUT',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                method: 'POST',
+                // PUT real por AJAX da 405 en el Docker de este proyecto (gotcha
+                // conocido). Como el body va como JSON, un campo _method no lo lee
+                // Laravel (solo mira form/multipart o query string), asi que se
+                // spoofea con la cabecera, igual que en public/vendor/helpdesk/*.js.
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-HTTP-Method-Override': 'PUT',
+                },
                 contentType: 'application/json',
                 data: JSON.stringify({
                     name: $form.find('[name="name"]').val(),

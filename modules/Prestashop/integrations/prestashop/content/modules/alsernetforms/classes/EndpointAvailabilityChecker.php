@@ -27,7 +27,7 @@ class EndpointAvailabilityChecker
 
     public function __construct()
     {
-        $this->db = \Db::getInstance();
+        $this->db = Db::getInstance();
         $this->httpClient = new HttpClient($this->checkTimeoutSeconds, $this->checkTimeoutSeconds, false);
     }
 

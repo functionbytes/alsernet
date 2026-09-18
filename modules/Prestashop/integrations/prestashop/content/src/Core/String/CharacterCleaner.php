@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,13 +32,12 @@ class CharacterCleaner
     /**
      * Delete unicode class from regular expression patterns.
      *
-     * @param string $pattern
-     *
+     * @param  string  $pattern
      * @return string pattern
      */
     public function cleanNonUnicodeSupport($pattern)
     {
-        if (!defined('PREG_BAD_UTF8_OFFSET')) {
+        if (! defined('PREG_BAD_UTF8_OFFSET')) {
             return $pattern;
         }
 

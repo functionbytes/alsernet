@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,19 +49,12 @@ class SetProductTagsCommand
      */
     private $localizedTagsList;
 
-    /**
-     * @param int $productId
-     * @param array $localizedTags
-     */
     public function __construct(int $productId, array $localizedTags)
     {
         $this->productId = new ProductId($productId);
         $this->setLocalizedTagsList($localizedTags);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -75,7 +69,7 @@ class SetProductTagsCommand
     }
 
     /**
-     * @param array[] $localizedTags key-value pairs where each key represents language id and value is the array of tags
+     * @param  array[]  $localizedTags  key-value pairs where each key represents language id and value is the array of tags
      *
      * @throws ProductConstraintException
      */

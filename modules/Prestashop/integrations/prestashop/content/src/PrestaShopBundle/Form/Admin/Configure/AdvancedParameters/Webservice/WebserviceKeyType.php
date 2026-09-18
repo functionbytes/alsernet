@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,11 +61,7 @@ class WebserviceKeyType extends TranslatorAwareType
     private $permissionChoices;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isMultistoreFeatureUsed
-     * @param array $resourceChoices
-     * @param array $permissionChoices
+     * @param  bool  $isMultistoreFeatureUsed
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -125,8 +122,7 @@ class WebserviceKeyType extends TranslatorAwareType
                 'scrollable' => false,
                 'headers_to_disable' => ['all'],
                 'headers_fixed' => true,
-            ])
-        ;
+            ]);
 
         // remove "all" configuration since it's not an actual permission
         $builder->get('permissions')->addModelTransformer(new CallbackTransformer(
@@ -149,10 +145,10 @@ class WebserviceKeyType extends TranslatorAwareType
 
             $builder->get('shop_association')->addModelTransformer(new CallbackTransformer(
                 function ($value) {
-                    return null === $value ? [] : $value;
+                    return $value === null ? [] : $value;
                 },
                 function ($value) {
-                    return null === $value ? [] : $value;
+                    return $value === null ? [] : $value;
                 }
             ));
         }

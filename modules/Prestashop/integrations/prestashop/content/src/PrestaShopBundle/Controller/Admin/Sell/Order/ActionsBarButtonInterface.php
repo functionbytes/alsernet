@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,8 +56,6 @@ interface ActionsBarButtonInterface
 {
     /**
      * This function will provide content to add extra CSS classes
-     *
-     * @return string
      */
     public function getClass(): string;
 
@@ -73,8 +72,6 @@ interface ActionsBarButtonInterface
 
     /**
      * This function will provide content rendered raw inside the <button>
-     *
-     * @return string
      */
     public function getContent(): string;
 }

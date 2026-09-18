@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../../../config/config.inc.php');
-require_once(dirname(__FILE__) . '/../../../../init.php');
-require_once(dirname(__FILE__) . '/../../alsernetmenu.php');
+require_once dirname(__FILE__).'/../../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../../init.php';
+require_once dirname(__FILE__).'/../../alsernetmenu.php';
 
 class alsernetmenumenuModuleFrontController extends ModuleFrontController
 {
@@ -13,26 +13,25 @@ class alsernetmenumenuModuleFrontController extends ModuleFrontController
 
     public function initContent()
     {
-        
-        $menu = new Alsernetmenu();
+
+        $menu = new Alsernetmenu;
 
         switch (Tools::getValue('method')) {
-
 
             case 'category':
 
                 $language = Tools::getValue('language');
                 $category = Tools::getValue('category');
 
-                if (!$category) {
+                if (! $category) {
                     exit;
                 }
 
-                die(
-                $menu->handleCategory(
-                    $category,
-                    $language
-                )
+                exit(
+                    $menu->handleCategory(
+                        $category,
+                        $language
+                    )
                 );
                 break;
             case 'subcategory':
@@ -40,15 +39,15 @@ class alsernetmenumenuModuleFrontController extends ModuleFrontController
                 $category = Tools::getValue('category');
                 $subcategory = Tools::getValue('subcategory');
 
-                if (!$subcategory || !$category) {
+                if (! $subcategory || ! $category) {
                     exit;
                 }
-                die(
+                exit(
 
-                $menu->handleSubcategory(
-                    $category,
-                    $subcategory
-                )
+                    $menu->handleSubcategory(
+                        $category,
+                        $subcategory
+                    )
                 );
                 break;
 
@@ -56,13 +55,12 @@ class alsernetmenumenuModuleFrontController extends ModuleFrontController
 
                 $language = Tools::getValue('language');
 
-                die(
-                $menu->handleMobile($language)
+                exit(
+                    $menu->handleMobile($language)
                 );
                 break;
 
         }
         exit;
     }
-}   
-  
+}

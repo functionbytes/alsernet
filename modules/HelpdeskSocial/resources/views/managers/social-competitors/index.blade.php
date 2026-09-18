@@ -52,12 +52,17 @@
                             <td>{{ $competitor->username ?? '-' }}</td>
                             <td>
                                 @if($competitor->metrics->count() > 0)
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 align-items-center flex-wrap">
                                     @foreach($competitor->metrics->sortByDesc('captured_at')->take(3) as $metric)
                                     <span class="badge bg-light text-dark" title="{{ $metric->metric_type }}: {{ $metric->value }} ({{ $metric->captured_at?->format('d/m') }})">
                                         {{ strtoupper(substr($metric->metric_type, 0, 3)) }} {{ number_format($metric->value, 0) }}
                                     </span>
                                     @endforeach
+                                    @if($competitor->metrics->contains('source', 'simulated'))
+                                    <span class="badge bg-warning text-dark" title="Datos generados para demo, no provienen de la API real del competidor">
+                                        <i class="fas fa-flask me-1"></i>Simulado
+                                    </span>
+                                    @endif
                                 </div>
                                 <small class="text-muted sparkline" data-competitor="{{ $competitor->id }}">
                                     <!-- Sparkline placeholder -->
@@ -99,7 +104,9 @@
 <div class="modal fade" id="competitorModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="competitorForm" method="POST" action="">
+            <form id="competitorForm" method="POST" action=""
+                  data-store-url="{{ route('helpdesksocial.competitors.store') }}"
+                  data-update-url-template="{{ route('helpdesksocial.competitors.update', '__ID__') }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="competitorModalLabel">Nuevo competidor</h5>
@@ -141,32 +148,6 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function resetCompetitorForm() {
-        $('#competitorForm').attr('action', '{{ route('helpdesksocial.competitors.store') }}');
-        $('#competitorForm').find('input[name="_method"]').remove();
-        $('#competitorForm')[0].reset();
-        $('#competitorModalLabel').text('Nuevo competidor');
-    }
-
-    function editCompetitor(id, name, platform, username, profileUrl, isActive) {
-        $('#competitorForm').attr('action', '{{ route('helpdesksocial.competitors.update', '__ID__') }}'.replace('__ID__', id));
-        if ($('#competitorForm').find('input[name="_method"]').length === 0) {
-            $('#competitorForm').prepend('<input type="hidden" name="_method" value="PUT">');
-        }
-        $('#competitorForm input[name="name"]').val(name);
-        $('#competitorForm select[name="platform"]').val(platform);
-        $('#competitorForm input[name="username"]').val(username);
-        $('#competitorForm input[name="profile_url"]').val(profileUrl);
-        $('#competitorForm input[name="is_active"]').prop('checked', isActive === 1);
-        $('#competitorModalLabel').text('Editar competidor');
-        $('#competitorModal').modal('show');
-    }
-
-    window.resetCompetitorForm = resetCompetitorForm;
-    window.editCompetitor = editCompetitor;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-competitors-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-competitors-index.js')) }}"></script>
+@endpush

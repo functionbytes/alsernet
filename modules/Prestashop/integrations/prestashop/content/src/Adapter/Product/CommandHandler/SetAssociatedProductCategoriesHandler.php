@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,6 @@ final class SetAssociatedProductCategoriesHandler implements SetAssociatedProduc
      */
     private $productCategoryUpdater;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductCategoryUpdater $productCategoryUpdater
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductCategoryUpdater $productCategoryUpdater

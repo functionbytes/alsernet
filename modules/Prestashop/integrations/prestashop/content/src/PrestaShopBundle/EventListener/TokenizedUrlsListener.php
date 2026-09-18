@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,11 @@ use Tools;
 class TokenizedUrlsListener
 {
     private $tokenManager;
+
     private $router;
+
     private $username;
+
     private $employeeId;
 
     public function __construct(
@@ -61,7 +65,7 @@ class TokenizedUrlsListener
         $this->username = $username;
         $context = $legacyContext->getContext();
 
-        if (null !== $context) {
+        if ($context !== null) {
             if ($context->employee instanceof Employee) {
                 $this->employeeId = $context->employee->id;
             }
@@ -76,7 +80,7 @@ class TokenizedUrlsListener
             return;
         }
 
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 
@@ -87,8 +91,8 @@ class TokenizedUrlsListener
          * every route prefixed by '_' won't be secured
          */
         if (
-            0 === strpos($route, '_') ||
-            0 === strpos($route, 'api_')
+            strpos($route, '_') === 0 ||
+            strpos($route, 'api_') === 0
         ) {
             return;
         }
@@ -97,7 +101,7 @@ class TokenizedUrlsListener
          * every uri which contains 'token' should use the old validation system
          */
         if ($request->query->has('token')) {
-            if (0 == strcasecmp(Tools::getAdminToken($this->employeeId), $request->query->get('token'))) {
+            if (strcasecmp(Tools::getAdminToken($this->employeeId), $request->query->get('token')) == 0) {
                 return;
             }
         }
@@ -109,9 +113,9 @@ class TokenizedUrlsListener
             $token = new CsrfToken('form', $request->query->get('form')['_token']);
         }
 
-        if ((false === $token || !$this->tokenManager->isTokenValid($token)) && $event instanceof GetResponseEvent) {
+        if (($token === false || ! $this->tokenManager->isTokenValid($token)) && $event instanceof GetResponseEvent) {
             // remove token if any
-            if (false !== strpos($uri, '_token=')) {
+            if (strpos($uri, '_token=') !== false) {
                 $uri = substr($uri, 0, strpos($uri, '_token='));
             }
 

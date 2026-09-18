@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,16 +88,14 @@ class AddEmployeeCommand
     private $hasEnabledGravatar;
 
     /**
-     * @param string $firstName
-     * @param string $lastName
-     * @param string $email
-     * @param string $plainPassword
-     * @param int $defaultPageId
-     * @param int $languageId
-     * @param bool $active
-     * @param int $profileId
-     * @param array $shopAssociation
-     * @param bool $hasEnabledGravatar
+     * @param  string  $firstName
+     * @param  string  $lastName
+     * @param  string  $email
+     * @param  string  $plainPassword
+     * @param  int  $defaultPageId
+     * @param  int  $languageId
+     * @param  bool  $active
+     * @param  int  $profileId
      */
     public function __construct(
         $firstName,

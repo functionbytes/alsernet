@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,19 +45,14 @@ class LanguageDefaultFontsCatalog
         'ar' => 'Tahoma',
     ];
 
-    /**
-     * @param array|null $languageDefaultFonts
-     */
-    public function __construct(array $languageDefaultFonts = null)
+    public function __construct(?array $languageDefaultFonts = null)
     {
-        if (null !== $languageDefaultFonts) {
+        if ($languageDefaultFonts !== null) {
             $this->languageDefaultFonts = $languageDefaultFonts;
         }
     }
 
     /**
-     * @param LanguageInterface $language
-     *
      * @return string
      */
     public function getDefaultFontByLanguage(LanguageInterface $language)

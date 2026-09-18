@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,9 +51,8 @@ final class CategoryTreeChoiceProvider implements FormChoiceProviderInterface
     private $enabledCategoriesOnly;
 
     /**
-     * @param CategoryDataProvider $categoryDataProvider
-     * @param int $contextShopRootCategoryId
-     * @param bool $enabledCategoriesOnly
+     * @param  int  $contextShopRootCategoryId
+     * @param  bool  $enabledCategoriesOnly
      */
     public function __construct(CategoryDataProvider $categoryDataProvider, $contextShopRootCategoryId, $enabledCategoriesOnly = false)
     {
@@ -77,8 +77,6 @@ final class CategoryTreeChoiceProvider implements FormChoiceProviderInterface
     }
 
     /**
-     * @param array $category
-     *
      * @return array
      */
     private function buildChoiceTree(array $category)

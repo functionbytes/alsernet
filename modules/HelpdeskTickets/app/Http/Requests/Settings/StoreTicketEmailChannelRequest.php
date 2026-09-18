@@ -26,6 +26,10 @@ class StoreTicketEmailChannelRequest extends FormRequest
             'password' => ['required', 'string'],
             'folder' => ['nullable', 'string', 'max:255'],
             'encryption' => ['nullable', 'string', 'in:tls,ssl'],
+            // Punto de corte: al sincronizar se ignoran correos anteriores a
+            // esta fecha (criterio IMAP SINCE, ver FetchTicketEmailsJob). No
+            // afecta a tickets ya importados con correos previos a la fecha.
+            'sync_since' => ['nullable', 'date'],
             'create_tickets' => ['nullable', 'boolean'],
             'create_replies' => ['nullable', 'boolean'],
             'is_default' => ['nullable', 'boolean'],
@@ -67,6 +71,7 @@ class StoreTicketEmailChannelRequest extends FormRequest
             'password' => 'contraseña',
             'folder' => 'carpeta',
             'encryption' => 'encriptación',
+            'sync_since' => 'sincronizar desde',
             'smtp_host' => 'servidor SMTP',
             'smtp_port' => 'puerto SMTP',
             'smtp_encryption' => 'encriptación SMTP',

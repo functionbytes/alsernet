@@ -12,18 +12,18 @@ use Modules\Helpdesk\Models\Setting;
 /**
  * Global auto-assignment strategy (#78 ve-auto-assign). Reads a runtime-editable
  * strategy from helpdesk_settings and resolves the agent for a new conversation:
- * round-robin, least-load, skills (delegates to SkillsRoutingService) or manual.
+ * round-robin, least-load or manual.
  */
 class AutoAssignmentService
 {
-    public const STRATEGIES = ['round_robin', 'least_load', 'skills', 'manual'];
+    public const STRATEGIES = ['round_robin', 'least_load', 'manual'];
 
     public const RETRIES = ['off', '2', '5', '15'];
 
     public const FALLBACKS = ['queue', 'supervisor'];
 
     public function __construct(
-        private readonly SkillsRoutingService $skills,
+        private readonly AgentAvailabilityService $availability,
     ) {}
 
     /**
@@ -74,7 +74,6 @@ class AutoAssignmentService
     {
         return match ($this->config()['strategy']) {
             'manual' => null,
-            'skills' => $this->skills->routeBySkills($conversation),
             'least_load' => $this->leastLoad($this->availableAgents($conversation)),
             default => $this->roundRobin($this->availableAgents($conversation)),
         };
@@ -93,7 +92,7 @@ class AutoAssignmentService
             ->pluck('user_id')
             ->all();
 
-        return $this->skills->filterAvailableAgents($userIds);
+        return $this->availability->filterAvailableAgents($userIds);
     }
 
     /**

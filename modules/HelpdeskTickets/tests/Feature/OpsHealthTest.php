@@ -22,7 +22,13 @@ class OpsHealthTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' incluida a propósito: es donde vive `users`, y sin ella los
+    // usuarios que crean estos tests NO se revierten al terminar. Esta clase
+    // dejaba 5 usuarios permanentes en la base compartida por cada ejecución
+    // —medido contando antes y después—, y con ellos un manager más que
+    // recibía el correo de alerta, hasta hacer fallar a sus propios tests
+    // ("Failed asserting that 12 is identical to 1").
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected function setUp(): void
     {
@@ -123,11 +129,18 @@ class OpsHealthTest extends TestCase
 
         $baseline = app(OpsHealthService::class)->snapshot()['unassigned_sla_warning'];
 
-        Ticket::factory()->create([
+        // La fecha se fija DESPUÉS de crear, y a la fuerza: al dar de alta un
+        // ticket, el sistema calcula su vencimiento de primera respuesta según
+        // la política de SLA y machaca lo que traiga la factory. Pasándola en
+        // create() se guardaba a 5 h y media vista —lo que dicta la política—,
+        // fuera de la ventana de aviso, y el ticket no se contaba nunca: el
+        // test fallaba por su propia premisa, no por el código que prueba.
+        $ticket = Ticket::factory()->create([
             'assignee_id' => null,
             'closed_at' => null,
-            'sla_first_response_due_at' => now()->addMinutes(30),
         ]);
+
+        $ticket->forceFill(['sla_first_response_due_at' => now()->addMinutes(30)])->save();
 
         $snapshot = app(OpsHealthService::class)->snapshot();
 
@@ -195,7 +208,16 @@ class OpsHealthTest extends TestCase
 
         $this->artisan('helpdesk:ops-metrics')->assertExitCode(0);
 
-        Mail::assertQueued(OpsAlertMail::class, 1);
+        // Se cuenta lo que le llega AL MANAGER DE ESTE TEST, no el total de
+        // correos encolados: el aviso va a todo el que tenga `manage_helpdesk`,
+        // y en esta base compartida hay administradores reales que lo tienen.
+        // Exigir "exactamente uno en todo el sistema" ataba el test al censo de
+        // usuarios y lo rompía cada vez que alguien recibía el permiso.
+        $this->assertCount(1, Mail::queued(
+            OpsAlertMail::class,
+            fn (OpsAlertMail $mail) => $mail->hasTo($manager->email)
+        ));
+
         Mail::assertQueued(OpsAlertMail::class, function (OpsAlertMail $mail) use ($manager) {
             return $mail->hasTo($manager->email)
                 && str_contains($mail->emailContent, 'dead-letter');
@@ -206,7 +228,7 @@ class OpsHealthTest extends TestCase
     {
         Mail::fake();
         config(['helpdesktickets.ops.alerts.enabled' => true]);
-        $this->createManager();
+        $manager = $this->createManager();
 
         $this->partialMock(OpsHealthService::class, function ($mock) {
             $mock->shouldReceive('refresh')->twice()->andReturn($this->unhealthySnapshot());
@@ -215,7 +237,12 @@ class OpsHealthTest extends TestCase
         $this->artisan('helpdesk:ops-metrics')->assertExitCode(0);
         $this->artisan('helpdesk:ops-metrics')->assertExitCode(0);
 
-        Mail::assertQueued(OpsAlertMail::class, 1);
+        // Dos pasadas, un solo aviso: lo que prueba el enfriamiento es que al
+        // manager no le llega dos veces, no cuántos avisos salieron en total.
+        $this->assertCount(1, Mail::queued(
+            OpsAlertMail::class,
+            fn (OpsAlertMail $mail) => $mail->hasTo($manager->email)
+        ));
     }
 
     public function test_no_alerts_option_skips_alert_evaluation(): void

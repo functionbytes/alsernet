@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface ContactRepositoryInterface
     /**
      * Get shop contacts.
      *
-     * @param int $langId Language ID in which contacts should be returned
-     *
+     * @param  int  $langId  Language ID in which contacts should be returned
      * @return array
      */
     public function findAllByLangId($langId);

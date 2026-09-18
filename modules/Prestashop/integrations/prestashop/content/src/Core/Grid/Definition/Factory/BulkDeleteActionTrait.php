@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,6 @@ use PrestaShop\PrestaShop\Core\Grid\Action\ModalOptions;
 trait BulkDeleteActionTrait
 {
     /**
-     * @param string $bulkDeleteRouteName
-     *
      * @return BulkActionInterface
      */
     protected function buildBulkDeleteAction(string $bulkDeleteRouteName)
@@ -52,17 +51,14 @@ trait BulkDeleteActionTrait
                     'confirm_button_label' => $this->trans('Delete', [], 'Admin.Actions'),
                     'confirm_button_class' => 'btn-danger',
                 ]),
-            ])
-        ;
+            ]);
     }
 
     /**
      * Shortcut method to translate text.
      *
-     * @param string $id
-     * @param array $options
-     * @param string $domain
-     *
+     * @param  string  $id
+     * @param  string  $domain
      * @return string
      */
     abstract protected function trans($id, array $options, $domain);

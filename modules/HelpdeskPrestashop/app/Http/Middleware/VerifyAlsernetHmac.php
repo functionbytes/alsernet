@@ -34,7 +34,7 @@ class VerifyAlsernetHmac
             return response()->json(['ok' => false, 'error' => 'invalid signature'], 401);
         }
 
-        if ($this->isReplay($request, $signature)) {
+        if ($this->isReplay($signature)) {
             Log::warning('HelpdeskPrestashop: webhook replay rejected.', [
                 'ip' => $request->ip(),
                 'event' => $request->header('X-Alsernet-Event'),
@@ -53,27 +53,20 @@ class VerifyAlsernetHmac
      * falsificable sin el secreto). Cache::add() es atómico: si la clave ya
      * existe, la petición es un replay.
      *
-     * La cabecera X-Alsernet-Idempotency-Key (que el emisor envía en
-     * escrituras) NO puede sustituir a la firma como nonce mientras no esté
-     * cubierta por el HMAC: un atacante podría reenviar la misma petición
-     * firmada cambiando solo esa cabecera. Por eso, cuando llega, se deduplica
-     * ADEMÁS de (nunca en lugar de) el hash de la firma.
+     * La deduplicación por X-Alsernet-Idempotency-Key (semántica de negocio:
+     * "esta acción ya se procesó") vive en el controller (PsEventReceiverController),
+     * que la marca 'done' solo tras éxito y libera el lock si el procesamiento
+     * falla. Hacerla también aquí, de forma incondicional al llegar la firma,
+     * quemaba la clave aunque el controller fallara después — un reintento
+     * legítimo del emisor tras un error 500 se rechazaba como "replay" sin
+     * haberse procesado nunca.
      */
-    private function isReplay(Request $request, string $signature): bool
+    private function isReplay(string $signature): bool
     {
-        $ttl = HmacSigner::TIMESTAMP_TOLERANCE_SECONDS;
-
-        if (! Cache::add(self::REPLAY_CACHE_PREFIX.hash('sha256', $signature), 1, $ttl)) {
-            return true;
-        }
-
-        $idempotencyKey = (string) $request->header('X-Alsernet-Idempotency-Key', '');
-
-        if ($idempotencyKey !== ''
-            && ! Cache::add(self::REPLAY_CACHE_PREFIX.'idem:'.hash('sha256', $idempotencyKey), 1, $ttl)) {
-            return true;
-        }
-
-        return false;
+        return ! Cache::add(
+            self::REPLAY_CACHE_PREFIX.hash('sha256', $signature),
+            1,
+            HmacSigner::TIMESTAMP_TOLERANCE_SECONDS
+        );
     }
 }

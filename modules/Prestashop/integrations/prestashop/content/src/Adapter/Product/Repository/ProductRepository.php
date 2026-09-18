@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -91,14 +92,6 @@ class ProductRepository extends AbstractObjectModelRepository
      */
     private $manufacturerRepository;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param ProductValidator $productValidator
-     * @param int $defaultCategoryId
-     * @param TaxRulesGroupRepository $taxRulesGroupRepository
-     * @param ManufacturerRepository $manufacturerRepository
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -118,9 +111,7 @@ class ProductRepository extends AbstractObjectModelRepository
     /**
      * Duplicates product entity without relations
      *
-     * @param Product $product
      *
-     * @return Product
      *
      * @throws CoreException
      * @throws CannotDuplicateProductException
@@ -140,48 +131,39 @@ class ProductRepository extends AbstractObjectModelRepository
 
     /**
      * Gets product price by provided shop
-     *
-     * @param ProductId $productId
-     * @param ShopId $shopId
-     *
-     * @return DecimalNumber|null
      */
     public function getPriceByShop(ProductId $productId, ShopId $shopId): ?DecimalNumber
     {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('price')
-            ->from($this->dbPrefix . 'product_shop')
+            ->from($this->dbPrefix.'product_shop')
             ->where('id_product = :productId')
             ->andWhere('id_shop = :shopId')
             ->setParameter('productId', $productId->getValue())
-            ->setParameter('shopId', $shopId->getValue())
-        ;
+            ->setParameter('shopId', $shopId->getValue());
 
         $result = $qb->execute()->fetch();
 
-        if (!$result) {
+        if (! $result) {
             return null;
         }
 
         return new DecimalNumber($result['price']);
     }
 
-    /**
-     * @param ProductId $productId
-     */
     public function assertProductExists(ProductId $productId): void
     {
         $this->assertObjectModelExists($productId->getValue(), 'product', ProductNotFoundException::class);
     }
 
     /**
-     * @param ProductId[] $productIds
+     * @param  ProductId[]  $productIds
      *
      * @throws ProductNotFoundException
      */
     public function assertAllProductsExists(array $productIds): void
     {
-        //@todo: no shop association. Should it be checked here?
+        // @todo: no shop association. Should it be checked here?
         $ids = array_map(function (ProductId $productId): int {
             return $productId->getValue();
         }, $productIds);
@@ -189,32 +171,28 @@ class ProductRepository extends AbstractObjectModelRepository
 
         $qb = $this->connection->createQueryBuilder();
         $qb->select('COUNT(id_product) as product_count')
-            ->from($this->dbPrefix . 'product')
+            ->from($this->dbPrefix.'product')
             ->where('id_product IN (:productIds)')
-            ->setParameter('productIds', $ids, Connection::PARAM_INT_ARRAY)
-        ;
+            ->setParameter('productIds', $ids, Connection::PARAM_INT_ARRAY);
 
         $results = $qb->execute()->fetch();
 
-        if (!$results || (int) $results['product_count'] !== count($ids)) {
+        if (! $results || (int) $results['product_count'] !== count($ids)) {
             throw new ProductNotFoundException(
-                    sprintf(
-                        'Some of these inventaries do not exist: %s',
-                        implode(',', $ids)
-                    )
-                );
+                sprintf(
+                    'Some of these inventaries do not exist: %s',
+                    implode(',', $ids)
+                )
+            );
         }
     }
 
     /**
-     * @param ProductId $productId
-     * @param LanguageId $languageId
-     *
      * @return array<array<string, string>>
-     *                             e.g [
-     *                             ['id_product' => '1', 'name' => 'Product name', 'reference' => 'demo15'],
-     *                             ['id_product' => '2', 'name' => 'Product name2', 'reference' => 'demo16'],
-     *                             ]
+     *                                      e.g [
+     *                                      ['id_product' => '1', 'name' => 'Product name', 'reference' => 'demo15'],
+     *                                      ['id_product' => '2', 'name' => 'Product name2', 'reference' => 'demo16'],
+     *                                      ]
      *
      * @throws CoreException
      */
@@ -236,10 +214,6 @@ class ProductRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return Product
-     *
      * @throws CoreException
      */
     public function get(ProductId $productId): Product
@@ -265,21 +239,18 @@ class ProductRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param array<int, string> $localizedNames
-     * @param string $productType
-     *
-     * @return Product
+     * @param  array<int, string>  $localizedNames
      *
      * @throws CannotAddProductException
      */
     public function create(array $localizedNames, string $productType): Product
     {
-        $product = new Product();
+        $product = new Product;
         $product->active = false;
         $product->id_category_default = $this->defaultCategoryId;
         $product->name = $localizedNames;
-        $product->is_virtual = ProductType::TYPE_VIRTUAL === $productType;
-        $product->cache_is_pack = ProductType::TYPE_PACK === $productType;
+        $product->is_virtual = $productType === ProductType::TYPE_VIRTUAL;
+        $product->cache_is_pack = $productType === ProductType::TYPE_PACK;
         $product->product_type = $productType;
 
         $this->productValidator->validateCreation($product);
@@ -290,10 +261,6 @@ class ProductRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param Product $product
-     * @param array $propertiesToUpdate
-     * @param int $errorCode
-     *
      * @throws CoreException
      * @throws ProductConstraintException
      * @throws ProductPackConstraintException
@@ -323,8 +290,6 @@ class ProductRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws CoreException
      */
     public function delete(ProductId $productId): void
@@ -333,8 +298,6 @@ class ProductRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param array $productIds
-     *
      * @throws CannotBulkDeleteProductException
      */
     public function bulkDelete(array $productIds): void

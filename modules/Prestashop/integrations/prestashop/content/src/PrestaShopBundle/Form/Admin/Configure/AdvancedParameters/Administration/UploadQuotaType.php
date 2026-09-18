@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,9 @@ use Symfony\Component\Validator\Constraints\Type;
 class UploadQuotaType extends TranslatorAwareType
 {
     public const FIELD_MAX_SIZE_ATTACHED_FILES = 'max_size_attached_files';
+
     public const FIELD_MAX_SIZE_DOWNLOADABLE_FILE = 'max_size_downloadable_product';
+
     public const FIELD_MAX_SIZE_PRODUCT_IMAGE = 'max_size_product_image';
 
     /**

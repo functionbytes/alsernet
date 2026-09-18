@@ -22,7 +22,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger-solid" id="bv-delete-conv-confirm">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_title') }}</button>
+            <button class="btn-brand-solid" id="bv-delete-conv-confirm">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_title') }}</button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
@@ -30,38 +30,8 @@
 
 @once
 @push('scripts')
-<script>
-$(document).on('click', '#bv-delete-conv-confirm', function () {
-    var url = $('#bv-btn-delete-conv').data('delete-url');
-    if (!url) {
-        if (window.toastr) toastr.warning('No hay conversación activa');
-        return;
-    }
-
-    var $btn = $(this).prop('disabled', true);
-
-    $.ajax({
-        url: url,
-        method: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json',
-        },
-    })
-    .done(function () {
-        $('[data-bv-modal-name="delete-conv"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) $('body').css('overflow', '');
-        if (window.toastr) toastr.success('Conversación movida a la papelera.');
-        $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-    })
-    .fail(function (xhr) {
-        var msg = xhr?.responseJSON?.message || 'Error al eliminar la conversación';
-        if (window.toastr) toastr.error(msg);
-    })
-    .always(function () {
-        $btn.prop('disabled', false);
-    });
-});
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/delete-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/delete-conv.js')) }}" defer></script>
 @endpush
 @endonce

@@ -41,9 +41,15 @@ class ErpIntegrationDriver implements IntegrationDriverContract
         ];
     }
 
+    /**
+     * class_exists() sigue siendo true aunque el módulo HelpdeskErp esté
+     * deshabilitado (es un monolito, la clase siempre está en el autoload):
+     * usa el helper de estado real del módulo (instalado+activo+toggle de
+     * Settings → Integraciones), igual que el resto del sistema.
+     */
     public function isAvailable(): bool
     {
-        return class_exists(ErpContextService::class);
+        return class_exists(ErpContextService::class) && helpdesk_erp_enabled();
     }
 
     /**

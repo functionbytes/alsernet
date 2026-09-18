@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -99,19 +100,19 @@ class AddManufacturerAddressCommand
     private $dni;
 
     /**
-     * @param string $lastName
-     * @param string $firstName
-     * @param string $address
-     * @param int|null $countryId
-     * @param string $city
-     * @param int $manufacturerId
-     * @param string|null $address2
-     * @param string|null $postCode
-     * @param int|null $stateId
-     * @param string|null $homePhone
-     * @param string $mobilePhone
-     * @param string|null $other
-     * @param string|null $dni
+     * @param  string  $lastName
+     * @param  string  $firstName
+     * @param  string  $address
+     * @param  int|null  $countryId
+     * @param  string  $city
+     * @param  int  $manufacturerId
+     * @param  string|null  $address2
+     * @param  string|null  $postCode
+     * @param  int|null  $stateId
+     * @param  string|null  $homePhone
+     * @param  string  $mobilePhone
+     * @param  string|null  $other
+     * @param  string|null  $dni
      *
      * @throws AddressConstraintException
      */
@@ -251,13 +252,13 @@ class AddManufacturerAddressCommand
     }
 
     /**
-     * @param mixed $value
+     * @param  mixed  $value
      *
      * @throws AddressConstraintException
      */
     private function assertIsNullOrNonNegativeInt($value)
     {
-        if (null === $value || is_int($value) || 0 <= $value) {
+        if ($value === null || is_int($value) || $value >= 0) {
             return;
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,6 @@ class ImportController extends FrameworkBundleAdminController
     /**
      * Show import form & handle forwarding to legacy controller.
      *
-     * @param Request $request
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
@@ -62,7 +62,7 @@ class ImportController extends FrameworkBundleAdminController
 
         $importDir = $this->get('prestashop.core.import.dir');
 
-        if (!$this->checkImportDirectory($importDir)) {
+        if (! $this->checkImportDirectory($importDir)) {
             return $this->render(
                 '@PrestaShop/Admin/Configure/AdvancedParameters/ImportPage/import.html.twig',
                 $this->getTemplateParams($request)
@@ -79,13 +79,13 @@ class ImportController extends FrameworkBundleAdminController
         $form->handleRequest($request);
 
         if ($form->isSubmitted()) {
-            if (!$this->checkImportFormSubmitPermissions($legacyController)) {
+            if (! $this->checkImportFormSubmitPermissions($legacyController)) {
                 return $this->redirectToRoute('admin_import');
             }
 
             $data = $form->getData();
 
-            if (!$errors = $formHandler->save($data)) {
+            if (! $errors = $formHandler->save($data)) {
                 // WIP import page 2 redirect
                 /*return $this->redirectToRoute(
                     'admin_import_data_configuration_index',
@@ -115,7 +115,6 @@ class ImportController extends FrameworkBundleAdminController
     /**
      * Handle import file upload via AJAX, sending authorization errors in JSON.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -129,7 +128,7 @@ class ImportController extends FrameworkBundleAdminController
             ]);
         }
 
-        if (!in_array($this->authorizationLevel($legacyController), [
+        if (! in_array($this->authorizationLevel($legacyController), [
             PageVoter::LEVEL_CREATE,
             PageVoter::LEVEL_UPDATE,
             PageVoter::LEVEL_DELETE,
@@ -140,7 +139,7 @@ class ImportController extends FrameworkBundleAdminController
         }
 
         $uploadedFile = $request->files->get('file');
-        if (!$uploadedFile instanceof UploadedFile) {
+        if (! $uploadedFile instanceof UploadedFile) {
             return $this->json([
                 'error' => $this->trans('No file was uploaded.', 'Admin.Advparameters.Notification'),
             ]);
@@ -165,9 +164,8 @@ class ImportController extends FrameworkBundleAdminController
      * Delete import file.
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_import")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return RedirectResponse
      */
@@ -186,9 +184,8 @@ class ImportController extends FrameworkBundleAdminController
      * Download import file from history.
      *
      * @AdminSecurity("is_granted(['read','update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_import")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return Response
      */
@@ -197,7 +194,7 @@ class ImportController extends FrameworkBundleAdminController
         if ($filename = $request->query->get('filename')) {
             $importDirectory = $this->get('prestashop.core.import.dir');
 
-            $response = new BinaryFileResponse($importDirectory . $filename);
+            $response = new BinaryFileResponse($importDirectory.$filename);
             $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename);
 
             return $response;
@@ -211,8 +208,7 @@ class ImportController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))", redirectRoute="admin_import")
      *
-     * @param string $sampleName
-     *
+     * @param  string  $sampleName
      * @return Response
      */
     public function downloadSampleAction($sampleName)
@@ -220,7 +216,7 @@ class ImportController extends FrameworkBundleAdminController
         $sampleFileProvider = $this->get('prestashop.core.import.sample.file_provider');
         $sampleFile = $sampleFileProvider->getFile($sampleName);
 
-        if (null === $sampleFile) {
+        if ($sampleFile === null) {
             return $this->redirectToRoute('admin_import');
         }
 
@@ -237,8 +233,6 @@ class ImportController extends FrameworkBundleAdminController
      *     "is_granted('read', request.get('_legacy_controller'))",
      *     redirectRoute="admin_import"
      * )
-     *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -260,9 +254,8 @@ class ImportController extends FrameworkBundleAdminController
      * Process the import.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", redirectRoute="admin_import")
-     * @DemoRestricted(redirectRoute="admin_import")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_import")
      *
      * @return JsonResponse
      */
@@ -277,7 +270,7 @@ class ImportController extends FrameworkBundleAdminController
             $errors[] = $this->trans('To proceed, please upload a file first.', 'Admin.Advparameters.Notification');
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $this->json([
                 'errors' => $errors,
                 'isFinished' => true,
@@ -304,7 +297,6 @@ class ImportController extends FrameworkBundleAdminController
     /**
      * Get generic template parameters.
      *
-     * @param Request $request
      *
      * @return array
      */
@@ -326,8 +318,7 @@ class ImportController extends FrameworkBundleAdminController
     /**
      * Checks permissions of import form in step 1.
      *
-     * @param string $legacyController
-     *
+     * @param  string  $legacyController
      * @return bool
      */
     private function checkImportFormSubmitPermissions($legacyController)
@@ -344,7 +335,7 @@ class ImportController extends FrameworkBundleAdminController
             return false;
         }
 
-        if (!in_array($this->authorizationLevel($legacyController), [
+        if (! in_array($this->authorizationLevel($legacyController), [
             PageVoter::LEVEL_CREATE,
             PageVoter::LEVEL_UPDATE,
             PageVoter::LEVEL_DELETE,
@@ -366,13 +357,12 @@ class ImportController extends FrameworkBundleAdminController
     /**
      * Check if the import directory exists and is accessible.
      *
-     * @param ImportDirectory $importDir
      *
      * @return bool
      */
     private function checkImportDirectory(ImportDirectory $importDir)
     {
-        if (!$importDir->exists()) {
+        if (! $importDir->exists()) {
             $this->addFlash(
                 'error',
                 $this->trans(
@@ -384,7 +374,7 @@ class ImportController extends FrameworkBundleAdminController
             return false;
         }
 
-        if (!$importDir->isWritable()) {
+        if (! $importDir->isWritable()) {
             $this->addFlash(
                 'warning',
                 $this->trans(
@@ -401,7 +391,6 @@ class ImportController extends FrameworkBundleAdminController
      * Forwards submitted form data to legacy import page.
      * To be removed in 1.7.7 version.
      *
-     * @param Request $request
      *
      * @return RedirectResponse
      */

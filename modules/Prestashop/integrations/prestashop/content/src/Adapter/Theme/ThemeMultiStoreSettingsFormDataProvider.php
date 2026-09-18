@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,8 @@ final class ThemeMultiStoreSettingsFormDataProvider implements MultiStoreSetting
     private $isSingleShopContext;
 
     /**
-     * @param bool $isShopFeatureUsed
-     * @param bool $isSingleShopContext
+     * @param  bool  $isShopFeatureUsed
+     * @param  bool  $isSingleShopContext
      */
     public function __construct(
         $isShopFeatureUsed,
@@ -82,8 +83,7 @@ final class ThemeMultiStoreSettingsFormDataProvider implements MultiStoreSetting
     /**
      * Checks if the configuration exists for specific shop context.
      *
-     * @param string $configurationKey
-     *
+     * @param  string  $configurationKey
      * @return bool
      */
     private function doesConfigurationExistInSingleShopContext($configurationKey)

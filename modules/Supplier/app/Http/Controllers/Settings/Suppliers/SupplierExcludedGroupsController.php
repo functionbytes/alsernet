@@ -20,7 +20,7 @@ class SupplierExcludedGroupsController extends Controller
         // Fix 8: resolver labels desde BD local para los que no tienen label
         $erpIds = $groups->pluck('erp_id')->all();
         $subfamilyNames = Subfamily::whereIn('erp_id', $erpIds)->pluck('name', 'erp_id');
-        $categoryNames  = Category::whereIn('erp_id', $erpIds)->pluck('name', 'erp_id');
+        $categoryNames = Category::whereIn('erp_id', $erpIds)->pluck('name', 'erp_id');
 
         $groups->each(function ($group) use ($subfamilyNames, $categoryNames) {
             if (! $group->label) {
@@ -36,17 +36,17 @@ class SupplierExcludedGroupsController extends Controller
         $excludedErpIds = $groups->pluck('erp_id')->all();
         $affectedProductCount = empty($excludedErpIds) ? 0 : Product::where(function ($q) use ($excludedErpIds) {
             $q->whereIn('erp_category_id', $excludedErpIds)
-              ->orWhereIn('erp_subfamily_id', $excludedErpIds);
+                ->orWhereIn('erp_subfamily_id', $excludedErpIds);
         })->count();
 
         return view('supplier::settings.views.sync.excluded-groups', [
-            'groups'               => $groups,
+            'groups' => $groups,
             'affectedProductCount' => $affectedProductCount,
-            'routes'               => [
-                'store'   => route('settings.suppliers.sync.excluded-groups.store'),
-                'bulk'    => route('settings.suppliers.sync.excluded-groups.bulk'),
+            'routes' => [
+                'store' => route('settings.suppliers.sync.excluded-groups.store'),
+                'bulk' => route('settings.suppliers.sync.excluded-groups.bulk'),
                 'destroy' => route('settings.suppliers.sync.excluded-groups.destroy', ':id'),
-                'update'  => route('settings.suppliers.sync.excluded-groups.update', ':id'),
+                'update' => route('settings.suppliers.sync.excluded-groups.update', ':id'),
             ],
         ]);
     }
@@ -55,7 +55,7 @@ class SupplierExcludedGroupsController extends Controller
     {
         $validated = $request->validate([
             'erp_id' => 'required|integer|min:1|unique:supplier_excluded_erp_groups,erp_id',
-            'label'  => 'nullable|string|max:120',
+            'label' => 'nullable|string|max:120',
             'reason' => 'nullable|string|max:255',
         ], [
             'erp_id.unique' => 'Este ID ya está en la lista de exclusión.',
@@ -66,7 +66,7 @@ class SupplierExcludedGroupsController extends Controller
         return response()->json([
             'success' => true,
             'message' => "ID {$group->erp_id} añadido a la lista de exclusión.",
-            'group'   => $group,
+            'group' => $group,
         ]);
     }
 
@@ -75,7 +75,7 @@ class SupplierExcludedGroupsController extends Controller
         $group = ExcludedErpGroup::findOrFail($id);
 
         $validated = $request->validate([
-            'label'  => 'nullable|string|max:120',
+            'label' => 'nullable|string|max:120',
             'reason' => 'nullable|string|max:255',
         ]);
 
@@ -99,12 +99,12 @@ class SupplierExcludedGroupsController extends Controller
     public function bulkStore(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'ids'    => 'required|string',
+            'ids' => 'required|string',
             'reason' => 'nullable|string|max:255',
         ]);
 
-        $raw    = preg_split('/[\s,;]+/', trim($validated['ids']));
-        $ids    = array_filter(array_map('intval', $raw), fn ($v) => $v > 0);
+        $raw = preg_split('/[\s,;]+/', trim($validated['ids']));
+        $ids = array_filter(array_map('intval', $raw), fn ($v) => $v > 0);
         $reason = $validated['reason'] ?? null;
 
         if (empty($ids)) {

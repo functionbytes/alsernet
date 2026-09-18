@@ -137,7 +137,7 @@
         var html = _pool.map(function (p, i) {
             var thumb = p.image
                 ? '<span class="ps-prc-thumb">' + safeImg(p.image) + '</span>'
-                : '<span class="ps-prc-thumb"><i class="fas fa-box"></i></span>';
+                : '<span class="ps-prc-thumb"><i class="fas fa-image"></i></span>';
             var sk = stockLabel(p);
             var on = (_selected && _selected.id === p.id) ? ' on' : '';
             var skuEl = p.sku ? '<small>' + esc(p.sku) + '</small>' : '';
@@ -165,7 +165,7 @@
             var i     = _pool.indexOf(p);
             var thumb = p.image
                 ? '<span class="ps-prc-thumb">' + safeImg(p.image) + '</span>'
-                : '<span class="ps-prc-thumb"><i class="fas fa-box"></i></span>';
+                : '<span class="ps-prc-thumb"><i class="fas fa-image"></i></span>';
             var sk    = stockLabel(p);
             var on    = (_selected && _selected.id === p.id) ? ' on' : '';
             var skuEl = p.sku ? '<small>' + esc(p.sku) + '</small>' : '';
@@ -185,7 +185,7 @@
 
     function renderDetail(p) {
         // Thumb
-        $('#prDThumb').html(p.image ? safeImg(p.image) : '<i class="fas fa-box"></i>');
+        $('#prDThumb').html(p.image ? safeImg(p.image) : '<i class="fas fa-image"></i>');
 
         // Cabecera
         $('#prDName').text(p.name);
@@ -211,8 +211,14 @@
         $('#prDPrice').html(priceHtml + stockBadge);
 
         // Mejora 5: Botón copiar ficha completa + MEJORA 2: Botón PS Admin
-        var psAdminUrl = 'http://localhost:8091/adminalsernet1/index.php?controller=AdminProducts&id_product=' + p.id + '&updateproduct';
-        var adminBtn = '<a class="ps-admin-btn" href="' + psAdminUrl + '" target="_blank" rel="noopener" title="Editar en PrestaShop"><i class="fas fa-external-link-alt"></i> PS Admin</a>';
+        // URL base inyectada por data-ps-admin-url (config helpdeskprestashop.admin_url);
+        // sin configurar, el botón se omite en vez de enlazar a un host fijo.
+        var psAdminBase = $('[data-bv-modal-name="ps-product-recommend"]').data('psAdminUrl');
+        var adminBtn = '';
+        if (psAdminBase) {
+            var psAdminUrl = psAdminBase + '/index.php?controller=AdminProducts&id_product=' + p.id + '&updateproduct';
+            adminBtn = '<a class="ps-admin-btn" href="' + psAdminUrl + '" target="_blank" rel="noopener" title="Editar en PrestaShop"><i class="fas fa-external-link-alt"></i> PS Admin</a>';
+        }
         var copyFichaBtn = '<div class="ps-ficha-actions">' +
             '<button class="ps-copy-ficha" type="button" title="Copiar ficha completa"><i class="fas fa-clipboard"></i> Copiar ficha</button>' +
             adminBtn +
@@ -303,7 +309,7 @@
         }).done(function (r) {
             if (r.success && r.products && r.products.length) {
                 var html = r.products.map(function (p) {
-                    var thumb = p.image ? '<img class="ps-img-safe" src="' + esc(p.image) + '" loading="lazy">' : '<i class="fas fa-box"></i>';
+                    var thumb = p.image ? '<img class="ps-img-safe" src="' + esc(p.image) + '" loading="lazy">' : '<i class="fas fa-image"></i>';
                     var price = p.price_with_tax > 0 ? money(p.price_with_tax) : '';
                     var stTxt = p.in_stock ? '' : ' · Sin stock';
                     return '<button class="ps-alt-row" type="button" data-pid="' + p.id + '">' +
@@ -324,7 +330,7 @@
                         var ask     = stockLabel(a);
                         var refPart = a.sku ? 'Ref: ' + esc(a.sku) + ' · ' : '';
                         var stPart  = '<span class="' + ask.cls + '">' + ask.text + '</span>';
-                        var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-box"></i>';
+                        var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-image"></i>';
                         return '<button class="ps-alt-row" type="button" data-idx="' + _pool.indexOf(a) + '">' +
                             '<span class="at">' + thumbEl + '</span>' +
                             '<span class="ab">' +
@@ -346,7 +352,7 @@
                     var ask     = stockLabel(a);
                     var refPart = a.sku ? 'Ref: ' + esc(a.sku) + ' · ' : '';
                     var stPart  = '<span class="' + ask.cls + '">' + ask.text + '</span>';
-                    var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-box"></i>';
+                    var thumbEl = a.image ? safeImg(a.image) : '<i class="fas fa-image"></i>';
                     return '<button class="ps-alt-row" type="button" data-idx="' + _pool.indexOf(a) + '">' +
                         '<span class="at">' + thumbEl + '</span>' +
                         '<span class="ab">' +
@@ -443,6 +449,7 @@
         if (!_combinations.length) {
             $('#prAttrBlock').addClass('bv-hidden');
             $('#prComboCount').addClass('bv-hidden');
+            updateLinkPreview();
             return;
         }
 
@@ -491,6 +498,11 @@
         if (firstAvailable) {
             var $first = $('#prAttrGroups .combo-row[data-cid="' + firstAvailable.id + '"]');
             if ($first.length) { $first.trigger('click'); }
+        } else {
+            // Todas agotadas: nada que auto-seleccionar, pero la vista previa
+            // debe reflejarlo (enlace general + aviso) en vez de quedarse con
+            // el estado del producto anterior.
+            updateLinkPreview();
         }
     }
 
@@ -513,11 +525,49 @@
     function selectProduct(p) {
         _selected      = p;
         _selectedCombo = null;
+        _combinations  = [];
         $('#prProductList .ps-prc-item').each(function (i) {
             $(this).toggleClass('on', !!(_pool[i] && _pool[i].id === p.id));
         });
         renderDetail(p);
+        updateLinkPreview();
         fetchAttributes(p.id);
+    }
+
+    // ── Vista previa del enlace que se enviará (QA 18-sep-2026) ───────────────
+    // Único lugar donde se construye la URL final: el botón "Recomendar en
+    // chat" reutiliza _pendingUrl en vez de recalcularla, así que lo que el
+    // agente ve aquí es exactamente lo que se envía — nunca puede desincronizarse.
+    var _pendingUrl = '';
+
+    function updateLinkPreview() {
+        var $box = $('#prLinkPreview');
+        if (!_selected) { $box.addClass('bv-hidden'); _pendingUrl = ''; return; }
+
+        var url = (_selected.url || '').trim();
+        if (!url) { $box.addClass('bv-hidden'); _pendingUrl = ''; return; }
+
+        var allSoldOut = _combinations.length > 0 && !_selectedCombo;
+        if (_selectedCombo) {
+            url += (url.indexOf('?') === -1 ? '?' : '&') + 'id_product_attribute=' + _selectedCombo.id;
+        }
+        _pendingUrl = url;
+
+        var caption;
+        if (allSoldOut) {
+            caption = 'Todas las combinaciones están agotadas: se enviará el enlace general del producto, sin talla ni color.';
+        } else if (_selectedCombo) {
+            caption = 'Incluye la combinación seleccionada (' + (_selectedCombo.label || _selectedCombo.reference || '') + '). Elige otra arriba si quieres cambiarla.';
+        } else {
+            caption = 'Este producto no tiene variantes.';
+        }
+
+        $box.removeClass('bv-hidden').toggleClass('is-warn', allSoldOut);
+        $('#prLinkPreviewUrl').text(url);
+        $('#prLinkPreviewCaption').text(caption);
+        $('#prLinkPreviewIcon').html(allSoldOut
+            ? '<i class="fas fa-triangle-exclamation"></i>'
+            : '<i class="fas fa-link"></i>');
     }
 
     // ── Deseleccionar ────────────────────────────────────────────────────────
@@ -537,23 +587,34 @@
         $('#prVolBlock').html('');     // MEJORA 4: limpiar precios por volumen
         $('#prProductList .ps-prc-item').removeClass('on');
         $('#prDetailZone').addClass('bv-hidden');
+        updateLinkPreview();
         $('#prDetailEmpty').removeClass('bv-hidden');
-        $('#prAttrBlock, #prAltBlock, #prHistBlock').addClass('bv-hidden');
+        // #prHistBlock NO se oculta aquí: "Ya recomendados" es del historial de
+        // la conversación entera (loadConversationHistory() lo carga una sola
+        // vez al abrir el modal), no del producto seleccionado. Ocultarlo en
+        // cada reset de búsqueda lo dejaba invisible para el resto de la
+        // sesión del modal en cuanto el agente escribía algo en el buscador,
+        // porque nada vuelve a llamar loadConversationHistory() después.
+        $('#prAttrBlock, #prAltBlock').addClass('bv-hidden');
         $('#prComboCount').addClass('bv-hidden');
         $('#prFootDefault').removeClass('bv-hidden');
         $('#prFootSelected').addClass('bv-hidden');
     }
 
     // ── Fallback de imagen rota → icono ───────────────────────────────────────
+    // El evento "error" de <img> no burbujea, así que un listener delegado en
+    // document vía $(document).on(...) nunca se disparaba: se necesita fase de
+    // captura (tercer argumento true), que jQuery .on() no ofrece.
 
-    $(document).on('error', '.ps-img-safe', function () {
-        var $wrap = $(this).closest('.ps-prc-thumb, .ps-pc-thumb, .at');
+    document.addEventListener('error', function (e) {
+        if (!e.target.classList || !e.target.classList.contains('ps-img-safe')) { return; }
+        var $wrap = $(e.target).closest('.ps-prc-thumb, .ps-pc-thumb, .at');
         if ($wrap.length) {
-            $wrap.html('<i class="fas fa-box"></i>');
+            $wrap.html('<i class="fas fa-image"></i>');
         } else {
-            $(this).replaceWith('<i class="fas fa-box"></i>');
+            $(e.target).replaceWith('<i class="fas fa-image"></i>');
         }
-    });
+    }, true);
 
     // ── Carga de recomendados / historial ─────────────────────────────────────
 
@@ -564,7 +625,22 @@
         $('#prResultCount').addClass('bv-hidden');
         $('#prProductList').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>');
         HDCommerce.ajax({ url: base + '/ps/products', method: 'GET' })
-            .done(function (r) { renderList(r.products || [], r.has_more); })
+            .done(function (r) {
+                var prods = r.products || [];
+                if (!prods.length) {
+                    // Mensaje propio: el genérico de emptyStateHtml() invita a
+                    // "escribir una búsqueda", que no aplica aquí — este cliente
+                    // simplemente no tiene compras previas en PrestaShop.
+                    _pool = [];
+                    $('#prProductList').html(
+                        '<div class="ps-empty"><i class="fas fa-bag-shopping"></i>' +
+                        '<span>Sin compras previas</span>' +
+                        '<small>Este cliente no tiene pedidos registrados en PrestaShop. Busca por nombre, referencia o SKU.</small></div>'
+                    );
+                    return;
+                }
+                renderList(prods, r.has_more);
+            })
             .fail(function () {
                 $('#prProductList').html('<div class="bv-oc-empty"><i class="fas fa-triangle-exclamation"></i><div class="title">Error al cargar</div></div>');
             });
@@ -592,7 +668,7 @@
     function renderHistory(recs) {
         if (!recs || !recs.length) { return; }
         var html = recs.map(function (r) {
-            var thumbEl = r.product_image ? safeImg(r.product_image) : '<i class="fas fa-box"></i>';
+            var thumbEl = r.product_image ? safeImg(r.product_image) : '<i class="fas fa-image"></i>';
             return '<div class="ps-hist-row">' +
                 '<span class="at">' + thumbEl + '</span>' +
                 '<span class="ab">' +
@@ -748,6 +824,8 @@
         } else {
             $('#prAttrSel').addClass('bv-hidden');
         }
+
+        updateLinkPreview();
     });
 
     // ── Deseleccionar ────────────────────────────────────────────────────────
@@ -787,12 +865,11 @@
 
     $(document).on('click', '#prSendToChat', function () {
         if (!_selected) { return; }
-        var url = (_selected.url || '').trim();
+        // Misma URL que ya muestra la vista previa (#prLinkPreview) — nunca se
+        // recalcula por separado, para que lo que el agente ve sea siempre
+        // exactamente lo que se envía.
+        var url = _pendingUrl;
         if (!url) { toastr.warning('Este producto no tiene URL disponible.'); return; }
-        // Añadir id_product_attribute si hay una combinación seleccionada
-        if (_selectedCombo) {
-            url += (url.indexOf('?') === -1 ? '?' : '&') + 'id_product_attribute=' + _selectedCombo.id;
-        }
 
         // Mensaje enriquecido
         var priceStr = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
@@ -831,13 +908,29 @@
             });
         }
 
-        // MEJORA 8: nota interna opcional
+        // MEJORA 8: nota interna opcional — crea una nota real contra el mismo
+        // endpoint que usa el composer para "Nota interna" (is_internal:1).
+        // Antes disparaba un evento 'helpdesk:internal-note' que ningún
+        // archivo del proyecto escuchaba: el texto se perdía en silencio y el
+        // agente creía haber dejado una nota para su equipo.
         var note = $('#prInternalNote').val().trim();
-        if (note) {
-            $(document).trigger('helpdesk:internal-note', {
-                conversationId: HDCommerce.conversationId(),
-                text: '[PS] Nota sobre producto recomendado (' + (_selected ? _selected.name : '') + '): ' + note,
-            });
+        if (note && convId) {
+            var sendUrl = $('.bv-composer').data('bv-send-url');
+            if (sendUrl) {
+                $.ajax({
+                    url: sendUrl,
+                    method: 'POST',
+                    dataType: 'json',
+                    data: {
+                        body: '[PS] Nota sobre producto recomendado (' + (_selected ? _selected.name : '') + '): ' + note,
+                        is_internal: 1,
+                        action: 'send',
+                    },
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+                }).fail(function () {
+                    toastr.error('No se pudo guardar la nota interna.');
+                });
+            }
         }
         $('#prInternalNote').val('');
 
@@ -889,7 +982,7 @@
         if (!_selected) { return; }
         var ref   = (_selectedCombo && _selectedCombo.reference) || _selected.sku || '';
         var price = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
-        var url   = _selected.url || '';
+        var url   = _pendingUrl || '';
         var text  = _selected.name;
         if (ref)   { text += '\nRef: ' + ref; }
         if (price) { text += '\nPrecio: ' + price; }
@@ -907,22 +1000,42 @@
         });
     });
 
-    // ── Mejora 6: Filtro "Solo en stock" ─────────────────────────────────────
+    // ── Mejora 6: Filtro "Solo en stock" + Mejora 5: Ordenar ──────────────────
+    // Los dos controles no se componían: cambiar el orden volvía a partir de
+    // _pool completo e ignoraba silenciosamente el checkbox "Solo en stock"
+    // (los productos sin stock reaparecían sin que el checkbox se desmarcara).
+    // Ahora ambos leen el estado de los dos controles y aplican los dos.
+
+    function applyStockAndSort(pool) {
+        var onlyStock = $('#prInStockOnly').is(':checked');
+        var sort      = $('#prSortBy').val();
+        var list      = onlyStock ? pool.filter(function (p) { return p.in_stock; }) : pool.slice();
+        if (sort === 'name_asc')  { list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
+        if (sort === 'name_desc') { list.sort(function (a, b) { return (b.name || '').localeCompare(a.name || ''); }); }
+        if (sort === 'price_asc') { list.sort(function (a, b) { return (a.price_with_tax || 0) - (b.price_with_tax || 0); }); }
+        if (sort === 'price_desc'){ list.sort(function (a, b) { return (b.price_with_tax || 0) - (a.price_with_tax || 0); }); }
+        if (sort === 'stock_desc'){ list.sort(function (a, b) { return (b.stock || 0) - (a.stock || 0); }); }
+        return { list: list, onlyStock: onlyStock, sort: sort };
+    }
 
     $(document).on('change', '#prInStockOnly', function () {
-        var onlyStock = $(this).is(':checked');
         if (!_pool.length) { return; }
-        var filtered = onlyStock ? _pool.filter(function (p) { return p.in_stock; }) : _pool;
-        if (onlyStock && !filtered.length) {
+        var res = applyStockAndSort(_pool);
+        if (res.onlyStock && !res.list.length) {
             // Sin resultados en pool: lanzar nueva búsqueda con in_stock=1
             var base = HDCommerce.base();
             if (!base) { renderListFiltered([], false); return; }
             $('#prProductList').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Buscando en stock…</div>');
             HDCommerce.ajax({ url: base + '/ps/products', method: 'GET', data: { q: _searchQuery, in_stock: 1 } })
-                .done(function (r) { renderListFiltered(r.products || [], false); })
+                .done(function (r) {
+                    // renderList() (no renderListFiltered) para que _pool quede
+                    // reemplazado por esta lista ya filtrada — si no, cambiar el
+                    // orden justo después volvería a partir de la lista vieja.
+                    renderList(r.products || [], false);
+                })
                 .fail(function () { renderListFiltered([], false); });
         } else {
-            renderListFiltered(filtered, _hasMore && !onlyStock);
+            renderListFiltered(res.list, _hasMore && !res.onlyStock && !res.sort);
         }
     });
 
@@ -970,18 +1083,12 @@
         });
     });
 
-    // ── MEJORA 5: Ordenar resultados ─────────────────────────────────────────
+    // ── MEJORA 5: Ordenar resultados (compone con "Solo en stock", ver arriba) ─
 
     $(document).on('change', '#prSortBy', function () {
-        var sort = $(this).val();
         if (!_pool.length) { return; }
-        var sorted = _pool.slice();
-        if (sort === 'name_asc')  { sorted.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
-        if (sort === 'name_desc') { sorted.sort(function (a, b) { return (b.name || '').localeCompare(a.name || ''); }); }
-        if (sort === 'price_asc') { sorted.sort(function (a, b) { return (a.price_with_tax || 0) - (b.price_with_tax || 0); }); }
-        if (sort === 'price_desc'){ sorted.sort(function (a, b) { return (b.price_with_tax || 0) - (a.price_with_tax || 0); }); }
-        if (sort === 'stock_desc'){ sorted.sort(function (a, b) { return (b.stock || 0) - (a.stock || 0); }); }
-        renderListFiltered(sorted, _hasMore && !sort);
+        var res = applyStockAndSort(_pool);
+        renderListFiltered(res.list, _hasMore && !res.sort && !res.onlyStock);
     });
 
     // ── MEJORA 6: Filtro por categoría ──────────────────────────────────────
@@ -1008,7 +1115,7 @@
         if (!_selected) { return; }
         var ref     = (_selectedCombo && _selectedCombo.reference) || _selected.sku || '';
         var price   = _selected.price_with_tax > 0 ? money(_selected.price_with_tax) : '';
-        var url     = _selected.url || '';
+        var url     = _pendingUrl || '';
         var subject = 'Producto recomendado: ' + _selected.name;
         var body    = _selected.name;
         if (ref)   { body += '\nReferencia: ' + ref; }
@@ -1072,7 +1179,9 @@
         $('#prFootSelected').addClass('bv-hidden');
         loadRecommended();
         loadConversationHistory();
-        loadCategories();               // MEJORA 6: cargar categorías al abrir
+        // MEJORA 6 desactivada: el <select> está disabled en el blade (el
+        // filtro por categoría no funciona — ver nota ahí), así que no tiene
+        // sentido gastar una petición en poblar opciones que nadie puede usar.
         detectProductFromChat();        // Mejora 10
     });
 

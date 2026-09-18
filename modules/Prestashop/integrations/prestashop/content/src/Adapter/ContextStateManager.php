@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,17 +67,11 @@ final class ContextStateManager
      */
     private $contextFieldsStack = null;
 
-    /**
-     * @param LegacyContext $legacyContext
-     */
     public function __construct(LegacyContext $legacyContext)
     {
         $this->legacyContext = $legacyContext;
     }
 
-    /**
-     * @return Context
-     */
     public function getContext(): Context
     {
         return $this->legacyContext->getContext();
@@ -85,7 +80,6 @@ final class ContextStateManager
     /**
      * Sets context cart and saves previous value
      *
-     * @param Cart|null $cart
      *
      * @return $this
      */
@@ -100,7 +94,6 @@ final class ContextStateManager
     /**
      * Sets context country and saves previous value
      *
-     * @param Country|null $country
      *
      * @return $this
      */
@@ -115,7 +108,6 @@ final class ContextStateManager
     /**
      * Sets context currency and saves previous value
      *
-     * @param Currency|null $currency
      *
      * @return $this
      */
@@ -130,7 +122,6 @@ final class ContextStateManager
     /**
      * Sets context language and saves previous value
      *
-     * @param Language|null $language
      *
      * @return $this
      */
@@ -145,7 +136,6 @@ final class ContextStateManager
     /**
      * Sets context customer and saves previous value
      *
-     * @param Customer|null $customer
      *
      * @return $this
      */
@@ -160,7 +150,6 @@ final class ContextStateManager
     /**
      * Sets context shop and saves previous value
      *
-     * @param Shop $shop
      *
      * @return $this
      *
@@ -177,8 +166,6 @@ final class ContextStateManager
 
     /**
      * Restores context to a state before changes
-     *
-     * @return self
      */
     public function restorePreviousContext(): self
     {
@@ -205,7 +192,7 @@ final class ContextStateManager
     public function saveCurrentContext(): self
     {
         // No context field has been overridden yet so no need to save/stack it
-        if (null === $this->contextFieldsStack) {
+        if ($this->contextFieldsStack === null) {
             return $this;
         }
 
@@ -223,8 +210,6 @@ final class ContextStateManager
     /**
      * Return the stack of modified fields
      * If it's null, no context field has been overridden
-     *
-     * @return array|null
      */
     public function getContextFieldsStack(): ?array
     {
@@ -233,15 +218,13 @@ final class ContextStateManager
 
     /**
      * Save context field into local array
-     *
-     * @param string $fieldName
      */
     private function saveContextField(string $fieldName)
     {
         $currentStashIndex = $this->getCurrentStashIndex();
         // NOTE: array_key_exists important here, isset cannot be used because it would not detect if null is stored
-        if (!array_key_exists($fieldName, $this->contextFieldsStack[$currentStashIndex])) {
-            if ('shop' === $fieldName) {
+        if (! array_key_exists($fieldName, $this->contextFieldsStack[$currentStashIndex])) {
+            if ($fieldName === 'shop') {
                 $this->contextFieldsStack[$currentStashIndex]['shop'] = $this->getContext()->$fieldName;
                 $this->contextFieldsStack[$currentStashIndex]['shopContext'] = Shop::getContext();
             } else {
@@ -252,15 +235,13 @@ final class ContextStateManager
 
     /**
      * Restores context saved value, and remove save value from local array
-     *
-     * @param string $fieldName
      */
     private function restoreContextField(string $fieldName): void
     {
         $currentStashIndex = $this->getCurrentStashIndex();
         // NOTE: array_key_exists important here, isset cannot be used because it would not detect if null is stored
         if (array_key_exists($fieldName, $this->contextFieldsStack[$currentStashIndex])) {
-            if ('shop' === $fieldName) {
+            if ($fieldName === 'shop') {
                 $this->restoreShopContext($currentStashIndex);
             }
             $this->getContext()->$fieldName = $this->contextFieldsStack[$currentStashIndex][$fieldName];
@@ -270,13 +251,11 @@ final class ContextStateManager
 
     /**
      * Return the index of the current stack
-     *
-     * @return int
      */
     private function getCurrentStashIndex(): int
     {
         // If this is the first time the index is needed we need to init the stack
-        if (null === $this->contextFieldsStack) {
+        if ($this->contextFieldsStack === null) {
             $this->contextFieldsStack = [[]];
         }
 
@@ -286,15 +265,13 @@ final class ContextStateManager
     /**
      * Restore the ShopContext, this is used when Shop has been overridden, we need to
      * restore context->shop of course But also the static fields in Shop class
-     *
-     * @param int $currentStashIndex
      */
     private function restoreShopContext(int $currentStashIndex): void
     {
         $shop = $this->contextFieldsStack[$currentStashIndex]['shop'];
         $shopId = $shop instanceof Shop ? $shop->id : null;
         $shopContext = $this->contextFieldsStack[$currentStashIndex]['shopContext'];
-        if (null !== $shopContext) {
+        if ($shopContext !== null) {
             Shop::setContext($shopContext, $shopId);
         }
         unset($this->contextFieldsStack[$currentStashIndex]['shopContext']);

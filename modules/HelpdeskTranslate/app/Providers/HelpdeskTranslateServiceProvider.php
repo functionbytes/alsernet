@@ -93,6 +93,7 @@ class HelpdeskTranslateServiceProvider extends ModuleServiceProvider
 
         NavService::registerSidebar('settings', [
             'title' => __('helpdesktranslate::messages.sidebar.section'),
+            'order' => 300,
             'items' => [
                 [
                     'label' => __('helpdesktranslate::messages.sidebar.item'),

@@ -31,7 +31,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                 <input type="text" name="name"
                                        class="form-control @error('name') is-invalid @enderror"
                                        value="{{ old('name', $view->name) }}"
@@ -62,8 +62,8 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Ordenar por</label>
                                 <select name="sort_by" class="form-select @error('sort_by') is-invalid @enderror">
-                                    <option value="">Sin ordenacion predeterminada</option>
-                                    @foreach(['created_at' => 'Fecha de creacion', 'updated_at' => 'Ultima actualizacion', 'priority' => 'Prioridad', 'status' => 'Estado', 'assignee_id' => 'Agente asignado'] as $value => $label)
+                                    <option value="">Sin ordenación predeterminada</option>
+                                    @foreach($sortLabels as $value => $label)
                                         <option value="{{ $value }}" {{ old('sort_by', $view->sort_by) === $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
@@ -77,8 +77,8 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Direccion</label>
                                 <select name="sort_direction" class="form-select @error('sort_direction') is-invalid @enderror">
-                                    <option value="desc" {{ old('sort_direction', $view->sort_direction ?? 'desc') === 'desc' ? 'selected' : '' }}>Descendente (mas recientes primero)</option>
-                                    <option value="asc" {{ old('sort_direction', $view->sort_direction) === 'asc' ? 'selected' : '' }}>Ascendente (mas antiguos primero)</option>
+                                    <option value="desc" {{ old('sort_direction', $view->sort_direction ?? 'desc') === 'desc' ? 'selected' : '' }}>Descendente (más recientes primero)</option>
+                                    <option value="asc" {{ old('sort_direction', $view->sort_direction) === 'asc' ? 'selected' : '' }}>Ascendente (más antiguos primero)</option>
                                 </select>
                                 @error('sort_direction')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -185,25 +185,7 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('#viewForm').on('submit', function () {
-        $('.filters-hidden').remove();
-        try {
-            const obj = JSON.parse($('#filtersJson').val() || '{}');
-            const form = this;
-            Object.entries(obj).forEach(function ([k, v]) {
-                $(form).append($('<input>', {
-                    type: 'hidden',
-                    class: 'filters-hidden',
-                    name: 'filters[' + k + ']',
-                    value: v,
-                }));
-            });
-        } catch (e) {
-            // JSON invalido — no se agregan filtros
-        }
-    });
-});
-</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/views-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/views-form.js')) }}" defer></script>
 @endpush

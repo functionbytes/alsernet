@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
      */
     private $virtualProductFileValidator;
 
-    /**
-     * @param VirtualProductFileValidator $virtualProductFileValidator
-     */
     public function __construct(
         VirtualProductFileValidator $virtualProductFileValidator
     ) {
@@ -61,10 +59,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param VirtualProductFileId $virtualProductFileId
-     *
-     * @return VirtualProductFile
-     *
      * @throws VirtualProductFileNotFoundException
      */
     public function get(VirtualProductFileId $virtualProductFileId): VirtualProductFile
@@ -79,9 +73,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
         return $virtualProductFile;
     }
 
-    /**
-     * @param VirtualProductFileId $virtualProductFileId
-     */
     public function delete(VirtualProductFileId $virtualProductFileId): void
     {
         $this->deleteObjectModel(
@@ -91,10 +82,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return VirtualProductFile
-     *
      * @throws VirtualProductFileNotFoundException
      */
     public function findByProductId(ProductId $productId): VirtualProductFile
@@ -109,7 +96,7 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
             );
         }
 
-        if (!$id) {
+        if (! $id) {
             throw new VirtualProductFileNotFoundException(sprintf(
                 'Cannot find VirtualProduct for product %d',
                 $productId->getValue()
@@ -120,10 +107,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param VirtualProductFile $virtualProductFile
-     *
-     * @return VirtualProductFileId
-     *
      * @throws CannotAddVirtualProductFileException
      */
     public function add(VirtualProductFile $virtualProductFile): VirtualProductFileId
@@ -134,9 +117,6 @@ class VirtualProductFileRepository extends AbstractObjectModelRepository
         return new VirtualProductFileId($id);
     }
 
-    /**
-     * @param VirtualProductFile $virtualProductFile
-     */
     public function update(VirtualProductFile $virtualProductFile): void
     {
         $this->virtualProductFileValidator->validate($virtualProductFile);

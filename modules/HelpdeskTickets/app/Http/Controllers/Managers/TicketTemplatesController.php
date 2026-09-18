@@ -195,4 +195,28 @@ class TicketTemplatesController extends Controller
             ->route('manager.helpdesk.ticket-templates.index')
             ->with('success', __('helpdesktickets::helpdesktickets.messages.template_deleted'));
     }
+
+    /**
+     * "Usarla como base para la mía": un agente sin helpdesk.tickets.manage
+     * no puede editar una plantilla general, pero sí puede querer partir de
+     * ella para tener su propia copia editable. Mismo gate que view() —
+     * cualquier plantilla que el agente puede VER en el listado (general o
+     * suya) se puede duplicar; la copia nace SIEMPRE personal (created_by =
+     * quien duplica), incluso si el original era general, porque de eso se
+     * trata: una versión propia que no dependa de permisos de gestión.
+     */
+    public function duplicate(Request $request, TicketTemplate $ticketTemplate): RedirectResponse
+    {
+        $this->authorize('view', $ticketTemplate);
+
+        $copy = $ticketTemplate->replicate(['created_by']);
+        $copy->name = $ticketTemplate->name.' (copia)';
+        $copy->created_by = $request->user()->id;
+        $copy->is_active = true;
+        $copy->save();
+
+        return redirect()
+            ->route('manager.helpdesk.ticket-templates.edit', $copy->id)
+            ->with('success', 'Plantilla duplicada. Ya es tuya: edítala como quieras.');
+    }
 }

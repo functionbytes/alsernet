@@ -26,7 +26,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger" id="bv-archive-conv-delete">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_delete_permanently') }}</button>
+            <button class="btn-brand" id="bv-archive-conv-delete">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_delete_permanently') }}</button>
             <button class="btn-secondary" id="bv-archive-conv-archive">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_archive_instead') }}</button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
@@ -35,62 +35,8 @@
 
 @once
 @push('scripts')
-<script>
-(function ($) {
-    'use strict';
-
-    function getConvId() {
-        return $('.bv-composer').data('bv-conversation-id') || null;
-    }
-
-    function closeBvModal(name) {
-        $('[data-bv-modal-name="' + name + '"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
-    }
-
-    $(document).on('click', '#bv-archive-conv-archive', function () {
-        var convId = getConvId();
-        if (!convId) {
-            if (window.toastr) { toastr.warning('Sin conversación activa'); }
-            return;
-        }
-        var $btn = $(this).prop('disabled', true);
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/archive',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function () {
-            closeBvModal('archive-conv');
-            if (window.toastr) { toastr.success('Conversación archivada'); }
-            $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al archivar';
-            if (window.toastr) { toastr.error(msg); }
-        }).always(function () { $btn.prop('disabled', false); });
-    });
-
-    $(document).on('click', '#bv-archive-conv-delete', function () {
-        var convId = getConvId();
-        if (!convId) {
-            if (window.toastr) { toastr.warning('Sin conversación activa'); }
-            return;
-        }
-        var $btn = $(this).prop('disabled', true);
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId,
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function () {
-            closeBvModal('archive-conv');
-            if (window.toastr) { toastr.success('Conversación eliminada'); }
-            $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al eliminar';
-            if (window.toastr) { toastr.error(msg); }
-        }).always(function () { $btn.prop('disabled', false); });
-    });
-
-}(window.jQuery));
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/archive-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/archive-conv.js')) }}" defer></script>
 @endpush
 @endonce

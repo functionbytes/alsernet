@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,14 +65,11 @@ class AccessDeniedListener
         $this->session = $session;
     }
 
-    /**
-     * @param GetResponseForExceptionEvent $event
-     */
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
-        if (!$event->isMasterRequest()
-            || !$event->getException() instanceof AccessDeniedException
-            || !$securityConfigurations = $event->getRequest()->attributes->get('_security')
+        if (! $event->isMasterRequest()
+            || ! $event->getException() instanceof AccessDeniedException
+            || ! $securityConfigurations = $event->getRequest()->attributes->get('_security')
         ) {
             return;
         }
@@ -90,9 +88,6 @@ class AccessDeniedListener
     }
 
     /**
-     * @param Request $request
-     * @param AdminSecurity $adminSecurity
-     *
      * @return Response
      */
     private function getAccessDeniedResponse(Request $request, AdminSecurity $adminSecurity)
@@ -114,8 +109,6 @@ class AccessDeniedListener
     /**
      * Compute the url for the redirection.
      *
-     * @param AdminSecurity $adminSecurity
-     * @param Request $request
      *
      * @return string
      */
@@ -139,8 +132,6 @@ class AccessDeniedListener
     /**
      * Gets query parameters by comparing them to the current request attributes.
      *
-     * @param array $queryParametersToKeep
-     * @param Request $request
      *
      * @return array
      */
@@ -150,7 +141,7 @@ class AccessDeniedListener
 
         foreach ($queryParametersToKeep as $queryParameterName) {
             $value = $request->get($queryParameterName);
-            if (null !== $value) {
+            if ($value !== null) {
                 $result[$queryParameterName] = $value;
             }
         }
@@ -159,8 +150,6 @@ class AccessDeniedListener
     }
 
     /**
-     * @param AdminSecurity $adminSecurity
-     *
      * @return string
      */
     private function getErrorMessage(AdminSecurity $adminSecurity)

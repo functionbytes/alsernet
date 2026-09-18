@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ final class BulkDeleteAttributeGroupCommand
     private $attributeGroupIds;
 
     /**
-     * @param int[] $attributeGroupIds
+     * @param  int[]  $attributeGroupIds
      *
      * @throws AttributeGroupConstraintException
      */
@@ -58,8 +59,6 @@ final class BulkDeleteAttributeGroupCommand
     }
 
     /**
-     * @param array $attributeGroupIds
-     *
      * @throws AttributeGroupConstraintException
      */
     private function setAttributeGroupIds(array $attributeGroupIds)

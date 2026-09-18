@@ -23,13 +23,9 @@
     </div>
 </div>
 
+{{-- CSS del módulo (.nc-platform-group) la carga modals/customer-integrations.blade.php
+     (helpdeskintegration.css), que siempre se incluye junto a este modal. --}}
 @once
-@push('css')
-<style>
-    .nc-platform-group { padding: 10px; }
-    .nc-platform-group .bv-modal-label { padding: 10px; }
-</style>
-@endpush
 @push('scripts')
 <script>
     window.HelpdeskIntegrationLang = Object.assign(window.HelpdeskIntegrationLang || {}, @json(__('helpdeskintegration::messages.js')));

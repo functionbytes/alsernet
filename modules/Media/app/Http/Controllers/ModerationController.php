@@ -19,6 +19,7 @@ class ModerationController extends Controller
                     ->orWhereRaw("JSON_EXTRACT(metadata, '$.ai_tags') IS NOT NULL");
             })
             ->where('visibility', 'public')
+            // La tabla users no tiene columna `name`: es firstname/lastname.
             ->with('user:id,firstname,lastname,email')
             ->paginate(20);
 

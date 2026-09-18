@@ -4,6 +4,9 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Otros\AsientoCent;
+use Modules\Erp\Models\Oracle\Otros\Empresa;
+use Modules\Erp\Models\Oracle\Otros\Subcuenta;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -74,7 +77,7 @@ class ApunteCent extends Model
      */
     public function apunte()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ApunteCent::class, 'idapunte', 'idapunte');
+        return $this->belongsTo(ApunteCent::class, 'idapunte', 'idapunte');
     }
 
     /**
@@ -83,7 +86,7 @@ class ApunteCent extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
     }
 
     /**
@@ -92,7 +95,7 @@ class ApunteCent extends Model
      */
     public function subcuenta()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
+        return $this->belongsTo(Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
     }
 
     /**
@@ -101,7 +104,7 @@ class ApunteCent extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
     }
 
     /**
@@ -110,6 +113,6 @@ class ApunteCent extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,8 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
     private $languageId;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLanguageId
+     * @param  string  $dbPrefix
+     * @param  int  $contextLanguageId
      */
     public function __construct(
         Connection $connection,
@@ -69,8 +68,7 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('p.id_profile, pl.name')
-        ;
+            ->select('p.id_profile, pl.name');
 
         $this->searchCriteriaApplicator
             ->applySorting($searchCriteria, $qb)
@@ -85,8 +83,7 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(p.id_profile)')
-        ;
+            ->select('COUNT(p.id_profile)');
 
         return $qb;
     }
@@ -94,7 +91,6 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -102,11 +98,10 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'profile', 'p')
-            ->innerJoin('p', $this->dbPrefix . 'profile_lang', 'pl', 'p.id_profile = pl.id_profile')
+            ->from($this->dbPrefix.'profile', 'p')
+            ->innerJoin('p', $this->dbPrefix.'profile_lang', 'pl', 'p.id_profile = pl.id_profile')
             ->andWhere('pl.id_lang = :language')
-            ->setParameter('language', $this->languageId)
-        ;
+            ->setParameter('language', $this->languageId);
 
         $allowedFilters = [
             'id_profile',
@@ -114,11 +109,11 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $name => $value) {
-            if (!in_array($name, $allowedFilters, true)) {
+            if (! in_array($name, $allowedFilters, true)) {
                 continue;
             }
 
-            if ('id_profile' === $name) {
+            if ($name === 'id_profile') {
                 $qb->andWhere("p.id_profile = :$name");
                 $qb->setParameter($name, $value);
 
@@ -126,7 +121,7 @@ final class ProfileQueryBuilder extends AbstractDoctrineQueryBuilder
             }
 
             $qb->andWhere("$name LIKE :$name");
-            $qb->setParameter($name, '%' . $value . '%');
+            $qb->setParameter($name, '%'.$value.'%');
         }
 
         return $qb;

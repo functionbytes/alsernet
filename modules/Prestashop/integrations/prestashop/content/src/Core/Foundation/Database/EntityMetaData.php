@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,10 +33,12 @@ class EntityMetaData
      * @var string|null
      */
     public $entityClassName;
+
     /**
      * @var array|null
      */
     private $primaryKeyFieldnames;
+
     /**
      * @var string|null
      */
@@ -54,8 +57,6 @@ class EntityMetaData
     }
 
     /**
-     * @param array $primaryKeyFieldnames
-     *
      * @return self
      */
     public function setPrimaryKeyFieldNames(array $primaryKeyFieldnames)

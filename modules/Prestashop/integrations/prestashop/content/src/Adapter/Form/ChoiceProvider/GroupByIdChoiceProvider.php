@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ final class GroupByIdChoiceProvider implements FormChoiceProviderInterface
     private $contextLangId;
 
     /**
-     * @param ConfigurationInterface $configuration
-     * @param int $contextLangId
+     * @param  int  $contextLangId
      */
     public function __construct(ConfigurationInterface $configuration, $contextLangId)
     {

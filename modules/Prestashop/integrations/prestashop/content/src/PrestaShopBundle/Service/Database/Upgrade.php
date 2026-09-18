@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,7 @@ class Upgrade extends AbstractCommand
      */
     public function addDoctrineSchemaUpdate()
     {
-        $command = new UpdateSchemaCommand();
+        $command = new UpdateSchemaCommand;
         $this->application->add($command);
 
         $this->commands[] = [

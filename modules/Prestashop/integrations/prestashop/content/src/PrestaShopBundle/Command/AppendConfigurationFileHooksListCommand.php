@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,7 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     {
         $this
             ->setName('prestashop:update:configuration-file-hooks-listing')
-            ->setDescription('Appends configuration file hooks list')
-        ;
+            ->setDescription('Appends configuration file hooks list');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -61,7 +61,7 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
 
         $io = new SymfonyStyle($input, $output);
 
-        if (!in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
+        if (! in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
             $io->warning('Dev or test environment is required to fully list all the hooks');
 
             return 1;
@@ -76,7 +76,7 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
             $io->error($e->getMessage());
         }
 
-        if (!empty($addedHooks)) {
+        if (! empty($addedHooks)) {
             $io->title('Hooks added to configuration file');
             $io->note(sprintf('Total hooks added: %s', count($addedHooks)));
 
@@ -95,11 +95,11 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     {
         /** @var LegacyContext $legacyContext */
         $legacyContext = $this->getContainer()->get('prestashop.adapter.legacy.context');
-        //We need to have an employee or the listing hooks don't work
-        //see LegacyHookSubscriber
-        if (!$legacyContext->getContext()->employee) {
-            //Even a non existing employee is fine
-            $legacyContext->getContext()->employee = new Employee();
+        // We need to have an employee or the listing hooks don't work
+        // see LegacyHookSubscriber
+        if (! $legacyContext->getContext()->employee) {
+            // Even a non existing employee is fine
+            $legacyContext->getContext()->employee = new Employee;
         }
     }
 
@@ -138,24 +138,22 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     /**
      * Appends given hooks in the configuration file.
      *
-     * @param HookDescription[] $hookDescriptions
-     *
+     * @param  HookDescription[]  $hookDescriptions
      * @return array
      *
      * @throws Exception
      */
     private function appendHooksInConfigurationFile(array $hookDescriptions)
     {
-        $hookConfigurationFileLocation = $this->getContainer()->get('kernel')->getRootDir() . '/../install-dev/data/xml/';
+        $hookConfigurationFileLocation = $this->getContainer()->get('kernel')->getRootDir().'/../install-dev/data/xml/';
         $hookFileName = 'hook.xml';
-        $fullFilePath = $hookConfigurationFileLocation . $hookFileName;
+        $fullFilePath = $hookConfigurationFileLocation.$hookFileName;
 
-        $filesFinder = new Finder();
+        $filesFinder = new Finder;
         $filesFinder
             ->files()
             ->in($hookConfigurationFileLocation)
-            ->name($hookFileName)
-        ;
+            ->name($hookFileName);
 
         $hookFileContent = null;
 
@@ -165,13 +163,13 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
             break;
         }
 
-        if (!$hookFileContent) {
+        if (! $hookFileContent) {
             throw new Exception(sprintf('File %s has not been found', $fullFilePath));
         }
 
         $xmlFileContent = new SimpleXMLElement($hookFileContent);
 
-        if (!isset($xmlFileContent->entities, $xmlFileContent->entities->hook)) {
+        if (! isset($xmlFileContent->entities, $xmlFileContent->entities->hook)) {
             return [];
         }
 
@@ -193,7 +191,7 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
             $addedHooks[] = $hookDescription;
         }
 
-        if (!$xmlFileContent->saveXML($fullFilePath)) {
+        if (! $xmlFileContent->saveXML($fullFilePath)) {
             throw new Exception(sprintf('Failed to save new xml content to file %s', $fullFilePath));
         }
 
@@ -203,7 +201,6 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     /**
      * Gets existing hook names which are already defined in the file.
      *
-     * @param SimpleXMLElement $hooksFromXmlFile
      *
      * @return array
      */
@@ -211,7 +208,7 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     {
         $hookNames = [];
         foreach ($hooksFromXmlFile as $hook) {
-            if (!isset($hook->name)) {
+            if (! isset($hook->name)) {
                 continue;
             }
 
@@ -224,7 +221,6 @@ class AppendConfigurationFileHooksListCommand extends ContainerAwareCommand
     /**
      * Gets hook descriptions
      *
-     * @param array $hookNames
      *
      * @return HookDescription[]
      */

@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,7 +18,7 @@ class WhatsAppTemplatesController extends Controller
     public function __construct()
     {
         $this->middleware('can:helpdesk.whatsapp-templates.view')->only(['index']);
-        $this->middleware('can:helpdesk.whatsapp-templates.manage')->only(['sync', 'create', 'store']);
+        $this->middleware('can:helpdesk.whatsapp-templates.manage')->only(['sync', 'create', 'store', 'bulkAction']);
     }
 
     public function index(Request $request): View
@@ -41,7 +42,13 @@ class WhatsAppTemplatesController extends Controller
             $query->where('category', $request->category);
         }
 
-        $templates = $query->latest()->paginate(20);
+        // Casi todas las plantillas existen una vez por idioma, asi que sin
+        // este filtro la lista se lee mal.
+        if ($request->filled('language')) {
+            $query->where('language', $request->language);
+        }
+
+        $templates = $query->latest()->paginate(20)->withQueryString();
 
         $stats = [
             'total' => WhatsAppTemplate::query()->count(),
@@ -50,7 +57,13 @@ class WhatsAppTemplatesController extends Controller
             'rejected' => WhatsAppTemplate::query()->where('status', 'rejected')->count(),
         ];
 
-        return view('helpdesk::settings.whatsapp-templates.index', compact('templates', 'stats'));
+        $languages = WhatsAppTemplate::query()
+            ->whereNotNull('language')
+            ->distinct()
+            ->orderBy('language')
+            ->pluck('language');
+
+        return view('helpdesk::settings.whatsapp-templates.index', compact('templates', 'stats', 'languages'));
     }
 
     public function sync(): RedirectResponse
@@ -60,6 +73,30 @@ class WhatsAppTemplatesController extends Controller
         return redirect()
             ->route('settings.helpdesk.whatsapp-templates.index')
             ->with('success', 'Sincronizacion iniciada. Los templates se actualizaran en breve.');
+    }
+
+    /**
+     * Borrado en lote del espejo local.
+     *
+     * Las plantillas se sincronizan desde Meta: esto solo limpia la copia de
+     * aqui, util para las que ya no existen alli. Una plantilla que siga viva
+     * en Meta vuelve a aparecer en la siguiente sincronizacion, y eso es lo
+     * correcto — no hay nada que borrar en Meta desde esta pantalla.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = WhatsAppTemplate::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json([
+            'message' => $count.' plantilla(s) eliminada(s) de la copia local.',
+            'count' => $count,
+        ]);
     }
 
     public function create(): View

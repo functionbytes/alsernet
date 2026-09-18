@@ -4,24 +4,24 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include _PS_ADMIN_DIR_ . '/../config/config.inc.php';
-include _PS_ADMIN_DIR_ . '/../init.php';
+include _PS_ADMIN_DIR_.'/../config/config.inc.php';
+include _PS_ADMIN_DIR_.'/../init.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $datos = str_replace('[','',$_POST['selectedCategories']);
-    $datos = str_replace(']','',$datos);
-    $datos = str_replace('"','',$datos);
+    $datos = str_replace('[', '', $_POST['selectedCategories']);
+    $datos = str_replace(']', '', $datos);
+    $datos = str_replace('"', '', $datos);
 
-    Db::getInstance()->execute("DELETE FROM aalv_manufacturer_category_exclude;");
+    Db::getInstance()->execute('DELETE FROM aalv_manufacturer_category_exclude;');
     Db::getInstance()->execute("INSERT INTO aalv_manufacturer_category_exclude VALUES ('".$datos."');");
-    header("Location: https://a-alvarez.com/scriptsalsernet/excluir_categorias_marcas.php");
+    header('Location: https://a-alvarez.com/scriptsalsernet/excluir_categorias_marcas.php');
 }
 
-
-function construirArbolCategorias($parentId = 0) {
+function construirArbolCategorias($parentId = 0)
+{
     $query = "SELECT
                 cate.id_category,
                 acl.name,
@@ -35,11 +35,11 @@ function construirArbolCategorias($parentId = 0) {
                 cate.id_parent = $parentId";
     $columna = Db::getInstance()->ExecuteS($query);
 
-    $result = array(); // Arreglo para almacenar los resultados
+    $result = []; // Arreglo para almacenar los resultados
 
     if (count($columna) != 0) {
         foreach ($columna as $key => $value) {
-            if($value['id_category'] == 2821 || $value['id_category'] == 2820 || $value['id_category'] == 12){
+            if ($value['id_category'] == 2821 || $value['id_category'] == 2820 || $value['id_category'] == 12) {
                 continue;
             }
             $categoryId = $value['id_category'];
@@ -61,34 +61,33 @@ function construirArbolCategorias($parentId = 0) {
             }
 
             // Agregar los datos de la categoría actual al resultado
-            $categoria = array(
+            $categoria = [
                 'id' => $categoryId,
-                'text' => '['.$categoryId.'] ['.$categoryName.'] ['.$active.'] ['.$productCount.']'
-            );
+                'text' => '['.$categoryId.'] ['.$categoryName.'] ['.$active.'] ['.$productCount.']',
+            ];
 
             // Llamar recursivamente para las categorías hijas con un nivel aumentado
             $categoria['children'] = construirArbolCategorias($categoryId);
 
-            if(count($categoria['children']) > 0){
-                if(idSeleccionado($categoryId)){
+            if (count($categoria['children']) > 0) {
+                if (idSeleccionado($categoryId)) {
                     $categoria['state'] = ['selected' => true,
-                                            'opened' => true];
+                        'opened' => true];
                     // $categoria['state']['selected'] = [$categoryId => true];
-                }else{
+                } else {
                     $categoria['state'] = ['selected' => false,
-                                            'opened' => true ];
+                        'opened' => true];
                 }
                 // $categoria['state'] = ['opened' => true];
-            }else{
-                if(idSeleccionado($categoryId)){
+            } else {
+                if (idSeleccionado($categoryId)) {
                     $categoria['state'] = ['selected' => true,
-                                            'opened' => false ];
-                }else{
+                        'opened' => false];
+                } else {
                     $categoria['state'] = ['selected' => false,
-                                        'opened' => false ];
+                        'opened' => false];
                 }
             }
-
 
             $result[] = $categoria;
         }
@@ -97,13 +96,15 @@ function construirArbolCategorias($parentId = 0) {
     return $result;
 }
 
-function idSeleccionado($categoryId){
-    $sql = Db::getInstance()->ExecuteS("SELECT * FROM aalv_manufacturer_category_exclude");
-    $datos = explode(",",$sql[0]['value']);
+function idSeleccionado($categoryId)
+{
+    $sql = Db::getInstance()->ExecuteS('SELECT * FROM aalv_manufacturer_category_exclude');
+    $datos = explode(',', $sql[0]['value']);
 
-    if(in_array($categoryId, $datos)){
+    if (in_array($categoryId, $datos)) {
         return true;
     }
+
     return false;
 }
 

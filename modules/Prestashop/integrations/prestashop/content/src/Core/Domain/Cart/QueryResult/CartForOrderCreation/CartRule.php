@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,12 +52,6 @@ class CartRule
      */
     private $value;
 
-    /**
-     * @param int $cartRuleId
-     * @param string $name
-     * @param string $description
-     * @param string $value
-     */
     public function __construct(
         int $cartRuleId,
         string $name,
@@ -69,33 +64,21 @@ class CartRule
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getCartRuleId(): int
     {
         return $this->cartRuleId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;

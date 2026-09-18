@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,20 +41,14 @@ class FilterCategorySearchCriteriaListener
      */
     private $categorySearchCriteriaFactory;
 
-    /**
-     * @param DecoratedSearchCriteriaFactory $categorySearchCriteriaFactory
-     */
     public function __construct(DecoratedSearchCriteriaFactory $categorySearchCriteriaFactory)
     {
         $this->categorySearchCriteriaFactory = $categorySearchCriteriaFactory;
     }
 
-    /**
-     * @param FilterSearchCriteriaEvent $event
-     */
     public function onFilterSearchCriteria(FilterSearchCriteriaEvent $event)
     {
-        if (!$event->getSearchCriteria() instanceof CategoryFilters) {
+        if (! $event->getSearchCriteria() instanceof CategoryFilters) {
             return;
         }
 

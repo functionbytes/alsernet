@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ class CategoriesType extends TranslatorAwareType
                 'label' => $this->trans('Create a new category', 'Admin.Catalog.Feature'),
                 'label_tag_name' => 'h2',
                 'label_help_box' => $this->trans('If you want to quickly create a new category, you can do it here. Don’t forget to then go to the Categories page to fill in the needed details (description, image, etc.). A new category will not automatically appear in your shop\'s menu, please read the Help about it.', 'Admin.Catalog.Help'),
-            ])
-        ;
+            ]);
     }
 
     /**

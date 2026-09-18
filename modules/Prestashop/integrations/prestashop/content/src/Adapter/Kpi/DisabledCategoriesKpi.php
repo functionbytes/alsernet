@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,7 @@ final class DisabledCategoriesKpi implements KpiInterface
     private $sourceUrl;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $kpiConfiguration
-     * @param string $sourceUrl
+     * @param  string  $sourceUrl
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -73,13 +72,13 @@ final class DisabledCategoriesKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-disabled-categories';
         $helper->icon = 'toggle_off';
         $helper->color = 'color1';
         $helper->title = $this->translator->trans('Disabled Categories', [], 'Admin.Catalog.Feature');
 
-        if (false !== $this->kpiConfiguration->get('DISABLED_CATEGORIES')) {
+        if ($this->kpiConfiguration->get('DISABLED_CATEGORIES') !== false) {
             $helper->value = $this->kpiConfiguration->get('DISABLED_CATEGORIES');
         }
 

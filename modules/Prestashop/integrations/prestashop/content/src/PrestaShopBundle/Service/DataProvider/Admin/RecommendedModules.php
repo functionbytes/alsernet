@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,6 @@ class RecommendedModules
      * Constructor.
      *
      * Dependency injection will give the required services.
-     *
-     * @param Router $router
      */
     public function __construct(Router $router)
     {
@@ -56,9 +55,8 @@ class RecommendedModules
     /**
      * Gets all recommended modules for a specific domain.
      *
-     * @param string $domain The given domain to filter recommended modules
-     * @param bool|false $randomize To shuffle results
-     *
+     * @param  string  $domain  The given domain to filter recommended modules
+     * @param  bool|false  $randomize  To shuffle results
      * @return array A list of modules names (identifiers)
      */
     public function getRecommendedModuleIdList($domain = 'administration', $randomize = false)
@@ -84,8 +82,7 @@ class RecommendedModules
     /**
      * Filters the given module list to remove installed ones, and bad filled cases.
      *
-     * @param array $moduleFullList The input list to filter
-     *
+     * @param  array  $moduleFullList  The input list to filter
      * @return array The filtered list of modules
      */
     public function filterInstalledAndBadModules(array $moduleFullList)
@@ -99,7 +96,7 @@ class RecommendedModules
             if ((bool) array_key_exists($module->attributes->get('name'), $installed_modules) === true) {
                 unset($moduleFullList[$key]);
             }
-            if (!isset($module->attributes->get('media')->img)) {
+            if (! isset($module->attributes->get('media')->img)) {
                 unset($moduleFullList[$key]);
             }
         }

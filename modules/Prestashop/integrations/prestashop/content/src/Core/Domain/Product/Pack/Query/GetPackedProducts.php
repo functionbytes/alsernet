@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,16 +42,13 @@ class GetPackedProducts
     private $packId;
 
     /**
-     * @param int $packId id of product which represents the pack
+     * @param  int  $packId  id of product which represents the pack
      */
     public function __construct(int $packId)
     {
         $this->packId = new ProductId($packId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getPackId(): ProductId
     {
         return $this->packId;

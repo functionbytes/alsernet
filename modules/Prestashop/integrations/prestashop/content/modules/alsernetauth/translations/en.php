@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 
 $_MODULE['<{alsernetauth}prestashop>alsernetauth_c77b230fb04d8bb2b20729973a6280e5'] = 'Title login';
 $_MODULE['<{alsernetauth}prestashop>alsernetauth_39c97d6ee6cc0db6f5ff74b3b923fce3'] = 'Description login';

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class BulkDeleteCatalogPriceRuleCommand
     private $catalogPriceRuleIds;
 
     /**
-     * @param int[] $catalogPriceRuleIds
+     * @param  int[]  $catalogPriceRuleIds
      *
      * @throws CatalogPriceRuleConstraintException
      */
@@ -58,7 +59,7 @@ class BulkDeleteCatalogPriceRuleCommand
     }
 
     /**
-     * @param int[] $catalogPriceRuleIds
+     * @param  int[]  $catalogPriceRuleIds
      *
      * @throws CatalogPriceRuleConstraintException
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,8 @@ class SetInternalOrderNoteCommand
     private $internalNote;
 
     /**
-     * @param int $orderId
-     * @param string $internalNote
+     * @param  int  $orderId
+     * @param  string  $internalNote
      */
     public function __construct($orderId, $internalNote)
     {
@@ -75,13 +76,13 @@ class SetInternalOrderNoteCommand
     }
 
     /**
-     * @param string $internalNote
+     * @param  string  $internalNote
      *
      * @throws OrderConstraintException
      */
     private function assertInternalNoteIsString($internalNote)
     {
-        if (!is_string($internalNote)) {
+        if (! is_string($internalNote)) {
             throw new OrderConstraintException('Invalid internal note provided. Internal note must be a string.', OrderConstraintException::INVALID_INTERNAL_NOTE);
         }
     }

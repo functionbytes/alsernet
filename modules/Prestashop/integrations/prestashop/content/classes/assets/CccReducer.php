@@ -24,6 +24,7 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use PrestaShop\PrestaShop\Adapter\Assets\AssetUrlGeneratorTrait;
 use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -35,7 +36,7 @@ class CccReducerCore
     /** @var Filesystem */
     protected $filesystem;
 
-    use PrestaShop\PrestaShop\Adapter\Assets\AssetUrlGeneratorTrait;
+    use AssetUrlGeneratorTrait;
 
     /**
      * @param  string  $cacheDir

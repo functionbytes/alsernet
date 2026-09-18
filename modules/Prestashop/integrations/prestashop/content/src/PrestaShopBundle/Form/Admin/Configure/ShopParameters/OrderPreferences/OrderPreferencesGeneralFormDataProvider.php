@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,7 +78,7 @@ class OrderPreferencesGeneralFormDataProvider implements FormDataProviderInterfa
     public function setData(array $data)
     {
         // If TOS option is disabled - reset the cms id as well
-        if (!$data['enable_tos']) {
+        if (! $data['enable_tos']) {
             $data['tos_cms_id'] = 0;
         }
 
@@ -91,7 +92,6 @@ class OrderPreferencesGeneralFormDataProvider implements FormDataProviderInterfa
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -101,7 +101,7 @@ class OrderPreferencesGeneralFormDataProvider implements FormDataProviderInterfa
         $purchaseMinimumValue = $data['purchase_minimum_value'] ?? null;
 
         // Check if purchase minimum value is a positive number
-        if (!is_numeric($purchaseMinimumValue) || $purchaseMinimumValue < 0) {
+        if (! is_numeric($purchaseMinimumValue) || $purchaseMinimumValue < 0) {
             $errors[] = $this->translator->trans(
                 'Minimum purchase total required in order to validate the order',
                 [],
@@ -114,7 +114,7 @@ class OrderPreferencesGeneralFormDataProvider implements FormDataProviderInterfa
             $tosCmsId = $data['tos_cms_id'];
             $tosCms = $this->cmsDataProvider->getCMSById($tosCmsId);
 
-            if (!$tosCms->id) {
+            if (! $tosCms->id) {
                 $errors[] = [
                     'key' => 'Assign a valid page if you want it to be read.',
                     'domain' => 'Admin.Shopparameters.Notification',

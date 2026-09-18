@@ -25,6 +25,11 @@ class UpdateTicketGeneralSettingsRequest extends FormRequest
             'maximum_allow_replies' => ['nullable', 'integer', 'min:1', 'max:100'],
             'reply_allow_in_hours' => ['nullable', 'integer', 'min:1', 'max:24'],
 
+            // Asignación y estado automáticos al responder (no aplica a notas internas).
+            'assign_on_reply' => ['nullable', 'boolean'],
+            'status_on_reply' => ['nullable', 'boolean'],
+            'status_on_reply_slug' => ['required_if:status_on_reply,1', 'string', 'in:resolved,waiting-customer,on-hold,open'],
+
             'auto_responsetime_ticket' => ['nullable', 'boolean'],
             'auto_responsetime_ticket_time' => ['nullable', 'integer', 'min:1', 'max:365'],
 

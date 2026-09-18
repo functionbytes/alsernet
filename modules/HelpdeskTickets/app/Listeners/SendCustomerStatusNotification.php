@@ -26,9 +26,17 @@ class SendCustomerStatusNotification implements ShouldQueue
 
     public array $backoff = [30, 60, 120];
 
-    public function __construct(private readonly TicketChannelMailerService $channelMailer)
+    public function __construct(private readonly TicketChannelMailerService $channelMailer) {}
+
+    /**
+     * La cola va en viaQueue() y no en el constructor: el Dispatcher lee las
+     * opciones del listener sobre una instancia creada SIN constructor, así
+     * que un $this->queue de ahí nunca se aplicaba y el job caía en
+     * 'default' — cola que ningún worker atiende. Ver SendCustomerConfirmation.
+     */
+    public function viaQueue(): string
     {
-        $this->queue = 'notifications';
+        return 'notifications';
     }
 
     public function handle(TicketStatusChanged $event): void

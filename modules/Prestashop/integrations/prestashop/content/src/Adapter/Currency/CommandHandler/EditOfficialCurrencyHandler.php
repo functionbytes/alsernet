@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ final class EditOfficialCurrencyHandler extends AbstractCurrencyHandler implemen
     {
         try {
             $entity = new Currency($command->getCurrencyId()->getValue());
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CurrencyNotFoundException(sprintf('Currency object with id "%s" was not found for currency update', $command->getCurrencyId()->getValue()));
             }
             $this->verify($entity, $command);
@@ -71,9 +72,6 @@ final class EditOfficialCurrencyHandler extends AbstractCurrencyHandler implemen
     }
 
     /**
-     * @param Currency $entity
-     * @param EditCurrencyCommand $command
-     *
      * @throws CannotDisableDefaultCurrencyException
      * @throws DefaultCurrencyInMultiShopException
      */

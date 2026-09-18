@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,6 @@ abstract class AbstractProfileHandler
     /**
      * Checks if given profile is not assigned to any employee.
      *
-     * @param Profile $profile
      *
      * @throws FailedToDeleteProfileException
      */
@@ -46,7 +46,7 @@ abstract class AbstractProfileHandler
     {
         $profileEmployees = Employee::getEmployeesByProfile($profile->id);
 
-        if (!empty($profileEmployees)) {
+        if (! empty($profileEmployees)) {
             throw new FailedToDeleteProfileException(sprintf('Failed to delete profile with id "%d", because it is assigned to employee.', $profile->id), FailedToDeleteProfileException::PROFILE_IS_ASSIGNED_TO_EMPLOYEE);
         }
     }

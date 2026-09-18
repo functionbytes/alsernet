@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetauth}prestashop>authcontroller_59e4904d4366fab35a8282f418e699de'] = 'Adresse email invalide';
 $_MODULE['<{alsernetauth}prestashop>authcontroller_cba0b206627d45fbf0ae707e20d4a38f'] = 'Mot de passe non valide';
 $_MODULE['<{alsernetauth}prestashop>authcontroller_851b596481f3c3e6d709ca2004536017'] = 'Prénom invalide';

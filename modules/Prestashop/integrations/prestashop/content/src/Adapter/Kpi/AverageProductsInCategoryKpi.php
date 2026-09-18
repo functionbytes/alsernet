@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,7 @@ final class AverageProductsInCategoryKpi implements KpiInterface
     private $sourceUrl;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $kpiConfiguration
-     * @param string $sourceUrl
+     * @param  string  $sourceUrl
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -73,14 +72,14 @@ final class AverageProductsInCategoryKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-inventaries-per-category';
         $helper->icon = 'search';
         $helper->color = 'color4';
         $helper->title =
             $this->translator->trans('Average number of inventaries per category', [], 'Admin.Catalog.Feature');
 
-        if (false !== $this->kpiConfiguration->get('PRODUCTS_PER_CATEGORY')) {
+        if ($this->kpiConfiguration->get('PRODUCTS_PER_CATEGORY') !== false) {
             $helper->value = $this->kpiConfiguration->get('PRODUCTS_PER_CATEGORY');
         }
 

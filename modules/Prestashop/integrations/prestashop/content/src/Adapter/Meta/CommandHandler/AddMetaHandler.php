@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,10 +69,7 @@ final class AddMetaHandler implements AddMetaHandlerInterface
     private $metaDataProvider;
 
     /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param ValidatorInterface $validator
-     * @param int $defaultLanguageId
-     * @param MetaDataProvider $metaDataProvider
+     * @param  int  $defaultLanguageId
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -98,7 +96,7 @@ final class AddMetaHandler implements AddMetaHandlerInterface
         $this->assertIsValidPageName($command);
 
         try {
-            $entity = new Meta();
+            $entity = new Meta;
             $entity->page = $command->getPageName()->getValue();
             $entity->title = $command->getLocalisedPageTitles();
             $entity->description = $command->getLocalisedMetaDescription();
@@ -106,7 +104,7 @@ final class AddMetaHandler implements AddMetaHandlerInterface
 
             $rewriteUrls = $command->getLocalisedRewriteUrls();
             foreach ($rewriteUrls as $idLang => $rewriteUrl) {
-                if (!$rewriteUrl) {
+                if (! $rewriteUrl) {
                     $rewriteUrls[$idLang] = $rewriteUrls[$this->defaultLanguageId];
                 }
             }
@@ -114,7 +112,7 @@ final class AddMetaHandler implements AddMetaHandlerInterface
             $entity->url_rewrite = $rewriteUrls;
             $entity->add();
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CannotAddMetaException(sprintf('Invalid entity id after creation: %s', $entity->id));
             }
         } catch (PrestaShopException $exception) {
@@ -127,47 +125,41 @@ final class AddMetaHandler implements AddMetaHandlerInterface
     }
 
     /**
-     * @param AddMetaCommand $command
-     *
      * @throws MetaConstraintException
      */
     private function assertUrlRewriteHasDefaultLanguage(AddMetaCommand $command)
     {
         $urlRewriteErrors = $this->validator->validate(
             $command->getLocalisedRewriteUrls(),
-            new DefaultLanguage()
+            new DefaultLanguage
         );
 
-        if (0 !== count($urlRewriteErrors) && 'index' !== $command->getPageName()->getValue()) {
+        if (count($urlRewriteErrors) !== 0 && $command->getPageName()->getValue() !== 'index') {
             throw new MetaConstraintException('The url rewrite is missing for the default language when creating new meta record', MetaConstraintException::INVALID_URL_REWRITE);
         }
     }
 
     /**
-     * @param AddMetaCommand $command
-     *
      * @throws MetaConstraintException
      */
     private function assertIsUrlRewriteValid(AddMetaCommand $command)
     {
         foreach ($command->getLocalisedRewriteUrls() as $idLang => $rewriteUrl) {
-            $errors = $this->validator->validate($rewriteUrl, new IsUrlRewrite());
+            $errors = $this->validator->validate($rewriteUrl, new IsUrlRewrite);
 
-            if (0 !== count($errors)) {
+            if (count($errors) !== 0) {
                 throw new MetaConstraintException(sprintf('Url rewrite %s for language with id %s is not valid', $rewriteUrl, $idLang), MetaConstraintException::INVALID_URL_REWRITE);
             }
         }
     }
 
     /**
-     * @param AddMetaCommand $command
-     *
      * @throws MetaConstraintException
      */
     private function assertIsValidPageName(AddMetaCommand $command)
     {
         $availablePages = $this->metaDataProvider->getAvailablePages();
-        if (!in_array($command->getPageName()->getValue(), $availablePages, true)) {
+        if (! in_array($command->getPageName()->getValue(), $availablePages, true)) {
             throw new MetaConstraintException(sprintf('Given page name %s is not available. Available values are %s', $command->getPageName()->getValue(), var_export($availablePages, true)), MetaConstraintException::INVALID_PAGE_NAME);
         }
     }

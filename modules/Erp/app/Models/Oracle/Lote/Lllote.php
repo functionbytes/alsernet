@@ -3,6 +3,8 @@
 namespace Modules\Erp\Models\Oracle\Lote;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -48,7 +50,7 @@ class Lllote extends Model
      */
     public function lllote()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lllote::class, 'idlllote', 'idlllote');
+        return $this->belongsTo(Lllote::class, 'idlllote', 'idlllote');
     }
 
     /**
@@ -57,7 +59,7 @@ class Lllote extends Model
      */
     public function llote()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Llote::class, 'idllote', 'idllote');
+        return $this->belongsTo(Llote::class, 'idllote', 'idllote');
     }
 
     /**
@@ -66,7 +68,7 @@ class Lllote extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -75,6 +77,6 @@ class Lllote extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 }

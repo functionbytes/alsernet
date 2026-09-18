@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class GiftProductAction implements CartRuleActionInterface
      */
     private $giftProduct;
 
-    /**
-     * @param GiftProduct $giftProduct
-     */
     public function __construct(GiftProduct $giftProduct)
     {
         $this->giftProduct = $giftProduct;

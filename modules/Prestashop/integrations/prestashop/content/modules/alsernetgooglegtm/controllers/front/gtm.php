@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../../../config/config.inc.php');
-require_once(dirname(__FILE__) . '/../../../../init.php');
-require_once(dirname(__FILE__) . '/../../alsernetgooglegtm.php');
+require_once dirname(__FILE__).'/../../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../../init.php';
+require_once dirname(__FILE__).'/../../alsernetgooglegtm.php';
 
 class alsernetgooglegtmgtmModuleFrontController extends ModuleFrontController
 {
@@ -13,23 +13,21 @@ class alsernetgooglegtmgtmModuleFrontController extends ModuleFrontController
 
     public function initContent()
     {
-        //*parent::initContent();
+        // *parent::initContent();
 
+        $gtm = new Alsernetgooglegtm;
 
-        $gtm = new Alsernetgooglegtm();
-
-        //die();
+        // die();
         switch (Tools::getValue('method')) {
 
-                case 'select':
+            case 'select':
 
-                    $product = Tools::getValue('product');
-                    $category = Tools::getValue('category');
-                    $response  = $gtm->handleSelect($product,$category);
+                $product = Tools::getValue('product');
+                $category = Tools::getValue('category');
+                $response = $gtm->handleSelect($product, $category);
                 break;
 
         }
-
 
         header('Access-Control-Allow-Origin: *');
         header('Content-Type: application/json');

@@ -35,6 +35,8 @@ class UpdateIntegrationProviderRequest extends FormRequest
             'search_types.*.label' => ['required_with:search_types', 'string', 'max:50'],
             'credentials' => ['nullable', 'array'],
             'credentials.*' => ['nullable', 'string', 'max:1000'],
+            'credentials_clear' => ['nullable', 'array'],
+            'credentials_clear.*' => ['string', Rule::in(['api_key', 'api_secret', 'base_url'])],
             'config' => ['nullable', 'array'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:500'],

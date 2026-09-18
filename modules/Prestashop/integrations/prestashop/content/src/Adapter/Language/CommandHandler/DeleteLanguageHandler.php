@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,7 +66,7 @@ final class DeleteLanguageHandler extends AbstractLanguageHandler implements Del
         // language must be deleted in "ALL SHOPS" context
         Shop::setContext(Shop::CONTEXT_ALL);
 
-        if (false === $language->delete()) {
+        if ($language->delete() === false) {
             throw new LanguageException(sprintf('Failed to delete language "%s"', $language->iso_code));
         }
     }

@@ -1,16 +1,15 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../../config/config.inc.php');
-require_once(dirname(__FILE__) . '/../../../init.php');
-include_once(dirname(__FILE__) . '/front/FormController.php');
-include_once(dirname(__FILE__) . '/front/SubscribersController.php');
-include_once(dirname(__FILE__) . '/front/NewslettersController.php');
+require_once dirname(__FILE__).'/../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../init.php';
+include_once dirname(__FILE__).'/front/FormController.php';
+include_once dirname(__FILE__).'/front/SubscribersController.php';
+include_once dirname(__FILE__).'/front/NewslettersController.php';
 
 class Routes extends Module
 {
     public function routes()
     {
-
 
         $modalitie = Tools::getValue('modalitie');
         $iso = trim(Tools::getValue('iso'));
@@ -21,15 +20,15 @@ class Routes extends Module
             $this->sendJsonResponse($response);
         } else {
 
-            $secret = "6LcRY40nAAAAAFJjZX46U5wcWquOwY_g7MDeBUly";
+            $secret = '6LcRY40nAAAAAFJjZX46U5wcWquOwY_g7MDeBUly';
             $response = Tools::getValue('g-recaptcha-response');
 
-            if (!empty($response)) {
+            if (! empty($response)) {
                 $url = 'https://www.google.com/recaptcha/api/siteverify';
-                $data = array(
+                $data = [
                     'secret' => $secret,
-                    'response' => $response
-                );
+                    'response' => $response,
+                ];
 
                 // Configuración de cURL
                 $ch = curl_init();
@@ -43,35 +42,34 @@ class Routes extends Module
 
                 if ($verify === false) {
                     // Manejo de error en cURL
-                    $response = array(
+                    $response = [
                         'status' => 'error',
-                        'message' => $this->l('Error: Unable to validate reCAPTCHA.', $iso) . curl_error($ch),
-                    );
+                        'message' => $this->l('Error: Unable to validate reCAPTCHA.', $iso).curl_error($ch),
+                    ];
                 } else {
                     $captcha_success = json_decode($verify);
 
                     if (isset($captcha_success) && $captcha_success->success) {
                         $response = $this->handleAction();
                     } else {
-                        $response = array(
+                        $response = [
                             'status' => 'warning',
                             'message' => $this->l('Error: Invalid reCAPTCHA access.', 'formscontroller', $iso),
-                        );
+                        ];
                     }
                 }
 
                 curl_close($ch);
             } else {
-                $response = array(
+                $response = [
                     'status' => 'warning',
                     'message' => $this->l('Error: No reCAPTCHA response received.', 'formscontroller', $iso),
-                );
+                ];
             }
 
             $this->sendJsonResponse($response);
 
         }
-
 
     }
 
@@ -79,9 +77,9 @@ class Routes extends Module
     {
 
         $action = Tools::getValue('action');
-        $controller = new FormController();
-        $controllerSubscribers = new SubscribersController();
-        $controllerNewsletters = new NewslettersController();
+        $controller = new FormController;
+        $controllerSubscribers = new SubscribersController;
+        $controllerNewsletters = new NewslettersController;
 
         $response = null;
 
@@ -90,7 +88,7 @@ class Routes extends Module
                 $response = $controller->fitting();
                 break;
             case 'demonday':
-                //$response = $controller->demonday();
+                // $response = $controller->demonday();
                 break;
             case 'demondayorder':
                 $response = $controller->demondayorder();
@@ -118,7 +116,7 @@ class Routes extends Module
                 $response = $controllerNewsletters->newsletterdischargerssports();
                 break;
             case 'synchronizationnewsletter':
-                //$response = $controllerSubscribers->synchronizationnewsletter();
+                // $response = $controllerSubscribers->synchronizationnewsletter();
                 break;
             case 'customizeyourexperience':
                 $response = $controllerSubscribers->customizeyourexperience();
@@ -143,10 +141,10 @@ class Routes extends Module
                 break;
 
             default:
-                $response = array(
+                $response = [
                     'status' => 'error',
                     'message' => 'Invalid action',
-                );
+                ];
                 break;
         }
 
@@ -162,5 +160,5 @@ class Routes extends Module
     }
 }
 
-$routes = new Routes();
+$routes = new Routes;
 $routes->routes();

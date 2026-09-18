@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,9 @@ class DuplicateOrderStateNameException extends OrderStateException
     private $name;
 
     /**
-     * @param string $message
-     * @param int $code
-     * @param null $previous
+     * @param  string  $message
+     * @param  int  $code
+     * @param  null  $previous
      */
     public function __construct(Name $name, $message = '', $code = 0, $previous = null)
     {

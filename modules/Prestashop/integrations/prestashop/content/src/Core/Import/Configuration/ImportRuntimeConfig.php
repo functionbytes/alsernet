@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -97,11 +98,9 @@ final class ImportRuntimeConfig implements ImportRuntimeConfigInterface
     private $errors;
 
     /**
-     * @param bool $shouldValidateData
-     * @param int $offset
-     * @param int $limit
-     * @param array $sharedData
-     * @param array $entityFields
+     * @param  bool  $shouldValidateData
+     * @param  int  $offset
+     * @param  int  $limit
      */
     public function __construct(
         $shouldValidateData,
@@ -214,8 +213,6 @@ final class ImportRuntimeConfig implements ImportRuntimeConfigInterface
     }
 
     /**
-     * @param array $notices
-     *
      * @return array|void
      */
     public function setNotices(array $notices)
@@ -224,8 +221,6 @@ final class ImportRuntimeConfig implements ImportRuntimeConfigInterface
     }
 
     /**
-     * @param array $warnings
-     *
      * @return array|void
      */
     public function setWarnings(array $warnings)
@@ -234,8 +229,6 @@ final class ImportRuntimeConfig implements ImportRuntimeConfigInterface
     }
 
     /**
-     * @param array $errors
-     *
      * @return array|void
      */
     public function setErrors(array $errors)

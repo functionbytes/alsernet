@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class UrlSchemaDataConfiguration implements DataConfigurationInterface
 
     /**
      * UrlSchemaDataConfiguration constructor.
-     *
-     * @param ConfigurationInterface $configuration
-     * @param array $rules
      */
     public function __construct(ConfigurationInterface $configuration, array $rules)
     {
@@ -101,8 +99,7 @@ final class UrlSchemaDataConfiguration implements DataConfigurationInterface
     /**
      * Gets configuration from configuration table.
      *
-     * @param string $routeId
-     *
+     * @param  string  $routeId
      * @return string
      */
     private function getConfigurationValue($routeId)
@@ -113,9 +110,8 @@ final class UrlSchemaDataConfiguration implements DataConfigurationInterface
     /**
      * Updates configuration data.
      *
-     * @param string $routeId
-     * @param string $rule
-     *
+     * @param  string  $routeId
+     * @param  string  $rule
      * @return mixed
      */
     private function updateConfigurationValue($routeId, $rule)
@@ -126,8 +122,7 @@ final class UrlSchemaDataConfiguration implements DataConfigurationInterface
     /**
      * Gets key which is used to retrieve data from configuration table.
      *
-     * @param string $routeId
-     *
+     * @param  string  $routeId
      * @return string
      */
     private function getConfigurationKey($routeId)

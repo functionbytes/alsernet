@@ -67,7 +67,18 @@ class MetaWebhookController extends Controller
             return response()->json(['status' => 'unsupported'], 400);
         }
 
-        $events = $this->parser->parse($payload);
+        // Meta reintenta la entrega si no recibe 200, así que un fallo interno
+        // de parseo (payload inesperado, etc.) no debe traducirse en reintentos
+        // infinitos del proveedor: se registra y se responde 200 igualmente.
+        try {
+            $events = $this->parser->parse($payload);
+        } catch (\Throwable $e) {
+            Log::error('Meta webhook payload failed to parse', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['status' => 'error'], 200);
+        }
 
         foreach ($events as $event) {
             // Skip echo events

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,6 @@ interface DoctrineSearchCriteriaApplicatorInterface
     /**
      * Apply pagination on query builder.
      *
-     * @param SearchCriteriaInterface $searchCriteria
-     * @param QueryBuilder $queryBuilder
      *
      * @return self
      */
@@ -47,8 +46,6 @@ interface DoctrineSearchCriteriaApplicatorInterface
     /**
      * Apply sorting on query builder.
      *
-     * @param SearchCriteriaInterface $searchCriteria
-     * @param QueryBuilder $queryBuilder
      *
      * @return self
      */

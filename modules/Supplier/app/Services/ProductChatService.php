@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Ai\AiBudget;
 use Modules\Supplier\Models\Product\Product;
 
@@ -23,7 +24,7 @@ class ProductChatService
         }
         try {
             return decrypt($value);
-        } catch (\Exception) {
+        } catch (Exception) {
             return $value;
         }
     }
@@ -142,9 +143,9 @@ class ProductChatService
 
     public function __construct()
     {
-        $this->openaiApiKey    = self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.openai_api_key', '')) ?: config('services.openai.api_key', '');
-        $this->anthropicApiKey = self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.anthropic_api_key', '')) ?: config('services.anthropic.api_key', '');
-        $this->googleApiKey    = self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.google_api_key', '')) ?: config('services.google.api_key', '');
+        $this->openaiApiKey = self::decryptApiKey(Setting::get('supplier.openai_api_key', '')) ?: config('services.openai.api_key', '');
+        $this->anthropicApiKey = self::decryptApiKey(Setting::get('supplier.anthropic_api_key', '')) ?: config('services.anthropic.api_key', '');
+        $this->googleApiKey = self::decryptApiKey(Setting::get('supplier.google_api_key', '')) ?: config('services.google.api_key', '');
     }
 
     /**
@@ -185,9 +186,9 @@ class ProductChatService
 
         // Búsqueda web obligatoria en todos los proveedores
         $response = match ($config['provider']) {
-            'openai'    => $this->callOpenAiWithSearch($messages, $model),
+            'openai' => $this->callOpenAiWithSearch($messages, $model),
             'anthropic' => $this->callAnthropic($messages, $model),
-            'google'    => $this->callGeminiChat($messages, $model),
+            'google' => $this->callGeminiChat($messages, $model),
             default => throw new Exception("Provider no soportado: {$config['provider']}"),
         };
 
@@ -563,7 +564,7 @@ PROMPT;
         }
 
         $systemContent = '';
-        $chatMessages  = [];
+        $chatMessages = [];
 
         foreach ($messages as $msg) {
             if ($msg['role'] === 'system') {
@@ -574,12 +575,12 @@ PROMPT;
         }
 
         $payload = [
-            'model'       => $model,
-            'max_tokens'  => 4096,
+            'model' => $model,
+            'max_tokens' => 4096,
             'temperature' => 0.7,
-            'tools'       => [[
-                'type'     => 'web_search_20250305',
-                'name'     => 'web_search',
+            'tools' => [[
+                'type' => 'web_search_20250305',
+                'name' => 'web_search',
                 'max_uses' => 5,
             ]],
             'messages' => $chatMessages,
@@ -590,9 +591,9 @@ PROMPT;
         }
 
         $response = Http::withHeaders([
-            'x-api-key'         => $this->anthropicApiKey,
+            'x-api-key' => $this->anthropicApiKey,
             'anthropic-version' => '2023-06-01',
-            'anthropic-beta'    => 'web-search-2025-03-05',
+            'anthropic-beta' => 'web-search-2025-03-05',
         ])
             ->timeout(120)
             ->post('https://api.anthropic.com/v1/messages', $payload);
@@ -601,9 +602,9 @@ PROMPT;
             throw new Exception("Error de Anthropic API ({$response->status()}): {$response->body()}");
         }
 
-        $data    = $response->json();
+        $data = $response->json();
         $sources = [];
-        $text    = '';
+        $text = '';
 
         foreach ($data['content'] ?? [] as $block) {
             if (($block['type'] ?? '') === 'text') {
@@ -622,11 +623,11 @@ PROMPT;
         }
 
         return [
-            'content'        => $text,
-            'sources'        => array_values($sources),
-            'web_search_used'=> ! empty($sources),
+            'content' => $text,
+            'sources' => array_values($sources),
+            'web_search_used' => ! empty($sources),
             'usage' => [
-                'prompt_tokens'     => $data['usage']['input_tokens']  ?? 0,
+                'prompt_tokens' => $data['usage']['input_tokens'] ?? 0,
                 'completion_tokens' => $data['usage']['output_tokens'] ?? 0,
             ],
         ];
@@ -646,17 +647,18 @@ PROMPT;
         foreach ($messages as $msg) {
             if ($msg['role'] === 'system') {
                 $systemText = $msg['content'];
+
                 continue;
             }
             $contents[] = [
-                'role'  => $msg['role'] === 'assistant' ? 'model' : 'user',
+                'role' => $msg['role'] === 'assistant' ? 'model' : 'user',
                 'parts' => [['text' => $msg['content']]],
             ];
         }
 
         $body = [
             'contents' => $contents,
-            'tools'    => [['google_search' => new \stdClass]],
+            'tools' => [['google_search' => new \stdClass]],
             'generationConfig' => ['maxOutputTokens' => 4096, 'temperature' => 0.7],
         ];
         if ($systemText) {
@@ -671,9 +673,9 @@ PROMPT;
             throw new Exception("Google Gemini API error: {$response->status()} - {$response->body()}");
         }
 
-        $data      = $response->json();
+        $data = $response->json();
         $candidate = $data['candidates'][0] ?? [];
-        $text      = '';
+        $text = '';
         foreach ($candidate['content']['parts'] ?? [] as $part) {
             $text .= $part['text'] ?? '';
         }
@@ -693,7 +695,7 @@ PROMPT;
             'sources' => $sources,
             'web_search_used' => ! empty($sources),
             'usage' => [
-                'prompt_tokens'     => $usage['promptTokenCount']     ?? 0,
+                'prompt_tokens' => $usage['promptTokenCount'] ?? 0,
                 'completion_tokens' => $usage['candidatesTokenCount'] ?? 0,
             ],
         ];

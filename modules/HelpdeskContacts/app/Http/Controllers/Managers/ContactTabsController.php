@@ -139,17 +139,14 @@ class ContactTabsController extends Controller
     /**
      * Wrap a tab aggregation in the standard JSON envelope.
      * A failing tab degrades to an empty, unavailable section instead of a 500.
-     * When the Contacts integration toggle is off (Settings → Integraciones),
-     * no aggregation runs at all — every tab degrades the same way.
+     * The Contacts integration toggle (Settings → Integraciones) is enforced
+     * once for the whole module by the 'integration.enabled:contacts' route
+     * middleware — this method never runs at all while it's off.
      *
      * @param  callable(): array<string, mixed>  $resolver
      */
     private function tab(callable $resolver): JsonResponse
     {
-        if (! helpdesk_contacts_enabled()) {
-            return response()->json(['success' => true, 'data' => ['available' => false]]);
-        }
-
         try {
             return response()->json(['success' => true, 'data' => $resolver()]);
         } catch (Throwable $e) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,13 +39,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 class ProductCustomField extends CommonAbstractType
 {
     private $translator;
+
     private $locales;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
+     * @param  object  $translator
+     * @param  object  $legacyContext
      */
     public function __construct($translator, $legacyContext)
     {
@@ -69,7 +71,7 @@ class ProductCustomField extends CommonAbstractType
             ->add('label', TranslateType::class, [
                 'type' => FormType\TextType::class,
                 'options' => ['constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Length(['min' => 2]),
                 ]],
                 'locales' => $this->locales,

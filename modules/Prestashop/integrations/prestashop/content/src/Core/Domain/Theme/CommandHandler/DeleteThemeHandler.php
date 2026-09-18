@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,22 +41,16 @@ final class DeleteThemeHandler implements DeleteThemeHandlerInterface
      */
     private $themeManager;
 
-    /**
-     * @param ThemeManager $themeManager
-     */
     public function __construct(ThemeManager $themeManager)
     {
         $this->themeManager = $themeManager;
     }
 
-    /**
-     * @param DeleteThemeCommand $command
-     */
     public function handle(DeleteThemeCommand $command)
     {
         $plainThemeName = $command->getThemeName()->getValue();
 
-        if (!$this->themeManager->uninstall($plainThemeName)) {
+        if (! $this->themeManager->uninstall($plainThemeName)) {
             throw new CannotDeleteThemeException(sprintf('Theme "%s" is used and thus cannot be deleted.', $plainThemeName));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,8 @@ class AdminLinkBuilder implements EntityLinkBuilderInterface
      *  'customer' => 'AdminCustomers',
      * ];
      *
-     * @param Link $link Link class that generates links
-     * @param array $entityControllers List of entities with appropriate controller
+     * @param  Link  $link  Link class that generates links
+     * @param  array  $entityControllers  List of entities with appropriate controller
      */
     public function __construct(Link $link, array $entityControllers)
     {
@@ -82,17 +83,15 @@ class AdminLinkBuilder implements EntityLinkBuilderInterface
     }
 
     /**
-     * @param string $action
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $action
+     * @param  string  $entity
      * @return array
      */
     private function buildActionParameters($action, $entity, array $parameters)
     {
         unset($parameters['current_index']);
         unset($parameters['token']);
-        $editAction = $action . $entity;
+        $editAction = $action.$entity;
 
         return array_merge(
             $parameters,
@@ -105,6 +104,6 @@ class AdminLinkBuilder implements EntityLinkBuilderInterface
      */
     public function canBuild($entity)
     {
-        return !empty($this->entityControllers[$entity]);
+        return ! empty($this->entityControllers[$entity]);
     }
 }

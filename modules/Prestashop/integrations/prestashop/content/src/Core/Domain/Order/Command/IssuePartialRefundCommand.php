@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,14 +55,6 @@ class IssuePartialRefundCommand extends AbstractRefundCommand
      *      ],
      * ];
      *
-     * @param int $orderId
-     * @param array $orderDetailRefunds
-     * @param string $shippingCostRefundAmount
-     * @param bool $restockRefundedProducts
-     * @param bool $generateVoucher
-     * @param bool $generateCreditSlip
-     * @param int $voucherRefundType
-     * @param string|null $voucherRefundAmount
      *
      * @throws InvalidCancelProductException
      * @throws OrderException
@@ -88,13 +81,10 @@ class IssuePartialRefundCommand extends AbstractRefundCommand
         try {
             $this->shippingCostRefundAmount = new DecimalNumber($shippingCostRefundAmount);
         } catch (InvalidArgumentException $e) {
-            throw new InvalidAmountException();
+            throw new InvalidAmountException;
         }
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getShippingCostRefundAmount(): DecimalNumber
     {
         return $this->shippingCostRefundAmount;

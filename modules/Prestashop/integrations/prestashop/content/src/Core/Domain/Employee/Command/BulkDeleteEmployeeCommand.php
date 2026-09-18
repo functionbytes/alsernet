@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class BulkDeleteEmployeeCommand
     private $employeeIds;
 
     /**
-     * @param int[] $employeeIds
+     * @param  int[]  $employeeIds
      */
     public function __construct(array $employeeIds)
     {
@@ -55,7 +56,7 @@ class BulkDeleteEmployeeCommand
     }
 
     /**
-     * @param int[] $employeeIds
+     * @param  int[]  $employeeIds
      */
     private function setEmployeeIds(array $employeeIds)
     {

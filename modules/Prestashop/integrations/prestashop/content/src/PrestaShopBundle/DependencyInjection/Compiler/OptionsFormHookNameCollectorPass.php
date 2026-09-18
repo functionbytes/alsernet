@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,11 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
     public const OPTIONS_FORM_SERVICE_SUFFIX = 'form_handler';
 
     public const HOOK_NAME_POSITION_IN_CONSTRUCTOR = 4;
+
     public const HOOK_NAME_PREFIX = 'action';
+
     public const HOOK_NAME_OF_FORM_BUILDER_SUFFIX = 'Form';
+
     public const HOOK_NAME_OF_FORM_SAVE_SUFFIX = 'Save';
 
     /**
@@ -58,7 +62,7 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        if (!in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
+        if (! in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
             return;
         }
 
@@ -103,24 +107,21 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
     /**
      * Checks if service belongs to options form.
      *
-     * @param string $serviceId
-     * @param string $serviceClass
-     *
+     * @param  string  $serviceId
+     * @param  string  $serviceClass
      * @return bool
      */
     private function isOptionsFormService($serviceId, $serviceClass)
     {
         return $this->stringEndsWith($serviceId, self::OPTIONS_FORM_SERVICE_SUFFIX) &&
-            is_subclass_of($serviceClass, FormHandlerInterface::class)
-        ;
+            is_subclass_of($serviceClass, FormHandlerInterface::class);
     }
 
     /**
      * Checks if string ends with certain string.
      *
-     * @param string $haystack
-     * @param string $needle
-     *
+     * @param  string  $haystack
+     * @param  string  $needle
      * @return bool
      */
     private function stringEndsWith($haystack, $needle)
@@ -131,8 +132,7 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
     }
 
     /**
-     * @param Definition[] $serviceDefinitions
-     *
+     * @param  Definition[]  $serviceDefinitions
      * @return Generator
      */
     private function getOptionNamesFromConstructorArgument(array $serviceDefinitions)
@@ -140,13 +140,13 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
         foreach ($serviceDefinitions as $serviceDefinition) {
             $constructorArguments = $serviceDefinition->getArguments();
 
-            if (!isset($constructorArguments[self::HOOK_NAME_POSITION_IN_CONSTRUCTOR])) {
+            if (! isset($constructorArguments[self::HOOK_NAME_POSITION_IN_CONSTRUCTOR])) {
                 continue;
             }
 
             $hookName = $constructorArguments[self::HOOK_NAME_POSITION_IN_CONSTRUCTOR];
 
-            if (!is_string($hookName)) {
+            if (! is_string($hookName)) {
                 continue;
             }
 
@@ -157,14 +157,13 @@ final class OptionsFormHookNameCollectorPass implements CompilerPassInterface
     /**
      * Formats hook names.
      *
-     * @param string $hookStartsWith
-     * @param string $hookId
-     * @param string $hookEndsWidth
-     *
+     * @param  string  $hookStartsWith
+     * @param  string  $hookId
+     * @param  string  $hookEndsWidth
      * @return string
      */
     private function formatHookName($hookStartsWith, $hookId, $hookEndsWidth)
     {
-        return $hookStartsWith . $hookId . $hookEndsWidth;
+        return $hookStartsWith.$hookId.$hookEndsWidth;
     }
 }

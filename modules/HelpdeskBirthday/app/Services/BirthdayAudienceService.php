@@ -6,9 +6,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\Models\Setting;
 use Modules\HelpdeskBirthday\Exceptions\BirthdayAudienceException;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Support\BirthdaySettings;
 use Modules\HelpdeskEmailActivity\Models\EmailSuppression;
 
 /**
@@ -30,6 +30,7 @@ class BirthdayAudienceService
         private readonly BirthdayDayResolver $days,
         private readonly BirthdayLanguageResolver $languages,
         private readonly BirthdayErpAudienceService $erp,
+        private readonly BirthdaySettings $settings,
     ) {}
 
     /**
@@ -59,10 +60,11 @@ class BirthdayAudienceService
 
     private function source(): string
     {
-        $configured = (string) Setting::get(
-            'helpdeskbirthday.audience_source',
-            config('helpdeskbirthday.audience_source', 'api'),
-        );
+        // El prefijo es el de BirthdaySettings ('helpdesk_birthday.'), no el
+        // nombre de la config: con 'helpdeskbirthday.' esta clave nunca casaba
+        // con la que guarda el panel, así que el ajuste no se podía cambiar
+        // desde la interfaz por mucho que se guardara.
+        $configured = (string) ($this->settings->all()['audience_source'] ?? 'api');
 
         return $configured === 'gestion' ? 'gestion' : 'api';
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,6 @@ class ProductFormType extends TranslatorAwareType
      */
     private $productTypeListener;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param EventSubscriberInterface $productTypeListener
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -91,8 +87,7 @@ class ProductFormType extends TranslatorAwareType
             ->add('categories', CategoriesType::class)
             ->add('footer', FooterType::class, [
                 'product_id' => $productId,
-            ])
-        ;
+            ]);
 
         /*
          * This listener adapts the content of the form based on the Product type, it can remove add or transforms some

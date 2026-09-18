@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -118,23 +119,6 @@ class AddCustomerAddressCommand
     private $other;
 
     /**
-     * @param int $customerId
-     * @param string $addressAlias
-     * @param string $firstName
-     * @param string $lastName
-     * @param string $address
-     * @param string $city
-     * @param int $countryId
-     * @param string $postcode
-     * @param string $dni
-     * @param string $company
-     * @param string $vat_number
-     * @param string $address2
-     * @param int $id_state
-     * @param string $phone
-     * @param string $phone_mobile
-     * @param string $other
-     *
      * @throws CountryConstraintException
      * @throws StateConstraintException
      */
@@ -147,14 +131,14 @@ class AddCustomerAddressCommand
         string $city,
         int $countryId,
         string $postcode,
-        string $dni = null,
-        string $company = null,
-        string $vat_number = null,
-        string $address2 = null,
+        ?string $dni = null,
+        ?string $company = null,
+        ?string $vat_number = null,
+        ?string $address2 = null,
         int $id_state = 0,
-        string $phone = null,
+        ?string $phone = null,
         ?string $phone_mobile = null,
-        string $other = null
+        ?string $other = null
     ) {
         $this->customerId = new CustomerId($customerId);
         $this->addressAlias = $addressAlias;
@@ -174,129 +158,81 @@ class AddCustomerAddressCommand
         $this->other = $other;
     }
 
-    /**
-     * @return CustomerId
-     */
     public function getCustomerId(): CustomerId
     {
         return $this->customerId;
     }
 
-    /**
-     * @return string
-     */
     public function getAddressAlias(): string
     {
         return $this->addressAlias;
     }
 
-    /**
-     * @return string
-     */
     public function getFirstName(): string
     {
         return $this->firstName;
     }
 
-    /**
-     * @return string
-     */
     public function getLastName(): string
     {
         return $this->lastName;
     }
 
-    /**
-     * @return string
-     */
     public function getAddress(): string
     {
         return $this->address;
     }
 
-    /**
-     * @return string
-     */
     public function getCity(): string
     {
         return $this->city;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPostCode(): ?string
     {
         return $this->postCode;
     }
 
-    /**
-     * @return CountryId
-     */
     public function getCountryId(): CountryId
     {
         return $this->countryId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDni(): ?string
     {
         return $this->dni;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCompany(): ?string
     {
         return $this->company;
     }
 
-    /**
-     * @return string|null
-     */
     public function getVatNumber(): ?string
     {
         return $this->vatNumber;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAddress2(): ?string
     {
         return $this->address2;
     }
 
-    /**
-     * @return StateId|null
-     */
     public function getStateId(): ?StateId
     {
         return $this->stateId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getHomePhone(): ?string
     {
         return $this->homePhone;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMobilePhone(): ?string
     {
         return $this->mobilePhone;
     }
 
-    /**
-     * @return string|null
-     */
     public function getOther(): ?string
     {
         return $this->other;

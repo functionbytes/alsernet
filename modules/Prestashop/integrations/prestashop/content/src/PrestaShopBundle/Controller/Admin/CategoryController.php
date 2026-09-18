@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,13 +47,12 @@ class CategoryController extends FrameworkBundleAdminController
     /**
      * Process Ajax Form to add a simple category (name and parent category).
      *
-     * @param Request $request
      *
      * @return string
      */
     public function addSimpleCategoryFormAction(Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $commandBus = $this->get('prestashop.core.command_bus');
         $tools = $this->get('prestashop.adapter.tools');
         $shopContext = $this->get('prestashop.adapter.shop.context');
@@ -124,14 +124,12 @@ class CategoryController extends FrameworkBundleAdminController
     /**
      * Get Categories formatted like ajax_product_file.php.
      *
-     * @param int $limit
-     * @param Request $request
-     *
+     * @param  int  $limit
      * @return JsonResponse
      */
     public function getAjaxCategoriesAction($limit, Request $request)
     {
-        if (!$request->isXmlHttpRequest()) {
+        if (! $request->isXmlHttpRequest()) {
             throw new NotFoundHttpException('Should be ajax request.');
         }
 
@@ -140,11 +138,6 @@ class CategoryController extends FrameworkBundleAdminController
         );
     }
 
-    /**
-     * @param string $categoryName
-     *
-     * @return array
-     */
     private function getErrorMessages(string $categoryName): array
     {
         return [

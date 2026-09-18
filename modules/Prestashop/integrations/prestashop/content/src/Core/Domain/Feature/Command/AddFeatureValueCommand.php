@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ class AddFeatureValueCommand
     private $localizedValues;
 
     /**
-     * @param int $featureId
-     * @param string[] $localizedValues
+     * @param  string[]  $localizedValues
      */
     public function __construct(int $featureId, array $localizedValues)
     {
@@ -56,17 +56,11 @@ class AddFeatureValueCommand
         $this->localizedValues = $localizedValues;
     }
 
-    /**
-     * @return FeatureId
-     */
     public function getFeatureId(): FeatureId
     {
         return $this->featureId;
     }
 
-    /**
-     * @return array
-     */
     public function getLocalizedValues(): array
     {
         return $this->localizedValues;

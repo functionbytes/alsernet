@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,7 +88,7 @@ class GeneralConfiguration implements DataConfigurationInterface
      */
     public function validateConfiguration(array $configuration)
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $resolver->setRequired([
             'catalog_mode',
             'catalog_mode_with_prices',

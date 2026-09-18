@@ -81,12 +81,10 @@ class ThemeExtractor
     public function __construct(SmartyExtractor $smartyExtractor)
     {
         $this->smartyExtractor = $smartyExtractor;
-        $this->dumpers[] = new XliffFileDumper();
+        $this->dumpers[] = new XliffFileDumper;
     }
 
     /**
-     * @param ThemeProvider $themeProvider
-     *
      * @return $this
      */
     public function setThemeProvider(ThemeProvider $themeProvider)
@@ -97,11 +95,8 @@ class ThemeExtractor
     }
 
     /**
-     * @param Theme $theme
-     * @param string $locale
-     * @param bool $rootDir
-     *
-     * @return MessageCatalogue|null
+     * @param  string  $locale
+     * @param  bool  $rootDir
      *
      * @throws Exception
      */
@@ -126,7 +121,7 @@ class ThemeExtractor
 
         foreach ($this->dumpers as $dumper) {
             if ($this->format === $dumper->getExtension()) {
-                if (null !== $this->outputPath) {
+                if ($this->outputPath !== null) {
                     $options['path'] = $this->outputPath;
                 }
 
@@ -142,8 +137,8 @@ class ThemeExtractor
     /**
      * Add default catalogue in this &$catalogue when the translation exists.
      *
-     * @param string $locale
-     * @param MessageCatalogue $catalogue
+     * @param  string  $locale
+     * @param  MessageCatalogue  $catalogue
      */
     private function overrideFromDefaultCatalog($locale, &$catalogue)
     {
@@ -165,7 +160,7 @@ class ThemeExtractor
 
         foreach ($defaultCatalogue as $domain => $translation) {
             // AdminCatalogFeature.fr-FR to AdminCatalogFeature
-            $domain = str_replace('.' . $locale, '', $domain);
+            $domain = str_replace('.'.$locale, '', $domain);
 
             // AdminCatalogFeature to Admin.Catalog.Feature
             $domain = implode('.', preg_split('/(?=[A-Z])/', $domain, -1, PREG_SPLIT_NO_EMPTY));
@@ -183,15 +178,15 @@ class ThemeExtractor
     /**
      * Add database catalogue in this &$catalogue.
      *
-     * @param string $themeName
-     * @param string $locale
-     * @param MessageCatalogue $catalogue
+     * @param  string  $themeName
+     * @param  string  $locale
+     * @param  MessageCatalogue  $catalogue
      *
      * @throws Exception
      */
     private function overrideFromDatabase($themeName, $locale, &$catalogue): void
     {
-        if (null === $this->themeProvider) {
+        if ($this->themeProvider === null) {
             throw new Exception('Theme provider is required.');
         }
 
@@ -204,8 +199,6 @@ class ThemeExtractor
     }
 
     /**
-     * @param FileDumper $dumper
-     *
      * @return $this
      */
     public function addDumper(FileDumper $dumper)
@@ -224,8 +217,7 @@ class ThemeExtractor
     }
 
     /**
-     * @param string $format
-     *
+     * @param  string  $format
      * @return $this
      */
     public function setFormat($format)
@@ -244,8 +236,7 @@ class ThemeExtractor
     }
 
     /**
-     * @param string $outputPath
-     *
+     * @param  string  $outputPath
      * @return $this
      */
     public function setOutputPath($outputPath)

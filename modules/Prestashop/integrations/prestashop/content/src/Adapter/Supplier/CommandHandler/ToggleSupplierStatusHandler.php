@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,11 +50,11 @@ final class ToggleSupplierStatusHandler implements ToggleSupplierStatusHandlerIn
         try {
             $entity = new Supplier($command->getSupplierId()->getValue());
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new SupplierNotFoundException(sprintf('Supplier object with id "%s" has not been found for status changing.', $command->getSupplierId()->getValue()));
             }
 
-            if (false === $entity->toggleStatus()) {
+            if ($entity->toggleStatus() === false) {
                 throw new CannotToggleSupplierStatusException(sprintf('Unable to toggle supplier with id "%s"', $command->getSupplierId()->getValue()));
             }
         } catch (PrestaShopException $exception) {

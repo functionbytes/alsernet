@@ -1210,6 +1210,13 @@ class Document extends Model implements HasMedia
             }
         });
 
+        static::saving(function (Document $document) {
+            if ($document->isDirty('customer_cellphone')) {
+                $digits = preg_replace('/\D+/', '', (string) $document->customer_cellphone);
+                $document->customer_cellphone_normalized = strlen($digits) >= 9 ? substr($digits, -9) : null;
+            }
+        });
+
         static::created(function (Document $document) {
             // Automatically initialize validation workflow when document is created
             try {

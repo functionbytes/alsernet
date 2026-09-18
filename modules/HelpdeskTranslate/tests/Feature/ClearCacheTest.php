@@ -17,7 +17,7 @@ class ClearCacheTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     private const URL = '/panel/settings/helpdesk-translate/cache';
 
@@ -47,6 +47,12 @@ class ClearCacheTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('helpdesk-translate.settings.update');
 
+        // La tabla no arranca vacía: la BD de desarrollo ya trae caché real
+        // de traducciones, visible dentro de la misma transacción. El
+        // endpoint borra TODA la tabla, así que lo que hay que probar es el
+        // incremento y el conteo final, no un total absoluto.
+        $baseline = TranslationCache::query()->count();
+
         // Seed three cache rows directly via the model (factory not needed).
         foreach (['Hello', 'Bonjour', 'Hallo'] as $i => $text) {
             TranslationCache::query()->create([
@@ -62,13 +68,13 @@ class ClearCacheTest extends TestCase
             ]);
         }
 
-        $this->assertSame(3, TranslationCache::query()->count());
+        $this->assertSame($baseline + 3, TranslationCache::query()->count());
 
         $this->actingAs($user)
             ->deleteJson(self::URL)
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('deleted', 3);
+            ->assertJsonPath('deleted', $baseline + 3);
 
         $this->assertSame(0, TranslationCache::query()->count());
     }

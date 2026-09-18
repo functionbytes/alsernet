@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,6 @@ use PrestaShop\PrestaShop\Core\Domain\Order\Exception\OrderNotFoundException;
 final class SetInternalOrderNoteHandler extends AbstractOrderHandler implements SetInternalOrderNoteHandlerInterface
 {
     /**
-     * @param SetInternalOrderNoteCommand $command
-     *
      * @throws OrderNotFoundException
      */
     public function handle(SetInternalOrderNoteCommand $command)
@@ -54,11 +53,11 @@ final class SetInternalOrderNoteHandler extends AbstractOrderHandler implements 
 
         $order->note = $command->getInternalNote();
 
-        if (false === $order->validateFields(false)) {
+        if ($order->validateFields(false) === false) {
             throw new OrderConstraintException(sprintf('Invalid note "%s" provided for order with id "%d".', $command->getInternalNote(), $command->getOrderId()->getValue()), OrderConstraintException::INVALID_INTERNAL_NOTE);
         }
 
-        if (false === $order->update()) {
+        if ($order->update() === false) {
             throw new OrderException(sprintf('An error occurred when setting note for order with id "%d".', $command->getOrderId()->getValue()));
         }
     }

@@ -24,7 +24,9 @@ class AnalyticsController extends Controller
     {
         abort_if(! helpdesk_analytics_enabled(), 404);
 
-        return view('helpdeskanalytics::dashboard.index');
+        return view('helpdeskanalytics::dashboard.index', [
+            'customerSegmentLimit' => (int) config('helpdeskanalytics.customer_segment_limit', 5000),
+        ]);
     }
 
     public function data(AnalyticsRangeRequest $request): JsonResponse
@@ -38,7 +40,10 @@ class AnalyticsController extends Controller
         }
 
         $from = $request->date('from') ?? now()->startOfMonth();
-        $to = $request->date('to') ?? now()->endOfMonth();
+        // $request->date('to') resuelve a medianoche del día indicado: sin
+        // endOfDay() el filtro `to` explícito excluía toda la actividad del
+        // propio día seleccionado.
+        $to = ($request->date('to') ?? now())->endOfDay();
 
         // Aislamiento por bandeja: sin helpdesk.manage, los agregados se
         // limitan a las bandejas asignadas al usuario (AgentInboxCapacity).
@@ -52,7 +57,10 @@ class AnalyticsController extends Controller
             'channels' => $this->analytics->channelDistribution($from, $to, $user),
             'agents' => $this->analytics->agentPerformance($from, $to, $user),
             'trends' => $this->analytics->trends($from, $to, $user),
-            'heatmap' => $this->analytics->heatmap($from, $to, $user),
+            // heatmap() se dejó fuera del feed: ejecuta un GROUP BY WEEKDAY x HOUR
+            // de hasta 366 días por request y no tiene ningún consumidor en
+            // resources/ (verificado). El método del servicio se deja intacto
+            // por si se retoma en el futuro.
             'customers' => $this->analytics->customerSegments($from, $to, $user),
             'tickets' => $this->analytics->ticketMetrics($from, $to, $user),
         ]);

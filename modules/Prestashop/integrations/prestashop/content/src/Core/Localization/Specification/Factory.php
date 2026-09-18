@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,13 +45,12 @@ class Factory
     /**
      * Build a Number specification from a CLDR Locale object.
      *
-     * @param CldrLocaleInterface $cldrLocale
-     *                                        This CldrLocale object is a low level data object extracted from CLDR data source
-     * @param int $maxFractionDigits
-     *                               Max number of digits to display in a number's decimal part
-     * @param bool $numberGroupingUsed
-     *                                 Should we group digits in a number's integer part ?
-     *
+     * @param  CldrLocaleInterface  $cldrLocale
+     *                                           This CldrLocale object is a low level data object extracted from CLDR data source
+     * @param  int  $maxFractionDigits
+     *                                  Max number of digits to display in a number's decimal part
+     * @param  bool  $numberGroupingUsed
+     *                                    Should we group digits in a number's integer part ?
      * @return NumberSpecification
      *
      * @throws LocalizationException
@@ -77,14 +77,13 @@ class Factory
     /**
      * Build a Price specification from a CLDR Locale object and a Currency object.
      *
-     * @param string $localeCode The concerned locale
-     * @param CldrLocaleInterface $cldrLocale his CldrLocale object is a low level data object extracted from CLDR data source
-     *                                        It contains data about the concerned locale
-     * @param Currency $currency This Currency object brings missing specification to format a number as a price
-     * @param bool $numberGroupingUsed Should we group digits when formatting prices ?
-     * @param string $currencyDisplayType Type of display for currency symbol (symbol or ISO code)
-     * @param int $maxFractionDigits|null The decimal precision of the price
-     *
+     * @param  string  $localeCode  The concerned locale
+     * @param  CldrLocaleInterface  $cldrLocale  his CldrLocale object is a low level data object extracted from CLDR data source
+     *                                           It contains data about the concerned locale
+     * @param  Currency  $currency  This Currency object brings missing specification to format a number as a price
+     * @param  bool  $numberGroupingUsed  Should we group digits when formatting prices ?
+     * @param  string  $currencyDisplayType  Type of display for currency symbol (symbol or ISO code)
+     * @param  int  $maxFractionDigits|null  The decimal precision of the price
      * @return PriceSpecification
      *
      * @throws LocalizationException
@@ -121,9 +120,8 @@ class Factory
      * Extract the positive pattern from a CLDR formatting pattern
      * Works with any formatting pattern (number, price, percentage).
      *
-     * @param string $pattern
-     *                        The CLDR pattern
-     *
+     * @param  string  $pattern
+     *                           The CLDR pattern
      * @return string
      *                The extracted positive pattern
      */
@@ -138,9 +136,8 @@ class Factory
      * Extract the negative pattern from a CLDR formatting pattern
      * Works with any formatting pattern (number, price, percentage).
      *
-     * @param string $pattern
-     *                        The CLDR pattern
-     *
+     * @param  string  $pattern
+     *                           The CLDR pattern
      * @return string
      *                The extracted negative pattern
      */
@@ -150,15 +147,14 @@ class Factory
 
         return isset($patterns[1])
             ? $patterns[1]
-            : '-' . $patterns[0];
+            : '-'.$patterns[0];
     }
 
     /**
      * Convert a list of CLDR number symbols data into a list of NumberSymbolList objects.
      *
-     * @param NumberSymbolsData[] $allNumberSymbolsData
-     *                                                  All the CLDR number symbols data indexed by numbering system
-     *
+     * @param  NumberSymbolsData[]  $allNumberSymbolsData
+     *                                                     All the CLDR number symbols data indexed by numbering system
      * @return NumberSymbolList[]
      *
      * @throws LocalizationException
@@ -177,8 +173,7 @@ class Factory
     /**
      * Get a NumberSymbolList object from a CLDR NumberSymbolsData object.
      *
-     * @param NumberSymbolsData $symbolsData Data that will be used to build the NumberSymbolList object
-     *
+     * @param  NumberSymbolsData  $symbolsData  Data that will be used to build the NumberSymbolList object
      * @return NumberSymbolList An immutable NumberSymbolList object
      *
      * @throws LocalizationException If passed data is invalid
@@ -203,9 +198,8 @@ class Factory
     /**
      * Extract the min number of fraction digits from a number pattern (decimal, currency, percentage).
      *
-     * @param string $pattern
-     *                        The formatting pattern to use for extraction
-     *
+     * @param  string  $pattern
+     *                           The formatting pattern to use for extraction
      * @return int
      *             The min number of fraction digits to display in the final number
      */
@@ -219,8 +213,7 @@ class Factory
     /**
      * Extract the max number of fraction digits from a number pattern (decimal, currency, percentage).
      *
-     * @param string $pattern The formatting pattern to use for extraction (eg 0.00##)
-     *
+     * @param  string  $pattern  The formatting pattern to use for extraction (eg 0.00##)
      * @return int The max number of fraction digits to display in the final number
      */
     protected function getMaxFractionDigits($pattern)
@@ -233,9 +226,8 @@ class Factory
     /**
      * Get the primary digits group size from a number formatting pattern.
      *
-     * @param string $pattern
-     *                        The CLDR number formatting pattern (e.g.: #,##0.###)
-     *
+     * @param  string  $pattern
+     *                           The CLDR number formatting pattern (e.g.: #,##0.###)
      * @return int
      *             The primary group size of the passed pattern
      */
@@ -252,8 +244,7 @@ class Factory
      * e.g.: with    #,##0.### => No secondary group. Will return primary group size.
      * e.g.: with #,##,##0.### => Secondary group size is 2, primary group size is 3.
      *
-     * @param string $pattern The CLDR number formatting pattern
-     *
+     * @param  string  $pattern  The CLDR number formatting pattern
      * @return int The secondary group size of the passed pattern
      */
     protected function getSecondaryGroupSize($pattern)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class GetCountryRequiredFieldsHandler implements GetCountryRequiredFieldsH
     /** @var CountryRequiredFieldsProviderInterface */
     private $requiredFieldsProvider;
 
-    /**
-     * @param CountryRequiredFieldsProviderInterface $requiredFieldsProvider
-     */
     public function __construct(CountryRequiredFieldsProviderInterface $requiredFieldsProvider)
     {
         $this->requiredFieldsProvider = $requiredFieldsProvider;

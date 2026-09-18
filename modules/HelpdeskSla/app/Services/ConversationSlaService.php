@@ -3,6 +3,8 @@
 namespace Modules\HelpdeskSla\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +36,24 @@ use Modules\HelpdeskSla\Models\ConversationSlaBreach;
 class ConversationSlaService
 {
     private const PRIORITY_CACHE_KEY = 'helpdesksla:priority_slug_map';
+
+    private const DEFAULT_WARNING_THRESHOLD = 80;
+
+    /**
+     * Columnas mínimas para el barrido de avisos: la misma conexión sirve al
+     * inbox en vivo, así que no se hidrata la fila completa cada 15 minutos.
+     */
+    private const SLA_WARNING_COLUMNS = [
+        'id',
+        'sla_policy_id',
+        'created_at',
+        'first_response_at',
+        'sla_first_response_due_at',
+        'sla_first_response_breached',
+        'sla_resolution_due_at',
+        'sla_resolution_breached',
+        'sla_paused_duration_minutes',
+    ];
 
     public function __construct(
         private readonly BusinessHoursCalculator $businessHours,
@@ -134,6 +154,8 @@ class ConversationSlaService
      */
     public function checkBreaches(): int
     {
+        $this->autoResumeStaleSnoozes();
+
         $count = 0;
 
         Conversation::query()
@@ -187,6 +209,25 @@ class ConversationSlaService
     }
 
     /**
+     * Red de seguridad: si UnsnoozeConversationJob se pierde (cola caída, fallo
+     * silencioso), la conversación queda pausada para siempre y desaparece del
+     * radar de SLA. Antes de cada check de incumplimientos, se reanuda
+     * cualquier conversación pausada cuyo snoozed_until ya no esté vigente.
+     */
+    private function autoResumeStaleSnoozes(): void
+    {
+        Conversation::query()
+            ->open()
+            ->whereNotNull('sla_paused_at')
+            ->where(function (Builder $query): void {
+                $query->whereNull('snoozed_until')
+                    ->orWhere('snoozed_until', '<=', now());
+            })
+            ->cursor()
+            ->each(fn (Conversation $conversation) => $this->resumeSla($conversation));
+    }
+
+    /**
      * Warn about open conversations approaching their SLA deadline (past the
      * policy's warning_threshold_percent but not yet breached). Warns once per
      * conversation, deduped via sla_warned_at.
@@ -195,44 +236,14 @@ class ConversationSlaService
      */
     public function sendWarnings(): int
     {
+        $activePolicies = SlaPolicy::query()->active()->get();
         $count = 0;
-        $policies = [];
 
-        Conversation::query()
-            ->open()
-            ->whereNull('sla_warned_at')
-            ->whereNotNull('sla_policy_id')
-            ->whereNull('sla_paused_at')
-            ->where(function ($query): void {
-                $query->where(function ($q): void {
-                    $q->whereNull('first_response_at')
-                        ->where('sla_first_response_breached', false)
-                        ->whereNotNull('sla_first_response_due_at')
-                        ->where('sla_first_response_due_at', '>', now());
-                })->orWhere(function ($q): void {
-                    $q->where('sla_resolution_breached', false)
-                        ->whereNotNull('sla_resolution_due_at')
-                        ->where('sla_resolution_due_at', '>', now());
-                });
-            })
-            ->cursor()
-            ->each(function (Conversation $conversation) use (&$count, &$policies): void {
-                $policyId = $conversation->sla_policy_id;
-                $policy = $policies[$policyId] ??= SlaPolicy::find($policyId);
-                $threshold = (int) ($policy->warning_threshold_percent ?? 80);
+        foreach ($activePolicies as $policy) {
+            $count += $this->sendWarningsForPolicy($policy);
+        }
 
-                $approaching = $this->approachingWarning($conversation, $threshold);
-
-                if ($approaching === null) {
-                    return;
-                }
-
-                [$type, $percent] = $approaching;
-
-                $conversation->updateQuietly(['sla_warned_at' => now()]);
-                SlaWarningThreshold::dispatch($conversation, $type, $percent);
-                $count++;
-            });
+        $count += $this->sendWarningsForOrphanedPolicies($activePolicies->pluck('id'));
 
         if ($count > 0) {
             Log::info('HelpdeskSla: avisos de SLA enviados.', ['warnings' => $count]);
@@ -242,9 +253,139 @@ class ConversationSlaService
     }
 
     /**
+     * Conversaciones cuya policy sigue activa: el umbral de aviso se traduce a
+     * SQL para que solo lleguen a PHP las conversaciones que de verdad podrían
+     * estar cerca del límite, en vez de hidratar todo el backlog abierto.
+     */
+    private function sendWarningsForPolicy(SlaPolicy $policy): int
+    {
+        $threshold = (int) ($policy->warning_threshold_percent ?? self::DEFAULT_WARNING_THRESHOLD);
+        $count = 0;
+
+        $this->baseWarningQuery()
+            ->where('sla_policy_id', $policy->id)
+            ->where(fn (Builder $query) => $this->applyThresholdFilter($query, $policy, $threshold))
+            ->cursor()
+            ->each(function (Conversation $conversation) use (&$count, $policy, $threshold): void {
+                $count += $this->dispatchWarningIfApproaching($conversation, $policy, $threshold);
+            });
+
+        return $count;
+    }
+
+    /**
+     * Conversaciones cuya policy ya no está activa (desactivada/borrada
+     * después de aplicarse): se conservan con el umbral por defecto para no
+     * perder cobertura en silencio. La policy se resuelve una única vez por
+     * id y el resultado null también se cachea (array_key_exists, no ??=)
+     * para no repetir la consulta por cada conversación huérfana.
+     */
+    private function sendWarningsForOrphanedPolicies(Collection $activePolicyIds): int
+    {
+        $count = 0;
+        $resolved = [];
+
+        $this->baseWarningQuery()
+            ->whereNotIn('sla_policy_id', $activePolicyIds)
+            ->cursor()
+            ->each(function (Conversation $conversation) use (&$count, &$resolved): void {
+                $policyId = $conversation->sla_policy_id;
+
+                if (! array_key_exists($policyId, $resolved)) {
+                    $resolved[$policyId] = SlaPolicy::find($policyId);
+                }
+
+                $policy = $resolved[$policyId];
+                $threshold = (int) ($policy->warning_threshold_percent ?? self::DEFAULT_WARNING_THRESHOLD);
+
+                $count += $this->dispatchWarningIfApproaching($conversation, $policy, $threshold);
+            });
+
+        return $count;
+    }
+
+    private function baseWarningQuery(): Builder
+    {
+        return Conversation::query()
+            ->select(self::SLA_WARNING_COLUMNS)
+            ->open()
+            ->whereNull('sla_warned_at')
+            ->whereNotNull('sla_policy_id')
+            ->whereNull('sla_paused_at');
+    }
+
+    private function applyThresholdFilter(Builder $query, SlaPolicy $policy, int $threshold): void
+    {
+        $businessOnly = (bool) $policy->business_hours_only;
+
+        $query->where(function (Builder $q) use ($policy, $threshold, $businessOnly): void {
+            $q->whereNull('first_response_at')
+                ->where('sla_first_response_breached', false)
+                ->whereNotNull('sla_first_response_due_at')
+                ->where('sla_first_response_due_at', '>', now())
+                ->when(
+                    $policy->first_response_time_hours,
+                    fn (Builder $q2) => $this->constrainToThreshold($q2, 'sla_first_response_due_at', (int) $policy->first_response_time_hours, $threshold, $businessOnly)
+                );
+        })->orWhere(function (Builder $q) use ($policy, $threshold, $businessOnly): void {
+            $q->where('sla_resolution_breached', false)
+                ->whereNotNull('sla_resolution_due_at')
+                ->where('sla_resolution_due_at', '>', now())
+                ->when(
+                    $policy->resolution_time_hours,
+                    fn (Builder $q2) => $this->constrainToThreshold($q2, 'sla_resolution_due_at', (int) $policy->resolution_time_hours, $threshold, $businessOnly)
+                );
+        });
+    }
+
+    /**
+     * Pre-filtro SQL del umbral de aviso.
+     *
+     * - Política en horas naturales: fórmula exacta sobre la fecha límite real
+     *   (due_at - created_at son literalmente las horas de la política).
+     * - Política en horas hábiles: due_at ya viene estirado por fines de
+     *   semana/festivos, así que usar esa ventana infravaloraría el % real
+     *   consumido. Se compara contra las horas "puras" de la política: como
+     *   el tiempo hábil consumido siempre es <= al tiempo natural
+     *   transcurrido, esto nunca descarta una conversación que sí haya
+     *   cruzado el umbral real (el filtrado preciso lo hace después
+     *   approachingWarning(), consciente de horas hábiles, en PHP).
+     */
+    private function constrainToThreshold(Builder $query, string $dueColumn, int $hours, int $threshold, bool $businessOnly): Builder
+    {
+        if ($businessOnly) {
+            $elapsedSeconds = (int) round($hours * 3600 * $threshold / 100);
+
+            return $query->whereRaw('TIMESTAMPDIFF(SECOND, created_at, NOW()) >= ?', [$elapsedSeconds]);
+        }
+
+        return $query->whereRaw(
+            "TIMESTAMPDIFF(SECOND, created_at, NOW()) >= TIMESTAMPDIFF(SECOND, created_at, {$dueColumn}) * ? / 100",
+            [$threshold]
+        );
+    }
+
+    private function dispatchWarningIfApproaching(Conversation $conversation, ?SlaPolicy $policy, int $threshold): int
+    {
+        $approaching = $this->approachingWarning($conversation, $policy, $threshold);
+
+        if ($approaching === null) {
+            return 0;
+        }
+
+        [$type, $percent] = $approaching;
+
+        $conversation->updateQuietly(['sla_warned_at' => now()]);
+        SlaWarningThreshold::dispatch($conversation, $type, $percent);
+
+        return 1;
+    }
+
+    /**
      * Recompute SLA due dates after a priority change. Re-resolves the policy,
      * recomputes due dates from the creation time and re-evaluates breach flags.
-     * No-op on closed conversations.
+     * No-op on closed conversations and on conversations currently paused (their
+     * due dates are frozen until resumeSla() extends them).
      */
     public function recalculate(Conversation $conversation): void
     {
@@ -258,21 +399,73 @@ class ConversationSlaService
             return;
         }
 
+        if ($conversation->sla_paused_at !== null) {
+            return;
+        }
+
         $start = $conversation->created_at ?? now();
         $businessOnly = (bool) $policy->business_hours_only;
-        $updates = ['sla_policy_id' => $policy->id];
+        $pausedMinutes = (int) ($conversation->sla_paused_duration_minutes ?? 0);
+
+        $updates = [
+            'sla_policy_id' => $policy->id,
+            'sla_warned_at' => null,
+        ];
 
         if ($policy->first_response_time_hours && $conversation->first_response_at === null) {
-            $updates['sla_first_response_due_at'] = $this->addBusinessHours($start, (int) $policy->first_response_time_hours, $businessOnly);
-            $updates['sla_first_response_breached'] = false;
+            $dueAt = $this->addBusinessHours($start, (int) $policy->first_response_time_hours, $businessOnly)
+                ->addMinutes($pausedMinutes);
+
+            $updates['sla_first_response_due_at'] = $dueAt;
+            $updates['sla_first_response_breached'] = $this->reconcileBreachFlag(
+                $conversation,
+                ConversationSlaBreach::TYPE_FIRST_RESPONSE,
+                (bool) $conversation->sla_first_response_breached,
+                $dueAt
+            );
         }
 
         if ($policy->resolution_time_hours) {
-            $updates['sla_resolution_due_at'] = $this->addBusinessHours($start, (int) $policy->resolution_time_hours, $businessOnly);
-            $updates['sla_resolution_breached'] = false;
+            $dueAt = $this->addBusinessHours($start, (int) $policy->resolution_time_hours, $businessOnly)
+                ->addMinutes($pausedMinutes);
+
+            $updates['sla_resolution_due_at'] = $dueAt;
+            $updates['sla_resolution_breached'] = $this->reconcileBreachFlag(
+                $conversation,
+                ConversationSlaBreach::TYPE_RESOLUTION,
+                (bool) $conversation->sla_resolution_breached,
+                $dueAt
+            );
         }
 
         $conversation->updateQuietly($updates);
+    }
+
+    /**
+     * Al recalcular tras un cambio de política/prioridad, un incumplimiento ya
+     * registrado no puede resetearse a "no incumplido" sin resolver su
+     * registro: de lo contrario el próximo check-breaches lo vuelve a detectar
+     * y genera un segundo registro + una segunda alerta. Solo se desactiva el
+     * flag cuando la nueva fecha límite calculada queda en el futuro; si sigue
+     * en el pasado, el incumplimiento (y su registro) se dejan tal cual.
+     */
+    private function reconcileBreachFlag(Conversation $conversation, string $type, bool $wasBreached, Carbon $newDueAt): bool
+    {
+        if (! $wasBreached) {
+            return false;
+        }
+
+        if ($newDueAt->isPast()) {
+            return true;
+        }
+
+        ConversationSlaBreach::query()
+            ->where('conversation_id', $conversation->id)
+            ->ofType($type)
+            ->unresolved()
+            ->update(['resolved' => true, 'resolved_at' => now()]);
+
+        return false;
     }
 
     /**
@@ -344,7 +537,7 @@ class ConversationSlaService
      *
      * @return array{0: string, 1: int}|null [type, percentUsed]
      */
-    private function approachingWarning(Conversation $conversation, int $threshold): ?array
+    private function approachingWarning(Conversation $conversation, ?SlaPolicy $policy, int $threshold): ?array
     {
         $created = $conversation->created_at;
 
@@ -352,12 +545,15 @@ class ConversationSlaService
             return null;
         }
 
+        $businessOnly = (bool) ($policy?->business_hours_only);
+        $pausedMinutes = (int) ($conversation->sla_paused_duration_minutes ?? 0);
+
         if (
             $conversation->first_response_at === null
             && ! $conversation->sla_first_response_breached
             && $conversation->sla_first_response_due_at?->isFuture()
         ) {
-            $percent = $this->percentUsed($created, $conversation->sla_first_response_due_at);
+            $percent = $this->percentUsed($created, $conversation->sla_first_response_due_at, $businessOnly, $pausedMinutes);
 
             if ($percent >= $threshold) {
                 return [ConversationSlaBreach::TYPE_FIRST_RESPONSE, $percent];
@@ -368,7 +564,7 @@ class ConversationSlaService
             ! $conversation->sla_resolution_breached
             && $conversation->sla_resolution_due_at?->isFuture()
         ) {
-            $percent = $this->percentUsed($created, $conversation->sla_resolution_due_at);
+            $percent = $this->percentUsed($created, $conversation->sla_resolution_due_at, $businessOnly, $pausedMinutes);
 
             if ($percent >= $threshold) {
                 return [ConversationSlaBreach::TYPE_RESOLUTION, $percent];
@@ -378,15 +574,30 @@ class ConversationSlaService
         return null;
     }
 
-    private function percentUsed(Carbon $created, Carbon $due): int
+    /**
+     * % del plazo consumido entre $created y $due. Cuando la política es de
+     * horas hábiles, se miden minutos hábiles reales (BusinessHoursCalculator)
+     * en vez de tiempo natural: si no, el aviso se "quema" durante un fin de
+     * semana sin que haya transcurrido tiempo hábil real. Los minutos en que
+     * el reloj estuvo pausado (snooze) tampoco cuentan como consumidos.
+     */
+    private function percentUsed(Carbon $created, Carbon $due, bool $businessHoursOnly, int $pausedMinutes = 0): int
     {
-        $total = abs($created->diffInSeconds($due));
+        $now = now();
+
+        if ($businessHoursOnly) {
+            $total = $this->businessHours->businessMinutesBetween($created, $due);
+            $used = $this->businessHours->businessMinutesBetween($created, $now);
+        } else {
+            $total = abs($created->diffInMinutes($due));
+            $used = abs($created->diffInMinutes($now));
+        }
+
+        $used = max(0, $used - $pausedMinutes);
 
         if ($total <= 0) {
             return 100;
         }
-
-        $used = abs($created->diffInSeconds(now()));
 
         return (int) min(100, round($used / $total * 100));
     }

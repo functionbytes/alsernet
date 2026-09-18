@@ -4,6 +4,12 @@
 --}}
 <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="tickets">
     @php
+        $canCreateTickets = app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->canCreateTickets();
+
+        // Las claves SON el vocabulario del módulo (low|normal|high|urgent).
+        // Cualquier otra cosa cae al fallback 'normal' de abajo, pero la clase
+        // CSS prio-{valor} de la tarjeta no existiría: por eso el modal de
+        // escalado ya no puede mandar prioridades fuera de esta lista.
         $ticketPriorityMap = [
             'low'    => ['label' => 'Baja',    'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)',  'icon' => 'fa-arrow-down'],
             'normal' => ['label' => 'Normal',  'color' => '#3b82f6', 'bg' => 'rgba(59, 130, 246, 0.1)',  'icon' => 'fa-equals'],
@@ -25,9 +31,11 @@
             <i class="far fa-ticket"></i>
             <div class="bv-tab-empty-title">Sin tickets relacionados</div>
             <div class="bv-tab-empty-sub">No hay tickets asociados a este cliente</div>
-            <button class="btn btn-sm btn-primary mt-3" data-bv-modal="create-ticket">
-                <i class="fas fa-plus me-1"></i> Crear primer ticket
-            </button>
+            @if($canCreateTickets)
+                <button class="btn btn-sm btn-primary mt-3" data-bv-modal="create-ticket">
+                    Crear primer ticket
+                </button>
+            @endif
         </div>
     @else
         {{-- Cabecera con contador --}}
@@ -38,13 +46,15 @@
                 <span class="sub">
                     {{ $tCounts['open'] }} abierto{{ $tCounts['open'] === 1 ? '' : 's' }}
                     @if($tCounts['urgent'] > 0)
-                        · <span class="text-danger fw-semibold">{{ $tCounts['urgent'] }} urgente{{ $tCounts['urgent'] === 1 ? '' : 's' }}</span>
+                        · <span class="text-brand fw-semibold">{{ $tCounts['urgent'] }} urgente{{ $tCounts['urgent'] === 1 ? '' : 's' }}</span>
                     @endif
                 </span>
             </div>
-            <button class="add-btn" data-bv-modal="create-ticket" title="Nuevo ticket">
-                <i class="fa-solid fa-plus"></i>
-            </button>
+            @if($canCreateTickets)
+                <button class="add-btn" data-bv-modal="create-ticket" title="Nuevo ticket" aria-label="Nuevo ticket">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            @endif
         </div>
 
         {{-- Filtros --}}
@@ -86,30 +96,47 @@
                     $tFilterTags   = 'all ' . ($tIsClosed ? 'closed' : 'open') . ($ticket->priority === 'urgent' ? ' urgent' : '');
                     $tFromThisConv = isset($rpConversationId) && $rpConversationId && (int) ($ticket->conversation_id ?? 0) === (int) $rpConversationId;
                 @endphp
-                <button class="tk-card prio-{{ $ticket->priority }} {{ $tIsClosed ? 'is-closed' : '' }}"
+                {{-- Rediseño sep-2026 (dirección "A · Asunto primero").
+
+                     El badge "De esta conversación" era una etiqueta de texto
+                     completo en la misma fila que el chip de estado: en 340 px
+                     se solapaban y el estado quedaba tapado. Y como casi todos
+                     los tickets del panel nacen de la conversación abierta, el
+                     badge se repetía en todas las tarjetas sin distinguir nada.
+                     Ahora es el eslabón que precede al número, con su título.
+
+                     El asunto sube a la primera línea porque es lo que
+                     identifica el ticket; el número, que antes ocupaba el sitio
+                     de honor, baja al renglón de metadatos.
+
+                     Las clases .id y .title se conservan: el modal de detalle
+                     las lee para pintar su estado de carga. --}}
+                <button class="tk-card prio-{{ array_key_exists($ticket->priority, $ticketPriorityMap) ? $ticket->priority : 'normal' }} {{ $tIsClosed ? 'is-closed' : '' }}"
                         data-bv-modal="ticket"
                         data-ticket-id="{{ $ticket->id }}"
                         data-bv-ticket-tags="{{ $tFilterTags }}">
                     <div class="head">
-                        <i class="fa-solid fa-bars bv-x81"></i>
-                        <span class="id">#{{ $ticket->ticket_number ?? $ticket->id }}</span>
-                        @if($tFromThisConv)
-                            <span class="badge bg-primary-subtle text-primary" title="Creado desde esta conversación"><i class="fas fa-link me-1"></i>De esta conversación</span>
-                        @endif
+                        <span class="title">{{ \Illuminate\Support\Str::limit($tSubject, 90) }}</span>
                         <span class="status">{{ $tStatusName }}</span>
                     </div>
-                    <div class="title">{{ \Illuminate\Support\Str::limit($tSubject, 60) }}</div>
+                    <div class="meta">
+                        @if($tFromThisConv)
+                            <span class="link" title="Creado desde esta conversación"><i class="fas fa-link" aria-hidden="true"></i></span>
+                        @endif
+                        <span class="id">#{{ $ticket->ticket_number ?? $ticket->id }}</span>
+                        @if($ticket->created_at)
+                            <span class="dot" aria-hidden="true"></span>
+                            <span class="age">{{ $ticket->created_at->diffForHumans(['short' => true]) }}</span>
+                        @endif
+                    </div>
                     <div class="foot">
                         @if($tAssigneeName)
-                            <span class="seg"><i class="fa-regular fa-user"></i> {{ \Illuminate\Support\Str::limit($tAssigneeName, 14) }}</span>
+                            <span class="seg"><i class="fa-regular fa-user"></i> {{ \Illuminate\Support\Str::limit($tAssigneeName, 16) }}</span>
                         @else
-                            <span class="unassigned">Sin asignar</span>
+                            <span class="seg unassigned"><i class="fa-regular fa-user"></i> Sin asignar</span>
                         @endif
                         @if($ticket->category)
-                            <span class="seg"><i class="fa-regular fa-folder"></i> {{ \Illuminate\Support\Str::limit($ticket->category->name ?? '', 12) }}</span>
-                        @endif
-                        @if($ticket->created_at)
-                            <span class="seg bv-x69"><i class="fa-regular fa-clock"></i> {{ $ticket->created_at->diffForHumans(['short' => true]) }}</span>
+                            <span class="seg"><i class="fa-regular fa-folder"></i> {{ \Illuminate\Support\Str::limit($ticket->category->name ?? '', 16) }}</span>
                         @endif
                     </div>
                 </button>

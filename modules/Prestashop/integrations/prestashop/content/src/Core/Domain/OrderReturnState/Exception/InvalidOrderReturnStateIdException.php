@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\OrderReturnState\Exception;
 /**
  * Class InvalidOrderReturnStateIdException is thrown when OrderReturnStateId with invalid value is being created.
  */
-class InvalidOrderReturnStateIdException extends OrderReturnStateException
-{
-}
+class InvalidOrderReturnStateIdException extends OrderReturnStateException {}

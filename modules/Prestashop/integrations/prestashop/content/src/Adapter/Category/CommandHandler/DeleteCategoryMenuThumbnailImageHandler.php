@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,6 @@ final class DeleteCategoryMenuThumbnailImageHandler implements DeleteCategoryMen
      */
     private $smartyCacheClearer;
 
-    /**
-     * @param Filesystem $filesystem
-     * @param ConfigurationInterface $configuration
-     * @param CacheClearerInterface $smartyCacheClearer
-     */
     public function __construct(
         Filesystem $filesystem,
         ConfigurationInterface $configuration,

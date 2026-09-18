@@ -16,7 +16,7 @@ abstract class InboxTestCase extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected User $manager;
 

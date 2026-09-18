@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,7 @@ final class AddCustomerAddressHandler extends AbstractAddressHandler implements 
         try {
             $this->validateAddress($address);
 
-            if (false === $address->add()) {
+            if ($address->add() === false) {
                 throw new CannotAddAddressException(sprintf('Failed to add new address "%s"', $command->getAddress()));
             }
         } catch (PrestaShopException $e) {
@@ -62,14 +63,9 @@ final class AddCustomerAddressHandler extends AbstractAddressHandler implements 
         return new AddressId((int) $address->id);
     }
 
-    /**
-     * @param AddCustomerAddressCommand $command
-     *
-     * @return Address
-     */
     private function createAddressFromCommand(AddCustomerAddressCommand $command): Address
     {
-        $address = new Address();
+        $address = new Address;
 
         $address->id_customer = $command->getCustomerId()->getValue();
         $address->lastname = $command->getLastName();

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ class GetReferenceCurrency
     private $isoCode;
 
     /**
-     * @param string $isoCode
-     *
      * @throws CurrencyException
      */
     public function __construct(string $isoCode)
@@ -51,9 +50,6 @@ class GetReferenceCurrency
         $this->isoCode = new AlphaIsoCode($isoCode);
     }
 
-    /**
-     * @return AlphaIsoCode
-     */
     public function getIsoCode(): AlphaIsoCode
     {
         return $this->isoCode;

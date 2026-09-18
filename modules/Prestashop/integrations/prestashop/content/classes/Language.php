@@ -530,7 +530,7 @@ class LanguageCore extends ObjectModel implements LanguageInterface
      *
      * @return bool
      *
-     * @throws \PrestaShopDatabaseException
+     * @throws PrestaShopDatabaseException
      */
     private function duplicateRowsFromDefaultShopLang($tableName, $shopDefaultLangId, $shopId)
     {
@@ -1481,7 +1481,7 @@ class LanguageCore extends ObjectModel implements LanguageInterface
     {
         $key = 'Language::getLanguagePackListContent_'.$iso;
         if (! Cache::isStored($key)) {
-            if (! $tar instanceof \Archive_Tar) {
+            if (! $tar instanceof Archive_Tar) {
                 return false;
             }
             $result = $tar->listContent();
@@ -1625,7 +1625,7 @@ class LanguageCore extends ObjectModel implements LanguageInterface
      *
      * @param  static  $lang
      *
-     * @throws \PrestaShopDatabaseException
+     * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
     private static function updateMultilangFromClassForShop(DataLangCore $classObject, self $lang, Shop $shop)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -83,9 +84,8 @@ class AdministrationController extends FrameworkBundleAdminController
      * Process the Administration general configuration form.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_administration")
-     * @DemoRestricted(redirectRoute="admin_administration")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_administration")
      *
      * @return RedirectResponse
      */
@@ -102,9 +102,8 @@ class AdministrationController extends FrameworkBundleAdminController
      * Process the Administration upload quota configuration form.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_administration")
-     * @DemoRestricted(redirectRoute="admin_administration")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_administration")
      *
      * @return RedirectResponse
      */
@@ -121,9 +120,8 @@ class AdministrationController extends FrameworkBundleAdminController
      * Process the Administration notifications configuration form.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_administration")
-     * @DemoRestricted(redirectRoute="admin_administration")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_administration")
      *
      * @return RedirectResponse
      */
@@ -139,16 +137,13 @@ class AdministrationController extends FrameworkBundleAdminController
     /**
      * Process the Administration configuration form.
      *
-     * @param Request $request
-     * @param FormHandlerInterface $formHandler
-     * @param string $hookName
      *
      * @return RedirectResponse
      */
     protected function processForm(Request $request, FormHandlerInterface $formHandler, string $hookName)
     {
         $this->dispatchHook(
-            'actionAdminAdministrationControllerPostProcess' . $hookName . 'Before',
+            'actionAdminAdministrationControllerPostProcess'.$hookName.'Before',
             ['controller' => $this]
         );
 
@@ -173,25 +168,16 @@ class AdministrationController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_administration');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getGeneralFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.adapter.administration.general.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getUploadQuotaFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.adapter.administration.upload_quota.form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     protected function getNotificationsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.adapter.administration.notifications.form_handler');
@@ -212,10 +198,6 @@ class AdministrationController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param InvalidConfigurationDataError $error
-     *
-     * @return string
-     *
      * @throws FieldNotFoundException
      */
     private function getErrorMessage(InvalidConfigurationDataError $error): string
@@ -253,11 +235,6 @@ class AdministrationController extends FrameworkBundleAdminController
         );
     }
 
-    /**
-     * @param string $fieldName
-     *
-     * @return string
-     */
     private function getFieldLabel(string $fieldName): string
     {
         /*

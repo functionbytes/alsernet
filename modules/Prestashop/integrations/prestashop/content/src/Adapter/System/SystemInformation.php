@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,7 +67,7 @@ class SystemInformation
     public function getSummary()
     {
         return [
-            'notHostMode' => !$this->hostingInformation->isHostMode(),
+            'notHostMode' => ! $this->hostingInformation->isHostMode(),
             'server' => $this->hostingInformation->getServerInformation(),
             'instaWebInstalled' => $this->hostingInformation->isApacheInstawebModule(),
             'uname' => $this->hostingInformation->getUname(),

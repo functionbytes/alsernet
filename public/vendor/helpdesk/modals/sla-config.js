@@ -62,7 +62,7 @@
 
         $.ajax({
             url: '/panel/helpdesk/settings/sla',
-            method: 'PUT',
+            method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
                 sla:               _slaData,

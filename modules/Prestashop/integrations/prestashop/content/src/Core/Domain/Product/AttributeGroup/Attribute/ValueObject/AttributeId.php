@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ final class AttributeId
     private $attributeId;
 
     /**
-     * @param int $attributeId
+     * @param  int  $attributeId
      *
      * @throws AttributeConstraintException
      */
@@ -60,13 +61,13 @@ final class AttributeId
     /**
      * Validates that the value is integer and is greater than zero
      *
-     * @param int $value
+     * @param  int  $value
      *
      * @throws AttributeConstraintException
      */
     private function assertIsIntegerGreaterThanZero($value)
     {
-        if (!is_int($value) || 0 >= $value) {
+        if (! is_int($value) || $value <= 0) {
             throw new AttributeConstraintException(sprintf('Invalid attribute id "%s".', var_export($value, true)), AttributeConstraintException::INVALID_ID);
         }
     }

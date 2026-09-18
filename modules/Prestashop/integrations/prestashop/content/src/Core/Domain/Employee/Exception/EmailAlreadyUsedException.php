@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,10 +40,10 @@ class EmailAlreadyUsedException extends EmployeeException
     private $email;
 
     /**
-     * @param string $email the email that's being used
-     * @param string $message
-     * @param int $code
-     * @param Exception|null $previous
+     * @param  string  $email  the email that's being used
+     * @param  string  $message
+     * @param  int  $code
+     * @param  Exception|null  $previous
      */
     public function __construct($email, $message = '', $code = 0, $previous = null)
     {

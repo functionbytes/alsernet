@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -145,7 +146,7 @@ class ManufacturerController extends FrameworkBundleAdminController
         try {
             $result = $this->getFormHandler()->handle($manufacturerForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_manufacturers_index');
@@ -166,8 +167,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param int $manufacturerId
-     *
+     * @param  int  $manufacturerId
      * @return Response
      */
     public function viewAction(Request $request, $manufacturerId)
@@ -201,8 +201,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      *     "is_granted(['update'], request.get('_legacy_controller'))"
      * )
      *
-     * @param int $manufacturerId
-     *
+     * @param  int  $manufacturerId
      * @return Response
      */
     public function editAction(Request $request, $manufacturerId)
@@ -229,7 +228,7 @@ class ManufacturerController extends FrameworkBundleAdminController
             }
         }
 
-        if (!isset($editableManufacturer) || !isset($manufacturerForm)) {
+        if (! isset($editableManufacturer) || ! isset($manufacturerForm)) {
             return $this->redirectToRoute('admin_manufacturers_index');
         }
 
@@ -246,10 +245,10 @@ class ManufacturerController extends FrameworkBundleAdminController
      * Deletes manufacturer
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
-     * @param int|string $manufacturerId
-     *
+     * @param  int|string  $manufacturerId
      * @return RedirectResponse
      */
     public function deleteAction($manufacturerId)
@@ -271,6 +270,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      * Deletes manufacturers on bulk action
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return RedirectResponse
@@ -296,6 +296,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      * Enables manufacturers on bulk action
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return RedirectResponse
@@ -322,6 +323,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      * Disables manufacturers on bulk action
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return RedirectResponse
@@ -348,10 +350,10 @@ class ManufacturerController extends FrameworkBundleAdminController
      * Toggles manufacturer status
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
-     * @param int $manufacturerId
-     *
+     * @param  int  $manufacturerId
      * @return RedirectResponse
      */
     public function toggleStatusAction($manufacturerId)
@@ -360,7 +362,7 @@ class ManufacturerController extends FrameworkBundleAdminController
             /** @var EditableManufacturer $editableManufacturer */
             $editableManufacturer = $this->getQueryBus()->handle(new GetManufacturerForEditing((int) $manufacturerId));
             $this->getCommandBus()->handle(
-                new ToggleManufacturerStatusCommand((int) $manufacturerId, !$editableManufacturer->isEnabled())
+                new ToggleManufacturerStatusCommand((int) $manufacturerId, ! $editableManufacturer->isEnabled())
             );
             $this->addFlash(
                 'success',
@@ -380,6 +382,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      *     "is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))",
      *     redirectRoute="admin_manufacturers_index"
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return Response
@@ -412,21 +415,20 @@ class ManufacturerController extends FrameworkBundleAdminController
             ];
         }
 
-        return (new CsvResponse())
+        return (new CsvResponse)
             ->setData($data)
             ->setHeadersData($headers)
-            ->setFileName('brands_' . date('Y-m-d_His') . '.csv')
-            ;
+            ->setFileName('brands_'.date('Y-m-d_His').'.csv');
     }
 
     /**
      * Deletes address
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
-     * @param int $addressId
-     *
+     * @param  int  $addressId
      * @return RedirectResponse
      */
     public function deleteAddressAction($addressId)
@@ -451,6 +453,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      *     "is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))",
      *     redirectRoute="admin_manufacturers_index"
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return Response
@@ -484,17 +487,17 @@ class ManufacturerController extends FrameworkBundleAdminController
             ];
         }
 
-        return (new CsvResponse())
+        return (new CsvResponse)
             ->setData($data)
             ->setHeadersData($headers)
-            ->setFileName('address_' . date('Y-m-d_His') . '.csv')
-            ;
+            ->setFileName('address_'.date('Y-m-d_His').'.csv');
     }
 
     /**
      * Deletes adresses in bulk action
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_manufacturers_index")
+     *
      * @DemoRestricted(redirectRoute="admin_manufacturers_index")
      *
      * @return RedirectResponse
@@ -540,7 +543,7 @@ class ManufacturerController extends FrameworkBundleAdminController
         try {
             $result = $addressFormHandler->handle($addressForm);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_manufacturers_index');
@@ -565,8 +568,7 @@ class ManufacturerController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param int $addressId
-     *
+     * @param  int  $addressId
      * @return Response
      */
     public function editAddressAction(Request $request, $addressId)
@@ -603,7 +605,7 @@ class ManufacturerController extends FrameworkBundleAdminController
             }
         }
 
-        if (!isset($editableAddress) || !isset($addressForm)) {
+        if (! isset($editableAddress) || ! isset($addressForm)) {
             return $this->redirectToRoute('admin_manufacturers_index');
         }
 
@@ -664,8 +666,8 @@ class ManufacturerController extends FrameworkBundleAdminController
                 'Admin.Notifications.Error'
             ),
             MemoryLimitException::class => $this->trans(
-                    'Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration backups.',
-                    'Admin.Notifications.Error'
+                'Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration backups.',
+                'Admin.Notifications.Error'
             ),
             ImageUploadException::class => $this->trans(
                 'An error occurred while uploading the image.',
@@ -703,7 +705,7 @@ class ManufacturerController extends FrameworkBundleAdminController
     {
         $manufacturerIds = $request->request->get('manufacturer_bulk');
 
-        if (!is_array($manufacturerIds)) {
+        if (! is_array($manufacturerIds)) {
             return [];
         }
 
@@ -721,7 +723,7 @@ class ManufacturerController extends FrameworkBundleAdminController
     {
         $addressIds = $request->request->get('manufacturer_address_bulk');
 
-        if (!is_array($addressIds)) {
+        if (! is_array($addressIds)) {
             return [];
         }
 

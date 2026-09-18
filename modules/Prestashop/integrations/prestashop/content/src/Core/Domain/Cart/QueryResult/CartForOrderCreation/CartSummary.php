@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,17 +77,6 @@ class CartSummary
      */
     private $processOrderLink;
 
-    /**
-     * @param string $totalProductsPrice
-     * @param string $totalDiscount
-     * @param string $totalShippingPrice
-     * @param string $totalShippingWithoutTaxes
-     * @param string $totalTaxes
-     * @param string $totalPriceWithTaxes
-     * @param string $totalPriceWithoutTaxes
-     * @param string $orderMessage
-     * @param string $processOrderLink
-     */
     public function __construct(
         string $totalProductsPrice,
         string $totalDiscount,
@@ -109,73 +99,46 @@ class CartSummary
         $this->orderMessage = $orderMessage;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalProductsPrice(): string
     {
         return $this->totalProductsPrice;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalDiscount(): string
     {
         return $this->totalDiscount;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalShippingPrice(): string
     {
         return $this->totalShippingPrice;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalShippingWithoutTaxes(): string
     {
         return $this->totalShippingWithoutTaxes;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalTaxes(): string
     {
         return $this->totalTaxes;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalPriceWithTaxes(): string
     {
         return $this->totalPriceWithTaxes;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalPriceWithoutTaxes(): string
     {
         return $this->totalPriceWithoutTaxes;
     }
 
-    /**
-     * @return string
-     */
     public function getProcessOrderLink(): string
     {
         return $this->processOrderLink;
     }
 
-    /**
-     * @return string
-     */
     public function getOrderMessage(): string
     {
         return $this->orderMessage;

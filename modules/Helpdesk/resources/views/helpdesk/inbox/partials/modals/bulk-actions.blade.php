@@ -58,10 +58,10 @@
             </div>
 
             {{-- Sub-panel condicional por acción --}}
-            <div id="bulkSubPanel" style="display:none;margin-top:14px">
+            <div id="bulkSubPanel" class="d-none bv-mt-14">
 
                 {{-- Assign sub-panel --}}
-                <div id="bulkSubAssign" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubAssign" class="bv-bulk-sub d-none">
                     <div class="bv-modal-search">
                         <i class="fas fa-magnifying-glass"></i>
                         <input id="bulkAssignSearch" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_assign_search_placeholder') }}">
@@ -72,7 +72,7 @@
                 </div>
 
                 {{-- Priority sub-panel --}}
-                <div id="bulkSubPriority" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubPriority" class="bv-bulk-sub d-none">
                     <div class="bv-opt-list">
                         <button class="bv-opt" data-bv-value="low"><div class="bv-opt__ic"><i class="fas fa-chevron-down"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_low') }}</span></div></button>
                         <button class="bv-opt on" data-bv-value="normal"><div class="bv-opt__ic"><i class="fas fa-minus"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_normal') }}</span></div></button>
@@ -82,7 +82,7 @@
                 </div>
 
                 {{-- Delete confirm sub-panel --}}
-                <div id="bulkSubDelete" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubDelete" class="bv-bulk-sub d-none">
                     <div class="bv-warn-box">
                         <div class="bv-warn-box__body">
                             <strong>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_strong') }}</strong> {{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_text') }}
@@ -91,7 +91,7 @@
                 </div>
 
                 {{-- Team sub-panel --}}
-                <div id="bulkSubTeam" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubTeam" class="bv-bulk-sub d-none">
                     <div class="bv-opt-list">
                         @forelse($groups ?? [] as $group)
                             <button type="button" class="bv-opt" data-bulk-group-id="{{ $group->id }}">
@@ -106,7 +106,7 @@
                 </div>
 
                 {{-- Tag sub-panel (multi-select) --}}
-                <div id="bulkSubTag" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubTag" class="bv-bulk-sub d-none">
                     <div class="bv-tags-chip-wrap">
                         @forelse($inboxTags ?? [] as $tag)
                             <span class="bv-rtag" data-bulk-tag-id="{{ $tag->id }}">{{ $tag->name }}</span>
@@ -117,7 +117,7 @@
                 </div>
 
                 {{-- Snooze sub-panel --}}
-                <div id="bulkSubSnooze" class="bv-bulk-sub" style="display:none">
+                <div id="bulkSubSnooze" class="bv-bulk-sub d-none">
                     <div class="snz-list">
                         <button type="button" class="snz-opt on" data-bulk-snooze="1h">
                             <i class="fa-solid fa-stopwatch snz-ic"></i>
@@ -147,11 +147,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/bulk-actions.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/bulk-actions.js')) }}" defer></script>
-@endpush
-@endonce

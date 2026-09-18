@@ -1,5 +1,7 @@
 <?php
 
+use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
+
 include_once _PS_MODULE_DIR_.'alsernetforms/classes/ApiManager.php';  // @deprecated - Will be removed
 include_once _PS_MODULE_DIR_.'alsernetforms/classes/Actions/DocumentAction.php';
 
@@ -8,7 +10,7 @@ class Order extends OrderCore
     public function __construct($id = null, $order_presenter = null)
     {
         parent::__construct($id);
-        $this->order_presenter = $order_presenter ?: new PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
+        $this->order_presenter = $order_presenter ?: new OrderPresenter;
     }
 
     public function requestDeliveryTimes()
@@ -61,7 +63,7 @@ class Order extends OrderCore
         $products = $this->getProducts();
 
         foreach ($products as $product) {
-            $features = \Product::getFeaturesStatic((int) $product['id_product'], null);
+            $features = Product::getFeaturesStatic((int) $product['id_product'], null);
 
             if (empty($features)) {
                 continue;
@@ -95,7 +97,7 @@ class Order extends OrderCore
 
         foreach ($products as $product) {
 
-            $features = \Product::getFeaturesStatic((int) $product['id_product'], null);
+            $features = Product::getFeaturesStatic((int) $product['id_product'], null);
 
             if (empty($features)) {
                 continue;
@@ -155,7 +157,7 @@ class Order extends OrderCore
         }
 
         // ✅ REFACTORIZADO: Usar DocumentAction en lugar de ApiManager deprecated
-        $documentAction = new DocumentAction();
+        $documentAction = new DocumentAction;
         dd([
             'order_id' => $this->id,
             'reference' => $this->reference,
@@ -192,8 +194,8 @@ class Order extends OrderCore
                 'company' => $address->company ?? null,
                 'phone' => $customer->phone ?? null,
                 'phone_mobile' => $customer->phone_mobile ?? null,
-                ],
-                'inventaries' => $mappedProducts,
+            ],
+            'inventaries' => $mappedProducts,
             'delivery_address' => $address->address1 ?? null,
             'date_add' => $this->date_add,
         ]);
@@ -346,7 +348,7 @@ class Order extends OrderCore
     {
         // ✅ REFACTORIZADO: Usar DocumentAction en lugar de ApiManager deprecated
         // RESTful endpoint: GET /api/documents/{uid}/validation
-        $documentAction = new DocumentAction();
+        $documentAction = new DocumentAction;
         $response = $documentAction->validate($uid);
 
         // DocumentAction retorna estructura normalizada con 'data' directo (sin 'response' wrapper)
@@ -560,7 +562,7 @@ class Order extends OrderCore
         // ✅ REFACTORIZADO: Usar DocumentAction en lugar de ApiManager deprecated
         // RESTful endpoint: GET /api/documents/verify?order_id={orderId}
         // NOTA: Este método no se usa actualmente, pero se mantiene actualizado para uso futuro
-        $documentAction = new DocumentAction();
+        $documentAction = new DocumentAction;
         $response = $documentAction->verifyByOrderId($order);
 
         // DocumentAction retorna estructura normalizada con 'data' directo (sin 'response' wrapper)

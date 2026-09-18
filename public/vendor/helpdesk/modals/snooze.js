@@ -104,9 +104,14 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                 'Accept': 'application/json',
             },
-        }).done(function(resp) {
+        }).done(function() {
             $('[data-bv-modal-name="snooze"] [data-bv-close]').first().trigger('click');
-            if (resp && resp.message) toastr.success(resp.message);
+            // El backend formatea la hora de confirmación sin convertir a la
+            // zona horaria del agente (app corre en UTC) — desfase real de
+            // horas visto en QA ("Mañana 09:00" seleccionado, toast decía
+            // "07:00"). `until` ya está en hora local del navegador, así que
+            // el mensaje se construye aquí en vez de confiar en resp.message.
+            toastr.success('Conversación pospuesta hasta ' + fmtDay(until) + ' ' + fmtTime(until) + '.');
         }).fail(function(xhr) {
             var msg = xhr?.responseJSON?.errors
                 ? Object.values(xhr.responseJSON.errors)[0]?.[0]

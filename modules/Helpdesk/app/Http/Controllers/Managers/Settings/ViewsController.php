@@ -68,8 +68,9 @@ class ViewsController extends Controller
         }
 
         $views = $query->ordered()->paginate(20);
+        $sortLabels = ConversationView::sortLabels();
 
-        return view('helpdesk::settings.views.index', compact('views', 'stats'));
+        return view('helpdesk::settings.views.index', compact('views', 'stats', 'sortLabels'));
     }
 
     /**
@@ -79,8 +80,9 @@ class ViewsController extends Controller
     {
         $statuses = ConversationStatus::active()->ordered()->get();
         $groups = Group::with('users')->get();
+        $sortLabels = ConversationView::sortLabels();
 
-        return view('helpdesk::settings.views.create', compact('statuses', 'groups'));
+        return view('helpdesk::settings.views.create', compact('statuses', 'groups', 'sortLabels'));
     }
 
     /**
@@ -114,8 +116,9 @@ class ViewsController extends Controller
 
         $statuses = ConversationStatus::active()->ordered()->get();
         $groups = Group::with('users')->get();
+        $sortLabels = ConversationView::sortLabels();
 
-        return view('helpdesk::settings.views.edit', compact('view', 'statuses', 'groups'));
+        return view('helpdesk::settings.views.edit', compact('view', 'statuses', 'groups', 'sortLabels'));
     }
 
     /**

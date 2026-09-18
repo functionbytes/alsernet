@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,57 +87,36 @@ class EditableCartRuleConditions
         $this->restrictions = $restrictions;
     }
 
-    /**
-     * @return CustomerId|null
-     */
     public function getCustomerId(): ?CustomerId
     {
         return $this->customerId;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateFrom(): ?DateTime
     {
         return $this->dateFrom;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTo(): ?DateTime
     {
         return $this->dateTo;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantity(): int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantityPerUser(): int
     {
         return $this->quantityPerUser;
     }
 
-    /**
-     * @return EditableCartRuleMinimum
-     */
     public function getMinimum(): EditableCartRuleMinimum
     {
         return $this->minimum;
     }
 
-    /**
-     * @return EditableCartRuleRestrictions
-     */
     public function getRestrictions(): EditableCartRuleRestrictions
     {
         return $this->restrictions;

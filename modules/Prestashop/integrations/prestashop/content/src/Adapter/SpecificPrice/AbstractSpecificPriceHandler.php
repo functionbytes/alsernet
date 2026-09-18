@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,7 @@ abstract class AbstractSpecificPriceHandler
     /**
      * Gets legacy SpecificPrice object
      *
-     * @param SpecificPriceId $specificPriceId
      *
-     * @return SpecificPrice
      *
      * @throws SpecificPriceException
      * @throws SpecificPriceNotFoundException
@@ -69,8 +68,6 @@ abstract class AbstractSpecificPriceHandler
     /**
      * Checks if date range values are not inverse. (range from not bigger than range to)
      *
-     * @param DateTime $from
-     * @param DateTime $to
      *
      * @throws SpecificPriceConstraintException
      */

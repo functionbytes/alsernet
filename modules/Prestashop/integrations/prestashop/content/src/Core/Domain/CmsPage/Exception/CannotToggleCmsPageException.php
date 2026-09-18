@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\CmsPage\Exception;
 /**
  * Is thrown when cms page cannot be enabled or disabled in toggling action
  */
-class CannotToggleCmsPageException extends CmsPageException
-{
-}
+class CannotToggleCmsPageException extends CmsPageException {}

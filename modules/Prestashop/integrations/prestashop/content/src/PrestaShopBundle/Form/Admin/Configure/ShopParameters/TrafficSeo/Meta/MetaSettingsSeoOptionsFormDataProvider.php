@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,6 @@ final class MetaSettingsSeoOptionsFormDataProvider implements FormDataProviderIn
 
     /**
      * MetaFormDataProvider constructor.
-     *
-     * @param DataConfigurationInterface $seoOptionsDataConfiguration
      */
     public function __construct(
         DataConfigurationInterface $seoOptionsDataConfiguration

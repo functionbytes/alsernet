@@ -85,7 +85,36 @@ class TicketViewsController extends Controller
      */
     public function edit(TicketView $view)
     {
+        $this->authorizeOwnership($view);
+
         return view('theme.views.backups.helpdesk.ticket-views.edit', ['view' => $view] + $this->filterOptions());
+    }
+
+    /**
+     * Auditoría de seguridad (14-sep-2026): igual que en MacrosController,
+     * el middleware de esta pantalla solo exige helpdesk.tickets.settings
+     * (77+ cuentas en producción: super-settings/helpdesk-admin/super-admin).
+     * edit/update/destroy y bulkAction() no comprobaban is_shared/user_id de
+     * la vista antes de mutarla: cualquiera de esas cuentas podía editar o
+     * borrar por id la vista PRIVADA guardada por otra. Una vista compartida
+     * (is_shared), del sistema o el permiso amplio de gestión siguen
+     * permitiendo tocarla; una privada de otro usuario, no.
+     */
+    protected function authorizeOwnership(TicketView $view): void
+    {
+        abort_unless($this->canManage($view), 403, 'No tienes permisos para gestionar esta vista.');
+    }
+
+    /**
+     * Versión sin abort() para bulkAction(): una vista ajena no debe tumbar
+     * la petición entera, solo quedar fuera del lote.
+     */
+    protected function canManage(TicketView $view): bool
+    {
+        return $view->is_system
+            || $view->is_shared
+            || (int) $view->user_id === (int) auth()->id()
+            || auth()->user()->can('helpdesk.tickets.manage');
     }
 
     /**
@@ -105,6 +134,8 @@ class TicketViewsController extends Controller
      */
     public function update(UpdateTicketViewRequest $request, TicketView $view)
     {
+        $this->authorizeOwnership($view);
+
         $validated = $request->validated();
 
         $validated['is_shared'] = $request->boolean('is_shared');
@@ -125,6 +156,8 @@ class TicketViewsController extends Controller
         if ($view->is_system) {
             return back()->with('error', __('helpdesktickets::helpdesktickets.settings.view.cannot_delete_system'));
         }
+
+        $this->authorizeOwnership($view);
 
         $view->delete();
 
@@ -165,12 +198,24 @@ class TicketViewsController extends Controller
                     continue;
                 }
 
+                if (! $this->canManage($view)) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 $view->delete();
                 $count++;
             }
         } else {
             $value = $action === 'activate';
             foreach ($views as $view) {
+                if (! $this->canManage($view)) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 $view->update(['is_shared' => $value]);
                 $count++;
             }
@@ -179,7 +224,7 @@ class TicketViewsController extends Controller
         $labels = ['delete' => 'eliminada(s)', 'activate' => 'compartida(s)', 'deactivate' => 'dejada(s) de compartir'];
         $message = "{$count} vista(s) {$labels[$action]}.";
         if ($skipped > 0) {
-            $message .= " {$skipped} omitida(s) por ser del sistema.";
+            $message .= " {$skipped} omitida(s) por ser del sistema o de otro usuario.";
         }
 
         return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);

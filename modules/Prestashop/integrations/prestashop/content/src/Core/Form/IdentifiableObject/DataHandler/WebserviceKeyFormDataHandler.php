@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ final class WebserviceKeyFormDataHandler implements FormDataHandlerInterface
     private $contextShopId;
 
     /**
-     * @param CommandBusInterface $commandBus
-     * @param int $contextShopId
+     * @param  int  $contextShopId
      */
     public function __construct(CommandBusInterface $commandBus, $contextShopId)
     {
@@ -61,7 +61,7 @@ final class WebserviceKeyFormDataHandler implements FormDataHandlerInterface
      */
     public function create(array $data)
     {
-        if (!isset($data['shop_association'])) {
+        if (! isset($data['shop_association'])) {
             $data['shop_association'] = [(int) $this->contextShopId];
         }
 
@@ -87,8 +87,7 @@ final class WebserviceKeyFormDataHandler implements FormDataHandlerInterface
             ->setKey($data['key'])
             ->setDescription($data['description'])
             ->setStatus($data['status'])
-            ->setPermissions($data['permissions'])
-        ;
+            ->setPermissions($data['permissions']);
 
         if (isset($data['shop_association'])) {
             $editCommand->setShopAssociation($data['shop_association']);

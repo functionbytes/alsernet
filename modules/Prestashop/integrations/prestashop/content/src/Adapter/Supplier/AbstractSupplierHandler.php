@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,6 @@ abstract class AbstractSupplierHandler extends AbstractObjectModelHandler
     /**
      * Gets legacy Supplier
      *
-     * @param SupplierId $supplierId
      *
      * @return Supplier
      *
@@ -65,8 +65,6 @@ abstract class AbstractSupplierHandler extends AbstractObjectModelHandler
     }
 
     /**
-     * @param SupplierId $supplierId
-     *
      * @return Address
      *
      * @throws SupplierException
@@ -79,7 +77,7 @@ abstract class AbstractSupplierHandler extends AbstractObjectModelHandler
 
             $address = new Address($addressId);
 
-            if (null === $address->id_supplier) {
+            if ($address->id_supplier === null) {
                 throw new AddressNotFoundException(sprintf('Address for supplier with id "%s" was not found', $supplierIdValue));
             }
         } catch (PrestaShopException $e) {
@@ -101,19 +99,16 @@ abstract class AbstractSupplierHandler extends AbstractObjectModelHandler
     }
 
     /**
-     * @param Supplier $supplier
-     * @param Address $address
-     *
      * @throws PrestaShopException
      * @throws SupplierException
      */
     protected function validateFields(Supplier $supplier, Address $address)
     {
-        if (false === $supplier->validateFields(false) || false === $supplier->validateFieldsLang(false)) {
+        if ($supplier->validateFields(false) === false || $supplier->validateFieldsLang(false) === false) {
             throw new SupplierException('Supplier contains invalid field values');
         }
 
-        if (false === $address->validateFields(false) || false === $address->validateFieldsLang(false)) {
+        if ($address->validateFields(false) === false || $address->validateFieldsLang(false) === false) {
             throw new SupplierException('Supplier address contains invalid field values');
         }
     }

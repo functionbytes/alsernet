@@ -44,8 +44,6 @@ class LocaleDataSource
     /**
      * LocaleDataSource constructor needs a CldrLocaleDataLayerInterface layer object.
      * This top layer might be chained with lower layers and will be the entry point of this middleware stack.
-     *
-     * @param CldrLocaleDataLayerInterface $topLayer
      */
     public function __construct(CldrLocaleDataLayerInterface $topLayer)
     {
@@ -53,8 +51,7 @@ class LocaleDataSource
     }
 
     /**
-     * @param string $localeCode
-     *
+     * @param  string  $localeCode
      * @return LocaleData|null
      */
     public function getLocaleData($localeCode)

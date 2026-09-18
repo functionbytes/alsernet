@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,9 +32,8 @@ interface InvoiceInterface
     /**
      * Return collection of Invoice.
      *
-     * @param string $dateFrom Date From
-     * @param string $dateTo Date To
-     *
+     * @param  string  $dateFrom  Date From
+     * @param  string  $dateTo  Date To
      * @return array[InvoiceLegacy]
      */
     public static function getByDeliveryDateInterval($dateFrom, $dateTo);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class DatabaseTablesList
     private $dbTables;
 
     /**
-     * @param string[] $dbTables
+     * @param  string[]  $dbTables
      *
      * @throws SqlRequestException
      */
@@ -57,8 +58,6 @@ class DatabaseTablesList
     }
 
     /**
-     * @param array $tables
-     *
      * @return self
      *
      * @throws SqlRequestException

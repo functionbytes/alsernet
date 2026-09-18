@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class UpdateEmployeeNotificationLastElementCommand
     private $type;
 
     /**
-     * @param string $type
-     *
      * @throws NotificationException
      */
     public function __construct(string $type)

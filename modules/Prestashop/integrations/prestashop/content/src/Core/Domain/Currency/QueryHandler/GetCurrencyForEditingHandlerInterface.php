@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShop\PrestaShop\Core\Domain\Currency\QueryHandler;
 
 use PrestaShop\PrestaShop\Core\Domain\Currency\Query\GetCurrencyForEditing;
+use PrestaShop\PrestaShop\Core\Domain\Currency\QueryResult\EditableCurrency;
 
 /**
  * Interface GetCurrencyForEditingHandlerInterface defines contract for GetCurrencyForFormEditingHandler.
@@ -34,9 +36,7 @@ use PrestaShop\PrestaShop\Core\Domain\Currency\Query\GetCurrencyForEditing;
 interface GetCurrencyForEditingHandlerInterface
 {
     /**
-     * @param GetCurrencyForEditing $query
-     *
-     * @return \PrestaShop\PrestaShop\Core\Domain\Currency\QueryResult\EditableCurrency
+     * @return EditableCurrency
      */
     public function handle(GetCurrencyForEditing $query);
 }

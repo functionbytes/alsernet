@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,7 @@ use TaxRulesGroup;
 /**
  * Provides tax rule group choices with tax rule name as key and id as value
  */
-final class TaxRuleGroupChoiceProvider implements FormChoiceProviderInterface, FormChoiceAttributeProviderInterface
+final class TaxRuleGroupChoiceProvider implements FormChoiceAttributeProviderInterface, FormChoiceProviderInterface
 {
     /**
      * {@inheritdoc}
@@ -56,21 +57,18 @@ final class TaxRuleGroupChoiceProvider implements FormChoiceProviderInterface, F
         $attrs = [];
         foreach ($this->getRules() as $rule) {
             // Keep first one found
-            if (!empty($attrs[$rule['name']]['data-tax-rate'])) {
+            if (! empty($attrs[$rule['name']]['data-tax-rate'])) {
                 continue;
             }
 
             $attrs[$rule['name']] = [
-                'data-tax-rate' => !empty($rule['rate']) ? $rule['rate'] : null,
+                'data-tax-rate' => ! empty($rule['rate']) ? $rule['rate'] : null,
             ];
         }
 
         return $attrs;
     }
 
-    /**
-     * @return array
-     */
     private function getRules(): array
     {
         return TaxRulesGroup::getTaxRulesGroupsForOptions();

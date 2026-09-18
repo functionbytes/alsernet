@@ -395,7 +395,7 @@ class StockAvailableCore extends ObjectModel
                 'location' => $location,
             ];
 
-            throw new \InvalidArgumentException(sprintf('Could not update location as input data is not valid: %s', json_encode($serializedInputData)));
+            throw new InvalidArgumentException(sprintf('Could not update location as input data is not valid: %s', json_encode($serializedInputData)));
         }
 
         $existing_id = StockAvailable::getStockAvailableIdByProductId($id_product, $id_product_attribute, $id_shop);

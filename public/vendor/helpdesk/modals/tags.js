@@ -13,7 +13,24 @@
     function applied()  { return $('#tags-applied'); }
     function tagsList() { return $('#tags-list'); }
 
-    /* ── Sincroniza estado al abrir ──────────────────────────── */
+    /* ── Sincroniza estado al abrir ──────────────────────────────
+     * El modal vive fuera del pane (se incluye una sola vez en el layout),
+     * así que su HTML de "Aplicadas" solo refleja la conversación que
+     * estaba abierta cuando la PÁGINA cargó — al cambiar de conversación
+     * por SPA sin recargar, quedaba obsoleto (ej. abría en "Ninguna
+     * aplicada" con una etiqueta ya puesta). El panel derecho (#rsp-tag-wrap)
+     * sí se actualiza en cada bvLoadConversationPane, así que es la fuente
+     * real de qué etiquetas tiene la conversación actualmente abierta.
+     */
+    function currentTagsFromRightPanel() {
+        var $wrap = $('#rsp-tag-wrap');
+        var tags = [];
+        $wrap.find('[data-tag-id]').each(function () {
+            tags.push({ id: String($(this).data('tag-id')), name: $(this).text().trim() });
+        });
+        return tags;
+    }
+
     (new MutationObserver(function (mutations) {
         mutations.forEach(function (m) {
             if (m.attributeName !== 'class') { return; }
@@ -23,11 +40,17 @@
             preAppliedIds = new Set();
             tagsList().find('.bv-rtag[data-tag-id]').removeClass('bv-rtag--on');
 
-            applied().find('.bv-rtag').each(function () {
-                var id = String($(this).data('tag-id'));
-                preAppliedIds.add(id);
-                tagsList().find('.bv-rtag[data-tag-id="' + id + '"]').addClass('bv-rtag--on');
-            });
+            var currentTags = currentTagsFromRightPanel();
+            applied().empty();
+            if (currentTags.length) {
+                currentTags.forEach(function (t) {
+                    addChip(t.id, t.name);
+                    preAppliedIds.add(t.id);
+                    tagsList().find('.bv-rtag[data-tag-id="' + t.id + '"]').addClass('bv-rtag--on');
+                });
+            } else {
+                applied().append('<em class="bv-tags-empty" id="tags-applied-empty">Ninguna aplicada</em>');
+            }
 
             $('#tags-search').val('').trigger('input');
         });
@@ -157,9 +180,9 @@
 
             $.ajax({
                 url: updateUrl,
-                method: 'PUT',
+                method: 'POST',
                 contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': csrf },
+                headers: { 'X-CSRF-TOKEN': csrf, 'X-HTTP-Method-Override': 'PUT' },
                 data: JSON.stringify({ tag_ids: existingIds }),
             }).done(function (resp) {
                 if (resp && resp.success) {
@@ -185,6 +208,14 @@
                     var convId = $('.bv-composer').data('bv-conversation-id');
                     if (convId && typeof window.bvLoadConversationPane === 'function') {
                         window.bvLoadConversationPane(convId, null, { push: false });
+                    }
+                    // El pane solo actualiza el panel derecho: si la lista está
+                    // filtrada por una etiqueta (ej. "?tag=2") y esta se quitó,
+                    // la fila se quedaba visible hasta recargar a mano. Reutiliza
+                    // el mismo refresco que ya usan reopen/status con los filtros
+                    // activos de la URL para no perder el filtro (ver #bv-btn-reopen).
+                    if (typeof window.refreshInboxList === 'function' && typeof window.readInboxFiltersFromUrl === 'function') {
+                        window.refreshInboxList(window.readInboxFiltersFromUrl());
                     }
                 } else {
                     toastr.error(resp.message || 'Error al guardar etiquetas');

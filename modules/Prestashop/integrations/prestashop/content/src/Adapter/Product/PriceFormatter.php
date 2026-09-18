@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,8 @@ use Tools;
 class PriceFormatter
 {
     /**
-     * @param float $price
-     * @param string|null $currency
-     *
+     * @param  float  $price
+     * @param  string|null  $currency
      * @return float
      */
     public function convertAmount($price, $currency = null)
@@ -45,9 +45,8 @@ class PriceFormatter
     }
 
     /**
-     * @param float $price
-     * @param string|null $currency
-     *
+     * @param  float  $price
+     * @param  string|null  $currency
      * @return string
      */
     public function format($price, $currency = null)
@@ -56,8 +55,7 @@ class PriceFormatter
     }
 
     /**
-     * @param float $price
-     *
+     * @param  float  $price
      * @return string
      */
     public function convertAndFormat($price)

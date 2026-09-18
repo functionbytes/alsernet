@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,8 +27,11 @@
 class AddressesControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'addresses';
+
     public $authRedirection = 'addresses';
+
     public $ssl = true;
 
     /**
@@ -39,8 +43,8 @@ class AddressesControllerCore extends FrontController
     {
         parent::init();
 
-        if (!Validate::isLoadedObject($this->context->customer)) {
-            die(Tools::displayError($this->trans('The customer could not be found.', [], 'Shop.Notifications.Error')));
+        if (! Validate::isLoadedObject($this->context->customer)) {
+            exit(Tools::displayError($this->trans('The customer could not be found.', [], 'Shop.Notifications.Error')));
         }
     }
 
@@ -52,7 +56,7 @@ class AddressesControllerCore extends FrontController
     public function initContent()
     {
         if (count($this->context->customer->getSimpleAddresses()) <= 0) {
-            $link = '<a href="' . $this->context->link->getPageLink('address', true) . '">' . $this->trans('Add a new address', [], 'Shop.Theme.Actions') . '</a>';
+            $link = '<a href="'.$this->context->link->getPageLink('address', true).'">'.$this->trans('Add a new address', [], 'Shop.Theme.Actions').'</a>';
             $this->warning[] = $this->trans('No addresses are available. %s', [$link], 'Shop.Notifications.Success');
         }
 

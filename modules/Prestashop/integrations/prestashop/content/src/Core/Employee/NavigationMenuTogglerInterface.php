@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ interface NavigationMenuTogglerInterface
     /**
      * Toggle the navigation for employee (collapse/expand)
      *
-     * @param bool $shouldCollapse if true - collapse the navigation, expand it otherwise
+     * @param  bool  $shouldCollapse  if true - collapse the navigation, expand it otherwise
      */
     public function toggleNavigationMenuInCookies($shouldCollapse);
 }

@@ -93,35 +93,34 @@ class CurrencyData
     /**
      * Override this object's data with another CurrencyData object.
      *
-     * @param CurrencyData $currencyData
-     *                                   Currency data to use for the override
-     *
+     * @param  CurrencyData  $currencyData
+     *                                      Currency data to use for the override
      * @return $this
      *               Fluent interface
      */
     public function overrideWith(CurrencyData $currencyData)
     {
-        if (null !== $currencyData->getIsoCode()) {
+        if ($currencyData->getIsoCode() !== null) {
             $this->setIsoCode($currencyData->getIsoCode());
         }
 
-        if (null !== $currencyData->getNumericIsoCode()) {
+        if ($currencyData->getNumericIsoCode() !== null) {
             $this->setNumericIsoCode($currencyData->getNumericIsoCode());
         }
 
-        if (null !== $currencyData->isActive()) {
+        if ($currencyData->isActive() !== null) {
             $this->setActive($currencyData->isActive());
         }
 
-        if (null !== $currencyData->getDecimalDigits()) {
+        if ($currencyData->getDecimalDigits() !== null) {
             $this->setDecimalDigits($currencyData->getDecimalDigits());
         }
 
-        if (null !== $currencyData->getDisplayNames()) {
+        if ($currencyData->getDisplayNames() !== null) {
             $this->displayNames = array_merge($this->displayNames ?? [], $currencyData->getDisplayNames());
         }
 
-        if (null !== $currencyData->getSymbols()) {
+        if ($currencyData->getSymbols() !== null) {
             $this->symbols = array_merge($this->symbols ?? [], $currencyData->getSymbols());
         }
 
@@ -137,8 +136,7 @@ class CurrencyData
     }
 
     /**
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return CurrencyData
      */
     public function setIsoCode($isoCode)
@@ -157,8 +155,7 @@ class CurrencyData
     }
 
     /**
-     * @param string $numericIsoCode
-     *
+     * @param  string  $numericIsoCode
      * @return CurrencyData
      */
     public function setNumericIsoCode($numericIsoCode)
@@ -177,8 +174,7 @@ class CurrencyData
     }
 
     /**
-     * @param int $decimalDigits
-     *
+     * @param  int  $decimalDigits
      * @return CurrencyData
      */
     public function setDecimalDigits($decimalDigits)
@@ -197,8 +193,7 @@ class CurrencyData
     }
 
     /**
-     * @param string[] $displayNames
-     *
+     * @param  string[]  $displayNames
      * @return CurrencyData
      */
     public function setDisplayNames($displayNames)
@@ -217,8 +212,7 @@ class CurrencyData
     }
 
     /**
-     * @param string[] $symbols
-     *
+     * @param  string[]  $symbols
      * @return CurrencyData
      */
     public function setSymbols($symbols)
@@ -239,7 +233,7 @@ class CurrencyData
     }
 
     /**
-     * @param bool $active
+     * @param  bool  $active
      */
     public function setActive($active)
     {

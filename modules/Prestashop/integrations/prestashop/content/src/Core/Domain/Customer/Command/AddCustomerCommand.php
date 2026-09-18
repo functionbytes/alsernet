@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -129,17 +130,17 @@ class AddCustomerCommand
     private $riskId;
 
     /**
-     * @param string $firstName
-     * @param string $lastName
-     * @param string $email
-     * @param string $password
-     * @param int $defaultGroupId
-     * @param int[] $groupIds
-     * @param int $shopId
-     * @param int|null $genderId
-     * @param bool $isEnabled
-     * @param bool $isPartnerOffersSubscribed
-     * @param string|null $birthday
+     * @param  string  $firstName
+     * @param  string  $lastName
+     * @param  string  $email
+     * @param  string  $password
+     * @param  int  $defaultGroupId
+     * @param  int[]  $groupIds
+     * @param  int  $shopId
+     * @param  int|null  $genderId
+     * @param  bool  $isEnabled
+     * @param  bool  $isPartnerOffersSubscribed
+     * @param  string|null  $birthday
      */
     public function __construct(
         $firstName,
@@ -164,7 +165,7 @@ class AddCustomerCommand
         $this->genderId = $genderId;
         $this->isEnabled = $isEnabled;
         $this->isPartnerOffersSubscribed = $isPartnerOffersSubscribed;
-        $this->birthday = null !== $birthday ? new Birthday($birthday) : Birthday::createEmpty();
+        $this->birthday = $birthday !== null ? new Birthday($birthday) : Birthday::createEmpty();
     }
 
     /**
@@ -264,8 +265,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param string $companyName
-     *
+     * @param  string  $companyName
      * @return self
      */
     public function setCompanyName($companyName)
@@ -284,8 +284,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param string $siretCode
-     *
+     * @param  string  $siretCode
      * @return self
      */
     public function setSiretCode($siretCode)
@@ -304,8 +303,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param string $apeCode
-     *
+     * @param  string  $apeCode
      * @return self
      */
     public function setApeCode($apeCode)
@@ -324,8 +322,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param string $website
-     *
+     * @param  string  $website
      * @return self
      */
     public function setWebsite($website)
@@ -344,8 +341,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param float $allowedOutstandingAmount
-     *
+     * @param  float  $allowedOutstandingAmount
      * @return self
      */
     public function setAllowedOutstandingAmount($allowedOutstandingAmount)
@@ -364,8 +360,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param int $maxPaymentDays
-     *
+     * @param  int  $maxPaymentDays
      * @return self
      */
     public function setMaxPaymentDays($maxPaymentDays)
@@ -384,8 +379,7 @@ class AddCustomerCommand
     }
 
     /**
-     * @param int $riskId
-     *
+     * @param  int  $riskId
      * @return self
      */
     public function setRiskId($riskId)

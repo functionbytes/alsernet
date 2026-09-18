@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,8 +31,5 @@ use PrestaShop\PrestaShop\Core\Domain\Order\Command\ResendOrderEmailCommand;
 
 interface ResendOrderEmailHandlerInterface
 {
-    /**
-     * @param ResendOrderEmailCommand $command
-     */
     public function handle(ResendOrderEmailCommand $command): void;
 }

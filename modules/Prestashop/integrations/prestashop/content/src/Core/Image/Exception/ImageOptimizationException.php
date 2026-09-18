@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Image\Exception;
 /**
  * Class ImageOptimizationException is thrown when resizing, cutting or optimizing image fails.
  */
-class ImageOptimizationException extends ImageException
-{
-}
+class ImageOptimizationException extends ImageException {}

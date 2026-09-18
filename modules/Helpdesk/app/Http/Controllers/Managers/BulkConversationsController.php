@@ -48,20 +48,22 @@ class BulkConversationsController extends Controller
             }
         }
 
+        $closedConversations = [];
+
         try {
-            $affected = DB::transaction(function () use ($action, $ids, $payload, $request, $conversations): int {
+            $affected = DB::transaction(function () use ($action, $ids, $payload, $request, $conversations, &$closedConversations): int {
                 return match ($action) {
                     'archive' => $this->bulkArchive($conversations),
 
                     'unarchive' => $this->bulkUnarchive($conversations),
 
-                    'close' => $this->bulkClose($conversations, $request),
+                    'close' => $this->bulkClose($conversations, $closedConversations),
 
                     'reopen' => $this->bulkReopen($conversations),
 
                     'assign' => $this->bulkAssign($conversations, $payload['assignee_id'] ?? null),
 
-                    'tag' => $this->bulkTag($ids, $payload['tag_ids'] ?? []),
+                    'tag' => $this->bulkTag($conversations, $payload['tag_ids'] ?? []),
 
                     'mark_read' => $this->bulkMarkRead($ids, $request->user()->id),
 
@@ -77,6 +79,12 @@ class BulkConversationsController extends Controller
                     'mute' => $this->bulkMute($ids, $request->user()->id, $payload['until'] ?? null),
                 };
             });
+
+            // Evento de cierre + CSAT van despues de confirmar la transaccion:
+            // si se dispararan dentro del closure y otra fila del mismo lote
+            // provocara un rollback, quedarian disparados para cierres que
+            // nunca se llegaron a persistir.
+            $this->dispatchCloseSideEffects($closedConversations, $request->boolean('skip_csat'));
 
             return response()->json([
                 'success' => true,
@@ -98,15 +106,17 @@ class BulkConversationsController extends Controller
     }
 
     /**
-     * Close each open conversation via the unit close() logic so status_id is set,
-     * then fire the close event + CSAT survey for parity with the individual action.
+     * Close each open conversation via the unit close() logic so status_id is set.
+     * Solo hace trabajo de BD: acumula las cerradas con exito en $closedConversations
+     * para que handle() dispare el evento de cierre + CSAT una vez confirmada la
+     * transaccion (ver dispatchCloseSideEffects()).
      *
      * @param  Collection<int, Conversation>  $conversations
+     * @param  array<int, Conversation>  $closedConversations
      */
-    private function bulkClose(Collection $conversations, BulkConversationsRequest $request): int
+    private function bulkClose(Collection $conversations, array &$closedConversations): int
     {
         $count = 0;
-        $skipCsat = $request->boolean('skip_csat');
 
         foreach ($conversations as $conversation) {
             if ($conversation->closed_at !== null) {
@@ -114,23 +124,40 @@ class BulkConversationsController extends Controller
             }
 
             $conversation->close();
-            ConversationClosed::dispatch($conversation);
-
-            if (! $skipCsat) {
-                try {
-                    app(CsatService::class)->dispatchForConversation($conversation);
-                } catch (\Throwable $e) {
-                    Log::warning('CSAT dispatch failed on bulk close', [
-                        'conversation_id' => $conversation->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
+            $closedConversations[] = $conversation;
             $count++;
         }
 
         return $count;
+    }
+
+    /**
+     * Dispara el evento de cierre + encuesta CSAT (llamada HTTP sincrona) para
+     * cada conversacion cerrada en el bulk close, una vez que la transaccion ya
+     * se confirmo, para parity con la accion individual sin mantener la
+     * transaccion de BD abierta ni disparar side-effects de cierres que un
+     * rollback posterior del mismo lote pudiera revertir.
+     *
+     * @param  array<int, Conversation>  $closedConversations
+     */
+    private function dispatchCloseSideEffects(array $closedConversations, bool $skipCsat): void
+    {
+        foreach ($closedConversations as $conversation) {
+            ConversationClosed::dispatch($conversation);
+
+            if ($skipCsat) {
+                continue;
+            }
+
+            try {
+                app(CsatService::class)->dispatchForConversation($conversation);
+            } catch (\Throwable $e) {
+                Log::warning('CSAT dispatch failed on bulk close', [
+                    'conversation_id' => $conversation->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
@@ -239,10 +266,11 @@ class BulkConversationsController extends Controller
         return $accessibleInboxIds === null || in_array($inboxId, $accessibleInboxIds, true);
     }
 
-    private function bulkTag(array $ids, array $tagIds): int
+    /**
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkTag(Collection $conversations, array $tagIds): int
     {
-        $conversations = Conversation::whereIn('id', $ids)->get();
-
         foreach ($conversations as $conversation) {
             $conversation->conversationTags()->sync($tagIds);
         }

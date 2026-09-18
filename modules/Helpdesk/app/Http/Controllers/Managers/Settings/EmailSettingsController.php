@@ -70,9 +70,7 @@ class EmailSettingsController extends Controller
             $validated[$field] = isset($validated[$field]) && $validated[$field];
         }
 
-        foreach ($validated as $key => $value) {
-            Setting::set(self::GROUP.'.'.$key, $value, self::GROUP);
-        }
+        Setting::setMany($validated, self::GROUP, 'settings.email.updated');
 
         return response()->json(['status' => true, 'message' => 'Configuración de email guardada correctamente.']);
     }

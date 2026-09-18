@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class UpdateProductBasicInformationHandler implements UpdateProductBasicIn
      */
     private $productRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductRepository $productRepository
     ) {
@@ -71,9 +69,6 @@ final class UpdateProductBasicInformationHandler implements UpdateProductBasicIn
     }
 
     /**
-     * @param Product $product
-     * @param UpdateProductBasicInformationCommand $command
-     *
      * @return array<string, mixed>
      */
     private function fillUpdatableProperties(
@@ -83,19 +78,19 @@ final class UpdateProductBasicInformationHandler implements UpdateProductBasicIn
         $updatableProperties = [];
 
         $localizedNames = $command->getLocalizedNames();
-        if (null !== $localizedNames) {
+        if ($localizedNames !== null) {
             $product->name = $localizedNames;
             $updatableProperties['name'] = array_keys($localizedNames);
         }
 
         $localizedDescriptions = $command->getLocalizedDescriptions();
-        if (null !== $localizedDescriptions) {
+        if ($localizedDescriptions !== null) {
             $product->description = $localizedDescriptions;
             $updatableProperties['description'] = array_keys($localizedDescriptions);
         }
 
         $localizedShortDescriptions = $command->getLocalizedShortDescriptions();
-        if (null !== $localizedShortDescriptions) {
+        if ($localizedShortDescriptions !== null) {
             $product->description_short = $localizedShortDescriptions;
             $updatableProperties['description_short'] = array_keys($localizedShortDescriptions);
         }

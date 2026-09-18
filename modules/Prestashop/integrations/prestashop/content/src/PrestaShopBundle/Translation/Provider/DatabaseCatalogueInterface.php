@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use Symfony\Component\Translation\MessageCatalogue;
 interface DatabaseCatalogueInterface
 {
     /**
-     * @param string|null $themeName the Theme name
-     *
+     * @param  string|null  $themeName  the Theme name
      * @return MessageCatalogue
      */
     public function getDatabaseCatalogue($themeName = null);

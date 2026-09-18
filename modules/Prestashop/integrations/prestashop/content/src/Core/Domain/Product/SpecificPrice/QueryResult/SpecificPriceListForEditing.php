@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,9 +60,6 @@ class SpecificPriceListForEditing
         return $this->specificPrices;
     }
 
-    /**
-     * @return int
-     */
     public function getTotalSpecificPricesCount(): int
     {
         return $this->totalSpecificPricesCount;

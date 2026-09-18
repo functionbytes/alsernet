@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,20 +39,12 @@ class OrderMessageProvider
      */
     private $contextLanguageId;
 
-    /**
-     * @param int $contextLanguageId
-     */
     public function __construct(int $contextLanguageId)
     {
         $this->contextLanguageId = $contextLanguageId;
     }
 
-    /**
-     * @param int|null $langId
-     *
-     * @return array
-     */
-    public function getMessages(int $langId = null): array
+    public function getMessages(?int $langId = null): array
     {
         $result = OrderMessage::getOrderMessages($langId ?? $this->contextLanguageId);
 

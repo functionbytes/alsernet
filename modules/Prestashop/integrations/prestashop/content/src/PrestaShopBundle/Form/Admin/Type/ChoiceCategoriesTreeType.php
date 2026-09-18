@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,8 @@ class ChoiceCategoriesTreeType extends CommonAbstractType
         $view->vars['multiple'] = $options['multiple'];
         $view->vars['expanded'] = $options['expanded'];
 
-        //if form is submitted, inject categories values array to check or not each field
-        if (!empty($view->vars['value']) && !empty($view->vars['value']['tree'])) {
+        // if form is submitted, inject categories values array to check or not each field
+        if (! empty($view->vars['value']) && ! empty($view->vars['value']['tree'])) {
             $view->vars['submitted_values'] = array_flip($view->vars['value']['tree']);
         }
     }

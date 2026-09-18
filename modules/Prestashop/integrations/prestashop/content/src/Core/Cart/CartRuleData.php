@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,12 +39,11 @@ class CartRuleData
     public function __construct($rowData)
     {
         $this->setRuleData($rowData);
-        $this->discountApplied = new AmountImmutable();
+        $this->discountApplied = new AmountImmutable;
     }
 
     /**
-     * @param array $ruleData
-     *
+     * @param  array  $ruleData
      * @return static
      */
     public function setRuleData($ruleData)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,7 @@ interface PositionUpdateHandlerInterface
      *      3 => 3
      * ];
      *
-     * @param string|int $parentId
-     * @param PositionDefinitionInterface $positionDefinition
-     *
+     * @param  string|int  $parentId
      * @return array
      */
     public function getCurrentPositions(PositionDefinitionInterface $positionDefinition, $parentId = null);
@@ -70,8 +69,6 @@ interface PositionUpdateHandlerInterface
      *
      * Throws a PositionUpdateException if something went wrong.
      *
-     * @param PositionDefinitionInterface $positionDefinition
-     * @param array $newPositions
      *
      * @throws PositionUpdateException
      */

@@ -125,16 +125,56 @@ class ScheduleControllerTest extends TestCase
         $this->assertTrue((bool) $shift->is_active);
     }
 
-    public function test_shift_validation_rejects_end_before_start(): void
+    /** @see QUAL-01 — overnight shifts (end < start) are now allowed */
+    public function test_shift_allows_overnight_window_crossing_midnight(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->post(route('settings.helpdesk.schedule.shifts.store'), [
+                'user_id' => $this->agent->id,
+                'day_of_week' => 1,
+                'start_time' => '22:00',
+                'end_time' => '06:00',
+            ]);
+
+        $response->assertRedirect(route('settings.helpdesk.schedule.index'));
+
+        $shift = AgentShift::query()->where('user_id', $this->agent->id)->first();
+        $this->assertNotNull($shift);
+        $this->assertSame('22:00:00', $shift->start_time);
+        $this->assertSame('06:00:00', $shift->end_time);
+    }
+
+    public function test_shift_validation_rejects_equal_start_and_end(): void
     {
         $this->actingAs($this->user)
             ->post(route('settings.helpdesk.schedule.shifts.store'), [
                 'user_id' => $this->agent->id,
                 'day_of_week' => 1,
-                'start_time' => '17:00',
+                'start_time' => '09:00',
                 'end_time' => '09:00',
             ])
             ->assertSessionHasErrors('end_time');
+    }
+
+    public function test_shift_validation_rejects_overlapping_shift_same_agent_same_day(): void
+    {
+        AgentShift::create([
+            'user_id' => $this->agent->id,
+            'day_of_week' => 1,
+            'start_time' => '09:00:00',
+            'end_time' => '17:00:00',
+            'timezone' => 'UTC',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('settings.helpdesk.schedule.shifts.store'), [
+                'user_id' => $this->agent->id,
+                'day_of_week' => 1,
+                'start_time' => '16:00',
+                'end_time' => '20:00',
+            ])
+            ->assertSessionHasErrors('start_time');
     }
 
     public function test_user_can_destroy_shift(): void
@@ -213,10 +253,35 @@ class ScheduleControllerTest extends TestCase
             ])
             ->assertRedirect(route('settings.helpdesk.schedule.index'));
 
-        $rotation = OncallRotation::query()->first();
+        $rotation = OncallRotation::query()->where('name', 'On-call principal')->first();
         $this->assertNotNull($rotation);
-        $this->assertSame('On-call principal', $rotation->name);
         $this->assertContains($this->agent->id, $rotation->user_ids);
+    }
+
+    /** @see QUAL-01 — storeOncall() must compute next_handoff_at and default current_user_id */
+    public function test_oncall_rotation_computes_next_handoff_and_defaults_current_user(): void
+    {
+        $second = User::factory()->create();
+        $startedAt = Carbon::now();
+
+        $this->actingAs($this->user)
+            ->post(route('settings.helpdesk.schedule.oncall.store'), [
+                'name' => 'Guardia nocturna',
+                'user_ids' => [$this->agent->id, $second->id],
+                'shift_duration_hours' => 12,
+                'started_at' => $startedAt->toDateTimeString(),
+            ])
+            ->assertRedirect(route('settings.helpdesk.schedule.index'));
+
+        $rotation = OncallRotation::query()->where('name', 'Guardia nocturna')->first();
+
+        $this->assertNotNull($rotation);
+        $this->assertSame($this->agent->id, $rotation->current_user_id);
+        $this->assertNotNull($rotation->next_handoff_at);
+        $this->assertSame(
+            $startedAt->copy()->addHours(12)->format('Y-m-d H:i'),
+            $rotation->next_handoff_at->format('Y-m-d H:i')
+        );
     }
 
     public function test_user_can_destroy_oncall_rotation(): void

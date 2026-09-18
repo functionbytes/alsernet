@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,16 +68,6 @@ class PaymentModulePreferencesType extends TranslatorAwareType
      */
     private $countryDataProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $paymentModules
-     * @param array $countryChoices
-     * @param array $groupChoices
-     * @param array $carrierChoices
-     * @param array $currencyChoices
-     * @param CountryDataProvider $countryDataProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -141,7 +132,7 @@ class PaymentModulePreferencesType extends TranslatorAwareType
         foreach ($this->paymentModules as $paymentModule) {
             $moduleInstance = $paymentModule->getInstance();
 
-            if ('radio' === $moduleInstance->currencies_mode) {
+            if ($moduleInstance->currencies_mode === 'radio') {
                 $allowMultipleCurrencies = false;
                 $currencyChoices = array_merge(
                     $this->currencyChoices,
@@ -175,7 +166,7 @@ class PaymentModulePreferencesType extends TranslatorAwareType
         foreach ($this->paymentModules as $paymentModule) {
             $limitedCountries = $paymentModule->get('limited_countries');
 
-            if (is_array($limitedCountries) && !empty($limitedCountries)) {
+            if (is_array($limitedCountries) && ! empty($limitedCountries)) {
                 $countryChoices = $this->getLimitedCountryChoices($limitedCountries);
             } else {
                 $countryChoices = $this->countryChoices;
@@ -263,7 +254,6 @@ class PaymentModulePreferencesType extends TranslatorAwareType
     /**
      * Get country choices by country ISO codes.
      *
-     * @param array $limitedCountryIsoCodes
      *
      * @return array
      */
@@ -274,7 +264,7 @@ class PaymentModulePreferencesType extends TranslatorAwareType
         foreach ($limitedCountryIsoCodes as $isoCode) {
             $countryId = $this->countryDataProvider->getIdByIsoCode($isoCode);
             $countryValueIndex = array_search($countryId, $this->countryChoices);
-            if (false !== $countryId && false !== $countryValueIndex) {
+            if ($countryId !== false && $countryValueIndex !== false) {
                 $countryChoices[] = $this->countryChoices[$countryValueIndex];
             }
         }
@@ -285,7 +275,6 @@ class PaymentModulePreferencesType extends TranslatorAwareType
     /**
      * Sort payment modules by display name.
      *
-     * @param array $paymentModules
      *
      * @return array
      */

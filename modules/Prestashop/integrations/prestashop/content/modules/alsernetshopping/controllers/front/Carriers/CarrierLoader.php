@@ -3,14 +3,15 @@
 /**
  * Cargador bajo demanda para carriers - Compatible con PrestaShop
  * Solo carga las clases cuando se necesitan
- * 
- * @package AlsernetShopping\Carriers
+ *
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 class CarrierLoader
 {
     private static $loaded = [];
+
     private static $carriersDir = null;
 
     /**
@@ -19,7 +20,7 @@ class CarrierLoader
     public static function init()
     {
         if (self::$carriersDir === null) {
-            self::$carriersDir = dirname(__FILE__) . '/';
+            self::$carriersDir = dirname(__FILE__).'/';
         }
     }
 
@@ -29,17 +30,18 @@ class CarrierLoader
     public static function loadClass($className)
     {
         self::init();
-        
+
         if (isset(self::$loaded[$className])) {
             return true; // Ya cargada
         }
 
-        $filename = $className . '.php';
-        $filepath = self::$carriersDir . $filename;
+        $filename = $className.'.php';
+        $filepath = self::$carriersDir.$filename;
 
         if (file_exists($filepath)) {
             require_once $filepath;
             self::$loaded[$className] = true;
+
             return true;
         }
 
@@ -55,7 +57,7 @@ class CarrierLoader
             'CarrierHandlerInterface',
             'AbstractCarrierHandler',
             'CarrierRegistry',
-            'CarrierAssetManager'
+            'CarrierAssetManager',
         ];
 
         foreach ($baseClasses as $class) {
@@ -79,15 +81,15 @@ class CarrierLoader
             108 => 'MondialRelayModuleHandler',
             109 => 'MondialRelayModuleHandler',
             110 => 'MondialRelayModuleHandler',
-            111 => 'MondialRelayModuleHandler'
+            111 => 'MondialRelayModuleHandler',
         ];
 
         if (isset($carrierHandlers[$carrierId])) {
             $handlerClass = $carrierHandlers[$carrierId];
-            
+
             // Cargar dependencias según el handler
-            if (strpos($handlerClass, 'External') !== false || 
-                strpos($handlerClass, 'MondialRelayModule') !== false || 
+            if (strpos($handlerClass, 'External') !== false ||
+                strpos($handlerClass, 'MondialRelayModule') !== false ||
                 strpos($handlerClass, 'InPostIndependent') !== false) {
                 self::loadClass('ExternalModuleCarrierHandler');
             }
@@ -116,7 +118,7 @@ class CarrierLoader
         return [
             'loaded_classes' => array_keys(self::$loaded),
             'total_loaded' => count(self::$loaded),
-            'carriers_dir' => self::$carriersDir
+            'carriers_dir' => self::$carriersDir,
         ];
     }
 }

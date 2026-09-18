@@ -233,9 +233,10 @@ class WidgetSessionService
 
     private function isPublicIp(string $ip): bool
     {
-        return ! (in_array($ip, ['127.0.0.1', '::1'], true)
-            || str_starts_with($ip, '192.168.')
-            || str_starts_with($ip, '10.')
-            || str_starts_with($ip, '172.'));
+        if (in_array($ip, ['127.0.0.1', '::1'], true)) {
+            return false;
+        }
+
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
     }
 }

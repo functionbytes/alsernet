@@ -34,7 +34,7 @@
 
             {{-- Mensajes programados --}}
             <div class="bv-form-field">
-                <div class="bv-form-label bv-x57">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_pending') }} <span class="bv-chip-id" id="scheduledCount" style="display:none"></span></div>
+                <div class="bv-form-label bv-x57">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_pending') }} <span class="bv-chip-id bv-step-hidden" id="scheduledCount"></span></div>
                 <div class="bv-x58" id="scheduledList">
                     <div class="bv-cv-loading-msg bv-x59"><i class="fas fa-spinner fa-spin"></i></div>
                 </div>
@@ -47,11 +47,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/schedule-msg.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/schedule-msg.js')) }}" defer></script>
-@endpush
-@endonce

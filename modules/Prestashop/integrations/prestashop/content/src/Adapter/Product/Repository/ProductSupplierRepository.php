@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,11 +63,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
      */
     private $productSupplierValidator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param ProductSupplierValidator $productSupplierValidator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -78,10 +74,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductSupplierId $productSupplierId
-     *
-     * @return ProductSupplier
-     *
      * @throws ProductSupplierNotFoundException
      */
     public function get(ProductSupplierId $productSupplierId): ProductSupplier
@@ -96,29 +88,23 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
         return $productSupplier;
     }
 
-    /**
-     * @param ProductId $productId
-     *
-     * @return SupplierId|null
-     */
     public function getProductDefaultSupplierId(ProductId $productId): ?SupplierId
     {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('p.id_supplier AS default_supplier_id')
-            ->from($this->dbPrefix . 'product_supplier', 'ps')
+            ->from($this->dbPrefix.'product_supplier', 'ps')
             ->innerJoin(
                 'ps',
-                $this->dbPrefix . 'product',
+                $this->dbPrefix.'product',
                 'p',
                 'ps.id_supplier = p.id_supplier'
             )
             ->where('ps.id_product = :productId')
-            ->setParameter('productId', $productId->getValue())
-        ;
+            ->setParameter('productId', $productId->getValue());
 
         $result = $qb->execute()->fetch();
 
-        if (!$result) {
+        if (! $result) {
             return null;
         }
 
@@ -126,21 +112,17 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     * @param SupplierId $supplierId
-     *
      * @return ProductSupplierId[]
      */
     public function getAssociatedProductSuppliers(ProductId $productId, SupplierId $supplierId): array
     {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('ps.id_product_supplier AS product_supplier_id')
-            ->from($this->dbPrefix . 'product_supplier', 'ps')
+            ->from($this->dbPrefix.'product_supplier', 'ps')
             ->andWhere('ps.id_product = :productId')
             ->andWhere('ps.id_supplier = :supplierId')
             ->setParameter('productId', $productId->getValue())
-            ->setParameter('supplierId', $supplierId->getValue())
-        ;
+            ->setParameter('supplierId', $supplierId->getValue());
 
         $results = $qb->execute()->fetchAll();
 
@@ -154,11 +136,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductSupplier $productSupplier
-     * @param int $errorCode
-     *
-     * @return ProductSupplierId
-     *
      * @throws CannotAddProductSupplierException
      */
     public function add(ProductSupplier $productSupplier, int $errorCode = 0): ProductSupplierId
@@ -170,8 +147,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductSupplier $productSupplier
-     *
      * @throws CannotUpdateProductSupplierException
      */
     public function update(ProductSupplier $productSupplier): void
@@ -181,8 +156,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductSupplierId $productSupplierId
-     *
      * @throws ProductSupplierNotFoundException
      */
     public function delete(ProductSupplierId $productSupplierId): void
@@ -191,8 +164,6 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param array $productSupplierIds
-     *
      * @throws CannotBulkDeleteProductSupplierException
      */
     public function bulkDelete(array $productSupplierIds): void
@@ -216,32 +187,24 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
         ));
     }
 
-    /**
-     * @param ProductId $productId
-     * @param CombinationId|null $combinationId
-     *
-     * @return array
-     */
     public function getProductSuppliersInfo(ProductId $productId, ?CombinationId $combinationId = null): array
     {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('*')
-            ->from($this->dbPrefix . 'product_supplier', 'ps')
+            ->from($this->dbPrefix.'product_supplier', 'ps')
             ->leftJoin(
                 'ps',
-                $this->dbPrefix . 'supplier',
+                $this->dbPrefix.'supplier',
                 's',
                 'ps.id_supplier = s.id_supplier'
             )
             ->where('ps.id_product = :productId')
             ->addOrderBy('s.name', 'ASC')
-            ->setParameter('productId', $productId->getValue())
-        ;
+            ->setParameter('productId', $productId->getValue());
 
         if ($combinationId) {
             $qb->andWhere('ps.id_product_attribute = :combinationId')
-                ->setParameter('combinationId', $combinationId->getValue())
-            ;
+                ->setParameter('combinationId', $combinationId->getValue());
         } else {
             $qb->andWhere('ps.id_product_attribute = 0');
         }

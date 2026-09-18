@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ class SearchAndResetType extends AbstractType
      */
     private $urlGenerator;
 
-    /**
-     * @param UrlGeneratorInterface $urlGenerator
-     */
     public function __construct(UrlGeneratorInterface $urlGenerator)
     {
         $this->urlGenerator = $urlGenerator;
@@ -58,12 +56,12 @@ class SearchAndResetType extends AbstractType
     {
         $showResetButton = false;
 
-        if (null !== $form->getParent()) {
+        if ($form->getParent() !== null) {
             $configuredTypeNames = array_keys($form->getParent()->all());
             $availableValueNames = array_keys($form->getParent()->getData());
 
             $configuredData = array_intersect($configuredTypeNames, $availableValueNames);
-            if (!empty($configuredData)) {
+            if (! empty($configuredData)) {
                 $showResetButton = true;
             }
         }
@@ -71,14 +69,14 @@ class SearchAndResetType extends AbstractType
         $resetUrl = isset($options['attr']['data-url']) ? $options['attr']['data-url'] : null;
         $redirectUrl = isset($options['attr']['data-redirect']) ? $options['attr']['data-redirect'] : null;
 
-        if (null !== $options['reset_route']) {
+        if ($options['reset_route'] !== null) {
             $resetUrl = $this->urlGenerator->generate(
                 $options['reset_route'],
                 $options['reset_route_params']
             );
         }
 
-        if (null !== $options['redirect_route']) {
+        if ($options['redirect_route'] !== null) {
             $redirectUrl = $this->urlGenerator->generate(
                 $options['redirect_route'],
                 $options['redirect_route_params']

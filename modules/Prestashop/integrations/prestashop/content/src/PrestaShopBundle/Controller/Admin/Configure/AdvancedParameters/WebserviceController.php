@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,7 @@ class WebserviceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param WebserviceKeyFilters $filters - filters for webservice list
-     * @param Request $request
-     *
+     * @param  WebserviceKeyFilters  $filters  - filters for webservice list
      * @return Response
      */
     public function indexAction(WebserviceKeyFilters $filters, Request $request)
@@ -83,8 +82,6 @@ class WebserviceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
@@ -98,7 +95,7 @@ class WebserviceController extends FrameworkBundleAdminController
         try {
             $result = $formHandler->handle($form);
 
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_webservice_keys_index');
@@ -120,9 +117,7 @@ class WebserviceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param int $webserviceKeyId
-     * @param Request $request
-     *
+     * @param  int  $webserviceKeyId
      * @return Response
      */
     public function editAction($webserviceKeyId, Request $request)
@@ -160,8 +155,6 @@ class WebserviceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -186,10 +179,10 @@ class WebserviceController extends FrameworkBundleAdminController
      * Deletes single record.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
+     *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", message="You do not have permission to delete this.")
      *
-     * @param int $webserviceKeyId
-     *
+     * @param  int  $webserviceKeyId
      * @return RedirectResponse
      */
     public function deleteAction($webserviceKeyId)
@@ -197,7 +190,7 @@ class WebserviceController extends FrameworkBundleAdminController
         $webserviceEraser = $this->get('prestashop.adapter.webservice.webservice_key_eraser');
         $errors = $webserviceEraser->erase([$webserviceKeyId]);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -213,9 +206,8 @@ class WebserviceController extends FrameworkBundleAdminController
      * Deletes selected records.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
-     * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", message="You do not have permission to delete this.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", message="You do not have permission to delete this.")
      *
      * @return RedirectResponse
      */
@@ -226,7 +218,7 @@ class WebserviceController extends FrameworkBundleAdminController
         $webserviceEraser = $this->get('prestashop.adapter.webservice.webservice_key_eraser');
         $errors = $webserviceEraser->erase($webserviceToDelete);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -242,9 +234,8 @@ class WebserviceController extends FrameworkBundleAdminController
      * Enables status for selected rows.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
-     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
      * @return RedirectResponse
      */
@@ -262,9 +253,8 @@ class WebserviceController extends FrameworkBundleAdminController
      * Disables status for selected rows.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
-     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
      * @return RedirectResponse
      */
@@ -282,10 +272,10 @@ class WebserviceController extends FrameworkBundleAdminController
      * Toggles webservice account status.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
+     *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
-     * @param int $webserviceKeyId
-     *
+     * @param  int  $webserviceKeyId
      * @return RedirectResponse
      */
     public function toggleStatusAction($webserviceKeyId)
@@ -293,7 +283,7 @@ class WebserviceController extends FrameworkBundleAdminController
         $statusModifier = $this->get('prestashop.adapter.webservice.webservice_key_status_modifier');
         $errors = $statusModifier->toggleStatus($webserviceKeyId);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -309,10 +299,8 @@ class WebserviceController extends FrameworkBundleAdminController
      * Process the Webservice configuration form.
      *
      * @DemoRestricted(redirectRoute="admin_webservice_keys_index")
-     * @AdminSecurity("is_granted(['create', 'update', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
-     * @param Request $request
-     * @param WebserviceKeyFilters $filters
+     * @AdminSecurity("is_granted(['create', 'update', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
      *
      * @return Response|RedirectResponse
      */
@@ -326,7 +314,7 @@ class WebserviceController extends FrameworkBundleAdminController
         if ($form->isSubmitted() && $form->isValid()) {
             $saveErrors = $this->getFormHandler()->save($form->getData());
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_webservice_keys_index');
@@ -338,13 +326,6 @@ class WebserviceController extends FrameworkBundleAdminController
         return $this->renderPage($request, $filters, $form);
     }
 
-    /**
-     * @param Request $request
-     * @param WebserviceKeyFilters $filters
-     * @param FormInterface $form
-     *
-     * @return Response
-     */
     protected function renderPage(Request $request, WebserviceKeyFilters $filters, FormInterface $form): Response
     {
         $gridWebserviceFactory = $this->get('prestashop.core.grid.factory.webservice_key');
@@ -366,9 +347,6 @@ class WebserviceController extends FrameworkBundleAdminController
         );
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.adapter.webservice.form_handler');

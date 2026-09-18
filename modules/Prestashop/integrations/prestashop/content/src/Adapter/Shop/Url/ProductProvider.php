@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ class ProductProvider implements UrlProviderInterface
      */
     private $link;
 
-    /**
-     * @param Link $link
-     */
     public function __construct(Link $link)
     {
         $this->link = $link;
@@ -51,11 +49,6 @@ class ProductProvider implements UrlProviderInterface
 
     /**
      * Create a link to a product.
-     *
-     * @param int|null $productId
-     * @param string|null $rewrite
-     *
-     * @return string
      */
     public function getUrl(?int $productId = null, ?string $rewrite = null): string
     {

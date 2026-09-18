@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,7 @@ namespace PrestaShopBundle\Form\Admin\Configure\ShopParameters\OrderStates;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\DefaultLanguage;
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\TypedRegex;
+use PrestaShop\PrestaShop\Core\Exception\InvalidArgumentException;
 use PrestaShop\PrestaShop\Core\MailTemplate\Layout\Layout;
 use PrestaShop\PrestaShop\Core\MailTemplate\ThemeCatalogInterface;
 use PrestaShopBundle\Form\Admin\Type\ColorPickerType;
@@ -64,13 +66,7 @@ class OrderStateType extends TranslatorAwareType
     private $templateAttributes;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param ThemeCatalogInterface $themeCatalog
-     * @param Router $routing
-     * @param Configuration $configuration
-     *
-     * @throws \PrestaShop\PrestaShop\Core\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -119,7 +115,7 @@ class OrderStateType extends TranslatorAwareType
             ->add('name', TranslatableType::class, [
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -204,8 +200,7 @@ class OrderStateType extends TranslatorAwareType
                 'required' => false,
                 'choices' => $this->templates,
                 'row_attr' => $this->templateAttributes,
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -217,7 +212,6 @@ class OrderStateType extends TranslatorAwareType
             ->setDefaults([
                 'translation_domain' => 'Admin.Shopparameters.Feature',
                 'allow_extra_fields' => true,
-            ])
-        ;
+            ]);
     }
 }

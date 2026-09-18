@@ -43,11 +43,16 @@ class UpdateChatFlowRequest extends FormRequest
             'trigger_conditions.sentiment_message' => ['sometimes', 'nullable', 'string', 'max:500'],
             'trigger_conditions.escape_enabled' => ['sometimes', 'boolean'],
             'trigger_conditions.escape_message' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'trigger_conditions.escape_keywords' => ['sometimes', 'array'],
+            'trigger_conditions.escape_keywords.*' => ['string', 'max:100'],
             'trigger_conditions.handoff_summary' => ['sometimes', 'boolean'],
             'trigger_conditions.ab_variant_id' => ['sometimes', 'nullable', 'integer'],
             'trigger_conditions.ab_split' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:99'],
             // Proactive outbound trigger from a business event (PrestaShop/ERP).
             'trigger_conditions.business_event' => ['sometimes', 'nullable', 'in:abandoned_cart,order_status,order_ready'],
+            // NLU-based intent classification (ChatFlowTriggerResolver::usesNlu/intentLabel).
+            'trigger_conditions.use_nlu' => ['sometimes', 'boolean'],
+            'trigger_conditions.intent' => ['sometimes', 'nullable', 'string', 'max:255'],
             'nodes' => ['nullable', 'array'],
             'nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::NODE_TYPES)],
             'status' => ['nullable', 'in:draft,active,archived'],

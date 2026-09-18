@@ -37,7 +37,10 @@ class TicketObserver
         // entran en el propio INSERT. Calcularlos después obligaba a un UPDATE
         // extra (saveQuietly) por cada ticket creado.
         if ($ticket->sla_policy_id) {
-            $ticket->calculateSlaDueDates(persist: false);
+            // onlyMissing: si quien crea el ticket fijó una fecha de SLA a
+            // mano, se respeta. Antes se pisaba siempre y el valor pedido se
+            // perdía en silencio.
+            $ticket->calculateSlaDueDates(persist: false, onlyMissing: true);
         }
     }
 

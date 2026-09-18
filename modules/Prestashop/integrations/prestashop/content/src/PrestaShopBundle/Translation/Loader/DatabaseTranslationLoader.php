@@ -45,9 +45,6 @@ class DatabaseTranslationLoader implements LoaderInterface
     /** @var EntityManagerInterface */
     protected $entityManager;
 
-    /**
-     * @param EntityManagerInterface $entityManager
-     */
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
@@ -68,7 +65,7 @@ class DatabaseTranslationLoader implements LoaderInterface
             return $catalogue;
         }
 
-        if (!array_key_exists($locale, $langs)) {
+        if (! array_key_exists($locale, $langs)) {
             $langs[$locale] = $this->entityManager->getRepository('PrestaShopBundle:Lang')->findOneBy(['locale' => $locale]);
         }
 
@@ -95,10 +92,6 @@ class DatabaseTranslationLoader implements LoaderInterface
         return $catalogue;
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param Lang $currentLang
-     */
     private function addLangConstraint(QueryBuilder $queryBuilder, Lang $currentLang)
     {
         $queryBuilder->andWhere('t.lang =:lang')
@@ -106,12 +99,11 @@ class DatabaseTranslationLoader implements LoaderInterface
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param string|null $theme
+     * @param  string|null  $theme
      */
     private function addThemeConstraint(QueryBuilder $queryBuilder, $theme)
     {
-        if (null === $theme) {
+        if ($theme === null) {
             $queryBuilder->andWhere('t.theme IS NULL');
         } else {
             $queryBuilder
@@ -121,8 +113,7 @@ class DatabaseTranslationLoader implements LoaderInterface
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $domain
+     * @param  string  $domain
      */
     private function addDomainConstraint(QueryBuilder $queryBuilder, $domain)
     {

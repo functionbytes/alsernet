@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Customer\Exception;
 /**
  * Is thrown when setting required fields for customer fails
  */
-class CannotSetRequiredFieldsForCustomerException extends CustomerException
-{
-}
+class CannotSetRequiredFieldsForCustomerException extends CustomerException {}

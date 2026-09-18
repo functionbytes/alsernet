@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,6 @@ interface FilterableGridDefinitionFactoryInterface extends GridDefinitionFactory
     /**
      * Return a (unique) id to identify the grid filters, this is used as a key to persist
      * (and clear) the Filters associated to the grid.
-     *
-     * @return string
      */
     public function getFilterId(): string;
 }

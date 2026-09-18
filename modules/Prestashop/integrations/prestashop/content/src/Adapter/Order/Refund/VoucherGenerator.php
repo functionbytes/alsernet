@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,10 +55,6 @@ class VoucherGenerator
      */
     private $translator;
 
-    /**
-     * @param Locale $locale
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         Locale $locale,
         TranslatorInterface $translator
@@ -67,11 +64,6 @@ class VoucherGenerator
     }
 
     /**
-     * @param Order $order
-     * @param float $voucherAmount
-     * @param string $currencyIsoCode
-     * @param bool $isTaxIncluded
-     *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -83,7 +75,7 @@ class VoucherGenerator
         string $currencyIsoCode,
         bool $isTaxIncluded
     ) {
-        $cartRule = new CartRule();
+        $cartRule = new CartRule;
         $cartRule->description = $this->translator->trans(
             'Credit slip for order #%d',
             ['#%d' => $order->id],
@@ -114,7 +106,7 @@ class VoucherGenerator
         $cartRule->minimum_amount_currency = $order->id_currency;
         $cartRule->reduction_currency = $order->id_currency;
 
-        if (!$cartRule->add()) {
+        if (! $cartRule->add()) {
             throw new OrderException('You cannot generate a voucher.');
         }
 
@@ -125,7 +117,7 @@ class VoucherGenerator
 
         $cartRule->code = sprintf('V%1$dC%2$dO%3$d', $cartRule->id, $order->id_customer, $order->id);
 
-        if (!$cartRule->update()) {
+        if (! $cartRule->update()) {
             throw new OrderException('You cannot generate a voucher.');
         }
 
@@ -154,7 +146,7 @@ class VoucherGenerator
             ),
             $params,
             $customer->email,
-            $customer->firstname . ' ' . $customer->lastname,
+            $customer->firstname.' '.$customer->lastname,
             null,
             null,
             null,

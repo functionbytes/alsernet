@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,13 +58,6 @@ class ShippingType extends TranslatorAwareType
      */
     private $deliveryTimeNoteTypesProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param string $currencyIsoCode
-     * @param FormChoiceProviderInterface $carrierChoiceProvider
-     * @param FormChoiceProviderInterface $additionalDeliveryTimeNoteTypesProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -103,7 +97,7 @@ class ShippingType extends TranslatorAwareType
                 'label_help_box' => $this->trans('If a carrier has a tax, it will be added to the shipping fees. Does not apply to free shipping.', 'Admin.Catalog.Help'),
                 'currency' => $this->currencyIsoCode,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -117,7 +111,6 @@ class ShippingType extends TranslatorAwareType
                 'label_tag_name' => 'h2',
                 'alert_message' => $this->trans('If no carrier is selected then all the carriers will be available for customers orders.', 'Admin.Catalog.Notification'),
                 'alert_type' => 'warning',
-            ])
-        ;
+            ]);
     }
 }

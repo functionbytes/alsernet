@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,6 @@ class AddCustomizationCommand
     private $customizationValuesByFieldIds;
 
     /**
-     * @param int $cartId
-     * @param int $productId
-     * @param array $customizationValuesByFieldIds
-     *
      * @throws CartConstraintException
      */
     public function __construct(int $cartId, int $productId, array $customizationValuesByFieldIds)
@@ -64,25 +61,16 @@ class AddCustomizationCommand
         $this->customizationValuesByFieldIds = $customizationValuesByFieldIds;
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return array
-     */
     public function getCustomizationValuesByFieldIds(): array
     {
         return $this->customizationValuesByFieldIds;

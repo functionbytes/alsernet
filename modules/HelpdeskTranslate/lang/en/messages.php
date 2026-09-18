@@ -28,6 +28,7 @@ return [
         'card_title' => 'Translations (HelpdeskTranslate)',
         'card_description' => 'Configure the translation provider, DeepL API key and default target language.',
         'cache_section' => 'Local translation cache',
+        'remove_key_label' => 'Remove saved key',
     ],
 
     'panel' => [
@@ -72,9 +73,9 @@ return [
         'text_max' => 'The text cannot exceed 2000 characters.',
         'from_in' => 'The source language is not valid.',
         'to_required' => 'The target language is required.',
-        'to_regex' => 'The target language is not valid (use an ISO code like `es` or `en-US`).',
+        'to_in' => 'The selected target language is not supported.',
         'target_required' => 'The target language is required.',
-        'target_regex' => 'The target language is not valid (use an ISO code like `es` or `en-US`).',
+        'target_in' => 'The selected target language is not supported.',
         'provider_required' => 'The translation provider is required.',
         'provider_in' => 'The selected provider is not valid.',
         'default_target_required' => 'The default target language is required.',

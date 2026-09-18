@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,7 @@ final class EmailLogsQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -84,7 +83,6 @@ final class EmailLogsQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -92,18 +90,18 @@ final class EmailLogsQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'mail', 'm')
-            ->leftJoin('m', $this->dbPrefix . 'lang', 'l', 'm.id_lang = l.id_lang');
+            ->from($this->dbPrefix.'mail', 'm')
+            ->leftJoin('m', $this->dbPrefix.'lang', 'l', 'm.id_lang = l.id_lang');
 
         foreach ($filters as $name => $value) {
-            if ('id_lang' === $name) {
+            if ($name === 'id_lang') {
                 $qb->andWhere("l.id_lang = :$name");
                 $qb->setParameter($name, $value);
 
                 continue;
             }
 
-            if ('date_add' === $name) {
+            if ($name === 'date_add') {
                 if (isset($value['from'])) {
                     $qb->andWhere('m.date_add >= :date_from');
                     $qb->setParameter('date_from', sprintf('%s %s', $value['from'], '0:0:0'));
@@ -118,7 +116,7 @@ final class EmailLogsQueryBuilder extends AbstractDoctrineQueryBuilder
             }
 
             $qb->andWhere("$name LIKE :$name");
-            $qb->setParameter($name, '%' . $value . '%');
+            $qb->setParameter($name, '%'.$value.'%');
         }
 
         return $qb;

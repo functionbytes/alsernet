@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,9 +51,6 @@ class ContainerParametersExtension implements ContainerBuilderExtensionInterface
      */
     private $environment;
 
-    /**
-     * @param EnvironmentInterface $environment
-     */
     public function __construct(EnvironmentInterface $environment)
     {
         $this->environment = $environment;
@@ -63,25 +61,25 @@ class ContainerParametersExtension implements ContainerBuilderExtensionInterface
      */
     public function build(ContainerBuilder $container)
     {
-        //This script is used in config.yml to init the container parameters
-        //It is also able to generate the parameters.php file if it does not exist
-        include _PS_ROOT_DIR_ . '/app/config/set_parameters.php';
-        $container->addResource(new FileResource(_PS_ROOT_DIR_ . '/app/config/parameters.php'));
+        // This script is used in config.yml to init the container parameters
+        // It is also able to generate the parameters.php file if it does not exist
+        include _PS_ROOT_DIR_.'/app/config/set_parameters.php';
+        $container->addResource(new FileResource(_PS_ROOT_DIR_.'/app/config/parameters.php'));
 
-        //Most of these parameters are just necessary fro doctrine services definitions
+        // Most of these parameters are just necessary fro doctrine services definitions
         $container->setParameter('kernel.bundles', []);
-        $container->setParameter('kernel.root_dir', _PS_ROOT_DIR_ . '/app');
+        $container->setParameter('kernel.root_dir', _PS_ROOT_DIR_.'/app');
         $container->setParameter('kernel.project_dir', _PS_ROOT_DIR_);
         $container->setParameter('kernel.name', 'app');
         $container->setParameter('kernel.debug', $this->environment->isDebug());
         $container->setParameter('kernel.environment', $this->environment->getName());
 
-        //Note: this is not the same folder in test env because PS_CACHE_DIR only manages dev and prod env
-        //but it should! So for now let's do it the right way here and let's fix the rest later when EnvironmentInterface
-        //will be correctly/fully integrated.
+        // Note: this is not the same folder in test env because PS_CACHE_DIR only manages dev and prod env
+        // but it should! So for now let's do it the right way here and let's fix the rest later when EnvironmentInterface
+        // will be correctly/fully integrated.
         $container->setParameter('kernel.cache_dir', $this->environment->getCacheDir());
 
-        //Init the active modules
-        $container->setParameter('kernel.active_modules', (new ModuleRepository())->getActiveModules());
+        // Init the active modules
+        $container->setParameter('kernel.active_modules', (new ModuleRepository)->getActiveModules());
     }
 }

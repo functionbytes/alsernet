@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class GetTaxForEditing
     private $taxId;
 
     /**
-     * @param int $taxId
+     * @param  int  $taxId
      */
     public function __construct($taxId)
     {

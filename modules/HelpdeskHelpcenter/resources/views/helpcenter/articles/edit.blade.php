@@ -10,7 +10,11 @@
 
   @include('core::components.alerts')
 
-  <div class="card">
+  <div class="row g-3">
+
+    {{-- Formulario --}}
+    <div class="col-12 col-lg-8">
+    <div class="card">
 
     <div class="card-header p-4 border-bottom border-light">
       <div class="d-flex justify-content-between align-items-center">
@@ -34,6 +38,8 @@
 
       <div class="card-body">
 
+            <h6 class="fw-semibold mb-1">Informacion basica</h6>
+            <p class="text-muted small mb-3">Titulo, resumen y orden del articulo dentro de su seccion</p>
             <div class="row">
               <div class="col-12">
                 <div class="mb-3">
@@ -66,6 +72,8 @@
               </div>
 
               <div class="col-12">
+                <h6 class="fw-semibold mb-1 mt-3">Posicionamiento</h6>
+                <p class="text-muted small mb-3">Como se presenta el articulo en los buscadores</p>
                 <div class="mb-3">
                   <label class="control-label col-form-label">Meta Descripción (SEO)</label>
                   <textarea class="form-control" id="meta_description" name="meta_description" rows="2"
@@ -74,6 +82,11 @@
                     Descripción que aparecerá en los resultados de Google (150-160 caracteres recomendados)
                   </small>
                 </div>
+              </div>
+
+              <div class="col-12">
+                <h6 class="fw-semibold mb-1 mt-3">Clasificacion</h6>
+                <p class="text-muted small mb-3">Donde se publica el articulo y como se etiqueta</p>
               </div>
 
               <div class="col-md-6">
@@ -98,7 +111,10 @@
                 <div class="mb-3">
                   <label class="control-label col-form-label">Etiquetas</label>
                   <select class="form-select select2-tags" id="tags" name="tags[]" multiple>
-                    @foreach($article->tags as $tag)
+                    {{-- tags() y no ->tags: la tabla tiene una columna 'tags' que se
+                         llama igual que la relacion belongsToMany, y Eloquent
+                         devuelve el atributo (null) en vez de la relacion. --}}
+                    @foreach($article->tags()->get() as $tag)
                       <option value="{{ $tag->name }}" selected>{{ $tag->name }}</option>
                     @endforeach
                   </select>
@@ -126,6 +142,8 @@
               </div>
 
               <div class="col-12">
+                <h6 class="fw-semibold mb-1 mt-3">Contenido</h6>
+                <p class="text-muted small mb-3">El cuerpo del articulo tal como lo vera el cliente</p>
                 <div class="mb-3">
                   <label class="control-label col-form-label">Contenido *</label>
                   <div id="bodyEditor"></div>
@@ -134,6 +152,11 @@
                   </small>
                   <label id="body-error" class="error d-none" for="body"></label>
                 </div>
+              </div>
+
+              <div class="col-12">
+                <h6 class="fw-semibold mb-1 mt-3">Publicacion</h6>
+                <p class="text-muted small mb-3">Si el articulo se ve en el centro de ayuda publico</p>
               </div>
 
               <div class="col-md-6">
@@ -169,16 +192,57 @@
             </div>
           </div>
 
-          <div class="card-footer d-flex justify-content-end gap-2">
-            <a href="{{ route('manager.helpcenter.articles') }}" class="btn btn-outline-secondary">
-              Cancelar
-            </a>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save me-1"></i> Actualizar
-            </button>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
+            <a href="{{ route('manager.helpcenter.articles') }}" class="btn btn-light w-100">Cancelar</a>
           </div>
         </form>
       </div>
+
+        </div>
+
+        {{-- Panel de instrucciones --}}
+        <div class="col-12 col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los articulos</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-0">
+                        Un articulo es una pagina del centro de ayuda publico. Se publica dentro de
+                        una seccion, y los clientes lo encuentran navegando por categorias o desde
+                        el buscador.
+                    </p>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">Un titulo que sea la pregunta que hace el cliente</li>
+                        <li class="mb-2">La descripcion breve es lo que se lee en los resultados de busqueda</li>
+                        <li class="mb-2">Guardalo como borrador hasta que el contenido este revisado</li>
+                        <li class="mb-0">La posicion ordena los articulos dentro de su seccion</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Visibilidad</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><span class="fw-semibold">Borrador:</span> solo se ve desde el panel</li>
+                        <li class="mb-2"><span class="fw-semibold">Publicado:</span> visible en el centro de ayuda</li>
+                        <li class="mb-0"><span class="fw-semibold">Oculto de la navegacion:</span> publicado pero accesible solo por su URL</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
 @endsection
 
@@ -233,8 +297,12 @@
         theme: 'snow'
       });
 
-      // Set existing content — @json escapa </script> y comillas (JSON_HEX_*),
-      // el cuerpo se guarda como HTML crudo y no debe romper este bloque.
+      // La directiva de abajo escapa el cierre de etiqueta y las comillas
+      // (JSON_HEX_*): el cuerpo se guarda como HTML crudo y no debe romper este
+      // bloque. Dos cosas que NO pueden aparecer en este comentario: el nombre
+      // de la directiva (Blade la compila aunque este comentada, y sin
+      // argumentos tira la vista con un parse error) y el cierre literal de
+      // <\/script>, que corta el bloque y deja el editor sin inicializar.
       bodyEditor.root.innerHTML = @json($article->body);
 
       // Update hidden field on editor change

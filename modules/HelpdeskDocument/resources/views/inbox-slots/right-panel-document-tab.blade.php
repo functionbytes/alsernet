@@ -112,7 +112,21 @@
     {{-- El JS de este panel (~1.800 lineas) vive en un fichero propio y no inline:
          asi se cachea en el navegador, se versiona por mtime y es editable sin
          tocar el Blade. Fuente en modules/HelpdeskDocument/public/js/ — recuerda
-         copiarlo a public/modules/helpdeskdocument/js/ tras editarlo. --}}
-    <script src="{{ asset('modules/helpdeskdocument/js/document-panel.js') }}?v={{ @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.js')) }}" defer></script>
+         copiarlo a public/modules/helpdeskdocument/js/ tras editarlo.
+
+         document-panel.min.js (npm run build:module-assets) es OPCIONAL, mismo
+         criterio "cae si está desactualizado" que tickets-app.js/ticket-detail.js
+         (ver scripts/build-module-assets.mjs): se sirve SOLO si existe Y es más
+         reciente que su única fuente; si no, cae al .js sin minificar de siempre. --}}
+    @php
+        $documentPanelSrcMtime = @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.js'));
+        $documentPanelMinMtime = @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.min.js'));
+        $useDocumentPanelMin = $documentPanelMinMtime !== false && $documentPanelSrcMtime !== false && $documentPanelMinMtime >= $documentPanelSrcMtime;
+    @endphp
+    @if ($useDocumentPanelMin)
+    <script src="{{ asset('modules/helpdeskdocument/js/document-panel.min.js') }}?v={{ $documentPanelMinMtime }}" defer></script>
+    @else
+    <script src="{{ asset('modules/helpdeskdocument/js/document-panel.js') }}?v={{ $documentPanelSrcMtime }}" defer></script>
+    @endif
 @endpush
 @endonce

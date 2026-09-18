@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -94,15 +95,13 @@ final class GeneralDataProvider implements FormDataProviderInterface
 
     /**
      * Perform validations on form data.
-     *
-     * @param array $data
      */
     private function validate(array $data): void
     {
-        $errors = new InvalidConfigurationDataErrorCollection();
+        $errors = new InvalidConfigurationDataErrorCollection;
         if (isset($data[GeneralType::FIELD_FRONT_COOKIE_LIFETIME])) {
             $frontOfficeLifeTimeCookie = $data[GeneralType::FIELD_FRONT_COOKIE_LIFETIME];
-            if (!is_numeric($frontOfficeLifeTimeCookie) || $frontOfficeLifeTimeCookie < 0) {
+            if (! is_numeric($frontOfficeLifeTimeCookie) || $frontOfficeLifeTimeCookie < 0) {
                 $errors->add(new InvalidConfigurationDataError(FormDataProvider::ERROR_NOT_NUMERIC_OR_LOWER_THAN_ZERO, GeneralType::FIELD_FRONT_COOKIE_LIFETIME));
             }
 
@@ -113,7 +112,7 @@ final class GeneralDataProvider implements FormDataProviderInterface
 
         if (isset($data[GeneralType::FIELD_BACK_COOKIE_LIFETIME])) {
             $backOfficeLifeTimeCookie = $data[GeneralType::FIELD_BACK_COOKIE_LIFETIME];
-            if (!is_numeric($backOfficeLifeTimeCookie) || $backOfficeLifeTimeCookie < 0) {
+            if (! is_numeric($backOfficeLifeTimeCookie) || $backOfficeLifeTimeCookie < 0) {
                 $errors->add(new InvalidConfigurationDataError(FormDataProvider::ERROR_NOT_NUMERIC_OR_LOWER_THAN_ZERO, GeneralType::FIELD_BACK_COOKIE_LIFETIME));
             }
 
@@ -123,12 +122,12 @@ final class GeneralDataProvider implements FormDataProviderInterface
         }
 
         if (isset($data[GeneralType::FIELD_COOKIE_SAMESITE])) {
-            if (!$this->validateSameSite($data[GeneralType::FIELD_COOKIE_SAMESITE])) {
+            if (! $this->validateSameSite($data[GeneralType::FIELD_COOKIE_SAMESITE])) {
                 $errors->add(new InvalidConfigurationDataError(FormDataProvider::ERROR_COOKIE_SAMESITE_NONE, GeneralType::FIELD_COOKIE_SAMESITE));
             }
         }
 
-        if (!$errors->isEmpty()) {
+        if (! $errors->isEmpty()) {
             throw new DataProviderException('Administration general data is invalid', 0, null, $errors);
         }
     }
@@ -136,10 +135,6 @@ final class GeneralDataProvider implements FormDataProviderInterface
     /**
      * Validate SameSite.
      * The SameSite=None is only working when Secure is settled
-     *
-     * @param string $sameSite
-     *
-     * @return bool
      */
     protected function validateSameSite(string $sameSite): bool
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,15 +68,12 @@ class TranslationsTreeBuilder
      * @var string
      */
     private $locale;
+
     /**
      * @var TranslationCatalogueBuilder
      */
     private $translationCatalogueBuilder;
 
-    /**
-     * @param Router $router
-     * @param TranslationCatalogueBuilder $translationCatalogueBuilder
-     */
     public function __construct(Router $router, TranslationCatalogueBuilder $translationCatalogueBuilder)
     {
         $this->router = $router;
@@ -83,12 +81,6 @@ class TranslationsTreeBuilder
     }
 
     /**
-     * @param ProviderDefinitionInterface $providerDefinition
-     * @param string $locale
-     * @param array $search
-     *
-     * @return array
-     *
      * @throws TranslationFilesNotFoundException
      * @throws UnexpectedTranslationTypeException
      */
@@ -108,7 +100,7 @@ class TranslationsTreeBuilder
             'theme' => $providerDefinition instanceof ThemeProviderDefinition ? $providerDefinition->getThemeName() : null,
             'module' => $providerDefinition instanceof ModuleProviderDefinition ? $providerDefinition->getModuleName() : null,
         ];
-        if (!empty($search)) {
+        if (! empty($search)) {
             $routeParams['search'] = $search;
         }
 
@@ -118,11 +110,9 @@ class TranslationsTreeBuilder
     /**
      * Builds the API tree recursively by transforming the metadata subtree
      *
-     * @param array $routeParams
-     * @param array $metadataSubtree A branch from the metadata tree
-     * @param string|null $subtreeName Subtree name (eg. "Bar")
-     * @param string|null $fullSubtreeName Full subtree name  (eg. "AdminFooBar")
-     *
+     * @param  array  $metadataSubtree  A branch from the metadata tree
+     * @param  string|null  $subtreeName  Subtree name (eg. "Bar")
+     * @param  string|null  $fullSubtreeName  Full subtree name  (eg. "AdminFooBar")
      * @return array API subtree
      */
     private function recursivelyBuildApiTree(
@@ -144,13 +134,14 @@ class TranslationsTreeBuilder
             if ($name === Catalogue::METADATA_KEY_NAME) {
                 $current['total_langs'] = $value['count'];
                 $current['total_missing_langs'] = $value['missing_langs'];
+
                 continue;
             }
-            if (!isset($current['children'])) {
+            if (! isset($current['children'])) {
                 $current['children'] = [];
             }
 
-            $current['children'][] = $this->recursivelyBuildApiTree($routeParams, $value, $name, (string) $fullSubtreeName . $name);
+            $current['children'][] = $this->recursivelyBuildApiTree($routeParams, $value, $name, (string) $fullSubtreeName.$name);
         }
 
         if (isset($current['children'])) {
@@ -165,9 +156,7 @@ class TranslationsTreeBuilder
     /**
      * Return the URL path to the translations from the given domain in the current context
      *
-     * @param string $fullName Domain name
-     * @param array $routeParams
-     *
+     * @param  string  $fullName  Domain name
      * @return string URL path
      */
     private function getRoute(string $fullName, array $routeParams): string

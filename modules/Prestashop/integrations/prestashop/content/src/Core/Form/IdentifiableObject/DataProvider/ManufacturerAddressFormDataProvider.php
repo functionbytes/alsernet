@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ final class ManufacturerAddressFormDataProvider implements FormDataProviderInter
     private $defaultCountryId;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param int $defaultCountryId
+     * @param  int  $defaultCountryId
      */
     public function __construct(
         CommandBusInterface $queryBus,

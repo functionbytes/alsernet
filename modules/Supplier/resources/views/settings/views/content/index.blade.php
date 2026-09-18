@@ -183,15 +183,7 @@
                                value="{{ request('search') }}">
 
                         {{-- Botón filtros avanzados --}}
-                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
-                                data-bs-toggle="modal" data-bs-target="#filter-modal"
-                                title="Filtros avanzados">
-                            <i class="fas fa-sliders"></i>
-                            @if($activeFilterCount > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
-                                      style="font-size: 0.6rem;">{{ $activeFilterCount }}</span>
-                            @endif
-                        </button>
+                        <x-filter-button target="filter-modal" :count="$activeFilterCount" />
 
                         {{-- Acceso rápido: reintentar fallidos --}}
                         <a href="{{ route('settings.suppliers.content.index', array_merge(request()->query(), ['status' => 'failed'])) }}"
@@ -622,144 +614,176 @@
         </div>
     </div>
 
-    {{-- Filter modal --}}
-    <div class="modal fade" id="filter-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:420px;">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header border-bottom px-4 py-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <h6 class="modal-title fw-bold mb-0">Filtros avanzados</h6>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Estado</label>
-                        <select id="modal-status" class="form-control select2-modal">
-                            <option value="">Todos los estados</option>
-                            @foreach($contentStatuses as $key => $statusObj)
-                                <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
-                                    {{ $statusObj->label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Proveedor</label>
-                        <select id="modal-supplier" class="form-control select2-modal">
-                            <option value="">Todos los proveedores</option>
-                            @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
-                                    {{ $supplier->label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Deporte</label>
-                        <select id="modal-sport" class="form-control select2-modal">
-                            <option value="">Todos los deportes</option>
-                            @foreach($sports as $sport)
-                                <option value="{{ $sport->id }}" {{ request('sport_id') == $sport->id ? 'selected' : '' }}>
-                                    {{ $sport->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Categoría</label>
-                        <select id="modal-erp-cat" class="form-control select2-modal">
-                            <option value="">Todas las categorías</option>
-                            @foreach($erpcategorias as $ec)
-                                <option value="{{ $ec->erp_categoria_id }}"
-                                        data-sport-id="{{ $ec->sport_id }}"
-                                        {{ request('erp_categoria_id') == $ec->erp_categoria_id ? 'selected' : '' }}>
-                                    {{ $ec->erp_categoria_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Familia</label>
-                        <select id="modal-category" class="form-control select2-modal">
-                            <option value="">Todas las familias</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}"
-                                        data-sport-id="{{ $cat->sport_id }}"
-                                        data-erp-cat-id="{{ $cat->erp_categoria_id }}"
-                                        {{ request('category_id') == $cat->id ? 'selected' : '' }}>
-                                    {{ $cat->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Subfamilia</label>
-                        <select id="modal-subfamily" class="form-control select2-modal">
-                            <option value="">Todas las subfamilias</option>
-                            @foreach($subfamilies as $sf)
-                                <option value="{{ $sf->id }}"
-                                        data-family-id="{{ $sf->category_id }}"
-                                        {{ request('subfamily_id') == $sf->id ? 'selected' : '' }}>
-                                    {{ $sf->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Prompt utilizado</label>
-                        <select id="modal-prompt" class="form-control select2-modal">
-                            <option value="">Todos los prompts</option>
-                            @foreach($prompts as $pr)
-                                <option value="{{ $pr->id }}" {{ request('prompt_id') == $pr->id ? 'selected' : '' }}>
-                                    {{ $pr->label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipo de contenido</label>
-                        <select id="modal-content-type" class="form-control select2-modal">
-                            <option value="">Todos los tipos</option>
-                            <option value="name"        {{ request('content_type') == 'name'        ? 'selected' : '' }}>Nombre</option>
-                            <option value="description" {{ request('content_type') == 'description' ? 'selected' : '' }}>Descripción</option>
-                            <option value="seo"         {{ request('content_type') == 'seo'         ? 'selected' : '' }}>SEO</option>
-                        </select>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Desde</label>
-                            <input type="date" id="modal-date-from" class="form-control" value="{{ request('date_from') }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Hasta</label>
-                            <input type="date" id="modal-date-to" class="form-control" value="{{ request('date_to') }}">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Antigüedad de generación</label>
-                        <select id="modal-older-than" class="form-control select2-modal">
-                            <option value="">Todo (sin límite)</option>
-                            <option value="30"  {{ request('older_than_days') == '30'  ? 'selected' : '' }}>Generado hace más de 30 días</option>
-                            <option value="60"  {{ request('older_than_days') == '60'  ? 'selected' : '' }}>Generado hace más de 60 días</option>
-                            <option value="90"  {{ request('older_than_days') == '90'  ? 'selected' : '' }}>Generado hace más de 90 días</option>
-                        </select>
-                    </div>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" role="switch" id="modal-no-sources"
-                               {{ request('no_sources') ? 'checked' : '' }}>
-                        <label class="form-check-label small fw-semibold" for="modal-no-sources">
-                            Solo sin fuentes web consultadas
-                        </label>
-                    </div>
-                </div>
-                <div class="modal-footer border-top px-4 py-3 d-flex flex-column gap-2">
-                    <button type="button" id="filter-apply-btn" class="btn btn-primary w-100">Aplicar</button>
-                    <button type="button" id="filter-clear-btn" class="btn btn-outline-secondary w-100">Cancelar</button>
+    {{-- Filtros avanzados --}}
+    <x-filter-shell id="filter-modal"
+                    :count="$activeFilterCount"
+                    apply-id="filter-apply-btn"
+                    clear-id="filter-clear-btn"
+                    apply-label="Aplicar filtros"
+                    clear-label="Limpiar">
+
+        @if($activeFilterCount > 0)
+            <x-slot:applied>
+                <span class="fs-applied-label">Filtrando por</span>
+                @if(request('status'))
+                    <span class="fs-chip">Estado: <b>{{ $contentStatuses[request('status')]->label ?? request('status') }}</b></span>
+                @endif
+                @if(request('supplier_id'))
+                    <span class="fs-chip">Proveedor: <b>{{ $suppliers->firstWhere('id', request('supplier_id'))->label ?? request('supplier_id') }}</b></span>
+                @endif
+                @if(request('sport_id'))
+                    <span class="fs-chip">Deporte: <b>{{ $sports->firstWhere('id', request('sport_id'))->name ?? request('sport_id') }}</b></span>
+                @endif
+                @if(request('erp_categoria_id'))
+                    <span class="fs-chip">Categoría: <b>{{ $erpcategorias->firstWhere('erp_categoria_id', request('erp_categoria_id'))->erp_categoria_name ?? request('erp_categoria_id') }}</b></span>
+                @endif
+                @if(request('category_id'))
+                    <span class="fs-chip">Familia: <b>{{ $categories->firstWhere('id', request('category_id'))->name ?? request('category_id') }}</b></span>
+                @endif
+                @if(request('subfamily_id'))
+                    <span class="fs-chip">Subfamilia: <b>{{ $subfamilies->firstWhere('id', request('subfamily_id'))->name ?? request('subfamily_id') }}</b></span>
+                @endif
+                @if(request('prompt_id'))
+                    <span class="fs-chip">Prompt: <b>{{ $prompts->firstWhere('id', request('prompt_id'))->label ?? request('prompt_id') }}</b></span>
+                @endif
+                @if(request('content_type'))
+                    <span class="fs-chip">Tipo: <b>{{ ['name' => 'Nombre', 'description' => 'Descripción', 'seo' => 'SEO'][request('content_type')] ?? request('content_type') }}</b></span>
+                @endif
+                @if(request('date_from'))
+                    <span class="fs-chip">Desde: <b>{{ request('date_from') }}</b></span>
+                @endif
+                @if(request('date_to'))
+                    <span class="fs-chip">Hasta: <b>{{ request('date_to') }}</b></span>
+                @endif
+                @if(request('older_than_days'))
+                    <span class="fs-chip">Generado hace más de <b>{{ request('older_than_days') }} días</b></span>
+                @endif
+                @if(request('no_sources'))
+                    <span class="fs-chip">Sin fuentes web</span>
+                @endif
+            </x-slot:applied>
+        @endif
+
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Estado</label>
+                <select id="modal-status" class="form-control select2-modal">
+                    <option value="">Todos los estados</option>
+                    @foreach($contentStatuses as $key => $statusObj)
+                        <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
+                            {{ $statusObj->label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Proveedor</label>
+                <select id="modal-supplier" class="form-control select2-modal">
+                    <option value="">Todos los proveedores</option>
+                    @foreach($suppliers as $supplier)
+                        <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                            {{ $supplier->label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Deporte</label>
+                <select id="modal-sport" class="form-control select2-modal">
+                    <option value="">Todos los deportes</option>
+                    @foreach($sports as $sport)
+                        <option value="{{ $sport->id }}" {{ request('sport_id') == $sport->id ? 'selected' : '' }}>
+                            {{ $sport->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Categoría</label>
+                <select id="modal-erp-cat" class="form-control select2-modal">
+                    <option value="">Todas las categorías</option>
+                    @foreach($erpcategorias as $ec)
+                        <option value="{{ $ec->erp_categoria_id }}"
+                                data-sport-id="{{ $ec->sport_id }}"
+                                {{ request('erp_categoria_id') == $ec->erp_categoria_id ? 'selected' : '' }}>
+                            {{ $ec->erp_categoria_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Familia</label>
+                <select id="modal-category" class="form-control select2-modal">
+                    <option value="">Todas las familias</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}"
+                                data-sport-id="{{ $cat->sport_id }}"
+                                data-erp-cat-id="{{ $cat->erp_categoria_id }}"
+                                {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                            {{ $cat->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Subfamilia</label>
+                <select id="modal-subfamily" class="form-control select2-modal">
+                    <option value="">Todas las subfamilias</option>
+                    @foreach($subfamilies as $sf)
+                        <option value="{{ $sf->id }}"
+                                data-family-id="{{ $sf->category_id }}"
+                                {{ request('subfamily_id') == $sf->id ? 'selected' : '' }}>
+                            {{ $sf->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Prompt utilizado</label>
+                <select id="modal-prompt" class="form-control select2-modal">
+                    <option value="">Todos los prompts</option>
+                    @foreach($prompts as $pr)
+                        <option value="{{ $pr->id }}" {{ request('prompt_id') == $pr->id ? 'selected' : '' }}>
+                            {{ $pr->label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Tipo de contenido</label>
+                <select id="modal-content-type" class="form-control select2-modal">
+                    <option value="">Todos los tipos</option>
+                    <option value="name"        {{ request('content_type') == 'name'        ? 'selected' : '' }}>Nombre</option>
+                    <option value="description" {{ request('content_type') == 'description' ? 'selected' : '' }}>Descripción</option>
+                    <option value="seo"         {{ request('content_type') == 'seo'         ? 'selected' : '' }}>SEO</option>
+                </select>
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Desde</label>
+                <input type="date" id="modal-date-from" class="form-control" value="{{ request('date_from') }}">
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Hasta</label>
+                <input type="date" id="modal-date-to" class="form-control" value="{{ request('date_to') }}">
+            </div>
+            <div class="fs-field">
+                <label class="form-label fw-semibold">Antigüedad de generación</label>
+                <select id="modal-older-than" class="form-control select2-modal">
+                    <option value="">Todo (sin límite)</option>
+                    <option value="30"  {{ request('older_than_days') == '30'  ? 'selected' : '' }}>Generado hace más de 30 días</option>
+                    <option value="60"  {{ request('older_than_days') == '60'  ? 'selected' : '' }}>Generado hace más de 60 días</option>
+                    <option value="90"  {{ request('older_than_days') == '90'  ? 'selected' : '' }}>Generado hace más de 90 días</option>
+                </select>
+            </div>
+            <div class="fs-field fs-field--full">
+                <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="modal-no-sources"
+                       {{ request('no_sources') ? 'checked' : '' }}>
+                    <label class="form-check-label small fw-semibold" for="modal-no-sources">
+                        Solo sin fuentes web consultadas
+                    </label>
                 </div>
             </div>
-        </div>
-    </div>
+    </x-filter-shell>
 
     {{-- Preview modal (quick view) --}}
     <div class="modal fade" id="preview-modal" tabindex="-1" aria-hidden="true">
@@ -778,12 +802,12 @@
                         <p class="small mb-0">Cargando vista previa…</p>
                     </div>
                 </div>
-                <div class="modal-footer border-top px-4 py-3 gap-2">
-                    <a href="#" id="preview-detail-link" class="btn btn-outline-secondary flex-grow-1" target="_blank">
-                        <i class="fas fa-up-right-from-square me-1"></i> Ver detalle
+                <div class="modal-footer border-top px-4 py-3 gap-2 flex-column">
+                    <a href="#" id="preview-detail-link" class="btn btn-secondary w-100" target="_blank">
+                        Ver detalle
                     </a>
-                    <a href="#" id="preview-chat-link" class="btn btn-primary flex-grow-1" target="_blank">
-                        <i class="fas fa-comments me-1"></i> Chat IA
+                    <a href="#" id="preview-chat-link" class="btn btn-primary w-100" target="_blank">
+                        Chat IA
                     </a>
                 </div>
             </div>
@@ -1090,7 +1114,7 @@ $(document).ready(function() {
     });
 
     // Filter modal selects — dropdownParent evita que queden detrás del modal
-    $('.select2-modal').select2({ width: '100%', dropdownParent: $('#filter-modal') });
+    $('.select2-modal').select2({ width: '100%', dropdownParent: window.FilterShell.el('filter-modal') });
 
     // Approve modal select
     $('#approve-publicar').select2({ width: '100%', dropdownParent: $('#approve-modal'), minimumResultsForSearch: Infinity });
@@ -1174,7 +1198,7 @@ $(document).ready(function() {
         if ($('#modal-no-sources').is(':checked')) {
             $('#content-filter-form').append('<input type="hidden" name="no_sources" value="1">');
         }
-        $('#filter-modal').modal('hide');
+        window.FilterShell.close('filter-modal');
         $('#content-filter-form').submit();
     });
 

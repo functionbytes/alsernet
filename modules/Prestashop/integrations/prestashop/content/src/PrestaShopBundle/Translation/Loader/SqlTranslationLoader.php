@@ -42,8 +42,7 @@ class SqlTranslationLoader implements LoaderInterface
     protected $theme;
 
     /**
-     * @param Theme $theme the theme
-     *
+     * @param  Theme  $theme  the theme
      * @return $this
      */
     public function setTheme(Theme $theme)
@@ -60,13 +59,13 @@ class SqlTranslationLoader implements LoaderInterface
     {
         static $localeResults = [];
 
-        if (!array_key_exists($locale, $localeResults)) {
+        if (! array_key_exists($locale, $localeResults)) {
             $locale = Db::getInstance()->escape($locale, false, true);
 
             $localeResults[$locale] = Db::getInstance()->getRow(
                 'SELECT `id_lang`
-                FROM `' . _DB_PREFIX_ . 'lang`
-                WHERE `locale` = "' . $locale . '"'
+                FROM `'._DB_PREFIX_.'lang`
+                WHERE `locale` = "'.$locale.'"'
             );
         }
 
@@ -76,17 +75,17 @@ class SqlTranslationLoader implements LoaderInterface
 
         $selectTranslationsQuery = '
             SELECT `key`, `translation`, `domain`
-            FROM `' . _DB_PREFIX_ . 'translation`
-            WHERE `id_lang` = ' . $localeResults[$locale]['id_lang'];
+            FROM `'._DB_PREFIX_.'translation`
+            WHERE `id_lang` = '.$localeResults[$locale]['id_lang'];
         $translations = Db::getInstance()->executeS($selectTranslationsQuery) ?: [];
 
         $catalogue = new MessageCatalogue($locale);
         $this->addTranslationsToCatalogue($translations, $catalogue);
 
-        if (null !== $this->theme) {
+        if ($this->theme !== null) {
             $selectThemeTranslationsQuery =
-                $selectTranslationsQuery . "\n" .
-                "AND theme = '" . $this->theme->getName() . "'";
+                $selectTranslationsQuery."\n".
+                "AND theme = '".$this->theme->getName()."'";
             $themeTranslations = Db::getInstance()->executeS($selectThemeTranslationsQuery) ?: [];
             $this->addTranslationsToCatalogue($themeTranslations, $catalogue);
         }
@@ -95,8 +94,8 @@ class SqlTranslationLoader implements LoaderInterface
     }
 
     /**
-     * @param array $translations the list of translations
-     * @param MessageCatalogueInterface $catalogue the Message Catalogue
+     * @param  array  $translations  the list of translations
+     * @param  MessageCatalogueInterface  $catalogue  the Message Catalogue
      */
     protected function addTranslationsToCatalogue(array $translations, MessageCatalogueInterface $catalogue)
     {

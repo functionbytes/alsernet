@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,7 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
     private $criteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $criteriaApplicator
-     * @param int $contextLangId
-     * @param int[] $contextShopIds
+     * @param  int[]  $contextShopIds
      */
     public function __construct(
         Connection $connection,
@@ -102,17 +99,15 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
      * @return QueryBuilder
      */
     private function getOrderStatesQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $queryBuilder = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'order_state', 'os')
+            ->from($this->dbPrefix.'order_state', 'os')
             ->leftJoin(
                 'os',
-                $this->dbPrefix . 'order_state_lang',
+                $this->dbPrefix.'order_state_lang',
                 'osl',
                 'os.id_order_state = osl.id_order_state AND osl.id_lang = :context_lang_id'
             )
@@ -126,9 +121,6 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply filters to order_states query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
      */
     private function applyFilters(array $filters, QueryBuilder $qb)
     {
@@ -142,20 +134,20 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
             if (in_array($filterName, ['send_email', 'delivery', 'invoice', 'id_order_state'])) {
-                $qb->andWhere('os.`' . $filterName . '` = :' . $filterName);
+                $qb->andWhere('os.`'.$filterName.'` = :'.$filterName);
                 $qb->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
             if (in_array($filterName, ['name', 'template'])) {
-                $qb->andWhere('osl.`' . $filterName . '` LIKE :' . $filterName);
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->andWhere('osl.`'.$filterName.'` LIKE :'.$filterName);
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
@@ -164,9 +156,6 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply sorting so search query builder for order_states.
-     *
-     * @param QueryBuilder $searchQueryBuilder
-     * @param SearchCriteriaInterface $searchCriteria
      */
     private function applySorting(QueryBuilder $searchQueryBuilder, SearchCriteriaInterface $searchCriteria)
     {
@@ -175,12 +164,12 @@ final class OrderStatesQueryBuilder extends AbstractDoctrineQueryBuilder
             case 'send_email':
             case 'delivery':
             case 'invoice':
-                $orderBy = 'os.' . $searchCriteria->getOrderBy();
+                $orderBy = 'os.'.$searchCriteria->getOrderBy();
 
                 break;
             case 'name':
             case 'template':
-                $orderBy = 'osl.' . $searchCriteria->getOrderBy();
+                $orderBy = 'osl.'.$searchCriteria->getOrderBy();
 
                 break;
             default:

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -79,14 +80,6 @@ class IssueStandardRefundHandler extends AbstractOrderCommandHandler implements 
      */
     private $contextStateManager;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param OrderRefundCalculator $orderRefundCalculator
-     * @param OrderSlipCreator $orderSlipCreator
-     * @param VoucherGenerator $voucherGenerator
-     * @param OrderRefundUpdater $refundUpdater
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         OrderRefundCalculator $orderRefundCalculator,
@@ -109,12 +102,12 @@ class IssueStandardRefundHandler extends AbstractOrderCommandHandler implements 
     public function handle(IssueStandardRefundCommand $command): void
     {
         if ((int) $this->configuration->get('PS_ORDER_RETURN') <= 0) {
-            throw new ReturnProductDisabledException();
+            throw new ReturnProductDisabledException;
         }
 
         /** @var Order $order */
         $order = $this->getOrder($command->getOrderId());
-        if (!$order->hasBeenPaid() && !$order->hasPayments()) {
+        if (! $order->hasBeenPaid() && ! $order->hasPayments()) {
             throw new InvalidOrderStateException(
                 InvalidOrderStateException::NOT_PAID,
                 'Can not perform standard refund on an order which is not paid'
@@ -136,10 +129,6 @@ class IssueStandardRefundHandler extends AbstractOrderCommandHandler implements 
         }
     }
 
-    /**
-     * @param IssueStandardRefundCommand $command
-     * @param Order $order
-     */
     private function issueStandardRefund(IssueStandardRefundCommand $command, Order $order): void
     {
         $shippingRefundAmount = new DecimalNumber((string) ($command->refundShippingCost() ? $order->total_shipping_tax_incl : 0));

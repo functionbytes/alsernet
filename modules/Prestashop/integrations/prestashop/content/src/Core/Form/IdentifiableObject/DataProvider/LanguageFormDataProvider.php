@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,8 @@ final class LanguageFormDataProvider implements FormDataProviderInterface
     private $defaultShopAssociation;
 
     /**
-     * @param CommandBusInterface $bus
-     * @param bool $isMultistoreFeatureActive
-     * @param int[] $defaultShopAssociation
+     * @param  bool  $isMultistoreFeatureActive
+     * @param  int[]  $defaultShopAssociation
      */
     public function __construct(
         CommandBusInterface $bus,

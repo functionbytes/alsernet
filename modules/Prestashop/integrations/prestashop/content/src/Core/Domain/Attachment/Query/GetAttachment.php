@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class GetAttachment
      */
     private $attachmentId;
 
-    /**
-     * @param int $attachmentId
-     */
     public function __construct(int $attachmentId)
     {
         $this->attachmentId = new AttachmentId($attachmentId);
     }
 
-    /**
-     * @return AttachmentId
-     */
     public function getAttachmentId(): AttachmentId
     {
         return $this->attachmentId;

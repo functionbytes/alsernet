@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,6 @@ final class AddWebserviceKeyHandler extends AbstractWebserviceKeyHandler impleme
 
     /**
      * Asserts that new webservice key does not duplicate already existing keys
-     *
-     * @param Key $key
      */
     private function assertWebserviceKeyIsNotDuplicate(Key $key)
     {
@@ -70,22 +69,20 @@ final class AddWebserviceKeyHandler extends AbstractWebserviceKeyHandler impleme
     }
 
     /**
-     * @param AddWebserviceKeyCommand $command
-     *
      * @return WebserviceKey
      */
     private function createLegacyWebserviceKeyFromCommand(AddWebserviceKeyCommand $command)
     {
-        $webserviceKey = new WebserviceKey();
+        $webserviceKey = new WebserviceKey;
         $webserviceKey->key = $command->getKey()->getValue();
         $webserviceKey->description = $command->getDescription();
         $webserviceKey->active = $command->getStatus();
 
-        if (false === $webserviceKey->validateFields(false)) {
+        if ($webserviceKey->validateFields(false) === false) {
             throw new WebserviceConstraintException('One or more fields are invalid in WebserviceKey');
         }
 
-        if (false === $webserviceKey->add()) {
+        if ($webserviceKey->add() === false) {
             throw new WebserviceException('Failed to add WebserviceKey');
         }
 

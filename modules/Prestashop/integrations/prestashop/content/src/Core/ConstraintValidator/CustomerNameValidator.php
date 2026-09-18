@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,6 +39,7 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class CustomerNameValidator extends ConstraintValidator
 {
     public const PATTERN_NAME = '/^(?!\s*$)(?:[^0-9!<>,;?=+()\/\\\\@#"°*`{}_^$%:¤\[\]|\.。]|[。\.](?:\s|$))*$/u';
+
     public const PATTERN_DOT_SPACED = '/[\.。](\s{1}[^\ ]|$)/';
 
     /**
@@ -45,9 +47,6 @@ class CustomerNameValidator extends ConstraintValidator
      */
     private $characterCleaner;
 
-    /**
-     * @param CharacterCleaner $characterCleaner
-     */
     public function __construct(CharacterCleaner $characterCleaner)
     {
         $this->characterCleaner = $characterCleaner;
@@ -58,26 +57,24 @@ class CustomerNameValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof CustomerName) {
+        if (! $constraint instanceof CustomerName) {
             throw new UnexpectedTypeException($constraint, CustomerName::class);
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new UnexpectedTypeException($value, 'string');
         }
 
-        if (!$this->isNameValid($value) || !$this->isPointSpacedValid($value)) {
+        if (! $this->isNameValid($value) || ! $this->isPointSpacedValid($value)) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 
     /**
      * Validates url rewrite according a specific pattern.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     private function isNameValid($name)
@@ -90,8 +87,7 @@ class CustomerNameValidator extends ConstraintValidator
     /**
      * Check if there is not more one space after point
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     private function isPointSpacedValid($name)

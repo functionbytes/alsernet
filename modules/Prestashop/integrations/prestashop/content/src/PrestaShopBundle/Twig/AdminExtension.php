@@ -59,11 +59,8 @@ class AdminExtension extends Twig_Extension implements InitRuntimeInterface
 
     /**
      * AdminExtension constructor.
-     *
-     * @param RequestStack|null $requestStack
-     * @param ContainerInterface $container
      */
-    public function __construct(RequestStack $requestStack = null, ContainerInterface $container)
+    public function __construct(?RequestStack $requestStack, ContainerInterface $container)
     {
         $this->requestStack = $requestStack;
         $this->container = $container;

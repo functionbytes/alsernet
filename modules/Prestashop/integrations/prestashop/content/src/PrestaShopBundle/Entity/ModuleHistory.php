@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,9 @@ use Doctrine\ORM\Mapping as ORM;
  * ModuleHistory.
  *
  * @ORM\Table
+ *
  * @ORM\Entity
+ *
  * @ORM\HasLifecycleCallbacks
  */
 class ModuleHistory
@@ -42,7 +45,9 @@ class ModuleHistory
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -62,14 +67,14 @@ class ModuleHistory
     private $idModule;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="date_add", type="datetime")
      */
     private $dateAdd;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="date_upd", type="datetime")
      */
@@ -88,8 +93,7 @@ class ModuleHistory
     /**
      * Set idEmployee.
      *
-     * @param int $idEmployee
-     *
+     * @param  int  $idEmployee
      * @return ModuleHistory
      */
     public function setIdEmployee($idEmployee)
@@ -112,8 +116,7 @@ class ModuleHistory
     /**
      * Set idModule.
      *
-     * @param int $idModule
-     *
+     * @param  int  $idModule
      * @return ModuleHistory
      */
     public function setIdModule($idModule)
@@ -136,8 +139,7 @@ class ModuleHistory
     /**
      * Set dateAdd.
      *
-     * @param \DateTime $dateAdd
-     *
+     * @param  DateTime  $dateAdd
      * @return ModuleHistory
      */
     public function setDateAdd($dateAdd)
@@ -150,7 +152,7 @@ class ModuleHistory
     /**
      * Get dateAdd.
      *
-     * @return \DateTime
+     * @return DateTime
      */
     public function getDateAdd()
     {
@@ -160,8 +162,7 @@ class ModuleHistory
     /**
      * Set dateUpd.
      *
-     * @param \DateTime $dateUpd
-     *
+     * @param  DateTime  $dateUpd
      * @return ModuleHistory
      */
     public function setDateUpd($dateUpd)
@@ -174,7 +175,7 @@ class ModuleHistory
     /**
      * Get dateUpd.
      *
-     * @return \DateTime
+     * @return DateTime
      */
     public function getDateUpd()
     {
@@ -185,14 +186,15 @@ class ModuleHistory
      * Now we tell doctrine that before we persist or update we call the updatedTimestamps() function.
      *
      * @ORM\PrePersist
+     *
      * @ORM\PreUpdate
      */
     public function updatedTimestamps()
     {
-        $this->setDateUpd(new DateTime());
+        $this->setDateUpd(new DateTime);
 
         if ($this->getDateAdd() == null) {
-            $this->setDateAdd(new DateTime());
+            $this->setDateAdd(new DateTime);
         }
     }
 }

@@ -26,6 +26,7 @@ class HelpdeskSocialPermissionsSeeder extends Seeder
             'helpdesksocial.templates.view',
             'helpdesksocial.analytics.view',
             'helpdesksocial.mentions.update',
+            'helpdesksocial.competitors.manage',
         ];
 
         foreach ($permissions as $permission) {

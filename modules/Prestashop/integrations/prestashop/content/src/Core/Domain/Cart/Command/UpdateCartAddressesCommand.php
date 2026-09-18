@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,10 +50,6 @@ class UpdateCartAddressesCommand
     private $newInvoiceAddressId;
 
     /**
-     * @param int $cartId
-     * @param int $newDeliveryAddressId
-     * @param int $newInvoiceAddressId
-     *
      * @throws AddressConstraintException
      * @throws CartConstraintException
      */
@@ -63,33 +60,22 @@ class UpdateCartAddressesCommand
         $this->setNewInvoiceAddressId($newInvoiceAddressId);
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;
     }
 
-    /**
-     * @return AddressId
-     */
     public function getNewDeliveryAddressId(): AddressId
     {
         return $this->newDeliveryAddressId;
     }
 
-    /**
-     * @return AddressId
-     */
     public function getNewInvoiceAddressId(): AddressId
     {
         return $this->newInvoiceAddressId;
     }
 
     /**
-     * @param int $newDeliveryAddressId
-     *
      * @throws AddressConstraintException
      */
     private function setNewDeliveryAddressId(int $newDeliveryAddressId): void
@@ -98,8 +84,6 @@ class UpdateCartAddressesCommand
     }
 
     /**
-     * @param int $newInvoiceAddressId
-     *
      * @throws AddressConstraintException
      */
     private function setNewInvoiceAddressId(int $newInvoiceAddressId): void

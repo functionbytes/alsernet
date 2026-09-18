@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,8 +86,7 @@ class Facet
     }
 
     /**
-     * @param string $label the facet label
-     *
+     * @param  string  $label  the facet label
      * @return $this
      */
     public function setLabel($label)
@@ -105,8 +105,7 @@ class Facet
     }
 
     /**
-     * @param string $type the facet type
-     *
+     * @param  string  $type  the facet type
      * @return $this
      */
     public function setType($type)
@@ -125,9 +124,8 @@ class Facet
     }
 
     /**
-     * @param string $name the facet property name
-     * @param mixed $value the facet property value
-     *
+     * @param  string  $name  the facet property name
+     * @param  mixed  $value  the facet property value
      * @return $this
      */
     public function setProperty($name, $value)
@@ -138,13 +136,12 @@ class Facet
     }
 
     /**
-     * @param string $name the facet property name
-     *
+     * @param  string  $name  the facet property name
      * @return mixed|null
      */
     public function getProperty($name)
     {
-        if (!array_key_exists($name, $this->properties)) {
+        if (! array_key_exists($name, $this->properties)) {
             return null;
         }
 
@@ -152,8 +149,7 @@ class Facet
     }
 
     /**
-     * @param Filter $filter the facet filter
-     *
+     * @param  Filter  $filter  the facet filter
      * @return $this
      */
     public function addFilter(Filter $filter)
@@ -172,8 +168,7 @@ class Facet
     }
 
     /**
-     * @param bool $isAllowed allows/disallows the multiple selection
-     *
+     * @param  bool  $isAllowed  allows/disallows the multiple selection
      * @return $this
      */
     public function setMultipleSelectionAllowed($isAllowed = true)
@@ -192,8 +187,7 @@ class Facet
     }
 
     /**
-     * @param bool $displayed sets the display of the facet
-     *
+     * @param  bool  $displayed  sets the display of the facet
      * @return $this
      */
     public function setDisplayed($displayed = true)
@@ -212,8 +206,7 @@ class Facet
     }
 
     /**
-     * @param string $widgetType sets the widget type of the facet
-     *
+     * @param  string  $widgetType  sets the widget type of the facet
      * @return $this
      */
     public function setWidgetType($widgetType)

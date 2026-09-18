@@ -38,9 +38,9 @@
                 <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.feedback_field_attach') }}</label>
                 <div class="bv-dropzone-mini" id="feedbackDropzone">
                     <i class="far fa-image"></i> {{ __('helpdesk::helpdesk.inbox.modals.feedback_attach_hint') }}
-                    <input type="file" id="feedbackFile" accept="image/*" style="display:none">
+                    <input type="file" id="feedbackFile" accept="image/*" class="bv-hidden">
                 </div>
-                <div id="feedbackFilePreview" style="display:none;font-size:11.5px;margin-top:5px">
+                <div id="feedbackFilePreview" class="bv-step-hidden bv-feedback-file-preview bv-mt-5">
                     <i class="fas fa-image me-1"></i><span id="feedbackFileName"></span>
                     <button class="bv-x27" type="button" id="feedbackFileRemove"><i class="fas fa-xmark"></i></button>
                 </div>
@@ -62,11 +62,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/feedback.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/feedback.js')) }}" defer></script>
-@endpush
-@endonce

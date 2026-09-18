@@ -38,16 +38,20 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class ModuleTemplateIterator extends TemplateIterator
 {
     private $kernel;
+
     private $rootDir;
+
     private $templates;
+
     private $paths;
+
     private $defaultPath;
 
     /**
-     * @param KernelInterface $kernel A KernelInterface instance
-     * @param string $rootDir The directory where global templates can be stored
-     * @param array $paths Additional Twig paths to warm
-     * @param string $defaultPath The directory where global templates can be stored
+     * @param  KernelInterface  $kernel  A KernelInterface instance
+     * @param  string  $rootDir  The directory where global templates can be stored
+     * @param  array  $paths  Additional Twig paths to warm
+     * @param  string  $defaultPath  The directory where global templates can be stored
      */
     public function __construct(KernelInterface $kernel, $rootDir, array $paths = [], $defaultPath = null)
     {
@@ -58,7 +62,7 @@ class ModuleTemplateIterator extends TemplateIterator
 
         $keyToRemove = array_search('modules', $paths);
         // If the key was found, move it in a new array
-        if (false !== $keyToRemove) {
+        if ($keyToRemove !== false) {
             $exceptionPath = $paths[$keyToRemove];
             unset($paths[$keyToRemove]);
             $this->paths = [$keyToRemove => $exceptionPath];
@@ -71,7 +75,7 @@ class ModuleTemplateIterator extends TemplateIterator
      */
     public function getIterator()
     {
-        if (null !== $this->templates) {
+        if ($this->templates !== null) {
             return $this->templates;
         }
 
@@ -88,20 +92,19 @@ class ModuleTemplateIterator extends TemplateIterator
     /**
      * Find templates in the given directory.
      *
-     * @param string $dir The directory where to look for templates
-     * @param string|null $namespace The template namespace
-     *
+     * @param  string  $dir  The directory where to look for templates
+     * @param  string|null  $namespace  The template namespace
      * @return array
      */
     private function findTemplatesInDirectory($dir, $namespace = null, array $excludeDirs = [])
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return [];
         }
 
         $templates = [];
         foreach (Finder::create()->files()->name('*.twig')->followLinks()->in($dir)->exclude($excludeDirs) as $file) {
-            $templates[] = (null !== $namespace ? '@' . $namespace . '/' : '') . str_replace('\\', '/', $file->getRelativePathname());
+            $templates[] = ($namespace !== null ? '@'.$namespace.'/' : '').str_replace('\\', '/', $file->getRelativePathname());
         }
 
         return $templates;

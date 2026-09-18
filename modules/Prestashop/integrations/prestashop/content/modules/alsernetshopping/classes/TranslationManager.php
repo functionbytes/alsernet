@@ -1,6 +1,6 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -8,15 +8,18 @@ if (!defined('_PS_VERSION_')) {
  * Gestor centralizado de traducciones para el módulo AlsernetShopping
  * Elimina duplicación de código de traducciones en todos los controladores
  *
- * @package AlsernetShopping
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 class TranslationManager
 {
     private static $instance;
+
     private static $translationCache = [];
+
     private static $translationsMerged = [];
+
     private static $cacheTimeout = 3600; // 1 hora
 
     const MODULE_NAME = 'alsernetshopping';
@@ -26,20 +29,21 @@ class TranslationManager
      */
     public static function getInstance(): self
     {
-        if (!self::$instance) {
-            self::$instance = new self();
+        if (! self::$instance) {
+            self::$instance = new self;
         }
+
         return self::$instance;
     }
 
     /**
      * Método principal de traducción - reemplaza el método l() duplicado
      *
-     * @param string $string Texto a traducir
-     * @param string $source Fuente/controlador específico
-     * @param string|null $locale Idioma específico
-     * @param array|null $sprintf Parámetros para sprintf
-     * @param bool $js Si es para JavaScript
+     * @param  string  $string  Texto a traducir
+     * @param  string  $source  Fuente/controlador específico
+     * @param  string|null  $locale  Idioma específico
+     * @param  array|null  $sprintf  Parámetros para sprintf
+     * @param  bool  $js  Si es para JavaScript
      * @return string Texto traducido
      */
     public static function trans(
@@ -68,13 +72,13 @@ class TranslationManager
                 if ($sprintf === null) {
                     self::$translationCache[$cacheKey] = [
                         'translation' => $translation,
-                        'timestamp' => time()
+                        'timestamp' => time(),
                     ];
                 }
             }
 
             // Aplicar sprintf si está presente
-            if ($sprintf !== null && !empty($sprintf)) {
+            if ($sprintf !== null && ! empty($sprintf)) {
                 $translation = self::applySprintf($translation, $sprintf);
             }
 
@@ -85,8 +89,9 @@ class TranslationManager
 
             return $translation;
 
-        } catch (\Exception $e) {
-            error_log('TranslationManager error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('TranslationManager error: '.$e->getMessage());
+
             return $string; // Fallback al texto original
         }
     }
@@ -104,7 +109,7 @@ class TranslationManager
      */
     public static function controller(string $string, string $controllerName, ?string $locale = null): string
     {
-        return self::trans($string, strtolower($controllerName) . 'controller', $locale);
+        return self::trans($string, strtolower($controllerName).'controller', $locale);
     }
 
     /**
@@ -130,6 +135,7 @@ class TranslationManager
         ];
 
         $defaultMessage = $errorMessages[$errorKey] ?? $errorKey;
+
         return self::trans($defaultMessage, 'errors', $locale);
     }
 
@@ -145,29 +151,29 @@ class TranslationManager
 
         // Claves de búsqueda en orden de prioridad
         $searchKeys = [
-            strtolower('<{' . self::MODULE_NAME . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key,
-            strtolower('<{' . self::MODULE_NAME . '}prestashop>' . $source) . '_' . $key,
+            strtolower('<{'.self::MODULE_NAME.'}'._THEME_NAME_.'>'.$source).'_'.$key,
+            strtolower('<{'.self::MODULE_NAME.'}prestashop>'.$source).'_'.$key,
         ];
 
         // Si es un controlador, agregar claves adicionales
         if (substr($source, -10) === 'controller') {
             $file = substr($source, 0, -10);
-            $searchKeys[] = strtolower('<{' . self::MODULE_NAME . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-            $searchKeys[] = strtolower('<{' . self::MODULE_NAME . '}prestashop>' . $file) . '_' . $key;
+            $searchKeys[] = strtolower('<{'.self::MODULE_NAME.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+            $searchKeys[] = strtolower('<{'.self::MODULE_NAME.'}prestashop>'.$file).'_'.$key;
         }
 
         // Buscar traducción
         global $_MODULES, $_LANGADM;
 
         foreach ($searchKeys as $searchKey) {
-            if (!empty($_MODULES[$searchKey])) {
+            if (! empty($_MODULES[$searchKey])) {
                 return stripslashes($_MODULES[$searchKey]);
             }
         }
 
         // Fallback a traducciones de admin
-        if (!empty($_LANGADM)) {
-            $adminTranslation = \Translate::getGenericAdminTranslation($string, $key, $_LANGADM);
+        if (! empty($_LANGADM)) {
+            $adminTranslation = Translate::getGenericAdminTranslation($string, $key, $_LANGADM);
             if ($adminTranslation !== $string) {
                 return stripslashes($adminTranslation);
             }
@@ -179,7 +185,7 @@ class TranslationManager
             if ($contextTranslation !== $string) {
                 return $contextTranslation;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Silenciar errores del traductor
         }
 
@@ -199,18 +205,18 @@ class TranslationManager
 
         $filesByPriority = [
             // PrestaShop 1.7+ translations
-            _PS_MODULE_DIR_ . self::MODULE_NAME . '/translations/' . $iso . '.php',
+            _PS_MODULE_DIR_.self::MODULE_NAME.'/translations/'.$iso.'.php',
             // PrestaShop 1.6 translations
-            _PS_MODULE_DIR_ . self::MODULE_NAME . '/' . $iso . '.php',
+            _PS_MODULE_DIR_.self::MODULE_NAME.'/'.$iso.'.php',
             // Theme translations
-            _PS_THEME_DIR_ . 'modules/' . self::MODULE_NAME . '/translations/' . $iso . '.php',
-            _PS_THEME_DIR_ . 'modules/' . self::MODULE_NAME . '/' . $iso . '.php',
+            _PS_THEME_DIR_.'modules/'.self::MODULE_NAME.'/translations/'.$iso.'.php',
+            _PS_THEME_DIR_.'modules/'.self::MODULE_NAME.'/'.$iso.'.php',
         ];
 
         foreach ($filesByPriority as $file) {
             if (file_exists($file)) {
                 include_once $file;
-                $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
             }
         }
 
@@ -222,7 +228,7 @@ class TranslationManager
      */
     private static function generateCacheKey(string $string, string $source, string $iso, bool $js): string
     {
-        return md5(self::MODULE_NAME . '|' . $string . '|' . $source . '|' . (int)$js . '|' . $iso);
+        return md5(self::MODULE_NAME.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso);
     }
 
     /**
@@ -230,11 +236,12 @@ class TranslationManager
      */
     private static function isCacheValid(string $cacheKey): bool
     {
-        if (!isset(self::$translationCache[$cacheKey])) {
+        if (! isset(self::$translationCache[$cacheKey])) {
             return false;
         }
 
         $cacheData = self::$translationCache[$cacheKey];
+
         return (time() - $cacheData['timestamp']) < self::$cacheTimeout;
     }
 
@@ -247,7 +254,7 @@ class TranslationManager
             return $translation;
         }
 
-        return \Translate::checkAndReplaceArgs($translation, $sprintf);
+        return Translate::checkAndReplaceArgs($translation, $sprintf);
     }
 
     /**
@@ -268,7 +275,7 @@ class TranslationManager
             'cached_langs' => count(self::$translationCache),
             'loaded_languages' => count(self::$translationsMerged[self::MODULE_NAME] ?? []),
             'cache_timeout' => self::$cacheTimeout,
-            'memory_usage' => memory_get_usage(true)
+            'memory_usage' => memory_get_usage(true),
         ];
     }
 }

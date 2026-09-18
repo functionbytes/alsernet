@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Unit\Events;
 
 use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\TicketItem;
@@ -41,9 +42,11 @@ class MessageAddedTest extends TestCase
 
         $channels = $event->broadcastOn();
 
-        $this->assertCount(1, $channels);
+        $this->assertCount(2, $channels);
         $this->assertInstanceOf(PresenceChannel::class, $channels[0]);
         $this->assertSame('presence-ticket.99', $channels[0]->name);
+        $this->assertInstanceOf(PrivateChannel::class, $channels[1]);
+        $this->assertSame('private-helpdesk.tickets', $channels[1]->name);
     }
 
     public function test_broadcast_as_es_message_added(): void
@@ -61,6 +64,10 @@ class MessageAddedTest extends TestCase
         // necesario para decidir si hace falta refrescar.
         $event = new MessageAdded($this->makeItem(id: 123, internal: true));
 
-        $this->assertSame(['item_id' => 123, 'is_internal' => true], $event->broadcastWith());
+        $this->assertSame([
+            'ticket_id' => 7,
+            'item_id' => 123,
+            'is_internal' => true,
+        ], $event->broadcastWith());
     }
 }

@@ -35,6 +35,7 @@ class TicketOpsAutomationsController extends Controller
         $this->authorize('viewAny', Ticket::class);
 
         $rules = Automation::query()
+            ->ticketDomain()
             ->orderBy('order')
             ->orderBy('id')
             ->limit(50)
@@ -81,6 +82,10 @@ class TicketOpsAutomationsController extends Controller
     {
         $this->authorize('viewAny', Ticket::class);
         abort_unless($request->user()?->can('helpdesk.tickets.settings'), 403);
+        // El route-model-binding no filtra por dominio: sin esto se podía
+        // pausar/activar una regla de Conversaciones (misma tabla física)
+        // tecleando su id en la URL de este endpoint de Tickets.
+        abort_unless(array_key_exists($automation->trigger_event, Automation::$triggerEvents), 404);
 
         $automation->update(['is_active' => ! $automation->is_active]);
 

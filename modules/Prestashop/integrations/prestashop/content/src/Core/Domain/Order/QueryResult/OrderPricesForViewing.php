@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -74,6 +75,7 @@ class OrderPricesForViewing
      * @var DecimalNumber
      */
     private $discountsAmountRaw;
+
     /**
      * @var DecimalNumber
      */
@@ -131,113 +133,71 @@ class OrderPricesForViewing
         $this->totalAmountRaw = $totalAmountRaw;
     }
 
-    /**
-     * @return string
-     */
     public function getProductsPriceFormatted(): string
     {
         return $this->productsPriceFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getDiscountsAmountFormatted(): ?string
     {
         return $this->discountsAmountFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getWrappingPriceFormatted(): ?string
     {
         return $this->wrappingPriceFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getShippingPriceFormatted(): ?string
     {
         return $this->shippingPriceFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getShippingRefundableAmountFormatted(): ?string
     {
         return $this->shippingRefundableAmountFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getTaxesAmountFormatted(): string
     {
         return $this->taxesAmountFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalAmountFormatted(): string
     {
         return $this->totalAmountFormatted;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getProductsPriceRaw(): DecimalNumber
     {
         return $this->productsPriceRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getDiscountsAmountRaw(): DecimalNumber
     {
         return $this->discountsAmountRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getWrappingPriceRaw(): DecimalNumber
     {
         return $this->wrappingPriceRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getShippingPriceRaw(): DecimalNumber
     {
         return $this->shippingPriceRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getShippingRefundableAmountRaw(): DecimalNumber
     {
         return $this->shippingRefundableAmountRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getTaxesAmountRaw(): DecimalNumber
     {
         return $this->taxesAmountRaw;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getTotalAmountRaw(): DecimalNumber
     {
         return $this->totalAmountRaw;

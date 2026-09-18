@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,13 @@ class EntityLinkBuilderFactory
      */
     private $builders;
 
-    /**
-     * @param array $builders
-     */
     public function __construct(array $builders)
     {
         $this->builders = $builders;
     }
 
     /**
-     * @param string $entity
-     *
+     * @param  string  $entity
      * @return EntityLinkBuilderInterface
      *
      * @throws BuilderNotFoundException

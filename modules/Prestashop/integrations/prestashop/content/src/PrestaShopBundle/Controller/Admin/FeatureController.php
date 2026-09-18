@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,13 +37,12 @@ class FeatureController extends FrameworkBundleAdminController
     /**
      * Get all values for a given feature.
      *
-     * @param int $idFeature The feature Id
-     *
+     * @param  int  $idFeature  The feature Id
      * @return JsonResponse features list
      */
     public function getFeatureValuesAction($idFeature)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $locales = $this->get('prestashop.adapter.legacy.context')->getLanguages();
         $data = [];
 

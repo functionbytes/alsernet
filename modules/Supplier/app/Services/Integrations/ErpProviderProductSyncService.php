@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
@@ -14,7 +15,6 @@ use Modules\Supplier\Models\Product\Product;
 use Modules\Supplier\Models\Product\ProductAttribute;
 use Modules\Supplier\Models\Supplier\Supplier;
 use Modules\Supplier\Models\Sync\SyncBatch;
-use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Sync\SyncLog;
 
 /**
@@ -64,7 +64,7 @@ class ErpProviderProductSyncService
             }
 
             $responseData = $data['data'] ?? $data;
-            $products     = $responseData['products'] ?? $data['products'] ?? [];
+            $products = $responseData['products'] ?? $data['products'] ?? [];
 
             // Apply filters
             $products = $this->applyProductFilters($products, $filterCriteria);
@@ -128,10 +128,10 @@ class ErpProviderProductSyncService
                         if ($batch) {
                             $logBuffer[] = $this->buildLogRow($batch, [
                                 'entity_type' => 'product',
-                                'entity_id'   => $product->id,
-                                'erp_id'      => $erpArtiProvId,
-                                'action'      => $existsBefore ? 'update' : 'create',
-                                'result'      => 'success',
+                                'entity_id' => $product->id,
+                                'erp_id' => $erpArtiProvId,
+                                'action' => $existsBefore ? 'update' : 'create',
+                                'result' => 'success',
                             ]);
                         }
                     }
@@ -529,11 +529,13 @@ class ErpProviderProductSyncService
     {
         // --- Deportes ---
         foreach ($data['sports'] ?? [] as $s) {
-            if (empty($s['id'])) continue;
+            if (empty($s['id'])) {
+                continue;
+            }
             Sport::updateOrCreate(
                 ['erp_id' => $s['id']],
                 [
-                    'name'      => $s['description'] ?? "Deporte {$s['id']}",
+                    'name' => $s['description'] ?? "Deporte {$s['id']}",
                     'available' => (bool) ($s['available'] ?? true),
                 ]
             );
@@ -543,18 +545,20 @@ class ErpProviderProductSyncService
         $sportIdMap = Sport::whereNotNull('erp_id')->pluck('id', 'erp_id');
 
         foreach ($data['categories'] ?? [] as $f) {
-            if (empty($f['id'])) continue;
+            if (empty($f['id'])) {
+                continue;
+            }
             $sportId = isset($f['sport_id']) ? ($sportIdMap->get($f['sport_id'])) : null;
             Category::updateOrCreate(
                 ['erp_id' => $f['id']],
                 [
-                    'name'               => $f['description'] ?? "Familia {$f['id']}",
-                    'sport_id'           => $sportId,
-                    'erp_sport_id'       => $f['sport_id'] ?? null,
-                    'erp_categoria_id'   => $f['categoria_id'] ?? null,
+                    'name' => $f['description'] ?? "Familia {$f['id']}",
+                    'sport_id' => $sportId,
+                    'erp_sport_id' => $f['sport_id'] ?? null,
+                    'erp_categoria_id' => $f['categoria_id'] ?? null,
                     'erp_categoria_name' => $f['categoria_name'] ?? null,
-                    'available'          => (bool) ($f['available'] ?? true),
-                    'last_sync_at'       => now(),
+                    'available' => (bool) ($f['available'] ?? true),
+                    'last_sync_at' => now(),
                 ]
             );
         }
@@ -563,16 +567,18 @@ class ErpProviderProductSyncService
         $categoryIdMap = Category::whereNotNull('erp_id')->pluck('id', 'erp_id');
 
         foreach ($data['subfamilies'] ?? [] as $s) {
-            if (empty($s['id'])) continue;
+            if (empty($s['id'])) {
+                continue;
+            }
             $categoryId = isset($s['family_id']) ? ($categoryIdMap->get($s['family_id'])) : null;
             Subfamily::updateOrCreate(
                 ['erp_id' => $s['id']],
                 [
-                    'name'             => $s['description'] ?? "Subfamilia {$s['id']}",
-                    'category_id'      => $categoryId,
-                    'erp_category_id'  => $s['family_id'] ?? null,
-                    'available'        => (bool) ($s['available'] ?? true),
-                    'last_sync_at'     => now(),
+                    'name' => $s['description'] ?? "Subfamilia {$s['id']}",
+                    'category_id' => $categoryId,
+                    'erp_category_id' => $s['family_id'] ?? null,
+                    'available' => (bool) ($s['available'] ?? true),
+                    'last_sync_at' => now(),
                 ]
             );
         }

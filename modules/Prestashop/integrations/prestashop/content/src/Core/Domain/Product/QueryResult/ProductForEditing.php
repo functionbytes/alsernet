@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -100,21 +101,6 @@ class ProductForEditing
      */
     private $virtualProductFile;
 
-    /**
-     * @param int $productId
-     * @param string $type
-     * @param ProductCustomizationOptions $customizationOptions
-     * @param ProductBasicInformation $basicInformation
-     * @param ProductCategoriesInformation $categoriesInformation
-     * @param ProductPricesInformation $pricesInformation
-     * @param ProductOptions $options
-     * @param ProductDetails $details
-     * @param ProductShippingInformation $shippingInformation
-     * @param ProductSeoOptions $productSeoOptions
-     * @param array $associatedAttachmentIds
-     * @param ProductStockInformation $stockInformation
-     * @param VirtualProductFileForEditing|null $virtualProductFile
-     */
     public function __construct(
         int $productId,
         string $type,
@@ -145,81 +131,51 @@ class ProductForEditing
         $this->virtualProductFile = $virtualProductFile;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return $this->type;
     }
 
-    /**
-     * @return ProductCustomizationOptions
-     */
     public function getCustomizationOptions(): ProductCustomizationOptions
     {
         return $this->customizationOptions;
     }
 
-    /**
-     * @return ProductBasicInformation
-     */
     public function getBasicInformation(): ProductBasicInformation
     {
         return $this->basicInformation;
     }
 
-    /**
-     * @return ProductCategoriesInformation
-     */
     public function getCategoriesInformation(): ProductCategoriesInformation
     {
         return $this->categoriesInformation;
     }
 
-    /**
-     * @return ProductPricesInformation
-     */
     public function getPricesInformation(): ProductPricesInformation
     {
         return $this->pricesInformation;
     }
 
-    /**
-     * @return ProductOptions
-     */
     public function getOptions(): ProductOptions
     {
         return $this->options;
     }
 
-    /**
-     * @return ProductDetails
-     */
     public function getDetails(): ProductDetails
     {
         return $this->details;
     }
 
-    /**
-     * @return ProductShippingInformation
-     */
     public function getShippingInformation(): ProductShippingInformation
     {
         return $this->shippingInformation;
     }
 
-    /**
-     * @return ProductSeoOptions
-     */
     public function getProductSeoOptions(): ProductSeoOptions
     {
         return $this->productSeoOptions;
@@ -233,17 +189,11 @@ class ProductForEditing
         return $this->associatedAttachmentIds;
     }
 
-    /**
-     * @return ProductStockInformation
-     */
     public function getStockInformation(): ProductStockInformation
     {
         return $this->stockInformation;
     }
 
-    /**
-     * @return VirtualProductFileForEditing|null
-     */
     public function getVirtualProductFile(): ?VirtualProductFileForEditing
     {
         return $this->virtualProductFile;

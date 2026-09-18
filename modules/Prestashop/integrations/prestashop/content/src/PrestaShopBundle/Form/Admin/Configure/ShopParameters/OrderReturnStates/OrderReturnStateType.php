@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ class OrderReturnStateType extends TranslatorAwareType
             ->add('name', TranslatableType::class, [
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -62,8 +63,7 @@ class OrderReturnStateType extends TranslatorAwareType
             ])
             ->add('color', ColorPickerType::class, [
                 'required' => false,
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -74,7 +74,6 @@ class OrderReturnStateType extends TranslatorAwareType
         $resolver
             ->setDefaults([
                 'translation_domain' => 'Admin.Shopparameters.Feature',
-            ])
-        ;
+            ]);
     }
 }

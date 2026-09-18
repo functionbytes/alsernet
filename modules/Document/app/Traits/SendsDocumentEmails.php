@@ -4,6 +4,7 @@ namespace Modules\Document\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Modules\Document\Entities\Document;
 
 /**
@@ -94,8 +95,8 @@ trait SendsDocumentEmails
     {
         $rateLimitKey = "email_sent:{$document->id}:{$emailType}";
 
-        if (\Illuminate\Support\Facades\Cache::has($rateLimitKey)) {
-            $retryTime = \Illuminate\Support\Facades\Cache::get($rateLimitKey);
+        if (Cache::has($rateLimitKey)) {
+            $retryTime = Cache::get($rateLimitKey);
             $secondsRemaining = now()->diffInSeconds($retryTime, false);
 
             // Redondear hacia arriba para asegurar que el usuario espere tiempo suficiente

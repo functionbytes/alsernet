@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,9 +38,6 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductNotFoundException
  */
 class UpdateProductStatusCommandHandler implements UpdateProductStatusCommandHandlerInterface
 {
-    /**
-     * @param UpdateProductStatusCommand $command
-     */
     public function handle(UpdateProductStatusCommand $command)
     {
         $productId = $command->getProductId()->getValue();
@@ -49,7 +47,7 @@ class UpdateProductStatusCommandHandler implements UpdateProductStatusCommandHan
             throw new ProductNotFoundException(sprintf('Product with id "%d" was not found', $productId));
         }
         if ($product->active != $command->getEnable()) {
-            if (!$product->toggleStatus()) {
+            if (! $product->toggleStatus()) {
                 throw new CannotUpdateProductException(sprintf('Cannot update status for product with id "%d"', $productId));
             }
         }

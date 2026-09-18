@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -101,7 +102,7 @@ final class CartRuleGridDefinitionFactory extends AbstractGridDefinitionFactory 
      */
     protected function getColumns(): ColumnCollectionInterface
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('bulk'))
                     ->setOptions([
@@ -165,7 +166,7 @@ final class CartRuleGridDefinitionFactory extends AbstractGridDefinitionFactory 
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add(
                                 $this->buildDeleteAction(
                                     'admin_cart_rules_delete',
@@ -183,7 +184,7 @@ final class CartRuleGridDefinitionFactory extends AbstractGridDefinitionFactory 
      */
     protected function getFilters(): FilterCollectionInterface
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_cart_rule', TextType::class))
                     ->setTypeOptions([
@@ -268,7 +269,7 @@ final class CartRuleGridDefinitionFactory extends AbstractGridDefinitionFactory 
      */
     protected function getBulkActions(): BulkActionCollectionInterface
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

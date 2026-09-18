@@ -1,37 +1,41 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once dirname(__FILE__) . '/../../classes/TranslationManager.php';
-require_once dirname(__FILE__) . '/Services/ResponseHelper.php';
-require_once dirname(__FILE__) . '/Services/ControllerHelper.php';
+require_once dirname(__FILE__).'/../../classes/TranslationManager.php';
+require_once dirname(__FILE__).'/Services/ResponseHelper.php';
+require_once dirname(__FILE__).'/Services/ControllerHelper.php';
 
 /**
  * Controlador base para todos los controladores del módulo AlsernetShopping
  * Proporciona funcionalidad común y elimina duplicación
  *
- * @package AlsernetShopping
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 abstract class BaseController extends Module
 {
     public $module;
+
     protected $controllerName;
+
     protected $customer;
+
     protected $cart;
+
     protected $iso;
+
     protected $lang;
 
     protected $language;
 
-
     public function __construct()
     {
         $this->bootstrap = true;
-        $this->module = Module::getInstanceByName("alsernetshopping");
+        $this->module = Module::getInstanceByName('alsernetshopping');
         $this->context = Context::getContext();
         $this->customer = $this->context->customer;
         $this->cart = $this->context->cart;
@@ -41,7 +45,6 @@ abstract class BaseController extends Module
         $this->controllerName = $this->getControllerName();
         parent::__construct();
     }
-
 
     /**
      * Traducciones para errores comunes
@@ -58,7 +61,8 @@ abstract class BaseController extends Module
     {
         // Compatibilidad con ModuleCore::trans()
         $source = $domain ?: 'general';
-        return TranslationManager::trans((string)$id, $source, $locale, $parameters);
+
+        return TranslationManager::trans((string) $id, $source, $locale, $parameters);
     }
 
     /**
@@ -126,7 +130,7 @@ abstract class BaseController extends Module
      */
     protected function getLanguageId(): int
     {
-        return (int)$this->context->language->id;
+        return (int) $this->context->language->id;
     }
 
     /**
@@ -144,8 +148,8 @@ abstract class BaseController extends Module
     {
         if (Configuration::get('ALSERNET_DEBUG_MODE')) {
             $logMessage = "[{$this->controllerName}] {$message}";
-            if (!empty($context)) {
-                $logMessage .= ' - Context: ' . json_encode($context);
+            if (! empty($context)) {
+                $logMessage .= ' - Context: '.json_encode($context);
             }
             error_log($logMessage);
         }
@@ -161,7 +165,7 @@ abstract class BaseController extends Module
             'controller_name' => $this->controllerName,
             'is_logged' => $this->isLoggedIn(),
             'current_language' => $this->getLanguageIso(),
-            'debug_mode' => (bool)Configuration::get('ALSERNET_DEBUG_MODE'),
+            'debug_mode' => (bool) Configuration::get('ALSERNET_DEBUG_MODE'),
         ];
 
         $this->context->smarty->assign(array_merge($commonVars, $additionalVars));
@@ -172,9 +176,7 @@ abstract class BaseController extends Module
      */
     abstract public function init();
 
-
-
-    public function getModuleTranslation($module,$originalString,$source,$sprintf = null,$js = false,$locale = null,$fallback = true,$escape = true)
+    public function getModuleTranslation($module, $originalString, $source, $sprintf = null, $js = false, $locale = null, $fallback = true, $escape = true)
     {
         global $_MODULES, $_MODULE, $_LANGADM;
 
@@ -185,10 +187,9 @@ abstract class BaseController extends Module
         // $translations_merged is a cache of wether a specific module's translations have already been added to $_MODULES
         static $translationsMerged = [];
 
-
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -196,51 +197,50 @@ abstract class BaseController extends Module
             $iso = $this->context->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int)$js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -249,8 +249,8 @@ abstract class BaseController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -266,9 +266,9 @@ abstract class BaseController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -293,5 +293,4 @@ abstract class BaseController extends Module
             $locale
         );
     }
-
 }

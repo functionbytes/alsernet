@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ class ToggleCarrierStatusHandler extends AbstractCarrierHandler implements Toggl
         $carrier = $this->getCarrier($command->getCarrierId());
 
         try {
-            if (false === $carrier->toggleStatus()) {
+            if ($carrier->toggleStatus() === false) {
                 throw new CannotToggleCarrierStatusException(sprintf('Unable to toggle status of carrier with id "%d"', $command->getCarrierId()->getValue()), CannotToggleCarrierStatusException::SINGLE_TOGGLE);
             }
         } catch (PrestaShopException $e) {

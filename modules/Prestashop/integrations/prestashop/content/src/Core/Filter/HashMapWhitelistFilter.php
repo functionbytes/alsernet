@@ -93,8 +93,7 @@ class HashMapWhitelistFilter implements FilterInterface
      * - FilterInterface[] an array of filters, indexed by keys to keep
      * - A mixture of the two
      *
-     * @param string[]|FilterInterface[] $definition
-     *
+     * @param  string[]|FilterInterface[]  $definition
      * @return $this
      */
     public function whitelist($definition)
@@ -109,15 +108,14 @@ class HashMapWhitelistFilter implements FilterInterface
     /**
      * Removes the provided key from the whitelist.
      *
-     * @param string|int $key
-     *
+     * @param  string|int  $key
      * @return $this
      *
      * @throws FilterException if $key is not scalar
      */
     public function removeFromWhitelist($key)
     {
-        if (!is_scalar($key)) {
+        if (! is_scalar($key)) {
             throw new FilterException(sprintf('Invalid parameter %s', print_r($key, true)));
         }
 
@@ -152,8 +150,7 @@ class HashMapWhitelistFilter implements FilterInterface
     /**
      * Filters the subject.
      *
-     * @param array|AbstractLazyArray $subject
-     *
+     * @param  array|AbstractLazyArray  $subject
      * @return array The filtered subject
      *
      * @throws \RuntimeException
@@ -188,9 +185,8 @@ class HashMapWhitelistFilter implements FilterInterface
     /**
      * Adds an element to the whitelist.
      *
-     * @param int|string $paramKey
-     * @param string|FilterInterface $paramValue
-     *
+     * @param  int|string  $paramKey
+     * @param  string|FilterInterface  $paramValue
      * @return $this
      */
     private function addWhitelistItem($paramKey, $paramValue)

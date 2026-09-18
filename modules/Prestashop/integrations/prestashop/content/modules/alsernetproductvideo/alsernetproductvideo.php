@@ -1,5 +1,6 @@
 <?php
-if (!defined('_PS_VERSION_')) {
+
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -33,7 +34,7 @@ class AlsernetProductVideo extends Module
 
     private function addAdminTab()
     {
-        $tab = new Tab();
+        $tab = new Tab;
         $tab->active = 1;
         $tab->class_name = 'AdminProductFilm';
         $tab->name = [];
@@ -52,8 +53,10 @@ class AlsernetProductVideo extends Module
         $id_tab = (int) Tab::getIdFromClassName('AdminProductFilm');
         if ($id_tab) {
             $tab = new Tab($id_tab);
+
             return $tab->delete();
         }
+
         return true;
     }
 }

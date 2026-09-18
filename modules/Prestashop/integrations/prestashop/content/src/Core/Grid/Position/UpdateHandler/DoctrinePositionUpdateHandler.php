@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,7 @@ final class DoctrinePositionUpdateHandler implements PositionUpdateHandlerInterf
     private $dbPrefix;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -67,13 +67,13 @@ final class DoctrinePositionUpdateHandler implements PositionUpdateHandlerInterf
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
-            ->from($this->dbPrefix . $positionDefinition->getTable(), 't')
-            ->select('t.' . $positionDefinition->getIdField() . ', t.' . $positionDefinition->getPositionField())
-            ->addOrderBy('t.' . $positionDefinition->getPositionField(), 'ASC');
+            ->from($this->dbPrefix.$positionDefinition->getTable(), 't')
+            ->select('t.'.$positionDefinition->getIdField().', t.'.$positionDefinition->getPositionField())
+            ->addOrderBy('t.'.$positionDefinition->getPositionField(), 'ASC');
 
-        if (null !== $parentId && null !== $positionDefinition->getParentIdField()) {
+        if ($parentId !== null && $positionDefinition->getParentIdField() !== null) {
             $qb
-                ->andWhere('t.' . $positionDefinition->getParentIdField() . ' = :parentId')
+                ->andWhere('t.'.$positionDefinition->getParentIdField().' = :parentId')
                 ->setParameter('parentId', $parentId);
         }
 
@@ -98,9 +98,9 @@ final class DoctrinePositionUpdateHandler implements PositionUpdateHandlerInterf
             foreach ($newPositions as $rowId => $newPosition) {
                 $qb = $this->connection->createQueryBuilder();
                 $qb
-                    ->update($this->dbPrefix . $positionDefinition->getTable())
+                    ->update($this->dbPrefix.$positionDefinition->getTable())
                     ->set($positionDefinition->getPositionField(), ':position')
-                    ->andWhere($positionDefinition->getIdField() . ' = :rowId')
+                    ->andWhere($positionDefinition->getIdField().' = :rowId')
                     ->setParameter('rowId', $rowId)
                     ->setParameter('position', $positionIndex);
 
@@ -108,7 +108,7 @@ final class DoctrinePositionUpdateHandler implements PositionUpdateHandlerInterf
                 if ($statement instanceof Statement && $statement->errorCode()) {
                     throw new PositionUpdateException('Could not update #%i', 'Admin.Catalog.Notification', [$rowId]);
                 }
-                ++$positionIndex;
+                $positionIndex++;
             }
             $this->connection->commit();
         } catch (ConnectionException $e) {

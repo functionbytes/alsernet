@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,13 +61,6 @@ final class OutstandingQueryBuilder implements DoctrineQueryBuilderInterface
      */
     private $contextShopIds;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $criteriaApplicator
-     * @param int $contextLangId
-     * @param array $contextShopIds
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -107,21 +101,16 @@ final class OutstandingQueryBuilder implements DoctrineQueryBuilderInterface
         return $this->getBaseQueryBuilder($searchCriteria)->select('COUNT(oi.id_order_invoice)');
     }
 
-    /**
-     * @param SearchCriteriaInterface $criteria
-     *
-     * @return QueryBuilder
-     */
     private function getBaseQueryBuilder(SearchCriteriaInterface $criteria): QueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'order_invoice', 'oi')
-            ->leftJoin('oi', $this->dbPrefix . 'orders', 'o', 'oi.id_order = o.id_order')
-            ->leftJoin('o', $this->dbPrefix . 'customer', 'c', 'o.id_customer = c.id_customer')
-            ->leftJoin('c', $this->dbPrefix . 'risk', 'r', 'c.id_risk = r.id_risk')
-            ->leftJoin('r', $this->dbPrefix . 'risk_lang', 'rl', 'r.id_risk = rl.id_risk AND rl.id_lang = :context_lang_id')
-            ->leftJoin('o', $this->dbPrefix . 'currency', 'cur', 'o.id_currency = cur.id_currency')
+            ->from($this->dbPrefix.'order_invoice', 'oi')
+            ->leftJoin('oi', $this->dbPrefix.'orders', 'o', 'oi.id_order = o.id_order')
+            ->leftJoin('o', $this->dbPrefix.'customer', 'c', 'o.id_customer = c.id_customer')
+            ->leftJoin('c', $this->dbPrefix.'risk', 'r', 'c.id_risk = r.id_risk')
+            ->leftJoin('r', $this->dbPrefix.'risk_lang', 'rl', 'r.id_risk = rl.id_risk AND rl.id_lang = :context_lang_id')
+            ->leftJoin('o', $this->dbPrefix.'currency', 'cur', 'o.id_currency = cur.id_currency')
             ->andWhere('number > 0')
             ->andWhere('o.id_shop IN (:context_shop_ids)')
             ->setParameter('context_lang_id', $this->contextLangId, PDO::PARAM_INT)
@@ -134,9 +123,6 @@ final class OutstandingQueryBuilder implements DoctrineQueryBuilderInterface
 
     /**
      * Apply filters for query builder.
-     *
-     * @param QueryBuilder $qb
-     * @param array $filters
      */
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
@@ -169,7 +155,7 @@ final class OutstandingQueryBuilder implements DoctrineQueryBuilderInterface
                 $alias = $likeComparisonFilters[$filterName];
 
                 $qb->andWhere("$alias LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
@@ -196,10 +182,6 @@ final class OutstandingQueryBuilder implements DoctrineQueryBuilderInterface
         }
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param SearchCriteriaInterface $criteria
-     */
     private function applySorting(QueryBuilder $qb, SearchCriteriaInterface $criteria): void
     {
         $sortableFields = [

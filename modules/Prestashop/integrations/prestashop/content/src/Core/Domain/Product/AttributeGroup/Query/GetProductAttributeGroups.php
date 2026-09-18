@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class GetProductAttributeGroups
     private $withAttributes;
 
     /**
-     * @param int $productId
-     * @param bool $withAttributes
-     *
      * @throws ProductConstraintException
      */
     public function __construct(int $productId, bool $withAttributes)
@@ -58,17 +56,11 @@ class GetProductAttributeGroups
         $this->withAttributes = $withAttributes;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return bool
-     */
     public function withAttributes(): bool
     {
         return $this->withAttributes;

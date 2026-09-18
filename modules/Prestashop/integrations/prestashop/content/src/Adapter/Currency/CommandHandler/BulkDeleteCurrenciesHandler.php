@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,17 +48,12 @@ final class BulkDeleteCurrenciesHandler extends AbstractCurrencyHandler implemen
      */
     private $defaultCurrencyId;
 
-    /**
-     * @param int $defaultCurrencyId
-     */
     public function __construct(int $defaultCurrencyId)
     {
         $this->defaultCurrencyId = (int) $defaultCurrencyId;
     }
 
     /**
-     * @param BulkDeleteCurrenciesCommand $command
-     *
      * @throws BulkDeleteCurrenciesException
      */
     public function handle(BulkDeleteCurrenciesCommand $command)
@@ -67,8 +63,9 @@ final class BulkDeleteCurrenciesHandler extends AbstractCurrencyHandler implemen
         foreach ($command->getCurrencyIds() as $currencyId) {
             $entity = new Currency($currencyId->getValue());
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 $faileds[] = $currencyId->getValue();
+
                 continue;
             }
 
@@ -77,11 +74,12 @@ final class BulkDeleteCurrenciesHandler extends AbstractCurrencyHandler implemen
                 $this->assertDefaultCurrencyIsNotBeingRemovedOrDisabledFromAnyShop($entity);
             } catch (CurrencyException $e) {
                 $faileds[] = $currencyId->getValue();
+
                 continue;
             }
 
             try {
-                if (false === $entity->delete()) {
+                if ($entity->delete() === false) {
                     $faileds[] = $currencyId->getValue();
                 }
             } catch (PrestaShopException $e) {
@@ -89,7 +87,7 @@ final class BulkDeleteCurrenciesHandler extends AbstractCurrencyHandler implemen
             }
         }
 
-        if (!empty($faileds)) {
+        if (! empty($faileds)) {
             throw new BulkDeleteCurrenciesException($faileds, 'Failed to delete all of selected currencies');
         }
     }

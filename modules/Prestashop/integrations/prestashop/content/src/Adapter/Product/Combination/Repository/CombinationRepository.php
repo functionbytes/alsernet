@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,12 +70,6 @@ class CombinationRepository extends AbstractObjectModelRepository
      */
     private $combinationValidator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param AttributeRepository $attributeRepository
-     * @param CombinationValidator $combinationValidator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -88,10 +83,6 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param CombinationId $combinationId
-     *
-     * @return Combination
-     *
      * @throws CombinationNotFoundException
      */
     public function get(CombinationId $combinationId): Combination
@@ -107,16 +98,11 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     * @param bool $isDefault
-     *
-     * @return Combination
-     *
      * @throws CoreException
      */
     public function create(ProductId $productId, bool $isDefault): Combination
     {
-        $combination = new Combination();
+        $combination = new Combination;
         $combination->id_product = $productId->getValue();
         $combination->default_on = $isDefault;
 
@@ -125,11 +111,6 @@ class CombinationRepository extends AbstractObjectModelRepository
         return $combination;
     }
 
-    /**
-     * @param Combination $combination
-     * @param array $updatableProperties
-     * @param int $errorCode
-     */
     public function partialUpdate(Combination $combination, array $updatableProperties, int $errorCode): void
     {
         $this->combinationValidator->validate($combination);
@@ -142,9 +123,6 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param CombinationId $combinationId
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     public function delete(CombinationId $combinationId, int $errorCode = 0): void
@@ -153,8 +131,6 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws CannotDeleteCombinationException
      */
     public function deleteByProductId(ProductId $productId): void
@@ -164,9 +140,6 @@ class CombinationRepository extends AbstractObjectModelRepository
         $this->bulkDelete($combinationIds);
     }
 
-    /**
-     * @param array $combinationIds
-     */
     public function bulkDelete(array $combinationIds): void
     {
         $failedIds = [];
@@ -189,8 +162,6 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @return CombinationId[]
      */
     public function getCombinationIdsByProductId(ProductId $productId): array
@@ -198,22 +169,21 @@ class CombinationRepository extends AbstractObjectModelRepository
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('pa.id_product_attribute')
-            ->from($this->dbPrefix . 'product_attribute', 'pa')
+            ->from($this->dbPrefix.'product_attribute', 'pa')
             ->andWhere('pa.id_product = :productId')
             ->setParameter('productId', $productId->getValue())
-            ->addOrderBy('pa.id_product_attribute', 'ASC')
-        ;
+            ->addOrderBy('pa.id_product_attribute', 'ASC');
         $combinationIds = $qb->execute()->fetchAll();
 
         return array_map(
-            function (array $combination) { return new CombinationId((int) $combination['id_product_attribute']); },
+            function (array $combination) {
+                return new CombinationId((int) $combination['id_product_attribute']);
+            },
             $combinationIds
         );
     }
 
     /**
-     * @param CombinationId $combinationId
-     *
      * @throws CoreException
      */
     public function assertCombinationExists(CombinationId $combinationId): void
@@ -226,8 +196,7 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param CombinationId $combinationId
-     * @param int[] $attributeIds
+     * @param  int[]  $attributeIds
      */
     public function saveProductAttributeAssociation(CombinationId $combinationId, array $attributeIds): void
     {
@@ -243,7 +212,7 @@ class CombinationRepository extends AbstractObjectModelRepository
         }
 
         try {
-            if (!Db::getInstance()->insert('product_attribute_combination', $attributesList)) {
+            if (! Db::getInstance()->insert('product_attribute_combination', $attributesList)) {
                 throw new CannotAddCombinationException('Failed saving product-combination associations');
             }
         } catch (PrestaShopException $e) {
@@ -252,10 +221,6 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return Combination|null
-     *
      * @throws CoreException
      */
     public function findDefaultCombination(ProductId $productId): ?Combination
@@ -270,8 +235,7 @@ class CombinationRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param int[] $attributeIds
-     *
+     * @param  int[]  $attributeIds
      * @return CombinationId[]
      */
     public function getCombinationIdsByAttributes(ProductId $productId, array $attributeIds): array
@@ -281,10 +245,10 @@ class CombinationRepository extends AbstractObjectModelRepository
         $qb
             ->addSelect('pa.id_product_attribute')
             ->addSelect('GROUP_CONCAT(pac.id_attribute ORDER BY pac.id_attribute ASC SEPARATOR "-") AS attribute_ids')
-            ->from($this->dbPrefix . 'product_attribute', 'pa')
+            ->from($this->dbPrefix.'product_attribute', 'pa')
             ->innerJoin(
                 'pa',
-                $this->dbPrefix . 'product_attribute_combination',
+                $this->dbPrefix.'product_attribute_combination',
                 'pac',
                 'pac.id_product_attribute = pa.id_product_attribute'
             )
@@ -292,8 +256,7 @@ class CombinationRepository extends AbstractObjectModelRepository
             ->andHaving('attribute_ids = :attributeIds')
             ->setParameter('productId', $productId->getValue())
             ->setParameter('attributeIds', implode('-', $attributeIds))
-            ->addGroupBy('pa.id_product_attribute')
-        ;
+            ->addGroupBy('pa.id_product_attribute');
         $result = $qb->execute()->fetchAll();
         if (empty($result)) {
             return [];

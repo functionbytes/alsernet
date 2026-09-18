@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,8 +66,7 @@ class TextWithLengthCounterType extends AbstractType
             ->setAllowedTypes('max_length', 'int')
             ->setAllowedTypes('input_attr', ['array'])
             ->setAllowedValues('position', ['before', 'after'])
-            ->setAllowedValues('input', ['text', 'textarea'])
-        ;
+            ->setAllowedValues('input', ['text', 'textarea']);
     }
 
     /**

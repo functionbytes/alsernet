@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,6 @@ final class GeolocationOptionsFormDataProvider implements FormDataProviderInterf
      */
     private $validator;
 
-    /**
-     * @param DataConfigurationInterface $dataConfiguration
-     * @param GeoLiteCityCheckerInterface $geoLiteCityChecker
-     * @param ValidatorInterface $validator
-     */
     public function __construct(
         DataConfigurationInterface $dataConfiguration,
         GeoLiteCityCheckerInterface $geoLiteCityChecker,
@@ -90,7 +86,7 @@ final class GeolocationOptionsFormDataProvider implements FormDataProviderInterf
             ];
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Category\Exception;
 /**
  * Class MenuThumbnailsLimitException is thrown when maximum number of thumbnail images is reached.
  */
-class MenuThumbnailsLimitException extends CategoryException
-{
-}
+class MenuThumbnailsLimitException extends CategoryException {}

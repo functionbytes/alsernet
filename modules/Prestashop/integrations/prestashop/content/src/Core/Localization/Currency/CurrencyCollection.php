@@ -33,7 +33,7 @@ use IteratorAggregate;
 use PrestaShop\PrestaShop\Core\Localization\Currency;
 use Traversable;
 
-class CurrencyCollection implements IteratorAggregate, Countable
+class CurrencyCollection implements Countable, IteratorAggregate
 {
     protected $currencies = [];
 
@@ -64,9 +64,8 @@ class CurrencyCollection implements IteratorAggregate, Countable
     /**
      * Adds a currency at the end of the collection.
      *
-     * @param currency $currency
-     *                           The currency to add
-     *
+     * @param  Currency  $currency
+     *                              The currency to add
      * @return CurrencyCollection
      *                            Fluent interface
      */
@@ -91,9 +90,8 @@ class CurrencyCollection implements IteratorAggregate, Countable
     /**
      * Gets a currency by ISO code.
      *
-     * @param string $isoCode
-     *                        The currency code (alphabetic ISO 4217 code)
-     *
+     * @param  string  $isoCode
+     *                           The currency code (alphabetic ISO 4217 code)
      * @return Currency|null
      *                       A Currency instance or null when not found
      */
@@ -107,9 +105,8 @@ class CurrencyCollection implements IteratorAggregate, Countable
     /**
      * Removes a currency or an array of currencies by iso code from the collection.
      *
-     * @param string|string[] $isoCode
-     *                                 The currency ISO code or an array of currency ISO codes
-     *
+     * @param  string|string[]  $isoCode
+     *                                    The currency ISO code or an array of currency ISO codes
      * @return CurrencyCollection
      *                            Fluent interface
      */
@@ -126,8 +123,7 @@ class CurrencyCollection implements IteratorAggregate, Countable
      * Adds a currency collection at the end of the current set by appending all
      * currencies of the added collection.
      *
-     * @param CurrencyCollection $collection The CurrencyCollection to append at the end of the current one
-     *
+     * @param  CurrencyCollection  $collection  The CurrencyCollection to append at the end of the current one
      * @return CurrencyCollection Fluent interface
      */
     public function addCollection(CurrencyCollection $collection)

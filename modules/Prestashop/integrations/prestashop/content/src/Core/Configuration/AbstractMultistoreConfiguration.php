@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,10 +54,6 @@ abstract class AbstractMultistoreConfiguration implements DataConfigurationInter
 
     /**
      * AbstractMultistoreConfiguration constructor.
-     *
-     * @param Configuration $configuration
-     * @param Context $shopContext
-     * @param FeatureInterface $multistoreFeature
      */
     public function __construct(Configuration $configuration, Context $shopContext, FeatureInterface $multistoreFeature)
     {
@@ -65,9 +62,6 @@ abstract class AbstractMultistoreConfiguration implements DataConfigurationInter
         $this->multistoreFeature = $multistoreFeature;
     }
 
-    /**
-     * @return ShopConstraint|null
-     */
     public function getShopConstraint(): ?ShopConstraint
     {
         if ($this->shopContext->isAllShopContext()) {
@@ -78,15 +72,13 @@ abstract class AbstractMultistoreConfiguration implements DataConfigurationInter
     }
 
     /**
-     * @param string $configurationKey BO configuration key, ex: PS_SHOP_ENABLE (as stored in the configuration db table)
-     * @param string $fieldName
-     * @param array $input an associative array where keys are field names and values are field values
-     * @param ShopConstraint|null $shopConstraint
-     * @param array $options<int, string> Options @deprecated Will be removed in next major
+     * @param  string  $configurationKey  BO configuration key, ex: PS_SHOP_ENABLE (as stored in the configuration db table)
+     * @param  array  $input  an associative array where keys are field names and values are field values
+     * @param  array  $options<int,  string> Options @deprecated Will be removed in next major
      */
     public function updateConfigurationValue(string $configurationKey, string $fieldName, array $input, ?ShopConstraint $shopConstraint, array $options = []): void
     {
-        if (!array_key_exists($fieldName, $input)) {
+        if (! array_key_exists($fieldName, $input)) {
             return;
         }
 
@@ -94,7 +86,7 @@ abstract class AbstractMultistoreConfiguration implements DataConfigurationInter
 
         // If we are in multistore context (not all shop) and the multistore checkbox value is absent (it was unchecked),
         // then the field multistore value must be removed from DB for current context
-        if ($this->multistoreFeature->isUsed() && !$this->shopContext->isAllShopContext() && !isset($input[$prefix . $fieldName])) {
+        if ($this->multistoreFeature->isUsed() && ! $this->shopContext->isAllShopContext() && ! isset($input[$prefix.$fieldName])) {
             $this->configuration->deleteFromContext($configurationKey, $shopConstraint);
         } else {
             $this->configuration->set($configurationKey, $input[$fieldName], $shopConstraint, $options);

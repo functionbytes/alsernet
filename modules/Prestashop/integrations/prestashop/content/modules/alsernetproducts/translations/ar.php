@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{leofeature}prestashop>leofeature_ab958c5dabadcbf3b020b083f8ff929f'] = 'ليو ميزة';
 $_MODULE['<{leofeature}prestashop>leofeature_6bf92ee4988e28d896685690b1fa5f35'] = 'ميزة ليو بريستاشوب 1.7: سلة اياكس، عربة المنسدلة، ويطير عربة، استعراض، مقارنة، مفضلة في قائمة المنتجات';
 $_MODULE['<{leofeature}prestashop>leofeature_e60e6135ee33810573ed274fb9982ad1'] = 'إدارة ميزة ليو';

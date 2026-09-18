@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,8 +69,6 @@ class PackStockType
     private $value;
 
     /**
-     * @param int $value
-     *
      * @throws ProductPackConstraintException
      */
     public function __construct(int $value)
@@ -77,22 +76,17 @@ class PackStockType
         $this->setStockType($value);
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $stockType
-     *
      * @throws ProductPackConstraintException
      */
     private function setStockType(int $stockType): void
     {
-        if (!in_array($stockType, self::ALLOWED_PACK_STOCK_TYPES)) {
+        if (! in_array($stockType, self::ALLOWED_PACK_STOCK_TYPES)) {
             throw new ProductPackConstraintException(
                 sprintf(
                     'Cannot use product pack stock type %s, allowed values are: %s',

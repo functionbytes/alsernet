@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,10 @@ class Layout implements LayoutInterface
     private $moduleName;
 
     /**
-     * @param string $name Name of the layout to describe its purpose
-     * @param string $htmlPath Absolute path of the html layout file
-     * @param string $txtPath Absolute path of the txt layout file
-     * @param string $moduleName Which module this layout is associated to (if any)
+     * @param  string  $name  Name of the layout to describe its purpose
+     * @param  string  $htmlPath  Absolute path of the html layout file
+     * @param  string  $txtPath  Absolute path of the txt layout file
+     * @param  string  $moduleName  Which module this layout is associated to (if any)
      */
     public function __construct(
         $name,

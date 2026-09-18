@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,13 +27,14 @@
 
 namespace PrestaShop\PrestaShop\Core\Foundation\Database\EntityManager;
 
+use PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface;
 use PrestaShop\PrestaShop\Core\Foundation\Database\Exception;
 
 class QueryBuilder
 {
     private $db;
 
-    public function __construct(\PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface $db)
+    public function __construct(DatabaseInterface $db)
     {
         $this->db = $db;
     }
@@ -42,7 +44,7 @@ class QueryBuilder
         $escaped = $this->db->escape($value);
 
         if (is_string($value)) {
-            return "'" . $escaped . "'";
+            return "'".$escaped."'";
         } else {
             return $escaped;
         }
@@ -60,13 +62,13 @@ class QueryBuilder
 
         foreach ($conditions as $key => $value) {
             if (is_scalar($value)) {
-                $parts[] = $key . ' = ' . $this->quote($value);
+                $parts[] = $key.' = '.$this->quote($value);
             } else {
                 $list = [];
                 foreach ($value as $item) {
                     $list[] = $this->quote($item);
                 }
-                $parts[] = $key . ' IN (' . implode(', ', $list) . ')';
+                $parts[] = $key.' IN ('.implode(', ', $list).')';
             }
         }
 

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskDocument\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Route;
 use Modules\Document\Entities\Document;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
@@ -17,31 +18,54 @@ use Modules\Helpdesk\Tests\HelpdeskTestCase;
 class DocumentActionAuthorizationTest extends HelpdeskTestCase
 {
     /**
-     * The full set of mutating endpoints exposed by DocumentActionController.
+     * The full set of mutating endpoints under
+     * `manager.helpdesk.conversations.documents.*` that resolve a document by
+     * URL binding (`{conversation}/{document}[/...]`).
+     *
+     * Derived from the router instead of hand-maintained: a hand-written list
+     * previously omitted `link` (DocumentCreateController::link) entirely, so
+     * a brand-new mutating route silently shipped without ownership coverage
+     * in this test. Enumerating from Route::getRoutes() means any future
+     * route matching the same URL shape is covered automatically.
+     *
+     * Excludes routes without both `{conversation}` and `{document}` in the
+     * URI (`store`, `import-from-chat`, `import-from-device`): they resolve
+     * the target document differently and don't fit this test's
+     * conversation+document(+id) harness.
      *
      * @return array<int, array{0: string, 1: string, 2: bool}>
      *                                                          [route name suffix, HTTP verb, needs trailing id binding]
      */
     private function mutatingActions(): array
     {
-        return [
-            ['upload', 'post', false],
-            ['assign', 'post', false],
-            ['approve-stage', 'post', false],
-            ['reject-stage', 'post', false],
-            ['send-notification', 'post', false],
-            ['send-reminder', 'post', false],
-            ['send-upload-confirmation', 'post', false],
-            ['send-approval', 'post', false],
-            ['send-missing', 'post', false],
-            ['send-rejection', 'post', false],
-            ['send-custom-email', 'post', false],
-            ['notes.add', 'post', false],
-            ['notes.delete', 'delete', true],
-            ['upload-attachment', 'post', false],
-            ['delete-attachment', 'delete', true],
-            ['update', 'post', false],
-        ];
+        $mutatingVerbs = ['DELETE', 'PUT', 'PATCH', 'POST'];
+
+        return collect(Route::getRoutes())
+            ->filter(function ($route) use ($mutatingVerbs) {
+                $name = $route->getName();
+
+                if (! $name || ! str_starts_with($name, 'manager.helpdesk.conversations.documents.')) {
+                    return false;
+                }
+
+                if (! str_contains($route->uri(), '{conversation}') || ! str_contains($route->uri(), '{document}')) {
+                    return false;
+                }
+
+                return array_intersect($mutatingVerbs, $route->methods()) !== [];
+            })
+            ->map(function ($route) use ($mutatingVerbs) {
+                $verb = strtolower(collect($mutatingVerbs)->first(fn ($m) => in_array($m, $route->methods(), true)));
+                $action = substr($route->getName(), strlen('manager.helpdesk.conversations.documents.'));
+
+                // More than {conversation}/{document} in the URI means a third
+                // binding (noteId/mediaId/docType) the test must fill in.
+                $needsId = substr_count($route->uri(), '{') > 2;
+
+                return [$action, $verb, $needsId];
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -220,5 +244,13 @@ class DocumentActionAuthorizationTest extends HelpdeskTestCase
             'customer_firstname' => 'Other',
             'customer_email' => 'someone-else@example.com',
         ]);
+
+        // QUAL-09 / item 4: 'link' writes on the CONVERSATION (not the
+        // document), accumulating every linked id in metadata.document_ids
+        // (ConversationDocumentLinker::linkDocument()). The two assertions
+        // above only cover the `documents` table, so this closes that gap:
+        // the blocked 'link' call must not have appended the foreign
+        // document's id to the conversation it doesn't belong to.
+        $this->assertEmpty($conversation->fresh()->metadata['document_ids'] ?? []);
     }
 }

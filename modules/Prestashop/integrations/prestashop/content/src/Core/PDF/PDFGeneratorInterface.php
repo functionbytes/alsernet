@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ interface PDFGeneratorInterface
     /**
      * Generates PDF out of given object and template using legacy generator.
      *
-     * @param array $objectCollection collection of objects
+     * @param  array  $objectCollection  collection of objects
      */
     public function generatePDF(array $objectCollection);
 }

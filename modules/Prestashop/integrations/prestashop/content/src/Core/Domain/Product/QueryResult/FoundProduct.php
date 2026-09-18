@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,17 +88,8 @@ class FoundProduct
     private $customizationFields;
 
     /**
-     * @param int $productId
-     * @param string $name
-     * @param string $formattedPrice
-     * @param float $priceTaxIncl
-     * @param float $priceTaxExcl
-     * @param float $taxRate
-     * @param int $stock
-     * @param string $location
-     * @param bool $availableOutOfStock
-     * @param ProductCombination[] $combinations
-     * @param ProductCustomizationField[] $customizationFields
+     * @param  ProductCombination[]  $combinations
+     * @param  ProductCustomizationField[]  $customizationFields
      */
     public function __construct(
         int $productId,
@@ -125,65 +117,41 @@ class FoundProduct
         $this->customizationFields = $customizationFields;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return string
-     */
     public function getLocation(): string
     {
         return $this->location;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getFormattedPrice(): string
     {
         return $this->formattedPrice;
     }
 
-    /**
-     * @return float
-     */
     public function getPriceTaxIncl(): float
     {
         return $this->priceTaxIncl;
     }
 
-    /**
-     * @return float
-     */
     public function getPriceTaxExcl(): float
     {
         return $this->priceTaxExcl;
     }
 
-    /**
-     * @return int
-     */
     public function getStock(): int
     {
         return $this->stock;
     }
 
-    /**
-     * @return float
-     */
     public function getTaxRate(): float
     {
         return $this->taxRate;
@@ -205,9 +173,6 @@ class FoundProduct
         return $this->customizationFields;
     }
 
-    /**
-     * @return bool
-     */
     public function isAvailableOutOfStock(): bool
     {
         return $this->availableOutOfStock;

@@ -10,7 +10,11 @@
 
   @include('core::components.alerts')
 
-  <div class="card">
+  <div class="row g-3">
+
+    {{-- Formulario --}}
+    <div class="col-12 col-lg-8">
+    <div class="card">
 
     <div class="card-header p-4 border-bottom border-light">
       <h5 class="mb-1 fw-bold">Nueva categoría</h5>
@@ -89,16 +93,55 @@
             </div>
           </div>
 
-          <div class="card-footer d-flex justify-content-end gap-2">
-            <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-outline-secondary">
-              Cancelar
-            </a>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save me-1"></i> Guardar
-            </button>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary w-100 mb-1">Guardar</button>
+            <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-light w-100">Cancelar</a>
           </div>
         </form>
       </div>
+
+        </div>
+
+        {{-- Panel de instrucciones --}}
+        <div class="col-12 col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las categorias</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-0">
+                        Una categoria es el primer nivel del centro de ayuda. Dentro de ella se
+                        crean secciones, y dentro de las secciones van los articulos.
+                    </p>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Como se organiza</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><span class="fw-semibold">Categoria:</span> el area general, p. ej. "Pedidos y envios"</li>
+                        <li class="mb-2"><span class="fw-semibold">Seccion:</span> el subtema, p. ej. "Seguimiento del pedido"</li>
+                        <li class="mb-0"><span class="fw-semibold">Articulo:</span> la respuesta concreta a una duda</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">Pocas categorias y bien diferenciadas entre si</li>
+                        <li class="mb-2">Nombres que use el cliente, no los internos del equipo</li>
+                        <li class="mb-0">La posicion decide el orden en el centro de ayuda</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
 @endsection
 

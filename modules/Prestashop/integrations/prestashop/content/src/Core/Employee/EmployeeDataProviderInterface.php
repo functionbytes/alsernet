@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface EmployeeDataProviderInterface
     /**
      * Get employee's hashed password by employee's ID.
      *
-     * @param int $employeeId
-     *
+     * @param  int  $employeeId
      * @return string
      */
     public function getEmployeeHashedPassword($employeeId);
@@ -43,8 +43,7 @@ interface EmployeeDataProviderInterface
     /**
      * Checks if employee is a super admin.
      *
-     * @param int $employeeId
-     *
+     * @param  int  $employeeId
      * @return bool
      */
     public function isSuperAdmin($employeeId);

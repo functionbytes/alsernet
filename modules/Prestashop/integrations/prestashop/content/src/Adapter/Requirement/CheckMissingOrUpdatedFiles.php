@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,9 +36,8 @@ use AppKernel;
 class CheckMissingOrUpdatedFiles
 {
     /**
-     * @param string|null $dir
-     * @param string $path
-     *
+     * @param  string|null  $dir
+     * @param  string  $path
      * @return array
      */
     public function getListOfUpdatedFiles($dir = null, $path = '')
@@ -47,9 +47,9 @@ class CheckMissingOrUpdatedFiles
             'updated' => [],
         ];
 
-        if (null === $dir) {
-            $xml = @simplexml_load_file(_PS_API_URL_ . '/xml/md5-' . AppKernel::MAJOR_VERSION . '/' . AppKernel::VERSION . '.xml');
-            if (!$xml) {
+        if ($dir === null) {
+            $xml = @simplexml_load_file(_PS_API_URL_.'/xml/md5-'.AppKernel::MAJOR_VERSION.'/'.AppKernel::VERSION.'.xml');
+            if (! $xml) {
                 return $fileList;
             }
 
@@ -60,20 +60,20 @@ class CheckMissingOrUpdatedFiles
         $adminDir = basename(_PS_ADMIN_DIR_);
 
         foreach ($dir->md5file as $file) {
-            $filename = preg_replace('#^admin/#', $adminDir . '/', $path . $file['name']);
-            if (preg_match('#^' . $excludeRegexp . '#', $filename)) {
+            $filename = preg_replace('#^admin/#', $adminDir.'/', $path.$file['name']);
+            if (preg_match('#^'.$excludeRegexp.'#', $filename)) {
                 continue;
             }
 
-            if (!file_exists(_PS_ROOT_DIR_ . '/' . $filename)) {
+            if (! file_exists(_PS_ROOT_DIR_.'/'.$filename)) {
                 $fileList['missing'][] = $filename;
-            } elseif (md5_file(_PS_ROOT_DIR_ . '/' . $filename) !== (string) $file) {
+            } elseif (md5_file(_PS_ROOT_DIR_.'/'.$filename) !== (string) $file) {
                 $fileList['updated'][] = $filename;
             }
         }
 
         foreach ($dir->dir as $subdir) {
-            $fileList = array_merge_recursive($fileList, $this->getListOfUpdatedFiles($subdir, $path . $subdir['name'] . '/'));
+            $fileList = array_merge_recursive($fileList, $this->getListOfUpdatedFiles($subdir, $path.$subdir['name'].'/'));
         }
 
         return $fileList;

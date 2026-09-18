@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,6 @@ abstract class AbstractTypedCollection extends ArrayCollection
     /**
      * AbstractTypedCollection constructor.
      *
-     * @param array $elements
      *
      * @throws TypeException
      */
@@ -57,8 +57,7 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $element
-     *
+     * @param  mixed  $element
      * @return bool
      *
      * @throws TypeException
@@ -71,9 +70,8 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $offset
-     * @param mixed $value
-     *
+     * @param  mixed  $offset
+     * @param  mixed  $value
      * @return void
      *
      * @throws TypeException
@@ -86,8 +84,7 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $element
-     *
+     * @param  mixed  $element
      * @return bool
      *
      * @throws TypeException
@@ -100,8 +97,7 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $element
-     *
+     * @param  mixed  $element
      * @return bool|false|int|string
      *
      * @throws TypeException
@@ -114,8 +110,8 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $key
-     * @param mixed $value
+     * @param  mixed  $key
+     * @param  mixed  $value
      *
      * @throws TypeException
      */
@@ -127,8 +123,7 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $element
-     *
+     * @param  mixed  $element
      * @return bool
      *
      * @throws TypeException
@@ -141,8 +136,6 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param array $elements
-     *
      * @throws TypeException
      */
     private function checkElementsType(array $elements)
@@ -153,14 +146,14 @@ abstract class AbstractTypedCollection extends ArrayCollection
     }
 
     /**
-     * @param mixed $element
+     * @param  mixed  $element
      *
      * @throws TypeException
      */
     private function checkElementType($element)
     {
         $expectedType = $this->getType();
-        if (!($element instanceof $expectedType)) {
+        if (! ($element instanceof $expectedType)) {
             throw new TypeException(sprintf('Invalid element type %s, expected %s', is_object($element) ? get_class($element) : gettype($element), $expectedType));
         }
     }

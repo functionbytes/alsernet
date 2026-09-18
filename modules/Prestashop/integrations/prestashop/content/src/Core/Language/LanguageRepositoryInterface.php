@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,7 @@ interface LanguageRepositoryInterface extends ObjectRepository
     /**
      * Return a LanguageInterface whose locale matches the provided one.
      *
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return LanguageInterface
      */
     public function getOneByLocale($locale);
@@ -46,8 +46,7 @@ interface LanguageRepositoryInterface extends ObjectRepository
     /**
      * Return a LanguageInterface which isoCode matches the provided one.
      *
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return LanguageInterface
      */
     public function getOneByIsoCode($isoCode);
@@ -57,8 +56,7 @@ interface LanguageRepositoryInterface extends ObjectRepository
      * if no one is found try matching by isoCode (splitting the locale if
      * necessary).
      *
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return LanguageInterface|null
      */
     public function getOneByLocaleOrIsoCode($locale);

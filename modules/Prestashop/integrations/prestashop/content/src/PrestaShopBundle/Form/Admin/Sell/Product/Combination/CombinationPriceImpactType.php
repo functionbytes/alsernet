@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,12 +52,6 @@ class CombinationPriceImpactType extends TranslatorAwareType
      */
     private $weightUnit;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param Currency $defaultCurrency
-     * @param string $weightUnit
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -80,7 +75,7 @@ class CombinationPriceImpactType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
             ])
@@ -91,7 +86,7 @@ class CombinationPriceImpactType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
             ])
@@ -101,7 +96,7 @@ class CombinationPriceImpactType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
             ])
@@ -112,7 +107,7 @@ class CombinationPriceImpactType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
             ])
@@ -121,7 +116,7 @@ class CombinationPriceImpactType extends TranslatorAwareType
                 'label' => $this->trans('Impact on weight', 'Admin.Catalog.Feature'),
                 'unit' => $this->weightUnit,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type([
                         'type' => 'numeric',
                         'message' => $this->trans(
@@ -129,10 +124,9 @@ class CombinationPriceImpactType extends TranslatorAwareType
                             'Admin.Notifications.Error'
                         ),
                     ]),
-                    new PositiveOrZero(),
+                    new PositiveOrZero,
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**

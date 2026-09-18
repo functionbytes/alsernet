@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,13 @@ class ExchangeRateProvider
     public const CURRENCY_FEED_URL = 'http://api.prestashop.com/xml/currencies.xml';
 
     public const CLOSED_ALLOWED_FAILURES = 3;
+
     public const CLOSED_TIMEOUT_SECONDS = 1;
 
     public const OPEN_ALLOWED_FAILURES = 3;
+
     public const OPEN_TIMEOUT_SECONDS = 2;
+
     public const OPEN_THRESHOLD_SECONDS = 3600; // 1 hour
 
     public const CACHE_KEY_XML = 'currency_feed.xml';
@@ -75,10 +79,8 @@ class ExchangeRateProvider
     private $currencies = [];
 
     /**
-     * @param string $currencyFeedUrl
-     * @param string $defaultCurrencyIsoCode
-     * @param CircuitBreakerInterface $remoteServiceProvider
-     * @param CacheInterface $cache
+     * @param  string  $currencyFeedUrl
+     * @param  string  $defaultCurrencyIsoCode
      */
     public function __construct(
         $currencyFeedUrl,
@@ -93,8 +95,7 @@ class ExchangeRateProvider
     }
 
     /**
-     * @param string $currencyIsoCode
-     *
+     * @param  string  $currencyIsoCode
      * @return DecimalNumber
      *
      * @throws CurrencyFeedException
@@ -124,8 +125,6 @@ class ExchangeRateProvider
     }
 
     /**
-     * @param string $currencyIsoCode
-     *
      * @return DecimalNumber
      *
      * @throws CurrencyFeedException
@@ -136,7 +135,7 @@ class ExchangeRateProvider
             return new DecimalNumber('1.0');
         }
 
-        if (!isset($this->currencies[$currencyIsoCode])) {
+        if (! isset($this->currencies[$currencyIsoCode])) {
             throw new CurrencyFeedException(sprintf('Exchange rate for currency with ISO code %s was not found', $currencyIsoCode));
         }
 
@@ -152,7 +151,7 @@ class ExchangeRateProvider
      */
     private function fetchCurrencyFeed()
     {
-        if (!empty($this->currencies)) {
+        if (! empty($this->currencies)) {
             return;
         }
 
@@ -163,11 +162,11 @@ class ExchangeRateProvider
         }
 
         $xmlFeed = $this->parseAndSaveXMLFeed($remoteFeedData);
-        if (null === $xmlFeed) {
+        if ($xmlFeed === null) {
             $xmlFeed = $this->parseAndSaveXMLFeed($cachedFeedData);
         }
 
-        if (null === $xmlFeed) {
+        if ($xmlFeed === null) {
             throw new CurrencyFeedException('Invalid currency XML feed');
         }
 
@@ -175,18 +174,17 @@ class ExchangeRateProvider
     }
 
     /**
-     * @param string $feedContent
-     *
+     * @param  string  $feedContent
      * @return SimpleXMLElement|null
      */
     private function parseAndSaveXMLFeed($feedContent)
     {
         $xmlFeed = @simplexml_load_string($feedContent);
-        if (!$xmlFeed || !$this->isValidXMLFeed($xmlFeed)) {
+        if (! $xmlFeed || ! $this->isValidXMLFeed($xmlFeed)) {
             return null;
         }
 
-        //Cache the feed
+        // Cache the feed
         $cacheItem = $this->cache->getItem(self::CACHE_KEY_XML);
         $cacheItem->set($feedContent);
         $this->cache->save($cacheItem);
@@ -195,7 +193,7 @@ class ExchangeRateProvider
     }
 
     /**
-     * @param SimpleXMLElement $xmlFeed
+     * @param  SimpleXMLElement  $xmlFeed
      */
     private function parseXmlFeed($xmlFeed)
     {
@@ -213,20 +211,15 @@ class ExchangeRateProvider
     private function getCachedCurrencyFeed()
     {
         $cacheItem = $this->cache->getItem(self::CACHE_KEY_XML);
-        if (!$cacheItem->isHit()) {
+        if (! $cacheItem->isHit()) {
             return '';
         }
 
         $feedContent = $cacheItem->get();
 
-        return !empty($feedContent) ? $feedContent : '';
+        return ! empty($feedContent) ? $feedContent : '';
     }
 
-    /**
-     * @param SimpleXMLElement $xmlFeed
-     *
-     * @return bool
-     */
     private function isValidXMLFeed(SimpleXMLElement $xmlFeed): bool
     {
         return (bool) count($xmlFeed->list->currency);

@@ -30,6 +30,17 @@ interface CatalogDriver
     public function find(string $id): ?CatalogProduct;
 
     /**
+     * Recupera varios productos de una vez (p. ej. al compartir un carrusel de
+     * hasta N ids desde el panel). Evita que el llamador tenga que hacer N
+     * llamadas a find(); cada driver decide cómo resolverlo de forma eficiente
+     * (índice en memoria, una única query con whereIn, etc.).
+     *
+     * @param  array<int, string>  $ids
+     * @return array<string, CatalogProduct> indexado por id, solo los encontrados
+     */
+    public function findMany(array $ids): array;
+
+    /**
      * Productos relacionados con uno dado (cross/upsell), como máximo $limit.
      *
      * @return array<int, CatalogProduct>

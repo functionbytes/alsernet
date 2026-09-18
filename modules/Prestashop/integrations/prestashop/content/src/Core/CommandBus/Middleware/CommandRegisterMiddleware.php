@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,6 @@ final class CommandRegisterMiddleware implements Middleware
      */
     private $executedCommandRegistry;
 
-    /**
-     * @param HandlerLocator $handlerLocator
-     * @param CommandNameExtractor $commandNameExtractor
-     * @param ExecutedCommandRegistry $executedCommandRegistry
-     */
     public function __construct(
         HandlerLocator $handlerLocator,
         CommandNameExtractor $commandNameExtractor,

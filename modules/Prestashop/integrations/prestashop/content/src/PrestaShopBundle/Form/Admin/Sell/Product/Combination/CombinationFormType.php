@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,6 @@ class CombinationFormType extends TranslatorAwareType
      */
     private $imagesChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param ConfigurableFormChoiceProviderInterface $imagesChoiceProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -62,10 +58,6 @@ class CombinationFormType extends TranslatorAwareType
         $this->imagesChoiceProvider = $imagesChoiceProvider;
     }
 
-    /**
-     * @param FormBuilderInterface $builder
-     * @param array $options
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
@@ -85,8 +77,7 @@ class CombinationFormType extends TranslatorAwareType
                 },
                 'multiple' => true,
                 'expanded' => true,
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -100,7 +91,6 @@ class CombinationFormType extends TranslatorAwareType
             ->setDefaults([
                 'required' => false,
                 'label' => false,
-            ])
-        ;
+            ]);
     }
 }

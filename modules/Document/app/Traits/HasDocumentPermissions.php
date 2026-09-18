@@ -2,6 +2,7 @@
 
 namespace Modules\Document\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Modules\Document\Entities\DocumentValidatorGroup;
 
@@ -103,7 +104,7 @@ trait HasDocumentPermissions
     /**
      * Get the user's primary document validator groups
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function primaryDocumentGroups()
     {
@@ -116,7 +117,7 @@ trait HasDocumentPermissions
     /**
      * Get the user's backup document validator groups
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function backupDocumentGroups()
     {

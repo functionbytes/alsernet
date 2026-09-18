@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -94,14 +95,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
      */
     private $countryId;
 
-    /**
-     * @param NumberExtractor $numberExtractor
-     * @param ProductRepository $productRepository
-     * @param StockAvailableRepository $stockAvailableRepository
-     * @param VirtualProductFileRepository $virtualProductFileRepository
-     * @param TaxComputer $taxComputer
-     * @param int $countryId
-     */
     public function __construct(
         NumberExtractor $numberExtractor,
         ProductRepository $productRepository,
@@ -142,11 +135,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         );
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductBasicInformation
-     */
     private function getBasicInformation(Product $product): ProductBasicInformation
     {
         return new ProductBasicInformation(
@@ -157,11 +145,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         );
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductCategoriesInformation
-     */
     private function getCategoriesInformation(Product $product): ProductCategoriesInformation
     {
         $categoryIds = array_map('intval', $product->getCategories());
@@ -170,11 +153,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         return new ProductCategoriesInformation($categoryIds, $defaultCategoryId);
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductPricesInformation
-     */
     private function getPricesInformation(Product $product): ProductPricesInformation
     {
         $priceTaxExcluded = $this->numberExtractor->extract($product, 'price');
@@ -197,11 +175,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         );
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductOptions
-     */
     private function getOptions(Product $product): ProductOptions
     {
         return new ProductOptions(
@@ -216,11 +189,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         );
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductDetails
-     */
     private function getDetails(Product $product): ProductDetails
     {
         return new ProductDetails(
@@ -233,10 +201,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
     }
 
     /**
-     * @param Product $product
-     *
-     * @return ProductShippingInformation
-     *
      * @throws NumberExtractorException
      */
     private function getShippingInformation(Product $product): ProductShippingInformation
@@ -259,15 +223,13 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
     }
 
     /**
-     * @param int $productId
-     *
      * @return LocalizedTags[]
      */
     private function getLocalizedTagsList(int $productId): array
     {
         $tags = Tag::getProductTags($productId);
 
-        if (!$tags) {
+        if (! $tags) {
             return [];
         }
 
@@ -280,14 +242,9 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         return $localizedTagsList;
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductCustomizationOptions
-     */
     private function getCustomizationOptions(Product $product): ProductCustomizationOptions
     {
-        if (!Customization::isFeatureActive()) {
+        if (! Customization::isFeatureActive()) {
             return ProductCustomizationOptions::createNotCustomizable();
         }
 
@@ -308,11 +265,6 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
         return $options;
     }
 
-    /**
-     * @param Product $product
-     *
-     * @return ProductSeoOptions
-     */
     private function getSeoOptions(Product $product): ProductSeoOptions
     {
         return new ProductSeoOptions(
@@ -326,14 +278,10 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
 
     /**
      * Return the product stock infos, it's important that the Product is fetched with stock data
-     *
-     * @param Product $product
-     *
-     * @return ProductStockInformation
      */
     private function getProductStockInformation(Product $product): ProductStockInformation
     {
-        //@todo: In theory StockAvailable is created for each product when Product::add is called,
+        // @todo: In theory StockAvailable is created for each product when Product::add is called,
         //  but we should explore some multishop edgecases
         //  (like shop ids might be missing and foreach loop won't start resulting in a missing StockAvailable for product)
         $stockAvailable = $this->stockAvailableRepository->getForProduct(new ProductId($product->id));
@@ -348,17 +296,13 @@ final class GetProductForEditingHandler implements GetProductForEditingHandlerIn
             $product->available_now,
             $product->available_later,
             $stockAvailable->location,
-            DateTimeUtil::NULL_DATE === $product->available_date ? null : new DateTime($product->available_date)
+            $product->available_date === DateTimeUtil::NULL_DATE ? null : new DateTime($product->available_date)
         );
     }
 
     /**
      * Get virtual product file
      * Legacy object ProductDownload is referred as VirtualProductFile in Core
-     *
-     * @param Product $product
-     *
-     * @return VirtualProductFileForEditing|null
      */
     private function getVirtualProductFile(Product $product): ?VirtualProductFileForEditing
     {

@@ -1,6 +1,8 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+use AlsernetShopping\Carriers\CarrierRegistry;
+
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -13,12 +15,12 @@ class ControllerHelper
     /**
      * Valida que el usuario esté autenticado
      */
-    public static function validateAuthentication(\Context $context): ?array
+    public static function validateAuthentication(Context $context): ?array
     {
         $customer = $context->customer;
 
-        if (!$customer || !$customer->isLogged()) {
-            return \ResponseHelper::authRequired($context);
+        if (! $customer || ! $customer->isLogged()) {
+            return ResponseHelper::authRequired($context);
         }
 
         return null; // Todo OK
@@ -29,81 +31,82 @@ class ControllerHelper
      */
     public static function validateCarrierParams(int $carrierId): ?array
     {
-        if (!$carrierId) {
-            return \ResponseHelper::warning('ID de carrier requerido');
+        if (! $carrierId) {
+            return ResponseHelper::warning('ID de carrier requerido');
         }
 
         return null; // Todo OK
     }
 
-
     /**
      * Obtiene datos comunes de dirección para carriers
      */
-    public static function getAddressData(\Address $address, \Context $context): array
+    public static function getAddressData(Address $address, Context $context): array
     {
-        $id_lang = (int)$context->language->id;
+        $id_lang = (int) $context->language->id;
 
         return [
             'delivery_address' => $address,
-            'state_name' => $address->id_state ? \State::getNameById($address->id_state) : '',
-            'country_name' => $address->id_country ? \Country::getNameById($id_lang, $address->id_country) : '',
+            'state_name' => $address->id_state ? State::getNameById($address->id_state) : '',
+            'country_name' => $address->id_country ? Country::getNameById($id_lang, $address->id_country) : '',
         ];
     }
 
-    public static function processCarrierSelection(int $carrierId, array $requestData, \Context $context): array
+    public static function processCarrierSelection(int $carrierId, array $requestData, Context $context): array
     {
 
-
-        $carrierRegistry = \AlsernetShopping\Carriers\CarrierRegistry::getInstance();
+        $carrierRegistry = CarrierRegistry::getInstance();
         $handler = $carrierRegistry->getHandler($carrierId);
 
-        error_log("ControllerHelper: Processing selection for carrier {$carrierId}, handler: " . ($handler ? 'YES' : 'NO'));
+        error_log("ControllerHelper: Processing selection for carrier {$carrierId}, handler: ".($handler ? 'YES' : 'NO'));
 
         if ($handler && $handler->isEnabled()) {
             try {
                 // Cada handler decide qué campos necesita y devuelve status success|warning|error
                 $result = $handler->processSelection($requestData, $context);
-                return is_array($result) ? $result : \ResponseHelper::error('Respuesta inválida del handler');
-            } catch (\Exception $e) {
-                error_log("Error processing selection for carrier {$carrierId}: " . $e->getMessage());
-                return \ResponseHelper::error('Error interno procesando la selección del carrier');
+
+                return is_array($result) ? $result : ResponseHelper::error('Respuesta inválida del handler');
+            } catch (Exception $e) {
+                error_log("Error processing selection for carrier {$carrierId}: ".$e->getMessage());
+
+                return ResponseHelper::error('Error interno procesando la selección del carrier');
             }
         }
 
-        return \ResponseHelper::warning('Carrier no disponible para selección específica.');
+        return ResponseHelper::warning('Carrier no disponible para selección específica.');
     }
 
     public static function getCarrierSelectionByCart($idCart, $idLang = null)
     {
-        if (!(int)$idCart) {
+        if (! (int) $idCart) {
             return null;
         }
 
         $ctx = Context::getContext();
         if ($idLang === null) {
-            $idLang = (int)$ctx->language->id;
+            $idLang = (int) $ctx->language->id;
         }
 
         $db = Db::getInstance();
 
         // ---- 0) ¿Existe la tabla cart_carrier?
         $tableName = pSQL(_DB_PREFIX_.'cart_carrier');
-        $hasCartCarrier = (bool)$db->getValue("SHOW TABLES LIKE '".$tableName."'");
+        $hasCartCarrier = (bool) $db->getValue("SHOW TABLES LIKE '".$tableName."'");
 
         // ---- 1) cart_carrier si existe
         if ($hasCartCarrier) {
-            $sql = new DbQuery();
+            $sql = new DbQuery;
             $sql->select('cc.id_carrier, cc.id_carrier_reference, cl.delay, cl.name')
                 ->from('cart_carrier', 'cc')
-                ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = cc.id_carrier AND cl.id_lang = '.(int)$idLang)
-                ->where('cc.id_cart = '.(int)$idCart)
+                ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = cc.id_carrier AND cl.id_lang = '.(int) $idLang)
+                ->where('cc.id_cart = '.(int) $idCart)
                 ->orderBy('cc.date_add DESC');
 
             if ($row = $db->getRow($sql)) {
-                $row['id_carrier'] = (int)$row['id_carrier'];
-                $row['id_carrier_reference'] = (int)$row['id_carrier_reference'];
+                $row['id_carrier'] = (int) $row['id_carrier'];
+                $row['id_carrier_reference'] = (int) $row['id_carrier_reference'];
                 $row['source'] = 'cart_carrier';
+
                 return $row;
             }
         }
@@ -112,11 +115,11 @@ class ControllerHelper
         $cartRow = $db->getRow('
             SELECT id_carrier, delivery_option, id_address_delivery
             FROM '._DB_PREFIX_.'cart
-            WHERE id_cart = '.(int)$idCart
+            WHERE id_cart = '.(int) $idCart
         );
 
         if ($cartRow) {
-            $idCarrierFromCart = (int)$cartRow['id_carrier'];
+            $idCarrierFromCart = (int) $cartRow['id_carrier'];
 
             $selectedCarrier = 0;
             $deliveryOptionRaw = $cartRow['delivery_option'];
@@ -138,13 +141,13 @@ class ControllerHelper
                 }
             }
 
-            if (is_array($map) && !empty($map)) {
+            if (is_array($map) && ! empty($map)) {
                 // Para carritos estándar 1 dirección: primera clave
-                $firstAddressId = (int)key($map);
-                $opt = (string)reset($map); // ejemplo "12," o "12,12"
+                $firstAddressId = (int) key($map);
+                $opt = (string) reset($map); // ejemplo "12," o "12,12"
                 // Extraer primer número (id_carrier)
                 if (preg_match('/^\s*(\d+)\s*,?/', $opt, $m)) {
-                    $selectedCarrier = (int)$m[1];
+                    $selectedCarrier = (int) $m[1];
                 }
             }
 
@@ -154,32 +157,34 @@ class ControllerHelper
             }
 
             if ($selectedCarrier > 0) {
-                $sql = new DbQuery();
+                $sql = new DbQuery;
                 $sql->select('c.id_carrier, c.id_reference as id_carrier_reference, cl.delay, cl.name')
                     ->from('carrier', 'c')
-                    ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = c.id_carrier AND cl.id_lang = '.(int)$idLang)
-                    ->where('c.id_carrier = '.(int)$selectedCarrier);
+                    ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = c.id_carrier AND cl.id_lang = '.(int) $idLang)
+                    ->where('c.id_carrier = '.(int) $selectedCarrier);
 
                 if ($row = $db->getRow($sql)) {
-                    $row['id_carrier'] = (int)$row['id_carrier'];
-                    $row['id_carrier_reference'] = (int)$row['id_carrier_reference'];
+                    $row['id_carrier'] = (int) $row['id_carrier'];
+                    $row['id_carrier_reference'] = (int) $row['id_carrier_reference'];
                     $row['source'] = ($hasCartCarrier ? 'fallback_delivery_option' : 'delivery_option');
+
                     return $row;
                 }
             }
 
             // ---- 3) Último recurso: id_carrier del carrito con sus datos
             if ($idCarrierFromCart > 0) {
-                $sql = new DbQuery();
+                $sql = new DbQuery;
                 $sql->select('c.id_carrier, c.id_reference as id_carrier_reference, cl.delay, cl.name')
                     ->from('carrier', 'c')
-                    ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = c.id_carrier AND cl.id_lang = '.(int)$idLang)
-                    ->where('c.id_carrier = '.(int)$idCarrierFromCart);
+                    ->leftJoin('carrier_lang', 'cl', 'cl.id_carrier = c.id_carrier AND cl.id_lang = '.(int) $idLang)
+                    ->where('c.id_carrier = '.(int) $idCarrierFromCart);
 
                 if ($row = $db->getRow($sql)) {
-                    $row['id_carrier'] = (int)$row['id_carrier'];
-                    $row['id_carrier_reference'] = (int)$row['id_carrier_reference'];
+                    $row['id_carrier'] = (int) $row['id_carrier'];
+                    $row['id_carrier_reference'] = (int) $row['id_carrier_reference'];
                     $row['source'] = 'cart.id_carrier';
+
                     return $row;
                 }
             }
@@ -188,37 +193,34 @@ class ControllerHelper
         return null;
     }
 
-
-    public static function persistCarrierSelection(\Context $context, array $requestData, array $handlerResult): bool
+    public static function persistCarrierSelection(Context $context, array $requestData, array $handlerResult): bool
     {
 
-
-        $carrierId = (int)$requestData['id_carrier'];
-        $registry  = \AlsernetShopping\Carriers\CarrierRegistry::getInstance();
-        $handler   = $registry->getHandler($carrierId);
-
-        return $handler->persistSelection($context, $requestData, $handlerResult);
-
-    }
-    public static function persistCarrierUnselection(\Context $context, array $requestData, array $handlerResult): bool
-    {
-
-
-        $carrierId = (int)$requestData['id_carrier'];
-        $registry  = \AlsernetShopping\Carriers\CarrierRegistry::getInstance();
-        $handler   = $registry->getHandler($carrierId);
+        $carrierId = (int) $requestData['id_carrier'];
+        $registry = CarrierRegistry::getInstance();
+        $handler = $registry->getHandler($carrierId);
 
         return $handler->persistSelection($context, $requestData, $handlerResult);
 
     }
 
+    public static function persistCarrierUnselection(Context $context, array $requestData, array $handlerResult): bool
+    {
+
+        $carrierId = (int) $requestData['id_carrier'];
+        $registry = CarrierRegistry::getInstance();
+        $handler = $registry->getHandler($carrierId);
+
+        return $handler->persistSelection($context, $requestData, $handlerResult);
+
+    }
 
     /**
      * Procesa carrier usando el sistema modular
      */
-    public static function processCarrierRequest(int $carrierId, array $requestData, \Context $context): array
+    public static function processCarrierRequest(int $carrierId, array $requestData, Context $context): array
     {
-        $carrierRegistry = \AlsernetShopping\Carriers\CarrierRegistry::getInstance();
+        $carrierRegistry = CarrierRegistry::getInstance();
         $handler = $carrierRegistry->getHandler($carrierId);
 
         $cart = $context->cart;
@@ -238,7 +240,7 @@ class ControllerHelper
 
         $context->smarty->assign($data);
 
-        error_log("ControllerHelper: Processing carrier {$carrierId}, handler found: " . ($handler ? 'YES' : 'NO'));
+        error_log("ControllerHelper: Processing carrier {$carrierId}, handler found: ".($handler ? 'YES' : 'NO'));
 
         if ($handler && $handler->isEnabled()) {
             try {
@@ -248,8 +250,8 @@ class ControllerHelper
                 if ($result['status'] === 'success') {
                     return $result;
                 }
-            } catch (\Exception $e) {
-                error_log("Error processing carrier {$carrierId}: " . $e->getMessage());
+            } catch (Exception $e) {
+                error_log("Error processing carrier {$carrierId}: ".$e->getMessage());
             }
         }
 
@@ -262,7 +264,7 @@ class ControllerHelper
             // Standard carriers should return success even without specific handlers
             error_log("Standard carrier {$carrierId} processed successfully without handler");
 
-            return \ResponseHelper::carrierResponse(
+            return ResponseHelper::carrierResponse(
                 'success',
                 false,
                 $carrierId,
@@ -273,7 +275,7 @@ class ControllerHelper
             // Custom carriers require handlers
             error_log("Custom carrier {$carrierId} requires a specific handler");
 
-            return \ResponseHelper::carrierResponse(
+            return ResponseHelper::carrierResponse(
                 'error',
                 '',
                 $carrierId,
@@ -284,7 +286,7 @@ class ControllerHelper
             // Unknown carrier type
             error_log("Unknown carrier type for {$carrierId}. Consider adding it to CarrierRegistry configuration.");
 
-            return \ResponseHelper::carrierResponse(
+            return ResponseHelper::carrierResponse(
                 'warning',
                 '<div class="alert alert-warning">Este método de envío requiere configuración adicional.</div>',
                 $carrierId,
@@ -297,7 +299,7 @@ class ControllerHelper
     /**
      * Actualiza el carrier del carrito
      */
-    public static function updateCartCarrier(\Cart $cart, int $carrierId): void
+    public static function updateCartCarrier(Cart $cart, int $carrierId): void
     {
         $cart->id_carrier = $carrierId;
         $cart->step = 'delivery';
@@ -309,10 +311,10 @@ class ControllerHelper
      */
     public static function getAddressConfiguration(): array
     {
-        return \Configuration::getMultiple([
+        return Configuration::getMultiple([
             'PS_TAX_ADDRESS_TYPE',
             'PS_INVOICE',
-            'VATNUMBER_MANAGEMENT'
+            'VATNUMBER_MANAGEMENT',
         ]);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,12 +51,7 @@ class GeneralConfiguration implements DataConfigurationInterface
      */
     private $isDebug;
 
-    /**
-     * @param Configuration $configuration
-     * @param Cookie $cookie
-     * @param bool|null $isDebug
-     */
-    public function __construct(Configuration $configuration, Cookie $cookie, bool $isDebug = null)
+    public function __construct(Configuration $configuration, Cookie $cookie, ?bool $isDebug = null)
     {
         $this->configuration = $configuration;
         $this->cookie = $cookie;
@@ -92,7 +88,7 @@ class GeneralConfiguration implements DataConfigurationInterface
         $errors = [];
 
         if ($this->validateConfiguration($configuration)) {
-            if (!$this->validateSameSite($configuration['cookie_samesite'])) {
+            if (! $this->validateSameSite($configuration['cookie_samesite'])) {
                 $errors[] = [
                     'key' => 'The SameSite=None is only available in secure mode.',
                     'domain' => 'Admin.Advparameters.Notification',
@@ -122,14 +118,14 @@ class GeneralConfiguration implements DataConfigurationInterface
     public function validateConfiguration(array $configuration)
     {
         $isValid = isset(
-                $configuration['check_modules_update'],
-                $configuration['check_ip_address'],
-                $configuration['front_cookie_lifetime'],
-                $configuration['back_cookie_lifetime']
-            ) && in_array(
-                $configuration['cookie_samesite'],
-                Cookie::SAMESITE_AVAILABLE_VALUES
-            );
+            $configuration['check_modules_update'],
+            $configuration['check_ip_address'],
+            $configuration['front_cookie_lifetime'],
+            $configuration['back_cookie_lifetime']
+        ) && in_array(
+            $configuration['cookie_samesite'],
+            Cookie::SAMESITE_AVAILABLE_VALUES
+        );
         if ($this->isDebug) {
             $isValid &= in_array(
                 $configuration['check_modules_stability_channel'],
@@ -143,10 +139,6 @@ class GeneralConfiguration implements DataConfigurationInterface
     /**
      * Validate SameSite.
      * The SameSite=None is only working when Secure is settled
-     *
-     * @param string $sameSite
-     *
-     * @return bool
      */
     protected function validateSameSite(string $sameSite): bool
     {

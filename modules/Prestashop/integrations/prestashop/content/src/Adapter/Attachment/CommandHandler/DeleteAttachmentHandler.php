@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ final class DeleteAttachmentHandler extends AbstractAttachmentHandler implements
     {
         $attachment = $this->getAttachment($command->getAttachmentId());
 
-        if (!$this->deleteAttachment($attachment)) {
+        if (! $this->deleteAttachment($attachment)) {
             throw new DeleteAttachmentException(sprintf('Cannot delete Attachment object with id "%s".', $attachment->id));
         }
     }

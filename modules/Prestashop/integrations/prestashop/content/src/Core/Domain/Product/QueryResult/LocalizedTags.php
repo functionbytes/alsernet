@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ class LocalizedTags
     private $tags;
 
     /**
-     * @param int $languageId
-     * @param string[] $tags
+     * @param  string[]  $tags
      */
     public function __construct(int $languageId, array $tags)
     {
@@ -53,9 +53,6 @@ class LocalizedTags
         $this->tags = $tags;
     }
 
-    /**
-     * @return int
-     */
     public function getLanguageId(): int
     {
         return $this->languageId;

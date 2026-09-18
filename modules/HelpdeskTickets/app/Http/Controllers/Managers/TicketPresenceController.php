@@ -43,6 +43,32 @@ class TicketPresenceController extends Controller
         return response()->json(['success' => true, 'data' => ['viewers' => $others]]);
     }
 
+    /**
+     * Presencia de VARIOS tickets a la vez, para el listado — heartbeat()/
+     * leave() son por ticket abierto (el detalle), esto es de solo lectura
+     * y no requiere tener ninguno abierto. `ids` es una lista separada por
+     * comas de los tickets que la fila tiene cargados en ese momento
+     * (nunca todos los de la bandeja, solo la página visible).
+     */
+    public function overview(Request $request): JsonResponse
+    {
+        $ids = collect(explode(',', (string) $request->query('ids')))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->presence->viewersForMany($ids, now()->timestamp),
+        ]);
+    }
+
     public function leave(Request $request, Ticket $ticket): JsonResponse
     {
         $user = $request->user();

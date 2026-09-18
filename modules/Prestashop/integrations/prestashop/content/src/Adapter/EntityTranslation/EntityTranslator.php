@@ -67,12 +67,6 @@ class EntityTranslator implements EntityTranslatorInterface
      */
     protected $dbPrefix;
 
-    /**
-     * @param Db $db
-     * @param string $dbPrefix
-     * @param TranslatorInterface $translator
-     * @param DataLangCore $dataLang
-     */
     public function __construct(
         Db $db,
         string $dbPrefix,
@@ -89,8 +83,6 @@ class EntityTranslator implements EntityTranslatorInterface
     /**
      * Translate the entity's data in database using reverse translation technique
      *
-     * @param int $languageId
-     * @param int $shopId
      *
      * @throws LanguageNotFoundException
      * @throws \PrestaShopDatabaseException
@@ -110,7 +102,7 @@ class EntityTranslator implements EntityTranslatorInterface
 
         // get table data
         $sql = "SELECT * FROM `$tableNameSql` WHERE `id_lang` = $languageId"
-            . $shopWhere;
+            .$shopWhere;
 
         $tableData = $this->db->executeS($sql, true, false);
 
@@ -127,32 +119,32 @@ class EntityTranslator implements EntityTranslatorInterface
 
             // Construct update where
             foreach ($keys as $key) {
-                $updateWhere[] = '`' . bqSQL($key) . '` = "' . pSQL($data[$key]) . '"';
+                $updateWhere[] = '`'.bqSQL($key).'` = "'.pSQL($data[$key]).'"';
             }
 
             // Construct update field
             foreach ($fieldsToUpdate as $fieldName) {
-                if ('url_rewrite' === $fieldName && Language::$locale_crowdin_lang === $lang->locale) {
+                if ($fieldName === 'url_rewrite' && Language::$locale_crowdin_lang === $lang->locale) {
                     continue;
                 }
 
                 $translatedField = $this->doTranslate($data, $fieldName);
 
-                if (!empty($translatedField) && $translatedField != $data[$fieldName]) {
-                    $updateFields[] = '`' . bqSQL($fieldName) . '` = "' . pSQL($translatedField) . '"';
+                if (! empty($translatedField) && $translatedField != $data[$fieldName]) {
+                    $updateFields[] = '`'.bqSQL($fieldName).'` = "'.pSQL($translatedField).'"';
                 }
             }
 
             // Update table
-            if (!empty($updateWhere) && !empty($updateFields)) {
+            if (! empty($updateWhere) && ! empty($updateFields)) {
                 $updateWhere = implode(' AND ', $updateWhere);
                 $updateFields = implode(', ', $updateFields);
 
                 $sql = "UPDATE `$tableNameSql`
                     SET $updateFields
                     WHERE $updateWhere AND `id_lang` = $languageId"
-                    . $shopWhere
-                    . ' LIMIT 1';
+                    .$shopWhere
+                    .' LIMIT 1';
 
                 $this->db->execute($sql);
             }
@@ -162,9 +154,7 @@ class EntityTranslator implements EntityTranslatorInterface
     /**
      * Return true if an id_shop field exists in database
      *
-     * @param string $tableNameSql
      *
-     * @return bool
      *
      * @throws \PrestaShopDatabaseException
      */
@@ -186,14 +176,13 @@ class EntityTranslator implements EntityTranslatorInterface
     /**
      * Retrieves the original wording via reverse dictionary search (aka "untranslation")
      *
-     * @param array $data Database record
-     * @param string $fieldName Name of the field from $data to translate
-     *
+     * @param  array  $data  Database record
+     * @param  string  $fieldName  Name of the field from $data to translate
      * @return string "Untranslated" value
      */
     protected function getSourceString(array $data, string $fieldName): string
     {
-        if (!array_key_exists($fieldName, $data)) {
+        if (! array_key_exists($fieldName, $data)) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Unable to reverse translate entity field "%s" because it\'s not defined in the provided database record',
@@ -208,9 +197,8 @@ class EntityTranslator implements EntityTranslatorInterface
     /**
      * Finds out the original wording and translates it
      *
-     * @param array $data Database record
-     * @param string $fieldName Name of the field from $data to translate
-     *
+     * @param  array  $data  Database record
+     * @param  string  $fieldName  Name of the field from $data to translate
      * @return string Translated value
      */
     protected function doTranslate(array $data, string $fieldName): string
@@ -223,7 +211,6 @@ class EntityTranslator implements EntityTranslatorInterface
     /**
      * Builds the table name using the DataLang class as source
      *
-     * @param DataLangCore $dataLang
      *
      * @return string The table name, including prefix
      */
@@ -231,7 +218,7 @@ class EntityTranslator implements EntityTranslatorInterface
     {
         $tableName = $this->dataLang->getTableName();
         if (substr($tableName, 0, strlen($this->dbPrefix)) !== $this->dbPrefix) {
-            $tableName = $this->dbPrefix . $tableName;
+            $tableName = $this->dbPrefix.$tableName;
         }
 
         return $tableName;

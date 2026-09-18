@@ -83,7 +83,7 @@ class AgentsController extends Controller
             ->pluck('total', 'assignee_id');
 
         $data = $agents->map(function (User $u) use ($onlineIds, $workloads) {
-            $name = trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: $u->email;
+            $name = $u->fullName() ?: $u->email;
             $initials = collect(preg_split('/\s+/', $name))
                 ->filter()
                 ->take(2)

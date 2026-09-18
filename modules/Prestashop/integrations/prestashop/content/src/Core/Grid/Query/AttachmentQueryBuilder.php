@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,12 +46,6 @@ final class AttachmentQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     private $employeeIdLang;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param string $employeeIdLang
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -72,13 +67,11 @@ final class AttachmentQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb
             ->select('a.`id_attachment`, al.`name`, a.`file`, a.`file_size`')
-            ->addSelect('COALESCE(virtual_product_attachment.`product_count`, 0) AS inventaries')
-        ;
+            ->addSelect('COALESCE(virtual_product_attachment.`product_count`, 0) AS inventaries');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -89,39 +82,34 @@ final class AttachmentQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT a.`id_attachment`)')
-        ;
+            ->select('COUNT(DISTINCT a.`id_attachment`)');
 
         return $qb;
     }
 
     /**
      * Gets query builder with the common sql used for displaying webservice list and applying filter actions.
-     *
-     * @param array $filters
-     *
-     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters): QueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'attachment', 'a')
+            ->from($this->dbPrefix.'attachment', 'a')
             ->leftJoin(
                 'a',
-                $this->dbPrefix . 'attachment_lang',
+                $this->dbPrefix.'attachment_lang',
                 'al',
                 'a.`id_attachment` = al.`id_attachment`'
             );
 
         $productCountQb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'product_attachment', 'pa')
+            ->from($this->dbPrefix.'product_attachment', 'pa')
             ->select('pa.`id_attachment`, COUNT(*) as product_count')
             ->groupBy('id_attachment');
 
         $qb->leftJoin('a',
-            '(' . $productCountQb->getSQL() . ')',
+            '('.$productCountQb->getSQL().')',
             'virtual_product_attachment',
             'a.`id_attachment` = virtual_product_attachment.`id_attachment`');
 
@@ -134,9 +122,6 @@ final class AttachmentQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply filters to attachments query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
      */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
@@ -148,27 +133,27 @@ final class AttachmentQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap)) {
                 continue;
             }
 
-            if ('id_attachment' === $filterName) {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' = :' . $filterName);
+            if ($filterName === 'id_attachment') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            if ('inventaries' === $filterName && $value === '0') {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' IS NULL');
+            if ($filterName === 'inventaries' && $value === '0') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' IS NULL');
 
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersMap[$filterName] . ' LIKE :' . $filterName)
-                ->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere($allowedFiltersMap[$filterName].' LIKE :'.$filterName)
+                ->setParameter($filterName, '%'.$value.'%');
         }
     }
 }

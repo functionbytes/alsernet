@@ -30,6 +30,12 @@ class BirthdayRecipient extends Model
 
     public const SKIP_DUPLICATE = 'duplicate';
 
+    /** Gestión no llegó a emitirle su bono: sin regalo no se felicita. */
+    public const SKIP_NO_COUPON = 'no_coupon';
+
+    /** Se le pasó el día. Una felicitación con retraso es peor que ninguna. */
+    public const SKIP_EXPIRED = 'expired';
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_birthday_recipients';
@@ -92,6 +98,40 @@ class BirthdayRecipient extends Model
     public function scopeUnfinished(Builder $query): Builder
     {
         return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_SENDING]);
+    }
+
+    /**
+     * Los que ya tienen su bono emitido en Gestión.
+     *
+     * Es la condición para encolar: un correo de cumpleaños sin el bono dentro
+     * no se puede repetir al día siguiente, así que antes que mandarlo vacío se
+     * espera a que Gestión lo emita.
+     */
+    public function scopeWithCoupon(Builder $query): Builder
+    {
+        return $query->whereNotNull('coupon_code')->where('coupon_code', '!=', '');
+    }
+
+    /**
+     * El código tal como lo teclea el cliente en la tienda:
+     * «{idbono}-{codigo_verificacion}», que es como PrestaShop crea el
+     * cart_rule (CartRule::createCartRuleAlvarez).
+     *
+     * Se guardan las dos partes por separado porque consultar o consumir el
+     * bono en Gestión las necesita sueltas, pero al cliente hay que darle el
+     * código entero: solo con el id no puede canjear nada.
+     */
+    public function publicCode(): ?string
+    {
+        $code = trim((string) $this->coupon_code);
+
+        if ($code === '') {
+            return null;
+        }
+
+        $verification = trim((string) $this->coupon_verification_code);
+
+        return $verification !== '' ? $code.'-'.$verification : $code;
     }
 
     /**

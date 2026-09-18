@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,9 +37,8 @@ use Doctrine\Persistence\ObjectRepository;
 interface TranslationRepositoryInterface extends ObjectRepository
 {
     /**
-     * @param mixed $alias
-     * @param mixed|null $indexBy
-     *
+     * @param  mixed  $alias
+     * @param  mixed|null  $indexBy
      * @return QueryBuilder
      */
     public function createQueryBuilder($alias, $indexBy = null);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,29 +34,21 @@ interface TranslationInterface
 {
     /**
      * Database id
-     *
-     * @return int
      */
     public function getId(): int;
 
     /**
      * The translation key (wording)
-     *
-     * @return string
      */
     public function getKey(): string;
 
     /**
      * The translated string (message)
-     *
-     * @return string
      */
     public function getTranslation(): string;
 
     /**
      * The translation domain name
-     *
-     * @return string
      */
     public function getDomain(): string;
 }

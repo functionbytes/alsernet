@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,6 @@ final class AddCartRuleToCartHandler extends AbstractCartHandler implements AddC
      */
     private $contextStateManager;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         TranslatorInterface $translator,
         ContextStateManager $contextStateManager
@@ -81,8 +78,7 @@ final class AddCartRuleToCartHandler extends AbstractCartHandler implements AddC
             ->setCurrency(new Currency($cart->id_currency))
             ->setLanguage($cart->getAssociatedLanguage())
             ->setCustomer(new Customer($cart->id_customer))
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
 
         $errorMessage = $this->validateCartRule($cartRule, $cart);
 
@@ -92,7 +88,7 @@ final class AddCartRuleToCartHandler extends AbstractCartHandler implements AddC
             throw new CartRuleValidityException($errorMessage);
         }
 
-        if (!$cart->addCartRule($cartRule->id)) {
+        if (! $cart->addCartRule($cartRule->id)) {
             $this->contextStateManager->restorePreviousContext();
 
             throw new CartException('Failed to add cart rule to cart.');
@@ -106,10 +102,6 @@ final class AddCartRuleToCartHandler extends AbstractCartHandler implements AddC
      *
      * Return null if cart rule is valid.
      * Return translated error message if cart rule is not valid.
-     *
-     * @param CartRule $cartRule
-     *
-     * @return string|null
      */
     private function validateCartRule(CartRule $cartRule, Cart $cart): ?string
     {
@@ -118,11 +110,11 @@ final class AddCartRuleToCartHandler extends AbstractCartHandler implements AddC
         $isValid = $cartRule->checkValidity(Context::getContext(), false, true);
 
         foreach ($previousCartRules as $previousCartRule) {
-            Cache::clean('getContextualValue_' . $previousCartRule['id_discount'] . '_*');
+            Cache::clean('getContextualValue_'.$previousCartRule['id_discount'].'_*');
         }
 
         // if its valid, don't return any error message
-        if (true === $isValid) {
+        if ($isValid === true) {
             return null;
         }
 

@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetshopping}prestashop>customer_04176f095283bc729f1e3926967e7034'] = 'Nome próprio';
 $_MODULE['<{alsernetshopping}prestashop>customer_dff4bf10409100d989495c6d5486035e'] = 'Apelido';
 $_MODULE['<{alsernetshopping}prestashop>customer_ce8ae9da5b7cd6c3df2929543a9af92d'] = 'Email';

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -74,14 +75,6 @@ abstract class AbstractRefundCommand
     protected $voucherRefundAmount;
 
     /**
-     * @param int $orderId
-     * @param array $orderDetailRefunds
-     * @param bool $restockRefundedProducts
-     * @param bool $generateVoucher
-     * @param bool $generateCreditSlip
-     * @param int $voucherRefundType
-     * @param string|null $voucherRefundAmount
-     *
      * @throws InvalidCancelProductException
      * @throws OrderException
      */
@@ -99,78 +92,55 @@ abstract class AbstractRefundCommand
         $this->generateCreditSlip = $generateCreditSlip;
         $this->generateVoucher = $generateVoucher;
         $this->voucherRefundType = $voucherRefundType;
-        if (null !== $voucherRefundAmount) {
+        if ($voucherRefundAmount !== null) {
             try {
                 $this->voucherRefundAmount = new DecimalNumber($voucherRefundAmount);
             } catch (InvalidArgumentException $e) {
-                throw new InvalidAmountException();
+                throw new InvalidAmountException;
             }
         }
         $this->setOrderDetailRefunds($orderDetailRefunds);
-        if (!$this->generateCreditSlip && !$this->generateVoucher) {
+        if (! $this->generateCreditSlip && ! $this->generateVoucher) {
             throw new InvalidCancelProductException(InvalidCancelProductException::NO_GENERATION);
         }
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return array
-     */
     public function getOrderDetailRefunds(): array
     {
         return $this->orderDetailRefunds;
     }
 
-    /**
-     * @return bool
-     */
     public function restockRefundedProducts(): bool
     {
         return $this->restockRefundedProducts;
     }
 
-    /**
-     * @return bool
-     */
     public function generateCreditSlip(): bool
     {
         return $this->generateCreditSlip;
     }
 
-    /**
-     * @return bool
-     */
     public function generateVoucher(): bool
     {
         return $this->generateVoucher;
     }
 
-    /**
-     * @return int
-     */
     public function getVoucherRefundType(): int
     {
         return $this->voucherRefundType;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getVoucherRefundAmount(): ?DecimalNumber
     {
         return $this->voucherRefundAmount;
     }
 
     /**
-     * @param array $orderDetailRefunds
-     *
      * @throws InvalidCancelProductException
      * @throws OrderException
      */

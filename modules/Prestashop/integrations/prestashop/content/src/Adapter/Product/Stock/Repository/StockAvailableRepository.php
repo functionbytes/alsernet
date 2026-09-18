@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,11 +61,6 @@ class StockAvailableRepository extends AbstractObjectModelRepository
      */
     private $stockAvailableValidator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param StockAvailableValidator $stockAvailableValidator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -76,8 +72,6 @@ class StockAvailableRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param StockAvailable $stockAvailable
-     *
      * @throws CoreException
      */
     public function update(StockAvailable $stockAvailable): void
@@ -87,10 +81,6 @@ class StockAvailableRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return StockAvailable
-     *
      * @throws CoreException
      * @throws StockAvailableNotFoundException
      */
@@ -99,9 +89,9 @@ class StockAvailableRepository extends AbstractObjectModelRepository
         $stockAvailableId = StockAvailable::getStockAvailableIdByProductId($productId->getValue());
         if ($stockAvailableId <= 0) {
             throw new StockAvailableNotFoundException(sprintf(
-                    'Cannot find StockAvailable for product #%d',
-                    $productId->getValue()
-                )
+                'Cannot find StockAvailable for product #%d',
+                $productId->getValue()
+            )
             );
         }
 
@@ -109,30 +99,25 @@ class StockAvailableRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param CombinationId $combinationId
-     *
-     * @return StockAvailable
-     *
      * @throws CoreException
      * @throws StockAvailableNotFoundException
      */
     public function getForCombination(CombinationId $combinationId): StockAvailable
     {
-        //@todo: multishop not handled
+        // @todo: multishop not handled
         $qb = $this->connection->createQueryBuilder();
         $qb->select('id_stock_available')
-            ->from($this->dbPrefix . 'stock_available')
+            ->from($this->dbPrefix.'stock_available')
             ->where('id_product_attribute = :combinationId')
-            ->setParameter('combinationId', $combinationId->getValue())
-        ;
+            ->setParameter('combinationId', $combinationId->getValue());
 
         $result = $qb->execute()->fetch();
 
-        if (!$result) {
+        if (! $result) {
             throw new StockAvailableNotFoundException(sprintf(
-                    'Cannot find StockAvailable for combination #%d',
-                    $combinationId->getValue()
-                )
+                'Cannot find StockAvailable for combination #%d',
+                $combinationId->getValue()
+            )
             );
         }
 
@@ -140,16 +125,12 @@ class StockAvailableRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return StockAvailable
-     *
      * @throws CoreException
      * @throws StockAvailableNotFoundException
      */
     public function create(ProductId $productId): StockAvailable
     {
-        $stockAvailable = new StockAvailable();
+        $stockAvailable = new StockAvailable;
         $stockAvailable->id_product = $productId->getValue();
         $shopParams = [];
         try {
@@ -170,10 +151,6 @@ class StockAvailableRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param int $stockAvailableId
-     *
-     * @return StockAvailable
-     *
      * @throws CoreException
      * @throws StockAvailableNotFoundException
      */

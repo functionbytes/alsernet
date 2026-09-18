@@ -49,20 +49,52 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.index'))
             ->assertOk()
             ->assertSee($campaign->campaign_date->format('d/m/Y'))
-            ->assertSee('CUMPLE10-XYZ');
+            // El listado enseña cuántos bonos se emitieron, no un código único:
+            // cada cliente tiene el suyo.
+            ->assertSee('Bonos');
     }
 
-    public function test_el_detalle_muestra_cupon_ritmo_y_destinatarios(): void
+    public function test_el_cuadro_de_mando_resume_bonos_dinero_y_envio(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        // La portada de la campaña es el resumen, no la lista de destinatarios:
+        // para saber si funcionó no hay que leer 577 filas.
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('Bonos emitidos')
+            ->assertSee('Facturado')
+            ->assertSee('Pedido medio')
+            ->assertSee('09:00–14:00')
+            // Y las cuatro pestañas para bajar al detalle.
+            ->assertSee('Destinatarios')
+            ->assertSee('Descuadre');
+    }
+
+    public function test_los_destinatarios_viven_en_su_pestana(): void
     {
         $campaign = $this->campaign();
         $this->recipient($campaign, 'ana@ejemplo.test');
 
         $this->actingAs($this->admin)
-            ->get(route('helpdeskbirthday.campaigns.show', $campaign))
+            ->get(route('helpdeskbirthday.campaigns.recipients', $campaign))
             ->assertOk()
             ->assertSee('ana@ejemplo.test')
-            ->assertSee('CUMPLE10-XYZ')
-            ->assertSee('09:00–14:00');
+            // El bono es de esa persona, no de la campaña.
+            ->assertSee('910001-AAA');
+    }
+
+    public function test_la_pantalla_de_descuadre_carga(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.reconciliation', $campaign))
+            ->assertOk()
+            ->assertSee('Importe en riesgo');
     }
 
     public function test_la_previsualizacion_devuelve_el_correo_renderizado(): void
@@ -74,7 +106,7 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.preview', $campaign));
 
         $response->assertOk();
-        $this->assertStringContainsString('CUMPLE10-XYZ', $response->getContent());
+        $this->assertStringContainsString('910001-AAA', $response->getContent());
     }
 
     public function test_pausar_y_reanudar_desde_el_panel(): void
@@ -117,7 +149,7 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.recipient-email', [$campaign, $recipient]));
 
         $response->assertOk();
-        $this->assertStringContainsString('CUMPLE10-XYZ', $response->getContent());
+        $this->assertStringContainsString('910001-AAA', $response->getContent());
         $this->assertStringContainsString('Ana', $response->getContent());
     }
 
@@ -202,13 +234,15 @@ class BirthdayPanelTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->get(route('helpdeskbirthday.campaigns.redemptions', $campaign));
 
-        $response->assertOk()->assertSee('Canjes del cupón', false);
+        // «Bonos» y no «cupón»: Gestión emite uno por cliente, y la pantalla
+        // habla de los bonos de la campaña, no de un código único.
+        $response->assertOk()->assertSee('Canjes de los bonos', false);
 
         // Sin BD de PrestaShop configurada avisa en vez de mostrar ceros; con
         // ella, pinta la tabla. Ambas salidas son válidas según el entorno.
         $content = $response->getContent();
         $this->assertTrue(
-            str_contains($content, 'Pedidos con el cupón')
+            str_contains($content, 'Pedidos con bono')
                 || str_contains($content, 'No hay base de datos de PrestaShop configurada'),
             'La pantalla de canjes no muestra ni la tabla ni el aviso de PrestaShop no configurado.'
         );
@@ -228,12 +262,6 @@ class BirthdayPanelTest extends TestCase
         return BirthdayCampaign::create([
             'campaign_date' => now()->toDateString(),
             'status' => BirthdayCampaign::STATUS_SCHEDULED,
-            'coupon_code' => 'CUMPLE10-XYZ',
-            'coupon_valid_from' => now()->toDateString(),
-            'coupon_valid_to' => now()->addMonth()->toDateString(),
-            'coupon_amount' => 10,
-            'coupon_min_purchase' => 50,
-            'coupon_source' => BirthdayCampaign::SOURCE_ERP,
             'template_key' => 'birthday-coupon',
             'window_start' => '09:00:00',
             'window_end' => '14:00:00',
@@ -253,6 +281,13 @@ class BirthdayPanelTest extends TestCase
             'birth_date' => '1990-01-01',
             'scheduled_at' => now()->addMinutes(5),
             'status' => BirthdayRecipient::STATUS_PENDING,
+            // Su bono, emitido por gestión: es el que lleva su correo.
+            'coupon_code' => '910001',
+            'coupon_verification_code' => 'AAA',
+            'coupon_amount' => 5,
+            'coupon_min_purchase' => 30,
+            'coupon_valid_from' => now()->toDateString(),
+            'coupon_valid_to' => now()->addMonth()->toDateString(),
         ]);
     }
 }

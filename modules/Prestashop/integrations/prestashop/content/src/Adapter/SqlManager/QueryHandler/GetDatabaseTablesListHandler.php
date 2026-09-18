@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class GetDatabaseTablesListHandler implements GetDatabaseTablesListHandler
      */
     public function handle(GetDatabaseTablesList $query)
     {
-        $dbTables = (new RequestSql())->getTables();
+        $dbTables = (new RequestSql)->getTables();
 
         return new DatabaseTablesList($dbTables);
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,11 +62,6 @@ final class OutstandingGridDefinitionFactory extends AbstractGridDefinitionFacto
      */
     private $risks;
 
-    /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param ConfigurationInterface $configuration
-     * @param int $languageId
-     */
     public function __construct(HookDispatcherInterface $hookDispatcher, ConfigurationInterface $configuration, int $languageId)
     {
         parent::__construct($hookDispatcher);
@@ -98,7 +94,7 @@ final class OutstandingGridDefinitionFactory extends AbstractGridDefinitionFacto
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new DataColumn('id_invoice'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -177,7 +173,7 @@ final class OutstandingGridDefinitionFactory extends AbstractGridDefinitionFacto
 
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_invoice', TextType::class))
                     ->setAssociatedColumn('id_invoice')
@@ -245,7 +241,7 @@ final class OutstandingGridDefinitionFactory extends AbstractGridDefinitionFacto
 
     private function getInvoiceRowAction(): RowActionCollection
     {
-        $collection = new RowActionCollection();
+        $collection = new RowActionCollection;
         $collection
             ->add(
                 (new LinkRowAction('print_invoice'))
@@ -264,7 +260,7 @@ final class OutstandingGridDefinitionFactory extends AbstractGridDefinitionFacto
 
     private function getViewRowAction(): RowActionCollection
     {
-        $collection = new RowActionCollection();
+        $collection = new RowActionCollection;
         $collection
             ->add(
                 (new LinkRowAction('view'))

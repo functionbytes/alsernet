@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskHelpcenter\Services;
 
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -36,10 +37,13 @@ class HelpcenterWidgetService
         // Count published+active articles per pivot category_id (any depth).
         // Articles created via the manager have category_id=NULL (pivot manages associations),
         // so we must count via the helpdesk_helpcenter_category_article pivot, not category_id.
+        // This payload is cached globally (WIDGET_CACHE_KEY, shared across every
+        // visitor for up to 1h), so it can never vary per-user: role-restricted
+        // articles are always excluded here, same as an anonymous visitor.
         $pivotCounts = HelpCenterCategory::query()
             ->withCount(['articles as published_count' => fn ($q) => $q
-                ->where('is_published', true)
-                ->where('active', true)])
+                ->published()
+                ->visibleToRole(null)])
             ->get()
             ->pluck('published_count', 'id');
 
@@ -66,8 +70,8 @@ class HelpcenterWidgetService
             ->all();
 
         $popular = HelpCenterArticle::query()
-            ->where('is_published', true)
-            ->where('active', true)
+            ->published()
+            ->visibleToRole(null)
             ->with('categories.parent')
             ->orderByDesc('views_count')
             ->limit(5)
@@ -77,8 +81,8 @@ class HelpcenterWidgetService
             ->all();
 
         $articles = HelpCenterArticle::query()
-            ->where('is_published', true)
-            ->where('active', true)
+            ->published()
+            ->visibleToRole(null)
             ->with('categories.parent')
             ->orderByDesc('views_count')
             ->limit(50)
@@ -157,8 +161,8 @@ class HelpcenterWidgetService
 
         $articles = HelpCenterArticle::query()
             ->whereIn('id', $ranked->keys())
-            ->where('is_published', true)
-            ->where('active', true)
+            ->published()
+            ->visibleToRole(null)
             ->get()
             ->keyBy('id');
 
@@ -177,8 +181,8 @@ class HelpcenterWidgetService
         $booleanTerm = $this->buildBooleanTerm($query);
 
         $builder = HelpCenterArticle::query()
-            ->where('is_published', true)
-            ->where('active', true)
+            ->published()
+            ->visibleToRole(null)
             ->where(fn ($q) => $q
                 ->when($booleanTerm !== null, fn ($qb) => $qb
                     ->whereRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE)', [$booleanTerm]))
@@ -206,8 +210,8 @@ class HelpcenterWidgetService
     public function getArticle(int $id): ?array
     {
         $article = HelpCenterArticle::query()
-            ->where('is_published', true)
-            ->where('active', true)
+            ->published()
+            ->visibleToRole(null)
             ->with('categories.parent')
             ->find($id);
 
@@ -223,11 +227,11 @@ class HelpcenterWidgetService
             'id' => (string) $article->id,
             'title' => $article->title,
             'slug' => $article->slug,
-            // Sanitizado con HTMLPurifier (clean()) igual que la vista pública:
+            // Sanitizado con HTMLPurifier (clean_html()) igual que la vista pública:
             // el widget lo renderiza con dangerouslySetInnerHTML, así que sin
             // esto un editor podría inyectar XSS almacenado en cualquier sitio
             // que embeba el widget.
-            'body' => clean($article->content ?? $article->body ?? ''),
+            'body' => clean_html($article->content ?? $article->body ?? ''),
             'description' => $article->excerpt ?? $article->description ?? '',
             'category' => $category,
             'section' => $section,
@@ -257,18 +261,16 @@ class HelpcenterWidgetService
 
         $voteValue = $helpful ? 1 : -1;
 
-        $existing = HelpCenterArticleVote::query()
-            ->where('article_id', $article->id)
-            ->where(function ($q) use ($cookieId, $ipHash) {
-                if ($cookieId) {
-                    $q->where('cookie_id', $cookieId);
-                }
-                if ($ipHash) {
-                    $q->orWhere('ip_hash', $ipHash);
-                }
-            })
-            ->when(! $cookieId && ! $ipHash, fn ($q) => $q->whereRaw('1 = 0'))
-            ->first();
+        // Misma identidad que ArticleVoteController: cookie_id es la clave real
+        // del votante, ip_hash solo bloquea un segundo voto tras borrar la
+        // cookie — nunca se usa para localizar/editar el voto de otro
+        // visitante detrás de la misma IP.
+        $existing = $cookieId
+            ? HelpCenterArticleVote::query()
+                ->where('article_id', $article->id)
+                ->where('cookie_id', $cookieId)
+                ->first()
+            : null;
 
         if ($existing) {
             // El observer recalcula solo si cambia; forzar saved() con update.
@@ -277,12 +279,26 @@ class HelpcenterWidgetService
             return true;
         }
 
-        HelpCenterArticleVote::create([
-            'article_id' => $article->id,
-            'cookie_id' => $cookieId,
-            'ip_hash' => $ipHash,
-            'vote' => $voteValue,
-        ]);
+        $ipAlreadyVoted = $ipHash && HelpCenterArticleVote::query()
+            ->where('article_id', $article->id)
+            ->where('ip_hash', $ipHash)
+            ->exists();
+
+        if ($ipAlreadyVoted) {
+            return true;
+        }
+
+        try {
+            HelpCenterArticleVote::create([
+                'article_id' => $article->id,
+                'cookie_id' => $cookieId,
+                'ip_hash' => $ipHash,
+                'vote' => $voteValue,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Insert concurrente con la misma clave única (mismo cookie_id o
+            // ip_hash) — el voto ya quedó registrado por la otra petición.
+        }
 
         return true;
     }

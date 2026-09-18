@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,6 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Customization\QueryResult\Customiz
 interface GetProductCustomizationFieldsHandlerInterface
 {
     /**
-     * @param GetProductCustomizationFields $query
-     *
      * @return CustomizationField[]
      */
     public function handle(GetProductCustomizationFields $query): array;

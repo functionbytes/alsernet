@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,6 @@ final class DeleteCustomerDiscountRowAction extends AbstractRowAction
             ])
             ->setAllowedTypes('id_cart_rule', 'string')
             ->setAllowedTypes('method', 'string')
-            ->setAllowedTypes('confirm_message', 'string')
-        ;
+            ->setAllowedTypes('confirm_message', 'string');
     }
 }

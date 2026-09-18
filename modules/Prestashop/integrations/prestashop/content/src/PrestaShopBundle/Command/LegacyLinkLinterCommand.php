@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +55,7 @@ class LegacyLinkLinterCommand extends ContainerAwareCommand
         $unconfiguredRoutes = $this->getUnconfiguredRoutes();
         $io = new SymfonyStyle($input, $output);
 
-        if (!empty($unconfiguredRoutes)) {
+        if (! empty($unconfiguredRoutes)) {
             $io->warning(sprintf(
                 '%s routes are not configured with _legacy_link:',
                 count($unconfiguredRoutes)
@@ -82,7 +83,7 @@ class LegacyLinkLinterCommand extends ContainerAwareCommand
         $unconfiguredRoutes = [];
 
         foreach ($routes as $routeName => $route) {
-            if (true === $legacyLinkLinter->lint('_legacy_link', $route)) {
+            if ($legacyLinkLinter->lint('_legacy_link', $route) === true) {
                 continue;
             }
             $unconfiguredRoutes[] = $routeName;

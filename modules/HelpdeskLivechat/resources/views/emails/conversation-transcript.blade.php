@@ -44,12 +44,13 @@
                     {{-- Messages --}}
                     <tr>
                         <td style="padding:0 32px 24px;">
-                            @forelse($conversation->items as $item)
+                            @forelse($items as $item)
+                                {{-- Defense in depth: internal notes must already be excluded by the
+                                     caller, but we never render them here even if that ever regresses. --}}
+                                @continue($item['is_internal'] ?? false)
                                 @php
-                                    $isAgent = ! is_null($item->user_id);
-                                    $senderName = $isAgent
-                                        ? (optional($item->user)->name ?? 'Agente')
-                                        : (optional($item->author)->name ?? 'Visitante');
+                                    $isAgent = (bool) ($item['is_agent'] ?? false);
+                                    $senderName = $item['sender_name'] ?? ($isAgent ? 'Agente' : 'Visitante');
                                 @endphp
                                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                                     <tr>
@@ -59,7 +60,7 @@
                                                     {{ $senderName }}
                                                 </strong>
                                                 &nbsp;&middot;&nbsp;
-                                                {{ $item->created_at?->format('d/m/Y H:i') }}
+                                                {{ $item['created_at'] ?? '' }}
                                             </p>
                                             <div style="
                                                 background:{{ $isAgent ? '#fff5f5' : '#f8f8f8' }};
@@ -70,7 +71,7 @@
                                                 color:#333333;
                                                 line-height:1.5;
                                             ">
-                                                {!! nl2br(e($item->body)) !!}
+                                                {!! nl2br(e($item['body'] ?? '')) !!}
                                             </div>
                                         </td>
                                     </tr>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,7 @@ final class FormHandler implements FormHandlerInterface
     private $isDemoModeEnabled;
 
     /**
-     * @param FormDataHandlerInterface $dataHandler
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param TranslatorInterface $translator
-     * @param bool $isDemoModeEnabled
+     * @param  bool  $isDemoModeEnabled
      */
     public function __construct(
         FormDataHandlerInterface $dataHandler,
@@ -93,14 +91,12 @@ final class FormHandler implements FormHandlerInterface
     }
 
     /**
-     * @param FormInterface $form
-     * @param int|null $id
-     *
+     * @param  int|null  $id
      * @return FormHandlerResultInterface
      */
     private function handleForm(FormInterface $form, $id = null)
     {
-        if (!$form->isSubmitted()) {
+        if (! $form->isSubmitted()) {
             return FormHandlerResult::createNotSubmitted();
         }
 
@@ -114,11 +110,11 @@ final class FormHandler implements FormHandlerInterface
             return FormHandlerResult::createSubmittedButNotValid();
         }
 
-        if (!$form->isValid()) {
+        if (! $form->isValid()) {
             return FormHandlerResult::createSubmittedButNotValid();
         }
 
-        if (null !== $id) {
+        if ($id !== null) {
             return $this->handleFormUpdate($form, $id);
         }
 
@@ -126,23 +122,21 @@ final class FormHandler implements FormHandlerInterface
     }
 
     /**
-     * @param FormInterface $form
-     * @param int $id
-     *
+     * @param  int  $id
      * @return FormHandlerResultInterface
      */
     private function handleFormUpdate(FormInterface $form, $id)
     {
         $data = $form->getData();
 
-        $this->hookDispatcher->dispatchWithParameters('actionBeforeUpdate' . Container::camelize($form->getName()) . 'FormHandler', [
+        $this->hookDispatcher->dispatchWithParameters('actionBeforeUpdate'.Container::camelize($form->getName()).'FormHandler', [
             'form_data' => &$data,
             'id' => $id,
         ]);
 
         $this->dataHandler->update($id, $data);
 
-        $this->hookDispatcher->dispatchWithParameters('actionAfterUpdate' . Container::camelize($form->getName()) . 'FormHandler', [
+        $this->hookDispatcher->dispatchWithParameters('actionAfterUpdate'.Container::camelize($form->getName()).'FormHandler', [
             'id' => $id,
             'form_data' => &$data,
         ]);
@@ -151,8 +145,6 @@ final class FormHandler implements FormHandlerInterface
     }
 
     /**
-     * @param FormInterface $form
-     *
      * @return FormHandlerResult
      */
     private function handleFormCreate(FormInterface $form)
@@ -160,14 +152,14 @@ final class FormHandler implements FormHandlerInterface
         $data = $form->getData();
 
         $this->hookDispatcher->dispatchWithParameters(
-            'actionBeforeCreate' . Container::camelize($form->getName()) . 'FormHandler', [
+            'actionBeforeCreate'.Container::camelize($form->getName()).'FormHandler', [
                 'form_data' => &$data,
             ]
         );
 
         $id = $this->dataHandler->create($data);
 
-        $this->hookDispatcher->dispatchWithParameters('actionAfterCreate' . Container::camelize($form->getName()) . 'FormHandler', [
+        $this->hookDispatcher->dispatchWithParameters('actionAfterCreate'.Container::camelize($form->getName()).'FormHandler', [
             'id' => $id,
             'form_data' => &$data,
         ]);

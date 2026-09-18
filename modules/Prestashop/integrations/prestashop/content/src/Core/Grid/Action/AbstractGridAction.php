@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,7 +57,7 @@ abstract class AbstractGridAction implements GridActionInterface
     private $options;
 
     /**
-     * @param string $id
+     * @param  string  $id
      */
     public function __construct($id)
     {
@@ -122,7 +123,7 @@ abstract class AbstractGridAction implements GridActionInterface
      */
     public function getOptions()
     {
-        if (null === $this->options) {
+        if ($this->options === null) {
             $this->resolveOptions();
         }
 
@@ -131,21 +132,15 @@ abstract class AbstractGridAction implements GridActionInterface
 
     /**
      * Default bulk action options configuration. You can override it if options are needed.
-     *
-     * @param OptionsResolver $resolver
      */
-    protected function configureOptions(OptionsResolver $resolver)
-    {
-    }
+    protected function configureOptions(OptionsResolver $resolver) {}
 
     /**
      * Resolve action options.
-     *
-     * @param array $options
      */
     private function resolveOptions(array $options = [])
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);

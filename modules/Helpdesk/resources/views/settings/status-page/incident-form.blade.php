@@ -33,7 +33,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Titulo <span class="text-danger">*</span></label>
+                                <label class="form-label">Titulo <span class="text-brand">*</span></label>
                                 <input type="text" name="title"
                                        class="form-control @error('title') is-invalid @enderror"
                                        value="{{ old('title', $incident->title ?? '') }}"
@@ -45,7 +45,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripcion <span class="text-danger">*</span></label>
+                                <label class="form-label">Descripcion <span class="text-brand">*</span></label>
                                 <textarea name="body"
                                           class="form-control @error('body') is-invalid @enderror"
                                           rows="4"
@@ -63,7 +63,7 @@
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Severidad <span class="text-danger">*</span></label>
+                                <label class="form-label">Severidad <span class="text-brand">*</span></label>
                                 <select name="severity" class="form-select @error('severity') is-invalid @enderror" required>
                                     <option value="">Seleccionar severidad...</option>
                                     <option value="minor" {{ old('severity', $incident->severity ?? '') === 'minor' ? 'selected' : '' }}>Menor</option>
@@ -76,7 +76,7 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Estado <span class="text-danger">*</span></label>
+                                <label class="form-label">Estado <span class="text-brand">*</span></label>
                                 <select name="status" class="form-select @error('status') is-invalid @enderror" required>
                                     <option value="">Seleccionar estado...</option>
                                     <option value="investigating" {{ old('status', $incident->status ?? '') === 'investigating' ? 'selected' : '' }}>Investigando</option>
@@ -133,7 +133,7 @@
                 <div class="card-body">
                     <ul class="text-muted mb-0">
                         <li class="mb-2"><span class="badge bg-warning-subtle text-warning me-2">Menor</span> Impacto limitado, sin interrupcion total</li>
-                        <li class="mb-2"><span class="badge bg-danger-subtle text-danger me-2">Mayor</span> Servicio degradado o parcialmente caido</li>
+                        <li class="mb-2"><span class="badge bg-info-subtle text-info me-2">Mayor</span> Servicio degradado o parcialmente caido</li>
                         <li class="mb-2"><span class="badge bg-dark-subtle text-dark me-2">Critico</span> Servicio completamente inaccesible</li>
                     </ul>
                 </div>
@@ -158,3 +158,9 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/status-incident-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/status-incident-form.js')) }}" defer></script>
+@endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ final class EmailConfigurationTester implements EmailConfigurationTesterInterfac
      */
     private $translator;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         TranslatorInterface $translator
@@ -63,8 +60,6 @@ final class EmailConfigurationTester implements EmailConfigurationTesterInterfac
     }
 
     /**
-     * @param array $config
-     *
      * @return array<int, string>
      */
     public function testConfiguration(array $config)
@@ -76,9 +71,9 @@ final class EmailConfigurationTester implements EmailConfigurationTesterInterfac
         );
         $subject = $this->translator->trans('Test message -- Prestashop', [], 'Admin.Advparameters.Feature');
 
-        $smtpChecked = MailOption::METHOD_SMTP === (int) $config['mail_method'];
+        $smtpChecked = (int) $config['mail_method'] === MailOption::METHOD_SMTP;
 
-        $password = !empty($config['smtp_password']) ?
+        $password = ! empty($config['smtp_password']) ?
             urldecode($config['smtp_password']) :
             $this->configuration->get('PS_MAIL_PASSWD');
         $password = str_replace(
@@ -103,7 +98,7 @@ final class EmailConfigurationTester implements EmailConfigurationTesterInterfac
 
         $errors = [];
 
-        if (false === $result || is_string($result)) {
+        if ($result === false || is_string($result)) {
             $errors[] = $this->translator->trans(
                 'Error: Please check your configuration',
                 [],

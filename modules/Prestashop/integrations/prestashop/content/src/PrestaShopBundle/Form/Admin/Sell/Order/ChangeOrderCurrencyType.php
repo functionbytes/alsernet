@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ class ChangeOrderCurrencyType extends AbstractType
      */
     private $currencyChoiceProvider;
 
-    /**
-     * @param FormChoiceProviderInterface $currencyChoiceProvider
-     */
     public function __construct(FormChoiceProviderInterface $currencyChoiceProvider)
     {
         $this->currencyChoiceProvider = $currencyChoiceProvider;
@@ -55,8 +53,7 @@ class ChangeOrderCurrencyType extends AbstractType
         $builder
             ->add('new_currency_id', ChoiceType::class, [
                 'choices' => $this->getCurrencyChoices($options['current_currency_id']),
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -68,20 +65,14 @@ class ChangeOrderCurrencyType extends AbstractType
             ->setDefaults([
                 'current_currency_id' => null,
             ])
-            ->setAllowedTypes('current_currency_id', ['int', 'null'])
-        ;
+            ->setAllowedTypes('current_currency_id', ['int', 'null']);
     }
 
-    /**
-     * @param int|null $currentCurrencyId
-     *
-     * @return array
-     */
     private function getCurrencyChoices(?int $currentCurrencyId): array
     {
         $choices = $this->currencyChoiceProvider->getChoices();
 
-        if (null === $currentCurrencyId) {
+        if ($currentCurrencyId === null) {
             return $choices;
         }
 

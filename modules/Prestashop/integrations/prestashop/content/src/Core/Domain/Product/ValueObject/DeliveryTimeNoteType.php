@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,31 +65,23 @@ class DeliveryTimeNoteType
      */
     private $value;
 
-    /**
-     * @param int $value
-     */
     public function __construct(int $value)
     {
         $this->assertTypeValueIsValid($value);
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $type
-     *
      * @throws ProductConstraintException
      */
     private function assertTypeValueIsValid(int $type): void
     {
-        if (!in_array($type, self::ALLOWED_TYPES)) {
+        if (! in_array($type, self::ALLOWED_TYPES)) {
             throw new ProductConstraintException(
                 sprintf(
                     'Invalid type value of delivery time notes. Got "%d", allowed values are: %s',

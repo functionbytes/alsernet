@@ -37,6 +37,16 @@ class EmailLogLookupService
             return null;
         }
 
+        // Antes no comprobaba el toggle de la integración: con
+        // helpdesk_emaillog_enabled() apagado, LogEmailQueued/LogEmailSent
+        // dejan de escribir filas nuevas en EmailLog, pero las YA existentes
+        // (de cuando estaba activo) se seguían mostrando en la card Correo
+        // del ticket como si el registro siguiera en marcha (detectado
+        // 14-sep-2026, auditoría de funcionalidades de tickets).
+        if (! helpdesk_emaillog_enabled()) {
+            return null;
+        }
+
         return EmailLog::with(['opens', 'clicks'])
             ->where('message_id', trim($messageId, '<>'))
             ->first();

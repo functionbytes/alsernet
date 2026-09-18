@@ -4,6 +4,7 @@ namespace Modules\Supplier\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Modules\Supplier\Http\Controllers\Api\HealthController;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -49,7 +50,7 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('api/health')
             ->name('api.health.')
             ->group(function () {
-                Route::get('sync', [\Modules\Supplier\Http\Controllers\Api\HealthController::class, 'sync'])
+                Route::get('sync', [HealthController::class, 'sync'])
                     ->name('sync');
             });
     }

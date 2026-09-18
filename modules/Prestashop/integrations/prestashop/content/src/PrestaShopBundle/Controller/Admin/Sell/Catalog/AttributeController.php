@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,10 +54,7 @@ class AttributeController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"attributeGroupId"}
      * )
      *
-     * @param Request $request
-     * @param int|string $attributeGroupId
-     * @param AttributeFilters $attributeFilters
-     *
+     * @param  int|string  $attributeGroupId
      * @return Response
      */
     public function indexAction(Request $request, $attributeGroupId, AttributeFilters $attributeFilters)
@@ -85,9 +83,6 @@ class AttributeController extends FrameworkBundleAdminController
      *     redirectRoute="admin_attributes_index",
      *     redirectQueryParamsToKeep={"attributeGroupId"}
      * )
-     *
-     * @param Request $request
-     * @param int $attributeGroupId
      *
      * @return RedirectResponse
      */
@@ -124,8 +119,6 @@ class AttributeController extends FrameworkBundleAdminController
      *     message="You do not have permission to create this."
      * )
      *
-     * @param int $attributeGroupId
-     *
      * @return RedirectResponse
      */
     public function createAction(int $attributeGroupId)
@@ -141,9 +134,6 @@ class AttributeController extends FrameworkBundleAdminController
      *     "is_granted(['update'], request.get('_legacy_controller'))",
      *     message="You do not have permission to update this."
      * )
-     *
-     * @param int $attributeId
-     * @param int $attributeGroupId
      *
      * @return RedirectResponse
      */
@@ -162,9 +152,6 @@ class AttributeController extends FrameworkBundleAdminController
      *     redirectRoute="admin_attributes_index",
      *     redirectQueryParamsToKeep={"attributeGroupId"}
      * )
-     *
-     * @param int $attributeGroupId
-     * @param int $attributeId
      *
      * @return RedirectResponse
      */
@@ -193,9 +180,6 @@ class AttributeController extends FrameworkBundleAdminController
      *     redirectQueryParamsToKeep={"attributeGroupId"}
      * )
      *
-     * @param int $attributeGroupId
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function bulkDeleteAction(int $attributeGroupId, Request $request)
@@ -218,15 +202,13 @@ class AttributeController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @return array
      */
     private function getAttributeIdsFromRequest(Request $request)
     {
         $attributeIds = $request->request->get('attribute_bulk');
 
-        if (!is_array($attributeIds)) {
+        if (! is_array($attributeIds)) {
             return [];
         }
 

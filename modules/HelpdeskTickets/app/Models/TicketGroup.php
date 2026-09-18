@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Grupos de tickets (pantalla Ajustes → Grupos).
@@ -60,7 +61,14 @@ class TicketGroup extends Model
     protected function isDefault(): Attribute
     {
         return Attribute::make(
-            get: fn () => (bool) $this->attributes['default'] ?? false,
+            // (bool) ANTES de ?? rompe la protección de ?? sobre un acceso
+            // directo a array: (bool) $x['k'] se evalúa como su propia
+            // expresión (el cast tiene más precedencia), así que PHP
+            // necesita resolver $x['k'] de verdad para castearlo — el ??
+            // nunca llega a intervenir y "Undefined array key" salta igual.
+            // Detectado creando un TicketGroup sin pasar 'default' (columna
+            // sin default en el modelo, aunque sí lo tenga en la migración).
+            get: fn () => (bool) ($this->attributes['default'] ?? false),
             set: fn ($value) => ['default' => (bool) $value],
         );
     }
@@ -170,6 +178,42 @@ class TicketGroup extends Model
             ->where('is_active', true)
             ->first();
     }
+
+    /**
+     * IDs de los equipos a los que pertenece un agente.
+     *
+     * Consulta directa al pivote (mismo criterio que users(): tabla
+     * helpdesk_group_user en la conexión 'helpdesk') en vez de pasar por la
+     * relación, para no arrastrar el belongsToMany cruzado entre conexiones
+     * —aquí solo hacen falta los IDs, no hidratar modelos de User.
+     *
+     * La usan TicketPolicy y TicketsCrudController para acotar qué tickets ve
+     * un agente sin el permiso helpdesk.tickets.manage: los de su(s)
+     * equipo(s), más los que tenga asignados a él directamente aunque el
+     * ticket sea de un equipo ajeno (p. ej. reasignado a mano).
+     *
+     * Memoizada en memoria (no cache compartida) por $userId: la misma
+     * request de listado llama a esto hasta 3 veces (scopeToVisibleTickets(),
+     * tabCountsScopeKey() y — por cada ticket — TicketPolicy::inScope() en
+     * una acción masiva de BulkTicketsController), siempre para el mismo
+     * usuario autenticado (14-sep-2026, auditoría de rendimiento). La
+     * membresía de grupo no cambia dentro de una misma request/job, así que
+     * no hace falta invalidar esta caché en vivo.
+     *
+     * @return array<int, int>
+     */
+    public static function idsForUser(int $userId): array
+    {
+        return self::$idsForUserCache[$userId] ??= DB::connection('helpdesk')
+            ->table('helpdesk_group_user')
+            ->where('user_id', $userId)
+            ->pluck('group_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /** @var array<int, array<int, int>> */
+    private static array $idsForUserCache = [];
 
     /**
      * Get the next agent for assignment based on assignment mode.

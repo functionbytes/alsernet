@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,19 +53,18 @@ final class ClassFiltersBuilder extends AbstractFiltersBuilder
     /**
      * Build the filters with the class defined by filtersClass
      *
-     * @param Filters|null $filters
      *
      * @return Filters
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
-        if (null === $this->filtersClass) {
+        if ($this->filtersClass === null) {
             return $filters;
         }
 
         /** @var array $defaultParameters */
         $defaultParameters = call_user_func([$this->filtersClass, 'getDefaults']);
-        if (null !== $filters) {
+        if ($filters !== null) {
             /** @var Filters $typedFilters */
             $typedFilters = new $this->filtersClass($filters->all(), $filters->getFilterId());
             $typedFilters->add($defaultParameters);

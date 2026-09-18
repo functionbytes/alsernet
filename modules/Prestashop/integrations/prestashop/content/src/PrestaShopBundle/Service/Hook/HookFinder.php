@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,24 +68,24 @@ class HookFinder
      */
     public function find()
     {
-        $hookContent = (new HookManager())->exec($this->hookName, $this->params, null, true);
-        if (!is_array($hookContent)) {
+        $hookContent = (new HookManager)->exec($this->hookName, $this->params, null, true);
+        if (! is_array($hookContent)) {
             $hookContent = [];
         }
 
         foreach ($hookContent as $moduleName => $moduleContents) {
-            if (!is_array($moduleContents)) {
+            if (! is_array($moduleContents)) {
                 continue;
             }
             foreach ($moduleContents as $content) {
                 // Check data returned if asked
-                if (!count($this->expectedInstanceClasses)) {
+                if (! count($this->expectedInstanceClasses)) {
                     continue;
                 }
-                if (is_object($content) && !in_array(get_class($content), $this->expectedInstanceClasses)) {
-                    throw new \Exception('The module ' . $moduleName . ' did not return expected class. Was ' . get_class($content) . ' instead of ' . implode(' or ', $this->expectedInstanceClasses) . '.');
-                } elseif (!is_object($content)) {
-                    throw new \Exception('The module ' . $moduleName . ' did not return expected type. Was ' . gettype($content) . ' instead of ' . implode(' or ', $this->expectedInstanceClasses) . '.');
+                if (is_object($content) && ! in_array(get_class($content), $this->expectedInstanceClasses)) {
+                    throw new \Exception('The module '.$moduleName.' did not return expected class. Was '.get_class($content).' instead of '.implode(' or ', $this->expectedInstanceClasses).'.');
+                } elseif (! is_object($content)) {
+                    throw new \Exception('The module '.$moduleName.' did not return expected type. Was '.gettype($content).' instead of '.implode(' or ', $this->expectedInstanceClasses).'.');
                 }
             }
         }
@@ -103,11 +104,11 @@ class HookFinder
         $presentedContents = [];
 
         foreach ($hookContent as $moduleName => $moduleContents) {
-            if (!is_array($moduleContents)) {
+            if (! is_array($moduleContents)) {
                 continue;
             }
             foreach ($moduleContents as $content) {
-                if (!$content instanceof HookContentClassInterface) {
+                if (! $content instanceof HookContentClassInterface) {
                     throw new \Exception('The class returned must implement HookContentClassInterface to be presented');
                 }
 
@@ -155,8 +156,7 @@ class HookFinder
      * Add an instance of class to be returned by the hook without
      * erasing the other values.
      *
-     * @param string|array $expectedInstanceClasses
-     *
+     * @param  string|array  $expectedInstanceClasses
      * @return self
      */
     public function addExpectedInstanceClasses($expectedInstanceClasses)
@@ -173,8 +173,7 @@ class HookFinder
     /**
      * Replace all expected classes and types.
      *
-     * @param array $expectedInstanceClasses
-     *
+     * @param  array  $expectedInstanceClasses
      * @return self
      */
     public function setExpectedInstanceClasses($expectedInstanceClasses)
@@ -187,8 +186,7 @@ class HookFinder
     /**
      * Change the hook to be called.
      *
-     * @param string $hookName
-     *
+     * @param  string  $hookName
      * @return self
      */
     public function setHookName($hookName)
@@ -201,8 +199,7 @@ class HookFinder
     /**
      * Add a hook param without erasing all the other values.
      *
-     * @param array $params
-     *
+     * @param  array  $params
      * @return self
      */
     public function addParams($params)
@@ -215,8 +212,7 @@ class HookFinder
     /**
      * Replace the params array.
      *
-     * @param array $params
-     *
+     * @param  array  $params
      * @return self
      */
     public function setParams($params)

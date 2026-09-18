@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -103,10 +104,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     private $locale;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param int $contextLangId
-     * @param Link $link
-     * @param Locale $locale
+     * @param  int  $contextLangId
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -114,7 +112,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
         Link $link,
         Locale $locale
     ) {
-        $this->context = new LegacyContext();
+        $this->context = new LegacyContext;
         $this->contextLangId = $contextLangId;
         $this->translator = $translator;
         $this->link = $link;
@@ -151,8 +149,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return GeneralInformation
      */
     private function getGeneralInformation(Customer $customer)
@@ -164,8 +160,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return PersonalInformation
      */
     private function getPersonalInformation(Customer $customer)
@@ -175,7 +169,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
         $gender = new Gender($customer->id_gender, $this->contextLangId);
         $socialTitle = $gender->name ?: $this->translator->trans('Unknown', [], 'Admin.Orderscustomers.Feature');
 
-        if ($customer->birthday && '0000-00-00' !== $customer->birthday) {
+        if ($customer->birthday && $customer->birthday !== '0000-00-00') {
             $birthday = sprintf(
                 $this->translator->trans('%1$d years old (birth date: %2$s)', [], 'Admin.Orderscustomers.Feature'),
                 $customerStats['age'],
@@ -218,22 +212,21 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param int $customerId
-     *
+     * @param  int  $customerId
      * @return int|null customer rank or null if customer is not ranked
      */
     private function getCustomerRankBySales($customerId)
     {
-        $sql = 'SELECT SUM(total_paid_real) FROM ' . _DB_PREFIX_ . 'orders WHERE id_customer = ' . (int) $customerId . ' AND valid = 1';
+        $sql = 'SELECT SUM(total_paid_real) FROM '._DB_PREFIX_.'orders WHERE id_customer = '.(int) $customerId.' AND valid = 1';
 
         if ($totalPaid = Db::getInstance()->getValue($sql)) {
             $sql = '
                 SELECT SQL_CALC_FOUND_ROWS COUNT(*)
-                FROM ' . _DB_PREFIX_ . 'orders
+                FROM '._DB_PREFIX_.'orders
                 WHERE valid = 1
-                    AND id_customer != ' . (int) $customerId . '
+                    AND id_customer != '.(int) $customerId.'
                 GROUP BY id_customer
-                HAVING SUM(total_paid_real) > ' . (int) $totalPaid;
+                HAVING SUM(total_paid_real) > '.(int) $totalPaid;
 
             Db::getInstance()->getValue($sql);
 
@@ -244,8 +237,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return OrdersInformation
      */
     private function getCustomerOrders(Customer $customer)
@@ -263,7 +254,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
                 Currency::getIsoCodeById((int) $order['id_currency'])
             );
 
-            if (!isset($order['order_state'])) {
+            if (! isset($order['order_state'])) {
                 $order['order_state'] = $this->translator->trans(
                     'There is no status defined for this order.',
                     [],
@@ -296,8 +287,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return CartInformation[]
      */
     private function getCustomerCarts(Customer $customer)
@@ -329,8 +318,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return ProductsInformation
      */
     private function getCustomerProducts(Customer $customer)
@@ -350,15 +337,15 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
 
         $sql = '
             SELECT DISTINCT cp.id_product, c.id_cart, c.id_shop, cp.id_shop AS cp_id_shop
-            FROM ' . _DB_PREFIX_ . 'cart_product cp
-            JOIN ' . _DB_PREFIX_ . 'cart c ON (c.id_cart = cp.id_cart)
-            JOIN ' . _DB_PREFIX_ . 'product p ON (cp.id_product = p.id_product)
-            WHERE c.id_customer = ' . (int) $customer->id . '
+            FROM '._DB_PREFIX_.'cart_product cp
+            JOIN '._DB_PREFIX_.'cart c ON (c.id_cart = cp.id_cart)
+            JOIN '._DB_PREFIX_.'product p ON (cp.id_product = p.id_product)
+            WHERE c.id_customer = '.(int) $customer->id.'
                 AND NOT EXISTS (
                         SELECT 1
-                        FROM ' . _DB_PREFIX_ . 'orders o
-                        JOIN ' . _DB_PREFIX_ . 'order_detail od ON (o.id_order = od.id_order)
-                        WHERE product_id = cp.id_product AND o.valid = 1 AND o.id_customer = ' . (int) $customer->id . '
+                        FROM '._DB_PREFIX_.'orders o
+                        JOIN '._DB_PREFIX_.'order_detail od ON (o.id_order = od.id_order)
+                        WHERE product_id = cp.id_product AND o.valid = 1 AND o.id_customer = '.(int) $customer->id.'
                 )
         ';
 
@@ -371,7 +358,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
                 $productData['id_shop']
             );
 
-            if (!Validate::isLoadedObject($product)) {
+            if (! Validate::isLoadedObject($product)) {
                 continue;
             }
 
@@ -398,8 +385,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return MessageInformation[]
      */
     private function getCustomerMessages(Customer $customer)
@@ -431,8 +416,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return DiscountInformation[]
      */
     private function getCustomerDiscounts(Customer $customer)
@@ -456,8 +439,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return SentEmailInformation[]
      */
     private function getLastEmailsSentToCustomer(Customer $customer)
@@ -478,8 +459,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return LastConnectionInformation[]
      */
     private function getLastCustomerConnections(Customer $customer)
@@ -487,7 +466,7 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
         $connections = $customer->getLastConnections();
         $lastConnections = [];
 
-        if (!is_array($connections)) {
+        if (! is_array($connections)) {
             $connections = [];
         }
 
@@ -510,8 +489,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return GroupInformation[]
      */
     private function getCustomerGroups(Customer $customer)
@@ -532,8 +509,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return ReferrerInformation[]
      */
     private function getCustomerReferrers(Customer $customer)
@@ -553,8 +528,6 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param Customer $customer
-     *
      * @return AddressInformation[]
      */
     private function getCustomerAddresses(Customer $customer)
@@ -587,14 +560,11 @@ final class GetCustomerForViewingHandler implements GetCustomerForViewingHandler
     }
 
     /**
-     * @param CustomerId $customerId
-     * @param Customer $customer
-     *
      * @throws CustomerNotFoundException
      */
     private function assertCustomerWasFound(CustomerId $customerId, Customer $customer)
     {
-        if (!$customer->id) {
+        if (! $customer->id) {
             throw new CustomerNotFoundException($customerId, sprintf('Customer with id "%s" was not found.', $customerId->getValue()));
         }
     }

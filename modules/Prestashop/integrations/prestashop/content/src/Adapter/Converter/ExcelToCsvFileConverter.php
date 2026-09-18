@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,8 @@ final class ExcelToCsvFileConverter implements FileConverterInterface
     private $excelDirectory;
 
     /**
-     * @param Filesystem $filesystem
-     * @param string $csvDirectory path to CSV files directory
-     * @param string $excelDirectory path to excel files directory
+     * @param  string  $csvDirectory  path to CSV files directory
+     * @param  string  $excelDirectory  path to excel files directory
      */
     public function __construct(Filesystem $filesystem, $csvDirectory, $excelDirectory)
     {
@@ -74,17 +74,17 @@ final class ExcelToCsvFileConverter implements FileConverterInterface
             return $sourceFile;
         }
 
-        if (!$this->filesystem->exists($this->excelDirectory)) {
+        if (! $this->filesystem->exists($this->excelDirectory)) {
             $this->filesystem->mkdir($this->excelDirectory);
         }
 
-        $destinationFilename = basename($sourceFile->getFilename(), $sourceFile->getExtension()) . '.csv';
-        $destinationFilePath = $this->excelDirectory . $destinationFilename;
+        $destinationFilename = basename($sourceFile->getFilename(), $sourceFile->getExtension()).'.csv';
+        $destinationFilePath = $this->excelDirectory.$destinationFilename;
 
-        if (!$this->filesystem->exists($destinationFilePath)) {
+        if (! $this->filesystem->exists($destinationFilePath)) {
             $excelReader = IOFactory::createReaderForFile($sourceFile->getFilename());
             $excelReader->setReadDataOnly(true);
-            $excelFile = $excelReader->load($sourceFile->getFilename() . $destinationFilename);
+            $excelFile = $excelReader->load($sourceFile->getFilename().$destinationFilename);
             /** @var Csv $csvWriter */
             $csvWriter = IOFactory::createWriter($excelFile, 'Csv');
             $csvWriter->setSheetIndex(0);

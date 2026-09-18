@@ -44,9 +44,16 @@ class PrestashopIntegrationDriver implements IntegrationDriverContract
         ];
     }
 
+    /**
+     * class_exists() sigue siendo true aunque el módulo HelpdeskPrestashop
+     * esté deshabilitado (es un monolito, la clase siempre está en el
+     * autoload): usa el helper de estado real del módulo
+     * (instalado+activo+toggle de Settings → Integraciones), igual que el
+     * resto del sistema.
+     */
     public function isAvailable(): bool
     {
-        return class_exists(PrestashopContextService::class);
+        return class_exists(PrestashopContextService::class) && helpdesk_prestashop_enabled();
     }
 
     public function search(string $query, string $type): DriverResult

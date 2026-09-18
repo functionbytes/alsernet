@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class SlipPdfType extends CommonAbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $now = (new DateTime())->format('Y-m-d');
+        $now = (new DateTime)->format('Y-m-d');
         $builder
             ->add(
                 'date_from',

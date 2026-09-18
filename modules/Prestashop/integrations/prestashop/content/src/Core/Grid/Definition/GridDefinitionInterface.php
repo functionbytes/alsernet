@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,11 +60,6 @@ interface GridDefinitionInterface
      */
     public function getColumns();
 
-    /**
-     * @param string $id
-     *
-     * @return ColumnInterface
-     */
     public function getColumnById(string $id): ColumnInterface;
 
     /**

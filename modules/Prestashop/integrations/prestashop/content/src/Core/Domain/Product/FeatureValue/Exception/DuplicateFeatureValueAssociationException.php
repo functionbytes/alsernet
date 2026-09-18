@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\FeatureValue\Exception;
 /**
  * Thrown when you try to associate the same value more than once.
  */
-class DuplicateFeatureValueAssociationException extends ProductFeatureValueException
-{
-}
+class DuplicateFeatureValueAssociationException extends ProductFeatureValueException {}

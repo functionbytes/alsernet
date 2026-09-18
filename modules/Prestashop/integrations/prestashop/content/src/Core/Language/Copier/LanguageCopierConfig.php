@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,10 @@ final class LanguageCopierConfig implements LanguageCopierConfigInterface
     private $languageTo;
 
     /**
-     * @param string $themeFrom
-     * @param string $languageFrom
-     * @param string $themeTo
-     * @param string $languageTo
+     * @param  string  $themeFrom
+     * @param  string  $languageFrom
+     * @param  string  $themeTo
+     * @param  string  $languageTo
      */
     public function __construct($themeFrom, $languageFrom, $themeTo, $languageTo)
     {

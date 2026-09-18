@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,12 +60,6 @@ final class LanguageCopier implements LanguageCopierInterface
      */
     private $themeCollection;
 
-    /**
-     * @param LanguageDataProvider $languageDataProvider
-     * @param TranslatorInterface $translator
-     * @param Filesystem $filesystem
-     * @param ThemeCollection $themeCollection
-     */
     public function __construct(
         LanguageDataProvider $languageDataProvider,
         TranslatorInterface $translator,
@@ -84,7 +79,7 @@ final class LanguageCopier implements LanguageCopierInterface
     {
         $errors = $this->validateConfig($config);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 
@@ -132,7 +127,7 @@ final class LanguageCopier implements LanguageCopierInterface
                     $config->getThemeTo()
                 );
 
-                if (!$changedModuleTranslationKeys) {
+                if (! $changedModuleTranslationKeys) {
                     $errors[] = [
                         'key' => 'Impossible to translate "%dest%".',
                         'domain' => 'Admin.International.Notification',
@@ -144,7 +139,7 @@ final class LanguageCopier implements LanguageCopierInterface
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $errors[] = [
                 'key' => 'A part of the data has been copied but some of the language files could not be found.',
                 'domain' => 'Admin.International.Notification',
@@ -158,7 +153,6 @@ final class LanguageCopier implements LanguageCopierInterface
     /**
      * Validates given configuration.
      *
-     * @param LanguageCopierConfigInterface $config
      *
      * @return array of errors
      */
@@ -209,7 +203,7 @@ final class LanguageCopier implements LanguageCopierInterface
                 }
             }
 
-            if (!$fromThemeFound || !$toThemeFound) {
+            if (! $fromThemeFound || ! $toThemeFound) {
                 $errors[] = [
                     'key' => 'Theme(s) not found',
                     'domain' => 'Admin.International.Notification',
@@ -224,25 +218,23 @@ final class LanguageCopier implements LanguageCopierInterface
     /**
      * Checks if the source and destination paths are related to modules.
      *
-     * @param string $source
-     * @param string $destination
-     * @param string $language
-     *
+     * @param  string  $source
+     * @param  string  $destination
+     * @param  string  $language
      * @return bool
      */
     private function isModuleContext($source, $destination, $language)
     {
         // Legacy condition
-        return false !== strpos($destination, 'modules') && basename($source) === $language . '.php';
+        return strpos($destination, 'modules') !== false && basename($source) === $language.'.php';
     }
 
     /**
      * A legacy method to change modules translation keys.
      *
-     * @param string $path
-     * @param string $themeFrom
-     * @param string $themeTo
-     *
+     * @param  string  $path
+     * @param  string  $themeFrom
+     * @param  string  $themeTo
      * @return bool result
      */
     private function changeModulesTranslationKeys($path, $themeFrom, $themeTo)

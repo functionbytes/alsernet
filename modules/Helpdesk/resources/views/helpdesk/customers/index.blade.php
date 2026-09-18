@@ -107,13 +107,7 @@
 
 @push('scripts')
 <script>
-$(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/misc/select2-flash.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/select2-flash.js')) }}" defer></script>
 @endpush

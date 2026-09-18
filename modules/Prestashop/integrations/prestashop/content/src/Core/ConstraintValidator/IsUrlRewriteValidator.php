@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ class IsUrlRewriteValidator extends ConstraintValidator
      * introduce BC break. The recommended approach is to pass
      * PrestaShop\PrestaShop\Adapter\Configuration as a service instead to avoid keeping cached scalar value.
      *
-     * @param ConfigurationInterface|bool $accentedCharsConfiguration
+     * @param  ConfigurationInterface|bool  $accentedCharsConfiguration
      */
     public function __construct($accentedCharsConfiguration)
     {
@@ -60,32 +61,30 @@ class IsUrlRewriteValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof IsUrlRewrite) {
+        if (! $constraint instanceof IsUrlRewrite) {
             throw new UnexpectedTypeException($constraint, IsUrlRewrite::class);
         }
 
-        if (null === $value || '' === $value) {
+        if ($value === null || $value === '') {
             return;
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new UnexpectedTypeException($value, 'string');
         }
 
-        if (!$this->isUrlRewriteValid($value)) {
+        if (! $this->isUrlRewriteValid($value)) {
             $this->context->buildViolation($constraint->message)
                 ->setTranslationDomain('Admin.Notifications.Error')
                 ->setParameter('%s', $this->formatValue($value))
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 
     /**
      * Validates url rewrite according the patterns which vary based on ascented chars allowed setting.
      *
-     * @param string $urlRewrite
-     *
+     * @param  string  $urlRewrite
      * @return false|int
      */
     private function isUrlRewriteValid($urlRewrite)

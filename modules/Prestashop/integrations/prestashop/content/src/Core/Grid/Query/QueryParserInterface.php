@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,9 +33,8 @@ namespace PrestaShop\PrestaShop\Core\Grid\Query;
 interface QueryParserInterface
 {
     /**
-     * @param string $query the prepared query
-     * @param array $queryParameters the query parameters
-     *
+     * @param  string  $query  the prepared query
+     * @param  array  $queryParameters  the query parameters
      * @return string
      */
     public function parse($query, array $queryParameters);

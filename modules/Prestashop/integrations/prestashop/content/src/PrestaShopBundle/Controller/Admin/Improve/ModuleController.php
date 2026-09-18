@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -110,7 +111,7 @@ class ModuleController extends ModuleAbstractController
             $modulesTheme = $currentTheme->getModulesToEnable();
         }
 
-        $filters = new AddonListFilter();
+        $filters = new AddonListFilter;
         $filters->setType(AddonListFilterType::MODULE | AddonListFilterType::SERVICE)
             ->removeStatus(AddonListFilterStatus::UNINSTALLED);
         $installedProducts = $moduleRepository->getFilteredList($filters);
@@ -148,8 +149,6 @@ class ModuleController extends ModuleAbstractController
     /**
      * @AdminSecurity("is_granted(['read'], 'ADMINMODULESSF_')")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function getPreferredModulesAction(Request $request)
@@ -165,7 +164,7 @@ class ModuleController extends ModuleAbstractController
 
         $installed = $uninstalled = [];
 
-        if (!empty($tabModulesList)) {
+        if (! empty($tabModulesList)) {
             foreach ($tabModulesList as $key => $value) {
                 foreach ($modulesListUnsorted['installed'] as $moduleInstalled) {
                     if ($moduleInstalled['attributes']['name'] == $value) {
@@ -209,8 +208,7 @@ class ModuleController extends ModuleAbstractController
     /**
      * @AdminSecurity("is_granted(['read', 'create', 'update', 'delete'], 'ADMINMODULESSF_')")
      *
-     * @param Request $module_name
-     *
+     * @param  Request  $module_name
      * @return Response
      */
     public function configureModuleAction($module_name)
@@ -238,13 +236,13 @@ class ModuleController extends ModuleAbstractController
                 ]
             );
 
-        if (null === $moduleHistory) {
-            $moduleHistory = new ModuleHistory();
+        if ($moduleHistory === null) {
+            $moduleHistory = new ModuleHistory;
         }
 
         $moduleHistory->setIdEmployee($currentEmployeeId);
         $moduleHistory->setIdModule($moduleAccessedId);
-        $moduleHistory->setDateUpd(new DateTime());
+        $moduleHistory->setDateUpd(new DateTime);
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($moduleHistory);
@@ -264,8 +262,7 @@ class ModuleController extends ModuleAbstractController
     /**
      * @AdminSecurity("is_granted(['read'], 'ADMINMODULESSF_')")
      *
-     * @param int $moduleId
-     *
+     * @param  int  $moduleId
      * @return Response
      */
     public function getModuleCartAction($moduleId)
@@ -293,7 +290,6 @@ class ModuleController extends ModuleAbstractController
     /**
      * Controller responsible for displaying "Catalog Module Grid" section of Module management pages with ajax.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -307,7 +303,7 @@ class ModuleController extends ModuleAbstractController
                 PageVoter::LEVEL_UPDATE,
             ]
         );
-        if (null !== $deniedAccess) {
+        if ($deniedAccess !== null) {
             return $deniedAccess;
         }
 
@@ -315,7 +311,7 @@ class ModuleController extends ModuleAbstractController
         $moduleRepository = $this->get('prestashop.core.admin.module.repository');
         $responseArray = [];
 
-        $filters = new AddonListFilter();
+        $filters = new AddonListFilter;
         $filters->setType(AddonListFilterType::MODULE | AddonListFilterType::SERVICE)
             ->setStatus(~AddonListFilterStatus::INSTALLED);
 
@@ -346,8 +342,6 @@ class ModuleController extends ModuleAbstractController
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function moduleAction(Request $request)
@@ -374,7 +368,7 @@ class ModuleController extends ModuleAbstractController
                 $deniedAccess = null;
         }
 
-        if (null !== $deniedAccess) {
+        if ($deniedAccess !== null) {
             return $deniedAccess;
         }
 
@@ -389,7 +383,7 @@ class ModuleController extends ModuleAbstractController
         $modulesProvider = $this->container->get('prestashop.core.admin.data_provider.module_interface');
         $response = [$module => []];
 
-        if (!method_exists($moduleManager, $action)) {
+        if (! method_exists($moduleManager, $action)) {
             $response[$module]['status'] = false;
             $response[$module]['msg'] = $this->trans('Invalid action', 'Admin.Notifications.Error');
 
@@ -503,7 +497,6 @@ class ModuleController extends ModuleAbstractController
     /**
      * Controller responsible for importing new module from DropFile zone in BO.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -524,13 +517,13 @@ class ModuleController extends ModuleAbstractController
                 PageVoter::LEVEL_DELETE,
             ]
         );
-        if (null !== $deniedAccess) {
+        if ($deniedAccess !== null) {
             return $deniedAccess;
         }
 
         $moduleManager = $this->get('prestashop.module.manager');
         $moduleZipManager = $this->get('prestashop.module.zip.manager');
-        $serverParams = new ServerParams();
+        $serverParams = new ServerParams;
         $moduleName = '';
 
         try {
@@ -566,7 +559,7 @@ class ModuleController extends ModuleAbstractController
             ];
 
             $violations = $this->get('validator')->validate($fileUploaded, $constraints);
-            if (0 !== count($violations)) {
+            if (count($violations) !== 0) {
                 $violationsMessages = [];
                 foreach ($violations as $violation) {
                     $violationsMessages[] = $violation->getMessage();
@@ -660,7 +653,7 @@ class ModuleController extends ModuleAbstractController
 
         $modulesOnDisk = $addonsProvider->generateAddonsUrls($modulesOnDisk);
         foreach ($modulesOnDisk as $module) {
-            if (!isset($modulesSelectList) || in_array($module->get('name'), $modulesSelectList)) {
+            if (! isset($modulesSelectList) || in_array($module->get('name'), $modulesSelectList)) {
                 $perm = true;
                 if ($module->get('id')) {
                     $perm &= Module::getPermissionStatic(
@@ -675,7 +668,7 @@ class ModuleController extends ModuleAbstractController
                         $id_admin_module
                     );
 
-                    $perm &= !$access['edit'];
+                    $perm &= ! $access['edit'];
                 }
 
                 if ($module->get('author') === ModuleRepository::PARTNER_AUTHOR) {
@@ -699,7 +692,7 @@ class ModuleController extends ModuleAbstractController
     private function getTopMenuData(array $topMenuData, $activeMenu = null)
     {
         if (isset($activeMenu)) {
-            if (!isset($topMenuData[$activeMenu])) {
+            if (! isset($topMenuData[$activeMenu])) {
                 throw new Exception(sprintf('Menu \'%s\' not found in Top Menu data', $activeMenu), 1);
             }
 
@@ -710,8 +703,6 @@ class ModuleController extends ModuleAbstractController
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     private function getDisabledFunctionalityResponse(Request $request)
@@ -729,8 +720,6 @@ class ModuleController extends ModuleAbstractController
     /**
      * Construct Json struct for catalog body response.
      *
-     * @param array $categories
-     * @param array $modules
      *
      * @return array
      */
@@ -765,7 +754,6 @@ class ModuleController extends ModuleAbstractController
     /**
      * Construct json struct from top menu.
      *
-     * @param array $categories
      *
      * @return array
      */
@@ -786,13 +774,12 @@ class ModuleController extends ModuleAbstractController
     /**
      * Check user permission.
      *
-     * @param array $pageVoter
      *
      * @return JsonResponse|null
      */
     private function checkPermissions(array $pageVoter)
     {
-        if (!in_array(
+        if (! in_array(
             $this->authorizationLevel(self::CONTROLLER_NAME),
             $pageVoter
         )
@@ -809,13 +796,12 @@ class ModuleController extends ModuleAbstractController
     }
 
     /**
-     * @param string $pageVoter
-     *
+     * @param  string  $pageVoter
      * @return JsonResponse|null
      */
     private function checkPermission($pageVoter)
     {
-        if (!$this->isGranted($pageVoter, self::CONTROLLER_NAME)) {
+        if (! $this->isGranted($pageVoter, self::CONTROLLER_NAME)) {
             return new JsonResponse(
                 [
                     'status' => false,
@@ -830,8 +816,7 @@ class ModuleController extends ModuleAbstractController
     /**
      * Get categories and its modules.
      *
-     * @param array $modules List of installed modules
-     *
+     * @param  array  $modules  List of installed modules
      * @return array
      */
     private function getCategories(AdminModuleDataProvider $modulesProvider, array $modules)

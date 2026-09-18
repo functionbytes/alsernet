@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ interface LocaleInterface
     /**
      * Format a number according to locale rules.
      *
-     * @param int|float|string $number The number to be formatted
-     *
+     * @param  int|float|string  $number  The number to be formatted
      * @return string The formatted number
      */
     public function formatNumber($number);
@@ -45,9 +45,8 @@ interface LocaleInterface
     /**
      * Format a number as a price.
      *
-     * @param int|float|string $number Number to be formatted as a price
-     * @param string $currencyCode Currency of the price
-     *
+     * @param  int|float|string  $number  Number to be formatted as a price
+     * @param  string  $currencyCode  Currency of the price
      * @return string The formatted price
      */
     public function formatPrice($number, $currencyCode);

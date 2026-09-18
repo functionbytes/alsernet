@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ class OrdersInformation
     private $totalSpent;
 
     /**
-     * @param string $totalSpent
-     * @param OrderInformation[] $validOrders
-     * @param OrderInformation[] $invalidOrders
+     * @param  string  $totalSpent
+     * @param  OrderInformation[]  $validOrders
+     * @param  OrderInformation[]  $invalidOrders
      */
     public function __construct($totalSpent, array $validOrders, array $invalidOrders)
     {

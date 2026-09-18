@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,12 +47,9 @@ class SqlLoader
      */
     protected $errors = [];
 
-    /**
-     * @param Db|null $db
-     */
-    public function __construct(Db $db = null)
+    public function __construct(?Db $db = null)
     {
-        if (null === $db) {
+        if ($db === null) {
             $db = Db::getInstance();
         }
         $this->db = $db;
@@ -59,8 +57,6 @@ class SqlLoader
 
     /**
      * Set a list of keywords which will be replaced in queries.
-     *
-     * @param array $data
      */
     public function setMetaData(array $data)
     {
@@ -74,8 +70,8 @@ class SqlLoader
      *
      * @deprecated use parseFile()
      *
-     * @param string $filename
-     * @param bool $stop_when_fail
+     * @param  string  $filename
+     * @param  bool  $stop_when_fail
      */
     public function parse_file($filename, $stop_when_fail = true)
     {
@@ -85,12 +81,12 @@ class SqlLoader
     /**
      * Parse a SQL file and execute queries.
      *
-     * @param string $filename
-     * @param bool $stop_when_fail
+     * @param  string  $filename
+     * @param  bool  $stop_when_fail
      */
     public function parseFile($filename, $stop_when_fail = true)
     {
-        if (!file_exists($filename)) {
+        if (! file_exists($filename)) {
             throw new PrestashopInstallerException("File $filename not found");
         }
 
@@ -100,8 +96,8 @@ class SqlLoader
     /**
      * Parse and execute a list of SQL queries.
      *
-     * @param string $content
-     * @param bool $stop_when_fail
+     * @param  string  $content
+     * @param  bool  $stop_when_fail
      */
     public function parse($content, $stop_when_fail = true)
     {
@@ -111,11 +107,11 @@ class SqlLoader
         $queries = preg_split('#;\s*[\r\n]+#', $content);
         foreach ($queries as $query) {
             $query = trim($query);
-            if (!$query) {
+            if (! $query) {
                 continue;
             }
 
-            if (!$this->db->execute($query)) {
+            if (! $this->db->execute($query)) {
                 $this->errors[] = [
                     'errno' => $this->db->getNumberError(),
                     'error' => $this->db->getMsgError(),

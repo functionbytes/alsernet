@@ -3,9 +3,7 @@
 @section('title', 'Catálogo de proveedores de integración')
 
 @push('css')
-    <style>
-        .avatar-icon-32 { width: 32px; height: 32px; color: var(--icon-color, inherit); }
-    </style>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdeskintegration/helpdeskintegration.css') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/helpdeskintegration.css')) }}"/>
 @endpush
 
 @section('page_header')
@@ -208,27 +206,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        const name = $(this).data('name');
-        $('#hiDeleteForm').attr('action', url);
-        $('#hiDeleteItemName').text(name);
-        $('#hiDeleteModal').modal('show');
-    });
-
-    $(document).on('click', '.btn-toggle', function () {
-        const url = $(this).data('url');
-        $('#toggleForm').attr('action', url).submit();
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HiProvidersIndexFlash = @json(['success' => session('success'), 'error' => session('error')]);
 </script>
+<script src="{{ asset('vendor/helpdeskintegration/providers-index.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/providers-index.js')) }}" defer></script>
 @endpush

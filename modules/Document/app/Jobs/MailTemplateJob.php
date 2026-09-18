@@ -85,8 +85,9 @@ class MailTemplateJob implements ShouldQueue
         } catch (BroadcastException $e) {
             // Handle broadcasting timeouts gracefully - email was sent successfully
             if ($this->isBroadcastTimeout($e)) {
-              
+
                 $this->logSuccess();
+
                 return; // Don't throw - job is successful
             }
 
@@ -105,6 +106,7 @@ class MailTemplateJob implements ShouldQueue
     private function isBroadcastTimeout(BroadcastException $e): bool
     {
         $message = $e->getMessage();
+
         return strpos($message, 'cURL error 28') !== false ||
                strpos($message, 'Connection timed out') !== false ||
                strpos($message, 'timeout') !== false;
@@ -177,9 +179,8 @@ class MailTemplateJob implements ShouldQueue
                 'timestamp' => now()->toIso8601String(),
             ]);
 
-           
         } catch (\Exception $e) {
-           
+
         }
     }
 
@@ -197,7 +198,7 @@ class MailTemplateJob implements ShouldQueue
                 $this->adminId
             );
         } catch (\Exception $e) {
-            
+
         }
 
         Log::channel('email-jobs')->error('Email job failed after all retries', [
@@ -212,6 +213,5 @@ class MailTemplateJob implements ShouldQueue
             'timestamp' => now()->toIso8601String(),
         ]);
 
-       
     }
 }

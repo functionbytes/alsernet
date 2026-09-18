@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,9 +38,8 @@ class AddressFactory
      * Initialize an address corresponding to the specified id address or if empty to the
      * default shop configuration.
      *
-     * @param int|null $id_address
-     * @param bool $with_geoloc
-     *
+     * @param  int|null  $id_address
+     * @param  bool  $with_geoloc
      * @return Address
      */
     public function findOrCreate($id_address = null, $with_geoloc = false)
@@ -52,8 +52,7 @@ class AddressFactory
     /**
      * Check if an address exists depending on given $id_address.
      *
-     * @param int $id_address
-     *
+     * @param  int  $id_address
      * @return bool
      */
     public function addressExists($id_address)

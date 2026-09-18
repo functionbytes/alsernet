@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class EmployeeOptionsConfiguration implements DataConfigurationInterface
      */
     private $optionsChecker;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration, OptionsCheckerInterface $optionsChecker)
     {
         $this->configuration = $configuration;
@@ -71,7 +69,7 @@ final class EmployeeOptionsConfiguration implements DataConfigurationInterface
     {
         $errors = [];
 
-        if (!$this->optionsChecker->canBeChanged()) {
+        if (! $this->optionsChecker->canBeChanged()) {
             $errors[] = [
                 'key' => 'You cannot change the value of this configuration field in the context of this shop.',
                 'parameters' => [],

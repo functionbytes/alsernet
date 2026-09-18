@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,11 +51,11 @@ final class EditCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandler 
         try {
             $specificPriceRule = $this->fetchSpecificPriceRuleFromCommand($command);
 
-            if (false === $specificPriceRule->validateFields(false)) {
+            if ($specificPriceRule->validateFields(false) === false) {
                 throw new CatalogPriceRuleException('Specific price rule contains invalid field values');
             }
 
-            if (false === $specificPriceRule->update()) {
+            if ($specificPriceRule->update() === false) {
                 throw new CannotUpdateCatalogPriceRuleException(sprintf('Failed to update specific price rule with id %s', $specificPriceRule->id));
             }
             $specificPriceRule->deleteConditions();
@@ -67,9 +68,7 @@ final class EditCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandler 
     /**
      * Creates SpecificPriceRule object from given command
      *
-     * @param EditCatalogPriceRuleCommand $command
      *
-     * @return SpecificPriceRule
      *
      * @throws PrestaShopException
      */
@@ -78,32 +77,32 @@ final class EditCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandler 
         $specificPriceRule = new SpecificPriceRule($command->getCatalogPriceRuleId()->getValue());
         $this->fetchDateRange($command, $specificPriceRule);
 
-        if (null !== $command->getName()) {
+        if ($command->getName() !== null) {
             $specificPriceRule->name = $command->getName();
         }
-        if (null !== $command->getShopId()) {
+        if ($command->getShopId() !== null) {
             $specificPriceRule->id_shop = $command->getShopId();
         }
-        if (null !== $command->getCurrencyId()) {
+        if ($command->getCurrencyId() !== null) {
             $specificPriceRule->id_currency = $command->getCurrencyId();
         }
-        if (null !== $command->getCountryId()) {
+        if ($command->getCountryId() !== null) {
             $specificPriceRule->id_country = $command->getCountryId();
         }
-        if (null !== $command->getGroupId()) {
+        if ($command->getGroupId() !== null) {
             $specificPriceRule->id_group = $command->getGroupId();
         }
-        if (null !== $command->getFromQuantity()) {
+        if ($command->getFromQuantity() !== null) {
             $specificPriceRule->from_quantity = $command->getFromQuantity();
         }
-        if (null !== $command->getPrice()) {
+        if ($command->getPrice() !== null) {
             $specificPriceRule->price = $command->getPrice();
         }
 
-        if (null !== $command->isTaxIncluded()) {
+        if ($command->isTaxIncluded() !== null) {
             $specificPriceRule->reduction_tax = $command->isTaxIncluded();
         }
-        if (null !== $command->getReduction()) {
+        if ($command->getReduction() !== null) {
             $specificPriceRule->reduction_type = $command->getReduction()->getType();
             $specificPriceRule->reduction = $command->getReduction()->getValue();
         }
@@ -114,8 +113,6 @@ final class EditCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandler 
     /**
      * Fetches date range from command to object model also asserting that the range is not inverse
      *
-     * @param EditCatalogPriceRuleCommand $command
-     * @param SpecificPriceRule $specificPriceRule
      *
      * @throws CatalogPriceRuleConstraintException
      */
@@ -127,22 +124,22 @@ final class EditCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandler 
         $modelDateFrom = $specificPriceRule->from;
         $modelDateTo = $specificPriceRule->to;
 
-        //if `date from` value is being updated
-        if (null !== $commandDateFrom) {
-            //and if `date to` is set in database
-            if (UtilsDateTime::NULL_DATETIME !== $modelDateTo) {
-                //asserts that range between these values is not inverse
+        // if `date from` value is being updated
+        if ($commandDateFrom !== null) {
+            // and if `date to` is set in database
+            if ($modelDateTo !== UtilsDateTime::NULL_DATETIME) {
+                // asserts that range between these values is not inverse
                 $this->assertDateRangeIsNotInverse($commandDateFrom, new DateTime($modelDateTo));
             }
 
             $specificPriceRule->from = $commandDateFrom->format('Y-m-d H:i:s');
         }
 
-        //if `date to` value is being updated
-        if (null !== $commandDateTo) {
-            //and if `date from` is set in database
-            if (UtilsDateTime::NULL_DATETIME !== $modelDateFrom) {
-                //asserts that range between these values is not inverse
+        // if `date to` value is being updated
+        if ($commandDateTo !== null) {
+            // and if `date from` is set in database
+            if ($modelDateFrom !== UtilsDateTime::NULL_DATETIME) {
+                // asserts that range between these values is not inverse
                 $this->assertDateRangeIsNotInverse(new DateTime($modelDateFrom), $commandDateTo);
             }
 

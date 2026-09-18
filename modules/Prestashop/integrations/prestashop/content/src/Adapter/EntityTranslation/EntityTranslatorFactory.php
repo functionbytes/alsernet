@@ -59,9 +59,6 @@ class EntityTranslatorFactory
      */
     private $dbPrefix;
 
-    /**
-     * @param TranslatorInterface $translator
-     */
     public function __construct(TranslatorInterface $translator)
     {
         $this->db = Db::getInstance();
@@ -73,10 +70,8 @@ class EntityTranslatorFactory
     /**
      * Builds an entity translator based on a table name
      *
-     * @param string $tableName Table name (accepts with or without db prefix and _lang suffix)
-     * @param string $locale IETF language tag
-     *
-     * @return EntityTranslatorInterface
+     * @param  string  $tableName  Table name (accepts with or without db prefix and _lang suffix)
+     * @param  string  $locale  IETF language tag
      */
     public function buildFromTableName(string $tableName, string $locale): EntityTranslatorInterface
     {
@@ -88,9 +83,7 @@ class EntityTranslatorFactory
     /**
      * Builds an entity translator
      *
-     * @param DataLangCore $dataLang DataLang class for this entity
-     *
-     * @return EntityTranslatorInterface
+     * @param  DataLangCore  $dataLang  DataLang class for this entity
      */
     public function build(DataLangCore $dataLang): EntityTranslatorInterface
     {

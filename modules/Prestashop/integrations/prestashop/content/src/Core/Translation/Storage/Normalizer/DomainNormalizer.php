@@ -36,9 +36,7 @@ use RuntimeException;
 class DomainNormalizer
 {
     /**
-     * @param string $domain Domain name
-     *
-     * @return string
+     * @param  string  $domain  Domain name
      *
      * @throws RuntimeException
      */

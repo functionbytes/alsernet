@@ -26,7 +26,7 @@ class AgentCatalogTest extends TestCase
     use SeedsHelpdeskRoles;
     use SeedsOpenConversationStatus;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private const FEED_URL = 'https://shop.example/feed.json';
 

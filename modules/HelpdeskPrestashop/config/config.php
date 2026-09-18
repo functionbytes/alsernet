@@ -10,6 +10,17 @@ return [
     'api_url' => env('ALSERNETBRIDGE_API_URL', ''),
 
     /*
+     | URL pública de la tienda (la que ve un cliente real en su navegador),
+     | usada para construir enlaces de producto/imagen cuando se resuelve
+     | contra la BD directa en vez del bridge. Deliberadamente separada de
+     | api_url: esta suele apuntar a host.docker.internal (solo resoluble
+     | desde dentro de Docker), que un cliente jamás podría abrir. Mismo
+     | patrón que QUESTIONS_SHOP_URL/HELPDESK_BIRTHDAY_SHOP_URL en otros
+     | módulos.
+     */
+    'shop_url' => rtrim(env('ALSERNETBRIDGE_SHOP_URL', ''), '/'),
+
+    /*
      | Secreto HMAC compartido con el módulo alsernetbridge (PrestaShop config
      | ALSERNETBRIDGE_WEBHOOK_SECRET). Se usa para firmar cada petición.
      */
@@ -60,4 +71,19 @@ return [
      | clientes de PrestaShop se omiten en vez de intentar leer un esquema ajeno.
      */
     'ps_db' => env('HELPDESK_PS_DB', ''),
+
+    /*
+     | Prefijo de tablas de la base de datos de PrestaShop (ej. `aalv_product`).
+     | Solo se usa cuando ps_db está configurada.
+     */
+    'ps_prefix' => env('HELPDESK_PS_PREFIX', 'aalv_'),
+
+    /*
+     | URL base del panel de administracion de PrestaShop (ej.
+     | https://tienda.ejemplo.com/adminXXXXXXXXX). Usada solo para construir el
+     | enlace "PS Admin" del modal de recomendar producto — vacia por defecto,
+     | el boton se oculta si no esta configurada (antes tenia un
+     | http://localhost:8091/... hardcodeado en el JS).
+     */
+    'admin_url' => rtrim(env('ALSERNETBRIDGE_ADMIN_URL', ''), '/'),
 ];

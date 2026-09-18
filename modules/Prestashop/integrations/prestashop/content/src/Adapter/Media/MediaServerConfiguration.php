@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,7 +64,7 @@ class MediaServerConfiguration implements DataConfigurationInterface
     {
         $errors = [];
         $isValid = $this->validateConfiguration($configuration);
-        if (true === $isValid) {
+        if ($isValid === true) {
             $serverOne = $configuration['media_server_one'];
             $serverTwo = $configuration['media_server_two'];
             $serverThree = $configuration['media_server_three'];
@@ -72,7 +73,7 @@ class MediaServerConfiguration implements DataConfigurationInterface
             $this->configuration->set('PS_MEDIA_SERVER_2', $serverTwo);
             $this->configuration->set('PS_MEDIA_SERVER_3', $serverThree);
 
-            if (!empty($serverOne) || !empty($serverTwo) || !empty($serverThree)) {
+            if (! empty($serverOne) || ! empty($serverTwo) || ! empty($serverThree)) {
                 $this->configuration->set('PS_MEDIA_SERVERS', 1);
             } else {
                 $this->configuration->set('PS_MEDIA_SERVERS', 0);
@@ -85,8 +86,6 @@ class MediaServerConfiguration implements DataConfigurationInterface
     }
 
     /**
-     * @param array $configuration
-     *
      * @return array<int, array<string, array|string>>|bool
      */
     public function validateConfiguration(array $configuration)
@@ -96,7 +95,7 @@ class MediaServerConfiguration implements DataConfigurationInterface
         $serverTwo = $configuration['media_server_two'];
         $serverThree = $configuration['media_server_three'];
 
-        if (!empty($serverOne) && !$this->isValidDomain($serverOne)) {
+        if (! empty($serverOne) && ! $this->isValidDomain($serverOne)) {
             $errors[] = [
                 'key' => 'Media server #1 is invalid',
                 'domain' => 'Admin.Advparameters.Notification',
@@ -104,7 +103,7 @@ class MediaServerConfiguration implements DataConfigurationInterface
             ];
         }
 
-        if (!empty($serverTwo) && !$this->isValidDomain($serverTwo)) {
+        if (! empty($serverTwo) && ! $this->isValidDomain($serverTwo)) {
             $errors[] = [
                 'key' => 'Media server #2 is invalid',
                 'domain' => 'Admin.Advparameters.Notification',
@@ -112,7 +111,7 @@ class MediaServerConfiguration implements DataConfigurationInterface
             ];
         }
 
-        if (!empty($serverThree) && !$this->isValidDomain($serverThree)) {
+        if (! empty($serverThree) && ! $this->isValidDomain($serverThree)) {
             $errors[] = [
                 'key' => 'Media server #3 is invalid',
                 'domain' => 'Admin.Advparameters.Notification',
@@ -128,14 +127,13 @@ class MediaServerConfiguration implements DataConfigurationInterface
     }
 
     /**
-     * @param string $domainName
-     *
+     * @param  string  $domainName
      * @return bool
      */
     private function isValidDomain($domainName)
     {
-        if (false !== filter_var($domainName, FILTER_VALIDATE_DOMAIN)) {
-            return false !== filter_var(gethostbyname($domainName), FILTER_VALIDATE_IP);
+        if (filter_var($domainName, FILTER_VALIDATE_DOMAIN) !== false) {
+            return filter_var(gethostbyname($domainName), FILTER_VALIDATE_IP) !== false;
         }
 
         return false;

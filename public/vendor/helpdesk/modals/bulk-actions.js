@@ -30,21 +30,21 @@
     }
 
     function showSubPanel(type) {
-        $('#bulkSubPanel').show();
-        $('.bv-bulk-sub').hide();
+        $('#bulkSubPanel').removeClass('d-none');
+        $('.bv-bulk-sub').addClass('d-none');
         if (type === 'assign') {
-            $('#bulkSubAssign').show();
+            $('#bulkSubAssign').removeClass('d-none');
             loadBulkAgents();
         } else if (type === 'priority') {
-            $('#bulkSubPriority').show();
+            $('#bulkSubPriority').removeClass('d-none');
         } else if (type === 'delete') {
-            $('#bulkSubDelete').show();
+            $('#bulkSubDelete').removeClass('d-none');
         } else if (type === 'team') {
-            $('#bulkSubTeam').show();
+            $('#bulkSubTeam').removeClass('d-none');
         } else if (type === 'tag') {
-            $('#bulkSubTag').show();
+            $('#bulkSubTag').removeClass('d-none');
         } else if (type === 'snooze') {
-            $('#bulkSubSnooze').show();
+            $('#bulkSubSnooze').removeClass('d-none');
             // La opción "1h" ya aparece preseleccionada visualmente: fija el
             // payload por defecto para que "Aplicar" funcione sin un click extra.
             $('#bulkSubSnooze .snz-opt').removeClass('on');
@@ -52,7 +52,7 @@
             var defaultUntil = calcBulkSnoozeUntil('1h');
             _bulkPayload.until = defaultUntil ? defaultUntil.toISOString() : null;
         } else {
-            $('#bulkSubPanel').hide();
+            $('#bulkSubPanel').addClass('d-none');
         }
     }
 
@@ -100,7 +100,7 @@
         _bulkAction = null;
         _bulkPayload = {};
         $('.bv-bulk-act').removeClass('on');
-        $('#bulkSubPanel').hide();
+        $('#bulkSubPanel').addClass('d-none');
         $('#bv-bulk-apply').prop('disabled', true).text('Aplicar acción');
 
         var n = getSelectedIds().length || parseInt($('[data-bulk-count]').data('bulk-count') || '0', 10);
@@ -117,7 +117,7 @@
 
         var noSubPanel = ['resolve', 'close', 'archive', 'mute'];
         if (noSubPanel.indexOf(_bulkAction) !== -1) {
-            $('#bulkSubPanel').hide();
+            $('#bulkSubPanel').addClass('d-none');
         } else {
             showSubPanel(_bulkAction);
         }

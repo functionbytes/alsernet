@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ class FeatureValueListener implements EventSubscriberInterface
      */
     private $formCloner;
 
-    /**
-     * @param ConfigurableFormChoiceProviderInterface $featureValuesChoiceProvider
-     * @param FormCloner $formCloner
-     */
     public function __construct(
         ConfigurableFormChoiceProviderInterface $featureValuesChoiceProvider,
         FormCloner $formCloner
@@ -73,9 +70,6 @@ class FeatureValueListener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * @param FormEvent $event
-     */
     public function updateFeatureValuesOptions(FormEvent $event): void
     {
         $form = $event->getForm();
@@ -86,7 +80,7 @@ class FeatureValueListener implements EventSubscriberInterface
         }
 
         $hasCustomValue = array_reduce($data['custom_value'] ?? [], function (bool $hasPresentValue, ?string $customValue) {
-            return $hasPresentValue || !empty($customValue);
+            return $hasPresentValue || ! empty($customValue);
         }, false);
 
         $featureValues = $this->featureValuesChoiceProvider->getChoices(['feature_id' => (int) $data['feature_id'], 'custom' => $hasCustomValue]);

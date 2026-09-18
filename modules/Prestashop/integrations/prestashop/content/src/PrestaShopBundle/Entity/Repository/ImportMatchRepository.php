@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,20 +46,18 @@ class ImportMatchRepository implements RepositoryInterface
     private $importMatchTable;
 
     /**
-     * @param Connection $connection
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      */
     public function __construct(Connection $connection, $tablePrefix)
     {
         $this->connection = $connection;
-        $this->importMatchTable = $tablePrefix . 'import_match';
+        $this->importMatchTable = $tablePrefix.'import_match';
     }
 
     /**
      * Find one item by ID.
      *
-     * @param int $id
-     *
+     * @param  int  $id
      * @return array
      */
     public function findOneById($id)
@@ -76,8 +75,7 @@ class ImportMatchRepository implements RepositoryInterface
     /**
      * Find one item by name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return array
      */
     public function findOneByName($name)
@@ -108,7 +106,7 @@ class ImportMatchRepository implements RepositoryInterface
     /**
      * Delete one import match by it's id.
      *
-     * @param int $id
+     * @param  int  $id
      */
     public function deleteById($id)
     {

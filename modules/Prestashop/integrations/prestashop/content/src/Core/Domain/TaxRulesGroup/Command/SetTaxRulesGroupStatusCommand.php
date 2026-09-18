@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ class SetTaxRulesGroupStatusCommand
     private $expectedStatus;
 
     /**
-     * @param int $taxRulesGroupId
-     * @param bool $expectedStatus
-     *
      * @throws TaxRulesGroupConstraintException
      */
     public function __construct(int $taxRulesGroupId, bool $expectedStatus)
@@ -56,17 +54,11 @@ class SetTaxRulesGroupStatusCommand
         $this->taxRulesGroupId = new TaxRulesGroupId($taxRulesGroupId);
     }
 
-    /**
-     * @return TaxRulesGroupId
-     */
     public function getTaxRulesGroupId(): TaxRulesGroupId
     {
         return $this->taxRulesGroupId;
     }
 
-    /**
-     * @return bool
-     */
     public function getExpectedStatus(): bool
     {
         return $this->expectedStatus;

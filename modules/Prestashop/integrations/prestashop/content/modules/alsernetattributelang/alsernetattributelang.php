@@ -1,5 +1,8 @@
 <?php
-if (!defined('_PS_VERSION_')) { exit; }
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 class Alsernetattributelang extends Module
 {
@@ -31,13 +34,13 @@ class Alsernetattributelang extends Module
 
     protected function installTab()
     {
-        $id_parent = (int)Tab::getIdFromClassName('IMPROVE');
-        if (!$id_parent) {
+        $id_parent = (int) Tab::getIdFromClassName('IMPROVE');
+        if (! $id_parent) {
             // Fallback: ponerlo bajo el menú principal
             $id_parent = 0;
         }
 
-        $tab = new Tab();
+        $tab = new Tab;
         $tab->active = 1;
         $tab->class_name = 'AdminAlsernetAttributeLang';
         $tab->name = [];
@@ -46,16 +49,19 @@ class Alsernetattributelang extends Module
         }
         $tab->id_parent = $id_parent; // Menú: Mejoras
         $tab->module = $this->name;
-        return (bool)$tab->add();
+
+        return (bool) $tab->add();
     }
 
     protected function uninstallTab()
     {
-        $id_tab = (int)Tab::getIdFromClassName('AdminAlsernetAttributeLang');
+        $id_tab = (int) Tab::getIdFromClassName('AdminAlsernetAttributeLang');
         if ($id_tab) {
             $tab = new Tab($id_tab);
-            return (bool)$tab->delete();
+
+            return (bool) $tab->delete();
         }
+
         return true;
     }
 
@@ -66,6 +72,7 @@ class Alsernetattributelang extends Module
         $html .= '<p>'.$this->l('Abrir herramienta de traducción de atributos por producto.').'</p>';
         $html .= '<a class="btn btn-primary" href="'.htmlspecialchars($link).'">'.$this->l('Abrir').'</a>';
         $html .= '</div>';
+
         return $html;
     }
 }

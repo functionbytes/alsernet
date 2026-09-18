@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -73,13 +74,6 @@ final class GetEditableCombinationsListHandler implements GetEditableCombination
      */
     private $productImagePathFactory;
 
-    /**
-     * @param StockAvailableRepository $stockAvailableRepository
-     * @param DoctrineQueryBuilderInterface $combinationQueryBuilder
-     * @param AttributeRepository $attributeRepository
-     * @param ProductImageRepository $productImageRepository
-     * @param ProductImagePathFactory $productImagePathFactory
-     */
     public function __construct(
         StockAvailableRepository $stockAvailableRepository,
         DoctrineQueryBuilderInterface $combinationQueryBuilder,
@@ -134,13 +128,7 @@ final class GetEditableCombinationsListHandler implements GetEditableCombination
     }
 
     /**
-     * @param array $combinations
-     * @param array<int, array<int, mixed>> $attributesInformationByCombinationId
-     * @param int $totalCombinationsCount
-     * @param array $imageIdsByCombinationIds
-     * @param array $defaultImageIds
-     *
-     * @return CombinationListForEditing
+     * @param  array<int, array<int, mixed>>  $attributesInformationByCombinationId
      */
     private function formatEditableCombinationsForListing(
         array $combinations,
@@ -165,9 +153,9 @@ final class GetEditableCombinationsListHandler implements GetEditableCombination
             }
 
             $imageId = null;
-            if (!empty($imageIdsByCombinationIds[$combinationId])) {
+            if (! empty($imageIdsByCombinationIds[$combinationId])) {
                 $imageId = reset($imageIdsByCombinationIds[$combinationId]);
-            } elseif (!empty($defaultImageIds)) {
+            } elseif (! empty($defaultImageIds)) {
                 $imageId = reset($defaultImageIds);
             }
 
@@ -188,9 +176,7 @@ final class GetEditableCombinationsListHandler implements GetEditableCombination
     }
 
     /**
-     * @param CombinationAttributeInformation[] $attributesInformation
-     *
-     * @return string
+     * @param  CombinationAttributeInformation[]  $attributesInformation
      */
     private function buildCombinationName(array $attributesInformation): string
     {

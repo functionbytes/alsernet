@@ -21,6 +21,21 @@
                         <h5 class="mb-1 fw-bold">Auditoría de actividad</h5>
                         <p class="small mb-0 text-muted">Historial detallado de eventos del sistema con soporte de filtros avanzados</p>
                     </div>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ route('activity.export', request()->query()) }}">Exportar CSV</a>
+                                <div class="dropdown-divider"></div>
+                                <button id="refresh-stats-btn" type="button" class="dropdown-item">
+                                    Refrescar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -31,7 +46,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total eventos</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="total">{{ number_format($stats['total']) }}</h4>
                                 <small class="text-muted">Registrados en el sistema</small>
                             </div>
                         </div>
@@ -40,7 +55,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Creaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['created']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="created">{{ number_format($stats['created']) }}</h4>
                                 <small class="text-muted">Eventos de creación</small>
                             </div>
                         </div>
@@ -49,7 +64,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Actualizaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['updated']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="updated">{{ number_format($stats['updated']) }}</h4>
                                 <small class="text-muted">Eventos de modificación</small>
                             </div>
                         </div>
@@ -58,7 +73,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Eliminaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['deleted']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="deleted">{{ number_format($stats['deleted']) }}</h4>
                                 <small class="text-muted">Eventos de eliminación</small>
                             </div>
                         </div>
@@ -66,82 +81,249 @@
                 </div>
             </div>
 
-            {{-- Filters --}}
+            {{-- Busqueda y filtros --}}
             <div class="card-body border-bottom">
-                <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                    <div class="flex-fill">
-                        <div class="input-group h-100">
-                            <span class="input-group-text bg-white border-end-1">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="search" class="form-control border-start-0 ps-0" id="filterSearch" placeholder="Buscar en descripción...">
+                @php
+                    $advancedKeys = ['event', 'log_name', 'from', 'to'];
+                    $activeFilterCount = collect($advancedKeys)->filter(fn ($k) => request()->filled($k))->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                @endphp
+
+                <form method="GET" action="{{ route('activity.audit') }}" id="audit-filter-form">
+                    {{-- Los avanzados viajan ocultos: el modal solo escribe en
+                         ellos al aplicar, para que cerrar el modal sin aplicar
+                         no cambie la busqueda. --}}
+                    <input type="hidden" name="event"    id="filter-event"    value="{{ request('event') }}">
+                    <input type="hidden" name="log_name" id="filter-log-name" value="{{ request('log_name') }}">
+                    <input type="hidden" name="from"     id="filter-from"     value="{{ request('from') }}">
+                    <input type="hidden" name="to"       id="filter-to"       value="{{ request('to') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar en descripción o en los datos del cambio..."
+                               value="{{ request('search') }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#audit-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary act-filter-badge">{{ $activeFilterCount }}</span>
+                            @endif
+                        </button>
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
+                            </button>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('activity.audit') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
-                    <div class="flex-shrink-0" style="min-width: 180px;">
-                        <select class="form-select select2 h-100" id="filterEvent">
-                            <option value="">Todos los eventos</option>
-                            <option value="created">Creado</option>
-                            <option value="updated">Actualizado</option>
-                            <option value="deleted">Eliminado</option>
-                            <option value="login">Login</option>
-                            <option value="logout">Logout</option>
-                        </select>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 180px;">
-                        <select class="form-select select2 h-100" id="filterLogName">
-                            <option value="">Todos los módulos</option>
-                            @foreach($logNames as $logName)
-                                <option value="{{ $logName }}">{{ ucfirst($logName) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 150px;">
-                        <input type="date" class="form-control h-100" id="filterDateFrom">
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 150px;">
-                        <input type="date" class="form-control h-100" id="filterDateTo">
-                    </div>
-                    <div class="d-flex gap-2 flex-shrink-0">
-                        <button type="button" class="btn btn-primary" id="applyFilters">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if(request('event'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Evento: {{ ucfirst(request('event')) }}
+                                </span>
+                            @endif
+                            @if(request('log_name'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Módulo: {{ ucfirst(request('log_name')) }}
+                                </span>
+                            @endif
+                            @if(request('from'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Desde: {{ request('from') }}</span>
+                            @endif
+                            @if(request('to'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Hasta: {{ request('to') }}</span>
+                            @endif
+                        </div>
+                    @endif
+                </form>
             </div>
 
             {{-- Table --}}
             <div class="card-body">
-                <div class="mb-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1 fw-bold">Historial de actividad</h6>
-                        <p class="text-muted mb-0" id="total-count">Cargando...</p>
+                @if($activities->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th>Usuario</th>
+                                    <th>Evento</th>
+                                    <th>Descripción</th>
+                                    <th>Módulo</th>
+                                    <th>Fecha</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($activities as $activity)
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $activity->id }}"></td>
+                                        <td>
+                                            <div class="small fw-semibold">{{ $activity->causer?->name ?? 'Sistema' }}</div>
+                                            @if($activity->causer?->email)
+                                                <small class="text-muted">{{ $activity->causer->email }}</small>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @php
+                                                $eventMap = ['created' => 'success', 'updated' => 'primary', 'deleted' => 'danger'];
+                                                $color = $eventMap[$activity->event] ?? 'secondary';
+                                            @endphp
+                                            <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
+                                                {{ $activity->event ?? 'n/a' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-truncate d-block" style="max-width:240px;">{{ $activity->description ?: '-' }}</small>
+                                            @if($activity->subject_type)
+                                                <span class="badge bg-light text-dark border">
+                                                    {{ class_basename($activity->subject_type) }}{{ $activity->subject_id ? ' #'.$activity->subject_id : '' }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ $activity->log_name ?: 'default' }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="small">{{ $activity->created_at->format('d/m/Y H:i') }}</div>
+                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-boundary="viewport">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('activity.logs.show', $activity->id) }}">
+                                                            Ver detalle
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-
-                <div id="activity-table-container">
+                @else
                     <div class="text-center py-5">
-                        <div class="spinner-border text-primary mb-2"></div>
-                        <p class="text-muted mb-0">Cargando actividad...</p>
+                        <div class="d-flex flex-column align-items-center">
+                            <h6 class="mb-1">
+                                @if(request()->hasAny(['search', 'from', 'to']))
+                                    No se encontraron resultados
+                                @else
+                                    No hay eventos registrados
+                                @endif
+                            </h6>
+                            <p class="text-muted mb-3">
+                                @if(request('search'))
+                                    No hay resultados para "{{ request('search') }}"
+                                @else
+                                    Aún no se han registrado eventos en el sistema
+                                @endif
+                            </p>
+                            @if(request()->hasAny(['search', 'event', 'log_name', 'from', 'to']))
+                                <a href="{{ route('activity.audit') }}" class="btn btn-sm btn-outline-secondary">Limpiar filtros</a>
+                            @endif
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
 
-            <div class="card-footer bg-white px-4" id="pagination-container"></div>
+            @if($activities->hasPages())
+                <div class="card-footer">{{ $activities->links() }}</div>
+            @endif
 
         </div>
     </div>
 
-    {{-- Detail modal --}}
-    <div class="modal fade" id="activityDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="activity-detail-title">Detalle de actividad</h5>
+                    <h5 class="modal-title">Acción masiva</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="activity-detail-body"></div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> registro(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100 mb-2" data-bs-dismiss="modal">Cerrar</button>
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Filtros avanzados --}}
+    <div class="modal fade" id="audit-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Evento</label>
+                        <select id="modal-event" class="form-control select2-filter-modal">
+                            <option value="">Todos los eventos</option>
+                            <option value="created" @selected(request('event') === 'created')>Creado</option>
+                            <option value="updated" @selected(request('event') === 'updated')>Actualizado</option>
+                            <option value="deleted" @selected(request('event') === 'deleted')>Eliminado</option>
+                            <option value="login" @selected(request('event') === 'login')>Login</option>
+                            <option value="logout" @selected(request('event') === 'logout')>Logout</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Módulo</label>
+                        <select id="modal-log-name" class="form-control select2-filter-modal">
+                            <option value="">Todos los módulos</option>
+                            @foreach($logNames as $logName)
+                                <option value="{{ $logName }}" @selected(request('log_name') === $logName)>{{ ucfirst($logName) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-0">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Desde</label>
+                            <input type="date" id="modal-from" class="form-control" value="{{ request('from') }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Hasta</label>
+                            <input type="date" id="modal-to" class="form-control" value="{{ request('to') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="audit-filter-apply-btn" class="btn btn-primary w-100 mb-1">Aplicar filtros</button>
+                    <button type="button" id="audit-filter-clear-btn" class="btn btn-secondary w-100">Limpiar</button>
                 </div>
             </div>
         </div>
@@ -149,238 +331,100 @@
 
 @endsection
 
+@push('styles')
+<style>
+    .act-filter-badge { font-size: .6rem; }
+</style>
+@endpush
+
 @push('scripts')
 <script>
-(function () {
-    var currentPage = 1;
-    var eventColors = {
-        created: 'success',
-        updated: 'primary',
-        deleted: 'primary',
-        login: 'info',
-        logout: 'secondary'
-    };
+$(document).ready(function () {
+    // ── Filtros avanzados ────────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#audit-filter-modal'), width: '100%' });
 
-    function eventBadge(event) {
-        var color = eventColors[event] || 'secondary';
-        return '<span class="badge bg-' + color + '-subtle text-' + color + '">' + (event || 'n/a') + '</span>';
-    }
+    $('#audit-filter-apply-btn').on('click', function () {
+        $('#filter-event').val($('#modal-event').val());
+        $('#filter-log-name').val($('#modal-log-name').val());
+        $('#filter-from').val($('#modal-from').val());
+        $('#filter-to').val($('#modal-to').val());
+        $('#audit-filter-modal').modal('hide');
+        $('#audit-filter-form').submit();
+    });
 
-    function loadData(page) {
-        page = page || 1;
-        currentPage = page;
+    $('#audit-filter-clear-btn').on('click', function () {
+        window.location = '{{ route('activity.audit') }}';
+    });
 
-        $('#activity-table-container').html(
-            '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-secondary"></div></div>'
-        );
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Éxito');
+    @endif
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
+    @endif
 
-        $.get('{{ route("activity.audit.data") }}', {
-            page: page,
-            search: $('#filterSearch').val(),
-            event: $('#filterEvent').val(),
-            log_name: $('#filterLogName').val(),
-            date_from: $('#filterDateFrom').val(),
-            date_to: $('#filterDateTo').val()
-        }, function (res) {
-            if (!res.success) { return; }
+    // Bulk actions
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-            $('#total-count').text(res.pagination.total + ' registros encontrados');
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
-            if (!res.data.length) {
-                $('#activity-table-container').html(
-                    '<div class="text-center py-5">' +
-                    '<i class="fas fa-inbox fa-3x text-muted opacity-50 d-block mb-3"></i>' +
-                    '<h6 class="text-muted">Sin actividad registrada</h6></div>'
-                );
-                $('#pagination-container').html('');
-                return;
-            }
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
 
-            var rows = res.data.map(function (a) {
-                var subject = a.subject_type
-                    ? '<span class="badge bg-light text-dark">' + a.subject_type + (a.subject_id ? ' #' + a.subject_id : '') + '</span>'
-                    : '';
-                var safeData = JSON.stringify(a).replace(/"/g, '&quot;');
-                return '<tr style="cursor:pointer;" onclick="showDetail(' + safeData + ')">' +
-                    '<td>' +
-                        '<div class="small fw-semibold">' + a.causer_name + '</div>' +
-                        '<small class="text-muted">' + a.causer_email + '</small>' +
-                    '</td>' +
-                    '<td>' + eventBadge(a.event) + '</td>' +
-                    '<td>' +
-                        '<small class="text-truncate d-block" style="max-width:240px;">' + (a.description || '-') + '</small>' +
-                        subject +
-                    '</td>' +
-                    '<td><span class="badge bg-light text-dark">' + (a.log_name || 'default') + '</span></td>' +
-                    '<td>' +
-                        '<div class="small">' + a.created_at + '</div>' +
-                        '<small class="text-muted">' + a.created_at_human + '</small>' +
-                    '</td>' +
-                    '</tr>';
-            }).join('');
+    // Refresh stats
+    $('#refresh-stats-btn').on('click', function () {
+        const $btn  = $(this);
+        const $icon = $btn.find('i');
+        $btn.prop('disabled', true);
+        $icon.addClass('fa-spin');
 
-            $('#activity-table-container').html(
-                '<div class="table-responsive">' +
-                '<table class="table table-hover align-middle mb-0">' +
-                '<thead class="table-light">' +
-                '<tr><th>Usuario</th><th>Evento</th><th>Descripción</th><th>Módulo</th><th>Fecha</th></tr>' +
-                '</thead><tbody>' + rows + '</tbody></table></div>'
-            );
+        $.getJSON('{{ route('activity.logs.stats') }}')
+            .done(function (data) {
+                $('[data-stat="total"]').text(new Intl.NumberFormat().format(data.total));
+                $('[data-stat="created"]').text(new Intl.NumberFormat().format(data.created));
+                $('[data-stat="updated"]').text(new Intl.NumberFormat().format(data.updated));
+                $('[data-stat="deleted"]').text(new Intl.NumberFormat().format(data.deleted));
+                toastr.success('Stats actualizados');
+            })
+            .fail(function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al refrescar.');
+            })
+            .always(function () {
+                $btn.prop('disabled', false);
+                $icon.removeClass('fa-spin');
+            });
+    });
 
-            renderPagination(res.pagination);
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un registro.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' registro(s) seleccionados?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('activity.logs.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.message || res.count + ' registro(s) eliminados.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
         });
-    }
-
-    function renderPagination(p) {
-        if (p.last_page <= 1) {
-            $('#pagination-container').html(
-                '<div class="d-flex justify-content-center py-2">' +
-                '<small class="text-muted">Mostrando ' + p.total + ' registro(s)</small>' +
-                '</div>'
-            );
-            return;
-        }
-
-        var from = (p.current_page - 1) * p.per_page + 1;
-        var to = Math.min(p.current_page * p.per_page, p.total);
-
-        var info = '<small class="text-muted">Mostrando ' + from + '-' + to + ' de ' + p.total + ' registros</small>';
-
-        var pages = [];
-        pages.push(1);
-        if (p.current_page > 3) { pages.push('...'); }
-        for (var i = Math.max(2, p.current_page - 1); i <= Math.min(p.last_page - 1, p.current_page + 1); i++) {
-            pages.push(i);
-        }
-        if (p.current_page < p.last_page - 2) { pages.push('...'); }
-        if (p.last_page > 1) { pages.push(p.last_page); }
-
-        var nav = '<ul class="pagination pagination-sm mb-0">';
-        nav += '<li class="page-item' + (p.current_page === 1 ? ' disabled' : '') + '">' +
-            '<a class="page-link" href="#" data-page="' + (p.current_page - 1) + '">&lsaquo;</a></li>';
-        for (var j = 0; j < pages.length; j++) {
-            if (pages[j] === '...') {
-                nav += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
-            } else {
-                nav += '<li class="page-item' + (pages[j] === p.current_page ? ' active' : '') + '">' +
-                    '<a class="page-link" href="#" data-page="' + pages[j] + '">' + pages[j] + '</a></li>';
-            }
-        }
-        nav += '<li class="page-item' + (p.current_page === p.last_page ? ' disabled' : '') + '">' +
-            '<a class="page-link" href="#" data-page="' + (p.current_page + 1) + '">&rsaquo;</a></li>';
-        nav += '</ul>';
-
-        $('#pagination-container').html(
-            '<div class="d-flex justify-content-between align-items-center py-2">' +
-            info + '<nav>' + nav + '</nav></div>'
-        );
-    }
-
-    function formatValue(val) {
-        if (val === null || val === undefined) return '<span class="text-muted fst-italic">vacío</span>';
-        if (typeof val === 'object') return JSON.stringify(val);
-        return String(val);
-    }
-
-    function renderChangesTable(props) {
-        var attrs = props.attributes || {};
-        var old = props.old || {};
-        var keys = Object.keys(attrs);
-        if (!keys.length) return '';
-
-        var rows = keys.map(function (key) {
-            var oldVal = old.hasOwnProperty(key) ? old[key] : null;
-            var newVal = attrs[key];
-            return '<tr>' +
-                '<td class="fw-semibold">' + key + '</td>' +
-                '<td class="text-danger">' + formatValue(oldVal) + '</td>' +
-                '<td class="text-success fw-semibold">' + formatValue(newVal) + '</td>' +
-                '</tr>';
-        }).join('');
-
-        return '<label class="form-label fw-semibold text-muted mb-2">Cambios realizados</label>' +
-            '<div class="table-responsive">' +
-            '<table class="table table-striped table-bordered w-100 text-nowrap">' +
-            '<thead><tr><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th></tr>' +
-            '</thead><tbody>' + rows + '</tbody></table></div>';
-    }
-
-    function renderFlatProperties(props) {
-        var exclude = ['attributes', 'old'];
-        var keys = Object.keys(props).filter(function (k) { return exclude.indexOf(k) === -1; });
-        if (!keys.length) return '';
-
-        var rows = keys.map(function (key) {
-            var val = props[key];
-            var display = (typeof val === 'object' && val !== null) ? JSON.stringify(val) : formatValue(val);
-            return '<tr>' +
-                '<td class="fw-semibold">' + key + '</td>' +
-                '<td>' + display + '</td>' +
-                '</tr>';
-        }).join('');
-
-        return '<label class="form-label fw-semibold text-muted mb-2">Propiedades</label>' +
-            '<div class="table-responsive">' +
-            '<table class="table table-striped table-bordered w-100 text-nowrap">' +
-            '<thead><tr><th>Campo</th><th>Valor</th></tr>' +
-            '</thead><tbody>' + rows + '</tbody></table></div>';
-    }
-
-    window.showDetail = function (a) {
-        $('#activity-detail-title').text(a.description || 'Detalle de actividad');
-
-        var subject = a.subject_type ? a.subject_type + (a.subject_id ? ' #' + a.subject_id : '') : '-';
-
-        var html = '<div class="row g-3 mb-4">' +
-            '<div class="col-md-6">' +
-                '<label class="form-label fw-semibold text-muted mb-1">Usuario</label>' +
-                '<input type="text" class="form-control bg-light" value="' + a.causer_name + (a.causer_email ? ' (' + a.causer_email + ')' : '') + '" readonly>' +
-            '</div>' +
-            '<div class="col-md-6">' +
-                '<label class="form-label fw-semibold text-muted mb-1">Fecha</label>' +
-                '<input type="text" class="form-control bg-light" value="' + a.created_at + ' (' + a.created_at_human + ')" readonly>' +
-            '</div>' +
-            '<div class="col-md-4">' +
-                '<label class="form-label fw-semibold text-muted mb-1">Evento</label>' +
-                '<input type="text" class="form-control bg-light" value="' + (a.event || 'n/a') + '" readonly>' +
-            '</div>' +
-            '<div class="col-md-4">' +
-                '<label class="form-label fw-semibold text-muted mb-1">Modulo</label>' +
-                '<input type="text" class="form-control bg-light" value="' + (a.log_name || 'default') + '" readonly>' +
-            '</div>' +
-            '<div class="col-md-4">' +
-                '<label class="form-label fw-semibold text-muted mb-1">Objeto</label>' +
-                '<input type="text" class="form-control bg-light" value="' + subject + '" readonly>' +
-            '</div>' +
-        '</div>';
-
-        var hasProps = a.properties && Object.keys(a.properties).length > 0;
-        if (hasProps) {
-            var hasChanges = a.properties.attributes && Object.keys(a.properties.attributes).length > 0;
-            if (hasChanges) {
-                html += renderChangesTable(a.properties);
-            }
-            html += renderFlatProperties(a.properties);
-        }
-
-        $('#activity-detail-body').html(html);
-
-        new bootstrap.Modal(document.getElementById('activityDetailModal')).show();
-    };
-
-    $(document).on('click', '#pagination-container .page-link', function (e) {
-        e.preventDefault();
-        var page = parseInt($(this).data('page'));
-        if (page >= 1) { loadData(page); }
     });
-
-    $('#applyFilters').on('click', function () { loadData(1); });
-    $('#filterEvent, #filterLogName').on('change', function () { loadData(1); });
-    $('#filterSearch').on('keypress', function (e) {
-        if (e.which === 13) { loadData(1); }
-    });
-
-    loadData(1);
-})();
+});
 </script>
 @endpush

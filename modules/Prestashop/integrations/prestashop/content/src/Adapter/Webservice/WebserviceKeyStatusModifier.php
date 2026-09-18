@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ final class WebserviceKeyStatusModifier
 
     /**
      * WebserviceKeyStatusModifier constructor.
-     *
-     * @param TranslatorInterface $translator
      */
     public function __construct(TranslatorInterface $translator)
     {
@@ -53,8 +52,7 @@ final class WebserviceKeyStatusModifier
     /**
      * Toggles status for webservice key entity.
      *
-     * @param int $columnId - an id which identifies the required entity to be modified
-     *
+     * @param  int  $columnId  - an id which identifies the required entity to be modified
      * @return string[] - if empty when process of status change was successful
      *
      * @throws \PrestaShopDatabaseException
@@ -64,20 +62,20 @@ final class WebserviceKeyStatusModifier
     {
         $webserviceKey = new WebserviceKey($columnId);
 
-        if (!Validate::isLoadedObject($webserviceKey)) {
+        if (! Validate::isLoadedObject($webserviceKey)) {
             $error = $this->translator
                 ->trans(
                     'An error occurred while updating the status for an object.',
                     [],
                     'Admin.Notifications.Error'
-                ) .
-                WebserviceKey::$definition['table'] .
+                ).
+                WebserviceKey::$definition['table'].
                 $this->translator->trans('(cannot load object)', [], 'Admin.Notifications.Error');
 
             return [$error];
         }
 
-        if (!$webserviceKey->toggleStatus()) {
+        if (! $webserviceKey->toggleStatus()) {
             $error = $this->translator
                 ->trans('An error occurred while updating the status.', [], 'Admin.Notifications.Error');
 
@@ -90,9 +88,7 @@ final class WebserviceKeyStatusModifier
     /**
      * Updates status for multiple fields.
      *
-     * @param array $columnIds
-     * @param bool $status
-     *
+     * @param  bool  $status
      * @return bool
      *
      * @throws \PrestaShopDatabaseException

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +55,7 @@ final class GetSqlRequestExecutionResultHandler implements GetSqlRequestExecutio
             $id = $query->getSqlRequestId()->getValue();
             $entity = new RequestSql($id);
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new SqlRequestNotFoundException(sprintf('SqlRequest with id %s was not found', $id));
             }
 
@@ -79,7 +80,6 @@ final class GetSqlRequestExecutionResultHandler implements GetSqlRequestExecutio
     /**
      * Replaces sensitive data with placeholder values.
      *
-     * @param array $records
      *
      * @return array Records with hidden sensitive data
      *
@@ -88,7 +88,7 @@ final class GetSqlRequestExecutionResultHandler implements GetSqlRequestExecutio
     private function hideSensitiveData(array $records)
     {
         foreach ($records as $key => $record) {
-            foreach ((new RequestSql())->attributes as $sensitiveAttribute => $placeholder) {
+            foreach ((new RequestSql)->attributes as $sensitiveAttribute => $placeholder) {
                 if (isset($record[$sensitiveAttribute])) {
                     $records[$key][$sensitiveAttribute] = $placeholder;
                 }

@@ -4,6 +4,8 @@ namespace Modules\Erp\Models\Oracle\Cobro;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya;
+use Modules\Erp\Models\Oracle\Albaran\AlbarancliCentral;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -69,7 +71,7 @@ class DeudacliCentral extends Model
      */
     public function deudacliCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\DeudacliCentral::class, 'iddeudacli_central', 'iddeudacli_central');
+        return $this->belongsTo(DeudacliCentral::class, 'iddeudacli_central', 'iddeudacli_central');
     }
 
     /**
@@ -78,7 +80,7 @@ class DeudacliCentral extends Model
      */
     public function deudacli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\DeudacliCapthaya::class, 'iddeudacli', 'iddeudacli');
+        return $this->belongsTo(DeudacliCapthaya::class, 'iddeudacli', 'iddeudacli');
     }
 
     /**
@@ -87,7 +89,7 @@ class DeudacliCentral extends Model
      */
     public function cobrocli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
+        return $this->belongsTo(CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
     }
 
     /**
@@ -96,7 +98,7 @@ class DeudacliCentral extends Model
      */
     public function cobrocliCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCentral::class, 'idcobrocli_central', 'idcobrocli_central');
+        return $this->belongsTo(CobrocliCentral::class, 'idcobrocli_central', 'idcobrocli_central');
     }
 
     /**
@@ -105,7 +107,7 @@ class DeudacliCentral extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -114,7 +116,7 @@ class DeudacliCentral extends Model
      */
     public function albarancliCentral()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCentral::class, 'idalbarancli_central', 'idalbarancli_central');
+        return $this->belongsTo(AlbarancliCentral::class, 'idalbarancli_central', 'idalbarancli_central');
     }
 
     /**
@@ -123,6 +125,6 @@ class DeudacliCentral extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 }

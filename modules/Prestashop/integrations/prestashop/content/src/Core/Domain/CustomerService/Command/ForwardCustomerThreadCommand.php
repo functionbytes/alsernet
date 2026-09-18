@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,15 +59,14 @@ class ForwardCustomerThreadCommand
     /**
      * Creates command for forwarding customer thread for another employee
      *
-     * @param int $customerThreadId
-     * @param int $employeeId
-     * @param string $comment
-     *
+     * @param  int  $customerThreadId
+     * @param  int  $employeeId
+     * @param  string  $comment
      * @return self
      */
     public static function toAnotherEmployee($customerThreadId, $employeeId, $comment)
     {
-        $command = new self();
+        $command = new self;
         $command->employeeId = new EmployeeId($employeeId);
         $command->customerThreadId = new CustomerThreadId($customerThreadId);
         $command->comment = $comment;
@@ -77,15 +77,14 @@ class ForwardCustomerThreadCommand
     /**
      * Creates command for forwarding customer thread for someone else (not employee)
      *
-     * @param int $customerThreadId
-     * @param string $email
-     * @param string $comment
-     *
+     * @param  int  $customerThreadId
+     * @param  string  $email
+     * @param  string  $comment
      * @return ForwardCustomerThreadCommand
      */
     public static function toSomeoneElse($customerThreadId, $email, $comment)
     {
-        $command = new self();
+        $command = new self;
         $command->email = new Email($email);
         $command->customerThreadId = new CustomerThreadId($customerThreadId);
         $command->comment = $comment;
@@ -96,9 +95,7 @@ class ForwardCustomerThreadCommand
     /**
      * Command should be created using static factories
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @return EmployeeId|null
@@ -137,6 +134,6 @@ class ForwardCustomerThreadCommand
      */
     public function forwardToEmployee()
     {
-        return null !== $this->employeeId;
+        return $this->employeeId !== null;
     }
 }

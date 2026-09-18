@@ -90,7 +90,7 @@
 
             <div class="col-md-1">
                 <button type="button"
-                        class="btn btn-sm btn-light-danger w-100"
+                        class="btn btn-sm btn-outline-danger w-100"
                         onclick="removeCondition(this)">
                     <i class="fas fa-trash"></i>
                 </button>

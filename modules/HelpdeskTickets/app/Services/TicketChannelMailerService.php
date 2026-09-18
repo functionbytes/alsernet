@@ -3,8 +3,11 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 
 /**
  * Resuelve por qué canal de correo (buzón IMAP/SMTP) debería salir la
@@ -22,6 +25,29 @@ use Modules\HelpdeskTickets\Models\TicketMail;
  */
 class TicketChannelMailerService
 {
+    /**
+     * Memoizadas por ticket_id (no por instancia: SendCustomerConfirmation/
+     * StatusNotification/ReopenNotification/ReplyNotification son listeners
+     * ShouldQueue independientes, cada uno resuelve su PROPIA instancia de
+     * este servicio vía el contenedor — un array de instancia no serviría de
+     * nada entre ellos). El worker que sirve la cola 'notifications'
+     * (supervisor-helpdesk, maxProcesses:1) procesa esos jobs uno tras otro
+     * en el MISMO proceso PHP, así que hasta 4 listeners reaccionando al
+     * mismo cambio de estado de un ticket pagaban hasta 3 queries a
+     * helpdesk_ticket_mails cada uno — 12 queries para un solo evento
+     * (14-sep-2026, auditoría de rendimiento). El canal/hilo de un ticket no
+     * cambia dentro de esa ventana, así que memoizar es seguro.
+     *
+     * @var array<int, array<string, mixed>|null>
+     */
+    private static array $channelCache = [];
+
+    /** @var array<int, string|null> */
+    private static array $lastInboundMessageIdCache = [];
+
+    /** @var array<int, string|null> */
+    private static array $firstMailSubjectCache = [];
+
     public function __construct(private readonly TicketEmailChannelsRepository $channels) {}
 
     /**
@@ -29,6 +55,10 @@ class TicketChannelMailerService
      */
     public function resolveChannelForTicket(Ticket $ticket): ?array
     {
+        if (array_key_exists($ticket->id, self::$channelCache)) {
+            return self::$channelCache[$ticket->id];
+        }
+
         $lastInbound = TicketMail::where('ticket_id', $ticket->id)
             ->where('direction', 'inbound')
             ->latest()
@@ -41,7 +71,7 @@ class TicketChannelMailerService
                 $username = strtolower((string) ($channel['username'] ?? ''));
 
                 if ($username !== '' && str_contains($to, $username)) {
-                    return $channel;
+                    return self::$channelCache[$ticket->id] = $channel;
                 }
             }
         }
@@ -53,7 +83,7 @@ class TicketChannelMailerService
         // recibido tu solicitud" salía del mailer genérico de la app en vez
         // del buzón real de soporte (detectado 3-sep-2026 probando un ticket
         // real nacido del formulario de contacto de alsernetforms).
-        return $this->channels->default();
+        return self::$channelCache[$ticket->id] = $this->channels->default();
     }
 
     /**
@@ -63,7 +93,11 @@ class TicketChannelMailerService
      */
     public function lastInboundMessageId(Ticket $ticket): ?string
     {
-        return TicketMail::where('ticket_id', $ticket->id)
+        if (array_key_exists($ticket->id, self::$lastInboundMessageIdCache)) {
+            return self::$lastInboundMessageIdCache[$ticket->id];
+        }
+
+        return self::$lastInboundMessageIdCache[$ticket->id] = TicketMail::where('ticket_id', $ticket->id)
             ->where('direction', 'inbound')
             ->latest()
             ->value('message_id');
@@ -88,7 +122,16 @@ class TicketChannelMailerService
      */
     public function threadSubject(Ticket $ticket): string
     {
-        $stored = TicketMail::where('ticket_id', $ticket->id)->oldest()->value('subject');
+        // Solo se memoiza la parte que cuesta una query (el asunto guardado
+        // del primer TicketMail); el resto se recalcula siempre con los
+        // datos ACTUALES de $ticket, para no arrastrar un subject/
+        // ticket_number obsoleto de una llamada anterior con una instancia
+        // más vieja del mismo ticket.
+        if (! array_key_exists($ticket->id, self::$firstMailSubjectCache)) {
+            self::$firstMailSubjectCache[$ticket->id] = TicketMail::where('ticket_id', $ticket->id)->oldest()->value('subject');
+        }
+
+        $stored = self::$firstMailSubjectCache[$ticket->id];
 
         $base = $stored ? $this->stripThreadDecorations($ticket, $stored) : null;
 
@@ -140,13 +183,15 @@ class TicketChannelMailerService
             'password' => $channel['password'],
         ];
 
+        $streamOptions = null;
+
         // Mismo apaño que en FetchTicketEmailsJob para los servidores que solo
         // hablan TLS 1.0/1.1: OpenSSL 3 los rechaza de fabrica y el envio muere
         // con "unsupported protocol". Se rebaja el nivel de cifrado solo para
         // los hosts declarados en helpdesk.imap.legacy_tls_hosts, y sin tocar la
         // verificacion del certificado, que sigue exigiendose.
         if ($this->needsLegacyTls((string) $channel['smtp_host'])) {
-            $mailer['stream'] = [
+            $streamOptions = [
                 'ssl' => [
                     'ciphers' => 'DEFAULT@SECLEVEL=0',
                     'verify_peer' => true,
@@ -156,6 +201,24 @@ class TicketChannelMailerService
         }
 
         Config::set("mail.mailers.{$name}", $mailer);
+
+        // Config::set(...) por sí solo NO alcanza para el apaño de arriba:
+        // MailManager::configureSmtpTransport() (Laravel 12) no lee ninguna
+        // clave 'stream' del config array, así que guardarla ahí es un no-op
+        // silencioso — verificado con un envío real contra correo.a-alvarez.com,
+        // que fallaba con el mismo "unsupported protocol" pese a esta config.
+        // Symfony sí expone setStreamOptions() en el SocketStream del
+        // transporte ya construido, así que se aplica acá, sobre la instancia
+        // que Mail::mailer($name) cachea internamente (MailManager::mailer()
+        // reutiliza la misma instancia entre llamadas con el mismo $name),
+        // para que el envío real que haga el llamador ya la tenga puesta.
+        if ($streamOptions !== null) {
+            $transport = Mail::mailer($name)->getSymfonyTransport();
+
+            if ($transport instanceof EsmtpTransport && ($stream = $transport->getStream()) instanceof SocketStream) {
+                $stream->setStreamOptions($streamOptions);
+            }
+        }
 
         return $name;
     }

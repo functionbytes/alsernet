@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,7 @@ interface AdminPagePreferenceInterface
     /**
      * Use it to know if we need to redirect to legacy Controllers or not.
      *
-     * @param string $page the page to look for
-     *
+     * @param  string  $page  the page to look for
      * @return bool true to redirect to legacy
      */
     public function getTemporaryShouldUseLegacyPage($page);
@@ -47,8 +47,8 @@ interface AdminPagePreferenceInterface
     /**
      * Set the temporary behavior of the new/old page on Admin interface.
      *
-     * @param string $page the page to look for
-     * @param bool $useLegacy true to redirect to old legacy pages for Product controller
+     * @param  string  $page  the page to look for
+     * @param  bool  $useLegacy  true to redirect to old legacy pages for Product controller
      */
     public function setTemporaryShouldUseLegacyPage($page, $useLegacy);
 
@@ -56,8 +56,7 @@ interface AdminPagePreferenceInterface
      * Use it to know if we need to display the 'switch to legacy page' button or not.
      * In debug mode, always shown.
      *
-     * @param string $page the page to look for
-     *
+     * @param  string  $page  the page to look for
      * @return bool true to show the switch to legacy page button
      */
     public function getTemporaryShouldAllowUseLegacyPage($page = null);

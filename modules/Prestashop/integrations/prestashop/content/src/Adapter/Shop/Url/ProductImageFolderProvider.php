@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ class ProductImageFolderProvider implements UrlProviderInterface
      */
     private $imagesRelativeFolder;
 
-    /**
-     * @param Link $link
-     * @param string $imagesRelativeFolder
-     */
     public function __construct(
         Link $link,
         string $imagesRelativeFolder
@@ -57,11 +54,9 @@ class ProductImageFolderProvider implements UrlProviderInterface
 
     /**
      * Create a link to product images base folder.
-     *
-     * @return string
      */
     public function getUrl(): string
     {
-        return rtrim($this->link->getBaseLink(), '/') . '/' . rtrim($this->imagesRelativeFolder, '/');
+        return rtrim($this->link->getBaseLink(), '/').'/'.rtrim($this->imagesRelativeFolder, '/');
     }
 }

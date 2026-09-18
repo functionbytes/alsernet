@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,12 +51,6 @@ class AttachmentInformation
      */
     private $type;
 
-    /**
-     * @param int $attachmentId
-     * @param string $name
-     * @param string $fileName
-     * @param string $type
-     */
     public function __construct(int $attachmentId, string $name, string $fileName, string $type)
     {
         $this->attachmentId = $attachmentId;
@@ -64,33 +59,21 @@ class AttachmentInformation
         $this->type = $type;
     }
 
-    /**
-     * @return int
-     */
     public function getAttachmentId(): int
     {
         return $this->attachmentId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getFileName(): string
     {
         return $this->fileName;
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return $this->type;

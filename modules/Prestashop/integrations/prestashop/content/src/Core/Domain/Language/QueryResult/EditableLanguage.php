@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,15 +82,11 @@ class EditableLanguage
     private $shopAssociation;
 
     /**
-     * @param LanguageId $languageId
-     * @param string $name
-     * @param IsoCode $isoCode
-     * @param TagIETF $tagIETF
-     * @param string $shortDateFormat
-     * @param string $fullDateFormat
-     * @param bool $isRtl
-     * @param bool $isActive
-     * @param array $shopAssociation
+     * @param  string  $name
+     * @param  string  $shortDateFormat
+     * @param  string  $fullDateFormat
+     * @param  bool  $isRtl
+     * @param  bool  $isActive
      */
     public function __construct(
         LanguageId $languageId,

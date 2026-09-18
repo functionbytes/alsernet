@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,13 +53,12 @@ class ModulePresenter implements PresenterInterface
     }
 
     /**
-     * @param Module $module
-     *
+     * @param  Module  $module
      * @return array
      */
     public function present($module)
     {
-        if (!($module instanceof Module)) {
+        if (! ($module instanceof Module)) {
             throw new Exception('ModulePresenter can only present instance of Module');
         }
 
@@ -93,7 +93,7 @@ class ModulePresenter implements PresenterInterface
             $prices['displayPrice'] = $this->priceFormatter->convertAndFormat($prices[$iso_code]);
             $prices['raw'] = $prices[$iso_code];
         } else {
-            $prices['displayPrice'] = '$' . $prices['USD'];
+            $prices['displayPrice'] = '$'.$prices['USD'];
             $prices['raw'] = $prices['USD'];
         }
 
@@ -103,8 +103,7 @@ class ModulePresenter implements PresenterInterface
     /**
      * Transform a collection of addons as a simple array of data.
      *
-     * @param AddonsCollection|array $modules
-     *
+     * @param  AddonsCollection|array  $modules
      * @return array
      */
     public function presentCollection($modules)
@@ -120,8 +119,7 @@ class ModulePresenter implements PresenterInterface
     /**
      * Generate the list of small icons to be displayed near the module name.
      *
-     * @param array $attributes Attributes of presented module
-     *
+     * @param  array  $attributes  Attributes of presented module
      * @return array
      */
     private function addPicos(array $attributes)
@@ -129,7 +127,7 @@ class ModulePresenter implements PresenterInterface
         $picos = [];
 
         // PrestaTrust display
-        if (!empty($attributes['prestatrust']) && !empty($attributes['prestatrust']->pico)) {
+        if (! empty($attributes['prestatrust']) && ! empty($attributes['prestatrust']->pico)) {
             $text = '';
             $class = '';
             if (isset($attributes['prestatrust']->status)) {

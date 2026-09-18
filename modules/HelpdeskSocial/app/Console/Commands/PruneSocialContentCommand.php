@@ -6,6 +6,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskSocial\Models\SocialCompetitorMetric;
 use Modules\HelpdeskSocial\Models\SocialMention;
 
 /**
@@ -47,7 +48,42 @@ class PruneSocialContentCommand extends Command
 
         $this->components->info("Pruned {$comments} comment(s) and {$mentions} mention(s) older than {$days} days.");
 
+        $this->pruneCompetitorMetrics();
+
         return self::SUCCESS;
+    }
+
+    /**
+     * Retencion propia (helpdesksocial.competitors.metrics_retention_days):
+     * el benchmarking de competidores se consulta con mucha menos frecuencia
+     * que los comentarios/menciones, así que no comparte el retention_days
+     * general.
+     */
+    private function pruneCompetitorMetrics(): void
+    {
+        $days = (int) config('helpdesksocial.competitors.metrics_retention_days', 0);
+
+        if ($days <= 0) {
+            return;
+        }
+
+        $cutoff = now()->subDays($days);
+        $total = 0;
+
+        do {
+            $deleted = SocialCompetitorMetric::query()
+                ->where('captured_at', '<', $cutoff)
+                ->limit(1000)
+                ->delete();
+
+            $total += $deleted;
+        } while ($deleted > 0);
+
+        if ($total > 0) {
+            Log::info('Pruned social competitor metrics', ['metrics' => $total, 'older_than_days' => $days]);
+        }
+
+        $this->components->info("Pruned {$total} competitor metric(s) older than {$days} days.");
     }
 
     private function pruneClosedComments(CarbonInterface $cutoff): int

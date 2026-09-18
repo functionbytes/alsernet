@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class ClassLang
     /**
      * ClassLang constructor.
      *
-     * @param string $locale
+     * @param  string  $locale
      */
     public function __construct($locale)
     {
@@ -49,13 +50,12 @@ class ClassLang
     }
 
     /**
-     * @param string $className
-     *
+     * @param  string  $className
      * @return bool
      */
     public function getClassLang($className)
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             return false;
         }
 

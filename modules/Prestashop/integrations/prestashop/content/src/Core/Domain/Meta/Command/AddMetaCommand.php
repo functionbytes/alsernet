@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ class AddMetaCommand extends AbstractMetaCommand
     private $LocalisedRewriteUrls;
 
     /**
-     * @param string $pageName
+     * @param  string  $pageName
      *
      * @throws MetaConstraintException
      */
@@ -86,8 +87,7 @@ class AddMetaCommand extends AbstractMetaCommand
     }
 
     /**
-     * @param string[] $localisedPageTitle
-     *
+     * @param  string[]  $localisedPageTitle
      * @return self
      *
      * @throws MetaConstraintException
@@ -112,8 +112,7 @@ class AddMetaCommand extends AbstractMetaCommand
     }
 
     /**
-     * @param string[] $localisedMetaDescription
-     *
+     * @param  string[]  $localisedMetaDescription
      * @return self
      *
      * @throws MetaConstraintException
@@ -138,8 +137,7 @@ class AddMetaCommand extends AbstractMetaCommand
     }
 
     /**
-     * @param string[] $localisedMetaKeywords
-     *
+     * @param  string[]  $localisedMetaKeywords
      * @return self
      *
      * @throws MetaConstraintException
@@ -164,8 +162,7 @@ class AddMetaCommand extends AbstractMetaCommand
     }
 
     /**
-     * @param string[] $LocalisedRewriteUrls
-     *
+     * @param  string[]  $LocalisedRewriteUrls
      * @return self
      */
     public function setLocalisedRewriteUrls(array $LocalisedRewriteUrls)

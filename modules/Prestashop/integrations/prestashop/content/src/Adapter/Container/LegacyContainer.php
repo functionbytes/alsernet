@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,6 +37,4 @@ use Symfony\Component\DependencyInjection\Container;
  * It implements LegacyContainerInterface which allows to detect if the container
  * was built by Symfony or by PrestaShop.
  */
-class LegacyContainer extends Container implements LegacyContainerInterface
-{
-}
+class LegacyContainer extends Container implements LegacyContainerInterface {}

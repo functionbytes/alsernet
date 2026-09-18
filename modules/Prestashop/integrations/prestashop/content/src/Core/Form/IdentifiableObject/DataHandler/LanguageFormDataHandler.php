@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class LanguageFormDataHandler implements FormDataHandlerInterface
      */
     private $bus;
 
-    /**
-     * @param CommandBusInterface $bus
-     */
     public function __construct(CommandBusInterface $bus)
     {
         $this->bus = $bus;
@@ -55,7 +53,7 @@ final class LanguageFormDataHandler implements FormDataHandlerInterface
      */
     public function create(array $data)
     {
-        if (!isset($data['shop_association']) || !$data['shop_association']) {
+        if (! isset($data['shop_association']) || ! $data['shop_association']) {
             $data['shop_association'] = [];
         }
 
@@ -93,8 +91,7 @@ final class LanguageFormDataHandler implements FormDataHandlerInterface
             ->setShortDateFormat((string) $data['short_date_format'])
             ->setFullDateFormat((string) $data['full_date_format'])
             ->setIsRtl($data['is_rtl'])
-            ->setIsActive($data['is_active'])
-        ;
+            ->setIsActive($data['is_active']);
 
         if ($data['flag_image'] instanceof UploadedFile) {
             $command->setFlagImagePath($data['flag_image']->getPathname());
@@ -106,7 +103,9 @@ final class LanguageFormDataHandler implements FormDataHandlerInterface
 
         if (isset($data['shop_association'])) {
             $shopAssociation = $data['shop_association'] ?: [];
-            $shopAssociation = array_map(function ($shopId) { return (int) $shopId; }, $shopAssociation);
+            $shopAssociation = array_map(function ($shopId) {
+                return (int) $shopId;
+            }, $shopAssociation);
 
             $command->setShopAssociation($shopAssociation);
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class GetCmsPageCategoriesForBreadcrumbHandler implements GetCmsPageCatego
     private $contextLanguageId;
 
     /**
-     * @param int $contextLanguageId
+     * @param  int  $contextLanguageId
      */
     public function __construct($contextLanguageId)
     {
@@ -68,7 +69,7 @@ final class GetCmsPageCategoriesForBreadcrumbHandler implements GetCmsPageCatego
                 $this->contextLanguageId
             );
 
-            if (0 >= $currentCategory->id) {
+            if ($currentCategory->id <= 0) {
                 throw new CmsPageCategoryNotFoundException(sprintf('Cms category object with id "%s" has not been found for retrieving breadcrumbs', $query->getCurrentCategoryId()->getValue()));
             }
 
@@ -85,7 +86,7 @@ final class GetCmsPageCategoriesForBreadcrumbHandler implements GetCmsPageCatego
             'name' => $rootCategory->name,
         ];
 
-        if (CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID === $query->getCurrentCategoryId()->getValue()) {
+        if ($query->getCurrentCategoryId()->getValue() === CmsPageCategoryId::ROOT_CMS_PAGE_CATEGORY_ID) {
             return new Breadcrumb([
                 new BreadcrumbItem(
                     (int) $rootCategoryData['id_cms_category'],

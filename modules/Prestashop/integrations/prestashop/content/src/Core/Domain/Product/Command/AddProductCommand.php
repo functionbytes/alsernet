@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ class AddProductCommand
      */
     private $productType;
 
-    /**
-     * @param array $localizedNames
-     * @param string $productType
-     */
     public function __construct(
         array $localizedNames,
         string $productType
@@ -65,9 +62,6 @@ class AddProductCommand
         return $this->localizedNames;
     }
 
-    /**
-     * @return ProductType
-     */
     public function getProductType(): ProductType
     {
         return $this->productType;

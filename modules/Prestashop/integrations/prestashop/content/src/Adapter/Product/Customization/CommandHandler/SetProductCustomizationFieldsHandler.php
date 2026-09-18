@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,6 @@ class SetProductCustomizationFieldsHandler implements SetProductCustomizationFie
      */
     private $productCustomizationFieldUpdater;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductCustomizationFieldUpdater $productCustomizationFieldUpdater
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductCustomizationFieldUpdater $productCustomizationFieldUpdater
@@ -86,15 +83,9 @@ class SetProductCustomizationFieldsHandler implements SetProductCustomizationFie
         }, $product->getNonDeletedCustomizationFieldIds());
     }
 
-    /**
-     * @param ProductId $productId
-     * @param CustomizationFieldDTO $customizationFieldDTO
-     *
-     * @return CustomizationField
-     */
     private function buildEntityFromDTO(ProductId $productId, CustomizationFieldDTO $customizationFieldDTO): CustomizationField
     {
-        $customizationField = new CustomizationField();
+        $customizationField = new CustomizationField;
         $customizationField->id = $customizationFieldDTO->getCustomizationFieldId();
         $customizationField->id_product = $productId->getValue();
         $customizationField->type = $customizationFieldDTO->getType();

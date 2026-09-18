@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,17 +41,11 @@ class RemoveAllProductsFromPackCommand
      */
     private $packId;
 
-    /**
-     * @param int $packId
-     */
     public function __construct(int $packId)
     {
         $this->packId = new PackId($packId);
     }
 
-    /**
-     * @return PackId
-     */
     public function getPackId(): PackId
     {
         return $this->packId;

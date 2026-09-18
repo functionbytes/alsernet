@@ -3,8 +3,10 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentValidationCondition;
 
@@ -289,5 +291,39 @@ class DocumentValidationConditionController extends Controller
                 ->back()
                 ->with('error', 'Error al actualizar el estado: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Perform a bulk action on selected validation conditions.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', Rule::in(['activate', 'deactivate', 'delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['string'],
+        ]);
+
+        $conditions = DocumentValidationCondition::whereIn('uid', $validated['ids'])->get();
+
+        $count = 0;
+
+        foreach ($conditions as $condition) {
+            match ($validated['action']) {
+                'activate' => $condition->update(['is_active' => true]),
+                'deactivate' => $condition->update(['is_active' => false]),
+                'delete' => $condition->delete(),
+            };
+
+            $count++;
+        }
+
+        $message = match ($validated['action']) {
+            'activate' => "{$count} condición(es) activada(s).",
+            'deactivate' => "{$count} condición(es) desactivada(s).",
+            'delete' => "{$count} condición(es) eliminada(s).",
+        };
+
+        return response()->json(['success' => true, 'message' => $message, 'count' => $count]);
     }
 }

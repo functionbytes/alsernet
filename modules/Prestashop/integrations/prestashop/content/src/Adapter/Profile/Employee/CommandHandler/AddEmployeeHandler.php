@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,11 +60,6 @@ final class AddEmployeeHandler extends AbstractEmployeeHandler implements AddEmp
      */
     private $contextEmployeeProvider;
 
-    /**
-     * @param Hashing $hashing
-     * @param ProfileAccessCheckerInterface $profileAccessChecker
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
-     */
     public function __construct(
         Hashing $hashing,
         ProfileAccessCheckerInterface $profileAccessChecker,
@@ -84,7 +80,7 @@ final class AddEmployeeHandler extends AbstractEmployeeHandler implements AddEmp
             (int) $command->getProfileId()
         );
 
-        if (!$canAccessProfile) {
+        if (! $canAccessProfile) {
             throw new InvalidProfileException('You cannot access the provided profile.');
         }
 
@@ -100,13 +96,12 @@ final class AddEmployeeHandler extends AbstractEmployeeHandler implements AddEmp
     /**
      * Create legacy employee object.
      *
-     * @param AddEmployeeCommand $command
      *
      * @return Employee
      */
     private function createLegacyEmployeeObjectFromCommand(AddEmployeeCommand $command)
     {
-        $employee = new Employee();
+        $employee = new Employee;
         $employee->firstname = $command->getFirstName()->getValue();
         $employee->lastname = $command->getLastName()->getValue();
         $employee->email = $command->getEmail()->getValue();
@@ -120,7 +115,7 @@ final class AddEmployeeHandler extends AbstractEmployeeHandler implements AddEmp
         $employee->id_last_customer = $employee->getLastElementsForNotify('customer');
         $employee->has_enabled_gravatar = $command->hasEnabledGravatar();
 
-        if (false === $employee->add()) {
+        if ($employee->add() === false) {
             throw new EmployeeException(sprintf('Failed to add new employee with email "%s"', $command->getEmail()->getValue()));
         }
 
@@ -128,7 +123,7 @@ final class AddEmployeeHandler extends AbstractEmployeeHandler implements AddEmp
     }
 
     /**
-     * @param string $email
+     * @param  string  $email
      *
      * @throws EmailAlreadyUsedException
      */

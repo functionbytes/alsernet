@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShop\PrestaShop\Core\Grid\Query;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 
 /**
@@ -52,11 +54,9 @@ final class MetaQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * MetaQueryBuilder constructor.
      *
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextIdLang
-     * @param int $contextIdShop
+     * @param  string  $dbPrefix
+     * @param  int  $contextIdLang
+     * @param  int  $contextIdShop
      */
     public function __construct(
         Connection $connection,
@@ -100,9 +100,8 @@ final class MetaQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with common sql for meta table.
      *
-     * @param array $filters
      *
-     * @return \Doctrine\DBAL\Query\QueryBuilder
+     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters)
     {
@@ -115,10 +114,10 @@ final class MetaQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'meta', 'm')
+            ->from($this->dbPrefix.'meta', 'm')
             ->innerJoin(
                 'm',
-                $this->dbPrefix . 'meta_lang',
+                $this->dbPrefix.'meta_lang',
                 'l',
                 'm.`id_meta` = l.`id_meta`'
             );
@@ -134,26 +133,26 @@ final class MetaQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb->andWhere('m.`configurable`=1');
 
         foreach ($filters as $name => $value) {
-            if (!in_array($name, $availableFilters, true)) {
+            if (! in_array($name, $availableFilters, true)) {
                 continue;
             }
 
-            if ('id_meta' === $name) {
-                $qb->andWhere('m.`id_meta` = :' . $name);
+            if ($name === 'id_meta') {
+                $qb->andWhere('m.`id_meta` = :'.$name);
                 $qb->setParameter($name, $value);
 
                 continue;
             }
 
-            if ('page' === $name) {
-                $qb->andWhere('m.`page` LIKE :' . $name);
-                $qb->setParameter($name, '%' . $value . '%');
+            if ($name === 'page') {
+                $qb->andWhere('m.`page` LIKE :'.$name);
+                $qb->setParameter($name, '%'.$value.'%');
 
                 continue;
             }
 
-            $qb->andWhere('l.`' . $name . '` LIKE :' . $name);
-            $qb->setParameter($name, '%' . $value . '%');
+            $qb->andWhere('l.`'.$name.'` LIKE :'.$name);
+            $qb->setParameter($name, '%'.$value.'%');
         }
 
         return $qb;

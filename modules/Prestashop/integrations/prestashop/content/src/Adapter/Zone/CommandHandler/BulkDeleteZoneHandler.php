@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,11 @@ final class BulkDeleteZoneHandler implements BulkDeleteZoneHandlerInterface
         foreach ($command->getZoneIds() as $zoneId) {
             $zone = new Zone($zoneId->getValue());
 
-            if (0 >= $zone->id) {
+            if ($zone->id <= 0) {
                 throw new ZoneNotFoundException(sprintf('Unable to find zone with id "%d" for deletion', $zoneId->getValue()));
             }
 
-            if (!$zone->delete()) {
+            if (! $zone->delete()) {
                 throw new DeleteZoneException(sprintf('An error occurred when deleting zone with id "%d"', $zoneId->getValue()), DeleteZoneException::FAILED_BULK_DELETE);
             }
         }

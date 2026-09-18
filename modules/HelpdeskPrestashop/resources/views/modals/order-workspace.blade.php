@@ -69,7 +69,21 @@
 @push('scripts')
     {{-- JS extraido a fichero propio: se cachea en el navegador en vez de
          re-descargarse en cada render del inbox. Fuente en
-         modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar. --}}
-    <script src="{{ asset('modules/helpdeskprestashop/js/order-workspace.js') }}?v={{ @filemtime(base_path('modules/HelpdeskPrestashop/public/js/order-workspace.js')) }}" defer></script>
+         modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar.
+
+         order-workspace.min.js (npm run build:module-assets) es OPCIONAL,
+         mismo criterio "cae si está desactualizado" que tickets-app.js (ver
+         scripts/build-module-assets.mjs): se sirve solo si existe Y es más
+         reciente que su fuente. --}}
+    @php
+        $orderWorkspaceSrcMtime = @filemtime(base_path('modules/HelpdeskPrestashop/public/js/order-workspace.js'));
+        $orderWorkspaceMinMtime = @filemtime(base_path('modules/HelpdeskPrestashop/public/js/order-workspace.min.js'));
+        $useOrderWorkspaceMin = $orderWorkspaceMinMtime !== false && $orderWorkspaceSrcMtime !== false && $orderWorkspaceMinMtime >= $orderWorkspaceSrcMtime;
+    @endphp
+    @if ($useOrderWorkspaceMin)
+    <script src="{{ asset('modules/helpdeskprestashop/js/order-workspace.min.js') }}?v={{ $orderWorkspaceMinMtime }}" defer></script>
+    @else
+    <script src="{{ asset('modules/helpdeskprestashop/js/order-workspace.js') }}?v={{ $orderWorkspaceSrcMtime }}" defer></script>
+    @endif
 @endpush
 @endonce

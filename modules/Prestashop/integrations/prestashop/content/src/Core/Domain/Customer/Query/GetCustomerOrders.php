@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class GetCustomerOrders
      */
     private $customerId;
 
-    /**
-     * @param int $customerId
-     */
     public function __construct(int $customerId)
     {
         $this->customerId = new CustomerId($customerId);
     }
 
-    /**
-     * @return CustomerId
-     */
     public function getCustomerId(): CustomerId
     {
         return $this->customerId;

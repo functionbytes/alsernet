@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,6 @@ final class UpdateProductPricesHandler implements UpdateProductPricesHandlerInte
      */
     private $productPricePropertiesFiller;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductPricePropertiesFiller $productPricePropertiesFiller
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductPricePropertiesFiller $productPricePropertiesFiller
@@ -75,9 +72,6 @@ final class UpdateProductPricesHandler implements UpdateProductPricesHandlerInte
     }
 
     /**
-     * @param Product $product
-     * @param UpdateProductPricesCommand $command
-     *
      * @return string[] updatable properties
      *
      * @throws ProductConstraintException
@@ -91,24 +85,24 @@ final class UpdateProductPricesHandler implements UpdateProductPricesHandlerInte
             $command->getWholesalePrice()
         );
 
-        if (null !== $command->getUnity()) {
+        if ($command->getUnity() !== null) {
             $product->unity = $command->getUnity();
             $updatableProperties[] = 'unity';
         }
 
-        if (null !== $command->getEcotax()) {
+        if ($command->getEcotax() !== null) {
             $product->ecotax = (float) (string) $command->getEcotax();
             $updatableProperties[] = 'ecotax';
         }
 
         $taxRulesGroupId = $command->getTaxRulesGroupId();
 
-        if (null !== $taxRulesGroupId) {
+        if ($taxRulesGroupId !== null) {
             $product->id_tax_rules_group = $taxRulesGroupId;
             $updatableProperties[] = 'id_tax_rules_group';
         }
 
-        if (null !== $command->isOnSale()) {
+        if ($command->isOnSale() !== null) {
             $product->on_sale = $command->isOnSale();
             $updatableProperties[] = 'on_sale';
         }

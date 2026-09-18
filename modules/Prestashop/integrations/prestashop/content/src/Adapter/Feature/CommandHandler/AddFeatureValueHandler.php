@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,14 +69,9 @@ class AddFeatureValueHandler implements AddFeatureValueHandlerInterface
         return $this->featureValueRepository->add($this->fillObjectWithCommand($command));
     }
 
-    /**
-     * @param AddFeatureValueCommand $command
-     *
-     * @return FeatureValue
-     */
     private function fillObjectWithCommand(AddFeatureValueCommand $command): FeatureValue
     {
-        $featureValue = new FeatureValue();
+        $featureValue = new FeatureValue;
         $featureValue->id_feature = (int) $command->getFeatureId()->getValue();
         $featureValue->value = $command->getLocalizedValues();
 

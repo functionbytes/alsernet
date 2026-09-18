@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -142,17 +143,11 @@ class CartRow
     protected $isProcessed = false;
 
     /**
-     * @param array $rowData array item given by Cart::getProducts()
-     * @param PriceCalculator $priceCalculator
-     * @param AddressFactory $addressFactory
-     * @param CustomerDataProvider $customerDataProvider
-     * @param CacheAdapter $cacheAdapter
-     * @param GroupDataProvider $groupDataProvider
-     * @param Database $databaseAdapter
-     * @param bool $useEcotax
-     * @param int $precision
-     * @param string $roundType see self::ROUND_MODE_*
-     * @param int|null $orderId If order ID is specified the product price is fetched from associated OrderDetail value
+     * @param  array  $rowData  array item given by Cart::getProducts()
+     * @param  bool  $useEcotax
+     * @param  int  $precision
+     * @param  string  $roundType  see self::ROUND_MODE_*
+     * @param  int|null  $orderId  If order ID is specified the product price is fetched from associated OrderDetail value
      */
     public function __construct(
         $rowData,
@@ -181,8 +176,7 @@ class CartRow
     }
 
     /**
-     * @param array $rowData
-     *
+     * @param  array  $rowData
      * @return CartRow
      */
     public function setRowData($rowData)
@@ -209,7 +203,7 @@ class CartRow
      */
     public function getInitialUnitPrice()
     {
-        if (!$this->isProcessed) {
+        if (! $this->isProcessed) {
             throw new \Exception('Row must be processed before getting its total');
         }
 
@@ -225,7 +219,7 @@ class CartRow
      */
     public function getInitialTotalPrice()
     {
-        if (!$this->isProcessed) {
+        if (! $this->isProcessed) {
             throw new \Exception('Row must be processed before getting its total');
         }
 
@@ -241,7 +235,7 @@ class CartRow
      */
     public function getFinalUnitPrice()
     {
-        if (!$this->isProcessed) {
+        if (! $this->isProcessed) {
             throw new \Exception('Row must be processed before getting its total');
         }
 
@@ -257,7 +251,7 @@ class CartRow
      */
     public function getFinalTotalPrice()
     {
-        if (!$this->isProcessed) {
+        if (! $this->isProcessed) {
             throw new \Exception('Row must be processed before getting its total');
         }
 
@@ -267,7 +261,6 @@ class CartRow
     /**
      * run initial row calculation.
      *
-     * @param Cart $cart
      *
      * @throws CoreException
      */
@@ -279,7 +272,7 @@ class CartRow
 
         // store not rounded values, except in round_mode_item, we still need to round individual items
         if ($this->roundType == self::ROUND_MODE_ITEM) {
-            $tools = new Tools();
+            $tools = new Tools;
             $this->initialTotalPrice = new AmountImmutable(
                 $tools->round($this->initialUnitPrice->getTaxIncluded(), $this->precision) * $quantity,
                 $tools->round($this->initialUnitPrice->getTaxExcluded(), $this->precision) * $quantity
@@ -303,7 +296,7 @@ class CartRow
         $quantity = (int) $rowData['cart_quantity'];
 
         $addressId = $cart->getProductAddressId($rowData);
-        if (!$addressId) {
+        if (! $addressId) {
             $addressId = $cart->getTaxAddressId();
         }
         $address = $this->addressFactory->findOrCreate($addressId, true);
@@ -318,20 +311,20 @@ class CartRow
         if ($cart->id_customer) {
             $groupId = $this->customerDataProvider->getDefaultGroupId((int) $cart->id_customer);
         }
-        if (!$groupId) {
+        if (! $groupId) {
             $groupId = (int) $this->groupDataProvider->getCurrent()->id;
         }
 
         $cartQuantity = 0;
         if ((int) $cart->id) {
             $cacheId = sprintf(self::PRODUCT_PRICE_CACHE_ID_PATTERN, (int) $productId, (int) $cart->id);
-            if (!$this->cacheAdapter->isStored($cacheId)
+            if (! $this->cacheAdapter->isStored($cacheId)
                 || ($cartQuantity = $this->cacheAdapter->retrieve($cacheId)
                                     != (int) $quantity)) {
                 $sql = 'SELECT SUM(`quantity`)
-				FROM `' . _DB_PREFIX_ . 'cart_product`
-				WHERE `id_product` = ' . (int) $productId . '
-				AND `id_cart` = ' . (int) $cart->id;
+				FROM `'._DB_PREFIX_.'cart_product`
+				WHERE `id_product` = '.(int) $productId.'
+				AND `id_cart` = '.(int) $cart->id;
                 $cartQuantity = (int) $this->databaseAdapter->getValue($sql, _PS_USE_SQL_SLAVE_);
                 $this->cacheAdapter->store($cacheId, $cartQuantity);
             } else {
@@ -354,7 +347,7 @@ class CartRow
         ];
         foreach ($productPrices as $productPrice => $computationParameters) {
             $productPrices[$productPrice]['value'] = null;
-            if (null !== $this->orderId) {
+            if ($this->orderId !== null) {
                 $productPrices[$productPrice]['value'] = $this->priceCalculator->getOrderPrice(
                     $this->orderId,
                     (int) $productId,
@@ -364,7 +357,7 @@ class CartRow
                     $this->useEcotax
                 );
             }
-            if (null === $productPrices[$productPrice]['value']) {
+            if ($productPrices[$productPrice]['value'] === null) {
                 $productPrices[$productPrice]['value'] = $this->priceCalculator->priceCalculation(
                     $shopId,
                     (int) $productId,
@@ -407,7 +400,7 @@ class CartRow
 
         $rowData = $this->getRowData();
         $quantity = (int) $rowData['cart_quantity'];
-        $tools = new Tools();
+        $tools = new Tools;
         switch ($this->roundType) {
             case self::ROUND_MODE_TOTAL:
                 // do not round the line
@@ -444,8 +437,6 @@ class CartRow
     /**
      * substract discount from the row
      * if discount exceeds amount, we keep 0 (no use of negative amounts).
-     *
-     * @param AmountImmutable $amount
      */
     public function applyFlatDiscount(AmountImmutable $amount)
     {
@@ -466,15 +457,14 @@ class CartRow
     }
 
     /**
-     * @param float $percent 0-100
-     *
+     * @param  float  $percent  0-100
      * @return AmountImmutable
      */
     public function applyPercentageDiscount($percent)
     {
         $percent = (float) $percent;
         if ($percent < 0 || $percent > 100) {
-            throw new \Exception('Invalid percentage discount given: ' . $percent);
+            throw new \Exception('Invalid percentage discount given: '.$percent);
         }
         $discountTaxIncluded = $this->finalTotalPrice->getTaxIncluded() * $percent / 100;
         $discountTaxExcluded = $this->finalTotalPrice->getTaxExcluded() * $percent / 100;
@@ -494,7 +484,7 @@ class CartRow
         $taxIncluded = $this->finalTotalPrice->getTaxIncluded();
         $taxExcluded = $this->finalTotalPrice->getTaxExcluded();
         // Avoid division by zero
-        if (0 === $quantity) {
+        if ($quantity === 0) {
             $this->finalUnitPrice = new AmountImmutable(0, 0);
         } else {
             $this->finalUnitPrice = new AmountImmutable(

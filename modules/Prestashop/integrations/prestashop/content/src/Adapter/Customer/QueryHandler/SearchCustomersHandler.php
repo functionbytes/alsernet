@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,12 +54,12 @@ final class SearchCustomersHandler implements SearchCustomersHandlerInterface
             }
 
             $customersResult = Customer::searchByName($searchPhrase, $limit);
-            if (!is_array($customersResult)) {
+            if (! is_array($customersResult)) {
                 continue;
             }
 
             foreach ($customersResult as $customerArray) {
-                if (!$customerArray['active']) {
+                if (! $customerArray['active']) {
                     continue;
                 }
 

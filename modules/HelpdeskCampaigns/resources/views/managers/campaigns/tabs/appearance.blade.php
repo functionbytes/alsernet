@@ -14,7 +14,7 @@
 
     {{-- Colores --}}
     <h6 class="fw-semibold mb-1">Colores</h6>
-    <p class="text-muted small mb-3">Paleta de colores para el fondo, texto y elementos de accion</p>
+    <p class="text-muted small mb-3">Paleta de colores para el fondo, texto y elementos de acción</p>
     <div class="row g-3 mb-4">
 
         <div class="col-12 col-md-6 col-xl-4">
@@ -43,15 +43,15 @@
 
     </div>
 
-    {{-- Tipografia --}}
-    <h6 class="fw-semibold mb-1">Tipografia</h6>
-    <p class="text-muted small mb-3">Tamano y familia de fuente del contenido</p>
+    {{-- Tipografía --}}
+    <h6 class="fw-semibold mb-1">Tipografía</h6>
+    <p class="text-muted small mb-3">Tamaño y familia de fuente del contenido</p>
     <div class="row g-3 mb-4">
 
         <div class="col-12 col-md-6">
-            <label class="form-label">Tamano de fuente</label>
+            <label class="form-label">Tamaño de fuente</label>
             <select name="appearance[font_size]" class="form-select">
-                <option value="small" {{ $fontSize === 'small' ? 'selected' : '' }}>Pequena (12px)</option>
+                <option value="small" {{ $fontSize === 'small' ? 'selected' : '' }}>Pequeña (12px)</option>
                 <option value="medium" {{ $fontSize === 'medium' ? 'selected' : '' }}>Mediana (14px)</option>
                 <option value="large" {{ $fontSize === 'large' ? 'selected' : '' }}>Grande (16px)</option>
                 <option value="xlarge" {{ $fontSize === 'xlarge' ? 'selected' : '' }}>Extra grande (18px)</option>
@@ -72,11 +72,11 @@
 
     {{-- Posicionamiento --}}
     <h6 class="fw-semibold mb-1">Posicionamiento</h6>
-    <p class="text-muted small mb-3">Ubicacion y tamano del contenedor de la campana</p>
+    <p class="text-muted small mb-3">Ubicación y tamaño del contenedor de la campaña</p>
     <div class="row g-3 mb-4">
 
         <div class="col-12 col-md-6">
-            <label class="form-label">Posicion en pantalla</label>
+            <label class="form-label">Posición en pantalla</label>
             <select name="appearance[position]" class="form-select" id="position-select">
                 <option value="top-left" {{ $position === 'top-left' ? 'selected' : '' }}>Superior izquierda</option>
                 <option value="top-center" {{ $position === 'top-center' ? 'selected' : '' }}>Superior centro</option>
@@ -89,7 +89,7 @@
         </div>
 
         <div class="col-12 col-md-6">
-            <label class="form-label">Ancho maximo</label>
+            <label class="form-label">Ancho máximo</label>
             <div class="input-group">
                 <input type="number" name="appearance[max_width]" class="form-control"
                        value="{{ $appearance['max_width'] ?? 600 }}" min="300" max="1200" step="50">
@@ -141,26 +141,5 @@
 </form>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    // Sync color inputs
-    [['bg-color', 'appearance[background_color]'],
-     ['text-color', 'appearance[text_color]'],
-     ['primary-color', 'appearance[primary_color]']
-    ].forEach(([id]) => {
-        const colorInput = document.getElementById(`${id}-input`);
-        const textDisplay = document.getElementById(`${id}-text`);
-        if (colorInput && textDisplay) {
-            colorInput.addEventListener('input', () => { textDisplay.value = colorInput.value; });
-        }
-    });
-
-    // Border radius range output
-    const rangeInput = document.getElementById('border-radius-range');
-    const rangeOutput = document.getElementById('border-radius-output');
-    if (rangeInput && rangeOutput) {
-        rangeInput.addEventListener('input', () => { rangeOutput.textContent = rangeInput.value + 'px'; });
-    }
-});
-</script>
+<script src="{{ asset('modules/helpdeskcampaigns/js/campaign-form-appearance.js') }}?v={{ @filemtime(public_path('modules/helpdeskcampaigns/js/campaign-form-appearance.js')) }}" defer></script>
 @endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -97,24 +98,11 @@ final class ProductImportHandler extends AbstractImportHandler
     private $imageCopier;
 
     /**
-     * @param ImportDataFormatter $dataFormatter
-     * @param array $allShopIds
-     * @param array $contextShopIds
-     * @param int $currentContextShopId
-     * @param bool $isMultistoreEnabled
-     * @param int $contextLanguageId
-     * @param TranslatorInterface $translator
-     * @param LoggerInterface $logger
-     * @param int $employeeId
-     * @param Database $legacyDatabase
-     * @param CacheClearerInterface $cacheClearer
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param Configuration $configuration
-     * @param Address $shopAddress
-     * @param Validate $validate
-     * @param Tools $tools
-     * @param ImageCopier $imageCopier
+     * @param  int  $currentContextShopId
+     * @param  bool  $isMultistoreEnabled
+     * @param  int  $contextLanguageId
+     * @param  int  $employeeId
+     * @param  string  $dbPrefix
      */
     public function __construct(
         ImportDataFormatter $dataFormatter,
@@ -153,8 +141,8 @@ final class ProductImportHandler extends AbstractImportHandler
         );
 
         $this->connection = $connection;
-        $this->productTable = $dbPrefix . 'product';
-        $this->accessoryTable = $dbPrefix . 'accessory';
+        $this->productTable = $dbPrefix.'product';
+        $this->accessoryTable = $dbPrefix.'accessory';
         $this->defaultValues = [
             'id_category' => [$this->configuration->getInt('PS_HOME_CATEGORY')],
             'id_category_default' => null,
@@ -199,11 +187,11 @@ final class ProductImportHandler extends AbstractImportHandler
     {
         parent::setUp($importConfig, $runtimeConfig);
 
-        if (!defined('PS_MASS_PRODUCT_CREATION')) {
+        if (! defined('PS_MASS_PRODUCT_CREATION')) {
             define('PS_MASS_PRODUCT_CREATION', true);
         }
 
-        if (!$runtimeConfig->shouldValidateData()) {
+        if (! $runtimeConfig->shouldValidateData()) {
             Module::setBatchMode(true);
         }
     }
@@ -242,8 +230,7 @@ final class ProductImportHandler extends AbstractImportHandler
         $productExistsById = $this->entityExists($product, 'product');
         $productExistsByReference = $importConfig->matchReferences() &&
             $product->reference &&
-            $product->existsRefInDatabase($product->reference)
-        ;
+            $product->existsRefInDatabase($product->reference);
 
         if ($productExistsByReference || $productExistsById) {
             $product->date_upd = date('Y-m-d H:i:s');
@@ -252,7 +239,7 @@ final class ProductImportHandler extends AbstractImportHandler
         $unfriendlyError = $this->configuration->getBoolean('UNFRIENDLY_ERROR');
         $fieldsError = $product->validateFields($unfriendlyError, true);
         $langFieldsError = $product->validateFieldsLang($unfriendlyError, true);
-        $isValid = true === $fieldsError && true === $langFieldsError;
+        $isValid = $fieldsError === true && $langFieldsError === true;
 
         if ($isValid) {
             $productSaved = $this->loadProductData(
@@ -265,18 +252,18 @@ final class ProductImportHandler extends AbstractImportHandler
                 $entityFields
             );
 
-            if (!$productSaved) {
+            if (! $productSaved) {
                 $productId = $this->fetchDataValueByKey($dataRow, $entityFields, 'id');
 
                 $this->error(sprintf(
                     $this->translator->trans('%1$s (ID: %2$s) cannot be saved', [], 'Admin.Advparameters.Notification'),
-                    !empty($productName) ? $this->tools->sanitize($productName) : 'No Name',
-                    !empty($productId) ? $this->tools->sanitize($productId) : 'No ID'
+                    ! empty($productName) ? $this->tools->sanitize($productName) : 'No Name',
+                    ! empty($productId) ? $this->tools->sanitize($productId) : 'No ID'
                 ));
 
-                $this->error($fieldsError . $langFieldsError . $this->legacyDatabase->getErrorMessage());
+                $this->error($fieldsError.$langFieldsError.$this->legacyDatabase->getErrorMessage());
             } else {
-                if (!$runtimeConfig->shouldValidateData()) {
+                if (! $runtimeConfig->shouldValidateData()) {
                     $this->saveProductSupplier($product);
                     $this->saveProductTags($product, $importConfig, $productName);
                     $this->saveProductImages($product, $importConfig);
@@ -311,11 +298,11 @@ final class ProductImportHandler extends AbstractImportHandler
     {
         parent::tearDown($importConfig, $runtimeConfig);
 
-        if ($runtimeConfig->isFinished() && !$runtimeConfig->shouldValidateData()) {
+        if ($runtimeConfig->isFinished() && ! $runtimeConfig->shouldValidateData()) {
             $this->importAccessories($runtimeConfig);
         }
 
-        if (!$runtimeConfig->shouldValidateData()) {
+        if (! $runtimeConfig->shouldValidateData()) {
             Module::processDeferedFuncCall();
             Module::processDeferedClearCache();
             Tag::updateTagCount();
@@ -326,15 +313,15 @@ final class ProductImportHandler extends AbstractImportHandler
      * Legacy logic to create category.
      * This method is internally called by legacy Category::searchByPath(), so it has to be public.
      *
-     * @param int $defaultLanguageId
-     * @param string $categoryName
-     * @param int|null $parentCategoryId
+     * @param  int  $defaultLanguageId
+     * @param  string  $categoryName
+     * @param  int|null  $parentCategoryId
      */
     public function createCategory($defaultLanguageId, $categoryName, $parentCategoryId = null)
     {
         $unfriendlyError = $this->configuration->getBoolean('UNFRIENDLY_ERROR');
         $homeCategoryId = $this->configuration->getInt('PS_HOME_CATEGORY');
-        $category = new Category();
+        $category = new Category;
 
         $category->id_shop_default = $this->isMultistoreEnabled ? (int) $this->currentContextShopId : 1;
         $category->name = $this->dataFormatter->createMultiLangField(trim($categoryName));
@@ -346,9 +333,9 @@ final class ProductImportHandler extends AbstractImportHandler
 
         $fieldsError = $category->validateFields($unfriendlyError, true);
         $langFieldsError = $category->validateFieldsLang($unfriendlyError, true);
-        $isValid = true === $fieldsError && true === $langFieldsError;
+        $isValid = $fieldsError === true && $langFieldsError === true;
 
-        if (!$isValid || !$category->add()) {
+        if (! $isValid || ! $category->add()) {
             $this->error(sprintf(
                 $this->translator->trans(
                     '%1$s (ID: %2$s) cannot be saved',
@@ -356,14 +343,14 @@ final class ProductImportHandler extends AbstractImportHandler
                     'Admin.Advparameters.Notification'
                 ),
                 $category->name[$defaultLanguageId],
-                !empty($category->id) ? $category->id : 'null'
+                ! empty($category->id) ? $category->id : 'null'
             ));
 
-            if (!$isValid) {
-                $error = true !== $fieldsError ? $fieldsError : '';
-                $error .= true !== $langFieldsError ? $langFieldsError : '';
+            if (! $isValid) {
+                $error = $fieldsError !== true ? $fieldsError : '';
+                $error .= $langFieldsError !== true ? $langFieldsError : '';
 
-                $this->error($error . $this->legacyDatabase->getErrorMessage());
+                $this->error($error.$this->legacyDatabase->getErrorMessage());
             }
         }
     }
@@ -371,10 +358,7 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Fetch the product ID.
      *
-     * @param DataRowInterface $dataRow
-     * @param array $entityFields
-     * @param bool $fetchByReference if true, will fallback to finding the product ID by reference
-     *
+     * @param  bool  $fetchByReference  if true, will fallback to finding the product ID by reference
      * @return int|null
      */
     private function fetchProductId(
@@ -384,7 +368,7 @@ final class ProductImportHandler extends AbstractImportHandler
     ) {
         $productId = $this->fetchDataValueByKey($dataRow, $entityFields, 'id');
 
-        if (!empty($productId)) {
+        if (! empty($productId)) {
             return (int) $productId;
         }
 
@@ -394,9 +378,9 @@ final class ProductImportHandler extends AbstractImportHandler
             if ($productReference) {
                 $statement = $this->connection->query(
                     'SELECT p.`id_product`
-                    FROM `' . $this->productTable . '` p
-                    ' . Shop::addSqlAssociation('product', 'p') . '
-                    WHERE p.`reference` = "' . pSQL($productReference) . '"'
+                    FROM `'.$this->productTable.'` p
+                    '.Shop::addSqlAssociation('product', 'p').'
+                    WHERE p.`reference` = "'.pSQL($productReference).'"'
                 );
                 $row = $statement->fetch();
 
@@ -409,12 +393,10 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Load stock data for the product.
-     *
-     * @param Product $product
      */
     private function loadStock(Product $product)
     {
-        if (!Validate::isLoadedObject($product)) {
+        if (! Validate::isLoadedObject($product)) {
             return;
         }
 
@@ -423,7 +405,7 @@ final class ProductImportHandler extends AbstractImportHandler
 
         if (is_array($category_data)) {
             foreach ($category_data as $tmp) {
-                if (!isset($product->category) || !$product->category || is_array($product->category)) {
+                if (! isset($product->category) || ! $product->category || is_array($product->category)) {
                     $product->category[] = $tmp;
                 }
             }
@@ -433,18 +415,16 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Load shops data into the product object.
      *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
-     * @param string $productName used for error messages
+     * @param  string  $productName  used for error messages
      */
     private function loadShops(Product $product, ImportConfigInterface $importConfig, $productName)
     {
         $defaultShopId = $this->configuration->getInt('PS_SHOP_DEFAULT');
 
-        if (!$this->isMultistoreEnabled) {
+        if (! $this->isMultistoreEnabled) {
             $product->shop = $defaultShopId;
             $product->id_shop_default = $defaultShopId;
-        } elseif (!isset($product->shop) || empty($product->shop)) {
+        } elseif (! isset($product->shop) || empty($product->shop)) {
             $product->shop = implode($importConfig->getMultipleValueSeparator(), $this->contextShopIds);
             $product->id_shop_default = $this->currentContextShopId;
         }
@@ -455,10 +435,10 @@ final class ProductImportHandler extends AbstractImportHandler
 
         if (is_array($productShops)) {
             foreach ($productShops as $shop) {
-                if (!empty($shop)) {
+                if (! empty($shop)) {
                     $shop = is_numeric($shop) ? $shop : Shop::getIdByName($shop);
 
-                    if (!in_array($shop, $this->allShopIds)) {
+                    if (! in_array($shop, $this->allShopIds)) {
                         $this->addEntityWarning(
                             $this->translator->trans('Shop is not valid', [], 'Admin.Advparameters.Notification'),
                             $productName,
@@ -474,8 +454,6 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Load taxes data into the product object.
-     *
-     * @param Product $product
      */
     private function loadTaxes(Product $product)
     {
@@ -497,7 +475,7 @@ final class ProductImportHandler extends AbstractImportHandler
             }
         }
 
-        if (!$this->configuration->getBoolean('PS_USE_ECOTAX')) {
+        if (! $this->configuration->getBoolean('PS_USE_ECOTAX')) {
             $product->ecotax = 0;
         }
     }
@@ -505,37 +483,36 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Load manufacturer data into the product object.
      *
-     * @param Product $product
-     * @param bool $validateOnly if true, will not create new manufacturer if not exists
+     * @param  bool  $validateOnly  if true, will not create new manufacturer if not exists
      */
     private function loadManufacturer(Product $product, $validateOnly)
     {
-        if (!isset($product->manufacturer)) {
+        if (! isset($product->manufacturer)) {
             return;
         }
 
         if (is_numeric($product->manufacturer) && Manufacturer::manufacturerExists($product->manufacturer)) {
             $product->id_manufacturer = (int) $product->manufacturer;
-        } elseif (is_string($product->manufacturer) && !empty($product->manufacturer)) {
+        } elseif (is_string($product->manufacturer) && ! empty($product->manufacturer)) {
             if ($manufacturer = Manufacturer::getIdByName($product->manufacturer)) {
                 $product->id_manufacturer = (int) $manufacturer;
             } else {
                 $unfriendlyError = $this->configuration->getBoolean('UNFRIENDLY_ERROR');
 
-                $manufacturer = new Manufacturer();
+                $manufacturer = new Manufacturer;
                 $manufacturer->name = $product->manufacturer;
                 $manufacturer->active = true;
 
                 $fieldsError = $manufacturer->validateFields($unfriendlyError, true);
                 $langFieldsError = $manufacturer->validateFieldsLang($unfriendlyError, true);
-                $isValid = true === $fieldsError && true === $langFieldsError;
+                $isValid = $fieldsError === true && $langFieldsError === true;
 
                 // Creating the manufacturer if it's not validation step
-                if ($isValid && !$validateOnly && $manufacturer->add()) {
+                if ($isValid && ! $validateOnly && $manufacturer->add()) {
                     $product->id_manufacturer = (int) $manufacturer->id;
                     $manufacturer->associateTo($product->id_shop_list);
                 } else {
-                    if (!$validateOnly) {
+                    if (! $validateOnly) {
                         $this->error(sprintf(
                             $this->translator->trans(
                                 '%1$s (ID: %2$s) cannot be saved',
@@ -543,15 +520,15 @@ final class ProductImportHandler extends AbstractImportHandler
                                 'Admin.Advparameters.Notification'
                             ),
                             $manufacturer->name,
-                            !empty($manufacturer->id) ? $manufacturer->id : 'null'
+                            ! empty($manufacturer->id) ? $manufacturer->id : 'null'
                         ));
                     }
 
-                    if (!$isValid) {
-                        $error = true !== $fieldsError ? $fieldsError : '';
-                        $error .= true !== $langFieldsError ? $langFieldsError : '';
+                    if (! $isValid) {
+                        $error = $fieldsError !== true ? $fieldsError : '';
+                        $error .= $langFieldsError !== true ? $langFieldsError : '';
 
-                        $this->error($error . $this->legacyDatabase->getErrorMessage());
+                        $this->error($error.$this->legacyDatabase->getErrorMessage());
                     }
                 }
             }
@@ -561,37 +538,36 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Load supplier data into the product object.
      *
-     * @param Product $product
-     * @param bool $validateOnly if true, will not create new supplier if not exists
+     * @param  bool  $validateOnly  if true, will not create new supplier if not exists
      */
     private function loadSupplier(Product $product, $validateOnly)
     {
-        if (!isset($product->supplier)) {
+        if (! isset($product->supplier)) {
             return;
         }
 
         if (is_numeric($product->supplier) && Supplier::supplierExists($product->supplier)) {
             $product->id_supplier = (int) $product->supplier;
-        } elseif (is_string($product->supplier) && !empty($product->supplier)) {
+        } elseif (is_string($product->supplier) && ! empty($product->supplier)) {
             if ($supplier = Supplier::getIdByName($product->supplier)) {
                 $product->id_supplier = (int) $supplier;
             } else {
                 $unfriendlyError = $this->configuration->getBoolean('UNFRIENDLY_ERROR');
 
-                $supplier = new Supplier();
+                $supplier = new Supplier;
                 $supplier->name = $product->supplier;
                 $supplier->active = true;
 
                 $fieldsError = $supplier->validateFields($unfriendlyError, true);
                 $langFieldsError = $supplier->validateFieldsLang($unfriendlyError, true);
-                $isValid = true === $fieldsError && true === $langFieldsError;
+                $isValid = $fieldsError === true && $langFieldsError === true;
 
                 // Creating the supplier if it's not validation step
-                if ($isValid && !$validateOnly && $supplier->add()) {
+                if ($isValid && ! $validateOnly && $supplier->add()) {
                     $product->id_supplier = (int) $supplier->id;
                     $supplier->associateTo($product->id_shop_list);
                 } else {
-                    if (!$validateOnly) {
+                    if (! $validateOnly) {
                         $this->error(sprintf(
                             $this->translator->trans(
                                 '%1$s (ID: %2$s) cannot be saved',
@@ -599,15 +575,15 @@ final class ProductImportHandler extends AbstractImportHandler
                                 'Admin.Advparameters.Notification'
                             ),
                             $supplier->name,
-                            !empty($supplier->id) ? $supplier->id : 'null'
+                            ! empty($supplier->id) ? $supplier->id : 'null'
                         ));
                     }
 
-                    if (!$isValid) {
-                        $error = true !== $fieldsError ? $fieldsError : '';
-                        $error .= true !== $langFieldsError ? $langFieldsError : '';
+                    if (! $isValid) {
+                        $error = $fieldsError !== true ? $fieldsError : '';
+                        $error .= $langFieldsError !== true ? $langFieldsError : '';
 
-                        $this->error($error . $this->legacyDatabase->getErrorMessage());
+                        $this->error($error.$this->legacyDatabase->getErrorMessage());
                     }
                 }
             }
@@ -616,14 +592,12 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Load prices into product object.
-     *
-     * @param Product $product
      */
     private function loadPrice(Product $product)
     {
-        if (isset($product->price_tex) && !isset($product->price_tin)) {
+        if (isset($product->price_tex) && ! isset($product->price_tin)) {
             $product->price = $product->price_tex;
-        } elseif (isset($product->price_tin) && !isset($product->price_tex)) {
+        } elseif (isset($product->price_tin) && ! isset($product->price_tex)) {
             $product->price = $product->price_tin;
             // If a tax is already included in price, withdraw it from price
             if ($product->tax_rate) {
@@ -637,8 +611,7 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Load category data into product object.
      *
-     * @param Product $product
-     * @param bool $validateOnly
+     * @param  bool  $validateOnly
      */
     private function loadCategory(Product $product, $validateOnly)
     {
@@ -653,7 +626,7 @@ final class ProductImportHandler extends AbstractImportHandler
                     if (Category::categoryExists($value)) {
                         $product->id_category[] = (int) $value;
                     } else {
-                        $category = new Category();
+                        $category = new Category;
                         $category->id = (int) $value;
                         $category->name = $this->dataFormatter->createMultiLangField($value);
                         $category->active = true;
@@ -664,12 +637,12 @@ final class ProductImportHandler extends AbstractImportHandler
 
                         $fieldsError = $category->validateFields($unfriendlyError, true);
                         $langFieldsError = $category->validateFieldsLang($unfriendlyError, true);
-                        $isValid = true === $fieldsError && true === $langFieldsError;
+                        $isValid = $fieldsError === true && $langFieldsError === true;
 
-                        if ($isValid && !$validateOnly && $category->add()) {
+                        if ($isValid && ! $validateOnly && $category->add()) {
                             $product->id_category[] = (int) $category->id;
                         } else {
-                            if (!$validateOnly) {
+                            if (! $validateOnly) {
                                 $this->error(sprintf(
                                     $this->translator->trans(
                                         '%1$s (ID: %2$s) cannot be saved',
@@ -677,19 +650,19 @@ final class ProductImportHandler extends AbstractImportHandler
                                         'Admin.Advparameters.Notification'
                                     ),
                                     $category->name[$defaultLanguageId],
-                                    !empty($category->id) ? $category->id : 'null'
+                                    ! empty($category->id) ? $category->id : 'null'
                                 ));
                             }
 
-                            if (!$isValid) {
-                                $error = true !== $fieldsError ? $fieldsError : '';
-                                $error .= true !== $langFieldsError ? $langFieldsError : '';
+                            if (! $isValid) {
+                                $error = $fieldsError !== true ? $fieldsError : '';
+                                $error .= $langFieldsError !== true ? $langFieldsError : '';
 
-                                $this->error($error . $this->legacyDatabase->getErrorMessage());
+                                $this->error($error.$this->legacyDatabase->getErrorMessage());
                             }
                         }
                     }
-                } elseif (!$validateOnly && is_string($value) && !empty($value)) {
+                } elseif (! $validateOnly && is_string($value) && ! empty($value)) {
                     $category = Category::searchByPath(
                         $defaultLanguageId,
                         trim($value),
@@ -718,7 +691,7 @@ final class ProductImportHandler extends AbstractImportHandler
         // Category default now takes the value of the first new category during import
         if (isset($product->id_category[0])) {
             $product->id_category_default = (int) $product->id_category[0];
-        } elseif (!empty($product->id_category_default)) {
+        } elseif (! empty($product->id_category_default)) {
             $defaultProductShop = new Shop($product->id_shop_default);
             $product->id_category_default = Category::getRootCategory(
                 null,
@@ -729,9 +702,6 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Load meta data into the product object.
-     *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
      */
     private function loadMetaData(Product $product, ImportConfigInterface $importConfig)
     {
@@ -745,7 +715,7 @@ final class ProductImportHandler extends AbstractImportHandler
 
         $validLink = $this->validate->isLinkRewrite($linkRewrite);
 
-        if (($linkRewriteExists && empty($product->link_rewrite[$this->languageId])) || !$validLink) {
+        if (($linkRewriteExists && empty($product->link_rewrite[$this->languageId])) || ! $validLink) {
             $linkRewrite = $this->dataFormatter->createFriendlyUrl($product->name[$this->languageId]);
 
             if ($linkRewrite == '') {
@@ -753,7 +723,7 @@ final class ProductImportHandler extends AbstractImportHandler
             }
         }
 
-        if (!$validLink) {
+        if (! $validLink) {
             $this->notice($this->translator->trans(
                 'Rewrite link for %1$s (ID %2$s): re-written as %3$s.',
                 [
@@ -765,7 +735,7 @@ final class ProductImportHandler extends AbstractImportHandler
             ));
         }
 
-        if (!$validLink || !(is_array($product->link_rewrite) && count($product->link_rewrite))) {
+        if (! $validLink || ! (is_array($product->link_rewrite) && count($product->link_rewrite))) {
             $product->link_rewrite = $this->dataFormatter->createMultiLangField($linkRewrite);
         } else {
             $product->link_rewrite[(int) $this->languageId] = $linkRewrite;
@@ -777,7 +747,7 @@ final class ProductImportHandler extends AbstractImportHandler
         if ($multipleValueSeparator != ',') {
             if (is_array($product->meta_keywords)) {
                 foreach ($product->meta_keywords as &$metaKeyword) {
-                    if (!empty($metaKeyword)) {
+                    if (! empty($metaKeyword)) {
                         $metaKeyword = str_replace($multipleValueSeparator, ',', $metaKeyword);
                     }
                 }
@@ -787,8 +757,6 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Fix float values.
-     *
-     * @param Product $product
      */
     private function fixFloatValues(Product $product)
     {
@@ -803,14 +771,9 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Load other product data.
      *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
-     * @param bool $productExistsById
-     * @param bool $productExistsByReference
-     * @param bool $validateOnly
-     * @param DataRowInterface $dataRow
-     * @param array $entityFields
-     *
+     * @param  bool  $productExistsById
+     * @param  bool  $productExistsByReference
+     * @param  bool  $validateOnly
      * @return bool
      */
     private function loadProductData(
@@ -822,7 +785,7 @@ final class ProductImportHandler extends AbstractImportHandler
         DataRowInterface $dataRow,
         array $entityFields
     ) {
-        if (!$product->quantity) {
+        if (! $product->quantity) {
             $product->quantity = 0;
         }
 
@@ -831,14 +794,14 @@ final class ProductImportHandler extends AbstractImportHandler
 
         if ($productExistsById || $productExistsByReference) {
             $sqlPart = 'SELECT product_shop.`date_add`, p.`id_product`
-                FROM `' . _DB_PREFIX_ . 'product` p
-                ' . Shop::addSqlAssociation('product', 'p') . '
+                FROM `'._DB_PREFIX_.'product` p
+                '.Shop::addSqlAssociation('product', 'p').'
                 WHERE ';
 
             if ($productExistsByReference) {
-                $sqlPart .= 'p.`reference` = "' . pSQL($product->reference) . '"';
+                $sqlPart .= 'p.`reference` = "'.pSQL($product->reference).'"';
             } elseif ($productExistsById) {
-                $sqlPart .= 'p.`id_product` = ' . (int) $product->id;
+                $sqlPart .= 'p.`id_product` = '.(int) $product->id;
             }
 
             $statement = $this->connection->query($sqlPart);
@@ -850,14 +813,14 @@ final class ProductImportHandler extends AbstractImportHandler
 
             $product->date_add = $row['date_add'];
 
-            if (!$validateOnly) {
+            if (! $validateOnly) {
                 $result = $product->update();
             }
         } else {
             $result = $product->add($product->date_add == '');
         }
 
-        if (!$validateOnly) {
+        if (! $validateOnly) {
             if ($product->getType() == Product::PTYPE_VIRTUAL) {
                 StockAvailable::setProductOutOfStock((int) $product->id, 1);
             } else {
@@ -872,14 +835,14 @@ final class ProductImportHandler extends AbstractImportHandler
             if ($product->getType() == Product::PTYPE_VIRTUAL) {
                 $downloadDir = $this->configuration->get('_PS_DOWNLOAD_DIR_');
 
-                $productDownload = new ProductDownload();
+                $productDownload = new ProductDownload;
                 $productDownload->filename = ProductDownload::getNewFilename();
                 $virtualProductFileUrl = $this->fetchDataValueByKey(
                     $dataRow,
                     $entityFields,
                     'file_url'
                 );
-                $this->tools->copy($virtualProductFileUrl, $downloadDir . $productDownload->filename);
+                $this->tools->copy($virtualProductFileUrl, $downloadDir.$productDownload->filename);
                 $productDownload->id_product = (int) $product->id;
                 $productDownload->nb_downloadable = (int) $this->fetchDataValueByKey(
                     $dataRow,
@@ -906,8 +869,6 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Save product supplier data.
-     *
-     * @param Product $product
      */
     private function saveProductSupplier(Product $product)
     {
@@ -931,13 +892,12 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Save specific price for a product.
      *
-     * @param Product $product
-     * @param string $reductionPrice
-     * @param string $reductionPercent
-     * @param string $reductionFrom
-     * @param string $reductionTo
-     * @param bool $validateOnly
-     * @param string $productName
+     * @param  string  $reductionPrice
+     * @param  string  $reductionPercent
+     * @param  string  $reductionFrom
+     * @param  string  $reductionTo
+     * @param  bool  $validateOnly
+     * @param  string  $productName
      */
     private function saveSpecificPrice(
         Product $product,
@@ -951,7 +911,7 @@ final class ProductImportHandler extends AbstractImportHandler
         $reductionPercent = (float) $reductionPercent;
         $reductionPrice = (float) $reductionPrice;
 
-        if (!$reductionPrice <= 0 && $reductionPercent <= 0) {
+        if (! $reductionPrice <= 0 && $reductionPercent <= 0) {
             return;
         }
 
@@ -961,7 +921,7 @@ final class ProductImportHandler extends AbstractImportHandler
             if (is_array($specificPrice) && isset($specificPrice['id_specific_price'])) {
                 $specificPrice = new SpecificPrice((int) $specificPrice['id_specific_price']);
             } else {
-                $specificPrice = new SpecificPrice();
+                $specificPrice = new SpecificPrice;
             }
             $specificPrice->id_product = (int) $product->id;
             $specificPrice->id_specific_price_rule = 0;
@@ -977,7 +937,7 @@ final class ProductImportHandler extends AbstractImportHandler
             $specificPrice->from = Validate::isDate($reductionFrom) ? $reductionFrom : '0000-00-00 00:00:00';
             $specificPrice->to = Validate::isDate($reductionTo) ? $reductionTo : '0000-00-00 00:00:00';
 
-            if (!$validateOnly && !$specificPrice->save()) {
+            if (! $validateOnly && ! $specificPrice->save()) {
                 $this->addEntityWarning(
                     $this->translator->trans('Discount is invalid', [], 'Admin.Advparameters.Notification'),
                     $this->tools->sanitize($productName),
@@ -990,9 +950,7 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Save product tags data.
      *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
-     * @param string $productName product name, used for error messages
+     * @param  string  $productName  product name, used for error messages
      */
     private function saveProductTags(Product $product, ImportConfigInterface $importConfig, $productName)
     {
@@ -1005,12 +963,12 @@ final class ProductImportHandler extends AbstractImportHandler
         if (isset($product->id) && $product->id) {
             $tags = Tag::getProductTags($product->id);
             if (is_array($tags) && count($tags)) {
-                if (!empty($product->tags)) {
+                if (! empty($product->tags)) {
                     $product->tags = explode($multipleValueSeparator, $product->tags);
                 }
                 if (is_array($product->tags) && count($product->tags)) {
                     foreach ($product->tags as $key => $tag) {
-                        if (!empty($tag)) {
+                        if (! empty($tag)) {
                             $product->tags[$key] = trim($tag);
                         }
                     }
@@ -1022,11 +980,11 @@ final class ProductImportHandler extends AbstractImportHandler
         // Delete tags for this id product, for no duplicating error
         Tag::deleteTagsForProduct($product->id);
 
-        if (!is_array($product->tags) && !empty($product->tags)) {
+        if (! is_array($product->tags) && ! empty($product->tags)) {
             $product->tags = $this->dataFormatter->createMultiLangField($product->tags);
             foreach ($product->tags as $key => $tags) {
                 $isTagAdded = Tag::addTags($key, $product->id, $tags, $multipleValueSeparator);
-                if (!$isTagAdded) {
+                if (! $isTagAdded) {
                     $this->addEntityWarning(
                         $this->tools->sanitize($productName),
                         $product->id,
@@ -1040,13 +998,13 @@ final class ProductImportHandler extends AbstractImportHandler
                 $str = '';
 
                 foreach ($tags as $one_tag) {
-                    $str .= $one_tag . $multipleValueSeparator;
+                    $str .= $one_tag.$multipleValueSeparator;
                 }
 
                 $str = rtrim($str, $multipleValueSeparator);
                 $isTagAdded = Tag::addTags($key, $product->id, $str, $multipleValueSeparator);
 
-                if (!$isTagAdded) {
+                if (! $isTagAdded) {
                     $this->addEntityWarning(
                         $this->tools->sanitize($productName),
                         (int) $product->id,
@@ -1066,13 +1024,10 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Save product images.
-     *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
      */
     private function saveProductImages(Product $product, ImportConfigInterface $importConfig)
     {
-        //delete existing images if "delete_existing_images" is set to 1
+        // delete existing images if "delete_existing_images" is set to 1
         if (isset($product->delete_existing_images)) {
             if ((bool) $product->delete_existing_images) {
                 $product->deleteImages();
@@ -1086,13 +1041,13 @@ final class ProductImportHandler extends AbstractImportHandler
             foreach ($product->image as $key => $url) {
                 $url = trim($url);
                 $error = false;
-                if (!empty($url)) {
+                if (! empty($url)) {
                     $url = str_replace(' ', '%20', $url);
 
-                    $image = new Image();
+                    $image = new Image;
                     $image->id_product = (int) $product->id;
                     $image->position = Image::getHighestPosition($product->id) + 1;
-                    $image->cover = (!$key && !$product_has_images) ? true : false;
+                    $image->cover = (! $key && ! $product_has_images) ? true : false;
                     $alt = $product->image_alt[$key];
                     if (strlen($alt) > 0) {
                         $image->legend = $this->dataFormatter->createMultiLangField($alt);
@@ -1100,7 +1055,7 @@ final class ProductImportHandler extends AbstractImportHandler
 
                     $fieldsError = $image->validateFields($unfriendlyError, true);
                     $langFieldsError = $image->validateFieldsLang($unfriendlyError, true);
-                    $isValid = true === $fieldsError && true === $langFieldsError;
+                    $isValid = $fieldsError === true && $langFieldsError === true;
 
                     if ($isValid && $image->add()) {
                         // associate image to selected shops
@@ -1110,10 +1065,10 @@ final class ProductImportHandler extends AbstractImportHandler
                             $image->id,
                             $url,
                             'inventaries',
-                            !$importConfig->skipThumbnailRegeneration()
+                            ! $importConfig->skipThumbnailRegeneration()
                         );
 
-                        if (!$copySucceeded) {
+                        if (! $copySucceeded) {
                             $image->delete();
                             $this->warning(
                                 $this->translator->trans(
@@ -1151,26 +1106,22 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Update additional product data.
      *
-     * @param Product $product
-     * @param bool $validateOnly
+     * @param  bool  $validateOnly
      */
     private function updateAdditionalData(Product $product, $validateOnly)
     {
-        if (!$validateOnly && isset($product->id_category) && is_array($product->id_category)) {
+        if (! $validateOnly && isset($product->id_category) && is_array($product->id_category)) {
             $product->updateCategories(array_map('intval', $product->id_category));
         }
 
         $product->checkDefaultAttributes();
-        if (!$validateOnly && !$product->cache_default_attribute) {
+        if (! $validateOnly && ! $product->cache_default_attribute) {
             Product::updateDefaultAttribute($product->id);
         }
     }
 
     /**
      * Save product features.
-     *
-     * @param Product $product
-     * @param ImportConfigInterface $importConfig
      */
     private function saveFeatures(Product $product, ImportConfigInterface $importConfig)
     {
@@ -1192,7 +1143,7 @@ final class ProductImportHandler extends AbstractImportHandler
             $position = isset($feature[2]) ? (int) $feature[2] - 1 : false;
             $custom = isset($feature[3]) ? (int) $feature[3] : false;
 
-            if (!empty($featureName) && !empty($featureValue)) {
+            if (! empty($featureName) && ! empty($featureValue)) {
                 $featureId = (int) Feature::addFeatureImport($featureName, $position);
                 $productId = null;
                 if ($importConfig->forceIds() || $importConfig->matchReferences()) {
@@ -1216,16 +1167,15 @@ final class ProductImportHandler extends AbstractImportHandler
     /**
      * Save stock data for the product.
      *
-     * @param Product $product
-     * @param bool $validateOnly
-     * @param bool $productExists
+     * @param  bool  $validateOnly
+     * @param  bool  $productExists
      */
     private function saveStock(Product $product, $validateOnly, $productExists)
     {
         $asmEnabled = $this->configuration->getBoolean('PS_ADVANCED_STOCK_MANAGEMENT');
 
         // set advanced stock managment
-        if (!$validateOnly && isset($product->advanced_stock_management)) {
+        if (! $validateOnly && isset($product->advanced_stock_management)) {
             if ($product->advanced_stock_management != 1 && $product->advanced_stock_management != 0) {
                 $this->warning(
                     $this->translator->trans(
@@ -1234,7 +1184,7 @@ final class ProductImportHandler extends AbstractImportHandler
                         'Admin.Advparameters.Notification'
                     )
                 );
-            } elseif (!$asmEnabled && $product->advanced_stock_management == 1) {
+            } elseif (! $asmEnabled && $product->advanced_stock_management == 1) {
                 $this->warning(
                     $this->translator->trans(
                         'Advanced stock management is not enabled, cannot enable on product %name%',
@@ -1253,7 +1203,7 @@ final class ProductImportHandler extends AbstractImportHandler
 
         // Check if warehouse exists
         if (isset($product->warehouse) && $product->warehouse) {
-            if (!$asmEnabled) {
+            if (! $asmEnabled) {
                 $this->warning(
                     $this->translator->trans(
                         'Advanced stock management is not enabled, warehouse not set on product %name%',
@@ -1261,7 +1211,7 @@ final class ProductImportHandler extends AbstractImportHandler
                         'Admin.Advparameters.Notification'
                     )
                 );
-            } elseif (!$validateOnly) {
+            } elseif (! $validateOnly) {
                 if (Warehouse::exists($product->warehouse)) {
                     // Get already associated warehouses
                     $associatedWarehousesCollection = WarehouseProductLocation::getCollection($product->id);
@@ -1269,7 +1219,7 @@ final class ProductImportHandler extends AbstractImportHandler
                     foreach ($associatedWarehousesCollection as $awc) {
                         $awc->delete();
                     }
-                    $warehouseLocationEntity = new WarehouseProductLocation();
+                    $warehouseLocationEntity = new WarehouseProductLocation;
                     $warehouseLocationEntity->id_product = $product->id;
                     $warehouseLocationEntity->id_product_attribute = 0;
                     $warehouseLocationEntity->id_warehouse = $product->warehouse;
@@ -1305,7 +1255,7 @@ final class ProductImportHandler extends AbstractImportHandler
                         'Admin.Advparameters.Notification'
                     )
                 );
-            } elseif ((!$product->advanced_stock_management || $product->advanced_stock_management == 0) && $product->depends_on_stock == 1) {
+            } elseif ((! $product->advanced_stock_management || $product->advanced_stock_management == 0) && $product->depends_on_stock == 1) {
                 $this->warning(
                     $this->translator->trans(
                         'Advanced stock management is not enabled, cannot set "Depends on stock" for product %name%',
@@ -1313,12 +1263,12 @@ final class ProductImportHandler extends AbstractImportHandler
                         'Admin.Advparameters.Notification'
                     )
                 );
-            } elseif (!$validateOnly) {
+            } elseif (! $validateOnly) {
                 StockAvailable::setProductDependsOnStock($product->id, $product->depends_on_stock);
             }
 
             // This code allows us to set qty and disable depends on stock
-            if (!$validateOnly && isset($product->quantity)) {
+            if (! $validateOnly && isset($product->quantity)) {
                 // if depends on stock and quantity, add quantity to stock
                 if ($product->depends_on_stock == 1) {
                     $stockManager = StockManagerFactory::getManager();
@@ -1347,7 +1297,7 @@ final class ProductImportHandler extends AbstractImportHandler
                     }
                 }
             }
-        } elseif (!$validateOnly) {
+        } elseif (! $validateOnly) {
             // if not depends_on_stock set, use normal qty
             foreach ($shopIds as $shop) {
                 StockAvailable::setQuantity((int) $product->id, 0, (int) $product->quantity, (int) $shop);
@@ -1357,9 +1307,6 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Link product accessories.
-     *
-     * @param Product $product
-     * @param ImportRuntimeConfigInterface $runtimeConfig
      */
     private function linkAccessories(Product $product, ImportRuntimeConfigInterface $runtimeConfig)
     {
@@ -1371,8 +1318,7 @@ final class ProductImportHandler extends AbstractImportHandler
         $hasAccessories =
             isset($product->accessories) &&
             is_array($product->accessories) &&
-            count($product->accessories)
-        ;
+            count($product->accessories);
 
         if ($hasAccessories) {
             $sharedData = $runtimeConfig->getSharedData();
@@ -1384,14 +1330,12 @@ final class ProductImportHandler extends AbstractImportHandler
 
     /**
      * Import accessories.
-     *
-     * @param ImportRuntimeConfigInterface $runtimeConfig
      */
     private function importAccessories(ImportRuntimeConfigInterface $runtimeConfig)
     {
         $sharedData = $runtimeConfig->getSharedData();
 
-        if (!isset($sharedData['accessories'])) {
+        if (! isset($sharedData['accessories'])) {
             return;
         }
 

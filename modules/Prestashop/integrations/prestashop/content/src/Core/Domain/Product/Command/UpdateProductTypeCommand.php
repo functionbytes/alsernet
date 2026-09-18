@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,27 +44,17 @@ class UpdateProductTypeCommand
      */
     private $productType;
 
-    /**
-     * @param int $productId
-     * @param string $productType
-     */
     public function __construct(int $productId, string $productType)
     {
         $this->productId = new ProductId($productId);
         $this->productType = new ProductType($productType);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return ProductType
-     */
     public function getProductType(): ProductType
     {
         return $this->productType;

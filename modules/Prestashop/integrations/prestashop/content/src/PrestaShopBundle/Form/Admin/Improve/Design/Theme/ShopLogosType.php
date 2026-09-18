@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,9 +61,8 @@ class ShopLogosType extends AbstractType
     private $contextShopIds;
 
     /**
-     * @param bool $isShopFeatureUsed
-     * @param bool $isSingleShopContext
-     * @param array $contextShopIds
+     * @param  bool  $isShopFeatureUsed
+     * @param  bool  $isSingleShopContext
      */
     public function __construct(
         $isShopFeatureUsed,
@@ -79,7 +79,7 @@ class ShopLogosType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $shopLogoSettings = new ShopLogoSettings();
+        $shopLogoSettings = new ShopLogoSettings;
 
         $availableLogoFileTypes = implode(',', $shopLogoSettings->getLogoImageExtensionsWithDot());
 
@@ -107,8 +107,7 @@ class ShopLogosType extends AbstractType
                 'attr' => [
                     'accept' => $shopLogoSettings->getIconImageExtensionWithDot(),
                 ],
-            ])
-        ;
+            ]);
 
         $this->appendWithMultiShopCheckboxFormFields($builder);
         $this->appendWithMultiShopSwitchField($builder);
@@ -119,8 +118,6 @@ class ShopLogosType extends AbstractType
      * which are used to restrict certain configuration for specific shop only. It also has data transformer
      * which helps to map all the fields so the post is aware of the fields which are being modified for specific shop.
      * And it also disabled the fields which are not checked.
-     *
-     * @param FormBuilderInterface $builder
      */
     private function appendWithMultiShopCheckboxFormFields(FormBuilderInterface $builder)
     {
@@ -131,7 +128,7 @@ class ShopLogosType extends AbstractType
 
         /** @var FormBuilderInterface $form */
         foreach ($builder as $form) {
-            $builder->add($form->getName() . $suffix, ShopRestrictionCheckboxType::class, [
+            $builder->add($form->getName().$suffix, ShopRestrictionCheckboxType::class, [
                 'attr' => [
                     'is_allowed_to_display' => $isAllowedToDisplay,
                     'data-shop-restriction-target' => $form->getName(),
@@ -148,8 +145,6 @@ class ShopLogosType extends AbstractType
 
     /**
      * adds switch field to current form which toggles all multi-shop checkboxes on or off.
-     *
-     * @param FormBuilderInterface $builder
      */
     private function appendWithMultiShopSwitchField(FormBuilderInterface $builder)
     {
@@ -170,8 +165,7 @@ class ShopLogosType extends AbstractType
      * When form is submitted it adds extra form field called shop_restriction which is an object which holds
      * for which fields the checkbox has been clicked.
      *
-     * @param FormBuilderInterface $builder
-     * @param string $suffix - helps to find multi shop checkbox field
+     * @param  string  $suffix  - helps to find multi shop checkbox field
      */
     private function transformMultiStoreFields(FormBuilderInterface $builder, $suffix)
     {
@@ -205,8 +199,7 @@ class ShopLogosType extends AbstractType
     /**
      * The fields which does not have checked checkbox are being disabled by default
      *
-     * @param FormBuilderInterface $builder
-     * @param string $suffix - helps to find multi shop checkbox field
+     * @param  string  $suffix  - helps to find multi shop checkbox field
      */
     private function disableAllShopContextFields(FormBuilderInterface $builder, $suffix)
     {
@@ -220,7 +213,7 @@ class ShopLogosType extends AbstractType
             $data = $event->getData();
 
             foreach ($data as $fieldName => $value) {
-                if ($value || !$this->stringEndsWith($fieldName, $suffix)) {
+                if ($value || ! $this->stringEndsWith($fieldName, $suffix)) {
                     continue;
                 }
 
@@ -239,8 +232,7 @@ class ShopLogosType extends AbstractType
      * Sets the source attribute fields so they can be mapped with the shop restriction checkbox fields later on in
      * javascript events.
      *
-     * @param FormBuilderInterface $builder
-     * @param string $suffix - helps to find multi shop checkbox field
+     * @param  string  $suffix  - helps to find multi shop checkbox field
      */
     private function setShopRestrictionSource(FormBuilderInterface $builder, $suffix)
     {
@@ -268,9 +260,8 @@ class ShopLogosType extends AbstractType
     /**
      * Gets the checkbox form fields which are the source of multi-store behavior.
      *
-     * @param FormInterface $form
-     * @param string $suffix
-     *
+     * @param  FormInterface  $form
+     * @param  string  $suffix
      * @return array
      */
     private function getShopRestrictionSourceFormFields($form, $suffix)
@@ -278,7 +269,7 @@ class ShopLogosType extends AbstractType
         $formFields = [];
 
         foreach ($form as $formField) {
-            if (!$this->stringEndsWith($formField->getName(), $suffix)) {
+            if (! $this->stringEndsWith($formField->getName(), $suffix)) {
                 $formFields[] = $formField;
             }
         }
@@ -289,9 +280,8 @@ class ShopLogosType extends AbstractType
     /**
      * Checks if string ends with certain string.
      *
-     * @param string $haystack - the string in which search operation will be performed
-     * @param string $needle - the string which is being searched if exists at the end of the string
-     *
+     * @param  string  $haystack  - the string in which search operation will be performed
+     * @param  string  $needle  - the string which is being searched if exists at the end of the string
      * @return bool
      */
     private function stringEndsWith($haystack, $needle)
@@ -305,9 +295,8 @@ class ShopLogosType extends AbstractType
      * Gets the original field name. E.g if $shopRestrictionFieldName is header_logo_is_restricted_to_shop and
      *  suffix is _is_restricted_to_shop then it will return header_logo
      *
-     * @param string $shopRestrictionFieldName
-     * @param string $suffix
-     *
+     * @param  string  $shopRestrictionFieldName
+     * @param  string  $suffix
      * @return string
      */
     private function getOriginalFieldNameFromSuffix($shopRestrictionFieldName, $suffix)

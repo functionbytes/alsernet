@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,7 +30,9 @@ namespace PrestaShop\PrestaShop\Core\Addon\Module;
 class AddonListFilterDeviceStatus
 {
     public const DEVICE_COMPUTER = 1;
+
     public const DEVICE_TABLET = 2;
+
     public const DEVICE_MOBILE = 4;
 
     public const ALL = 7;

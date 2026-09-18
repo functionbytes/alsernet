@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,7 @@ class Attribute
     private $localizedNames;
 
     /**
-     * @param int $attributeId
-     * @param int $position
-     * @param string $color
-     * @param string[] $localizedNames key => value pairs where each key represents language id
+     * @param  string[]  $localizedNames  key => value pairs where each key represents language id
      */
     public function __construct(
         int $attributeId,
@@ -68,25 +66,16 @@ class Attribute
         $this->localizedNames = $localizedNames;
     }
 
-    /**
-     * @return int
-     */
     public function getAttributeId(): int
     {
         return $this->attributeId;
     }
 
-    /**
-     * @return int
-     */
     public function getPosition(): int
     {
         return $this->position;
     }
 
-    /**
-     * @return string
-     */
     public function getColor(): string
     {
         return $this->color;

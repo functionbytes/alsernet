@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,7 +46,7 @@ class IsoCode
     private $isoCode;
 
     /**
-     * @param string $isoCode
+     * @param  string  $isoCode
      */
     public function __construct($isoCode)
     {
@@ -63,13 +64,13 @@ class IsoCode
     }
 
     /**
-     * @param string $isoCode
+     * @param  string  $isoCode
      *
      * @throws LanguageException
      */
     private function assertIsIsoCode($isoCode)
     {
-        if (!is_string($isoCode) || !preg_match('/^[a-zA-Z]{2,3}$/', $isoCode)) {
+        if (! is_string($isoCode) || ! preg_match('/^[a-zA-Z]{2,3}$/', $isoCode)) {
             throw new LanguageConstraintException(sprintf('Invalid language ISO code %s supplied', var_export($isoCode, true)), LanguageConstraintException::INVALID_ISO_CODE);
         }
     }

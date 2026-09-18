@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,10 +39,9 @@ interface CurrencyDataProviderInterface
     /**
      * Return available currencies.
      *
-     * @param bool $object
-     * @param bool $active
-     * @param bool $group_by
-     *
+     * @param  bool  $object
+     * @param  bool  $active
+     * @param  bool  $group_by
      * @return array Currencies
      */
     public function getCurrencies($object = false, $active = true, $group_by = false);
@@ -49,8 +49,7 @@ interface CurrencyDataProviderInterface
     /**
      * Return raw currencies data from the database (not deleted + active currencies).
      *
-     * @param bool $currentShopOnly If true returns only currencies associated to current shop
-     *
+     * @param  bool  $currentShopOnly  If true returns only currencies associated to current shop
      * @return array[] Available currencies
      */
     public function findAll($currentShopOnly = true);
@@ -65,13 +64,12 @@ interface CurrencyDataProviderInterface
     /**
      * Get a Currency entity instance by ISO code.
      *
-     * @param string $isoCode
-     *                        An ISO 4217 currency code
-     * @param int|null $idLang
-     *                         Set this parameter if you want the currency in a specific language.
-     *                         If null, default language will be used
-     *
-     * @return currency|null
+     * @param  string  $isoCode
+     *                           An ISO 4217 currency code
+     * @param  int|null  $idLang
+     *                            Set this parameter if you want the currency in a specific language.
+     *                            If null, default language will be used
+     * @return Currency|null
      *                       The asked Currency object, or null if not found
      */
     public function getCurrencyByIsoCode($isoCode, $idLang = null);
@@ -80,13 +78,12 @@ interface CurrencyDataProviderInterface
      * Get a Currency entity instance.
      * If the passed ISO code is known, this Currency entity will be loaded with known data.
      *
-     * @param string $isoCode
-     *                        An ISO 4217 currency code
-     * @param int|null $idLang
-     *                         Set this parameter if you want the currency in a specific language.
-     *                         If null, default language will be used
-     *
-     * @return currency
+     * @param  string  $isoCode
+     *                           An ISO 4217 currency code
+     * @param  int|null  $idLang
+     *                            Set this parameter if you want the currency in a specific language.
+     *                            If null, default language will be used
+     * @return Currency
      *                  The asked Currency object, loaded with relevant data if passed ISO code is known
      */
     public function getCurrencyByIsoCodeOrCreate($isoCode, $idLang = null);
@@ -95,8 +92,8 @@ interface CurrencyDataProviderInterface
      * Persists a Currency entity into DB.
      * If this entity already exists in DB (has a known currency_id), it will be updated.
      *
-     * @param Currency $currencyEntity
-     *                                 Currency object model to save
+     * @param  Currency  $currencyEntity
+     *                                    Currency object model to save
      *
      * @throws PrestaShopException
      *                             If something wrong happened with DB when saving $currencyEntity
@@ -108,8 +105,7 @@ interface CurrencyDataProviderInterface
     /**
      * Gets a legacy Currency instance by ID.
      *
-     * @param int $currencyId
-     *
+     * @param  int  $currencyId
      * @return Currency
      */
     public function getCurrencyById($currencyId);

@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateTeamMemberRequest;
@@ -28,8 +29,10 @@ class TeamController extends Controller
                 $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
             });
 
-        // Apply filters
-        if ($request->has('search')) {
+        // filled() y no has(): al enviar el formulario los filtros sin elegir
+        // viajan vacios, y con has() un role="" se traducia en un
+        // whereHas(name = '') que dejaba la lista a cero.
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('firstname', 'like', "%{$search}%")
@@ -38,17 +41,22 @@ class TeamController extends Controller
             });
         }
 
-        // Filter by role
-        if ($request->has('role') && $request->role !== 'all') {
+        if ($request->filled('role') && $request->role !== 'all') {
             $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
 
-        // Filter by group
-        if ($request->has('group_id') && $request->group_id !== 'all') {
+        if ($request->filled('group_id') && $request->group_id !== 'all') {
             $query->whereHas('groups', function ($q) use ($request) {
                 $q->where('helpdesk_groups.id', $request->group_id);
+            });
+        }
+
+        if ($request->filled('availability') && $request->availability !== 'all') {
+            $availabilityFilter = $request->availability;
+            $query->whereHas('agentSettings', function ($q) use ($availabilityFilter) {
+                $q->where('accepts_conversations', $availabilityFilter);
             });
         }
 
@@ -144,6 +152,65 @@ class TeamController extends Controller
     /**
      * Update member backups.
      */
+    /**
+     * Acciones sobre varios miembros a la vez.
+     *
+     * Solo toca la configuracion de agente (disponibilidad) y la pertenencia a
+     * grupos. No hay borrado: son usuarios reales del sistema y su alta/baja se
+     * gestiona desde el modulo de usuarios, no desde el panel del equipo.
+     */
+    public function membersBulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:availability,add_group,remove_group'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+            'availability' => ['required_if:action,availability', 'in:yes,working_hours,no'],
+            'group_id' => ['required_if:action,add_group,remove_group', 'integer'],
+        ]);
+
+        $members = User::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($members as $member) {
+            // Mismo permiso que la edicion individual: un lote no puede ser una
+            // puerta trasera para tocar a quien no se podria tocar de una en una.
+            if (! auth()->user()->can('update', $member)) {
+                $skipped++;
+
+                continue;
+            }
+
+            match ($validated['action']) {
+                'availability' => $member->agentSettings()->updateOrCreate(
+                    ['user_id' => $member->id],
+                    ['accepts_conversations' => $validated['availability']],
+                ),
+                'add_group' => $member->groups()->syncWithoutDetaching([
+                    $validated['group_id'] => ['conversation_priority' => 'backup'],
+                ]),
+                'remove_group' => $member->groups()->detach($validated['group_id']),
+            };
+
+            $count++;
+        }
+
+        $labels = [
+            'availability' => 'actualizado(s)',
+            'add_group' => 'añadido(s) al grupo',
+            'remove_group' => 'quitado(s) del grupo',
+        ];
+
+        $message = "{$count} miembro(s) {$labels[$validated['action']]}.";
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitido(s) por falta de permisos.";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
+    }
+
     public function memberUpdate(UpdateTeamMemberRequest $request, $id)
     {
         $member = User::findOrFail($id);

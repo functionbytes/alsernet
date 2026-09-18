@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class BulkDeleteLanguagesCommand
     private $languageIds = [];
 
     /**
-     * @param int[] $languageIds
+     * @param  int[]  $languageIds
      */
     public function __construct(array $languageIds)
     {
@@ -56,7 +57,7 @@ class BulkDeleteLanguagesCommand
     }
 
     /**
-     * @param int[] $languageIds
+     * @param  int[]  $languageIds
      */
     private function setLanguageIds(array $languageIds)
     {

@@ -33,17 +33,16 @@ namespace PrestaShopBundle\Translation;
 trait TranslatorLanguageTrait
 {
     /**
-     * @param string $locale Locale code for the catalogue to check if loaded
-     *
+     * @param  string  $locale  Locale code for the catalogue to check if loaded
      * @return bool
      */
     public function isLanguageLoaded($locale)
     {
-        return !empty($this->catalogues[$locale]);
+        return ! empty($this->catalogues[$locale]);
     }
 
     /**
-     * @param string $locale Locale code for the catalogue to be cleared
+     * @param  string  $locale  Locale code for the catalogue to be cleared
      */
     public function clearLanguage($locale)
     {

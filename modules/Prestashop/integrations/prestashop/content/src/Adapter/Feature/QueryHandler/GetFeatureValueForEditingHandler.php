@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ class GetFeatureValueForEditingHandler implements GetFeatureValueForEditingHandl
      */
     private $featureValueRepository;
 
-    /**
-     * @param FeatureValueRepository $featureValueRepository
-     */
     public function __construct(FeatureValueRepository $featureValueRepository)
     {
         $this->featureValueRepository = $featureValueRepository;

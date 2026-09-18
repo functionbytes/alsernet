@@ -2,11 +2,7 @@
 
 namespace Modules\Helpdesk\Services\Campaigns;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Jobs\Campaigns\SendBroadcastMessageJob;
 use Modules\Helpdesk\Models\Campaigns\Broadcast;
-use Modules\Helpdesk\Models\Campaigns\BroadcastRecipient;
 use Modules\Helpdesk\Models\Customer;
 
 class BroadcastService
@@ -22,48 +18,19 @@ class BroadcastService
     }
 
     /**
-     * Dispatch a broadcast: build recipients and enqueue one job per customer.
-     * Jobs are throttled to a max of 5/second to respect Meta rate limits.
+     * INCOMPLETO — no conectado a ningún flujo real: referenciaba
+     * Modules\Helpdesk\Jobs\Campaigns\SendBroadcastMessageJob, una clase que
+     * nunca llegó a existir en el árbol, y este servicio no tiene ningún
+     * caller (verificado por grep). Se deja la excepción explícita para que
+     * no pueda invocarse por accidente y dejar broadcasts a medio procesar
+     * (recipients creados en BD pero sin job real que los despache).
+     *
+     * Si se retoma esta feature, el envío real ya vive en SendBroadcastJob /
+     * SendBroadcastChunkJob (modules/Helpdesk/app/Jobs/).
      */
     public function dispatchBroadcast(Broadcast $broadcast): void
     {
-        $broadcast->markAsSending();
-
-        $filters = $broadcast->filters ?? [];
-        $customers = $this->buildCustomerQuery($filters)->get(['id']);
-
-        if ($customers->isEmpty()) {
-            Log::warning('Broadcast has no matching customers', ['broadcast_id' => $broadcast->id]);
-            $broadcast->markAsFailed();
-
-            return;
-        }
-
-        DB::transaction(function () use ($broadcast, $customers): void {
-            foreach ($customers as $customer) {
-                BroadcastRecipient::query()->create([
-                    'broadcast_id' => $broadcast->id,
-                    'customer_id' => $customer->id,
-                    'status' => 'pending',
-                ]);
-            }
-
-            $broadcast->update(['recipients_count' => $customers->count()]);
-        });
-
-        // Dispatch jobs with delay to throttle: max 5/second for Meta API compliance
-        $recipients = BroadcastRecipient::query()
-            ->where('broadcast_id', $broadcast->id)
-            ->where('status', 'pending')
-            ->get(['id']);
-
-        foreach ($recipients as $index => $recipient) {
-            $delaySeconds = (int) floor($index / 5); // batch of 5 per second
-
-            SendBroadcastMessageJob::dispatch($broadcast->id, $recipient->id)
-                ->onQueue('helpdesk-broadcasts')
-                ->delay(now()->addSeconds($delaySeconds));
-        }
+        throw new \RuntimeException('BroadcastService::dispatchBroadcast() no está conectado; usar SendBroadcastJob/SendBroadcastChunkJob');
     }
 
     /**

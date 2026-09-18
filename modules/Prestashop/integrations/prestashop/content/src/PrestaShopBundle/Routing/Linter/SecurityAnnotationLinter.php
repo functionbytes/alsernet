@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,10 +50,6 @@ final class SecurityAnnotationLinter implements RouteLinterInterface
      */
     private $controllerNameParser;
 
-    /**
-     * @param Reader $annotationReader
-     * @param ControllerNameParser $controllerNameParser
-     */
     public function __construct(Reader $annotationReader, ControllerNameParser $controllerNameParser)
     {
         $this->annotationReader = $annotationReader;
@@ -60,9 +57,7 @@ final class SecurityAnnotationLinter implements RouteLinterInterface
     }
 
     /**
-     * @param string $routeName
-     * @param Route $route
-     *
+     * @param  string  $routeName
      * @return AdminSecurity
      *
      * @throws \ReflectionException
@@ -83,7 +78,7 @@ final class SecurityAnnotationLinter implements RouteLinterInterface
 
         $annotation = $this->annotationReader->getMethodAnnotation($reflection, AdminSecurity::class);
 
-        if (null === $annotation) {
+        if ($annotation === null) {
             throw new LinterException(sprintf('"%s:%s" does not have AdminSecurity annotation configured', $controllerAndMethod['controller'], $controllerAndMethod['method']));
         }
 
@@ -99,8 +94,6 @@ final class SecurityAnnotationLinter implements RouteLinterInterface
     }
 
     /**
-     * @param Route $route
-     *
      * @return array|null
      */
     private function extractControllerAndMethodNamesFromRoute(Route $route)
@@ -116,7 +109,7 @@ final class SecurityAnnotationLinter implements RouteLinterInterface
             }
         }
 
-        list($controller, $method) = explode('::', $controller, 2);
+        [$controller, $method] = explode('::', $controller, 2);
 
         return [
             'controller' => $controller,

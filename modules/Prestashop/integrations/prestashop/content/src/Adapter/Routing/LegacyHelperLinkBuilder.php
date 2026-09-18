@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,56 +38,50 @@ use PrestaShop\PrestaShop\Core\Routing\EntityLinkBuilderInterface;
 class LegacyHelperLinkBuilder implements EntityLinkBuilderInterface
 {
     /**
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $entity
      * @return string
      *
      * @throws InvalidArgumentException
      */
     public function getViewLink($entity, array $parameters)
     {
-        if (!isset($parameters['current_index'])) {
+        if (! isset($parameters['current_index'])) {
             throw new InvalidArgumentException('Missing parameter current_index to build legacy link');
         }
 
         $currentIndex = $parameters['current_index'];
         $parameters = $this->buildActionParameters('view', $entity, $parameters);
 
-        return $currentIndex . '&' . http_build_query($parameters);
+        return $currentIndex.'&'.http_build_query($parameters);
     }
 
     /**
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $entity
      * @return string
      *
      * @throws InvalidArgumentException
      */
     public function getEditLink($entity, array $parameters)
     {
-        if (!isset($parameters['current_index'])) {
+        if (! isset($parameters['current_index'])) {
             throw new InvalidArgumentException('Missing parameter current_index to build legacy link');
         }
 
         $currentIndex = $parameters['current_index'];
         $parameters = $this->buildActionParameters('update', $entity, $parameters);
 
-        return $currentIndex . '&' . http_build_query($parameters);
+        return $currentIndex.'&'.http_build_query($parameters);
     }
 
     /**
-     * @param string $action
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $action
+     * @param  string  $entity
      * @return array
      */
     private function buildActionParameters($action, $entity, array $parameters)
     {
         unset($parameters['current_index']);
-        $actionParameter = $action . $entity;
+        $actionParameter = $action.$entity;
 
         /**
          * Legacy actions are displayed with empty value (e.g ?controller=ProductAdminController&updateproduct&id_product=1)

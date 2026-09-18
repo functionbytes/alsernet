@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,17 +36,12 @@ use PrestaShopException;
 abstract class AbstractObjectModelRepository
 {
     /**
-     * @param int $id
-     * @param string $objectTableName
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function assertObjectModelExists(int $id, string $objectTableName, string $exceptionClass, int $errorCode = 0): void
     {
         try {
-            if (!ObjectModel::existsInDatabase($id, $objectTableName)) {
+            if (! ObjectModel::existsInDatabase($id, $objectTableName)) {
                 throw new $exceptionClass(sprintf('%s #%d does not exist', $objectTableName, $id), $errorCode);
             }
         } catch (PrestaShopException $e) {
@@ -63,12 +59,6 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param int $id
-     * @param string $objectModelClass
-     * @param string $exceptionClass
-     *
-     * @return ObjectModel
-     *
      * @throws CoreException
      */
     protected function getObjectModel(int $id, string $objectModelClass, string $exceptionClass): ObjectModel
@@ -95,17 +85,10 @@ abstract class AbstractObjectModelRepository
         return $objectModel;
     }
 
-    /**
-     * @param ObjectModel $objectModel
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
-     * @return int
-     */
     protected function addObjectModel(ObjectModel $objectModel, string $exceptionClass, int $errorCode = 0): int
     {
         try {
-            if (!$objectModel->add()) {
+            if (! $objectModel->add()) {
                 throw new $exceptionClass(
                     sprintf('Failed to add %s', get_class($objectModel)),
                     $errorCode
@@ -127,20 +110,16 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function updateObjectModel(ObjectModel $objectModel, string $exceptionClass, int $errorCode = 0): void
     {
-        if (!$objectModel->id) {
+        if (! $objectModel->id) {
             throw new CoreException('Cannot update object model without id');
         }
 
         try {
-            if (!$objectModel->update()) {
+            if (! $objectModel->update()) {
                 throw new $exceptionClass(
                     sprintf('Failed to update %s #%d', get_class($objectModel), $objectModel->id),
                     $errorCode
@@ -163,11 +142,6 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param array $propertiesToUpdate
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function partiallyUpdateObjectModel(
@@ -181,16 +155,12 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function deleteObjectModel(ObjectModel $objectModel, string $exceptionClass, int $errorCode = 0): void
     {
         try {
-            if (!$objectModel->delete()) {
+            if (! $objectModel->delete()) {
                 throw new $exceptionClass(
                     sprintf('Failed to delete %s #%d', get_class($objectModel), $objectModel->id),
                     $errorCode
@@ -211,16 +181,12 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function softDeleteObjectModel(ObjectModel $objectModel, string $exceptionClass, int $errorCode = 0): void
     {
         try {
-            if (!$objectModel->softDelete()) {
+            if (! $objectModel->softDelete()) {
                 throw new $exceptionClass(
                     sprintf('Failed to soft delete %s #%d', get_class($objectModel), $objectModel->id),
                     $errorCode
@@ -241,15 +207,13 @@ abstract class AbstractObjectModelRepository
     }
 
     /**
-     * @param array $propertiesToUpdate
-     *
      * @return array<string, mixed>
      */
     private function formatPropertiesToUpdate(array $propertiesToUpdate): array
     {
         $formattedPropertiesToUpdate = [];
         foreach ($propertiesToUpdate as $propertyName => $property) {
-            if (!is_array($property)) {
+            if (! is_array($property)) {
                 $formattedPropertiesToUpdate[$property] = true;
 
                 continue;

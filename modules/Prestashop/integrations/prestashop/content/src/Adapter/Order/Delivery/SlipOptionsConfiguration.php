@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,7 +36,9 @@ use PrestaShop\PrestaShop\Core\Configuration\DataConfigurationInterface;
 final class SlipOptionsConfiguration implements DataConfigurationInterface
 {
     public const PREFIX = 'PS_DELIVERY_PREFIX';
+
     public const NUMBER = 'PS_DELIVERY_NUMBER';
+
     public const ENABLE_PRODUCT_IMAGE = 'PS_PDF_IMG_DELIVERY';
 
     /**

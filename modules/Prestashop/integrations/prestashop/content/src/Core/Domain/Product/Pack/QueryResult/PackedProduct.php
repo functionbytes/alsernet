@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,6 @@ class PackedProduct
      */
     private $combinationId;
 
-    /**
-     * @param int $productId
-     * @param int $quantity
-     * @param int $combinationId
-     */
     public function __construct(
         int $productId,
         int $quantity,
@@ -63,25 +59,16 @@ class PackedProduct
         $this->combinationId = $combinationId;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantity(): int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return int
-     */
     public function getCombinationId(): int
     {
         return $this->combinationId;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,7 +78,7 @@ final class ZoneGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns(): ColumnCollectionInterface
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('bulk'))
                     ->setOptions([
@@ -123,7 +124,7 @@ final class ZoneGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getFilters(): FilterCollectionInterface
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_zone', TextType::class))
                     ->setAssociatedColumn('id_zone')
@@ -165,12 +166,9 @@ final class ZoneGridDefinitionFactory extends AbstractGridDefinitionFactory
             );
     }
 
-    /**
-     * @return RowActionCollection
-     */
     private function getRowActions(): RowActionCollection
     {
-        $rowActionCollection = new RowActionCollection();
+        $rowActionCollection = new RowActionCollection;
         $rowActionCollection
             ->add(
                 (new LinkRowAction('edit'))
@@ -199,7 +197,7 @@ final class ZoneGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions(): GridActionCollectionInterface
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -222,7 +220,7 @@ final class ZoneGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions(): BulkActionCollectionInterface
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

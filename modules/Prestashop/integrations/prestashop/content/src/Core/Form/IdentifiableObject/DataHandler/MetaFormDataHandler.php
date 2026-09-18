@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class MetaFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -61,8 +59,7 @@ final class MetaFormDataHandler implements FormDataHandlerInterface
             ->setLocalisedPageTitle($data['page_title'])
             ->setLocalisedMetaDescription($data['meta_description'])
             ->setLocalisedMetaKeywords($data['meta_keywords'])
-            ->setLocalisedRewriteUrls($data['url_rewrite'])
-        ;
+            ->setLocalisedRewriteUrls($data['url_rewrite']);
 
         /** @var MetaId $metaId */
         $metaId = $this->commandBus->handle($addMetaCommand);
@@ -82,8 +79,7 @@ final class MetaFormDataHandler implements FormDataHandlerInterface
             ->setLocalisedPageTitles($data['page_title'])
             ->setLocalisedMetaDescriptions($data['meta_description'])
             ->setLocalisedMetaKeywords($data['meta_keywords'])
-            ->setLocalisedRewriteUrls($data['url_rewrite'])
-        ;
+            ->setLocalisedRewriteUrls($data['url_rewrite']);
 
         $this->commandBus->handle($editMetaCommand);
     }

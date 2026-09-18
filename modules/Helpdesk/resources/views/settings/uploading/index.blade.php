@@ -28,7 +28,7 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="max_file_size_mb" class="form-label fw-semibold">
-                                Tamaño maximo por archivo (MB) <span class="text-danger">*</span>
+                                Tamaño maximo por archivo (MB) <span class="text-brand">*</span>
                             </label>
                             <input type="number" class="form-control @error('max_file_size_mb') is-invalid @enderror"
                                 id="max_file_size_mb" name="max_file_size_mb"
@@ -64,7 +64,7 @@
                     @endphp
 
                     <label for="allowed_extensions" class="form-label fw-semibold">
-                        Extensiones permitidas <span class="text-danger">*</span>
+                        Extensiones permitidas <span class="text-brand">*</span>
                     </label>
                     <select class="form-select select2-tags @error('allowed_extensions') is-invalid @enderror"
                         id="allowed_extensions" name="allowed_extensions[]" multiple>
@@ -103,7 +103,7 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="image_max_width" class="form-label fw-semibold">
-                                    Ancho maximo (px) <span class="text-danger">*</span>
+                                    Ancho maximo (px) <span class="text-brand">*</span>
                                 </label>
                                 <input type="number" class="form-control @error('image_max_width') is-invalid @enderror"
                                     id="image_max_width" name="image_max_width"
@@ -115,7 +115,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="image_max_height" class="form-label fw-semibold">
-                                    Alto maximo (px) <span class="text-danger">*</span>
+                                    Alto maximo (px) <span class="text-brand">*</span>
                                 </label>
                                 <input type="number" class="form-control @error('image_max_height') is-invalid @enderror"
                                     id="image_max_height" name="image_max_height"
@@ -127,7 +127,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="image_quality" class="form-label fw-semibold">
-                                    Calidad (%) <span class="text-danger">*</span>
+                                    Calidad (%) <span class="text-brand">*</span>
                                 </label>
                                 <input type="number" class="form-control @error('image_quality') is-invalid @enderror"
                                     id="image_quality" name="image_quality"
@@ -252,31 +252,11 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-    $('.select2-tags').select2({ width: '100%', tags: true, tokenSeparators: [',', ' '] });
-
-    $('#enable_image_compression').on('change', function () {
-        $('#compression-fields').toggleClass('d-none', !this.checked);
-    });
-
-    $('#max_file_size_mb').on('input', function () {
-        var mb = parseInt($(this).val() || 0);
-        $('#fileSizeHelp').text('Tamaño maximo permitido por archivo (' + mb + ' MB = ' + (mb * 1024) + ' KB)');
-    });
-
-    $('#image_quality').on('input', function () {
-        var q = parseInt($(this).val() || 0);
-        var label = q >= 90 ? 'alta calidad, archivo mayor' : q >= 70 ? 'equilibrio calidad/tamaño' : 'menor calidad, archivo mas pequeño';
-        $('#qualityHelp').text(q + '% — ' + label);
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Guardado');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.UploadingIndexConfig = {
+    flash: { success: @json(session('success')), successTitle: 'Guardado', error: @json(session('error')) },
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/uploading-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/uploading-index.js')) }}" defer></script>
 @endpush

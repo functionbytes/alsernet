@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class BulkDeleteCmsPageCategoryCommand extends AbstractBulkCmsPageCategoryComman
     private $cmsPageCategoryIds;
 
     /**
-     * @param int[] $cmsPageCategoryIds
+     * @param  int[]  $cmsPageCategoryIds
      *
      * @throws CmsPageCategoryException
      */
@@ -63,7 +64,7 @@ class BulkDeleteCmsPageCategoryCommand extends AbstractBulkCmsPageCategoryComman
     }
 
     /**
-     * @param int[] $cmsPageCategoryIds
+     * @param  int[]  $cmsPageCategoryIds
      *
      * @throws CmsPageCategoryException
      */

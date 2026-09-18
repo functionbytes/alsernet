@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ final class HookDescription
     private $description;
 
     /**
-     * @param string $name
-     * @param string $title
-     * @param string $description
+     * @param  string  $name
+     * @param  string  $title
+     * @param  string  $description
      */
     public function __construct($name, $title, $description)
     {

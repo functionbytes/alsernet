@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,11 +87,6 @@ class AddonsDataProvider implements AddonsInterface
      */
     private $moduleChannel;
 
-    /**
-     * @param ApiClient $apiClient
-     * @param ModuleZipManager $zipManager
-     * @param string|null $moduleChannel
-     */
     public function __construct(
         ApiClient $apiClient,
         ModuleZipManager $zipManager,
@@ -103,10 +99,6 @@ class AddonsDataProvider implements AddonsInterface
     }
 
     /**
-     * @param int $module_id
-     *
-     * @return bool
-     *
      * @throws Exception
      */
     public function downloadModule(int $module_id): bool
@@ -120,7 +112,7 @@ class AddonsDataProvider implements AddonsInterface
         try {
             $module_data = $this->request('module_download', $params);
         } catch (Exception $e) {
-            if (!$this->isAddonsAuthenticated()) {
+            if (! $this->isAddonsAuthenticated()) {
                 throw new Exception('Error sent by Addons. You may need to be logged.', 0, $e);
             } else {
                 throw new Exception('Error sent by Addons. You may be not allowed to download this module.', 0, $e);
@@ -138,8 +130,6 @@ class AddonsDataProvider implements AddonsInterface
     }
 
     /**
-     * @return bool
-     *
      * @todo Does this function should be in a User related class ?
      */
     public function isAddonsAuthenticated(): bool
@@ -155,7 +145,7 @@ class AddonsDataProvider implements AddonsInterface
      */
     public function request($action, $params = [])
     {
-        if (!$this->isAddonsUp()) {
+        if (! $this->isAddonsUp()) {
             throw new Exception('Previous call failed and disabled client.');
         }
 
@@ -249,8 +239,6 @@ class AddonsDataProvider implements AddonsInterface
 
     /**
      * Check if a request has already failed.
-     *
-     * @return bool
      */
     public function isAddonsUp(): bool
     {

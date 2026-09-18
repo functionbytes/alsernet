@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ final class GetProductCustomizationFieldsHandler implements GetProductCustomizat
      */
     private $productRepository;
 
-    /**
-     * @param CustomizationFieldRepository $customizationFieldRepository
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         CustomizationFieldRepository $customizationFieldRepository,
         ProductRepository $productRepository
@@ -80,11 +77,6 @@ final class GetProductCustomizationFieldsHandler implements GetProductCustomizat
         return $customizationFields;
     }
 
-    /**
-     * @param int $fieldId
-     *
-     * @return CustomizationField
-     */
     private function buildCustomizationField(int $fieldId): CustomizationField
     {
         $fieldEntity = $this->customizationFieldRepository->get(new CustomizationFieldId($fieldId));

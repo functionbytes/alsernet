@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,18 +38,20 @@ class ProductSettings
     /**
      * Class not supposed to be initialized, it only serves as static storage
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * Bellow constants define maximum allowed length of product properties
      */
     public const MAX_NAME_LENGTH = 128;
+
     public const MAX_MPN_LENGTH = 40;
+
     public const MAX_META_TITLE_LENGTH = 70;
+
     public const MAX_META_DESCRIPTION_LENGTH = 160;
 
     public const MAX_DESCRIPTION_SHORT_LENGTH = 800;
+
     public const MAX_DESCRIPTION_LENGTH = 21844;
 }

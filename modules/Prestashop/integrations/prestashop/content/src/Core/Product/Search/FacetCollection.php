@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,7 @@ class FacetCollection
     private $facets = [];
 
     /**
-     * @param Facet $facet the facet to add
-     *
+     * @param  Facet  $facet  the facet to add
      * @return $this
      */
     public function addFacet(Facet $facet)
@@ -49,8 +49,7 @@ class FacetCollection
     }
 
     /**
-     * @param array $facets the facets to add
-     *
+     * @param  array  $facets  the facets to add
      * @return $this
      */
     public function setFacets(array $facets)

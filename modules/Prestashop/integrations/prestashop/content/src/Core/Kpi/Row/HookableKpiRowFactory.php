@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,8 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
     private $options = [];
 
     /**
-     * @param KpiInterface[] $kpis
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param string $identifier
+     * @param  KpiInterface[]  $kpis
+     * @param  string  $identifier
      */
     public function __construct(
         array $kpis,
@@ -96,8 +96,6 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
 
     /**
      * Set options for kpi row
-     *
-     * @param array $options
      */
     public function setOptions(array $options)
     {
@@ -105,8 +103,6 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
     }
 
     /**
-     * @param array $kpis
-     *
      * @return bool true if valid, else throw an exception
      *
      * @throws InvalidArgumentException
@@ -114,7 +110,7 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
     private function validateKpis(array $kpis)
     {
         foreach ($kpis as $kpi) {
-            if (!$kpi instanceof KpiInterface) {
+            if (! $kpi instanceof KpiInterface) {
                 throw InvalidArgumentException::invalidKpi($kpi);
             }
         }
@@ -123,15 +119,14 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
     }
 
     /**
-     * @param mixed $identifier
-     *
+     * @param  mixed  $identifier
      * @return bool true if valid, else throw an exception
      *
      * @throws InvalidArgumentException
      */
     private function validateIdentifier($identifier)
     {
-        if (!is_string($identifier)) {
+        if (! is_string($identifier)) {
             throw InvalidArgumentException::invalidIdentifier($identifier);
         }
 
@@ -139,12 +134,11 @@ final class HookableKpiRowFactory implements KpiRowFactoryInterface
     }
 
     /**
-     * @param string $identifier
-     *
+     * @param  string  $identifier
      * @return string
      */
     private function getHookName($identifier)
     {
-        return 'action' . ucfirst($identifier) . 'KpiRowModifier';
+        return 'action'.ucfirst($identifier).'KpiRowModifier';
     }
 }

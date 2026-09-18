@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class CmsProvider implements UrlProviderInterface
      */
     private $link;
 
-    /**
-     * @param Link $link
-     */
     public function __construct(Link $link)
     {
         $this->link = $link;
@@ -50,9 +48,8 @@ final class CmsProvider implements UrlProviderInterface
     /**
      * Create a link to a cms.
      *
-     * @param int $cmsId
-     * @param string $rewrite
-     *
+     * @param  int  $cmsId
+     * @param  string  $rewrite
      * @return string
      */
     public function getUrl($cmsId = null, $rewrite = null)

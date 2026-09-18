@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,13 +40,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class ProductWarehouseCombination extends CommonAbstractType
 {
     private $translator;
+
     private $contextLegacy;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
+     * @param  object  $translator
+     * @param  object  $legacyContext
      */
     public function __construct($translator, $legacyContext)
     {
@@ -73,7 +75,7 @@ class ProductWarehouseCombination extends CommonAbstractType
                 'empty_data' => '',
             ]);
 
-        //set default minimal values for collection prototype
+        // set default minimal values for collection prototype
         $builder->setData([
             'warehouse_id' => $options['id_warehouse'],
             'warehouse_activated' => false,

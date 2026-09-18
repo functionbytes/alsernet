@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,12 +48,6 @@ class CurrencyExchangeRateType extends TranslatorAwareType
      */
     private $router;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isCronModuleInstalled
-     * @param Router $router
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -71,13 +66,12 @@ class CurrencyExchangeRateType extends TranslatorAwareType
     {
         $builder
             ->add('live_exchange_rate', SwitchType::class, [
-                'disabled' => !$this->isCronModuleInstalled,
+                'disabled' => ! $this->isCronModuleInstalled,
                 'label' => $this->trans('Live exchange rates', 'Admin.International.Feature'),
                 'attr' => [
                     'class' => 'js-live-exchange-rate',
                     'data-url' => $this->router->generate('admin_currencies_update_live_exchange_rates'),
                 ],
-            ])
-        ;
+            ]);
     }
 }

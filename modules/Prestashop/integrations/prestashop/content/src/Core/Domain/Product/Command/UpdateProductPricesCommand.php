@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,35 +77,21 @@ class UpdateProductPricesCommand
      */
     private $unity;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getPrice(): ?DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @param string $price
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setPrice(string $price): self
     {
         $this->price = new DecimalNumber($price);
@@ -112,19 +99,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getEcotax(): ?DecimalNumber
     {
         return $this->ecotax;
     }
 
-    /**
-     * @param string $ecotax
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setEcotax(string $ecotax): self
     {
         $this->ecotax = new DecimalNumber($ecotax);
@@ -132,19 +111,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getTaxRulesGroupId(): ?int
     {
         return $this->taxRulesGroupId;
     }
 
-    /**
-     * @param int $taxRulesGroupId
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setTaxRulesGroupId(int $taxRulesGroupId): self
     {
         $this->taxRulesGroupId = $taxRulesGroupId;
@@ -152,19 +123,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isOnSale(): ?bool
     {
         return $this->onSale;
     }
 
-    /**
-     * @param bool $onSale
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setOnSale(bool $onSale): self
     {
         $this->onSale = $onSale;
@@ -172,19 +135,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getWholesalePrice(): ?DecimalNumber
     {
         return $this->wholesalePrice;
     }
 
-    /**
-     * @param string $wholesalePrice
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setWholesalePrice(string $wholesalePrice): self
     {
         $this->wholesalePrice = new DecimalNumber($wholesalePrice);
@@ -192,19 +147,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getUnitPrice(): ?DecimalNumber
     {
         return $this->unitPrice;
     }
 
-    /**
-     * @param string $unitPrice
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setUnitPrice(string $unitPrice): self
     {
         $this->unitPrice = new DecimalNumber($unitPrice);
@@ -212,19 +159,11 @@ class UpdateProductPricesCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getUnity(): ?string
     {
         return $this->unity;
     }
 
-    /**
-     * @param string $unity
-     *
-     * @return UpdateProductPricesCommand
-     */
     public function setUnity(string $unity): self
     {
         $this->unity = $unity;

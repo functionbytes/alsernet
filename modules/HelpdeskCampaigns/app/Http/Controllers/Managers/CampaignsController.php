@@ -62,11 +62,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
-
-        return view('helpdeskcampaigns::managers.campaigns.create', [
-            'templates' => $templates,
-        ]);
+        return view('helpdeskcampaigns::managers.campaigns.create');
     }
 
     /**
@@ -119,11 +115,8 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
-
         return view('helpdeskcampaigns::managers.campaigns.edit', [
             'campaign' => $campaign,
-            'templates' => $templates,
         ]);
     }
 
@@ -164,11 +157,11 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        if ($campaign->requiresPendingApproval()) {
-            return back()->with('error', 'La campaña requiere aprobación antes de publicarse.');
+        try {
+            $campaign->publish();
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $campaign->publish();
 
         Cache::forget("campaign_stats_{$campaign->id}");
 
@@ -182,7 +175,11 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $campaign->pause();
+        try {
+            $campaign->pause();
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         Cache::forget("campaign_stats_{$campaign->id}");
 
@@ -196,7 +193,11 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $campaign->resume();
+        try {
+            $campaign->resume();
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         Cache::forget("campaign_stats_{$campaign->id}");
 
@@ -210,7 +211,11 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $campaign->end();
+        try {
+            $campaign->end();
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         Cache::forget("campaign_stats_{$campaign->id}");
 
@@ -354,18 +359,29 @@ class CampaignsController extends Controller
 
         $campaigns = Campaign::query()->whereIn('id', $validated['ids'])->get();
 
+        $failures = [];
+
         foreach ($campaigns as $campaign) {
-            match ($validated['action']) {
-                'delete' => $campaign->delete(),
-                'activate' => $campaign->publish(),
-                'pause' => $campaign->pause(),
-                'end' => $campaign->end(),
-            };
+            try {
+                match ($validated['action']) {
+                    'delete' => $campaign->delete(),
+                    'activate' => $campaign->publish(),
+                    'pause' => $campaign->pause(),
+                    'end' => $campaign->end(),
+                };
+
+                Cache::forget("campaign_stats_{$campaign->id}");
+            } catch (\Throwable $e) {
+                $failures[] = ['id' => $campaign->id, 'name' => $campaign->name, 'error' => $e->getMessage()];
+            }
         }
 
+        $succeeded = $campaigns->count() - count($failures);
+
         return response()->json([
-            'success' => true,
-            'message' => 'Acción aplicada a '.$campaigns->count().' campañas.',
+            'success' => empty($failures),
+            'message' => "Acción aplicada a {$succeeded} campañas.".(count($failures) ? ' '.count($failures).' fallaron.' : ''),
+            'failures' => $failures,
         ]);
     }
 
@@ -396,17 +412,30 @@ class CampaignsController extends Controller
     {
         $this->authorize('manage', Campaign::class);
 
-        $publishedAt = $campaign->published_at;
-        $status = ($publishedAt && $publishedAt->isFuture()) ? 'scheduled' : 'active';
+        if ($campaign->status !== Campaign::STATUS_PENDING_APPROVAL) {
+            return back()->with('error', 'Solo se pueden aprobar campañas pendientes de aprobación.');
+        }
 
         $campaign->update([
-            'status' => $status,
             'approved_at' => now(),
             'approved_by_user_id' => auth()->id(),
             'metadata' => array_merge($campaign->metadata ?? [], [
                 'approved_at' => now()->toIso8601String(),
             ]),
         ]);
+
+        $isScheduledForLater = $campaign->published_at && $campaign->published_at->isFuture();
+
+        if ($isScheduledForLater) {
+            // Fuera del alcance de publish(): la campaña no pasa a activa hasta
+            // que PublishScheduledCampaignsJob la recoja en su fecha.
+            $campaign->update(['status' => Campaign::STATUS_SCHEDULED]);
+        } else {
+            // Delega en el modelo para que se despache CampaignPublished (antes
+            // este endpoint escribía el status a pelo y el evento nunca se
+            // disparaba para campañas aprobadas desde el panel).
+            $campaign->publish();
+        }
 
         Cache::forget("campaign_stats_{$campaign->id}");
 
@@ -478,7 +507,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
+        $templates = CampaignTemplate::select(['id', 'name', 'description', 'template_type'])->limit(100)->get();
 
         return view('helpdeskcampaigns::managers.campaigns.templates', [
             'templates' => $templates,

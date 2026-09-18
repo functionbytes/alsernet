@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,9 +62,7 @@ abstract class AbstractDeleteSupplierHandler
     private $supplierAddressProvider;
 
     /**
-     * @param SupplierOrderValidator $supplierOrderValidator
-     * @param SupplierAddressProvider $supplierAddressProvider
-     * @param string $dbPrefix
+     * @param  string  $dbPrefix
      */
     public function __construct(
         SupplierOrderValidator $supplierOrderValidator,
@@ -79,7 +78,6 @@ abstract class AbstractDeleteSupplierHandler
      * Removes supplier and all related content with it such as image, supplier and product relation
      * and supplier address.
      *
-     * @param SupplierId $supplierId
      *
      * @throws SupplierException
      */
@@ -88,7 +86,7 @@ abstract class AbstractDeleteSupplierHandler
         try {
             $entity = new Supplier($supplierId->getValue());
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new SupplierNotFoundException(sprintf('Supplier object with id "%s" was not found for deletion.', $supplierId->getValue()));
             }
 
@@ -96,15 +94,15 @@ abstract class AbstractDeleteSupplierHandler
                 throw new CannotDeleteSupplierException($supplierId->getValue(), sprintf('Supplier with id %s cannot be deleted due to it has pending orders', $supplierId->getValue()), CannotDeleteSupplierException::HAS_PENDING_ORDERS);
             }
 
-            if (false === $this->deleteProductSupplierRelation($supplierId)) {
+            if ($this->deleteProductSupplierRelation($supplierId) === false) {
                 throw new CannotDeleteSupplierProductRelationException(sprintf('Unable to delete suppliers with id "%s" product relation from product_supplier table', $supplierId->getValue()));
             }
 
-            if (1 >= count($entity->getAssociatedShops()) && false === $this->deleteSupplierAddress($supplierId)) {
+            if (count($entity->getAssociatedShops()) <= 1 && $this->deleteSupplierAddress($supplierId) === false) {
                 throw new CannotDeleteSupplierAddressException(sprintf('Unable to set deleted flag for supplier with id "%s" address', $supplierId->getValue()));
             }
 
-            if (false === $entity->delete()) {
+            if ($entity->delete() === false) {
                 throw new SupplierException(sprintf('Unable to delete supplier object with id "%s"', $supplierId->getValue()));
             }
         } catch (PrestaShopException $exception) {
@@ -115,13 +113,12 @@ abstract class AbstractDeleteSupplierHandler
     /**
      * Deletes product supplier relation.
      *
-     * @param SupplierId $supplierId
      *
      * @return bool
      */
     private function deleteProductSupplierRelation(SupplierId $supplierId)
     {
-        $sql = 'DELETE FROM `' . $this->dbPrefix . 'product_supplier` WHERE `id_supplier`=' . $supplierId->getValue();
+        $sql = 'DELETE FROM `'.$this->dbPrefix.'product_supplier` WHERE `id_supplier`='.$supplierId->getValue();
 
         return Db::getInstance()->execute($sql);
     }
@@ -129,7 +126,6 @@ abstract class AbstractDeleteSupplierHandler
     /**
      * Deletes supplier address.
      *
-     * @param SupplierId $supplierId
      *
      * @return bool
      */
@@ -151,7 +147,6 @@ abstract class AbstractDeleteSupplierHandler
     /**
      * Checks if the given supplier has pending orders.
      *
-     * @param SupplierId $supplierId
      *
      * @return bool
      */

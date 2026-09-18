@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ class ProductCategoriesInformation
     private $defaultCategoryId;
 
     /**
-     * @param int[] $categoryIds
-     * @param int $defaultCategoryId
+     * @param  int[]  $categoryIds
      */
     public function __construct(array $categoryIds, int $defaultCategoryId)
     {
@@ -61,9 +61,6 @@ class ProductCategoriesInformation
         return $this->categoryIds;
     }
 
-    /**
-     * @return int
-     */
     public function getDefaultCategoryId(): int
     {
         return $this->defaultCategoryId;

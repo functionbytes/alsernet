@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,7 @@ final class MerchandiseReturnQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLanguageId
-     * @param array $contextShopIds
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -97,30 +94,28 @@ final class MerchandiseReturnQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
      * @return QueryBuilder
      */
     private function getMerchandiseReturnQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $queryBuilder = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'order_return', 'r')
+            ->from($this->dbPrefix.'order_return', 'r')
             ->leftJoin(
                 'r',
-                $this->dbPrefix . 'order_return_state',
+                $this->dbPrefix.'order_return_state',
                 'ors',
                 'r.state = ors.id_order_return_state'
             )
             ->leftJoin(
                 'r',
-                $this->dbPrefix . 'order_return_state_lang',
+                $this->dbPrefix.'order_return_state_lang',
                 'orsl',
                 'orsl.id_order_return_state = r.state AND orsl.id_lang = :context_language_id'
             )
             ->setParameter('context_language_id', $this->contextLanguageId)
             ->leftJoin(
                 'r',
-                $this->dbPrefix . 'orders',
+                $this->dbPrefix.'orders',
                 'o',
                 'o.id_order = r.id_order'
             )
@@ -134,9 +129,6 @@ final class MerchandiseReturnQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply filters to merchandise returns query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
      */
     private function applyFilters(array $filters, QueryBuilder $qb)
     {
@@ -148,25 +140,25 @@ final class MerchandiseReturnQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
-            if ('id_order' === $filterName) {
-                $qb->andWhere('o.`' . $filterName . '` LIKE :' . $filterName);
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
-
-                continue;
-            }
-
-            if ('status' === $filterName) {
-                $qb->andWhere('orsl.`name` LIKE :' . $filterName);
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+            if ($filterName === 'id_order') {
+                $qb->andWhere('o.`'.$filterName.'` LIKE :'.$filterName);
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            if ('date_add' === $filterName) {
+            if ($filterName === 'status') {
+                $qb->andWhere('orsl.`name` LIKE :'.$filterName);
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
+
+                continue;
+            }
+
+            if ($filterName === 'date_add') {
                 if (isset($filterValue['from'])) {
                     $qb->andWhere('r.date_add >= :date_from');
                     $qb->setParameter('date_from', sprintf('%s 0:0:0', $filterValue['from']));
@@ -180,8 +172,8 @@ final class MerchandiseReturnQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            $qb->andWhere('`' . $filterName . '` LIKE :' . $filterName);
-            $qb->setParameter($filterName, '%' . $filterValue . '%');
+            $qb->andWhere('`'.$filterName.'` LIKE :'.$filterName);
+            $qb->setParameter($filterName, '%'.$filterValue.'%');
         }
     }
 }

@@ -173,9 +173,13 @@ class SocialComment extends Model
 
     public function markAsEscalated(?int $assignedToUserId = null): void
     {
+        // Sin argumento explícito se conserva la asignación existente en vez de
+        // vaciarla: varios llamadores invocan markAsEscalated() sin user_id
+        // (p.ej. el agente ya asignado escalando su propio comentario), y antes
+        // eso desasignaba el comentario como efecto secundario.
         $this->forceFill([
             'status' => 'escalated',
-            'assigned_to_user_id' => $assignedToUserId,
+            'assigned_to_user_id' => $assignedToUserId ?? $this->assigned_to_user_id,
         ])->save();
 
         SocialCommentEscalated::dispatch($this);

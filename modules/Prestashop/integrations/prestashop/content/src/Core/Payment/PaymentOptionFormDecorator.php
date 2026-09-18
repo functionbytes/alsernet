@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,10 +33,10 @@ class PaymentOptionFormDecorator
 {
     public function addHiddenSubmitButton($formHTML, $optionId)
     {
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         $doc->encoding = 'UTF-8';
 
-        $doc->loadHTML('<?xml encoding="UTF-8">' . $formHTML);
+        $doc->loadHTML('<?xml encoding="UTF-8">'.$formHTML);
 
         $forms = $doc->getElementsByTagName('form');
         if ($forms->length !== 1) {
@@ -48,7 +49,7 @@ class PaymentOptionFormDecorator
         $styleAttr->value = 'display:none';
 
         $idAttr = $doc->createAttribute('id');
-        $idAttr->value = 'pay-with-' . $optionId;
+        $idAttr->value = 'pay-with-'.$optionId;
 
         $typeAttr = $doc->createAttribute('type');
         $typeAttr->value = 'submit';

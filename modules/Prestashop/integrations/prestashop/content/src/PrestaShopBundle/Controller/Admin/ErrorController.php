@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class ErrorController extends FrameworkBundleAdminController
      * Enables debug mode from error page (500 for example)
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], 'AdminPerformance')")
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */

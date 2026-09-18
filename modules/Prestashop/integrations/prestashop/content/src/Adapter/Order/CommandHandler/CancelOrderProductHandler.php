@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,6 +41,7 @@ use PrestaShop\PrestaShop\Core\Domain\Order\Command\CancelOrderProductCommand;
 use PrestaShop\PrestaShop\Core\Domain\Order\CommandHandler\CancelOrderProductHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\InvalidCancelProductException;
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\InvalidOrderStateException;
+use PrestaShop\PrestaShop\Core\Domain\Order\Exception\OrderException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
@@ -65,10 +67,6 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
 
     /**
      * CancelOrderProductHandler constructor.
-     *
-     * @param OrderProductQuantityUpdater $orderProductQuantityUpdater
-     * @param LoggerInterface $logger
-     * @param TranslatorInterface $translator
      */
     public function __construct(
         OrderProductQuantityUpdater $orderProductQuantityUpdater,
@@ -138,9 +136,6 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
         }
     }
 
-    /**
-     * @param Order $order*
-     */
     private function checkOrderState(Order $order)
     {
         if ($order->hasBeenPaid() || $order->hasPayments()) {
@@ -151,15 +146,12 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
         }
     }
 
-    /**
-     * @param Order $order
-     */
     private function cancelOrder(Order $order)
     {
-        $history = new OrderHistory();
+        $history = new OrderHistory;
         $history->id_order = (int) $order->id;
         $history->changeIdOrderState(Configuration::get('PS_OS_CANCELED'), $order);
-        if (!$history->addWithemail()) {
+        if (! $history->addWithemail()) {
             // email failure must not block order update process
             $this->logger->warning(
                 $this->translator->trans(
@@ -172,8 +164,6 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
     }
 
     /**
-     * @param array $orderDetails
-     *
      * @throws InvalidCancelProductException
      */
     private function assertCancelableProductQuantities(array $orderDetails, array $customizationQuantities)
@@ -194,6 +184,7 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
                 if ($cancellableQuantity < $cancelQuantity) {
                     throw new InvalidCancelProductException(InvalidCancelProductException::QUANTITY_TOO_HIGH, $cancellableQuantity);
                 }
+
                 continue;
             }
             // get list of customizations
@@ -210,7 +201,7 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
         foreach ($customizationList as $id_customization => $id_order_detail) {
             $qtyCancelProduct = abs($orderDetails['customizedCancelQuantity'][$id_customization]);
             $customization_quantity = $customization_quantities[$id_customization];
-            if (!$qtyCancelProduct) {
+            if (! $qtyCancelProduct) {
                 throw new InvalidCancelProductException(InvalidCancelProductException::INVALID_QUANTITY);
             }
             $cancellableQuantity = $customization_quantity['quantity'] - ($customization_quantity['quantity_refunded'] + $customization_quantity['quantity_returned']);
@@ -222,16 +213,13 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
     }
 
     /**
-     * @param Order $order
-     * @param array $orderDetails
-     *
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
-     * @throws \PrestaShop\PrestaShop\Core\Domain\Order\Exception\OrderException
+     * @throws OrderException
      */
     private function cancelProducts(Order $order, array $orderDetails)
     {
-        if (!empty($orderDetails['productsOrderDetails'])) {
+        if (! empty($orderDetails['productsOrderDetails'])) {
             foreach ($orderDetails['productsOrderDetails'] as $orderDetail) {
                 if ((int) $orderDetail->id_customization > 0) {
                     $qty_cancel_product = abs($orderDetails['customizedCancelQuantity'][$orderDetail->id_customization]);

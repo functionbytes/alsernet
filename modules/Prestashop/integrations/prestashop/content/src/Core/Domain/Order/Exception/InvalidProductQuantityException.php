@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Order\Exception;
 /**
  * Thrown when trying to add an invalid quantity or a product (<= 0)
  */
-class InvalidProductQuantityException extends OrderException
-{
-}
+class InvalidProductQuantityException extends OrderException {}

@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateTeamMemberRequest;
 use Modules\Helpdesk\Models\AgentSettings;
+use Modules\User\Database\Seeders\UserPermissionsSeeder;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -20,7 +21,7 @@ class TeamControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $admin;
 
@@ -31,11 +32,22 @@ class TeamControllerTest extends TestCase
         parent::setUp();
 
         $this->seed(PermissionsSeeder::class);
+        // TeamController::update()/destroy() autorizan contra la Policy genérica
+        // de User (edit-users/delete-users/...), no contra un permiso propio de
+        // Helpdesk — es intencional: un "miembro del equipo" es un User. Desde
+        // que se retiró el Gate::before de super-settings (7-sep-2026) esa
+        // Policy se evalúa de verdad, y sin este seeder Spatie lanza
+        // PermissionDoesNotExist (500) porque el permiso no existe en ningún
+        // sitio, no porque al actor le falte.
+        $this->seed(UserPermissionsSeeder::class);
 
         $superRole = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'support', 'guard_name' => 'web']);
 
-        // Actor with super-settings role bypasses all permission checks via Gate::before
+        // El rol super-settings real ya trae los 447 permisos (ver
+        // SuperSettingsExplicitPermissionsSeeder); Role::firstOrCreate() de
+        // arriba encuentra esa fila existente, así que $this->admin los
+        // hereda sin tener que asignarlos aquí a mano.
         $this->admin = User::factory()->create();
         $this->admin->assignRole($superRole);
 

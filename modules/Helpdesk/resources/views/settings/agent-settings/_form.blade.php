@@ -2,7 +2,8 @@
 
     {{-- Seccion: Disponibilidad --}}
     <div class="col-12">
-        <h6 class="fw-bold mb-3">Disponibilidad</h6>
+        <h6 class="fw-semibold mb-1">Disponibilidad</h6>
+        <p class="text-muted small mb-3">Cuándo puede recibir este agente conversaciones nuevas y si el sistema se las puede asignar automáticamente</p>
     </div>
 
     {{-- Disponible --}}
@@ -61,7 +62,8 @@
 
     {{-- Seccion: Limites --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-3">Limites</h6>
+        <h6 class="fw-semibold mb-1">Límites</h6>
+        <p class="text-muted small mb-3">Tope de conversaciones abiertas que puede tener asignadas este agente a la vez</p>
     </div>
 
     {{-- Maximo de conversaciones --}}
@@ -80,7 +82,8 @@
 
     {{-- Seccion: Vacaciones --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-3">Vacaciones</h6>
+        <h6 class="fw-semibold mb-1">Vacaciones</h6>
+        <p class="text-muted small mb-3">Pausa temporal de asignaciones y los idiomas que este agente puede atender</p>
     </div>
 
     {{-- Vacaciones hasta --}}
@@ -108,27 +111,8 @@
         @enderror
     </div>
 
-    {{-- Seccion: Habilidades --}}
-    @if($skills->count() > 0)
-        <div class="col-12 mt-2">
-            <h6 class="fw-bold mb-3">Habilidades asignadas</h6>
-        </div>
-
-        <div class="col-12">
-            <label class="form-label">Habilidades</label>
-            <select name="skills[]" class="form-select" multiple size="{{ min($skills->count(), 8) }}">
-                @foreach($skills as $skill)
-                    <option value="{{ $skill->id }}"
-                        @selected(in_array($skill->id, old('skills', $assignedSkillIds)))>
-                        {{ $skill->name }}
-                    </option>
-                @endforeach
-            </select>
-            <div class="form-text">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias habilidades</div>
-            @error('skills')
-                <div class="invalid-feedback d-block">{{ $message }}</div>
-            @enderror
-        </div>
-    @endif
-
 </div>
+
+@push('scripts')
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+@endpush

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,22 +54,27 @@ class TranslationCatalogueExporter
      * @var TranslationCatalogueBuilder
      */
     private $translationCatalogueBuilder;
+
     /**
      * @var ProviderDefinitionFactory
      */
     private $providerDefinitionFactory;
+
     /**
      * @var XliffFileDumper
      */
     private $dumper;
+
     /**
      * @var Filesystem
      */
     private $filesystem;
+
     /**
      * @var string
      */
     private $exportDir;
+
     /**
      * @var ZipManager
      */
@@ -104,8 +110,6 @@ class TranslationCatalogueExporter
      *   ...
      * ]
      *
-     * @param array $selections
-     * @param string $locale
      *
      * @return string The zip file with catalogues exported
      *
@@ -117,7 +121,7 @@ class TranslationCatalogueExporter
     {
         $this->validateParameters($selections);
 
-        if (!$this->filesystem->exists($this->exportDir)) {
+        if (! $this->filesystem->exists($this->exportDir)) {
             $this->filesystem->mkdir($this->exportDir);
         }
 
@@ -130,7 +134,7 @@ class TranslationCatalogueExporter
         $dumpOptions = [
             'path' => $path,
             'default_locale' => $locale,
-            'root_dir' => _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR,
+            'root_dir' => _PS_ROOT_DIR_.DIRECTORY_SEPARATOR,
         ];
 
         foreach ($selections as $selection) {
@@ -155,7 +159,7 @@ class TranslationCatalogueExporter
     }
 
     /**
-     * @param array $selections Translation types to export
+     * @param  array  $selections  Translation types to export
      *
      * @throws UnexpectedTranslationTypeException
      * @throws Exception
@@ -164,12 +168,12 @@ class TranslationCatalogueExporter
         array $selections
     ): void {
         foreach ($selections as $selection) {
-            if (!in_array($selection['type'], ProviderDefinitionInterface::ALLOWED_EXPORT_TYPES, true)) {
+            if (! in_array($selection['type'], ProviderDefinitionInterface::ALLOWED_EXPORT_TYPES, true)) {
                 throw new UnexpectedTranslationTypeException('This \'type\' param is not valid.');
             }
 
             if (
-                null === $selection['selected']
+                $selection['selected'] === null
                 && (in_array($selection['type'], [ProviderDefinitionInterface::TYPE_MODULES, ProviderDefinitionInterface::TYPE_THEMES], true))
             ) {
                 throw new Exception(sprintf('Selected value cannot be null for type %s.', $selection['type']));
@@ -195,7 +199,7 @@ class TranslationCatalogueExporter
     {
         $finder = Finder::create();
 
-        foreach ($finder->in($path . DIRECTORY_SEPARATOR . $locale)->files() as $file) {
+        foreach ($finder->in($path.DIRECTORY_SEPARATOR.$locale)->files() as $file) {
             $filenameParts = explode('.', $file->getFilename());
             unset($filenameParts[count($filenameParts) - 1]); // Remove the extension
             /*
@@ -203,7 +207,7 @@ class TranslationCatalogueExporter
              * DIRECTORY/ab-AB/FullDomainName.ab-AB.xlf
              */
             $destinationFilename = sprintf(
-                '%s' . DIRECTORY_SEPARATOR . '%s' . DIRECTORY_SEPARATOR . '%s.%s.%s',
+                '%s'.DIRECTORY_SEPARATOR.'%s'.DIRECTORY_SEPARATOR.'%s.%s.%s',
                 $path,
                 $locale,
                 implode('.', $filenameParts),

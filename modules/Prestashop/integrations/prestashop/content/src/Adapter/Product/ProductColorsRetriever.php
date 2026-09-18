@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use Product;
 class ProductColorsRetriever
 {
     /**
-     * @param int $id_product
-     *
+     * @param  int  $id_product
      * @return mixed|null
      */
     public function getColoredVariants($id_product)

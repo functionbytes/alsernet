@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,7 @@ namespace PrestaShop\PrestaShop\Core\AttributeGroup;
 interface AttributeGroupViewDataProviderInterface
 {
     /**
-     * @param int $attributeGroupId
-     *
+     * @param  int  $attributeGroupId
      * @return bool
      */
     public function isColorGroup($attributeGroupId);
@@ -41,8 +41,7 @@ interface AttributeGroupViewDataProviderInterface
     /**
      * Provides the name of attribute group by its id
      *
-     * @param int $attributeGroupId
-     *
+     * @param  int  $attributeGroupId
      * @return string
      */
     public function getAttributeGroupNameById($attributeGroupId);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,15 +51,14 @@ class ServiceLocator
     /**
      * Get a service depending on its given $serviceName.
      *
-     * @param string $serviceName
-     *
+     * @param  string  $serviceName
      * @return mixed|object
      *
      * @throws CoreException
      */
     public static function get($serviceName)
     {
-        if (empty(self::$service_container) || null === self::$service_container) {
+        if (empty(self::$service_container) || self::$service_container === null) {
             throw new CoreException('Service container is not set.');
         }
 

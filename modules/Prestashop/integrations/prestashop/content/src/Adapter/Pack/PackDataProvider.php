@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,8 +39,8 @@ class PackDataProvider
     /**
      * Get product pack items.
      *
-     * @param int $id_product
-     * @param int $id_lang
+     * @param  int  $id_product
+     * @param  int  $id_lang
      */
     public function getItems($id_product, $id_lang)
     {

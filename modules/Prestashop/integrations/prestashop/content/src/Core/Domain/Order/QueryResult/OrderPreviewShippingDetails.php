@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -120,22 +121,6 @@ class OrderPreviewShippingDetails
 
     /**
      * InvoiceDetails constructor.
-     *
-     * @param string $firstName
-     * @param string $lastName
-     * @param string|null $company
-     * @param string|null $vatNumber
-     * @param string $address1
-     * @param string $address2
-     * @param string $city
-     * @param string $postalCode
-     * @param string|null $stateName
-     * @param string $country
-     * @param string $phone
-     * @param string|null $carrierName
-     * @param string|null $trackingNumber
-     * @param string|null $dni
-     * @param string|null $trackingUrl
      */
     public function __construct(
         string $firstName,
@@ -171,121 +156,76 @@ class OrderPreviewShippingDetails
         $this->trackingUrl = $trackingUrl;
     }
 
-    /**
-     * @return string
-     */
     public function getFirstName(): string
     {
         return $this->firstName;
     }
 
-    /**
-     * @return string
-     */
     public function getLastName(): string
     {
         return $this->lastName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCompany(): ?string
     {
         return $this->company;
     }
 
-    /**
-     * @return string|null
-     */
     public function getVatNumber(): ?string
     {
         return $this->vatNumber;
     }
 
-    /**
-     * @return string
-     */
     public function getAddress1(): string
     {
         return $this->address1;
     }
 
-    /**
-     * @return string
-     */
     public function getCity(): string
     {
         return $this->city;
     }
 
-    /**
-     * @return string
-     */
     public function getPostalCode(): string
     {
         return $this->postalCode;
     }
 
-    /**
-     * @return string|null
-     */
     public function getStateName(): ?string
     {
         return $this->stateName;
     }
 
-    /**
-     * @return string
-     */
     public function getCountry(): string
     {
         return $this->country;
     }
 
-    /**
-     * @return string
-     */
     public function getPhone(): string
     {
         return $this->phone;
     }
 
-    /**
-     * @return string
-     */
     public function getAddress2(): string
     {
         return $this->address2;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCarrierName(): ?string
     {
         return $this->carrierName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getTrackingNumber(): ?string
     {
         return $this->trackingNumber;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDNI(): ?string
     {
         return $this->dni;
     }
 
-    /**
-     * @return string|null
-     */
     public function getTrackingUrl(): ?string
     {
         return $this->trackingUrl;

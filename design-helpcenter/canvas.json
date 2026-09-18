@@ -1,0 +1,30 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1240, "h": 560, "title": "Listado de categorías" },
+    { "file": "Actual.dc.html", "x": 0, "y": 700, "w": 1240, "h": 860, "title": "Hoy" }
+  ],
+  "annotations": [
+    {
+      "id": "n-main",
+      "x": 0,
+      "y": -170,
+      "w": 620,
+      "text": "Listado sin subitems: una fila por categoría.\nLas secciones se ven al entrar — el detalle ya las lista con sus artículos, sus acciones y su estado vacío, así que no se pierde nada. El chevrón de la derecha anuncia que la fila entra.\nCinco categorías en 330 px, contra los 520 px que hoy ocupan seis filas."
+    },
+    {
+      "id": "n-articulos",
+      "x": 700,
+      "y": -170,
+      "w": 540,
+      "text": "Ojo con la columna Artículos.\nMarca 0 en todas porque cuenta solo los artículos colgados de la categoría, y aquí cuelgan de las secciones: «Pedidos y envios» tiene 4 repartidos en sus dos secciones. Sin los subitems debajo, ese 0 ya no se explica solo.\nPropongo que sume los de sus secciones. Dilo y lo cambio."
+    },
+    {
+      "id": "n-actual",
+      "x": 0,
+      "y": 600,
+      "w": 620,
+      "text": "Hoy, para comparar."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

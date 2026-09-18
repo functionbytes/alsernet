@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,17 +43,12 @@ class GetHookStatus
 
     /**
      * GetHookStatus constructor.
-     *
-     * @param int $hookId
      */
     public function __construct(int $hookId)
     {
         $this->hookId = new HookId($hookId);
     }
 
-    /**
-     * @return HookId
-     */
     public function getHookId(): HookId
     {
         return $this->hookId;

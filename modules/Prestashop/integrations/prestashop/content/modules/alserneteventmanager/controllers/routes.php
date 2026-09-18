@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__).'/../../../config/config.inc.php');
-require_once(dirname(__FILE__).'/../../../init.php');
-include_once(dirname(__FILE__).'/front/EventsController.php');
+require_once dirname(__FILE__).'/../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../init.php';
+include_once dirname(__FILE__).'/front/EventsController.php';
 
 class Routes extends Module
 {
@@ -16,7 +16,7 @@ class Routes extends Module
     {
 
         $action = Tools::getValue('action');
-        $controller = new EventsController();
+        $controller = new EventsController;
 
         switch ($action) {
             case 'get':
@@ -24,10 +24,10 @@ class Routes extends Module
                 break;
 
             default:
-                $response = array(
+                $response = [
                     'status' => 'error',
                     'message' => 'Invalid action',
-                );
+                ];
                 break;
         }
 
@@ -43,5 +43,5 @@ class Routes extends Module
     }
 }
 
-$routes = new Routes();
+$routes = new Routes;
 $routes->routes();

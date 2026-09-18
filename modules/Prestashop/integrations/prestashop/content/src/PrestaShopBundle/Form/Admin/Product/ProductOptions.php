@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,25 +41,33 @@ use Symfony\Component\Validator\Constraints as Assert;
 class ProductOptions extends CommonAbstractType
 {
     private $translator;
+
     private $suppliers;
+
     private $context;
+
     private $productAdapter;
+
     private $router;
+
     private $locales;
+
     private $currencyDataprovider;
+
     private $fullAttachmentList;
+
     private $attachmentList;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
-     * @param object $productDataProvider
-     * @param object $supplierDataProvider
-     * @param object $currencyDataprovider
-     * @param object $attachmentDataprovider
-     * @param object $router
+     * @param  object  $translator
+     * @param  object  $legacyContext
+     * @param  object  $productDataProvider
+     * @param  object  $supplierDataProvider
+     * @param  object  $currencyDataprovider
+     * @param  object  $attachmentDataprovider
+     * @param  object  $router
      */
     public function __construct(
         $translator,
@@ -237,7 +246,7 @@ class ProductOptions extends CommonAbstractType
 
         foreach ($this->suppliers as $supplier => $id) {
             $builder->add(
-                'supplier_combination_' . $id,
+                'supplier_combination_'.$id,
                 FormType\CollectionType::class,
                 [
                     'entry_type' => ProductSupplierCombination::class,
@@ -260,14 +269,14 @@ class ProductOptions extends CommonAbstractType
             'allow_delete' => true,
         ]);
 
-        //Add product attachment form
+        // Add product attachment form
         $builder->add('attachment_product', ProductAttachement::class, [
             'required' => false,
             'label' => $this->translator->trans('Attachment', [], 'Admin.Catalog.Feature'),
             'attr' => ['data-action' => $this->router->generate('admin_product_attachement_add_action', ['idProduct' => 1])],
         ]);
 
-        //Add attachment selectors
+        // Add attachment selectors
         $builder->add('attachments', FormType\ChoiceType::class, [
             'expanded' => true,
             'multiple' => true,
@@ -288,11 +297,11 @@ class ProductOptions extends CommonAbstractType
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $data = $event->getData();
 
-            //If not supplier selected, remove all supplier combinations collection form
-            if (!isset($data['suppliers']) || count($data['suppliers']) == 0) {
+            // If not supplier selected, remove all supplier combinations collection form
+            if (! isset($data['suppliers']) || count($data['suppliers']) == 0) {
                 $form = $event->getForm();
                 foreach ($this->suppliers as $supplier => $id) {
-                    $form->remove('supplier_combination_' . $id);
+                    $form->remove('supplier_combination_'.$id);
                 }
             }
         });

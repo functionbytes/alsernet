@@ -61,7 +61,7 @@ class SocialAccountHealthAlertNotification extends Notification implements Shoul
     public function toMail(mixed $notifiable): MailMessage
     {
         $url = route('helpdesksocial.accounts.index');
-        $name = trim(($notifiable->firstname ?? '').' '.($notifiable->lastname ?? '')) ?: 'Hola';
+        $name = $notifiable->fullName() ?: 'Hola';
 
         return (new MailMessage)
             ->subject('[Alerta] Problemas detectados en cuentas sociales')

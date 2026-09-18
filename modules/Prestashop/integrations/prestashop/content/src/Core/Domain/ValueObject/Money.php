@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,14 +47,11 @@ class Money
     private $currencyId;
 
     /**
-     * @param DecimalNumber $amount
-     * @param CurrencyId $currencyId
-     *
      * @throws DomainConstraintException
      */
     public function __construct(DecimalNumber $amount, CurrencyId $currencyId)
     {
-        if (!$amount->isGreaterOrEqualThanZero()) {
+        if (! $amount->isGreaterOrEqualThanZero()) {
             throw new DomainConstraintException(sprintf('Money amount cannot be lower than zero, %f given', (string) $amount), DomainConstraintException::INVALID_MONEY_AMOUNT);
         }
 
@@ -61,17 +59,11 @@ class Money
         $this->currencyId = $currencyId;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getAmount(): DecimalNumber
     {
         return $this->amount;
     }
 
-    /**
-     * @return CurrencyId
-     */
     public function getCurrencyId(): CurrencyId
     {
         return $this->currencyId;

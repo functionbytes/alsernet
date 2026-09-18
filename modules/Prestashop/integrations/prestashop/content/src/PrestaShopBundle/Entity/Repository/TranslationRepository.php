@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,9 +33,8 @@ use PrestaShop\PrestaShop\Core\Translation\TranslationRepositoryInterface;
 class TranslationRepository extends EntityRepository implements TranslationRepositoryInterface
 {
     /**
-     * @param string $language
-     * @param string $theme
-     *
+     * @param  string  $language
+     * @param  string  $theme
      * @return array
      */
     public function findByLanguageAndTheme($language, $theme = null)
@@ -43,7 +43,7 @@ class TranslationRepository extends EntityRepository implements TranslationRepos
         $queryBuilder->where('lang = :language');
         $queryBuilder->setParameter('language', $language);
 
-        if (null !== $theme) {
+        if ($theme !== null) {
             $queryBuilder->andWhere('theme = :theme');
             $queryBuilder->setParameter('theme', $theme);
         } else {

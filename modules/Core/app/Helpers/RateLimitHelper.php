@@ -1,5 +1,8 @@
 <?php
 
+use app\Library\Exception\OutOfCredits;
+use app\Library\Exception\RateLimitExceeded;
+
 /**
  * Rate Limiting and Credit Tracking Helpers
  *
@@ -14,13 +17,13 @@ if (! function_exists('execute_with_limits')) {
      *
      * @param  array  $rateTrackers  Array of rate tracker instances
      * @param  array  $creditTrackers  Array of credit tracker instances
-     * @param  \Closure|null  $task  The task to execute
+     * @param  Closure|null  $task  The task to execute
      * @return void
      *
-     * @throws \app\Library\Exception\OutOfCredits
-     * @throws \app\Library\Exception\RateLimitExceeded
+     * @throws OutOfCredits
+     * @throws RateLimitExceeded
      */
-    function execute_with_limits(array $rateTrackers, array $creditTrackers, ?\Closure $task = null)
+    function execute_with_limits(array $rateTrackers, array $creditTrackers, ?Closure $task = null)
     {
         $rateTrackers = array_values(array_filter($rateTrackers));
         $creditTrackers = array_values(array_filter($creditTrackers));
@@ -31,7 +34,7 @@ if (! function_exists('execute_with_limits')) {
                 $creditTracker->count();
                 $creditCounted[] = $creditTracker;
             }
-        } catch (\app\Library\Exception\OutOfCredits $exception) {
+        } catch (OutOfCredits $exception) {
             foreach ($creditCounted as $creditTracker) {
                 $creditTracker->rollback();
             }
@@ -43,7 +46,7 @@ if (! function_exists('execute_with_limits')) {
             foreach ($rateTrackers as $rateTracker) {
                 $rateTracker->count();
             }
-        } catch (\app\Library\Exception\RateLimitExceeded $exception) {
+        } catch (RateLimitExceeded $exception) {
             foreach ($creditCounted as $creditTracker) {
                 $creditTracker->rollback();
             }
@@ -57,7 +60,7 @@ if (! function_exists('execute_with_limits')) {
             }
 
             $task();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             foreach ($creditCounted as $creditTracker) {
                 $creditTracker->rollback();
             }

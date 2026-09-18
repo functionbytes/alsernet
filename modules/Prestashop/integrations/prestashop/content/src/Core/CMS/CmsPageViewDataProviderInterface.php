@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface CmsPageViewDataProviderInterface
     /**
      * Gets data required for rendering the view.
      *
-     * @param int $cmsCategoryParentId
-     *
+     * @param  int  $cmsCategoryParentId
      * @return array
      */
     public function getView($cmsCategoryParentId);

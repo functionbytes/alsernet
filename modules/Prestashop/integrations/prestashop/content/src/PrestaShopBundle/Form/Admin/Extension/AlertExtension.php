@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,8 +58,7 @@ class AlertExtension extends AbstractTypeExtension
             ->setAllowedTypes('alert_title', ['string', 'null'])
             ->setAllowedTypes('alert_type', ['string'])
             ->setAllowedTypes('alert_position', ['string'])
-            ->setAllowedValues('alert_position', ['append', 'prepend'])
-        ;
+            ->setAllowedValues('alert_position', ['append', 'prepend']);
     }
 
     /**
@@ -66,7 +66,7 @@ class AlertExtension extends AbstractTypeExtension
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        if (!empty($options['alert_message'])) {
+        if (! empty($options['alert_message'])) {
             $view->vars['alert_message'] = is_string($options['alert_message']) ? [$options['alert_message']] : $options['alert_message'];
             $view->vars['alert_type'] = $options['alert_type'];
             $view->vars['alert_position'] = $options['alert_position'];

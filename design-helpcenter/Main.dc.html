@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    /* Tokens del módulo: modules/HelpdeskHelpcenter/public/css/helpcenter.css
+       Se corrigen los dos restos rojos del tema anterior (--hhc-primary-lt
+       #fdf0f0 y --hhc-primary-dk #8c0000) por sus equivalentes verdes. */
+    :root {
+      --bg:          #f4f5f7;
+      --panel:       #ffffff;
+      --subtle:      #f9fafb;
+      --canvas:      #e8eaed;
+      --border:      #e4e6ea;
+      --border-soft: #edeef1;
+      --text:        #1a1d23;
+      --soft:        #4b5260;
+      --muted:       #8a93a2;
+      --primary:     #90bb13;
+      --primary-lt:  #f2f7e3;
+      --primary-dk:  #4f6b0a;
+      --radius:      10px;
+      --radius-sm:   6px;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      letter-spacing: -.005em;
+      color: var(--text);
+    }
+    a { color: var(--primary-dk); text-decoration: none; }
+    a:hover { color: var(--primary); }
+
+    /* Una fila por categoría. Sin subfilas, la rejilla puede darle a cada
+       cifra su columna sin apretar el nombre. */
+    .r {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 116px 116px 84px 30px;
+      align-items: center;
+    }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .chk { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid #cdd2da; background: #fff; }
+    .row {
+      border-bottom: 1px solid var(--border-soft);
+      padding: 0 16px;
+      min-height: 58px;
+    }
+    .row:last-child { border-bottom: 0; }
+    /* La fila entera abre la categoría; el chevrón lo anuncia. */
+    .row:hover { background: var(--subtle); }
+    .go { color: #c3c8d1; }
+    .row:hover .go { color: var(--primary-dk); }
+    .cnt { font-size: 14px; font-weight: 600; }
+    .cnt--zero { color: #b9bfc9; font-weight: 500; }
+    .unit { font-size: 11px; color: var(--muted); margin-left: 4px; }
+  </style>
+</helmet>
+
+<div style="padding: 28px 30px 34px;">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px;">
+    <div>
+      <h1 style="margin: 0 0 3px; font-size: 19px; font-weight: 600; letter-spacing: -.02em;">Categorías</h1>
+      <p style="margin: 0; font-size: 12.5px; color: var(--muted);">Organiza tu base de conocimiento en categorías y secciones</p>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); font-size: 12.5px;">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+        Buscar por nombre…
+      </div>
+      <div style="display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 15px; background: var(--primary); border-radius: var(--radius-sm); color: #fff; font-size: 12.5px; font-weight: 500;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        Nueva categoría
+      </div>
+    </div>
+  </div>
+
+  <div style="background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden;">
+
+    <div class="r" style="background: var(--subtle); border-bottom: 1px solid var(--border); padding: 0 16px; height: 40px; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);">
+      <div><div class="chk"></div></div>
+      <div>Nombre</div>
+      <div class="num">Secciones</div>
+      <div class="num">Artículos</div>
+      <div class="num">Posición</div>
+      <div></div>
+    </div>
+
+    <div class="r row">
+      <div><div class="chk"></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; background: var(--primary-lt); color: var(--primary-dk); display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.5 5.5h9v8h-9z"/><path d="M10.5 8.5h4l3 3v2h-7z"/><circle cx="5" cy="15" r="1.6"/><circle cx="14" cy="15" r="1.6"/></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-size: 13.5px; font-weight: 600; line-height: 1.4;">Pedidos y envios</div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Estado del pedido, plazos, gastos de envío y recogida en tienda</div>
+        </div>
+      </div>
+      <div class="num"><span class="cnt">2</span><span class="unit">secc.</span></div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">art.</span></div>
+      <div class="num" style="font-size: 12.5px; font-weight: 600; color: var(--soft);">#1</div>
+      <div style="display: flex; justify-content: flex-end;">
+        <svg class="go" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+
+    <div class="r row">
+      <div><div class="chk"></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; background: var(--primary-lt); color: var(--primary-dk); display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="1.5" y="4" width="17" height="12" rx="2"/><circle cx="7" cy="9.5" r="1.8"/><path d="M4.2 13.4c.5-1.4 1.6-2.1 2.8-2.1s2.3.7 2.8 2.1"/><path d="M12.5 8.5h4M12.5 11.5h4"/></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-size: 13.5px; font-weight: 600; line-height: 1.4;">Licencias y documentacion</div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Que licencia necesitas para cada arma y como tramitar las guías</div>
+        </div>
+      </div>
+      <div class="num"><span class="cnt">2</span><span class="unit">secc.</span></div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">art.</span></div>
+      <div class="num" style="font-size: 12.5px; font-weight: 600; color: var(--soft);">#2</div>
+      <div style="display: flex; justify-content: flex-end;">
+        <svg class="go" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+
+    <div class="r row">
+      <div><div class="chk"></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; background: var(--primary-lt); color: var(--primary-dk); display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 1 1 2.05 4.95"/><path d="M3 5.5V10h4.5"/></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-size: 13.5px; font-weight: 600; line-height: 1.4;">Devoluciones y garantia</div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Plazos de desistimiento, garantía legal y reparaciones.</div>
+        </div>
+      </div>
+      <div class="num"><span class="cnt">2</span><span class="unit">secc.</span></div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">art.</span></div>
+      <div class="num" style="font-size: 12.5px; font-weight: 600; color: var(--soft);">#3</div>
+      <div style="display: flex; justify-content: flex-end;">
+        <svg class="go" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+
+    <div class="r row">
+      <div><div class="chk"></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; background: var(--primary-lt); color: var(--primary-dk); display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3"/><circle cx="10" cy="10" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-size: 13.5px; font-weight: 600; line-height: 1.4;">Productos y asesoramiento</div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Guias de compra, calibres, tallas y mantenimiento.</div>
+        </div>
+      </div>
+      <div class="num"><span class="cnt">2</span><span class="unit">secc.</span></div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">art.</span></div>
+      <div class="num" style="font-size: 12.5px; font-weight: 600; color: var(--soft);">#4</div>
+      <div style="display: flex; justify-content: flex-end;">
+        <svg class="go" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+
+    <!-- Categoría sin secciones: el vacío se dice, no se deja en blanco. -->
+    <div class="r row">
+      <div><div class="chk"></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; background: var(--canvas); color: var(--muted); display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M2 5.5A1.5 1.5 0 0 1 3.5 4h3.2l1.6 2h8.2A1.5 1.5 0 0 1 18 7.5v7A1.5 1.5 0 0 1 16.5 16h-13A1.5 1.5 0 0 1 2 14.5z"/></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-size: 13.5px; font-weight: 600; line-height: 1.4;">Tiro deportivo</div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4;">Sin secciones todavía · <span style="color: var(--primary-dk); font-weight: 500;">Añadir la primera</span></div>
+        </div>
+      </div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">secc.</span></div>
+      <div class="num"><span class="cnt cnt--zero">0</span><span class="unit">art.</span></div>
+      <div class="num" style="font-size: 12.5px; font-weight: 600; color: var(--soft);">#5</div>
+      <div style="display: flex; justify-content: flex-end;">
+        <svg class="go" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="margin: 14px 2px 0; font-size: 11.5px; color: var(--muted);">
+    Cinco categorías en 330 px. Las secciones viven en el detalle de cada una, que ya las lista con sus artículos y sus acciones.
+  </p>
+</div>
+</x-dc>
+</body>
+</html>

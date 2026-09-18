@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class MaterialChoiceTreeType extends AbstractType
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         $selectedData = [];
-        if (null !== $form->getData()) {
+        if ($form->getData() !== null) {
             $selectedData = is_array($form->getData()) ? $form->getData() : [$form->getData()];
         }
 
@@ -87,9 +88,6 @@ class MaterialChoiceTreeType extends AbstractType
     }
 
     /**
-     * @param array $options
-     * @param array $selectedData
-     *
      * @return array
      */
     private function getFormattedChoicesTree(array $options, array $selectedData)
@@ -109,11 +107,8 @@ class MaterialChoiceTreeType extends AbstractType
     }
 
     /**
-     * @param array $choice
-     * @param string $choiceValueName
-     * @param string $choiceChildrenName
-     * @param array $selectedValues
-     *
+     * @param  string  $choiceValueName
+     * @param  string  $choiceChildrenName
      * @return bool
      */
     private function fillChoiceWithChildrenSelection(

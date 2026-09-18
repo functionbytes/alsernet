@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ class UpdateOrderStatusType extends AbstractType
      */
     private $statusChoiceAttributes;
 
-    /**
-     * @param ConfigurableFormChoiceProviderInterface $statusChoiceProvider
-     * @param array $statusChoiceAttributes
-     */
     public function __construct(
         ConfigurableFormChoiceProviderInterface $statusChoiceProvider,
         array $statusChoiceAttributes
@@ -58,7 +55,7 @@ class UpdateOrderStatusType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $choiceProviderParams = [];
-        if (!empty($options['data']['new_order_status_id'])) {
+        if (! empty($options['data']['new_order_status_id'])) {
             $choiceProviderParams = ['current_state' => $options['data']['new_order_status_id']];
         }
         $builder
@@ -68,7 +65,6 @@ class UpdateOrderStatusType extends AbstractType
                 'choices' => $this->statusChoiceProvider->getChoices($choiceProviderParams),
                 'choice_attr' => $this->statusChoiceAttributes,
                 'translation_domain' => false,
-            ])
-        ;
+            ]);
     }
 }

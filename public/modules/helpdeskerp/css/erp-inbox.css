@@ -28,7 +28,7 @@
 
 /* rp3-points-card: loyalty points highlight */
 .rp3-points-card {
-    background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
+    background: linear-gradient(135deg, #90bb13 0%, #4f6b0a 100%);
     border-radius: 10px;
     padding: 16px;
     text-align: center;
@@ -44,4 +44,66 @@
     font-size: 12px;
     color: rgba(255,255,255,.75);
     margin-top: 4px;
+}
+
+/* ── Aviso "el cliente no está en gestión" ──────────────────────────────────
+   Panel derecho del inbox, sección Integraciones. Se pinta cuando la búsqueda
+   automática ya corrió y no encontró al cliente (helpdesk_customers.
+   erp_lookup_status). Tono neutro a propósito: no es un error del agente ni
+   una alarma, es información — y la interfaz del helpdesk no usa rojos. */
+.rsp-erp-missing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--bv-border);
+    border-radius: 8px;
+    background: var(--bv-bg-subtle);
+}
+
+.rsp-erp-missing-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 180px;
+    min-width: 0;
+    font-size: 12.5px;
+    color: var(--bv-text);
+    opacity: .85;
+}
+
+.rsp-erp-missing-text i { opacity: .6; }
+.rsp-erp-missing-text span { overflow-wrap: anywhere; }
+
+.rsp-erp-missing-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.rsp-erp-btn {
+    border: 1px solid var(--bv-border);
+    background: var(--bv-bg-panel);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11.5px;
+    cursor: pointer;
+    color: inherit;
+}
+
+.rsp-erp-btn:hover { background: rgba(125, 125, 125, .12); }
+.rsp-erp-btn[disabled] { opacity: .55; cursor: default; }
+
+/* Chip de estado del workspace de pedido ERP (modals/order-workspace.blade.php).
+   El ERP no expone un color de estado por pedido (a diferencia de PrestaShop,
+   que sí y por eso calcula el suyo inline vía JS): aquí es siempre el mismo
+   tono neutro, así que es una clase y no un style="" dinámico. La forma
+   (.bv-po-pill) es del core (conversations-commerce.css); este módulo solo
+   aporta el color. */
+.bv-po-pill--neutral {
+    background: #eef0f2;
+    color: #52525b;
+    border: 1px solid #e5e7eb;
 }

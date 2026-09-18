@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,6 @@ class SEOOptionsType extends TranslatorAwareType
                     'Enable this option if you want to display your product\'s attributes in its meta title.',
                     'Admin.Shopparameters.Help'
                 ),
-            ])
-        ;
+            ]);
     }
 }

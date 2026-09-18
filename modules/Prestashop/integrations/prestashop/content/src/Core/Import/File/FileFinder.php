@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,11 @@ final class FileFinder
      */
     public function getImportFileNames()
     {
-        if (!$this->importDirectory->isReadable()) {
+        if (! $this->importDirectory->isReadable()) {
             return [];
         }
 
-        $finder = new Finder();
+        $finder = new Finder;
         $finder
             ->files()
             ->in($this->importDirectory->getDir())

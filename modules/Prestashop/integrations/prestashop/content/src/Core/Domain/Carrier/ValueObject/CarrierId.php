@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,20 +41,14 @@ class CarrierId
      */
     private $carrierId;
 
-    /**
-     * @param int $carrierId
-     */
     public function __construct(int $carrierId)
     {
-        if (0 >= $carrierId) {
+        if ($carrierId <= 0) {
             throw new CarrierConstraintException(sprintf('Invalid carrier id "%d"', $carrierId), CarrierConstraintException::INVALID_ID);
         }
         $this->carrierId = $carrierId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->carrierId;

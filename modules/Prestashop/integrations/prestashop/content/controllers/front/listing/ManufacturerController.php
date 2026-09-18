@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
     public $php_self = 'manufacturer';
 
     protected $manufacturer;
+
     protected $label;
 
     public function canonicalRedirection($canonicalURL = '')
@@ -53,7 +55,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
         if ($id_manufacturer = Tools::getValue('id_manufacturer')) {
             $this->manufacturer = new Manufacturer((int) $id_manufacturer, $this->context->language->id);
 
-            if (!Validate::isLoadedObject($this->manufacturer) || !$this->manufacturer->active || !$this->manufacturer->isAssociatedToShop()) {
+            if (! Validate::isLoadedObject($this->manufacturer) || ! $this->manufacturer->active || ! $this->manufacturer->isAssociatedToShop()) {
                 $this->redirect_after = '404';
                 $this->redirect();
             } else {
@@ -104,7 +106,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
 
     protected function getProductSearchQuery()
     {
-        $query = new ProductSearchQuery();
+        $query = new ProductSearchQuery;
         $query
             ->setIdManufacturer($this->manufacturer->id)
             ->setSortOrder(new SortOrder('product', Tools::getProductsOrder('by'), Tools::getProductsOrder('way')));
@@ -137,7 +139,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
             $id_shop = null,
             $chain = true
         );
-        if (!empty($filteredManufacturer)) {
+        if (! empty($filteredManufacturer)) {
             $manufacturerVar['description'] = $filteredManufacturer;
         }
 
@@ -153,7 +155,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
     {
         $manufacturersVar = $this->getTemplateVarManufacturers();
 
-        if (!empty($manufacturersVar)) {
+        if (! empty($manufacturersVar)) {
             foreach ($manufacturersVar as $k => $manufacturer) {
                 $filteredManufacturer = Hook::exec(
                     'filterManufacturerContent',
@@ -165,7 +167,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
                     $id_shop = null,
                     $chain = true
                 );
-                if (!empty($filteredManufacturer)) {
+                if (! empty($filteredManufacturer)) {
                     $manufacturersVar[$k]['text'] = $filteredManufacturer;
                 }
             }

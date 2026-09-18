@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,6 @@ final class FilterCategoriesRequestPurifier
     /**
      * Changes the filter category values in case it is not numeric or signed.
      *
-     * @param Request $request
      *
      * @return Request
      */
@@ -47,7 +47,7 @@ final class FilterCategoriesRequestPurifier
     {
         if ($request->isMethod('POST')) {
             $value = $request->request->get(self::CATEGORY);
-            if (null !== $value && (!is_numeric($value) || $value < 0)) {
+            if ($value !== null && (! is_numeric($value) || $value < 0)) {
                 $request->request->set(self::CATEGORY, '');
             }
         }

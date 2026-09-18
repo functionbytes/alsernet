@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,9 @@
 
 namespace PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters;
 
+use PrestaShop\PrestaShop\Adapter\Requirement\CheckMissingOrUpdatedFiles;
+use PrestaShop\PrestaShop\Adapter\Requirement\CheckRequirements;
+use PrestaShop\PrestaShop\Adapter\System\SystemInformation;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
@@ -39,9 +43,8 @@ class SystemInformationController extends FrameworkBundleAdminController
 {
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
-     * @Template("@PrestaShop/Admin/Configure/AdvancedParameters/system_information.html.twig")
      *
-     * @param Request $request
+     * @Template("@PrestaShop/Admin/Configure/AdvancedParameters/system_information.html.twig")
      *
      * @return array<string, array|bool|string|null>
      */
@@ -78,7 +81,7 @@ class SystemInformationController extends FrameworkBundleAdminController
     }
 
     /**
-     * @return \PrestaShop\PrestaShop\Adapter\System\SystemInformation
+     * @return SystemInformation
      */
     private function getSystemInformation()
     {
@@ -86,7 +89,7 @@ class SystemInformationController extends FrameworkBundleAdminController
     }
 
     /**
-     * @return \PrestaShop\PrestaShop\Adapter\Requirement\CheckRequirements
+     * @return CheckRequirements
      */
     private function getRequirementsChecker()
     {
@@ -94,7 +97,7 @@ class SystemInformationController extends FrameworkBundleAdminController
     }
 
     /**
-     * @return \PrestaShop\PrestaShop\Adapter\Requirement\CheckMissingOrUpdatedFiles
+     * @return CheckMissingOrUpdatedFiles
      */
     private function getRequiredFilesChecker()
     {

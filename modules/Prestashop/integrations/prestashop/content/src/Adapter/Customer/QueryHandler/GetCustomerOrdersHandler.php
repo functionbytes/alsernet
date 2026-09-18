@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class GetCustomerOrdersHandler extends AbstractCustomerHandler implements 
      */
     private $locale;
 
-    /**
-     * @param LocaleInterface $locale
-     */
     public function __construct(
         LocaleInterface $locale
     ) {
@@ -57,8 +55,6 @@ final class GetCustomerOrdersHandler extends AbstractCustomerHandler implements 
     }
 
     /**
-     * @param GetCustomerOrders $query
-     *
      * @return OrderSummary[]
      *
      * @throws CustomerNotFoundException
@@ -73,8 +69,6 @@ final class GetCustomerOrdersHandler extends AbstractCustomerHandler implements 
     }
 
     /**
-     * @param int $customerId
-     *
      * @throws LocalizationException
      */
     private function getOrders(int $customerId)

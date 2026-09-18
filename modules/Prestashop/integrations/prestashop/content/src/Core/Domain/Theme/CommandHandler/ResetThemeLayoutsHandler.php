@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class ResetThemeLayoutsHandler implements ResetThemeLayoutsHandlerInterfac
      */
     private $themeManager;
 
-    /**
-     * @param ThemeManager $themeManager
-     */
     public function __construct(ThemeManager $themeManager)
     {
         $this->themeManager = $themeManager;
@@ -53,7 +51,7 @@ final class ResetThemeLayoutsHandler implements ResetThemeLayoutsHandlerInterfac
      */
     public function handle(ResetThemeLayoutsCommand $command)
     {
-        if (!$this->themeManager->reset($command->getThemeName()->getValue())) {
+        if (! $this->themeManager->reset($command->getThemeName()->getValue())) {
             throw new CannotResetThemeLayoutsException(sprintf('Cannot reset "%s" theme page layouts.', $command->getThemeName()->getValue()));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ class OrderReturnPresenter implements PresenterInterface
     /**
      * OrderReturnPresenter constructor.
      *
-     * @param string $prefix
-     * @param Link $link
+     * @param  string  $prefix
      */
     public function __construct($prefix, Link $link)
     {
@@ -56,15 +56,14 @@ class OrderReturnPresenter implements PresenterInterface
     }
 
     /**
-     * @param array $orderReturn
-     *
+     * @param  array  $orderReturn
      * @return OrderReturnLazyArray
      *
      * @throws \ReflectionException
      */
     public function present($orderReturn)
     {
-        if (!is_array($orderReturn)) {
+        if (! is_array($orderReturn)) {
             throw new Exception('orderReturnPresenter can only present order_return passed as array');
         }
 

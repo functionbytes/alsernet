@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,28 +35,22 @@ use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 interface ShopConfigurationInterface extends ConfigurationInterface
 {
     /**
-     * @param string $key
-     * @param mixed|null $default
-     * @param ShopConstraint|null $shopConstraint
-     *
+     * @param  string  $key
+     * @param  mixed|null  $default
      * @return mixed
      */
-    public function get($key, $default = null, ShopConstraint $shopConstraint = null);
+    public function get($key, $default = null, ?ShopConstraint $shopConstraint = null);
 
     /**
-     * @param string $key
-     * @param mixed $value
-     * @param ShopConstraint|null $shopConstraint
-     *
+     * @param  string  $key
+     * @param  mixed  $value
      * @return ShopConfigurationInterface
      */
-    public function set($key, $value, ShopConstraint $shopConstraint = null);
+    public function set($key, $value, ?ShopConstraint $shopConstraint = null);
 
     /**
-     * @param string $key
-     * @param ShopConstraint|null $shopConstraint
-     *
+     * @param  string  $key
      * @return bool
      */
-    public function has($key, ShopConstraint $shopConstraint = null);
+    public function has($key, ?ShopConstraint $shopConstraint = null);
 }

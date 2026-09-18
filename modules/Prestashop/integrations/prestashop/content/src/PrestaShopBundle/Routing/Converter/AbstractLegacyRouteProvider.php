@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,7 +64,7 @@ abstract class AbstractLegacyRouteProvider implements LegacyRouteProviderInterfa
         $this->initControllerActions();
 
         $controllerActions = $this->getControllerActions($controller);
-        if (null === $controllerActions) {
+        if ($controllerActions === null) {
             throw new RouteNotFoundException(sprintf('Could not find a route matching for legacy controller: %s', $controller));
         }
 
@@ -78,14 +79,14 @@ abstract class AbstractLegacyRouteProvider implements LegacyRouteProviderInterfa
         $this->initControllerActions();
 
         $controllerActions = $this->getControllerActions($controller);
-        if (null === $controllerActions) {
+        if ($controllerActions === null) {
             throw new RouteNotFoundException(sprintf('Could not find a route matching for legacy controller: %s', $controller));
         }
 
         $action = LegacyRoute::isIndexAction($action) ? 'index' : $action;
         $routeName = $this->getRouteName($controllerActions, $action);
-        if (null === $routeName) {
-            throw new RouteNotFoundException(sprintf('Could not find a route matching for legacy action: %s', $controller . ':' . $action));
+        if ($routeName === null) {
+            throw new RouteNotFoundException(sprintf('Could not find a route matching for legacy action: %s', $controller.':'.$action));
         }
 
         return $this->getLegacyRoutes()[$routeName];
@@ -94,9 +95,7 @@ abstract class AbstractLegacyRouteProvider implements LegacyRouteProviderInterfa
     /**
      * Get the route name.
      *
-     * @param array $controllerActions
-     * @param string $action
-     *
+     * @param  string  $action
      * @return string|null
      */
     private function getRouteName(array $controllerActions, $action)
@@ -121,7 +120,7 @@ abstract class AbstractLegacyRouteProvider implements LegacyRouteProviderInterfa
      */
     private function initControllerActions()
     {
-        if (null === $this->controllersActions) {
+        if ($this->controllersActions === null) {
             $this->controllersActions = [];
             /** @var LegacyRoute $legacyRoute */
             foreach ($this->getLegacyRoutes() as $legacyRoute) {
@@ -131,8 +130,7 @@ abstract class AbstractLegacyRouteProvider implements LegacyRouteProviderInterfa
     }
 
     /**
-     * @param string $controller
-     *
+     * @param  string  $controller
      * @return array|null
      */
     private function getControllerActions($controller)

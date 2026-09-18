@@ -1,4 +1,5 @@
 <?php
+
 class AlsernetArbolErpController extends ModuleAdminController
 {
     public function __construct()
@@ -29,7 +30,7 @@ class AlsernetArbolErpController extends ModuleAdminController
     {
         // Array de Tipo de Productos
         $selectLista = [
-            'featureValue' => []
+            'featureValue' => [],
         ];
 
         $product_type_selected = Db::getInstance()->executeS('  select
@@ -49,5 +50,4 @@ class AlsernetArbolErpController extends ModuleAdminController
 
         return $selectLista;
     }
-
 }

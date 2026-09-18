@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -72,14 +73,13 @@ class AddManufacturerCommand
     private $shopAssociation;
 
     /**
-     * @param string $name
-     * @param bool $enabled
-     * @param string[] $localizedShortDescriptions
-     * @param string[] $localizedDescriptions
-     * @param string[] $localizedMetaTitles
-     * @param string[] $localizedMetaDescriptions
-     * @param string[] $localizedMetaKeywords
-     * @param array $shopAssociation
+     * @param  string  $name
+     * @param  bool  $enabled
+     * @param  string[]  $localizedShortDescriptions
+     * @param  string[]  $localizedDescriptions
+     * @param  string[]  $localizedMetaTitles
+     * @param  string[]  $localizedMetaDescriptions
+     * @param  string[]  $localizedMetaKeywords
      */
     public function __construct(
         $name,

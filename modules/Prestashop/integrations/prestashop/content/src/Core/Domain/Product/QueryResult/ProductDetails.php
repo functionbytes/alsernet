@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,13 +59,6 @@ class ProductDetails
      */
     private $reference;
 
-    /**
-     * @param string $isbn
-     * @param string $upc
-     * @param string $ean13
-     * @param string $mpn
-     * @param string $reference
-     */
     public function __construct(
         string $isbn,
         string $upc,
@@ -79,41 +73,26 @@ class ProductDetails
         $this->reference = $reference;
     }
 
-    /**
-     * @return string
-     */
     public function getIsbn(): string
     {
         return $this->isbn;
     }
 
-    /**
-     * @return string
-     */
     public function getUpc(): string
     {
         return $this->upc;
     }
 
-    /**
-     * @return string
-     */
     public function getEan13(): string
     {
         return $this->ean13;
     }
 
-    /**
-     * @return string
-     */
     public function getMpn(): string
     {
         return $this->mpn;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;

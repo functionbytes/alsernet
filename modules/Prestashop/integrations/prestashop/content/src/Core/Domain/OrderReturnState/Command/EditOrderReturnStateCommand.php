@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,7 +57,7 @@ class EditOrderReturnStateCommand
     private $color;
 
     /**
-     * @param int $orderReturnStateId
+     * @param  int  $orderReturnStateId
      */
     public function __construct($orderReturnStateId)
     {
@@ -80,8 +81,7 @@ class EditOrderReturnStateCommand
     }
 
     /**
-     * @param array<string> $name
-     *
+     * @param  array<string>  $name
      * @return self
      */
     public function setName($name)

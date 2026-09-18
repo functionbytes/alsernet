@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,6 @@ final class ImportThemeHandler implements ImportThemeHandlerInterface
      */
     private $configuration;
 
-    /**
-     * @param ThemeUploaderInterface $themeUploader
-     * @param ThemeManager $themeManager
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(
         ThemeUploaderInterface $themeUploader,
         ThemeManager $themeManager,
@@ -79,12 +75,12 @@ final class ImportThemeHandler implements ImportThemeHandlerInterface
         $source = $command->getImportSource()->getSource();
 
         $themePath = '';
-        if (ThemeImportSource::FROM_ARCHIVE === $type) {
+        if ($type === ThemeImportSource::FROM_ARCHIVE) {
             $themePath = $this->themeUploader->upload($source);
-        } elseif (ThemeImportSource::FROM_WEB === $type) {
+        } elseif ($type === ThemeImportSource::FROM_WEB) {
             $themePath = $source;
-        } elseif (ThemeImportSource::FROM_FTP === $type) {
-            $themePath = $this->configuration->get('_PS_ALL_THEMES_DIR_') . $source;
+        } elseif ($type === ThemeImportSource::FROM_FTP) {
+            $themePath = $this->configuration->get('_PS_ALL_THEMES_DIR_').$source;
         }
 
         try {
@@ -92,7 +88,7 @@ final class ImportThemeHandler implements ImportThemeHandlerInterface
         } catch (ThemeAlreadyExistsException $e) {
             throw new ImportedThemeAlreadyExistsException(new ThemeName($e->getThemeName()), sprintf('Imported theme "%s" already exists.', $e->getThemeName()), 0, $e);
         } finally {
-            if (ThemeImportSource::FROM_ARCHIVE === $type) {
+            if ($type === ThemeImportSource::FROM_ARCHIVE) {
                 @unlink($themePath);
             }
         }

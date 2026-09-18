@@ -3,6 +3,10 @@
 namespace Modules\Helpdesk\Http\Requests\Public;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Core\Rules\ValidMimeMagicBytes;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 
 class UploadSimulatorAttachmentRequest extends FormRequest
 {
@@ -18,8 +22,20 @@ class UploadSimulatorAttachmentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $settings = app(HelpdeskSettings::class);
+
         return [
-            'file' => ['required', 'file', 'max:20480', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,mp3,mp4,webm,ogg,wav'],
+            'file' => [
+                'required',
+                'file',
+                'max:'.$settings->attachmentMaxKilobytes(),
+                'mimes:'.implode(',', $settings->attachmentExtensions()),
+                new ValidMimeMagicBytes($settings->attachmentMimeTypes()),
+                Rule::prohibitedIf(fn () => ! filter_var(
+                    Setting::get('tickets.guest_file_upload_enable', true),
+                    FILTER_VALIDATE_BOOLEAN,
+                )),
+            ],
             'token' => ['required', 'string', 'max:64'],
         ];
     }
@@ -32,7 +48,7 @@ class UploadSimulatorAttachmentRequest extends FormRequest
         return [
             'file.required' => 'Debes seleccionar un archivo.',
             'file.file' => 'El elemento enviado no es un archivo válido.',
-            'file.max' => 'El archivo no puede superar los 20 MB.',
+            'file.max' => 'El archivo no puede superar el límite configurado en Helpdesk.',
             'file.mimes' => 'Tipo de archivo no permitido.',
             'token.required' => 'Falta el token de la sesión simulada.',
         ];

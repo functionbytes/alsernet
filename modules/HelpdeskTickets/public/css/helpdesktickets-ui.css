@@ -3,15 +3,12 @@
  * CSS grandes (tickets.css / tickets-app.css / emails.css).
  *
  * Existen para retirar los style="" que quedaban sueltos en las pantallas de
- * agente, ajustes y páginas públicas. Se dejan inline, a propósito, dos cosas
- * que NO son presentación y por tanto no pertenecen a una hoja de estilos:
- *
- *   - Los colores que salen de la base de datos (color del estado o de la
- *     categoría del ticket): el valor no se conoce al escribir el CSS.
- *   - El display:none inicial de los paneles que jQuery alterna con
- *     .show()/.hide()/.css('display', …), que escriben estilo inline y no
- *     verían una clase (y contra .d-none de Bootstrap, que lleva !important,
- *     perderían).
+ * agente, ajustes y páginas públicas. Solo queda inline el valor que de
+ * verdad es dinámico y no puede vivir en una hoja de estilos: el color que
+ * sale de la base de datos (estado/categoría del ticket). Ni así se escribe
+ * la propiedad CSS suelta en el style="" — se pasa como variable
+ * (--hdt-color) y la consume una clase (.hdt-dyn-bg/.hdt-dyn-fg) de aquí
+ * abajo.
  */
 
 /* Truncados de tabla */
@@ -34,3 +31,33 @@
 /* Iconos decorativos de páginas públicas */
 .hdt-icon-xl  { font-size: 3rem; }
 .hdt-icon-xxl { font-size: 5rem; }
+
+/* Color de estado/categoría que viene de BD: el style="" solo lleva la
+   variable --hdt-color, la propiedad real vive aquí. */
+.hdt-dyn-bg { background-color: var(--hdt-color, #6c757d); }
+.hdt-dyn-fg { color: var(--hdt-color, #6c757d); }
+
+/* Oculto en el primer render (p.ej. un bloque condicional que el JS
+   mostrará según el valor de un <select>). Sin !important a propósito: el
+   propio JS decide la visibilidad después con .show()/.hide()/.toggle()/
+   .css('display', …), que escriben el estilo inline y ya ganan a cualquier
+   clase — no hace falta pelear con la cascada. */
+.hdt-step-hidden { display: none; }
+
+/* Vista previa de plantilla de ticket (managers/ticket-templates/form) —
+   vivía como <style> suelto en el propio Blade. */
+.tpl-preview-body { white-space: pre-wrap; }
+
+/* Listado de plantillas de ticket (managers/ticket-templates/index) —
+   vivían como <style> suelto en el propio Blade. */
+.tt-bulk-toolbar { z-index: 1050; }
+.tt-filter-badge { font-size: .6rem; }
+
+/* Listado de tickets recurrentes (managers/recurring-tickets/index) —
+   vivía como <style> suelto en el propio Blade. */
+.rt-bulk-toolbar { z-index: 1050; }
+
+/* Dashboard de agente (agents/dashboard.blade.php) — vivía como <style>
+   suelto en el propio Blade. */
+.btn-icon-sm { width: 30px; height: 30px; background: #f5f6f8; }
+.stat-icon   { width: 44px; height: 44px; }

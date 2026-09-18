@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,22 +51,22 @@ final class EditCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler im
         try {
             $cmsPageCategory = new CMSCategory($command->getCmsPageCategoryId()->getValue());
 
-            if (0 >= $cmsPageCategory->id) {
+            if ($cmsPageCategory->id <= 0) {
                 throw new CmsPageCategoryNotFoundException(sprintf('Unable to find cms page category with id "%s"', $cmsPageCategory->id));
             }
 
-            if (null !== $command->getLocalisedName()) {
-                if (!$this->assertHasDefaultLanguage($command->getLocalisedName())) {
+            if ($command->getLocalisedName() !== null) {
+                if (! $this->assertHasDefaultLanguage($command->getLocalisedName())) {
                     throw new CmsPageCategoryConstraintException('Missing name in default language', CmsPageCategoryConstraintException::MISSING_DEFAULT_LANGUAGE_FOR_NAME);
                 }
                 $cmsPageCategory->name = $command->getLocalisedName();
             }
 
-            if (null !== $command->isDisplayed()) {
+            if ($command->isDisplayed() !== null) {
                 $cmsPageCategory->active = $command->isDisplayed();
             }
 
-            if (null !== $command->getParentId()) {
+            if ($command->getParentId() !== null) {
                 $this->assertCmsCategoryCanBeMovedToParent(
                     $command->getCmsPageCategoryId()->getValue(),
                     $command->getParentId()->getValue()
@@ -73,25 +74,25 @@ final class EditCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler im
                 $cmsPageCategory->id_parent = $command->getParentId()->getValue();
             }
 
-            if (null !== $command->getLocalisedDescription()) {
+            if ($command->getLocalisedDescription() !== null) {
                 $this->assertDescriptionContainsCleanHtml($command->getLocalisedDescription());
                 $cmsPageCategory->description = $command->getLocalisedDescription();
             }
 
-            if (null !== $command->getLocalisedMetaTitle()) {
+            if ($command->getLocalisedMetaTitle() !== null) {
                 $cmsPageCategory->meta_title = $command->getLocalisedMetaTitle();
             }
 
-            if (null !== $command->getLocalisedMetaDescription()) {
+            if ($command->getLocalisedMetaDescription() !== null) {
                 $cmsPageCategory->meta_description = $command->getLocalisedMetaDescription();
             }
 
-            if (null !== $command->getLocalisedMetaKeywords()) {
+            if ($command->getLocalisedMetaKeywords() !== null) {
                 $cmsPageCategory->meta_keywords = $command->getLocalisedMetaKeywords();
             }
 
-            if (null !== $command->getLocalisedFriendlyUrl()) {
-                if (!$this->assertHasDefaultLanguage($command->getLocalisedFriendlyUrl())) {
+            if ($command->getLocalisedFriendlyUrl() !== null) {
+                if (! $this->assertHasDefaultLanguage($command->getLocalisedFriendlyUrl())) {
                     throw new CmsPageCategoryConstraintException('Missing friendly url in default language', CmsPageCategoryConstraintException::MISSING_DEFAULT_LANGUAGE_FOR_FRIENDLY_URL);
                 }
                 $this->assertIsValidLinkRewrite($command->getLocalisedFriendlyUrl());
@@ -99,11 +100,11 @@ final class EditCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler im
                 $cmsPageCategory->link_rewrite = $command->getLocalisedFriendlyUrl();
             }
 
-            if (false === $cmsPageCategory->update()) {
+            if ($cmsPageCategory->update() === false) {
                 throw new CannotUpdateCmsPageCategoryException('Failed to update cms page category');
             }
 
-            if (null !== $command->getShopAssociation()) {
+            if ($command->getShopAssociation() !== null) {
                 $this->associateWithShops($cmsPageCategory, $command->getShopAssociation());
             }
         } catch (PrestaShopException $exception) {
@@ -114,14 +115,14 @@ final class EditCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler im
     /**
      * Adds if the current category is not being moved to the same category or its own child.
      *
-     * @param int $cmsCategoryId
-     * @param int $cmsCategoryParentId
+     * @param  int  $cmsCategoryId
+     * @param  int  $cmsCategoryParentId
      *
      * @throws CmsPageCategoryConstraintException
      */
     private function assertCmsCategoryCanBeMovedToParent($cmsCategoryId, $cmsCategoryParentId)
     {
-        if (!CMSCategory::checkBeforeMove($cmsCategoryId, $cmsCategoryParentId)) {
+        if (! CMSCategory::checkBeforeMove($cmsCategoryId, $cmsCategoryParentId)) {
             throw new CmsPageCategoryConstraintException(sprintf('Unable to move cms category "%s" to parent category "%s"', $cmsCategoryId, $cmsCategoryParentId), CmsPageCategoryConstraintException::CANNOT_MOVE_CATEGORY_TO_PARENT);
         }
     }

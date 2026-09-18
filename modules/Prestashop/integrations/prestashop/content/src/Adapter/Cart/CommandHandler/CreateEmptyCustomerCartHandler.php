@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,15 +59,11 @@ final class CreateEmptyCustomerCartHandler implements CreateEmptyCustomerCartHan
     }
 
     /**
-     * @param Customer $customer
-     *
-     * @return Cart
-     *
      * @throws PrestaShopException
      */
     private function createEmptyCustomerCart(Customer $customer): Cart
     {
-        $cart = new Cart();
+        $cart = new Cart;
 
         $cart->recyclable = false;
         $cart->gift = false;
@@ -78,7 +75,7 @@ final class CreateEmptyCustomerCartHandler implements CreateEmptyCustomerCartHan
         $cart->id_currency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
 
         $addresses = $customer->getAddresses($cart->id_lang);
-        $addressId = !empty($addresses) ? (int) reset($addresses)['id_address'] : null;
+        $addressId = ! empty($addresses) ? (int) reset($addresses)['id_address'] : null;
         $cart->id_address_delivery = $addressId;
         $cart->id_address_invoice = $addressId;
 

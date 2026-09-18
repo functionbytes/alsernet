@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,12 +59,6 @@ class LocalizationConfiguration implements DataConfigurationInterface
      */
     private $adminModuleDataProvider;
 
-    /**
-     * @param Configuration $configuration
-     * @param LanguageActivatorInterface $languageActivator
-     * @param CurrencyManager $currencyManager
-     * @param AdminModuleDataProvider $adminModuleDataProvider
-     */
     public function __construct(
         Configuration $configuration,
         LanguageActivatorInterface $languageActivator,

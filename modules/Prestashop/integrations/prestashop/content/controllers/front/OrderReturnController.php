@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,8 +31,11 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderReturnPresenter;
 class OrderReturnControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'order-return';
+
     public $authRedirection = 'order-follow';
+
     public $ssl = true;
 
     /**
@@ -45,7 +49,7 @@ class OrderReturnControllerCore extends FrontController
 
         $id_order_return = (int) Tools::getValue('id_order_return');
 
-        if (!isset($id_order_return) || !Validate::isUnsignedId($id_order_return)) {
+        if (! isset($id_order_return) || ! Validate::isUnsignedId($id_order_return)) {
             $this->redirect_after = '404';
             $this->redirect();
         } else {
@@ -111,7 +115,7 @@ class OrderReturnControllerCore extends FrontController
         $return_products = OrderReturn::getOrdersReturnProducts((int) $order_return_id, $order);
 
         foreach ($return_products as $id_return_product => $return_product) {
-            if (!isset($return_product['deleted'])) {
+            if (! isset($return_product['deleted'])) {
                 $products[$id_return_product] = $return_product;
                 $products[$id_return_product]['customizations'] = ($return_product['customizedDatas']) ? $this->getTemplateVarCustomization($return_product) : [];
             }

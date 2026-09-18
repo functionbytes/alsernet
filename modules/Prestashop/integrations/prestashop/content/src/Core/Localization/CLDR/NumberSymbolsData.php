@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -157,65 +158,64 @@ class NumberSymbolsData
     /**
      * Override this object's symbols with another NumberSymbolsData object.
      *
-     * @param NumberSymbolsData $symbolsData Symbols to use for the override
-     *
+     * @param  NumberSymbolsData  $symbolsData  Symbols to use for the override
      * @return $this Fluent interface
      */
     public function overrideWith(NumberSymbolsData $symbolsData)
     {
-        if (null !== $symbolsData->getDecimal()) {
+        if ($symbolsData->getDecimal() !== null) {
             $this->setDecimal($symbolsData->getDecimal());
         }
 
-        if (null !== $symbolsData->getGroup()) {
+        if ($symbolsData->getGroup() !== null) {
             $this->setGroup($symbolsData->getGroup());
         }
 
-        if (null !== $symbolsData->getList()) {
+        if ($symbolsData->getList() !== null) {
             $this->setList($symbolsData->getList());
         }
 
-        if (null !== $symbolsData->getPercentSign()) {
+        if ($symbolsData->getPercentSign() !== null) {
             $this->setPercentSign($symbolsData->getPercentSign());
         }
 
-        if (null !== $symbolsData->getMinusSign()) {
+        if ($symbolsData->getMinusSign() !== null) {
             $this->setMinusSign($symbolsData->getMinusSign());
         }
 
-        if (null !== $symbolsData->getPlusSign()) {
+        if ($symbolsData->getPlusSign() !== null) {
             $this->setPlusSign($symbolsData->getPlusSign());
         }
 
-        if (null !== $symbolsData->getExponential()) {
+        if ($symbolsData->getExponential() !== null) {
             $this->setExponential($symbolsData->getExponential());
         }
 
-        if (null !== $symbolsData->getSuperscriptingExponent()) {
+        if ($symbolsData->getSuperscriptingExponent() !== null) {
             $this->setSuperscriptingExponent($symbolsData->getSuperscriptingExponent());
         }
 
-        if (null !== $symbolsData->getPerMille()) {
+        if ($symbolsData->getPerMille() !== null) {
             $this->setPerMille($symbolsData->getPerMille());
         }
 
-        if (null !== $symbolsData->getInfinity()) {
+        if ($symbolsData->getInfinity() !== null) {
             $this->setInfinity($symbolsData->getInfinity());
         }
 
-        if (null !== $symbolsData->getNan()) {
+        if ($symbolsData->getNan() !== null) {
             $this->setNan($symbolsData->getNan());
         }
 
-        if (null !== $symbolsData->getTimeSeparator()) {
+        if ($symbolsData->getTimeSeparator() !== null) {
             $this->setTimeSeparator($symbolsData->getTimeSeparator());
         }
 
-        if (null !== $symbolsData->getCurrencyDecimal()) {
+        if ($symbolsData->getCurrencyDecimal() !== null) {
             $this->setCurrencyDecimal($symbolsData->getCurrencyDecimal());
         }
 
-        if (null !== $symbolsData->getCurrencyGroup()) {
+        if ($symbolsData->getCurrencyGroup() !== null) {
             $this->setCurrencyGroup($symbolsData->getCurrencyGroup());
         }
 
@@ -231,8 +231,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $decimal
-     *
+     * @param  string  $decimal
      * @return NumberSymbolsData
      */
     public function setDecimal($decimal)
@@ -251,8 +250,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $group
-     *
+     * @param  string  $group
      * @return NumberSymbolsData
      */
     public function setGroup($group)
@@ -271,8 +269,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $list
-     *
+     * @param  string  $list
      * @return NumberSymbolsData
      */
     public function setList($list)
@@ -291,8 +288,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $percentSign
-     *
+     * @param  string  $percentSign
      * @return NumberSymbolsData
      */
     public function setPercentSign($percentSign)
@@ -311,8 +307,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $minusSign
-     *
+     * @param  string  $minusSign
      * @return NumberSymbolsData
      */
     public function setMinusSign($minusSign)
@@ -331,8 +326,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $plusSign
-     *
+     * @param  string  $plusSign
      * @return NumberSymbolsData
      */
     public function setPlusSign($plusSign)
@@ -351,8 +345,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $exponential
-     *
+     * @param  string  $exponential
      * @return NumberSymbolsData
      */
     public function setExponential($exponential)
@@ -371,8 +364,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $superscriptingExponent
-     *
+     * @param  string  $superscriptingExponent
      * @return NumberSymbolsData
      */
     public function setSuperscriptingExponent($superscriptingExponent)
@@ -391,8 +383,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $perMille
-     *
+     * @param  string  $perMille
      * @return NumberSymbolsData
      */
     public function setPerMille($perMille)
@@ -411,8 +402,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $infinity
-     *
+     * @param  string  $infinity
      * @return NumberSymbolsData
      */
     public function setInfinity($infinity)
@@ -431,8 +421,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $nan
-     *
+     * @param  string  $nan
      * @return NumberSymbolsData
      */
     public function setNan($nan)
@@ -451,8 +440,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $timeSeparator
-     *
+     * @param  string  $timeSeparator
      * @return NumberSymbolsData
      */
     public function setTimeSeparator($timeSeparator)
@@ -471,8 +459,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $currencyDecimal
-     *
+     * @param  string  $currencyDecimal
      * @return NumberSymbolsData
      */
     public function setCurrencyDecimal($currencyDecimal)
@@ -491,8 +478,7 @@ class NumberSymbolsData
     }
 
     /**
-     * @param string $currencyGroup
-     *
+     * @param  string  $currencyGroup
      * @return NumberSymbolsData
      */
     public function setCurrencyGroup($currencyGroup)

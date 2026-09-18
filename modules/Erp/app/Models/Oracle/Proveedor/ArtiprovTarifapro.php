@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierProductPrice;
 
 /**
  * Modelo para la tabla ARTIPROV_TARIFAPRO
@@ -59,7 +60,7 @@ class ArtiprovTarifapro extends Model
      */
     public function artiprovTarifapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\ArtiprovTarifapro::class, 'idartiprov_tarifapro', 'idartiprov_tarifapro');
+        return $this->belongsTo(ArtiprovTarifapro::class, 'idartiprov_tarifapro', 'idartiprov_tarifapro');
     }
 
     /**
@@ -68,7 +69,7 @@ class ArtiprovTarifapro extends Model
      */
     public function artiprov()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Artiprov::class, 'idartiprov', 'idartiprov');
+        return $this->belongsTo(Artiprov::class, 'idartiprov', 'idartiprov');
     }
 
     /**
@@ -76,6 +77,6 @@ class ArtiprovTarifapro extends Model
      */
     public function supplierProductPrices(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierProductPrice::class, 'erp_price_id', 'idartiprov_tarifapro');
+        return $this->hasMany(SupplierProductPrice::class, 'erp_price_id', 'idartiprov_tarifapro');
     }
 }

@@ -183,6 +183,22 @@ class ProductSearchController extends Controller
     }
 
     /**
+     * Returns PS orders for a customer. Carga diferida (AJAX) desde los tabs
+     * "Tienda" y "Carritos" del inbox — evita el bloqueo síncrono del bridge
+     * de PrestaShop (hasta 12s) en el render del panel derecho.
+     */
+    public function orders(Request $request, Customer $customer): JsonResponse
+    {
+        $this->authorize('view', $customer);
+
+        $orders = $customer->email
+            ? ($this->ps->getCustomerContext($customer->email)['orders'] ?? [])
+            : [];
+
+        return response()->json(['success' => true, 'orders' => $orders]);
+    }
+
+    /**
      * Returns available PS categories for the search filter dropdown.
      */
     public function categories(Request $request): JsonResponse

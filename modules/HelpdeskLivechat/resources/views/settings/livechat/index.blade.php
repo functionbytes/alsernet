@@ -3,149 +3,7 @@
 @section('title', 'Configuración de LiveChat')
 
 @push('css')
-<style>
-    /* Fix: some theme CSS sets visibility:collapse on .collapse, breaking accordion content */
-    #widgetAccordion .accordion-collapse.show,
-    #widgetAccordion .accordion-collapse.show .accordion-body,
-    .tab-content > .tab-pane.show { visibility: visible !important; }
-    .lc-settings-header {
-        background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
-        color: white;
-        padding: 1.5rem 2rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-    }
-    .lc-settings-header h4 { font-weight: 700; margin: 0 0 .25rem; }
-    .lc-settings-header p  { opacity: .9; margin: 0; font-size: .9rem; }
-
-    .lc-section-title {
-        font-size: .8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        color: #555;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-    }
-    .lc-section-title i { color: #90bb13; }
-
-    .lc-preview-wrap {
-        position: sticky;
-        top: 20px;
-    }
-
-    .lc-phone-frame {
-        background: #1a1a1a;
-        border-radius: 36px;
-        padding: 12px;
-        box-shadow: 0 12px 40px rgba(0,0,0,.35);
-        width: 340px;
-        margin: 0 auto;
-    }
-    .lc-phone-notch {
-        background: #333;
-        height: 24px;
-        border-radius: 12px;
-        margin: 0 auto 10px;
-        width: 100px;
-    }
-    .lc-phone-screen {
-        border-radius: 24px;
-        overflow: hidden;
-        height: 560px;
-        background: #fff;
-        position: relative;
-    }
-    .lc-phone-screen iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
-    }
-    .lc-phone-home-bar {
-        background: #333;
-        height: 4px;
-        border-radius: 2px;
-        width: 100px;
-        margin: 10px auto 0;
-    }
-
-    .preview-screen-tabs .nav-link {
-        font-size: .8rem;
-        padding: .35rem .75rem;
-        color: #666;
-        border-radius: 6px;
-    }
-    .preview-screen-tabs .nav-link.active {
-        background: #90bb13;
-        color: #fff;
-    }
-
-    /* Main settings tabs */
-    .lc-nav-tabs .nav-link {
-        color: #555;
-        border-bottom: 3px solid transparent;
-        border-top: none;
-        border-left: none;
-        border-right: none;
-        border-radius: 0;
-        padding: .6rem 1rem;
-        font-weight: 500;
-    }
-    .lc-nav-tabs .nav-link:hover { color: #90bb13; }
-    .lc-nav-tabs .nav-link.active {
-        color: #90bb13;
-        border-bottom-color: #90bb13;
-        background: transparent;
-    }
-
-    /* Timeout toggles */
-    .timeout-row {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: .75rem;
-        cursor: pointer;
-        transition: border-color .15s;
-    }
-    .timeout-row:hover { border-color: #90bb13; }
-    .timeout-row.active { border-color: #90bb13; background: #fff8f8; }
-
-    /* Code block */
-    .lc-code-block {
-        background: #1e1e2e;
-        color: #cdd6f4;
-        border-radius: 8px;
-        padding: 1rem 1.25rem;
-        font-family: 'Courier New', monospace;
-        font-size: .85rem;
-        position: relative;
-    }
-    .lc-code-copy {
-        position: absolute;
-        top: .5rem;
-        right: .5rem;
-    }
-
-    /* Toggle list items */
-    .lc-toggle-item {
-        display: flex;
-        align-items: flex-start;
-        gap: .75rem;
-        padding: .6rem .75rem;
-        border-radius: 8px;
-        border: 1px solid #eee;
-        background: #f5f6f8;
-        margin-bottom: .5rem;
-    }
-    .hd-icon-fw { width: 14px; }
-    .hd-color-input { max-width: 50px; }
-    .hd-num-input-sm { width: 65px; }
-    .hd-code-pre { color: inherit; background: transparent; padding: 0; }
-    .hd-code-sm { font-size: .8rem; }
-</style>
+<link rel="stylesheet" href="{{ asset('modules/helpdesklivechat/css/livechat-settings.css') }}?v={{ filemtime(public_path('modules/helpdesklivechat/css/livechat-settings.css')) }}">
 @endpush
 
 @section('page_header')
@@ -172,7 +30,7 @@
                 <p>Personaliza el widget de chat en vivo y sus comportamientos</p>
             </div>
             <button type="submit" form="livechatForm" class="btn btn-light fw-semibold" id="saveBtn">
-                <i class="fas fa-save me-2"></i>Guardar cambios
+                Guardar cambios
             </button>
         </div>
     </div>
@@ -199,8 +57,8 @@
         <div class="col-md-4">
             <a href="{{ route('settings.engagement.triggers.page') }}" class="card text-decoration-none h-100">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="bg-danger bg-opacity-10 rounded-3 p-3">
-                        <i class="fas fa-bolt text-danger fs-4"></i>
+                    <div class="bg-brand bg-opacity-10 rounded-3 p-3">
+                        <i class="fas fa-bolt text-brand fs-4"></i>
                     </div>
                     <div>
                         <div class="fw-semibold">Reglas de activación</div>
@@ -363,7 +221,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-home">
-                                        <i class="fas fa-home me-2 text-danger"></i>Pantalla principal
+                                        <i class="fas fa-home me-2 lc-accent-icon"></i>Pantalla principal
                                     </button>
                                 </h2>
                                 <div id="acc-home" class="accordion-collapse collapse">
@@ -404,14 +262,14 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-chat">
-                                        <i class="fas fa-message me-2 text-danger"></i>Pantalla de chat
+                                        <i class="fas fa-message me-2 lc-accent-icon"></i>Pantalla de chat
                                     </button>
                                 </h2>
                                 <div id="acc-chat" class="accordion-collapse collapse">
                                     <div class="accordion-body">
                                         <p class="text-muted small mb-3">Mensajes que ven los visitantes en la ventana de conversación</p>
                                         <div class="mb-3">
-                                            <label class="form-label fw-semibold" for="welcome_message">Mensaje de bienvenida <span class="text-danger">*</span></label>
+                                            <label class="form-label fw-semibold" for="welcome_message">Mensaje de bienvenida <span class="text-brand">*</span></label>
                                             <input type="text" class="form-control lc-sync" id="welcome_message" name="welcome_message"
                                                 value="{{ old('welcome_message', $backups['welcome_message'] ?? 'Hola! ¿Cómo podemos ayudarte?') }}"
                                                 maxlength="200" required>
@@ -445,7 +303,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-launcher">
-                                        <i class="fas fa-rocket me-2 text-danger"></i>Lanzador
+                                        <i class="fas fa-rocket me-2 lc-accent-icon"></i>Lanzador
                                     </button>
                                 </h2>
                                 <div id="acc-launcher" class="accordion-collapse collapse">
@@ -493,7 +351,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-style">
-                                        <i class="fas fa-palette me-2 text-danger"></i>Estilo
+                                        <i class="fas fa-palette me-2 lc-accent-icon"></i>Estilo
                                     </button>
                                 </h2>
                                 <div id="acc-style" class="accordion-collapse collapse show">
@@ -515,7 +373,7 @@
                                                 ])
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label fw-semibold" for="header_title">Título del chat <span class="text-danger">*</span></label>
+                                                <label class="form-label fw-semibold" for="header_title">Título del chat <span class="text-brand">*</span></label>
                                                 <input type="text" class="form-control lc-sync" id="header_title" name="header_title"
                                                     value="{{ old('header_title', $backups['header_title'] ?? 'Chat de Soporte') }}" maxlength="100" required>
                                             </div>
@@ -540,7 +398,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-screens">
-                                        <i class="fas fa-table-columns me-2 text-danger"></i>Pantallas activas
+                                        <i class="fas fa-table-columns me-2 lc-accent-icon"></i>Pantallas activas
                                     </button>
                                 </h2>
                                 <div id="acc-screens" class="accordion-collapse collapse">
@@ -632,7 +490,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-forms">
-                                        <i class="fas fa-wpforms me-2 text-danger"></i>Formularios
+                                        <i class="fas fa-wpforms me-2 lc-accent-icon"></i>Formularios
                                     </button>
                                 </h2>
                                 <div id="acc-forms" class="accordion-collapse collapse">
@@ -695,7 +553,7 @@
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed fw-semibold" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#acc-chatpage">
-                                        <i class="fas fa-window-maximize me-2 text-danger"></i>Página de chat
+                                        <i class="fas fa-window-maximize me-2 lc-accent-icon"></i>Página de chat
                                     </button>
                                 </h2>
                                 <div id="acc-chatpage" class="accordion-collapse collapse">
@@ -705,7 +563,7 @@
                                             <input type="text" class="form-control bg-light" id="chatPageUrl"
                                                 value="{{ url('/hd/widget') }}" readonly>
                                             <button type="button" class="btn btn-outline-secondary" onclick="copyChatLink()">
-                                                <i class="fas fa-copy me-1"></i><span id="copyLinkLabel">Copiar enlace</span>
+                                                <span id="copyLinkLabel">Copiar enlace</span>
                                             </button>
                                         </div>
                                         <div class="mb-3">
@@ -929,7 +787,7 @@
 &lt;script src="{{ url('/hd/widget-loader.js') }}"&gt;&lt;/script&gt;</pre>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-light lc-code-copy" onclick="copyInstallCode()">
-                                        <i class="fas fa-copy me-1"></i><span id="copyCodeLabel">Copiar</span>
+                                        <span id="copyCodeLabel">Copiar</span>
                                     </button>
                                 </div>
 
@@ -996,17 +854,17 @@
                                         <input type="text" class="form-control bg-light font-monospace" id="secretKeyDisplay"
                                             value="{{ $backups['secret_key'] ?? '(no disponible)' }}" readonly>
                                         <button type="button" class="btn btn-outline-secondary" onclick="copySecretKey()">
-                                            <i class="fas fa-copy me-1"></i><span id="copyKeyLabel">Copiar clave</span>
+                                            <span id="copyKeyLabel">Copiar clave</span>
                                         </button>
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap">
                                         <a href="https://support.vebto.com/hc/articles/42/71/239/identifying-logged-in-users-in-livechat-widget"
                                             class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">
-                                            <i class="fas fa-user me-1"></i>Identificar usuarios autenticados
+                                            Identificar usuarios autenticados
                                         </a>
                                         <a href="https://support.vebto.com/hc/articles/42/71/238/enforcing-identity-verification-in-livechat-widget"
                                             class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">
-                                            <i class="fas fa-shield-halved me-1"></i>Forzar verificación de identidad
+                                            Forzar verificación de identidad
                                         </a>
                                     </div>
                                 </div>
@@ -1067,147 +925,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    var iframe      = document.getElementById('widgetPreviewIframe');
-    var iframeReady = false;
-    var pendingSettings = null;
-
-    // ── Widget ready signal ────────────────────────────────────────────────
-    window.addEventListener('message', function (event) {
-        if (event.origin !== window.location.origin) return;
-        if (event.data?.source === 'be-backups-preview' && event.data?.type === 'appLoaded') {
-            iframeReady = true;
-            if (pendingSettings) {
-                postSettings(pendingSettings);
-                pendingSettings = null;
-            }
-        }
-    });
-
-    // ── Collect and post settings ─────────────────────────────────────────
-    function collectSettings() {
-        return {
-            primary_color:          $('#primary_color').val(),
-            secondary_color:        $('#secondary_color').val(),
-            header_title:           $('#header_title').val(),
-            welcome_message:        $('#welcome_message').val(),
-            input_placeholder:      $('#input_placeholder').val(),
-            show_avatars:           $('#show_avatars').is(':checked'),
-            show_help_center:       $('#show_help_center').is(':checked'),
-            typing_indicator:       $('#typing_indicator').is(':checked'),
-            sound_notifications:    $('#sound_notifications').is(':checked'),
-            show_timestamps:        $('#show_timestamps').is(':checked'),
-            enable_email_transcripts: $('#enable_email_transcripts').is(':checked'),
-            hide_launcher:          $('#hide_launcher').is(':checked'),
-            position:               $('#position').val(),
-            side_spacing:           parseInt($('#side_spacing').val()) || 16,
-            bottom_spacing:         parseInt($('#bottom_spacing').val()) || 16,
-        };
-    }
-
-    function postSettings(settings) {
-        if (!iframe.contentWindow) return;
-        iframe.contentWindow.postMessage({
-            source: 'be-backups-editor',
-            type:   'setValues',
-            values: settings
-        }, window.location.origin);
-    }
-
-    function syncPreview() {
-        var s = collectSettings();
-        if (iframeReady) {
-            postSettings(s);
-        } else {
-            pendingSettings = s;
-        }
-    }
-
-    // ── Sync color pickers ─────────────────────────────────────────────────
-    // El componente de color ya mantiene muestra y hex en sintonia; aqui solo
-    // hace falta repintar la vista previa del widget.
-    $(document).on('input', '.ts-color .ts-color__hex', function () {
-        syncPreview();
-    });
-
-    // ── Sync all other form inputs ─────────────────────────────────────────
-    $('#livechatForm').on('change input', '.lc-sync', function () {
-        syncPreview();
-    });
-
-    // ── Screen tabs ────────────────────────────────────────────────────────
-    $('#previewTabs').on('click', 'a.nav-link', function (e) {
-        e.preventDefault();
-        $('#previewTabs a.nav-link').removeClass('active');
-        $(this).addClass('active');
-        iframeReady = false;
-        iframe.src = '{{ route("helpdesk-livechat.widget.spa.index") }}?preview=true';
-        pendingSettings = collectSettings();
-    });
-
-    // ── Send initial settings once iframe is ready ─────────────────────────
-    pendingSettings = collectSettings();
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Configuración guardada');
-    @endif
-
-    // File types section visibility
-    (function () {
-        var toggle  = document.getElementById('enable_file_upload');
-        var section = document.getElementById('file-types-section');
-        if (!toggle || !section) { return; }
-        function sync() { section.style.display = toggle.checked ? '' : 'none'; }
-        toggle.addEventListener('change', sync);
-        sync();
-    }());
-});
-
-// ── Timeout toggles ────────────────────────────────────────────────────────
-function toggleTimeout(type) {
-    var checkbox = document.getElementById('enable_auto_' + type);
-    var body     = document.getElementById('body-' + type);
-    var row      = document.getElementById('row-' + type);
-    checkbox.checked = !checkbox.checked;
-    body.classList.toggle('opacity-50', !checkbox.checked);
-    row.classList.toggle('active', checkbox.checked);
-}
-
-// ── Forms switcher ─────────────────────────────────────────────────────────
-function switchForm(type) {
-    document.getElementById('formPreChat').classList.toggle('d-none', type !== 'pre');
-    document.getElementById('formPostChat').classList.toggle('d-none', type !== 'post');
-    document.getElementById('btnPreChat').classList.toggle('active', type === 'pre');
-    document.getElementById('btnPostChat').classList.toggle('active', type === 'post');
-}
-
-// ── Copy helpers ───────────────────────────────────────────────────────────
-function copyInstallCode() {
-    var block = document.getElementById('installCodeBlock').innerText;
-    navigator.clipboard.writeText(block).then(function () {
-        var el = document.getElementById('copyCodeLabel');
-        el.textContent = '¡Copiado!';
-        setTimeout(function () { el.textContent = 'Copiar'; }, 2000);
-    });
-}
-
-function copyChatLink() {
-    var url = document.getElementById('chatPageUrl').value;
-    navigator.clipboard.writeText(url).then(function () {
-        var el = document.getElementById('copyLinkLabel');
-        el.textContent = '¡Enlace copiado!';
-        setTimeout(function () { el.textContent = 'Copiar enlace'; }, 2000);
-    });
-}
-
-function copySecretKey() {
-    var key = document.getElementById('secretKeyDisplay').value;
-    navigator.clipboard.writeText(key).then(function () {
-        var el = document.getElementById('copyKeyLabel');
-        el.textContent = '¡Copiada!';
-        setTimeout(function () { el.textContent = 'Copiar clave'; }, 2000);
-    });
-}
-</script>
+<script>window.LivechatSettingsFlash = @json(['success' => session('success')]);</script>
+<script src="{{ asset('modules/helpdesklivechat/js/livechat-settings.js') }}?v={{ filemtime(public_path('modules/helpdesklivechat/js/livechat-settings.js')) }}"></script>
 @endpush

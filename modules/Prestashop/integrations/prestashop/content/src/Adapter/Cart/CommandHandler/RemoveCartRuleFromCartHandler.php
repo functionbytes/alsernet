@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class RemoveCartRuleFromCartHandler extends AbstractCartHandler implements
     {
         $cart = $this->getCart($command->getCartId());
 
-        if (!$cart->removeCartRule($command->getCartRuleId()->getValue())) {
+        if (! $cart->removeCartRule($command->getCartRuleId()->getValue())) {
             throw new CartException(sprintf('Failed to remove cart rule with id "%d" from cart', $command->getCartRuleId()->getValue()));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,12 +40,7 @@ class StockMovementRepository extends StockManagementRepository
     /**
      * StockMovementRepository constructor.
      *
-     * @param ContainerInterface $container
-     * @param Connection $connection
-     * @param EntityManager $entityManager
-     * @param ContextAdapter $contextAdapter
-     * @param ImageManager $imageManager
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      */
     public function __construct(
         ContainerInterface $container,
@@ -65,10 +61,9 @@ class StockMovementRepository extends StockManagementRepository
     }
 
     /**
-     * @param string $andWhereClause
-     * @param string $having
-     * @param null $orderByClause
-     *
+     * @param  string  $andWhereClause
+     * @param  string  $having
+     * @param  null  $orderByClause
      * @return mixed
      */
     protected function selectSql(
@@ -76,7 +71,7 @@ class StockMovementRepository extends StockManagementRepository
         $having = '',
         $orderByClause = null
     ) {
-        if (null === $orderByClause) {
+        if ($orderByClause === null) {
             $orderByClause = $this->orderByMovementsIds();
         }
 
@@ -180,8 +175,6 @@ class StockMovementRepository extends StockManagementRepository
     }
 
     /**
-     * @param array $rows
-     *
      * @return array
      */
     protected function addAdditionalData(array $rows)
@@ -194,8 +187,6 @@ class StockMovementRepository extends StockManagementRepository
     }
 
     /**
-     * @param array $rows
-     *
      * @return array
      */
     private function addOrderLink(array $rows)
@@ -248,8 +239,7 @@ class StockMovementRepository extends StockManagementRepository
     /**
      * Get type of movements from employees.
      *
-     * @param bool $grouped
-     *
+     * @param  bool  $grouped
      * @return mixed
      */
     public function getTypes($grouped = false)
@@ -265,7 +255,7 @@ class StockMovementRepository extends StockManagementRepository
         $query = str_replace(
             '{table_prefix}',
             $this->tablePrefix,
-            'SELECT ' . $select . '
+            'SELECT '.$select.'
             FROM {table_prefix}stock_mvt sm
             INNER JOIN {table_prefix}stock_available sa ON (sa.id_stock_available = sm.id_stock)
             INNER JOIN {table_prefix}stock_mvt_reason_lang smrl ON (
@@ -273,7 +263,7 @@ class StockMovementRepository extends StockManagementRepository
               AND smrl.id_lang = :language_id)
             WHERE
             sa.id_shop = :shop_id
-            ' . $groupBy . '
+            '.$groupBy.'
             ORDER BY name ASC'
         );
 
@@ -295,8 +285,6 @@ class StockMovementRepository extends StockManagementRepository
     }
 
     /**
-     * @param StockMvt $stockMvt
-     *
      * @return int
      */
     public function saveStockMvt(StockMvt $stockMvt)

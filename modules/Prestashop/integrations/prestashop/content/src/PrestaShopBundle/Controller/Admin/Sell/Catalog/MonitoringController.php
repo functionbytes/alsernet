@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,15 +64,6 @@ class MonitoringController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param EmptyCategoryFilters $emptyCategoryFilters
-     * @param NoQtyProductWithCombinationFilters $noQtyProductWithCombinationFilters
-     * @param NoQtyProductWithoutCombinationFilters $noQtyProductWithoutCombinationFilters
-     * @param DisabledProductFilters $disabledProductFilters
-     * @param ProductWithoutImageFilters $productWithoutImageFilters
-     * @param ProductWithoutDescriptionFilters $productWithoutDescriptionFilters
-     * @param ProductWithoutPriceFilters $productWithoutPriceFilters
-     *
      * @return Response
      */
     public function indexAction(
@@ -119,8 +111,6 @@ class MonitoringController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -146,10 +136,6 @@ class MonitoringController extends FrameworkBundleAdminController
      *     redirectRoute="admin_monitorings_index",
      *     message="You do not have permission to delete this."
      * )
-     *
-     * @param Request $request
-     *
-     * @return RedirectResponse
      */
     public function deleteBulkAction(Request $request): RedirectResponse
     {
@@ -169,17 +155,11 @@ class MonitoringController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_monitorings_index');
     }
 
-    /**
-     * @param Request $request
-     * @param array $gridIdentifiers
-     *
-     * @return array
-     */
     private function getBulkProductsFromRequest(Request $request, array $gridIdentifiers): array
     {
         $productIds = $request->request->get(sprintf('%s_%s', $gridIdentifiers['grid_id'], 'monitoring_products_bulk'));
 
-        if (!is_array($productIds)) {
+        if (! is_array($productIds)) {
             return [];
         }
 
@@ -193,7 +173,6 @@ class MonitoringController extends FrameworkBundleAdminController
     /**
      * Parses grid identifying parts from request in order to recognize which grid is being filtered
      *
-     * @param Request $request
      *
      * @return array
      */
@@ -227,8 +206,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param EmptyCategoryFilters $filters
-     *
      * @return GridInterface
      */
     private function getEmptyCategoryGrid(EmptyCategoryFilters $filters)
@@ -239,8 +216,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param NoQtyProductWithCombinationFilters $filters
-     *
      * @return GridInterface
      */
     private function getNoQtyProductWithCombinationGrid(NoQtyProductWithCombinationFilters $filters)
@@ -251,8 +226,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param NoQtyProductWithoutCombinationFilters $filters
-     *
      * @return GridInterface
      */
     private function getNoQtyProductWithoutCombinationGrid(NoQtyProductWithoutCombinationFilters $filters)
@@ -263,8 +236,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param DisabledProductFilters $filters
-     *
      * @return GridInterface
      */
     private function getDisabledProductGrid(DisabledProductFilters $filters)
@@ -275,8 +246,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param ProductWithoutImageFilters $filters
-     *
      * @return GridInterface
      */
     private function getProductWithoutImageGrid(ProductWithoutImageFilters $filters)
@@ -287,8 +256,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param ProductWithoutDescriptionFilters $filters
-     *
      * @return GridInterface
      */
     private function getProductWithoutDescriptionGrid(ProductWithoutDescriptionFilters $filters)
@@ -299,8 +266,6 @@ class MonitoringController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param ProductWithoutPriceFilters $filters
-     *
      * @return GridInterface
      */
     private function getProductWithoutPriceGrid(ProductWithoutPriceFilters $filters)

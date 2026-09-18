@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class SqlRequestSettings
     private $fileEncoding;
 
     /**
-     * @param string $fileEncoding
+     * @param  string  $fileEncoding
      */
     public function __construct($fileEncoding)
     {
@@ -58,7 +59,7 @@ class SqlRequestSettings
     }
 
     /**
-     * @param string $fileEncoding
+     * @param  string  $fileEncoding
      */
     private function setFileEncoding($fileEncoding)
     {

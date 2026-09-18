@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  Please read the terms of the CLUF license attached to this module(cf "licences" folder)
  *
@@ -8,56 +9,54 @@
  *            https://www.lineagrafica.es/licenses/license_es.pdf
  *            https://www.lineagrafica.es/licenses/license_fr.pdf
  */
-
 class LGCommentsJsonApi
 {
     /**
      * return de Ajax response
      *
-     * @param $response
-     * @param int $status_code
+     * @param  int  $status_code
      */
     public static function returnResponse($response, $status_code = 200)
     {
-        if (!headers_sent()) {
+        if (! headers_sent()) {
             self::httpResponseCode($status_code);
             header('Content-Type: application/json');
-            header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-            header("Cache-Control: post-check=0, pre-check=0", false);
-            header("Pragma: no-cache");
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Cache-Control: post-check=0, pre-check=0', false);
+            header('Pragma: no-cache');
         }
-        if (!empty($response)) {
+        if (! empty($response)) {
             if (version_compare(_PS_VERSION_, '1.7', '<')) {
-                die(Tools::jsonEncode($response));
+                exit(Tools::jsonEncode($response));
             } else {
-                die(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
+                exit(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
             }
         } elseif (trim($response) != '') {
             if (version_compare(_PS_VERSION_, '1.7', '<')) {
-                die(Tools::jsonEncode($response));
+                exit(Tools::jsonEncode($response));
             } else {
-                die(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
+                exit(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
             }
-        } elseif (!is_null($response)) {
+        } elseif (! is_null($response)) {
             if (version_compare(_PS_VERSION_, '1.7', '<')) {
-                die(Tools::jsonEncode($response));
+                exit(Tools::jsonEncode($response));
             } else {
-                die(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
+                exit(json_encode($response)); // Deprecated on 1.7, library compatible with 1.6, 1.7 versions
             }
         } else {
-            die();
+            exit();
         }
     }
 
     /**
      * set response code according to php version
      *
-     * @param null $code
+     * @param  null  $code
      * @return int|null
      */
     protected static function httpResponseCode($code = null)
     {
-        if (!function_exists('http_response_code')) {
+        if (! function_exists('http_response_code')) {
             if ($code !== null) {
                 switch ($code) {
                     case 100:
@@ -172,15 +171,16 @@ class LGCommentsJsonApi
                         $text = 'HTTP Version not supported';
                         break;
                     default:
-                        $text = 'Unknown http status code "' . htmlentities($code) . '"';
+                        $text = 'Unknown http status code "'.htmlentities($code).'"';
                         break;
                 }
                 $protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
-                header($protocol . ' ' . $code . ' ' . $text);
+                header($protocol.' '.$code.' '.$text);
                 $GLOBALS['http_response_code'] = $code;
             } else {
                 $code = (isset($GLOBALS['http_response_code']) ? $GLOBALS['http_response_code'] : 200);
             }
+
             return $code;
         } else {
             http_response_code($code);

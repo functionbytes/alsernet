@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,13 +64,6 @@ class OrderSummary
 
     /**
      * OrderForOrderCreation constructor.
-     *
-     * @param int $orderId
-     * @param string $orderPlacedDate
-     * @param string $paymentMethodName
-     * @param string $orderStatus
-     * @param int $orderProductsCount
-     * @param string $totalPaid
      */
     public function __construct(
         int $orderId, string $orderPlacedDate,
@@ -86,49 +80,31 @@ class OrderSummary
         $this->totalPaid = $totalPaid;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderId(): int
     {
         return $this->orderId;
     }
 
-    /**
-     * @return string
-     */
     public function getOrderPlacedDate(): string
     {
         return $this->orderPlacedDate;
     }
 
-    /**
-     * @return string
-     */
     public function getPaymentMethodName(): string
     {
         return $this->paymentMethodName;
     }
 
-    /**
-     * @return string
-     */
     public function getOrderStatus(): string
     {
         return $this->orderStatus;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderProductsCount(): int
     {
         return $this->orderProductsCount;
     }
 
-    /**
-     * @return string
-     */
     public function getTotalPaid(): string
     {
         return $this->totalPaid;

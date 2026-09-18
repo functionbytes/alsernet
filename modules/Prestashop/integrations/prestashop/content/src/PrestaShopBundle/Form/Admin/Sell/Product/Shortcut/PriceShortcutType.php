@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,13 +55,6 @@ class PriceShortcutType extends TranslatorAwareType
      */
     private $defaultCurrency;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $taxRuleGroupChoices
-     * @param array $taxRuleGroupChoicesAttributes
-     * @param Currency $defaultCurrency
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -74,10 +68,6 @@ class PriceShortcutType extends TranslatorAwareType
         $this->defaultCurrency = $defaultCurrency;
     }
 
-    /**
-     * @param FormBuilderInterface $builder
-     * @param array $options
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
@@ -87,7 +77,7 @@ class PriceShortcutType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -98,7 +88,7 @@ class PriceShortcutType extends TranslatorAwareType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->defaultCurrency->iso_code,
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -114,7 +104,6 @@ class PriceShortcutType extends TranslatorAwareType
                     'data-minimumResultsForSearch' => '7',
                 ],
                 'label' => $this->trans('Tax rule', 'Admin.Catalog.Feature'),
-            ])
-        ;
+            ]);
     }
 }

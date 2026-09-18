@@ -348,15 +348,30 @@ class PrestashopContextService
      */
     public function getOrderStates(): array
     {
-        return Cache::remember('ps_order_states', 3600, function (): array {
-            try {
-                $result = $this->callApi('order.states', []);
-            } catch (\Throwable) {
-                return [];
-            }
+        $key = 'ps_order_states';
+        $cached = Cache::get($key);
 
-            return $result['states'] ?? [];
-        });
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $result = $this->callApi('order.states', []);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $states = $result['states'] ?? [];
+
+        // No cachear una lista vacía: un fallo transitorio del bridge (ok=false,
+        // o `states` ausente) dejaría el desplegable de "Cambiar estado" vacío
+        // durante 1h para todos los agentes en vez de reintentar en la próxima
+        // petición.
+        if ($states !== []) {
+            Cache::put($key, $states, 3600);
+        }
+
+        return $states;
     }
 
     /**
@@ -583,11 +598,17 @@ class PrestashopContextService
         $timestamp = time();
         $signature = HmacSigner::sign($secret, $timestamp, $bodyJson);
 
-        // NOTA: esta lista está incompleta respecto a la del bridge (le faltan
-        // order.change_status/set_tracking/set_address/send_email) — no se
-        // toca aquí, fuera de alcance; se añaden solo las 2 acciones nuevas
-        // que este cambio introduce, para que sí generen su idempotency key.
-        $writeActions = ['customer.add_message', 'order.add_note', 'order.start_return', 'order.flag_for_erp_send', 'customer.fix_anonymous_profile'];
+        $writeActions = [
+            'customer.add_message',
+            'order.add_note',
+            'order.start_return',
+            'order.flag_for_erp_send',
+            'customer.fix_anonymous_profile',
+            'order.change_status',
+            'order.set_tracking',
+            'order.set_address',
+            'order.send_email',
+        ];
         $headers = [
             'X-Alsernet-Signature' => $signature,
             'X-Alsernet-Timestamp' => (string) $timestamp,

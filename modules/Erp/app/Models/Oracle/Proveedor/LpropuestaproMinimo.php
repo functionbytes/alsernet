@@ -3,6 +3,7 @@
 namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -40,7 +41,7 @@ class LpropuestaproMinimo extends Model
      */
     public function lpropuestaproMinimo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\LpropuestaproMinimo::class, 'idlpropuestapro_minimo', 'idlpropuestapro_minimo');
+        return $this->belongsTo(LpropuestaproMinimo::class, 'idlpropuestapro_minimo', 'idlpropuestapro_minimo');
     }
 
     /**
@@ -49,7 +50,7 @@ class LpropuestaproMinimo extends Model
      */
     public function lpropuestapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
+        return $this->belongsTo(Lpropuestapro::class, 'idlpropuestapro', 'idlpropuestapro');
     }
 
     /**
@@ -58,6 +59,6 @@ class LpropuestaproMinimo extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

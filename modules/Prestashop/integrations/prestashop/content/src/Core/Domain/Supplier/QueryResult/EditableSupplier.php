@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -125,24 +126,10 @@ class EditableSupplier
     private $dni;
 
     /**
-     * @param SupplierId $supplierId
-     * @param string $name
-     * @param string[] $localizedDescriptions
-     * @param string $address
-     * @param string $city
-     * @param string $address2
-     * @param int $countryId
-     * @param string $postCode
-     * @param int $stateId
-     * @param string $phone
-     * @param string $mobilePhone
-     * @param string[] $localizedMetaTitles
-     * @param string[] $localizedMetaDescriptions
-     * @param string[] $localizedMetaKeywords
-     * @param bool $enabled
-     * @param array $associatedShops
-     * @param string $dni
-     * @param array|null $logoImage
+     * @param  string[]  $localizedDescriptions
+     * @param  string[]  $localizedMetaTitles
+     * @param  string[]  $localizedMetaDescriptions
+     * @param  string[]  $localizedMetaKeywords
      */
     public function __construct(
         SupplierId $supplierId,
@@ -184,17 +171,11 @@ class EditableSupplier
         $this->associatedShops = $associatedShops;
     }
 
-    /**
-     * @return SupplierId
-     */
     public function getSupplierId(): SupplierId
     {
         return $this->supplierId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
@@ -208,73 +189,46 @@ class EditableSupplier
         return $this->localizedDescriptions;
     }
 
-    /**
-     * @return string
-     */
     public function getAddress(): string
     {
         return $this->address;
     }
 
-    /**
-     * @return string
-     */
     public function getCity(): string
     {
         return $this->city;
     }
 
-    /**
-     * @return string
-     */
     public function getAddress2(): string
     {
         return $this->address2;
     }
 
-    /**
-     * @return int
-     */
     public function getCountryId(): int
     {
         return $this->countryId;
     }
 
-    /**
-     * @return string
-     */
     public function getPostCode(): string
     {
         return $this->postCode;
     }
 
-    /**
-     * @return int
-     */
     public function getStateId(): int
     {
         return $this->stateId;
     }
 
-    /**
-     * @return string
-     */
     public function getPhone(): string
     {
         return $this->phone;
     }
 
-    /**
-     * @return string
-     */
     public function getMobilePhone(): string
     {
         return $this->mobilePhone;
     }
 
-    /**
-     * @return array|null
-     */
     public function getLogoImage(): ?array
     {
         return $this->logoImage;
@@ -304,25 +258,16 @@ class EditableSupplier
         return $this->localizedMetaKeywords;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;
     }
 
-    /**
-     * @return array
-     */
     public function getAssociatedShops(): array
     {
         return $this->associatedShops;
     }
 
-    /**
-     * @return string
-     */
     public function getDni(): string
     {
         return $this->dni;

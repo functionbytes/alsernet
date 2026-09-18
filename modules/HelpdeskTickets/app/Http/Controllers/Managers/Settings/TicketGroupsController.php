@@ -44,7 +44,13 @@ class TicketGroupsController extends Controller
             'active' => TicketGroup::where('is_active', true)->count(),
             'inactive' => TicketGroup::where('is_active', false)->count(),
             'default' => TicketGroup::where('default', true)->count(),
-            'total_members' => \DB::connection('helpdesk')->table('helpdesk_ticket_group_user')->distinct('user_id')->count('user_id'),
+            // helpdesk_ticket_group_user es la tabla histórica que quedó
+            // huérfana con la unificación de helpdesk_groups (ver
+            // TicketGroup::users()/Modules\Helpdesk\Models\Group — ambos
+            // módulos comparten helpdesk_group_user desde entonces); esta
+            // consulta seguía apuntando a la tabla vieja y por eso siempre
+            // daba 0 miembros, sin importar cuántos agentes tuviera un grupo.
+            'total_members' => \DB::connection('helpdesk')->table('helpdesk_group_user')->distinct('user_id')->count('user_id'),
         ];
 
         return view('theme.views.backups.helpdesk.ticket-groups.index', [

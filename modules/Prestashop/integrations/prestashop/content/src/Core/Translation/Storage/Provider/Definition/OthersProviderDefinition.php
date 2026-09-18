@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,9 @@ class OthersProviderDefinition extends AbstractCoreProviderDefinition
 {
     public const OTHERS_DOMAIN_NAME = 'messages';
 
-    private const FILENAME_FILTERS_REGEX = ['#^' . self::OTHERS_DOMAIN_NAME . '*#'];
+    private const FILENAME_FILTERS_REGEX = ['#^'.self::OTHERS_DOMAIN_NAME.'*#'];
 
-    private const TRANSLATION_DOMAINS_REGEX = ['^' . self::OTHERS_DOMAIN_NAME . '*'];
+    private const TRANSLATION_DOMAINS_REGEX = ['^'.self::OTHERS_DOMAIN_NAME.'*'];
 
     /**
      * {@inheritdoc}

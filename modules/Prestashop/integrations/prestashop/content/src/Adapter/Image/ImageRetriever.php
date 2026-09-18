@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,6 @@ class ImageRetriever
     }
 
     /**
-     * @param array $product
-     * @param Language $language
-     *
      * @return array
      */
     public function getAllProductImages(array $product, Language $language)
@@ -73,7 +71,7 @@ class ImageRetriever
         }
 
         $combinationImages = $productInstance->getCombinationImages($language->id);
-        if (!$combinationImages) {
+        if (! $combinationImages) {
             $combinationImages = [];
         }
         $imageToCombinations = [];
@@ -106,9 +104,6 @@ class ImageRetriever
     }
 
     /**
-     * @param array $product
-     * @param Language $language
-     *
      * @return array
      */
     public function getProductImages(array $product, Language $language)
@@ -124,20 +119,19 @@ class ImageRetriever
             }
         }
 
-        return (0 === count($filteredImages)) ? $images : $filteredImages;
+        return (count($filteredImages) === 0) ? $images : $filteredImages;
     }
 
     /**
-     * @param Product|Store|Category $object
-     * @param int $id_image
-     *
+     * @param  Product|Store|Category  $object
+     * @param  int  $id_image
      * @return array|null
      *
      * @throws PrestaShopDatabaseException
      */
     public function getImage($object, $id_image)
     {
-        if (!$id_image) {
+        if (! $id_image) {
             return null;
         }
 
@@ -164,22 +158,22 @@ class ImageRetriever
         $urls = [];
         $image_types = ImageType::getImagesTypes($type, true);
 
-        $extPath = $imageFolderPath . DIRECTORY_SEPARATOR . 'fileType';
+        $extPath = $imageFolderPath.DIRECTORY_SEPARATOR.'fileType';
         $ext = @file_get_contents($extPath) ?: 'jpg';
 
         $mainImagePath = implode(DIRECTORY_SEPARATOR, [
             $imageFolderPath,
-            $id_image . '.' . $ext,
+            $id_image.'.'.$ext,
         ]);
         $generateHighDpiImages = (bool) Configuration::get('PS_HIGHT_DPI');
 
         foreach ($image_types as $image_type) {
             $resizedImagePath = implode(DIRECTORY_SEPARATOR, [
                 $imageFolderPath,
-                $id_image . '-' . $image_type['name'] . '.' . $ext,
+                $id_image.'-'.$image_type['name'].'.'.$ext,
             ]);
 
-            if (!file_exists($resizedImagePath)) {
+            if (! file_exists($resizedImagePath)) {
                 ImageManager::resize(
                     $mainImagePath,
                     $resizedImagePath,
@@ -191,9 +185,9 @@ class ImageRetriever
             if ($generateHighDpiImages) {
                 $resizedImagePathHighDpi = implode(DIRECTORY_SEPARATOR, [
                     $imageFolderPath,
-                    $id_image . '-' . $image_type['name'] . '2x.' . $ext,
+                    $id_image.'-'.$image_type['name'].'2x.'.$ext,
                 ]);
-                if (!file_exists($resizedImagePathHighDpi)) {
+                if (! file_exists($resizedImagePathHighDpi)) {
                     ImageManager::resize(
                         $mainImagePath,
                         $resizedImagePathHighDpi,
@@ -237,14 +231,13 @@ class ImageRetriever
     }
 
     /**
-     * @param string $imageHash
-     *
+     * @param  string  $imageHash
      * @return array
      */
     public function getCustomizationImage($imageHash)
     {
-        $large_image_url = rtrim($this->link->getBaseLink(), '/') . '/upload/' . $imageHash;
-        $small_image_url = $large_image_url . '_small';
+        $large_image_url = rtrim($this->link->getBaseLink(), '/').'/upload/'.$imageHash;
+        $small_image_url = $large_image_url.'_small';
 
         $small = [
             'url' => $small_image_url,
@@ -270,8 +263,6 @@ class ImageRetriever
     }
 
     /**
-     * @param Language $language
-     *
      * @return array
      *
      * @throws PrestaShopDatabaseException
@@ -285,7 +276,7 @@ class ImageRetriever
         foreach ($image_types as $image_type) {
             $url = $this->link->getImageLink(
                 '',
-                $language->iso_code . '-default',
+                $language->iso_code.'-default',
                 $image_type['name']
             );
 

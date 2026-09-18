@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,6 @@ final class CmsPageFilterFormFactory implements GridFilterFormFactoryInterface
      */
     private $requestStack;
 
-    /**
-     * @param GridFilterFormFactoryInterface $formFactory
-     * @param UrlGeneratorInterface $urlGenerator
-     * @param RequestStack $requestStack
-     */
     public function __construct(
         GridFilterFormFactoryInterface $formFactory,
         UrlGeneratorInterface $urlGenerator,
@@ -90,7 +86,7 @@ final class CmsPageFilterFormFactory implements GridFilterFormFactoryInterface
 
         $request = $this->requestStack->getCurrentRequest();
 
-        if (null !== $request) {
+        if ($request !== null) {
             $newActionUrl = $this->urlGenerator->generate('admin_cms_pages_search', [
                 'id_cms_category' => $request->query->getInt('id_cms_category'),
             ]);

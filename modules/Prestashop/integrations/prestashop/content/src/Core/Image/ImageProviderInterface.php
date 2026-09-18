@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface ImageProviderInterface
     /**
      * Get thumbnail image path.
      *
-     * @param int $imageId
-     *
+     * @param  int  $imageId
      * @return string Path to thumbnail
      */
     public function getPath($imageId);

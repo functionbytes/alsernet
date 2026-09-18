@@ -1,5 +1,7 @@
 <?php
 
+use DeepL\Translator;
+
 require 'vendor/autoload.php';
 
 define('_DEF_authKey', 'af12b059-74f8-4417-8476-2f6785526670'); // Replace with your key
@@ -7,7 +9,7 @@ define('_DEF_authKey', 'af12b059-74f8-4417-8476-2f6785526670'); // Replace with 
 $dbOkitup = connectOkitup();
 mysqli_set_charset($dbOkitup, 'utf8mb4');
 
-$translator = new \DeepL\Translator(_DEF_authKey);
+$translator = new Translator(_DEF_authKey);
 
 $sql = 'select
     p.id_product,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,11 @@ final class SetCategoryIsEnabledHandler implements SetCategoryIsEnabledHandlerIn
         $categoryId = $command->getCategoryId()->getValue();
         $entity = new Category($categoryId);
 
-        if (!$entity->id) {
+        if (! $entity->id) {
             throw new CategoryNotFoundException($command->getCategoryId(), sprintf('Category with id "%s" was not found', $categoryId));
         }
 
-        if (!$entity->toggleStatus()) {
+        if (! $entity->toggleStatus()) {
             throw new CannotUpdateCategoryStatusException(sprintf('Cannot update status for category with id "%s"', $categoryId));
         }
     }

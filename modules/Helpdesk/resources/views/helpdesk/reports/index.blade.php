@@ -6,6 +6,10 @@
     @include('core::components.card', ['title' => 'Reportes - Helpdesk'])
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
+@endpush
+
 @section('content')
 
         {{-- Page Header --}}
@@ -47,7 +51,7 @@
                     @endforeach
                     <button type="button" class="btn btn-sm {{ $activeRange === 'custom' ? 'btn-primary' : 'btn-light' }}"
                             data-bs-toggle="collapse" data-bs-target="#custom-range-form">
-                        <i class="fas fa-calendar me-1"></i> Rango personalizado
+                        Rango personalizado
                     </button>
                 </div>
 
@@ -65,7 +69,7 @@
                         </div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="fas fa-filter me-1"></i> Filtrar
+                                Filtrar
                             </button>
                         </div>
                     </form>
@@ -91,7 +95,9 @@
                 }
                 $isGood = $mode === 'good_up' ? $isUp : ! $isUp;
 
-                return ['class' => $isGood ? 'success' : 'danger', 'icon' => $icon];
+                // Sin rojos en la paleta de la casa: lo "malo" usa el mismo
+                // gris neutro que el modo 'neutral', no danger/rosa.
+                return ['class' => $isGood ? 'success' : 'info', 'icon' => $icon];
             };
         @endphp
         <div class="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
@@ -143,8 +149,8 @@
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center">
-                        <div class="rounded-circle bg-danger-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
-                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        <div class="rounded-circle bg-info-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
+                            <i class="fas fa-exclamation-triangle text-info"></i>
                         </div>
                         <h3 class="fw-bold mb-0">{{ number_format($slaBreached) }}</h3>
                         <small class="text-muted d-block">SLA incumplidos</small>
@@ -292,7 +298,7 @@
                     <div class="card-body pt-3">
                         @php
                             $priorityLabels = [
-                                'urgent' => ['label' => 'Urgente', 'class' => 'danger'],
+                                'urgent' => ['label' => 'Urgente', 'class' => 'info'],
                                 'high' => ['label' => 'Alta', 'class' => 'warning'],
                                 'normal' => ['label' => 'Normal', 'class' => 'info'],
                                 'low' => ['label' => 'Baja', 'class' => 'secondary'],
@@ -333,7 +339,7 @@
                                     <small class="text-muted">Jobs en cola</small>
                                 </div>
                                 <div class="col-6 col-md-2">
-                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['failed_jobs'] ?? 0) > 0 ? 'text-danger' : 'text-muted' }}">{{ $opsHealth['failed_jobs'] !== null ? number_format($opsHealth['failed_jobs']) : 'n/d' }}</h4>
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['failed_jobs'] ?? 0) > 0 ? 'text-dark' : 'text-muted' }}">{{ $opsHealth['failed_jobs'] !== null ? number_format($opsHealth['failed_jobs']) : 'n/d' }}</h4>
                                     <small class="text-muted">Dead-letters</small>
                                 </div>
                                 <div class="col-6 col-md-2">
@@ -341,7 +347,7 @@
                                     <small class="text-muted">Webhooks fallidos (1h)</small>
                                 </div>
                                 <div class="col-6 col-md-2">
-                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['sla_breaches_last_hour'] ?? 0) > 0 ? 'text-danger' : 'text-muted' }}">{{ $opsHealth['sla_breaches_last_hour'] !== null ? number_format($opsHealth['sla_breaches_last_hour']) : 'n/d' }}</h4>
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['sla_breaches_last_hour'] ?? 0) > 0 ? 'text-dark' : 'text-muted' }}">{{ $opsHealth['sla_breaches_last_hour'] !== null ? number_format($opsHealth['sla_breaches_last_hour']) : 'n/d' }}</h4>
                                     <small class="text-muted">Breaches SLA (1h)</small>
                                 </div>
                                 <div class="col-6 col-md-2">
@@ -396,7 +402,7 @@
                             </div>
                             <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
                                 <span class="text-muted">Tasa de SLA incumplido</span>
-                                <span class="fw-semibold text-{{ $totalCreated > 0 && ($slaBreached / $totalCreated) > 0.1 ? 'danger' : 'success' }}">
+                                <span class="fw-semibold text-{{ $totalCreated > 0 && ($slaBreached / $totalCreated) > 0.1 ? 'dark' : 'success' }}">
                                     {{ $totalCreated > 0 ? round(($slaBreached / $totalCreated) * 100, 1) : 0 }}%
                                 </span>
                             </div>
@@ -526,9 +532,9 @@
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
                                                 <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-semibold bv-icon-circle-32">
-                                                    {{ strtoupper(substr($row['agent']->name, 0, 1)) }}
+                                                    {{ mb_strtoupper(mb_substr($row['agent']->fullName(), 0, 1)) }}
                                                 </div>
-                                                <span>{{ $row['agent']->name }}</span>
+                                                <span>{{ $row['agent']->fullName() }}</span>
                                             </div>
                                         </td>
                                         <td class="text-center">
@@ -559,64 +565,22 @@
             'count' => (int) $row->count,
         ];
     })->values();
+
+    // Config que consume public/vendor/helpdesk/reports/index.js. Igual que
+    // arriba, se arma en PHP y se pasa a @json() como variable simple para
+    // no repetir el bug de @json([...]) multilinea con Blade.
+    $hdReportsIndexConfig = [
+        'trend' => $trend,
+        'statusChart' => $statusChartData,
+        'flashSuccess' => session('success'),
+        'flashError' => session('error'),
+    ];
 @endphp
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-    (function () {
-        const trendData = @json($trend);
-
-        new Chart(document.getElementById('chart-trend'), {
-            type: 'line',
-            data: {
-                labels: trendData.labels,
-                datasets: [{
-                    label: 'Tickets creados',
-                    data: trendData.series,
-                    borderColor: '#90bb13',
-                    backgroundColor: 'rgba(144,187,19,0.12)',
-                    tension: 0.3,
-                    fill: true,
-                }],
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            },
-        });
-
-        const statusChartEl = document.getElementById('chart-status');
-        if (statusChartEl) {
-            const statusData = @json($statusChartData);
-
-            new Chart(statusChartEl, {
-                type: 'doughnut',
-                data: {
-                    labels: statusData.map(d => d.label),
-                    datasets: [{
-                        data: statusData.map(d => d.count),
-                        backgroundColor: statusData.map(d => d.color),
-                        borderWidth: 0,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    cutout: '65%',
-                    plugins: { legend: { display: false } },
-                },
-            });
-        }
-    })();
-
-    $(document).ready(function () {
-        @if(session('success'))
-            toastr.success('{{ session('success') }}', 'Exito');
-        @endif
-        @if(session('error'))
-            toastr.error('{{ session('error') }}', 'Error');
-        @endif
-    });
-</script>
+<script>window.HdReportsIndex = @json($hdReportsIndexConfig);</script>
+{{-- JS extraido a public/vendor/helpdesk/reports/: se cachea en el navegador
+     en vez de re-descargarse en cada carga de esta página. --}}
+<script src="{{ asset('vendor/helpdesk/reports/index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/reports/index.js')) }}" defer></script>
 @endpush

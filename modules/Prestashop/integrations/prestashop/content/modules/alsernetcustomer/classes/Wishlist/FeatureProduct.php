@@ -1,15 +1,9 @@
 <?php
 
-use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
-use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
 use PrestaShop\PrestaShop\Core\Product\ProductExtraContentFinder;
-use PrestaShop\PrestaShop\Core\Product\ProductListingPresenter;
-use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
-use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 
 class FeatureProduct extends ProductControllerCore
 {
-    
     protected function assignPriceAndTax()
     {
         $id_customer = (isset($this->context->customer) ? (int) $this->context->customer->id : 0);
@@ -48,25 +42,25 @@ class FeatureProduct extends ProductControllerCore
         $product_price = $this->product->getPrice(Product::$_taxCalculationMethod == PS_TAX_INC, false);
         $this->quantity_discounts = $this->formatQuantityDiscounts($quantity_discounts, $product_price, (float) $tax, $this->product->ecotax);
 
-        $this->context->smarty->assign(array(
-            'no_tax' => Tax::excludeTaxeOption() || !$tax,
-            'tax_enabled' => Configuration::get('PS_TAX') && !Configuration::get('AEUC_LABEL_TAX_INC_EXC'),
+        $this->context->smarty->assign([
+            'no_tax' => Tax::excludeTaxeOption() || ! $tax,
+            'tax_enabled' => Configuration::get('PS_TAX') && ! Configuration::get('AEUC_LABEL_TAX_INC_EXC'),
             'customer_group_without_tax' => Group::getPriceDisplayMethod($this->context->customer->id_default_group),
-        ));
+        ]);
     }
-    
+
     public function getTemplateVarProductTemplate($id_product, $id_product_attribute)
     {
         if ($id_product) {
             $this->product = new Product($id_product, true, $this->context->language->id, $this->context->shop->id);
         }
 
-        if (!Validate::isLoadedObject($this->product)) {
+        if (! Validate::isLoadedObject($this->product)) {
             return false;
         }
         $productSettings = ProductPresentingFrontControllerCore::getProductPresentationSettings();
         // Hook displayProductExtraContent
-        $extraContentFinder = new ProductExtraContentFinder();
+        $extraContentFinder = new ProductExtraContentFinder;
 
         $product = $this->objectPresenter->present($this->product);
         $product['id_product'] = (int) $this->product->id;
@@ -75,7 +69,7 @@ class FeatureProduct extends ProductControllerCore
         $product['id_product_attribute'] = (int) $id_product_attribute;
         $product['minimal_quantity'] = $this->getProductMinimalQuantity($product);
         $product['quantity_wanted'] = $this->getRequiredQuantity($product);
-        $product['extraContent'] = $extraContentFinder->addParams(array('product' => $this->product))->present();
+        $product['extraContent'] = $extraContentFinder->addParams(['product' => $this->product])->present();
 
         $product_full = Product::getProductProperties($this->context->language->id, $product, $this->context);
 
@@ -86,9 +80,9 @@ class FeatureProduct extends ProductControllerCore
             && Configuration::get('PS_STOCK_MANAGEMENT')
             && $this->product->quantity > 0
             && $this->product->available_for_order
-            && !Configuration::isCatalogMode()
+            && ! Configuration::isCatalogMode()
         );
-        $product_full['quantity_label'] = ($this->product->quantity > 1) ? $this->trans('Items', array(), 'Shop.Theme.Catalog') : $this->trans('Item', array(), 'Shop.Theme.Catalog');
+        $product_full['quantity_label'] = ($this->product->quantity > 1) ? $this->trans('Items', [], 'Shop.Theme.Catalog') : $this->trans('Item', [], 'Shop.Theme.Catalog');
         $product_full['quantity_discounts'] = $this->quantity_discounts;
 
         if ($product_full['unit_price_ratio'] > 0) {
@@ -109,5 +103,4 @@ class FeatureProduct extends ProductControllerCore
             $this->context->language
         );
     }
-   
 }

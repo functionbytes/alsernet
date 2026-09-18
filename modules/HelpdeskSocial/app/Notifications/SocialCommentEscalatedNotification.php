@@ -68,7 +68,7 @@ class SocialCommentEscalatedNotification extends Notification implements ShouldQ
     public function toMail(mixed $notifiable): MailMessage
     {
         $url = route('helpdesksocial.inbox.show', $this->comment);
-        $name = trim(($notifiable->firstname ?? '').' '.($notifiable->lastname ?? '')) ?: 'Hola';
+        $name = $notifiable->fullName() ?: 'Hola';
 
         return (new MailMessage)
             ->subject("[Escalación] Comentario #{$this->comment->id} requiere atención")

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,18 +42,16 @@ class ProductImageController extends FrameworkBundleAdminController
     /**
      * Manage upload for product image.
      *
-     * @param int $idProduct
-     * @param Request $request
-     *
+     * @param  int  $idProduct
      * @return string
      */
     public function uploadImageAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $return_data = [];
 
-        if ($idProduct == 0 || !$request->isXmlHttpRequest()) {
+        if ($idProduct == 0 || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 
@@ -61,7 +60,7 @@ class ProductImageController extends FrameworkBundleAdminController
                 'error_bubbling' => true,
                 'constraints' => [
                     new Assert\NotNull(['message' => $this->trans('Please select a file', 'Admin.Catalog.Feature')]),
-                    new Assert\Image(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE') . 'M']),
+                    new Assert\Image(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE').'M']),
                 ],
             ])
             ->getForm();
@@ -91,17 +90,16 @@ class ProductImageController extends FrameworkBundleAdminController
     /**
      * Update images positions.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
     public function updateImagePositionAction(Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $json = $request->request->get('json');
 
-        if (!empty($json) && $request->isXmlHttpRequest()) {
+        if (! empty($json) && $request->isXmlHttpRequest()) {
             $adminProductWrapper->ajaxProcessUpdateImagePosition(json_decode($json, true));
         }
 
@@ -113,9 +111,7 @@ class ProductImageController extends FrameworkBundleAdminController
      *
      * @Template("@PrestaShop/Admin/ProductImage/form.html.twig")
      *
-     * @param string|int $idImage
-     * @param Request $request
-     *
+     * @param  string|int  $idImage
      * @return array|JsonResponse|Response
      */
     public function formAction($idImage, Request $request)
@@ -124,8 +120,8 @@ class ProductImageController extends FrameworkBundleAdminController
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
 
-        if ($idImage == 0 || !$request->isXmlHttpRequest()) {
-            return new Response();
+        if ($idImage == 0 || ! $request->isXmlHttpRequest()) {
+            return new Response;
         }
 
         $image = $productAdapter->getImage((int) $idImage);
@@ -148,7 +144,7 @@ class ProductImageController extends FrameworkBundleAdminController
         $form->handleRequest($request);
 
         if ($request->isMethod('POST')) {
-            $jsonResponse = new JsonResponse();
+            $jsonResponse = new JsonResponse;
 
             if ($form->isValid()) {
                 $jsonResponse->setData($adminProductWrapper->ajaxProcessUpdateImage($idImage, $form->getData()));
@@ -174,17 +170,15 @@ class ProductImageController extends FrameworkBundleAdminController
     /**
      * Delete an image from its ID.
      *
-     * @param int $idImage
-     * @param Request $request
-     *
+     * @param  int  $idImage
      * @return JsonResponse
      */
     public function deleteAction($idImage, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
 
-        if (!$request->isXmlHttpRequest()) {
+        if (! $request->isXmlHttpRequest()) {
             return $response;
         }
 

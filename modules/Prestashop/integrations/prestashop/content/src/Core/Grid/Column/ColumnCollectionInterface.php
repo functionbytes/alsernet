@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,12 +33,11 @@ use Iterator;
 /**
  * Interface ColumnCollectionInterface defines contract for grid column collection.
  */
-interface ColumnCollectionInterface extends Iterator, Countable
+interface ColumnCollectionInterface extends Countable, Iterator
 {
     /**
      * Add column to collection.
      *
-     * @param ColumnInterface $column
      *
      * @return self
      */
@@ -46,17 +46,13 @@ interface ColumnCollectionInterface extends Iterator, Countable
     /**
      * Add column after given column.
      *
-     * @param string $id Column id
-     * @param ColumnInterface $column
-     *
+     * @param  string  $id  Column id
      * @return self
      */
     public function addAfter($id, ColumnInterface $column);
 
     /**
-     * @param string $id Column id
-     * @param ColumnInterface $column
-     *
+     * @param  string  $id  Column id
      * @return self
      */
     public function addBefore($id, ColumnInterface $column);
@@ -64,8 +60,7 @@ interface ColumnCollectionInterface extends Iterator, Countable
     /**
      * Remove column from collection.
      *
-     * @param string $id
-     *
+     * @param  string  $id
      * @return self
      */
     public function remove($id);

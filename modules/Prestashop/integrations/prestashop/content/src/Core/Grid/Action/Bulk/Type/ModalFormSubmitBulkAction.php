@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,7 +54,6 @@ final class ModalFormSubmitBulkAction extends AbstractBulkAction
                 'modal_id',
             ])
             ->setAllowedTypes('submit_route', 'string')
-            ->setAllowedTypes('modal_id', 'string')
-        ;
+            ->setAllowedTypes('modal_id', 'string');
     }
 }

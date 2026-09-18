@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,7 @@ final class SlipPdfConfiguration implements DataConfigurationInterface
     public function updateConfiguration(array $configuration)
     {
         if ($this->validateConfiguration($configuration)) {
-            if (!Validate::isDate($configuration['date_to'])) {
+            if (! Validate::isDate($configuration['date_to'])) {
                 $errors[] = [
                     'key' => "Invalid 'to' date",
                     'domain' => 'Admin.Catalog.Notification',
@@ -70,7 +71,7 @@ final class SlipPdfConfiguration implements DataConfigurationInterface
                 ];
             }
 
-            if (!Validate::isDate($configuration['date_from'])) {
+            if (! Validate::isDate($configuration['date_from'])) {
                 $errors[] = [
                     'key' => "Invalid 'from' date",
                     'domain' => 'Admin.Catalog.Notification',
@@ -87,7 +88,7 @@ final class SlipPdfConfiguration implements DataConfigurationInterface
             }
         }
 
-        return !empty($errors) ? $errors : [];
+        return ! empty($errors) ? $errors : [];
     }
 
     /**

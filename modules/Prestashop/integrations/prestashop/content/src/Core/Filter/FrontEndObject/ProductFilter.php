@@ -64,7 +64,7 @@ class ProductFilter extends HashMapWhitelistFilter
             'ecotax',
             'ecotax_attr',
             'ecotax_rate',
-            'embedded_attributes' => new EmbeddedAttributesFilter(),
+            'embedded_attributes' => new EmbeddedAttributesFilter,
             'flags',
             'has_discount',
             'id',

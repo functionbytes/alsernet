@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,35 +58,21 @@ class UpdateProductImageCommand
      */
     private $position;
 
-    /**
-     * @param int $imageId
-     */
     public function __construct(int $imageId)
     {
         $this->imageId = new ImageId($imageId);
     }
 
-    /**
-     * @return ImageId
-     */
     public function getImageId(): ImageId
     {
         return $this->imageId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getFilePath(): ?string
     {
         return $this->filePath;
     }
 
-    /**
-     * @param string|null $filePath
-     *
-     * @return self
-     */
     public function setFilePath(?string $filePath): self
     {
         $this->filePath = $filePath;
@@ -93,19 +80,11 @@ class UpdateProductImageCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isCover(): ?bool
     {
         return $this->isCover;
     }
 
-    /**
-     * @param bool|null $isCover
-     *
-     * @return self
-     */
     public function setIsCover(?bool $isCover): self
     {
         $this->isCover = $isCover;
@@ -122,9 +101,7 @@ class UpdateProductImageCommand
     }
 
     /**
-     * @param array<int, string>|null $localizedLegends
-     *
-     * @return self
+     * @param  array<int, string>|null  $localizedLegends
      */
     public function setLocalizedLegends(?array $localizedLegends): self
     {
@@ -133,19 +110,11 @@ class UpdateProductImageCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getPosition(): ?int
     {
         return $this->position;
     }
 
-    /**
-     * @param int|null $position
-     *
-     * @return self
-     */
     public function setPosition(?int $position): self
     {
         $this->position = $position;

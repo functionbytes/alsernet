@@ -59,10 +59,15 @@ class ImportChatFlowRequest extends FormRequest
             'flow.trigger_conditions.sentiment_message' => ['sometimes', 'nullable', 'string', 'max:500'],
             'flow.trigger_conditions.escape_enabled' => ['sometimes', 'boolean'],
             'flow.trigger_conditions.escape_message' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'flow.trigger_conditions.escape_keywords' => ['sometimes', 'array'],
+            'flow.trigger_conditions.escape_keywords.*' => ['string', 'max:100'],
             'flow.trigger_conditions.handoff_summary' => ['sometimes', 'boolean'],
             'flow.trigger_conditions.ab_variant_id' => ['sometimes', 'nullable', 'integer'],
             'flow.trigger_conditions.ab_split' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:99'],
             'flow.trigger_conditions.business_event' => ['sometimes', 'nullable', 'in:abandoned_cart,order_status,order_ready'],
+            // NLU-based intent classification (ChatFlowTriggerResolver::usesNlu/intentLabel).
+            'flow.trigger_conditions.use_nlu' => ['sometimes', 'boolean'],
+            'flow.trigger_conditions.intent' => ['sometimes', 'nullable', 'string', 'max:255'],
 
             // 1 MB of JSON can carry thousands of tiny nodes that degrade the
             // validator and the React editor — explicit node/edge caps.

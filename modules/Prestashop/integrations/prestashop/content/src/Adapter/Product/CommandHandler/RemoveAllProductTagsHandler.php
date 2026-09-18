@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ final class RemoveAllProductTagsHandler implements RemoveAllProductTagsHandlerIn
      */
     private $productTagUpdater;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductTagUpdater $productTagUpdater
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductTagUpdater $productTagUpdater

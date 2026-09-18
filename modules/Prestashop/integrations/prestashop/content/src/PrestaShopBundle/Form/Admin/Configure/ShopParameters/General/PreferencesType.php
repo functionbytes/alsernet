@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,11 +57,9 @@ class PreferencesType extends TranslatorAwareType
     private $isAllShopContext;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isMultistoreUsed
-     * @param bool $isSingleShopContext
-     * @param bool $isAllShopContext
+     * @param  bool  $isMultistoreUsed
+     * @param  bool  $isSingleShopContext
+     * @param  bool  $isAllShopContext
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -101,7 +100,7 @@ class PreferencesType extends TranslatorAwareType
 
         $builder
             ->add('enable_ssl_everywhere', SwitchType::class, [
-                'disabled' => !$isSslEnabled,
+                'disabled' => ! $isSslEnabled,
                 'label' => $this->trans(
                     'Enable SSL on all pages',
                     'Admin.Shopparameters.Feature'
@@ -112,7 +111,7 @@ class PreferencesType extends TranslatorAwareType
                 ),
             ])
             ->add('enable_token', SwitchType::class, [
-                'disabled' => !$this->isContextDependantOptionEnabled(),
+                'disabled' => ! $this->isContextDependantOptionEnabled(),
                 'label' => $this->trans(
                     'Increase front office security',
                     'Admin.Shopparameters.Feature'
@@ -124,9 +123,9 @@ class PreferencesType extends TranslatorAwareType
             ])
             ->add('allow_html_iframes', SwitchType::class, [
                 'label' => $this->trans(
-                        'Allow iframes on HTML fields',
-                        'Admin.Shopparameters.Feature'
-                    ),
+                    'Allow iframes on HTML fields',
+                    'Admin.Shopparameters.Feature'
+                ),
                 'help' => $this->trans(
                     'Allow iframes on text fields like product description. We recommend that you leave this option disabled.',
                     'Admin.Shopparameters.Help'
@@ -134,9 +133,9 @@ class PreferencesType extends TranslatorAwareType
             ])
             ->add('use_htmlpurifier', SwitchType::class, [
                 'label' => $this->trans(
-                        'Use HTMLPurifier Library',
-                        'Admin.Shopparameters.Feature'
-                    ),
+                    'Use HTMLPurifier Library',
+                    'Admin.Shopparameters.Feature'
+                ),
                 'help' => $this->trans(
                     'Clean the HTML content on text fields. We recommend that you leave this option enabled.',
                     'Admin.Shopparameters.Help'
@@ -199,7 +198,7 @@ class PreferencesType extends TranslatorAwareType
                     ),
                 ])
             ->add('multishop_feature_active', SwitchType::class, [
-                'disabled' => !$this->isContextDependantOptionEnabled(),
+                'disabled' => ! $this->isContextDependantOptionEnabled(),
                 'label' => $this->trans('Enable Multistore', 'Admin.Shopparameters.Feature'),
                 'help' => $this->trans(
                     'The multistore feature allows you to manage several e-shops with one Back Office. If this feature is enabled, a "Multistore" page will be available in the "Advanced Parameters" menu.',
@@ -272,7 +271,7 @@ class PreferencesType extends TranslatorAwareType
      */
     protected function isContextDependantOptionEnabled()
     {
-        if (!$this->isMultistoreUsed && $this->isSingleShopContext) {
+        if (! $this->isMultistoreUsed && $this->isSingleShopContext) {
             return true;
         }
 

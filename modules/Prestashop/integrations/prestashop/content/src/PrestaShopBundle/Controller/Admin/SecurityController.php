@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,7 @@ class SecurityController extends FrameworkBundleAdminController
     public function compromisedAccessAction(Request $request)
     {
         $requestUri = urldecode($request->query->get('uri'));
-        $url = new Assert\Url();
+        $url = new Assert\Url;
         $violations = $this->get('validator')->validate($requestUri, [$url]);
         if ($violations->count()) {
             return $this->redirect('dashboard');

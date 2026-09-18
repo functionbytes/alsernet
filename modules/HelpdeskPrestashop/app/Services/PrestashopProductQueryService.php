@@ -17,13 +17,23 @@ class PrestashopProductQueryService
 
     public function __construct()
     {
-        $this->db = (string) config('helpdeskprestashop.ps_db', 'alvarez_cristia');
+        $this->db = (string) config('helpdeskprestashop.ps_db', '');
         $this->prefix = (string) config('helpdeskprestashop.ps_prefix', 'aalv_');
+    }
+
+    /** Sin ps_db configurada, las consultas directas a la BD de PrestaShop se omiten. */
+    private function isConfigured(): bool
+    {
+        return $this->db !== '';
     }
 
     /** Search products by name or reference (partial match). */
     public function searchByText(string $query, string $lang = 'es', int $limit = 10, int $offset = 0, bool $inStockOnly = false): array
     {
+        if (! $this->isConfigured()) {
+            return [];
+        }
+
         $storeUrl = $this->getStoreUrl();
 
         $rows = $this->baseQuery($lang)
@@ -81,6 +91,10 @@ class PrestashopProductQueryService
      */
     public function getProductAttributes(int $productId, string $lang = 'es'): array
     {
+        if (! $this->isConfigured()) {
+            return ['attributes' => [], 'combinations' => []];
+        }
+
         $langId = $this->getLangId($lang);
         $db = $this->db;
         $pfx = $this->prefix;
@@ -205,6 +219,10 @@ class PrestashopProductQueryService
 
     private function findByField(string $column, mixed $value, string $lang): ?array
     {
+        if (! $this->isConfigured()) {
+            return null;
+        }
+
         $storeUrl = $this->getStoreUrl();
 
         $row = $this->baseQuery($lang)
@@ -272,9 +290,24 @@ class PrestashopProductQueryService
         return $cache[$iso];
     }
 
-    /** Derive the public store base URL from the configured API URL. */
+    /**
+     * Public store base URL, para enlaces que un cliente real puede abrir.
+     *
+     * helpdeskprestashop.shop_url es la fuente correcta (ver su comentario en
+     * config.php); si un entorno todavía no la tiene configurada, se cae al
+     * comportamiento antiguo de derivarla de api_url — que en Docker suele
+     * apuntar a host.docker.internal, irresoluble para cualquier cliente
+     * fuera del host. Preferible a un enlace roto silencioso, pero solo un
+     * fallback: configura shop_url en cuanto puedas.
+     */
     private function getStoreUrl(): string
     {
+        $shopUrl = (string) config('helpdeskprestashop.shop_url', '');
+
+        if ($shopUrl !== '') {
+            return $shopUrl;
+        }
+
         $apiUrl = (string) config('helpdeskprestashop.api_url', '');
 
         if ($apiUrl === '') {

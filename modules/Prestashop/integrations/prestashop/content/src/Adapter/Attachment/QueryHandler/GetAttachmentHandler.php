@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class GetAttachmentHandler extends AbstractAttachmentHandler implements Ge
      */
     private $downloadDirectory;
 
-    /**
-     * @param string $downloadDirectory
-     */
     public function __construct(string $downloadDirectory)
     {
         $this->downloadDirectory = $downloadDirectory;
@@ -58,9 +56,9 @@ final class GetAttachmentHandler extends AbstractAttachmentHandler implements Ge
     public function handle(GetAttachment $query): Attachment
     {
         $attachment = $this->getAttachment($query->getAttachmentId());
-        $path = $this->downloadDirectory . $attachment->file;
+        $path = $this->downloadDirectory.$attachment->file;
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new AttachmentNotFoundException(sprintf('Attachment file was not found at %s', $path));
         }
 

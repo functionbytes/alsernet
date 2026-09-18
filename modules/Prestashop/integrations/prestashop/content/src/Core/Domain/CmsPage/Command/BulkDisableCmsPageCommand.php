@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class BulkDisableCmsPageCommand
     private $cmsPages;
 
     /**
-     * @param array $cmsPageIds
-     *
      * @throws CmsPageException
      */
     public function __construct(array $cmsPageIds)
@@ -58,8 +57,6 @@ class BulkDisableCmsPageCommand
     }
 
     /**
-     * @param array $cmsPageIds
-     *
      * @throws CmsPageException
      */
     private function setCmsPages(array $cmsPageIds)

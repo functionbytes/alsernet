@@ -4,6 +4,7 @@ namespace Modules\HelpdeskChatFlow\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
@@ -27,8 +28,25 @@ class HandleNodeTimeoutJob implements ShouldQueue
         private readonly int $sessionId,
         private readonly string $nodeId,
         private readonly int $sinceItemId,
+        private readonly int $conversationId,
     ) {
         $this->onQueue('chatflow');
+    }
+
+    /**
+     * Same lock/resource as ExecuteChatFlowNodeJob: a timeout firing while the
+     * customer's reply is being processed (or vice versa) could otherwise both
+     * advance the session state concurrently.
+     *
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping('chatflow-conversation:'.$this->conversationId))
+                ->releaseAfter(30)
+                ->expireAfter(180),
+        ];
     }
 
     public function handle(ChatFlowEngine $engine): void

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,13 +64,6 @@ final class FormBuilder implements FormBuilderInterface
      */
     private $optionsProvider;
 
-    /**
-     * @param FormFactoryInterface $formFactory
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param FormDataProviderInterface $dataProvider
-     * @param string $formType
-     * @param FormOptionsProviderInterface|null $optionsProvider
-     */
     public function __construct(
         FormFactoryInterface $formFactory,
         HookDispatcherInterface $hookDispatcher,
@@ -92,7 +86,7 @@ final class FormBuilder implements FormBuilderInterface
         if (is_array($defaultData = $this->dataProvider->getDefaultData())) {
             $data = array_merge($defaultData, $data);
         }
-        if (null !== $this->optionsProvider
+        if ($this->optionsProvider !== null
             && is_array($defaultOptions = $this->optionsProvider->getDefaultOptions($data))) {
             $options = array_merge($defaultOptions, $options);
         }
@@ -111,7 +105,7 @@ final class FormBuilder implements FormBuilderInterface
     public function getFormFor($id, array $data = [], array $options = [])
     {
         $data = array_merge($this->dataProvider->getData($id), $data);
-        if (null !== $this->optionsProvider) {
+        if ($this->optionsProvider !== null) {
             $options = array_merge($this->optionsProvider->getOptions($id, $data), $options);
         }
 
@@ -124,18 +118,16 @@ final class FormBuilder implements FormBuilderInterface
     }
 
     /**
-     * @param string $formType
-     * @param array $data
-     * @param int|null $id
-     * @param array $options
-     *
+     * @param  string  $formType
+     * @param  array  $data
+     * @param  int|null  $id
      * @return FormInterface
      */
     private function buildForm($formType, $data, $id = null, array $options = [])
     {
         $formBuilder = $this->formFactory->createBuilder($formType, $data, $options);
 
-        $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($formBuilder->getName()) . 'FormBuilderModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action'.Container::camelize($formBuilder->getName()).'FormBuilderModifier', [
             'form_builder' => $formBuilder,
             'data' => &$data,
             'options' => &$options,

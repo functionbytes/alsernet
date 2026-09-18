@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class BulkDeleteAddressCommand
     private $addressIds;
 
     /**
-     * @param int[] $addressIds
+     * @param  int[]  $addressIds
      *
      * @throws AddressConstraintException
      */
@@ -58,7 +59,7 @@ class BulkDeleteAddressCommand
     }
 
     /**
-     * @param int[] $addressIds
+     * @param  int[]  $addressIds
      *
      * @throws AddressConstraintException
      */

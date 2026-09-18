@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class BulkEnableCustomerCommand
     private $customerIds = [];
 
     /**
-     * @param int[] $customerIds
+     * @param  int[]  $customerIds
      */
     public function __construct(array $customerIds)
     {
@@ -55,7 +56,7 @@ class BulkEnableCustomerCommand
     }
 
     /**
-     * @param int[] $customerIds
+     * @param  int[]  $customerIds
      */
     private function setCustomerIds(array $customerIds)
     {

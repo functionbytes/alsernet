@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,15 +40,12 @@ final class TaxOptionsConfiguration implements DataConfigurationInterface
      * @var ConfigurationInterface
      */
     private $configuration;
+
     /**
      * @var ProductEcotaxResetterInterface
      */
     private $productEcotaxResetter;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param ProductEcotaxResetterInterface $productEcotaxResetter
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         ProductEcotaxResetterInterface $productEcotaxResetter
@@ -85,7 +83,7 @@ final class TaxOptionsConfiguration implements DataConfigurationInterface
                 $this->configuration->set('PS_ECOTAX_TAX_RULES_GROUP_ID', $configuration['eco_tax_rule_group']);
             }
 
-            if (false === $configuration['enable_tax']) {
+            if ($configuration['enable_tax'] === false) {
                 $this->configuration->set('PS_TAX_DISPLAY', false);
             }
         }
@@ -108,13 +106,13 @@ final class TaxOptionsConfiguration implements DataConfigurationInterface
     /**
      * Responsible for ecotax update
      *
-     * @param bool $isEnabled
+     * @param  bool  $isEnabled
      */
     private function updateEcotax($isEnabled)
     {
         $wasEnabled = (bool) $this->configuration->get('PS_USE_ECOTAX');
 
-        if (!$isEnabled && $wasEnabled !== $isEnabled) {
+        if (! $isEnabled && $wasEnabled !== $isEnabled) {
             $this->productEcotaxResetter->reset();
         }
         $this->configuration->set('PS_USE_ECOTAX', $isEnabled);

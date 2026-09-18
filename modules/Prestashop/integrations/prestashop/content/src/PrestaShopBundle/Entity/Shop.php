@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Shop.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\ShopRepository")
  */
 class Shop
@@ -41,13 +43,16 @@ class Shop
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_shop", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\ShopGroup")
+     *
      * @ORM\JoinColumn(name="id_shop_group", referencedColumnName="id_shop_group", nullable=false)
      */
     private $shopGroup;
@@ -98,6 +103,7 @@ class Shop
      * @var Collection
      *
      * One group shop has many shops. This is the inverse side.
+     *
      * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\ShopUrl", mappedBy="shop")
      */
     private $shopUrls;
@@ -115,8 +121,7 @@ class Shop
     /**
      * Set name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return Shop
      */
     public function setName($name)
@@ -136,11 +141,6 @@ class Shop
         return $this->name;
     }
 
-    /**
-     * @param string $color
-     *
-     * @return Shop
-     */
     public function setColor(string $color): Shop
     {
         $this->color = $color;
@@ -148,9 +148,6 @@ class Shop
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getColor(): ?string
     {
         return $this->color;
@@ -159,8 +156,7 @@ class Shop
     /**
      * Set idCategory.
      *
-     * @param int $idCategory
-     *
+     * @param  int  $idCategory
      * @return Shop
      */
     public function setIdCategory($idCategory)
@@ -183,8 +179,7 @@ class Shop
     /**
      * Set themeName.
      *
-     * @param string $themeName
-     *
+     * @param  string  $themeName
      * @return Shop
      */
     public function setThemeName($themeName)
@@ -207,8 +202,7 @@ class Shop
     /**
      * Set active.
      *
-     * @param bool $active
-     *
+     * @param  bool  $active
      * @return Shop
      */
     public function setActive($active)
@@ -231,8 +225,7 @@ class Shop
     /**
      * Set deleted.
      *
-     * @param bool $deleted
-     *
+     * @param  bool  $deleted
      * @return Shop
      */
     public function setDeleted($deleted)
@@ -255,7 +248,6 @@ class Shop
     /**
      * Set shopGroup.
      *
-     * @param \PrestaShopBundle\Entity\ShopGroup $shopGroup
      *
      * @return Shop
      */
@@ -269,24 +261,18 @@ class Shop
     /**
      * Get shopGroup.
      *
-     * @return \PrestaShopBundle\Entity\ShopGroup
+     * @return ShopGroup
      */
     public function getShopGroup()
     {
         return $this->shopGroup;
     }
 
-    /**
-     * @return Collection
-     */
     public function getShopUrls(): Collection
     {
         return $this->shopUrls;
     }
 
-    /**
-     * @return bool
-     */
     public function hasMainUrl(): bool
     {
         foreach ($this->shopUrls as $shopUrl) {

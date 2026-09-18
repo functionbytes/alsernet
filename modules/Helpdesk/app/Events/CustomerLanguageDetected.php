@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -11,7 +12,7 @@ use Modules\Helpdesk\Models\Conversation;
 
 class CustomerLanguageDetected implements ShouldBroadcast
 {
-    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly Conversation $conversation,

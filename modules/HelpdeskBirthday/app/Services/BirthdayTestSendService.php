@@ -22,7 +22,6 @@ use Throwable;
 class BirthdayTestSendService
 {
     public function __construct(
-        private readonly BirthdayCouponService $coupons,
         private readonly BirthdaySettings $settings,
     ) {}
 
@@ -64,8 +63,8 @@ class BirthdayTestSendService
     }
 
     /**
-     * Campaña de hoy si existe; si no, una en memoria con el cupón configurado.
-     * Permite probar la plantilla antes de que el scheduler prepare nada.
+     * Campaña de hoy si existe; si no, una en memoria. Permite probar la
+     * plantilla antes de que el scheduler prepare nada.
      */
     private function draftCampaign(): BirthdayCampaign
     {
@@ -77,21 +76,9 @@ class BirthdayTestSendService
             return $today;
         }
 
-        $settings = $this->settings->all();
-        $coupon = $this->coupons->resolve($settings);
-
-        // Sin cupón configurado se prueba igual, con un código de muestra: la
-        // gracia de la prueba es ver la maqueta, no validar el bono.
-        $campaign = new BirthdayCampaign($coupon !== [] ? $coupon : [
-            'coupon_code' => 'CODIGO-DE-PRUEBA',
-            'coupon_valid_from' => CarbonImmutable::today()->toDateString(),
-            'coupon_valid_to' => CarbonImmutable::today()->addMonth()->toDateString(),
-            'coupon_amount' => 10,
-            'coupon_min_purchase' => 50,
-        ]);
-
+        $campaign = new BirthdayCampaign;
         $campaign->campaign_date = CarbonImmutable::today();
-        $campaign->template_key = (string) $settings['template_key'];
+        $campaign->template_key = (string) $this->settings->all()['template_key'];
 
         return $campaign;
     }
@@ -102,6 +89,9 @@ class BirthdayTestSendService
      */
     private function fakeRecipient(BirthdayCampaign $campaign, string $email): BirthdayRecipient
     {
+        // El bono va en el destinatario, que es donde vive de verdad: cada
+        // cliente recibe el suyo. Aquí es de muestra —la gracia de la prueba es
+        // ver la maqueta con un código dentro, no validar nada en Gestión.
         $recipient = new BirthdayRecipient([
             'campaign_id' => $campaign->id,
             'email' => $email,
@@ -109,6 +99,12 @@ class BirthdayTestSendService
             'lang' => app(BirthdayLanguageResolver::class)->fallbackIso(),
             'birth_date' => CarbonImmutable::today()->subYears(30)->toDateString(),
             'status' => BirthdayRecipient::STATUS_PENDING,
+            'coupon_code' => '900000000',
+            'coupon_verification_code' => 'PRUEBA',
+            'coupon_amount' => 5,
+            'coupon_min_purchase' => 30,
+            'coupon_valid_from' => CarbonImmutable::today()->toDateString(),
+            'coupon_valid_to' => CarbonImmutable::today()->addMonth()->toDateString(),
         ]);
 
         $recipient->id = 0;

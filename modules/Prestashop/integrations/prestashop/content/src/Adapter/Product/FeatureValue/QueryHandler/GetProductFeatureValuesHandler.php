@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ class GetProductFeatureValuesHandler implements GetProductFeatureValuesHandlerIn
                 (int) $featureValuesDatum['id_feature'],
                 (int) $featureValuesDatum['id_feature_value'],
                 $featureValuesDatum['localized_values'],
-                1 === (int) $featureValuesDatum['custom']
+                (int) $featureValuesDatum['custom'] === 1
             );
         }
 

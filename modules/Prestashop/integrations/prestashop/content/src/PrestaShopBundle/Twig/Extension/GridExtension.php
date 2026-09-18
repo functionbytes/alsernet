@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,6 +43,7 @@ use Twig_SimpleFunction as SimpleFunction;
 class GridExtension extends AbstractExtension
 {
     public const BASE_COLUMN_CONTENT_TEMPLATE_PATH = '@PrestaShop/Admin/Common/Grid/Columns/Content';
+
     public const BASE_COLUMN_HEADER_TEMPLATE_PATH = '@PrestaShop/Admin/Common/Grid/Columns/Header/Content';
 
     /**
@@ -54,10 +56,6 @@ class GridExtension extends AbstractExtension
      */
     private $cache;
 
-    /**
-     * @param Environment $twig
-     * @param AdapterInterface $cache
-     */
     public function __construct(Environment $twig, AdapterInterface $cache)
     {
         $this->twig = $twig;
@@ -85,9 +83,6 @@ class GridExtension extends AbstractExtension
     /**
      * Render column content.
      *
-     * @param array $record
-     * @param array $column
-     * @param array $grid
      *
      * @return string
      *
@@ -97,14 +92,14 @@ class GridExtension extends AbstractExtension
     {
         $templateCacheKey = sprintf('column_%s_%s_%s_content', $grid['id'], $column['id'], $column['type']);
 
-        if (false === $this->cache->hasItem($templateCacheKey)) {
+        if ($this->cache->hasItem($templateCacheKey) === false) {
             $template = $this->getTemplatePath(
                 $column,
                 $grid,
                 self::BASE_COLUMN_CONTENT_TEMPLATE_PATH
             );
 
-            if (null === $template) {
+            if ($template === null) {
                 throw new RuntimeException(sprintf('Content template for column type "%s" was not found', $column['type']));
             }
 
@@ -125,8 +120,6 @@ class GridExtension extends AbstractExtension
     /**
      * Render column header.
      *
-     * @param array $column
-     * @param array $grid
      *
      * @return string
      */
@@ -139,7 +132,7 @@ class GridExtension extends AbstractExtension
             $column['type']
         );
 
-        if (!$this->cache->hasItem($templateCacheKey)) {
+        if (! $this->cache->hasItem($templateCacheKey)) {
             $template = $this->getTemplatePath(
                 $column,
                 $grid,
@@ -161,8 +154,6 @@ class GridExtension extends AbstractExtension
     }
 
     /**
-     * @param array $grid
-     *
      * @return bool
      */
     public function isOrderingColumn(array $grid)
@@ -174,7 +165,7 @@ class GridExtension extends AbstractExtension
         }
 
         foreach ($grid['columns'] as $column) {
-            if ('position' == $column['type']) {
+            if ($column['type'] == 'position') {
                 $positionField = $column['id'];
                 if (strtolower($positionField) == strtolower($grid['sorting']['order_by'])) {
                     return true;
@@ -188,11 +179,8 @@ class GridExtension extends AbstractExtension
     /**
      * Get template for column.
      *
-     * @param array $column
-     * @param array $grid
-     * @param string $basePath
-     * @param string|null $defaultTemplate
-     *
+     * @param  string  $basePath
+     * @param  string|null  $defaultTemplate
      * @return string|null
      */
     private function getTemplatePath(array $column, array $grid, $basePath, $defaultTemplate = null)
@@ -206,7 +194,7 @@ class GridExtension extends AbstractExtension
         $columnTemplate = sprintf('%s/%s.html.twig', $basePath, $columnType);
 
         $loader = $this->twig->getLoader();
-        if (!($loader instanceof ExistsLoaderInterface)) {
+        if (! ($loader instanceof ExistsLoaderInterface)) {
             return null;
         }
 
@@ -222,7 +210,7 @@ class GridExtension extends AbstractExtension
             return $columnTemplate;
         }
 
-        if (null !== $defaultTemplate) {
+        if ($defaultTemplate !== null) {
             return sprintf('%s/%s', $basePath, $defaultTemplate);
         }
 

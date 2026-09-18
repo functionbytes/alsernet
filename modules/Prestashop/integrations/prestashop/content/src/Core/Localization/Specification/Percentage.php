@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,6 +35,4 @@ use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecif
  * Regroups specific rules and data used when formatting a percentage number in a given locale and a given numbering
  * system (latin, arab, ...).
  */
-class Percentage extends NumberSpecification
-{
-}
+class Percentage extends NumberSpecification {}

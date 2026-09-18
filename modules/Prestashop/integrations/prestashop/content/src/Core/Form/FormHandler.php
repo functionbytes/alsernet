@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,12 +72,8 @@ class FormHandler implements FormHandlerInterface
     /**
      * FormHandler constructor.
      *
-     * @param FormBuilderInterface $formBuilder
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param FormDataProviderInterface $formDataProvider
-     * @param array $formTypes
-     * @param string $hookName
-     * @param string $formName
+     * @param  string  $hookName
+     * @param  string  $formName
      */
     public function __construct(
         FormBuilderInterface $formBuilder,

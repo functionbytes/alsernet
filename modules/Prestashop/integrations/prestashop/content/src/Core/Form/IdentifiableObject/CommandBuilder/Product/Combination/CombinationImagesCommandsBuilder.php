@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class CombinationImagesCommandsBuilder implements CombinationCommandsBuilderInte
      */
     public function buildCommands(CombinationId $combinationId, array $formData): array
     {
-        if (!isset($formData['images'])) {
+        if (! isset($formData['images'])) {
             return [];
         }
 

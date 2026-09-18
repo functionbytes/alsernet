@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,7 +56,6 @@ final class OrderPriceColumn extends AbstractColumn
                 'is_paid_field',
             ])
             ->setAllowedTypes('field', 'string')
-            ->setAllowedTypes('is_paid_field', 'string')
-        ;
+            ->setAllowedTypes('is_paid_field', 'string');
     }
 }

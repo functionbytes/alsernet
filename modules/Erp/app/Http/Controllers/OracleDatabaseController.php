@@ -3,6 +3,7 @@
 namespace Modules\Erp\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +24,7 @@ class OracleDatabaseController extends Controller
         // Obtener estado de la conexión
         $lastCheck = $settings['oracle_last_check'] ?? null;
         $lastStatus = $settings['oracle_last_status'] ?? 'unknown';
-        $lastCheckDate = $lastCheck ? \Carbon\Carbon::parse($lastCheck) : null;
+        $lastCheckDate = $lastCheck ? Carbon::parse($lastCheck) : null;
 
         return view('erp::settings.database.index', compact('settings', 'lastStatus', 'lastCheckDate'));
     }

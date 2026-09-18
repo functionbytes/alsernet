@@ -4,13 +4,6 @@ namespace Modules\Prestashop\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Prestashop\Entities\Address;
-use Modules\Prestashop\Entities\Carrier;
-use Modules\Prestashop\Entities\Cart;
-use Modules\Prestashop\Entities\Currency;
-use Modules\Prestashop\Entities\Customer;
-use Modules\Prestashop\Entities\Language;
 use Modules\Prestashop\Entities\Orders\OrderState;
 use Modules\Prestashop\Entities\Shop\Shop;
 use Modules\Prestashop\Entities\Shop\ShopGroup;

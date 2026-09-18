@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,7 @@ use ReflectionException;
 final class CommandDefinitionParser
 {
     /**
-     * @param string $commandName
-     *
+     * @param  string  $commandName
      * @return CommandDefinition
      *
      * @throws ReflectionException
@@ -53,8 +53,7 @@ final class CommandDefinitionParser
     /**
      * Checks whether the command is of type Query or Command by provided name
      *
-     * @param string $commandName
-     *
+     * @param  string  $commandName
      * @return string
      */
     private function parseType($commandName)
@@ -67,8 +66,7 @@ final class CommandDefinitionParser
     }
 
     /**
-     * @param string $commandName
-     *
+     * @param  string  $commandName
      * @return string
      *
      * @throws ReflectionException

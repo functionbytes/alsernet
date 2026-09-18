@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class SetAssociatedProductAttachmentsHandler implements SetAssociatedProdu
      */
     private $productAttachmentUpdater;
 
-    /**
-     * @param ProductAttachmentUpdater $productUpdater
-     */
     public function __construct(
         ProductAttachmentUpdater $productUpdater
     ) {

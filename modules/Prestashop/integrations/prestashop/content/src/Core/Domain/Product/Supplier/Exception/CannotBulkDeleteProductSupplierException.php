@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,12 +42,11 @@ class CannotBulkDeleteProductSupplierException extends ProductSupplierException
     private $productSupplierIds;
 
     /**
-     * @param int[] $productSupplierIds ids of product supplier which cannot be deleted
-     * @param string $message
-     * @param int $code
-     * @param Throwable|null $previous
+     * @param  int[]  $productSupplierIds  ids of product supplier which cannot be deleted
+     * @param  string  $message
+     * @param  int  $code
      */
-    public function __construct(array $productSupplierIds, $message = '', $code = 0, Throwable $previous = null)
+    public function __construct(array $productSupplierIds, $message = '', $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
         $this->productSupplierIds = $productSupplierIds;

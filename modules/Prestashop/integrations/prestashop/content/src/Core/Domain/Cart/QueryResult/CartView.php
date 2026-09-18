@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,11 +55,8 @@ class CartView
     private $currencyId;
 
     /**
-     * @param int $cartId
-     * @param int $currencyId
-     * @param array $customerInformation
-     * @param array $orderInformation
-     * @param array $cartSummary
+     * @param  int  $cartId
+     * @param  int  $currencyId
      */
     public function __construct(
         $cartId,

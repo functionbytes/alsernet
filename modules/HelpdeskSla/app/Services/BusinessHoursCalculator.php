@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSla\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\BusinessHour;
 use Modules\HelpdeskSla\Models\Holiday;
 
@@ -42,8 +43,15 @@ class BusinessHoursCalculator
             return $start->copy()->addHours($hours);
         }
 
-        $timezone = (string) config('helpdesksla.default_business_hours.timezone', 'Europe/Madrid');
         $schedule = $this->schedule();
+
+        if (! $this->scheduleHasOpenDays($schedule)) {
+            Log::warning('HelpdeskSla: calendario de horas hábiles vacío, se degrada a horas naturales.', ['hours' => $hours]);
+
+            return $start->copy()->addHours($hours);
+        }
+
+        $timezone = $this->resolveTimezone($schedule);
         $cursor = $start->copy()->setTimezone($timezone);
         $remaining = $hours * 60;
         $guard = 0;
@@ -87,13 +95,116 @@ class BusinessHoursCalculator
             }
         }
 
+        // El guard se agotó (calendario inconsistente/loop defensivo): el resto
+        // pendiente se degrada a horas naturales en vez de devolver un cursor
+        // desbocado (~2.7 años en el futuro tras 1000 iteraciones de 1 día).
+        if ($remaining > 0) {
+            Log::warning('HelpdeskSla: el cálculo de horas hábiles agotó el límite de iteraciones, se degrada el resto a horas naturales.', [
+                'hours' => $hours,
+                'remaining_minutes' => $remaining,
+            ]);
+
+            $cursor = $cursor->addMinutes($remaining);
+        }
+
         return $cursor->setTimezone($start->getTimezone());
     }
 
     /**
-     * Business-hours calendar keyed by Carbon dayOfWeek (0=Sunday..6=Saturday).
+     * ¿Hay al menos un día laborable en el calendario? Ignora la clave
+     * 'timezone' (metadato, no un día de la semana).
      *
-     * @return array<int, array{open: string, close: string}>
+     * @param  array<int|string, mixed>  $schedule
+     */
+    private function scheduleHasOpenDays(array $schedule): bool
+    {
+        foreach (array_keys($schedule) as $day) {
+            if (is_int($day)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Zona horaria del calendario de negocio. Sale del propio calendario
+     * cacheado (columna helpdesk_business_hours.timezone) para no asumir la
+     * zona por defecto de config() cuando las filas reales usan otra distinta
+     * (p.ej. initializeDefaults() siembra Europe/Madrid).
+     *
+     * @param  array<int|string, mixed>  $schedule
+     */
+    private function resolveTimezone(array $schedule): string
+    {
+        return (string) ($schedule['timezone'] ?? config('helpdesksla.default_business_hours.timezone', 'Europe/Madrid'));
+    }
+
+    /**
+     * Minutos hábiles reales transcurridos entre dos fechas (no la diferencia
+     * en minutos naturales). Usado por ConversationSlaService::percentUsed()
+     * para que el aviso de "cerca del SLA" no se consuma durante fines de
+     * semana/festivos cuando la política es de horas hábiles.
+     */
+    public function businessMinutesBetween(Carbon $start, Carbon $end): int
+    {
+        if ($end->lessThanOrEqualTo($start)) {
+            return 0;
+        }
+
+        $schedule = $this->schedule();
+
+        if (! $this->scheduleHasOpenDays($schedule)) {
+            return (int) abs($start->diffInMinutes($end));
+        }
+
+        $timezone = $this->resolveTimezone($schedule);
+        $cursor = $start->copy()->setTimezone($timezone);
+        $end = $end->copy()->setTimezone($timezone);
+        $holidays = $this->holidays();
+        $minutes = 0;
+        $guard = 0;
+
+        while ($cursor->lessThan($end) && $guard++ < 1000) {
+            $day = $schedule[$cursor->dayOfWeek] ?? null;
+
+            if ($day === null || $this->isHoliday($cursor, $holidays)) {
+                $cursor = $cursor->addDay()->startOfDay();
+
+                continue;
+            }
+
+            [$openHour, $openMinute] = array_map('intval', explode(':', $day['open']));
+            [$closeHour, $closeMinute] = array_map('intval', explode(':', $day['close']));
+
+            $open = $cursor->copy()->setTime($openHour, $openMinute);
+            $close = $cursor->copy()->setTime($closeHour, $closeMinute);
+
+            $segmentStart = $cursor->greaterThan($open) ? $cursor : $open;
+            $segmentEnd = $end->lessThan($close) ? $end : $close;
+
+            if ($segmentStart->lessThan($segmentEnd)) {
+                $minutes += (int) round(abs($segmentStart->diffInMinutes($segmentEnd)));
+            }
+
+            if ($end->lessThanOrEqualTo($close)) {
+                break;
+            }
+
+            $cursor = $cursor->addDay()->startOfDay();
+        }
+
+        return $minutes;
+    }
+
+    /**
+     * Business-hours calendar keyed by Carbon dayOfWeek (0=Sunday..6=Saturday),
+     * plus a 'timezone' string entry taken from the rows themselves (no
+     * collision with the int day keys). Falls back to the config default
+     * calendar/timezone when no rows exist, which is why resolveTimezone()
+     * still checks config() when the 'timezone' key is absent.
+     *
+     * @return array<int|string, mixed>
      */
     public function schedule(): array
     {
@@ -107,6 +218,10 @@ class BusinessHoursCalculator
             $map = [];
 
             foreach ($rows as $row) {
+                if ($row->timezone) {
+                    $map['timezone'] ??= $row->timezone;
+                }
+
                 if (! $row->opens_at || ! $row->closes_at) {
                     continue;
                 }

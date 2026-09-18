@@ -25,8 +25,6 @@ use Modules\Helpdesk\Models\CsatRating;
  */
 class AnalyticsAggregatorService
 {
-    private const CACHE_TTL = 300;
-
     /**
      * Kept as a plain string literal (never a top-of-file import, never ::class)
      * so it is only ever resolved behind the ticketsAvailable() guard and this
@@ -39,7 +37,7 @@ class AnalyticsAggregatorService
     ) {}
 
     /**
-     * @return array{conversations: int, closed: int, open: int, avg_first_response_seconds: int, csat_avg: float}
+     * @return array{conversations: int, closed: int, open: int, avg_first_response_seconds: int, csat_avg: ?float}
      */
     public function overview(Carbon $from, Carbon $to, ?User $user = null): array
     {
@@ -79,7 +77,9 @@ class AnalyticsAggregatorService
                 'closed' => (int) ($row->closed ?? 0),
                 'open' => (int) $open,
                 'avg_first_response_seconds' => (int) round((float) ($row->avg_first_response ?? 0)),
-                'csat_avg' => round((float) ($csatAvg ?? 0), 2),
+                // null (no 0.0) cuando no hay valoraciones en el rango: la vista
+                // pinta '—' en vez de leer "CSAT 0" como si el servicio fuera malo.
+                'csat_avg' => $csatAvg !== null ? round((float) $csatAvg, 2) : null,
             ];
         });
     }
@@ -98,7 +98,11 @@ class AnalyticsAggregatorService
                 ->whereBetween('created_at', [$from, $to])
                 ->when($inboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $inboxIds))
                 ->selectRaw('COALESCE(channel, \'web\') as channel, COUNT(*) as count')
-                ->groupBy('channel')
+                // groupBy('channel') agrupaba las filas con channel NULL en su
+                // propio grupo, separado del de channel='web' real — salían dos
+                // filas "web" en vez de una fusionada. Se agrupa por la misma
+                // expresión COALESCE que ya usa el SELECT.
+                ->groupByRaw("COALESCE(channel, 'web')")
                 ->orderByDesc('count')
                 ->get()
                 ->map(fn ($r): array => ['channel' => (string) $r->channel, 'count' => (int) $r->count])
@@ -126,6 +130,7 @@ class AnalyticsAggregatorService
         return $this->remember('agents', $from, $to, $inboxIds, function () use ($from, $to, $inboxIds): array {
             $conversationRows = DB::connection('helpdesk')
                 ->table('helpdesk_conversations as c')
+                ->whereNull('c.deleted_at')
                 ->whereBetween('c.closed_at', [$from, $to])
                 ->whereNotNull('c.assignee_id')
                 ->when($inboxIds !== null, fn ($q) => $q->whereIn('c.inbox_id', $inboxIds))
@@ -176,11 +181,15 @@ class AnalyticsAggregatorService
                 ->whereBetween('created_at', [$from, $to])
                 ->whereNotNull('user_id')
                 ->where('type', 'message')
-                ->when($inboxIds !== null, fn ($q) => $q->whereIn('conversation_id', function ($sub) use ($inboxIds) {
+                // Antes solo se filtraba por bandeja cuando $inboxIds !== null;
+                // los items de conversaciones borradas (soft delete) se contaban
+                // siempre, en ambos casos.
+                ->whereIn('conversation_id', function ($sub) use ($inboxIds) {
                     $sub->select('id')
                         ->from('helpdesk_conversations')
-                        ->whereIn('inbox_id', $inboxIds);
-                }))
+                        ->whereNull('deleted_at')
+                        ->when($inboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $inboxIds));
+                })
                 ->groupBy('user_id')
                 ->selectRaw('user_id, COUNT(*) as msg_count')
                 ->pluck('msg_count', 'user_id');
@@ -274,13 +283,6 @@ class AnalyticsAggregatorService
     }
 
     /**
-     * Maximum number of distinct customers scored in one segment computation.
-     * Beyond this the result is a sample (flagged via 'sampled') so the dashboard
-     * never presents a partial count as if it were the whole population.
-     */
-    private const SEGMENT_CUSTOMER_CAP = 5000;
-
-    /**
      * Health-score bands for customers active in the range (batched, no N+1).
      *
      * Scores every distinct customer in the range up to SEGMENT_CUSTOMER_CAP, in
@@ -295,19 +297,21 @@ class AnalyticsAggregatorService
         $inboxIds = $this->accessibleInboxIds($user);
 
         return $this->remember('customers', $from, $to, $inboxIds, function () use ($from, $to, $inboxIds): array {
+            $segmentCap = (int) config('helpdeskanalytics.customer_segment_limit', 5000);
+
             // Fetch one past the cap to detect (and flag) truncation.
             $customerIds = Conversation::query()
                 ->whereBetween('created_at', [$from, $to])
                 ->whereNotNull('customer_id')
                 ->when($inboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $inboxIds))
                 ->distinct()
-                ->limit(self::SEGMENT_CUSTOMER_CAP + 1)
+                ->limit($segmentCap + 1)
                 ->pluck('customer_id')
                 ->all();
 
-            $sampled = count($customerIds) > self::SEGMENT_CUSTOMER_CAP;
+            $sampled = count($customerIds) > $segmentCap;
             if ($sampled) {
-                $customerIds = array_slice($customerIds, 0, self::SEGMENT_CUSTOMER_CAP);
+                $customerIds = array_slice($customerIds, 0, $segmentCap);
             }
 
             $healthy = $neutral = $atRisk = $total = 0;
@@ -454,6 +458,6 @@ class AnalyticsAggregatorService
 
         $cacheKey = sprintf('helpdeskanalytics:%s:%s:%s:%s', $key, $scope, $from->timestamp, $to->timestamp);
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, $callback);
+        return Cache::remember($cacheKey, (int) config('helpdeskanalytics.cache_ttl', 300), $callback);
     }
 }

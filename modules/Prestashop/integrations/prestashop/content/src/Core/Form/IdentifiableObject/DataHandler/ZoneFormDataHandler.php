@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ final class ZoneFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -53,10 +51,6 @@ final class ZoneFormDataHandler implements FormDataHandlerInterface
 
     /**
      * Create object from form data.
-     *
-     * @param array $data
-     *
-     * @return int
      */
     public function create(array $data): int
     {

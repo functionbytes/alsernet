@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,14 +61,10 @@ class MultistoreController extends FrameworkBundleAdminController
 
     /**
      * This methods returns a Response object containing the multistore header displayed at the top of migrated pages
-     *
-     * @param bool $lockedToAllShopContext
-     *
-     * @return Response
      */
     public function header(bool $lockedToAllShopContext): Response
     {
-        if (!$this->multistoreFeature->isUsed()) {
+        if (! $this->multistoreFeature->isUsed()) {
             return $this->render('@PrestaShop/Admin/Multistore/header.html.twig', [
                 'isMultistoreUsed' => false,
             ]);
@@ -78,18 +75,18 @@ class MultistoreController extends FrameworkBundleAdminController
 
         if ($isShopContext) {
             $currentContext = $this->entityManager->getRepository(Shop::class)->findOneBy(['id' => $this->multistoreContext->getContextShopID()]);
-        } elseif (!$isAllShopContext) {
+        } elseif (! $isAllShopContext) {
             $shopGroupLegacy = $this->multistoreContext->getContextShopGroup();
             $currentContext = $this->entityManager->getRepository(ShopGroup::class)->findOneBy(['id' => $shopGroupLegacy->id]);
         } else {
             // use ShopGroup object as a the container for "all shops" context so that it can be used transparently in twig
-            $currentContext = new ShopGroup();
+            $currentContext = new ShopGroup;
             $currentContext->setName($this->trans('All shops', 'Admin.Global'));
             $currentContext->setColor('');
         }
 
         $groupList = [];
-        if (!$lockedToAllShopContext) {
+        if (! $lockedToAllShopContext) {
             $groupList = $this->entityManager->getRepository(ShopGroup::class)->findBy(['active' => true]);
         }
 
@@ -108,12 +105,6 @@ class MultistoreController extends FrameworkBundleAdminController
         ]);
     }
 
-    /**
-     * @param ShopConfigurationInterface $configuration
-     * @param string $configurationKey
-     *
-     * @return Response
-     */
     public function configurationDropdown(ShopConfigurationInterface $configuration, string $configurationKey): Response
     {
         $shopGroups = $this->entityManager->getRepository(ShopGroup::class)->findBy(['active' => true]);
@@ -125,9 +116,9 @@ class MultistoreController extends FrameworkBundleAdminController
             $dropdownData = $this->groupShopDropdown($shopCustomizationChecker, $shopGroups, $configurationKey);
         }
 
-        if (!$dropdownData['shouldDisplayDropdown']) {
+        if (! $dropdownData['shouldDisplayDropdown']) {
             // no dropdown is displayed if no shop overrides this configuration value, so we return an empty response.
-            return new Response();
+            return new Response;
         }
 
         return $this->render('@PrestaShop/Admin/Multistore/dropdown.html.twig', $dropdownData['templateData']);
@@ -135,12 +126,6 @@ class MultistoreController extends FrameworkBundleAdminController
 
     /**
      * Gathers data for multistore dropdown in group shop context
-     *
-     * @param CustomizedConfigurationChecker $shopCustomizationChecker
-     * @param array $shopGroups
-     * @param string $configurationKey
-     *
-     * @return array
      */
     private function groupShopDropdown(CustomizedConfigurationChecker $shopCustomizationChecker, array $shopGroups, string $configurationKey): array
     {
@@ -153,7 +138,7 @@ class MultistoreController extends FrameworkBundleAdminController
             }
             if (
                 $group->getId() === $this->multistoreContext->getContextShopGroup()->id
-                && !$shouldDisplayDropdown
+                && ! $shouldDisplayDropdown
             ) {
                 foreach ($group->getShops() as $shop) {
                     if ($shopCustomizationChecker->isConfigurationCustomizedForThisShop($configurationKey, $shop, true)) {
@@ -177,12 +162,6 @@ class MultistoreController extends FrameworkBundleAdminController
 
     /**
      * Gathers data for multistore dropdown in all shop context
-     *
-     * @param CustomizedConfigurationChecker $shopCustomizationChecker
-     * @param array $shopGroups
-     * @param string $configurationKey
-     *
-     * @return array
      */
     private function allShopDropdown(CustomizedConfigurationChecker $shopCustomizationChecker, array $shopGroups, string $configurationKey): array
     {
@@ -214,11 +193,6 @@ class MultistoreController extends FrameworkBundleAdminController
         ];
     }
 
-    /**
-     * @param ShopGroup $group
-     *
-     * @return bool
-     */
     private function shouldIncludeGroupShop(ShopGroup $group): bool
     {
         // group shop is only included if we are in all shop context or in group context when this group is the current context

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ abstract class AbstractDoctrineQueryBuilder implements DoctrineQueryBuilderInter
     protected $dbPrefix;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
+     * @param  string  $dbPrefix
      */
     public function __construct(Connection $connection, $dbPrefix)
     {

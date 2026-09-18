@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,9 @@ class ToggleCarrierIsFreeHandler extends AbstractCarrierHandler implements Toggl
 
         try {
             $carrier->setFieldsToUpdate(['is_free' => true]);
-            $carrier->is_free = !(bool) $carrier->is_free;
+            $carrier->is_free = ! (bool) $carrier->is_free;
 
-            if (false === $carrier->update()) {
+            if ($carrier->update() === false) {
                 throw new CannotToggleCarrierIsFreeStatusException(sprintf('Unable to toggle is-free status of carrier with id "%d"', $command->getCarrierId()->getValue()));
             }
         } catch (PrestaShopException $e) {

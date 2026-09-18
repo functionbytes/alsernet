@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,7 @@ final class FormHandlerFactory implements FormHandlerFactoryInterface
     private $isDemoModeEnabled;
 
     /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param TranslatorInterface $translator
-     * @param bool $isDemoModeEnabled
+     * @param  bool  $isDemoModeEnabled
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,

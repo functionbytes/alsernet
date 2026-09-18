@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,11 +62,8 @@ class CachingConfiguration implements DataConfigurationInterface
     private $cachingSystem;
 
     /**
-     * @param MemcacheServerManager $memcacheServerManager
-     * @param PhpParameters $phpParameters
-     * @param CacheClearerInterface $symfonyCacheClearer
-     * @param bool $isCachingEnabled
-     * @param string $cachingSystem
+     * @param  bool  $isCachingEnabled
+     * @param  string  $cachingSystem
      */
     public function __construct(
         MemcacheServerManager $memcacheServerManager,
@@ -130,19 +128,19 @@ class CachingConfiguration implements DataConfigurationInterface
 
         if (
             $configuration['use_cache'] !== $this->isCachingEnabled
-            && null !== $configuration['caching_system']
+            && $configuration['caching_system'] !== null
         ) {
             $this->phpParameters->setProperty('parameters.ps_cache_enable', $configuration['use_cache']);
         }
 
         if (
-            null !== $configuration['caching_system']
+            $configuration['caching_system'] !== null
             && $configuration['caching_system'] !== $this->cachingSystem
         ) {
             $this->phpParameters->setProperty('parameters.ps_caching', $configuration['caching_system']);
         }
 
-        if (false === $this->phpParameters->saveConfiguration()) {
+        if ($this->phpParameters->saveConfiguration() === false) {
             $errors[] = [
                 'key' => 'The backups file cannot be overwritten.',
                 'domain' => 'Admin.Advparameters.Notification',

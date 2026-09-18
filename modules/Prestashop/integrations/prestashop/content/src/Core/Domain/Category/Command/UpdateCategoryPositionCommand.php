@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,11 +60,10 @@ class UpdateCategoryPositionCommand
     private $foundFirst;
 
     /**
-     * @param int $categoryId
-     * @param int $parentCategoryId
-     * @param int $way
-     * @param array $positions
-     * @param bool $foundFirst
+     * @param  int  $categoryId
+     * @param  int  $parentCategoryId
+     * @param  int  $way
+     * @param  bool  $foundFirst
      */
     public function __construct($categoryId, $parentCategoryId, $way, array $positions, $foundFirst)
     {

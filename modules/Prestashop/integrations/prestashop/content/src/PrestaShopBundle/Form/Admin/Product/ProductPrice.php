@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,50 +57,62 @@ class ProductPrice extends CommonAbstractType
      * @var Configuration
      */
     private $configuration;
+
     /**
      * @var CountryDataProvider
      */
     public $countryDataprovider;
+
     /**
      * @var Currency
      */
     public $currency;
+
     /**
      * @var CurrencyDataProvider
      */
     public $currencyDataprovider;
+
     /**
      * @var CustomerDataProvider
      */
     private $customerDataprovider;
+
     /**
      * @var float
      */
     public $eco_tax_rate;
+
     /**
      * @var GroupDataProvider
      */
     public $groupDataprovider;
+
     /**
      * @var LegacyContext
      */
     public $legacyContext;
+
     /**
      * @var Router
      */
     public $router;
+
     /**
      * @var Context
      */
     public $shopContextAdapter;
+
     /**
      * @var array
      */
     public $tax_rules;
+
     /**
      * @var array[]
      */
     public $tax_rules_rates;
+
     /**
      * @var TranslatorInterface
      */
@@ -108,15 +121,15 @@ class ProductPrice extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param TaxRuleDataProvider $taxDataProvider
-     * @param Router $router
-     * @param Context $shopContextAdapter
-     * @param CountryDataProvider $countryDataprovider
-     * @param CurrencyDataProvider $currencyDataprovider
-     * @param GroupDataProvider $groupDataprovider
-     * @param LegacyContext $legacyContext
-     * @param CustomerDataProvider $customerDataprovider
+     * @param  TranslatorInterface  $translator
+     * @param  TaxRuleDataProvider  $taxDataProvider
+     * @param  Router  $router
+     * @param  Context  $shopContextAdapter
+     * @param  CountryDataProvider  $countryDataprovider
+     * @param  CurrencyDataProvider  $currencyDataprovider
+     * @param  GroupDataProvider  $groupDataprovider
+     * @param  LegacyContext  $legacyContext
+     * @param  CustomerDataProvider  $customerDataprovider
      */
     public function __construct(
         $translator,
@@ -163,7 +176,7 @@ class ProductPrice extends CommonAbstractType
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'currency' => $this->currency->iso_code,
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'float']),
                 ],
             ]
@@ -186,7 +199,7 @@ class ProductPrice extends CommonAbstractType
                     'label' => $this->translator->trans('Ecotax (tax incl.)', [], 'Admin.Catalog.Feature'),
                     'currency' => $this->currency->iso_code,
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'float']),
                     ],
                     'attr' => ['data-eco-tax-rate' => $this->eco_tax_rate],
@@ -265,7 +278,7 @@ class ProductPrice extends CommonAbstractType
                 ]
             );
 
-        //generates fields for price priority
+        // generates fields for price priority
         $specificPricePriorityChoices = [
             $this->translator->trans('Shop', [], 'Admin.Global') => 'id_shop',
             $this->translator->trans('Currency', [], 'Admin.Global') => 'id_currency',
@@ -273,9 +286,9 @@ class ProductPrice extends CommonAbstractType
             $this->translator->trans('Group', [], 'Admin.Global') => 'id_group',
         ];
 
-        for ($i = 0, $iMax = count($specificPricePriorityChoices); $i < $iMax; ++$i) {
+        for ($i = 0, $iMax = count($specificPricePriorityChoices); $i < $iMax; $i++) {
             $builder->add(
-                'specificPricePriority_' . $i,
+                'specificPricePriority_'.$i,
                 FormType\ChoiceType::class,
                 [
                     'choices' => $specificPricePriorityChoices,

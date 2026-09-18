@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface StringNormalizerInterface
     /**
      * Normalizes a string value.
      *
-     * @param string $value
-     *
+     * @param  string  $value
      * @return string normalized string
      */
     public function normalize($value);

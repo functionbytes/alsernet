@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,13 @@ class PrestaTrustChecker
     protected $checked_extensions = ['php', 'js', 'css', 'tpl'];
 
     public const SMART_CONTRACT_PATTERN = 'prestatrust-license-verification: ';
+
     public const CHECKS_ALL_OK = 'Module is authenticated.';
+
     public const CHECKS_INTEGRITY_NOK = 'Warning, the module has been modified since its purchase from the Addons Marketplace.';
+
     public const CHECKS_PROPERTY_NOK = 'Warning, the purchase proof is invalid. This license has already been used on another shop.';
+
     public const CHECKS_ALL_NOK = 'Warning, the module has been modified and its purchase proof is invalid.';
 
     /**
@@ -70,9 +75,9 @@ class PrestaTrustChecker
     protected $translator;
 
     /**
-     * @param Cache $cache Cache provider to keep data between two requests
-     * @param ApiClient $apiClient Addons Marketplace API client (Guzzle)
-     * @param TranslatorInterface $translator Translator for explanation messages
+     * @param  Cache  $cache  Cache provider to keep data between two requests
+     * @param  ApiClient  $apiClient  Addons Marketplace API client (Guzzle)
+     * @param  TranslatorInterface  $translator  Translator for explanation messages
      */
     public function __construct(Cache $cache, ApiClient $apiClient, TranslatorInterface $translator)
     {
@@ -84,16 +89,14 @@ class PrestaTrustChecker
     /**
      * If the module is compliant, this class generates and adds all PrestaTrust related details.
      * If not, the module remains untouched. We do not execute checks to avoid slow performances.
-     *
-     * @param Module $module
      */
     public function loadDetailsIntoModule(Module $module)
     {
-        if (!$this->isCompliant($module)) {
+        if (! $this->isCompliant($module)) {
             return;
         }
 
-        if (!$this->cache->contains($module->get('name'))) {
+        if (! $this->cache->contains($module->get('name'))) {
             return;
         }
 
@@ -112,14 +115,12 @@ class PrestaTrustChecker
      * Looking at the original content (before unzipping) allows us to make sure we do not have altered content
      * or remaining one from another zip.
      * Any module copy pasted in the module folder won't go through this function.
-     *
-     * @param ModuleZip $zipFile
      */
     public function checkModuleZip(ModuleZip $zipFile)
     {
         // Do we need to check something in order to validate only PrestaTrust related modules?
 
-        $details = new stdClass();
+        $details = new stdClass;
         $details->hash = $this->calculateHash($zipFile->getSource());
 
         $this->cache->save($zipFile->getName(), $details);
@@ -128,19 +129,18 @@ class PrestaTrustChecker
     /**
      * Find all files with defined extensions, and calculate md5 from their content.
      *
-     * @param string $zipFile Path to the module Zip file
-     *
+     * @param  string  $zipFile  Path to the module Zip file
      * @return string Hash of the module
      */
     protected function calculateHash($zipFile)
     {
         $preparehash = '';
-        $zip = new ZipArchive();
-        if (true !== $zip->open($zipFile)) {
+        $zip = new ZipArchive;
+        if ($zip->open($zipFile) !== true) {
             return $preparehash;
         }
 
-        for ($i = 0; $i < $zip->numFiles; ++$i) {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
             $stat = $zip->statIndex($i);
             $file_info = pathinfo($stat['name']);
 
@@ -149,7 +149,7 @@ class PrestaTrustChecker
             }
 
             if (in_array(trim($file_info['extension']), $this->checked_extensions)) {
-                $preparehash .= $zip->getFromName($file_info['dirname'] . '/' . $file_info['basename']);
+                $preparehash .= $zip->getFromName($file_info['dirname'].'/'.$file_info['basename']);
             }
         }
         $zip->close();
@@ -162,8 +162,7 @@ class PrestaTrustChecker
      * To find the address, we must find a file which matches the pattern "'prestatrust-license-verification:".
      * The address will be found right after it, and must also match the file name.
      *
-     * @param string $path Module root path
-     *
+     * @param  string  $path  Module root path
      * @return string|null smart contract address, if found
      */
     public function findSmartContrat($path)
@@ -186,7 +185,6 @@ class PrestaTrustChecker
      * Get message to display at the employee. It is used to explain briefly what is PrestaTrust and what
      * went right (or wrong).
      *
-     * @param array $check_list
      *
      * @return string Message displayed for confirmation
      */
@@ -195,10 +193,10 @@ class PrestaTrustChecker
         if ($check_list['integrity'] && $check_list['property']) {
             return self::CHECKS_ALL_OK;
         }
-        if (!$check_list['integrity'] && $check_list['property']) {
+        if (! $check_list['integrity'] && $check_list['property']) {
             return self::CHECKS_INTEGRITY_NOK;
         }
-        if ($check_list['integrity'] && !$check_list['property']) {
+        if ($check_list['integrity'] && ! $check_list['property']) {
             return self::CHECKS_PROPERTY_NOK;
         }
 
@@ -209,13 +207,12 @@ class PrestaTrustChecker
      * Check if a module can be checked with PrestaTrust. To make it compliant, an attribute "author_address"
      * must exist, start with "0x" and be 42 characters long.
      *
-     * @param Module $module
      *
      * @return bool Module compliancy
      */
     protected function isCompliant(Module $module)
     {
-        if (!$module->attributes->has('author_address')) {
+        if (! $module->attributes->has('author_address')) {
             return false;
         }
 
@@ -223,11 +220,11 @@ class PrestaTrustChecker
 
         // Always ensure 0x prefix.
         // Address should be 20bytes=40 HEX-chars + prefix.
-        if (!self::hasHexPrefix($address) || strlen($address) !== 42) {
+        if (! self::hasHexPrefix($address) || strlen($address) !== 42) {
             return false;
         }
 
-        if (!function_exists('ctype_xdigit') || !ctype_xdigit(substr($address, strlen('0x')))) {
+        if (! function_exists('ctype_xdigit') || ! ctype_xdigit(substr($address, strlen('0x')))) {
             return false;
         }
 
@@ -237,8 +234,7 @@ class PrestaTrustChecker
     /**
      * Check that the string starts with '0x'.
      *
-     * @param string $str Author address
-     *
+     * @param  string  $str  Author address
      * @return bool True if starts with '0x'
      */
     protected function hasHexPrefix($str)
@@ -252,9 +248,8 @@ class PrestaTrustChecker
      * Send to the Marketplace API our details about the module, and get results
      * about its integrity and property.
      *
-     * @param string $hash Calculted hash from the modules files
-     * @param string $contract Smart contract address from module
-     *
+     * @param  string  $hash  Calculted hash from the modules files
+     * @param  string  $contract  Smart contract address from module
      * @return array of check list results
      */
     protected function requestCheck($hash, $contract)

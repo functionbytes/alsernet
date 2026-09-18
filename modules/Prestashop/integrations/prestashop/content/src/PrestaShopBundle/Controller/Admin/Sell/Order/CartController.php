@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,9 +69,7 @@ class CartController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param int $cartId
-     *
+     * @param  int  $cartId
      * @return Response
      */
     public function viewAction(Request $request, $cartId)
@@ -107,8 +106,6 @@ class CartController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
      *
-     * @param int $cartId
-     *
      * @return JsonResponse
      */
     public function getInfoAction(int $cartId)
@@ -132,10 +129,6 @@ class CartController extends FrameworkBundleAdminController
      * Creates empty cart
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function createAction(Request $request): JsonResponse
     {
@@ -156,11 +149,6 @@ class CartController extends FrameworkBundleAdminController
      * Changes the cart address information
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param int $cartId
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function editAddressesAction(int $cartId, Request $request): JsonResponse
     {
@@ -185,11 +173,6 @@ class CartController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param int $cartId
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function editCurrencyAction(int $cartId, Request $request): JsonResponse
     {
@@ -210,11 +193,6 @@ class CartController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param int $cartId
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function editLanguageAction(int $cartId, Request $request): JsonResponse
     {
@@ -235,11 +213,6 @@ class CartController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     * @param int $cartId
-     *
-     * @return JsonResponse
      */
     public function editCarrierAction(Request $request, int $cartId): JsonResponse
     {
@@ -261,9 +234,6 @@ class CartController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
-     * @param int $cartId
      *
      * @return JsonResponse
      */
@@ -295,11 +265,6 @@ class CartController extends FrameworkBundleAdminController
      * Adds cart rule to cart
      *
      * @AdminSecurity("is_granted('create', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     * @param int $cartId
-     *
-     * @return JsonResponse
      */
     public function addCartRuleAction(Request $request, int $cartId): JsonResponse
     {
@@ -321,9 +286,6 @@ class CartController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
      *
-     * @param int $cartId
-     * @param int $cartRuleId
-     *
      * @return JsonResponse
      */
     public function deleteCartRuleAction(int $cartId, int $cartRuleId)
@@ -344,11 +306,6 @@ class CartController extends FrameworkBundleAdminController
      * Adds product to cart
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     * @param int $cartId
-     *
-     * @return JsonResponse
      */
     public function addProductAction(Request $request, int $cartId): JsonResponse
     {
@@ -386,12 +343,6 @@ class CartController extends FrameworkBundleAdminController
      * that are used only for this cart and this product.
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     * @param int $cartId
-     * @param int $productId
-     *
-     * @return JsonResponse
      */
     public function editProductPriceAction(Request $request, int $cartId, int $productId): JsonResponse
     {
@@ -436,10 +387,6 @@ class CartController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
      *
-     * @param Request $request
-     * @param int $cartId
-     * @param int $productId
-     *
      * @return JsonResponse
      */
     public function editProductQuantityAction(Request $request, int $cartId, int $productId)
@@ -475,11 +422,6 @@ class CartController extends FrameworkBundleAdminController
      * Deletes product from cart
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller')) || is_granted('create', 'AdminOrders')")
-     *
-     * @param Request $request
-     * @param int $cartId
-     *
-     * @return JsonResponse
      */
     public function deleteProductAction(Request $request, int $cartId): JsonResponse
     {
@@ -505,10 +447,6 @@ class CartController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param int $cartId
-     *
-     * @return CartForOrderCreation
-     *
      * @throws CartConstraintException
      */
     private function getCartInfo(int $cartId): CartForOrderCreation
@@ -525,17 +463,15 @@ class CartController extends FrameworkBundleAdminController
      * For this reason custom headers where passed containing submitted file sizes
      *  to check if request contains all files that were submitted in browser
      *
-     * @param string $fileSizeHeaders
-     * @param array $fileCustomizations
      *
      * @throws FileUploadException
      */
     private function assertAllUploadedFilesReachedRequest(string $fileSizeHeaders, array $fileCustomizations): void
     {
-        if (!empty($fileSizeHeaders)) {
+        if (! empty($fileSizeHeaders)) {
             $fileSizesByInputName = json_decode($fileSizeHeaders, true);
             foreach ($fileSizesByInputName as $name => $size) {
-                if (!isset($fileCustomizations[$name])) {
+                if (! isset($fileCustomizations[$name])) {
                     throw new FileUploadException('Some files were possibly not uploaded due to post_max_size limit', UPLOAD_ERR_INI_SIZE);
                 }
             }
@@ -543,8 +479,6 @@ class CartController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Exception $e
-     *
      * @return array
      */
     private function getErrorMessages(Exception $e)
@@ -628,11 +562,6 @@ class CartController extends FrameworkBundleAdminController
         ];
     }
 
-    /**
-     * @param Exception $e
-     *
-     * @return int
-     */
     private function getErrorCode(Exception $e): int
     {
         switch (get_class($e)) {
@@ -646,12 +575,6 @@ class CartController extends FrameworkBundleAdminController
     /**
      * This method will be removed in the next patch version. We rely on Cart ObjectModel to simplify the code
      * It returns the number of items of the specific product/attribute that are gift for the cart
-     *
-     * @param int $cartId
-     * @param int $productId
-     * @param int|null $attributeId
-     *
-     * @return int
      */
     private function getProductGiftedQuantity(int $cartId, int $productId, ?int $attributeId): int
     {
@@ -665,9 +588,9 @@ class CartController extends FrameworkBundleAdminController
         foreach ($giftCartRules as $giftCartRule) {
             if (
                 $productId == $giftCartRule['gift_product'] &&
-                (null === $attributeId || $attributeId == $giftCartRule['gift_product_attribute'])
+                ($attributeId === null || $attributeId == $giftCartRule['gift_product_attribute'])
             ) {
-                ++$giftedQuantity;
+                $giftedQuantity++;
             }
         }
 

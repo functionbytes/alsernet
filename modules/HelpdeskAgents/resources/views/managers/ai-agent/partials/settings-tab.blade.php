@@ -1,36 +1,28 @@
-<div class="row">
-    <!-- Main Settings Form -->
-    <div class="col-lg-8">
-        <form method="POST" action="{{ route('helpdesk.ai.settings.update') }}" id="settingsForm">
+<div class="ais-body">
+
+    {{-- ── Formulario ───────────────────────────────────────────────── --}}
+    <form method="POST" action="{{ route('helpdesk.ai.settings.update') }}" id="settingsForm" class="ais-main">
             @csrf
             @method('PUT')
 
-            <!-- Basic Information -->
-            <div class="card mb-3">
-                <div class="card-header bg-light-primary">
-                    <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2"></i>Información Básica</h5>
+            {{-- Identidad --}}
+            <div class="ais-card">
+                <div>
+                    <h2 class="ais-section-title">Identidad</h2>
+                    <p class="ais-section-note">Cómo se llama el agente y si está atendiendo ahora mismo.</p>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Nombre del Agente <span class="text-danger">*</span></label>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nombre <span class="ais-required">· obligatorio</span></label>
                         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                             value="{{ old('name', $agent->name ?? 'Asistente IA') }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Descripción</label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
-                            rows="2" placeholder="Breve descripción del propósito del agente">{{ old('description', $agent->description ?? '') }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-0">
-                        <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Estado <span class="ais-required">· obligatorio</span></label>
                         <select name="status" class="form-select @error('status') is-invalid @enderror">
                             @foreach ($statuses as $value => $label)
                                 <option value="{{ $value }}" {{ old('status', $agent->status ?? 'inactive') === $value ? 'selected' : '' }}>
@@ -38,39 +30,53 @@
                                 </option>
                             @endforeach
                         </select>
+                        <div class="ais-help mt-1">En pausa deja de responder pero conserva la configuración.</div>
                         @error('status')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
+                            rows="2" placeholder="Para qué existe este agente">{{ old('description', $agent->description ?? '') }}</textarea>
+                        <div class="ais-help mt-1">Solo para el equipo. El cliente nunca la ve.</div>
+                        @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
             </div>
 
-            <!-- Personality/System Prompt -->
-            <div class="card mb-3">
-                <div class="card-header bg-light-info">
-                    <h5 class="mb-0"><i class="fa-solid fa-message me-2"></i>Personalidad</h5>
+            {{-- Instrucciones --}}
+            <div class="ais-card">
+                <div>
+                    <h2 class="ais-section-title">Instrucciones</h2>
+                    <p class="ais-section-note">Lo que el agente tiene siempre presente antes de leer el mensaje del cliente.</p>
                 </div>
-                <div class="card-body">
-                    <label class="form-label fw-semibold">System Prompt (Instrucciones Base) <span class="text-danger">*</span></label>
-                    <textarea name="personality" class="form-control @error('personality') is-invalid @enderror"
-                        rows="6" required placeholder="Define el comportamiento y personalidad del agente...">{{ old('personality', $agent->personality ?? 'Eres un asistente útil y amable.') }}</textarea>
-                    <small class="text-muted d-block mt-2">Este prompt controla cómo el agente se comporta y responde a los usuarios.</small>
+
+                <div>
+                    <label class="form-label fw-semibold">Instrucciones base <span class="ais-required">· obligatorio</span></label>
+                    <textarea name="personality" class="form-control ais-prompt @error('personality') is-invalid @enderror"
+                        rows="7" required placeholder="Qué tono usa, qué puede prometer y cuándo debe pasar la conversación a una persona">{{ old('personality', $agent->personality ?? 'Eres un asistente útil y amable.') }}</textarea>
+                    <div class="ais-help mt-1">Es lo que más nota el cliente: define tono, límites y cuándo escalar a un agente humano.</div>
                     @error('personality')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <!-- LLM Provider & Model -->
-            <div class="card mb-3">
-                <div class="card-header bg-light-success">
-                    <h5 class="mb-0"><i class="fa-solid fa-microchip me-2"></i>Proveedor LLM</h5>
+            {{-- Proveedor y modelo --}}
+            <div class="ais-card">
+                <div>
+                    <h2 class="ais-section-title">Proveedor y modelo</h2>
+                    <p class="ais-section-note">Quién ejecuta el modelo y con qué credencial se le llama.</p>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Proveedor <span class="text-danger">*</span></label>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Proveedor <span class="ais-required">· obligatorio</span></label>
                         <select name="provider" id="provider" class="form-select @error('provider') is-invalid @enderror" required>
-                            <option value="">-- Seleccionar Proveedor --</option>
+                            <option value="">Seleccionar proveedor</option>
                             @foreach ($providers as $key => $provider)
                                 <option value="{{ $key }}" {{ old('provider', $agent->provider ?? '') === $key ? 'selected' : '' }}>
                                     {{ $provider['label'] }}
@@ -81,15 +87,20 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Modelo <span class="text-danger">*</span></label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Modelo <span class="ais-required">· obligatorio</span></label>
                         <select name="model" id="model" class="form-select @error('model') is-invalid @enderror" required>
-                            <option value="">-- Seleccionar Modelo --</option>
+                            <option value="">Seleccionar modelo</option>
                             @if ($agent->provider ?? false)
-                                @foreach ($providers[$agent->provider]['models'] as $model)
-                                    <option value="{{ $model }}" {{ old('model', $agent->model ?? '') === $model ? 'selected' : '' }}>
-                                        {{ $model }}
+                                {{-- models es {clave: etiqueta} (p.ej. "claude-opus-5" =>
+                                     "Claude Opus 5"); con "as $model" (forma de un solo
+                                     valor) PHP liga $model a la ETIQUETA, no a la clave,
+                                     así el value nunca coincidía con el slug guardado en
+                                     $agent->model y la opción correcta no quedaba
+                                     seleccionada al editar. --}}
+                                @foreach ($providers[$agent->provider]['models'] as $modelKey => $modelLabel)
+                                    <option value="{{ $modelKey }}" {{ old('model', $agent->model ?? '') === $modelKey ? 'selected' : '' }}>
+                                        {{ $modelLabel }}
                                     </option>
                                 @endforeach
                             @endif
@@ -98,25 +109,23 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    <div class="mb-0">
-                        <label class="form-label fw-semibold">API Key</label>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Clave de API</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
                             <input type="password" name="api_key" id="api_key" class="form-control @error('api_key') is-invalid @enderror"
-                                placeholder="{{ ($agent->getApiKey() ?? null) ? '••••••••••••••••••••' : 'sk-... o xxxx-xxxx-xxxx' }}">
-                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                placeholder="{{ ($agent->getApiKey() ?? null) ? '••••••••••••••••••••' : 'sk-... o xxxx-xxxx-xxxx' }}" autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey" title="Mostrar u ocultar la clave" aria-label="Mostrar u ocultar la clave">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
-                            <button class="btn btn-primary" type="button" id="testConnection">
-                                <i class="fa-solid fa-plug"></i> Probar
-                            </button>
+                            <button class="btn btn-secondary" type="button" id="testConnection">Probar</button>
                         </div>
-                        @if ($agent->getApiKey() ?? null)
-                            <small class="text-muted d-block mt-2"><i class="fa-solid fa-lock me-1"></i>API key guardada. Deja vacío para mantener la actual.</small>
-                        @else
-                            <small class="text-muted d-block mt-2">Tu API key se cifra y almacena de forma segura.</small>
-                        @endif
+                        <div class="ais-help mt-1">
+                            @if ($agent->getApiKey() ?? null)
+                                Se guarda cifrada. Déjala en blanco para conservar la que ya hay.
+                            @else
+                                Se guarda cifrada. El botón Probar confirma que vale antes de guardar nada.
+                            @endif
+                        </div>
                         @error('api_key')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -124,190 +133,56 @@
                 </div>
             </div>
 
-            <!-- Advanced Parameters -->
-            <div class="card mb-3">
-                <div class="card-header bg-light-warning">
-                    <h5 class="mb-0"><i class="fa-solid fa-sliders me-2"></i>Parámetros Avanzados</h5>
+            {{-- Ajuste fino --}}
+            <div class="ais-card">
+                <div>
+                    <h2 class="ais-section-title">Ajuste fino</h2>
+                    <p class="ais-section-note">Los valores por defecto funcionan bien. Tócalos solo si sabes qué esperas cambiar.</p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Temperature (0-2)</label>
-                            <input type="number" name="temperature" class="form-control" step="0.1" min="0" max="2"
-                                value="{{ old('temperature', $agent->parameters['temperature'] ?? 0.7) }}">
-                            <small class="text-muted">Mayor = más creativo, Menor = más determinista</small>
-                        </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Max Tokens</label>
-                            <input type="number" name="max_tokens" class="form-control" min="1" max="128000"
-                                value="{{ old('max_tokens', $agent->parameters['max_tokens'] ?? 2048) }}">
-                            <small class="text-muted">Máximo de tokens en la respuesta</small>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Top P (0-1)</label>
-                            <input type="number" name="top_p" class="form-control" step="0.01" min="0" max="1"
-                                value="{{ old('top_p', $agent->parameters['top_p'] ?? 1.0) }}">
-                            <small class="text-muted">Nucleus sampling</small>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Frequency Penalty (-2 a 2)</label>
-                            <input type="number" name="frequency_penalty" class="form-control" step="0.1" min="-2" max="2"
-                                value="{{ old('frequency_penalty', $agent->parameters['frequency_penalty'] ?? 0) }}">
-                            <small class="text-muted">Penaliza palabras repetidas</small>
-                        </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Temperatura</label>
+                        <input type="number" name="temperature" class="form-control" step="0.1" min="0" max="2"
+                            value="{{ old('temperature', $agent->parameters['temperature'] ?? 0.7) }}">
+                        <div class="ais-help mt-1">0 responde siempre igual; 2, muy suelto. Entre 0 y 2.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Longitud máxima</label>
+                        <input type="number" name="max_tokens" class="form-control" min="1" max="128000"
+                            value="{{ old('max_tokens', $agent->parameters['max_tokens'] ?? 2048) }}">
+                        <div class="ais-help mt-1">Tokens como techo de cada respuesta.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Top P</label>
+                        <input type="number" name="top_p" class="form-control" step="0.01" min="0" max="1"
+                            value="{{ old('top_p', $agent->parameters['top_p'] ?? 1.0) }}">
+                        <div class="ais-help mt-1">Cuánto vocabulario se permite. Entre 0 y 1.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Penalización por repetición</label>
+                        <input type="number" name="frequency_penalty" class="form-control" step="0.1" min="-2" max="2"
+                            value="{{ old('frequency_penalty', $agent->parameters['frequency_penalty'] ?? 0) }}">
+                        <div class="ais-help mt-1">Sube si repite frases. Entre −2 y 2.</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Save Button -->
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-check me-2"></i>Guardar Configuración
-                </button>
+            {{-- Pie de acciones --}}
+            <div class="ais-foot">
+                <span class="ais-foot-hint">Los cambios entran en vigor en la siguiente conversación que atienda el agente.</span>
+                <button type="submit" class="btn btn-primary">{{ $hasAgent ? 'Guardar cambios' : 'Crear el agente' }}</button>
             </div>
-        </form>
-    </div>
 
-    <!-- Sidebar - Statistics & Info -->
-    <div class="col-lg-4">
-        <!-- Status Card -->
-        <div class="card mb-3">
-            <div class="card-header bg-light-secondary">
-                <h5 class="mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Estado del Agente</h5>
-            </div>
-            <div class="card-body">
-                @if ($hasAgent ?? false)
-                    <div class="text-center">
-                        <div class="mb-3">
-                            <span class="badge bg-{{ $agent->status === 'active' ? 'success' : 'secondary' }} p-3 fs-6">
-                                <i class="fa-solid fa-robot me-1"></i>{{ $agent->status_label }}
-                            </span>
-                        </div>
-                        <h5 class="mb-2">{{ $agent->name ?? 'Sin nombre' }}</h5>
-                        <p class="text-muted mb-1">Proveedor: <strong>{{ $agent->provider_label ?? 'N/A' }}</strong></p>
-                        <p class="text-muted mb-3">Modelo: <strong>{{ $agent->model ?? 'N/A' }}</strong></p>
+    </form>
 
-                        @if ($agent->enabled_at)
-                            <div class="alert alert-info py-2">
-                                <small><i class="fa-solid fa-calendar me-1"></i>Activado: {{ $agent->enabled_at->format('d/m/Y H:i') }}</small>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="alert alert-info mb-0">
-                        <i class="fa-solid fa-circle-info me-2"></i>
-                        <strong>Sin configurar</strong>
-                        <p class="mb-0 mt-2 small">Rellena el formulario para crear tu primer agente IA.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        <!-- Quick Links Card -->
-        <div class="card">
-            <div class="card-header bg-light-info">
-                <h5 class="mb-0"><i class="fa-solid fa-circle-question me-2"></i>Ayuda Rápida</h5>
-            </div>
-            <div class="card-body">
-                <h6 class="mb-2">¿Cómo obtener API Keys?</h6>
-                <ul class="small mb-3">
-                    <li><a href="https://platform.openai.com/api-keys" target="_blank" class="text-decoration-none">OpenAI <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
-                    <li><a href="https://console.anthropic.com/" target="_blank" class="text-decoration-none">Anthropic <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
-                    <li><a href="https://aistudio.google.com/" target="_blank" class="text-decoration-none">Google Gemini <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
-                    <li><a href="https://ollama.ai/" target="_blank" class="text-decoration-none">Ollama (Local) <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
-                </ul>
-
-                <hr>
-
-                <h6 class="mb-2">Parámetros</h6>
-                <ul class="small mb-0">
-                    <li><strong>Temperature:</strong> Creatividad (0=determinista, 2=muy creativo)</li>
-                    <li><strong>Max Tokens:</strong> Largo máximo de la respuesta</li>
-                    <li><strong>Top P:</strong> Diversidad de tokens seleccionados</li>
-                </ul>
-            </div>
+    {{-- ── Ayuda ────────────────────────────────────────────────────── --}}
+    <div class="ais-rail">
+        @include('helpdeskagents::managers.ai-agent.partials.settings-rail', ['showUsage' => $hasAgent])
+        <div class="ais-note-card">
+            <h3 class="ais-note-title">Antes de activarlo</h3>
+            <p class="ais-note-body">Prueba la conexión y escribe las instrucciones antes de poner el estado en Activo: en cuanto lo esté, contestará al siguiente cliente que escriba.</p>
         </div>
     </div>
+
 </div>
-
-@push('scripts')
-<script>
-const providers = @json($providers);
-
-// Toggle API key visibility
-document.getElementById('toggleApiKey')?.addEventListener('click', function() {
-    const input = document.getElementById('api_key');
-    const icon = this.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-});
-
-// Update model dropdown when provider changes
-document.getElementById('provider')?.addEventListener('change', function() {
-    const provider = this.value;
-    const modelSelect = document.getElementById('model');
-    modelSelect.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
-
-    if (provider && providers[provider]) {
-        providers[provider].models.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            modelSelect.appendChild(option);
-        });
-    }
-});
-
-// Test connection
-document.getElementById('testConnection')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    const provider = document.getElementById('provider').value;
-    const model = document.getElementById('model').value;
-    const apiKey = document.getElementById('api_key').value;
-
-    if (!provider || !model) {
-        toastr.warning('Por favor selecciona proveedor y modelo', 'Advertencia');
-        return;
-    }
-
-    const btn = this;
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Probando...';
-
-    fetch('{{ route("helpdesk.ai.settings.test") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({ provider, model, api_key: apiKey }),
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            toastr.success(data.message, 'Conexión exitosa');
-        } else {
-            toastr.error(data.message, 'Error');
-        }
-    })
-    .catch(err => {
-        toastr.error('Error al conectar: ' + err.message, 'Error');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-    });
-});
-</script>
-@endpush

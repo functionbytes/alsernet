@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,11 +53,6 @@ final class EmployeeFormAccessChecker implements EmployeeFormAccessCheckerInterf
      */
     private $employeeDataProvider;
 
-    /**
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
-     * @param EmployeeDataProviderInterface $employeeDataProvider
-     * @param TabRepository $tabRepository
-     */
     public function __construct(
         ContextEmployeeProviderInterface $contextEmployeeProvider,
         EmployeeDataProviderInterface $employeeDataProvider,
@@ -72,7 +68,7 @@ final class EmployeeFormAccessChecker implements EmployeeFormAccessCheckerInterf
      */
     public function isRestrictedAccess($employeeId)
     {
-        if (!is_int($employeeId)) {
+        if (! is_int($employeeId)) {
             throw new \InvalidArgumentException(sprintf('Employee ID must be an integer, %s given', gettype($employeeId)));
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ use Symfony\Component\Translation\MessageCatalogueInterface;
 /**
  * Be able to retrieve information from legacy translation files
  */
-class ExternalModuleLegacySystemProvider extends AbstractProvider implements UseDefaultCatalogueInterface, SearchProviderInterface, UseModuleInterface
+class ExternalModuleLegacySystemProvider extends AbstractProvider implements SearchProviderInterface, UseDefaultCatalogueInterface, UseModuleInterface
 {
     /**
      * @var ModuleProvider Module provider
@@ -86,7 +87,7 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      */
     public function getFilters()
     {
-        return ['#^' . preg_quote($this->domain) . '([A-Z]|$)#'];
+        return ['#^'.preg_quote($this->domain).'([A-Z]|$)#'];
     }
 
     /**
@@ -94,7 +95,7 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      */
     public function getTranslationDomains()
     {
-        return ['^' . preg_quote($this->domain) . '([A-Z]|$)'];
+        return ['^'.preg_quote($this->domain).'([A-Z]|$)'];
     }
 
     /**
@@ -110,7 +111,7 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      */
     public function setModuleName($moduleName)
     {
-        if (null === $this->moduleName || empty($this->moduleName)) {
+        if ($this->moduleName === null || empty($this->moduleName)) {
             UnsupportedModuleException::moduleNotProvided(self::getIdentifier());
         }
 
@@ -123,13 +124,12 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
     }
 
     /**
-     * @param string $domain
-     *
+     * @param  string  $domain
      * @return AbstractProvider|SearchProviderInterface|void
      */
     public function setDomain($domain)
     {
-        throw new InvalidArgumentException(__CLASS__ . ' does not allow calls to setDomain()');
+        throw new InvalidArgumentException(__CLASS__.' does not allow calls to setDomain()');
     }
 
     /**
@@ -155,8 +155,7 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
             $translationCatalogue = $this->moduleProvider
                 ->setModuleName($this->moduleName)
                 ->setLocale($this->locale)
-                ->getXliffCatalogue()
-            ;
+                ->getXliffCatalogue();
         } catch (FileNotFoundException $exception) {
             $translationCatalogue = $this->buildTranslationCatalogueFromLegacyFiles();
         }
@@ -169,7 +168,7 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      */
     public function getDefaultResourceDirectory()
     {
-        return $this->resourceDirectory . DIRECTORY_SEPARATOR . $this->moduleName . DIRECTORY_SEPARATOR . 'translations' . DIRECTORY_SEPARATOR;
+        return $this->resourceDirectory.DIRECTORY_SEPARATOR.$this->moduleName.DIRECTORY_SEPARATOR.'translations'.DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -243,13 +242,12 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      * Replaces dots in the catalogue's domain names
      * and filters out domains not corresponding to the one from this module
      *
-     * @param MessageCatalogueInterface $catalogue
      *
      * @return MessageCatalogue
      */
     private function filterDomains(MessageCatalogueInterface $catalogue)
     {
-        $normalizer = new DomainNormalizer();
+        $normalizer = new DomainNormalizer;
         $newCatalogue = new MessageCatalogue($catalogue->getLocale());
 
         // add delimiter to
@@ -311,9 +309,9 @@ class ExternalModuleLegacySystemProvider extends AbstractProvider implements Use
      */
     private function getCachedDefaultCatalogue()
     {
-        $catalogueCacheKey = $this->moduleName . '|' . $this->locale;
+        $catalogueCacheKey = $this->moduleName.'|'.$this->locale;
 
-        if (!isset($this->defaultCatalogueCache[$catalogueCacheKey])) {
+        if (! isset($this->defaultCatalogueCache[$catalogueCacheKey])) {
             $this->defaultCatalogueCache[$catalogueCacheKey] = $this->buildFreshDefaultCatalogue();
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class NoTagsValidator extends ConstraintValidator
 {
     public function validate($value, Constraint $constraint): void
     {
-        if (!$constraint instanceof NoTags) {
+        if (! $constraint instanceof NoTags) {
             throw new UnexpectedTypeException($constraint, NoTags::class);
         }
 
@@ -48,7 +49,7 @@ class NoTagsValidator extends ConstraintValidator
             return;
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new UnexpectedTypeException($value, 'string');
         }
 
@@ -56,8 +57,7 @@ class NoTagsValidator extends ConstraintValidator
             $this->context->buildViolation($constraint->message)
                 ->setTranslationDomain('Admin.Notifications.Error')
                 ->setParameter('%s', $this->formatValue($value))
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

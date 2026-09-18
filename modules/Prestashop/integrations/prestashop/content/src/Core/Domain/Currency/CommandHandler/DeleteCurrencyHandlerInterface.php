@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ interface DeleteCurrencyHandlerInterface
 {
     /**
      * Handles the deletion logic of currency.
-     *
-     * @param DeleteCurrencyCommand $command
      */
     public function handle(DeleteCurrencyCommand $command);
 }

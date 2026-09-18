@@ -2,8 +2,11 @@
 
 namespace Modules\HelpdeskTickets\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -24,17 +27,19 @@ use Modules\HelpdeskTickets\Models\TicketMessage;
  * (FetchTicketEmailsJob) creaba el TicketItem pero, si el agente ya tenía el
  * ticket abierto, no aparecía hasta recargar la página a mano — no había
  * ningún mecanismo de refresco en vivo del hilo. Se transmite en el mismo
- * canal de presencia ticket.{id} que ya usan TicketViewing/TicketTyping
- * (mismo patrón, mismo canal, misma autorización vía TicketPolicy::view en
- * routes/channels.php) — el payload es mínimo a propósito: el frontend, al
- * recibirlo, vuelve a pedir TicketDetailDataController::data() completo
- * (fetchDetailData(), ya usado en ~15 sitios) en vez de reconstruir aquí el
- * mapeo completo del hilo (traducción, HTML purificado, adjuntos…), que ya
- * existe una sola vez en el controller.
+ * canal de presencia ticket.{id} que ya usan TicketViewing/TicketTyping y
+ * también en helpdesk.tickets para que el listado se actualice sin esperar
+ * al polling. Ambos canales están autorizados: el primero por TicketPolicy y
+ * el segundo por el permiso de ver la bandeja. El payload es mínimo a
+ * propósito: el frontend, al recibirlo, vuelve a pedir
+ * TicketDetailDataController::data() completo (fetchDetailData(), ya usado
+ * en ~15 sitios) en vez de reconstruir aquí el mapeo completo del hilo
+ * (traducción, HTML purificado, adjuntos…), que ya existe una sola vez en el
+ * controller.
  */
 class MessageAdded implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public TicketMessage|TicketItem $item;
 
@@ -44,11 +49,14 @@ class MessageAdded implements ShouldBroadcast
     }
 
     /**
-     * @return array<int, PresenceChannel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
-        return [new PresenceChannel('ticket.'.$this->item->ticket_id)];
+        return [
+            new PresenceChannel('ticket.'.$this->item->ticket_id),
+            new PrivateChannel('helpdesk.tickets'),
+        ];
     }
 
     public function broadcastAs(): string
@@ -64,6 +72,7 @@ class MessageAdded implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
+            'ticket_id' => $this->item->ticket_id,
             'item_id' => $this->item->id,
             'is_internal' => (bool) $this->item->is_internal,
         ];

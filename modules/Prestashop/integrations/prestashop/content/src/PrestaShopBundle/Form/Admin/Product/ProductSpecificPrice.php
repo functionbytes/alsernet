@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,38 +55,47 @@ class ProductSpecificPrice extends CommonAbstractType
      * @var LegacyContext
      */
     public $context;
+
     /**
      * @var array
      */
     private $countries;
+
     /**
      * @var array
      */
     private $currencies;
+
     /**
      * @var Currency
      */
     public $currency;
+
     /**
      * @var CustomerDataProvider
      */
     public $customerDataProvider;
+
     /**
      * @var array
      */
     private $groups;
+
     /**
      * @var array<int|array>
      */
     public $locales;
+
     /**
      * @var Router
      */
     public $router;
+
     /**
      * @var array
      */
     public $shops;
+
     /**
      * @var TranslatorInterface
      */
@@ -94,14 +104,14 @@ class ProductSpecificPrice extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param Router $router
-     * @param TranslatorInterface $translator
-     * @param Context $shopContextAdapter
-     * @param CountryDataProvider $countryDataprovider
-     * @param CurrencyDataProviderInterface $currencyDataprovider
-     * @param GroupDataProvider $groupDataprovider
-     * @param LegacyContext $legacyContext
-     * @param CustomerDataProvider $customerDataProvider
+     * @param  Router  $router
+     * @param  TranslatorInterface  $translator
+     * @param  Context  $shopContextAdapter
+     * @param  CountryDataProvider  $countryDataprovider
+     * @param  CurrencyDataProviderInterface  $currencyDataprovider
+     * @param  GroupDataProvider  $groupDataprovider
+     * @param  LegacyContext  $legacyContext
+     * @param  CustomerDataProvider  $customerDataProvider
      */
     public function __construct(
         $router,
@@ -141,8 +151,8 @@ class ProductSpecificPrice extends CommonAbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        //If context multi-shop, hide shop selector
-        //Else show selector
+        // If context multi-shop, hide shop selector
+        // Else show selector
         if (count($this->shops) == 1) {
             $builder->add(
                 'sp_id_shop',
@@ -212,7 +222,7 @@ class ProductSpecificPrice extends CommonAbstractType
                 [
                     // "%QUERY" is appended to url in order to avoid "%" sign being encoded into "%25",
                     // it used as a placeholder to replace with actual query in JS
-                    'remote_url' => $this->router->generate('admin_customers_search', ['sf2' => 1]) . '&customer_search=%QUERY',
+                    'remote_url' => $this->router->generate('admin_customers_search', ['sf2' => 1]).'&customer_search=%QUERY',
                     'mapping_value' => 'id_customer',
                     'mapping_name' => 'fullname_and_email',
                     'placeholder' => $this->translator->trans('All customers', [], 'Admin.Global'),
@@ -348,7 +358,7 @@ class ProductSpecificPrice extends CommonAbstractType
 
             $form = $event->getForm();
 
-            //bypass SF validation, define submitted value in choice list
+            // bypass SF validation, define submitted value in choice list
             $form->add(
                 'sp_id_product_attribute',
                 FormType\ChoiceType::class,

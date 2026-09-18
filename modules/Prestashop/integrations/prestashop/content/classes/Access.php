@@ -361,7 +361,7 @@ class AccessCore extends ObjectModel
         ');
 
         if (empty($roles)) {
-            throw new \Exception('Cannot find role slug');
+            throw new Exception('Cannot find role slug');
         }
 
         $res = [];

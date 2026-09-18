@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,14 +45,11 @@ class MaintenanceController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param FormInterface $form
-     *
      * @return Response
      */
-    public function indexAction(Request $request, FormInterface $form = null)
+    public function indexAction(Request $request, ?FormInterface $form = null)
     {
-        if (null === $form) {
+        if ($form === null) {
             $form = $this->get('prestashop.adapter.maintenance.form_handler')->getForm();
         }
 
@@ -69,11 +67,10 @@ class MaintenanceController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))",
      *     message="You do not have permission to edit this.",
      *     redirectRoute="admin_maintenance")
+     *
      * @DemoRestricted(redirectRoute="admin_maintenance")
      *
      * @return RedirectResponse
@@ -86,14 +83,14 @@ class MaintenanceController extends FrameworkBundleAdminController
         $form = $this->get('prestashop.adapter.maintenance.form_handler')->getForm();
         $form->handleRequest($request);
 
-        if (!$form->isSubmitted()) {
+        if (! $form->isSubmitted()) {
             return $redirectResponse;
         }
 
         $data = $form->getData();
         $saveErrors = $this->get('prestashop.adapter.maintenance.form_handler')->save($data);
 
-        if (0 === count($saveErrors)) {
+        if (count($saveErrors) === 0) {
             $this->addFlash('success', $this->trans('Successful update.', 'Admin.Notifications.Success'));
 
             return $redirectResponse;

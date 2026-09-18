@@ -43,34 +43,28 @@ use Symfony\Component\Translation\MessageCatalogueInterface;
 class TranslationFinder
 {
     private const ERR_NO_FILES_IN_DIRECTORY = 1;
+
     private const ERR_DIRECTORY_NOT_FOUND = 2;
 
     /**
-     * @param array $paths a list of paths when we can look for translations
-     * @param string $locale the Symfony (not the PrestaShop one) locale
-     * @param string|null $pattern a regular expression
-     *
-     * @return MessageCatalogue
+     * @param  array  $paths  a list of paths when we can look for translations
+     * @param  string  $locale  the Symfony (not the PrestaShop one) locale
+     * @param  string|null  $pattern  a regular expression
      *
      * @throws FileNotFoundException
      */
-    public function getCatalogueFromPaths(array $paths, string $locale, string $pattern = null): MessageCatalogue
+    public function getCatalogueFromPaths(array $paths, string $locale, ?string $pattern = null): MessageCatalogue
     {
         $translationFiles = $this->getTranslationFilesFromPath($paths, $pattern);
 
         return $this->buildCatalogueFromFiles($translationFiles, $locale);
     }
 
-    /**
-     * @param MessageCatalogueInterface $catalogue
-     *
-     * @return MessageCatalogue
-     */
     private function removeTrailingLocaleFromDomains(MessageCatalogueInterface $catalogue): MessageCatalogue
     {
         $messages = $catalogue->all();
         $locale = $catalogue->getLocale();
-        $localeSuffix = '.' . $locale;
+        $localeSuffix = '.'.$locale;
         $suffixLength = strlen($localeSuffix);
 
         foreach ($catalogue->getDomains() as $domain) {
@@ -85,18 +79,15 @@ class TranslationFinder
     }
 
     /**
-     * @param string[] $paths
-     * @param string|null $pattern
-     *
-     * @return Finder
+     * @param  string[]  $paths
      *
      * @throws FileNotFoundException
      */
     private function getTranslationFilesFromPath(array $paths, ?string $pattern = null): Finder
     {
-        $finder = new Finder();
+        $finder = new Finder;
 
-        if (null !== $pattern) {
+        if ($pattern !== null) {
             $finder->name($pattern);
         }
 
@@ -113,20 +104,14 @@ class TranslationFinder
         return $translationFiles;
     }
 
-    /**
-     * @param Finder $translationFiles
-     * @param string $locale
-     *
-     * @return MessageCatalogue
-     */
     private function buildCatalogueFromFiles(Finder $translationFiles, string $locale): MessageCatalogue
     {
         $messageCatalogue = new MessageCatalogue($locale);
-        $xliffFileLoader = new XliffFileLoader();
+        $xliffFileLoader = new XliffFileLoader;
 
         /** @var SplFileInfo $file */
         foreach ($translationFiles as $file) {
-            if ('xlf' === $file->getExtension()) {
+            if ($file->getExtension() === 'xlf') {
                 $domain = $this->getDomainFromFile($file, $locale);
 
                 $fileCatalogue = $xliffFileLoader->load($file->getPathname(), $locale, $domain);
@@ -139,19 +124,13 @@ class TranslationFinder
         return $messageCatalogue;
     }
 
-    /**
-     * @param SplFileInfo $file
-     * @param string $locale
-     *
-     * @return string
-     */
     private function getDomainFromFile(SplFileInfo $file, string $locale): string
     {
         $basename = $file->getBasename('.xlf');
 
         $domain = $basename;
         if (strpos($basename, $locale) === false) {
-            $domain .= '.' . $locale;
+            $domain .= '.'.$locale;
         }
 
         return $domain;

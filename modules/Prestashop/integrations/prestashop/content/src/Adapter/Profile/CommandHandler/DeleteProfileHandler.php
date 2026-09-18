@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,7 @@ final class DeleteProfileHandler extends AbstractProfileHandler implements Delet
     private $contextEmployeeProvider;
 
     /**
-     * @param int $superAdminProfileId
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
+     * @param  int  $superAdminProfileId
      */
     public function __construct($superAdminProfileId, ContextEmployeeProviderInterface $contextEmployeeProvider)
     {
@@ -87,7 +87,7 @@ final class DeleteProfileHandler extends AbstractProfileHandler implements Delet
                 throw new CannotDeleteSuperAdminProfileException(sprintf('Cannot delete Profile with id %s', var_export($entityId, true)));
             }
 
-            if (false === $entity->delete()) {
+            if ($entity->delete() === false) {
                 throw new FailedToDeleteProfileException(sprintf('Failed to delete Profile with id %s', var_export($entityId, true)));
             }
         } catch (PrestaShopException $e) {

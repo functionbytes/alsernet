@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,10 +61,7 @@ class ContactType extends TranslatorAwareType
     private $singleDefaultLanguageArrayToFilledArrayDataTransformer;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param DataTransformerInterface $singleDefaultLanguageArrayToFilledArrayDataTransformer
-     * @param bool $isShopFeatureEnabled
+     * @param  bool  $isShopFeatureEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -86,7 +84,7 @@ class ContactType extends TranslatorAwareType
                 'label' => $this->trans('Title', 'Admin.Global'),
                 'help' => $this->trans('Contact name (e.g. Customer Support).', 'Admin.Shopparameters.Help'),
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -140,8 +138,7 @@ class ContactType extends TranslatorAwareType
                         ]),
                     ],
                 ],
-            ])
-        ;
+            ]);
 
         $builder->get('title')->addModelTransformer($this->singleDefaultLanguageArrayToFilledArrayDataTransformer);
 

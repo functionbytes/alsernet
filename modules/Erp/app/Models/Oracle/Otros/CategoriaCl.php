@@ -5,7 +5,9 @@ namespace Modules\Erp\Models\Oracle\Otros;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\FamiliaCl;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierErpCategory;
 
 /**
  * Modelo para la tabla CATEGORIA_CL
@@ -53,7 +55,7 @@ class CategoriaCl extends Model
      */
     public function categoriaCl()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CategoriaCl::class, 'idcategoria_cl', 'idcategoria_cl');
+        return $this->belongsTo(CategoriaCl::class, 'idcategoria_cl', 'idcategoria_cl');
     }
 
     /**
@@ -62,7 +64,7 @@ class CategoriaCl extends Model
      */
     public function deporteCl()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\DeporteCl::class, 'iddeporte_cl', 'iddeporte_cl');
+        return $this->belongsTo(DeporteCl::class, 'iddeporte_cl', 'iddeporte_cl');
     }
 
     /**
@@ -70,7 +72,7 @@ class CategoriaCl extends Model
      */
     public function supplierErpCategories(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierErpCategory::class, 'erp_category_id', 'idcategoria_cl');
+        return $this->hasMany(SupplierErpCategory::class, 'erp_category_id', 'idcategoria_cl');
     }
 
     /**
@@ -78,6 +80,6 @@ class CategoriaCl extends Model
      */
     public function familias()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Configuracion\FamiliaCl::class, 'idcategoria_cl', 'idcategoria_cl');
+        return $this->hasMany(FamiliaCl::class, 'idcategoria_cl', 'idcategoria_cl');
     }
 }

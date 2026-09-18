@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ final class ManufacturerGridDataFactory implements GridDataFactoryInterface
      */
     private $manufacturerLogoThumbnailProvider;
 
-    /**
-     * @param GridDataFactoryInterface $manufacturerDataFactory
-     * @param ImageProviderInterface $manufacturerLogoThumbnailProvider
-     */
     public function __construct(
         GridDataFactoryInterface $manufacturerDataFactory,
         ImageProviderInterface $manufacturerLogoThumbnailProvider
@@ -77,8 +74,6 @@ final class ManufacturerGridDataFactory implements GridDataFactoryInterface
     }
 
     /**
-     * @param array $manufacturers
-     *
      * @return array
      */
     private function applyModification(array $manufacturers)
@@ -88,7 +83,7 @@ final class ManufacturerGridDataFactory implements GridDataFactoryInterface
                 $manufacturer['id_manufacturer']
             );
 
-            if (null === $manufacturers[$i]['addresses_count']) {
+            if ($manufacturers[$i]['addresses_count'] === null) {
                 $manufacturers[$i]['addresses_count'] = '--';
             }
         }

@@ -271,15 +271,14 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
             return;
         }
 
-        NavService::registerSidebar('helpdesk', [
-            'title' => 'Chat Flows',
+        // Vive en Ajustes, no en el menu operativo del dia a dia: construir y
+        // mantener flujos de chatbot es una tarea de configuracion, igual que
+        // Macros o Vistas guardadas.
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk · Chat Flows',
+            'order' => 220,
             'items' => [
-                [
-                    'label' => 'Chat Flows',
-                    'route' => 'chatflow.index',
-                    'icon' => 'fas fa-diagram-project',
-                    'permission' => 'chatflow.view',
-                ],
+                ['label' => 'Chat Flows', 'route' => 'chatflow.index', 'permission' => 'chatflow.view'],
             ],
         ]);
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class FilterFormFactoryFormActionDecorator implements GridFilterFormFactor
     private $formActionRoute;
 
     /**
-     * @param GridFilterFormFactoryInterface $delegate
-     * @param UrlGeneratorInterface $urlGenerator
-     * @param string $formActionRoute will change the form action of filters form to this
+     * @param  string  $formActionRoute  will change the form action of filters form to this
      */
     public function __construct(
         GridFilterFormFactoryInterface $delegate,

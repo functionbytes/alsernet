@@ -220,7 +220,19 @@ class CustomerTimelineService
                 return $events;
             }
 
+            // Columnas explícitas, igual que erpOrderEvents()/erpInvoiceEvents():
+            // (array) $r sobre la fila completa filtraba a este JSON columnas
+            // internas de helpdesk_conversations (asignación, tags, ids de
+            // agente...) que no pertenecen a la ficha de cliente del ERP.
+            // Se filtra por hasColumn() porque el set exacto de columnas
+            // varía entre despliegues.
+            $safeColumns = array_values(array_filter(
+                ['id', 'subject', 'title', 'status_id', 'priority', 'created_at', 'last_message_at', 'closed_at'],
+                fn ($col) => Schema::connection('helpdesk')->hasColumn('helpdesk_conversations', $col)
+            ));
+
             $rows = DB::connection('helpdesk')->table('helpdesk_conversations')
+                ->select($safeColumns)
                 ->where(function ($q) use ($email, $candidates) {
                     foreach ($candidates as $col) {
                         $q->orWhere($col, $email);

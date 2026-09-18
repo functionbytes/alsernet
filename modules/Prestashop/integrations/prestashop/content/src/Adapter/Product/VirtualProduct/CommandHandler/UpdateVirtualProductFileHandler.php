@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,10 +50,6 @@ final class UpdateVirtualProductFileHandler implements UpdateVirtualProductFileH
      */
     private $virtualProductFileRepository;
 
-    /**
-     * @param VirtualProductUpdater $virtualProductUpdater
-     * @param VirtualProductFileRepository $virtualProductFileRepository
-     */
     public function __construct(
         VirtualProductUpdater $virtualProductUpdater,
         VirtualProductFileRepository $virtualProductFileRepository
@@ -75,22 +72,18 @@ final class UpdateVirtualProductFileHandler implements UpdateVirtualProductFileH
         );
     }
 
-    /**
-     * @param VirtualProductFile $virtualProductFile
-     * @param UpdateVirtualProductFileCommand $command
-     */
     private function fillEntityWithCommandData(VirtualProductFile $virtualProductFile, UpdateVirtualProductFileCommand $command): void
     {
-        if (null !== $command->getDisplayName()) {
+        if ($command->getDisplayName() !== null) {
             $virtualProductFile->display_filename = $command->getDisplayName();
         }
-        if (null !== $command->getAccessDays()) {
+        if ($command->getAccessDays() !== null) {
             $virtualProductFile->nb_days_accessible = $command->getAccessDays();
         }
-        if (null !== $command->getDownloadTimesLimit()) {
+        if ($command->getDownloadTimesLimit() !== null) {
             $virtualProductFile->nb_downloadable = $command->getDownloadTimesLimit();
         }
-        if (null !== $command->getExpirationDate()) {
+        if ($command->getExpirationDate() !== null) {
             $virtualProductFile->date_expiration = $command->getExpirationDate()->format(DateTime::DEFAULT_DATE_FORMAT);
         }
     }

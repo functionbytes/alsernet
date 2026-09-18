@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,22 +41,12 @@ class TaxComputer
      */
     private $taxRulesGroupRepository;
 
-    /**
-     * @param TaxRulesGroupRepository $taxRulesGroupRepository
-     */
     public function __construct(
         TaxRulesGroupRepository $taxRulesGroupRepository
     ) {
         $this->taxRulesGroupRepository = $taxRulesGroupRepository;
     }
 
-    /**
-     * @param DecimalNumber $priceTaxExcluded
-     * @param TaxRulesGroupId $taxRulesGroupId
-     * @param CountryId $countryId
-     *
-     * @return DecimalNumber
-     */
     public function computePriceWithTaxes(
         DecimalNumber $priceTaxExcluded,
         TaxRulesGroupId $taxRulesGroupId,
@@ -66,13 +57,6 @@ class TaxComputer
         return $priceTaxExcluded->times($taxRatio);
     }
 
-    /**
-     * @param DecimalNumber $priceTaxIncluded
-     * @param TaxRulesGroupId $taxRulesGroupId
-     * @param CountryId $countryId
-     *
-     * @return DecimalNumber
-     */
     public function computePriceWithoutTaxes(
         DecimalNumber $priceTaxIncluded,
         TaxRulesGroupId $taxRulesGroupId,
@@ -83,16 +67,10 @@ class TaxComputer
         return $priceTaxIncluded->dividedBy($taxRatio);
     }
 
-    /**
-     * @param TaxRulesGroupId $taxRulesGroupId
-     * @param CountryId $countryId
-     *
-     * @return DecimalNumber
-     */
     private function getTaxRatio(TaxRulesGroupId $taxRulesGroupId, CountryId $countryId): DecimalNumber
     {
         $taxRulesGroup = $this->taxRulesGroupRepository->getTaxRulesGroupDetails($taxRulesGroupId);
-        if (!empty($taxRulesGroup['rates'])) {
+        if (! empty($taxRulesGroup['rates'])) {
             // Use the tax rate associated to context country, or the first one as fallback
             $countryTaxRate = $taxRulesGroup['rates'][$countryId->getValue()] ?? reset($taxRulesGroup['rates']);
         } else {

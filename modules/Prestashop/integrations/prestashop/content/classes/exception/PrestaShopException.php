@@ -157,10 +157,10 @@ class PrestaShopExceptionCore extends Exception
         $hiddenArgs = [];
 
         try {
-            $class = new \ReflectionClass($trace['class']);
-            /** @var \ReflectionMethod $method */
+            $class = new ReflectionClass($trace['class']);
+            /** @var ReflectionMethod $method */
             $method = $class->getMethod($trace['function']);
-            /** @var \ReflectionParameter $parameter */
+            /** @var ReflectionParameter $parameter */
             foreach ($method->getParameters() as $argIndex => $parameter) {
                 if ($argIndex >= count($args)) {
                     break;

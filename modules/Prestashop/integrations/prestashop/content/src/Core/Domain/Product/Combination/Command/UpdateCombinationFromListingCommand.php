@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,35 +63,21 @@ class UpdateCombinationFromListingCommand
      */
     private $reference;
 
-    /**
-     * @param int $combinationId
-     */
     public function __construct(int $combinationId)
     {
         $this->combinationId = new CombinationId($combinationId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;
     }
 
-    /**
-     * @return DecimalNumber|null
-     */
     public function getImpactOnPrice(): ?DecimalNumber
     {
         return $this->impactOnPrice;
     }
 
-    /**
-     * @param string $impactOnPrice
-     *
-     * @return self
-     */
     public function setImpactOnPrice(string $impactOnPrice): self
     {
         $this->impactOnPrice = new DecimalNumber($impactOnPrice);
@@ -98,19 +85,11 @@ class UpdateCombinationFromListingCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getQuantity(): ?int
     {
         return $this->quantity;
     }
 
-    /**
-     * @param int $quantity
-     *
-     * @return self
-     */
     public function setQuantity(int $quantity): self
     {
         $this->quantity = $quantity;
@@ -118,19 +97,11 @@ class UpdateCombinationFromListingCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isDefault(): ?bool
     {
         return $this->default;
     }
 
-    /**
-     * @param bool $default
-     *
-     * @return self
-     */
     public function setDefault(bool $default): self
     {
         $this->default = $default;
@@ -138,19 +109,11 @@ class UpdateCombinationFromListingCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getReference(): ?string
     {
         return $this->reference;
     }
 
-    /**
-     * @param string|null $reference
-     *
-     * @return self
-     */
     public function setReference(?string $reference): self
     {
         $this->reference = $reference;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -95,8 +96,7 @@ final class OrderStateFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param int $orderStateId
-     *
+     * @param  int  $orderStateId
      * @return EditOrderStateCommand
      */
     private function buildOrderStateEditCommand($orderStateId, array $data)
@@ -113,8 +113,7 @@ final class OrderStateFormDataHandler implements FormDataHandlerInterface
             ->setShipped($data['shipped'])
             ->setPaid($data['paid'])
             ->setDelivery($data['delivery'])
-            ->setTemplate($data['template'])
-        ;
+            ->setTemplate($data['template']);
 
         return $command;
     }

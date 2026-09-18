@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,17 +31,7 @@ use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 
 interface CountryRequiredFieldsProviderInterface
 {
-    /**
-     * @param CountryId $countryId
-     *
-     * @return bool
-     */
     public function isStatesRequired(CountryId $countryId): bool;
 
-    /**
-     * @param CountryId $countryId
-     *
-     * @return bool
-     */
     public function isDniRequired(CountryId $countryId): bool;
 }

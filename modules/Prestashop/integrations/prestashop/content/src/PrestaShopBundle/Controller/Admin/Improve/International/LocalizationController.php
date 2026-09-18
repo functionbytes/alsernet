@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,15 +47,13 @@ class LocalizationController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(Request $request)
     {
         $legacyController = $request->attributes->get('_legacy_controller');
 
-        if (!extension_loaded('openssl')) {
+        if (! extension_loaded('openssl')) {
             $this->addFlash('warning', $this->trans('Importing a new language may fail without the OpenSSL module. Please enable "openssl.so" on your server configuration.', 'Admin.International.Notification'));
         }
 
@@ -80,9 +79,8 @@ class LocalizationController extends FrameworkBundleAdminController
      * Process the Localization Configuration form.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
-     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
      * @return RedirectResponse
      */
@@ -99,9 +97,8 @@ class LocalizationController extends FrameworkBundleAdminController
      * Process the Localization Local Units form.
      *
      * @AdminSecurity("is_granted(['read','update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
-     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
      * @return RedirectResponse
      */
@@ -118,9 +115,8 @@ class LocalizationController extends FrameworkBundleAdminController
      * Process the Localization Advanced form.
      *
      * @AdminSecurity("is_granted(['read','update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
-     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
      * @return RedirectResponse
      */
@@ -136,16 +132,13 @@ class LocalizationController extends FrameworkBundleAdminController
     /**
      * Process the Localization configuration form.
      *
-     * @param Request $request
-     * @param FormHandlerInterface $formHandler
-     * @param string $hookName
      *
      * @return RedirectResponse
      */
     protected function processForm(Request $request, FormHandlerInterface $formHandler, string $hookName)
     {
         $this->dispatchHook(
-            'actionAdminInternationalLocalizationControllerPostProcess' . $hookName . 'Before',
+            'actionAdminInternationalLocalizationControllerPostProcess'.$hookName.'Before',
             ['controller' => $this]
         );
 
@@ -158,7 +151,7 @@ class LocalizationController extends FrameworkBundleAdminController
             $data = $form->getData();
             $saveErrors = $formHandler->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
             } else {
                 $this->flashErrors($saveErrors);
@@ -172,9 +165,8 @@ class LocalizationController extends FrameworkBundleAdminController
      * Handles localization pack import.
      *
      * @AdminSecurity("is_granted(['update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to edit this.")
-     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_localization_index")
      *
      * @return RedirectResponse
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,9 @@ class OrderStateNotFoundException extends OrderStateException
     private $orderStateId;
 
     /**
-     * @param string $message
-     * @param int $code
-     * @param \Exception|null $previous
+     * @param  string  $message
+     * @param  int  $code
+     * @param  \Exception|null  $previous
      */
     public function __construct(OrderStateId $orderStateId, $message = '', $code = 0, $previous = null)
     {

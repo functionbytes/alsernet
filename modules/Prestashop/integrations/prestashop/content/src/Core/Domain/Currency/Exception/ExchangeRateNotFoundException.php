@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Currency\Exception;
  * Class CannotFindExchangeRateException is thrown if the exchange rate could not be found
  * for the required currency.
  */
-class ExchangeRateNotFoundException extends CurrencyException
-{
-}
+class ExchangeRateNotFoundException extends CurrencyException {}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -96,20 +97,6 @@ class EditableCatalogPriceRule
      */
     private $reduction;
 
-    /**
-     * @param CatalogPriceRuleId $catalogPriceRuleId
-     * @param string $name
-     * @param int $shopId
-     * @param int $currencyId
-     * @param int $countryId
-     * @param int $groupId
-     * @param int $fromQuantity
-     * @param DecimalNumber $price
-     * @param Reduction $reduction
-     * @param bool $includeTax
-     * @param DateTime|null $from
-     * @param DateTime|null $to
-     */
     public function __construct(
         CatalogPriceRuleId $catalogPriceRuleId,
         string $name,
@@ -138,97 +125,61 @@ class EditableCatalogPriceRule
         $this->includeTax = $includeTax;
     }
 
-    /**
-     * @return CatalogPriceRuleId
-     */
     public function getCatalogPriceRuleId(): CatalogPriceRuleId
     {
         return $this->catalogPriceRuleId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return int
-     */
     public function getShopId(): int
     {
         return $this->shopId;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrencyId(): int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int
-     */
     public function getCountryId(): int
     {
         return $this->countryId;
     }
 
-    /**
-     * @return int
-     */
     public function getGroupId(): int
     {
         return $this->groupId;
     }
 
-    /**
-     * @return int
-     */
     public function getFromQuantity(): int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getFrom(): ?DateTime
     {
         return $this->from;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getTo(): ?DateTime
     {
         return $this->to;
     }
 
-    /**
-     * @return Reduction
-     */
     public function getReduction(): Reduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxIncluded(): bool
     {
         return $this->includeTax;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Module;
  * Define what should be a module.
  * Note:We don't typeHint on old Module class to not create hard dependency with Legacy.
  */
-interface ModuleInterface
-{
-}
+interface ModuleInterface {}

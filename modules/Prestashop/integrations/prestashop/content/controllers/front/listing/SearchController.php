@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,10 +31,13 @@ use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
 class SearchControllerCore extends ProductListingFrontController
 {
     public $php_self = 'search';
+
     public $instant_search;
+
     public $ajax_search;
 
     protected $search_string;
+
     protected $search_tag;
 
     /**
@@ -46,7 +50,7 @@ class SearchControllerCore extends ProductListingFrontController
         parent::init();
 
         $this->search_string = Tools::getValue('s');
-        if (!$this->search_string) {
+        if (! $this->search_string) {
             $this->search_string = Tools::getValue('search_query');
         }
 
@@ -85,7 +89,7 @@ class SearchControllerCore extends ProductListingFrontController
 
     protected function getProductSearchQuery()
     {
-        $query = new ProductSearchQuery();
+        $query = new ProductSearchQuery;
         $query
             ->setSortOrder(new SortOrder('product', 'position', 'desc'))
             ->setSearchString($this->search_string)

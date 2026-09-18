@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class CountryStateByIdChoiceProvider implements ConfigurableFormChoiceProv
      */
     public function getChoices(array $options)
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $this->configureOptions($resolver);
         $resolvedOptions = $resolver->resolve($options);
         $choices = [];
@@ -52,7 +53,7 @@ final class CountryStateByIdChoiceProvider implements ConfigurableFormChoiceProv
         try {
             $countryHasStates = (new Country($countryId))->contains_states;
 
-            if (!$countryHasStates) {
+            if (! $countryHasStates) {
                 return [];
             }
 
@@ -70,8 +71,6 @@ final class CountryStateByIdChoiceProvider implements ConfigurableFormChoiceProv
 
     /**
      * Configures array parameters and default values
-     *
-     * @param OptionsResolver $resolver
      */
     private function configureOptions(OptionsResolver $resolver)
     {
@@ -82,13 +81,10 @@ final class CountryStateByIdChoiceProvider implements ConfigurableFormChoiceProv
         $this->allowIdCountryGreaterThanZero($resolver);
     }
 
-    /**
-     * @param OptionsResolver $resolver
-     */
     private function allowIdCountryGreaterThanZero(OptionsResolver $resolver)
     {
         $resolver->setAllowedValues('id_country', function ($value) {
-            return 0 < $value;
+            return $value > 0;
         });
     }
 }

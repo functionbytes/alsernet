@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,10 +54,6 @@ class LanguageType extends TranslatorAwareType
 
     /**
      * LanguageType constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isMultistoreFeatureActive
      */
     public function __construct(TranslatorInterface $translator, array $locales, bool $isMultistoreFeatureActive)
     {
@@ -149,7 +146,7 @@ class LanguageType extends TranslatorAwareType
                 ],
                 'label' => $this->trans('Flag', 'Admin.International.Feature'),
                 'help' => $this->trans('Upload the country flag from your computer.', 'Admin.International.Help'),
-                'required' => !$options['is_for_editing'],
+                'required' => ! $options['is_for_editing'],
                 'constraints' => [
                     new Image([
                         'mimeTypesMessage' => $this->trans('This field is invalid.', 'Admin.Notifications.Error'),
@@ -159,7 +156,7 @@ class LanguageType extends TranslatorAwareType
             ->add('no_picture_image', FileType::class, [
                 'label' => $this->trans('"No-picture" image', 'Admin.International.Feature'),
                 'help' => $this->trans('Image is displayed when no picture is found.', 'Admin.International.Help'),
-                'required' => !$options['is_for_editing'],
+                'required' => ! $options['is_for_editing'],
                 'constraints' => [
                     new Image([
                         'mimeTypesMessage' => $this->trans('This field is invalid.', 'Admin.Notifications.Error'),
@@ -171,7 +168,7 @@ class LanguageType extends TranslatorAwareType
                 'help' => $this->trans(
                     'Enable if this language is read from right to left.',
                     'Admin.International.Help'
-                ) . $this->trans(
+                ).$this->trans(
                     '(Experimental: your theme must be compliant with RTL languages).',
                     'Admin.International.Help'
                 ),
@@ -181,8 +178,7 @@ class LanguageType extends TranslatorAwareType
                 'label' => $this->trans('Status', 'Admin.Global'),
                 'help' => $this->trans('Activate this language.', 'Admin.International.Help'),
                 'required' => false,
-            ])
-        ;
+            ]);
 
         if ($this->isMultistoreFeatureActive) {
             $builder->add('shop_association', ShopChoiceTreeType::class, [
@@ -208,7 +204,6 @@ class LanguageType extends TranslatorAwareType
                 // then some fields are optional
                 'is_for_editing' => false,
             ])
-            ->setAllowedTypes('is_for_editing', 'bool')
-        ;
+            ->setAllowedTypes('is_for_editing', 'bool');
     }
 }

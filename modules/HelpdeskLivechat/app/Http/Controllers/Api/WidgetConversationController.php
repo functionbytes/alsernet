@@ -220,13 +220,7 @@ class WidgetConversationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $conversation = Conversation::with([
-            'customer',
-            'inbox.channel',
-            'items' => fn ($q) => $q->with(['user:id,firstname,lastname', 'author:id,name,email'])
-                ->where('is_internal', false)
-                ->orderBy('created_at'),
-        ])->find($id);
+        $conversation = Conversation::with(['customer', 'inbox.channel'])->find($id);
 
         if (! $conversation) {
             return response()->json(['error' => 'Conversation not found'], 404);
@@ -249,7 +243,33 @@ class WidgetConversationController extends Controller
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
-        Mail::queue(new ConversationTranscriptMail($conversation, $destinationEmail));
+        // Build a plain, already-filtered snapshot of the visible messages instead
+        // of relying on the eager-loaded `items` relation constraint: once this
+        // Mailable is queued, SerializesModels rehydrates $conversation from the
+        // database on a fresh worker and would reload `items` WITHOUT the
+        // `is_internal = false` filter, leaking internal notes to the customer.
+        $transcriptItems = ConversationItem::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('is_internal', false)
+            ->with(['user:id,firstname,lastname', 'author:id,name,email'])
+            ->orderBy('created_at')
+            ->get()
+            ->map(function (ConversationItem $item) {
+                $isAgent = ! is_null($item->user_id);
+
+                return [
+                    'is_internal' => (bool) $item->is_internal,
+                    'is_agent' => $isAgent,
+                    'sender_name' => $isAgent
+                        ? (optional($item->user)->name ?? 'Agente')
+                        : (optional($item->author)->name ?? 'Visitante'),
+                    'body' => (string) $item->body,
+                    'created_at' => optional($item->created_at)->format('d/m/Y H:i'),
+                ];
+            })
+            ->all();
+
+        Mail::queue(new ConversationTranscriptMail($conversation, $destinationEmail, $transcriptItems));
 
         return response()->json([
             'success' => true,

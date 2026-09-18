@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class DeleteAddressHandler extends AbstractAddressHandler implements Delet
         $addressId = $command->getAddressId();
         $address = $this->getAddress($addressId);
 
-        if (!$this->deleteAddress($address)) {
+        if (! $this->deleteAddress($address)) {
             throw new DeleteAddressException(sprintf('Cannot delete Address object with id "%s".', $addressId->getValue()), DeleteAddressException::FAILED_DELETE);
         }
     }

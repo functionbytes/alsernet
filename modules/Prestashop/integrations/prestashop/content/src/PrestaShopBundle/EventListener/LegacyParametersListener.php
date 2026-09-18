@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,26 +47,20 @@ class LegacyParametersListener
      */
     private $converter;
 
-    /**
-     * @param LegacyParametersConverter $converter
-     */
     public function __construct(LegacyParametersConverter $converter)
     {
         $this->converter = $converter;
     }
 
-    /**
-     * @param GetResponseEvent $event
-     */
     public function onKernelRequest(GetResponseEvent $event)
     {
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 
         $request = $event->getRequest();
         $legacyParameters = $this->converter->getParameters($request->attributes->all(), $request->query->all());
-        if (null === $legacyParameters) {
+        if ($legacyParameters === null) {
             return;
         }
 

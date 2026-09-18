@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,13 +72,6 @@ class VirtualProductUpdater
      */
     private $filesystem;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param VirtualProductFileUploader $virtualProductFileUploader
-     * @param VirtualProductFileRepository $virtualProductFileRepository
-     * @param Filesystem $filesystem
-     * @param string $virtualProductFileDir
-     */
     public function __construct(
         ProductRepository $productRepository,
         VirtualProductFileUploader $virtualProductFileUploader,
@@ -92,10 +86,6 @@ class VirtualProductUpdater
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param VirtualProductFile $virtualProductFile
-     * @param string|null $newFilePath
-     */
     public function updateFile(VirtualProductFile $virtualProductFile, ?string $newFilePath): void
     {
         if ($newFilePath) {
@@ -110,11 +100,7 @@ class VirtualProductUpdater
      * Add virtual product file to a product
      * Legacy object ProductDownload is referred as VirtualProductFile in Core
      *
-     * @param ProductId $productId
-     * @param string $filePath
-     * @param VirtualProductFile $virtualProductFile
      *
-     * @return VirtualProductFileId
      *
      * @throws InvalidProductTypeException
      * @throws VirtualProductFileConstraintException
@@ -143,9 +129,6 @@ class VirtualProductUpdater
         return $this->virtualProductFileRepository->add($virtualProductFile);
     }
 
-    /**
-     * @param VirtualProductFileId $virtualProductFileId
-     */
     public function deleteFile(VirtualProductFileId $virtualProductFileId): void
     {
         $virtualProductFile = $this->virtualProductFileRepository->get($virtualProductFileId);
@@ -155,8 +138,6 @@ class VirtualProductUpdater
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws InvalidProductTypeException
      */
     public function deleteFileForProduct(ProductId $productId): void

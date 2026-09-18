@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,16 +49,13 @@ final class BackUrlRedirectResponseListener
      */
     private $employeeId;
 
-    /**
-     * @param BackUrlProvider $backUrlProvider
-     */
     public function __construct(
         BackUrlProvider $backUrlProvider,
         LegacyContext $legacyContext
-   ) {
+    ) {
         $this->backUrlProvider = $backUrlProvider;
         $context = $legacyContext->getContext();
-        if (null !== $context && $context->employee instanceof Employee) {
+        if ($context !== null && $context->employee instanceof Employee) {
             $this->employeeId = $context->employee->id;
         }
     }
@@ -72,13 +70,13 @@ final class BackUrlRedirectResponseListener
         $currentRequest = $event->getRequest();
         $originalResponse = $event->getResponse();
 
-        if (!$originalResponse instanceof RedirectResponse) {
+        if (! $originalResponse instanceof RedirectResponse) {
             return;
         }
 
         $backUrl = $this->backUrlProvider->getBackUrl($currentRequest);
 
-        if ($backUrl && !$this->isRequestUrlEqualToResponseUrl($currentRequest, $originalResponse)) {
+        if ($backUrl && ! $this->isRequestUrlEqualToResponseUrl($currentRequest, $originalResponse)) {
             $backUrlResponse = $originalResponse->setTargetUrl($backUrl);
             $event->setResponse($backUrlResponse);
         }
@@ -88,8 +86,6 @@ final class BackUrlRedirectResponseListener
      * Compares if request url is equal to response url - in such case the back url should not work since the action
      * is suppose to be kept on the same url . E.g "save and stay" button click.
      *
-     * @param Request $currentRequest
-     * @param RedirectResponse $originalResponse
      *
      * @return bool
      */

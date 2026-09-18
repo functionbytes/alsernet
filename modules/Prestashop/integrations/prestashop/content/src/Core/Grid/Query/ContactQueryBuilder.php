@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,8 @@ final class ContactQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextShopsIds;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $languageId
-     * @param array $contextShopsIds
+     * @param  string  $dbPrefix
+     * @param  int  $languageId
      */
     public function __construct(
         Connection $connection,
@@ -102,7 +100,6 @@ final class ContactQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -117,28 +114,28 @@ final class ContactQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'contact', 'c')
-            ->innerJoin('c', $this->dbPrefix . 'contact_lang', 'cl', 'c.id_contact = cl.id_contact')
-            ->innerJoin('c', $this->dbPrefix . 'contact_shop', 'cs', 'c.id_contact = cs.id_contact')
+            ->from($this->dbPrefix.'contact', 'c')
+            ->innerJoin('c', $this->dbPrefix.'contact_lang', 'cl', 'c.id_contact = cl.id_contact')
+            ->innerJoin('c', $this->dbPrefix.'contact_shop', 'cs', 'c.id_contact = cs.id_contact')
             ->andWhere('cl.`id_lang`= :language')
             ->andWhere('cs.`id_shop` IN (:shops)')
             ->setParameter('language', $this->languageId)
             ->setParameter('shops', $this->contextShopsIds, Connection::PARAM_INT_ARRAY);
 
         foreach ($filters as $name => $value) {
-            if (!in_array($name, $allowedFilters, true)) {
+            if (! in_array($name, $allowedFilters, true)) {
                 continue;
             }
 
-            if ('id_contact' === $name) {
-                $qb->andWhere('c.`id_contact` = :' . $name);
+            if ($name === 'id_contact') {
+                $qb->andWhere('c.`id_contact` = :'.$name);
                 $qb->setParameter($name, $value);
 
                 continue;
             }
 
             $qb->andWhere("$name LIKE :$name");
-            $qb->setParameter($name, '%' . $value . '%');
+            $qb->setParameter($name, '%'.$value.'%');
         }
 
         return $qb;

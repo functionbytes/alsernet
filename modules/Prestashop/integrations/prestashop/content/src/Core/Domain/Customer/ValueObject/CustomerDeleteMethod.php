@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ class CustomerDeleteMethod
     private $method;
 
     /**
-     * @param string $method
+     * @param  string  $method
      *
      * @throws CustomerException
      */
@@ -65,7 +66,7 @@ class CustomerDeleteMethod
      */
     public function isAllowedToRegisterAfterDelete()
     {
-        return self::ALLOW_CUSTOMER_REGISTRATION === $this->method;
+        return $this->method === self::ALLOW_CUSTOMER_REGISTRATION;
     }
 
     /**
@@ -77,7 +78,7 @@ class CustomerDeleteMethod
     }
 
     /**
-     * @param string $method
+     * @param  string  $method
      *
      * @throws CustomerException
      */
@@ -85,7 +86,7 @@ class CustomerDeleteMethod
     {
         $definedMethods = [self::ALLOW_CUSTOMER_REGISTRATION, self::DENY_CUSTOMER_REGISTRATION];
 
-        if (!in_array($method, $definedMethods)) {
+        if (! in_array($method, $definedMethods)) {
             throw new CustomerException(sprintf('Supplied customer delete method "%s" does not exists. Available methods are: %s.', $method, implode(',', $definedMethods)));
         }
     }

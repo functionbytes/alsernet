@@ -32,6 +32,21 @@ class ErpCustomerDataService
      */
     public function findByPhone(string $phoneDigits): ?array
     {
+        // Un teléfono compartido por varios IDCLIENTE distintos (frecuente:
+        // familia, oficina) es ambiguo — antes ROWNUM<=1 devolvía uno
+        // arbitrario, que ErpContextService cachea 10 min y puede llegar a
+        // persistir como vínculo permanente del cliente equivocado. Cero o
+        // más de un IDCLIENTE distinto: no hay match seguro, devuelve null.
+        $matches = $this->oci8->query(
+            'SELECT COUNT(DISTINCT IDCLIENTE) AS CNT FROM DEVELOPER.CLIENTETELEFONO_CENT WHERE TELEFONO = :phone',
+            ['phone' => $phoneDigits],
+            10000
+        );
+
+        if ((int) ($matches[0]['CNT'] ?? 0) !== 1) {
+            return null;
+        }
+
         $rows = $this->oci8->query(
             'SELECT c.IDCLIENTE, c.NOMBRE, c.APELLIDOS, c.CIF, c.EMAIL '.
             'FROM DEVELOPER.CLIENTE_CENT c '.

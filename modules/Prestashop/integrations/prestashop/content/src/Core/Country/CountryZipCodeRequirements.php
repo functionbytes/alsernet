@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,36 +52,21 @@ class CountryZipCodeRequirements
      */
     private $countryName;
 
-    /**
-     * @param bool $isRequired
-     */
     public function __construct(bool $isRequired)
     {
         $this->isRequired = $isRequired;
     }
 
-    /**
-     * @return bool
-     */
     public function isRequired(): bool
     {
         return $this->isRequired;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPattern(): ?string
     {
         return $this->pattern;
     }
 
-    /**
-     * @param string $pattern
-     * @param string $humanReadablePattern
-     *
-     * @return CountryZipCodeRequirements
-     */
     public function setPatterns(string $pattern, string $humanReadablePattern): CountryZipCodeRequirements
     {
         $this->pattern = $pattern;
@@ -89,27 +75,16 @@ class CountryZipCodeRequirements
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getHumanReadablePattern(): ?string
     {
         return $this->humanReadablePattern;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCountryName(): ?string
     {
         return $this->countryName;
     }
 
-    /**
-     * @param string $countryName
-     *
-     * @return CountryZipCodeRequirements
-     */
     public function setCountryName(string $countryName): CountryZipCodeRequirements
     {
         $this->countryName = $countryName;

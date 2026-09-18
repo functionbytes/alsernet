@@ -82,39 +82,54 @@
                 </div>
             </div>
 
-            {{-- Filtros --}}
+            {{-- Busqueda y filtros --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('manager.helpcenter.articles') }}">
-                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                        <div class="flex-fill">
-                            <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-1">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por título..."
-                                       value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0 helpcenter-filter-status">
-                            <select name="draft" class="form-select h-100">
-                                <option value="">Todos los estados</option>
-                                <option value="0" {{ request('draft') === '0' ? 'selected' : '' }}>Publicados</option>
-                                <option value="1" {{ request('draft') === '1' ? 'selected' : '' }}>Borradores</option>
-                            </select>
-                        </div>
-                        <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search me-1"></i>
+                @php
+                    $activeFilterCount = collect(['draft', 'category_id', 'author_id'])->filter(fn ($k) => request()->filled($k))->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                    $draftLabels = ['0' => 'Publicados', '1' => 'Borradores'];
+                @endphp
+
+                <form method="GET" action="{{ route('manager.helpcenter.articles') }}" id="articles-filter-form"
+                      data-bulk-url="{{ route('manager.helpcenter.articles.bulk-action') }}">
+                    <input type="hidden" name="draft" id="filter-draft" value="{{ request('draft') }}">
+                    <input type="hidden" name="category_id" id="filter-category" value="{{ request('category_id') }}">
+                    <input type="hidden" name="author_id" id="filter-author" value="{{ request('author_id') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por título..."
+                               value="{{ request('search') }}">
+
+                        <x-filter-button target="articles-filter-modal" :count="$activeFilterCount" />
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
                             </button>
-                            @if(request('search') || request('draft') !== null)
-                                <a href="{{ route('manager.helpcenter.articles') }}" class="btn btn-outline-secondary"
-                                   title="Limpiar filtros">
-                                    <i class="fas fa-times"></i>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('manager.helpcenter.articles') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if(request()->filled('draft'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Estado: {{ $draftLabels[request('draft')] ?? request('draft') }}</span>
+                            @endif
+                            @if(request('category_id'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Categoria: {{ $categories->firstWhere('id', request('category_id'))->name ?? request('category_id') }}</span>
+                            @endif
+                            @if(request('author_id'))
+                                @php $hcAuthor = $authors->firstWhere('id', request('author_id')); @endphp
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Autor: {{ $hcAuthor ? trim($hcAuthor->firstname.' '.$hcAuthor->lastname) ?: $hcAuthor->email : request('author_id') }}</span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -152,6 +167,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Título</th>
                                     <th>Secciones</th>
                                     <th>Estado</th>
@@ -165,6 +181,7 @@
                             <tbody>
                                 @foreach($articles as $article)
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $article->id }}"></td>
                                         <td>
                                             <div class="fw-semibold">{{ $article->title }}</div>
                                             @if($article->description)
@@ -264,28 +281,85 @@
 
     @include('core::components.delete')
 
+    {{-- Filtros avanzados --}}
+    <x-filter-shell id="articles-filter-modal"
+                    :count="$activeFilterCount"
+                    apply-id="articles-filter-apply-btn"
+                    clear-id="articles-filter-clear-btn">
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Estado</label>
+            <select id="modal-draft" class="form-control select2-filter-modal">
+                <option value="">Todos los estados</option>
+                <option value="0" @selected(request('draft') === '0')>Publicados</option>
+                <option value="1" @selected(request('draft') === '1')>Borradores</option>
+            </select>
+        </div>
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Categoria</label>
+            <select id="modal-category" class="form-control select2-filter-modal">
+                <option value="">Todas las categorias</option>
+                @foreach($categories as $hcCategory)
+                    <option value="{{ $hcCategory->id }}" @selected(request('category_id') == $hcCategory->id)>{{ $hcCategory->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="fs-field">
+            <label class="form-label fw-semibold">Autor</label>
+            <select id="modal-author" class="form-control select2-filter-modal">
+                <option value="">Cualquier autor</option>
+                @foreach($authors as $hcAuthor)
+                    <option value="{{ $hcAuthor->id }}" @selected(request('author_id') == $hcAuthor->id)>
+                        {{ trim($hcAuthor->firstname.' '.$hcAuthor->lastname) ?: $hcAuthor->email }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </x-filter-shell>
+
+    {{-- Barra flotante de seleccion --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none hc-bulk-toolbar">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Accion masiva --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara sobre <strong><span data-bulk-count>0</span> articulo(s)</strong>.</p>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2-bulk">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="publish">Publicar</option>
+                            <option value="draft">Pasar a borrador</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
-@push('styles')
-<style>
-.helpcenter-filter-status { min-width: 180px; }
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/helpcenter-manager.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/helpcenter-manager.css')) }}">
 @endpush
 
-@push('scripts')
-<script>
-$(document).ready(function () {
-    $('.delete-btn').on('click', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
+@include('helpdeskhelpcenter::partials.common-scripts')
 
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
-</script>
+@push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdeskhelpcenter/js/articles-index.js') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/js/articles-index.js')) }}"></script>
 @endpush

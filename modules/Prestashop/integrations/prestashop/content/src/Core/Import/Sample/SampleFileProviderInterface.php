@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ interface SampleFileProviderInterface
     /**
      * Get sample import file.
      *
-     * @param string $sampleFileName
-     *
+     * @param  string  $sampleFileName
      * @return File|null File if files was found or null otherwise
      */
     public function getFile($sampleFileName);

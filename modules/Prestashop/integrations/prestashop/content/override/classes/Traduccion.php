@@ -1,5 +1,7 @@
 <?php
 
+use DeepL\Translator;
+
 require dirname(__FILE__).'/../../traduccion/DeepL/vendor/autoload.php';
 define('_DEF_authKey', 'a7c95f82-c7ba-456a-83e6-46a40d46c56b'); // Replace with your key
 
@@ -641,7 +643,7 @@ class Traduccion
 
         $target_lang = $this->getIdiomaCode($id_lang);
 
-        $translator = new \DeepL\Translator(_DEF_authKey);
+        $translator = new Translator(_DEF_authKey);
         $glosaries = $translator->listGlossaries();
         $glosary_id = '';
         foreach ($glosaries as $glosario) {
@@ -674,7 +676,7 @@ class Traduccion
 
         $target_lang = $this->getIdiomaCode($id_lang);
 
-        $translator = new \DeepL\Translator(_DEF_authKey);
+        $translator = new Translator(_DEF_authKey);
         $query = 'SELECT name FROM '._DB_PREFIX_.'attribute_group_lang WHERE id_lang='.$id_lang.' AND id_attribute_group='.$id_attribute_group;
         $caracteristica = Db::getInstance()->executeS($query)[0];
         $options = ['formality' => 'prefer_more'];
@@ -690,7 +692,7 @@ class Traduccion
 
         $target_lang = $this->getIdiomaCode($id_lang);
 
-        $translator = new \DeepL\Translator(_DEF_authKey);
+        $translator = new Translator(_DEF_authKey);
         $query = 'SELECT name FROM '._DB_PREFIX_.'attribute_lang WHERE id_lang='.$id_lang.' AND id_attribute='.$id_attribute;
         $atributo = Db::getInstance()->executeS($query)[0];
         $options = ['formality' => 'prefer_more'];
@@ -707,7 +709,7 @@ class Traduccion
         $idioma_origen = $this->getIdiomaCode($id_lang_origen, 'iso_code');
         $idioma_destino = $this->getIdiomaCode($id_lang_destino);
 
-        $translator = new \DeepL\Translator(_DEF_authKey);
+        $translator = new Translator(_DEF_authKey);
         $glosaries = $translator->listGlossaries();
         $glosary_id = '';
         foreach ($glosaries as $glosario) {

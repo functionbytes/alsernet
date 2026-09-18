@@ -26,6 +26,7 @@
  */
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
+use PrestaShopBundle\DataCollector\HookRegistry;
 
 class HookCore extends ObjectModel
 {
@@ -989,7 +990,7 @@ class HookCore extends ObjectModel
     }
 
     /**
-     * @return \PrestaShopBundle\DataCollector\HookRegistry|null
+     * @return HookRegistry|null
      */
     private static function getHookRegistry()
     {

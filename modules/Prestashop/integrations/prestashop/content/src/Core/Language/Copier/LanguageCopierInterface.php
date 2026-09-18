@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,6 @@ interface LanguageCopierInterface
     /**
      * Copies a language with given config.
      *
-     * @param LanguageCopierConfigInterface $config
      *
      * @return array of errors if any occurred, empty array otherwise
      */

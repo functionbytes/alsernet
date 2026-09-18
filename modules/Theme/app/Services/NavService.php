@@ -100,6 +100,7 @@ class NavService
                 self::$menus['sidebar'][$sidebarId]['sections'][] = [
                     'title' => $config['title'],
                     'items' => $config['items'],
+                    'order' => $config['order'] ?? null,
                 ];
             }
         } else {
@@ -109,6 +110,7 @@ class NavService
                     [
                         'title' => $config['title'],
                         'items' => $config['items'],
+                        'order' => $config['order'] ?? null,
                     ],
                 ],
             ];
@@ -226,7 +228,36 @@ class NavService
      */
     public static function getSidebar(string $sidebarId): ?array
     {
-        return self::$menus['sidebar'][$sidebarId] ?? null;
+        $sidebar = self::$menus['sidebar'][$sidebarId] ?? null;
+
+        return $sidebar === null ? null : self::sortSections($sidebar);
+    }
+
+    /**
+     * Ordena las secciones por su 'order'.
+     *
+     * Sin 'order' el orden lo decidia el de arranque de los modulos, asi que
+     * las secciones de un mismo bloque acababan repartidas por todo el menu
+     * segun la prioridad de cada provider. Las que no declaran uno conservan su
+     * posicion relativa de registro, detras de las que si.
+     */
+    private static function sortSections(array $sidebar): array
+    {
+        if (! isset($sidebar['sections'])) {
+            return $sidebar;
+        }
+
+        $indexed = [];
+
+        foreach (array_values($sidebar['sections']) as $i => $section) {
+            $indexed[] = [$section['order'] ?? PHP_INT_MAX, $i, $section];
+        }
+
+        usort($indexed, fn ($a, $b) => [$a[0], $a[1]] <=> [$b[0], $b[1]]);
+
+        $sidebar['sections'] = array_column($indexed, 2);
+
+        return $sidebar;
     }
 
     /**
@@ -382,7 +413,7 @@ class NavService
 
             // Si el usuario es super-settings, mostrar todos
             if ($user->hasRole('super-settings')) {
-                $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
+                $sidebars[$sidebarId] = self::filterDisabledItems(self::sortSections($sidebar));
 
                 continue;
             }
@@ -390,7 +421,7 @@ class NavService
             // Verificar si el usuario tiene permiso para este módulo
             try {
                 if ($user->hasPermissionTo($permissionName)) {
-                    $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
+                    $sidebars[$sidebarId] = self::filterDisabledItems(self::sortSections($sidebar));
                 }
             } catch (PermissionDoesNotExist $e) {
                 logger()->warning("NavService: permission '{$permissionName}' not found. Run the module seeder.");

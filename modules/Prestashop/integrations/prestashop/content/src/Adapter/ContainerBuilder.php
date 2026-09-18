@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -82,9 +83,8 @@ class ContainerBuilder
     private $containerConfigCache;
 
     /**
-     * @param string $containerName
-     * @param bool $isDebug
-     *
+     * @param  string  $containerName
+     * @param  bool  $isDebug
      * @return LegacyContainerBuilder
      *
      * @throws Exception
@@ -96,7 +96,7 @@ class ContainerBuilder
                 'You should use `SymfonyContainer::getInstance()` instead of `ContainerBuilder::getContainer(\'admin\')`'
             );
         }
-        if (!isset(self::$containers[$containerName])) {
+        if (! isset(self::$containers[$containerName])) {
             $builder = new ContainerBuilder(new Environment($isDebug));
             self::$containers[$containerName] = $builder->buildContainer($containerName);
         }
@@ -104,17 +104,13 @@ class ContainerBuilder
         return self::$containers[$containerName];
     }
 
-    /**
-     * @param EnvironmentInterface $environment
-     */
     public function __construct(EnvironmentInterface $environment)
     {
         $this->environment = $environment;
     }
 
     /**
-     * @param string $containerName
-     *
+     * @param  string  $containerName
      * @return ContainerInterface|LegacyContainerBuilder
      *
      * @throws Exception
@@ -122,16 +118,16 @@ class ContainerBuilder
     public function buildContainer($containerName)
     {
         $this->containerName = $containerName;
-        $this->containerClassName = ucfirst($this->containerName) . 'Container';
-        $this->dumpFile = $this->environment->getCacheDir() . $this->containerClassName . '.php';
+        $this->containerClassName = ucfirst($this->containerName).'Container';
+        $this->dumpFile = $this->environment->getCacheDir().$this->containerClassName.'.php';
         $this->containerConfigCache = new ConfigCache($this->dumpFile, $this->environment->isDebug());
 
-        //These methods load required files like autoload or annotation metadata so we need to load
-        //them at each container creation, this can't be compiled.
+        // These methods load required files like autoload or annotation metadata so we need to load
+        // them at each container creation, this can't be compiled.
         $this->loadDoctrineAnnotationMetadata();
 
         $container = $this->loadDumpedContainer();
-        if (null === $container) {
+        if ($container === null) {
             $container = $this->compileContainer();
         }
 
@@ -152,7 +148,7 @@ class ContainerBuilder
         $container = null;
         if ($this->containerConfigCache->isFresh()) {
             require_once $this->dumpFile;
-            $container = new $this->containerClassName();
+            $container = new $this->containerClassName;
         }
 
         return $container;
@@ -165,14 +161,14 @@ class ContainerBuilder
      */
     private function compileContainer()
     {
-        $container = new LegacyContainerBuilder();
-        //If the container builder is modified the container logically should be rebuilt
+        $container = new LegacyContainerBuilder;
+        // If the container builder is modified the container logically should be rebuilt
         $container->addResource(new FileResource(__FILE__));
 
         $container->addCompilerPass(new LoadServicesFromModulesPass($this->containerName), PassConfig::TYPE_BEFORE_OPTIMIZATION, 1);
-        $container->addCompilerPass(new LegacyCompilerPass());
+        $container->addCompilerPass(new LegacyCompilerPass);
 
-        //Build extensions
+        // Build extensions
         $builderExtensions = [
             new ContainerParametersExtension($this->environment),
             new DoctrineBuilderExtension($this->environment),
@@ -185,7 +181,7 @@ class ContainerBuilder
         $this->loadServicesFromConfig($container);
         $container->compile();
 
-        //Dump the container file
+        // Dump the container file
         $dumper = new PhpDumper($container);
         $this->containerConfigCache->write(
             $dumper->dump([
@@ -206,13 +202,11 @@ class ContainerBuilder
      */
     private function loadDoctrineAnnotationMetadata()
     {
-        //IMPORTANT: we need to provide a cache because doctrine tries to init a connection on redis, memcached, ... on its own
-        Setup::createAnnotationMetadataConfiguration([], $this->environment->isDebug(), null, new ArrayCache());
+        // IMPORTANT: we need to provide a cache because doctrine tries to init a connection on redis, memcached, ... on its own
+        Setup::createAnnotationMetadataConfiguration([], $this->environment->isDebug(), null, new ArrayCache);
     }
 
     /**
-     * @param LegacyContainerBuilder $container
-     *
      * @throws Exception
      */
     private function loadServicesFromConfig(LegacyContainerBuilder $container)
@@ -233,19 +227,18 @@ class ContainerBuilder
      * be done in a compiler pass because they are only executed on compilation and this needs to
      * be done at each container instanciation.
      *
-     * @param ContainerInterface $container
      *
      * @throws Exception
      */
     private function loadModulesAutoloader(ContainerInterface $container)
     {
-        if (!$container->hasParameter('kernel.active_modules')) {
+        if (! $container->hasParameter('kernel.active_modules')) {
             return;
         }
 
         $activeModules = $container->getParameter('kernel.active_modules');
         foreach ($activeModules as $module) {
-            $autoloader = _PS_MODULE_DIR_ . $module . '/vendor/autoload.php';
+            $autoloader = _PS_MODULE_DIR_.$module.'/vendor/autoload.php';
 
             if (file_exists($autoloader)) {
                 include_once $autoloader;

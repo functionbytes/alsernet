@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,7 +27,9 @@
 
 namespace PrestaShop\PrestaShop\Core\CMS;
 
-class CMSRoleRepository extends \PrestaShop\PrestaShop\Core\Foundation\Database\EntityRepository
+use PrestaShop\PrestaShop\Core\Foundation\Database\EntityRepository;
+
+class CMSRoleRepository extends EntityRepository
 {
     /**
      * Return all CMSRoles which are already associated.
@@ -37,7 +40,7 @@ class CMSRoleRepository extends \PrestaShop\PrestaShop\Core\Foundation\Database\
     {
         $sql = '
 			SELECT *
-			FROM `' . $this->getTableNameWithPrefix() . '`
+			FROM `'.$this->getTableNameWithPrefix().'`
 			WHERE `id_cms` != 0';
 
         return $this->hydrateMany($this->db->select($sql));

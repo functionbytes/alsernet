@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,11 +38,11 @@ class ProductListingLazyArray extends ProductLazyArray
      */
     public function getAddToCartUrl()
     {
-        if ($this->product['id_product_attribute'] != 0 && !$this->settings->allow_add_variant_to_cart_from_listing) {
+        if ($this->product['id_product_attribute'] != 0 && ! $this->settings->allow_add_variant_to_cart_from_listing) {
             return null;
         }
 
-        if ($this->product['customizable'] == 2 || !empty($this->product['customization_required'])) {
+        if ($this->product['customizable'] == 2 || ! empty($this->product['customization_required'])) {
             return null;
         }
 
@@ -49,16 +50,13 @@ class ProductListingLazyArray extends ProductLazyArray
     }
 
     /**
-     * @param array $product
-     * @param ProductPresentationSettings $settings
-     *
      * @return bool
      */
     protected function shouldEnableAddToCartButton(array $product, ProductPresentationSettings $settings)
     {
         if (isset($product['attributes'])
             && count($product['attributes']) > 0
-            && !$settings->allow_add_variant_to_cart_from_listing) {
+            && ! $settings->allow_add_variant_to_cart_from_listing) {
             return false;
         }
 

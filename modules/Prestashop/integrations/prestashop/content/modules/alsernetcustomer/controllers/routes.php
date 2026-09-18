@@ -1,10 +1,10 @@
 <?php
 
-require_once(dirname(__FILE__).'/../../../config/config.inc.php');
-require_once(dirname(__FILE__).'/../../../init.php');
-include_once(dirname(__FILE__).'/front/CustomerController.php');
-include_once(dirname(__FILE__).'/front/AddressController.php');
-include_once(dirname(__FILE__).'/front/WishlistController.php');
+require_once dirname(__FILE__).'/../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../init.php';
+include_once dirname(__FILE__).'/front/CustomerController.php';
+include_once dirname(__FILE__).'/front/AddressController.php';
+include_once dirname(__FILE__).'/front/WishlistController.php';
 
 class Routes extends Module
 {
@@ -27,7 +27,7 @@ class Routes extends Module
         switch ($modalitie) {
             case 'wishlist':
 
-                $controller = new WishlistController();
+                $controller = new WishlistController;
                 $response = null;
 
                 switch ($action) {
@@ -41,13 +41,13 @@ class Routes extends Module
                         $response = $controller->delete();
                         break;
                     case 'get':
-                        //$response = $controller->get();
+                        // $response = $controller->get();
                         break;
                     case 'view':
-                        //$response = $controller->view();
+                        // $response = $controller->view();
                         break;
                     case 'modal':
-                        //$response = $controller->modal();
+                        // $response = $controller->modal();
                         break;
                     case 'cart':
                         $response = $controller->cart();
@@ -57,22 +57,20 @@ class Routes extends Module
                         break;
 
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
 
                 return $response;
 
-
                 break;
             case 'address':
 
-                $controllerAddress = new AddressController();
+                $controllerAddress = new AddressController;
                 $response = null;
-
 
                 switch ($action) {
                     case 'addaddress':
@@ -100,20 +98,19 @@ class Routes extends Module
                         $response = $controllerAddress->getaddresses();
                         break;
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
 
                 return $response;
 
-
                 break;
             case 'customer':
 
-                $controllerCustomer = new CustomerController();
+                $controllerCustomer = new CustomerController;
                 $response = null;
 
                 switch ($action) {
@@ -123,25 +120,23 @@ class Routes extends Module
                         break;
 
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
 
                 return $response;
 
-
                 break;
             default:
-                $response = array(
+                $response = [
                     'status' => 'error',
                     'message' => 'Invalid action',
-                );
+                ];
                 break;
         }
-
 
         return $response;
     }
@@ -155,6 +150,6 @@ class Routes extends Module
     }
 }
 
-$routes = new Routes();
+$routes = new Routes;
 
 $routes->routes();

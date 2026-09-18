@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ final class StyleSheetProcessorFactory implements StyleSheetProcessorFactoryInte
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -55,18 +53,18 @@ final class StyleSheetProcessorFactory implements StyleSheetProcessorFactoryInte
         $moduleDir = $this->configuration->get('_PS_MODULE_DIR_');
 
         if (null === $adminDir = $this->configuration->get('_PS_ADMIN_DIR_')) {
-            $adminDir = $rootDir . DIRECTORY_SEPARATOR . 'admin';
-            $adminDir = is_dir($adminDir) ? $adminDir : ($adminDir . '-dev');
+            $adminDir = $rootDir.DIRECTORY_SEPARATOR.'admin';
+            $adminDir = is_dir($adminDir) ? $adminDir : ($adminDir.'-dev');
         }
 
-        $themesDir = $this->configuration->get('_PS_ROOT_DIR_') . DIRECTORY_SEPARATOR . 'themes';
+        $themesDir = $this->configuration->get('_PS_ROOT_DIR_').DIRECTORY_SEPARATOR.'themes';
 
         // @todo: improve modules configuration
         // see: https://github.com/PrestaShop/PrestaShop/pull/11169#discussion_r231824489
         $modulesToProcess = [
-            $moduleDir . 'gamification',
-            $moduleDir . 'welcome',
-            $moduleDir . 'cronjobs',
+            $moduleDir.'gamification',
+            $moduleDir.'welcome',
+            $moduleDir.'cronjobs',
         ];
 
         return new Processor(

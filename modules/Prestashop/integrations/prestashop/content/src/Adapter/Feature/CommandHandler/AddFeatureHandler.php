@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,19 +45,19 @@ final class AddFeatureHandler extends AbstractObjectModelHandler implements AddF
      */
     public function handle(AddFeatureCommand $command)
     {
-        $feature = new Feature();
+        $feature = new Feature;
 
         $feature->name = $command->getLocalizedNames();
 
-        if (false === $feature->validateFields(false)) {
+        if ($feature->validateFields(false) === false) {
             throw new FeatureConstraintException('Invalid feature data');
         }
 
-        if (false === $feature->validateFieldsLang(false)) {
+        if ($feature->validateFieldsLang(false) === false) {
             throw new FeatureConstraintException('Invalid feature data', FeatureConstraintException::INVALID_NAME);
         }
 
-        if (false === $feature->add()) {
+        if ($feature->add() === false) {
             throw new CannotAddFeatureException('Unable to create new feature');
         }
 

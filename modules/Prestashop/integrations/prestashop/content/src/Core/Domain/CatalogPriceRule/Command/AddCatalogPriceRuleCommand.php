@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -94,17 +95,6 @@ class AddCatalogPriceRuleCommand
     private $dateTimeTo;
 
     /**
-     * @param string $name
-     * @param int $currencyId
-     * @param int $countryId
-     * @param int $groupId
-     * @param int $fromQuantity
-     * @param string $reductionType
-     * @param float $reductionValue
-     * @param int $shopId
-     * @param bool $includeTax
-     * @param float $price
-     *
      * @throws DomainConstraintException
      */
     public function __construct(
@@ -130,97 +120,62 @@ class AddCatalogPriceRuleCommand
         $this->includeTax = $includeTax;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return int
-     */
     public function getShopId(): int
     {
         return $this->shopId;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrencyId(): int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int
-     */
     public function getCountryId(): int
     {
         return $this->countryId;
     }
 
-    /**
-     * @return int
-     */
     public function getGroupId(): int
     {
         return $this->groupId;
     }
 
-    /**
-     * @return int
-     */
     public function getFromQuantity(): int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @return Reduction
-     */
     public function getReduction(): Reduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeFrom(): ?DateTime
     {
         return $this->dateTimeFrom;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeTo(): ?DateTime
     {
         return $this->dateTimeTo;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxIncluded(): bool
     {
         return $this->includeTax;
     }
 
     /**
-     * @param string $dateTimeFrom
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function setDateTimeFrom(string $dateTimeFrom)
@@ -229,8 +184,6 @@ class AddCatalogPriceRuleCommand
     }
 
     /**
-     * @param string $dateTimeTo
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function setDateTimeTo(string $dateTimeTo)
@@ -239,10 +192,6 @@ class AddCatalogPriceRuleCommand
     }
 
     /**
-     * @param string $dateTime
-     *
-     * @return DateTime
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     private function createDateTime(string $dateTime): DateTime

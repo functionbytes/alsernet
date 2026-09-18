@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class GetDatabaseTableFieldsList
     private $tableName;
 
     /**
-     * @param string $tableName
+     * @param  string  $tableName
      *
      * @throws SqlManagementConstraintException
      */
@@ -57,15 +58,14 @@ class GetDatabaseTableFieldsList
     }
 
     /**
-     * @param string $tableName
-     *
+     * @param  string  $tableName
      * @return self
      *
      * @throws SqlManagementConstraintException
      */
     public function setTableName($tableName)
     {
-        if (!is_string($tableName) || empty($tableName)) {
+        if (! is_string($tableName) || empty($tableName)) {
             throw new SqlManagementConstraintException(sprintf('Invalid database table name %s supplied', var_export($tableName, true)), SqlManagementConstraintException::INVALID_DATABASE_TABLE_NAME);
         }
 

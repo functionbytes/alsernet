@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Jobs\SendBulkHsmTemplateJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
@@ -39,13 +40,16 @@ class ContactsController extends Controller
      */
     public function index(Request $request): View
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $perPage = in_array((int) $request->input('per_page'), [15, 25, 50, 100]) ? (int) $request->input('per_page') : 25;
 
         // Orden fijo (sin sorting por columna en la UI) — mismo patrón que
         // UsersController::index(), que usa latest() sin parámetros de sort.
+        // withCount() en vez de leer total_conversations: esa columna solo se
+        // incrementa (Customer::incrementConversationCount()) y nunca se
+        // decrementa al borrar/reasignar conversaciones — encontrada
+        // desincronizada en vivo (mostraba 15 con 0 conversaciones reales).
         $customers = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
+            ->withCount('conversations')
             ->orderByDesc('last_seen_at')
             ->paginate($perPage)
             ->appends($request->query());
@@ -91,8 +95,6 @@ class ContactsController extends Controller
      */
     public function show(Customer $customer): View
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $this->assertVisible($customer);
 
         return view('contacts::contacts.show', [
@@ -127,8 +129,6 @@ class ContactsController extends Controller
      */
     public function importForm(): View
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         return view('contacts::contacts.import');
     }
 
@@ -144,8 +144,6 @@ class ContactsController extends Controller
      */
     public function importProcess(ImportContactsRequest $request): RedirectResponse
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $handle = fopen($request->file('file')->getPathname(), 'r');
 
         // Skip UTF-8 BOM if present
@@ -154,7 +152,19 @@ class ContactsController extends Controller
             rewind($handle);
         }
 
-        $headers = array_map('strtolower', array_map('trim', fgetcsv($handle)));
+        $headerRow = fgetcsv($handle);
+
+        if ($headerRow === false) {
+            fclose($handle);
+
+            return back()->withErrors(['file' => 'El CSV está vacío o no tiene cabecera.']);
+        }
+
+        // Str::ascii() quita tildes ademas de minusculas/trim: una cabecera
+        // "Teléfono" (la forma natural en español) nunca casaba con el
+        // 'telefono' sin tilde de abajo y la columna se importaba vacia
+        // en silencio.
+        $headers = array_map(fn (string $header): string => Str::ascii(strtolower(trim($header))), $headerRow);
         $nameCol = array_search('name', $headers) !== false ? array_search('name', $headers) : array_search('nombre', $headers);
         $emailCol = array_search('email', $headers) !== false ? array_search('email', $headers) : array_search('correo', $headers);
         $phoneCol = array_search('phone', $headers) !== false ? array_search('phone', $headers) : array_search('telefono', $headers);
@@ -288,7 +298,14 @@ class ContactsController extends Controller
                 // el índice único de la BD — sin esto, re-importar la misma
                 // dirección tras "Eliminar" chocaba con una violación de
                 // constraint en vez de restaurar el registro existente.
-                $trashed = $email ? Customer::withTrashed()->onlyTrashed()->where('email', $email)->first() : null;
+                //
+                // El restore SOLO se hace dentro del alcance del agente (mismo
+                // aislamiento por inbox que el resto del import): sin forAgent()
+                // aquí, un agente podía restaurar y engancharse (syncWithoutDetaching)
+                // un contacto borrado de OTRA bandeja con solo conocer su email.
+                $trashed = $email
+                    ? Customer::withTrashed()->onlyTrashed()->forAgent($agent)->where('email', $email)->first()
+                    : null;
 
                 if ($trashed) {
                     $trashed->restore();
@@ -302,6 +319,14 @@ class ContactsController extends Controller
                     }
 
                     $counters['restored']++;
+
+                    continue;
+                }
+
+                // El email pertenece a un contacto eliminado fuera del alcance
+                // del agente: no se restaura ni se duplica — se omite.
+                if ($email && Customer::withTrashed()->onlyTrashed()->where('email', $email)->exists()) {
+                    $counters['skipped']++;
 
                     continue;
                 }
@@ -330,8 +355,6 @@ class ContactsController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $filename = 'contactos-'.now()->format('Y-m-d').'.csv';
 
         $query = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
@@ -416,8 +439,6 @@ class ContactsController extends Controller
      */
     public function hsmTemplates(): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $templates = WhatsAppTemplate::query()
             ->where('status', 'approved')
             ->orderBy('display_name')
@@ -445,8 +466,6 @@ class ContactsController extends Controller
      */
     public function sendHsm(Customer $customer, SendHsmRequest $request, HsmConversationService $hsmConversations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         $this->assertVisible($customer);
 
         abort_if(
@@ -479,7 +498,7 @@ class ContactsController extends Controller
      */
     public function externalPlatforms(CustomerIntegrationService $integrations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         return response()->json(['success' => true, 'platforms' => $integrations->linkablePlatforms()]);
     }
@@ -492,7 +511,7 @@ class ContactsController extends Controller
      */
     public function externalSearch(ExternalSearchRequest $request, CustomerIntegrationService $integrations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         $data = $request->validated();
 
@@ -524,8 +543,11 @@ class ContactsController extends Controller
 
                 $r['platform'] = $platform;
                 $r['linked_customer_id'] = $linked?->id;
+                // Restringido al forAgent() del solicitante: sin esto, un
+                // resultado de búsqueda revelaba el id de un Customer fuera
+                // del alcance del agente (aislamiento por inbox roto).
                 $r['matched_customer_id'] = ! $linked && filled($r['email'] ?? null)
-                    ? Customer::query()->where('email', $r['email'])->value('id')
+                    ? Customer::query()->forAgent($request->user())->where('email', $r['email'])->value('id')
                     : null;
 
                 $results[] = $r;
@@ -546,7 +568,7 @@ class ContactsController extends Controller
      */
     public function externalCreate(ExternalIntegrationRequest $request, CustomerIntegrationService $integrations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         $data = $request->validated();
 
@@ -579,16 +601,25 @@ class ContactsController extends Controller
      */
     public function externalPreview(ExternalPreviewRequest $request): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         $data = $request->validated();
         $email = $data['email'] ?? '';
+        $phone = $data['phone'] ?? null;
+
+        // Antes aceptaba cualquier email/teléfono arbitrario con solo
+        // contacts.view, devolviendo la ficha ERP/PS completa (dirección,
+        // pedidos, facturas, NIF) sin relación con el alcance del agente.
+        // Ahora exige que el email/teléfono ya pertenezca a un Customer
+        // dentro de su forAgent() — mismo aislamiento por inbox que el resto
+        // del controlador (assertVisible/bulkAction/index).
+        $this->assertKnownToAgent($email, $phone);
 
         // ERP soporta fallback por teléfono cuando no hay email (frecuente en
         // resultados encontrados por búsqueda telefónica) — PrestaShop no
         // tiene ese fallback implementado, sigue exigiendo email.
         $context = match ($data['platform']) {
-            'erp' => app(ErpContextService::class)->getCustomerContext($email, $data['phone'] ?? null),
+            'erp' => app(ErpContextService::class)->getCustomerContext($email, $phone),
             'prestashop' => app(PrestashopContextService::class)->getCustomerContext($email),
         };
 
@@ -601,7 +632,7 @@ class ContactsController extends Controller
      */
     public function externalLink(Customer $customer, ExternalIntegrationRequest $request, CustomerIntegrationService $integrations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         $this->assertVisible($customer);
 
@@ -628,7 +659,7 @@ class ContactsController extends Controller
      */
     public function externalIntegrations(Customer $customer, CustomerIntegrationService $integrations): JsonResponse
     {
-        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+        abort_if(! helpdesk_integration_enabled(), 404);
 
         $this->assertVisible($customer);
 
@@ -710,8 +741,6 @@ class ContactsController extends Controller
      */
     public function reports(Request $request): View
     {
-        abort_if(! helpdesk_contacts_enabled(), 404);
-
         // Cacheado 2 min por agente: las 6 queries de este dashboard reevalúan
         // forAgent() (WHERE EXISTS contra conversations/inboxes) cada vez sin
         // necesitar frescura al segundo — mismo criterio que index().
@@ -811,6 +840,30 @@ class ContactsController extends Controller
             403,
             'Sin autorización sobre este contacto.'
         );
+    }
+
+    /**
+     * Abort with 403 unless the given email/phone belongs to a Customer
+     * within the requesting agent's forAgent() scope — used by
+     * externalPreview() to stop arbitrary email/phone lookups from
+     * returning a full external (ERP/PrestaShop) profile.
+     */
+    private function assertKnownToAgent(string $email, ?string $phone): void
+    {
+        $exists = Customer::query()
+            ->forAgent(request()->user())
+            ->where(function (Builder $q) use ($email, $phone) {
+                if ($email !== '') {
+                    $q->orWhere('email', $email);
+                }
+
+                if (filled($phone)) {
+                    $q->orWhere('phone', $phone)->orWhere('whatsapp_phone', $phone);
+                }
+            })
+            ->exists();
+
+        abort_unless($exists, 403, 'Sin autorización sobre este contacto externo.');
     }
 
     /**

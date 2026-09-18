@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -105,7 +106,7 @@ class EditManufacturerAddressCommand
     private $dni;
 
     /**
-     * @param int $addressId
+     * @param  int  $addressId
      *
      * @throws AddressConstraintException
      */
@@ -123,7 +124,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param AddressId $addressId
+     * @param  AddressId  $addressId
      */
     public function setAddressId($addressId)
     {
@@ -139,7 +140,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param int $manufacturerId
+     * @param  int  $manufacturerId
      *
      * @throws AddressConstraintException
      */
@@ -158,7 +159,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $lastName
+     * @param  string|null  $lastName
      */
     public function setLastName($lastName)
     {
@@ -174,7 +175,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $firstName
+     * @param  string|null  $firstName
      */
     public function setFirstName($firstName)
     {
@@ -190,7 +191,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $address
+     * @param  string|null  $address
      */
     public function setAddress($address)
     {
@@ -206,7 +207,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $city
+     * @param  string|null  $city
      */
     public function setCity($city)
     {
@@ -222,7 +223,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $address2
+     * @param  string|null  $address2
      */
     public function setAddress2($address2)
     {
@@ -238,7 +239,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param int|null $countryId
+     * @param  int|null  $countryId
      */
     public function setCountryId($countryId)
     {
@@ -254,7 +255,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $postCode
+     * @param  string|null  $postCode
      */
     public function setPostCode($postCode)
     {
@@ -270,7 +271,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param int|null $stateId
+     * @param  int|null  $stateId
      */
     public function setStateId($stateId)
     {
@@ -286,7 +287,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $homePhone
+     * @param  string|null  $homePhone
      */
     public function setHomePhone($homePhone)
     {
@@ -302,7 +303,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $mobilePhone
+     * @param  string|null  $mobilePhone
      */
     public function setMobilePhone($mobilePhone)
     {
@@ -318,7 +319,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $other
+     * @param  string|null  $other
      */
     public function setOther($other)
     {
@@ -334,7 +335,7 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param string|null $dni
+     * @param  string|null  $dni
      */
     public function setDni($dni)
     {
@@ -342,13 +343,13 @@ class EditManufacturerAddressCommand
     }
 
     /**
-     * @param mixed $value
+     * @param  mixed  $value
      *
      * @throws AddressConstraintException
      */
     private function assertIsNullOrNonNegativeInt($value)
     {
-        if (null === $value || is_int($value) || 0 <= $value) {
+        if ($value === null || is_int($value) || $value >= 0) {
             return;
         }
         throw new AddressConstraintException(sprintf('Invalid manufacturer id "%s" provided for address.', var_export($value, true)), AddressConstraintException::INVALID_MANUFACTURER_ID);

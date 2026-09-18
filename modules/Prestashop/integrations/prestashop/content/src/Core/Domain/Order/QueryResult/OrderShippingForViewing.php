@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,11 +55,7 @@ class OrderShippingForViewing
     private $giftMessage;
 
     /**
-     * @param OrderCarrierForViewing[] $carriers
-     * @param bool $isRecycledPackaging
-     * @param bool $isGiftWrapping
-     * @param string|null $giftMessage
-     * @param string|null $carrierModuleInfo
+     * @param  OrderCarrierForViewing[]  $carriers
      */
     public function __construct(
         array $carriers,
@@ -87,41 +84,26 @@ class OrderShippingForViewing
         return $this->carriers;
     }
 
-    /**
-     * @return bool
-     */
     public function isRecycledPackaging(): bool
     {
         return $this->isRecycledPackaging;
     }
 
-    /**
-     * @return bool
-     */
     public function isGiftWrapping(): bool
     {
         return $this->isGiftWrapping;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCarrierModuleInfo(): ?string
     {
         return $this->carrierModuleInfo;
     }
 
-    /**
-     * @return string|null
-     */
     public function getGiftMessage(): ?string
     {
         return $this->giftMessage;
     }
 
-    /**
-     * @param OrderCarrierForViewing $carrier
-     */
     private function addCarrier(OrderCarrierForViewing $carrier): void
     {
         $this->carriers[] = $carrier;

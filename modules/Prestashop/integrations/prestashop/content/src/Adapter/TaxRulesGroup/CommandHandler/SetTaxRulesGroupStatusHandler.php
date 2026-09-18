@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ final class SetTaxRulesGroupStatusHandler extends AbstractTaxRulesGroupHandler i
     {
         $taxRulesGroup = $this->getTaxRulesGroup($command->getTaxRulesGroupId());
 
-        if (!$this->setTaxRulesGroupStatus($taxRulesGroup, $command->getExpectedStatus())) {
+        if (! $this->setTaxRulesGroupStatus($taxRulesGroup, $command->getExpectedStatus())) {
             throw new CannotUpdateTaxRulesGroupException(sprintf('Unable to toggle tax rules group status with id "%s"', $taxRulesGroup->id), CannotUpdateTaxRulesGroupException::FAILED_TOGGLE_STATUS);
         }
     }

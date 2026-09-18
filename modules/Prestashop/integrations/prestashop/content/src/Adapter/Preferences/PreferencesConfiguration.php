@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,7 +72,7 @@ class PreferencesConfiguration implements DataConfigurationInterface
      */
     public function updateConfiguration(array $configuration)
     {
-        if (false === $this->validateConfiguration($configuration)) {
+        if ($this->validateConfiguration($configuration) === false) {
             return [
                 [
                     'key' => 'Invalid configuration',
@@ -110,10 +111,6 @@ class PreferencesConfiguration implements DataConfigurationInterface
     /**
      * Validate the SSL configuration can be disabled if the SameSite Cookie
      * is not settled to None
-     *
-     * @param array $configuration
-     *
-     * @return bool
      */
     protected function validateSameSiteConfiguration(array $configuration): bool
     {

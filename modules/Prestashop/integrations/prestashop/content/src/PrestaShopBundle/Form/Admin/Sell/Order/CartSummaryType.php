@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,11 +55,6 @@ class CartSummaryType extends AbstractType
      */
     private $translator;
 
-    /**
-     * @param FormChoiceProviderInterface $orderStatesChoiceProvider
-     * @param FormChoiceProviderInterface $paymentModulesChoiceProvider
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         FormChoiceProviderInterface $orderStatesChoiceProvider,
         FormChoiceProviderInterface $paymentModulesChoiceProvider,
@@ -103,8 +99,6 @@ class CartSummaryType extends AbstractType
 
     /**
      * Gets payment module choices
-     *
-     * @return array
      */
     private function getPaymentModuleChoices(): array
     {

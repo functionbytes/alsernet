@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,20 +69,18 @@ class MaintenanceConfiguration extends AbstractMultistoreConfiguration
     }
 
     /**
-     * @param array $configurationInputValues
-     *
      * @return bool
      */
     public function validateConfiguration(array $configurationInputValues)
     {
         // add multistore fields in list of expected fields
         foreach ($this->fields as $value) {
-            $this->fields[] = MultistoreCheckboxEnabler::MULTISTORE_FIELD_PREFIX . $value;
+            $this->fields[] = MultistoreCheckboxEnabler::MULTISTORE_FIELD_PREFIX.$value;
         }
 
         // check all given fields are expected
         foreach ($configurationInputValues as $key => $value) {
-            if (!in_array($key, $this->fields)) {
+            if (! in_array($key, $this->fields)) {
                 return false;
             }
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,7 @@ use Symfony\Component\Finder\SplFileInfo;
 final class FolderThemeScanner
 {
     /**
-     * @param string $mailThemeFolder
-     *
+     * @param  string  $mailThemeFolder
      * @return ThemeInterface|null
      *
      * @throws FileNotFoundException
@@ -54,7 +54,7 @@ final class FolderThemeScanner
 
         $mailTheme = new Theme(basename($mailThemeFolder));
 
-        $finder = new Finder();
+        $finder = new Finder;
         $finder->files()->in($mailThemeFolder);
         if ($finder->count() > 0) {
             $mailTheme->setLayouts($this->findThemeLayouts($mailThemeFolder));
@@ -64,15 +64,14 @@ final class FolderThemeScanner
     }
 
     /**
-     * @param string $mailThemeFolder
+     * @param  string  $mailThemeFolder
+     * @return LayoutCollectionInterface
      *
      * @throws TypeException
-     *
-     * @return LayoutCollectionInterface
      */
     private function findThemeLayouts($mailThemeFolder)
     {
-        $mailThemeLayouts = new LayoutCollection();
+        $mailThemeLayouts = new LayoutCollection;
         $this->addCoreLayouts($mailThemeLayouts, $mailThemeFolder);
         $this->addModulesLayouts($mailThemeLayouts, $mailThemeFolder);
 
@@ -80,8 +79,7 @@ final class FolderThemeScanner
     }
 
     /**
-     * @param LayoutCollectionInterface $collection
-     * @param string $mailThemeFolder
+     * @param  string  $mailThemeFolder
      */
     private function addCoreLayouts(LayoutCollectionInterface $collection, $mailThemeFolder)
     {
@@ -89,7 +87,7 @@ final class FolderThemeScanner
             $mailThemeFolder,
             MailTemplateInterface::CORE_CATEGORY,
         ]);
-        if (!is_dir($coreLayoutsFolder)) {
+        if (! is_dir($coreLayoutsFolder)) {
             return;
         }
 
@@ -97,8 +95,7 @@ final class FolderThemeScanner
     }
 
     /**
-     * @param LayoutCollectionInterface $collection
-     * @param string $mailThemeFolder
+     * @param  string  $mailThemeFolder
      */
     private function addModulesLayouts(LayoutCollectionInterface $collection, $mailThemeFolder)
     {
@@ -106,11 +103,11 @@ final class FolderThemeScanner
             $mailThemeFolder,
             MailTemplateInterface::MODULES_CATEGORY,
         ]);
-        if (!is_dir($moduleLayoutsFolder)) {
+        if (! is_dir($moduleLayoutsFolder)) {
             return;
         }
 
-        $moduleFinder = new Finder();
+        $moduleFinder = new Finder;
         $moduleFinder->directories()->in($moduleLayoutsFolder)->depth(0);
 
         /* @var SplFileInfo $moduleFolder */
@@ -120,9 +117,8 @@ final class FolderThemeScanner
     }
 
     /**
-     * @param LayoutCollectionInterface $collection
-     * @param string $folder
-     * @param string $moduleName
+     * @param  string  $folder
+     * @param  string  $moduleName
      */
     private function addLayoutsFromFolder(
         LayoutCollectionInterface $collection,
@@ -130,13 +126,13 @@ final class FolderThemeScanner
         $moduleName = ''
     ) {
         $layoutFiles = [];
-        $finder = new Finder();
+        $finder = new Finder;
         $finder->files()->in($folder)->sortByName();
         /** @var SplFileInfo $fileInfo */
         foreach ($finder as $fileInfo) {
-            //Get filename without any extension (ex: account.html.twig -> account)
+            // Get filename without any extension (ex: account.html.twig -> account)
             $layoutName = preg_replace('/\..+/', '', $fileInfo->getBasename());
-            if (!isset($layoutFiles[$layoutName])) {
+            if (! isset($layoutFiles[$layoutName])) {
                 $layoutFiles[$layoutName] = [
                     MailTemplateInterface::HTML_TYPE => '',
                     MailTemplateInterface::TXT_TYPE => '',
@@ -157,13 +153,11 @@ final class FolderThemeScanner
     }
 
     /**
-     * @param SplFileInfo $fileInfo
-     *
      * @return string
      */
     private function getTemplateType(SplFileInfo $fileInfo)
     {
-        $ext = !empty($fileInfo->getExtension()) ? '.' . $fileInfo->getExtension() : '';
+        $ext = ! empty($fileInfo->getExtension()) ? '.'.$fileInfo->getExtension() : '';
         $htmlTypeRegexp = sprintf('/.+\.%s%s/', MailTemplateInterface::HTML_TYPE, $ext);
         if (preg_match($htmlTypeRegexp, $fileInfo->getFilename())) {
             return MailTemplateInterface::HTML_TYPE;
@@ -177,7 +171,7 @@ final class FolderThemeScanner
      */
     private function checkThemeFolder($mailThemeFolder)
     {
-        if (!is_dir($mailThemeFolder)) {
+        if (! is_dir($mailThemeFolder)) {
             throw new FileNotFoundException(sprintf('Invalid mail theme folder "%s": no such directory', $mailThemeFolder));
         }
     }

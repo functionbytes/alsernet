@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,12 +27,14 @@
 class AuthControllerCore extends FrontController
 {
     public $ssl = true;
+
     public $php_self = 'authentication';
+
     public $auth = false;
 
     public function checkAccess()
     {
-        if ($this->context->customer->isLogged() && !$this->ajax) {
+        if ($this->context->customer->isLogged() && ! $this->ajax) {
             $this->redirect_after = ($this->authRedirection) ? urlencode($this->authRedirection) : 'my-account';
             $this->redirect();
         }
@@ -86,7 +89,7 @@ class AuthControllerCore extends FrontController
 
         parent::initContent();
 
-        if ($should_redirect && !$this->ajax) {
+        if ($should_redirect && ! $this->ajax) {
             $back = rawurldecode(Tools::getValue('back'));
 
             if (Tools::urlBelongsToShop($back)) {

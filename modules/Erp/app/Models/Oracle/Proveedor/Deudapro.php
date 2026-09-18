@@ -4,7 +4,9 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Cobro\Formapago;
 use Modules\Erp\Models\Oracle\Factura\Facturapro;
+use Modules\Erp\Models\Oracle\Otros\Condicionpago;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -71,7 +73,7 @@ class Deudapro extends Model
      */
     public function deudapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Deudapro::class, 'iddeudapro', 'iddeudapro');
+        return $this->belongsTo(Deudapro::class, 'iddeudapro', 'iddeudapro');
     }
 
     /**
@@ -80,7 +82,7 @@ class Deudapro extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -89,7 +91,7 @@ class Deudapro extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -98,6 +100,6 @@ class Deudapro extends Model
      */
     public function condicionpago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
+        return $this->belongsTo(Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
     }
 }

@@ -111,12 +111,13 @@ class IntegrationsController extends Controller
 
     public function update(UpdateIntegrationsSettingsRequest $request): RedirectResponse
     {
+        $values = [];
         foreach (self::TOGGLEABLE_MODULES as $module) {
             $field = "{$module['key']}_integration_enabled";
-            $value = $request->has($field) ? '1' : '0';
-
-            Setting::set("{$module['key']}.integration_enabled", $value, 'integrations');
+            $values[$module['key'].'.integration_enabled'] = $request->has($field) ? '1' : '0';
         }
+
+        Setting::setMany($values, 'integrations', 'settings.integrations.updated');
 
         return back()->with('success', 'Integraciones actualizadas.');
     }

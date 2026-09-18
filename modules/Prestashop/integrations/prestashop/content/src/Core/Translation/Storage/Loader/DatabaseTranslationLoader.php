@@ -63,10 +63,9 @@ class DatabaseTranslationLoader
     /**
      * Loads all user translations according to search parameters
      *
-     * @param string $locale Translation language
-     * @param string $domain Regex for domain pattern search
-     * @param string|null $theme A theme name
-     *
+     * @param  string  $locale  Translation language
+     * @param  string  $domain  Regex for domain pattern search
+     * @param  string|null  $theme  A theme name
      * @return MessageCatalogue A MessageCatalogue instance
      */
     public function load(string $locale, string $domain = 'messages', ?string $theme = null): MessageCatalogue
@@ -79,7 +78,7 @@ class DatabaseTranslationLoader
             return $catalogue;
         }
 
-        if (!array_key_exists($locale, $languages)) {
+        if (! array_key_exists($locale, $languages)) {
             $languages[$locale] = $this->languageRepository->findOneBy(['locale' => $locale]);
         }
 
@@ -103,23 +102,15 @@ class DatabaseTranslationLoader
         return $catalogue;
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param LanguageInterface $currentLang
-     */
     private function addLangConstraint(QueryBuilder $queryBuilder, LanguageInterface $currentLang): void
     {
         $queryBuilder->andWhere('t.lang =:lang')
             ->setParameter('lang', $currentLang);
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string|null $theme
-     */
     private function addThemeConstraint(QueryBuilder $queryBuilder, ?string $theme = null): void
     {
-        if (null === $theme) {
+        if ($theme === null) {
             $queryBuilder->andWhere('t.theme IS NULL');
         } else {
             $queryBuilder
@@ -128,10 +119,6 @@ class DatabaseTranslationLoader
         }
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $domain
-     */
     private function addDomainConstraint(QueryBuilder $queryBuilder, string $domain): void
     {
         if ($domain !== '*') {

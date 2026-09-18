@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,16 @@ abstract class AbstractDeleteCategoryHandler
     /**
      * Handle inventaries category after its deletion.
      *
-     * @param int $parentCategoryId
-     * @param CategoryDeleteMode $mode
+     * @param  int  $parentCategoryId
      */
     protected function handleProductsUpdate($parentCategoryId, CategoryDeleteMode $mode)
     {
         $productsWithoutCategory = \Db::getInstance()->executeS('
 			SELECT p.`id_product`
-			FROM `' . _DB_PREFIX_ . 'product` p
-			' . Shop::addSqlAssociation('product', 'p') . '
+			FROM `'._DB_PREFIX_.'product` p
+			'.Shop::addSqlAssociation('product', 'p').'
 			WHERE NOT EXISTS (
-			    SELECT 1 FROM `' . _DB_PREFIX_ . 'category_product` cp WHERE cp.`id_product` = p.`id_product`
+			    SELECT 1 FROM `'._DB_PREFIX_.'category_product` cp WHERE cp.`id_product` = p.`id_product`
 			)
 		');
 
@@ -56,7 +56,7 @@ abstract class AbstractDeleteCategoryHandler
             $product = new Product((int) $productWithoutCategory['id_product']);
 
             if ($product->id) {
-                if (0 === $parentCategoryId || $mode->shouldRemoveProducts()) {
+                if ($parentCategoryId === 0 || $mode->shouldRemoveProducts()) {
                     $product->delete();
 
                     continue;

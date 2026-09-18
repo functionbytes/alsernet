@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,6 @@ interface LocalizationPackImporterInterface
     /**
      * Import localization pack.
      *
-     * @param LocalizationPackImportConfig $config
      *
      * @return array Return errors if any or empty array otherwise
      */

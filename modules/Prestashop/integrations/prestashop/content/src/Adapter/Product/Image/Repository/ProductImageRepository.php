@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,11 +64,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
      */
     private $productImageValidator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param ProductImageValidator $productImageValidator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -79,10 +75,7 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     * @param int[] $shopIds
-     *
-     * @return Image
+     * @param  int[]  $shopIds
      *
      * @throws CoreException
      * @throws ProductImageException
@@ -91,14 +84,14 @@ class ProductImageRepository extends AbstractObjectModelRepository
     public function create(ProductId $productId, array $shopIds): Image
     {
         $productIdValue = $productId->getValue();
-        $image = new Image();
+        $image = new Image;
         $image->id_product = $productIdValue;
-        $image->cover = !Image::getCover($productIdValue);
+        $image->cover = ! Image::getCover($productIdValue);
 
         $this->addObjectModel($image, CannotAddProductImageException::class);
 
         try {
-            if (!$image->associateTo($shopIds)) {
+            if (! $image->associateTo($shopIds)) {
                 throw new ProductImageException(sprintf(
                     'Failed to associate product image #%d with shops',
                     $image->id
@@ -116,8 +109,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @return ImageId[]
      *
      * @throws CoreException
@@ -126,18 +117,17 @@ class ProductImageRepository extends AbstractObjectModelRepository
     {
         $qb = $this->connection->createQueryBuilder();
 
-        //@todo: multishop not handled
+        // @todo: multishop not handled
         $results = $qb->select('id_image')
-            ->from($this->dbPrefix . 'image', 'i')
+            ->from($this->dbPrefix.'image', 'i')
             ->where('i.id_product = :productId')
             ->setParameter('productId', $productId->getValue())
             ->addOrderBy('i.position', 'ASC')
             ->addOrderBy('i.id_image', 'ASC')
             ->execute()
-            ->fetchAll()
-        ;
+            ->fetchAll();
 
-        if (!$results) {
+        if (! $results) {
             return [];
         }
 
@@ -150,8 +140,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @return Image[]
      *
      * @throws CoreException
@@ -183,13 +171,13 @@ class ProductImageRepository extends AbstractObjectModelRepository
             throw new CoreException('Error occurred when trying to get product image types');
         }
 
-        if (!$results) {
+        if (! $results) {
             return [];
         }
 
         $imageTypes = [];
         foreach ($results as $result) {
-            $imageType = new ImageType();
+            $imageType = new ImageType;
             $imageType->id = (int) $result['id_image_type'];
             $imageType->name = $result['name'];
             $imageType->width = (int) $result['width'];
@@ -206,10 +194,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ImageId $imageId
-     *
-     * @return Image
-     *
      * @throws CoreException
      */
     public function get(ImageId $imageId): Image
@@ -225,10 +209,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
-     * @return Image|null
-     *
      * @throws CoreException
      */
     public function findCover(ProductId $productId): ?Image
@@ -237,13 +217,12 @@ class ProductImageRepository extends AbstractObjectModelRepository
             $qb = $this->connection->createQueryBuilder();
             $qb
                 ->addSelect('i.id_image')
-                ->from($this->dbPrefix . 'image', 'i')
+                ->from($this->dbPrefix.'image', 'i')
                 ->andWhere('i.id_product = :productId')
                 ->andWhere('i.cover = 1')
-                ->setParameter('productId', $productId->getValue())
-            ;
+                ->setParameter('productId', $productId->getValue());
             $result = $qb->execute()->fetch();
-            $id = !empty($result['id_image']) ? (int) $result['id_image'] : null;
+            $id = ! empty($result['id_image']) ? (int) $result['id_image'] : null;
         } catch (PrestaShopException $e) {
             throw new CoreException('Error occurred while trying to get product default combination', 0, $e);
         }
@@ -254,25 +233,23 @@ class ProductImageRepository extends AbstractObjectModelRepository
     /**
      * Retrieves a list of image ids ordered by position for each provided combination id
      *
-     * @param int[] $combinationIds
-     *
+     * @param  int[]  $combinationIds
      * @return array<int, ImageId[]> [(int) id_combination => [ImageId]]
      */
     public function getImagesIdsForCombinations(array $combinationIds): array
     {
-        //@todo: multishop not handled
+        // @todo: multishop not handled
         $qb = $this->connection->createQueryBuilder();
         $qb->select('pai.id_product_attribute, pai.id_image')
-            ->from($this->dbPrefix . 'product_attribute_image', 'pai')
+            ->from($this->dbPrefix.'product_attribute_image', 'pai')
             ->leftJoin(
                 'pai',
-                $this->dbPrefix . 'image', 'i',
+                $this->dbPrefix.'image', 'i',
                 'i.id_image = pai.id_image'
             )
             ->andWhere($qb->expr()->in('pai.id_product_attribute', ':combinationIds'))
             ->setParameter('combinationIds', $combinationIds, Connection::PARAM_INT_ARRAY)
-            ->orderBy('i.position', 'asc')
-        ;
+            ->orderBy('i.position', 'asc');
 
         $results = $qb->execute()->fetchAll();
 
@@ -285,7 +262,7 @@ class ProductImageRepository extends AbstractObjectModelRepository
         $imagesIdsByCombinationIds = [];
         foreach ($results as $result) {
             $id = (int) $result['id_image'];
-            if (!isset($imageIds[$id])) {
+            if (! isset($imageIds[$id])) {
                 $imageIds[$id] = new ImageId($id);
             }
             $imagesIdsByCombinationIds[(int) $result['id_product_attribute']][] = $imageIds[$id];
@@ -295,10 +272,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param Image $image
-     * @param array $updatableProperties
-     * @param int $errorCode
-     *
      * @throws CannotUpdateProductImageException
      */
     public function partialUpdate(Image $image, array $updatableProperties, int $errorCode = 0): void
@@ -313,8 +286,6 @@ class ProductImageRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param Image $image
-     *
      * @throws CannotDeleteProductImageException
      */
     public function delete(Image $image): void

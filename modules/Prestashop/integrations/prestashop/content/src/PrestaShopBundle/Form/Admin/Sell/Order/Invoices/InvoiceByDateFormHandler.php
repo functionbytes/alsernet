@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,13 +52,7 @@ final class InvoiceByDateFormHandler extends Handler
     private $pdfGenerator;
 
     /**
-     * @param FormFactoryInterface $formFactory
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param FormDataProviderInterface $formDataProvider
-     * @param string $form
-     * @param string $hookName
-     * @param OrderInvoiceDataProviderInterface $orderInvoiceDataProvider
-     * @param PDFGeneratorInterface $pdfGenerator
+     * @param  string  $hookName
      */
     public function __construct(
         FormFactoryInterface $formFactory,

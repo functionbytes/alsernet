@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,12 +71,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
      */
     private $defaultCategoryId;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     * @param bool $defaultProductActivation
-     * @param int $mostUsedTaxRulesGroupId
-     * @param int $defaultCategoryId
-     */
     public function __construct(
         CommandBusInterface $queryBus,
         bool $defaultProductActivation,
@@ -176,10 +171,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
 
     /**
      * Returned product data with shortcut data that is picked from existing data.
-     *
-     * @param array $productData
-     *
-     * @return array
      */
     private function addShortcutData(array $productData): array
     {
@@ -197,11 +188,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
         return $productData;
     }
 
-    /**
-     * @param ProductForEditing $productForEditing
-     *
-     * @return array
-     */
     private function extractCategoriesData(ProductForEditing $productForEditing): array
     {
         $categoriesInformation = $productForEditing->getCategoriesInformation();
@@ -219,8 +205,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractVirtualProductFileData(ProductForEditing $productForEditing): array
@@ -230,7 +214,7 @@ final class ProductFormDataProvider implements FormDataProviderInterface
         ];
         $virtualProductFile = $productForEditing->getVirtualProductFile();
 
-        if (null !== $virtualProductFile) {
+        if ($virtualProductFile !== null) {
             $data = [
                 'has_file' => true,
                 'virtual_product_file_id' => $virtualProductFile->getId(),
@@ -247,8 +231,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractHeaderData(ProductForEditing $productForEditing): array
@@ -260,8 +242,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractBasicData(ProductForEditing $productForEditing): array
@@ -275,8 +255,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param int $productId
-     *
      * @return array<string, array<int, array<string, int|array<int, string>>>>
      */
     private function extractFeatureValues(int $productId): array
@@ -307,8 +285,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractStockData(ProductForEditing $productForEditing): array
@@ -338,8 +314,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractPricingData(ProductForEditing $productForEditing): array
@@ -360,11 +334,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
         ];
     }
 
-    /**
-     * @param ProductForEditing $productForEditing
-     *
-     * @return array
-     */
     private function extractSEOData(ProductForEditing $productForEditing): array
     {
         $seoOptions = $productForEditing->getProductSeoOptions();
@@ -378,8 +347,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, int|string>
      */
     private function extractRedirectOptionData(ProductForEditing $productForEditing): array
@@ -393,8 +360,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractShippingData(ProductForEditing $productForEditing): array
@@ -419,8 +384,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, mixed>
      */
     private function extractOptionsData(ProductForEditing $productForEditing): array
@@ -451,8 +414,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, array<int, mixed>>
      */
     private function extractCustomizationsData(ProductForEditing $productForEditing): array
@@ -482,8 +443,7 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param LocalizedTags[] $localizedTagsList
-     *
+     * @param  LocalizedTags[]  $localizedTagsList
      * @return array<int, string>
      */
     private function presentTags(array $localizedTagsList): array
@@ -497,8 +457,6 @@ final class ProductFormDataProvider implements FormDataProviderInterface
     }
 
     /**
-     * @param ProductForEditing $productForEditing
-     *
      * @return array<string, int|array<int, int|array<string, string|int>>>
      */
     private function extractSuppliersData(ProductForEditing $productForEditing): array

@@ -46,57 +46,8 @@
 
 @once
 @push('scripts')
-<script>
-$(document).on('click', '[data-bv-modal-name="move-to-team"] .bv-opt', function () {
-    $('[data-bv-modal-name="move-to-team"] .bv-opt').removeClass('on');
-    $(this).addClass('on');
-});
-
-$(document).on('input', '#move-team-search', function () {
-    var q = $(this).val().toLowerCase();
-    $('[data-bv-modal-name="move-to-team"] .bv-opt').each(function () {
-        var name = $(this).find('.name').text().toLowerCase();
-        $(this).toggle(!q || name.includes(q));
-    });
-});
-
-$(document).on('click', '#move-team-btn', function () {
-    var $selected = $('[data-bv-modal-name="move-to-team"] .bv-opt.on');
-    var groupId = $selected.data('group-id');
-    var convId = $('.bv-composer').data('bv-conversation-id');
-
-    if (!groupId) {
-        if (window.toastr) toastr.warning('Selecciona un equipo destino');
-        return;
-    }
-
-    if (!convId) {
-        if (window.toastr) toastr.warning('No hay conversación activa');
-        return;
-    }
-
-    $.ajax({
-        url: '/panel/helpdesk/conversations/' + convId,
-        method: 'PUT',
-        dataType: 'json',
-        data: { group_id: groupId },
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json',
-        },
-    })
-    .done(function (resp) {
-        $('[data-bv-modal-name="move-to-team"]').removeClass('on');
-        if ($('body').css('overflow') !== '') $('body').css('overflow', '');
-
-        var groupName = $selected.find('.name').text();
-        $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-    })
-    .fail(function (xhr) {
-        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'No se pudo mover la conversación';
-        if (window.toastr) toastr.error(msg);
-    });
-});
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/move-to-team.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/move-to-team.js')) }}" defer></script>
 @endpush
 @endonce

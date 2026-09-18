@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,6 @@ class EditCartAddressHandler implements EditCartAddressHandlerInterface
      */
     private $addressHandler;
 
-    /**
-     * @param EditCustomerAddressHandlerInterface $addressHandler
-     */
     public function __construct(EditCustomerAddressHandlerInterface $addressHandler)
     {
         $this->addressHandler = $addressHandler;
@@ -73,7 +71,7 @@ class EditCartAddressHandler implements EditCartAddressHandlerInterface
     {
         try {
             $cart = new Cart($command->getCartId()->getValue());
-            if (!Validate::isLoadedObject($cart) || $command->getCartId()->getValue() !== (int) $cart->id) {
+            if (! Validate::isLoadedObject($cart) || $command->getCartId()->getValue() !== (int) $cart->id) {
                 throw new CartNotFoundException(sprintf('Cart with id "%d" was not found', $command->getCartId()->getValue()));
             }
 
@@ -89,7 +87,7 @@ class EditCartAddressHandler implements EditCartAddressHandlerInterface
                     $cart->id_address_invoice = $addressId->getValue();
                     break;
             }
-            if (!$cart->update()) {
+            if (! $cart->update()) {
                 throw new CannotUpdateCartAddressException(sprintf('An error occurred when updating address for cart "%d"', $command->getCartId()->getValue()));
             }
         } catch (PrestaShopException $e) {
@@ -100,10 +98,6 @@ class EditCartAddressHandler implements EditCartAddressHandlerInterface
     }
 
     /**
-     * @param EditCartAddressCommand $cartCommand
-     *
-     * @return EditCustomerAddressCommand
-     *
      * @throws AddressConstraintException
      * @throws CountryConstraintException
      * @throws StateConstraintException
@@ -121,49 +115,49 @@ class EditCartAddressHandler implements EditCartAddressHandlerInterface
                 break;
         }
         $addressCommand = new EditCustomerAddressCommand($addressId);
-        if (null !== $cartCommand->getAddressAlias()) {
+        if ($cartCommand->getAddressAlias() !== null) {
             $addressCommand->setAddressAlias($cartCommand->getAddressAlias());
         }
-        if (null !== $cartCommand->getFirstName()) {
+        if ($cartCommand->getFirstName() !== null) {
             $addressCommand->setFirstName($cartCommand->getFirstName());
         }
-        if (null !== $cartCommand->getLastName()) {
+        if ($cartCommand->getLastName() !== null) {
             $addressCommand->setLastName($cartCommand->getLastName());
         }
-        if (null !== $cartCommand->getAddress()) {
+        if ($cartCommand->getAddress() !== null) {
             $addressCommand->setAddress($cartCommand->getAddress());
         }
-        if (null !== $cartCommand->getCity()) {
+        if ($cartCommand->getCity() !== null) {
             $addressCommand->setCity($cartCommand->getCity());
         }
-        if (null !== $cartCommand->getPostCode()) {
+        if ($cartCommand->getPostCode() !== null) {
             $addressCommand->setPostCode($cartCommand->getPostCode());
         }
-        if (null !== $cartCommand->getCountryId()) {
+        if ($cartCommand->getCountryId() !== null) {
             $addressCommand->setCountryId($cartCommand->getCountryId()->getValue());
         }
-        if (null !== $cartCommand->getDni()) {
+        if ($cartCommand->getDni() !== null) {
             $addressCommand->setDni($cartCommand->getDni());
         }
-        if (null !== $cartCommand->getCompany()) {
+        if ($cartCommand->getCompany() !== null) {
             $addressCommand->setCompany($cartCommand->getCompany());
         }
-        if (null !== $cartCommand->getVatNumber()) {
+        if ($cartCommand->getVatNumber() !== null) {
             $addressCommand->setVatNumber($cartCommand->getVatNumber());
         }
-        if (null !== $cartCommand->getAddress2()) {
+        if ($cartCommand->getAddress2() !== null) {
             $addressCommand->setAddress2($cartCommand->getAddress2());
         }
-        if (null !== $cartCommand->getStateId()) {
+        if ($cartCommand->getStateId() !== null) {
             $addressCommand->setStateId($cartCommand->getStateId()->getValue());
         }
-        if (null !== $cartCommand->getHomePhone()) {
+        if ($cartCommand->getHomePhone() !== null) {
             $addressCommand->setHomePhone($cartCommand->getHomePhone());
         }
-        if (null !== $cartCommand->getMobilePhone()) {
+        if ($cartCommand->getMobilePhone() !== null) {
             $addressCommand->setMobilePhone($cartCommand->getMobilePhone());
         }
-        if (null !== $cartCommand->getOther()) {
+        if ($cartCommand->getOther() !== null) {
             $addressCommand->setOther($cartCommand->getOther());
         }
 

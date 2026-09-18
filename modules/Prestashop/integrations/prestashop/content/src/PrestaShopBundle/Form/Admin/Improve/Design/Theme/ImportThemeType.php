@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,11 +46,6 @@ class ImportThemeType extends TranslatorAwareType
      */
     private $themeZipsChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $themeZipsChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -95,8 +91,7 @@ class ImportThemeType extends TranslatorAwareType
                 'placeholder' => '-',
                 'choices' => $this->themeZipsChoices,
                 'translation_domain' => false,
-            ])
-        ;
+            ]);
     }
 
     /**

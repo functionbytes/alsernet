@@ -76,9 +76,8 @@ interface LocaleInterface
     /**
      * Get the number symbols to use for a given numbering system.
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return NumberSymbolsData The wanted number symbols
      *
      * @throws LocalizationException When passed $numberingSystem is invalid
@@ -88,9 +87,8 @@ interface LocaleInterface
     /**
      * Get the pattern to use when formatting a decimal number (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The decimal pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
@@ -100,9 +98,8 @@ interface LocaleInterface
     /**
      * Get the pattern to use when formatting a percentage (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The percent pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
@@ -112,9 +109,8 @@ interface LocaleInterface
     /**
      * Get the pattern to use when formatting a price (for a given numbering system).
      *
-     * @param string|null $numberingSystem The numbering system of the wanted symbols set.
-     *                                     If null, the default numbering system of this locale will be used.
-     *
+     * @param  string|null  $numberingSystem  The numbering system of the wanted symbols set.
+     *                                        If null, the default numbering system of this locale will be used.
      * @return string The currency pattern
      *
      * @throws LocalizationException When passed numbering system is invalid
@@ -124,8 +120,7 @@ interface LocaleInterface
     /**
      * Get a given CLDR Currency.
      *
-     * @param string $currencyCode An ISO 4217 currency code
-     *
+     * @param  string  $currencyCode  An ISO 4217 currency code
      * @return CurrencyInterface|null The wanted CLDR Currency. Null if this currency is not available for this locale.
      */
     public function getCurrency($currencyCode);
@@ -133,8 +128,7 @@ interface LocaleInterface
     /**
      * Get CLDR data of a given currency.
      *
-     * @param string $currencyCode An ISO 4217 currency code
-     *
+     * @param  string  $currencyCode  An ISO 4217 currency code
      * @return CurrencyData|null The wanted currency data. Null if this currency is not available for this locale.
      */
     public function getCurrencyData($currencyCode);

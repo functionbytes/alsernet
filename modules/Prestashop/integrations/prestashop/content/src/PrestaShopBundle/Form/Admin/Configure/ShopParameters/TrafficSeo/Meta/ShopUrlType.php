@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,12 +56,6 @@ class ShopUrlType extends TranslatorAwareType
 
     /**
      * ShopUrlType constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $isHostMode
-     * @param bool $isShopFeatureActive
-     * @param bool $doesMainShopUrlExist
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -80,7 +75,7 @@ class ShopUrlType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        if (!$this->isHostMode && !$this->isShopFeatureActive && $this->doesMainShopUrlExist) {
+        if (! $this->isHostMode && ! $this->isShopFeatureActive && $this->doesMainShopUrlExist) {
             $builder
                 ->add('domain', TextType::class, [
                     'label' => $this->trans(

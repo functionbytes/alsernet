@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,11 +62,10 @@ class InvalidProductTypeException extends ProductException
     public const EXPECTED_NO_COMBINATIONS_TYPE = 50;
 
     /**
-     * @param int $code
-     * @param string $message
-     * @param Throwable|null $previous
+     * @param  int  $code
+     * @param  string  $message
      */
-    public function __construct($code, $message = '', Throwable $previous = null)
+    public function __construct($code, $message = '', ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

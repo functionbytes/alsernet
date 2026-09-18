@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -88,10 +89,10 @@ class ModuleCommand extends ContainerAwareCommand
         $this->output = $output;
         /** @var LegacyContext $legacyContext */
         $legacyContext = $this->getContainer()->get('prestashop.adapter.legacy.context');
-        //We need to have an employee or the module hooks don't work
-        //see LegacyHookSubscriber
-        if (!$legacyContext->getContext()->employee) {
-            //Even a non existing employee is fine
+        // We need to have an employee or the module hooks don't work
+        // see LegacyHookSubscriber
+        if (! $legacyContext->getContext()->employee) {
+            // Even a non existing employee is fine
             $legacyContext->getContext()->employee = new Employee(42);
         }
     }
@@ -104,7 +105,7 @@ class ModuleCommand extends ContainerAwareCommand
         $action = $input->getArgument('action');
         $file = $input->getArgument('file path');
 
-        if (!in_array($action, $this->allowedActions)) {
+        if (! in_array($action, $this->allowedActions)) {
             $this->displayMessage(
                 $this->translator->trans(
                     'Unknown module action. It must be one of these values: %actions%',
@@ -136,9 +137,11 @@ class ModuleCommand extends ContainerAwareCommand
 
         // Check if validation passed and exit in case of errors
         $errors = $moduleSelfConfigurator->validate();
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             // Display errors as a list
-            $errors = array_map(function ($val) { return '- ' . $val; }, $errors);
+            $errors = array_map(function ($val) {
+                return '- '.$val;
+            }, $errors);
             // And add a default message at the top
             array_unshift($errors, $this->translator->trans(
                 'Validation of configuration details failed:',

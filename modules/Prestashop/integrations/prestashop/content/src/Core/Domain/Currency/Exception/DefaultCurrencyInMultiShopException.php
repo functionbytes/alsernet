@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,11 +54,11 @@ class DefaultCurrencyInMultiShopException extends CurrencyException
     private $shopName;
 
     /**
-     * @param string $currencyName
-     * @param string $shopName
-     * @param string $message
-     * @param int $code
-     * @param null $previous
+     * @param  string  $currencyName
+     * @param  string  $shopName
+     * @param  string  $message
+     * @param  int  $code
+     * @param  null  $previous
      */
     public function __construct($currencyName, $shopName, $message = '', $code = 0, $previous = null)
     {

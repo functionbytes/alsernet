@@ -21,11 +21,11 @@ return new class extends Migration
         });
 
         // Migrar valores existentes: si tiene subfamily_id → poblar subfamily_ids
-        DB::statement("
+        DB::statement('
             UPDATE supplier_prompts
             SET subfamily_ids = JSON_ARRAY(subfamily_id)
             WHERE subfamily_id IS NOT NULL AND subfamily_ids IS NULL
-        ");
+        ');
     }
 
     public function down(): void

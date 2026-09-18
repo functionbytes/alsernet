@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        //We need the list of active modules to load their config, during install the parameter might no be available
-        //if the parameters file has not been generated yet, so we skip this part of the build
-        if (!$container->hasParameter('kernel.active_modules')) {
+        // We need the list of active modules to load their config, during install the parameter might no be available
+        // if the parameters file has not been generated yet, so we skip this part of the build
+        if (! $container->hasParameter('kernel.active_modules')) {
             return;
         }
 
@@ -69,7 +70,6 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
     /**
      * Return a list of CompilerPassInterface indexed with their associated resource.
      *
-     * @param array $activeModules
      *
      * @return array
      */
@@ -79,14 +79,14 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
         /** @var SplFileInfo $moduleFolder */
         foreach ($this->getModulesFolders() as $moduleFolder) {
             if (in_array($moduleFolder->getFilename(), $activeModules)
-                && is_dir($moduleFolder . '/src/Entity')
+                && is_dir($moduleFolder.'/src/Entity')
             ) {
                 $moduleNamespace = $this->getModuleNamespace($moduleFolder);
                 if (empty($moduleNamespace)) {
                     continue;
                 }
-                $modulePrefix = 'Module' . Inflector::camelize($moduleFolder->getFilename());
-                $moduleEntityDirectory = realpath($moduleFolder . '/src/Entity');
+                $modulePrefix = 'Module'.Inflector::camelize($moduleFolder->getFilename());
+                $moduleEntityDirectory = realpath($moduleFolder.'/src/Entity');
                 $mappingPass = $this->createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory, $modulePrefix);
                 $mappingsPassList[$moduleEntityDirectory] = $mappingPass;
             }
@@ -101,17 +101,16 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
      * whole process was stopped. So we manually create the DoctrineOrmMappingsPass so that AnnotationDriver ignores
      * the index.php file.
      *
-     * @param string $moduleNamespace
-     * @param string $moduleEntityDirectory
-     * @param string $modulePrefix
-     *
+     * @param  string  $moduleNamespace
+     * @param  string  $moduleEntityDirectory
+     * @param  string  $modulePrefix
      * @return DoctrineOrmMappingsPass
      */
     private function createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory, $modulePrefix)
     {
         $reader = new Reference('annotation_reader');
         $driverDefinition = new Definition('Doctrine\ORM\Mapping\Driver\AnnotationDriver', [$reader, [$moduleEntityDirectory]]);
-        $indexFile = $moduleEntityDirectory . '/index.php';
+        $indexFile = $moduleEntityDirectory.'/index.php';
         if (file_exists($indexFile)) {
             $driverDefinition->addMethodCall('addExcludePaths', [[$indexFile]]);
         }
@@ -120,14 +119,12 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param SplFileInfo $moduleFolder
-     *
      * @return string
      */
     private function getModuleNamespace(SplFileInfo $moduleFolder)
     {
-        $finder = new Finder();
-        $finder->files()->in($moduleFolder->getRealPath() . '/src/Entity')->name('*.php');
+        $finder = new Finder;
+        $finder->files()->in($moduleFolder->getRealPath().'/src/Entity')->name('*.php');
         foreach ($finder as $phpFile) {
             $phpContent = file_get_contents($phpFile->getRealPath());
             if (preg_match('~namespace[ \t]+(.+)[ \t]*;~Um', $phpContent, $matches)) {

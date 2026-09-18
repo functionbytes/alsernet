@@ -62,6 +62,7 @@ use PrestaShopBundle\Service\Hook\HookFinder;
 use Product;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Symfony\Component\Form\Exception\AlreadySubmittedException;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormInterface;
@@ -70,6 +71,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Exception\InvalidParameterException;
+use Symfony\Component\Routing\Exception\MissingMandatoryParametersException;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\Translation\Exception\InvalidArgumentException;
 use Tools;
 
 /**
@@ -107,13 +112,13 @@ class ProductController extends FrameworkBundleAdminController
      * @param  string  $sortOrder  To order product list
      * @return array|Template|RedirectResponse|Response
      *
-     * @throws \Symfony\Component\Translation\Exception\InvalidArgumentException
-     * @throws \Symfony\Component\Routing\Exception\RouteNotFoundException
+     * @throws InvalidArgumentException
+     * @throws RouteNotFoundException
      * @throws \LogicException
-     * @throws \Symfony\Component\Routing\Exception\MissingMandatoryParametersException
-     * @throws \Symfony\Component\Routing\Exception\InvalidParameterException
+     * @throws MissingMandatoryParametersException
+     * @throws InvalidParameterException
      * @throws \Symfony\Component\Form\Exception\LogicException
-     * @throws \Symfony\Component\Form\Exception\AlreadySubmittedException
+     * @throws AlreadySubmittedException
      */
     public function catalogAction(
         Request $request,
@@ -725,7 +730,7 @@ class ProductController extends FrameworkBundleAdminController
      * Do bulk action on a list of Products. Used with the 'selection action' dropdown menu on the Catalog page.
      *
      * @param  string  $action  The action to apply on the selected inventaries
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      *
      * @throws Exception if action not properly set or unknown
      */
@@ -896,7 +901,7 @@ class ProductController extends FrameworkBundleAdminController
      * Used with the 'grouped action' dropdown menu on the Catalog page.
      *
      * @param  string  $action  The action to apply on the selected inventaries
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      *
      * @throws Exception if action not properly set or unknown
      */
@@ -1005,7 +1010,7 @@ class ProductController extends FrameworkBundleAdminController
      *
      * @param  string  $action  The action to apply on the selected product
      * @param  int  $id  the product ID to apply the action on
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      *
      * @throws Exception if action not properly set or unknown
      */
@@ -1198,7 +1203,7 @@ class ProductController extends FrameworkBundleAdminController
     /**
      * @return CsvResponse
      *
-     * @throws \Symfony\Component\Translation\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function exportAction()
     {

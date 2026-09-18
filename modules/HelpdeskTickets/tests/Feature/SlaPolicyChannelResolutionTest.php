@@ -96,6 +96,14 @@ class SlaPolicyChannelResolutionTest extends TestCase
 
     public function test_ticket_without_any_policy_keeps_null_sla_policy(): void
     {
+        // Esta suite corre contra la base compartida, que tiene políticas SLA
+        // reales — y una marcada is_default, que es justo la que devuelve
+        // resolveForChannel() cuando no hay ninguna del canal. El caso que este
+        // test comprueba es «no hay NINGUNA política aplicable», así que hay
+        // que construirlo. Va dentro de la transacción del test, así que las
+        // políticas reales no se tocan.
+        TicketSlaPolicy::query()->update(['is_default' => false]);
+
         // Sin políticas configuradas el resolver es un no-op: comportamiento
         // histórico (ticket sin SLA).
         $ticket = $this->makeTicket(['source' => 'widget']);

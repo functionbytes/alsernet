@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,8 @@ class EditableAttachment
     private $file;
 
     /**
-     * @param string $fileName
-     * @param string[] $name
-     * @param string[] $description
+     * @param  string[]  $name
+     * @param  string[]  $description
      */
     public function __construct(
         string $fileName,
@@ -68,9 +68,6 @@ class EditableAttachment
         $this->description = $description;
     }
 
-    /**
-     * @return string
-     */
     public function getFileName(): string
     {
         return $this->fileName;
@@ -92,19 +89,11 @@ class EditableAttachment
         return $this->description;
     }
 
-    /**
-     * @return SplFileInfo|null
-     */
     public function getFile(): ?SplFileInfo
     {
         return $this->file;
     }
 
-    /**
-     * @param SplFileInfo|null $file
-     *
-     * @return EditableAttachment
-     */
     public function setFile(?SplFileInfo $file): EditableAttachment
     {
         $this->file = $file;

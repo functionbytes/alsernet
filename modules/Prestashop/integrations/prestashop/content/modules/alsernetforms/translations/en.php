@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_e7701766b7e37bcc5107d59c9fce57b5'] = 'Please click on the following link and follow the instructions:';
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_09f81c6db0942a118b6c80c1ca37dbbc'] = 'Upload documentation';
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_5a2ed80eea72f11978ea5d6212bb2f9a'] = '[b]REMEMBER:[/b] In order to ship your weapon, we need you to send us the following documentation:';

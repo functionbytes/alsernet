@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,14 +71,10 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
     private $multistoreFeature;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicator $searchCriteriaApplicator
-     * @param int $contextLangId
-     * @param int $contextShopId
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     * @param FeatureInterface $multistoreFeature
-     * @param int|null $rootCategoryId
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
+     * @param  int  $contextShopId
+     * @param  int|null  $rootCategoryId
      */
     public function __construct(
         Connection $connection,
@@ -128,7 +125,6 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -136,13 +132,13 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'category', 'c')
+            ->from($this->dbPrefix.'category', 'c')
             ->setParameter('context_lang_id', $this->contextLangId)
             ->setParameter('context_shop_id', $this->contextShopId);
 
         $qb->leftJoin(
             'c',
-            $this->dbPrefix . 'category_lang',
+            $this->dbPrefix.'category_lang',
             'cl',
             $this->multistoreFeature->isUsed() && $this->multistoreContextChecker->isSingleShopContext() ?
                 'c.id_category = cl.id_category AND cl.id_lang = :context_lang_id AND cl.id_shop = :context_shop_id' :
@@ -151,7 +147,7 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb->leftJoin(
             'c',
-            $this->dbPrefix . 'category_shop',
+            $this->dbPrefix.'category_shop',
             'cs',
             $this->multistoreContextChecker->isSingleShopContext() ?
                 'c.id_category = cs.id_category AND cs.id_shop = :context_shop_id' :
@@ -159,7 +155,7 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
         );
 
         foreach ($filters as $filterName => $filterValue) {
-            if ('id_category' === $filterName) {
+            if ($filterName === 'id_category') {
                 $qb->andWhere("c.id_category = :$filterName");
                 $qb->setParameter($filterName, $filterValue);
 
@@ -172,27 +168,27 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
                 $qb->setParameter('root_category_id', $this->rootCategoryId);
             }
 
-            if ('name' === $filterName) {
+            if ($filterName === 'name') {
                 $qb->andWhere("cl.name LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            if ('description' === $filterName) {
+            if ($filterName === 'description') {
                 $qb->andWhere("cl.description LIKE :$filterName");
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
-            if ('position' === $filterName) {
+            if ($filterName === 'position') {
                 // When filtering by position,
                 // value must be decreased by 1,
                 // since position value in database starts at 0,
                 // but for user display positions are increased by 1.
                 if (is_numeric($filterValue)) {
-                    --$filterValue;
+                    $filterValue--;
                 } else {
                     $filterValue = null;
                 }
@@ -203,14 +199,14 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            if ('active' === $filterName) {
+            if ($filterName === 'active') {
                 $qb->andWhere("c.active = :$filterName");
                 $qb->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            if ('id_category_parent' === $filterName) {
+            if ($filterName === 'id_category_parent') {
                 if ($this->isSearchRequestOnHomeCategory($filters)) {
                     continue;
                 }
@@ -230,8 +226,6 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param array $filters
-     *
      * @return bool
      */
     private function isSearchRequestOnHomeCategory(array $filters)

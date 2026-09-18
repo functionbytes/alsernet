@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,16 +45,13 @@ class AddOrderCustomerMessageCommand
      * @var OrderId
      */
     private $orderId;
+
     /**
      * @var bool
      */
     private $isPrivate;
 
     /**
-     * @param int $orderId
-     * @param string $message
-     * @param bool $isPrivate
-     *
      * @throws OrderException
      * @throws CustomerMessageConstraintException
      */
@@ -64,38 +62,27 @@ class AddOrderCustomerMessageCommand
         $this->isPrivate = $isPrivate;
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return string
-     */
     public function getMessage(): string
     {
         return $this->message;
     }
 
-    /**
-     * @return bool
-     */
     public function isPrivate(): bool
     {
         return $this->isPrivate;
     }
 
     /**
-     * @param string $message
-     *
      * @throws CustomerMessageConstraintException
      */
     private function setMessage(string $message): void
     {
-        if (!$message) {
+        if (! $message) {
             throw new CustomerMessageConstraintException('Missing required message', CustomerMessageConstraintException::MISSING_MESSAGE);
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,6 +40,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 class ModifyTranslationsType extends TranslatorAwareType
 {
     public const CORE_langs_CHOICE_INDEX = '0';
+
     /**
      * @var array
      */
@@ -59,14 +61,6 @@ class ModifyTranslationsType extends TranslatorAwareType
      */
     private $moduleChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $translationTypeChoices
-     * @param array $emailContentTypeChoices
-     * @param array $themeChoices
-     * @param array $moduleChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

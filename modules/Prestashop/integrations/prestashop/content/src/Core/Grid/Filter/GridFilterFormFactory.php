@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,20 +49,16 @@ final class GridFilterFormFactory implements GridFilterFormFactoryInterface
      */
     private $hookDispatcher;
 
-    /**
-     * @param FormFactoryInterface $formFactory
-     * @param HookDispatcherInterface|null $hookDispatcher
-     */
     public function __construct(
         FormFactoryInterface $formFactory,
-        HookDispatcherInterface $hookDispatcher = null
+        ?HookDispatcherInterface $hookDispatcher = null
     ) {
         $this->formFactory = $formFactory;
 
-        if (null === $hookDispatcher) {
+        if ($hookDispatcher === null) {
             @trigger_error('The $hookDispatcher parameter should not be null, inject your main HookDispatcherInterface service, or NullDispatcher if you don\'t need hooks.', E_USER_DEPRECATED);
         }
-        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher();
+        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher;
     }
 
     /**
@@ -83,7 +80,7 @@ final class GridFilterFormFactory implements GridFilterFormFactoryInterface
             );
         }
 
-        $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($definition->getId()) . 'GridFilterFormModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action'.Container::camelize($definition->getId()).'GridFilterFormModifier', [
             'filter_form_builder' => $formBuilder,
         ]);
 

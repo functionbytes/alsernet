@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use PrestaShop\PrestaShop\Core\Exception\CoreException;
 /**
  * Base class for PrestaShop core file export exceptions
  */
-class ExportException extends CoreException
-{
-}
+class ExportException extends CoreException {}

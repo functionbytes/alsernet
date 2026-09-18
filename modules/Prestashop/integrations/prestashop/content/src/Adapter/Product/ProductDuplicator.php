@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,14 +87,6 @@ class ProductDuplicator
      */
     private $stringModifier;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param bool $isSearchIndexationOn
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     * @param TranslatorInterface $translator
-     * @param StringModifierInterface $stringModifier
-     */
     public function __construct(
         ProductRepository $productRepository,
         HookDispatcherInterface $hookDispatcher,
@@ -111,8 +104,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @return ProductId new product id
      *
      * @throws CannotDuplicateProductException
@@ -121,7 +112,7 @@ class ProductDuplicator
      */
     public function duplicate(ProductId $productId): ProductId
     {
-        //@todo: add database transaction. After/if PR #21740 gets merged
+        // @todo: add database transaction. After/if PR #21740 gets merged
         $product = $this->productRepository->get($productId);
         $oldProductId = $productId->getValue();
         $this->hookDispatcher->dispatchWithParameters(
@@ -148,16 +139,14 @@ class ProductDuplicator
             'actionAdminDuplicateAfter',
             ['id_product' => $oldProductId, 'id_product_new' => $newProductId]
         );
-        //@todo: after ##21740 (transactions PR) is resolved.
+
+        // @todo: after ##21740 (transactions PR) is resolved.
         //  Based on if its accepted or not, we need to implement roll back if something went wrong.
         //  If transactions are accepted then we use it, else we manually rewind (delete the duplicate product)
         return new ProductId((int) $newProduct->id);
     }
 
     /**
-     * @param Product $newProduct
-     * @param int $oldProductId
-     *
      * @throws CannotUpdateProductException
      */
     private function updateSearchIndexation(Product $newProduct, int $oldProductId): void
@@ -167,12 +156,12 @@ class ProductDuplicator
             [ProductVisibility::VISIBLE_EVERYWHERE, ProductVisibility::VISIBLE_IN_SEARCH]
         );
 
-        if (!$this->isSearchIndexationOn || !$productIsVisibleInSearch) {
+        if (! $this->isSearchIndexationOn || ! $productIsVisibleInSearch) {
             return;
         }
 
         try {
-            if (!Search::indexation(false, $newProduct->id)) {
+            if (! Search::indexation(false, $newProduct->id)) {
                 throw new CannotUpdateProductException(
                     sprintf('Cannot update search indexation when duplicating product %d', $oldProductId),
                     CannotUpdateProductException::FAILED_UPDATE_SEARCH_INDEXATION
@@ -188,8 +177,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param Product $product
-     *
      * @return Product the new product
      */
     private function duplicateProduct(Product $product): Product
@@ -206,8 +193,7 @@ class ProductDuplicator
     /**
      * Provides duplicated product name
      *
-     * @param array<int, string> $oldProductLocalizedNames
-     *
+     * @param  array<int, string>  $oldProductLocalizedNames
      * @return array<int, string>
      */
     private function getNewProductName(array $oldProductLocalizedNames): array
@@ -223,12 +209,9 @@ class ProductDuplicator
         return $newProductLocalizedNames;
     }
 
-    /**
-     * @param Product $product
-     */
     private function setPriceByShops(Product $product): void
     {
-        if (!empty($product->price) || !$this->multistoreContextChecker->isGroupShopContext()) {
+        if (! empty($product->price) || ! $this->multistoreContextChecker->isGroupShopContext()) {
             return;
         }
 
@@ -238,7 +221,7 @@ class ProductDuplicator
                 new ShopId((int) $shop['id_shop'])
             );
 
-            if (!$priceByShop) {
+            if (! $priceByShop) {
                 continue;
             }
 
@@ -269,8 +252,6 @@ class ProductDuplicator
     /**
      * Duplicates related product entities & associations
      *
-     * @param int $oldProductId
-     * @param int $newProductId
      *
      * @throws CannotDuplicateProductException
      * @throws CoreException
@@ -296,9 +277,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -313,9 +291,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -330,14 +305,11 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @return array<string, array<int, array<int, int>>> combination images
-     *                       [
-     *                       'old' => [1 {id product attribute} => [0 {index} => 1 {id image}]]
-     *                       'new' => [2 {id product attribute} => [0 {index} => 3 {id image}]]
-     *                       ]
+     *                                                    [
+     *                                                    'old' => [1 {id product attribute} => [0 {index} => 1 {id image}]]
+     *                                                    'new' => [2 {id product attribute} => [0 {index} => 3 {id image}]]
+     *                                                    ]
      *
      * @throws CannotDuplicateProductException
      * @throws CoreException
@@ -351,7 +323,7 @@ class ProductDuplicator
             CannotDuplicateProductException::FAILED_DUPLICATE_ATTRIBUTES
         );
 
-        if (!$result) {
+        if (! $result) {
             return [];
         }
 
@@ -359,9 +331,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -376,9 +345,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -393,9 +359,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -410,9 +373,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -427,9 +387,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -444,9 +401,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -461,9 +415,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -478,9 +429,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -495,9 +443,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -512,9 +457,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -529,10 +471,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     * @param array $combinationImages
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -547,9 +485,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -564,9 +499,6 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $oldProductId
-     * @param int $newProductId
-     *
      * @throws CannotDuplicateProductException
      * @throws CoreException
      */
@@ -581,16 +513,13 @@ class ProductDuplicator
     }
 
     /**
-     * @param int $newProductId
-     * @param int $oldProductId
-     *
      * @throws CannotUpdateProductException
      * @throws CoreException
      */
     private function updateDefaultAttribute(int $newProductId, int $oldProductId): void
     {
         try {
-            if (!Product::updateDefaultAttribute($newProductId)) {
+            if (! Product::updateDefaultAttribute($newProductId)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to update default attribute when duplicating product %d', $oldProductId),
                     CannotUpdateProductException::FAILED_UPDATE_DEFAULT_ATTRIBUTE
@@ -608,9 +537,6 @@ class ProductDuplicator
     /**
      * Wraps product relations duplication in try-catch
      *
-     * @param array $staticCallback
-     * @param array $arguments
-     * @param int $errorCode
      *
      * @return array|null result of callback. If result is array then its returned, else null is returned
      *
@@ -626,7 +552,7 @@ class ProductDuplicator
                 return $result;
             }
 
-            if (!$result) {
+            if (! $result) {
                 throw new CannotDuplicateProductException(
                     sprintf('Cannot duplicate product. [%s] failed', implode('::', $staticCallback)),
                     $errorCode

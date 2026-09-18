@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class CmsPageViewDataProvider implements CmsPageViewDataProviderInterface
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(CommandBusInterface $queryBus)
     {
         $this->queryBus = $queryBus;
@@ -66,8 +64,7 @@ final class CmsPageViewDataProvider implements CmsPageViewDataProviderInterface
     /**
      * Gets breadcrumb tree which contains cms page categories. If the exception is raised when it returns empty array.
      *
-     * @param int $cmsCategoryParentId
-     *
+     * @param  int  $cmsCategoryParentId
      * @return Breadcrumb|array
      *
      * @throws CmsPageCategoryException

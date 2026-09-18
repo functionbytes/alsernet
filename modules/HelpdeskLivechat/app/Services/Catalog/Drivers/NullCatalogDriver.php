@@ -22,6 +22,11 @@ final class NullCatalogDriver implements CatalogDriver
         return null;
     }
 
+    public function findMany(array $ids): array
+    {
+        return [];
+    }
+
     public function related(string $id, int $limit = 4): array
     {
         return [];

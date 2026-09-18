@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class AdaptThemeToRTLLanguagesType extends AbstractType
     private $themeChoices;
 
     /**
-     * @param string[] $themeChoices
+     * @param  string[]  $themeChoices
      */
     public function __construct(array $themeChoices)
     {
@@ -61,7 +62,6 @@ class AdaptThemeToRTLLanguagesType extends AbstractType
             ->add('generate_rtl_css', SwitchType::class, [
                 'required' => false,
                 'data' => false,
-            ])
-        ;
+            ]);
     }
 }

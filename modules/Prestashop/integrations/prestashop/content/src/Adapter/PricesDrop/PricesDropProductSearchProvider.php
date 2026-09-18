@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,10 +59,7 @@ class PricesDropProductSearchProvider implements ProductSearchProviderInterface
     }
 
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchQuery $query
-     * @param string $type
-     *
+     * @param  string  $type
      * @return array
      */
     private function getProductsOrCount(
@@ -86,14 +84,14 @@ class PricesDropProductSearchProvider implements ProductSearchProviderInterface
         ProductSearchContext $context,
         ProductSearchQuery $query
     ) {
-        if (!$products = $this->getProductsOrCount($context, $query, 'inventaries')) {
+        if (! $products = $this->getProductsOrCount($context, $query, 'inventaries')) {
             $products = [];
         }
         $count = $this->getProductsOrCount($context, $query, 'count');
 
-        $result = new ProductSearchResult();
+        $result = new ProductSearchResult;
 
-        if (!empty($products)) {
+        if (! empty($products)) {
             $result
                 ->setProducts($products)
                 ->setTotalProductsCount($count);

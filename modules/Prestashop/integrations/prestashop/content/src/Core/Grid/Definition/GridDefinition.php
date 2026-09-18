@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,13 +77,8 @@ final class GridDefinition implements GridDefinitionInterface
     private $filters;
 
     /**
-     * @param string $id Unique grid identifier
-     * @param string $name
-     * @param ColumnCollectionInterface $columns
-     * @param FilterCollectionInterface $filters
-     * @param GridActionCollectionInterface $gridActions
-     * @param BulkActionCollectionInterface $bulkActions
-     * @param ViewOptionsCollectionInterface $viewOptions
+     * @param  string  $id  Unique grid identifier
+     * @param  string  $name
      */
     public function __construct(
         $id,
@@ -174,11 +170,11 @@ final class GridDefinition implements GridDefinitionInterface
     }
 
     /**
-     * @param string $name
+     * @param  string  $name
      */
     public function setName($name)
     {
-        if (!is_string($name)) {
+        if (! is_string($name)) {
             throw new InvalidDataException('Definition name should be a string.');
         }
 
@@ -186,32 +182,23 @@ final class GridDefinition implements GridDefinitionInterface
     }
 
     /**
-     * @param ColumnCollectionInterface $columns
+     * @param  ColumnCollectionInterface  $columns
      */
     public function setColumns($columns)
     {
         $this->columns = $columns;
     }
 
-    /**
-     * @param GridActionCollectionInterface $gridActions
-     */
     public function setGridActions(GridActionCollectionInterface $gridActions)
     {
         $this->gridActions = $gridActions;
     }
 
-    /**
-     * @param BulkActionCollectionInterface $bulkActions
-     */
     public function setBulkActions(BulkActionCollectionInterface $bulkActions)
     {
         $this->bulkActions = $bulkActions;
     }
 
-    /**
-     * @param FilterCollectionInterface $filters
-     */
     public function setFilters(FilterCollectionInterface $filters)
     {
         $this->filters = $filters;

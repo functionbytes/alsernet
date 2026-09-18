@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class CatalogPriceRuleFormDataProvider implements FormDataProviderInterfac
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(CommandBusInterface $queryBus)
     {
         $this->queryBus = $queryBus;
@@ -75,7 +73,7 @@ final class CatalogPriceRuleFormDataProvider implements FormDataProviderInterfac
             'id_country' => $editableCatalogPriceRule->getCountryId(),
             'id_group' => $editableCatalogPriceRule->getGroupId(),
             'from_quantity' => $editableCatalogPriceRule->getFromQuantity(),
-            'price' => null === $price ? $price : (string) $price,
+            'price' => $price === null ? $price : (string) $price,
             'leave_initial_price' => $leaveInitialPrice,
             'date_range' => [
                 'from' => $from ? $from->format($dateTimeFormat) : '',

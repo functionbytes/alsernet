@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,13 +88,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
      */
     private $translator;
 
-    /**
-     * @param LocaleInterface $locale
-     * @param int $contextLangId
-     * @param Link $contextLink
-     * @param ContextStateManager $contextStateManager
-     * @param TranslatorInterface $translator
-     */
     public function __construct(
         LocaleInterface $locale,
         int $contextLangId,
@@ -109,10 +103,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     }
 
     /**
-     * @param GetCartForOrderCreation $query
-     *
-     * @return CartForOrderCreation
-     *
      * @throws CartNotFoundException
      * @throws LocalizationException
      * @throws PrestaShopException
@@ -128,8 +118,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
             ->setCurrency($currency)
             ->setLanguage($language)
             ->setCustomer(new Customer($cart->id_customer))
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
 
         try {
             $addresses = $this->getAddresses($cart);
@@ -160,8 +149,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     }
 
     /**
-     * @param Cart $cart
-     *
      * @return CartAddress[]
      */
     private function getAddresses(Cart $cart): array
@@ -175,13 +162,13 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         }
 
         // Add addresses already assigned to cart if absent (in case they are deleted)
-        if (0 !== (int) $cart->id_address_delivery && !isset($cartAddresses[$cart->id_address_delivery])) {
+        if ((int) $cart->id_address_delivery !== 0 && ! isset($cartAddresses[$cart->id_address_delivery])) {
             $cartAddresses[$cart->id_address_delivery] = $this->buildCartAddress(
                 $cart->id_address_delivery,
                 $cart
             );
         }
-        if (0 !== (int) $cart->id_address_invoice && !isset($cartAddresses[$cart->id_address_invoice])) {
+        if ((int) $cart->id_address_invoice !== 0 && ! isset($cartAddresses[$cart->id_address_invoice])) {
             $cartAddresses[$cart->id_address_invoice] = $this->buildCartAddress(
                 $cart->id_address_invoice,
                 $cart
@@ -191,12 +178,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         return array_values($cartAddresses);
     }
 
-    /**
-     * @param int $addressId
-     * @param Cart $cart
-     *
-     * @return CartAddress
-     */
     private function buildCartAddress(int $addressId, Cart $cart): CartAddress
     {
         $address = new Address($addressId);
@@ -211,11 +192,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     }
 
     /**
-     * @param Cart $cart
-     * @param array $legacySummary
-     * @param Currency $currency
-     * @param bool $hideDiscounts
-     *
      * @return CartForOrderCreation\CartRule[]
      */
     private function extractCartRulesFromLegacySummary(Cart $cart, array $legacySummary, Currency $currency, bool $hideDiscounts = false): array
@@ -239,7 +215,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
 
                 if (isset($cartRules[$giftRuleId])) {
                     // it is possible that one cart rule can have a gift product, but also have other conditions,
-                    //so we need to sum their reduction values
+                    // so we need to sum their reduction values
                     /** @var CartForOrderCreation\CartRule $cartRule */
                     $cartRule = $cartRules[$giftRuleId];
                     $finalValue = $finalValue->plus(new DecimalNumber($cartRule->getValue()));
@@ -258,10 +234,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     }
 
     /**
-     * @param Cart $cart
-     * @param array $legacySummary
-     * @param Currency $currency
-     *
      * @return CartProduct[]
      */
     private function extractProductsWithGiftSplitFromLegacySummary(Cart $cart, array $legacySummary, Currency $currency): array
@@ -272,7 +244,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         foreach ($legacySummary['inventaries'] as $product) {
             $productKey = $this->generateUniqueProductKey($product);
 
-            //decrease product quantity for each identical product which is marked as gift
+            // decrease product quantity for each identical product which is marked as gift
             if (isset($mergedGifts[$productKey])) {
                 $identicalGiftedProduct = $mergedGifts[$productKey];
                 $product['quantity'] -= $identicalGiftedProduct['quantity'];
@@ -289,10 +261,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     }
 
     /**
-     * @param Cart $cart
-     * @param array $legacySummary
-     * @param Currency $currency
-     *
      * @return CartProduct[]
      */
     private function extractProductsFromLegacySummary(Cart $cart, array $legacySummary, Currency $currency): array
@@ -305,11 +273,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         return $products;
     }
 
-    /**
-     * @param array $giftProducts
-     *
-     * @return array
-     */
     private function mergeGiftProducts(array $giftProducts): array
     {
         $mergedGifts = [];
@@ -317,13 +280,13 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         foreach ($giftProducts as $giftProduct) {
             $productKey = $this->generateUniqueProductKey($giftProduct);
 
-            if (!isset($mergedGifts[$productKey])) {
+            if (! isset($mergedGifts[$productKey])) {
                 // set first gift and make sure its quantity is 1.
                 $mergedGifts[$productKey] = $giftProduct;
                 $mergedGifts[$productKey]['quantity'] = 1;
             } else {
-                //increase existing gift quantity by 1
-                ++$mergedGifts[$productKey]['quantity'];
+                // increase existing gift quantity by 1
+                $mergedGifts[$productKey]['quantity']++;
             }
         }
 
@@ -332,10 +295,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
 
     /**
      * Forms a unique product key using combination and customization ids.
-     *
-     * @param array $product
-     *
-     * @return string
      */
     private function generateUniqueProductKey(array $product): string
     {
@@ -347,26 +306,19 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         );
     }
 
-    /**
-     * @param Cart $cart
-     * @param array $legacySummary
-     * @param bool $hideDiscounts
-     *
-     * @return CartShipping|null
-     */
     private function extractShippingFromLegacySummary(Cart $cart, array $legacySummary, bool $hideDiscounts = true): ?CartShipping
     {
         $deliveryOptionsByAddress = $cart->getDeliveryOptionList();
         $deliveryAddress = (int) $cart->id_address_delivery;
 
-        //Check if there is any delivery options available for cart delivery address
-        if (!array_key_exists($deliveryAddress, $deliveryOptionsByAddress)) {
+        // Check if there is any delivery options available for cart delivery address
+        if (! array_key_exists($deliveryAddress, $deliveryOptionsByAddress)) {
             return null;
         }
 
         /** @var Carrier $carrier */
         $carrier = $legacySummary['carrier'];
-        $isFreeShipping = !empty($cart->getCartRules(CartRule::FILTER_ACTION_SHIPPING));
+        $isFreeShipping = ! empty($cart->getCartRules(CartRule::FILTER_ACTION_SHIPPING));
 
         return new CartShipping(
             $isFreeShipping && $hideDiscounts ? '0' : (string) $legacySummary['total_shipping'],
@@ -382,8 +334,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     /**
      * Fetch CartDeliveryOption[] DTO's from legacy array
      *
-     * @param array $deliveryOptionsByAddress
-     * @param int $deliveryAddressId
      *
      * @return array
      */
@@ -405,17 +355,11 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
             }
         }
 
-        //make sure array is not associative
+        // make sure array is not associative
         return array_values($deliveryOptions);
     }
 
     /**
-     * @param array $legacySummary
-     * @param Currency $currency
-     * @param Cart $cart
-     *
-     * @return CartSummary
-     *
      * @throws LocalizationException
      */
     private function extractSummaryFromLegacySummary(array $legacySummary, Currency $currency, Cart $cart): CartSummary
@@ -445,7 +389,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
                 http_build_query([
                     'step' => 3,
                     'recover_cart' => $cartId,
-                    'token_cart' => md5(_COOKIE_KEY_ . 'recover_cart_' . $cartId),
+                    'token_cart' => md5(_COOKIE_KEY_.'recover_cart_'.$cartId),
                 ])
             )
         );
@@ -454,16 +398,13 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
     /**
      * Provides product customizations data
      *
-     * @param Cart $cart
-     * @param array $product the product array from legacy summary
-     *
-     * @return Customization|null
+     * @param  array  $product  the product array from legacy summary
      */
     private function getProductCustomizedData(Cart $cart, array $product): ?Customization
     {
         $customizationId = (int) $product['id_customization'];
 
-        if (!$customizationId) {
+        if (! $customizationId) {
             return null;
         }
 
@@ -483,14 +424,12 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
             return null;
         }
 
-        return new CartForOrderCreation\Customization($customizationId, $productCustomizedFieldsData);
+        return new Customization($customizationId, $productCustomizedFieldsData);
     }
 
     /**
      * Provides customized fields data for product
      *
-     * @param array $customizations
-     * @param array $product
      *
      * @return array
      */
@@ -516,7 +455,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
                             $customizationFieldsData[] = new CustomizationFieldData(
                                 Product::CUSTOMIZE_FILE,
                                 $file['name'],
-                                _THEME_PROD_PIC_DIR_ . $file['value'] . '_small'
+                                _THEME_PROD_PIC_DIR_.$file['value'].'_small'
                             );
                         }
                     }
@@ -527,13 +466,6 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
         return $customizationFieldsData;
     }
 
-    /**
-     * @param Cart $cart
-     * @param Currency $currency
-     * @param array $product
-     *
-     * @return CartProduct
-     */
     private function buildCartProduct(
         Cart $cart,
         Currency $currency,
@@ -555,7 +487,7 @@ final class GetCartForOrderCreationHandler extends AbstractCartHandler implement
                 isset($product['id_product_attribute']) ? (int) $product['id_product_attribute'] : null
             ),
             Product::isAvailableWhenOutOfStock((int) $product['out_of_stock']) !== 0,
-            !empty($product['is_gift'])
+            ! empty($product['is_gift'])
         );
     }
 }

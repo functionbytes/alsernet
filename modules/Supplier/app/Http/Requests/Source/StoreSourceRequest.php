@@ -25,6 +25,8 @@ class StoreSourceRequest extends FormRequest
             'is_active' => ['boolean'],
             'extraction_mode' => ['nullable', 'string', 'in:manual,ai'],
             'configuration' => ['nullable', 'array'],
+            'configuration.urls' => ['nullable', 'array'],
+            'configuration.urls.*.url' => ['nullable', 'url', 'max:2048'],
             'content_urls' => ['nullable', 'array'],
             'content_urls.*.url' => ['nullable', 'url', 'max:2048'],
             'content_urls.*.note' => ['nullable', 'string', 'max:255'],

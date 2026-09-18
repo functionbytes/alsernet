@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class TimezoneByNameChoiceProvider implements FormChoiceProviderInterface
      */
     private $timezoneRepository;
 
-    /**
-     * @param TimezoneRepository $timezoneRepository
-     */
     public function __construct(TimezoneRepository $timezoneRepository)
     {
         $this->timezoneRepository = $timezoneRepository;

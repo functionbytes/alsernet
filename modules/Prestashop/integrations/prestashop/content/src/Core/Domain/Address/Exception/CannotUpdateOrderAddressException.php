@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Address\Exception;
 /**
  * Thrown on failure to update address
  */
-class CannotUpdateOrderAddressException extends AddressException
-{
-}
+class CannotUpdateOrderAddressException extends AddressException {}

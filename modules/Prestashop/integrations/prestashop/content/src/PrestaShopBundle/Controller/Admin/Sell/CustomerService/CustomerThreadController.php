@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,9 +56,7 @@ class CustomerThreadController extends FrameworkBundleAdminController
      *     redirectRoute="admin_customer_threads_index"
      * )
      *
-     * @param Request $request
-     * @param int $customerThreadId
-     *
+     * @param  int  $customerThreadId
      * @return Response
      */
     public function viewAction(Request $request, $customerThreadId)
@@ -99,9 +98,7 @@ class CustomerThreadController extends FrameworkBundleAdminController
      *     redirectRoute="admin_customer_threads_index"
      * )
      *
-     * @param Request $request
-     * @param int $customerThreadId
-     *
+     * @param  int  $customerThreadId
      * @return RedirectResponse
      */
     public function replyAction(Request $request, $customerThreadId)
@@ -109,13 +106,13 @@ class CustomerThreadController extends FrameworkBundleAdminController
         $replyToCustomerThreadForm = $this->createForm(ReplyToCustomerThreadType::class);
         $replyToCustomerThreadForm->handleRequest($request);
 
-        if (!$replyToCustomerThreadForm->isSubmitted()) {
+        if (! $replyToCustomerThreadForm->isSubmitted()) {
             return $this->redirectToRoute('admin_customer_threads_view', [
                 'customerThreadId' => $customerThreadId,
             ]);
         }
 
-        if (!$replyToCustomerThreadForm->isValid()) {
+        if (! $replyToCustomerThreadForm->isValid()) {
             foreach ($replyToCustomerThreadForm->getErrors(true) as $error) {
                 $this->addFlash('error', $error->getMessage());
             }
@@ -157,9 +154,8 @@ class CustomerThreadController extends FrameworkBundleAdminController
      *     redirectRoute="admin_customer_threads_index"
      * )
      *
-     * @param int $customerThreadId
-     * @param string $newStatus
-     *
+     * @param  int  $customerThreadId
+     * @param  string  $newStatus
      * @return RedirectResponse
      */
     public function updateStatusAction($customerThreadId, $newStatus)
@@ -191,9 +187,7 @@ class CustomerThreadController extends FrameworkBundleAdminController
      *     redirectRoute="admin_customer_threads_index"
      * )
      *
-     * @param Request $request
-     * @param int $customerThreadId
-     *
+     * @param  int  $customerThreadId
      * @return RedirectResponse
      */
     public function forwardAction(Request $request, $customerThreadId)
@@ -201,13 +195,13 @@ class CustomerThreadController extends FrameworkBundleAdminController
         $forwardCustomerThreadForm = $this->createForm(ForwardCustomerThreadType::class);
         $forwardCustomerThreadForm->handleRequest($request);
 
-        if (!$forwardCustomerThreadForm->isSubmitted()) {
+        if (! $forwardCustomerThreadForm->isSubmitted()) {
             return $this->redirectToRoute('admin_customer_threads_view', [
                 'customerThreadId' => $customerThreadId,
             ]);
         }
 
-        if (!$forwardCustomerThreadForm->isValid()) {
+        if (! $forwardCustomerThreadForm->isValid()) {
             foreach ($forwardCustomerThreadForm->getErrors(true) as $error) {
                 $this->addFlash('error', $error->getMessage());
             }
@@ -219,7 +213,7 @@ class CustomerThreadController extends FrameworkBundleAdminController
 
         $data = $forwardCustomerThreadForm->getData();
 
-        if (!$data['employee_id'] && empty($data['someone_else_email'])) {
+        if (! $data['employee_id'] && empty($data['someone_else_email'])) {
             $this->addFlash('error', $this->trans('The email address is invalid.', 'Admin.Notifications.Error'));
 
             return $this->redirectToRoute('admin_customer_threads_view', [

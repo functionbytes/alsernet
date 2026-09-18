@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ class AttachmentId
     private $id;
 
     /**
-     * @param int $id
-     *
      * @throws AttachmentConstraintException]
      */
     public function __construct(int $id)
@@ -50,22 +49,17 @@ class AttachmentId
         $this->id = $id;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->id;
     }
 
     /**
-     * @param int $attachmentId
-     *
      * @throws AttachmentConstraintException
      */
     private function assertIsValidId(int $attachmentId): void
     {
-        if (0 >= $attachmentId) {
+        if ($attachmentId <= 0) {
             throw new AttachmentConstraintException(sprintf('Invalid Attachment id %s supplied', var_export($attachmentId, true)), AttachmentConstraintException::INVALID_ID);
         }
     }

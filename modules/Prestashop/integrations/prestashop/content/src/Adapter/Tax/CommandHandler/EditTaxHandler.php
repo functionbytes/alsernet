@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,22 +48,22 @@ final class EditTaxHandler extends AbstractTaxHandler implements EditTaxHandlerI
     {
         $tax = $this->getTax($command->getTaxId());
 
-        if (null !== $command->getLocalizedNames()) {
+        if ($command->getLocalizedNames() !== null) {
             $tax->name = $command->getLocalizedNames();
         }
-        if (null !== $command->getRate()) {
+        if ($command->getRate() !== null) {
             $tax->rate = $command->getRate();
         }
-        if (null !== $command->isEnabled()) {
+        if ($command->isEnabled() !== null) {
             $tax->active = $command->isEnabled();
         }
 
         try {
-            if (false === $tax->validateFields(false) || false === $tax->validateFieldsLang(false)) {
+            if ($tax->validateFields(false) === false || $tax->validateFieldsLang(false) === false) {
                 throw new TaxException('Tax contains invalid field values');
             }
 
-            if (!$tax->update()) {
+            if (! $tax->update()) {
                 throw new TaxException(sprintf('Cannot update tax with id "%s"', $tax->id));
             }
         } catch (PrestaShopException $e) {

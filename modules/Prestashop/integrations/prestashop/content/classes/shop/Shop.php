@@ -25,6 +25,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 use PrestaShop\PrestaShop\Core\Addon\Theme\Theme;
+use PrestaShop\PrestaShop\Core\Addon\Theme\ThemeManagerBuilder;
 
 /**
  * @since 1.5.0
@@ -494,7 +495,7 @@ class ShopCore extends ObjectModel
     {
         $context = Context::getContext();
         $db = Db::getInstance();
-        $themeRepository = (new PrestaShop\PrestaShop\Core\Addon\Theme\ThemeManagerBuilder($context, $db))->buildRepository($this);
+        $themeRepository = (new ThemeManagerBuilder($context, $db))->buildRepository($this);
         if (empty($this->theme_name)) {
             $this->theme_name = 'classic';
         }

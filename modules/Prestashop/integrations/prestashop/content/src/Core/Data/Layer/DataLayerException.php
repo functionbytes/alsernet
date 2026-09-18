@@ -29,6 +29,4 @@ namespace PrestaShop\PrestaShop\Core\Data\Layer;
 
 use Exception;
 
-class DataLayerException extends Exception
-{
-}
+class DataLayerException extends Exception {}

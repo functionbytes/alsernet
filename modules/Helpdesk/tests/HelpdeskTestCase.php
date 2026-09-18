@@ -14,7 +14,7 @@ abstract class HelpdeskTestCase extends TestCase
     use DatabaseTransactions;
     use SeedsHelpdeskRoles;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     protected User $manager;
 

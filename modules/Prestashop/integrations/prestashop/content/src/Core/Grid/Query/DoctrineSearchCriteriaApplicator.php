@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,11 +40,11 @@ final class DoctrineSearchCriteriaApplicator implements DoctrineSearchCriteriaAp
      */
     public function applyPagination(SearchCriteriaInterface $searchCriteria, QueryBuilder $queryBuilder)
     {
-        if (null !== $searchCriteria->getLimit()) {
+        if ($searchCriteria->getLimit() !== null) {
             $queryBuilder->setMaxResults($searchCriteria->getLimit());
         }
 
-        if (null !== $searchCriteria->getOffset()) {
+        if ($searchCriteria->getOffset() !== null) {
             $queryBuilder->setFirstResult($searchCriteria->getOffset());
         }
 
@@ -55,7 +56,7 @@ final class DoctrineSearchCriteriaApplicator implements DoctrineSearchCriteriaAp
      */
     public function applySorting(SearchCriteriaInterface $searchCriteria, QueryBuilder $queryBuilder)
     {
-        if (null !== $searchCriteria->getOrderBy() && null !== $searchCriteria->getOrderWay()) {
+        if ($searchCriteria->getOrderBy() !== null && $searchCriteria->getOrderWay() !== null) {
             $queryBuilder->orderBy(
                 $searchCriteria->getOrderBy(),
                 $searchCriteria->getOrderWay()

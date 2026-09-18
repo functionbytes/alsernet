@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class ChangeOrderInvoiceAddressCommand
     private $newInvoiceAddressId;
 
     /**
-     * @param int $orderId
-     * @param int $newInvoiceAddressId
+     * @param  int  $orderId
+     * @param  int  $newInvoiceAddressId
      */
     public function __construct($orderId, $newInvoiceAddressId)
     {

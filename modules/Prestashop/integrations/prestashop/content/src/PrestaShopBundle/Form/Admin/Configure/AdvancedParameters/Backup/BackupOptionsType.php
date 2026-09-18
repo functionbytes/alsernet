@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,10 +45,6 @@ class BackupOptionsType extends TranslatorAwareType
 
     /**
      * BackupOptionsType constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param Configuration $configuration
      */
     public function __construct(
         TranslatorInterface $translator,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,6 @@ final class FileUploader
      */
     private $importDirectory;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param ImportDirectory $importDirectory
-     */
     public function __construct(
         TranslatorInterface $translator,
         ImportDirectory $importDirectory
@@ -63,7 +60,6 @@ final class FileUploader
     /**
      * Handle import file uploading to admin import/ directory.
      *
-     * @param UploadedFile $uploadedFile
      *
      * @return File
      *
@@ -98,7 +94,6 @@ final class FileUploader
     /**
      * Check if uploaded file is valid.
      *
-     * @param UploadedFile $uploadedFile
      *
      * @return string|false Return error string on error or FALSE otherwise
      */
@@ -130,7 +125,7 @@ final class FileUploader
             return $error;
         }
 
-        if (!preg_match('#([^\.]*?)\.(csv|xls[xt]?|o[dt]s)$#is', $uploadedFile->getClientOriginalName())) {
+        if (! preg_match('#([^\.]*?)\.(csv|xls[xt]?|o[dt]s)$#is', $uploadedFile->getClientOriginalName())) {
             $error = $this->translator->trans('The extension of your file should be .csv.', [], 'Admin.Advparameters.Notification');
         }
 

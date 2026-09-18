@@ -2,6 +2,11 @@
 
 namespace Modules\Document\Listeners;
 
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Events\DocumentCreated;
@@ -41,7 +46,7 @@ class SendDocumentCreatedNotification
         $validatorGroup = DocumentValidatorGroup::findByKey($firstStage->key);
 
         if (! $validatorGroup) {
-           
+
             return;
         }
 
@@ -49,15 +54,15 @@ class SendDocumentCreatedNotification
         $users = $validatorGroup->users()->get();
 
         if ($users->isEmpty()) {
-            
+
             return;
         }
 
         // Send notification to all users in the validator group
         foreach ($users as $user) {
-            $notification = new class extends Notification implements \Illuminate\Contracts\Broadcasting\ShouldBroadcast, \Illuminate\Contracts\Queue\ShouldQueue
+            $notification = new class extends Notification implements ShouldBroadcast, ShouldQueue
             {
-                use \Illuminate\Bus\Queueable;
+                use Queueable;
 
                 public ?int $recipientUserId = null;
 
@@ -93,7 +98,7 @@ class SendDocumentCreatedNotification
 
                 public function toBroadcast($notifiable)
                 {
-                    return new \Illuminate\Notifications\Messages\BroadcastMessage([
+                    return new BroadcastMessage([
                         'title' => '📄 Nuevo documento para validar',
                         'message' => "Documento #{$this->document->order_id} requiere validación de {$this->groupKey}",
                         'icon' => 'fa-duotone fas fa-file-check',
@@ -110,7 +115,7 @@ class SendDocumentCreatedNotification
                 public function broadcastOn(): array
                 {
                     return [
-                        new \Illuminate\Broadcasting\Channel('documents.created'),
+                        new Channel('documents.created'),
                     ];
                 }
 

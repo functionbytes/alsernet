@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -160,21 +161,6 @@ class AddCartRuleCommand
     private $discountProductId;
 
     /**
-     * @param array $localizedNames
-     * @param bool $highlightInCart
-     * @param bool $allowPartialUse
-     * @param int $priority
-     * @param bool $isActive
-     * @param DateTime $validFrom
-     * @param DateTime $validTo
-     * @param int $totalQuantity
-     * @param int $quantityPerUser
-     * @param CartRuleActionInterface $cartRuleAction
-     * @param float $minimumAmount
-     * @param int $minimumAmountCurrencyId
-     * @param bool $isMinimumAmountTaxExcluded
-     * @param bool $isMinimumAmountShippingExcluded
-     *
      * @throws CartRuleConstraintException
      * @throws DomainConstraintException
      */
@@ -212,19 +198,12 @@ class AddCartRuleCommand
         $this->cartRuleAction = $cartRuleAction;
     }
 
-    /**
-     * @return DiscountApplicationType|null
-     */
     public function getDiscountApplicationType(): ?DiscountApplicationType
     {
         return $this->discountApplicationType;
     }
 
     /**
-     * @param string $discountApplicationType
-     *
-     * @return AddCartRuleCommand
-     *
      * @throws CartRuleConstraintException
      */
     public function setDiscountApplicationType(string $discountApplicationType): AddCartRuleCommand
@@ -234,19 +213,11 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @return ProductId|null
-     */
     public function getDiscountProductId(): ?ProductId
     {
         return $this->discountProductId;
     }
 
-    /**
-     * @param int $discountProductId
-     *
-     * @return AddCartRuleCommand
-     */
     public function setDiscountProductId(int $discountProductId): AddCartRuleCommand
     {
         $this->discountProductId = new ProductId($discountProductId);
@@ -254,171 +225,106 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * @return string
-     */
     public function getCode(): string
     {
         return $this->code;
     }
 
-    /**
-     * @return MoneyAmountCondition
-     */
     public function getMinimumAmountCondition(): MoneyAmountCondition
     {
         return $this->minimumAmountCondition;
     }
 
-    /**
-     * @return CustomerId|null
-     */
     public function getCustomerId(): ?CustomerId
     {
         return $this->customerId;
     }
 
-    /**
-     * @return bool
-     */
     public function hasCountryRestriction(): bool
     {
         return $this->hasCountryRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function hasCarrierRestriction(): bool
     {
         return $this->hasCarrierRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function hasGroupRestriction(): bool
     {
         return $this->hasGroupRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function hasCartRuleRestriction(): bool
     {
         return $this->hasCartRuleRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function hasProductRestriction(): bool
     {
         return $this->hasProductRestriction;
     }
 
-    /**
-     * @return bool
-     */
     public function hasShopRestriction(): bool
     {
         return $this->hasShopRestriction;
     }
 
-    /**
-     * @return array
-     */
     public function getLocalizedNames(): array
     {
         return $this->localizedNames;
     }
 
-    /**
-     * @return bool
-     */
     public function isHighlightInCart(): bool
     {
         return $this->highlightInCart;
     }
 
-    /**
-     * @return bool
-     */
     public function isAllowPartialUse(): bool
     {
         return $this->allowPartialUse;
     }
 
-    /**
-     * @return int
-     */
     public function getPriority(): int
     {
         return $this->priority;
     }
 
-    /**
-     * @return bool
-     */
     public function isActive(): bool
     {
         return $this->isActive;
     }
 
-    /**
-     * @return DateTime
-     */
     public function getValidFrom(): DateTime
     {
         return $this->validFrom;
     }
 
-    /**
-     * @return DateTime
-     */
     public function getValidTo(): DateTime
     {
         return $this->validTo;
     }
 
-    /**
-     * @return int
-     */
     public function getTotalQuantity(): int
     {
         return $this->totalQuantity;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantityPerUser(): int
     {
         return $this->quantityPerUser;
     }
 
-    /**
-     * @return CartRuleActionInterface
-     */
     public function getCartRuleAction(): CartRuleActionInterface
     {
         return $this->cartRuleAction;
     }
 
-    /**
-     * @param string $description
-     *
-     * @return AddCartRuleCommand
-     */
     public function setDescription(string $description): AddCartRuleCommand
     {
         $this->description = $description;
@@ -426,11 +332,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param string $code
-     *
-     * @return AddCartRuleCommand
-     */
     public function setCode(string $code): AddCartRuleCommand
     {
         $this->code = $code;
@@ -438,11 +339,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param int $customerId
-     *
-     * @return AddCartRuleCommand
-     */
     public function setCustomerId(int $customerId): AddCartRuleCommand
     {
         $this->customerId = new CustomerId($customerId);
@@ -450,11 +346,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasCountryRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasCountryRestriction(bool $hasCountryRestriction): AddCartRuleCommand
     {
         $this->hasCountryRestriction = $hasCountryRestriction;
@@ -462,11 +353,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasCarrierRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasCarrierRestriction(bool $hasCarrierRestriction): AddCartRuleCommand
     {
         $this->hasCarrierRestriction = $hasCarrierRestriction;
@@ -474,11 +360,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasGroupRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasGroupRestriction(bool $hasGroupRestriction): AddCartRuleCommand
     {
         $this->hasGroupRestriction = $hasGroupRestriction;
@@ -486,11 +367,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasCartRuleRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasCartRuleRestriction(bool $hasCartRuleRestriction): AddCartRuleCommand
     {
         $this->hasCartRuleRestriction = $hasCartRuleRestriction;
@@ -498,11 +374,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasProductRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasProductRestriction(bool $hasProductRestriction): AddCartRuleCommand
     {
         $this->hasProductRestriction = $hasProductRestriction;
@@ -510,11 +381,6 @@ class AddCartRuleCommand
         return $this;
     }
 
-    /**
-     * @param bool $hasShopRestriction
-     *
-     * @return AddCartRuleCommand
-     */
     public function setHasShopRestriction(bool $hasShopRestriction): AddCartRuleCommand
     {
         $this->hasShopRestriction = $hasShopRestriction;
@@ -523,10 +389,6 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param array $localizedNames
-     *
-     * @return AddCartRuleCommand
-     *
      * @throws CartRuleConstraintException
      */
     private function setLocalizedNames(array $localizedNames): AddCartRuleCommand
@@ -541,15 +403,11 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param int $priority
-     *
-     * @return AddCartRuleCommand
-     *
      * @throws CartRuleConstraintException
      */
     private function setPriority(int $priority): AddCartRuleCommand
     {
-        if (0 >= $priority) {
+        if ($priority <= 0) {
             throw new CartRuleConstraintException(sprintf('Invalid cart rule priority "%s". Must be a positive integer.', var_export($priority, true)), CartRuleConstraintException::INVALID_PRIORITY);
         }
 
@@ -559,15 +417,11 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param int $quantity
-     *
-     * @return AddCartRuleCommand
-     *
      * @throws CartRuleConstraintException
      */
     private function setTotalQuantity(int $quantity): AddCartRuleCommand
     {
-        if (0 > $quantity) {
+        if ($quantity < 0) {
             throw new CartRuleConstraintException(sprintf('Quantity cannot be lower than zero, %d given', $quantity), CartRuleConstraintException::INVALID_QUANTITY);
         }
 
@@ -577,15 +431,11 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param int $quantity
-     *
-     * @return AddCartRuleCommand
-     *
      * @throws CartRuleConstraintException
      */
     private function setQuantityPerUser(int $quantity): AddCartRuleCommand
     {
-        if (0 > $quantity) {
+        if ($quantity < 0) {
             throw new CartRuleConstraintException(sprintf('Quantity per user cannot be lower than zero, %d given', $quantity), CartRuleConstraintException::INVALID_QUANTITY_PER_USER);
         }
 
@@ -595,8 +445,6 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param array $names
-     *
      * @throws CartRuleConstraintException
      */
     private function assertAtLeastOneNameIsPresent(array $names): void
@@ -607,9 +455,6 @@ class AddCartRuleCommand
     }
 
     /**
-     * @param DateTime $dateFrom
-     * @param DateTime $dateTo
-     *
      * @throws CartRuleConstraintException
      */
     private function assertDateRangeIsValid(DateTime $dateFrom, DateTime $dateTo): void

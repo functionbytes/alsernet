@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ class CMSDataProvider
     /**
      * Gets all CMS pages.
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array
      */
     public function getCMSPages($languageId = null)
@@ -48,8 +48,7 @@ class CMSDataProvider
     /**
      * Gets one CMS object by ID.
      *
-     * @param int $cmsId
-     *
+     * @param  int  $cmsId
      * @return CMS
      */
     public function getCMSById($cmsId)
@@ -60,8 +59,7 @@ class CMSDataProvider
     /**
      * Gets CMS choices for choice type.
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array
      */
     public function getCMSChoices($languageId = null)

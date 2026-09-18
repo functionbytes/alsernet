@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,11 +47,11 @@ class LoadServicesFromModulesPass implements CompilerPassInterface
      * Used to identify which scope of services need to be loaded (front services, admin
      * services or generic ones)
      *
-     * @param string $containerName
+     * @param  string  $containerName
      */
     public function __construct($containerName = '')
     {
-        $this->configPath = '/config/' . (empty($containerName) ? '' : trim($containerName, '/') . '/');
+        $this->configPath = '/config/'.(empty($containerName) ? '' : trim($containerName, '/').'/');
     }
 
     /**
@@ -58,15 +59,15 @@ class LoadServicesFromModulesPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        if (!$container->hasParameter('kernel.active_modules')) {
+        if (! $container->hasParameter('kernel.active_modules')) {
             return;
         }
 
         $activeModules = $container->getParameter('kernel.active_modules');
         foreach ($this->getModulesPaths() as $modulePath) {
             if (in_array($modulePath->getFilename(), $activeModules)) {
-                $moduleConfigPath = $modulePath . $this->configPath;
-                if (file_exists($moduleConfigPath . 'services.yml')) {
+                $moduleConfigPath = $modulePath.$this->configPath;
+                if (file_exists($moduleConfigPath.'services.yml')) {
                     $loader = new YamlFileLoader($container, new FileLocator($moduleConfigPath));
                     $loader->load('services.yml');
                 }

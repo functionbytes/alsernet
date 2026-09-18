@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,6 @@ final class LinkGroupColumn extends AbstractColumn
             ->setRequired([
                 'links',
             ])
-            ->setAllowedTypes('links', 'array')
-        ;
+            ->setAllowedTypes('links', 'array');
     }
 }

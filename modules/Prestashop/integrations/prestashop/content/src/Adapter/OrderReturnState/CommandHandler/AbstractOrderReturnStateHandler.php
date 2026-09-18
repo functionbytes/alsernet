@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,7 +57,7 @@ abstract class AbstractOrderReturnStateHandler
     {
         $errors = $orderReturnState->validateFieldsRequiredDatabase();
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $missingFields = array_keys($errors);
 
             throw new MissingOrderReturnStateRequiredFieldsException($missingFields, sprintf('One or more required fields for order return state are missing. Missing fields are: %s', implode(',', $missingFields)));

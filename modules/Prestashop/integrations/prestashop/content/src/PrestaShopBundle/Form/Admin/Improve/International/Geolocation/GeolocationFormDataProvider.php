@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,13 +64,6 @@ final class GeolocationFormDataProvider implements FormDataProviderInterface
      */
     private $validator;
 
-    /**
-     * @param DataConfigurationInterface $geolocationByIpAddressConfiguration
-     * @param DataConfigurationInterface $geolocationIpAddressWhitelistConfiguration
-     * @param DataConfigurationInterface $geolocationOptionsConfiguration
-     * @param GeoLiteCityCheckerInterface $geoLiteCityChecker
-     * @param ValidatorInterface $validator
-     */
     public function __construct(
         DataConfigurationInterface $geolocationByIpAddressConfiguration,
         DataConfigurationInterface $geolocationIpAddressWhitelistConfiguration,
@@ -103,7 +97,7 @@ final class GeolocationFormDataProvider implements FormDataProviderInterface
     {
         $errors = [];
 
-        if ($data['geolocation_by_id_address']['geolocation_enabled'] && !$this->geoLiteCityChecker->isAvailable()) {
+        if ($data['geolocation_by_id_address']['geolocation_enabled'] && ! $this->geoLiteCityChecker->isAvailable()) {
             $errors[] = [
                 'key' => 'The geolocation database is unavailable.',
                 'parameters' => [],
@@ -119,7 +113,7 @@ final class GeolocationFormDataProvider implements FormDataProviderInterface
             ];
         }
 
-        if (!$this->validator->isCleanHtml($data['geolocation_ip_address_whitelist']['geolocation_whitelist'])) {
+        if (! $this->validator->isCleanHtml($data['geolocation_ip_address_whitelist']['geolocation_whitelist'])) {
             $errors[] = [
                 'key' => 'Invalid whitelist',
                 'parameters' => [],
@@ -127,7 +121,7 @@ final class GeolocationFormDataProvider implements FormDataProviderInterface
             ];
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 

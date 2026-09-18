@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,14 +71,14 @@ class MoneyWithSuffixType extends MoneyType
      * Appends the suffix to the value, if the value is not empty.
      * Can be used with array_walk().
      *
-     * @param string $value
-     * @param int $key not used, it's only here to make this method compatible with array_walk
-     * @param string $suffix
+     * @param  string  $value
+     * @param  int  $key  not used, it's only here to make this method compatible with array_walk
+     * @param  string  $suffix
      */
     private function applySuffix(&$value, $key, $suffix)
     {
         if (strlen($value) > 0) {
-            $value = rtrim($value) . ' ' . $suffix;
+            $value = rtrim($value).' '.$suffix;
         }
     }
 }

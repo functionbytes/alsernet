@@ -67,8 +67,68 @@ return [
     /*
     | Cuantos destinatarios vencidos se despachan como maximo en cada pasada de
     | helpdeskbirthday:dispatch-due (corre cada minuto).
+    |
+    | NUNCA por encima de throttle.max_jobs: lo que sobra no se envia, se queda
+    | dando vueltas en la cola hasta que el freno lo deja pasar. Estaba en 100
+    | contra un freno de 30 y esa diferencia —70 jobs por minuto esperando— era
+    | la que agotaba los intentos de los correos y los daba por fallidos.
+    | Ahora el job caduca por tiempo (SendBirthdayEmailJob::retryUntil) y no por
+    | intentos, asi que un descuadre ya no pierde correos; pero encolar mas de
+    | lo que se puede enviar solo sirve para llenar Redis.
     */
-    'dispatch_batch_size' => (int) env('HELPDESK_BIRTHDAY_DISPATCH_BATCH', 100),
+    'dispatch_batch_size' => (int) env('HELPDESK_BIRTHDAY_DISPATCH_BATCH', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Canjes: de donde se leen
+    |--------------------------------------------------------------------------
+    | 'auto'   → el bridge si esta configurado, y si no la lectura SQL directa.
+    | 'bridge' → siempre por HTTP firmado (accion voucher.redemptions).
+    | 'sql'    → siempre leyendo la BD de PrestaShop (necesita HELPDESK_PS_DB).
+    |
+    | El bridge es la via de produccion: no exige que webadmin alcance la base
+    | de la tienda. El SQL directo sirve mientras compartan MariaDB.
+    */
+    'redemption_source' => env('HELPDESK_BIRTHDAY_REDEMPTION_SOURCE', 'auto'),
+
+    /*
+    | Como se reconoce un bono de cumpleanos entre todos los cupones de la
+    | tienda: por el nombre que PrestaShop guarda al aplicarlo. El literal real
+    | es "Cheque cumpleanos generado desde la web"; se busca un trozo para no
+    | depender de tildes ni de un cambio de redaccion.
+    |
+    | Se filtra por nombre y NO por lista de codigos porque 90 dias de campanas
+    | son mas de 50.000 codigos, y porque asi aparecen tambien los canjes que no
+    | se logra atribuir — que son informacion, no ruido.
+    */
+    'voucher_name_like' => env('HELPDESK_BIRTHDAY_VOUCHER_NAME_LIKE', 'cumplea'),
+
+    /*
+    | Timeout para las llamadas de canjes al bridge. Mas alto que el resto de
+    | llamadas de HelpdeskPrestashop porque cada una trae hasta 500 canjes.
+    */
+    'bridge_timeout' => (int) env('HELPDESK_BIRTHDAY_BRIDGE_TIMEOUT', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Caducidad de la campaña
+    |--------------------------------------------------------------------------
+    | Horas de gracia despues del dia del cumpleanos. Pasadas, lo que no haya
+    | salido ya no sale: una felicitacion con un dia de retraso es peor que
+    | ninguna, y el bono llevaria dias corriendo.
+    |
+    | La gracia existe para que un atasco de ultima hora (worker caido a las
+    | 23:00) todavia se pueda resolver por la manana.
+    */
+    /*
+    | A cuanta gente se avisa cuando una campana falla. Un fallo operativo se
+    | arregla igual con diez avisos que con mil cuatrocientos — y esta base
+    | tiene 1.412 usuarios con rol admin, asi que sin tope la notificacion
+    | ahogaba la cola que sirve el tiempo real del helpdesk.
+    */
+    'failure_notification_limit' => (int) env('HELPDESK_BIRTHDAY_FAILURE_NOTIFY_LIMIT', 10),
+
+    'expire_after_hours' => (int) env('HELPDESK_BIRTHDAY_EXPIRE_AFTER_HOURS', 6),
 
     /*
     |--------------------------------------------------------------------------
@@ -174,15 +234,32 @@ return [
     | coincide con los ids de la tabla `langs` del módulo Mailer. Aquí se
     | declara la correspondencia id del ERP => ISO.
     |
-    | VACÍO A PROPÓSITO: mientras nadie confirme los ids reales del ERP, todo
-    | el mundo recibe el correo en fallback_language, que es lo que pasaba
-    | antes. Rellenarlo es lo único que hace falta para que el módulo escriba
-    | en portugués, inglés, etc. — la plantilla ya es multi-idioma vía
-    | mailer_template_langs; solo hay que traducirla en el admin de Mailer.
+    | QUÉ SE SABE, medido contra el ERP y PrestaShop el 7-sep-2026
+    | ------------------------------------------------------------------------
+    | El cruce se hizo por `code_internet` del ERP contra `id_customer` de
+    | PrestaShop (por email NO funciona: los correos del dump de la tienda
+    | están anonimizados), mirando el `id_lang` que cada cliente tiene allí.
     |
-    | Ejemplo: [1 => 'es', 2 => 'pt', 3 => 'en']
+    |   ididioma = 2  ->  es    129 de 130 clientes. Inequívoco.
+    |   ididioma = 7  ->  ?     4 clientes: 2 en pt, 2 en es. SIN SEÑAL.
+    |   ididioma = 5  ->  ?     visto en 3 clientes, sin muestra suficiente.
+    |
+    | Sólo se mapea el 2, que es el 97% de la base y el único con evidencia.
+    | El 7 apunta a portugués —en ese grupo la proporción de lusófonos es
+    | muchísimo mayor que en el 2— pero con cuatro casos y empate no se fija:
+    | equivocarse manda el correo en un idioma que el cliente no lee, y quien
+    | no está en el mapa cae a `fallback_language`, que es lo que ya pasaba.
+    |
+    | Para cerrar el 5 y el 7 hace falta preguntar a Microserver o leer la
+    | tabla de idiomas en Oracle: la API de clientes IGNORA el filtro
+    | `language`, así que no se puede pedir una muestra dirigida.
+    |
+    | La plantilla ya es multi-idioma vía mailer_template_langs; en cuanto se
+    | confirmen, basta con añadirlos aquí y traducirla en el admin de Mailer.
     */
-    'erp_language_map' => [],
+    'erp_language_map' => [
+        2 => 'es',
+    ],
 
     'fallback_language' => env('HELPDESK_BIRTHDAY_FALLBACK_LANG', 'es'),
 

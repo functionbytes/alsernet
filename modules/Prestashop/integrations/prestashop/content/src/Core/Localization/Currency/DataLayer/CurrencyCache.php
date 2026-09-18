@@ -29,8 +29,8 @@ namespace PrestaShop\PrestaShop\Core\Localization\Currency\DataLayer;
 
 use PrestaShop\PrestaShop\Core\Data\Layer\AbstractDataLayer;
 use PrestaShop\PrestaShop\Core\Data\Layer\DataLayerException;
-use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyData as CurrencyData;
-use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyDataLayerInterface as CurrencyDataLayerInterface;
+use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyData;
+use PrestaShop\PrestaShop\Core\Localization\Currency\CurrencyDataLayerInterface;
 use PrestaShop\PrestaShop\Core\Localization\Currency\LocalizedCurrencyId;
 use PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -72,15 +72,14 @@ class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayerInterf
      *
      * Might be a file access, cache read, DB select...
      *
-     * @param LocalizedCurrencyId $id The CurrencyData object identifier (currency code + locale code)
-     *
+     * @param  LocalizedCurrencyId  $id  The CurrencyData object identifier (currency code + locale code)
      * @return CurrencyData|null The wanted CurrencyData object (null if not found)
      *
      * @throws LocalizationException When $currencyDataId is invalid
      */
     protected function doRead($id)
     {
-        if (!$id instanceof LocalizedCurrencyId) {
+        if (! $id instanceof LocalizedCurrencyId) {
             throw new LocalizationException('$currencyDataId must be a CurrencyDataIdentifier object');
         }
 
@@ -96,15 +95,15 @@ class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayerInterf
      *
      * Might be a file edit, cache update, DB insert/update...
      *
-     * @param LocalizedCurrencyId $currencyDataId The data object identifier
-     * @param CurrencyData $currencyData The data object to be written
+     * @param  LocalizedCurrencyId  $currencyDataId  The data object identifier
+     * @param  CurrencyData  $currencyData  The data object to be written
      *
      * @throws DataLayerException When write fails
      * @throws LocalizationException When $currencyDataId is invalid
      */
     protected function doWrite($currencyDataId, $currencyData)
     {
-        if (!$currencyDataId instanceof LocalizedCurrencyId) {
+        if (! $currencyDataId instanceof LocalizedCurrencyId) {
             throw new LocalizationException('$currencyDataId must be a CurrencyDataIdentifier object');
         }
 
@@ -113,7 +112,7 @@ class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayerInterf
 
         $saved = $this->cache->save($cacheItem);
 
-        if (!$saved) {
+        if (! $saved) {
             throw new DataLayerException('Unable to persist data in cache data layer');
         }
     }

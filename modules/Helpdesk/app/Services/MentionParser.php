@@ -173,7 +173,7 @@ class MentionParser
 
         $replacements = [];
         foreach ($resolved['users'] as $u) {
-            $name = trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: $u->email;
+            $name = $u->fullName() ?: $u->email;
             $handle = mb_strtolower(trim(($u->firstname ?? '').'.'.($u->lastname ?? ''), '.'));
             $replacements['@'.$handle] = $name;
         }

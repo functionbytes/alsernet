@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,8 @@ class AssignProductToCategoryCommand
     private $productId;
 
     /**
-     * @param int $categoryId
-     * @param int $productId
+     * @param  int  $categoryId
+     * @param  int  $productId
      *
      * @throws CategoryConstraintException
      * @throws ProductConstraintException */
@@ -58,11 +59,6 @@ class AssignProductToCategoryCommand
         $this->setProductId($productId);
     }
 
-    /**
-     * @param int $categoryId
-     *
-     * @return self
-     */
     public function setCategoryId(int $categoryId): AssignProductToCategoryCommand
     {
         $this->categoryId = new CategoryId($categoryId);
@@ -70,19 +66,11 @@ class AssignProductToCategoryCommand
         return $this;
     }
 
-    /**
-     * @return CategoryId
-     */
     public function getCategoryId(): CategoryId
     {
         return $this->categoryId;
     }
 
-    /**
-     * @param int $productId
-     *
-     * @return self
-     */
     public function setProductId(int $productId): AssignProductToCategoryCommand
     {
         $this->productId = new ProductId($productId);
@@ -90,9 +78,6 @@ class AssignProductToCategoryCommand
         return $this;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;

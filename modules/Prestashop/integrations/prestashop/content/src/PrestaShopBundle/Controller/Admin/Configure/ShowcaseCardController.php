@@ -52,6 +52,7 @@ class ShowcaseCardController extends FrameworkBundleAdminController
      * @see ShowcaseCard
      *
      * @AdminSecurity("is_granted(['create', 'update'], 'CONFIGURE')")
+     *
      * @DemoRestricted(redirectRoute="admin_metas_index")
      *
      * @return JsonResponse
@@ -59,7 +60,7 @@ class ShowcaseCardController extends FrameworkBundleAdminController
     public function closeShowcaseCardAction(Request $request)
     {
         // check prerequisites
-        if (!$request->isMethod('post') || !$request->request->get('close')) {
+        if (! $request->isMethod('post') || ! $request->request->get('close')) {
             return $this->json(
                 [
                     'success' => false,

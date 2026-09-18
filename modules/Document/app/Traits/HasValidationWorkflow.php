@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Modules\Document\Entities\DocumentValidationHistory;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Enums\ValidationAction;
+use Modules\Document\Notifications\DocumentStageAdvanced;
+use Modules\Document\Services\ValidationPermissionService;
 
 /**
  * Trait HasValidationWorkflow
@@ -282,9 +284,9 @@ trait HasValidationWorkflow
     /**
      * Get the validation permission service (lazy-loaded singleton).
      */
-    public function getPermissionService(): \Modules\Document\Services\ValidationPermissionService
+    public function getPermissionService(): ValidationPermissionService
     {
-        return app(\Modules\Document\Services\ValidationPermissionService::class);
+        return app(ValidationPermissionService::class);
     }
 
     /**
@@ -529,7 +531,7 @@ trait HasValidationWorkflow
 
             // Send notification to all users in the group
             foreach ($users as $user) {
-                $user->notify(new \Modules\Document\Notifications\DocumentStageAdvanced(
+                $user->notify(new DocumentStageAdvanced(
                     $this,
                     $previousStage,
                     $currentStage,

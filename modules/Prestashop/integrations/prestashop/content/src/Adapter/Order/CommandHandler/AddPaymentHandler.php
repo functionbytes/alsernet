@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,11 @@ final class AddPaymentHandler extends AbstractOrderHandler implements AddPayment
             $orderInvoice = null;
         }
 
-        if (!Validate::isLoadedObject($currency)) {
+        if (! Validate::isLoadedObject($currency)) {
             throw new OrderException('The selected currency is invalid.');
         }
 
-        if ($orderHasInvoice && !Validate::isLoadedObject($orderInvoice)) {
+        if ($orderHasInvoice && ! Validate::isLoadedObject($orderInvoice)) {
             throw new OrderException('The invoice is invalid.');
         }
 
@@ -72,7 +73,7 @@ final class AddPaymentHandler extends AbstractOrderHandler implements AddPayment
             $orderInvoice
         );
 
-        if (!$paymentAdded) {
+        if (! $paymentAdded) {
             throw new OrderException('An error occurred during payment.');
         }
     }

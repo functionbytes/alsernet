@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,14 +68,6 @@ class UpdateProductInOrderCommand
      */
     private $orderInvoiceId;
 
-    /**
-     * @param int $orderId
-     * @param int $orderDetailId
-     * @param string $priceTaxIncluded
-     * @param string $priceTaxExcluded
-     * @param int $quantity
-     * @param int|null $orderInvoiceId
-     */
     public function __construct(
         int $orderId,
         int $orderDetailId,
@@ -89,7 +82,7 @@ class UpdateProductInOrderCommand
             $this->priceTaxIncluded = new DecimalNumber($priceTaxIncluded);
             $this->priceTaxExcluded = new DecimalNumber($priceTaxExcluded);
         } catch (InvalidArgumentException $e) {
-            throw new InvalidAmountException();
+            throw new InvalidAmountException;
         }
         $this->setQuantity($quantity);
         $this->orderInvoiceId = $orderInvoiceId;
@@ -144,8 +137,6 @@ class UpdateProductInOrderCommand
     }
 
     /**
-     * @param int $quantity
-     *
      * @throws InvalidProductQuantityException
      */
     private function setQuantity(int $quantity): void

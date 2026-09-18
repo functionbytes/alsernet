@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\HealthController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AgentSettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AttributesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AuditController;
@@ -26,7 +27,6 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\NotificationSettingsCont
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\OffHoursResponsesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\RoutingRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\SkillsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlackIntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlaPoliciesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\StatusesController;
@@ -63,6 +63,13 @@ Route::put('features', [FeaturesSettingsController::class, 'update'])->name('fea
 Route::get('uploading', [SettingsController::class, 'uploadingIndex'])->name('uploading');
 Route::put('uploading', [SettingsController::class, 'uploadingUpdate'])->name('uploading.update');
 
+// Operational diagnostics (the public /helpdesk/health endpoint is deliberately
+// reduced to liveness information; this page is restricted by the settings
+// route group and may show troubleshooting details).
+Route::get('health', [HealthController::class, 'panel'])
+    ->middleware('can:helpdesk.settings.view')
+    ->name('health');
+
 // Social Integrations Settings
 Route::get('social-integrations', [SocialIntegrationsController::class, 'index'])->name('social-integrations.index');
 Route::post('social-integrations/test/whatsapp', [SocialIntegrationsController::class, 'testWhatsapp'])->name('social-integrations.test.whatsapp');
@@ -96,9 +103,11 @@ Route::prefix('webhooks')->name('webhooks.')->group(function () {
     Route::get('/', [WebhooksController::class, 'index'])->name('index');
     Route::get('create', [WebhooksController::class, 'create'])->name('create');
     Route::post('/', [WebhooksController::class, 'store'])->name('store');
+    Route::get('{webhook}', [WebhooksController::class, 'show'])->name('show');
     Route::get('{webhook}/edit', [WebhooksController::class, 'edit'])->name('edit');
     Route::put('{webhook}', [WebhooksController::class, 'update'])->name('update');
     Route::delete('{webhook}', [WebhooksController::class, 'destroy'])->name('destroy');
+    Route::post('{webhook}/deliveries/{delivery}/replay', [WebhooksController::class, 'replay'])->name('deliveries.replay');
 });
 
 // Schedule routes moved to modules/HelpdeskAgents/routes/settings.php
@@ -110,6 +119,7 @@ Route::prefix('team')->name('team.')->group(function () {
     Route::get('members', [TeamController::class, 'membersIndex'])->name('members');
     Route::get('members/{id}/edit', [TeamController::class, 'memberEdit'])->name('member.edit');
     Route::put('members/{id}', [TeamController::class, 'memberUpdate'])->name('member.update');
+    Route::post('members/bulk-action', [TeamController::class, 'membersBulkAction'])->name('members.bulk-action');
 
     Route::get('groups', [TeamController::class, 'groupsIndex'])->name('groups');
     Route::get('groups/create', [TeamController::class, 'groupCreate'])->name('group.create');
@@ -342,17 +352,6 @@ Route::prefix('agent-settings')->name('agent-settings.')->group(function () {
     Route::post('bulk-action', [AgentSettingsController::class, 'bulkAction'])->name('bulk-action');
 });
 
-// Skills
-Route::prefix('skills')->name('skills.')->group(function () {
-    Route::get('/', [SkillsController::class, 'index'])->name('index');
-    Route::get('create', [SkillsController::class, 'create'])->name('create');
-    Route::post('/', [SkillsController::class, 'store'])->name('store');
-    Route::get('{skill}/edit', [SkillsController::class, 'edit'])->name('edit');
-    Route::put('{skill}', [SkillsController::class, 'update'])->name('update');
-    Route::delete('{skill}', [SkillsController::class, 'destroy'])->name('destroy');
-    Route::post('bulk-action', [SkillsController::class, 'bulkAction'])->name('bulk-action');
-});
-
 // Companies
 Route::prefix('companies')->name('companies.')->group(function () {
     Route::get('/', [CompaniesController::class, 'index'])->name('index');
@@ -414,6 +413,7 @@ Route::prefix('whatsapp-templates')->name('whatsapp-templates.')->group(function
     Route::get('create', [WhatsAppTemplatesController::class, 'create'])->name('create');
     Route::post('/', [WhatsAppTemplatesController::class, 'store'])->name('store');
     Route::post('sync', [WhatsAppTemplatesController::class, 'sync'])->name('sync');
+    Route::post('bulk-action', [WhatsAppTemplatesController::class, 'bulkAction'])->name('bulk-action');
 });
 
 // WhatsApp Usage (reporte de gasto — plantillas HSM + respuestas de servicio)

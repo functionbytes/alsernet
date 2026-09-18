@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,13 +30,21 @@ namespace PrestaShop\PrestaShop\Core\Product;
 class ProductPresentationSettings
 {
     public $catalog_mode;
+
     public $catalog_mode_with_prices;
+
     public $restricted_country_mode;
+
     public $include_taxes;
+
     public $allow_add_variant_to_cart_from_listing;
+
     public $stock_management_enabled;
+
     public $showPrices;
+
     public $lastRemainingItems;
+
     /**
      * @var bool|null
      */
@@ -43,6 +52,6 @@ class ProductPresentationSettings
 
     public function shouldShowPrice()
     {
-        return $this->showPrices && (!$this->catalog_mode || $this->catalog_mode_with_prices);
+        return $this->showPrices && (! $this->catalog_mode || $this->catalog_mode_with_prices);
     }
 }

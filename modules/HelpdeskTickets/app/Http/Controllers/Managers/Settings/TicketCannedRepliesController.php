@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketCannedReplyRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCannedReplyRequest;
@@ -15,7 +16,13 @@ class TicketCannedRepliesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:helpdesk.tickets.settings');
+        // duplicate() queda fuera a propósito: vive también detrás de una
+        // ruta sin este middleware (ver routes/managers.php, bloque
+        // general) porque cualquier agente —tenga o no permiso para
+        // gestionar plantillas— puede querer su propia copia editable de
+        // una plantilla global desde el modal "Plantillas de email" del
+        // propio ticket, no solo desde esta pantalla de ajustes.
+        $this->middleware('can:helpdesk.tickets.settings')->except('duplicate');
     }
 
     /**
@@ -216,5 +223,53 @@ class TicketCannedRepliesController extends Controller
         }
 
         return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
+    }
+
+    /**
+     * "Duplicar como mía": cualquier agente que puede VER esta respuesta
+     * (global, o su propia personal) puede clonarla para tener una copia
+     * propia editable — sin depender de helpdesk.tickets.settings, que es
+     * justo el permiso que le faltaría para editar la original si es
+     * global (ver __construct()). Se llama tanto desde esta pantalla de
+     * ajustes como, sobre todo, desde el modal "Plantillas de email" del
+     * propio ticket (cualquier agente, tenga o no ese permiso).
+     *
+     * La copia nace SIEMPRE personal (is_global=false) aunque el original
+     * fuera compartido — de eso se trata, una versión propia que no
+     * dependa de permisos de gestión — y sin short_code: es una columna
+     * única y el original ya lo tiene ocupado.
+     */
+    public function duplicate(Request $request, TicketCannedReply $reply): JsonResponse|RedirectResponse
+    {
+        if (! $reply->is_global && $reply->user_id !== $request->user()->id) {
+            abort(403, 'No tienes acceso a esta respuesta.');
+        }
+
+        $copy = $reply->replicate(['user_id', 'is_global', 'usage_count', 'short_code']);
+        $copy->title = $reply->title.' (copia)';
+        $copy->user_id = $request->user()->id;
+        $copy->is_global = false;
+        $copy->is_active = true;
+        $copy->usage_count = 0;
+        $copy->short_code = null;
+        $copy->save();
+
+        $message = 'Plantilla duplicada. Ya es tuya: edítala como quieras.';
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => $message,
+                'reply' => [
+                    'id' => $copy->id,
+                    'title' => $copy->title,
+                    'content' => $copy->content,
+                    'short_code' => $copy->short_code,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('manager.helpdesk.settings.ticket-canned-replies.edit', $copy->id)
+            ->with('success', $message);
     }
 }

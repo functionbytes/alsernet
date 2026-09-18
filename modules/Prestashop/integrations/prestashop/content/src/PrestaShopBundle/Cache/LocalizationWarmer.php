@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,7 @@ use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 class LocalizationWarmer implements CacheWarmerInterface
 {
     private $version;
+
     private $country;
 
     public function __construct($version, $country)
@@ -43,25 +45,25 @@ class LocalizationWarmer implements CacheWarmerInterface
 
     public function warmUp($cacheDir)
     {
-        $fs = new Filesystem();
+        $fs = new Filesystem;
 
         if (is_dir($cacheDir)) {
             try {
                 $fs->mkdir($cacheDir);
             } catch (IOExceptionInterface $e) {
-                //@todo: log
+                // @todo: log
             }
         }
 
-        $path_cache_file = $cacheDir . $this->version . $this->country . '.xml';
+        $path_cache_file = $cacheDir.$this->version.$this->country.'.xml';
 
         if (is_file($path_cache_file)) {
             $localization_file_content = file_get_contents($path_cache_file);
         } else {
-            $localization_file = _PS_ROOT_DIR_ . '/localization/default.xml';
+            $localization_file = _PS_ROOT_DIR_.'/localization/default.xml';
 
-            if (file_exists(_PS_ROOT_DIR_ . '/localization/' . $this->country . '.xml')) {
-                $localization_file = _PS_ROOT_DIR_ . '/localization/' . $this->country . '.xml';
+            if (file_exists(_PS_ROOT_DIR_.'/localization/'.$this->country.'.xml')) {
+                $localization_file = _PS_ROOT_DIR_.'/localization/'.$this->country.'.xml';
             }
 
             $localization_file_content = file_get_contents($localization_file);
@@ -69,7 +71,7 @@ class LocalizationWarmer implements CacheWarmerInterface
             try {
                 $fs->dumpFile($path_cache_file, $localization_file_content);
             } catch (IOExceptionInterface $e) {
-                //@todo: log
+                // @todo: log
             }
         }
 

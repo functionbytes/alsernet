@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -83,35 +84,21 @@ class UpdateProductOptionsCommand
      */
     private $manufacturerId;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isActive(): ?bool
     {
         return $this->active;
     }
 
-    /**
-     * @param bool $active
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setActive(bool $active): UpdateProductOptionsCommand
     {
         $this->active = $active;
@@ -119,27 +106,16 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @return ProductVisibility|null
-     */
     public function getVisibility(): ?ProductVisibility
     {
         return $this->visibility;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isAvailableForOrder(): ?bool
     {
         return $this->availableForOrder;
     }
 
-    /**
-     * @param string $visibility
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setVisibility(string $visibility): UpdateProductOptionsCommand
     {
         $this->visibility = new ProductVisibility($visibility);
@@ -147,11 +123,6 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @param bool $availableForOrder
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setAvailableForOrder(bool $availableForOrder): UpdateProductOptionsCommand
     {
         $this->availableForOrder = $availableForOrder;
@@ -159,19 +130,11 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isOnlineOnly(): ?bool
     {
         return $this->onlineOnly;
     }
 
-    /**
-     * @param bool $onlineOnly
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setOnlineOnly(bool $onlineOnly): UpdateProductOptionsCommand
     {
         $this->onlineOnly = $onlineOnly;
@@ -179,19 +142,11 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function showPrice(): ?bool
     {
         return $this->showPrice;
     }
 
-    /**
-     * @param bool $showPrice
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setShowPrice(bool $showPrice): UpdateProductOptionsCommand
     {
         $this->showPrice = $showPrice;
@@ -199,19 +154,11 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @return ProductCondition|null
-     */
     public function getCondition(): ?ProductCondition
     {
         return $this->condition;
     }
 
-    /**
-     * @param string $condition
-     *
-     * @return UpdateProductOptionsCommand
-     */
     public function setCondition(string $condition): UpdateProductOptionsCommand
     {
         $this->condition = new ProductCondition($condition);
@@ -220,8 +167,6 @@ class UpdateProductOptionsCommand
     }
 
     /**
-     * @param bool $showCondition
-     *
      * @return $this
      */
     public function setShowCondition(bool $showCondition): UpdateProductOptionsCommand
@@ -231,35 +176,26 @@ class UpdateProductOptionsCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function showCondition(): ?bool
     {
         return $this->showCondition;
     }
 
-    /**
-     * @return ManufacturerIdInterface|null
-     */
     public function getManufacturerId(): ?ManufacturerIdInterface
     {
         return $this->manufacturerId;
     }
 
     /**
-     * @param int $manufacturerId
+     * @return $this
      *
      * @throws ManufacturerConstraintException
-     *
-     * @return $this
      */
     public function setManufacturerId(int $manufacturerId): UpdateProductOptionsCommand
     {
-        $this->manufacturerId = NoManufacturerId::NO_MANUFACTURER_ID === $manufacturerId ?
-            new NoManufacturerId() :
-            new ManufacturerId($manufacturerId)
-        ;
+        $this->manufacturerId = $manufacturerId === NoManufacturerId::NO_MANUFACTURER_ID ?
+            new NoManufacturerId :
+            new ManufacturerId($manufacturerId);
 
         return $this;
     }

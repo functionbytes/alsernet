@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -76,14 +77,7 @@ class EditableCombinationForListing
     private $imageUrl;
 
     /**
-     * @param int $combinationId
-     * @param string $combinationName
-     * @param string $reference
-     * @param CombinationAttributeInformation[] $attributesInformation
-     * @param bool $default
-     * @param DecimalNumber $impactOnPrice
-     * @param int $quantity
-     * @param string|null $imageUrl
+     * @param  CombinationAttributeInformation[]  $attributesInformation
      */
     public function __construct(
         int $combinationId,
@@ -105,9 +99,6 @@ class EditableCombinationForListing
         $this->imageUrl = $imageUrl;
     }
 
-    /**
-     * @return int
-     */
     public function getCombinationId(): int
     {
         return $this->combinationId;
@@ -121,49 +112,31 @@ class EditableCombinationForListing
         return $this->attributesInformation;
     }
 
-    /**
-     * @return string
-     */
     public function getCombinationName(): string
     {
         return $this->combinationName;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;
     }
 
-    /**
-     * @return bool
-     */
     public function isDefault(): bool
     {
         return $this->default;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getImpactOnPrice(): DecimalNumber
     {
         return $this->impactOnPrice;
     }
 
-    /**
-     * @return int
-     */
     public function getQuantity(): int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return string|null
-     */
     public function getImageUrl(): ?string
     {
         return $this->imageUrl;

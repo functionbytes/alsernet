@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Supplier\Database\Factories\Sync\SyncScheduleFactory;
-use Modules\Supplier\Models\Sync\SyncBatch;
 
 /**
  * Represents a scheduled synchronization job configuration.

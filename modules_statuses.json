@@ -13,8 +13,9 @@
     "GiftMessage": true,
     "Helpdesk": true,
     "HelpdeskAgents": true,
-    "HelpdeskAnalytics": false,
-    "HelpdeskCampaigns": false,
+    "HelpdeskAnalytics": true,
+    "HelpdeskBirthday": true,
+    "HelpdeskCampaigns": true,
     "HelpdeskChatFlow": true,
     "HelpdeskCompliance": true,
     "HelpdeskContacts": true,
@@ -26,7 +27,7 @@
     "HelpdeskLivechat": true,
     "HelpdeskPrestashop": true,
     "HelpdeskSla": true,
-    "HelpdeskSocial": false,
+    "HelpdeskSocial": true,
     "HelpdeskTickets": true,
     "HelpdeskTranslate": true,
     "Health": true,
@@ -56,5 +57,7 @@
     "Seo": false,
     "Users": true,
     "Core": true,
-    "Queue": true
+    "Queue": true,
+    "Reviews": true,
+    "Questions": true
 }

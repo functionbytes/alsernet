@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,6 @@ class ProductImageType extends CommonAbstractType
             ->add('legend', TranslatableType::class, [
                 'type' => TextType::class,
             ])
-            ->add('is_cover', SwitchType::class)
-        ;
+            ->add('is_cover', SwitchType::class);
     }
 }

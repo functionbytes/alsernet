@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ class ManufacturerType extends ChoiceType
      */
     private $manufacturerChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param FormChoiceProviderInterface $manufacturerChoiceProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         FormChoiceProviderInterface $manufacturerChoiceProvider
@@ -83,13 +80,6 @@ class ManufacturerType extends ChoiceType
         ]);
     }
 
-    /**
-     * @param string $key
-     * @param string $domain
-     * @param array $parameters
-     *
-     * @return string
-     */
     protected function trans(string $key, string $domain, array $parameters = []): string
     {
         return $this->translator->trans($key, $parameters, $domain);

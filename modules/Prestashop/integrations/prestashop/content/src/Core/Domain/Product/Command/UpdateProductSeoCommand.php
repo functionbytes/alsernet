@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,17 +62,11 @@ class UpdateProductSeoCommand
      */
     private $redirectOption;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -86,9 +81,7 @@ class UpdateProductSeoCommand
     }
 
     /**
-     * @param string[] $localizedMetaTitles key => value pairs where each key represents language id
-     *
-     * @return UpdateProductSeoCommand
+     * @param  string[]  $localizedMetaTitles  key => value pairs where each key represents language id
      */
     public function setLocalizedMetaTitles(array $localizedMetaTitles): UpdateProductSeoCommand
     {
@@ -106,9 +99,7 @@ class UpdateProductSeoCommand
     }
 
     /**
-     * @param string[] $localizedMetaDescriptions key => value pairs where each key represents language id
-     *
-     * @return UpdateProductSeoCommand
+     * @param  string[]  $localizedMetaDescriptions  key => value pairs where each key represents language id
      */
     public function setLocalizedMetaDescriptions(array $localizedMetaDescriptions): UpdateProductSeoCommand
     {
@@ -126,9 +117,7 @@ class UpdateProductSeoCommand
     }
 
     /**
-     * @param string[] $localizedLinkRewrites key => value pairs where each key represents language id
-     *
-     * @return UpdateProductSeoCommand
+     * @param  string[]  $localizedLinkRewrites  key => value pairs where each key represents language id
      */
     public function setLocalizedLinkRewrites(array $localizedLinkRewrites): UpdateProductSeoCommand
     {
@@ -137,20 +126,11 @@ class UpdateProductSeoCommand
         return $this;
     }
 
-    /**
-     * @return RedirectOption|null
-     */
     public function getRedirectOption(): ?RedirectOption
     {
         return $this->redirectOption;
     }
 
-    /**
-     * @param string $redirectType
-     * @param int $redirectTarget
-     *
-     * @return UpdateProductSeoCommand
-     */
     public function setRedirectOption(string $redirectType, int $redirectTarget): UpdateProductSeoCommand
     {
         $this->redirectOption = new RedirectOption($redirectType, $redirectTarget);

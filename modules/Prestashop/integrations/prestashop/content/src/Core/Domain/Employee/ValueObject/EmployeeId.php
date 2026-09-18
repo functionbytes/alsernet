@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class EmployeeId
     private $employeeId;
 
     /**
-     * @param int $employeeId
+     * @param  int  $employeeId
      *
      * @throws InvalidEmployeeIdException
      */
@@ -59,13 +60,13 @@ class EmployeeId
     }
 
     /**
-     * @param int $employeeId
+     * @param  int  $employeeId
      *
      * @throws InvalidEmployeeIdException
      */
     private function assertIntegerIsGreaterThanZero($employeeId)
     {
-        if (!is_int($employeeId) || 0 > $employeeId) {
+        if (! is_int($employeeId) || $employeeId < 0) {
             throw new InvalidEmployeeIdException(sprintf('Invalid employee id %s supplied. Employee id must be positive integer.', var_export($employeeId, true)));
         }
     }

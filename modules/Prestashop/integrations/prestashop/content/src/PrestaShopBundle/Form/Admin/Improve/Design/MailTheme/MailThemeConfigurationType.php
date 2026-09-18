@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ class MailThemeConfigurationType extends AbstractType
     /** @var array */
     private $mailThemes;
 
-    /**
-     * @param array $mailThemes
-     */
     public function __construct(array $mailThemes)
     {
         $this->mailThemes = $mailThemes;
@@ -55,7 +53,6 @@ class MailThemeConfigurationType extends AbstractType
         $builder
             ->add('defaultTheme', ChoiceType::class, [
                 'choices' => $this->mailThemes,
-            ])
-        ;
+            ]);
     }
 }

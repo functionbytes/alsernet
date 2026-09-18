@@ -36,7 +36,7 @@ use PrestaShop\PrestaShop\Core\Localization\Specification\NumberInterface as Num
  * Number specifications collection
  * Contains a list of Number specification items (all implementing NumberInterface).
  */
-class NumberCollection implements IteratorAggregate, Countable
+class NumberCollection implements Countable, IteratorAggregate
 {
     /**
      * The Number specification items.
@@ -72,11 +72,10 @@ class NumberCollection implements IteratorAggregate, Countable
     /**
      * Adds a Number specification item at the end of the collection.
      *
-     * @param int|string $index
-     *                          The item index
-     * @param numberSpecificationInterface $numberSpecification
-     *                                                          The Number specification item to add
-     *
+     * @param  int|string  $index
+     *                             The item index
+     * @param  NumberSpecificationInterface  $numberSpecification
+     *                                                             The Number specification item to add
      * @return NumberCollection
      *                          Fluent interface
      */
@@ -101,10 +100,9 @@ class NumberCollection implements IteratorAggregate, Countable
     /**
      * Gets a Number specification item by index.
      *
-     * @param int|string $index
-     *                          The Number specification item index into this collection
-     *                          (@see NumberCollection::add())
-     *
+     * @param  int|string  $index
+     *                             The Number specification item index into this collection
+     *                             (@see NumberCollection::add())
      * @return NumberSpecificationInterface|null
      *                                           A Number specification instance or null when not found
      */
@@ -118,9 +116,8 @@ class NumberCollection implements IteratorAggregate, Countable
     /**
      * Removes a Number specification item or an array of Number specification items by index from the collection.
      *
-     * @param int|string|int[]|string[]|array $index
-     *                                               The Number specification item index or an array of Number specification item indexes
-     *
+     * @param  int|string|int[]|string[]|array  $index
+     *                                                  The Number specification item index or an array of Number specification item indexes
      * @return NumberCollection
      *                          Fluent interface
      */

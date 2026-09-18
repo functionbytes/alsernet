@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,7 @@ final class PaymentModuleListProvider implements PaymentModuleListProviderInterf
     private $shopId;
 
     /**
-     * @param AddonRepositoryInterface $addonRepository
-     * @param ModuleRepository $moduleRepository
-     * @param int $shopId
+     * @param  int  $shopId
      */
     public function __construct(
         AddonRepositoryInterface $addonRepository,
@@ -73,7 +72,7 @@ final class PaymentModuleListProvider implements PaymentModuleListProviderInterf
      */
     public function getPaymentModuleList()
     {
-        $filters = (new AddonListFilter())
+        $filters = (new AddonListFilter)
             ->setType(AddonListFilterType::MODULE)
             ->setStatus(AddonListFilterStatus::INSTALLED);
 

@@ -46,7 +46,14 @@ class IntegrationDriverRegistryTest extends TestCase
         $this->assertTrue($registry->get('prestashop')->isAvailable());
     }
 
-    public function test_erp_driver_is_available_reflects_class_exists(): void
+    /**
+     * isAvailable() ya no es un mero class_exists(): también refleja el
+     * estado real del módulo (instalado+activo+toggle de Settings →
+     * Integraciones). class_exists() sigue siendo true con el módulo
+     * deshabilitado (monolito), así que antes este test consagraba un falso
+     * positivo de disponibilidad.
+     */
+    public function test_erp_driver_is_available_reflects_module_status(): void
     {
         if (! class_exists(ErpContextService::class)) {
             $this->markTestSkipped('HelpdeskErp no esta instalado en este entorno.');
@@ -54,7 +61,7 @@ class IntegrationDriverRegistryTest extends TestCase
 
         $driver = new ErpIntegrationDriver;
 
-        $this->assertTrue($driver->isAvailable());
+        $this->assertSame(helpdesk_erp_enabled(), $driver->isAvailable());
     }
 
     /**

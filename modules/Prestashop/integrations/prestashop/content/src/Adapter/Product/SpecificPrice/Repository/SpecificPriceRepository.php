@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,11 +61,6 @@ class SpecificPriceRepository extends AbstractObjectModelRepository
      */
     private $dbPrefix;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param SpecificPriceValidator $specificPriceValidator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -76,11 +72,6 @@ class SpecificPriceRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param SpecificPrice $specificPrice
-     * @param int $errorCode
-     *
-     * @return SpecificPriceId
-     *
      * @throws SpecificPriceConstraintException
      * @throws CoreException
      */
@@ -93,10 +84,6 @@ class SpecificPriceRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param SpecificPriceId $specificPriceId
-     *
-     * @return SpecificPrice
-     *
      * @throws SpecificPriceNotFoundException
      */
     public function get(SpecificPriceId $specificPriceId): SpecificPrice
@@ -112,11 +99,6 @@ class SpecificPriceRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     * @param int|null $limit
-     * @param int|null $offset
-     * @param array|null $filters
-     *
      * @return array<int, array<string, mixed>>
      */
     public function getProductSpecificPrices(ProductId $productId, ?int $limit = null, ?int $offset = null, ?array $filters = []): array
@@ -124,44 +106,29 @@ class SpecificPriceRepository extends AbstractObjectModelRepository
         $qb = $this->getSpecificPricesQueryBuilder($productId, $filters)
             ->select('sp.*')
             ->setFirstResult($offset)
-            ->setMaxResults($limit)
-        ;
+            ->setMaxResults($limit);
 
         return $qb->execute()->fetchAll();
     }
 
-    /**
-     * @param ProductId $productId
-     * @param array|null $filters
-     *
-     * @return int
-     */
     public function getProductSpecificPricesCount(ProductId $productId, ?array $filters = []): int
     {
         $qb = $this->getSpecificPricesQueryBuilder($productId, $filters)
-            ->select('COUNT(sp.id_specific_price) AS total_specific_prices')
-        ;
+            ->select('COUNT(sp.id_specific_price) AS total_specific_prices');
 
         return (int) $qb->execute()->fetch()['total_specific_prices'];
     }
 
-    /**
-     * @param ProductId $productId
-     * @param array|null $filters
-     *
-     * @return QueryBuilder
-     */
     private function getSpecificPricesQueryBuilder(ProductId $productId, ?array $filters): QueryBuilder
     {
-        //@todo: filters are not handled.
+        // @todo: filters are not handled.
         $qb = $this->connection->createQueryBuilder();
-        $qb->from($this->dbPrefix . 'specific_price', 'sp')
+        $qb->from($this->dbPrefix.'specific_price', 'sp')
             ->where('sp.id_product = :productId')
             ->andWhere('sp.id_cart = 0')
             ->andWhere('sp.id_specific_price_rule = 0')
             ->orderBy('id_specific_price', 'asc')
-            ->setParameter('productId', $productId->getValue())
-        ;
+            ->setParameter('productId', $productId->getValue());
 
         return $qb;
     }

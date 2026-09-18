@@ -27,18 +27,16 @@
 
 namespace PrestaShopBundle\Translation\Provider;
 
-interface SearchProviderInterface extends ProviderInterface, UseDefaultCatalogueInterface, XliffCatalogueInterface, DatabaseCatalogueInterface
+interface SearchProviderInterface extends DatabaseCatalogueInterface, ProviderInterface, UseDefaultCatalogueInterface, XliffCatalogueInterface
 {
     /**
-     * @param string $domain
-     *
+     * @param  string  $domain
      * @return self
      */
     public function setDomain($domain);
 
     /**
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return self
      */
     public function setLocale($locale);

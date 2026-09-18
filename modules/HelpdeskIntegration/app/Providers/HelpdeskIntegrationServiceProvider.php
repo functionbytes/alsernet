@@ -156,7 +156,8 @@ class HelpdeskIntegrationServiceProvider extends ServiceProvider
         }
 
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk — Integraciones externas',
+            'title' => 'Helpdesk · Integraciones externas',
+            'order' => 280,
             'items' => [
                 [
                     'label' => 'Catálogo de proveedores',

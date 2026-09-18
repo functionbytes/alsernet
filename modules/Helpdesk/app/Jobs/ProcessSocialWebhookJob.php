@@ -10,11 +10,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Events\ConversationReceiptsUpdated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
@@ -32,6 +31,13 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     /** @var array<int, int> */
     public array $backoff = [10, 30, 60];
+
+    /**
+     * Tope de ítems marcados como entregados/leídos por evento de recibo. Un
+     * watermark de Messenger/Instagram normalmente cubre unos pocos mensajes
+     * salientes; el límite evita un UPDATE desmedido si algo se acumula.
+     */
+    private const RECEIPT_BATCH_LIMIT = 500;
 
     /**
      * @param  string  $channel  'whatsapp'|'facebook'|'instagram'
@@ -103,6 +109,26 @@ class ProcessSocialWebhookJob implements ShouldQueue
     }
 
     /**
+     * PERF-05: agregado — un único broadcast con los ids marcados en vez de
+     * uno por ítem (cada uno con el payload completo de ConversationMessageCreated,
+     * que hace loadMissing de conversación+cliente+autor+usuario).
+     *
+     * @param  array<int, int>  $itemIds
+     */
+    private function broadcastReceiptsUpdatedSafely(int $conversationId, string $field, array $itemIds, ?int $watermark): void
+    {
+        try {
+            broadcast(new ConversationReceiptsUpdated($conversationId, $field, $itemIds, $watermark));
+        } catch (\Throwable $e) {
+            Log::warning('ProcessSocialWebhookJob: broadcast de recibos falló (metadata ya persistida)', [
+                'conversation_id' => $conversationId,
+                'item_ids' => $itemIds,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Mark agent-sent items as delivered/read or attach reactions, then
      * broadcast the change so the thread updates the receipt UI live.
      */
@@ -116,9 +142,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
             return;
         }
 
+        // Alineado con InboundMessageIngestor::resolveConversation(): sin el
+        // filtro de estado abierto ni el orden, un ->first() podía aplicar el
+        // recibo a una conversación antigua y cerrada distinta de la que el
+        // ingestor real usa para el mensaje saliente.
         $conversation = Conversation::query()
             ->where('channel', $this->channel)
             ->where('external_sender_id', $externalSenderId)
+            ->open()
+            ->latest()
             ->first();
 
         if (! $conversation) {
@@ -160,31 +192,65 @@ class ProcessSocialWebhookJob implements ShouldQueue
         // (marca todos los ítems salientes hasta ese instante); WhatsApp entrega el
         // estado por mensaje individual (marca solo el ítem con ese external_id).
         $field = $this->eventType === 'read' ? 'customer_read_at' : 'customer_delivered_at';
-        $now = now()->toIso8601String();
 
-        $itemsQuery = ConversationItem::query()
-            ->where('conversation_id', $conversation->id)
-            ->whereNotNull('user_id');
-
-        if ($watermark) {
-            $itemsQuery->where('created_at', '<=', Carbon::createFromTimestampMs($watermark));
-        } elseif ($messageId) {
-            $itemsQuery->where('external_id', $messageId);
-        } else {
+        if (! $watermark && ! $messageId) {
             return;
         }
 
-        foreach ($itemsQuery->get() as $item) {
-            $meta = is_array($item->metadata) ? $item->metadata : [];
-            if (isset($meta[$field])) {
-                continue;
-            }
-            $meta[$field] = $now;
-            $item->metadata = $meta;
-            $item->save();
+        // Idempotencia: si un reintento (o un duplicado del webhook de Meta) trae
+        // un watermark ya cubierto por el último procesado, no hay nada nuevo que
+        // marcar — nos ahorramos el escaneo de la tabla de ítems.
+        $watermarkKey = "receipt_watermark_{$this->eventType}";
+        $lastWatermark = $conversation->metadata[$watermarkKey] ?? null;
 
-            $this->broadcastMessageSafely($item, false);
+        if ($watermark && $lastWatermark !== null && $watermark <= $lastWatermark) {
+            return;
         }
+
+        $this->markItemsAsReceipted($conversation, $field, $watermark, $messageId);
+
+        if ($watermark) {
+            $conversation->forceFill([
+                'metadata' => array_merge($conversation->metadata ?? [], [$watermarkKey => $watermark]),
+            ])->save();
+        }
+    }
+
+    /**
+     * Marca en bloque los ítems salientes que aún no tienen `$field` en su
+     * metadata y emite un único broadcast agregado con los ids afectados —
+     * antes esto era un foreach que cargaba TODOS los ítems salientes de la
+     * conversación (sin límite), filtraba los ya marcados en PHP y emitía un
+     * broadcast con el payload completo del mensaje por cada uno.
+     */
+    private function markItemsAsReceipted(Conversation $conversation, string $field, ?int $watermark, ?string $messageId): void
+    {
+        $itemsQuery = ConversationItem::query()
+            ->where('conversation_id', $conversation->id)
+            ->whereNotNull('user_id')
+            ->whereRaw("JSON_EXTRACT(metadata, '$.{$field}') IS NULL");
+
+        if ($watermark) {
+            $itemsQuery->where('created_at', '<=', Carbon::createFromTimestampMs($watermark));
+        } else {
+            $itemsQuery->where('external_id', $messageId);
+        }
+
+        $ids = $itemsQuery->orderByDesc('id')->limit(self::RECEIPT_BATCH_LIMIT)->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $table = (new ConversationItem)->getTable();
+        $now = now()->toIso8601String();
+
+        ConversationItem::query()->getConnection()->update(
+            "UPDATE `{$table}` SET metadata = JSON_SET(COALESCE(metadata, JSON_OBJECT()), ?, ?) WHERE id IN (".implode(',', array_fill(0, $ids->count(), '?')).')',
+            array_merge(["$.{$field}"], [$now], $ids->all())
+        );
+
+        $this->broadcastReceiptsUpdatedSafely($conversation->id, $field, $ids->all(), $watermark);
     }
 
     // ─── WhatsApp ─────────────────────────────────────────────────────────────
@@ -374,33 +440,6 @@ class ProcessSocialWebhookJob implements ShouldQueue
     }
 
     /**
-     * Resolve a WhatsApp media ID to its actual download URL via the Graph API.
-     */
-    private function resolveWhatsAppMediaUrl(string $mediaId): ?string
-    {
-        $token = config('helpdesk.integrations.whatsapp.access_token');
-        $apiUrl = config('helpdesk.integrations.whatsapp.api_url', 'https://graph.facebook.com/v19.0');
-
-        try {
-            $response = Http::withToken($token)
-                ->timeout(10)
-                ->get("{$apiUrl}/{$mediaId}");
-
-            if ($response->failed()) {
-                Log::warning('Failed to resolve WhatsApp media URL', ['media_id' => $mediaId, 'status' => $response->status()]);
-
-                return null;
-            }
-
-            return $response->json('url');
-        } catch (\Throwable $e) {
-            Log::error('WhatsApp media URL resolution failed', ['media_id' => $mediaId, 'error' => $e->getMessage()]);
-
-            return null;
-        }
-    }
-
-    /**
      * Build the metadata array for a WhatsApp message event.
      * Empty/null values are stripped to keep the JSON lean.
      */
@@ -488,137 +527,5 @@ class ProcessSocialWebhookJob implements ShouldQueue
         }
 
         return $out;
-    }
-
-    private function labelForType(string $type): string
-    {
-        return match ($type) {
-            'image' => '[imagen]',
-            'audio' => '[audio]',
-            'video' => '[video]',
-            'document', 'file' => '[documento]',
-            'sticker' => '[sticker]',
-            'location' => '[ubicación]',
-            'contact' => '[contacto]',
-            'template' => '[plantilla]',
-            default => "[{$type}]",
-        };
-    }
-
-    /**
-     * Download a media file from the given URL and store it on disk.
-     * Detects the real mime type from response headers to pick the correct extension.
-     *
-     * @return array{path: string, url: string, name: string, mime_type: ?string, size: int}|null
-     */
-    private function downloadMedia(string $url, string $mediaType, string $platform, ?string $bearerToken = null): ?array
-    {
-        if (! OutboundMediaUrlGuard::isAllowed($url)) {
-            Log::warning('ProcessSocialWebhookJob: URL de media bloqueada por guard SSRF', [
-                'platform' => $platform,
-                'url' => substr($url, 0, 100),
-            ]);
-
-            return null;
-        }
-
-        try {
-            $request = Http::timeout(30);
-
-            if (filled($bearerToken)) {
-                $request = $request->withToken($bearerToken);
-            }
-
-            $response = $request->get($url);
-
-            if ($response->failed()) {
-                Log::warning("Failed to download media from {$platform}", ['url' => $url, 'status' => $response->status()]);
-
-                return null;
-            }
-
-            $body = $response->body();
-            $mime = $response->header('Content-Type') ?: null;
-            $extension = $this->extensionFromMime($mime, $mediaType);
-            $name = $platform.'_'.$mediaType.'_'.date('Ymd_His').'.'.$extension;
-            $filename = 'helpdesk/social-media/'.$platform.'/'.date('Y/m/d').'/'.uniqid('', true).'.'.$extension;
-
-            $disk = config('helpdesk.attachments.disk', 'public');
-            Storage::disk($disk)->put($filename, $body);
-
-            try {
-                $publicUrl = Storage::disk($disk)->url($filename);
-            } catch (\Throwable) {
-                $publicUrl = $filename;
-            }
-
-            return [
-                'path' => $filename,
-                'url' => $publicUrl,
-                'name' => $name,
-                'mime_type' => $mime,
-                'size' => strlen($body),
-            ];
-        } catch (\Throwable $e) {
-            Log::error("Media download failed for {$platform}", ['error' => $e->getMessage()]);
-
-            return null;
-        }
-    }
-
-    /**
-     * Determine the file extension from the Content-Type header, falling back to
-     * a sensible default based on the declared media type.
-     */
-    private function extensionFromMime(?string $mime, string $fallbackType): string
-    {
-        $mime = $mime ? strtolower(explode(';', $mime, 2)[0]) : '';
-        $mime = trim($mime);
-
-        $map = [
-            'image/jpeg' => 'jpg',
-            'image/jpg' => 'jpg',
-            'image/png' => 'png',
-            'image/gif' => 'gif',
-            'image/webp' => 'webp',
-            'image/svg+xml' => 'svg',
-            'audio/mpeg' => 'mp3',
-            'audio/mp3' => 'mp3',
-            'audio/ogg' => 'ogg',
-            'audio/opus' => 'opus',
-            'audio/wav' => 'wav',
-            'audio/x-wav' => 'wav',
-            'audio/aac' => 'aac',
-            'audio/mp4' => 'm4a',
-            'audio/x-m4a' => 'm4a',
-            'audio/webm' => 'webm',
-            'audio/3gpp' => '3gp',
-            'video/mp4' => 'mp4',
-            'video/quicktime' => 'mov',
-            'video/webm' => 'webm',
-            'video/3gpp' => '3gp',
-            'video/x-matroska' => 'mkv',
-            'application/pdf' => 'pdf',
-            'application/zip' => 'zip',
-            'application/msword' => 'doc',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
-            'application/vnd.ms-excel' => 'xls',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
-            'text/plain' => 'txt',
-            'text/csv' => 'csv',
-        ];
-
-        if (isset($map[$mime])) {
-            return $map[$mime];
-        }
-
-        return match ($fallbackType) {
-            'image' => 'jpg',
-            'audio', 'voice' => 'ogg',
-            'video' => 'mp4',
-            'document', 'file' => 'bin',
-            'sticker' => 'webp',
-            default => 'bin',
-        };
     }
 }

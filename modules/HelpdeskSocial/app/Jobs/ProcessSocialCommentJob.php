@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -15,7 +16,6 @@ use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Services\ConversationThreadingService;
 use Modules\HelpdeskSocial\Services\SlaTrackingService;
 use Modules\HelpdeskSocial\Services\SmartAssignmentService;
-use Modules\HelpdeskSocial\Services\SocialListeningService;
 
 /**
  * Camino rapido de ingesta de un comentario social: solo operaciones de base de
@@ -45,7 +45,6 @@ class ProcessSocialCommentJob implements ShouldQueue
         ConversationThreadingService $threadingService,
         SlaTrackingService $slaService,
         SmartAssignmentService $assignmentService,
-        SocialListeningService $listeningService,
     ): void {
         if (! helpdesk_social_enabled()) {
             Log::info('ProcessSocialCommentJob: Skipped - HelpdeskSocial integration disabled', [
@@ -90,21 +89,44 @@ class ProcessSocialCommentJob implements ShouldQueue
             return;
         }
 
+        // Bucle infinito: una respuesta que nosotros mismos publicamos (auto-reply
+        // o manual) llega de vuelta por webhook como un comentario nuevo cuyo
+        // autor es la propia página/cuenta. Sin este corte, ese comentario se
+        // reprocesaría (y volvería a auto-responder) indefinidamente.
+        $externalUserId = $this->event['external_user_id'] ?? null;
+
+        if ($externalUserId !== null && (string) $externalUserId === $account->external_id) {
+            return;
+        }
+
+        $rawCommentId = $this->event['external_comment_id'] ?? null;
+
+        if (is_string($rawCommentId) && $rawCommentId !== '' && SocialComment::where('external_reply_id', $rawCommentId)->exists()) {
+            return;
+        }
+
         // Create the social comment
-        $comment = SocialComment::create([
-            'social_account_id' => $account->id,
-            'platform' => $platform,
-            'external_comment_id' => $commentId,
-            'external_post_id' => $this->event['external_post_id'] ?? null,
-            'external_parent_id' => $this->event['external_parent_id'] ?? null,
-            'external_user_id' => $this->event['external_user_id'] ?? null,
-            'author_name' => $this->event['author_name'] ?? 'Usuario',
-            'author_username' => $this->event['author_username'] ?? null,
-            'body' => $this->event['body'] ?? '',
-            'is_mention' => $this->event['is_mention'] ?? false,
-            'status' => 'pending',
-            'posted_at' => $this->event['created_at'] ?? now(),
-        ]);
+        try {
+            $comment = SocialComment::create([
+                'social_account_id' => $account->id,
+                'platform' => $platform,
+                'external_comment_id' => $commentId,
+                'external_post_id' => $this->event['external_post_id'] ?? null,
+                'external_parent_id' => $this->event['external_parent_id'] ?? null,
+                'external_user_id' => $this->event['external_user_id'] ?? null,
+                'author_name' => $this->event['author_name'] ?? 'Usuario',
+                'author_username' => $this->event['author_username'] ?? null,
+                'body' => $this->event['body'] ?? '',
+                'is_mention' => $this->event['is_mention'] ?? false,
+                'status' => 'pending',
+                'posted_at' => $this->event['created_at'] ?? now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Carrera entre dos entregas del mismo webhook: la comprobación de
+            // arriba no vio el registro todavía, pero el índice único
+            // (platform, external_comment_id) ya lo tiene. No es un fallo real.
+            return;
+        }
 
         // Link to existing conversation or create a new one
         $threadingService->threadComment($comment);
@@ -117,14 +139,17 @@ class ProcessSocialCommentJob implements ShouldQueue
             $assignmentService->assign($comment);
         }
 
-        // Check for keyword matches via social listening
-        $listeningService->scanComment($comment);
-
         // Broadcast new comment in real-time so the agent sees it without delay
         SocialCommentReceived::dispatch($comment);
 
         // Intent classification (OpenAI) gates the auto-reply rules (they read
         // $comment->intent), so both run chained, in order, on the AI queue.
+        // OJO: cada Job de la cadena fija su propia cola en el constructor
+        // (onQueue()) — en Laravel 12 eso GANA sobre el onQueue() de la cadena.
+        // Si algún Job de aquí abajo dejara de fijar su cola explícitamente a
+        // config('helpdesksocial.queues.ai', ...), volvería a colarse en la cola
+        // de ingesta (helpdesk-social-processing) y bloquearía esos workers con
+        // llamadas HTTP a OpenAI de hasta 30s.
         Bus::chain([
             new ClassifyIntentJob($comment->id),
             new EvaluateAutoReplyJob($comment->id),
@@ -134,8 +159,11 @@ class ProcessSocialCommentJob implements ShouldQueue
     /**
      * External id usado para deduplicar. Los comentarios traen comment_id; las
      * menciones FB/IG suelen llegar sin él, así que se deriva una clave estable
-     * del evento (post + autor + fecha + cuerpo) para que una reentrega del
-     * mismo webhook no cree un SocialComment duplicado.
+     * del evento (post + autor + cuerpo) para que una reentrega del mismo
+     * webhook no cree un SocialComment duplicado. `created_at` queda fuera del
+     * hash a propósito: Meta puede reenviar el mismo evento con una marca de
+     * tiempo formateada de forma ligeramente distinta, lo que generaba una
+     * clave distinta (y por tanto un duplicado) para el mismo evento.
      */
     private function resolveDedupeId(string $platform): string
     {
@@ -149,7 +177,6 @@ class ProcessSocialCommentJob implements ShouldQueue
             $platform,
             (string) ($this->event['external_post_id'] ?? ''),
             (string) ($this->event['external_user_id'] ?? ''),
-            (string) ($this->event['created_at'] ?? ''),
             (string) ($this->event['body'] ?? ''),
         ]));
     }

@@ -49,9 +49,8 @@ class LegacyFileReader
     /**
      * Loads legacy translations from a file
      *
-     * @param string $path Path where the locale file should be looked up
-     * @param string $locale IETF language tag
-     *
+     * @param  string  $path  Path where the locale file should be looked up
+     * @param  string  $locale  IETF language tag
      * @return array Translation tokens
      */
     public function load(string $path, string $locale): array
@@ -61,9 +60,9 @@ class LegacyFileReader
 
         $shopLocale = $this->localeConverter->toLegacyLocale($locale);
 
-        $filePath = $path . "$shopLocale.php";
+        $filePath = $path."$shopLocale.php";
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             throw UnsupportedLocaleException::fileNotFound($filePath, $locale);
         }
 

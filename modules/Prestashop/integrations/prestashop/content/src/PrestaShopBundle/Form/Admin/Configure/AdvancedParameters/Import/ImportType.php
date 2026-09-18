@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -130,7 +131,7 @@ class ImportType extends TranslatorAwareType
         $builder->get('entity')
             ->addModelTransformer(new CallbackTransformer(
                 function ($entity) {
-                    if (null === $entity) {
+                    if ($entity === null) {
                         return $entity;
                     }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Order\Exception;
 /**
  * Exception thrown when something went wrong during a product cancel action.
  */
-class CancelProductFromOrderException extends OrderException
-{
-}
+class CancelProductFromOrderException extends OrderException {}

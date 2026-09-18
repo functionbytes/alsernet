@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,10 +33,15 @@ use Symfony\Component\EventDispatcher\Event;
 class ModuleManagementEvent extends Event
 {
     public const INSTALL = 'module.install';
+
     public const UNINSTALL = 'module.uninstall';
+
     public const DISABLE = 'module.disable';
+
     public const ENABLE = 'module.enable';
+
     public const UPGRADE = 'module.upgrade';
+
     public const RESET = 'module.reset';
 
     private $module;

@@ -12,6 +12,7 @@ use Modules\HelpdeskTickets\Http\Requests\Api\StoreTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Requests\Api\UpdateTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Resources\TicketResource;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 
 class TicketsController extends Controller
 {
@@ -19,8 +20,29 @@ class TicketsController extends Controller
     {
         $this->authorize('helpdesk.tickets.view');
 
+        $user = $request->user();
+
         $tickets = Ticket::query()
             ->with(['customer:id,name,email', 'status:id,name,color,slug', 'category:id,name,slug'])
+            // Antes solo exigía el permiso plano de entrada: cualquier token
+            // con helpdesk.tickets.view listaba TODOS los tickets del
+            // sistema (asunto, cliente y email de cualquier equipo), no solo
+            // los que TicketPolicy::inScope() dejaría ver en el panel — sin
+            // helpdesk.tickets.manage, aquí se aplica exactamente el mismo
+            // scoping que TicketsCrudController::scopeToVisibleTickets()
+            // (14-sep-2026, auditoría de seguridad).
+            ->when(! $user->hasPermissionTo('helpdesk.tickets.manage'), function ($q) use ($user) {
+                $groupIds = TicketGroup::idsForUser($user->id);
+
+                $q->where(function ($sub) use ($groupIds, $user) {
+                    $sub->where('assignee_id', $user->id)
+                        ->orWhereNull('group_id');
+
+                    if ($groupIds !== []) {
+                        $sub->orWhereIn('group_id', $groupIds);
+                    }
+                });
+            })
             ->when($request->filled('status'), fn ($q) => $q->whereHas('status', fn ($s) => $s->where('slug', $request->status)))
             ->when($request->filled('category'), fn ($q) => $q->whereHas('category', fn ($s) => $s->where('slug', $request->category)))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->priority))
@@ -74,6 +96,14 @@ class TicketsController extends Controller
             ->with(['customer:id,name,email', 'status:id,name,color,slug', 'category:id,name,slug', 'assignee:id,firstname,lastname'])
             ->firstOrFail();
 
+        // Antes se quedaba en el permiso plano de arriba: cualquier token
+        // con helpdesk.tickets.view podía leer CUALQUIER ticket del sistema,
+        // de cualquier equipo/agente, tecleando el número — a diferencia de
+        // todo el resto del módulo (panel, MacroApplyController,
+        // TicketAttachmentDownloadController...), que siempre autoriza
+        // contra la instancia (14-sep-2026, auditoría de seguridad).
+        $this->authorize('view', $ticket);
+
         return ApiResponse::success(new TicketResource($ticket));
     }
 
@@ -82,6 +112,10 @@ class TicketsController extends Controller
         $this->authorize('helpdesk.tickets.update');
 
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
+
+        // Mismo fix que show(): sin esto, el permiso plano de entrada
+        // bastaba para modificar cualquier ticket ajeno vía la API.
+        $this->authorize('update', $ticket);
 
         $ticket->update($request->validated());
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,7 @@ final class Hook implements HookInterface
     private $parameters;
 
     /**
-     * @param string $name
-     * @param array $parameters
+     * @param  string  $name
      */
     public function __construct($name, array $parameters = [])
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,6 @@ class PaymentPreferencesController extends FrameworkBundleAdminController
      *      message="Access denied."
      * )
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function indexAction(Request $request)
@@ -85,8 +84,6 @@ class PaymentPreferencesController extends FrameworkBundleAdminController
      *     redirectRoute="admin_payment_preferences"
      * )
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function processFormAction(Request $request)
@@ -112,9 +109,6 @@ class PaymentPreferencesController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_payment_preferences');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getPaymentPreferencesFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.payment_preferences.form_handler');

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
+use Modules\HelpdeskPrestashop\Support\OrderDetailCache;
 
 /**
  * Endpoint web (cookie auth) para enriquecer el modal de detalle de pedido PS
@@ -41,11 +42,11 @@ class PsOrderDetailController extends Controller
             ], 422);
         }
 
-        $this->assertScopedToCustomerEmail($customerEmail);
+        $this->assertScopedToCustomerEmail($customerEmail, 'helpdeskprestashop.prospect.view');
 
         // El email forma parte de la clave de caché: si no, el resultado del
         // primer email se serviría a otro email sobre el mismo order id.
-        $cacheKey = 'ps_order_detail:'.$order.':'.md5($customerEmail);
+        $cacheKey = OrderDetailCache::key($order, $customerEmail);
 
         $data = Cache::remember($cacheKey, 600, function () use ($order, $customerEmail) {
             try {

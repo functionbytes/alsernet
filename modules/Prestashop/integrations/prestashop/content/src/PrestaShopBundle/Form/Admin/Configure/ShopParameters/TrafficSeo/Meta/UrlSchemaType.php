@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -121,8 +122,7 @@ class UrlSchemaType extends TranslatorAwareType
     }
 
     /**
-     * @param string $idRoute
-     *
+     * @param  string  $idRoute
      * @return string
      *
      * @throws \PrestaShopException
@@ -142,11 +142,11 @@ class UrlSchemaType extends TranslatorAwareType
         }
 
         return $this->trans(
-                'Keywords: %keywords%',
-                'Admin.Shopparameters.Feature',
-                [
-                    '%keywords%' => implode(', ', $formattedKeyWords),
-                ]
+            'Keywords: %keywords%',
+            'Admin.Shopparameters.Feature',
+            [
+                '%keywords%' => implode(', ', $formattedKeyWords),
+            ]
         );
     }
 }

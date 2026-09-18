@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Exception;
 /**
  * Class DatabaseException any error linked to the database use this class as a base.
  */
-class DatabaseException extends CoreException
-{
-}
+class DatabaseException extends CoreException {}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,7 @@ class TaxRuleDataProvider
     /**
      * Get all Tax Rules Groups.
      *
-     * @param bool $only_active
-     *
+     * @param  bool  $only_active
      * @return array TaxRulesGroup
      */
     public function getTaxRulesGroups($only_active = true)
@@ -67,7 +67,7 @@ class TaxRuleDataProvider
      */
     public function getTaxRulesGroupWithRates()
     {
-        $address = new Address();
+        $address = new Address;
         $address->id_country = (int) Context::getContext()->country->id;
         $tax_rules_groups = $this->getTaxRulesGroups();
         $tax_rates = [
@@ -112,8 +112,7 @@ class TaxRuleDataProvider
     /**
      * Gets a list of tax rules groups for choice type.
      *
-     * @param bool $onlyActive if true, returns only active tax rules groups
-     *
+     * @param  bool  $onlyActive  if true, returns only active tax rules groups
      * @return array
      */
     public function getTaxRulesGroupChoices($onlyActive = true)

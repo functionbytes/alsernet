@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,17 +37,11 @@ class SearchCartRules
      */
     private $searchPhrase;
 
-    /**
-     * @param string $searchPhrase
-     */
     public function __construct(string $searchPhrase)
     {
         $this->searchPhrase = $searchPhrase;
     }
 
-    /**
-     * @return string
-     */
     public function getSearchPhrase(): string
     {
         return $this->searchPhrase;

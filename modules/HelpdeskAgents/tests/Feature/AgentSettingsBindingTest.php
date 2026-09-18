@@ -16,7 +16,7 @@ class AgentSettingsBindingTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $manager;
 
@@ -109,6 +109,56 @@ class AgentSettingsBindingTest extends TestCase
         // The input field must not carry a value= attribute with any key fragment.
         $html = $response->getContent();
         $this->assertStringNotContainsString('value="sk-', $html);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // BUG-04 — the first agent created must be flagged is_default
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * update() es la única vía que crea el primer AiAgent del módulo (no hay
+     * factory/seeder en producción). Sin is_default=true, un segundo agente
+     * creado más tarde sin marcarlo tampoco podría desempatar por default()
+     * en getDefaultAgent()/AiAgentFlowsController/etc.
+     */
+    public function test_first_agent_created_via_update_is_flagged_as_default(): void
+    {
+        // Slate limpia explícita: no depender de que el snapshot de test no
+        // traiga ya un agente sembrado (DefaultAiAgentSeeder existe para otros
+        // contextos).
+        AiAgent::query()->delete();
+
+        $this->actingAs($this->manager)
+            ->put(route('helpdesk.ai.settings.update'), [
+                'name' => 'Asistente de soporte',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'personality' => 'Amable y directo.',
+                'status' => 'inactive',
+            ])
+            ->assertRedirect();
+
+        $agent = AiAgent::sole();
+        $this->assertTrue($agent->is_default);
+    }
+
+    public function test_updating_the_existing_default_agent_does_not_create_a_second_one(): void
+    {
+        $agent = AiAgent::factory()->default()->create(['name' => 'Original']);
+
+        $this->actingAs($this->manager)
+            ->put(route('helpdesk.ai.settings.update'), [
+                'name' => 'Renombrado',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'personality' => 'Amable y directo.',
+                'status' => 'inactive',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, AiAgent::query()->count());
+        $this->assertSame('Renombrado', $agent->fresh()->name);
+        $this->assertTrue($agent->fresh()->is_default);
     }
 
     // ──────────────────────────────────────────────────────────

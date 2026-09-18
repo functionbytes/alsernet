@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,7 @@ class EmployeeOptionsType extends TranslatorAwareType
     private $canOptionsBeChanged;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $canOptionsBeChanged
+     * @param  bool  $canOptionsBeChanged
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -66,11 +65,11 @@ class EmployeeOptionsType extends TranslatorAwareType
             ->add('password_change_time', TextWithUnitType::class, [
                 'required' => false,
                 'unit' => $this->trans('minutes', 'Admin.Advparameters.Feature'),
-                'disabled' => !$this->canOptionsBeChanged,
+                'disabled' => ! $this->canOptionsBeChanged,
             ])
             ->add('allow_employee_specific_language', SwitchType::class, [
                 'required' => false,
-                'disabled' => !$this->canOptionsBeChanged,
+                'disabled' => ! $this->canOptionsBeChanged,
             ]);
     }
 }

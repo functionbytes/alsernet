@@ -1,15 +1,18 @@
 <?php
+
 // Incluir los archivos de configuración y de inicialización de PrestaShop
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../init.php');
-include(dirname(__FILE__).'/../../classes/ImageManager.php');
+include dirname(__FILE__).'/../../config/config.inc.php';
+include dirname(__FILE__).'/../../init.php';
+include dirname(__FILE__).'/../../classes/ImageManager.php';
 
 /**
  * Función que busca información de los atributos de productos y las imágenes asociadas a un modelo específico.
+ *
  * @param {string} id_modelo - El ID del modelo de producto para el cual se buscará información.
  * @return {Array} - Un arreglo con la información de los atributos de productos y las imágenes asociadas al modelo.
  */
-function buscarDatos($id_modelo) {
+function buscarDatos($id_modelo)
+{
     // Verificar si se está realizando una solicitud para obtener información de atributos de productos y las imágenes.
     if ($_GET['datos'] == 'v1') {
         // Realizar una consulta a la base de datos para obtener los atributos de productos y las imágenes asociadas al modelo específico.
@@ -50,11 +53,11 @@ function buscarDatos($id_modelo) {
         }
     } else {
         // Realizar una consulta a la base de datos para obtener las imágenes asociadas al modelo específico.
-        $imagenes = Db::getInstance()->executeS("SELECT impo.id_image
+        $imagenes = Db::getInstance()->executeS('SELECT impo.id_image
                                                 FROM aalv_product_import imp
                                                 INNER JOIN aalv_image impo ON impo.id_product = imp.id_product
-                                                WHERE imp.id_modelo = ".$id_modelo."
-                                                ORDER BY impo.position ASC");
+                                                WHERE imp.id_modelo = '.$id_modelo.'
+                                                ORDER BY impo.position ASC');
 
         // Obtener la URL base del servidor de medios
         $mediaServerUrl = Tools::getMediaServer(_PS_IMG_); // Puedes utilizar _PS_IMG_ para la carpeta 'img'
@@ -68,20 +71,20 @@ function buscarDatos($id_modelo) {
             $imagePath = '/img/p/';
 
             foreach ($digits as $digit) {
-                $imagePath .= $digit . '/';
+                $imagePath .= $digit.'/';
             }
 
-            $imagePath .= $imagenes[$i]['id_image'] . '-home_default.jpg';
+            $imagePath .= $imagenes[$i]['id_image'].'-home_default.jpg';
 
             $db['imagen'][$i]['url'] = $imagePath;
             $db['imagen'][$i]['id_image'] = $imagenes[$i]['id_image'];
         }
 
         // Realizar una consulta para obtener la imagen seleccionada en el campo de selección de imágenes
-        $db['select'] = Db::getInstance()->executeS("SELECT ima.id_image
+        $db['select'] = Db::getInstance()->executeS('SELECT ima.id_image
                                                     FROM aalv_product_attribute_image ima
                                                     INNER JOIN aalv_image impo ON impo.id_image = ima.id_image
-                                                    WHERE id_product_attribute = ".$_POST['refencia']);
+                                                    WHERE id_product_attribute = '.$_POST['refencia']);
     }
 
     // Devolver el arreglo con la información de los atributos de productos y las imágenes asociadas al modelo.
@@ -90,10 +93,12 @@ function buscarDatos($id_modelo) {
 
 /**
  * Función que crea la URL de la imagen a partir del ID de la imagen.
+ *
  * @param {string} id_image - El ID de la imagen para la cual se creará la URL.
  * @return {string} - La URL completa de la imagen.
  */
-function CrearUrlImagen($id_image) {
+function CrearUrlImagen($id_image)
+{
     // Verificar si el ID de la imagen está vacío
     if ($id_image == '') {
         // Si está vacío, devolver la URL de una imagen de reemplazo.
@@ -110,10 +115,10 @@ function CrearUrlImagen($id_image) {
     $imagePath = '/img/p/';
 
     foreach ($digits as $digit) {
-        $imagePath .= $digit . '/';
+        $imagePath .= $digit.'/';
     }
 
-    $imagePath .= $id_image . '-home_default.jpg';
+    $imagePath .= $id_image.'-home_default.jpg';
 
     // Devolver la URL completa de la imagen.
     return $imagePath;
@@ -127,6 +132,3 @@ $db = buscarDatos($id_modelo);
 
 // Devolver la información en formato JSON
 echo json_encode($db);
-
-
-?>

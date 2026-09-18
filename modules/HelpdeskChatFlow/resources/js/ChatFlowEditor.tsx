@@ -1471,7 +1471,7 @@ function TypeFields({ draft, allNodes, agents, groups, setData }: TypeFieldsProp
                         placeholder="Europe/Madrid"
                         value={d.timezone || ''}
                         onChange={e => setData({ timezone: e.target.value })} />
-                    <p style={hintStyle}>Guarda <code>within_business_hours</code> (sí/no) en el contexto. Pon un nodo <strong>Condición</strong> después para ramificar dentro/fuera de horario.</p>
+                    <p style={hintStyle}>Guarda <code>within_business_hours</code> (sí/no) en el contexto. Pon un nodo <strong>Condición</strong> después para ramificar dentro/fuera de horario. Un festivo cargado en <em>Festivos</em> también cuenta como fuera de horario, aunque caiga dentro del rango de días/horas de arriba.</p>
                 </div>
             );
         }
@@ -1951,8 +1951,12 @@ export default function ChatFlowEditor({
         }
         setSaving(true);
         try {
-            await axios.put(saveUrl, { name: flowName, nodes: JSON.stringify(backendNodes), trigger_conditions: flowSettings }, {
-                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            // PUT real por AJAX da 405 en el Docker de este proyecto (gotcha conocido).
+            // El body va como JSON, asi que un campo _method no lo lee Laravel (solo
+            // mira form/multipart o query string) y hay que spoofear con la cabecera,
+            // igual que en public/vendor/helpdesk/*.js.
+            await axios.post(saveUrl, { name: flowName, nodes: JSON.stringify(backendNodes), trigger_conditions: flowSettings }, {
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
             });
             setDirty(false);
             (window as any).toastr?.success('Flow guardado correctamente');

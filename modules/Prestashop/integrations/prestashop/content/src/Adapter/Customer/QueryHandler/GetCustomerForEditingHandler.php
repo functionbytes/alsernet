@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,10 +56,9 @@ final class GetCustomerForEditingHandler implements GetCustomerForEditingHandler
             throw new CustomerNotFoundException($customerId, sprintf('Customer with id "%s" was not found', $customerId->getValue()));
         }
 
-        $birthday = null === $customer->birthday ?
+        $birthday = $customer->birthday === null ?
             Birthday::createEmpty() :
-            new Birthday($customer->birthday)
-        ;
+            new Birthday($customer->birthday);
 
         return new EditableCustomer(
             $customerId,

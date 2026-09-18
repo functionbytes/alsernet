@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ final class CustomizationFieldsCommandsBuilder implements ProductCommandsBuilder
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['options']['customizations'])) {
+        if (! isset($formData['options']['customizations'])) {
             return [];
         }
 
@@ -60,8 +61,6 @@ final class CustomizationFieldsCommandsBuilder implements ProductCommandsBuilder
     }
 
     /**
-     * @param array $customizationsFormData
-     *
      * @return array<int, array<string, mixed>>
      */
     private function buildCustomizationFields(array $customizationsFormData): array

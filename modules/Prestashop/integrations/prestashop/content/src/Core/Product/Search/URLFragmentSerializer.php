@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ namespace PrestaShop\PrestaShop\Core\Product\Search;
 class URLFragmentSerializer
 {
     /**
-     * @param array $fragment
-     *
      * @return string
      */
     public function serialize(array $fragment)
@@ -58,8 +57,7 @@ class URLFragmentSerializer
     }
 
     /**
-     * @param string $string
-     *
+     * @param  string  $string
      * @return array
      */
     public function unserialize($string)
@@ -76,24 +74,21 @@ class URLFragmentSerializer
     }
 
     /**
-     * @param string $separator the string separator
-     * @param string $escape the string escape
-     * @param array $list
-     *
+     * @param  string  $separator  the string separator
+     * @param  string  $escape  the string escape
      * @return string
      */
     private function serializeListOfStrings($separator, $escape, array $list)
     {
         return implode($separator, array_map(function ($item) use ($separator, $escape) {
-            return str_replace($separator, $escape . $separator, $item);
+            return str_replace($separator, $escape.$separator, $item);
         }, $list));
     }
 
     /**
-     * @param string $separator the string separator
-     * @param string $escape the string escape
-     * @param string $string the UTF8 string
-     *
+     * @param  string  $separator  the string separator
+     * @param  string  $escape  the string escape
+     * @param  string  $string  the UTF8 string
      * @return array
      */
     private function unserializeListOfStrings($separator, $escape, $string)
@@ -132,7 +127,7 @@ class URLFragmentSerializer
             $currentString .= $escape;
         }
 
-        if ('' !== $currentString) {
+        if ($currentString !== '') {
             $list[] = $currentString;
         }
 

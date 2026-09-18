@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class CmsPageId
     private $cmsPageId;
 
     /**
-     * @param int $cmsPageId
+     * @param  int  $cmsPageId
      *
      * @throws CmsPageException
      */
@@ -60,13 +61,13 @@ class CmsPageId
     /**
      * Validates that the value is integer and is greater than zero.
      *
-     * @param int $cmsPageId
+     * @param  int  $cmsPageId
      *
      * @throws CmsPageException
      */
     private function assertIsIntegerGreaterThanZero($cmsPageId)
     {
-        if (!is_int($cmsPageId) || 0 >= $cmsPageId) {
+        if (! is_int($cmsPageId) || $cmsPageId <= 0) {
             throw new CmsPageException(sprintf('Invalid cms page id %s supplied', var_export($cmsPageId, true)));
         }
     }

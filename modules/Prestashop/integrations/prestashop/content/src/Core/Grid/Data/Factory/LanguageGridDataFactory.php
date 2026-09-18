@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ final class LanguageGridDataFactory implements GridDataFactoryInterface
      */
     private $languageFlagThumbnailProvider;
 
-    /**
-     * @param GridDataFactoryInterface $doctrineLanguageDataFactory
-     * @param ImageProviderInterface $languageFlagThumbnailProvider
-     */
     public function __construct(
         GridDataFactoryInterface $doctrineLanguageDataFactory,
         ImageProviderInterface $languageFlagThumbnailProvider
@@ -77,8 +74,6 @@ final class LanguageGridDataFactory implements GridDataFactoryInterface
     }
 
     /**
-     * @param array $languages
-     *
      * @return array
      */
     private function applyModification(array $languages)

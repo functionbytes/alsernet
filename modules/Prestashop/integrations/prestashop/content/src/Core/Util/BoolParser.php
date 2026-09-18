@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,8 +30,7 @@ namespace PrestaShop\PrestaShop\Core\Util;
 class BoolParser
 {
     /**
-     * @param string|int|bool $value
-     *
+     * @param  string|int|bool  $value
      * @return bool
      */
     public static function castToBool($value)

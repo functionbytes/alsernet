@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,33 +33,29 @@ namespace PrestaShop\PrestaShop\Core\Util\String;
 interface StringValidatorInterface
 {
     /**
-     * @param string $string
-     * @param string $prefix
-     *
+     * @param  string  $string
+     * @param  string  $prefix
      * @return bool
      */
     public function startsWith($string, $prefix);
 
     /**
-     * @param string $string
-     * @param string $suffix
-     *
+     * @param  string  $string
+     * @param  string  $suffix
      * @return bool
      */
     public function endsWith($string, $suffix);
 
     /**
-     * @param string $string
-     * @param string $prefix
-     * @param string $suffix
-     *
+     * @param  string  $string
+     * @param  string  $prefix
+     * @param  string  $suffix
      * @return bool
      */
     public function startsWithAndEndsWith($string, $prefix, $suffix);
 
     /**
-     * @param string $string
-     *
+     * @param  string  $string
      * @return bool
      */
     public function doesContainsWhiteSpaces($string);

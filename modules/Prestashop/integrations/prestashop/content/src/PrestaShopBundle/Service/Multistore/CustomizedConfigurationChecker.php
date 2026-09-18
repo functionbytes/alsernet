@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,17 +54,11 @@ class CustomizedConfigurationChecker
      * Tests if a configuration value is overriden for a given shop, not only on the shop itself
      * but also on parent shop group: when a shop inherits an overridden configuration value from his shop group
      * the value is considered to be customized for this shop
-     *
-     * @param string $configurationKey
-     * @param Shop $shop
-     * @param bool $isGroupShopContext
-     *
-     * @return bool
      */
     public function isConfigurationCustomizedForThisShop(string $configurationKey, Shop $shop, bool $isGroupShopContext): bool
     {
         // we don't check group shop customization if we are already in group shop context
-        if (!$isGroupShopContext) {
+        if (! $isGroupShopContext) {
             // check if given configuration is overridden for the parent group shop
             // isStrict must be true, otherwise the method will also check for configuration backups in "all shop" context
             $shopGroupConstraint = ShopConstraint::shopGroup($shop->getShopGroup()->getId(), true);

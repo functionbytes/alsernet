@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,13 +52,13 @@ final class EditCmsPageHandler extends AbstractCmsPageHandler implements EditCms
         $cms = $this->createCmsFromCommand($command);
 
         try {
-            if (false === $cms->validateFields(false) || false === $cms->validateFieldsLang(false)) {
+            if ($cms->validateFields(false) === false || $cms->validateFieldsLang(false) === false) {
                 throw new CmsPageException('Cms page contains invalid field values');
             }
-            if (false === $cms->update()) {
+            if ($cms->update() === false) {
                 throw new CannotEditCmsPageException(sprintf('Failed to update cms page with id %s', $command->getCmsPageId()->getValue()));
             }
-            if (null !== $command->getShopAssociation()) {
+            if ($command->getShopAssociation() !== null) {
                 $this->associateWithShops($cms, $command->getShopAssociation());
             }
         } catch (PrestaShopException $e) {
@@ -66,8 +67,6 @@ final class EditCmsPageHandler extends AbstractCmsPageHandler implements EditCms
     }
 
     /**
-     * @param EditCmsPageCommand $command
-     *
      * @return CMS
      *
      * @throws CmsPageException
@@ -78,41 +77,41 @@ final class EditCmsPageHandler extends AbstractCmsPageHandler implements EditCms
     {
         $cms = $this->getCmsPageIfExistsById($command->getCmsPageId()->getValue());
 
-        if (null !== $command->getCmsPageCategoryId()) {
+        if ($command->getCmsPageCategoryId() !== null) {
             $this->assertCmsCategoryExists($command->getCmsPageCategoryId()->getValue());
 
             $cms->id_cms_category = $command->getCmsPageCategoryId()->getValue();
         }
 
-        if (null !== $command->getLocalizedTitle()) {
+        if ($command->getLocalizedTitle() !== null) {
             $cms->meta_title = $command->getLocalizedTitle();
         }
 
-        if (null !== $command->getLocalizedMetaTitle()) {
+        if ($command->getLocalizedMetaTitle() !== null) {
             $cms->head_seo_title = $command->getLocalizedMetaTitle();
         }
 
-        if (null !== $command->getLocalizedMetaDescription()) {
+        if ($command->getLocalizedMetaDescription() !== null) {
             $cms->meta_description = $command->getLocalizedMetaDescription();
         }
 
-        if (null !== $command->getLocalizedMetaKeyword()) {
+        if ($command->getLocalizedMetaKeyword() !== null) {
             $cms->meta_keywords = $command->getLocalizedMetaKeyword();
         }
 
-        if (null !== $command->getLocalizedFriendlyUrl()) {
+        if ($command->getLocalizedFriendlyUrl() !== null) {
             $cms->link_rewrite = $command->getLocalizedFriendlyUrl();
         }
 
-        if (null !== $command->getLocalizedContent()) {
+        if ($command->getLocalizedContent() !== null) {
             $cms->content = $command->getLocalizedContent();
         }
 
-        if (null !== $command->isIndexedForSearch()) {
+        if ($command->isIndexedForSearch() !== null) {
             $cms->indexation = $command->isIndexedForSearch();
         }
 
-        if (null !== $command->isDisplayed()) {
+        if ($command->isDisplayed() !== null) {
             $cms->active = $command->isDisplayed();
         }
 

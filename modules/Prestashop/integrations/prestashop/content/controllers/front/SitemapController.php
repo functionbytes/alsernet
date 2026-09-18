@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -96,7 +97,7 @@ class SitemapControllerCore extends FrontController
 
         foreach ($cms['cms'] as $p) {
             $links[] = [
-                'id' => 'cms-page-' . $p['id_cms'],
+                'id' => 'cms-page-'.$p['id_cms'],
                 'label' => $p['meta_title'],
                 'url' => $p['link'],
             ];
@@ -105,7 +106,7 @@ class SitemapControllerCore extends FrontController
         if (isset($cms['children'])) {
             foreach ($cms['children'] as $c) {
                 $links[] = [
-                    'id' => 'cms-category-' . $c['id_cms_category'],
+                    'id' => 'cms-category-'.$c['id_cms_category'],
                     'label' => $c['name'],
                     'url' => $c['link'],
                     'children' => $this->getCmsTree($c),

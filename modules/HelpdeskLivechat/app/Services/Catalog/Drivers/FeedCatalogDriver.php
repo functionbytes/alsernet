@@ -49,6 +49,15 @@ final class FeedCatalogDriver implements CatalogDriver
         return self::STOPWORDS;
     }
 
+    /**
+     * Memoiza el catálogo ya resuelto (list + índice byId) para el resto del
+     * request: evita releer/deserializar la caché si search()/find()/related()
+     * se llaman varias veces en la misma petición.
+     *
+     * @var array{list: array<int, CatalogProduct>, byId: array<string, CatalogProduct>}|null
+     */
+    private ?array $catalogCache = null;
+
     public function __construct(
         private readonly string $feedUrl,
         private readonly int $cacheTtl = self::CACHE_TTL_SECONDS,
@@ -67,7 +76,7 @@ final class FeedCatalogDriver implements CatalogDriver
         }
 
         $scored = [];
-        foreach ($this->products() as $product) {
+        foreach ($this->catalog()['list'] as $product) {
             $score = $this->score($product, $terms);
             if ($score > 0) {
                 $scored[] = ['score' => $score, 'product' => $product];
@@ -91,13 +100,21 @@ final class FeedCatalogDriver implements CatalogDriver
 
     public function find(string $id): ?CatalogProduct
     {
-        foreach ($this->products() as $product) {
-            if ($product->id === $id) {
-                return $product;
+        return $this->catalog()['byId'][$id] ?? null;
+    }
+
+    public function findMany(array $ids): array
+    {
+        $byId = $this->catalog()['byId'];
+
+        $found = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $found[$id] = $byId[$id];
             }
         }
 
-        return null;
+        return $found;
     }
 
     public function related(string $id, int $limit = 4): array
@@ -113,7 +130,7 @@ final class FeedCatalogDriver implements CatalogDriver
         $terms = $this->tokenize($seed->title);
 
         $scored = [];
-        foreach ($this->products() as $product) {
+        foreach ($this->catalog()['list'] as $product) {
             if ($product->id === $id) {
                 continue;
             }
@@ -132,46 +149,68 @@ final class FeedCatalogDriver implements CatalogDriver
     }
 
     /**
-     * @return array<int, CatalogProduct>
+     * Catálogo resuelto (lista + índice por id), cacheado ya transformado a
+     * CatalogProduct para no repetir el array_map en cada request que golpea
+     * la caché, y memoizado en la instancia para llamadas repetidas dentro del
+     * mismo request.
+     *
+     * @return array{list: array<int, CatalogProduct>, byId: array<string, CatalogProduct>}
      */
-    private function products(): array
+    private function catalog(): array
     {
-        $raw = Cache::remember(
+        if ($this->catalogCache !== null) {
+            return $this->catalogCache;
+        }
+
+        return $this->catalogCache = Cache::remember(
             'helpdesklivechat:catalog:feed:'.md5($this->feedUrl),
             $this->cacheTtl,
             function (): array {
-                try {
-                    $response = Http::timeout(5)->acceptJson()->get($this->feedUrl);
+                $products = array_values(array_filter(array_map(
+                    static function ($item): ?CatalogProduct {
+                        if (! is_array($item)) {
+                            return null;
+                        }
+                        $product = CatalogProduct::fromArray($item);
 
-                    if (! $response->successful()) {
-                        return [];
-                    }
+                        return $product->id !== '' ? $product : null;
+                    },
+                    $this->fetchRawFeed()
+                )));
 
-                    $json = $response->json();
-
-                    return is_array($json) ? $json : [];
-                } catch (\Throwable $e) {
-                    Log::warning('HelpdeskLivechat catalog feed fetch failed', [
-                        'feed_url' => $this->feedUrl,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    return [];
+                $byId = [];
+                foreach ($products as $product) {
+                    $byId[$product->id] = $product;
                 }
+
+                return ['list' => $products, 'byId' => $byId];
             }
         );
+    }
 
-        return array_values(array_filter(array_map(
-            static function ($item): ?CatalogProduct {
-                if (! is_array($item)) {
-                    return null;
-                }
-                $product = CatalogProduct::fromArray($item);
+    /**
+     * @return array<int, mixed>
+     */
+    private function fetchRawFeed(): array
+    {
+        try {
+            $response = Http::timeout(5)->acceptJson()->get($this->feedUrl);
 
-                return $product->id !== '' ? $product : null;
-            },
-            $raw
-        )));
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $json = $response->json();
+
+            return is_array($json) ? $json : [];
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskLivechat catalog feed fetch failed', [
+                'feed_url' => $this->feedUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
     }
 
     /**

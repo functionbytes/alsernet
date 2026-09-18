@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,10 +46,6 @@ final class GetProductSupplierOptionsHandler extends AbstractProductSupplierHand
      */
     private $productRepository;
 
-    /**
-     * @param ProductSupplierRepository $productSupplierRepository
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductSupplierRepository $productSupplierRepository,
         ProductRepository $productRepository
@@ -57,11 +54,6 @@ final class GetProductSupplierOptionsHandler extends AbstractProductSupplierHand
         $this->productRepository = $productRepository;
     }
 
-    /**
-     * @param GetProductSupplierOptions $query
-     *
-     * @return ProductSupplierOptions
-     */
     public function handle(GetProductSupplierOptions $query): ProductSupplierOptions
     {
         $product = $this->productRepository->get($query->getProductId());

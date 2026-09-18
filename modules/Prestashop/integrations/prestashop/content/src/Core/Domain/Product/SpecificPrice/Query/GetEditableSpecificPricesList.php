@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,12 +56,6 @@ class GetEditableSpecificPricesList
      */
     private $filters;
 
-    /**
-     * @param int $productId
-     * @param int|null $limit
-     * @param int|null $offset
-     * @param array|null $filters
-     */
     public function __construct(
         int $productId,
         ?int $limit = null,
@@ -73,33 +68,21 @@ class GetEditableSpecificPricesList
         $this->filters = $filters;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLimit(): ?int
     {
         return $this->limit;
     }
 
-    /**
-     * @return int|null
-     */
     public function getOffset(): ?int
     {
         return $this->offset;
     }
 
-    /**
-     * @return array
-     */
     public function getFilters(): ?array
     {
         return $this->filters;

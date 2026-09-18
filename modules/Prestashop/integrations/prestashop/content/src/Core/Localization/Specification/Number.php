@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,23 +40,23 @@ class Number implements NumberInterface
     /**
      * Number specification constructor.
      *
-     * @param string $positivePattern
-     *                                CLDR formatting pattern for positive amounts
-     * @param string $negativePattern
-     *                                CLDR formatting pattern for negative amounts
-     * @param NumberSymbolList[] $symbols
-     *                                    List of available number symbols lists (NumberSymbolList objects)
-     *                                    Each list is indexed by numbering system
-     * @param int $maxFractionDigits
-     *                               Maximum number of digits after decimal separator
-     * @param int $minFractionDigits
-     *                               Minimum number of digits after decimal separator
-     * @param bool $groupingUsed
-     *                           Is digits grouping used ?
-     * @param int $primaryGroupSize
-     *                              Size of primary digits group in the number
-     * @param int $secondaryGroupSize
-     *                                Size of secondary digits group in the number
+     * @param  string  $positivePattern
+     *                                   CLDR formatting pattern for positive amounts
+     * @param  string  $negativePattern
+     *                                   CLDR formatting pattern for negative amounts
+     * @param  NumberSymbolList[]  $symbols
+     *                                       List of available number symbols lists (NumberSymbolList objects)
+     *                                       Each list is indexed by numbering system
+     * @param  int  $maxFractionDigits
+     *                                  Maximum number of digits after decimal separator
+     * @param  int  $minFractionDigits
+     *                                  Minimum number of digits after decimal separator
+     * @param  bool  $groupingUsed
+     *                              Is digits grouping used ?
+     * @param  int  $primaryGroupSize
+     *                                 Size of primary digits group in the number
+     * @param  int  $secondaryGroupSize
+     *                                   Size of secondary digits group in the number
      *
      * @throws LocalizationException
      */
@@ -172,16 +173,15 @@ class Number implements NumberInterface
     /**
      * Get the specified symbols list for a given numbering system.
      *
-     * @param string $numberingSystem
-     *                                Numbering system to use when formatting numbers. @see http://cldr.unicode.org/translation/numbering-systems
-     *
+     * @param  string  $numberingSystem
+     *                                   Numbering system to use when formatting numbers. @see http://cldr.unicode.org/translation/numbering-systems
      * @return NumberSymbolList
      *
      * @throws LocalizationException
      */
     public function getSymbolsByNumberingSystem($numberingSystem = NumberInterface::NUMBERING_SYSTEM_LATIN)
     {
-        if (!isset($this->symbols[$numberingSystem])) {
+        if (! isset($this->symbols[$numberingSystem])) {
             throw new LocalizationException('Unknown or invalid numbering system');
         }
 
@@ -269,56 +269,56 @@ class Number implements NumberInterface
      */
     protected function validateData()
     {
-        if (!isset($this->positivePattern)
-            || !is_string($this->positivePattern)
+        if (! isset($this->positivePattern)
+            || ! is_string($this->positivePattern)
         ) {
             throw new LocalizationException('Invalid positivePattern');
         }
 
-        if (!isset($this->negativePattern)
-            || !is_string($this->negativePattern)
+        if (! isset($this->negativePattern)
+            || ! is_string($this->negativePattern)
         ) {
             throw new LocalizationException('Invalid negativePattern');
         }
 
-        if (!isset($this->symbols)
-            || !(is_array($this->symbols))
+        if (! isset($this->symbols)
+            || ! (is_array($this->symbols))
         ) {
             throw new LocalizationException('Invalid symbols');
         }
 
         foreach ($this->symbols as $symbolList) {
-            if (!$symbolList instanceof NumberSymbolList) {
+            if (! $symbolList instanceof NumberSymbolList) {
                 throw new LocalizationException('Symbol lists must be instances of NumberSymbolList');
             }
         }
 
-        if (!isset($this->maxFractionDigits)
-            || !is_int($this->maxFractionDigits)
+        if (! isset($this->maxFractionDigits)
+            || ! is_int($this->maxFractionDigits)
         ) {
             throw new LocalizationException('Invalid maxFractionDigits');
         }
 
-        if (!isset($this->minFractionDigits)
-            || !is_int($this->minFractionDigits)
+        if (! isset($this->minFractionDigits)
+            || ! is_int($this->minFractionDigits)
         ) {
             throw new LocalizationException('Invalid minFractionDigits');
         }
 
-        if (!isset($this->groupingUsed)
-            || !is_bool($this->groupingUsed)
+        if (! isset($this->groupingUsed)
+            || ! is_bool($this->groupingUsed)
         ) {
             throw new LocalizationException('Invalid groupingUsed');
         }
 
-        if (!isset($this->primaryGroupSize)
-            || !is_int($this->primaryGroupSize)
+        if (! isset($this->primaryGroupSize)
+            || ! is_int($this->primaryGroupSize)
         ) {
             throw new LocalizationException('Invalid primaryGroupSize');
         }
 
-        if (!isset($this->secondaryGroupSize)
-            || !is_int($this->secondaryGroupSize)
+        if (! isset($this->secondaryGroupSize)
+            || ! is_int($this->secondaryGroupSize)
         ) {
             throw new LocalizationException('Invalid secondaryGroupSize');
         }
@@ -326,8 +326,6 @@ class Number implements NumberInterface
 
     /**
      * To array function
-     *
-     * @return array
      */
     public function toArray(): array
     {

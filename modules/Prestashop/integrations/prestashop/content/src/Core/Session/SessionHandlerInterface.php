@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,15 +36,11 @@ interface SessionHandlerInterface
 {
     /**
      * Initialize session
-     *
-     * @return void
      */
     public function init(): void;
 
     /**
      * Return the current session
-     *
-     * @return ?SessionInterface
      */
     public function getSession(): ?SessionInterface;
 }

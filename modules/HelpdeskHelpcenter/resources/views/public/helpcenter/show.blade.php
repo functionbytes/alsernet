@@ -47,19 +47,7 @@
 
     <link rel="stylesheet" href="{{ themeAsset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
-    <style>
-        body { background: #f5f6f8; }
-        .article-body img { max-width: 100%; height: auto; border-radius: .5rem; }
-        .article-body h2, .article-body h3 { margin-top: 1.75rem; margin-bottom: .75rem; }
-        .article-body p { line-height: 1.7; }
-        .article-body code { background: #f1f3f5; padding: .2rem .4rem; border-radius: .25rem; font-size: .9em; }
-        .article-body pre { background: #1e2329; color: #f5f6f8; padding: 1rem; border-radius: .5rem; overflow-x: auto; }
-        .article-body pre code { background: transparent; color: inherit; padding: 0; }
-        .helpcenter-topbar { background: #90bb13; }
-        .helpcenter-vote-extra { display: none; }
-        .helpcenter-breadcrumb a { color: rgba(255, 255, 255, .85); }
-        .helpcenter-breadcrumb a:hover { color: #fff; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/public-portal.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/public-portal.css')) }}">
 </head>
 <body>
 
@@ -94,12 +82,12 @@
                     <hr>
 
                     <div class="article-body mt-4">
-                        {!! clean($articleBody) !!}
+                        {!! clean_html($articleBody) !!}
                     </div>
 
                     <div class="article-feedback py-4 border-top mt-4">
                         <h2 class="h6 fw-bold">¿Te resultó útil este artículo?</h2>
-                        <div class="d-flex gap-2 mt-2" id="article-vote">
+                        <div class="d-flex gap-2 mt-2" id="article-vote" data-article-slug="{{ $article->slug }}">
                             <button class="btn btn-outline-success" data-vote="1">
                                 <i class="fas fa-thumbs-up me-1"></i> Sí
                             </button>
@@ -114,8 +102,8 @@
                         <p class="small text-success mt-2 mb-0 helpcenter-vote-extra" id="article-vote-thanks">
                             <i class="fas fa-check-circle me-1"></i>Gracias por tu opinión.
                         </p>
-                        <p class="small text-danger mt-2 mb-0 helpcenter-vote-extra" id="article-vote-error">
-                            <i class="fas fa-circle-exclamation me-1"></i>No se pudo registrar tu voto. Inténtalo de nuevo.
+                        <p class="small text-brand mt-2 mb-0 helpcenter-vote-extra" id="article-vote-error">
+                            <i class="fas fa-circle-exclamation me-1"></i><span id="article-vote-error-text">No se pudo registrar tu voto. Inténtalo de nuevo.</span>
                         </p>
                     </div>
                 </div>
@@ -144,42 +132,6 @@
 
 <script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
-<script>
-$(function () {
-    const articleSlug = '{{ $article->slug }}';
-    let selectedVote = null;
-
-    $('[data-vote]').on('click', function () {
-        selectedVote = parseInt($(this).data('vote'));
-
-        if (selectedVote === -1) {
-            $('#article-vote-comment').slideDown();
-        } else {
-            submitVote(null);
-        }
-    });
-
-    $('#article-vote-submit').on('click', function () {
-        submitVote($('#vote-comment-text').val());
-    });
-
-    function submitVote(comment) {
-        $.ajax({
-            url: '/api/helpcenter/articles/' + articleSlug + '/vote',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { vote: selectedVote, comment: comment },
-            success: function () {
-                $('#article-vote').hide();
-                $('#article-vote-comment').hide();
-                $('#article-vote-thanks').show();
-            },
-            error: function () {
-                $('#article-vote-error').show();
-            }
-        });
-    }
-});
-</script>
+<script src="{{ asset('modules/helpdeskhelpcenter/js/public-article-vote.js') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/js/public-article-vote.js')) }}"></script>
 </body>
 </html>

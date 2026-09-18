@@ -83,6 +83,11 @@ class ErpModelSyncService
 
             // Sincronizar un único modelo por ID
             if ($erpModelId !== null) {
+                // Sin esto, "Regenerar" puede devolver el detallado cacheado (hasta
+                // 1h, ver ApiController::cachedResult) en vez de los datos recién
+                // cambiados en Gestión — mismo forget que ya hace retryModelFromErp().
+                Cache::forget("product:detailed:{$erpModelId}");
+
                 $response = Http::timeout(60)->get("{$this->erpBaseUrl}/products/{$erpModelId}/detailed");
 
                 if (! $response->successful()) {
@@ -755,14 +760,11 @@ class ErpModelSyncService
 
         foreach ($data['characteristics'] ?? [] as $row) {
             $erpCharacteristicId = $row['characteristic_id'] ?? null;
-            if (! $erpCharacteristicId || empty($row['characteristic_name'])) {
+            if (! $erpCharacteristicId) {
                 continue;
             }
 
-            $characteristic = ErpCharacteristic::updateOrCreate(
-                ['erp_id' => $erpCharacteristicId],
-                ['nombre' => $row['characteristic_name'], 'last_sync_at' => now()]
-            );
+            $characteristic = $this->upsertErpCharacteristic($erpCharacteristicId, $row['characteristic_name'] ?? null);
 
             ModelCharacteristic::updateOrCreate(
                 ['product_id' => $product->id, 'characteristic_id' => $characteristic->id],
@@ -789,19 +791,13 @@ class ErpModelSyncService
                     $erpCharacteristicId = $row['characteristic_id'] ?? null;
                     $erpValueId = $row['value_id'] ?? null;
 
-                    if (! $erpCharacteristicId || ! $erpValueId || empty($row['characteristic_name']) || empty($row['value_name'])) {
+                    if (! $erpCharacteristicId || ! $erpValueId) {
                         continue;
                     }
 
-                    $characteristic = ErpCharacteristic::updateOrCreate(
-                        ['erp_id' => $erpCharacteristicId],
-                        ['nombre' => $row['characteristic_name'], 'last_sync_at' => now()]
-                    );
+                    $characteristic = $this->upsertErpCharacteristic($erpCharacteristicId, $row['characteristic_name'] ?? null);
 
-                    $value = ErpCharacteristicValue::updateOrCreate(
-                        ['erp_id' => $erpValueId],
-                        ['characteristic_id' => $characteristic->id, 'nombre' => $row['value_name'], 'last_sync_at' => now()]
-                    );
+                    $value = $this->upsertErpCharacteristicValue($erpValueId, $characteristic->id, $row['value_name'] ?? null);
 
                     // Sin variante propia (producto sin artículos diferenciados) el propio
                     // producto actúa como su "artículo" — product_id desambigua entre
@@ -829,6 +825,50 @@ class ErpModelSyncService
         }
 
         return $count;
+    }
+
+    /**
+     * El ERP no siempre resuelve characteristic_name para un characteristic_id dado
+     * (~1 de cada 3 en muestreo real) — antes esto descartaba la característica
+     * entera. Guarda con un nombre provisional en vez de perder el dato, sin pisar
+     * un nombre real ya guardado en una sincronización anterior.
+     */
+    private function upsertErpCharacteristic(string $erpCharacteristicId, ?string $name): ErpCharacteristic
+    {
+        $characteristic = ErpCharacteristic::firstOrNew(['erp_id' => $erpCharacteristicId]);
+
+        if (! empty($name)) {
+            $characteristic->nombre = $name;
+        } elseif (! $characteristic->exists) {
+            $characteristic->nombre = "Característica {$erpCharacteristicId}";
+        }
+
+        $characteristic->last_sync_at = now();
+        $characteristic->save();
+
+        return $characteristic;
+    }
+
+    /**
+     * Mismo caso que upsertErpCharacteristic() pero para el valor de la característica
+     * (p.ej. "Azul" para la característica "Color").
+     */
+    private function upsertErpCharacteristicValue(string $erpValueId, int $characteristicId, ?string $name): ErpCharacteristicValue
+    {
+        $value = ErpCharacteristicValue::firstOrNew(['erp_id' => $erpValueId]);
+
+        $value->characteristic_id = $characteristicId;
+
+        if (! empty($name)) {
+            $value->nombre = $name;
+        } elseif (! $value->exists) {
+            $value->nombre = "Valor {$erpValueId}";
+        }
+
+        $value->last_sync_at = now();
+        $value->save();
+
+        return $value;
     }
 
     /**
@@ -873,7 +913,10 @@ class ErpModelSyncService
             'erp_id' => $erpModelId,
             'supplier_id' => $supplier?->id,
             'category_id' => $category?->id,
-            'erp_category_id' => $data['idgrupo_cl'] ?? $data['grupo'] ?? null,
+            // El endpoint manda el grupo como objeto anidado ('categorie' => ['id' => ...]),
+            // no como escalar 'idgrupo_cl'/'grupo' (eso solo existe a nivel de artículo) —
+            // con la clave vieja esto quedaba siempre en null tras cada regenerado.
+            'erp_category_id' => $data['categorie']['id'] ?? null,
             'subfamily_id' => $subfamily?->id,
             'erp_subfamily_id' => $erpSubfamilyId,
             'sport_id' => $sport?->id,

@@ -77,24 +77,22 @@ class ThemeTranslationsFactory extends TranslationsFactory
     }
 
     /**
-     * @param string $locale the catalogue locale
-     * @param string $domain the catalogue domain
-     *
+     * @param  string  $locale  the catalogue locale
+     * @param  string  $domain  the catalogue domain
      * @return string
      */
     protected function removeLocaleFromDomain($locale, $domain)
     {
-        return str_replace('.' . $locale, '', $domain);
+        return str_replace('.'.$locale, '', $domain);
     }
 
     /**
-     * @param string $themeName the theme name
-     * @param string $locale the catalogue locale
-     * @param string|null $search
+     * @param  string  $themeName  the theme name
+     * @param  string  $locale  the catalogue locale
+     * @param  string|null  $search
+     * @return array
      *
      * @throws ProviderNotFoundException
-     *
-     * @return array
      */
     protected function getFrontTranslationsForThemeAndLocale($themeName, $locale, $search = null)
     {

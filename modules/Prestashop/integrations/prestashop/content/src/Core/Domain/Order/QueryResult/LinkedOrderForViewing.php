@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,6 @@ class LinkedOrderForViewing
      */
     private $amount;
 
-    /**
-     * @param int $orderId
-     * @param string $statusName
-     * @param string $amount
-     */
     public function __construct(int $orderId, string $statusName, string $amount)
     {
         $this->orderId = $orderId;
@@ -63,25 +59,16 @@ class LinkedOrderForViewing
         $this->amount = $amount;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderId(): int
     {
         return $this->orderId;
     }
 
-    /**
-     * @return string
-     */
     public function getStatusName(): string
     {
         return $this->statusName;
     }
 
-    /**
-     * @return string
-     */
     public function getAmount(): string
     {
         return $this->amount;

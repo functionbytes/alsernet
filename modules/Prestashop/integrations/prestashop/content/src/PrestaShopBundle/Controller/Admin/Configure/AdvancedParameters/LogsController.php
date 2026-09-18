@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters;
 
+use Doctrine\DBAL\Exception\InvalidArgumentException;
 use PrestaShop\PrestaShop\Core\Form\FormHandlerInterface;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\LogGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters\LogsFilters;
@@ -50,8 +52,7 @@ class LogsController extends FrameworkBundleAdminController
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param LogsFilters $filters the list of filters from the request
-     *
+     * @param  LogsFilters  $filters  the list of filters from the request
      * @return Response
      */
     public function indexAction(LogsFilters $filters)
@@ -76,9 +77,8 @@ class LogsController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_logs_index")
-     * @DemoRestricted(redirectRoute="admin_logs_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_logs_index")
      *
      * @return RedirectResponse
      */
@@ -98,9 +98,8 @@ class LogsController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['update', 'create','delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.", redirectRoute="admin_logs_index")
-     * @DemoRestricted(redirectRoute="admin_logs_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_logs_index")
      *
      * @return RedirectResponse
      */
@@ -116,7 +115,7 @@ class LogsController extends FrameworkBundleAdminController
 
             $saveErrors = $this->getFormHandler()->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->addFlash('success', $this->trans('Successful update.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_logs_index');
@@ -133,7 +132,7 @@ class LogsController extends FrameworkBundleAdminController
      *
      * @return RedirectResponse
      *
-     * @throws \Doctrine\DBAL\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function deleteAllAction()
     {

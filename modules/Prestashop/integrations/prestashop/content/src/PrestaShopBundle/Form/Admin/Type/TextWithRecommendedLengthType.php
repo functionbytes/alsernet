@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,7 +62,6 @@ class TextWithRecommendedLengthType extends AbstractType
                 'recommended_length',
             ])
             ->setAllowedTypes('recommended_length', 'int')
-            ->setAllowedValues('input_type', ['text', 'textarea'])
-        ;
+            ->setAllowedValues('input_type', ['text', 'textarea']);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,8 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Get shops list.
      *
-     * @param bool $active
-     * @param bool $get_as_list_id
-     *
+     * @param  bool  $active
+     * @param  bool  $get_as_list_id
      * @return array
      */
     public function getShops($active = true, $get_as_list_id = false)
@@ -64,8 +64,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Get a list of ID concerned by the shop context (E.g. if context is shop group, get list of children shop ID).
      *
-     * @param bool|string $share If false, dont check share datas from group. Else can take a Shop::SHARE_* constant value
-     *
+     * @param  bool|string  $share  If false, dont check share datas from group. Else can take a Shop::SHARE_* constant value
      * @return array
      */
     public function getContextListShopID($share = false)
@@ -83,7 +82,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     {
         $groupSettings = Shop::getGroupFromShop(Shop::getContextShopID(), false);
 
-        if (!empty($groupSettings['share_customer'])) {
+        if (! empty($groupSettings['share_customer'])) {
             return Shop::getContextListShopID(Shop::SHARE_CUSTOMER);
         } else {
             return Shop::getContextListShopID();
@@ -131,7 +130,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
      */
     public function isSingleShopContext()
     {
-        if (!Shop::isFeatureActive()) {
+        if (! Shop::isFeatureActive()) {
             return true;
         }
 
@@ -141,7 +140,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Update Multishop context for only one shop.
      *
-     * @param int $id Shop id to set in the current context
+     * @param  int  $id  Shop id to set in the current context
      */
     public function setShopContext($id)
     {
@@ -151,7 +150,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Update Multishop context for only one shop group.
      *
-     * @param int $id Shop id to set in the current context
+     * @param  int  $id  Shop id to set in the current context
      */
     public function setShopGroupContext($id)
     {
@@ -161,7 +160,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Update Multishop context for only one shop group.
      *
-     * @param int $id Shop id to set in the current context
+     * @param  int  $id  Shop id to set in the current context
      */
     public function setAllContext($id)
     {
@@ -176,9 +175,8 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     /**
      * Retrieve group ID of a shop.
      *
-     * @param int $shopId
-     * @param bool $asId
-     *
+     * @param  int  $shopId
+     * @param  bool  $asId
      * @return int
      */
     public function getGroupFromShop($shopId, $asId = true)
@@ -187,8 +185,7 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
     }
 
     /**
-     * @param int $shopGroupId
-     *
+     * @param  int  $shopGroupId
      * @return ShopGroup
      */
     public function ShopGroup($shopGroupId)
@@ -230,11 +227,6 @@ class Context implements MultistoreContextCheckerInterface, ShopContextInterface
         return LegacyContext::getContext()->shop->name;
     }
 
-    /**
-     * @param bool $strict
-     *
-     * @return ShopConstraint
-     */
     public function getShopConstraint(bool $strict = false): ShopConstraint
     {
         if ($this->isShopContext()) {

@@ -2,6 +2,8 @@
 
 @section('title', 'Bandeja social')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Bandeja social'])
 @endsection
@@ -12,7 +14,7 @@
         <div class="d-flex gap-2">
             <span class="badge bg-primary">{{ $stats['pending'] }} pendientes</span>
             <span class="badge bg-success">{{ $stats['replied'] }} respondidos</span>
-            <span class="badge bg-danger">{{ $stats['spam'] }} spam</span>
+            <span class="badge bg-brand">{{ $stats['spam'] }} spam</span>
         </div>
     </div>
 
@@ -61,7 +63,10 @@
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0"
+                       id="social-inbox-table"
+                       data-bulk-tag-url="{{ route('api.helpdesksocial.inbox.bulk') }}"
+                       data-tags-url="{{ route('api.helpdesksocial.tags.index') }}">
                     <thead class="table-light">
                         <tr>
                             <th width="30"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
@@ -89,7 +94,7 @@
                                 <small class="text-muted">{{ $comment->author_username ?? '' }}</small>
                             </td>
                             <td>
-                                <div class="text-truncate" style="max-width: 300px;" title="{{ $comment->body }}">
+                                <div class="text-truncate hso-truncate-300" title="{{ $comment->body }}">
                                     {{ $comment->body }}
                                 </div>
                                 @if($comment->external_post_id)
@@ -124,7 +129,7 @@
                                 <span class="badge bg-info">Auto</span>
                                 @endif
                                 @if($comment->sla_response_breached)
-                                <span class="badge bg-danger" title="SLA vencido"><i class="fas fa-clock"></i> SLA</span>
+                                <span class="badge bg-brand" title="SLA vencido"><i class="fas fa-clock"></i> SLA</span>
                                 @endif
                                 @if($comment->sentiment && is_array($comment->sentiment))
                                 <span class="badge bg-{{ ($comment->sentiment['label'] ?? 'neutral') === 'positive' ? 'success' : (($comment->sentiment['label'] ?? 'neutral') === 'negative' ? 'danger' : 'secondary') }}">
@@ -159,128 +164,6 @@
     </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function setupSocialInboxListener() {
-        if (typeof window.Echo === 'undefined') {
-            console.warn('[SocialInbox] Echo not ready, retrying in 500ms');
-            setTimeout(setupSocialInboxListener, 500);
-            return;
-        }
-
-        const inboxChannel = window.Echo.private('helpdesk.social.inbox');
-        console.log('[SocialInbox] Subscribed to private-helpdesk.social.inbox');
-
-        inboxChannel.listen('.social.comment.received', function (e) {
-            const comment = e.comment;
-            console.log('[SocialInbox] New comment received', comment);
-
-            // Show toast for high urgency comments
-            if (comment.urgency === 'high' || comment.urgency === 'critical') {
-                if (window.toastr) {
-                    toastr.warning(
-                        comment.author_name + ': ' + comment.body.substring(0, 60),
-                        'Comentario ' + (comment.urgency === 'critical' ? 'crítico' : 'alta urgencia') + ' en ' + comment.platform,
-                        { timeOut: 8000, closeButton: true }
-                    );
-                }
-            }
-
-            // Refresh the page to show the new comment
-            window.location.reload();
-        });
-
-        inboxChannel.listen('.social.intent.classified', function (e) {
-            console.log('[SocialInbox] Intent classified', e);
-            // If the comment is already visible, update its badge
-            const $row = $('tr[data-comment-id="' + e.comment_id + '"]');
-            if ($row.length) {
-                window.location.reload();
-            }
-        });
-
-        inboxChannel.listen('.social.comment.replied', function (e) {
-            console.log('[SocialInbox] Comment replied', e);
-            window.location.reload();
-        });
-    }
-
-    // Delay slightly to ensure Echo is bootstrapped
-    setTimeout(setupSocialInboxListener, 300);
-
-    function toggleSelectAll() {
-        const checked = $('#selectAll').prop('checked');
-        $('.comment-checkbox').prop('checked', checked);
-    }
-
-    function applyFilters() {
-        const sentiment = $('#sentimentFilter').val();
-        const status = $('#statusFilter').val();
-        const showSla = $('#showSlaBreached').prop('checked');
-
-        $('tr[data-comment-id]').each(function () {
-            const $row = $(this);
-            let visible = true;
-
-            if (sentiment && $row.data('sentiment') !== sentiment) {
-                visible = false;
-            }
-
-            if (status && $row.data('status') !== status) {
-                visible = false;
-            }
-
-            if (showSla && $row.data('sla-breached') !== '1') {
-                visible = false;
-            }
-
-            $row.toggle(visible);
-        });
-    }
-
-    function applyBulkTag() {
-        const tagId = $('#bulkTagSelect').val();
-        const commentIds = $('.comment-checkbox:checked').map(function () { return $(this).val(); }).get();
-
-        if (!tagId) {
-            if (window.toastr) { toastr.warning('Selecciona una etiqueta.'); }
-            return;
-        }
-
-        if (commentIds.length === 0) {
-            if (window.toastr) { toastr.warning('Selecciona al menos un comentario.'); }
-            return;
-        }
-
-        $.ajax({
-            url: '{{ route('helpdesksocial.inbox.bulk') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { tag_id: tagId, comment_ids: commentIds },
-            success: function () {
-                if (window.toastr) { toastr.success('Etiquetas aplicadas correctamente.'); }
-                window.location.reload();
-            },
-            error: function () {
-                if (window.toastr) { toastr.error('Error al aplicar etiquetas.'); }
-            }
-        });
-    }
-
-    $(document).ready(function () {
-        $.ajax({
-            url: '{{ route('helpdesksocial.tags.index') }}',
-            method: 'GET',
-            success: function (tags) {
-                const $select = $('#bulkTagSelect');
-                $select.empty().append('<option value="">Etiqueta...</option>');
-                tags.forEach(function (tag) {
-                    $select.append('<option value="' + tag.id + '">' + tag.name + '</option>');
-                });
-            }
-        });
-    });
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-inbox-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-inbox-index.js')) }}"></script>
+@endpush

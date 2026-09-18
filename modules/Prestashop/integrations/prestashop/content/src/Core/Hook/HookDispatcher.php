@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class HookDispatcher implements HookDispatcherInterface
      */
     private $hookDispatcherAdapter;
 
-    /**
-     * @param HookDispatcherAdapter $hookDispatcherAdapter
-     */
     public function __construct(HookDispatcherAdapter $hookDispatcherAdapter)
     {
         $this->hookDispatcherAdapter = $hookDispatcherAdapter;
@@ -96,7 +94,7 @@ final class HookDispatcher implements HookDispatcherInterface
     /**
      * {@inheritdoc}
      */
-    public function dispatch($eventName, Event $event = null)
+    public function dispatch($eventName, ?Event $event = null)
     {
         return $this->hookDispatcherAdapter->dispatch($eventName, $event);
     }

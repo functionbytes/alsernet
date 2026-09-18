@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,20 +50,20 @@ final class ManufacturerImageUploader extends AbstractImageUploader implements I
         $this->checkImageIsAllowedForUpload($image);
         $temporaryImageName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
 
-        if (!$temporaryImageName) {
+        if (! $temporaryImageName) {
             throw new ImageUploadException('An error occurred while uploading the image. Check your directory permissions.');
         }
 
-        if (!move_uploaded_file($image->getPathname(), $temporaryImageName)) {
+        if (! move_uploaded_file($image->getPathname(), $temporaryImageName)) {
             throw new ImageUploadException('An error occurred while uploading the image. Check your directory permissions.');
         }
 
         // Evaluate the memory required to resize the image: if it's too much, you can't resize it.
-        if (!ImageManager::checkImageMemoryLimit($temporaryImageName)) {
+        if (! ImageManager::checkImageMemoryLimit($temporaryImageName)) {
             throw new MemoryLimitException('Due to memory limit restrictions, this image cannot be loaded. Increase your memory_limit value.');
         }
         // Copy new image
-        if (!ImageManager::resize($temporaryImageName, _PS_MANU_IMG_DIR_ . $manufacturerId . '.jpg')) {
+        if (! ImageManager::resize($temporaryImageName, _PS_MANU_IMG_DIR_.$manufacturerId.'.jpg')) {
             throw new ImageOptimizationException('An error occurred while uploading the image. Check your directory permissions.');
         }
 
@@ -70,8 +71,7 @@ final class ManufacturerImageUploader extends AbstractImageUploader implements I
     }
 
     /**
-     * @param int $manufacturerId
-     *
+     * @param  int  $manufacturerId
      * @return bool
      */
     private function generateDifferentSizeImages($manufacturerId)
@@ -82,29 +82,29 @@ final class ManufacturerImageUploader extends AbstractImageUploader implements I
         try {
             /* Generate images with different size */
             if (count($_FILES) &&
-                file_exists(_PS_MANU_IMG_DIR_ . $manufacturerId . '.jpg')
+                file_exists(_PS_MANU_IMG_DIR_.$manufacturerId.'.jpg')
             ) {
                 $imageTypes = ImageType::getImagesTypes('manufacturers');
 
                 foreach ($imageTypes as $imageType) {
                     $resized &= ImageManager::resize(
-                        _PS_MANU_IMG_DIR_ . $manufacturerId . '.jpg',
-                        _PS_MANU_IMG_DIR_ . $manufacturerId . '-' . stripslashes($imageType['name']) . '.jpg',
+                        _PS_MANU_IMG_DIR_.$manufacturerId.'.jpg',
+                        _PS_MANU_IMG_DIR_.$manufacturerId.'-'.stripslashes($imageType['name']).'.jpg',
                         (int) $imageType['width'],
                         (int) $imageType['height']
                     );
 
                     if ($generateHighDpiImages) {
                         $resized &= ImageManager::resize(
-                            _PS_MANU_IMG_DIR_ . $manufacturerId . '.jpg',
-                            _PS_MANU_IMG_DIR_ . $manufacturerId . '-' . stripslashes($imageType['name']) . '2x.jpg',
+                            _PS_MANU_IMG_DIR_.$manufacturerId.'.jpg',
+                            _PS_MANU_IMG_DIR_.$manufacturerId.'-'.stripslashes($imageType['name']).'2x.jpg',
                             (int) $imageType['width'] * 2,
                             (int) $imageType['height'] * 2
                         );
                     }
                 }
 
-                $currentLogo = _PS_TMP_IMG_DIR_ . 'manufacturer_mini_' . $manufacturerId . '.jpg';
+                $currentLogo = _PS_TMP_IMG_DIR_.'manufacturer_mini_'.$manufacturerId.'.jpg';
 
                 if ($resized && file_exists($currentLogo)) {
                     unlink($currentLogo);
@@ -114,7 +114,7 @@ final class ManufacturerImageUploader extends AbstractImageUploader implements I
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 
-        if (!$resized) {
+        if (! $resized) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 

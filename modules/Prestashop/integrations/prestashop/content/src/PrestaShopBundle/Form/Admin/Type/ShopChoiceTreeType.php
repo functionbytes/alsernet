@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ class ShopChoiceTreeType extends AbstractType
      */
     private $stringArrayToIntegerArrayDataTransformer;
 
-    /**
-     * @param array $shopTreeChoices
-     * @param DataTransformerInterface $stringArrayToIntegerArrayDataTransformer
-     */
     public function __construct(
         array $shopTreeChoices,
         DataTransformerInterface $stringArrayToIntegerArrayDataTransformer

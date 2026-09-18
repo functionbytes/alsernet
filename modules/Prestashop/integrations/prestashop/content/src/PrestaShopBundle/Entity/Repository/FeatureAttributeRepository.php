@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,9 +61,7 @@ class FeatureAttributeRepository
     /**
      * FeatureAttributeRepository constructor.
      *
-     * @param Connection $connection
-     * @param ContextAdapter $contextAdapter
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      *
      * @throws NotImplementedException
      */
@@ -76,14 +75,14 @@ class FeatureAttributeRepository
 
         $context = $contextAdapter->getContext();
 
-        if (!$context->employee instanceof Employee) {
+        if (! $context->employee instanceof Employee) {
             throw new RuntimeException('Determining the active language requires a contextual employee instance.');
         }
 
         $languageId = $context->employee->id_lang;
         $this->languageId = (int) $languageId;
 
-        if (!$context->shop instanceof Shop) {
+        if (! $context->shop instanceof Shop) {
             throw new RuntimeException('Determining the active shop requires a contextual shop instance.');
         }
 
@@ -200,8 +199,7 @@ class FeatureAttributeRepository
     }
 
     /**
-     * @param array $rows
-     *
+     * @param  array  $rows
      * @return array
      */
     private function explodeCollections($rows)
@@ -210,7 +208,7 @@ class FeatureAttributeRepository
             $row['values'] = explode(',', $row['values']);
 
             $row['values'] = array_map(function ($value) {
-                if (false === strpos($value, ':')) {
+                if (strpos($value, ':') === false) {
                     return $value;
                 }
 

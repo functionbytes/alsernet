@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -98,8 +99,6 @@ class EditCatalogPriceRuleCommand
     private $reduction;
 
     /**
-     * @param int $catalogPriceRuleId
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function __construct(int $catalogPriceRuleId)
@@ -107,137 +106,87 @@ class EditCatalogPriceRuleCommand
         $this->catalogPriceRuleId = new CatalogPriceRuleId($catalogPriceRuleId);
     }
 
-    /**
-     * @return CatalogPriceRuleId
-     */
     public function getCatalogPriceRuleId(): CatalogPriceRuleId
     {
         return $this->catalogPriceRuleId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * @param string $name
-     */
     public function setName(string $name)
     {
         $this->name = $name;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopId(): ?int
     {
         return $this->shopId;
     }
 
-    /**
-     * @param int $shopId
-     */
     public function setShopId(int $shopId)
     {
         $this->shopId = $shopId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCurrencyId(): ?int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @param int $currencyId
-     */
     public function setCurrencyId(int $currencyId)
     {
         $this->currencyId = $currencyId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCountryId(): ?int
     {
         return $this->countryId;
     }
 
-    /**
-     * @param int $countryId
-     */
     public function setCountryId(int $countryId)
     {
         $this->countryId = $countryId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getGroupId(): ?int
     {
         return $this->groupId;
     }
 
-    /**
-     * @param int $groupId
-     */
     public function setGroupId(int $groupId)
     {
         $this->groupId = $groupId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getFromQuantity(): ?int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @param int $fromQuantity
-     */
     public function setFromQuantity(int $fromQuantity)
     {
         $this->fromQuantity = $fromQuantity;
     }
 
-    /**
-     * @return float|null
-     */
     public function getPrice(): ?float
     {
         return $this->price;
     }
 
-    /**
-     * @param float $price
-     */
     public function setPrice(float $price)
     {
         $this->price = $price;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeFrom(): ?DateTime
     {
         return $this->dateTimeFrom;
     }
 
     /**
-     * @param string $dateTimeFrom
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function setDateTimeFrom(string $dateTimeFrom)
@@ -245,17 +194,12 @@ class EditCatalogPriceRuleCommand
         $this->dateTimeFrom = $this->createDateTime($dateTimeFrom);
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeTo(): ?DateTime
     {
         return $this->dateTimeTo;
     }
 
     /**
-     * @param string $dateTimeTo
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function setDateTimeTo(string $dateTimeTo)
@@ -263,42 +207,27 @@ class EditCatalogPriceRuleCommand
         $this->dateTimeTo = $this->createDateTime($dateTimeTo);
     }
 
-    /**
-     * @return bool|null
-     */
     public function isTaxIncluded(): ?bool
     {
         return $this->includeTax;
     }
 
-    /**
-     * @param bool $includeTax
-     */
     public function setIncludeTax(bool $includeTax)
     {
         $this->includeTax = $includeTax;
     }
 
-    /**
-     * @return Reduction|null
-     */
     public function getReduction(): ?Reduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @param string $type
-     * @param float $value
-     */
     public function setReduction(string $type, float $value)
     {
         $this->reduction = new Reduction($type, $value);
     }
 
     /**
-     * @param string $dateTime
-     *
      * @return DateTime
      */
     private function createDateTime(string $dateTime)

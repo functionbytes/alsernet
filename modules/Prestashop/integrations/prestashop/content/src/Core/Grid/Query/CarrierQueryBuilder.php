@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,13 +62,6 @@ final class CarrierQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     private $contextShopIds;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param string $contextIdLang
-     * @param array $contextShopIds
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -110,9 +104,9 @@ final class CarrierQueryBuilder extends AbstractDoctrineQueryBuilder
     private function getCarrierQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         $qb = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'carrier', 'c')
-            ->innerJoin('c', $this->dbPrefix . 'carrier_lang', 'cl', 'c.id_carrier = cl.id_carrier')
-            ->innerJoin('c', $this->dbPrefix . 'carrier_shop', 'cs', 'c.id_carrier = cs.id_carrier')
+            ->from($this->dbPrefix.'carrier', 'c')
+            ->innerJoin('c', $this->dbPrefix.'carrier_lang', 'cl', 'c.id_carrier = cl.id_carrier')
+            ->innerJoin('c', $this->dbPrefix.'carrier_shop', 'cs', 'c.id_carrier = cs.id_carrier')
             ->andWhere('cl.id_lang = :contextIdLang')
             ->andWhere('cs.id_shop IN (:contextShopIds)')
             ->andWhere('cl.id_shop IN (:contextShopIds)')
@@ -128,20 +122,20 @@ final class CarrierQueryBuilder extends AbstractDoctrineQueryBuilder
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, self::ALLOWED_FILTERS)) {
+            if (! in_array($filterName, self::ALLOWED_FILTERS)) {
                 continue;
             }
 
             if ($filterName === 'name') {
                 $qb->andWhere('c.name LIKE :name');
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
 
             if ($filterName === 'delay') {
                 $qb->andWhere('cl.delay LIKE :delay');
-                $qb->setParameter($filterName, '%' . $filterValue . '%');
+                $qb->setParameter($filterName, '%'.$filterValue.'%');
 
                 continue;
             }
@@ -152,7 +146,7 @@ final class CarrierQueryBuilder extends AbstractDoctrineQueryBuilder
                 // since position value in database starts at 0,
                 // but for user display positions are increased by 1.
                 if (is_numeric($filterValue)) {
-                    --$filterValue;
+                    $filterValue--;
                 } else {
                     $filterValue = null;
                 }
@@ -163,7 +157,7 @@ final class CarrierQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            $qb->andWhere('c.' . $filterName . ' = :' . $filterName);
+            $qb->andWhere('c.'.$filterName.' = :'.$filterName);
             $qb->setParameter($filterName, $filterValue);
         }
     }

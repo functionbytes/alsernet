@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,12 +33,11 @@ use Iterator;
 /**
  * Interface PositionModificationCollectionInterface defines contract for grid RowModificationInterface collection.
  */
-interface PositionModificationCollectionInterface extends Iterator, Countable
+interface PositionModificationCollectionInterface extends Countable, Iterator
 {
     /**
      * Add rowModification to collection.
      *
-     * @param PositionModificationInterface $positionModification
      *
      * @return self
      */
@@ -46,7 +46,6 @@ interface PositionModificationCollectionInterface extends Iterator, Countable
     /**
      * Remove positionModification from collection.
      *
-     * @param PositionModificationInterface $positionModification
      *
      * @return self
      */

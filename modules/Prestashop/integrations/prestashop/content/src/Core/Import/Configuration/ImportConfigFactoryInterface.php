@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,6 @@ interface ImportConfigFactoryInterface
     /**
      * Build import configuration VO out of form data.
      *
-     * @param Request $request
      *
      * @return ImportConfigInterface
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Import\Exception;
 /**
  * Class SkippedIterationException thrown when an import iteration is skipped.
  */
-class SkippedIterationException extends ImportException
-{
-}
+class SkippedIterationException extends ImportException {}

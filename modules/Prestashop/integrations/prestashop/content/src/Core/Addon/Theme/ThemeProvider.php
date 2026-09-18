@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,6 @@ final class ThemeProvider implements ThemeProviderInterface
      */
     private $theme;
 
-    /**
-     * @param ThemeRepository $themeRepository
-     * @param Theme $theme
-     */
     public function __construct(ThemeRepository $themeRepository, Theme $theme)
     {
         $this->themeRepository = $themeRepository;

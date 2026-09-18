@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,7 @@ abstract class AbstractCartRuleHandler
     /**
      * Gets legacy CartRule
      *
-     * @param CartRuleId $cartRuleId
      *
-     * @return CartRule
      *
      * @throws CartRuleException
      * @throws CartRuleNotFoundException
@@ -67,7 +66,6 @@ abstract class AbstractCartRuleHandler
     /**
      * Deletes legacy CartRule
      *
-     * @param CartRule $cartRule
      *
      * @return bool
      *
@@ -85,10 +83,7 @@ abstract class AbstractCartRuleHandler
     /**
      * Toggles legacy cart rule status
      *
-     * @param CartRule $cartRule
-     * @param bool $newStatus
      *
-     * @return bool
      *
      * @throws CartRuleException
      */

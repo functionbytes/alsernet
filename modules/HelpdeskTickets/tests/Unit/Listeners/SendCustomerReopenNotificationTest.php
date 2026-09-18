@@ -143,9 +143,15 @@ class SendCustomerReopenNotificationTest extends TestCase
 
     public function test_listener_is_on_notifications_queue(): void
     {
-        $listener = app(SendCustomerReopenNotification::class);
+        // Se comprueba EXACTAMENTE como lo hace el Dispatcher de Laravel:
+        // instancia sin constructor + viaQueue(). Este test pasaba antes
+        // leyendo ->queue sobre una instancia resuelta del contenedor (con
+        // constructor), y por eso no detectó que en producción el job
+        // acababa en la cola 'default' —que ningún worker atiende— porque
+        // la asignación vivía dentro del constructor.
+        $listener = (new \ReflectionClass(SendCustomerReopenNotification::class))->newInstanceWithoutConstructor();
 
-        $this->assertEquals('notifications', $listener->queue);
+        $this->assertSame('notifications', $listener->viaQueue());
     }
 
     public function test_listener_retries_three_times(): void

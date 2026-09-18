@@ -4,6 +4,8 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -52,7 +54,7 @@ class StockCent extends Model
      */
     public function stock()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Stock::class, 'idstock', 'idstock');
+        return $this->belongsTo(Stock::class, 'idstock', 'idstock');
     }
 
     /**
@@ -61,7 +63,7 @@ class StockCent extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -70,7 +72,7 @@ class StockCent extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -79,6 +81,6 @@ class StockCent extends Model
      */
     public function teststock()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Teststock::class, 'idteststock', 'idteststock');
+        return $this->belongsTo(Teststock::class, 'idteststock', 'idteststock');
     }
 }

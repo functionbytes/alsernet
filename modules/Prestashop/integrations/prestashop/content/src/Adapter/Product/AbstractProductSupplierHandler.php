@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ abstract class AbstractProductSupplierHandler
      */
     protected $productSupplierRepository;
 
-    /**
-     * @param ProductSupplierRepository $productSupplierRepository
-     */
     public function __construct(
         ProductSupplierRepository $productSupplierRepository
     ) {
@@ -55,9 +53,6 @@ abstract class AbstractProductSupplierHandler
     }
 
     /**
-     * @param ProductId $productId
-     * @param CombinationId|null $combinationId
-     *
      * @return array<int, ProductSupplierInfo>
      */
     protected function getProductSuppliersInfo(ProductId $productId, ?CombinationId $combinationId = null): array
@@ -88,19 +83,13 @@ abstract class AbstractProductSupplierHandler
 
     /**
      * Loads ProductSupplier object model with data from DTO.
-     *
-     * @param ProductId $productId
-     * @param ProductSupplierDTO $productSupplierDTO
-     * @param CombinationId|null $combinationId
-     *
-     * @return ProductSupplier
      */
     protected function loadEntityFromDTO(ProductId $productId, ProductSupplierDTO $productSupplierDTO, ?CombinationId $combinationId = null): ProductSupplier
     {
         if ($productSupplierDTO->getProductSupplierId()) {
             $productSupplier = $this->productSupplierRepository->get($productSupplierDTO->getProductSupplierId());
         } else {
-            $productSupplier = new ProductSupplier();
+            $productSupplier = new ProductSupplier;
         }
 
         $productSupplier->id_product = $productId->getValue();

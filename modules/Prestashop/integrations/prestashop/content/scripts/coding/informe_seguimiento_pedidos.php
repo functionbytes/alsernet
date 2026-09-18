@@ -4,11 +4,11 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include(dirname(__FILE__) . '/../../config/config.inc.php');
-die();
+include dirname(__FILE__).'/../../config/config.inc.php';
+exit();
 // --- Consulta de pedidos (30 días) con alias seguros ---
 $sql = "
 SELECT
@@ -29,24 +29,26 @@ ORDER BY ao.id_order ASC
 
 $orders = Db::getInstance()->ExecuteS($sql);
 
-
 // Contexto HTTP (puedes agregar auth/headers si hace falta)
 $headers = [
-    "Accept: application/xml",
+    'Accept: application/xml',
 ];
 $context = stream_context_create([
-    "http" => [
-        "method" => "GET",
-        "header" => implode("\r\n", $headers),
-        "timeout" => 10,
-        "ignore_errors" => true,
+    'http' => [
+        'method' => 'GET',
+        'header' => implode("\r\n", $headers),
+        'timeout' => 10,
+        'ignore_errors' => true,
     ],
 ]);
 
 function http_get_silent(string $url, $context)
 {
     $content = @file_get_contents($url, false, $context);
-    if ($content === false) return [false, null];
+    if ($content === false) {
+        return [false, null];
+    }
+
     return [true, $content];
 }
 
@@ -69,10 +71,12 @@ function analizarEstadosXML(string $xmlRaw): array
     $lastFecha = null;
 
     foreach ($xml->resource as $res) {
-        $estado = isset($res->estado) ? (int)$res->estado : null;
-        $fecha  = isset($res->fecha)  ? (string)$res->fecha : null;
+        $estado = isset($res->estado) ? (int) $res->estado : null;
+        $fecha = isset($res->fecha) ? (string) $res->fecha : null;
 
-        if ($estado === 7) $has7 = true;
+        if ($estado === 7) {
+            $has7 = true;
+        }
 
         if ($fecha !== null) {
             $ts = strtotime($fecha);
@@ -82,30 +86,36 @@ function analizarEstadosXML(string $xmlRaw): array
             }
         }
     }
+
     return ['ok' => true, 'has7' => $has7, 'lastEstadoNum' => $lastEstadoNum];
 }
 
 function evaluarTracking(?string $raw): string
 {
-    if ($raw === null || $raw === '') return 'NO';
-    if (stripos($raw, 'Not Found') !== false) return 'NO';
+    if ($raw === null || $raw === '') {
+        return 'NO';
+    }
+    if (stripos($raw, 'Not Found') !== false) {
+        return 'NO';
+    }
+
     return 'SI';
 }
 
 // --- Construcción de filas ---
 $rows = [];
 foreach ($orders as $value) {
-    $idOrder = (int)$value['id_order'];
-    $estadoPresta = (string)$value['estado_presta'];
-    $transportista = (string)($value['transportista'] ?? '');
+    $idOrder = (int) $value['id_order'];
+    $estadoPresta = (string) $value['estado_presta'];
+    $transportista = (string) ($value['transportista'] ?? '');
 
-    $urlEstados  = "http://127.0.0.1:58002/api-gestion/pedido-cliente-hist/?identificadororigen=" . $idOrder;
-    $urlTracking = "http://127.0.0.1:58002/api-gestion/pedido-cliente-tracking/?identificadororigen=" . $idOrder;
+    $urlEstados = 'http://127.0.0.1:58002/api-gestion/pedido-cliente-hist/?identificadororigen='.$idOrder;
+    $urlTracking = 'http://127.0.0.1:58002/api-gestion/pedido-cliente-tracking/?identificadororigen='.$idOrder;
 
     // 1) Llamada a historial de estados
     [$okEstados, $xmlEstados] = http_get_silent($urlEstados, $context);
 
-    if (!$okEstados || $xmlEstados === null) {
+    if (! $okEstados || $xmlEstados === null) {
         // No responde: estado=no, tracking=no (Estado y Transportista se muestran igual)
         $rows[] = [
             'id' => $idOrder,
@@ -114,11 +124,12 @@ foreach ($orders as $value) {
             'transportista' => $transportista,
             'tracking' => 'no',
         ];
+
         continue;
     }
 
     $analisis = analizarEstadosXML($xmlEstados);
-    if (!$analisis['ok']) {
+    if (! $analisis['ok']) {
         $rows[] = [
             'id' => $idOrder,
             'estadoApi' => 'no',
@@ -126,6 +137,7 @@ foreach ($orders as $value) {
             'transportista' => $transportista,
             'tracking' => 'no',
         ];
+
         continue;
     }
 
@@ -215,26 +227,26 @@ foreach ($orders as $value) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($rows as $r): ?>
+                    <?php foreach ($rows as $r) { ?>
                         <tr>
-                            <td><?= (int)$r['id'] ?></td>
+                            <td><?= (int) $r['id'] ?></td>
                             <td><?= htmlspecialchars($r['estadoApi']) ?></td>
                             <td><?= htmlspecialchars($r['estadoPresta']) ?></td>
                             <td><?= htmlspecialchars($r['transportista']) ?></td>
                             <td>
                                 <?php
-                                $val = strtolower((string)$r['tracking']);
-                                if ($val === 'si') {
-                                    echo '<span class="badge badge-success">SI - Maxi</span>';
-                                } elseif ($val === 'no') {
-                                    echo '<span class="badge badge-secondary">NO - Maxi</span>';
-                                } else {
-                                    echo htmlspecialchars($r['tracking']);
-                                }
-                                ?>
+                                $val = strtolower((string) $r['tracking']);
+                        if ($val === 'si') {
+                            echo '<span class="badge badge-success">SI - Maxi</span>';
+                        } elseif ($val === 'no') {
+                            echo '<span class="badge badge-secondary">NO - Maxi</span>';
+                        } else {
+                            echo htmlspecialchars($r['tracking']);
+                        }
+                        ?>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </tbody>
             </table>
         </div>

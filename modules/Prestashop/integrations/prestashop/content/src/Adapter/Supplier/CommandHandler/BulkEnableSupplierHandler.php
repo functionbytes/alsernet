@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,13 +51,13 @@ final class BulkEnableSupplierHandler implements BulkEnableSupplierHandlerInterf
             foreach ($command->getSupplierIds() as $supplierId) {
                 $entity = new Supplier($supplierId->getValue());
 
-                if (0 >= $entity->id) {
+                if ($entity->id <= 0) {
                     throw new SupplierNotFoundException(sprintf('Supplier object with id "%s" has not been found for enabling status.', $supplierId->getValue()));
                 }
 
                 $entity->active = true;
 
-                if (false === $entity->update()) {
+                if ($entity->update() === false) {
                     throw new CannotUpdateSupplierStatusException(sprintf('Unable to enable supplier object with id "%s"', $supplierId->getValue()));
                 }
             }

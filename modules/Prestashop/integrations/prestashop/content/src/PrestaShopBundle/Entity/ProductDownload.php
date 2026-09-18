@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Table()
+ *
  * @ORM\Entity
  */
 class ProductDownload
@@ -39,7 +41,9 @@ class ProductDownload
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_product_download", type="integer", options={"unsigned"=true})
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -274,12 +278,13 @@ class ProductDownload
      * Now we tell doctrine that before we persist or update we call the updateTimestamps() function.
      *
      * @ORM\PrePersist
+     *
      * @ORM\PreUpdate
      */
     public function updateTimestamps()
     {
         if ($this->getDateAdd() == null) {
-            $this->setDateAdd(new DateTime());
+            $this->setDateAdd(new DateTime);
         }
     }
 }

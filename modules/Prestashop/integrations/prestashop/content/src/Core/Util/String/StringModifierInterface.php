@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,19 +33,13 @@ namespace PrestaShop\PrestaShop\Core\Util\String;
 interface StringModifierInterface
 {
     /**
-     * @param string $string
-     *
+     * @param  string  $string
      * @return string
      */
     public function splitByCamelCase($string);
 
     /**
      * Cuts string end if it exceeds expected length
-     *
-     * @param string $string
-     * @param int $expectedLength
-     *
-     * @return string
      */
     public function cutEnd(string $string, int $expectedLength): string;
 }

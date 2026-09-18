@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,10 +43,6 @@ use SpecificPrice;
 final class AddSpecificPriceHandler extends AbstractSpecificPriceHandler implements AddSpecificPriceHandlerInterface
 {
     /**
-     * @param AddSpecificPriceCommand $command
-     *
-     * @return SpecificPriceId
-     *
      * @throws SpecificPriceConstraintException
      * @throws SpecificPriceException
      */
@@ -54,11 +51,11 @@ final class AddSpecificPriceHandler extends AbstractSpecificPriceHandler impleme
         try {
             $specificPrice = $this->createSpecificPriceFromCommand($command);
 
-            if (false === $specificPrice->validateFields(false)) {
+            if ($specificPrice->validateFields(false) === false) {
                 throw new SpecificPriceConstraintException('Specific price contains invalid field values');
             }
 
-            if (!$specificPrice->add()) {
+            if (! $specificPrice->add()) {
                 throw new SpecificPriceException('Failed to add new specific price');
             }
         } catch (PrestaShopException $e) {
@@ -71,16 +68,14 @@ final class AddSpecificPriceHandler extends AbstractSpecificPriceHandler impleme
     /**
      * Creates legacy SpecificPrice object from command
      *
-     * @param AddSpecificPriceCommand $command
      *
-     * @return SpecificPrice
      *
      * @throws PrestaShopException
      * @throws SpecificPriceConstraintException
      */
     private function createSpecificPriceFromCommand(AddSpecificPriceCommand $command): SpecificPrice
     {
-        $specificPrice = new SpecificPrice();
+        $specificPrice = new SpecificPrice;
 
         $specificPrice->id_product = $command->getProductId()->getValue();
         $specificPrice->reduction_type = $command->getReduction()->getType();

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,8 +68,7 @@ class CustomerInformation
     private $customerSinceDate;
 
     /**
-     * @param string $email
-     *
+     * @param  string  $email
      * @return self
      */
     public static function withEmailOnly($email)
@@ -77,13 +77,13 @@ class CustomerInformation
     }
 
     /**
-     * @param int|null $customerId
-     * @param string|null $firstName
-     * @param string|null $lastName
-     * @param string $email
-     * @param int $validatedOrdersCount
-     * @param string $validatedOrdersAmount
-     * @param string $customerSinceDate
+     * @param  int|null  $customerId
+     * @param  string|null  $firstName
+     * @param  string|null  $lastName
+     * @param  string  $email
+     * @param  int  $validatedOrdersCount
+     * @param  string  $validatedOrdersAmount
+     * @param  string  $customerSinceDate
      */
     public function __construct(
         $customerId,

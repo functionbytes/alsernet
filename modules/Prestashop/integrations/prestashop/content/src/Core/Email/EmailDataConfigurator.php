@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class EmailDataConfigurator implements DataConfigurationInterface
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -86,7 +84,7 @@ final class EmailDataConfigurator implements DataConfigurationInterface
             $this->configuration->set('PS_MAIL_SMTP_PORT', $config['smtp_config']['port']);
             $smtpPassword = (string) $config['smtp_config']['password'];
 
-            if ('' !== $smtpPassword || !$this->configuration->get('PS_MAIL_PASSWD')) {
+            if ($smtpPassword !== '' || ! $this->configuration->get('PS_MAIL_PASSWD')) {
                 $this->configuration->set('PS_MAIL_PASSWD', $smtpPassword);
             }
         }

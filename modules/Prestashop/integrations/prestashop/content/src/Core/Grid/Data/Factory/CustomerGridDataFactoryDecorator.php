@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,7 @@ final class CustomerGridDataFactoryDecorator implements GridDataFactoryInterface
     private $contextCurrencyIsoCode;
 
     /**
-     * @param GridDataFactoryInterface $customerDoctrineGridDataFactory
-     * @param LocaleInterface $locale
-     * @param string $contextCurrencyIsoCode
+     * @param  string  $contextCurrencyIsoCode
      */
     public function __construct(
         GridDataFactoryInterface $customerDoctrineGridDataFactory,
@@ -84,8 +83,6 @@ final class CustomerGridDataFactoryDecorator implements GridDataFactoryInterface
     }
 
     /**
-     * @param RecordCollectionInterface $customers
-     *
      * @return RecordCollection
      */
     private function applyModifications(RecordCollectionInterface $customers)
@@ -97,18 +94,18 @@ final class CustomerGridDataFactoryDecorator implements GridDataFactoryInterface
                 $customer['social_title'] = '--';
             }
 
-            if (null === $customer['company']) {
+            if ($customer['company'] === null) {
                 $customer['company'] = '--';
             }
 
-            if (!empty($customer['total_spent'])) {
+            if (! empty($customer['total_spent'])) {
                 $customer['total_spent'] = $this->locale->formatPrice(
                     $customer['total_spent'],
                     $this->contextCurrencyIsoCode
                 );
             }
 
-            if (null === $customer['connect']) {
+            if ($customer['connect'] === null) {
                 $customer['connect'] = '--';
             }
 

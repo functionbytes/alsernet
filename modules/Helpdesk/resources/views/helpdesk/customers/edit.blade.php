@@ -27,10 +27,10 @@
                         </div>
                         <div class="d-flex gap-2">
                             <a href="{{ route('manager.helpdesk.customers.show', $customer) }}" class="btn btn-light">
-                                <i class="fa fa-times me-1"></i> Cancelar
+                                Cancelar
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-check me-1"></i> Guardar Cambios
+                                Guardar Cambios
                             </button>
                         </div>
                     </div>
@@ -44,7 +44,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
-                                            <h6 class="card-title text-{{ $customer->is_banned ? 'danger' : 'success' }} mb-2">
+                                            <h6 class="card-title text-{{ $customer->is_banned ? 'dark' : 'success' }} mb-2">
                                                 <i class="fa fa-{{ $customer->is_banned ? 'ban' : 'check-circle' }} me-1"></i>
                                                 Estado
                                             </h6>
@@ -116,7 +116,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="name" class="form-label fw-semibold">
-                                Nombre Completo <span class="text-danger">*</span>
+                                Nombre Completo <span class="text-brand">*</span>
                             </label>
                             <input type="text"
                                    id="name"
@@ -133,7 +133,7 @@
 
                         <div class="col-md-6">
                             <label for="email" class="form-label fw-semibold">
-                                Correo Electrónico <span class="text-danger">*</span>
+                                Correo Electrónico <span class="text-brand">*</span>
                             </label>
                             <input type="email"
                                    id="email"
@@ -403,35 +403,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: true,
-        placeholder: function() {
-            return $(this).find('option:first').text();
-        },
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    // Auto-uppercase country code
-    $('#country').on('input', function() {
-        $(this).val($(this).val().toUpperCase());
-    });
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/misc/select2-flash.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/misc/select2-flash.js')) }}" defer></script>
 @endpush

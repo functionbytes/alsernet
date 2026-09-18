@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationTag;
+use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Services\AgentPresenceService;
 
@@ -93,25 +94,31 @@ class ConversationInboxMetricsService
                     ->groupBy('channel')
                     ->pluck('cnt', 'channel');
 
+                // unassigned/archived/spam comparten la misma base ($inbox, sin
+                // join) y solo difieren en una columna simple: un único SELECT con
+                // SUM(CASE WHEN ...) sobre helpdesk_conversations directamente
+                // (antes 3 COUNT idénticos salvo el where). pending/closed/blocked/vip
+                // se quedan en sus propias queries porque necesitan whereHas (join a
+                // status/customer), igual que defaultViewVisible() (unread/mine/urgent).
+                $columnCounts = (clone $inbox)->selectRaw(
+                    'SUM(CASE WHEN assignee_id IS NULL THEN 1 ELSE 0 END) as unassigned,
+                    SUM(CASE WHEN is_archived = 1 THEN 1 ELSE 0 END) as archived,
+                    SUM(CASE WHEN is_spam = 1 THEN 1 ELSE 0 END) as spam'
+                )->first();
+
                 return [
-                    // Sin leer: mismo criterio que el filtro ?unread=1 de la lista
-                    // (helpdesk_conversation_reads real, no la vieja heurística
-                    // "abierta y sin asignar" que no tenía relación con si ESTE
-                    // usuario ya la había leído — el badge decía "3" con la lista
-                    // vacía debajo porque contaban cosas distintas).
+                    // Sin leer: Conversation::scopeUnreadFor() — única fuente de
+                    // verdad, compartida con listJson() (ver comentario del scope).
                     'unread' => $userId
-                        ? (clone $inbox)
-                            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-                            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
-                            ->count()
+                        ? (clone $inbox)->unreadFor($userId)->count()
                         : 0,
-                    'mine' => $userId ? (clone $inbox)->where('assignee_id', $userId)->count() : 0,
-                    'unassigned' => (clone $inbox)->whereNull('assignee_id')->count(),
-                    'urgent' => (clone $inbox)->where('priority', 'urgent')->count(),
+                    'mine' => $userId ? (clone $inbox)->defaultViewVisible()->where('assignee_id', $userId)->count() : 0,
+                    'unassigned' => (int) $columnCounts->unassigned,
+                    'urgent' => (clone $inbox)->defaultViewVisible()->where('priority', 'urgent')->count(),
                     'pending' => (clone $inbox)
                         ->whereHas('status', fn ($q) => $q->where('name', 'Esperando'))
                         ->count(),
-                    'archived' => (clone $inbox)->where('is_archived', true)->count(),
+                    'archived' => (int) $columnCounts->archived,
                     // "Cerradas" in the sidebar means resolved/closed status
                     // (is_open=false) — NOT archived, a separate concept. The
                     // link used to point at ?archived=1 and show this same
@@ -123,7 +130,7 @@ class ConversationInboxMetricsService
                     'blocked' => (clone $inbox)
                         ->whereHas('customer', fn ($c) => $c->whereNotNull('banned_at'))
                         ->count(),
-                    'spam' => (clone $inbox)->where('is_spam', true)->count(),
+                    'spam' => (int) $columnCounts->spam,
                     'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
                     'facebook' => (int) ($channelCounts['facebook'] ?? 0),
                     'instagram' => (int) ($channelCounts['instagram'] ?? 0),
@@ -154,46 +161,106 @@ class ConversationInboxMetricsService
     }
 
     /**
+     * Forget the sidebar's structural counters — BANDEJAS/EQUIPOS/ETIQUETAS
+     * (sidebarInboxes/sidebarGroups/inboxTags) — all three are single global
+     * cache keys (not per-user), so one agent's action can invalidate what
+     * every connected agent sees. Called from ConversationObserver whenever
+     * a conversation's group/status/archived state changes, and from the
+     * tag add/remove/sync endpoints (pivot-table changes the observer never
+     * sees). Real-time push (ConversationUpdated on the inbox channel) tells
+     * the client when to re-fetch; this just makes sure that re-fetch is not
+     * served a stale cached value for up to 60s.
+     */
+    public function invalidateSidebarStructureCaches(): void
+    {
+        Cache::forget('helpdesk:inbox:sidebar-counts-by-inbox');
+        Cache::forget('helpdesk:inbox:sidebar-groups');
+        Cache::forget('helpdesk:inbox:tags');
+    }
+
+    /**
      * Per-inbox sidebar entries filtrados por los inboxes asignados al
      * agente. Managers (helpdesk.manage) ven todos.
+     *
+     * La LISTA de bandejas visibles varía por agente (whereIn barato, sin
+     * cachear), pero el CONTEO de cada bandeja es el mismo para todos —
+     * delegado a inboxConversationCounts(), cacheado en una única clave
+     * global en vez de una por agente. Antes cada agente tenía su propia
+     * copia cacheada ('helpdesk:inbox:sidebar-list:user:{id}'), imposible de
+     * invalidar para todos a la vez cuando algo cambia en tiempo real (ver
+     * invalidateSidebarStructureCaches()).
      *
      * @param  array<int>|null  $userInboxIds
      * @return Collection<int, Inbox>
      */
-    public function sidebarInboxes(?int $userId, ?array $userInboxIds): Collection
+    public function sidebarInboxes(?array $userInboxIds): Collection
     {
-        $cacheKey = $userInboxIds === null
-            ? 'helpdesk:inbox:sidebar-list:all'
-            : 'helpdesk:inbox:sidebar-list:user:'.$userId;
+        $inboxList = Inbox::query()
+            ->where('is_active', true)
+            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('id', $userInboxIds))
+            ->orderBy('name')
+            ->get(['id', 'name', 'channel_type', 'color', 'icon']);
 
+        $counts = $this->inboxConversationCounts();
+
+        return $inboxList->each(
+            fn (Inbox $inbox) => $inbox->setAttribute('conversations_count', (int) ($counts[$inbox->id] ?? 0))
+        );
+    }
+
+    /**
+     * Un único GROUP BY para todos los contadores por inbox (antes 1 COUNT
+     * por inbox — N+1 con N inboxes activos). Filtrado igual que la vista
+     * "Inbox" por defecto (is_open/is_archived/sin bot activo) para que el
+     * número mostrado en el sidebar coincida con lo que el agente realmente
+     * ve al abrir ese inbox — antes contaba TODO (incluidas conversaciones
+     * resueltas/archivadas), mostrando un número mayor a cero con la lista
+     * vacía debajo.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    private function inboxConversationCounts(): \Illuminate\Support\Collection
+    {
         return cache()->remember(
-            $cacheKey,
+            'helpdesk:inbox:sidebar-counts-by-inbox',
             60,
-            function () use ($userInboxIds) {
-                $inboxList = Inbox::query()
-                    ->where('is_active', true)
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('id', $userInboxIds))
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'channel_type', 'color', 'icon']);
+            fn () => Conversation::query()
+                ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                ->where('is_archived', false)
+                ->withoutActiveBot()
+                ->selectRaw('inbox_id, COUNT(*) as cnt')
+                ->groupBy('inbox_id')
+                ->pluck('cnt', 'inbox_id')
+        );
+    }
 
-                // Un único GROUP BY para todos los contadores por inbox (antes 1
-                // COUNT por inbox — N+1 con N inboxes activos). Filtrado igual que
-                // la vista "Inbox" por defecto (is_open/is_archived/sin bot activo)
-                // para que el número mostrado en el sidebar coincida con lo que el
-                // agente realmente ve al abrir ese inbox — antes contaba TODO
-                // (incluidas conversaciones resueltas/archivadas), mostrando un
-                // número mayor a cero con la lista vacía debajo.
+    /**
+     * Contador de conversaciones por equipo para la sección "EQUIPOS" del
+     * sidebar — mismo criterio y mismo patrón de GROUP BY único que
+     * sidebarInboxes(), que hasta ahora era el único que lo aplicaba
+     * (Group::orderBy('name')->get() en index() nunca traía el conteo).
+     *
+     * @return Collection<int, Group>
+     */
+    public function sidebarGroups(): Collection
+    {
+        return cache()->remember(
+            'helpdesk:inbox:sidebar-groups',
+            60,
+            function () {
+                $groups = Group::orderBy('name')->get();
+
                 $counts = Conversation::query()
-                    ->whereIn('inbox_id', $inboxList->pluck('id'))
+                    ->whereIn('group_id', $groups->pluck('id'))
                     ->whereHas('status', fn ($q) => $q->where('is_open', true))
                     ->where('is_archived', false)
                     ->withoutActiveBot()
-                    ->selectRaw('inbox_id, COUNT(*) as cnt')
-                    ->groupBy('inbox_id')
-                    ->pluck('cnt', 'inbox_id');
+                    ->selectRaw('group_id, COUNT(*) as cnt')
+                    ->groupBy('group_id')
+                    ->pluck('cnt', 'group_id');
 
-                return $inboxList->each(
-                    fn (Inbox $inbox) => $inbox->setAttribute('conversations_count', (int) ($counts[$inbox->id] ?? 0))
+                return $groups->each(
+                    fn (Group $group) => $group->setAttribute('conversations_count', (int) ($counts[$group->id] ?? 0))
                 );
             }
         );
@@ -209,7 +276,19 @@ class ConversationInboxMetricsService
             60,
             fn () => ConversationTag::query()
                 ->where('is_active', true)
-                ->withCount('conversations')
+                // Mismo criterio de visibilidad que sidebarGroups()/sidebarInboxes():
+                // clickear una etiqueta navega a ?tag=X, que hereda el filtro
+                // is_open=true de la vista por defecto "Todas las abiertas" (ver
+                // ConversationFilter::requestOverrides() — 'tag' no libera 'is_open').
+                // Sin este scope aquí, withCount('conversations') contaba TODAS las
+                // conversaciones con la etiqueta (incluidas cerradas/archivadas/bot),
+                // así que el badge no coincidía con lo que realmente se veía al
+                // filtrar (p.ej. "Resuelta" mostraba 2 con la lista vacía).
+                ->withCount(['conversations' => fn ($q) => $q
+                    ->whereHas('status', fn ($s) => $s->where('is_open', true))
+                    ->where('is_archived', false)
+                    ->withoutActiveBot(),
+                ])
                 ->orderBy('name')
                 ->get()
         );

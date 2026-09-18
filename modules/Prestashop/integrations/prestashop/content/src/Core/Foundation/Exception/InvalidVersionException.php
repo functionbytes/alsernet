@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,12 +38,12 @@ class InvalidVersionException extends CoreException
     /**
      * Construct.
      *
-     * @param string $version the provided PrestaShop version
+     * @param  string  $version  the provided PrestaShop version
      */
     public function __construct($version)
     {
         $message = sprintf(
-            'You provided an invalid version string ("%s"). A valid version string ' .
+            'You provided an invalid version string ("%s"). A valid version string '.
             'must contain numeric characters separated by "." characters, for example "1.7.4.0".',
             $version
         );

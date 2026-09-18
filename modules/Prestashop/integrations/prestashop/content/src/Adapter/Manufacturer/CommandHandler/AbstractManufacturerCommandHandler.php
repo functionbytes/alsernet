@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,6 @@ abstract class AbstractManufacturerCommandHandler extends AbstractManufacturerHa
     /**
      * Deletes legacy Manufacturer
      *
-     * @param Manufacturer $manufacturer
      *
      * @return bool
      *
@@ -57,9 +57,7 @@ abstract class AbstractManufacturerCommandHandler extends AbstractManufacturerHa
     /**
      * Toggles legacy manufacturer status
      *
-     * @param Manufacturer $manufacturer
-     * @param bool $newStatus
-     *
+     * @param  bool  $newStatus
      * @return bool
      *
      * @throws ManufacturerException

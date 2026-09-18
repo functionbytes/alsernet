@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ class MailPartialTemplateRenderer
     /** @var Smarty */
     private $smarty;
 
-    /**
-     * @param Smarty $smarty
-     */
     public function __construct(Smarty $smarty)
     {
         $this->smarty = $smarty;
@@ -52,21 +50,19 @@ class MailPartialTemplateRenderer
      * current_theme/mails/current_iso_lang/ if found, otherwise in
      * mails/current_iso_lang.
      *
-     * @param string $partialTemplateName template name with extension
-     * @param LanguageInterface $language
-     * @param array $variables sent to smarty as 'list'
-     * @param bool $cleanComments
-     *
+     * @param  string  $partialTemplateName  template name with extension
+     * @param  array  $variables  sent to smarty as 'list'
+     * @param  bool  $cleanComments
      * @return string
      */
     public function render($partialTemplateName, LanguageInterface $language, array $variables = [], $cleanComments = false)
     {
         $potentialPaths = [
-            _PS_THEME_DIR_ . 'mails' . DIRECTORY_SEPARATOR . $language->getIsoCode() . DIRECTORY_SEPARATOR . $partialTemplateName,
-            _PS_MAIL_DIR_ . $language->getIsoCode() . DIRECTORY_SEPARATOR . $partialTemplateName,
-            _PS_THEME_DIR_ . 'mails' . DIRECTORY_SEPARATOR . 'en' . DIRECTORY_SEPARATOR . $partialTemplateName,
-            _PS_MAIL_DIR_ . 'en' . DIRECTORY_SEPARATOR . $partialTemplateName,
-            _PS_MAIL_DIR_ . '_partials' . DIRECTORY_SEPARATOR . $partialTemplateName,
+            _PS_THEME_DIR_.'mails'.DIRECTORY_SEPARATOR.$language->getIsoCode().DIRECTORY_SEPARATOR.$partialTemplateName,
+            _PS_MAIL_DIR_.$language->getIsoCode().DIRECTORY_SEPARATOR.$partialTemplateName,
+            _PS_THEME_DIR_.'mails'.DIRECTORY_SEPARATOR.'en'.DIRECTORY_SEPARATOR.$partialTemplateName,
+            _PS_MAIL_DIR_.'en'.DIRECTORY_SEPARATOR.$partialTemplateName,
+            _PS_MAIL_DIR_.'_partials'.DIRECTORY_SEPARATOR.$partialTemplateName,
         ];
 
         foreach ($potentialPaths as $path) {

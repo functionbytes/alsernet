@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class Backup implements BackupInterface
     private $fileName;
 
     /**
-     * @param string $fileName Backup file name
+     * @param  string  $fileName  Backup file name
      */
     public function __construct($fileName)
     {
@@ -69,7 +70,7 @@ final class Backup implements BackupInterface
      */
     public function getFilePath()
     {
-        return $this->legacyBackup->getBackupPath() . $this->getFileName();
+        return $this->legacyBackup->getBackupPath().$this->getFileName();
     }
 
     /**
@@ -101,8 +102,8 @@ final class Backup implements BackupInterface
      */
     public function getDate()
     {
-        list($timestamp) = explode('-', $this->fileName);
+        [$timestamp] = explode('-', $this->fileName);
 
-        return new DateTimeImmutable('@' . $timestamp);
+        return new DateTimeImmutable('@'.$timestamp);
     }
 }

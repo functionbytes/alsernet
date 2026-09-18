@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,8 @@ final class TopCategoryKpi implements KpiInterface
     private $employeeIdLang;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $kpiConfiguration
-     * @param string $sourceUrl
-     * @param int $employeeIdLang
+     * @param  string  $sourceUrl
+     * @param  int  $employeeIdLang
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -81,7 +80,7 @@ final class TopCategoryKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-top-category';
         $helper->icon = 'money';
         $helper->color = 'color3';

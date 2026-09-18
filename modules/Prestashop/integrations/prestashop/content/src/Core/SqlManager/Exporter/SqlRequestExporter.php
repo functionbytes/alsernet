@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class SqlRequestExporter implements SqlRequestExporterInterface
      */
     private $csvFileWriter;
 
-    /**
-     * @param FileWriterInterface $csvFileWriter
-     */
     public function __construct(FileWriterInterface $csvFileWriter)
     {
         $this->csvFileWriter = $csvFileWriter;

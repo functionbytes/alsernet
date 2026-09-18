@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ final class AddRootCategoryHandler extends AbstractObjectModelHandler implements
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -67,7 +65,6 @@ final class AddRootCategoryHandler extends AbstractObjectModelHandler implements
     /**
      * Creates legacy root category
      *
-     * @param AddRootCategoryCommand $command
      *
      * @return Category
      *
@@ -76,7 +73,7 @@ final class AddRootCategoryHandler extends AbstractObjectModelHandler implements
      */
     private function createRootCategoryFromCommand(AddRootCategoryCommand $command)
     {
-        $category = new Category();
+        $category = new Category;
         $category->is_root_category = true;
         $category->level_depth = 1;
         $category->id_parent = $this->configuration->get('PS_ROOT_CATEGORY');
@@ -84,35 +81,35 @@ final class AddRootCategoryHandler extends AbstractObjectModelHandler implements
         $category->link_rewrite = $command->getLocalizedLinkRewrites();
         $category->active = $command->isActive();
 
-        if (null !== $command->getLocalizedDescriptions()) {
+        if ($command->getLocalizedDescriptions() !== null) {
             $category->description = $command->getLocalizedDescriptions();
         }
 
-        if (null !== $command->getLocalizedMetaTitles()) {
+        if ($command->getLocalizedMetaTitles() !== null) {
             $category->meta_title = $command->getLocalizedMetaTitles();
         }
 
-        if (null !== $command->getLocalizedMetaDescriptions()) {
+        if ($command->getLocalizedMetaDescriptions() !== null) {
             $category->meta_description = $command->getLocalizedMetaDescriptions();
         }
 
-        if (null !== $command->getLocalizedMetaKeywords()) {
+        if ($command->getLocalizedMetaKeywords() !== null) {
             $category->meta_keywords = $command->getLocalizedMetaKeywords();
         }
 
-        if (null !== $command->getAssociatedGroupIds()) {
+        if ($command->getAssociatedGroupIds() !== null) {
             $category->groupBox = $command->getAssociatedGroupIds();
         }
 
-        if (false === $category->validateFields(false)) {
+        if ($category->validateFields(false) === false) {
             throw new CategoryException('Invalid data for root category creation');
         }
 
-        if (false === $category->validateFieldsLang(false)) {
+        if ($category->validateFieldsLang(false) === false) {
             throw new CategoryException('Invalid data for root category creation');
         }
 
-        if (false === $category->save()) {
+        if ($category->save() === false) {
             throw new CannotAddCategoryException('Failed to create root category');
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+use DeepL\Translator;
+
 require dirname(__FILE__).'/../../config/config.panel.inc.php';
 require dirname(__FILE__).'/vendor/autoload.php';
 
@@ -132,7 +134,7 @@ function traducirProductos($dbOkitup, $idioma, $id_products = false, $id_categor
 
     global $productos;
 
-    $translator = new \DeepL\Translator(_DEF_authKey);
+    $translator = new Translator(_DEF_authKey);
 
     $where_categoria = '';
     $where_productos = '';

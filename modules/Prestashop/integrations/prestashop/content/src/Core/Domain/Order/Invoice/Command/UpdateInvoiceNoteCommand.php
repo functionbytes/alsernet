@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,27 +44,17 @@ class UpdateInvoiceNoteCommand
      */
     private $note;
 
-    /**
-     * @param int $orderInvoiceId
-     * @param string|null $note
-     */
     public function __construct(int $orderInvoiceId, ?string $note)
     {
         $this->orderInvoiceId = new OrderInvoiceId($orderInvoiceId);
         $this->note = $note;
     }
 
-    /**
-     * @return OrderInvoiceId
-     */
     public function getOrderInvoiceId(): OrderInvoiceId
     {
         return $this->orderInvoiceId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getNote(): ?string
     {
         return $this->note;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,11 +43,6 @@ class ExportThemeLanguageType extends TranslatorAwareType
      */
     private $themeChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $themeChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

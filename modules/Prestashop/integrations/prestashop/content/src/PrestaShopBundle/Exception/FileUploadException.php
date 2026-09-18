@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShopBundle\Exception;
 /**
  * Exception that should be thrown when file uploading has failed.
  */
-class FileUploadException extends \RuntimeException
-{
-}
+class FileUploadException extends \RuntimeException {}

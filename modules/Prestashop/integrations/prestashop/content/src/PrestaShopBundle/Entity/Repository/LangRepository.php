@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,7 @@ use PrestaShopBundle\Entity\Lang;
 class LangRepository extends EntityRepository implements LanguageRepositoryInterface
 {
     public const ISO_CODE = 'isoCode';
+
     public const LOCALE = 'locale';
 
     /**
@@ -47,8 +49,7 @@ class LangRepository extends EntityRepository implements LanguageRepositoryInter
     ];
 
     /**
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return string
      */
     public function getLocaleByIsoCode($isoCode)
@@ -59,8 +60,7 @@ class LangRepository extends EntityRepository implements LanguageRepositoryInter
     }
 
     /**
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return Lang|null
      */
     public function getOneByLocale($locale)
@@ -69,8 +69,7 @@ class LangRepository extends EntityRepository implements LanguageRepositoryInter
     }
 
     /**
-     * @param string $isoCode
-     *
+     * @param  string  $isoCode
      * @return Lang|null
      */
     public function getOneByIsoCode($isoCode)
@@ -79,14 +78,13 @@ class LangRepository extends EntityRepository implements LanguageRepositoryInter
     }
 
     /**
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return Lang|null
      */
     public function getOneByLocaleOrIsoCode($locale)
     {
         $language = $this->getOneByLocale($locale);
-        if (!$language) {
+        if (! $language) {
             $localeParts = explode('-', $locale);
             $isoCode = strtolower($localeParts[0]);
             $language = $this->getOneByIsoCode($isoCode);
@@ -96,9 +94,8 @@ class LangRepository extends EntityRepository implements LanguageRepositoryInter
     }
 
     /**
-     * @param string $key
-     * @param string $value
-     *
+     * @param  string  $key
+     * @param  string  $value
      * @return Lang|null
      */
     private function searchLanguage($key, $value)

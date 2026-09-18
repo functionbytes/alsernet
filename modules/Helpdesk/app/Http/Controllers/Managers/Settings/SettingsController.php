@@ -4,7 +4,6 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\UpdateUploadingSettingsRequest;
 use Modules\Helpdesk\Models\Setting;
@@ -13,7 +12,7 @@ class SettingsController extends Controller
 {
     private const DEFAULTS = [
         'max_file_size_mb' => 25,
-        'allowed_extensions' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip',
+        'allowed_extensions' => 'pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,webp,txt,csv,zip,mp3,ogg,wav,m4a,webm',
         'enable_image_compression' => true,
         'image_max_width' => 1920,
         'image_max_height' => 1080,
@@ -62,11 +61,7 @@ class SettingsController extends Controller
             $validated['allowed_extensions'] = implode(',', $validated['allowed_extensions']);
         }
 
-        Cache::put('helpdesk.uploading', $validated, now()->addDays(365));
-
-        foreach ($validated as $key => $value) {
-            Setting::set('uploading.'.$key, $value, 'uploading');
-        }
+        Setting::setMany($validated, 'uploading', 'settings.uploading.updated');
 
         return back()->with('success', 'Configuración de subida de archivos actualizada correctamente.');
     }

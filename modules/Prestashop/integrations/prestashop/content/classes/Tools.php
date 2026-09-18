@@ -733,7 +733,7 @@ class ToolsCore
      * Return price with currency sign for a given product.
      *
      * @deprecated Since 1.7.6.0. Please use Locale::formatPrice() instead
-     * @see PrestaShop\PrestaShop\Core\Localization\Locale
+     * @see Locale
      *
      * @param  float  $price  Product price
      * @param  int|Currency|array|null  $currency  Current currency (object, id_currency, NULL => context currency)
@@ -2154,7 +2154,7 @@ class ToolsCore
                     curl_error($curl)
                 );
 
-                throw new \Exception($errorMessage);
+                throw new Exception($errorMessage);
             }
 
             curl_close($curl);
@@ -3274,7 +3274,7 @@ exit;
      *
      * @param  string  $type  by|way
      * @param  string  $value  If no index given, use default order from admin -> pref -> inventaries
-     * @param  bool|\bool(false)|string  $prefix
+     * @param  bool|bool(false)|string  $prefix
      * @return string Order by sql clause
      */
     public static function getProductsOrder($type, $value = null, $prefix = false)

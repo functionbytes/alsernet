@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -71,13 +72,6 @@ class ModuleActivatedListener
      */
     private $moduleRepository;
 
-    /**
-     * @param RouterInterface $router
-     * @param TranslatorInterface $translator
-     * @param Session $session
-     * @param Reader $annotationReader
-     * @param ModuleRepository $moduleRepository
-     */
     public function __construct(
         RouterInterface $router,
         TranslatorInterface $translator,
@@ -93,32 +87,30 @@ class ModuleActivatedListener
     }
 
     /**
-     * @param FilterControllerEvent $event
-     *
      * @throws AnnotationException
      * @throws \ReflectionException
      */
     public function onKernelController(FilterControllerEvent $event)
     {
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 
         $controller = $event->getController();
 
-        if (!is_array($controller)) {
+        if (! is_array($controller)) {
             return;
         }
 
-        list($controllerObject, $methodName) = $controller;
+        [$controllerObject, $methodName] = $controller;
         $moduleActivated = $this->getAnnotation($controllerObject, $methodName);
 
-        if (null === $moduleActivated) {
+        if ($moduleActivated === null) {
             return;
         }
 
         $module = $this->moduleRepository->getModule($moduleActivated->getModuleName());
-        if (!$module->isActive()) {
+        if (! $module->isActive()) {
             $this->showNotificationMessage($moduleActivated);
             $url = $this->router->generate($moduleActivated->getRedirectRoute());
 
@@ -130,8 +122,6 @@ class ModuleActivatedListener
 
     /**
      * Send an error message when redirected, will only work on migrated pages.
-     *
-     * @param ModuleActivated $moduleActivated
      */
     private function showNotificationMessage(ModuleActivated $moduleActivated)
     {
@@ -146,9 +136,8 @@ class ModuleActivatedListener
     }
 
     /**
-     * @param object $controllerObject
-     * @param string $methodName
-     *
+     * @param  object  $controllerObject
+     * @param  string  $methodName
      * @return ModuleActivated|null
      *
      * @throws AnnotationException
@@ -164,7 +153,7 @@ class ModuleActivatedListener
             $tokenAnnotation
         );
 
-        if (null !== $classAnnotation && $classAnnotation instanceof ModuleActivated) {
+        if ($classAnnotation !== null && $classAnnotation instanceof ModuleActivated) {
             $this->validateAnnotation($classAnnotation, $controllerClass);
 
             return $classAnnotation;
@@ -175,8 +164,8 @@ class ModuleActivatedListener
 
         $annotation = $this->annotationReader->getMethodAnnotation($reflectionMethod, $tokenAnnotation);
 
-        if (null !== $annotation && $annotation instanceof ModuleActivated) {
-            $this->validateAnnotation($annotation, $controllerClass . '::' . $methodName);
+        if ($annotation !== null && $annotation instanceof ModuleActivated) {
+            $this->validateAnnotation($annotation, $controllerClass.'::'.$methodName);
 
             return $annotation;
         }
@@ -185,18 +174,17 @@ class ModuleActivatedListener
     }
 
     /**
-     * @param ModuleActivated $annotation
-     * @param string $annotationPosition
+     * @param  string  $annotationPosition
      *
      * @throws AnnotationException
      */
     private function validateAnnotation(ModuleActivated $annotation, $annotationPosition)
     {
-        if (null === $annotation->getModuleName()) {
+        if ($annotation->getModuleName() === null) {
             throw new AnnotationException(sprintf('You must specify @ModuleActivated(moduleName) annotation parameter on %s', $annotationPosition));
         }
 
-        if (null === $annotation->getRedirectRoute()) {
+        if ($annotation->getRedirectRoute() === null) {
             throw new AnnotationException(sprintf('You must specify @ModuleActivated(redirectRoute) annotation parameter on %s', $annotationPosition));
         }
     }

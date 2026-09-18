@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,8 +50,7 @@ class GenerateProductCombinationsCommand
     private $groupedAttributeIdsList;
 
     /**
-     * @param int $productId
-     * @param array<int, array<int>> $groupedAttributeIds key-value pairs where key is the attribute group id and value is the list of that group attribute ids
+     * @param  array<int, array<int>>  $groupedAttributeIds  key-value pairs where key is the attribute group id and value is the list of that group attribute ids
      */
     public function __construct(
         int $productId,
@@ -60,25 +60,17 @@ class GenerateProductCombinationsCommand
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return array
-     */
     public function getGroupedAttributeIdsList(): array
     {
         return $this->groupedAttributeIdsList;
     }
 
     /**
-     * @param array $groupedAttributeIds
-     *
      * @throws AttributeConstraintException
      * @throws AttributeGroupConstraintException
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class DataRowCollectionFactory implements DataRowCollectionFactoryInterfac
      */
     private $fileReader;
 
-    /**
-     * @param FileReaderInterface $fileReader
-     */
     public function __construct(FileReaderInterface $fileReader)
     {
         $this->fileReader = $fileReader;
@@ -53,16 +51,16 @@ final class DataRowCollectionFactory implements DataRowCollectionFactoryInterfac
      */
     public function buildFromFile(SplFileInfo $file, $maxRowsInCollection = null)
     {
-        $dataRowCollection = new DataRowCollection();
+        $dataRowCollection = new DataRowCollection;
         $rowIndex = 0;
 
         foreach ($this->fileReader->read($file) as $dataRow) {
-            if (null !== $maxRowsInCollection && $rowIndex >= $maxRowsInCollection) {
+            if ($maxRowsInCollection !== null && $rowIndex >= $maxRowsInCollection) {
                 break;
             }
 
             $dataRowCollection->addDataRow($dataRow);
-            ++$rowIndex;
+            $rowIndex++;
         }
 
         return $dataRowCollection;

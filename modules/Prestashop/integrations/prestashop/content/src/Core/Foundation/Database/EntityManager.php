@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,18 +27,21 @@
 
 namespace PrestaShop\PrestaShop\Core\Foundation\Database;
 
+use PrestaShop\PrestaShop\Adapter\CoreException;
 use PrestaShop\PrestaShop\Adapter\EntityMetaDataRetriever;
+use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 
 class EntityManager
 {
     private $db;
+
     private $configuration;
 
     private $entityMetaData = [];
 
     public function __construct(
         DatabaseInterface $db,
-        \PrestaShop\PrestaShop\Core\ConfigurationInterface $configuration
+        ConfigurationInterface $configuration
     ) {
         $this->db = $db;
         $this->configuration = $configuration;
@@ -56,8 +60,7 @@ class EntityManager
     /**
      * Return current repository used.
      *
-     * @param string $className
-     *
+     * @param  string  $className
      * @return mixed
      */
     public function getRepository($className)
@@ -67,7 +70,7 @@ class EntityManager
             $repositoryClass = call_user_func([$className, 'getRepositoryClassName']);
         }
 
-        if (!$repositoryClass) {
+        if (! $repositoryClass) {
             $repositoryClass = '\\PrestaShop\\PrestaShop\\Core\\Foundation\\Database\\EntityRepository';
         }
 
@@ -83,16 +86,15 @@ class EntityManager
     /**
      * Return entity's meta data.
      *
-     * @param string $className
-     *
+     * @param  string  $className
      * @return mixed
      *
-     * @throws \PrestaShop\PrestaShop\Adapter\CoreException
+     * @throws CoreException
      */
     public function getEntityMetaData($className)
     {
-        if (!array_key_exists($className, $this->entityMetaData)) {
-            $metaDataRetriever = new EntityMetaDataRetriever();
+        if (! array_key_exists($className, $this->entityMetaData)) {
+            $metaDataRetriever = new EntityMetaDataRetriever;
             $this->entityMetaData[$className] = $metaDataRetriever->getEntityMetaData($className);
         }
 
@@ -102,7 +104,6 @@ class EntityManager
     /**
      * Flush entity to DB.
      *
-     * @param EntityInterface $entity
      *
      * @return $this
      */
@@ -116,7 +117,6 @@ class EntityManager
     /**
      * DElete entity from DB.
      *
-     * @param EntityInterface $entity
      *
      * @return $this
      */

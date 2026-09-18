@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,8 +63,6 @@ class OutOfStockType
     private $value;
 
     /**
-     * @param int $outOfStockType
-     *
      * @throws ProductStockConstraintException
      */
     public function __construct(int $outOfStockType)
@@ -71,22 +70,17 @@ class OutOfStockType
         $this->setOutOfStockType($outOfStockType);
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $outOfStockType
-     *
      * @throws ProductStockConstraintException
      */
     private function setOutOfStockType(int $outOfStockType): void
     {
-        if (!in_array($outOfStockType, self::ALLOWED_OUT_OF_STOCK_TYPES)) {
+        if (! in_array($outOfStockType, self::ALLOWED_OUT_OF_STOCK_TYPES)) {
             throw new ProductStockConstraintException(
                 sprintf(
                     'Cannot use product pack stock type %s, allowed values are: %s',

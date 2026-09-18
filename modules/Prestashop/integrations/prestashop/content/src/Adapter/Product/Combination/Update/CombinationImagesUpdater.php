@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,22 +59,19 @@ class CombinationImagesUpdater
     }
 
     /**
-     * @param CombinationId $combinationId
-     *
      * @throws DBALException
      * @throws InvalidArgumentException
      */
     public function deleteAllImageAssociations(CombinationId $combinationId): void
     {
         $this->connection->delete(
-            $this->dbPrefix . 'product_attribute_image',
+            $this->dbPrefix.'product_attribute_image',
             ['id_product_attribute' => $combinationId->getValue()]
         );
     }
 
     /**
-     * @param CombinationId $combinationId
-     * @param ImageId[] $imageIds
+     * @param  ImageId[]  $imageIds
      *
      * @throws DBALException
      * @throws InvalidArgumentException
@@ -89,7 +87,7 @@ class CombinationImagesUpdater
                 'id_product_attribute' => $combinationId->getValue(),
                 'id_image' => $imageId->getValue(),
             ];
-            $this->connection->insert($this->dbPrefix . 'product_attribute_image', $insertedValues);
+            $this->connection->insert($this->dbPrefix.'product_attribute_image', $insertedValues);
         }
     }
 }

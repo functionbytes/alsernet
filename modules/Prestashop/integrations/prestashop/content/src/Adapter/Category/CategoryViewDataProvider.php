@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,10 +61,7 @@ class CategoryViewDataProvider
     private $shopContext;
 
     /**
-     * @param ConfigurationInterface $configuration
-     * @param FeatureInterface $multishopFeature
-     * @param Context $shopContext
-     * @param int $contextLangId
+     * @param  int  $contextLangId
      */
     public function __construct(
         ConfigurationInterface $configuration,
@@ -80,8 +78,7 @@ class CategoryViewDataProvider
     /**
      * Get category view data.
      *
-     * @param int $categoryId
-     *
+     * @param  int  $categoryId
      * @return array
      */
     public function getViewData($categoryId)
@@ -94,7 +91,7 @@ class CategoryViewDataProvider
         if (empty($categoriesTree)
             && ($category->id != (int) $this->configuration->get('PS_ROOT_CATEGORY') || Tools::isSubmit('id_category'))
             && $this->shopContext->isShopContext()
-            && !$this->multishopFeature->isUsed()
+            && ! $this->multishopFeature->isUsed()
             && $categoriesWithoutParentCount > 1
         ) {
             $categoriesTree = [['name' => $category->name[$this->contextLangId]]];

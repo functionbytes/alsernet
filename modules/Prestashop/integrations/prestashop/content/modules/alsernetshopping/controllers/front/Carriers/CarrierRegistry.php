@@ -2,27 +2,31 @@
 
 namespace AlsernetShopping\Carriers;
 
-use Context;
 use Configuration;
+use Context;
 
 class CarrierRegistry
 {
     private static $instance = null;
+
     private $handlers = [];
+
     private $cache = [];
+
     private $cacheEnabled = true;
 
     private function __construct()
     {
-        $this->cacheEnabled = (bool)Configuration::get('ALSERNET_CARRIER_CACHE', true);
+        $this->cacheEnabled = (bool) Configuration::get('ALSERNET_CARRIER_CACHE', true);
         $this->loadDefaultHandlers();
     }
 
     public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new self();
+            self::$instance = new self;
         }
+
         return self::$instance;
     }
 
@@ -44,7 +48,8 @@ class CarrierRegistry
 
             return true;
         } catch (\Exception $e) {
-            error_log("CarrierRegistry: Error registering handler - " . $e->getMessage());
+            error_log('CarrierRegistry: Error registering handler - '.$e->getMessage());
+
             return false;
         }
     }
@@ -75,7 +80,7 @@ class CarrierRegistry
         // Registrar metricas si el monitor esta disponible
         if (class_exists('\AlsernetShopping\Carriers\CarrierPerformanceMonitor')) {
             try {
-                $monitor = \AlsernetShopping\Carriers\CarrierPerformanceMonitor::getInstance();
+                $monitor = CarrierPerformanceMonitor::getInstance();
                 $executionTime = microtime(true) - $startTime;
 
                 if ($fromCache) {
@@ -89,7 +94,7 @@ class CarrierRegistry
                 }
             } catch (\Exception $e) {
                 // Silenciosamente continuar si el monitor falla
-                error_log("CarrierRegistry: Monitor error - " . $e->getMessage());
+                error_log('CarrierRegistry: Monitor error - '.$e->getMessage());
             }
         }
 
@@ -103,7 +108,7 @@ class CarrierRegistry
 
     public function getActiveHandlers(): array
     {
-        return array_filter($this->handlers, function(CarrierHandlerInterface $handler) {
+        return array_filter($this->handlers, function (CarrierHandlerInterface $handler) {
             return $handler->isEnabled();
         });
     }
@@ -125,6 +130,7 @@ class CarrierRegistry
 
             return true;
         }
+
         return false;
     }
 
@@ -147,7 +153,7 @@ class CarrierRegistry
             'inactive_handlers' => $inactive,
             'cache_enabled' => $this->cacheEnabled,
             'cache_entries' => count($this->cache),
-            'registered_carriers' => array_keys($this->handlers)
+            'registered_carriers' => array_keys($this->handlers),
         ];
     }
 
@@ -162,14 +168,16 @@ class CarrierRegistry
             try {
                 $handler->cleanup();
             } catch (\Exception $e) {
-                error_log("CarrierRegistry: Error during cleanup - " . $e->getMessage());
+                error_log('CarrierRegistry: Error during cleanup - '.$e->getMessage());
             }
         }
     }
 
     // Carrier type configuration
     private const STANDARD_CARRIERS = [98, 100, 107, 108, 109, 110, 111]; // All go to setdelivery but only hide/show content
+
     private const CUSTOM_CARRIERS = [39, 101, 78, 66]; // Process dynamic HTML from server
+
     private const SKIP_SETDELIVERY = []; // Currently no carriers skip setdelivery
 
     private function loadDefaultHandlers(): void
@@ -184,12 +192,13 @@ class CarrierRegistry
         } elseif (in_array($carrierId, self::STANDARD_CARRIERS)) {
             return 'standard';
         }
+
         return 'unknown';
     }
 
     public function needsSetdelivery(int $carrierId): bool
     {
-        return !in_array($carrierId, self::SKIP_SETDELIVERY);
+        return ! in_array($carrierId, self::SKIP_SETDELIVERY);
     }
 
     public function getCarrierConfig(): array
@@ -197,20 +206,20 @@ class CarrierRegistry
         return [
             'standard' => self::STANDARD_CARRIERS,
             'custom' => self::CUSTOM_CARRIERS,
-            'skip_setdelivery' => self::SKIP_SETDELIVERY
+            'skip_setdelivery' => self::SKIP_SETDELIVERY,
         ];
     }
 
-    public function validateCarrierAvailability(int $carrierId, Context $context = null): array
+    public function validateCarrierAvailability(int $carrierId, ?Context $context = null): array
     {
         $context = $context ?: Context::getContext();
         $handler = $this->getHandler($carrierId);
 
-        if (!$handler) {
+        if (! $handler) {
             return [
                 'available' => false,
                 'handler' => null,
-                'message' => "No handler found for carrier ID {$carrierId}"
+                'message' => "No handler found for carrier ID {$carrierId}",
             ];
         }
 
@@ -219,7 +228,7 @@ class CarrierRegistry
         return [
             'available' => $validation['valid'],
             'handler' => $handler,
-            'message' => $validation['message']
+            'message' => $validation['message'],
         ];
     }
 
@@ -227,6 +236,6 @@ class CarrierRegistry
 
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new \Exception('Cannot unserialize singleton');
     }
 }

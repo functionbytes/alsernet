@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Services;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 
 class LinkPreviewService
 {
@@ -40,14 +41,30 @@ class LinkPreviewService
      */
     public function preview(string $url): ?array
     {
+        // SSRF guard: el body del mensaje/ticket es contenido de un cliente, así
+        // que la URL no es de confianza. Se rechaza si no resuelve exclusivamente
+        // a IPs públicas y, si es segura, la conexión se fija (CURLOPT_RESOLVE) a
+        // esas IPs ya validadas para cerrar la ventana de DNS rebinding entre el
+        // chequeo y la petición real.
+        $curlOptions = $this->ssrfSafeCurlOptions($url);
+
+        if ($curlOptions === null) {
+            Log::debug('LinkPreview blocked by SSRF guard', ['url' => $url]);
+
+            return null;
+        }
+
         $cacheKey = 'helpdesk.link_preview.'.md5($url);
 
-        return Cache::remember($cacheKey, now()->addHours(self::CACHE_TTL_HOURS), function () use ($url) {
+        return Cache::remember($cacheKey, now()->addHours(self::CACHE_TTL_HOURS), function () use ($url, $curlOptions) {
             try {
                 $response = Http::timeout(self::FETCH_TIMEOUT_SECONDS)
                     ->withUserAgent(self::USER_AGENT)
                     ->withHeaders(['Accept' => 'text/html,application/xhtml+xml'])
-                    ->withOptions(['allow_redirects' => ['max' => 3]])
+                    ->withOptions([
+                        'allow_redirects' => ['max' => 3],
+                        'curl' => $curlOptions,
+                    ])
                     ->get($url);
 
                 if (! $response->ok()) {
@@ -75,6 +92,41 @@ class LinkPreviewService
                 return null;
             }
         });
+    }
+
+    /**
+     * Validates the URL resolves exclusively to public IPs and returns curl
+     * options that pin the connection to those validated IPs (defence against
+     * DNS rebinding between the check and the request). Returns null when the
+     * URL must be rejected (bad scheme/host or private/reserved target).
+     *
+     * @return array<int, array<int, string>>|null
+     */
+    private function ssrfSafeCurlOptions(string $url): ?array
+    {
+        $parts = parse_url($url);
+
+        if (! $parts || ! in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host'])) {
+            return null;
+        }
+
+        $ips = OutboundUrlGuard::publicIps($url);
+
+        if ($ips === []) {
+            return null;
+        }
+
+        $host = $parts['host'];
+        $port = $parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80);
+
+        // libcurl accepts multiple pinned addresses (comma separated); IPv6
+        // literals go in brackets so the colons don't break the entry format.
+        $pinned = implode(',', array_map(
+            fn (string $ip): string => str_contains($ip, ':') ? '['.$ip.']' : $ip,
+            $ips
+        ));
+
+        return [CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"]];
     }
 
     private function extractFirstUrl(string $text): ?string

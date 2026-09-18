@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -13,7 +14,7 @@ use Modules\Helpdesk\Models\Conversation;
 
 class ConversationUserTyping implements ShouldBroadcast
 {
-    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public Conversation $conversation,

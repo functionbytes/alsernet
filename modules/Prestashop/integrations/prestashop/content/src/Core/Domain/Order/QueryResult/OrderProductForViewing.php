@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,7 +32,9 @@ use JsonSerializable;
 class OrderProductForViewing implements JsonSerializable
 {
     public const TYPE_PACK = 'pack';
+
     public const TYPE_PRODUCT_WITH_COMBINATIONS = 'product_with_combinations';
+
     public const TYPE_PRODUCT_WITHOUT_COMBINATIONS = 'product_without_combinations';
 
     /**
@@ -159,33 +162,6 @@ class OrderProductForViewing implements JsonSerializable
      */
     private $customizations;
 
-    /**
-     * @param int $orderDetailId
-     * @param int $id
-     * @param int $combinationId
-     * @param string $name
-     * @param string $reference
-     * @param string $supplierReference
-     * @param int $quantity
-     * @param string $unitPrice
-     * @param string $totalPrice
-     * @param int $availableQuantity
-     * @param string|null $imagePath
-     * @param string $unitPriceTaxExclRaw
-     * @param string $unitPriceTaxInclRaw
-     * @param string $taxRate
-     * @param string $amountRefunded
-     * @param int $quantityRefunded
-     * @param string $amountRefundable
-     * @param string $amountRefundableRaw
-     * @param string $location
-     * @param int|null $orderInvoiceId
-     * @param string $orderInvoiceNumber
-     * @param string $type
-     * @param bool $availableOutOfStock
-     * @param array $packItems
-     * @param OrderProductCustomizationsForViewing|null $customizations
-     */
     public function __construct(
         ?int $orderDetailId,
         int $id,
@@ -242,8 +218,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's order detail ID
-     *
-     * @return int|null
      */
     public function getOrderDetailId(): ?int
     {
@@ -252,17 +226,12 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product ID
-     *
-     * @return int
      */
     public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @return int
-     */
     public function getCombinationId(): int
     {
         return $this->combinationId;
@@ -270,8 +239,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's name
-     *
-     * @return string
      */
     public function getName(): string
     {
@@ -288,8 +255,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Product reference
-     *
-     * @return string
      */
     public function getReference(): string
     {
@@ -298,8 +263,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's supplier reference
-     *
-     * @return string
      */
     public function getSupplierReference(): string
     {
@@ -308,17 +271,12 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * get tax rate to be applied on this product
-     *
-     * @return string
      */
     public function getTaxRate(): string
     {
         return $this->taxRate;
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return $this->type;
@@ -326,8 +284,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's location
-     *
-     * @return string
      */
     public function getLocation(): string
     {
@@ -336,8 +292,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's quantity
-     *
-     * @return int
      */
     public function getQuantity(): int
     {
@@ -346,8 +300,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's unit price
-     *
-     * @return string
      */
     public function getUnitPrice(): string
     {
@@ -356,8 +308,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get product's formatted total price
-     *
-     * @return string
      */
     public function getTotalPrice(): string
     {
@@ -366,8 +316,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get available quantity for this product
-     *
-     * @return int
      */
     public function getAvailableQuantity(): int
     {
@@ -376,8 +324,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get image path for this product
-     *
-     * @return string|null
      */
     public function getImagePath(): ?string
     {
@@ -386,8 +332,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get unit price without taxes
-     *
-     * @return string
      */
     public function getUnitPriceTaxExclRaw(): string
     {
@@ -396,8 +340,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get unit price including taxes
-     *
-     * @return string
      */
     public function getUnitPriceTaxInclRaw(): string
     {
@@ -406,8 +348,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * How much (money) has already been refunded for this product
-     *
-     * @return string
      */
     public function getAmountRefunded(): string
     {
@@ -416,8 +356,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * How many (quantity) of this product has already been refunded
-     *
-     * @return int
      */
     public function getQuantityRefunded(): int
     {
@@ -426,8 +364,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * How much (money) can be refunded for this product (formatted for display)
-     *
-     * @return string
      */
     public function getAmountRefundable(): string
     {
@@ -436,8 +372,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * How much (money) can be refunded for this product
-     *
-     * @return string
      */
     public function getAmountRefundableRaw(): string
     {
@@ -446,8 +380,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * How many (quantity) of this product can be refunded
-     *
-     * @return int
      */
     public function getQuantityRefundable(): int
     {
@@ -456,8 +388,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Can this product be refunded
-     *
-     * @return bool
      */
     public function isRefundable(): bool
     {
@@ -470,8 +400,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get the id of this product's invoice
-     *
-     * @return int
      */
     public function getOrderInvoiceId(): ?int
     {
@@ -480,8 +408,6 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get the number (reference) of this product's invoice
-     *
-     * @return string
      */
     public function getOrderInvoiceNumber(): string
     {
@@ -490,25 +416,17 @@ class OrderProductForViewing implements JsonSerializable
 
     /**
      * Get customizations of this product
-     *
-     * @return OrderProductCustomizationsForViewing|null
      */
     public function getCustomizations(): ?OrderProductCustomizationsForViewing
     {
         return $this->customizations;
     }
 
-    /**
-     * @return bool
-     */
     public function isAvailableOutOfStock(): bool
     {
         return $this->availableOutOfStock;
     }
 
-    /**
-     * @return array
-     */
     public function jsonSerialize(): array
     {
         return [

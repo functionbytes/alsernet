@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,17 +50,13 @@ class HookEvent extends Event
      */
     private $contextParameters = [];
 
-    /**
-     * @param array $contextParameters
-     * @param array $hookParameters
-     */
-    public function __construct(array $contextParameters = null, array $hookParameters = null)
+    public function __construct(?array $contextParameters = null, ?array $hookParameters = null)
     {
-        if (null !== $contextParameters) {
+        if ($contextParameters !== null) {
             $this->contextParameters = $contextParameters;
         }
 
-        if (null !== $hookParameters) {
+        if ($hookParameters !== null) {
             $this->hookParameters = $hookParameters;
         }
     }
@@ -67,8 +64,7 @@ class HookEvent extends Event
     /**
      * Sets the Hook parameters.
      *
-     * @param array $parameters
-     *
+     * @param  array  $parameters
      * @return self
      */
     public function setHookParameters($parameters)

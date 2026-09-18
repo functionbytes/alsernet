@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,8 +65,7 @@ class DataFormatterExtension extends \Twig_Extension
     /**
      * Cast to array the variable given.
      *
-     * @param mixed $toCast Mixed value to be casted into an array
-     *
+     * @param  mixed  $toCast  Mixed value to be casted into an array
      * @return array $toCast casted in array
      */
     public function arrayCast($toCast)
@@ -76,8 +76,7 @@ class DataFormatterExtension extends \Twig_Extension
     /**
      * Cast to int the variable given.
      *
-     * @param mixed $toCast Mixed value to be casted into an int
-     *
+     * @param  mixed  $toCast  Mixed value to be casted into an int
      * @return int $toCast casted in int
      */
     public function intCast($toCast)
@@ -88,8 +87,8 @@ class DataFormatterExtension extends \Twig_Extension
     /**
      * PHP 'unset()' exposed through twig template engine.
      *
-     * @param array $array Array containing Element to unset
-     * @param string $key Element to be unset
+     * @param  array  $array  Array containing Element to unset
+     * @param  string  $key  Element to be unset
      */
     public function unsetElement($array, $key)
     {
@@ -107,8 +106,6 @@ class DataFormatterExtension extends \Twig_Extension
      *  arrayPluck(['first_name' => 'John', 'last_name' => 'Doe'], ['first_name']) => ['first_name' => 'John']
      *  arrayPluck(['first_name' => 'John', 'last_name' => 'Doe'], ['first_name' => 'name']) => ['name' => 'John']
      *
-     * @param array $array
-     * @param array $extractedKeys
      *
      * @return array
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,11 +55,11 @@ final class EditOrderStateHandler extends AbstractOrderStateHandler implements E
 
         $this->assertRequiredFieldsAreNotMissing($orderState);
 
-        if (false === $orderState->validateFields(false)) {
+        if ($orderState->validateFields(false) === false) {
             throw new OrderStateException('OrderState contains invalid field values');
         }
 
-        if (false === $orderState->update()) {
+        if ($orderState->update() === false) {
             throw new OrderStateException('Failed to update order state');
         }
     }
@@ -70,11 +71,11 @@ final class EditOrderStateHandler extends AbstractOrderStateHandler implements E
     {
         // Check that we have templates for all languages when send_email is on
         $haveMissingTemplates = (
-            !is_array($orderState->template) ||
+            ! is_array($orderState->template) ||
             count($orderState->template) != count(array_filter($orderState->template, 'strlen'))
         );
 
-        if (true === $orderState->send_email && true === $haveMissingTemplates) {
+        if ($orderState->send_email === true && $haveMissingTemplates === true) {
             throw new MissingOrderStateRequiredFieldsException(['template'], 'One or more required fields for order state are missing. Missing fields are: template');
         }
 
@@ -83,51 +84,51 @@ final class EditOrderStateHandler extends AbstractOrderStateHandler implements E
 
     private function updateOrderStateWithCommandData(OrderState $orderState, EditOrderStateCommand $command)
     {
-        if (null !== $command->getName()) {
+        if ($command->getName() !== null) {
             $orderState->name = $command->getName();
         }
 
-        if (null !== $command->getColor()) {
+        if ($command->getColor() !== null) {
             $orderState->color = $command->getColor();
         }
 
-        if (null !== $command->isLoggable()) {
+        if ($command->isLoggable() !== null) {
             $orderState->logable = $command->isLoggable();
         }
 
-        if (null !== $command->isHidden()) {
+        if ($command->isHidden() !== null) {
             $orderState->hidden = $command->isHidden();
         }
 
-        if (null !== $command->isInvoice()) {
+        if ($command->isInvoice() !== null) {
             $orderState->invoice = $command->isInvoice();
         }
 
-        if (null !== $command->isSendEmailEnabled()) {
+        if ($command->isSendEmailEnabled() !== null) {
             $orderState->send_email = $command->isSendEmailEnabled();
         }
 
-        if (null !== $command->isPdfInvoice()) {
+        if ($command->isPdfInvoice() !== null) {
             $orderState->pdf_invoice = $command->isPdfInvoice();
         }
 
-        if (null !== $command->isPdfDelivery()) {
+        if ($command->isPdfDelivery() !== null) {
             $orderState->pdf_delivery = $command->isPdfDelivery();
         }
 
-        if (null !== $command->isShipped()) {
+        if ($command->isShipped() !== null) {
             $orderState->shipped = $command->isShipped();
         }
 
-        if (null !== $command->isPaid()) {
+        if ($command->isPaid() !== null) {
             $orderState->paid = $command->isPaid();
         }
 
-        if (null !== $command->isDelivery()) {
+        if ($command->isDelivery() !== null) {
             $orderState->delivery = $command->isDelivery();
         }
 
-        if (null !== $command->getTemplate()) {
+        if ($command->getTemplate() !== null) {
             $orderState->template = $command->getTemplate();
         }
     }

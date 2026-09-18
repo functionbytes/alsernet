@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -110,14 +111,13 @@ final class ColumnCollection extends AbstractCollection implements ColumnCollect
     /**
      * Move an existing Column to a specific position.
      *
-     * @param string $id the Column ID original position in the Collection
-     * @param int $position the Column ID destination position in the Collection
-     *
+     * @param  string  $id  the Column ID original position in the Collection
+     * @param  int  $position  the Column ID destination position in the Collection
      * @return self
      */
     public function move($id, $position)
     {
-        if (!isset($this->items[$id])) {
+        if (! isset($this->items[$id])) {
             throw new ColumnNotFoundException(sprintf('Cannot insert new column into collection. Column with id "%s" was not found.', $id));
         }
 
@@ -136,22 +136,22 @@ final class ColumnCollection extends AbstractCollection implements ColumnCollect
     /**
      * Insert new column into collection at given position.
      *
-     * @param string $id Existing column id
-     * @param ColumnInterface $newColumn Column to insert
-     * @param string $position Position: "before" or "after"
+     * @param  string  $id  Existing column id
+     * @param  ColumnInterface  $newColumn  Column to insert
+     * @param  string  $position  Position: "before" or "after"
      *
      * @throws ColumnNotFoundException When column with given $id does not exist
      */
     private function insertByPosition($id, ColumnInterface $newColumn, $position)
     {
-        if (!isset($this->items[$id])) {
+        if (! isset($this->items[$id])) {
             throw new ColumnNotFoundException(sprintf('Cannot insert new column into collection. Column with id "%s" was not found.', $id));
         }
 
         $existingColumnKeyPosition = array_search($id, array_keys($this->items));
 
-        if (self::POSITION_AFTER === $position) {
-            ++$existingColumnKeyPosition;
+        if ($position === self::POSITION_AFTER) {
+            $existingColumnKeyPosition++;
         }
 
         $columns = array_slice($this->items, 0, $existingColumnKeyPosition, true) +

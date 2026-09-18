@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,6 @@ interface FilterCollectionInterface
     /**
      * Add filter to collection.
      *
-     * @param FilterInterface $filter
      *
      * @return self
      */
@@ -43,8 +43,7 @@ interface FilterCollectionInterface
     /**
      * Remove filter from collection.
      *
-     * @param string $filterName
-     *
+     * @param  string  $filterName
      * @return self
      */
     public function remove($filterName);

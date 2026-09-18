@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,49 +81,31 @@ class EditableCartRuleReduction
         $this->excludeSpecial = $excludeSpecial;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPercent(): DecimalNumber
     {
         return $this->percent;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getAmount(): DecimalNumber
     {
         return $this->amount;
     }
 
-    /**
-     * @return bool
-     */
     public function isTax(): bool
     {
         return $this->tax;
     }
 
-    /**
-     * @return CurrencyId|null
-     */
     public function getCurrencyId(): ?CurrencyId
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return ProductId|null
-     */
     public function getProductId(): ?ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return bool
-     */
     public function isExcludeSpecial(): bool
     {
         return $this->excludeSpecial;

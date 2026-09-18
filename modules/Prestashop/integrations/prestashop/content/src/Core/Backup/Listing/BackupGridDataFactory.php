@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,10 +63,7 @@ final class BackupGridDataFactory implements GridDataFactoryInterface
     private $backupByDateComparator;
 
     /**
-     * @param BackupRepositoryInterface $backupRepository
-     * @param BackupComparatorInterface $backupByDateComparator
-     * @param TranslatorInterface $translator
-     * @param string $languageDateTimeFormat
+     * @param  string  $languageDateTimeFormat
      */
     public function __construct(
         BackupRepositoryInterface $backupRepository,
@@ -87,7 +85,7 @@ final class BackupGridDataFactory implements GridDataFactoryInterface
         $backups = $this->backupRepository->retrieveBackups()->all();
         usort($backups, [$this->backupByDateComparator, 'compare']);
 
-        $paginatedBackups = null !== $searchCriteria->getOffset() && null !== $searchCriteria->getLimit() ?
+        $paginatedBackups = $searchCriteria->getOffset() !== null && $searchCriteria->getLimit() !== null ?
             array_slice($backups, $searchCriteria->getOffset(), $searchCriteria->getLimit()) :
             $backups;
 
@@ -116,19 +114,18 @@ final class BackupGridDataFactory implements GridDataFactoryInterface
     /**
      * Get formatted age.
      *
-     * @param BackupInterface $backup
      *
      * @return string
      */
     private function getFormattedAge(BackupInterface $backup)
     {
-        if (TimeDefinition::HOUR_IN_SECONDS > $backup->getAge()) {
+        if ($backup->getAge() < TimeDefinition::HOUR_IN_SECONDS) {
             return sprintf('< 1 %s', $this->translator->trans('Hour', [], 'Admin.Global'));
         }
 
-        if (TimeDefinition::DAY_IN_SECONDS > $backup->getAge()) {
+        if ($backup->getAge() < TimeDefinition::DAY_IN_SECONDS) {
             $hours = (int) floor($backup->getAge() / TimeDefinition::HOUR_IN_SECONDS);
-            $label = 1 === $hours ?
+            $label = $hours === 1 ?
                 $this->translator->trans('Hour', [], 'Admin.Global') :
                 $this->translator->trans('Hours', [], 'Admin.Global');
 
@@ -136,7 +133,7 @@ final class BackupGridDataFactory implements GridDataFactoryInterface
         }
 
         $days = (int) floor($backup->getAge() / TimeDefinition::DAY_IN_SECONDS);
-        $label = 1 === $days ?
+        $label = $days === 1 ?
             $this->translator->trans('Day', [], 'Admin.Global') :
             $this->translator->trans('Days', [], 'Admin.Global');
 
@@ -146,7 +143,6 @@ final class BackupGridDataFactory implements GridDataFactoryInterface
     /**
      * Get formatted backup size.
      *
-     * @param BackupInterface $backup
      *
      * @return string
      */

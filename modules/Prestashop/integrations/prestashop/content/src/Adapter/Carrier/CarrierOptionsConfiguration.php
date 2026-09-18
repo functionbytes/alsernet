@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,6 @@ class CarrierOptionsConfiguration implements DataConfigurationInterface
 
     /**
      * CarrierOptionsConfiguration constructor.
-     *
-     * @param Configuration $configuration
      */
     public function __construct(Configuration $configuration)
     {

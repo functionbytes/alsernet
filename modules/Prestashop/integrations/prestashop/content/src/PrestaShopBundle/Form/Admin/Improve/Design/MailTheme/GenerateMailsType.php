@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,12 +44,6 @@ class GenerateMailsType extends TranslatorAwareType
     /** @var array */
     private $themes;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $mailThemes
-     * @param array $themes
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -85,7 +80,6 @@ class GenerateMailsType extends TranslatorAwareType
                 'data' => '',
                 'disabled' => count($this->themes) <= 0,
             ])
-            ->add('overwrite', SwitchType::class, ['data' => false])
-        ;
+            ->add('overwrite', SwitchType::class, ['data' => false]);
     }
 }

@@ -43,12 +43,4 @@ class Priority extends Model
     {
         return $this->hasMany(Ticket::class, 'priority_id');
     }
-
-    /**
-     * SLA policies using this priority
-     */
-    public function slaPolicies(): HasMany
-    {
-        return $this->hasMany(SlaPolicy::class, 'priority_id');
-    }
 }

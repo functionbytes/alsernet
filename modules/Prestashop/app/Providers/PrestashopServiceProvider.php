@@ -159,7 +159,6 @@ class PrestashopServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
 
-
         NavService::registerSidebar('settings', [
             'title' => 'PrestaShop',
             'items' => [

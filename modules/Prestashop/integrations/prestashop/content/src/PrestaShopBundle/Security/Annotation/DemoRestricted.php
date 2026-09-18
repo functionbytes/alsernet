@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -72,7 +73,7 @@ class DemoRestricted extends ConfigurationAnnotation
     }
 
     /**
-     * @param string $domain the translation domain name
+     * @param  string  $domain  the translation domain name
      */
     public function setDomain($domain)
     {
@@ -88,7 +89,7 @@ class DemoRestricted extends ConfigurationAnnotation
     }
 
     /**
-     * @param string $message the message displayed after redirection
+     * @param  string  $message  the message displayed after redirection
      */
     public function setMessage($message)
     {
@@ -104,7 +105,7 @@ class DemoRestricted extends ConfigurationAnnotation
     }
 
     /**
-     * @param string $redirectRoute the route used for redirection
+     * @param  string  $redirectRoute  the route used for redirection
      */
     public function setRedirectRoute($redirectRoute)
     {
@@ -140,7 +141,7 @@ class DemoRestricted extends ConfigurationAnnotation
     }
 
     /**
-     * @param array $redirectQueryParamsToKeep
+     * @param  array  $redirectQueryParamsToKeep
      */
     public function setRedirectQueryParamsToKeep($redirectQueryParamsToKeep)
     {

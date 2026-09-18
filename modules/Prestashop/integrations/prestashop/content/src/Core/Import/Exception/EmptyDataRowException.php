@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Import\Exception;
 /**
  * Class EmptyDataRowException thrown when the import handler finds an empty data row.
  */
-class EmptyDataRowException extends InvalidDataRowException
-{
-}
+class EmptyDataRowException extends InvalidDataRowException {}

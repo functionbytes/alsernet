@@ -67,12 +67,4 @@ class Category extends Model
     {
         return $this->hasMany(CannedReply::class, 'category_id');
     }
-
-    /**
-     * SLA policies for this category
-     */
-    public function slaPolicies(): HasMany
-    {
-        return $this->hasMany(SlaPolicy::class, 'category_id');
-    }
 }

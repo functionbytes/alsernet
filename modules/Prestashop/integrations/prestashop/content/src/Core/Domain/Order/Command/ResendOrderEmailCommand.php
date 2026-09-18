@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,25 +53,16 @@ class ResendOrderEmailCommand
         $this->orderHistoryId = $orderHistoryId;
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderStatusId(): int
     {
         return $this->orderStatusId;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderHistoryId(): int
     {
         return $this->orderHistoryId;

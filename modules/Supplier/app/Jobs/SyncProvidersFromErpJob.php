@@ -14,7 +14,7 @@ use Modules\Supplier\Models\Sync\SyncBatch;
 use Modules\Supplier\Services\Integrations\ErpProviderSyncService;
 use Modules\Supplier\Services\SyncStatusService;
 
-class SyncProvidersFromErpJob implements ShouldQueue, ShouldBeUnique
+class SyncProvidersFromErpJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -49,6 +49,7 @@ class SyncProvidersFromErpJob implements ShouldQueue, ShouldBeUnique
                 'batch_id' => $this->batch->id,
                 'status' => $this->batch->status,
             ]);
+
             return;
         }
 

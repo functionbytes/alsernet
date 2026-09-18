@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\TaxRulesGroup\Exception;
 /**
  * Thrown on failure to find existing tax rules group
  */
-class TaxRulesGroupNotFoundException extends TaxRulesGroupException
-{
-}
+class TaxRulesGroupNotFoundException extends TaxRulesGroupException {}

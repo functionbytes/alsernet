@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Acelle\Model\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
 
 class Controller extends BaseController
@@ -23,7 +25,7 @@ class Controller extends BaseController
     /**
      * Check if the user is not authorized.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function notAuthorized()
     {
@@ -37,7 +39,7 @@ class Controller extends BaseController
     /**
      * Check if the user cannot create more item.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function noMoreItem()
     {
@@ -47,7 +49,7 @@ class Controller extends BaseController
     /**
      * When site status is offline.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function offline()
     {
@@ -57,7 +59,7 @@ class Controller extends BaseController
     /**
      * Show demo home page.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function demo()
     {
@@ -67,7 +69,7 @@ class Controller extends BaseController
     /**
      * Go to demo admin/campaign page.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function demoGo(Request $request)
     {
@@ -87,7 +89,7 @@ class Controller extends BaseController
     /**
      * Docs for api v1.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function docsApiV1()
     {
@@ -97,11 +99,11 @@ class Controller extends BaseController
     /**
      * Login from outsite.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function autoLogin($api_token)
     {
-        $user = \Acelle\Model\User::where('api_token', $api_token)->first();
+        $user = User::where('api_token', $api_token)->first();
 
         \Auth::login($user);
 
@@ -110,7 +112,7 @@ class Controller extends BaseController
 
     public function validateToken($api_token)
     {
-        $first = \Acelle\Model\User::where('api_token', $api_token)->first();
+        $first = User::where('api_token', $api_token)->first();
 
         if ($first) {
             return response()
@@ -128,11 +130,11 @@ class Controller extends BaseController
     /**
      * Login from outsite.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function tokenLogin($token)
     {
-        $user = \Acelle\Model\User::where('one_time_api_token', $token)->first();
+        $user = User::where('one_time_api_token', $token)->first();
 
         if (! $user) {
             return view('somethingWentWrong', ['message' => trans('messages.token_expired')]);
@@ -206,7 +208,7 @@ class Controller extends BaseController
     /**
      * When user is diabled.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function userDisabled()
     {
@@ -224,7 +226,6 @@ class Controller extends BaseController
     {
         return view('termsOfService');
     }
-
 
     /**
      * Return a successful JSON response
@@ -312,5 +313,4 @@ class Controller extends BaseController
             ],
         ];
     }
-
 }

@@ -3,7 +3,7 @@
     {{-- Nombre --}}
     <div class="col-12">
         <label class="form-label">
-            Nombre <span class="text-danger">*</span>
+            Nombre <span class="text-brand">*</span>
         </label>
         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
             value="{{ old('name', $slaPolicy->name ?? '') }}"
@@ -26,7 +26,7 @@
 
     {{-- Tiempos --}}
     <div class="col-12 col-md-6">
-        <label class="form-label">Primera respuesta (horas) <span class="text-danger">*</span></label>
+        <label class="form-label">Primera respuesta (horas) <span class="text-brand">*</span></label>
         <input type="number" name="first_response_time_hours" min="1" max="8760"
             class="form-control @error('first_response_time_hours') is-invalid @enderror"
             value="{{ old('first_response_time_hours', $slaPolicy->first_response_time_hours ?? '') }}"
@@ -38,7 +38,7 @@
     </div>
 
     <div class="col-12 col-md-6">
-        <label class="form-label">Resolucion (horas) <span class="text-danger">*</span></label>
+        <label class="form-label">Resolucion (horas) <span class="text-brand">*</span></label>
         <input type="number" name="resolution_time_hours" min="1" max="8760"
             class="form-control @error('resolution_time_hours') is-invalid @enderror"
             value="{{ old('resolution_time_hours', $slaPolicy->resolution_time_hours ?? '') }}"

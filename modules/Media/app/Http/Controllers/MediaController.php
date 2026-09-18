@@ -280,6 +280,9 @@ class MediaController extends Controller
     {
         $this->authorize('viewAny', MediaFile::class);
 
+        // validate() DEVUELVE los datos validados; hay que quedarselos.
+        // $request->validated() no existe en Illuminate\Http\Request (solo en
+        // FormRequest) y tiraba BadMethodCallException en cada busqueda.
         $validated = $request->validate([
             'query' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'in:image,video,audio,document,pdf,zip'],

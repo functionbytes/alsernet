@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class CustomizationFieldId
      */
     private $value;
 
-    /**
-     * @param int $value
-     */
     public function __construct(int $value)
     {
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;

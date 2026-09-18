@@ -30,7 +30,7 @@ return new class extends Migration
 
         // 3. Marcar LICENCIA-B (id_product=77645) como producto virtual (sin gastos de envío)
         DB::connection('prestashop')->statement(
-            "UPDATE aalv_product SET is_virtual = 1 WHERE id_product = 77645"
+            'UPDATE aalv_product SET is_virtual = 1 WHERE id_product = 77645'
         );
 
         // 4. Crear el DocumentType "licencias" en la base de datos principal
@@ -38,17 +38,17 @@ return new class extends Migration
 
         if (! $existingType) {
             DB::table('document_types')->insert([
-                'uid'              => (string) Str::uuid(),
-                'slug'             => 'licencias',
-                'label'            => 'Licencias Federativas',
-                'description'      => 'Licencia federativa obligatoria para la compra de fusiles de pesca submarina',
-                'icon'             => 'fas fa-id-card',
-                'color'            => '#dc3545',
-                'is_active'        => 1,
-                'sort_order'       => 6,
-                'sla_multiplier'   => 1.00,
-                'created_at'       => now(),
-                'updated_at'       => now(),
+                'uid' => (string) Str::uuid(),
+                'slug' => 'licencias',
+                'label' => 'Licencias Federativas',
+                'description' => 'Licencia federativa obligatoria para la compra de fusiles de pesca submarina',
+                'icon' => 'fas fa-id-card',
+                'color' => '#dc3545',
+                'is_active' => 1,
+                'sort_order' => 6,
+                'sla_multiplier' => 1.00,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -60,7 +60,7 @@ return new class extends Migration
 
         // Revertir LICENCIA-B a no virtual
         DB::connection('prestashop')->statement(
-            "UPDATE aalv_product SET is_virtual = 0 WHERE id_product = 77645"
+            'UPDATE aalv_product SET is_virtual = 0 WHERE id_product = 77645'
         );
 
         // Eliminar asignaciones del tag FUSIL y el tag mismo

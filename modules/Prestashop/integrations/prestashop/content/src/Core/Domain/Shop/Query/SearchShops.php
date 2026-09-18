@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ class SearchShops
 
     /**
      * SearchShops constructor.
-     *
-     * @param string $searchTerm
      */
     public function __construct(string $searchTerm)
     {
@@ -52,17 +51,12 @@ class SearchShops
         $this->searchTerm = $searchTerm;
     }
 
-    /**
-     * @return string
-     */
     public function getSearchTerm(): string
     {
         return $this->searchTerm;
     }
 
     /**
-     * @param string $searchTerm
-     *
      * @throws SearchShopException
      */
     private function assertSearchTermNotEmpty(string $searchTerm): void

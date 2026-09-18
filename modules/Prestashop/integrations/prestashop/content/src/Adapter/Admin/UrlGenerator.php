@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,6 @@ class UrlGenerator implements UrlGeneratorInterface
 
     /**
      * Constructor.
-     *
-     * @param LegacyContext $legacyContext
-     * @param Router $router
      */
     public function __construct(LegacyContext $legacyContext, Router $router)
     {
@@ -76,7 +74,7 @@ class UrlGenerator implements UrlGeneratorInterface
         $legacyParameters = $parameters;
 
         // resolve route & legacy mapping
-        list($legacyController, $legacyParameters) = $this->getLegacyOptions($name, $parameters);
+        [$legacyController, $legacyParameters] = $this->getLegacyOptions($name, $parameters);
 
         return $this->legacyContext->getAdminLink($legacyController, true, $legacyParameters);
     }
@@ -86,9 +84,8 @@ class UrlGenerator implements UrlGeneratorInterface
      *
      * If failed to find options, then return the input values.
      *
-     * @param string $routeName
-     * @param string[] $parameters The route parameters to convert
-     *
+     * @param  string  $routeName
+     * @param  string[]  $parameters  The route parameters to convert
      * @return array[] An array with: the legacy controller name, then the parameters array
      */
     final public function getLegacyOptions($routeName, $parameters = [])
@@ -103,7 +100,7 @@ class UrlGenerator implements UrlGeneratorInterface
                 if ($route->hasDefault('_legacy_param_mapper_class') && $route->hasDefault('_legacy_param_mapper_method')) {
                     $class = $route->getDefault('_legacy_param_mapper_class');
                     $method = $route->getDefault('_legacy_param_mapper_method');
-                    $method = (new ReflectionClass('\\' . $class))->getMethod($method);
+                    $method = (new ReflectionClass('\\'.$class))->getMethod($method);
                     $legacyParameters = $method->invoke(($method->isStatic()) ? null : $method->getDeclaringClass()->newInstance(), $parameters);
                 }
             }

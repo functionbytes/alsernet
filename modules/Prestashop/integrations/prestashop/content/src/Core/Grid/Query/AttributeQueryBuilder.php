@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,13 +63,10 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextShopIds;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLangId
-     * @param int $attributeGroupId
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     * @param int[] $contextShopIds
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
+     * @param  int  $attributeGroupId
+     * @param  int[]  $contextShopIds
      */
     public function __construct(
         Connection $connection,
@@ -90,7 +88,6 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get query that searches grid rows.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -109,7 +106,6 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get query that counts grid rows.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -122,40 +118,38 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param array $filters
-     *
      * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters)
     {
         $qb = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'attribute', 'a')
+            ->from($this->dbPrefix.'attribute', 'a')
             ->setParameter('contextLangId', $this->contextLangId)
             ->setParameter('attributeGroupId', $this->attributeGroupId)
             ->setParameter('contextShopIds', $this->contextShopIds, Connection::PARAM_INT_ARRAY)
             ->andWhere('al.id_lang = :contextLangId')
             ->andWhere('ag.id_attribute_group = :attributeGroupId');
 
-        if (!$this->multistoreContextChecker->isAllShopContext()) {
+        if (! $this->multistoreContextChecker->isAllShopContext()) {
             $qb->andWhere('ashop.id_shop IN (:contextShopIds)');
         }
 
         $qb->leftJoin(
             'a',
-            $this->dbPrefix . 'attribute_shop',
+            $this->dbPrefix.'attribute_shop',
             'ashop',
             'a.id_attribute = ashop.id_attribute'
         );
 
         $qb->leftJoin(
             'a',
-            $this->dbPrefix . 'attribute_group',
+            $this->dbPrefix.'attribute_group',
             'ag',
             'a.id_attribute_group = ag.id_attribute_group');
 
         $qb->leftJoin(
             'a',
-            $this->dbPrefix . 'attribute_lang',
+            $this->dbPrefix.'attribute_lang',
             'al',
             'a.id_attribute = al.id_attribute'
         );
@@ -165,10 +159,6 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param array $filters
-     * @param QueryBuilder $qb
-     */
     private function applyFilters(array $filters, QueryBuilder $qb)
     {
         $allowedFiltersMap = [
@@ -179,29 +169,30 @@ final class AttributeQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap)) {
                 continue;
             }
 
-            if ('value' === $filterName || 'color' === $filterName) {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' LIKE :' . $filterName)
-                    ->setParameter($filterName, '%' . $value . '%');
+            if ($filterName === 'value' || $filterName === 'color') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' LIKE :'.$filterName)
+                    ->setParameter($filterName, '%'.$value.'%');
+
                 continue;
             }
 
-            if ('position' === $filterName) {
+            if ($filterName === 'position') {
                 // When filtering by position,
                 // value must be decreased by 1,
                 // since position value in database starts at 0,
                 // but for user display positions are increased by 1.
                 if (is_numeric($value)) {
-                    --$value;
+                    $value--;
                 } else {
                     $value = null;
                 }
             }
 
-            $qb->andWhere('a.`' . $filterName . '` = :' . $filterName)
+            $qb->andWhere('a.`'.$filterName.'` = :'.$filterName)
                 ->setParameter($filterName, $value);
         }
     }

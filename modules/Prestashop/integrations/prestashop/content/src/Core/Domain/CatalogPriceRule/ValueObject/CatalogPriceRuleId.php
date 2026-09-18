@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ final class CatalogPriceRuleId
     private $catalogPriceRuleId;
 
     /**
-     * @param int $catalogPriceRuleId
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     public function __construct(int $catalogPriceRuleId)
@@ -49,9 +48,6 @@ final class CatalogPriceRuleId
         $this->catalogPriceRuleId = $catalogPriceRuleId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->catalogPriceRuleId;
@@ -60,13 +56,12 @@ final class CatalogPriceRuleId
     /**
      * Validates that the value is greater than zero
      *
-     * @param int $value
      *
      * @throws CatalogPriceRuleConstraintException
      */
     private function assertIsGreaterThanZero(int $value)
     {
-        if (0 >= $value) {
+        if ($value <= 0) {
             throw new CatalogPriceRuleConstraintException(sprintf('Invalid catalog price rule id "%s".', $value), CatalogPriceRuleConstraintException::INVALID_ID);
         }
     }

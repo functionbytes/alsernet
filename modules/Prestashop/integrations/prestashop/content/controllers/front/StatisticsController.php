@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 class StatisticsControllerCore extends FrontController
 {
     public $display_header = false;
+
     public $display_footer = false;
 
     protected $param_token;
@@ -33,8 +35,8 @@ class StatisticsControllerCore extends FrontController
     public function postProcess()
     {
         $this->param_token = Tools::getValue('token');
-        if (!$this->param_token) {
-            die;
+        if (! $this->param_token) {
+            exit;
         }
 
         if ($_POST['type'] == 'navinfo') {
@@ -52,8 +54,8 @@ class StatisticsControllerCore extends FrontController
     protected function processNavigationStats()
     {
         $id_guest = (int) Tools::getValue('id_guest');
-        if (sha1($id_guest . _COOKIE_KEY_) != $this->param_token) {
-            die;
+        if (sha1($id_guest._COOKIE_KEY_) != $this->param_token) {
+            exit;
         }
 
         $guest = new Guest((int) substr($_POST['id_guest'], 0, 10));
@@ -80,12 +82,12 @@ class StatisticsControllerCore extends FrontController
         $time_start = Tools::getValue('time_start');
         $id_page = (int) Tools::getValue('id_page');
 
-        if (sha1($id_connection . $id_page . $time_start . _COOKIE_KEY_) != $this->param_token) {
-            die;
+        if (sha1($id_connection.$id_page.$time_start._COOKIE_KEY_) != $this->param_token) {
+            exit;
         }
 
         if ($time <= 0) {
-            die;
+            exit;
         }
 
         Connection::setPageTime($id_connection, $id_page, substr($time_start, 0, 19), $time);

@@ -131,6 +131,7 @@ return [
     'tracked_modules' => [
         'HelpdeskTickets',
         'HelpdeskBirthday',
+        'Helpdesk',
     ],
 
     /*

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class ImportDirectory
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -56,7 +54,7 @@ final class ImportDirectory
     {
         return ($this->configuration->get('_PS_HOST_MODE_') ?
                 $this->configuration->get('_PS_ROOT_DIR_') :
-                $this->configuration->get('_PS_ADMIN_DIR_')) . DIRECTORY_SEPARATOR . 'import' . DIRECTORY_SEPARATOR;
+                $this->configuration->get('_PS_ADMIN_DIR_')).DIRECTORY_SEPARATOR.'import'.DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -66,7 +64,7 @@ final class ImportDirectory
      */
     public function exists()
     {
-        return (new Filesystem())->exists($this->getDir());
+        return (new Filesystem)->exists($this->getDir());
     }
 
     /**

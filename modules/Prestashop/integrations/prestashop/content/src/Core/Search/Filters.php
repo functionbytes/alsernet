@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,13 +45,12 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
     protected $needsToBePersisted = true;
 
     /**
-     * @param array $filters
-     * @param string $filterId
+     * @param  string  $filterId
      */
     public function __construct(array $filters = [], $filterId = '')
     {
         parent::__construct($filters);
-        $this->filterId = !empty($filterId) ? $filterId : $this->filterId;
+        $this->filterId = ! empty($filterId) ? $filterId : $this->filterId;
     }
 
     /**
@@ -81,7 +81,7 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
     public function getOrderBy()
     {
         $orderBy = $this->get('orderBy');
-        if (!Validate::isOrderBy($orderBy)) {
+        if (! Validate::isOrderBy($orderBy)) {
             return null;
         }
 
@@ -94,7 +94,7 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
     public function getOrderWay()
     {
         $orderWay = $this->get('sortOrder');
-        if (!Validate::isOrderWay(strtoupper($orderWay))) {
+        if (! Validate::isOrderWay(strtoupper($orderWay))) {
             return null;
         }
 
@@ -117,9 +117,6 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
         return $this->getInt('limit') ?: null;
     }
 
-    /**
-     * @param array $parameters
-     */
     public function addFilter(array $parameters = [])
     {
         $filters = array_replace($this->getFilters(), $parameters);
@@ -143,8 +140,7 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
     }
 
     /**
-     * @param string $filterId
-     *
+     * @param  string  $filterId
      * @return $this
      */
     public function setFilterId($filterId)
@@ -154,17 +150,12 @@ class Filters extends ParameterBag implements SearchCriteriaInterface
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function needsToBePersisted(): bool
     {
         return $this->needsToBePersisted;
     }
 
     /**
-     * @param bool $needsToBePersisted
-     *
      * @return static
      */
     public function setNeedsToBePersisted(bool $needsToBePersisted): self

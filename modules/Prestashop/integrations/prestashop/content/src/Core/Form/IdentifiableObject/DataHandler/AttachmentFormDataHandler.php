@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ final class AttachmentFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -80,11 +78,6 @@ final class AttachmentFormDataHandler implements FormDataHandlerInterface
 
     /**
      * Creates edit attachment command from
-     *
-     * @param AttachmentId $attachmentId
-     * @param array $data
-     *
-     * @return EditAttachmentCommand
      */
     private function createEditAttachmentCommand(
         AttachmentId $attachmentId,
@@ -110,8 +103,6 @@ final class AttachmentFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param array $data
-     *
      * @return AddAttachmentCommand
      */
     private function createAddAttachmentCommand(array $data)

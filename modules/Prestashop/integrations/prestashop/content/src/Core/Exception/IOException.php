@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,12 +37,11 @@ class IOException extends CoreException
     private $path;
 
     /**
-     * @param string $message
-     * @param int $code
-     * @param Throwable $previous
-     * @param string|null $path
+     * @param  string  $message
+     * @param  int  $code
+     * @param  string|null  $path
      */
-    public function __construct($message = '', $code = 0, Throwable $previous = null, $path = null)
+    public function __construct($message = '', $code = 0, ?Throwable $previous = null, $path = null)
     {
         parent::__construct($message, $code, $previous);
         $this->path = $path;

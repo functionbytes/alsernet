@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,7 +56,7 @@ final class DataRow implements DataRowInterface
      */
     public static function createFromArray(array $data)
     {
-        $row = new self();
+        $row = new self;
 
         foreach ($data as $key => $value) {
             $row->addCell(new DataCell($key, $value));
@@ -117,13 +118,13 @@ final class DataRow implements DataRowInterface
      */
     public function isEmpty()
     {
-        if (0 === count($this->cells)) {
+        if (count($this->cells) === 0) {
             return true;
         }
 
         foreach ($this->cells as $cell) {
             // If at least one cell is not empty - the row is not empty.
-            if ('' !== $cell->getValue()) {
+            if ($cell->getValue() !== '') {
                 return false;
             }
         }

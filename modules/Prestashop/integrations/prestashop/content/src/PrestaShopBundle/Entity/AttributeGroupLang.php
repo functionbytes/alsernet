@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,20 +33,25 @@ use Doctrine\ORM\Mapping as ORM;
  * AttributeGroupLang.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\AttributeGroupLangRepository")
  */
 class AttributeGroupLang
 {
     /**
      * @ORM\Id
+     *
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\AttributeGroup", inversedBy="attributeGroupLangs")
+     *
      * @ORM\JoinColumn(name="id_attribute_group", referencedColumnName="id_attribute_group", nullable=false, onDelete="CASCADE")
      */
     private $attributeGroup;
 
     /**
      * @ORM\Id
+     *
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Lang")
+     *
      * @ORM\JoinColumn(name="id_lang", referencedColumnName="id_lang", nullable=false, onDelete="CASCADE")
      */
     private $lang;
@@ -77,8 +83,7 @@ class AttributeGroupLang
     /**
      * Set name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return AttributeGroupLang
      */
     public function setName($name)
@@ -101,8 +106,7 @@ class AttributeGroupLang
     /**
      * Set publicName.
      *
-     * @param string $publicName
-     *
+     * @param  string  $publicName
      * @return AttributeGroupLang
      */
     public function setPublicName($publicName)
@@ -125,7 +129,6 @@ class AttributeGroupLang
     /**
      * Set attributeGroup.
      *
-     * @param \PrestaShopBundle\Entity\AttributeGroup $attributeGroup
      *
      * @return AttributeGroupLang
      */
@@ -139,7 +142,7 @@ class AttributeGroupLang
     /**
      * Get attributeGroup.
      *
-     * @return \PrestaShopBundle\Entity\AttributeGroup
+     * @return AttributeGroup
      */
     public function getAttributeGroup()
     {
@@ -149,7 +152,6 @@ class AttributeGroupLang
     /**
      * Set lang.
      *
-     * @param \PrestaShopBundle\Entity\Lang $lang
      *
      * @return AttributeGroupLang
      */
@@ -163,7 +165,7 @@ class AttributeGroupLang
     /**
      * Get lang.
      *
-     * @return \PrestaShopBundle\Entity\Lang
+     * @return Lang
      */
     public function getLang()
     {

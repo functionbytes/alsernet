@@ -21,7 +21,7 @@
             </div>
 
             <div id="ticketsPanelLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
-            <div id="ticketsPanelList" class="bv-tk-list" style="display:none"></div>
+            <div id="ticketsPanelList" class="bv-tk-list bv-step-hidden"></div>
 
         </div>
         <div class="bv-modal-foot">
@@ -30,11 +30,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/tickets-panel.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/tickets-panel.js')) }}" defer></script>
-@endpush
-@endonce

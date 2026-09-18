@@ -3,7 +3,14 @@
 namespace Modules\Erp\Models\Oracle\Factura;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
+use Modules\Erp\Models\Oracle\Cobro\Formapago;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
+use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
+use Modules\Erp\Models\Oracle\Otros\AsientoCent;
+use Modules\Erp\Models\Oracle\Otros\Condicionpago;
 use Modules\Erp\Models\Oracle\Proveedor\Deudapro;
+use Modules\Erp\Models\Oracle\Proveedor\Proveedor;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -100,7 +107,7 @@ class Facturapro extends Model
      */
     public function facturaproRectificada()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Facturapro::class, 'idfacturapro_rectificada', 'idfacturapro');
+        return $this->belongsTo(Facturapro::class, 'idfacturapro_rectificada', 'idfacturapro');
     }
 
     /**
@@ -109,7 +116,7 @@ class Facturapro extends Model
      */
     public function facturapro()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Facturapro::class, 'idfacturapro', 'idfacturapro');
+        return $this->belongsTo(Facturapro::class, 'idfacturapro', 'idfacturapro');
     }
 
     /**
@@ -118,7 +125,7 @@ class Facturapro extends Model
      */
     public function testfactura()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Testfactura::class, 'idtestfactura', 'idtestfactura');
+        return $this->belongsTo(Testfactura::class, 'idtestfactura', 'idtestfactura');
     }
 
     /**
@@ -127,7 +134,7 @@ class Facturapro extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -136,7 +143,7 @@ class Facturapro extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -145,7 +152,7 @@ class Facturapro extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
     }
 
     /**
@@ -154,7 +161,7 @@ class Facturapro extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -163,7 +170,7 @@ class Facturapro extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -172,7 +179,7 @@ class Facturapro extends Model
      */
     public function condicionpago()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
+        return $this->belongsTo(Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
     }
 
     /**
@@ -181,6 +188,6 @@ class Facturapro extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

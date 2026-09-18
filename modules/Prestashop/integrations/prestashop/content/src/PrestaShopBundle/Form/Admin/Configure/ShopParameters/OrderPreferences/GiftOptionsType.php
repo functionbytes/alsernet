@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,7 +88,7 @@ class GiftOptionsType extends TranslatorAwareType
                 'suffix' => $this->trans('(tax excl.)', 'Admin.Global'),
             ]);
 
-        if (!$atcpShipWrap) {
+        if (! $atcpShipWrap) {
             $builder->add('gift_wrapping_tax_rules_group', ChoiceType::class, [
                 'required' => false,
                 'label' => $this->trans('Gift-wrapping tax', 'Admin.Shopparameters.Feature'),

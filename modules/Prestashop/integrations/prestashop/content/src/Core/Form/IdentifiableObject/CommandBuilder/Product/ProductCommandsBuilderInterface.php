@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,9 +36,6 @@ use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 interface ProductCommandsBuilderInterface
 {
     /**
-     * @param ProductId $productId
-     * @param array $formData
-     *
      * @return array Return empty array if the required data for the command is absent
      */
     public function buildCommands(ProductId $productId, array $formData): array;

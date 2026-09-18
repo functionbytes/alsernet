@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class StandardRefundFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -51,10 +49,7 @@ final class StandardRefundFormDataHandler implements FormDataHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function create(array $data)
-    {
-        return;
-    }
+    public function create(array $data) {}
 
     /**
      * {@inheritdoc}
@@ -64,10 +59,10 @@ final class StandardRefundFormDataHandler implements FormDataHandlerInterface
         $refunds = [];
         foreach ($data['inventaries'] as $product) {
             $orderDetailId = $product->getOrderDetailId();
-            if (!isset($data['selected_' . $orderDetailId]) || !(bool) $data['selected_' . $orderDetailId]) {
+            if (! isset($data['selected_'.$orderDetailId]) || ! (bool) $data['selected_'.$orderDetailId]) {
                 continue;
             }
-            $refunds[$orderDetailId]['quantity'] = $data['quantity_' . $orderDetailId] ?? 0;
+            $refunds[$orderDetailId]['quantity'] = $data['quantity_'.$orderDetailId] ?? 0;
         }
 
         $command = new IssueStandardRefundCommand(

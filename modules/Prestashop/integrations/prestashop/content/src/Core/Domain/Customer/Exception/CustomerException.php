@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use PrestaShop\PrestaShop\Core\Domain\Exception\DomainException;
 /**
  * Class CustomerException is base "Customer" context exception
  */
-class CustomerException extends DomainException
-{
-}
+class CustomerException extends DomainException {}

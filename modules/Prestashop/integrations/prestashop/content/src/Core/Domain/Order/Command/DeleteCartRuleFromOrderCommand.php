@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class DeleteCartRuleFromOrderCommand
     private $orderCartRuleId;
 
     /**
-     * @param int $orderId
-     * @param int $orderCartRuleId
+     * @param  int  $orderId
+     * @param  int  $orderCartRuleId
      */
     public function __construct($orderId, $orderCartRuleId)
     {

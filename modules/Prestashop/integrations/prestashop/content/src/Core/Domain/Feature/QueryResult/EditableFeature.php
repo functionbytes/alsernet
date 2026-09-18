@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,8 @@ class EditableFeature
     private $shopAssociationIds;
 
     /**
-     * @param FeatureId $featureId
-     * @param string[] $name
-     * @param int[] $shopAssociationIds
+     * @param  string[]  $name
+     * @param  int[]  $shopAssociationIds
      */
     public function __construct(FeatureId $featureId, array $name, array $shopAssociationIds)
     {

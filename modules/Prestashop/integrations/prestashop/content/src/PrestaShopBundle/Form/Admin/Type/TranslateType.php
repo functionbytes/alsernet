@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,9 @@ class TranslateType extends CommonAbstractType
     private $defaultShopLanguageId;
 
     /**
-     * @param UrlGeneratorInterface $urlGenerator
-     * @param bool $saveFormLocaleChoice
-     * @param int $defaultFormLanguageId
-     * @param int $defaultShopLanguageId
+     * @param  bool  $saveFormLocaleChoice
+     * @param  int  $defaultFormLanguageId
+     * @param  int  $defaultShopLanguageId
      */
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
@@ -94,7 +94,7 @@ class TranslateType extends CommonAbstractType
             }
 
             $builder->add($locale['id_lang'], $options['type'], $locale_options);
-            ++$i;
+            $i++;
         }
     }
 
@@ -142,7 +142,6 @@ class TranslateType extends CommonAbstractType
     /**
      * Get default locale.
      *
-     * @param array $locales
      *
      * @return array
      */

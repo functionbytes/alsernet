@@ -80,7 +80,7 @@
                     </div>
                     <div class="card-footer bg-white border-top py-3">
                         <button type="submit" class="btn btn-primary-portal w-100">
-                            <i class="fas fa-floppy-disk me-2"></i>Guardar cambios
+                            Guardar cambios
                         </button>
                     </div>
                 </form>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -84,16 +85,8 @@ class ProductStockProperties
     private $availableDate;
 
     /**
-     * @param PackStockType|null $packStockType
-     * @param int|null $quantity
-     * @param OutOfStockType|null $outOfStockType
-     * @param int|null $minimalQuantity
-     * @param string|null $location
-     * @param int|null $lowStockThreshold
-     * @param bool|null $lowStockAlertEnabled
-     * @param string[]|null $localizedAvailableNowLabels
-     * @param string[]|null $localizedAvailableLaterLabels
-     * @param DateTimeInterface|null $availableDate
+     * @param  string[]|null  $localizedAvailableNowLabels
+     * @param  string[]|null  $localizedAvailableLaterLabels
      */
     public function __construct(
         ?PackStockType $packStockType = null,
@@ -119,57 +112,36 @@ class ProductStockProperties
         $this->availableDate = $availableDate;
     }
 
-    /**
-     * @return PackStockType|null
-     */
     public function getPackStockType(): ?PackStockType
     {
         return $this->packStockType;
     }
 
-    /**
-     * @return int|null
-     */
     public function getQuantity(): ?int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return OutOfStockType|null
-     */
     public function getOutOfStockType(): ?OutOfStockType
     {
         return $this->outOfStockType;
     }
 
-    /**
-     * @return int|null
-     */
     public function getMinimalQuantity(): ?int
     {
         return $this->minimalQuantity;
     }
 
-    /**
-     * @return string|null
-     */
     public function getLocation(): ?string
     {
         return $this->location;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLowStockThreshold(): ?int
     {
         return $this->lowStockThreshold;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isLowStockAlertEnabled(): ?bool
     {
         return $this->lowStockAlertEnabled;
@@ -191,9 +163,6 @@ class ProductStockProperties
         return $this->localizedAvailableLaterLabels;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getAvailableDate(): ?DateTimeInterface
     {
         return $this->availableDate;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ class TypeaheadProductPackCollectionType extends CommonAbstractType
     /**
      * {@inheritdoc}
      *
-     * @param object $productAdapter
+     * @param  object  $productAdapter
      */
     public function __construct($productAdapter)
     {
@@ -64,8 +65,8 @@ class TypeaheadProductPackCollectionType extends CommonAbstractType
         $view->vars['mapping_name'] = $options['mapping_name'];
         $view->vars['template_collection'] = $options['template_collection'];
 
-        //if form is submitted, inject datas to display collection
-        if (!empty($view->vars['value']) && !empty($view->vars['value']['data'])) {
+        // if form is submitted, inject datas to display collection
+        if (! empty($view->vars['value']) && ! empty($view->vars['value']['data'])) {
             $view->vars['collection'] = $view->vars['value']['data'];
         }
     }

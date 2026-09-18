@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,6 +52,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     protected $combinations;
 
     protected $quantity_discounts;
+
     protected $adminNotifications = [];
 
     /**
@@ -63,8 +65,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         if (Validate::isLoadedObject($this->product)) {
             $idProductAttribute = Tools::getValue('id_product_attribute', null);
 
-            if (!$this->product->hasCombinations() || !$this->isValidCombination($idProductAttribute, $this->product->id)) {
-                //Invalid combination we redirect to the canonical url (without attribute id)
+            if (! $this->product->hasCombinations() || ! $this->isValidCombination($idProductAttribute, $this->product->id)) {
+                // Invalid combination we redirect to the canonical url (without attribute id)
                 unset($_GET['id_product_attribute']);
                 $idProductAttribute = null;
             }
@@ -89,7 +91,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     {
         $product = $this->context->smarty->getTemplateVars('product');
 
-        if (!($product instanceof ProductLazyArray)) {
+        if (! ($product instanceof ProductLazyArray)) {
             return '';
         }
 
@@ -116,7 +118,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $this->product = new Product($id_product, true, $this->context->language->id, $this->context->shop->id);
         }
 
-        if (!Validate::isLoadedObject($this->product)) {
+        if (! Validate::isLoadedObject($this->product)) {
             header('HTTP/1.1 404 Not Found');
             header('Status: 404 Not Found');
             $this->errors[] = $this->trans('This product is no longer available.', [], 'Shop.Notifications.Error');
@@ -132,20 +134,20 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $isAssociatedToProduct = (
                 Tools::getValue('adtoken') == Tools::getAdminToken(
                     'AdminProducts'
-                    . (int) Tab::getIdFromClassName('AdminProducts')
-                    . (int) Tools::getValue('id_employee')
+                    .(int) Tab::getIdFromClassName('AdminProducts')
+                    .(int) Tools::getValue('id_employee')
                 )
                 && $this->product->isAssociatedToShop()
             );
-            $isPreview = ('1' === Tools::getValue('preview'));
-            if ((!$this->product->isAssociatedToShop() || !$this->product->active) && !$isPreview) {
+            $isPreview = (Tools::getValue('preview') === '1');
+            if ((! $this->product->isAssociatedToShop() || ! $this->product->active) && ! $isPreview) {
                 if ($isAssociatedToProduct) {
                     $this->adminNotifications['inactive_product'] = [
                         'type' => 'warning',
                         'message' => $this->trans('This product is not visible to your customers.', [], 'Shop.Notifications.Warning'),
                     ];
                 } else {
-                    if (!$this->product->id_type_redirected) {
+                    if (! $this->product->id_type_redirected) {
                         if (in_array($this->product->redirect_type, [ProductInterface::REDIRECT_TYPE_CATEGORY_MOVED_PERMANENTLY, ProductInterface::REDIRECT_TYPE_CATEGORY_FOUND])) {
                             $this->product->id_type_redirected = $this->product->id_category_default;
                         } else {
@@ -158,27 +160,27 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                     switch ($this->product->redirect_type) {
                         case ProductInterface::REDIRECT_TYPE_PRODUCT_MOVED_PERMANENTLY:
                             header('HTTP/1.1 301 Moved Permanently');
-                            header('Location: ' . $this->context->link->getProductLink($this->product->id_type_redirected));
+                            header('Location: '.$this->context->link->getProductLink($this->product->id_type_redirected));
                             exit;
 
-                        break;
+                            break;
                         case ProductInterface::REDIRECT_TYPE_PRODUCT_FOUND:
                             header('HTTP/1.1 302 Moved Temporarily');
                             header('Cache-Control: no-cache');
-                            header('Location: ' . $this->context->link->getProductLink($this->product->id_type_redirected));
+                            header('Location: '.$this->context->link->getProductLink($this->product->id_type_redirected));
                             exit;
 
-                        break;
+                            break;
                         case ProductInterface::REDIRECT_TYPE_CATEGORY_MOVED_PERMANENTLY:
                             header('HTTP/1.1 301 Moved Permanently');
-                            header('Location: ' . $this->context->link->getCategoryLink($this->product->id_type_redirected));
+                            header('Location: '.$this->context->link->getCategoryLink($this->product->id_type_redirected));
                             exit;
 
                             break;
                         case ProductInterface::REDIRECT_TYPE_CATEGORY_FOUND:
                             header('HTTP/1.1 302 Moved Temporarily');
                             header('Cache-Control: no-cache');
-                            header('Location: ' . $this->context->link->getCategoryLink($this->product->id_type_redirected));
+                            header('Location: '.$this->context->link->getCategoryLink($this->product->id_type_redirected));
                             exit;
 
                             break;
@@ -192,13 +194,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                             break;
                     }
                 }
-            } elseif (!$this->product->checkAccess(isset($this->context->customer->id) && $this->context->customer->id ? (int) $this->context->customer->id : 0)) {
+            } elseif (! $this->product->checkAccess(isset($this->context->customer->id) && $this->context->customer->id ? (int) $this->context->customer->id : 0)) {
                 header('HTTP/1.1 403 Forbidden');
                 header('Status: 403 Forbidden');
                 $this->errors[] = $this->trans('You do not have access to this product.', [], 'Shop.Notifications.Error');
                 $this->setTemplate('errors/forbidden');
             } else {
-                if (!$isAssociatedToProduct && $isPreview && !$this->ajax) {
+                if (! $isAssociatedToProduct && $isPreview && ! $this->ajax) {
                     header('HTTP/1.1 403 Forbidden');
                     header('Status: 403 Forbidden');
                     $this->errors[] = $this->trans('You do not have access to this product.', [], 'Shop.Notifications.Error');
@@ -231,14 +233,14 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                         }
                     }
                 }
-                if (!$id_category || !Category::inShopStatic($id_category, $this->context->shop) || !Product::idIsOnCategoryId((int) $this->product->id, ['0' => ['id_category' => $id_category]])) {
+                if (! $id_category || ! Category::inShopStatic($id_category, $this->context->shop) || ! Product::idIsOnCategoryId((int) $this->product->id, ['0' => ['id_category' => $id_category]])) {
                     $id_category = (int) $this->product->id_category_default;
                 }
                 $this->category = new Category((int) $id_category, (int) $this->context->cookie->id_lang);
                 $moduleManagerBuilder = ModuleManagerBuilder::getInstance();
                 $moduleManager = $moduleManagerBuilder->build();
 
-                if (isset($this->context->cookie, $this->category->id_category) && !($moduleManager->isInstalled('ps_categorytree') && $moduleManager->isEnabled('ps_categorytree'))) {
+                if (isset($this->context->cookie, $this->category->id_category) && ! ($moduleManager->isInstalled('ps_categorytree') && $moduleManager->isEnabled('ps_categorytree'))) {
                     $this->context->cookie->last_visited_category = (int) $this->category->id_category;
                 }
             }
@@ -252,9 +254,9 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
      */
     public function initContent()
     {
-        if (!$this->errors) {
+        if (! $this->errors) {
             if (Pack::isPack((int) $this->product->id)
-                && !Pack::isInStock((int) $this->product->id, $this->product->minimal_quantity, $this->context->cart)
+                && ! Pack::isInStock((int) $this->product->id, $this->product->minimal_quantity, $this->context->cart)
             ) {
                 $this->product->quantity = 0;
             }
@@ -265,7 +267,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $productPrice = 0;
             $productPriceWithoutReduction = 0;
 
-            if (!$priceDisplay || $priceDisplay == 2) {
+            if (! $priceDisplay || $priceDisplay == 2) {
                 $productPrice = $this->product->getPrice(true, null, 6);
                 $productPriceWithoutReduction = $this->product->getPriceWithoutReduct(false, null);
             } elseif ($priceDisplay == 1) {
@@ -276,13 +278,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             if (Tools::isSubmit('submitCustomizedData')) {
                 // If cart has not been saved, we need to do it so that customization fields can have an id_cart
                 // We check that the cookie exists first to avoid ghost carts
-                if (!$this->context->cart->id && isset($_COOKIE[$this->context->cookie->getName()])) {
+                if (! $this->context->cart->id && isset($_COOKIE[$this->context->cookie->getName()])) {
                     $this->context->cart->add();
                     $this->context->cookie->id_cart = (int) $this->context->cart->id;
                 }
                 $this->pictureUpload();
                 $this->textRecord();
-            } elseif (Tools::getIsset('deletePicture') && !$this->context->cart->deleteCustomizationToProduct($this->product->id, Tools::getValue('deletePicture'))) {
+            } elseif (Tools::getIsset('deletePicture') && ! $this->context->cart->deleteCustomizationToProduct($this->product->id, Tools::getValue('deletePicture'))) {
                 $this->errors[] = $this->trans('An error occurred while deleting the selected picture.', [], 'Shop.Notifications.Error');
             }
 
@@ -291,13 +293,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             if ($this->product->customizable) {
                 $files = $this->context->cart->getProductCustomization($this->product->id, Product::CUSTOMIZE_FILE, true);
                 foreach ($files as $file) {
-                    $pictures['pictures_' . $this->product->id . '_' . $file['index']] = $file['value'];
+                    $pictures['pictures_'.$this->product->id.'_'.$file['index']] = $file['value'];
                 }
 
                 $texts = $this->context->cart->getProductCustomization($this->product->id, Product::CUSTOMIZE_TEXTFIELD, true);
 
                 foreach ($texts as $text_field) {
-                    $text_fields['textFields_' . $this->product->id . '_' . $text_field['index']] = str_replace('<br />', "\n", $text_field['value']);
+                    $text_fields['textFields_'.$this->product->id.'_'.$text_field['index']] = str_replace('<br />', "\n", $text_field['value']);
                 }
             }
 
@@ -310,9 +312,9 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             if (is_array($customization_fields)) {
                 foreach ($customization_fields as &$customization_field) {
                     if ($customization_field['type'] == Product::CUSTOMIZE_FILE) {
-                        $customization_field['key'] = 'pictures_' . $this->product->id . '_' . $customization_field['id_customization_field'];
+                        $customization_field['key'] = 'pictures_'.$this->product->id.'_'.$customization_field['id_customization_field'];
                     } elseif ($customization_field['type'] == Product::CUSTOMIZE_TEXTFIELD) {
-                        $customization_field['key'] = 'textFields_' . $this->product->id . '_' . $customization_field['id_customization_field'];
+                        $customization_field['key'] = 'textFields_'.$this->product->id.'_'.$customization_field['id_customization_field'];
                     }
                 }
                 unset($customization_field);
@@ -335,8 +337,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                     $this->context->link
                 ),
                 $this->context->link,
-                new PriceFormatter(),
-                new ProductColorsRetriever(),
+                new PriceFormatter,
+                new ProductColorsRetriever,
                 $this->getTranslator()
             );
             $presentationSettings = $this->getProductPresentationSettings();
@@ -384,7 +386,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 null,
                 true
             );
-            if (!empty($filteredProduct['object'])) {
+            if (! empty($filteredProduct['object'])) {
                 $product_for_template = $filteredProduct['object'];
             }
 
@@ -406,10 +408,10 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 'id_customization' => empty($customization_datas) ? null : $customization_datas[0]['id_customization'],
                 'accessories' => $accessories,
                 'product' => $product_for_template,
-                'displayUnitPrice' => (!empty($this->product->unity) && $this->product->unit_price_ratio > 0.000000) ? true : false,
+                'displayUnitPrice' => (! empty($this->product->unity) && $this->product->unit_price_ratio > 0.000000) ? true : false,
                 'product_manufacturer' => $productManufacturer,
                 'manufacturer_image_url' => $manufacturerImageUrl,
-                'product_brand_url' =>  ($code != 'es') ? '/' . $code . '/m/' . $productBrandUrl : '/m/' . $productBrandUrl,
+                'product_brand_url' => ($code != 'es') ? '/'.$code.'/m/'.$productBrandUrl : '/m/'.$productBrandUrl,
             ]);
 
             // Assign attribute groups to the template
@@ -442,8 +444,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     {
         $product = $this->getTemplateVarProduct();
         $minimalProductQuantity = $this->getProductMinimalQuantity($product);
-        $isPreview = ('1' === Tools::getValue('preview'));
-        $isQuickView = ('1' === Tools::getValue('quickview'));
+        $isPreview = (Tools::getValue('preview') === '1');
+        $isQuickView = (Tools::getValue('quickview') === '1');
 
         if ($isQuickView) {
             $this->setQuickViewMode();
@@ -481,7 +483,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 $isPreview ? ['preview' => '1'] : []
             ),
             'product_minimal_quantity' => $minimalProductQuantity,
-            'product_has_combinations' => !empty($this->combinations),
+            'product_has_combinations' => ! empty($this->combinations),
             'id_product_attribute' => $product['id_product_attribute'],
             'product_title' => $this->getProductPageTitle(
                 $this->getTemplateVarPage()['meta'] ?? []
@@ -494,8 +496,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
      * Get minimal product quantity or minimal product combination quantity.
      *
      * @deprecated This method is deprecated since 1.7.5 and will be dropped in 1.8.0, please use getProductMinimalQuantity instead.
-     *
-     * @param $product
      *
      * @return int
      */
@@ -545,7 +545,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 $combination = new Combination((int) $quantity_discount['id_product_attribute']);
                 $attributes = $combination->getAttributesName((int) $this->context->language->id);
                 foreach ($attributes as $attribute) {
-                    $quantity_discount['attributes'] = $attribute['name'] . ' - ';
+                    $quantity_discount['attributes'] = $attribute['name'].' - ';
                 }
                 $quantity_discount['attributes'] = rtrim($quantity_discount['attributes'], ' - ');
             }
@@ -560,8 +560,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         $this->quantity_discounts = $this->formatQuantityDiscounts($quantity_discounts, $product_price, (float) $tax, $this->product->ecotax);
 
         $this->context->smarty->assign([
-            'no_tax' => Tax::excludeTaxeOption() || !$tax,
-            'tax_enabled' => Configuration::get('PS_TAX') && !Configuration::get('AEUC_LABEL_TAX_INC_EXC'),
+            'no_tax' => Tax::excludeTaxeOption() || ! $tax,
+            'tax_enabled' => Configuration::get('PS_TAX') && ! Configuration::get('AEUC_LABEL_TAX_INC_EXC'),
             'customer_group_without_tax' => Group::getPriceDisplayMethod($this->context->customer->id_default_group),
         ]);
     }
@@ -582,15 +582,15 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $combination_prices_set = [];
             foreach ($attributes_groups as $k => $row) {
                 // Color management
-                if (isset($row['is_color_group']) && $row['is_color_group'] && (isset($row['attribute_color']) && $row['attribute_color']) || (file_exists(_PS_COL_IMG_DIR_ . $row['id_attribute'] . '.jpg'))) {
+                if (isset($row['is_color_group']) && $row['is_color_group'] && (isset($row['attribute_color']) && $row['attribute_color']) || (file_exists(_PS_COL_IMG_DIR_.$row['id_attribute'].'.jpg'))) {
                     $colors[$row['id_attribute']]['value'] = $row['attribute_color'];
                     $colors[$row['id_attribute']]['name'] = $row['attribute_name'];
-                    if (!isset($colors[$row['id_attribute']]['attributes_quantity'])) {
+                    if (! isset($colors[$row['id_attribute']]['attributes_quantity'])) {
                         $colors[$row['id_attribute']]['attributes_quantity'] = 0;
                     }
                     $colors[$row['id_attribute']]['attributes_quantity'] += (int) $row['quantity'];
                 }
-                if (!isset($groups[$row['id_attribute_group']])) {
+                if (! isset($groups[$row['id_attribute_group']])) {
                     $groups[$row['id_attribute_group']] = [
                         'group_name' => $row['group_name'],
                         'name' => $row['public_group_name'],
@@ -602,15 +602,15 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 $groups[$row['id_attribute_group']]['attributes'][$row['id_attribute']] = [
                     'name' => $row['attribute_name'],
                     'html_color_code' => $row['attribute_color'],
-                    'texture' => (@filemtime(_PS_COL_IMG_DIR_ . $row['id_attribute'] . '.jpg')) ? _THEME_COL_DIR_ . $row['id_attribute'] . '.jpg' : '',
+                    'texture' => (@filemtime(_PS_COL_IMG_DIR_.$row['id_attribute'].'.jpg')) ? _THEME_COL_DIR_.$row['id_attribute'].'.jpg' : '',
                     'selected' => (isset($product_for_template['attributes'][$row['id_attribute_group']]['id_attribute']) && $product_for_template['attributes'][$row['id_attribute_group']]['id_attribute'] == $row['id_attribute']) ? true : false,
                 ];
 
-                //$product.attributes.$id_attribute_group.id_attribute eq $id_attribute
+                // $product.attributes.$id_attribute_group.id_attribute eq $id_attribute
                 if ($row['default_on'] && $groups[$row['id_attribute_group']]['default'] == -1) {
                     $groups[$row['id_attribute_group']]['default'] = (int) $row['id_attribute'];
                 }
-                if (!isset($groups[$row['id_attribute_group']]['attributes_quantity'][$row['id_attribute']])) {
+                if (! isset($groups[$row['id_attribute_group']]['attributes_quantity'][$row['id_attribute']])) {
                     $groups[$row['id_attribute_group']]['attributes_quantity'][$row['id_attribute']] = 0;
                 }
                 $groups[$row['id_attribute_group']]['attributes_quantity'][$row['id_attribute']] += (int) $row['quantity'];
@@ -620,7 +620,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 $this->combinations[$row['id_product_attribute']]['price'] = (float) $row['price'];
 
                 // Call getPriceStatic in order to set $combination_specific_price
-                if (!isset($combination_prices_set[(int) $row['id_product_attribute']])) {
+                if (! isset($combination_prices_set[(int) $row['id_product_attribute']])) {
                     $combination_specific_price = null;
                     Product::getPriceStatic((int) $this->product->id, false, $row['id_product_attribute'], 6, null, false, true, 1, false, null, null, null, $combination_specific_price);
                     $combination_prices_set[(int) $row['id_product_attribute']] = true;
@@ -643,7 +643,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                     $this->combinations[$row['id_product_attribute']]['available_date'] = $this->combinations[$row['id_product_attribute']]['date_formatted'] = '';
                 }
 
-                if (!isset($combination_images[$row['id_product_attribute']][0]['id_image'])) {
+                if (! isset($combination_images[$row['id_product_attribute']][0]['id_image'])) {
                     $this->combinations[$row['id_product_attribute']]['id_image'] = -1;
                 } else {
                     $this->combinations[$row['id_product_attribute']]['id_image'] = $id_image = (int) $combination_images[$row['id_product_attribute']][0]['id_image'];
@@ -653,7 +653,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                                 $current_cover = $image;
                             }
                         }
-                        if (!isset($current_cover)) {
+                        if (! isset($current_cover)) {
                             $current_cover = array_values($this->context->smarty->tpl_vars['product']->value['images'])[0];
                         }
 
@@ -686,7 +686,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                                 if (isset($product_images[$id_image])) {
                                     $cover = $product_images[$id_image];
                                 }
-                                $cover['id_image'] = (Configuration::get('PS_LEGACY_IMAGES') ? ($this->product->id . '-' . $id_image) : (int) $id_image);
+                                $cover['id_image'] = (Configuration::get('PS_LEGACY_IMAGES') ? ($this->product->id.'-'.$id_image) : (int) $id_image);
                                 $cover['id_image_only'] = (int) $id_image;
                                 $this->context->smarty->assign('cover', $cover);
                             }
@@ -699,33 +699,33 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $current_selected_attributes = [];
             $count = 0;
             foreach ($groups as &$group) {
-                ++$count;
+                $count++;
                 if ($count > 1) {
-                    //find attributes of current group, having a possible combination with current selected
+                    // find attributes of current group, having a possible combination with current selected
                     $id_product_attributes = [0];
                     $query = 'SELECT pac.`id_product_attribute`
-                        FROM `' . _DB_PREFIX_ . 'product_attribute_combination` pac
-                        INNER JOIN `' . _DB_PREFIX_ . 'product_attribute` pa ON pa.id_product_attribute = pac.id_product_attribute
-                        WHERE id_product = ' . $this->product->id . ' AND id_attribute IN (' . implode(',', array_map('intval', $current_selected_attributes)) . ')
+                        FROM `'._DB_PREFIX_.'product_attribute_combination` pac
+                        INNER JOIN `'._DB_PREFIX_.'product_attribute` pa ON pa.id_product_attribute = pac.id_product_attribute
+                        WHERE id_product = '.$this->product->id.' AND id_attribute IN ('.implode(',', array_map('intval', $current_selected_attributes)).')
                         GROUP BY id_product_attribute
-                        HAVING COUNT(id_product) = ' . count($current_selected_attributes);
+                        HAVING COUNT(id_product) = '.count($current_selected_attributes);
                     if ($results = Db::getInstance()->executeS($query)) {
                         foreach ($results as $row) {
                             $id_product_attributes[] = $row['id_product_attribute'];
                         }
                     }
-                    $id_attributes = Db::getInstance()->executeS('SELECT pac2.`id_attribute` FROM `' . _DB_PREFIX_ . 'product_attribute_combination` pac2' .
-                        ((!Product::isAvailableWhenOutOfStock($this->product->out_of_stock) && 0 == Configuration::get('PS_DISP_UNAVAILABLE_ATTR')) ?
-                        ' INNER JOIN `' . _DB_PREFIX_ . 'stock_available` pa ON pa.id_product_attribute = pac2.id_product_attribute
+                    $id_attributes = Db::getInstance()->executeS('SELECT pac2.`id_attribute` FROM `'._DB_PREFIX_.'product_attribute_combination` pac2'.
+                        ((! Product::isAvailableWhenOutOfStock($this->product->out_of_stock) && Configuration::get('PS_DISP_UNAVAILABLE_ATTR') == 0) ?
+                        ' INNER JOIN `'._DB_PREFIX_.'stock_available` pa ON pa.id_product_attribute = pac2.id_product_attribute
                         WHERE pa.quantity > 0 AND ' :
-                        ' WHERE ') .
-                        'pac2.`id_product_attribute` IN (' . implode(',', array_map('intval', $id_product_attributes)) . ')
-                        AND pac2.id_attribute NOT IN (' . implode(',', array_map('intval', $current_selected_attributes)) . ')');
+                        ' WHERE ').
+                        'pac2.`id_product_attribute` IN ('.implode(',', array_map('intval', $id_product_attributes)).')
+                        AND pac2.id_attribute NOT IN ('.implode(',', array_map('intval', $current_selected_attributes)).')');
                     foreach ($id_attributes as $k => $row) {
                         $id_attributes[$k] = (int) $row['id_attribute'];
                     }
                     foreach ($group['attributes'] as $key => $attribute) {
-                        if (!in_array((int) $key, $id_attributes)) {
+                        if (! in_array((int) $key, $id_attributes)) {
                             unset(
                                 $group['attributes'][$key],
                                 $group['attributes_quantity'][$key]
@@ -733,7 +733,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                         }
                     }
                 }
-                //find selected attribute or first of group
+                // find selected attribute or first of group
                 $index = 0;
                 $current_selected_attribute = 0;
                 foreach ($group['attributes'] as $key => $attribute) {
@@ -752,7 +752,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             }
 
             // wash attributes list (if some attributes are unavailables and if allowed to wash it)
-            if (!Product::isAvailableWhenOutOfStock($this->product->out_of_stock) && Configuration::get('PS_DISP_UNAVAILABLE_ATTR') == 0) {
+            if (! Product::isAvailableWhenOutOfStock($this->product->out_of_stock) && Configuration::get('PS_DISP_UNAVAILABLE_ATTR') == 0) {
                 foreach ($groups as &$group) {
                     foreach ($group['attributes_quantity'] as $key => $quantity) {
                         if ($quantity <= 0) {
@@ -770,7 +770,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             foreach ($this->combinations as $id_product_attribute => $comb) {
                 $attribute_list = '';
                 foreach ($comb['attributes'] as $id_attribute) {
-                    $attribute_list .= '\'' . (int) $id_attribute . '\',';
+                    $attribute_list .= '\''.(int) $id_attribute.'\',';
                 }
                 $attribute_list = rtrim($attribute_list, ',');
                 $this->combinations[$id_product_attribute]['list'] = $attribute_list;
@@ -820,7 +820,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     protected function assignCategory()
     {
         // Assign category to the template
-        if (($this->category === false || !Validate::isLoadedObject($this->category) || !$this->category->inShop() || !$this->category->isAssociatedToShop()) && Category::inShopStatic($this->product->id_category_default, $this->context->shop)) {
+        if (($this->category === false || ! Validate::isLoadedObject($this->category) || ! $this->category->inShop() || ! $this->category->isAssociatedToShop()) && Category::inShopStatic($this->product->id_category_default, $this->context->shop)) {
             $this->category = new Category((int) $this->product->id_category_default, (int) $this->context->language->id);
         }
 
@@ -845,9 +845,9 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     {
         $reg = '/\[img\-([0-9]+)\-(left|right)\-([a-zA-Z0-9-_]+)\]/';
         while (preg_match($reg, $desc, $matches)) {
-            $link_lmg = $this->context->link->getImageLink($this->product->link_rewrite, $this->product->id . '-' . $matches[1], $matches[3]);
+            $link_lmg = $this->context->link->getImageLink($this->product->link_rewrite, $this->product->id.'-'.$matches[1], $matches[3]);
             $class = $matches[2] == 'left' ? 'class="imageFloatLeft"' : 'class="imageFloatRight"';
-            $html_img = '<img src="' . $link_lmg . '" alt="" ' . $class . '/>';
+            $html_img = '<img src="'.$link_lmg.'" alt="" '.$class.'/>';
             $desc = str_replace($matches[0], $html_img, $desc);
         }
 
@@ -856,18 +856,18 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     protected function pictureUpload()
     {
-        if (!$field_ids = $this->product->getCustomizationFieldIds()) {
+        if (! $field_ids = $this->product->getCustomizationFieldIds()) {
             return false;
         }
         $authorized_file_fields = [];
         foreach ($field_ids as $field_id) {
             if ($field_id['type'] == Product::CUSTOMIZE_FILE) {
-                $authorized_file_fields[(int) $field_id['id_customization_field']] = 'file' . (int) $field_id['id_customization_field'];
+                $authorized_file_fields[(int) $field_id['id_customization_field']] = 'file'.(int) $field_id['id_customization_field'];
             }
         }
         $indexes = array_flip($authorized_file_fields);
         foreach ($_FILES as $field_name => $file) {
-            if (in_array($field_name, $authorized_file_fields) && isset($file['tmp_name']) && !empty($file['tmp_name'])) {
+            if (in_array($field_name, $authorized_file_fields) && isset($file['tmp_name']) && ! empty($file['tmp_name'])) {
                 $file_name = md5(uniqid(mt_rand(0, mt_getrandmax()), true));
                 if ($error = ImageManager::validateUpload($file, (int) Configuration::get('PS_PRODUCT_PICTURE_MAX_SIZE'))) {
                     $this->errors[] = $error;
@@ -876,13 +876,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                 $product_picture_width = (int) Configuration::get('PS_PRODUCT_PICTURE_WIDTH');
                 $product_picture_height = (int) Configuration::get('PS_PRODUCT_PICTURE_HEIGHT');
                 $tmp_name = tempnam(_PS_TMP_IMG_DIR_, 'PS');
-                if ($error || (!$tmp_name || !move_uploaded_file($file['tmp_name'], $tmp_name))) {
+                if ($error || (! $tmp_name || ! move_uploaded_file($file['tmp_name'], $tmp_name))) {
                     return false;
                 }
                 /* Original file */
-                if (!ImageManager::resize($tmp_name, _PS_UPLOAD_DIR_ . $file_name)) {
+                if (! ImageManager::resize($tmp_name, _PS_UPLOAD_DIR_.$file_name)) {
                     $this->errors[] = $this->trans('An error occurred during the image upload process.', [], 'Shop.Notifications.Error');
-                } elseif (!ImageManager::resize($tmp_name, _PS_UPLOAD_DIR_ . $file_name . '_small', $product_picture_width, $product_picture_height)) {
+                } elseif (! ImageManager::resize($tmp_name, _PS_UPLOAD_DIR_.$file_name.'_small', $product_picture_width, $product_picture_height)) {
                     $this->errors[] = $this->trans('An error occurred during the image upload process.', [], 'Shop.Notifications.Error');
                 } else {
                     $this->context->cart->addPictureToProduct($this->product->id, $indexes[$field_name], Product::CUSTOMIZE_FILE, $file_name);
@@ -896,21 +896,21 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     protected function textRecord()
     {
-        if (!$field_ids = $this->product->getCustomizationFieldIds()) {
+        if (! $field_ids = $this->product->getCustomizationFieldIds()) {
             return false;
         }
 
         $authorized_text_fields = [];
         foreach ($field_ids as $field_id) {
             if ($field_id['type'] == Product::CUSTOMIZE_TEXTFIELD) {
-                $authorized_text_fields[(int) $field_id['id_customization_field']] = 'textField' . (int) $field_id['id_customization_field'];
+                $authorized_text_fields[(int) $field_id['id_customization_field']] = 'textField'.(int) $field_id['id_customization_field'];
             }
         }
 
         $indexes = array_flip($authorized_text_fields);
         foreach ($_POST as $field_name => $value) {
             if (in_array($field_name, $authorized_text_fields) && $value != '') {
-                if (!Validate::isMessage($value)) {
+                if (! Validate::isMessage($value)) {
                     $this->errors[] = $this->trans('Invalid message', [], 'Shop.Notifications.Error');
                 } else {
                     $this->context->cart->addTextFieldToProduct($this->product->id, $indexes[$field_name], Product::CUSTOMIZE_TEXTFIELD, $value);
@@ -924,11 +924,10 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     /**
      * Calculation of currency-converted discounts for specific prices on product.
      *
-     * @param array $specific_prices array of specific prices definitions (DEFAULT currency)
-     * @param float $price current price in CURRENT currency
-     * @param float $tax_rate in percents
-     * @param float $ecotax_amount in DEFAULT currency, with tax
-     *
+     * @param  array  $specific_prices  array of specific prices definitions (DEFAULT currency)
+     * @param  float  $price  current price in CURRENT currency
+     * @param  float  $tax_rate  in percents
+     * @param  float  $ecotax_amount  in DEFAULT currency, with tax
      * @return array
      */
     protected function formatQuantityDiscounts($specific_prices, $price, $tax_rate, $ecotax_amount)
@@ -987,11 +986,11 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     private function getIdProductAttributeByGroupOrRequestOrDefault()
     {
         $idProductAttribute = $this->getIdProductAttributeByGroup();
-        if (null === $idProductAttribute) {
+        if ($idProductAttribute === null) {
             $idProductAttribute = (int) Tools::getValue('id_product_attribute');
         }
 
-        if (0 === $idProductAttribute) {
+        if ($idProductAttribute === 0) {
             $idProductAttribute = (int) Product::getDefaultAttribute($this->product->id);
         }
 
@@ -1004,15 +1003,14 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
      * If not try to return the first available attribute, if none are available
      * simply returns the input.
      *
-     * @param int $checkedIdProductAttribute
-     *
+     * @param  int  $checkedIdProductAttribute
      * @return int
      */
     private function tryToGetAvailableIdProductAttribute($checkedIdProductAttribute)
     {
-        if (!Configuration::get('PS_DISP_UNAVAILABLE_ATTR')) {
+        if (! Configuration::get('PS_DISP_UNAVAILABLE_ATTR')) {
             $productCombinations = $this->product->getAttributeCombinations();
-            if (!Product::isAvailableWhenOutOfStock($this->product->out_of_stock)) {
+            if (! Product::isAvailableWhenOutOfStock($this->product->out_of_stock)) {
                 $availableProductAttributes = array_filter(
                     $productCombinations,
                     function ($elem) {
@@ -1032,12 +1030,12 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
             if (empty($availableProductAttribute) && count($availableProductAttributes)) {
                 // if selected combination is NOT available ($availableProductAttribute) but they are other alternatives ($availableProductAttributes), then we'll try to get the closest.
-                if (!Product::isAvailableWhenOutOfStock($this->product->out_of_stock)) {
+                if (! Product::isAvailableWhenOutOfStock($this->product->out_of_stock)) {
                     // first lets get information of the selected combination.
                     $checkProductAttribute = array_filter(
                         $productCombinations,
                         function ($elem) use ($checkedIdProductAttribute) {
-                            return $elem['id_product_attribute'] == $checkedIdProductAttribute || (!$checkedIdProductAttribute && $elem['default_on']);
+                            return $elem['id_product_attribute'] == $checkedIdProductAttribute || (! $checkedIdProductAttribute && $elem['default_on']);
                         }
                     );
                     if (count($checkProductAttribute)) {
@@ -1047,7 +1045,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                             $alternativeAttribute = array_filter(
                                 $availableProductAttributes,
                                 function ($elem) use ($attribute) {
-                                    return $elem['id_attribute'] == $attribute['id_attribute'] && !$elem['is_color_group'];
+                                    return $elem['id_attribute'] == $attribute['id_attribute'] && ! $elem['is_color_group'];
                                 }
                             );
                             foreach ($alternativeAttribute as $key => $value) {
@@ -1102,7 +1100,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     {
         $productSettings = $this->getProductPresentationSettings();
         // Hook displayProductExtraContent
-        $extraContentFinder = new ProductExtraContentFinder();
+        $extraContentFinder = new ProductExtraContentFinder;
 
         $product = $this->objectPresenter->present($this->product);
         $product['id_product'] = (int) $this->product->id;
@@ -1124,7 +1122,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             && Configuration::get('PS_STOCK_MANAGEMENT')
             && $this->product->quantity > 0
             && $this->product->available_for_order
-            && !Configuration::isCatalogMode()
+            && ! Configuration::isCatalogMode()
         );
         $product_full['quantity_label'] = ($this->product->quantity > 1) ? $this->trans('Items', [], 'Shop.Theme.Catalog') : $this->trans('Item', [], 'Shop.Theme.Catalog');
         $product_full['quantity_discounts'] = $this->quantity_discounts;
@@ -1157,8 +1155,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
-     * @param $product
-     *
      * @return int
      */
     protected function getProductMinimalQuantity($product)
@@ -1179,11 +1175,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         return $minimal_quantity;
     }
 
-    /**
-     * @param array $product
-     *
-     * @return float
-     */
     protected function getProductEcotax(array $product): float
     {
         $ecotax = $product['ecotax'];
@@ -1197,7 +1188,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         if ($ecotax) {
             // Try to get price display from already assigned smarty variable for better performance
             $priceDisplay = $this->context->smarty->getTemplateVars('priceDisplay');
-            if (null === $priceDisplay) {
+            if ($priceDisplay === null) {
                 $priceDisplay = Product::getTaxCalculationMethod((int) $this->context->cookie->id_customer);
             }
 
@@ -1211,15 +1202,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
-     * @param $combinationId
-     *
      * @return ProductController|null
      */
     public function findProductCombinationById($combinationId)
     {
         $combinations = $this->product->getAttributesGroups($this->context->language->id, $combinationId);
 
-        if ($combinations === false || !is_array($combinations) || empty($combinations)) {
+        if ($combinations === false || ! is_array($combinations) || empty($combinations)) {
             return null;
         }
 
@@ -1227,8 +1216,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
-     * @param $product
-     *
      * @return int
      */
     protected function getRequiredQuantity($product)
@@ -1248,7 +1235,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         $categoryDefault = new Category($this->product->id_category_default, $this->context->language->id);
 
         foreach ($categoryDefault->getAllParents() as $category) {
-            if ($category->id_parent != 0 && !$category->is_root_category && $category->active) {
+            if ($category->id_parent != 0 && ! $category->is_root_category && $category->active) {
                 $breadcrumb['links'][] = [
                     'title' => $category->name,
                     'url' => $this->context->link->getCategoryLink($category),
@@ -1256,7 +1243,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             }
         }
 
-        if ($categoryDefault->id_parent != 0 && !$categoryDefault->is_root_category && $categoryDefault->active) {
+        if ($categoryDefault->id_parent != 0 && ! $categoryDefault->is_root_category && $categoryDefault->active) {
             $breadcrumb['links'][] = [
                 'title' => $categoryDefault->name,
                 'url' => $this->context->link->getCategoryLink($categoryDefault),
@@ -1307,13 +1294,13 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                         case Product::CUSTOMIZE_FILE:
                             $field['type'] = 'image';
                             $field['image'] = null;
-                            $field['input_name'] = 'file' . $customization_field['id_customization_field'];
+                            $field['input_name'] = 'file'.$customization_field['id_customization_field'];
 
                             break;
                         case Product::CUSTOMIZE_TEXTFIELD:
                             $field['type'] = 'text';
                             $field['text'] = '';
-                            $field['input_name'] = 'textField' . $customization_field['id_customization_field'];
+                            $field['input_name'] = 'textField'.$customization_field['id_customization_field'];
 
                             break;
                         default:
@@ -1368,18 +1355,18 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     {
         $page = parent::getTemplateVarPage();
 
-        if (!Validate::isLoadedObject($this->product)) {
+        if (! Validate::isLoadedObject($this->product)) {
             $page['title'] = $this->trans('The page you are looking for was not found.', [], 'Shop.Theme.Global');
             $page['page_name'] = 'pagenotfound';
 
             return $page;
         }
 
-        $page['body_classes']['product-id-' . $this->product->id] = true;
-        $page['body_classes']['product-' . $this->product->name] = true;
-        $page['body_classes']['product-id-category-' . $this->product->id_category_default] = true;
-        $page['body_classes']['product-id-manufacturer-' . $this->product->id_manufacturer] = true;
-        $page['body_classes']['product-id-supplier-' . $this->product->id_supplier] = true;
+        $page['body_classes']['product-id-'.$this->product->id] = true;
+        $page['body_classes']['product-'.$this->product->name] = true;
+        $page['body_classes']['product-id-category-'.$this->product->id_category_default] = true;
+        $page['body_classes']['product-id-manufacturer-'.$this->product->id_manufacturer] = true;
+        $page['body_classes']['product-id-supplier-'.$this->product->id_supplier] = true;
 
         if ($this->product->on_sale) {
             $page['body_classes']['product-on-sale'] = true;
@@ -1399,11 +1386,9 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
-     * @param array|null $meta
-     *
      * @return string
      */
-    private function getProductPageTitle(array $meta = null)
+    private function getProductPageTitle(?array $meta = null)
     {
         $title = $this->product->name;
         if (isset($meta['title'])) {
@@ -1411,7 +1396,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         } elseif (isset($meta['meta_title'])) {
             $title = $meta['meta_title'];
         }
-        if (!Configuration::get('PS_PRODUCT_ATTRIBUTES_IN_TITLE')) {
+        if (! Configuration::get('PS_PRODUCT_ATTRIBUTES_IN_TITLE')) {
             return $title;
         }
 
@@ -1420,7 +1405,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
             $attributes = $this->product->getAttributeCombinationsById($idProductAttribute, $this->context->language->id);
             if (is_array($attributes) && count($attributes) > 0) {
                 foreach ($attributes as $attribute) {
-                    $title .= ' ' . $attribute['group_name'] . ' ' . $attribute['attribute_name'];
+                    $title .= ' '.$attribute['group_name'].' '.$attribute['attribute_name'];
                 }
             }
         }
@@ -1433,16 +1418,14 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
      *
      * Indicates if the provided combination exists and belongs to the product
      *
-     * @param int $productAttributeId
-     * @param int $productId
-     *
+     * @param  int  $productAttributeId
+     * @param  int  $productId
      * @return bool
      */
     protected function isValidCombination($productAttributeId, $productId)
     {
         if ($productAttributeId > 0 && $productId > 0) {
             $combination = new Combination($productAttributeId);
-
 
             return
                 Validate::isLoadedObject($combination)
@@ -1454,8 +1437,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     /**
      * Return information whether we are or not in quick view mode.
-     *
-     * @return bool
      */
     public function isQuickView(): bool
     {
@@ -1464,8 +1445,6 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     /**
      * Set quick view mode.
-     *
-     * @param bool $enabled
      */
     public function setQuickViewMode(bool $enabled = true)
     {

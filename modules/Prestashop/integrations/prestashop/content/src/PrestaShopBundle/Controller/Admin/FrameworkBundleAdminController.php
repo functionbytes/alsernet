@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,7 @@ namespace PrestaShopBundle\Controller\Admin;
 use Exception;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Adapter\Shop\Context;
+use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
 use PrestaShop\PrestaShop\Core\Grid\GridInterface;
 use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Locale\Repository as LocaleRepository;
@@ -42,6 +44,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Translation\Exception\InvalidArgumentException;
 
 /**
  * Extends The Symfony framework bundle controller to add common functions for PrestaShop needs.
@@ -65,7 +68,7 @@ class FrameworkBundleAdminController extends Controller
      */
     public function __construct()
     {
-        $this->configuration = new Configuration();
+        $this->configuration = new Configuration;
     }
 
     /**
@@ -76,7 +79,7 @@ class FrameworkBundleAdminController extends Controller
     public function overviewAction()
     {
         return [
-            'is_shop_context' => (new Context())->isShopContext(),
+            'is_shop_context' => (new Context)->isShopContext(),
             'layoutTitle' => empty($this->layoutTitle) ? '' : $this->trans($this->layoutTitle, 'Admin.Navigation.Menu'),
         ];
     }
@@ -86,11 +89,10 @@ class FrameworkBundleAdminController extends Controller
      *
      * Parse all errors mapped by id html field
      *
-     * @param Form $form
      *
      * @return array[array[string]] Errors
      *
-     * @throws \Symfony\Component\Translation\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function getFormErrorsForJS(Form $form)
     {
@@ -103,7 +105,7 @@ class FrameworkBundleAdminController extends Controller
         $translator = $this->get('translator');
 
         foreach ($form->getErrors(true) as $error) {
-            if (!$error->getCause()) {
+            if (! $error->getCause()) {
                 $formId = 'bubbling_errors';
             } else {
                 $formId = str_replace(
@@ -137,8 +139,8 @@ class FrameworkBundleAdminController extends Controller
      *
      * Wrapper to: @see HookDispatcher::dispatchWithParameters()
      *
-     * @param string $hookName The hook name
-     * @param array $parameters The hook parameters
+     * @param  string  $hookName  The hook name
+     * @param  array  $parameters  The hook parameters
      */
     protected function dispatchHook($hookName, array $parameters)
     {
@@ -150,9 +152,8 @@ class FrameworkBundleAdminController extends Controller
      *
      * Wrapper to: @see HookDispatcher::renderForParameters()
      *
-     * @param string $hookName The hook name
-     * @param array $parameters The hook parameters
-     *
+     * @param  string  $hookName  The hook name
+     * @param  array  $parameters  The hook parameters
      * @return array The responses of hooks
      *
      * @throws Exception
@@ -165,9 +166,8 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Generates a documentation link.
      *
-     * @param string $section Legacy controller name
-     * @param bool|string $title Help title
-     *
+     * @param  string  $section  Legacy controller name
+     * @param  bool|string  $title  Help title
      * @return string
      */
     protected function generateSidebarLink($section, $title = false)
@@ -179,8 +179,8 @@ class FrameworkBundleAdminController extends Controller
             $title = $this->trans('Help', 'Admin.Global');
         }
 
-        $docLink = urlencode('https://help.prestashop.com/' . $legacyContext->getEmployeeLanguageIso() . '/doc/'
-            . $section . '?version=' . $version . '&country=' . $legacyContext->getEmployeeLanguageIso());
+        $docLink = urlencode('https://help.prestashop.com/'.$legacyContext->getEmployeeLanguageIso().'/doc/'
+            .$section.'?version='.$version.'&country='.$legacyContext->getEmployeeLanguageIso());
 
         return $this->generateUrl('admin_common_sidebar', [
             'url' => $docLink,
@@ -200,13 +200,11 @@ class FrameworkBundleAdminController extends Controller
 
     /**
      * Get the locale based on the context
-     *
-     * @return Locale
      */
     protected function getContextLocale(): Locale
     {
         $locale = $this->getContext()->getCurrentLocale();
-        if (null !== $locale) {
+        if ($locale !== null) {
             return $locale;
         }
 
@@ -220,8 +218,7 @@ class FrameworkBundleAdminController extends Controller
     }
 
     /**
-     * @param string $lang
-     *
+     * @param  string  $lang
      * @return mixed
      */
     protected function langToLocale($lang)
@@ -248,27 +245,26 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Checks if the attributes are granted against the current authentication token and optionally supplied object.
      *
-     * @param string $controller name of the controller that token is tested against
-     *
+     * @param  string  $controller  name of the controller that token is tested against
      * @return int
      *
      * @throws \LogicException
      */
     protected function authorizationLevel($controller)
     {
-        if ($this->isGranted(PageVoter::DELETE, $controller . '_')) {
+        if ($this->isGranted(PageVoter::DELETE, $controller.'_')) {
             return PageVoter::LEVEL_DELETE;
         }
 
-        if ($this->isGranted(PageVoter::CREATE, $controller . '_')) {
+        if ($this->isGranted(PageVoter::CREATE, $controller.'_')) {
             return PageVoter::LEVEL_CREATE;
         }
 
-        if ($this->isGranted(PageVoter::UPDATE, $controller . '_')) {
+        if ($this->isGranted(PageVoter::UPDATE, $controller.'_')) {
             return PageVoter::LEVEL_UPDATE;
         }
 
-        if ($this->isGranted(PageVoter::READ, $controller . '_')) {
+        if ($this->isGranted(PageVoter::READ, $controller.'_')) {
             return PageVoter::LEVEL_READ;
         }
 
@@ -278,10 +274,9 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Get the translated chain from key.
      *
-     * @param string $key the key to be translated
-     * @param string $domain the domain to be selected
-     * @param array $parameters Optional, pass parameters if needed (uncommon)
-     *
+     * @param  string  $key  the key to be translated
+     * @param  string  $domain  the domain to be selected
+     * @param  array  $parameters  Optional, pass parameters if needed (uncommon)
      * @return string
      */
     protected function trans($key, $domain, array $parameters = [])
@@ -292,7 +287,6 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Return errors as flash error messages.
      *
-     * @param array $errorMessages
      *
      * @throws \LogicException
      */
@@ -320,10 +314,9 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Check if the connected user is granted to actions on a specific object.
      *
-     * @param string $action
-     * @param string $object
-     * @param string $suffix
-     *
+     * @param  string  $action
+     * @param  string  $object
+     * @param  string  $suffix
      * @return bool
      *
      * @throws \LogicException
@@ -331,56 +324,54 @@ class FrameworkBundleAdminController extends Controller
     protected function actionIsAllowed($action, $object = '', $suffix = '')
     {
         return (
-                $action === 'delete' . $suffix && $this->isGranted(PageVoter::DELETE, $object)
-            ) || (
-                ($action === 'activate' . $suffix || $action === 'deactivate' . $suffix) &&
-                $this->isGranted(PageVoter::UPDATE, $object)
-            ) || (
-                ($action === 'duplicate' . $suffix) &&
-                ($this->isGranted(PageVoter::UPDATE, $object) || $this->isGranted(PageVoter::CREATE, $object))
-            );
+            $action === 'delete'.$suffix && $this->isGranted(PageVoter::DELETE, $object)
+        ) || (
+            ($action === 'activate'.$suffix || $action === 'deactivate'.$suffix) &&
+            $this->isGranted(PageVoter::UPDATE, $object)
+        ) || (
+            ($action === 'duplicate'.$suffix) &&
+            ($this->isGranted(PageVoter::UPDATE, $object) || $this->isGranted(PageVoter::CREATE, $object))
+        );
     }
 
     /**
      * Display a message about permissions failure according to an action.
      *
-     * @param string $action
-     * @param string $suffix
-     *
+     * @param  string  $action
+     * @param  string  $suffix
      * @return string
      *
      * @throws Exception
      */
     protected function getForbiddenActionMessage($action, $suffix = '')
     {
-        if ($action === 'delete' . $suffix) {
+        if ($action === 'delete'.$suffix) {
             return $this->trans('You do not have permission to delete this.', 'Admin.Notifications.Error');
         }
 
-        if ($action === 'deactivate' . $suffix || $action === 'activate' . $suffix) {
+        if ($action === 'deactivate'.$suffix || $action === 'activate'.$suffix) {
             return $this->trans('You do not have permission to edit this.', 'Admin.Notifications.Error');
         }
 
-        if ($action === 'duplicate' . $suffix) {
+        if ($action === 'duplicate'.$suffix) {
             return $this->trans('You do not have permission to add this.', 'Admin.Notifications.Error');
         }
 
-        throw new Exception(sprintf('Invalid action (%s)', $action . $suffix));
+        throw new Exception(sprintf('Invalid action (%s)', $action.$suffix));
     }
 
     /**
      * Get fallback error message when something unexpected happens.
      *
-     * @param string $type
-     * @param string $code
-     * @param string $message
-     *
+     * @param  string  $type
+     * @param  string  $code
+     * @param  string  $message
      * @return string
      */
     protected function getFallbackErrorMessage($type, $code, $message = '')
     {
         $isDebug = $this->get('kernel')->isDebug();
-        if ($isDebug && !empty($message)) {
+        if ($isDebug && ! empty($message)) {
             return $this->trans(
                 'An unexpected error occurred. [%type% code %code%]: %message%',
                 'Admin.Notifications.Error',
@@ -405,10 +396,9 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Get Admin URI from PrestaShop 1.6 Back Office.
      *
-     * @param string $controller the old Controller name
-     * @param bool $withToken whether we add token or not
-     * @param array $params url parameters
-     *
+     * @param  string  $controller  the old Controller name
+     * @param  bool  $withToken  whether we add token or not
+     * @param  array  $params  url parameters
      * @return string the page URI (with token)
      */
     protected function getAdminLink($controller, array $params, $withToken = true)
@@ -419,7 +409,6 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Present provided grid.
      *
-     * @param GridInterface $grid
      *
      * @return array
      */
@@ -431,7 +420,7 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Get commands bus to execute commands.
      *
-     * @return \PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface
+     * @return CommandBusInterface
      */
     protected function getCommandBus()
     {
@@ -441,7 +430,7 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Get query bus to execute queries.
      *
-     * @return \PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface
+     * @return CommandBusInterface
      */
     protected function getQueryBus()
     {
@@ -449,14 +438,12 @@ class FrameworkBundleAdminController extends Controller
     }
 
     /**
-     * @param array $errors
-     * @param int $httpStatusCode
-     *
+     * @param  int  $httpStatusCode
      * @return JsonResponse
      */
     protected function returnErrorJsonResponse(array $errors, $httpStatusCode)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $response->setStatusCode($httpStatusCode);
         $response->setData($errors);
 
@@ -479,9 +466,6 @@ class FrameworkBundleAdminController extends Controller
         return $this->getContext()->shop->id;
     }
 
-    /**
-     * @param FormInterface $form
-     */
     protected function addFlashFormErrors(FormInterface $form)
     {
         /** @var FormError $formError */
@@ -493,8 +477,6 @@ class FrameworkBundleAdminController extends Controller
     /**
      * Get error by exception from given messages
      *
-     * @param Exception $e
-     * @param array $messages
      *
      * @return string
      */

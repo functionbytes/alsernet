@@ -33,7 +33,7 @@
 
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-brand">*</span></label>
                                     <input type="text" name="name"
                                            class="form-control @error('name') is-invalid @enderror"
                                            value="{{ old('name') }}"
@@ -153,4 +153,10 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/tags-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/tags-form.js')) }}" defer></script>
+@endpush
 

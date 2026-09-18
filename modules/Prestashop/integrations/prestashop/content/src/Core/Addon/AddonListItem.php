@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,9 +30,14 @@ namespace PrestaShop\PrestaShop\Core\Addon;
 class AddonListItem
 {
     public $name;
+
     public $displayName;
+
     public $type;
+
     public $author;
+
     public $version;
+
     public $isEnabled;
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,7 @@ class WarehouseDataProvider
     /**
      * Get product warehouses.
      *
-     * @param int $id_product
-     *
+     * @param  int  $id_product
      * @return array Warehouses
      */
     public function getWarehouseProductLocations($id_product)
@@ -51,9 +51,8 @@ class WarehouseDataProvider
     /**
      * Get all warehouses.
      *
-     * @param bool $ignore_shop Optional, false by default - Allows to get only the warehouses that are associated to one/some shops (@see $id_shop)
-     * @param int $id_shop optional, Context::shop::Id by default - Allows to define a specific shop to filter
-     *
+     * @param  bool  $ignore_shop  Optional, false by default - Allows to get only the warehouses that are associated to one/some shops (@see $id_shop)
+     * @param  int  $id_shop  optional, Context::shop::Id by default - Allows to define a specific shop to filter
      * @return array Warehouses (ID, reference/name concatenated)
      */
     public function getWarehouses($ignore_shop = false, $id_shop = null)
@@ -64,15 +63,15 @@ class WarehouseDataProvider
     /**
      * For a given product and warehouse, gets the product warehouse data.
      *
-     * @param int $id_product
-     * @param int $id_product_attribute
-     * @param int $id_warehouse
-     *
+     * @param  int  $id_product
+     * @param  int  $id_product_attribute
+     * @param  int  $id_warehouse
      * @return array
      */
     public function getWarehouseProductLocationData($id_product, $id_product_attribute, $id_warehouse)
     {
         $location = WarehouseProductLocation::getProductLocation($id_product, $id_product_attribute, $id_warehouse);
+
         // for 'activated', we test if $location is ===false or ==="", that's the only difference to know it...
         return ['location' => $location, 'activated' => ($location !== false), 'product_id' => $id_product];
     }

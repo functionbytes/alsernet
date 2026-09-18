@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class OrderId
     private $orderId;
 
     /**
-     * @param int $orderId
+     * @param  int  $orderId
      *
      * @throws OrderException
      */
@@ -59,11 +60,11 @@ class OrderId
     }
 
     /**
-     * @param int $orderId
+     * @param  int  $orderId
      */
     private function assertIntegerIsGreaterThanZero($orderId)
     {
-        if (!is_int($orderId) || 0 > $orderId) {
+        if (! is_int($orderId) || $orderId < 0) {
             throw new OrderException(sprintf('Order id %s is invalid. Order id must be number that is greater than zero.', var_export($orderId, true)));
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ class AddressDniRequiredValidator extends ConstraintValidator
      */
     private $countryRequiredFieldsProvider;
 
-    /**
-     * @param CountryRequiredFieldsProviderInterface $countryRequiredFieldsProvider
-     */
     public function __construct(CountryRequiredFieldsProviderInterface $countryRequiredFieldsProvider)
     {
         $this->countryRequiredFieldsProvider = $countryRequiredFieldsProvider;
@@ -57,7 +55,7 @@ class AddressDniRequiredValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!($constraint instanceof AddressDniRequired)) {
+        if (! ($constraint instanceof AddressDniRequired)) {
             return;
         }
         $countryId = new CountryId((int) $constraint->id_country);

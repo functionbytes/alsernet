@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,10 +32,5 @@ use PrestaShop\PrestaShop\Core\Domain\ValueObject\Email;
 
 interface GetEmployeeEmailByIdHandlerInterface
 {
-    /**
-     * @param GetEmployeeEmailById $query
-     *
-     * @return Email
-     */
     public function handle(GetEmployeeEmailById $query): Email;
 }

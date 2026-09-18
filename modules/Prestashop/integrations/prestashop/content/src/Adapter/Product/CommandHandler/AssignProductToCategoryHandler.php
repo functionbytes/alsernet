@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,25 +40,20 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\CannotAssignProductToCat
  */
 final class AssignProductToCategoryHandler extends AbstractObjectModelHandler implements AssignProductToCategoryHandlerInterface
 {
-    /**
-     * @param AssignProductToCategoryCommand $command
-     */
     public function handle(AssignProductToCategoryCommand $command)
     {
         $this->assignProductToCategory($command);
     }
 
     /**
-     * @param AssignProductToCategoryCommand $command
-     *
      * @throws CannotAssignProductToCategoryException
      */
     private function assignProductToCategory(AssignProductToCategoryCommand $command)
     {
-        $productDataProvider = new ProductDataProvider();
+        $productDataProvider = new ProductDataProvider;
         $product = $productDataProvider->getProductInstance($command->getProductId()->getValue());
         $product->addToCategories($command->getCategoryId()->getValue());
-        if (false === $product->save()) {
+        if ($product->save() === false) {
             throw new CannotAssignProductToCategoryException(sprintf('Failed to add category to product %d', $command->getProductId()->getValue()));
         }
     }

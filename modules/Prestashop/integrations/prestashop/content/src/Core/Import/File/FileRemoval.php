@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,11 @@ final class FileRemoval
     /**
      * Remove file from import directory.
      *
-     * @param string $filename
+     * @param  string  $filename
      */
     public function remove($filename)
     {
-        $fs = new Filesystem();
-        $fs->remove($this->importDirectory . $filename);
+        $fs = new Filesystem;
+        $fs->remove($this->importDirectory.$filename);
     }
 }

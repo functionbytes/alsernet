@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -266,8 +267,7 @@ class OrderStateController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param int $orderStateId
-     *
+     * @param  int  $orderStateId
      * @return RedirectResponse
      */
     public function toggleDeliveryAction($orderStateId)
@@ -277,7 +277,7 @@ class OrderStateController extends FrameworkBundleAdminController
             $editableOrderState = $this->getQueryBus()->handle(new GetOrderStateForEditing((int) $orderStateId));
 
             $editOrderStateCommand = new EditOrderStateCommand((int) $orderStateId);
-            $editOrderStateCommand->setDelivery(!$editableOrderState->isDelivery());
+            $editOrderStateCommand->setDelivery(! $editableOrderState->isDelivery());
 
             $this->getCommandBus()->handle($editOrderStateCommand);
 
@@ -301,8 +301,7 @@ class OrderStateController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param int $orderStateId
-     *
+     * @param  int  $orderStateId
      * @return RedirectResponse
      */
     public function toggleInvoiceAction($orderStateId)
@@ -312,7 +311,7 @@ class OrderStateController extends FrameworkBundleAdminController
             $editableOrderState = $this->getQueryBus()->handle(new GetOrderStateForEditing((int) $orderStateId));
 
             $editOrderStateCommand = new EditOrderStateCommand((int) $orderStateId);
-            $editOrderStateCommand->setInvoice(!$editableOrderState->isInvoice());
+            $editOrderStateCommand->setInvoice(! $editableOrderState->isInvoice());
 
             $this->getCommandBus()->handle($editOrderStateCommand);
 
@@ -336,8 +335,7 @@ class OrderStateController extends FrameworkBundleAdminController
      *     message="You do not have permission to edit this."
      * )
      *
-     * @param int $orderStateId
-     *
+     * @param  int  $orderStateId
      * @return RedirectResponse
      */
     public function toggleSendEmailAction($orderStateId)
@@ -347,7 +345,7 @@ class OrderStateController extends FrameworkBundleAdminController
             $editableOrderState = $this->getQueryBus()->handle(new GetOrderStateForEditing((int) $orderStateId));
 
             $editOrderStateCommand = new EditOrderStateCommand((int) $orderStateId);
-            $editOrderStateCommand->setSendEmail(!$editableOrderState->isSendEmailEnabled());
+            $editOrderStateCommand->setSendEmail(! $editableOrderState->isSendEmailEnabled());
 
             $this->getCommandBus()->handle($editOrderStateCommand);
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,6 +29,4 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\Shop\Exception;
 
-class SearchShopException extends ShopException
-{
-}
+class SearchShopException extends ShopException {}

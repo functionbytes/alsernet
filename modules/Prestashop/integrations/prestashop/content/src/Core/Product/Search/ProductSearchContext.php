@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ class ProductSearchContext
      */
     private $idCustomer;
 
-    public function __construct(Context $context = null)
+    public function __construct(?Context $context = null)
     {
         if ($context) {
             $this->idShop = $context->shop->id;
@@ -61,8 +62,7 @@ class ProductSearchContext
     }
 
     /**
-     * @param int $idShop
-     *
+     * @param  int  $idShop
      * @return $this
      */
     public function setIdShop($idShop)
@@ -81,8 +81,7 @@ class ProductSearchContext
     }
 
     /**
-     * @param int $idLang
-     *
+     * @param  int  $idLang
      * @return $this
      */
     public function setIdLang($idLang)
@@ -101,8 +100,7 @@ class ProductSearchContext
     }
 
     /**
-     * @param int $idCurrency
-     *
+     * @param  int  $idCurrency
      * @return $this
      */
     public function setIdCurrency($idCurrency)
@@ -121,8 +119,7 @@ class ProductSearchContext
     }
 
     /**
-     * @param int $idCustomer
-     *
+     * @param  int  $idCustomer
      * @return $this
      */
     public function setIdCustomer($idCustomer)

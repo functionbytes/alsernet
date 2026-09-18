@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,7 @@ namespace PrestaShopBundle\Controller\Api;
 use Exception;
 use PrestaShopBundle\Api\QueryParamsCollection;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\FrameworkBundle\Command\CacheClearCommand;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,9 +44,6 @@ abstract class ApiController
      */
     protected $logger;
 
-    /**
-     * @param LoggerInterface $logger
-     */
     public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
@@ -61,8 +60,6 @@ abstract class ApiController
     }
 
     /**
-     * @param HttpException $exception
-     *
      * @return JsonResponse
      */
     protected function handleException(HttpException $exception)
@@ -73,8 +70,7 @@ abstract class ApiController
     }
 
     /**
-     * @param string $content
-     *
+     * @param  string  $content
      * @return array
      */
     protected function guardAgainstInvalidJsonBody($content)
@@ -90,7 +86,7 @@ abstract class ApiController
     }
 
     /**
-     * @see \Symfony\Bundle\FrameworkBundle\Command\CacheClearCommand
+     * @see CacheClearCommand
      */
     protected function clearCache()
     {
@@ -107,21 +103,18 @@ abstract class ApiController
     /**
      * Add additional info to JSON return.
      *
-     * @param Request $request
-     * @param QueryParamsCollection|null $queryParams
-     * @param array $headers
-     *
+     * @param  array  $headers
      * @return array
      */
     protected function addAdditionalInfo(
         Request $request,
-        QueryParamsCollection $queryParams = null,
+        ?QueryParamsCollection $queryParams = null,
         $headers = []
     ) {
         $router = $this->container->get('router');
 
         $queryParamsArray = [];
-        if (null !== $queryParams) {
+        if ($queryParams !== null) {
             $queryParamsArray = $queryParams->getQueryParams();
         }
 
@@ -143,7 +136,7 @@ abstract class ApiController
         if (array_key_exists('page_index', $allParams) && $allParams['page_index'] > 1) {
             $previousParams = $allParams;
             if (array_key_exists('page_index', $previousParams)) {
-                --$previousParams['page_index'];
+                $previousParams['page_index']--;
             }
             $info['previous_url'] = $router->generate($request->attributes->get('_route'), $previousParams);
         }
@@ -153,7 +146,7 @@ abstract class ApiController
             $headers['Total-Pages'] > $allParams['page_index']) {
             $nextParams = $allParams;
             if (array_key_exists('page_index', $nextParams)) {
-                ++$nextParams['page_index'];
+                $nextParams['page_index']++;
             }
             $info['next_url'] = $router->generate($request->attributes->get('_route'), $nextParams);
         }
@@ -162,7 +155,7 @@ abstract class ApiController
             $info['total_page'] = $headers['Total-Pages'];
         }
 
-        if (null !== $queryParams) {
+        if ($queryParams !== null) {
             $info['page_index'] = $queryParamsArray['page_index'];
             $info['page_size'] = $queryParamsArray['page_size'];
         }
@@ -171,18 +164,15 @@ abstract class ApiController
     }
 
     /**
-     * @param array $data
-     * @param Request $request
-     * @param QueryParamsCollection|null $queryParams
-     * @param int $status
-     * @param array $headers
-     *
+     * @param  array  $data
+     * @param  int  $status
+     * @param  array  $headers
      * @return JsonResponse
      */
     protected function jsonResponse(
         $data,
         Request $request,
-        QueryParamsCollection $queryParams = null,
+        ?QueryParamsCollection $queryParams = null,
         $status = 200,
         $headers = []
     ) {
@@ -197,16 +187,14 @@ abstract class ApiController
     /**
      * Checks if access is granted.
      *
-     * @param array $accessLevel
-     * @param string $controller name of the controller
-     *
+     * @param  string  $controller  name of the controller
      * @return bool
      */
     protected function isGranted(array $accessLevel, $controller)
     {
         return $this->container->get('security.authorization_checker')->isGranted(
             $accessLevel,
-            $controller . '_'
+            $controller.'_'
         );
     }
 }

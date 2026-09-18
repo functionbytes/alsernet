@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,14 +62,6 @@ class CombinationStockProperties
      */
     private $availableDate;
 
-    /**
-     * @param int|null $quantity
-     * @param int|null $minimalQuantity
-     * @param string|null $location
-     * @param int|null $lowStockThreshold
-     * @param bool|null $lowStockAlertEnabled
-     * @param DateTimeInterface|null $availableDate
-     */
     public function __construct(
         ?int $quantity = null,
         ?int $minimalQuantity = null,
@@ -85,49 +78,31 @@ class CombinationStockProperties
         $this->availableDate = $availableDate;
     }
 
-    /**
-     * @return int|null
-     */
     public function getQuantity(): ?int
     {
         return $this->quantity;
     }
 
-    /**
-     * @return int|null
-     */
     public function getMinimalQuantity(): ?int
     {
         return $this->minimalQuantity;
     }
 
-    /**
-     * @return string|null
-     */
     public function getLocation(): ?string
     {
         return $this->location;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLowStockThreshold(): ?int
     {
         return $this->lowStockThreshold;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isLowStockAlertEnabled(): ?bool
     {
         return $this->lowStockAlertEnabled;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getAvailableDate(): ?DateTimeInterface
     {
         return $this->availableDate;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,15 +47,14 @@ class BasicType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $formIsUsedToEditAProduct = !empty($options['product_id']);
+        $formIsUsedToEditAProduct = ! empty($options['product_id']);
         if ($formIsUsedToEditAProduct) {
             $productId = (int) $options['product_id'];
             $builder
                 ->add('images', ImageDropzoneType::class, [
                     'product_id' => $productId,
                     'update_form_type' => ProductImageType::class,
-                ])
-            ;
+                ]);
         }
 
         $builder
@@ -108,8 +108,7 @@ class BasicType extends TranslatorAwareType
             ->add('related_products', UnavailableType::class, [
                 'label' => $this->trans('Related inventaries', 'Admin.Catalog.Feature'),
                 'label_tag_name' => 'h2',
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -124,7 +123,6 @@ class BasicType extends TranslatorAwareType
                 'required' => false,
                 'label' => false,
             ])
-            ->setAllowedTypes('product_id', ['null', 'int'])
-        ;
+            ->setAllowedTypes('product_id', ['null', 'int']);
     }
 }

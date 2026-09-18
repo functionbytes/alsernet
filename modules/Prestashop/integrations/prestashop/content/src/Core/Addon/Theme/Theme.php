@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,17 +40,17 @@ class Theme implements AddonInterface
     public function __construct(array $attributes)
     {
         if (isset($attributes['parent'])) {
-            $yamlParser = new YamlParser((new Configuration())->get('_PS_CACHE_DIR_'));
-            $parentAttributes = $yamlParser->parse(_PS_ALL_THEMES_DIR_ . '/' . $attributes['parent'] . '/config/theme.yml');
-            $parentAttributes['preview'] = 'themes/' . $attributes['parent'] . '/preview.png';
-            $parentAttributes['parent_directory'] = rtrim($attributes['directory'], '/') . '/';
+            $yamlParser = new YamlParser((new Configuration)->get('_PS_CACHE_DIR_'));
+            $parentAttributes = $yamlParser->parse(_PS_ALL_THEMES_DIR_.'/'.$attributes['parent'].'/config/theme.yml');
+            $parentAttributes['preview'] = 'themes/'.$attributes['parent'].'/preview.png';
+            $parentAttributes['parent_directory'] = rtrim($attributes['directory'], '/').'/';
             $attributes = array_merge($parentAttributes, $attributes);
         }
 
-        $attributes['directory'] = rtrim($attributes['directory'], '/') . '/';
+        $attributes['directory'] = rtrim($attributes['directory'], '/').'/';
 
-        if (file_exists(_PS_ALL_THEMES_DIR_ . $attributes['name'] . '/preview.png')) {
-            $attributes['preview'] = 'themes/' . $attributes['name'] . '/preview.png';
+        if (file_exists(_PS_ALL_THEMES_DIR_.$attributes['name'].'/preview.png')) {
+            $attributes['preview'] = 'themes/'.$attributes['name'].'/preview.png';
         }
 
         $this->attributes = new ArrayFinder($attributes);
@@ -86,7 +87,7 @@ class Theme implements AddonInterface
                     if (is_array($module)) {
                         $module = key($module);
                     }
-                    if (null !== $module && !in_array($module, $modulesToEnable)) {
+                    if ($module !== null && ! in_array($module, $modulesToEnable)) {
                         $modulesToEnable[] = $module;
                     }
                 }
@@ -197,29 +198,29 @@ class Theme implements AddonInterface
 
     public function getLayoutRelativePathForPage($page)
     {
-        return 'layouts/' . $this->getLayoutNameForPage($page) . '.tpl';
+        return 'layouts/'.$this->getLayoutNameForPage($page).'.tpl';
     }
 
     private function getPageSpecificCss($pageId)
     {
         $css = array_merge(
             (array) $this->get('assets.css.all'),
-            (array) $this->get('assets.css.' . $pageId)
+            (array) $this->get('assets.css.'.$pageId)
         );
         foreach ($css as $key => &$entry) {
             // Required parameters
-            if (!isset($entry['id']) || !isset($entry['path'])) {
+            if (! isset($entry['id']) || ! isset($entry['path'])) {
                 unset($css[$key]);
 
                 continue;
             }
-            if (!isset($entry['media'])) {
+            if (! isset($entry['media'])) {
                 $entry['media'] = AbstractAssetManager::DEFAULT_MEDIA;
             }
-            if (!isset($entry['priority'])) {
+            if (! isset($entry['priority'])) {
                 $entry['priority'] = AbstractAssetManager::DEFAULT_PRIORITY;
             }
-            if (!isset($entry['inline'])) {
+            if (! isset($entry['inline'])) {
                 $entry['inline'] = false;
             }
         }
@@ -231,25 +232,25 @@ class Theme implements AddonInterface
     {
         $js = array_merge(
             (array) $this->get('assets.js.all'),
-            (array) $this->get('assets.js.' . $pageId)
+            (array) $this->get('assets.js.'.$pageId)
         );
         foreach ($js as $key => &$entry) {
             // Required parameters
-            if (!isset($entry['id']) || !isset($entry['path'])) {
+            if (! isset($entry['id']) || ! isset($entry['path'])) {
                 unset($js[$key]);
 
                 continue;
             }
-            if (!isset($entry['position'])) {
+            if (! isset($entry['position'])) {
                 $entry['position'] = AbstractAssetManager::DEFAULT_JS_POSITION;
             }
-            if (!isset($entry['priority'])) {
+            if (! isset($entry['priority'])) {
                 $entry['priority'] = AbstractAssetManager::DEFAULT_PRIORITY;
             }
-            if (!isset($entry['inline'])) {
+            if (! isset($entry['inline'])) {
                 $entry['inline'] = false;
             }
-            if (!isset($entry['attribute'])) {
+            if (! isset($entry['attribute'])) {
                 $entry['attribute'] = false;
             }
         }

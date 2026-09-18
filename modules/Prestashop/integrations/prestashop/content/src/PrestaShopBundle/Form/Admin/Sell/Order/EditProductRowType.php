@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,11 +51,6 @@ class EditProductRowType extends TranslatorAwareType
 
     /**
      * EditProductRowType constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param ConfigurableFormChoiceProviderInterface $orderInvoiceByIdChoiceProvider
-     * @param int $contextLangId
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -131,8 +127,7 @@ class EditProductRowType extends TranslatorAwareType
                     'data-order-id' => $options['order_id'],
                     'data-update-message' => $this->trans('Are you sure?', 'Admin.Notifications.Warning'),
                 ],
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -146,7 +141,6 @@ class EditProductRowType extends TranslatorAwareType
                 'order_id' => null,
             ])
             ->setAllowedTypes('order_id', ['int', 'null'])
-            ->setAllowedTypes('symbol', ['string'])
-        ;
+            ->setAllowedTypes('symbol', ['string']);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ class FeatureType extends AbstractType
     private $isMultistoreFeatureActive;
 
     /**
-     * @param bool $isMultistoreFeatureActive
+     * @param  bool  $isMultistoreFeatureActive
      */
     public function __construct($isMultistoreFeatureActive)
     {

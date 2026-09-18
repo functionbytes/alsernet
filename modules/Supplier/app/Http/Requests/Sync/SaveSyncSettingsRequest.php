@@ -15,20 +15,20 @@ class SaveSyncSettingsRequest extends FormRequest
     {
         return [
             'default_batch_size' => ['required', 'integer', 'min:1', 'max:1000'],
-            'erp_timeout'        => ['required', 'integer', 'min:5', 'max:300'],
-            'max_retries'        => ['required', 'integer', 'min:0', 'max:10'],
-            'erp_base_url'       => ['required', 'url', 'max:500'],
-            'sync_enabled'       => ['required', 'boolean'],
-            'log_level'          => ['required', 'in:debug,info,warning,error'],
-            'filter_date_from'          => ['nullable', 'date_format:Y-m-d'],
-            'default_limit'             => ['nullable', 'integer', 'min:0'],
-            'default_mode'              => ['nullable', 'in:filter,legacy'],
-            'default_force'             => ['nullable', 'in:0,1'],
+            'erp_timeout' => ['required', 'integer', 'min:5', 'max:300'],
+            'max_retries' => ['required', 'integer', 'min:0', 'max:10'],
+            'erp_base_url' => ['required', 'url', 'max:500'],
+            'sync_enabled' => ['required', 'boolean'],
+            'log_level' => ['required', 'in:debug,info,warning,error'],
+            'filter_date_from' => ['nullable', 'date_format:Y-m-d'],
+            'default_limit' => ['nullable', 'integer', 'min:0'],
+            'default_mode' => ['nullable', 'in:filter,legacy'],
+            'default_force' => ['nullable', 'in:0,1'],
             'default_description_empty' => ['nullable', 'in:0,1'],
-            'default_web_filter'        => ['nullable', 'in:,1,2'],
-            'default_skip_ai'           => ['nullable', 'in:0,1'],
-            'default_dry_run'           => ['nullable', 'in:0,1'],
-            'default_register_only'     => ['nullable', 'in:0,1'],
+            'default_web_filter' => ['nullable', 'in:,1,2'],
+            'default_skip_ai' => ['nullable', 'in:0,1'],
+            'default_dry_run' => ['nullable', 'in:0,1'],
+            'default_register_only' => ['nullable', 'in:0,1'],
         ];
     }
 

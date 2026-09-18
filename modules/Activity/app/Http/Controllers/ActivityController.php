@@ -49,6 +49,14 @@ class ActivityController extends Controller
 
         if ($request->filled('subject_type')) {
             $query->where('subject_type', $request->input('subject_type'));
+
+            // Filtro por registro concreto: sin él, "ver la auditoría de
+            // ESTE ticket" solo podía aproximarse buscando su número dentro
+            // de la descripción. Aditivo — únicamente actúa acompañando a
+            // subject_type, así que ninguna vista existente cambia.
+            if ($request->filled('subject_id')) {
+                $query->where('subject_id', $request->input('subject_id'));
+            }
         }
 
         if ($request->filled('event')) {
@@ -93,14 +101,32 @@ class ActivityController extends Controller
             ->latest('created_at');
 
         if ($request->filled('search')) {
-            $query->where('description', 'like', '%'.$request->input('search').'%');
+            $search = $request->input('search');
+
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhereJsonContains('properties->old', $search)
+                    ->orWhereJsonContains('properties->attributes', $search);
+            });
         }
 
         if ($request->filled('event')) {
             $query->where('event', $request->input('event'));
         }
 
-        $activities = $query->paginate(paginationNumber());
+        if ($request->filled('log_name')) {
+            $query->where('log_name', $request->input('log_name'));
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->date('from'));
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->date('to'));
+        }
+
+        $activities = $query->paginate(paginationNumber())->withQueryString();
         $stats = $this->eventStats();
         $logNames = Activity::query()->distinct()->pluck('log_name')->filter()->sort()->values();
 
@@ -115,6 +141,7 @@ class ActivityController extends Controller
             ->with('causer')
             ->when($request->filled('user_id'), fn ($q) => $q->where('causer_id', $request->user_id))
             ->when($request->filled('event'), fn ($q) => $q->where('event', $request->event))
+            ->when($request->filled('log_name'), fn ($q) => $q->where('log_name', $request->log_name))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->from))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->to))
             ->when($request->filled('search'), fn ($q) => $q->where('description', 'like', "%{$request->search}%"))

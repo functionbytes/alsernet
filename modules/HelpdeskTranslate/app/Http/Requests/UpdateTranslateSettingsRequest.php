@@ -4,7 +4,7 @@ namespace Modules\HelpdeskTranslate\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Helpdesk\Support\OutboundUrlGuard;
+use Modules\HelpdeskTranslate\Support\LibreTranslateEndpointUrlGuard;
 
 class UpdateTranslateSettingsRequest extends FormRequest
 {
@@ -21,6 +21,7 @@ class UpdateTranslateSettingsRequest extends FormRequest
             'auto_translate_incoming' => ['nullable', 'boolean'],
             'auto_translate_outgoing' => ['nullable', 'boolean'],
             'deepl_key' => ['nullable', 'string', 'max:255'],
+            'remove_deepl_key' => ['nullable', 'boolean'],
             'deepl_url' => ['nullable', 'string', Rule::in(config('helpdesktranslate.deepl_allowed_urls', []))],
             // A diferencia de deepl_url (allowlist cerrada), este endpoint es
             // libre — sin el guard SSRF, un titular de este permiso podia
@@ -28,13 +29,17 @@ class UpdateTranslateSettingsRequest extends FormRequest
             // que se envian a "traducir" en cada mensaje entrante/saliente.
             'libretranslate_endpoint' => [
                 'nullable', 'string', 'url:http,https', 'max:255',
+                // Guard propio y no OutboundUrlGuard: ese exige IP publica (correcto
+                // para webhooks a terceros) y rechazaba el LibreTranslate self-hosted
+                // de la red Docker, dejando toda la pantalla sin poder guardarse.
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    if ($value !== null && $value !== '' && ! OutboundUrlGuard::isSafe($value)) {
+                    if ($value !== null && $value !== '' && ! LibreTranslateEndpointUrlGuard::isAllowed($value)) {
                         $fail(__('helpdesktranslate::messages.validation.libretranslate_endpoint_unsafe'));
                     }
                 },
             ],
             'libretranslate_api_key' => ['nullable', 'string', 'max:255'],
+            'remove_libretranslate_api_key' => ['nullable', 'boolean'],
         ];
     }
 

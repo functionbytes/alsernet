@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,7 +31,7 @@ use ConfigurationTest;
 use Requirement;
 use SymfonyRequirements;
 
-require_once __DIR__ . '/../../../var/SymfonyRequirements.php';
+require_once __DIR__.'/../../../var/SymfonyRequirements.php';
 
 class System extends AbstractInstall
 {
@@ -44,19 +45,19 @@ class System extends AbstractInstall
         return self::checkTests(ConfigurationTest::getDefaultTestsOp(), 'optional');
     }
 
-    //get symfony requirements
+    // get symfony requirements
     public function checkSf2Requirements()
     {
-        $symfonyRequirements = new SymfonyRequirements();
+        $symfonyRequirements = new SymfonyRequirements;
         $errors = $symfonyRequirements->getFailedRequirements();
 
         return $errors;
     }
 
-    //get symfony recommendations
+    // get symfony recommendations
     public function checkSf2Recommendations()
     {
-        $symfonyRequirements = new SymfonyRequirements();
+        $symfonyRequirements = new SymfonyRequirements;
 
         $failedRecommendations = $symfonyRequirements->getFailedRecommendations();
 

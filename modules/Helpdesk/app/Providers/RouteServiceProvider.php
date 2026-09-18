@@ -5,7 +5,7 @@ namespace Modules\Helpdesk\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
-use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationAttachmentsController;
 use Modules\Helpdesk\Http\Middleware\Require2FA;
 
 class RouteServiceProvider extends ServiceProvider
@@ -94,7 +94,7 @@ class RouteServiceProvider extends ServiceProvider
                     ->middleware('throttle:120,1')
                     ->name('manager.helpdesk.api.agents.autocomplete');
 
-                Route::get('/api/attachment-download', [ConversationsController::class, 'downloadAttachment'])
+                Route::get('/api/attachment-download', [ConversationAttachmentsController::class, 'downloadAttachment'])
                     ->middleware('throttle:60,1')
                     ->name('manager.helpdesk.api.attachment-download');
             });
@@ -108,7 +108,7 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapApiRoutes(): void
     {
-        Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
+        Route::middleware(['api', 'auth:sanctum', 'helpdesk.api.scope', 'throttle:60,1'])
             ->prefix('api/v1/helpdesk')
             ->name('api.v1.helpdesk.')
             ->group(module_path($this->name, 'routes/api.php'));

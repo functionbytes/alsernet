@@ -37,8 +37,7 @@ trait AssetUrlGeneratorTrait
     protected $fqdn;
 
     /**
-     * @param string $fullPath
-     *
+     * @param  string  $fullPath
      * @return string
      */
     protected function getUriFromPath($fullPath)
@@ -47,17 +46,16 @@ trait AssetUrlGeneratorTrait
     }
 
     /**
-     * @param string $fullUri
-     *
+     * @param  string  $fullUri
      * @return string
      */
     protected function getPathFromUri($fullUri)
     {
         if ('' !== ($trimmedUri = rtrim($this->configuration->get('__PS_BASE_URI__'), '/'))) {
-            return $this->configuration->get('_PS_ROOT_DIR_') . preg_replace('#\\' . preg_quote($trimmedUri) . '#', '', $fullUri, 1);
+            return $this->configuration->get('_PS_ROOT_DIR_').preg_replace('#\\'.preg_quote($trimmedUri).'#', '', $fullUri, 1);
         }
 
-        return $this->configuration->get('_PS_ROOT_DIR_') . $fullUri;
+        return $this->configuration->get('_PS_ROOT_DIR_').$fullUri;
     }
 
     /**
@@ -65,7 +63,7 @@ trait AssetUrlGeneratorTrait
      */
     protected function getFQDN()
     {
-        if (null === $this->fqdn) {
+        if ($this->fqdn === null) {
             if ($this->configuration->get('PS_SSL_ENABLED') && ToolsLegacy::usingSecureMode()) {
                 $this->fqdn = $this->configuration->get('_PS_BASE_URL_SSL_');
             } else {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,10 +71,7 @@ class NumberExtractor
      *
      * ->extract($simpleArray, '[someKey]')
      *
-     * @param array|object $resource
-     * @param string $propertyPath
-     *
-     * @return DecimalNumber
+     * @param  array|object  $resource
      *
      * @throws NumberExtractorException
      */
@@ -82,7 +80,7 @@ class NumberExtractor
         if (is_object($resource)) {
             $numberFromPublicProperty = $this->extractPublicPropertyFirst($resource, $propertyPath);
 
-            if (null !== $numberFromPublicProperty) {
+            if ($numberFromPublicProperty !== null) {
                 return $numberFromPublicProperty;
             }
         }
@@ -118,22 +116,19 @@ class NumberExtractor
     /**
      * Check if object contains provided public property and extract it as a DecimalNumber, else return null
      *
-     * @param string|object $resource
-     * @param string $property
-     *
-     * @return DecimalNumber|null
+     * @param  string|object  $resource
      *
      * @throws ReflectionException
      */
     private function extractPublicPropertyFirst($resource, string $property): ?DecimalNumber
     {
-        if (!property_exists($resource, $property)) {
+        if (! property_exists($resource, $property)) {
             return null;
         }
 
         $reflectedObj = new ReflectionClass($resource);
 
-        if (!$reflectedObj->getProperty($property)->isPublic()) {
+        if (! $reflectedObj->getProperty($property)->isPublic()) {
             return null;
         }
 
@@ -141,15 +136,13 @@ class NumberExtractor
     }
 
     /**
-     * @param mixed $value
-     *
-     * @return DecimalNumber
+     * @param  mixed  $value
      *
      * @throws NumberExtractorException
      */
     private function toDecimalNumber($value): DecimalNumber
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             throw new NumberExtractorException(
                 sprintf(
                     'Only numeric values can be converted to DecimalNumber. Got "%s"',

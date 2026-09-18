@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,7 @@ final class EmployeeFormDataProvider implements FormDataProviderInterface
     private $defaultShopAssociation;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param bool $isMultistoreFeatureActive
-     * @param array $defaultShopAssociation
+     * @param  bool  $isMultistoreFeatureActive
      */
     public function __construct(
         CommandBusInterface $queryBus,

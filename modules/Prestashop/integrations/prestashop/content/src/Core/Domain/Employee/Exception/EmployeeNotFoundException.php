@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,10 +40,9 @@ class EmployeeNotFoundException extends EmployeeException
     private $employeeId;
 
     /**
-     * @param EmployeeId $employeeId
-     * @param string $message
-     * @param int $code
-     * @param \Exception|null $previous
+     * @param  string  $message
+     * @param  int  $code
+     * @param  \Exception|null  $previous
      */
     public function __construct(EmployeeId $employeeId, $message = '', $code = 0, $previous = null)
     {

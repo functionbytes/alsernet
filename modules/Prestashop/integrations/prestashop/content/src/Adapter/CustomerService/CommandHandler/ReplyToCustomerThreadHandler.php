@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,18 +58,12 @@ final class ReplyToCustomerThreadHandler implements ReplyToCustomerThreadHandler
      */
     private $translator;
 
-    /**
-     * @param Context $context
-     */
     public function __construct(Context $context)
     {
         $this->context = $context;
         $this->translator = $context->getTranslator();
     }
 
-    /**
-     * @param ReplyToCustomerThreadCommand $command
-     */
     public function handle(ReplyToCustomerThreadCommand $command)
     {
         $customerThread = new CustomerThread(
@@ -91,24 +86,22 @@ final class ReplyToCustomerThreadHandler implements ReplyToCustomerThreadHandler
     }
 
     /**
-     * @param CustomerThread $customerThread
-     * @param string $replyMessage
-     *
+     * @param  string  $replyMessage
      * @return CustomerMessage
      */
     private function createCustomerMessage(CustomerThread $customerThread, $replyMessage)
     {
-        $customerMessage = new CustomerMessage();
+        $customerMessage = new CustomerMessage;
         $customerMessage->id_employee = (int) $this->context->employee->id;
         $customerMessage->id_customer_thread = $customerThread->id;
         $customerMessage->ip_address = (string) (int) ip2long(Tools::getRemoteAddr());
         $customerMessage->message = $replyMessage;
 
-        if (false === $customerMessage->validateField('message', $customerMessage->message)) {
+        if ($customerMessage->validateField('message', $customerMessage->message) === false) {
             throw new CustomerServiceException('Invalid reply message');
         }
 
-        if (false === $customerMessage->add()) {
+        if ($customerMessage->add() === false) {
             throw new CustomerServiceException('Failed to add customer message');
         }
 
@@ -116,9 +109,6 @@ final class ReplyToCustomerThreadHandler implements ReplyToCustomerThreadHandler
     }
 
     /**
-     * @param CustomerThread $customerThread
-     * @param CustomerMessage $customerMessage
-     *
      * @return bool
      */
     private function sendReplyEmail(CustomerThread $customerThread, CustomerMessage $customerMessage)
@@ -129,7 +119,7 @@ final class ReplyToCustomerThreadHandler implements ReplyToCustomerThreadHandler
             '{reply}' => Tools::nl2br($customerMessage->message),
             '{link}' => Tools::url(
                 $this->context->link->getPageLink('contact', true, null, null, false, $customerThread->id_shop),
-                'id_customer_thread=' . (int) $customerThread->id . '&token=' . $customerThread->token
+                'id_customer_thread='.(int) $customerThread->id.'&token='.$customerThread->token
             ),
             '{firstname}' => $customer->firstname,
             '{lastname}' => $customer->lastname,

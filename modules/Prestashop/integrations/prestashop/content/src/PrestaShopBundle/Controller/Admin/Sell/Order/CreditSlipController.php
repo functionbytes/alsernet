@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,6 @@ class CreditSlipController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param CreditSlipFilters $creditSlipFilters
-     *
      * @return Response
      */
     public function indexAction(
@@ -102,8 +100,6 @@ class CreditSlipController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -124,8 +120,7 @@ class CreditSlipController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param int $creditSlipId
-     *
+     * @param  int  $creditSlipId
      * @return Response
      */
     public function generatePdfAction($creditSlipId)
@@ -145,8 +140,6 @@ class CreditSlipController extends FrameworkBundleAdminController
      * Generates PDF of credit slips found by requested date range
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
      *
      * @return Response
      */

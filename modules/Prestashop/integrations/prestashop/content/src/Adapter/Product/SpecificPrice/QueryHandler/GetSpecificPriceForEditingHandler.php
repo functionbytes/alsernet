@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ class GetSpecificPriceForEditingHandler implements GetSpecificPriceForEditingHan
      */
     private $specificPriceRepository;
 
-    /**
-     * @param SpecificPriceRepository $specificPriceRepository
-     */
     public function __construct(
         SpecificPriceRepository $specificPriceRepository
     ) {
@@ -62,8 +60,8 @@ class GetSpecificPriceForEditingHandler implements GetSpecificPriceForEditingHan
     {
         $specificPrice = $this->specificPriceRepository->get($query->getSpecificPriceId());
 
-        $dateFrom = DateTimeUtil::NULL_VALUE !== $specificPrice->from ? new DateTime($specificPrice->from) : null;
-        $dateTo = DateTimeUtil::NULL_VALUE !== $specificPrice->to ? new DateTime($specificPrice->to) : null;
+        $dateFrom = $specificPrice->from !== DateTimeUtil::NULL_VALUE ? new DateTime($specificPrice->from) : null;
+        $dateTo = $specificPrice->to !== DateTimeUtil::NULL_VALUE ? new DateTime($specificPrice->to) : null;
 
         return new SpecificPriceForEditing(
             (int) $specificPrice->id,

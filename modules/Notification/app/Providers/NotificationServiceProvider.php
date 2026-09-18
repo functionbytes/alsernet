@@ -170,7 +170,7 @@ class NotificationServiceProvider extends ServiceProvider
     {
         // Mini-nav item para Notifications
         NavService::registerMiniItem('notifications', [
-            'icon' => 'fa-duotone fa-thin fa-bell',
+            'icon' => 'bell',
             'tooltip' => 'Notificaciones',
             'sidebar_id' => 'notifications',
             'url' => 'notifications.index',

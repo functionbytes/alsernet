@@ -1,10 +1,9 @@
 <?php
 
-
 use PrestaShopBundle\Form\Admin\Type\TranslatableType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -16,7 +15,7 @@ class Alsernetcustomcategoryfield extends Module
         $this->version = '1.0.0';
         $this->author = 'Alsernet';
         $this->tab = 'administration';
-        $this->ps_versions_compliancy = array('min' => '1.7.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.7.0', 'max' => _PS_VERSION_];
         $this->bootstrap = true;
         $this->need_instance = 0;
         parent::__construct();
@@ -34,7 +33,6 @@ class Alsernetcustomcategoryfield extends Module
             $this->addFields();
     }
 
-
     public function addFields()
     {
         // Definir los nombres de las nuevas columnas
@@ -42,10 +40,10 @@ class Alsernetcustomcategoryfield extends Module
             'tituloh1' => 'VARCHAR(255) NULL',
             'category_url_path' => 'VARCHAR(500) NULL',
             'add_sitemap' => 'VARCHAR(500) NULL',
-            'prioridad' => 'VARCHAR(500) NULL'
+            'prioridad' => 'VARCHAR(500) NULL',
         ];
 
-        $tableName = _DB_PREFIX_ . 'category_lang';
+        $tableName = _DB_PREFIX_.'category_lang';
 
         foreach ($columns as $columnName => $columnType) {
             // Verifica si la columna ya existe
@@ -60,7 +58,7 @@ class Alsernetcustomcategoryfield extends Module
             if ($result['count'] == 0) {
                 // Si la columna no existe, la añade
                 $sql = "ALTER TABLE {$tableName} ADD COLUMN {$columnName} {$columnType};";
-                if (!Db::getInstance()->execute($sql)) {
+                if (! Db::getInstance()->execute($sql)) {
                     return false; // En caso de error en la consulta
                 }
             }
@@ -75,7 +73,6 @@ class Alsernetcustomcategoryfield extends Module
 
         return true; // Todos los campos se han añadido o ya existen
     }
-
 
     public function hookActionCategoryFormBuilderModifier($params)
     {
@@ -97,7 +94,7 @@ class Alsernetcustomcategoryfield extends Module
             ->add('add_sitemap', TranslatableType::class, [
                 'label' => $this->l('Add Sitemap'),
                 'required' => false,
-                'type' => TextType::class
+                'type' => TextType::class,
             ])
             ->add('prioridad', TranslatableType::class, [
                 'label' => $this->l('Prioridad'),
@@ -106,7 +103,7 @@ class Alsernetcustomcategoryfield extends Module
             ]);
 
         // Obtener los datos de la categoría actual
-        $categoryId = (int)Tools::getValue('id_category');
+        $categoryId = (int) Tools::getValue('id_category');
         if ($categoryId) {
             $category = new Category($categoryId);
             $params['data']['tituloh1'] = $category->tituloh1;
@@ -120,7 +117,7 @@ class Alsernetcustomcategoryfield extends Module
     public function hookActionObjectCategoryUpdateAfter($params)
     {
         $category = $params['object'];
-        $tableName = _DB_PREFIX_ . 'category_lang';
+        $tableName = _DB_PREFIX_.'category_lang';
 
         if ($category instanceof Category) {
             $categoryUrlPaths = $category->category_url_path;
@@ -134,15 +131,14 @@ class Alsernetcustomcategoryfield extends Module
     public function hookActionAfterUpdateCategoryFormHandler($params)
     {
 
-
-        $categoryId = (int)$params['id'];
+        $categoryId = (int) $params['id'];
         $category = new Category($categoryId);
         $updated = false;
 
         if (array_key_exists('form_data', $params)) {
 
             $addsitemaps = $params['form_data']['add_sitemap'];
-            if ($categoryId && !empty($addsitemaps)) {
+            if ($categoryId && ! empty($addsitemaps)) {
                 foreach ($addsitemaps as $idLang => $addsitemap) {
                     if ($addsitemaps) {
                         $category->add_sitemap[$idLang] = $addsitemap; // Guardar el campo traducido para cada idioma
@@ -152,7 +148,7 @@ class Alsernetcustomcategoryfield extends Module
             }
 
             $prioridades = $params['form_data']['prioridad'];
-            if ($categoryId && !empty($prioridades)) {
+            if ($categoryId && ! empty($prioridades)) {
                 foreach ($prioridades as $idLang => $prioridad) {
                     if ($prioridades) {
                         $category->prioridad[$idLang] = $prioridad; // Guardar el campo traducido para cada idioma
@@ -162,8 +158,8 @@ class Alsernetcustomcategoryfield extends Module
             }
 
             $linkRewriteValues = $params['form_data']['link_rewrite'];
-            //URL's con el formato siempre _
-            if ($categoryId && !empty($linkRewriteValues)) {
+            // URL's con el formato siempre _
+            if ($categoryId && ! empty($linkRewriteValues)) {
                 foreach ($linkRewriteValues as $idLang => $linkRewriteValue) {
                     if ($linkRewriteValues) {
                         $category->link_rewrite[$idLang] = str_replace('-', '_', $linkRewriteValue); // Guardar el campo traducido para cada idioma
@@ -174,7 +170,7 @@ class Alsernetcustomcategoryfield extends Module
 
             // Obtener los valores traducidos del campo
             $customFieldValues = $params['form_data']['tituloh1'];
-            if ($categoryId && !empty($customFieldValues)) {
+            if ($categoryId && ! empty($customFieldValues)) {
                 foreach ($customFieldValues as $idLang => $customFieldValue) {
                     if ($customFieldValue) {
                         $category->tituloh1[$idLang] = $customFieldValue; // Guardar el campo traducido para cada idioma
@@ -188,13 +184,10 @@ class Alsernetcustomcategoryfield extends Module
             $category->update();
         }
 
-
     }
 
-
     /**
-     * @param Category $category
-     * @param int $id_lang
+     * @param  int  $id_lang
      * @return void
      */
     public function getFullUrlPath(Category $category, int $idLang): string
@@ -208,20 +201,20 @@ class Alsernetcustomcategoryfield extends Module
         foreach ($categories as $i => $category) {
             if ($category['is_root_category']) {
                 break;
-            } else if ($category['id_parent'] == 2) {
-                $formatted_url = $category['link_rewrite'] . '/' . $formatted_url;
-            } else if ($category['id_category'] == null) {
+            } elseif ($category['id_parent'] == 2) {
+                $formatted_url = $category['link_rewrite'].'/'.$formatted_url;
+            } elseif ($category['id_category'] == null) {
                 continue;
             } else {
-                if ($i == 0)
+                if ($i == 0) {
                     $formatted_url = $category['link_rewrite'];
-                else
-                    $formatted_url = $category['link_rewrite'] . '-' . $formatted_url;
+                } else {
+                    $formatted_url = $category['link_rewrite'].'-'.$formatted_url;
+                }
             }
         }
 
         return rtrim($formatted_url, '/');
 
     }
-
 }

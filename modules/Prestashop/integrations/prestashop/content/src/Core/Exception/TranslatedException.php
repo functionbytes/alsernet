@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Exception;
 /**
  * Used for exceptions which messages are already translated and can be displayed straight to end-user
  */
-class TranslatedException extends CoreException
-{
-}
+class TranslatedException extends CoreException {}

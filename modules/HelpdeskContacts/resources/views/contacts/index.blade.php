@@ -3,9 +3,7 @@
 @section('title', 'Contactos')
 
 @push('css')
-    <style>
-        .icon-instagram { color: #c13584; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/contacts/css/contacts.css') }}?v={{ filemtime(public_path('modules/contacts/css/contacts.css')) }}">
     @if(helpdesk_integration_enabled())
         {{-- Framework visual .bv-modal del modal de búsqueda externa — mismo
              patrón ya usado fuera del inbox por helpdesk/customers/index.blade.php. --}}
@@ -105,69 +103,45 @@
 
         {{-- Filters --}}
         @php
-            $activeFilters = collect(['q', 'channel', 'last_seen', 'verified', 'banned'])
+            $activeFilters = collect(['channel', 'verified', 'banned'])
                 ->filter(fn ($k) => filled(request($k)))
                 ->count();
         @endphp
         <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('contacts.index') }}" id="contactsFilterForm">
-                <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                    <div class="flex-fill">
-                        <div class="input-group h-100">
-                            <span class="input-group-text bg-white border-end-1">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="search" name="q" class="form-control border-start-0 ps-0"
-                                   placeholder="Buscar por nombre, email, teléfono o ID de ERP/PrestaShop..."
-                                   value="{{ request('q') }}">
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 160px;">
-                        <select name="channel" class="form-select select2">
-                            <option value="">Todos los canales</option>
-                            <option value="email" {{ request('channel') === 'email' ? 'selected' : '' }}>Email</option>
-                            <option value="whatsapp" {{ request('channel') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
-                            <option value="facebook" {{ request('channel') === 'facebook' ? 'selected' : '' }}>Facebook</option>
-                            <option value="instagram" {{ request('channel') === 'instagram' ? 'selected' : '' }}>Instagram</option>
-                        </select>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 170px;">
-                        <select name="last_seen" class="form-select select2">
-                            <option value="">Cualquier fecha</option>
-                            <option value="today" {{ request('last_seen') === 'today' ? 'selected' : '' }}>Hoy</option>
-                            <option value="week" {{ request('last_seen') === 'week' ? 'selected' : '' }}>Esta semana</option>
-                            <option value="month" {{ request('last_seen') === 'month' ? 'selected' : '' }}>Este mes</option>
-                            <option value="inactive" {{ request('last_seen') === 'inactive' ? 'selected' : '' }}>Sin actividad (+30 días)</option>
-                        </select>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 150px;">
-                        <select name="verified" class="form-select select2">
-                            <option value="">Todos (verificados)</option>
-                            <option value="yes" {{ request('verified') === 'yes' ? 'selected' : '' }}>Solo verificados</option>
-                            <option value="no" {{ request('verified') === 'no' ? 'selected' : '' }}>No verificados</option>
-                        </select>
-                    </div>
-                    <div class="flex-shrink-0" style="min-width: 150px;">
-                        <select name="banned" class="form-select select2">
-                            <option value="">Todos (suspendidos)</option>
-                            <option value="yes" {{ request('banned') === 'yes' ? 'selected' : '' }}>Suspendidos</option>
-                            <option value="no" {{ request('banned') === 'no' ? 'selected' : '' }}>No suspendidos</option>
-                        </select>
-                    </div>
-                    <div class="d-flex gap-2 flex-shrink-0">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-1"></i>
-                        </button>
+            <form method="GET" action="{{ route('contacts.index') }}" id="contactsFilterForm"
+                  data-bulk-url="{{ route('contacts.bulk-action') }}">
+                <input type="hidden" name="channel"  id="ct-filter-channel"  value="{{ request('channel') }}">
+                <input type="hidden" name="verified" id="ct-filter-verified" value="{{ request('verified') }}">
+                <input type="hidden" name="banned"   id="ct-filter-banned"   value="{{ request('banned') }}">
+
+                <div class="d-flex align-items-center gap-2">
+                    <input type="search" name="q" class="form-control flex-grow-1"
+                           placeholder="Buscar por nombre, email, teléfono o ID de ERP/PrestaShop..."
+                           value="{{ request('q') }}">
+
+                    <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                            data-bs-toggle="modal" data-bs-target="#ct-filter-modal" title="Filtros avanzados">
+                        <i class="fas fa-filter"></i>
                         @if($activeFilters > 0)
-                            <a href="{{ route('contacts.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
-                                <i class="fas fa-times"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary ts-filter-badge">
+                                {{ $activeFilters }}
+                            </span>
+                        @endif
+                    </button>
+
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button type="submit" class="btn btn-primary" title="Buscar">
+                            <i class="fas fa-magnifying-glass"></i>
+                        </button>
+                        @if($activeFilters > 0 || filled(request('q')))
+                            <a href="{{ route('contacts.index') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                <i class="fas fa-xmark"></i>
                             </a>
                         @endif
                     </div>
                 </div>
             </form>
         </div>
-
 
         <div class="card-body">
             <div class="table-responsive">
@@ -178,7 +152,6 @@
                             <th>Contacto</th>
                             <th>Teléfono</th>
                             <th>Canales</th>
-                            <th>Última visita</th>
                             <th class="text-center">Conv.</th>
                             <th class="text-center">Acciones</th>
                         </tr>
@@ -186,45 +159,47 @@
                     <tbody>
                         @forelse($customers as $customer)
                             @php
-                                $convCount = $customer->total_conversations ?? 0;
+                                $convCount = $customer->conversations_count ?? 0;
                             @endphp
                             <tr>
                                 <td class="ps-3"><input type="checkbox" class="form-check-input contact-check" value="{{ $customer->id }}"></td>
                                 <td>
-                                    <div class="d-block fw-semibold">
+                                    {{-- Único acceso a la ficha 360 antes de este cambio era el
+                                         "..." > Ver ficha 360, dos clics para la acción principal
+                                         de esta pantalla — el resto del sistema siempre enlaza el
+                                         nombre en las listas de clientes/contactos. --}}
+                                    <a href="{{ route('contacts.show', $customer) }}" class="d-block fw-semibold text-reset text-decoration-none">
                                         {{ $customer->name ?: 'Sin nombre' }}
                                         @if($customer->email_verified_at ?? false)
                                             <i class="fas fa-circle-check text-success ms-1"></i>
                                         @endif
                                         @if($customer->banned_at ?? false)
-                                            <span class="badge bg-danger-subtle text-danger ms-1">Suspendido</span>
+                                            <span class="badge bg-brand-subtle text-brand ms-1">Suspendido</span>
                                         @endif
-                                    </div>
+                                    </a>
                                     <small class="text-muted">{{ $customer->email ?: '—' }}</small>
                                 </td>
                                 <td class="small">{{ $customer->phone ?: ($customer->whatsapp_phone ?? '—') }}</td>
                                 <td class="small">
-                                    <div class="d-flex gap-1">
+                                    {{-- Badges como los de estado del resto del panel: el icono
+                                         suelto no decia por que canal se puede contactar. --}}
+                                    <div class="d-flex flex-wrap gap-1">
                                         @if($customer->email)
-                                            <span class="text-muted" title="Email"><i class="fas fa-envelope"></i></span>
+                                            <span class="badge bg-success-subtle text-success"><i class="fas fa-envelope me-1"></i>Email</span>
                                         @endif
                                         @if($customer->whatsapp_phone)
-                                            <span class="text-success" title="WhatsApp"><i class="fab fa-whatsapp"></i></span>
+                                            <span class="badge bg-success-subtle text-success"><i class="fab fa-whatsapp me-1"></i>WhatsApp</span>
                                         @endif
                                         @if($customer->facebook_psid)
-                                            <span class="text-primary" title="Facebook Messenger"><i class="fab fa-facebook-messenger"></i></span>
+                                            <span class="badge bg-success-subtle text-success"><i class="fab fa-facebook-messenger me-1"></i>Facebook</span>
                                         @endif
                                         @if($customer->instagram_id)
-                                            <span class="icon-instagram" title="Instagram"><i class="fab fa-instagram"></i></span>
+                                            <span class="badge bg-success-subtle text-success"><i class="fab fa-instagram me-1"></i>Instagram</span>
+                                        @endif
+                                        @if(! $customer->email && ! $customer->whatsapp_phone && ! $customer->facebook_psid && ! $customer->instagram_id)
+                                            <span class="badge bg-secondary-subtle text-secondary">Sin canal</span>
                                         @endif
                                     </div>
-                                </td>
-                                <td class="small text-muted">
-                                    @if($customer->last_seen_at ?? false)
-                                        {{ $customer->last_seen_at->locale('es')->diffForHumans() }}
-                                    @else
-                                        —
-                                    @endif
                                 </td>
                                 <td class="text-center">
                                     @if($convCount > 0)
@@ -314,8 +289,7 @@
 
     {{-- Bulk trigger (floating), igual patrón que settings/users --}}
     <div id="bulk-toolbar"
-         class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none"
-         style="z-index: 1050;">
+         class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none ct-bulk-toolbar">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
@@ -330,7 +304,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted mb-3">
-                        Se aplicará la acción sobre <strong><span class="bulk-count-label">0</span> contacto(s)</strong> seleccionados.
+                        Se aplicará la acción sobre <strong><span data-bulk-count>0</span> contacto(s)</strong> seleccionados.
                     </p>
                     <div class="mb-3">
                         <label for="bulk-action-select" class="form-label fw-semibold">Acción</label>
@@ -355,76 +329,54 @@
          (mismo selector [data-bulk-action="send-hsm"], sin duplicar esa lógica). --}}
     <button type="button" data-bulk-action="send-hsm" class="d-none" aria-hidden="true"></button>
 
+    {{-- Filtros avanzados --}}
+    <div class="modal fade" id="ct-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Canal</label>
+                        <select id="ct-modal-channel" class="form-control select2-filter-modal">
+                            <option value="">Todos los canales</option>
+                            <option value="email"     @selected(request('channel') === 'email')>Email</option>
+                            <option value="whatsapp"  @selected(request('channel') === 'whatsapp')>WhatsApp</option>
+                            <option value="facebook"  @selected(request('channel') === 'facebook')>Facebook</option>
+                            <option value="instagram" @selected(request('channel') === 'instagram')>Instagram</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email verificado</label>
+                        <select id="ct-modal-verified" class="form-control select2-filter-modal">
+                            <option value="">Verificados y sin verificar</option>
+                            <option value="yes" @selected(request('verified') === 'yes')>Solo verificados</option>
+                            <option value="no"  @selected(request('verified') === 'no')>Solo sin verificar</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Acceso al soporte</label>
+                        <select id="ct-modal-banned" class="form-control select2-filter-modal">
+                            <option value="">Todos</option>
+                            <option value="yes" @selected(request('banned') === 'yes')>Solo suspendidos</option>
+                            <option value="no"  @selected(request('banned') === 'no')>Solo con acceso</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="ct-filter-apply-btn" class="btn btn-primary w-100 mb-1">Aplicar filtros</button>
+                    <button type="button" id="ct-filter-clear-btn" class="btn btn-secondary w-100">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    $('#contactsFilterForm .select2').select2({ width: '100%' });
-
-    var bulkUrl = '{{ route("contacts.bulk-action") }}';
-
-    // Helper global (public/core/js/bulk.js, cargado en el layout) — mismo
-    // patrón que settings/users: toolbar flotante + contador delegado.
-    var bulk = window.BulkActions.init({ checkbox: '.contact-check' });
-
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#per-page-select').on('change', function () {
-        var url = new URL(window.location.href);
-        url.searchParams.set('per_page', this.value);
-        url.searchParams.delete('page');
-        window.location.href = url.toString();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        var action = $('#bulk-action-select').val();
-        var ids = bulk.getIds();
-
-        if (!action) { toastr.warning('Selecciona una acción antes de continuar.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos un contacto.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' contactos? Esta acción no se puede deshacer.')) { return; }
-
-        if (action === 'send-hsm') {
-            $('#bulk-modal').modal('hide');
-            // send-hsm no pasa por bulkUrl: reusa el flujo bulk ya construido
-            // en send-hsm-modal.js (mismo selector, sin duplicar esa lógica).
-            $('[data-bulk-action="send-hsm"]').trigger('click');
-            return;
-        }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-        $.ajax({
-            url: bulkUrl,
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            contentType: 'application/json',
-            data: JSON.stringify({ action: action, ids: ids }),
-        }).done(function (resp) {
-            $('#bulk-modal').modal('hide');
-            toastr.success(resp.message || 'Acción aplicada');
-            setTimeout(function () { location.reload(); }, 800);
-        }).fail(function (xhr) {
-            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al ejecutar la acción');
-        }).always(function () {
-            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        });
-    });
-
-    $('.delete-btn').on('click', function (e) {
-        e.preventDefault();
-        $('#delete-form').attr('action', $(this).data('url'));
-        $('#delete-modal').modal('show');
-    });
-});
-</script>
+<script src="{{ asset('modules/contacts/js/contacts-index.js') }}?v={{ filemtime(public_path('modules/contacts/js/contacts-index.js')) }}"></script>
 <script src="{{ asset('modules/contacts/js/send-hsm-modal.js') }}?v={{ filemtime(public_path('modules/contacts/js/send-hsm-modal.js')) }}"></script>
 @if(helpdesk_integration_enabled())
 <script src="{{ asset('modules/contacts/js/external-search-modal.js') }}?v={{ filemtime(public_path('modules/contacts/js/external-search-modal.js')) }}"></script>

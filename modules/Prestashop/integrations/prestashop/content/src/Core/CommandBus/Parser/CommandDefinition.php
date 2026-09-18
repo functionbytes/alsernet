@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ class CommandDefinition
     private $description;
 
     /**
-     * @param string $className
-     * @param string $commandType
-     * @param string $description
+     * @param  string  $className
+     * @param  string  $commandType
+     * @param  string  $description
      */
     public function __construct($className, $commandType, $description)
     {

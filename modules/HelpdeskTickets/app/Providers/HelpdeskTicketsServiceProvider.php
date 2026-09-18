@@ -99,6 +99,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->registerRoutes();
+        $this->registerBroadcastChannels();
         $this->registerPolicies();
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -231,7 +232,10 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
                     // /panel/helpdeskemailactivity?module=HelpdeskTickets (mismo
                     // dato, auditoría cross-módulo unificada) — el
                     // "responder/redactar" que sí era exclusivo de tickets se
-                    // reubicó dentro de la ficha del ticket (TicketsCrudController::showFull).
+                    // reubicó dentro de la ficha del ticket (entonces
+                    // TicketsCrudController::showFull(), retirada el
+                    // 8-sep-2026 — el composer ahora vive solo en el
+                    // listado, tickets-app/core.js).
                     //
                     // 'permission' cambiado de 'helpdesk.tickets.emails.view' a
                     // 'helpdeskemailactivity.view': la autorización real la impone el
@@ -302,6 +306,23 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->app->singleton(AutomationEngine::class);
     }
 
+    /**
+     * Autorización de los canales de broadcasting del módulo.
+     *
+     * Sin esto, TicketCreated se emitía a 'helpdesk.tickets' y ningún cliente
+     * podía suscribirse: /broadcasting/auth respondía 403 por no existir la
+     * regla del canal. El listado no se enteraba de los tickets nuevos y el
+     * evento viajaba a un canal que nadie escuchaba.
+     */
+    protected function registerBroadcastChannels(): void
+    {
+        $path = module_path($this->moduleName, 'routes/channels.php');
+
+        if (file_exists($path)) {
+            require $path;
+        }
+    }
+
     protected function registerPolicies(): void
     {
         $map = [
@@ -361,13 +382,59 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Cadencia de lectura del buzón IMAP.
+     *
+     * Por defecto cada 3 segundos: el correo de un cliente entra en la bandeja
+     * casi al momento en vez de esperar hasta un minuto entero.
+     *
+     * HELPDESK_TICKETS_FETCH_SECONDS admite 1, 2, 3, 5, 10, 15, 20, 30 o 60;
+     * cualquier otro valor cae en el minuto de siempre. Súbelo si el servidor
+     * de correo se queja del ritmo: a 3 segundos son 20 aperturas de sesión
+     * IMAP por minuto.
+     */
+    protected function scheduleMailboxFetch(Schedule $schedule, callable $enabled): void
+    {
+        $event = $schedule->command('imap:emailticket');
+
+        // Laravel solo ofrece estas cadencias por debajo del minuto; no existe
+        // un "cada 3 segundos", así que 3 se sirve con everyTwoSeconds(), que
+        // cumple de sobra el "cada 3 segundos como mucho".
+        match ((int) config('helpdesktickets.fetch_interval_seconds', 3)) {
+            1 => $event->everySecond(),
+            2, 3 => $event->everyTwoSeconds(),
+            4, 5 => $event->everyFiveSeconds(),
+            6, 7, 8, 9, 10 => $event->everyTenSeconds(),
+            15 => $event->everyFifteenSeconds(),
+            20 => $event->everyTwentySeconds(),
+            30 => $event->everyThirtySeconds(),
+            default => $event->everyMinute(),
+        };
+
+        // Sin withoutOverlapping(): este comando solo despacha el trabajo y
+        // termina en milisegundos, así que el cerrojo no protegía de nada y en
+        // cambio se quedaba tomado y paraba la lectura durante minutos. Quien
+        // sí puede solaparse es FetchTicketEmailsJob leyendo el buzón, y ese es
+        // ahora ShouldBeUnique, que es donde corresponde.
+        $event->onOneServer()->runInBackground()->when($enabled);
+    }
+
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
             $enabled = fn () => helpdesk_tickets_enabled();
 
-            $schedule->command('imap:emailticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            // Lectura del buzón: es lo único de esta lista que el agente nota
+            // esperando. El trabajo en sí tarda menos de un segundo, así que lo
+            // que se esperaba era el siguiente ciclo del planificador — hasta
+            // un minuto entero desde que el cliente escribe.
+            //
+            // Laravel 12 admite intervalos por debajo del minuto. withoutOverlapping()
+            // sigue evitando que dos lecturas se pisen si un buzón va lento, y el
+            // intervalo se puede subir por entorno si el servidor de correo se
+            // queja del ritmo de conexiones.
+            $this->scheduleMailboxFetch($schedule, $enabled);
             $schedule->command('ticket:autoclose')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autooverdue')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
@@ -504,6 +571,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
     {
         $this->loadManagerRoutes();
         $this->loadTicketTemplatesRoutes();
+        $this->loadConversationBridgeRoutes();
         $this->loadApiRoutes();
         $this->loadAgentRoutes();
         $this->loadPortalRoutes();
@@ -546,7 +614,18 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
+        // Ampliado a los roles reales de agente (8-sep-2026): este gate
+        // dejaba TODO el panel de tickets —listado, detalle, responder,
+        // asignar, resolver— accesible solo a super-admin/super-settings.
+        // Un agente con role:helpdesk-agent recibía 403 antes incluso de que
+        // TicketPolicy llegara a mirar sus permisos finos
+        // (helpdesk.tickets.view/update/assign/...), así que ese sistema de
+        // permisos no gobernaba nada en la práctica: en producción solo un
+        // administrador podía usar el módulo. Mismo criterio que ya se
+        // amplió para ticket-templates.php más abajo, con el mismo motivo
+        // documentado ahí ("dejar aquí ese gate hacía que ... devolviera 403
+        // a todo agente").
+        Route::middleware(['web', 'auth', 'role:helpdesk-agent|helpdesk-manager|manager|super-admin|super-settings'])
             ->prefix('panel/helpdesk')
             ->group($path);
     }
@@ -576,9 +655,34 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
+        Route::middleware(['api', 'auth:sanctum', 'helpdesk.api.scope', 'throttle:60,1'])
             ->prefix('api/v1/helpdesk')
             ->name('api.v1.helpdesk.')
+            ->group($path);
+    }
+
+    /**
+     * Endpoints puente con la bandeja de conversaciones. Mismo prefijo de URL
+     * que managers.php, pero con el gate de rol de la BANDEJA: quien atiende
+     * el inbox (agentes y managers de helpdesk) tiene que poder escalar una
+     * conversación a ticket. managers.php exige super-admin/super-settings
+     * porque es configuración del módulo, y dejar aquí ese gate hacía que el
+     * botón "Crear ticket" del hilo devolviera 403 a todo agente.
+     *
+     * El permiso real (helpdesk.tickets.create) lo comprueba TicketPolicy
+     * dentro del controlador, así que el acceso se administra desde el panel
+     * de roles y no desde una lista de roles escrita a fuego aquí.
+     */
+    protected function loadConversationBridgeRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/conversation-bridge.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::middleware(['web', 'auth', 'role:helpdesk-agent|helpdesk-manager|manager|super-admin|super-settings'])
+            ->prefix('panel/helpdesk')
             ->group($path);
     }
 

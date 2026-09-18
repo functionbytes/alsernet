@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetproducts}prestashop>alsernetproducts_ac71d8452c267207bcf9f1c93c6419e8'] = 'Neuen';
 $_MODULE['<{alsernetproducts}prestashop>alsernetproducts_bd7929bc6bed5d8ec99db715a980ba04'] = 'Bestseller';
 $_MODULE['<{alsernetproducts}prestashop>commentsajax_765abf48d94d963af98c72ae7ab27275'] = 'Unbefugter Zugang';

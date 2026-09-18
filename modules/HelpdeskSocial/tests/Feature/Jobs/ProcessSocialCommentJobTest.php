@@ -6,20 +6,12 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Modules\Helpdesk\Models\Setting;
-use Modules\HelpdeskSocial\Contracts\AutoReplyEngineInterface;
 use Modules\HelpdeskSocial\Events\SocialCommentReceived;
 use Modules\HelpdeskSocial\Jobs\ProcessSocialCommentJob;
 use Modules\HelpdeskSocial\Models\SocialAccount;
-use Modules\HelpdeskSocial\Models\SocialComment;
-use Modules\HelpdeskSocial\Models\SocialIntent;
-use Modules\HelpdeskSocial\Services\AuditLogService;
 use Modules\HelpdeskSocial\Services\ConversationThreadingService;
-use Modules\HelpdeskSocial\Services\CrisisModeService;
-use Modules\HelpdeskSocial\Services\IntentClassificationService;
-use Modules\HelpdeskSocial\Services\SentimentAnalysisService;
 use Modules\HelpdeskSocial\Services\SlaTrackingService;
 use Modules\HelpdeskSocial\Services\SmartAssignmentService;
-use Modules\HelpdeskSocial\Services\SocialListeningService;
 use Modules\HelpdeskSocial\Tests\TestCase;
 
 class ProcessSocialCommentJobTest extends TestCase
@@ -176,53 +168,23 @@ class ProcessSocialCommentJobTest extends TestCase
     }
 
     /**
-     * Real, dependency-free service instances for the job's `handle()` signature.
+     * Dependencias reales del `handle()` del job (dedupe/threading/SLA/asignación
+     * son las únicas operaciones síncronas; clasificación de intención y
+     * auto-respuesta ahora se despachan aparte via Bus::chain(), resueltas por
+     * el contenedor real). Http::fake([]) sigue de guardia por si esa cadena
+     * llegara a golpear una API externa de verdad en este entorno de test.
      *
-     * HelpdeskSocial is disabled in this environment's modules_statuses.json, so its
-     * ServiceProvider never boots and the container has no binding for
-     * IntentClassifierInterface / AutoReplyEngineInterface. Building the collaborators by
-     * hand keeps these tests independent of that module-enabled state while still exercising
-     * the job's real processing pipeline.
-     *
-     * @return array{0: IntentClassificationService, 1: AutoReplyEngineInterface, 2: ConversationThreadingService, 3: SentimentAnalysisService, 4: SlaTrackingService, 5: SmartAssignmentService, 6: SocialListeningService, 7: CrisisModeService}
+     * @return array{0: ConversationThreadingService, 1: SlaTrackingService, 2: SmartAssignmentService}
      */
     private function processingDependencies(): array
     {
         Http::preventStrayRequests();
         Http::fake([]);
 
-        $classificationService = new class extends IntentClassificationService
-        {
-            public function __construct() {}
-
-            public function classify(SocialComment $comment): SocialIntent
-            {
-                return new SocialIntent;
-            }
-        };
-
-        $responder = new class implements AutoReplyEngineInterface
-        {
-            public function evaluate(SocialComment $comment): ?array
-            {
-                return null;
-            }
-
-            public function isEnabled(): bool
-            {
-                return false;
-            }
-        };
-
         return [
-            $classificationService,
-            $responder,
             new ConversationThreadingService,
-            new SentimentAnalysisService,
             new SlaTrackingService,
             new SmartAssignmentService,
-            new SocialListeningService,
-            new CrisisModeService(new AuditLogService),
         ];
     }
 }

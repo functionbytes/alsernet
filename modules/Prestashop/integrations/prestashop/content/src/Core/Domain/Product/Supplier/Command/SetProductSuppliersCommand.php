@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,7 @@ class SetProductSuppliersCommand
     private $productSuppliers;
 
     /**
-     * @param int $productId
-     * @param array<int, array<string, mixed>> $productSuppliers
+     * @param  array<int, array<string, mixed>>  $productSuppliers
      *
      * @see SetProductSuppliersCommand::setProductSuppliers() for $productSuppliers structure
      */
@@ -59,9 +59,6 @@ class SetProductSuppliersCommand
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -76,7 +73,7 @@ class SetProductSuppliersCommand
     }
 
     /**
-     * @param array<int, array<string, mixed>> $productSuppliers
+     * @param  array<int, array<string, mixed>>  $productSuppliers
      */
     private function setProductSuppliers(array $productSuppliers): void
     {

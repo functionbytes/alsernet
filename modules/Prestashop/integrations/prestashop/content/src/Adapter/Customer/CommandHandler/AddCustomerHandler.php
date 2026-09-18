@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,8 +56,7 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
     private $legacyCookieKey;
 
     /**
-     * @param Hashing $hashing
-     * @param string $legacyCookieKey
+     * @param  string  $legacyCookieKey
      */
     public function __construct(Hashing $hashing, $legacyCookieKey)
     {
@@ -69,7 +69,7 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
      */
     public function handle(AddCustomerCommand $command)
     {
-        $customer = new Customer();
+        $customer = new Customer;
 
         $this->fillCustomerWithCommandData($customer, $command);
 
@@ -79,7 +79,7 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
 
         $this->assertRequiredFieldsAreNotMissing($customer);
 
-        if (false === $customer->validateFields(false)) {
+        if ($customer->validateFields(false) === false) {
             throw new CustomerException('Customer contains invalid field values');
         }
 
@@ -91,12 +91,9 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
         return new CustomerId((int) $customer->id);
     }
 
-    /**
-     * @param Email $email
-     */
     private function assertCustomerWithGivenEmailDoesNotExist(Email $email)
     {
-        $customer = new Customer();
+        $customer = new Customer;
         $customer->getByEmail($email->getValue());
 
         if ($customer->id) {
@@ -104,13 +101,9 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
         }
     }
 
-    /**
-     * @param Customer $customer
-     * @param AddCustomerCommand $command
-     */
     private function fillCustomerWithCommandData(Customer $customer, AddCustomerCommand $command)
     {
-        $apeCode = null !== $command->getApeCode() ?
+        $apeCode = $command->getApeCode() !== null ?
             $command->getApeCode()->getValue() :
             null;
 
@@ -141,12 +134,9 @@ final class AddCustomerHandler extends AbstractCustomerHandler implements AddCus
         $customer->id_risk = $command->getRiskId();
     }
 
-    /**
-     * @param AddCustomerCommand $command
-     */
     private function assertCustomerCanAccessDefaultGroup(AddCustomerCommand $command)
     {
-        if (!in_array($command->getDefaultGroupId(), $command->getGroupIds())) {
+        if (! in_array($command->getDefaultGroupId(), $command->getGroupIds())) {
             throw new CustomerDefaultGroupAccessException(sprintf('Customer default group with id "%s" must be in access groups', $command->getDefaultGroupId()));
         }
     }

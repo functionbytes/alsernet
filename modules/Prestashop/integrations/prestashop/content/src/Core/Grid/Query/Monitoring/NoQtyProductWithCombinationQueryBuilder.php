@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,6 @@ final class NoQtyProductWithCombinationQueryBuilder extends AbstractProductQuery
     /**
      * Gets generic query builder
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -72,14 +72,14 @@ final class NoQtyProductWithCombinationQueryBuilder extends AbstractProductQuery
 
         $attrSubQuery = $this->connection->createQueryBuilder()
             ->select(1)
-            ->from($this->dbPrefix . 'product_attribute', 'pa')
+            ->from($this->dbPrefix.'product_attribute', 'pa')
             ->andWhere('pa.id_product = p.id_product');
 
         $subQuery = $this->connection->createQueryBuilder()->select(1);
         $subQuery
-            ->from($this->dbPrefix . 'stock_available', 'stock')
+            ->from($this->dbPrefix.'stock_available', 'stock')
             ->andWhere('p.id_product = stock.id_product')
-            ->andWhere('EXISTS(' . $attrSubQuery->getSQL() . ')')
+            ->andWhere('EXISTS('.$attrSubQuery->getSQL().')')
             ->andWhere('IFNULL(stock.quantity, 0) <= 0');
 
         if ($this->multistoreContextChecker->isSingleShopContext()) {
@@ -87,7 +87,7 @@ final class NoQtyProductWithCombinationQueryBuilder extends AbstractProductQuery
                 ->setParameter('context_shop_id', $this->contextShopId);
         }
 
-        $qb->andWhere('EXISTS(' . $subQuery->getSQL() . ')');
+        $qb->andWhere('EXISTS('.$subQuery->getSQL().')');
 
         return $qb;
     }

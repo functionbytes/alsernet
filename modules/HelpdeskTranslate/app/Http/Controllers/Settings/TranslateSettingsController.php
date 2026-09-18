@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Setting;
 use Modules\Helpdesk\Services\Exports\CsvStreamExporter;
+use Modules\Helpdesk\Support\EncryptedSetting;
 use Modules\HelpdeskTranslate\Http\Requests\UpdateTranslateSettingsRequest;
 use Modules\HelpdeskTranslate\Http\Requests\UsageReportRequest;
 use Modules\HelpdeskTranslate\Models\TranslateUsage;
@@ -49,8 +50,16 @@ class TranslateSettingsController extends Controller
         Setting::set('helpdesktranslate.auto_translate_incoming', $request->boolean('auto_translate_incoming'), 'helpdesktranslate');
         Setting::set('helpdesktranslate.auto_translate_outgoing', $request->boolean('auto_translate_outgoing'), 'helpdesktranslate');
 
-        if (! empty($data['deepl_key'])) {
-            Setting::set('helpdesktranslate.deepl.key', $data['deepl_key'], 'helpdesktranslate');
+        // "Eliminar clave guardada" gana sobre un valor nuevo si por lo que
+        // sea llegaran ambos a la vez: revocar una clave comprometida debe
+        // ganar siempre, nunca reintroducirla sin querer. set('', ...) vacía
+        // el Setting; resolveApiKey()/isProviderConfigured() usan `?:`, así
+        // que una vez vacío el operador cae automáticamente a la key de
+        // entorno (config/.env) sin ningún paso extra.
+        if ($request->boolean('remove_deepl_key')) {
+            EncryptedSetting::set('helpdesktranslate.deepl.key', '', 'helpdesktranslate');
+        } elseif (! empty($data['deepl_key'])) {
+            EncryptedSetting::set('helpdesktranslate.deepl.key', $data['deepl_key'], 'helpdesktranslate');
         }
 
         if (! empty($data['deepl_url'])) {
@@ -61,8 +70,10 @@ class TranslateSettingsController extends Controller
             Setting::set('helpdesktranslate.libretranslate.endpoint', $data['libretranslate_endpoint'] ?? '', 'helpdesktranslate');
         }
 
-        if (! empty($data['libretranslate_api_key'])) {
-            Setting::set('helpdesktranslate.libretranslate.api_key', $data['libretranslate_api_key'], 'helpdesktranslate');
+        if ($request->boolean('remove_libretranslate_api_key')) {
+            EncryptedSetting::set('helpdesktranslate.libretranslate.api_key', '', 'helpdesktranslate');
+        } elseif (! empty($data['libretranslate_api_key'])) {
+            EncryptedSetting::set('helpdesktranslate.libretranslate.api_key', $data['libretranslate_api_key'], 'helpdesktranslate');
         }
 
         return back()->with('success', __('helpdesktranslate::messages.success.settings_saved'));
@@ -73,7 +84,7 @@ class TranslateSettingsController extends Controller
      */
     public function test(): JsonResponse
     {
-        $apiKey = Setting::get('helpdesktranslate.deepl.key')
+        $apiKey = EncryptedSetting::get('helpdesktranslate.deepl.key')
             ?: config('helpdesktranslate.deepl.key')
             ?: config('services.deepl.key');
 
@@ -129,7 +140,7 @@ class TranslateSettingsController extends Controller
 
         $totalsRow = TranslateUsage::query()
             ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('COUNT(*) as calls, COALESCE(SUM(characters), 0) as characters, COALESCE(SUM(success), 0) as success_calls')
+            ->selectRaw('COUNT(*) as calls, COALESCE(SUM(characters), 0) as characters, COALESCE(SUM(success), 0) as success_calls, COALESCE(SUM(CASE WHEN success = 0 THEN characters ELSE 0 END), 0) as failed_characters')
             ->first();
 
         $calls = (int) ($totalsRow->calls ?? 0);
@@ -143,6 +154,14 @@ class TranslateSettingsController extends Controller
                 'calls' => $calls,
                 'success_calls' => $successCalls,
                 'failed_calls' => $calls - $successCalls,
+                // Caracteres de llamadas fallidas al proveedor: hasta el fix de
+                // PERF-04 estos se quedaban cargados contra el cupo diario para
+                // siempre pese a no haber costado nada real (ver
+                // CachedTranslator::revertQuotaCharge()). Este total es la
+                // medida real (antes/después) del cupo que el fix evita
+                // desperdiciar — el audit estimaba "~80.000 caracteres/día"
+                // sin datos detrás; esta cifra sí sale de este repo.
+                'failed_characters' => (int) ($totalsRow->failed_characters ?? 0),
                 'estimated_cost_eur' => $this->estimateDeeplCost($from, $to),
             ],
             'by_feature' => $this->aggregateUsageBy('feature', $from, $to),
@@ -275,20 +294,36 @@ class TranslateSettingsController extends Controller
      */
     private function dailyUsage(Carbon $from, Carbon $to): array
     {
-        return TranslateUsage::query()
+        $rows = TranslateUsage::query()
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('DATE(created_at) as date, COUNT(*) as calls, COALESCE(SUM(characters), 0) as characters, COALESCE(SUM(success), 0) as success_calls')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn ($row) => [
-                'date' => $row->date,
-                'calls' => (int) $row->calls,
-                'characters' => (int) $row->characters,
-                'success' => (int) $row->success_calls,
-                'failed' => (int) $row->calls - (int) $row->success_calls,
-            ])
-            ->all();
+            ->keyBy(fn ($row) => (string) $row->date);
+
+        // Se rellenan los dias sin consumo con ceros. Devolver solo los dias con
+        // registros hacia que el grafico repartiera los puntos a distancias
+        // iguales: entre dos dias consecutivos y entre dos separados por
+        // semanas se dibujaba el mismo hueco, y la linea inventaba una
+        // pendiente continua donde en realidad no hubo actividad.
+        $daily = [];
+        for ($day = $from->copy()->startOfDay(); $day->lte($to); $day->addDay()) {
+            $key = $day->toDateString();
+            $row = $rows->get($key);
+            $calls = (int) ($row->calls ?? 0);
+            $success = (int) ($row->success_calls ?? 0);
+
+            $daily[] = [
+                'date' => $key,
+                'calls' => $calls,
+                'characters' => (int) ($row->characters ?? 0),
+                'success' => $success,
+                'failed' => $calls - $success,
+            ];
+        }
+
+        return $daily;
     }
 
     /**
@@ -303,7 +338,7 @@ class TranslateSettingsController extends Controller
      */
     private function fetchLiveDeeplQuota(): ?array
     {
-        $apiKey = Setting::get('helpdesktranslate.deepl.key')
+        $apiKey = EncryptedSetting::get('helpdesktranslate.deepl.key')
             ?: config('helpdesktranslate.deepl.key')
             ?: config('services.deepl.key');
 

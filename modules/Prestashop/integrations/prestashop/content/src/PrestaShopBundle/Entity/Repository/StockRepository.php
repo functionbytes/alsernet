@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,13 +62,7 @@ class StockRepository extends StockManagementRepository
     /**
      * StockRepository constructor.
      *
-     * @param ContainerInterface $container
-     * @param Connection $connection
-     * @param EntityManager $entityManager
-     * @param ContextAdapter $contextAdapter
-     * @param ImageManager $imageManager
-     * @param StockManager $stockManager
-     * @param string $tablePrefix
+     * @param  string  $tablePrefix
      */
     public function __construct(
         ContainerInterface $container,
@@ -89,14 +84,12 @@ class StockRepository extends StockManagementRepository
 
         $this->stockManager = $stockManager;
 
-        $configuration = new Configuration();
+        $configuration = new Configuration;
         $this->orderStates['error'] = (int) $configuration->get('PS_OS_ERROR');
         $this->orderStates['cancellation'] = (int) $configuration->get('PS_OS_CANCELED');
     }
 
     /**
-     * @param MovementsCollection $movements
-     *
      * @return array
      */
     public function bulkUpdateStock(MovementsCollection $movements)
@@ -109,9 +102,7 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param Movement $movement
-     * @param bool $syncStock
-     *
+     * @param  bool  $syncStock
      * @return mixed
      */
     public function updateStock(Movement $movement, $syncStock = true)
@@ -120,12 +111,12 @@ class StockRepository extends StockManagementRepository
         $delta = $movement->getDelta();
 
         if ($productIdentity->getProductId() && $delta !== 0) {
-            $product = (new ProductDataProvider())->getProduct($productIdentity->getProductId());
+            $product = (new ProductDataProvider)->getProduct($productIdentity->getProductId());
 
             if ($product->id) {
-                $configurationAdapter = new Configuration();
+                $configurationAdapter = new Configuration;
 
-                (new StockManagerCore())->updateQuantity(
+                (new StockManagerCore)->updateQuantity(
                     $product,
                     $productIdentity->getCombinationId(),
                     $delta,
@@ -137,7 +128,7 @@ class StockRepository extends StockManagementRepository
                 );
             }
 
-            if (true === $syncStock) {
+            if ($syncStock === true) {
                 $this->syncAllStock($productIdentity->getProductId());
             }
         }
@@ -150,7 +141,7 @@ class StockRepository extends StockManagementRepository
      */
     private function syncAllStock($idProduct)
     {
-        (new StockManager())->updatePhysicalProductQuantity(
+        (new StockManager)->updatePhysicalProductQuantity(
             $this->contextAdapter->getContext()->shop->id,
             $this->orderStates['error'],
             $this->orderStates['cancellation'],
@@ -159,8 +150,6 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param ProductIdentity $productIdentity
-     *
      * @return mixed
      */
     private function selectStockBy(ProductIdentity $productIdentity)
@@ -188,8 +177,6 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param QueryParamsCollection $queryParams
-     *
      * @return mixed
      */
     public function getData(QueryParamsCollection $queryParams)
@@ -204,10 +191,8 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param int $offset
-     * @param int $limit
-     * @param QueryParamsCollection $queryParams
-     *
+     * @param  int  $offset
+     * @param  int  $limit
      * @return array
      */
     public function getDataExport($offset, $limit, QueryParamsCollection $queryParams)
@@ -219,10 +204,9 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param string $andWhereClause
-     * @param string $having
-     * @param null $orderByClause
-     *
+     * @param  string  $andWhereClause
+     * @param  string  $having
+     * @param  null  $orderByClause
      * @return mixed
      */
     protected function selectSql(
@@ -230,7 +214,7 @@ class StockRepository extends StockManagementRepository
         $having = '',
         $orderByClause = null
     ) {
-        if (null === $orderByClause) {
+        if ($orderByClause === null) {
             $orderByClause = $this->orderByProductIds();
         }
 
@@ -300,8 +284,6 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param QueryParamsCollection $queryParams
-     *
      * @return string
      */
     protected function andWhere(QueryParamsCollection $queryParams)
@@ -318,8 +300,6 @@ class StockRepository extends StockManagementRepository
     }
 
     /**
-     * @param array $rows
-     *
      * @return array
      */
     protected function addAdditionalData(array $rows)
@@ -348,15 +328,14 @@ class StockRepository extends StockManagementRepository
     /**
      * Compute the number of combinations associated with a product.
      *
-     * @param array $row
      *
      * @return string
      */
     private function getTotalCombinations(array $row)
     {
-        if (!isset($this->totalCombinations[$row['product_id']])) {
+        if (! isset($this->totalCombinations[$row['product_id']])) {
             $query = 'SELECT COUNT(*) total_combinations
-                        FROM ' . $this->tablePrefix . 'product_attribute pa
+                        FROM '.$this->tablePrefix.'product_attribute pa
                         WHERE id_product=:id_product';
             $statement = $this->connection->prepare($query);
             $statement->bindValue('id_product', (int) $row['product_id'], \PDO::PARAM_INT);
@@ -377,7 +356,7 @@ class StockRepository extends StockManagementRepository
                 'productId' => $row['product_id'],
             ]);
 
-            if (!empty($row['combination_id'])) {
+            if (! empty($row['combination_id'])) {
                 $row['edit_url'] = $router->generate('api_stock_edit_product_combination', [
                     'productId' => $row['product_id'],
                     'combinationId' => $row['combination_id'],

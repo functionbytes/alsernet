@@ -161,7 +161,7 @@ class TicketAiSuggestionController extends Controller
                 'status' => $c['ticket']->status?->name,
                 'similarity' => $c['similarity'],
                 'same_customer' => $c['same_customer'],
-                'url' => route('manager.helpdesk.tickets.show-full', $c['ticket']->id),
+                'url' => route('manager.helpdesk.tickets.show', $c['ticket']->id),
             ])->all(),
         ]);
     }
@@ -196,7 +196,7 @@ class TicketAiSuggestionController extends Controller
                 'status' => $c['ticket']->status?->name,
                 'similarity' => $c['similarity'],
                 'same_customer' => $c['same_customer'],
-                'url' => route('manager.helpdesk.tickets.show-full', $c['ticket']->id),
+                'url' => route('manager.helpdesk.tickets.show', $c['ticket']->id),
             ])->all(),
         ]);
     }

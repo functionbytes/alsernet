@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ class OutstandingController extends FrameworkBundleAdminController
      * Show list of outstandings.
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
-     * @param OutstandingFilters $filters
      */
     public function indexAction(Request $request, OutstandingFilters $filters)
     {
@@ -67,8 +65,6 @@ class OutstandingController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", redirectRoute="admin_outstanding_index")
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */

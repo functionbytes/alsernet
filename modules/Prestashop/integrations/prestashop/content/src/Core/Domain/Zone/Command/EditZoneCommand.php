@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,35 +56,21 @@ class EditZoneCommand
      */
     private $shopAssociation;
 
-    /**
-     * @param int $zoneId
-     */
     public function __construct(int $zoneId)
     {
         $this->zoneId = new ZoneId($zoneId);
     }
 
-    /**
-     * @return ZoneId
-     */
     public function getZoneId(): ZoneId
     {
         return $this->zoneId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @param string $name
-     *
-     * @return self
-     */
     public function setName(string $name): self
     {
         $this->name = $name;
@@ -91,19 +78,11 @@ class EditZoneCommand
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;
     }
 
-    /**
-     * @param bool $enabled
-     *
-     * @return self
-     */
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
@@ -111,19 +90,11 @@ class EditZoneCommand
         return $this;
     }
 
-    /**
-     * @return array|null
-     */
     public function getShopAssociation(): ?array
     {
         return $this->shopAssociation;
     }
 
-    /**
-     * @param array|null $shopAssociation
-     *
-     * @return self
-     */
     public function setShopAssociation(?array $shopAssociation): self
     {
         $this->shopAssociation = $shopAssociation;

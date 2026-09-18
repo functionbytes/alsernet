@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,13 +53,13 @@ final class AddSqlRequestHandler extends AbstractSqlRequestHandler implements Ad
         $this->assertSqlQueryIsValid($command->getSql());
 
         try {
-            $entity = new RequestSql();
+            $entity = new RequestSql;
             $entity->name = $command->getName();
             $entity->sql = $command->getSql();
 
             $entity->add();
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CannotAddSqlRequestException(sprintf('Invalid entity id after creation: %s', $entity->id));
             }
 

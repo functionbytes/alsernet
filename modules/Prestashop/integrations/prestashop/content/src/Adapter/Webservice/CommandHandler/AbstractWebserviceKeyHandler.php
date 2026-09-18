@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,10 +38,6 @@ use WebserviceKey;
  */
 abstract class AbstractWebserviceKeyHandler extends AbstractObjectModelHandler
 {
-    /**
-     * @param WebserviceKey $webserviceKey
-     * @param array $permissions
-     */
     protected function setPermissionsForWebserviceKey(WebserviceKey $webserviceKey, array $permissions)
     {
         Tools::generateHtaccess();

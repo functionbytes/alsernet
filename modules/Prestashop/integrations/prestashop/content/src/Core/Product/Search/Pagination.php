@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,13 +40,12 @@ class Pagination
     private $page;
 
     /**
-     * @param int $pagesCount
-     *
+     * @param  int  $pagesCount
      * @return $this
      */
     public function setPagesCount($pagesCount)
     {
-        if (!is_int($pagesCount)) {
+        if (! is_int($pagesCount)) {
             trigger_error(sprintf('Integer value is expected, got `%s`', gettype($pagesCount)), E_USER_NOTICE);
             $pagesCount = (int) $pagesCount;
         }
@@ -64,13 +64,12 @@ class Pagination
     }
 
     /**
-     * @param int $page
-     *
+     * @param  int  $page
      * @return $this
      */
     public function setPage($page)
     {
-        if (!is_int($page)) {
+        if (! is_int($page)) {
             trigger_error(sprintf('Integer value is expected, got `%s`', gettype($page)), E_USER_NOTICE);
             $page = (int) $page;
         }
@@ -89,9 +88,8 @@ class Pagination
     }
 
     /**
-     * @param int $page
-     * @param string $type
-     *
+     * @param  int  $page
+     * @param  string  $type
      * @return array
      */
     private function buildPageLink($page, $type = 'page')
@@ -101,7 +99,7 @@ class Pagination
         return [
             'type' => $type,
             'page' => $page,
-            'clickable' => !$current,
+            'clickable' => ! $current,
             'current' => $type === 'page' ? $current : false,
         ];
     }
@@ -133,7 +131,7 @@ class Pagination
                 return;
             }
 
-            if (null !== $lastPage && $page > $lastPage + 1) {
+            if ($lastPage !== null && $page > $lastPage + 1) {
                 $links[] = $this->buildSpacer();
             }
 
@@ -149,7 +147,7 @@ class Pagination
 
         $links[] = $this->buildPageLink(max(1, $this->getPage() - 1), 'previous');
 
-        for ($i = 0; $i < $boundaryContextLength; ++$i) {
+        for ($i = 0; $i < $boundaryContextLength; $i++) {
             $addPageLink(1 + $i);
         }
 
@@ -158,11 +156,11 @@ class Pagination
             $start = $this->getPagesCount() - $pageContextLength + 1;
         }
 
-        for ($i = 0; $i < $pageContextLength; ++$i) {
+        for ($i = 0; $i < $pageContextLength; $i++) {
             $addPageLink($start + $i);
         }
 
-        for ($i = 0; $i < $boundaryContextLength; ++$i) {
+        for ($i = 0; $i < $boundaryContextLength; $i++) {
             $addPageLink($this->getPagesCount() - $boundaryContextLength + 1 + $i);
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,11 +58,6 @@ class CombinationRemover
      */
     private $defaultCombinationUpdater;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param CombinationRepository $combinationRepository
-     * @param DefaultCombinationUpdater $defaultCombinationUpdater
-     */
     public function __construct(
         ProductRepository $productRepository,
         CombinationRepository $combinationRepository,
@@ -73,8 +69,6 @@ class CombinationRemover
     }
 
     /**
-     * @param CombinationId $combinationId
-     *
      * @throws CoreException
      * @throws CannotAddCombinationException
      * @throws CombinationNotFoundException
@@ -87,15 +81,13 @@ class CombinationRemover
         if ($combination->default_on) {
             $productId = new ProductId((int) $combination->id_product);
             $defaultCombination = $this->combinationRepository->findDefaultCombination($productId);
-            if (null !== $defaultCombination) {
+            if ($defaultCombination !== null) {
                 $this->defaultCombinationUpdater->setDefaultCombination(new CombinationId((int) $defaultCombination->id));
             }
         }
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws InvalidProductTypeException
      * @throws CannotDeleteCombinationException
      * @throws CoreException

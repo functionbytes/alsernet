@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ interface FormLanguageChangerInterface
     /**
      * Change employee form language to given one and save the selection in the cookies.
      *
-     * @param string $languageIsoCode two letter iso code of the language
+     * @param  string  $languageIsoCode  two letter iso code of the language
      */
     public function changeLanguageInCookies($languageIsoCode);
 }

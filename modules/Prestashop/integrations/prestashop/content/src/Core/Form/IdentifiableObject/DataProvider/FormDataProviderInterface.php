@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface FormDataProviderInterface
     /**
      * Get form data for given object with given id.
      *
-     * @param int $id
-     *
+     * @param  int  $id
      * @return mixed
      */
     public function getData($id);

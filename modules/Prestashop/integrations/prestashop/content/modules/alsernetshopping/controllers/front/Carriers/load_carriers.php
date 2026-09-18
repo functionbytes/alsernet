@@ -1,11 +1,13 @@
 <?php
 
+use AlsernetShopping\Carriers\CarrierInitializer;
+
 /**
  * Sistema de carga manual para carriers - Compatible con PrestaShop
  * No usa autoload para evitar conflictos
  *
- * @package AlsernetShopping\Carriers
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 
@@ -17,7 +19,7 @@ if (defined('ALSERNET_CARRIERS_LOADED')) {
 define('ALSERNET_CARRIERS_LOADED', true);
 
 // Directorio base de carriers
-$carriersDir = dirname(__FILE__) . '/';
+$carriersDir = dirname(__FILE__).'/';
 
 // Orden de carga (dependencias primero)
 $loadOrder = [
@@ -35,10 +37,10 @@ $loadOrder = [
     'DeliveryAddressHandler.php',
     'GuardPickupHandler.php',
     'StorePickupHandler.php',
-    //'MondialRelayHandler.php',
-    //'MondialRelayModuleHandler.php',
-    //'InPostCarrierHandler.php',
-    //'InPostIndependentHandler.php',
+    // 'MondialRelayHandler.php',
+    // 'MondialRelayModuleHandler.php',
+    // 'InPostCarrierHandler.php',
+    // 'InPostIndependentHandler.php',
     'CorreosExpressHandler.php',
 
     // 5. Gestores de sistema
@@ -46,12 +48,12 @@ $loadOrder = [
     'ModuleDelegationManager.php',
 
     // 6. Inicializador (último)
-    'CarrierInitializer.php'
+    'CarrierInitializer.php',
 ];
 
 // Cargar archivos en orden
 foreach ($loadOrder as $filename) {
-    $filePath = $carriersDir . $filename;
+    $filePath = $carriersDir.$filename;
 
     if (file_exists($filePath)) {
         require_once $filePath;
@@ -66,11 +68,11 @@ try {
     // error_log('CarrierSystem: Attempting to initialize...');
     if (class_exists('AlsernetShopping\Carriers\CarrierInitializer')) {
         // error_log('CarrierSystem: CarrierInitializer class found, initializing...');
-        $result = AlsernetShopping\Carriers\CarrierInitializer::initialize();
+        $result = CarrierInitializer::initialize();
         // error_log('CarrierSystem: Initialization result: ' . ($result ? 'SUCCESS' : 'FAILED'));
     } else {
         // error_log('CarrierSystem: CarrierInitializer class NOT found');
     }
 } catch (Exception $e) {
-    error_log('CarrierSystem: Auto-initialization failed - ' . $e->getMessage());
+    error_log('CarrierSystem: Auto-initialization failed - '.$e->getMessage());
 }

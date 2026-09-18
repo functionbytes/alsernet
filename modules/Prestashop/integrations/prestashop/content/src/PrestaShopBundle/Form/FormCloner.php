@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,12 +41,6 @@ use Symfony\Component\Form\FormInterface;
  */
 class FormCloner
 {
-    /**
-     * @param FormInterface $form
-     * @param array $options
-     *
-     * @return FormInterface
-     */
     public function cloneForm(FormInterface $form, array $options = []): FormInterface
     {
         $formBuilder = $this->cloneFormBuilder($form, $options);
@@ -53,23 +48,17 @@ class FormCloner
         return $formBuilder->getForm();
     }
 
-    /**
-     * @param FormInterface $form
-     * @param array $options
-     *
-     * @return FormBuilderInterface
-     */
     private function cloneFormBuilder(FormInterface $form, array $options = []): FormBuilderInterface
     {
         $formBuilder = $this->createFormBuilder($form, $options);
         foreach ($form->getConfig()->getModelTransformers() as $initialModelTransformer) {
-            if (!$this->hasSimilarTransformer($initialModelTransformer, $formBuilder->getModelTransformers())) {
+            if (! $this->hasSimilarTransformer($initialModelTransformer, $formBuilder->getModelTransformers())) {
                 $formBuilder->addModelTransformer($initialModelTransformer);
             }
         }
 
         foreach ($form->getConfig()->getViewTransformers() as $initialViewTransformer) {
-            if (!$this->hasSimilarTransformer($initialViewTransformer, $formBuilder->getViewTransformers())) {
+            if (! $this->hasSimilarTransformer($initialViewTransformer, $formBuilder->getViewTransformers())) {
                 $formBuilder->addViewTransformer($initialViewTransformer);
             }
         }
@@ -84,11 +73,6 @@ class FormCloner
      * check if they need to be copied.
      *
      * Maybe this test of class is too simple and will have to be improved someday.
-     *
-     * @param DataTransformerInterface $initialTransformer
-     * @param array $clonedTransformers
-     *
-     * @return bool
      */
     private function hasSimilarTransformer(DataTransformerInterface $initialTransformer, array $clonedTransformers): bool
     {
@@ -101,12 +85,6 @@ class FormCloner
         return false;
     }
 
-    /**
-     * @param FormInterface $form
-     * @param array $options
-     *
-     * @return FormBuilderInterface
-     */
     private function createFormBuilder(FormInterface $form, array $options = []): FormBuilderInterface
     {
         $factory = $form->getConfig()->getFormFactory();
@@ -114,7 +92,7 @@ class FormCloner
 
         $formOptions = $form->getConfig()->getOptions();
         $formOptions = array_merge($formOptions, $options);
-        if (null !== $form->getParent()) {
+        if ($form->getParent() !== null) {
             // Never initialize child forms automatically
             $formOptions['auto_initialize'] = false;
         }

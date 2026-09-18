@@ -13,29 +13,38 @@ class HelpdeskIntegrationPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $permissions = [
+        // Ficha de proveedores (Settings → Integraciones → Catálogo). Su ruta
+        // (HelpdeskIntegrationServiceProvider::registerRoutes()) exige
+        // role:super-admin|super-settings — conceder esta vista a otros roles
+        // solo mostraba un enlace de nav que terminaba en 403 al pulsarlo.
+        $settingsPermissions = [
             'helpdeskintegration.providers.view',
             'helpdeskintegration.providers.create',
             'helpdeskintegration.providers.update',
             'helpdeskintegration.providers.delete',
             'helpdeskintegration.providers.manage',
-
-            // Vincular/desvincular integraciones de un cliente desde el inbox.
-            // Antes bastaba con poder editar el cliente (helpdesk.customers.update);
-            // este permiso dedicado permite retirar la gestión de integraciones
-            // sin quitar la edición de clientes.
-            'helpdesk.integrations.manage',
         ];
+
+        // Vincular/desvincular integraciones de un cliente desde el inbox.
+        // Antes bastaba con poder editar el cliente (helpdesk.customers.update);
+        // este permiso dedicado permite retirar la gestión de integraciones
+        // sin quitar la edición de clientes. Es una acción de agente/manager
+        // del día a día, no de settings — se mantiene con el alcance amplio.
+        $manageIntegrationsPermission = 'helpdesk.integrations.manage';
+
+        $permissions = [...$settingsPermissions, $manageIntegrationsPermission];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
+        Role::whereIn('name', ['super-admin', 'super-settings'])
+            ->get()
+            ->each(fn (Role $role) => $role->givePermissionTo($settingsPermissions));
 
-        foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
-        }
+        Role::whereIn('name', ['admin', 'super-admin', 'super-administrador', 'super-settings'])
+            ->get()
+            ->each(fn (Role $role) => $role->givePermissionTo($manageIntegrationsPermission));
 
         $this->backfillIntegrationsManage();
 

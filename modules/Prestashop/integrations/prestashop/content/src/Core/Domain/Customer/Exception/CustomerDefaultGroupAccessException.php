@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Customer\Exception;
  * Exception is thrown when customer's default groups is not configured as access group.
  * This means that default group must also be configured as access group for customer.
  */
-class CustomerDefaultGroupAccessException extends CustomerException
-{
-}
+class CustomerDefaultGroupAccessException extends CustomerException {}

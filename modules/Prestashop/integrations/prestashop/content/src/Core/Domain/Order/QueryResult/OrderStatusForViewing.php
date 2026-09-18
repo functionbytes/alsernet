@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,16 +71,6 @@ class OrderStatusForViewing
      */
     private $orderHistoryId;
 
-    /**
-     * @param int $orderHistoryId
-     * @param int $orderStatusId
-     * @param string $name
-     * @param string $color
-     * @param DateTimeImmutable $createdAt
-     * @param bool $withEmail
-     * @param string|null $employeeFirstName
-     * @param string|null $employeeLastName
-     */
     public function __construct(
         int $orderHistoryId,
         int $orderStatusId,
@@ -100,65 +91,41 @@ class OrderStatusForViewing
         $this->orderHistoryId = $orderHistoryId;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderHistoryId(): int
     {
         return $this->orderHistoryId;
     }
 
-    /**
-     * @return int
-     */
     public function getOrderStatusId(): int
     {
         return $this->orderStatusId;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getColor(): string
     {
         return $this->color;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    /**
-     * @return bool
-     */
     public function withEmail(): bool
     {
         return $this->withEmail;
     }
 
-    /**
-     * @return string|null
-     */
     public function getEmployeeFirstName(): ?string
     {
         return $this->employeeFirstName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getEmployeeLastName(): ?string
     {
         return $this->employeeLastName;

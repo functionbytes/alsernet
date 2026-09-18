@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,6 @@ final class GetCombinationSuppliersHandler extends AbstractProductSupplierHandle
      */
     private $productRepository;
 
-    /**
-     * @param ProductSupplierRepository $productSupplierRepository
-     * @param CombinationRepository $combinationRepository
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductSupplierRepository $productSupplierRepository,
         CombinationRepository $combinationRepository,

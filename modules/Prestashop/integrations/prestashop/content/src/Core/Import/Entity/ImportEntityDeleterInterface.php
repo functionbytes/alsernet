@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ interface ImportEntityDeleterInterface
     /**
      * Delete all import entity data for given import entity type.
      *
-     * @param int $importEntity
+     * @param  int  $importEntity
      */
     public function deleteAll($importEntity);
 }

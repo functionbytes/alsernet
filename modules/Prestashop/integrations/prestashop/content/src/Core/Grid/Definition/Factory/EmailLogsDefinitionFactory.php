@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,10 +69,8 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
     private $languageChoiceProvider;
 
     /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param string $resetActionUrl
-     * @param string $redirectionUrl
-     * @param ConfigurableFormChoiceProviderInterface $languageChoiceProvider
+     * @param  string  $resetActionUrl
+     * @param  string  $redirectionUrl
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -106,7 +105,7 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('delete_email_logs'))
                     ->setOptions([
@@ -159,7 +158,7 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
-                        'actions' => (new RowActionCollection())
+                        'actions' => (new RowActionCollection)
                             ->add(
                                 $this->buildDeleteAction(
                                     'admin_emails_delete',
@@ -176,7 +175,7 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_mail', TextType::class))
                     ->setTypeOptions([
@@ -238,7 +237,7 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SubmitGridAction('delete_all_email_logs'))
                     ->setName($this->trans('Erase all', [], 'Admin.Advparameters.Feature'))
@@ -270,7 +269,7 @@ final class EmailLogsDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 $this->buildBulkDeleteAction('admin_emails_delete_bulk')
             );

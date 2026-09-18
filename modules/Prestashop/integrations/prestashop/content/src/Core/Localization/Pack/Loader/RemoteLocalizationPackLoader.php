@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,10 +45,6 @@ final class RemoteLocalizationPackLoader extends AbstractLocalizationPackLoader
      */
     private $version;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param Version $version
-     */
     public function __construct(ConfigurationInterface $configuration, Version $version)
     {
         $this->configuration = $configuration;
@@ -61,8 +58,8 @@ final class RemoteLocalizationPackLoader extends AbstractLocalizationPackLoader
     {
         $apiUrl = $this->configuration->get('_PS_API_URL_');
 
-        $xmlLocalizationPacks = $this->loadXml($apiUrl . '/rss/localization.xml');
-        if (!$xmlLocalizationPacks) {
+        $xmlLocalizationPacks = $this->loadXml($apiUrl.'/rss/localization.xml');
+        if (! $xmlLocalizationPacks) {
             return null;
         }
 

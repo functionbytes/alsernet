@@ -58,7 +58,7 @@ class HelpdeskAnalyticsServiceProvider extends ServiceProvider
         }
 
         NavService::registerMiniItem('helpdeskanalytics', [
-            'icon' => 'fas fa-chart-line',
+            'icon' => 'chart',
             'tooltip' => 'Analytics',
             'sidebar_id' => 'helpdeskanalytics',
             'order' => 72,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,7 @@ final class ColorBrightnessCalculator
     public const BRIGHT_COLOR_MIN = 130;
 
     /**
-     * @param string $hexColor
-     *
+     * @param  string  $hexColor
      * @return bool
      */
     public function isBright($hexColor)
@@ -47,8 +47,7 @@ final class ColorBrightnessCalculator
     }
 
     /**
-     * @param string $hexColor
-     *
+     * @param  string  $hexColor
      * @return float|int
      */
     private function calculate($hexColor)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,7 @@ class CacheWarmer implements CacheWarmerInterface
 {
     private $fileSystem;
 
-    public function __construct(FileSystem $fileSystem)
+    public function __construct(Filesystem $fileSystem)
     {
         $this->fileSystem = $fileSystem;
     }
@@ -41,11 +42,11 @@ class CacheWarmer implements CacheWarmerInterface
     public function warmUp($cacheDir)
     {
         $legacyDirs = [
-            $cacheDir . DIRECTORY_SEPARATOR . 'cachefs',
-            $cacheDir . DIRECTORY_SEPARATOR . 'purifier',
-            $cacheDir . DIRECTORY_SEPARATOR . 'push',
-            $cacheDir . DIRECTORY_SEPARATOR . 'sandbox',
-            $cacheDir . DIRECTORY_SEPARATOR . 'tcpdf',
+            $cacheDir.DIRECTORY_SEPARATOR.'cachefs',
+            $cacheDir.DIRECTORY_SEPARATOR.'purifier',
+            $cacheDir.DIRECTORY_SEPARATOR.'push',
+            $cacheDir.DIRECTORY_SEPARATOR.'sandbox',
+            $cacheDir.DIRECTORY_SEPARATOR.'tcpdf',
         ];
 
         $this->fileSystem->mkdir($legacyDirs);

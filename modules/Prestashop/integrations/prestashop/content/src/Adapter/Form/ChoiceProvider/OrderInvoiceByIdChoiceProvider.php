@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ final class OrderInvoiceByIdChoiceProvider implements ConfigurableFormChoiceProv
      */
     private $locale;
 
-    /**
-     * @param LocaleInterface $locale
-     */
     public function __construct(LocaleInterface $locale)
     {
         $this->locale = $locale;
@@ -54,7 +52,7 @@ final class OrderInvoiceByIdChoiceProvider implements ConfigurableFormChoiceProv
     {
         $order = new Order($options['id_order']);
         $invoices = $order->getInvoicesCollection();
-        $labelFormat = isset($options['display_total']) && false !== $options['display_total'] ? '%s - %s' : '%s';
+        $labelFormat = isset($options['display_total']) && $options['display_total'] !== false ? '%s - %s' : '%s';
 
         $choices = [];
 

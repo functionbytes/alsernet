@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,6 @@ class ProductImageValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param Image $image
-     * @param string $property
-     * @param int $errorCode
-     *
      * @throws CoreException
      * @throws ProductImageConstraintException
      */

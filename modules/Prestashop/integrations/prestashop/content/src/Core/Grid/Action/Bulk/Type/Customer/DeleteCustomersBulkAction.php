@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,6 @@ final class DeleteCustomersBulkAction extends AbstractBulkAction
             ->setRequired([
                 'customers_bulk_delete_route',
             ])
-            ->setAllowedTypes('customers_bulk_delete_route', 'string')
-        ;
+            ->setAllowedTypes('customers_bulk_delete_route', 'string');
     }
 }

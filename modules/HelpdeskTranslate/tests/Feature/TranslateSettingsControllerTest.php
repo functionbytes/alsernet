@@ -15,7 +15,7 @@ class TranslateSettingsControllerTest extends TestCase
     use DatabaseTransactions;
 
     /** @var string[] */
-    protected $connectionsToTransact = ['helpdesk'];
+    protected $connectionsToTransact = ['helpdesk', 'mysql'];
 
     private const INDEX_URL = '/panel/settings/helpdesk-translate';
 
@@ -27,6 +27,17 @@ class TranslateSettingsControllerTest extends TestCase
 
         Permission::firstOrCreate(['name' => 'helpdesk-translate.settings.view', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'helpdesk-translate.settings.update', 'guard_name' => 'web']);
+
+        // Los tests de /usage suman TODAS las filas del rango por defecto
+        // (últimos 30 días) contra totales absolutos. DeepL está activo en
+        // este entorno (auto-traducción de mensajes entrantes), así que la
+        // tabla real trae decenas de miles de caracteres ya registrados —
+        // sin este borrado, cualquier total exacto que el test espere queda
+        // a merced de cuánto tráfico real haya pasado hoy. Es un DELETE con
+        // transacción abierta (DatabaseTransactions la revierte al terminar),
+        // el mismo caso que guardAgainstMassDeletesOnRealDatabase() ya trata
+        // como legítimo.
+        TranslateUsage::query()->delete();
     }
 
     // ─── index ────────────────────────────────────────────────────────────────

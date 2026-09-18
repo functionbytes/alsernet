@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,7 +46,7 @@ class AttributeController extends FrameworkBundleAdminController
      */
     public function getAllAttributesAction()
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $locales = $this->get('prestashop.adapter.legacy.context')->getLanguages();
         $attributes = $this->get('prestashop.adapter.data_provider.attribute')->getAttributes($locales[0]['id_lang'], true);
 
@@ -54,8 +55,8 @@ class AttributeController extends FrameworkBundleAdminController
         foreach ($attributes as $attribute) {
             /* Construct attribute group selector. Ex : Color : All */
             $dataGroupAttributes[$attribute['id_attribute_group']] = [
-                'value' => 'group-' . $attribute['id_attribute_group'],
-                'label' => $attribute['public_name'] . ' : ' . $this->trans('All', 'Admin.Global'),
+                'value' => 'group-'.$attribute['id_attribute_group'],
+                'label' => $attribute['public_name'].' : '.$this->trans('All', 'Admin.Global'),
                 'data' => [
                     'id_group' => $attribute['id_attribute_group'],
                     'name' => $attribute['public_name'],
@@ -64,7 +65,7 @@ class AttributeController extends FrameworkBundleAdminController
 
             $data[] = [
                 'value' => $attribute['id_attribute'],
-                'label' => $attribute['public_name'] . ' : ' . $attribute['name'],
+                'label' => $attribute['public_name'].' : '.$attribute['name'],
                 'data' => [
                     'id_group' => $attribute['id_attribute_group'],
                     'name' => $attribute['name'],
@@ -84,39 +85,38 @@ class AttributeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create', 'update'], request.get('_legacy_controller'))")
      *
-     * @param Request $request The request
-     *
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function attributesGeneratorAction(Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $locales = $this->get('prestashop.adapter.legacy.context')->getLanguages();
         $options = $request->get('options');
         $idProduct = isset($request->get('form')['id_product']) ? $request->get('form')['id_product'] : null;
 
-        //get product
+        // get product
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
         /** @var Product $product */
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        if (!is_object($product) || empty($product->id) || empty($options) || !is_array($options)) {
+        if (! is_object($product) || empty($product->id) || empty($options) || ! is_array($options)) {
             $response->setStatusCode(400);
 
             return $response;
         }
 
-        //store exisiting product combinations
+        // store exisiting product combinations
         $existingCombinationsIds = array_map(function ($o) {
             return $o['id_product_attribute'];
         }, $product->getAttributeCombinations(1, false));
 
-        //get clean attributes ids
+        // get clean attributes ids
         $newOptions = [];
         foreach ($options as $idGroup => $attributes) {
             foreach ($attributes as $attribute) {
-                //If attribute is a group attribute, replace group data by all attributes group
-                if (false !== strpos($attribute, 'group')) {
+                // If attribute is a group attribute, replace group data by all attributes group
+                if (strpos($attribute, 'group') !== false) {
                     $allGroupAttributes = $this->get('prestashop.adapter.data_provider.attribute')->getAttributeIdsByGroup((int) $idGroup, true);
                     foreach ($allGroupAttributes as $groupAttribute) {
                         $newOptions[$idGroup][$groupAttribute] = $groupAttribute;
@@ -127,17 +127,17 @@ class AttributeController extends FrameworkBundleAdminController
             }
         }
 
-        //create attributes
+        // create attributes
         $this->get('prestashop.adapter.admin.controller.attribute_generator')->processGenerate($product, $newOptions);
 
-        //get all product combinations
+        // get all product combinations
         $allCombinations = $product->getAttributeCombinations(1, false);
 
         $allCombinationsIds = array_map(function ($o) {
             return $o['id_product_attribute'];
         }, $allCombinations);
 
-        //get new created combinations Ids
+        // get new created combinations Ids
         $newCombinationIds = array_diff($allCombinationsIds, $existingCombinationsIds);
 
         $attributes = $product->sortCombinationByAttributePosition($newCombinationIds, $locales[0]['id_lang']);
@@ -153,7 +153,7 @@ class AttributeController extends FrameworkBundleAdminController
             foreach ($attribute as $combination) {
                 $form = $this->get('form.factory')
                     ->createNamed(
-                        'combination_' . $combination['id_product_attribute'],
+                        'combination_'.$combination['id_product_attribute'],
                         'PrestaShopBundle\Form\Admin\Product\ProductCombination',
                         $combinationDataProvider->getFormCombination($combination['id_product_attribute'])
                     );
@@ -170,15 +170,11 @@ class AttributeController extends FrameworkBundleAdminController
         return $response->create($result);
     }
 
-    /**
-     * @param Product $product
-     * @param array $combinations
-     */
     public function ensureProductHasDefaultCombination(Product $product, array $combinations)
     {
         if (count($combinations)) {
             $defaultProductAttributeId = $product->getDefaultIdProductAttribute();
-            if (!$defaultProductAttributeId) {
+            if (! $defaultProductAttributeId) {
                 /*
                  * Combinations indexed by position, then attribute id
                  * ex: $combinations = [
@@ -189,7 +185,7 @@ class AttributeController extends FrameworkBundleAdminController
                  * ]
                  */
                 $firstPosition = array_keys($combinations)[0];
-                if (!empty($combinations[$firstPosition])) {
+                if (! empty($combinations[$firstPosition])) {
                     $firstAttributeId = array_keys($combinations[$firstPosition])[0];
                     $product->setDefaultAttribute($firstAttributeId);
                 }
@@ -202,16 +198,15 @@ class AttributeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))")
      *
-     * @param int $idProduct The product ID
-     * @param Request $request The request
-     *
+     * @param  int  $idProduct  The product ID
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function deleteAttributeAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
-        if (!$request->isXmlHttpRequest()) {
+        if (! $request->isXmlHttpRequest()) {
             return $response;
         }
 
@@ -239,20 +234,19 @@ class AttributeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))")
      *
-     * @param int $idProduct The product ID
-     * @param Request $request The request
-     *
+     * @param  int  $idProduct  The product ID
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function deleteAllAttributeAction($idProduct, Request $request)
     {
         $attributeAdapter = $this->get('prestashop.adapter.data_provider.attribute');
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
-        //get all attribute for a product
+        // get all attribute for a product
         $combinations = $attributeAdapter->getProductCombinations($idProduct);
 
-        if (!$combinations || !$request->isXmlHttpRequest()) {
+        if (! $combinations || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 
@@ -279,25 +273,24 @@ class AttributeController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
      *
-     * @param int $idProduct The product id
-     * @param Request $request The request
-     *
+     * @param  int  $idProduct  The product id
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function getFormImagesAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
         $attributeAdapter = $this->get('prestashop.adapter.data_provider.attribute');
         $locales = $this->get('prestashop.adapter.legacy.context')->getLanguages();
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        //get product images
+        // get product images
         $productImages = $productAdapter->getImages($idProduct, $locales[0]['id_lang']);
 
-        if (!$request->isXmlHttpRequest() || !is_object($product) || empty($product->id)) {
+        if (! $request->isXmlHttpRequest() || ! is_object($product) || empty($product->id)) {
             $response->setStatusCode(400);
 
             return $response;
@@ -306,7 +299,7 @@ class AttributeController extends FrameworkBundleAdminController
         $data = [];
         $combinations = $attributeAdapter->getProductCombinations($idProduct);
         foreach ($combinations as $combination) {
-            //get combination images
+            // get combination images
             $combinationImages = array_map(function ($o) {
                 return $o['id'];
             }, $attributeAdapter->getImages($combination['id_product_attribute']));

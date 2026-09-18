@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,11 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class TypedRegexValidator extends ConstraintValidator
 {
     public const CATALOG_CHARS = '<>;=#{}';
+
     public const GENERIC_NAME_CHARS = '<>={}';
+
     public const MESSAGE_CHARS = '<>{}';
+
     public const NAME_CHARS = '0-9!<>,;?=+()@#"�{}_$%:';
 
     /**
@@ -56,9 +60,6 @@ class TypedRegexValidator extends ConstraintValidator
      */
     private $characterCleaner;
 
-    /**
-     * @param CharacterCleaner $characterCleaner
-     */
     public function __construct(CharacterCleaner $characterCleaner)
     {
         $this->characterCleaner = $characterCleaner;
@@ -69,35 +70,33 @@ class TypedRegexValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof TypedRegex) {
+        if (! $constraint instanceof TypedRegex) {
             throw new UnexpectedTypeException($constraint, TypedRegex::class);
         }
 
-        if (null === $value || '' === $value) {
+        if ($value === null || $value === '') {
             return;
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new UnexpectedTypeException($value, 'string');
         }
 
         $pattern = $this->getPattern($constraint->type);
         $value = $this->sanitize($value, $constraint->type);
 
-        if (!$this->match($pattern, $constraint->type, $value)) {
+        if (! $this->match($pattern, $constraint->type, $value)) {
             $this->context->buildViolation($constraint->message)
                 ->setTranslationDomain('Admin.Notifications.Error')
                 ->setParameter('%s', $this->formatValue($value))
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 
     /**
      * Return regex pattern that depends on type
      *
-     * @param string $type
-     *
+     * @param  string  $type
      * @return string
      */
     private function getPattern($type)
@@ -146,9 +145,8 @@ class TypedRegexValidator extends ConstraintValidator
     /**
      * Responsible for sanitizing the string depending on type. (eg. applying  stripslashes())
      *
-     * @param string $value
-     * @param string $type
-     *
+     * @param  string  $value
+     * @param  string  $type
      * @return string
      */
     private function sanitize($value, $type)
@@ -166,10 +164,9 @@ class TypedRegexValidator extends ConstraintValidator
      * matches given subject, 0 if it does not, or FALSE
      * if an error occurred.
      *
-     * @param string $pattern
-     * @param string $type
-     * @param string $value
-     *
+     * @param  string  $pattern
+     * @param  string  $type
+     * @param  string  $value
      * @return bool|int
      */
     private function match($pattern, $type, $value)
@@ -178,7 +175,7 @@ class TypedRegexValidator extends ConstraintValidator
 
         $typesToInverseMatching = [TypedRegex::TYPE_MESSAGE];
         if (in_array($type, $typesToInverseMatching, true)) {
-            return !$match;
+            return ! $match;
         }
 
         return $match;

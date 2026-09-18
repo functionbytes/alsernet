@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,8 +38,6 @@ interface PositionUpdateFactoryInterface
     /**
      * Transform the provided data into a PositionUpdate.
      *
-     * @param array $data
-     * @param PositionDefinition $positionDefinition
      *
      * @return PositionUpdate
      *

@@ -25,7 +25,7 @@
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('settings.helpdesk.surveys.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Volver
+                            Volver
                         </a>
                     </div>
                 </div>

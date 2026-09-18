@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetauth}prestashop>password-new_32fe59513f5bbdd353b4527cc6af55ce'] = 'Reimpostare la password';
 $_MODULE['<{alsernetauth}prestashop>password-new_22ec031a1f7f948b80eb32ab80dcd553'] = 'Per favore, reimposta la tua password.';
 $_MODULE['<{alsernetauth}prestashop>password-new_ce8ae9da5b7cd6c3df2929543a9af92d'] = 'Email';

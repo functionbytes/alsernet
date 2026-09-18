@@ -16,7 +16,9 @@ class DispatchErpLinkJob
         $customerId = $event->conversation->customer_id;
 
         if ($customerId !== null) {
-            LinkCustomerToErpJob::dispatch($customerId);
+            // El origen viaja con el trabajo para que CustomerErpResolved
+            // pueda enrutar esta conversación en concreto.
+            LinkCustomerToErpJob::dispatch($customerId, 'conversation', $event->conversation->id);
         }
     }
 }

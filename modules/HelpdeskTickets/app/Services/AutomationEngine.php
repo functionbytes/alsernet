@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Modules\HelpdeskErp\Services\ErpFactsService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Models\Automation;
@@ -38,11 +39,23 @@ class AutomationEngine
      */
     public function matchesConditions(array $conditions, Ticket $ticket): bool
     {
+        $erpFacts = null;
+
         foreach ($conditions as $condition) {
             $field = $condition['field'] ?? null;
             $op = $condition['op'] ?? 'equals';
             $value = $condition['value'] ?? null;
-            $ticketValue = data_get($ticket, $field);
+
+            // Los campos erp_* no son columnas del ticket: salen de la ficha
+            // del cliente en gestión. Se resuelven una sola vez por evaluación
+            // y solo si la regla los usa, para no pedir el contexto del ERP en
+            // reglas que no lo necesitan.
+            if (is_string($field) && str_starts_with($field, 'erp_')) {
+                $erpFacts ??= $this->erpFacts($ticket);
+                $ticketValue = $erpFacts[$field] ?? null;
+            } else {
+                $ticketValue = data_get($ticket, $field);
+            }
 
             $matches = match ($op) {
                 'equals' => $ticketValue == $value,
@@ -69,6 +82,25 @@ class AutomationEngine
         }
 
         return true;
+    }
+
+    /**
+     * Señales del cliente en gestión para las condiciones erp_*.
+     *
+     * HelpdeskErp es un módulo aparte que puede no estar instalado o estar
+     * apagado; sin él, ErpFactsService no existe y una regla con condiciones
+     * del ERP no debe disparar (todo a los valores de "sin ficha"), no
+     * reventar.
+     *
+     * @return array<string, mixed>
+     */
+    private function erpFacts(Ticket $ticket): array
+    {
+        if (! class_exists(ErpFactsService::class)) {
+            return [];
+        }
+
+        return app(ErpFactsService::class)->forCustomer($ticket->customer);
     }
 
     private function runActions(array $actions, Ticket $ticket): void

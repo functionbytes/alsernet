@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class TranslationsKpi implements KpiInterface
     private $sourceLink;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $configuration
-     * @param string $sourceLink a link to refresh KPI
+     * @param  string  $sourceLink  a link to refresh KPI
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -73,14 +72,14 @@ final class TranslationsKpi implements KpiInterface
     {
         $frontOfficeTranslations = $this->configuration->get('FRONTOFFICE_langs');
 
-        $kpi = new HelperKpi();
-        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_ . 'new-theme/template/');
+        $kpi = new HelperKpi;
+        $kpi->context->smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_.'new-theme/template/');
         $kpi->id = 'box-translations';
         $kpi->icon = 'list';
         $kpi->color = 'color3';
         $kpi->title = $this->translator->trans('Front office Translations', [], 'Admin.International.Feature');
 
-        if (false !== $frontOfficeTranslations) {
+        if ($frontOfficeTranslations !== false) {
             $kpi->value = $frontOfficeTranslations;
         }
 

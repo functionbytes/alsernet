@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,12 +67,6 @@ class ProductStockUpdater
      */
     private $advancedStockEnabled;
 
-    /**
-     * @param StockManager $stockManager
-     * @param ProductRepository $productRepository
-     * @param StockAvailableRepository $stockAvailableRepository
-     * @param bool $advancedStockEnabled
-     */
     public function __construct(
         StockManager $stockManager,
         ProductRepository $productRepository,
@@ -84,10 +79,6 @@ class ProductStockUpdater
         $this->advancedStockEnabled = $advancedStockEnabled;
     }
 
-    /**
-     * @param ProductId $productId
-     * @param ProductStockProperties $properties
-     */
     public function update(ProductId $productId, ProductStockProperties $properties)
     {
         $product = $this->productRepository->get($productId);
@@ -105,9 +96,6 @@ class ProductStockUpdater
     }
 
     /**
-     * @param Product $product
-     * @param ProductStockProperties $properties
-     *
      * @return string[]|array<string, int[]>
      */
     private function fillUpdatableProperties(
@@ -117,45 +105,45 @@ class ProductStockUpdater
         $updatableProperties = [];
 
         $localizedLaterLabels = $properties->getLocalizedAvailableLaterLabels();
-        if (null !== $localizedLaterLabels) {
+        if ($localizedLaterLabels !== null) {
             $product->available_later = $localizedLaterLabels;
             $updatableProperties['available_later'] = array_keys($localizedLaterLabels);
         }
 
         $localizedNowLabels = $properties->getLocalizedAvailableNowLabels();
-        if (null !== $localizedNowLabels) {
+        if ($localizedNowLabels !== null) {
             $product->available_now = $localizedNowLabels;
             $updatableProperties['available_now'] = array_keys($localizedNowLabels);
         }
-        if (null !== $properties->getLocation()) {
+        if ($properties->getLocation() !== null) {
             $product->location = $properties->getLocation();
             $updatableProperties[] = 'location';
         }
-        if (null !== $properties->isLowStockAlertEnabled()) {
+        if ($properties->isLowStockAlertEnabled() !== null) {
             $product->low_stock_alert = $properties->isLowStockAlertEnabled();
             $updatableProperties[] = 'low_stock_alert';
         }
-        if (null !== $properties->getLowStockThreshold()) {
+        if ($properties->getLowStockThreshold() !== null) {
             $product->low_stock_threshold = $properties->getLowStockThreshold();
             $updatableProperties[] = 'low_stock_threshold';
         }
-        if (null !== $properties->getMinimalQuantity()) {
+        if ($properties->getMinimalQuantity() !== null) {
             $product->minimal_quantity = $properties->getMinimalQuantity();
             $updatableProperties[] = 'minimal_quantity';
         }
-        if (null !== $properties->getOutOfStockType()) {
+        if ($properties->getOutOfStockType() !== null) {
             $product->out_of_stock = $properties->getOutOfStockType()->getValue();
             $updatableProperties[] = 'out_of_stock';
         }
-        if (null !== $properties->getPackStockType()) {
+        if ($properties->getPackStockType() !== null) {
             $product->pack_stock_type = $properties->getPackStockType()->getValue();
             $updatableProperties[] = 'pack_stock_type';
         }
-        if (null !== $properties->getQuantity()) {
+        if ($properties->getQuantity() !== null) {
             $product->quantity = $properties->getQuantity();
             $updatableProperties[] = 'quantity';
         }
-        if (null !== $properties->getAvailableDate()) {
+        if ($properties->getAvailableDate() !== null) {
             $product->available_date = $properties->getAvailableDate()->format(DateTime::DEFAULT_DATE_FORMAT);
             $updatableProperties[] = 'available_date';
         }
@@ -163,25 +151,21 @@ class ProductStockUpdater
         return $updatableProperties;
     }
 
-    /**
-     * @param Product $product
-     * @param ProductStockProperties $properties
-     */
     private function updateStockAvailable(Product $product, ProductStockProperties $properties)
     {
         $stockAvailable = $this->getStockAvailable($product);
         $stockUpdateRequired = false;
 
-        if (null !== $properties->getOutOfStockType()) {
+        if ($properties->getOutOfStockType() !== null) {
             $stockAvailable->out_of_stock = $properties->getOutOfStockType()->getValue();
             $stockUpdateRequired = true;
         }
-        if (null !== $properties->getLocation()) {
+        if ($properties->getLocation() !== null) {
             $stockAvailable->location = $properties->getLocation();
             $stockUpdateRequired = true;
         }
 
-        if (null !== $properties->getQuantity()) {
+        if ($properties->getQuantity() !== null) {
             $this->updateQuantity($stockAvailable, $properties->getQuantity());
             $stockUpdateRequired = true;
         }
@@ -191,25 +175,17 @@ class ProductStockUpdater
         }
     }
 
-    /**
-     * @param StockAvailable $stockAvailable
-     * @param int $newQuantity
-     */
     private function updateQuantity(StockAvailable $stockAvailable, int $newQuantity): void
     {
         $deltaQuantity = $newQuantity - (int) $stockAvailable->quantity;
         $stockAvailable->quantity = $newQuantity;
 
-        if (0 !== $deltaQuantity) {
+        if ($deltaQuantity !== 0) {
             $this->stockManager->saveMovement($stockAvailable->id_product, $stockAvailable->id_product_attribute, $deltaQuantity);
         }
     }
 
     /**
-     * @param Product $product
-     *
-     * @return StockAvailable
-     *
      * @throws CoreException
      * @throws ProductStockException
      */

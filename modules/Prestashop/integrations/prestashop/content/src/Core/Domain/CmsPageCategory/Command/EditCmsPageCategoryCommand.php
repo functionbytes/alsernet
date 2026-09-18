@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,7 +87,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     private $shopAssociation;
 
     /**
-     * @param int $cmsPageCategoryId
+     * @param  int  $cmsPageCategoryId
      *
      * @throws CmsPageCategoryException
      */
@@ -112,8 +113,6 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param array $localisedName
-     *
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -135,8 +134,6 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param array $localisedFriendlyUrl
-     *
      * @return self
      */
     public function setLocalisedFriendlyUrl(array $localisedFriendlyUrl)
@@ -155,8 +152,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param int $parentId
-     *
+     * @param  int  $parentId
      * @return self
      *
      * @throws CmsPageCategoryException
@@ -177,8 +173,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param bool $isDisplayed
-     *
+     * @param  bool  $isDisplayed
      * @return self
      */
     public function setIsDisplayed($isDisplayed)
@@ -197,8 +192,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedDescription
-     *
+     * @param  string[]  $localisedDescription
      * @return self
      */
     public function setLocalisedDescription(array $localisedDescription)
@@ -217,8 +211,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaTitle
-     *
+     * @param  string[]  $localisedMetaTitle
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -240,8 +233,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaDescription
-     *
+     * @param  string[]  $localisedMetaDescription
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -263,8 +255,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param string[] $localisedMetaKeywords
-     *
+     * @param  string[]  $localisedMetaKeywords
      * @return self
      *
      * @throws CmsPageCategoryConstraintException
@@ -286,8 +277,7 @@ class EditCmsPageCategoryCommand extends AbstractCmsPageCategoryCommand
     }
 
     /**
-     * @param int[] $shopAssociation
-     *
+     * @param  int[]  $shopAssociation
      * @return self
      */
     public function setShopAssociation(array $shopAssociation)

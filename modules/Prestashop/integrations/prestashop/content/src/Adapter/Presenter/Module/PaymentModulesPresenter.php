@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ class PaymentModulesPresenter
      */
     private $paymentModuleListProvider;
 
-    /**
-     * @param PresenterInterface $modulePresenter
-     * @param PaymentModuleListProvider $paymentModuleListProvider
-     */
     public function __construct(
         PresenterInterface $modulePresenter,
         PaymentModuleListProvider $paymentModuleListProvider
@@ -60,8 +57,6 @@ class PaymentModulesPresenter
 
     /**
      * Get presented payment modules.
-     *
-     * @return array
      */
     public function present(): array
     {

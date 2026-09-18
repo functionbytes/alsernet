@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ class CombinationListForEditing
     private $totalCombinationsCount;
 
     /**
-     * @param int $totalCombinationsCount
-     * @param EditableCombinationForListing[] $combinations
+     * @param  EditableCombinationForListing[]  $combinations
      */
     public function __construct(int $totalCombinationsCount, array $combinations)
     {
@@ -61,9 +61,6 @@ class CombinationListForEditing
         return $this->combinations;
     }
 
-    /**
-     * @return int
-     */
     public function getTotalCombinationsCount(): int
     {
         return $this->totalCombinationsCount;

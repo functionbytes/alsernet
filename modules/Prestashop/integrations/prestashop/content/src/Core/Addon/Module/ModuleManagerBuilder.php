@@ -60,22 +60,34 @@ class ModuleManagerBuilder
      * @var ModuleRepository
      */
     public static $modulesRepository = null;
+
     /**
      * Singleton of ModuleManager.
      *
      * @var ModuleManager
      */
     public static $moduleManager = null;
+
     public static $adminModuleDataProvider = null;
+
     public static $lecacyContext;
+
     public static $legacyLogger = null;
+
     public static $moduleDataProvider = null;
+
     public static $moduleDataUpdater = null;
+
     public static $moduleZipManager = null;
+
     public static $translator = null;
+
     public static $addonsDataProvider = null;
+
     public static $categoriesProvider = null;
+
     public static $instance = null;
+
     public static $cacheProvider = null;
 
     /**
@@ -89,7 +101,7 @@ class ModuleManagerBuilder
     public static function getInstance()
     {
         if (self::$instance == null) {
-            self::$instance = new self();
+            self::$instance = new self;
         }
 
         return self::$instance;
@@ -102,9 +114,9 @@ class ModuleManagerBuilder
      */
     public function build()
     {
-        if (null === self::$moduleManager) {
+        if (self::$moduleManager === null) {
             $sfContainer = SymfonyContainer::getInstance();
-            if (null !== $sfContainer) {
+            if ($sfContainer !== null) {
                 self::$moduleManager = $sfContainer->get('prestashop.module.manager');
             } else {
                 self::$moduleManager = new ModuleManager(
@@ -114,8 +126,8 @@ class ModuleManagerBuilder
                     $this->buildRepository(),
                     self::$moduleZipManager,
                     self::$translator,
-                    new NullDispatcher(),
-                    new Clearer\SymfonyCacheClearer()
+                    new NullDispatcher,
+                    new Clearer\SymfonyCacheClearer
                 );
             }
         }
@@ -130,9 +142,9 @@ class ModuleManagerBuilder
      */
     public function buildRepository()
     {
-        if (null === self::$modulesRepository) {
+        if (self::$modulesRepository === null) {
             $sfContainer = SymfonyContainer::getInstance();
-            if (null !== $sfContainer) {
+            if ($sfContainer !== null) {
                 self::$modulesRepository = $sfContainer->get('prestashop.core.admin.module.repository');
             } else {
                 self::$modulesRepository = new ModuleRepository(
@@ -150,9 +162,6 @@ class ModuleManagerBuilder
         return self::$modulesRepository;
     }
 
-    /**
-     * @param bool $isDebug
-     */
     private function __construct(bool $isDebug = _PS_MODE_DEV_)
     {
         $this->isDebug = $isDebug;
@@ -161,15 +170,15 @@ class ModuleManagerBuilder
          * build & buildRepository. No need to init manually all the dependancies.
          */
         $sfContainer = SymfonyContainer::getInstance();
-        if (null !== $sfContainer) {
+        if ($sfContainer !== null) {
             return;
         }
 
-        $yamlParser = new YamlParser((new Configuration())->get('_PS_CACHE_DIR_'));
+        $yamlParser = new YamlParser((new Configuration)->get('_PS_CACHE_DIR_'));
 
-        $config = $yamlParser->parse($this->getConfigDir() . '/config.yml');
+        $config = $yamlParser->parse($this->getConfigDir().'/config.yml');
         $prestashopAddonsConfig =
-            $yamlParser->parse($this->getConfigDir() . '/addons/categories.yml');
+            $yamlParser->parse($this->getConfigDir().'/addons/categories.yml');
 
         $clientConfig = $config['csa_guzzle']['clients']['addons_api']['config'];
 
@@ -179,26 +188,26 @@ class ModuleManagerBuilder
             new Client($clientConfig),
             self::$translator->getLocale(),
             $this->getCountryIso(),
-            new Tools(),
-            (new Configuration())->get('_PS_BASE_URL_'),
+            new Tools,
+            (new Configuration)->get('_PS_BASE_URL_'),
             \AppKernel::VERSION
         );
 
         $marketPlaceClient->setSslVerification(_PS_CACHE_CA_CERT_FILE_);
-        if (file_exists($this->getConfigDir() . '/parameters.php')) {
-            $parameters = require $this->getConfigDir() . '/parameters.php';
+        if (file_exists($this->getConfigDir().'/parameters.php')) {
+            $parameters = require $this->getConfigDir().'/parameters.php';
             if (array_key_exists('addons.api_client.verify_ssl', $parameters['parameters'])) {
                 $marketPlaceClient->setSslVerification($parameters['parameters']['addons.api_client.verify_ssl']);
             }
         }
 
-        self::$moduleZipManager = new ModuleZipManager(new Filesystem(), self::$translator, new NullDispatcher());
+        self::$moduleZipManager = new ModuleZipManager(new Filesystem, self::$translator, new NullDispatcher);
         self::$addonsDataProvider = new AddonsDataProvider($marketPlaceClient, self::$moduleZipManager);
 
-        $kernelDir = realpath($this->getConfigDir() . '/../../var');
-        self::$addonsDataProvider->cacheDir = $kernelDir . ($this->isDebug ? '/cache/dev' : '/cache/prod');
+        $kernelDir = realpath($this->getConfigDir().'/../../var');
+        self::$addonsDataProvider->cacheDir = $kernelDir.($this->isDebug ? '/cache/dev' : '/cache/prod');
 
-        self::$cacheProvider = new FilesystemCache(self::$addonsDataProvider->cacheDir . '/doctrine');
+        self::$cacheProvider = new FilesystemCache(self::$addonsDataProvider->cacheDir.'/doctrine');
 
         $themeManagerBuilder = new ThemeManagerBuilder(Context::getContext(), Db::getInstance());
         $themeName = Context::getContext()->shop->theme_name;
@@ -206,14 +215,14 @@ class ModuleManagerBuilder
                         $themeManagerBuilder->buildRepository()->getInstanceByName($themeName)->getModulesToEnable() :
                         [];
 
-        self::$legacyLogger = new LegacyLogger();
+        self::$legacyLogger = new LegacyLogger;
         self::$categoriesProvider = new CategoriesProvider(
             $prestashopAddonsConfig['prestashop']['addons']['categories'],
             $themeModules
         );
-        self::$lecacyContext = new LegacyContext();
+        self::$lecacyContext = new LegacyContext;
 
-        if (null === self::$adminModuleDataProvider) {
+        if (self::$adminModuleDataProvider === null) {
             self::$moduleDataProvider = new ModuleDataProvider(self::$legacyLogger, self::$translator);
             self::$adminModuleDataProvider = new AdminModuleDataProvider(
                 self::$translator,
@@ -234,7 +243,7 @@ class ModuleManagerBuilder
     /**
      * Return an instance of \Symfony\Component\Routing\Router from Symfony scope into Legacy.
      *
-     * @return \Symfony\Component\Routing\Router
+     * @return Router
      */
     private function getSymfonyRouter()
     {
@@ -249,7 +258,7 @@ class ModuleManagerBuilder
 
     protected function getConfigDir()
     {
-        return _PS_ROOT_DIR_ . '/app/config';
+        return _PS_ROOT_DIR_.'/app/config';
     }
 
     /**

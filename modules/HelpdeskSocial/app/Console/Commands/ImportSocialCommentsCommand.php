@@ -5,15 +5,31 @@ namespace Modules\HelpdeskSocial\Console\Commands;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Validator;
 use League\Csv\Reader;
+use Modules\HelpdeskSocial\Jobs\ClassifyIntentJob;
+use Modules\HelpdeskSocial\Jobs\EvaluateAutoReplyJob;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskSocial\Services\ConversationThreadingService;
+use Modules\HelpdeskSocial\Services\SlaTrackingService;
+use Modules\HelpdeskSocial\Services\SmartAssignmentService;
+use Modules\HelpdeskSocial\Services\SocialListeningService;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'helpdesk-social:import-comments')]
 class ImportSocialCommentsCommand extends Command
 {
+    public function __construct(
+        private readonly ConversationThreadingService $threadingService,
+        private readonly SlaTrackingService $slaService,
+        private readonly SmartAssignmentService $assignmentService,
+        private readonly SocialListeningService $listeningService,
+    ) {
+        parent::__construct();
+    }
+
     protected $signature = 'helpdesk-social:import-comments
                             {file : Ruta al archivo a importar}
                             {--format= : Formato del archivo (csv, json). Auto-detecta por extension si no se indica}
@@ -296,10 +312,40 @@ class ImportSocialCommentsCommand extends Command
         if ($existing !== null) {
             $existing->update($data);
         } else {
-            SocialComment::create($data);
+            $this->processNewComment(SocialComment::create($data));
         }
 
         $this->imported++;
+    }
+
+    /**
+     * Convergencia con el resto de rutas de ingesta (webhook/polling): hasta
+     * ahora esta importación dejaba el comentario huérfano, sin hilo/SLA/
+     * asignación/clasificación. No se delega en ProcessSocialCommentJob
+     * porque este comando ya conoce (y respeta) el status/intent/urgency
+     * indicados en la fila importada — ese job siempre crea en 'pending' y
+     * dispararía auto-respuestas reales contra comentarios históricos ya
+     * resueltos. La clasificación IA + auto-respuesta solo se encola cuando
+     * la fila importada sigue 'pending' (el valor por defecto si el CSV/JSON
+     * no trae status), igual que en la ingesta en vivo.
+     */
+    private function processNewComment(SocialComment $comment): void
+    {
+        $this->threadingService->threadComment($comment);
+        $this->slaService->applyPolicyToComment($comment);
+
+        if (! $comment->assigned_to_user_id) {
+            $this->assignmentService->assign($comment);
+        }
+
+        $this->listeningService->scanComment($comment);
+
+        if ($comment->status === 'pending') {
+            Bus::chain([
+                new ClassifyIntentJob($comment->id),
+                new EvaluateAutoReplyJob($comment->id),
+            ])->onQueue(config('helpdesksocial.queues.ai', 'helpdesk-social-ai'))->dispatch();
+        }
     }
 
     /**

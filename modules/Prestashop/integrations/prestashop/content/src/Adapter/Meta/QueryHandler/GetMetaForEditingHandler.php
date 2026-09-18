@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class GetMetaForEditingHandler implements GetMetaForEditingHandlerInterfac
 
         $entity = new Meta($metaId->getValue());
 
-        if (0 >= $entity->id) {
+        if ($entity->id <= 0) {
             throw new MetaNotFoundException(sprintf('Meta with id "%s" cannot be found', $metaId->getValue()));
         }
 

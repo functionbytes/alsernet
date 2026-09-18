@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,8 +54,7 @@ class TermsAndConditions
     private $rawText;
 
     /**
-     * @param string $identifier
-     *
+     * @param  string  $identifier
      * @return $this
      */
     public function setIdentifier($identifier)
@@ -70,8 +70,7 @@ class TermsAndConditions
      *
      * Exemple : $terms->setText('hello [world] [new]', 'http://www.world.com', 'http://new.com');
      *
-     * @param string $rawText
-     *
+     * @param  string  $rawText
      * @return $this
      */
     public function setText($rawText)
@@ -110,7 +109,7 @@ class TermsAndConditions
                 $textToReplace
             );
 
-            ++$index;
+            $index++;
 
             return $replacement;
         }, $this->rawText);
@@ -127,12 +126,11 @@ class TermsAndConditions
     }
 
     /**
-     * @param int $index
-     *
+     * @param  int  $index
      * @return string
      */
     protected function createLinkId($index)
     {
-        return 'cta-' . $this->getIdentifier() . '-' . $index;
+        return 'cta-'.$this->getIdentifier().'-'.$index;
     }
 }

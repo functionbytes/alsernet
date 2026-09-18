@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,14 +42,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 class ProductAttachement extends CommonAbstractType
 {
     private $translator;
+
     private $legacyContext;
+
     private $configuration;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
+     * @param  object  $translator
+     * @param  object  $legacyContext
      */
     public function __construct($translator, $legacyContext)
     {
@@ -69,14 +72,14 @@ class ProductAttachement extends CommonAbstractType
             'label' => $this->translator->trans('File', [], 'Admin.Global'),
             'constraints' => [
                 new Assert\NotNull(['message' => $this->translator->trans('Please select a file', [], 'Admin.Catalog.Feature')]),
-                new Assert\File(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE') . 'M']),
+                new Assert\File(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE').'M']),
             ],
         ])
             ->add('name', TextType::class, [
                 'label' => $this->translator->trans('Filename', [], 'Admin.Global'),
                 'attr' => ['placeholder' => $this->translator->trans('Title', [], 'Admin.Global')],
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Length(['min' => 2]),
                 ],
             ])
@@ -97,7 +100,7 @@ class ProductAttachement extends CommonAbstractType
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $form = $event->getForm();
 
-            //if this partial form is submit from a parent form, disable it
+            // if this partial form is submit from a parent form, disable it
             if ($form->getParent()) {
                 $event->setData([]);
                 $form->add('file', FileType::class, ['mapped' => false]);

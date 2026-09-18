@@ -28,7 +28,7 @@
             @foreach($mainSidebars as $sidebarId => $sidebar)
                 @php
                     $miniItem  = $navMiniItems[$sidebarId] ?? null;
-                    $iconClass = $miniItem['icon'] ?? 'fa-duotone fa-thin fa-circle-dot';
+                    $iconKey   = $miniItem['icon'] ?? 'dot';
                     $label     = $miniItem['tooltip'] ?? ucfirst(str_replace(['-', '_'], ' ', $sidebarId));
                     $allItems  = collect($sidebar['sections'] ?? [])->flatMap(fn ($s) => $s['items'] ?? []);
 
@@ -43,7 +43,7 @@
                 <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
                     @if($allItems->count() === 1)
                         <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
+                            <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($iconKey) !!}</span>
                         </a>
                     @else
                         <a class="menu-link{{ $isActive ? ' active' : '' }}"
@@ -51,7 +51,7 @@
                            aria-controls="tab-{{ $sidebarId }}"
                            aria-label="{{ $label }}"
                            data-bs-toggle="tab">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
+                            <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($iconKey) !!}</span>
                         </a>
                     @endif
                 </li>
@@ -60,7 +60,7 @@
             @if($settingsSidebar)
                 @php
                     $settingsMiniItem = $navMiniItems['settings'] ?? null;
-                    $settingsIcon     = $settingsMiniItem['icon'] ?? 'fa-duotone fa-thin fa-gear';
+                    $settingsIcon     = $settingsMiniItem['icon'] ?? 'sliders';
                     $settingsLabel    = $settingsMiniItem['tooltip'] ?? 'Configuración';
                     $settingsActive   = $activeSidebarId === 'settings';
                 @endphp
@@ -71,7 +71,7 @@
                        aria-controls="tab-settings"
                        aria-label="{{ $settingsLabel }}"
                        data-bs-toggle="tab">
-                        <i class="{{ $settingsIcon }}" aria-hidden="true"></i>
+                        <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($settingsIcon) !!}</span>
                     </a>
                 </li>
             @endif
@@ -165,6 +165,35 @@
 (function () {
     var menubar = document.getElementById('appMenubar');
 
+    // El ítem activo ya llega marcado con .active desde el servidor
+    // (request()->routeIs() arriba), pero eso solo pinta la clase — nada
+    // movía el scroll del menú para que quedara a la vista. En secciones
+    // largas (p. ej. Ajustes > Helpdesk) el usuario tenía que desplazarse a
+    // mano para encontrar en qué pantalla estaba parado.
+    function scrollActiveIntoView(pane) {
+        var active = pane.querySelector('.menu-link.active');
+        if (!active) { return; }
+
+        var scrollEl = active.closest('[data-simplebar]');
+        if (!scrollEl) { return; }
+
+        var instance = SimpleBar.instances.get(scrollEl);
+        var container = instance ? instance.getScrollElement() : scrollEl;
+
+        var containerRect = container.getBoundingClientRect();
+        var activeRect = active.getBoundingClientRect();
+        var margin = 24;
+
+        // Ya visible con margen razonable: no tocar el scroll.
+        if (activeRect.top >= containerRect.top + margin && activeRect.bottom <= containerRect.bottom - margin) {
+            return;
+        }
+
+        var offset = (activeRect.top - containerRect.top) + container.scrollTop
+            - (containerRect.height / 2) + (activeRect.height / 2);
+        container.scrollTop = Math.max(0, offset);
+    }
+
     document.querySelectorAll('#appMenubarTabs [data-bs-toggle="tab"]').forEach(function (tab) {
         tab.addEventListener('show.bs.tab', function () {
             menubar.classList.remove('no-sidebar-open');
@@ -181,12 +210,25 @@
                     new SimpleBar(el);
                 }
             });
+            scrollActiveIntoView(pane);
         });
     });
 
-    document.querySelectorAll('#appMenubarTabsContent .tab-pane.active [data-simplebar]').forEach(function (el) {
-        var instance = SimpleBar.instances.get(el);
-        if (instance) { instance.recalculate(); }
+    document.querySelectorAll('#appMenubarTabsContent .tab-pane.active').forEach(function (pane) {
+        pane.querySelectorAll('[data-simplebar]').forEach(function (el) {
+            // A diferencia del cambio de pestaña, en la carga inicial nada
+            // más crea la instancia todavía — sin el `else` de abajo,
+            // scrollActiveIntoView() mide el elemento crudo (sin envolver
+            // por SimpleBar) y el scroll que fija se pierde en cuanto
+            // main.js crea la instancia real más tarde.
+            var instance = SimpleBar.instances.get(el);
+            if (instance) {
+                instance.recalculate();
+            } else {
+                new SimpleBar(el);
+            }
+        });
+        scrollActiveIntoView(pane);
     });
 }());
 </script>

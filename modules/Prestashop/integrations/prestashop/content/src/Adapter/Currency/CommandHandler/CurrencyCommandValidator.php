@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,6 @@ final class CurrencyCommandValidator
      */
     private $defaultCurrencyId;
 
-    /**
-     * @param LocaleRepository $localeRepoCLDR
-     * @param CurrencyDataProviderInterface $currencyDataProvider
-     * @param int $defaultCurrencyId
-     */
     public function __construct(
         LocaleRepository $localeRepoCLDR,
         CurrencyDataProviderInterface $currencyDataProvider,
@@ -74,8 +70,6 @@ final class CurrencyCommandValidator
     }
 
     /**
-     * @param string $isoCode
-     *
      * @throws InvalidUnofficialCurrencyException
      */
     public function assertCurrencyIsNotInReference(string $isoCode)
@@ -86,7 +80,7 @@ final class CurrencyCommandValidator
          */
         $locale = $this->localeRepoCLDR->getLocale('en');
         $cldrCurrency = $locale->getCurrency($isoCode);
-        if (null !== $cldrCurrency) {
+        if ($cldrCurrency !== null) {
             throw new InvalidUnofficialCurrencyException(sprintf('Unofficial currency with iso code "%s" is invalid because it matches a currency from CLDR database', $isoCode), $isoCode);
         }
     }
@@ -94,7 +88,6 @@ final class CurrencyCommandValidator
     /**
      * Throws an error if currency is available in the database (soft deleted currencies don't count)
      *
-     * @param string $isoCode
      *
      * @throws CurrencyConstraintException
      */
@@ -102,7 +95,7 @@ final class CurrencyCommandValidator
     {
         $currency = $this->currencyDataProvider->getCurrencyByIsoCode($isoCode);
 
-        if (null !== $currency && !$currency->deleted) {
+        if ($currency !== null && ! $currency->deleted) {
             throw new CurrencyConstraintException(sprintf('Currency with iso code "%s" already exists and cannot be created', $isoCode), CurrencyConstraintException::CURRENCY_ALREADY_EXISTS);
         }
     }
@@ -110,13 +103,12 @@ final class CurrencyCommandValidator
     /**
      * Prevents from default currency being disabled.
      *
-     * @param EditCurrencyCommand $command
      *
      * @throws CannotDisableDefaultCurrencyException
      */
     public function assertDefaultCurrencyIsNotBeingDisabled(EditCurrencyCommand $command)
     {
-        if (!$command->isEnabled() && $command->getCurrencyId()->getValue() === $this->defaultCurrencyId) {
+        if (! $command->isEnabled() && $command->getCurrencyId()->getValue() === $this->defaultCurrencyId) {
             throw new CannotDisableDefaultCurrencyException(sprintf('Currency with id "%s" is the default currency and cannot be disabled.', $command->getCurrencyId()->getValue()));
         }
     }
@@ -125,8 +117,6 @@ final class CurrencyCommandValidator
      * On each shop there might be different default currency. This function prevents from removing shop association
      * from each shop and checks that the shop is not being disabled as well.
      *
-     * @param Currency $currency
-     * @param EditCurrencyCommand $command
      *
      * @throws DefaultCurrencyInMultiShopException
      */
@@ -150,12 +140,12 @@ final class CurrencyCommandValidator
                 continue;
             }
 
-            if (!in_array($shopId, $shopIds)) {
+            if (! in_array($shopId, $shopIds)) {
                 $shop = new Shop($shopId);
                 throw new DefaultCurrencyInMultiShopException($currency->getName(), $shop->name, sprintf('Currency with id %s cannot be unassigned from shop with id %s because its the default currency.', $currency->id, $shopId), DefaultCurrencyInMultiShopException::CANNOT_REMOVE_CURRENCY);
             }
 
-            if (!$command->isEnabled()) {
+            if (! $command->isEnabled()) {
                 $shop = new Shop($shopId);
                 throw new DefaultCurrencyInMultiShopException($currency->getName(), $shop->name, sprintf('Currency with id %s cannot be disabled from shop with id %s because its the default currency.', $currency->id, $shopId), DefaultCurrencyInMultiShopException::CANNOT_DISABLE_CURRENCY);
             }

@@ -2,11 +2,11 @@
 
 namespace Modules\Document\Entities;
 
-use Modules\Core\Models\Lang;
-use Modules\Document\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Core\Models\Lang;
+use Modules\Document\Traits\HasUid;
 
 class DocumentRequirement extends Model
 {

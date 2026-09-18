@@ -14,7 +14,7 @@ use Tests\TestCase;
  * (Settings → Integraciones → HelpdeskAnalytics).
  *
  * AnalyticsController::data() is the single JSON feed that backs the whole
- * dashboard (overview, channels, agents, trends, heatmap, customers). It must
+ * dashboard (overview, channels, agents, trends, customers). It must
  * short-circuit to an empty/unavailable payload — without touching any
  * aggregate query — as soon as helpdesk_analytics_enabled() is false.
  */
@@ -22,7 +22,7 @@ class AnalyticsIntegrationToggleTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $user;
 
@@ -60,7 +60,7 @@ class AnalyticsIntegrationToggleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('available', true)
-            ->assertJsonStructure(['overview', 'channels', 'agents', 'trends', 'heatmap', 'customers']);
+            ->assertJsonStructure(['overview', 'channels', 'agents', 'trends', 'customers']);
     }
 
     public function test_data_feed_defaults_to_enabled_when_no_setting_is_stored(): void

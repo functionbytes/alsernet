@@ -1,0 +1,13 @@
+{
+    "name": "Reviews",
+    "alias": "reviews",
+    "description": "Registro y moderación de las opiniones de producto de la tienda Alvarez, recibidas del módulo alsernetreviews de PrestaShop.",
+    "keywords": ["reviews", "opiniones", "prestashop", "webhook", "alsernetreviews"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Reviews\\Providers\\ReviewsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

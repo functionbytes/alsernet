@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Web;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -90,7 +91,7 @@ class WProducto extends Model
      */
     public function modelo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WModelo::class, 'id_modelo', 'id');
+        return $this->belongsTo(WModelo::class, 'id_modelo', 'id');
     }
 
     /**
@@ -99,7 +100,7 @@ class WProducto extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
+        return $this->belongsTo(WAyudas::class, 'id', 'id');
     }
 
     /**
@@ -108,6 +109,6 @@ class WProducto extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,6 @@ class ImageController extends FrameworkBundleAdminController
 {
     /**
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
-     *
-     * @param int $productId
-     *
-     * @return JsonResponse
      */
     public function getImagesAction(int $productId): JsonResponse
     {
@@ -67,10 +64,6 @@ class ImageController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function addImageAction(Request $request): JsonResponse
     {
@@ -80,13 +73,13 @@ class ImageController extends FrameworkBundleAdminController
         try {
             $result = $this->getProductImageFormHandler()->handle($imageForm);
 
-            if (!$result->isSubmitted() || !$result->isValid()) {
+            if (! $result->isSubmitted() || ! $result->isValid()) {
                 return new JsonResponse([
                     'error' => 'Invalid form data.',
                     'form_errors' => $this->getFormErrorsForJS($imageForm),
                 ], Response::HTTP_BAD_REQUEST);
             }
-            if (null === $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() === null) {
                 return new JsonResponse([
                     'error' => 'Could not create image.',
                 ], Response::HTTP_BAD_REQUEST);
@@ -102,11 +95,6 @@ class ImageController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
-     *
-     * @param Request $request
-     * @param int $productImageId
-     *
-     * @return JsonResponse
      */
     public function updateImageAction(Request $request, int $productImageId): JsonResponse
     {
@@ -118,7 +106,7 @@ class ImageController extends FrameworkBundleAdminController
         try {
             $result = $this->getProductImageFormHandler()->handleFor($productImageId, $imageForm);
 
-            if (!$result->isSubmitted() || !$result->isValid()) {
+            if (! $result->isSubmitted() || ! $result->isValid()) {
                 return new JsonResponse([
                     'error' => 'Invalid form data.',
                     'form_errors' => $this->getFormErrorsForJS($imageForm),
@@ -135,10 +123,6 @@ class ImageController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
-     *
-     * @param int $productImageId
-     *
-     * @return JsonResponse
      */
     public function deleteImageAction(int $productImageId): JsonResponse
     {
@@ -153,27 +137,16 @@ class ImageController extends FrameworkBundleAdminController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    /**
-     * @return FormBuilderInterface
-     */
     private function getProductImageFormBuilder(): FormBuilderInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.builder.product_image_form_builder');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getProductImageFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.product_image_form_handler');
     }
 
-    /**
-     * @param int $productImageId
-     *
-     * @return JsonResponse
-     */
     private function getProductImageJsonResponse(int $productImageId): JsonResponse
     {
         $productImage = $this->getQueryBus()->handle(new GetProductImage($productImageId));
@@ -181,11 +154,6 @@ class ImageController extends FrameworkBundleAdminController
         return new JsonResponse($this->formatImage($productImage));
     }
 
-    /**
-     * @param ProductImage $image
-     *
-     * @return array
-     */
     private function formatImage(ProductImage $image): array
     {
         return [
@@ -200,10 +168,6 @@ class ImageController extends FrameworkBundleAdminController
 
     /**
      * Gets an error by exception class and its code.
-     *
-     * @param Exception $e
-     *
-     * @return array
      */
     private function getErrorMessages(Exception $e): array
     {
@@ -222,8 +186,8 @@ class ImageController extends FrameworkBundleAdminController
             ),
             UploadedImageConstraintException::class => [
                 UploadedImageConstraintException::EXCEEDED_SIZE => $this->trans(
-                'Max file size allowed is "%s" bytes.',
-                'Admin.Notifications.Error',
+                    'Max file size allowed is "%s" bytes.',
+                    'Admin.Notifications.Error',
                     [$iniConfig->getUploadMaxSizeInBytes()]
                 ),
                 UploadedImageConstraintException::UNRECOGNIZED_FORMAT => $this->trans(

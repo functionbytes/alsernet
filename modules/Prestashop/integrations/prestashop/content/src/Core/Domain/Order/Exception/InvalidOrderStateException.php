@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,17 +55,17 @@ class InvalidOrderStateException extends OrderException
      * Used when the order has been delivered (and it shouldn't have)
      */
     public const UNEXPECTED_DELIVERY = 4;
+
     /**
      * Used when the order state is not found
      */
     public const INVALID_ID = 5;
 
     /**
-     * @param int $code
-     * @param string $message
-     * @param Throwable|null $previous
+     * @param  int  $code
+     * @param  string  $message
      */
-    public function __construct($code = 0, $message = '', Throwable $previous = null)
+    public function __construct($code = 0, $message = '', ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

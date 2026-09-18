@@ -27,7 +27,7 @@
                             </div>
                         </div>
                         <a href="{{ route('manager.helpdesk.customers.show', $customer) }}" class="btn btn-outline-primary">
-                            <i class="fa fa-arrow-left me-1"></i> Volver al cliente
+                            Volver al cliente
                         </a>
                     </div>
                 </div>
@@ -46,7 +46,7 @@
                                     @if($mail->status === 'sent')
                                         <i class="fas fa-check-circle fa-2x text-success"></i>
                                     @elseif($mail->status === 'failed')
-                                        <i class="fas fa-times-circle fa-2x text-danger"></i>
+                                        <i class="fas fa-times-circle fa-2x text-dark"></i>
                                     @else
                                         <i class="fas fa-clock fa-2x text-warning"></i>
                                     @endif
@@ -76,7 +76,7 @@
                                     </span>
                                 </div>
                                 <div class="col-md-2 text-end">
-                                    <a href="{{ route('helpdeskemaillog.show', $mail->uid) }}"
+                                    <a href="{{ route('helpdeskemailactivity.show', $mail->uid) }}"
                                        class="btn btn-sm btn-outline-primary" target="_blank">
                                         <i class="fas fa-eye me-1"></i> Ver
                                     </a>

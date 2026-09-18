@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,13 +46,11 @@ class FeatureController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
     {
-        if (!$this->isFeatureEnabled()) {
+        if (! $this->isFeatureEnabled()) {
             return $this->render('@PrestaShop/Admin/Sell/Catalog/Features/create.html.twig', [
                 'showDisabledFeatureWarning' => true,
             ]);
@@ -66,10 +65,10 @@ class FeatureController extends FrameworkBundleAdminController
         try {
             $handlerResult = $featureFormHandler->handle($featureForm);
 
-            if (null !== $handlerResult->getIdentifiableObjectId()) {
+            if ($handlerResult->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
-                //@todo change route to index when it's migrated
+                // @todo change route to index when it's migrated
                 return $this->redirectToRoute('admin_features_create');
             }
         } catch (Exception $e) {
@@ -86,9 +85,7 @@ class FeatureController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
      *
-     * @param int $featureId
-     * @param Request $request
-     *
+     * @param  int  $featureId
      * @return Response
      */
     public function editAction($featureId, Request $request)
@@ -102,7 +99,7 @@ class FeatureController extends FrameworkBundleAdminController
             return $this->redirectToRoute('admin_features_create');
         }
 
-        if (!$this->isFeatureEnabled()) {
+        if (! $this->isFeatureEnabled()) {
             return $this->renderEditForm([
                 'showDisabledFeatureWarning' => true,
                 'editableFeature' => $editableFeature,
@@ -138,7 +135,6 @@ class FeatureController extends FrameworkBundleAdminController
     /**
      * Render feature edit form
      *
-     * @param array $parameters
      *
      * @return Response
      */

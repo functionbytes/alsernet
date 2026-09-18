@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,9 @@ final class OptionsCommandsBuilder implements ProductCommandsBuilderInterface
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['options']) &&
-            !isset($formData['manufacturer']) &&
-            !isset($formData['footer']['active'])) {
+        if (! isset($formData['options']) &&
+            ! isset($formData['manufacturer']) &&
+            ! isset($formData['footer']['active'])) {
             return [];
         }
 
@@ -67,7 +68,7 @@ final class OptionsCommandsBuilder implements ProductCommandsBuilderInterface
             $command->setCondition($options['condition']);
         }
 
-        if (null !== $manufacturerId) {
+        if ($manufacturerId !== null) {
             $command->setManufacturerId($manufacturerId);
         }
 

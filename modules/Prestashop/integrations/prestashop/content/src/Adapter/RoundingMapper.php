@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,9 +38,8 @@ final class RoundingMapper
      * Maps rounding modes from legacy rounding modes values to the new PrestaShop/Decimal's Rounding constant values.
      * eg. : asking mapping for PS_ROUND_UP (value : 0) would return Rounding::ROUND_CEIL (value : 'ceil').
      *
-     * @param int $legacyRoundingMode
-     *                                The legacy rounding mode value
-     *
+     * @param  int  $legacyRoundingMode
+     *                                   The legacy rounding mode value
      * @return string
      *                The corresponding Rounding class' constant value
      */
@@ -53,8 +53,8 @@ final class RoundingMapper
             PS_ROUND_HALF_EVEN => Rounding::ROUND_HALF_EVEN,
             PS_ROUND_HALF_ODD => Rounding::ROUND_HALF_EVEN, // Rounding::ROUND_HALF_ODD does not exist (never used)
         ];
-        if (!array_key_exists((int) $legacyRoundingMode, $roundModes)) {
-            throw new \InvalidArgumentException('Unknown legacy rounding mode : ' . (int) $legacyRoundingMode);
+        if (! array_key_exists((int) $legacyRoundingMode, $roundModes)) {
+            throw new \InvalidArgumentException('Unknown legacy rounding mode : '.(int) $legacyRoundingMode);
         }
 
         return $roundModes[$legacyRoundingMode];

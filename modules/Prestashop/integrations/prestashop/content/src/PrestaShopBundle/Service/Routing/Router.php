@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ class Router extends BaseRouter
     {
         $username = $this->userProvider->getUsername();
         // Do not generate token each time we want to generate a route for a user
-        if (!isset($this->tokens[$username])) {
+        if (! isset($this->tokens[$username])) {
             $this->tokens[$username] = $this->tokenManager->getToken($username)->getValue();
         }
 
@@ -96,6 +97,6 @@ class Router extends BaseRouter
 
         $queryParams['_token'] = $token;
 
-        return $baseUrl . '?' . http_build_query($queryParams, '', '&');
+        return $baseUrl.'?'.http_build_query($queryParams, '', '&');
     }
 }

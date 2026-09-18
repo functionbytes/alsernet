@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,15 +44,15 @@ class ProviderDefinitionFactory
             case ProviderDefinitionInterface::TYPE_CORE_DOMAIN:
                 return new CoreDomainProviderDefinition($selectedValue);
             case ProviderDefinitionInterface::TYPE_BACK:
-                return new BackofficeProviderDefinition();
+                return new BackofficeProviderDefinition;
             case ProviderDefinitionInterface::TYPE_FRONT:
-                return new FrontofficeProviderDefinition();
+                return new FrontofficeProviderDefinition;
             case ProviderDefinitionInterface::TYPE_MAILS:
-                return new MailsProviderDefinition();
+                return new MailsProviderDefinition;
             case ProviderDefinitionInterface::TYPE_MAILS_BODY:
-                return new MailsBodyProviderDefinition();
+                return new MailsBodyProviderDefinition;
             case ProviderDefinitionInterface::TYPE_OTHERS:
-                return new OthersProviderDefinition();
+                return new OthersProviderDefinition;
             default:
                 throw new RuntimeException(sprintf('Unrecognized type: %s', $type));
         }

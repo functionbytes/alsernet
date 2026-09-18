@@ -43,10 +43,12 @@ class LegacyTranslationKey
      * @var string
      */
     private $module;
+
     /**
      * @var string
      */
     private $theme;
+
     /**
      * @var string
      */
@@ -60,8 +62,7 @@ class LegacyTranslationKey
     /**
      * Parses a legacy translation key and returns its data
      *
-     * @param string $key Legacy translation key
-     *
+     * @param  string  $key  Legacy translation key
      * @return LegacyTranslationKey
      *
      * @throws InvalidLegacyTranslationKeyException
@@ -72,7 +73,7 @@ class LegacyTranslationKey
         preg_match(self::LEGACY_TRANSLATION_FORMAT, $key, $matches);
 
         foreach (['module', 'theme', 'source', 'hash'] as $item) {
-            if (!isset($matches[$item])) {
+            if (! isset($matches[$item])) {
                 throw InvalidLegacyTranslationKeyException::missingElementFromKey($item, $key);
             }
         }
@@ -81,10 +82,10 @@ class LegacyTranslationKey
     }
 
     /**
-     * @param string $module
-     * @param string $theme
-     * @param string $source
-     * @param string $hash
+     * @param  string  $module
+     * @param  string  $theme
+     * @param  string  $source
+     * @param  string  $hash
      */
     public function __construct($module, $theme, $source, $hash)
     {

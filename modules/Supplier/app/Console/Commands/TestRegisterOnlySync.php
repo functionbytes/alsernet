@@ -3,10 +3,10 @@
 namespace Modules\Supplier\Console\Commands;
 
 use Illuminate\Console\Command;
+use Modules\Supplier\Models\Ai\AiContent;
+use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Product\Product;
 use Modules\Supplier\Models\Supplier\Supplier;
-use Modules\Supplier\Models\Category\Category;
-use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Services\Integrations\ErpModelSyncService;
 
 class TestRegisterOnlySync extends Command
@@ -23,17 +23,19 @@ class TestRegisterOnlySync extends Command
         $supplier = Supplier::find($supplierId);
         $category = Category::find($categoryId);
 
-        if (!$supplier) {
+        if (! $supplier) {
             $this->error("Supplier #{$supplierId} not found");
+
             return 1;
         }
 
-        if (!$category) {
+        if (! $category) {
             $this->error("Category #{$categoryId} not found");
+
             return 1;
         }
 
-        $this->info("Testing register_only sync mode...");
+        $this->info('Testing register_only sync mode...');
         $this->info("Supplier: {$supplier->label} (#{$supplier->id})");
         $this->info("Category: {$category->name} (#{$category->id})");
 
@@ -46,7 +48,7 @@ class TestRegisterOnlySync extends Command
                 'supplier_id' => $supplier->id,
                 'category_id' => $category->id,
                 'erp_id' => 999000 + $i,
-                'code' => 'TEST-REGONLY-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'code' => 'TEST-REGONLY-'.str_pad($i, 3, '0', STR_PAD_LEFT),
                 'name' => "Test Product #{$i} (Register Only)",
                 'description' => "Test description for product #{$i}",
             ]);
@@ -79,7 +81,7 @@ class TestRegisterOnlySync extends Command
                 'product_attributes' => [
                     [
                         'id' => 100001 + $product->erp_id,
-                        'ean' => 'EAN-' . $product->erp_id,
+                        'ean' => 'EAN-'.$product->erp_id,
                         'name' => $product->name,
                         'subfamily_id' => 1,
                     ],
@@ -112,7 +114,7 @@ class TestRegisterOnlySync extends Command
         foreach ($products as $product) {
             $aiContent = AiContent::where('supplier_product_id', $product->id)->first();
 
-            if (!$aiContent) {
+            if (! $aiContent) {
                 $this->error("  ✗ Product #{$product->id} ({$product->name}): NO AiContent created");
             } elseif ($aiContent->status === AiContent::STATUS_PENDING_GENERATION) {
                 $this->line("  ✓ Product #{$product->id} ({$product->name}): Status = PENDING_GENERATION (Correct!)");
@@ -130,14 +132,16 @@ class TestRegisterOnlySync extends Command
 
         if ($pendingCount === 10) {
             $this->info("\n✨ SUCCESS: All products are in pending_generation state!");
-            $this->line("Next steps:");
-            $this->line("  1. Go to /panel/setting/suppliers/content");
-            $this->line("  2. Find the test products (code: TEST-REGONLY-*)");
-            $this->line("  3. Test regeneration and chat functionality");
-            $this->line("  4. Run: php artisan supplier:test-register-only --cleanup");
+            $this->line('Next steps:');
+            $this->line('  1. Go to /panel/setting/suppliers/content');
+            $this->line('  2. Find the test products (code: TEST-REGONLY-*)');
+            $this->line('  3. Test regeneration and chat functionality');
+            $this->line('  4. Run: php artisan supplier:test-register-only --cleanup');
+
             return 0;
         } else {
             $this->error("\n❌ FAILED: Some products have incorrect status!");
+
             return 1;
         }
     }

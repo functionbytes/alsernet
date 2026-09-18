@@ -7,18 +7,38 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\View\View;
 
 class HealthController extends Controller
 {
     public function check(): JsonResponse
     {
+        return $this->jsonSnapshot($this->snapshot(false));
+    }
+
+    /**
+     * Authenticated diagnostics for Settings > Helpdesk > Salud.
+     * Sensitive connection details never go through the public endpoint.
+     */
+    public function panel(): View
+    {
+        return view('helpdesk::settings.health.index', [
+            'health' => $this->snapshot(true),
+        ]);
+    }
+
+    /**
+     * @return array{status: string, checks: array<string, array<string, mixed>>, timestamp: string}
+     */
+    private function snapshot(bool $detailed): array
+    {
         $checks = [
-            'mysql' => $this->checkMysql(),
-            'redis' => $this->checkRedis(),
-            'horizon' => $this->checkHorizon(),
-            'reverb' => $this->checkReverb(),
-            'tunnel' => $this->checkTunnel(),
-            'queue_pending' => $this->checkQueuePending(),
+            'mysql' => $this->checkMysql($detailed),
+            'redis' => $this->checkRedis($detailed),
+            'horizon' => $this->checkHorizon($detailed),
+            'reverb' => $this->checkReverb($detailed),
+            'tunnel' => $this->checkTunnel($detailed),
+            'queue_pending' => $this->checkQueuePending($detailed),
         ];
 
         $statuses = collect($checks)->pluck('ok');
@@ -28,14 +48,20 @@ class HealthController extends Controller
             default => 'ok',
         };
 
-        return response()->json([
+        return [
             'status' => $globalStatus,
             'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
-        ], $globalStatus === 'down' ? 503 : 200);
+        ];
     }
 
-    private function checkMysql(): array
+    /** @param array{status: string, checks: array<string, array<string, mixed>>, timestamp: string} $snapshot */
+    private function jsonSnapshot(array $snapshot): JsonResponse
+    {
+        return response()->json($snapshot, $snapshot['status'] === 'down' ? 503 : 200);
+    }
+
+    private function checkMysql(bool $detailed): array
     {
         try {
             $start = microtime(true);
@@ -43,11 +69,11 @@ class HealthController extends Controller
 
             return ['ok' => true, 'latency_ms' => round((microtime(true) - $start) * 1000, 1)];
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
+            return $this->failure($e, $detailed);
         }
     }
 
-    private function checkRedis(): array
+    private function checkRedis(bool $detailed): array
     {
         try {
             $start = microtime(true);
@@ -55,11 +81,11 @@ class HealthController extends Controller
 
             return ['ok' => true, 'latency_ms' => round((microtime(true) - $start) * 1000, 1)];
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
+            return $this->failure($e, $detailed);
         }
     }
 
-    private function checkHorizon(): array
+    private function checkHorizon(bool $detailed): array
     {
         try {
             return [
@@ -67,24 +93,31 @@ class HealthController extends Controller
                 'configured' => filled(config('horizon.environments')),
             ];
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
+            return $this->failure($e, $detailed);
         }
     }
 
-    private function checkReverb(): array
+    private function checkReverb(bool $detailed): array
     {
-        return [
+        $check = [
             'ok' => filled(config('reverb.servers.reverb.host')),
-            'host' => config('reverb.servers.reverb.host'),
-            'port' => config('reverb.servers.reverb.port'),
         ];
+
+        if ($detailed) {
+            $check['host'] = config('reverb.servers.reverb.host');
+            $check['port'] = config('reverb.servers.reverb.port');
+        }
+
+        return $check;
     }
 
-    private function checkTunnel(): array
+    private function checkTunnel(bool $detailed): array
     {
         $url = config('helpdesk.public_url');
         if (! $url) {
-            return ['ok' => false, 'error' => 'HELPDESK_PUBLIC_URL not configured'];
+            return $detailed
+                ? ['ok' => false, 'error' => 'HELPDESK_PUBLIC_URL no está configurada.']
+                : ['ok' => false];
         }
         try {
             // Hit the webhook verify endpoint with an obviously-wrong token: a 403
@@ -94,13 +127,18 @@ class HealthController extends Controller
             $response = Http::timeout(3)->withOptions(['verify' => false])->get($probeUrl);
             $alive = in_array($response->status(), [200, 403], true);
 
-            return ['ok' => $alive, 'status' => $response->status(), 'url' => $url];
+            $check = ['ok' => $alive, 'status' => $response->status()];
+            if ($detailed) {
+                $check['url'] = $url;
+            }
+
+            return $check;
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => substr($e->getMessage(), 0, 100)];
+            return $this->failure($e, $detailed);
         }
     }
 
-    private function checkQueuePending(): array
+    private function checkQueuePending(bool $detailed): array
     {
         try {
             $prefix = config('database.redis.options.prefix', '');
@@ -108,7 +146,18 @@ class HealthController extends Controller
 
             return ['ok' => $count < 1000, 'count' => (int) $count];
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
+            return $this->failure($e, $detailed);
         }
+    }
+
+    private function failure(\Throwable $exception, bool $detailed): array
+    {
+        $failure = ['ok' => false];
+
+        if ($detailed) {
+            $failure['error'] = substr($exception->getMessage(), 0, 200);
+        }
+
+        return $failure;
     }
 }

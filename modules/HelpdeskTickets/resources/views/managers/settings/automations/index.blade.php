@@ -213,7 +213,7 @@
     </div>
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
         </button>
@@ -251,56 +251,13 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+{{-- Solo datos: la lógica entera vive en automations-index.js. --}}
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    // Delete modal
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // Bulk actions
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una accion.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una automatizacion.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' automatizacion(es) seleccionadas?')) { return; }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-        $.ajax({
-            url: '{{ route("manager.helpdesk.settings.automations.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
-    });
-});
+window.hdtAutomationsIndexConfig = {
+    bulkActionUrl: @json(route('manager.helpdesk.settings.automations.bulk-action')),
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/automations-index.js') }}"></script>
 @endpush

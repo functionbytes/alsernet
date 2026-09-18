@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ final class BulkDeleteEmployeeHandler extends AbstractEmployeeHandler implements
             $this->assertEmployeeIsNotTheOnlyAdminInShop($employee);
             $this->assertEmployeeDoesNotManageWarehouse($employee);
 
-            if (!$employee->delete()) {
+            if (! $employee->delete()) {
                 throw new CannotDeleteEmployeeException($employeeId, sprintf('Cannot delete employee with id "%s".', $employeeId->getValue()));
             }
         }

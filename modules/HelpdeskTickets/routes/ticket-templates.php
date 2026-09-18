@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTemplatesController;
 // de ruta se mantienen bajo el prefijo "manager." para no romper los
 // route() ya existentes en vistas/tests de cuando esto vivia en managers.php.
 Route::post('ticket-templates/bulk', [TicketTemplatesController::class, 'bulkAction'])->name('manager.helpdesk.ticket-templates.bulk-action');
+Route::post('ticket-templates/{ticketTemplate}/duplicate', [TicketTemplatesController::class, 'duplicate'])->name('manager.helpdesk.ticket-templates.duplicate');
 
 Route::resource('ticket-templates', TicketTemplatesController::class)->names([
     'index' => 'manager.helpdesk.ticket-templates.index',

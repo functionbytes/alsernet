@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,7 +68,7 @@ class FeaturesChoiceProvider implements FormChoiceProviderInterface
         $features = $this->featureRepository->getFeatures();
         $choices = [];
         foreach ($features as $feature) {
-            if (!empty($feature['localized_names'][$this->contextLanguageId])) {
+            if (! empty($feature['localized_names'][$this->contextLanguageId])) {
                 $featureName = $feature['localized_names'][$this->contextLanguageId];
             } else {
                 $featureName = $feature['localized_names'][$this->defaultLanguageId];

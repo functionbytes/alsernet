@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,6 @@ final class SqlRequestConfiguration implements DataConfigurationInterface
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(
         CommandBusInterface $commandBus,
         CommandBusInterface $queryBus
@@ -66,7 +63,7 @@ final class SqlRequestConfiguration implements DataConfigurationInterface
     public function getConfiguration()
     {
         /** @var SqlRequestSettings $sqlRequestSettings */
-        $sqlRequestSettings = $this->queryBus->handle(new GetSqlRequestSettings());
+        $sqlRequestSettings = $this->queryBus->handle(new GetSqlRequestSettings);
 
         return [
             'default_file_encoding' => $sqlRequestSettings->getFileEncoding(),
@@ -106,7 +103,6 @@ final class SqlRequestConfiguration implements DataConfigurationInterface
     /**
      * Handle exception when configuration update fails.
      *
-     * @param SqlRequestSettingsConstraintException $e
      *
      * @return array Array of errors
      */

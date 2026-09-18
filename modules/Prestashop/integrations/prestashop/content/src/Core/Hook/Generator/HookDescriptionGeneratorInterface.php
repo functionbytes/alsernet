@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use PrestaShop\PrestaShop\Core\Hook\HookDescription;
 interface HookDescriptionGeneratorInterface
 {
     /**
-     * @param string $hookName
-     *
+     * @param  string  $hookName
      * @return HookDescription
      */
     public function generate($hookName);

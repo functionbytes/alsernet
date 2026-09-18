@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -67,13 +68,13 @@ class AddressInformation
     private $addressId;
 
     /**
-     * @param int $addressId
-     * @param string $company
-     * @param string $fullName
-     * @param string $fullAddress
-     * @param string $countryName
-     * @param string $phone
-     * @param string $phoneMobile
+     * @param  int  $addressId
+     * @param  string  $company
+     * @param  string  $fullName
+     * @param  string  $fullAddress
+     * @param  string  $countryName
+     * @param  string  $phone
+     * @param  string  $phoneMobile
      */
     public function __construct($addressId, $company, $fullName, $fullAddress, $countryName, $phone, $phoneMobile)
     {

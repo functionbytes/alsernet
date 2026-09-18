@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -92,7 +93,7 @@ class EditCmsPageCommand
     private $shopAssociation;
 
     /**
-     * @param int $cmsPageId
+     * @param  int  $cmsPageId
      *
      * @throws CmsPageException
      */
@@ -118,8 +119,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param int|null $cmsPageCategoryId
-     *
+     * @param  int|null  $cmsPageCategoryId
      * @return self
      *
      * @throws CmsPageCategoryException
@@ -140,8 +140,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $localizedTitle
-     *
+     * @param  string[]  $localizedTitle
      * @return self
      */
     public function setLocalizedTitle(array $localizedTitle)
@@ -160,8 +159,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $localizedMetaTitle
-     *
+     * @param  string[]  $localizedMetaTitle
      * @return self
      */
     public function setLocalizedMetaTitle(array $localizedMetaTitle)
@@ -180,8 +178,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $localizedMetaDescription
-     *
+     * @param  string[]  $localizedMetaDescription
      * @return self
      */
     public function setLocalizedMetaDescription(array $localizedMetaDescription)
@@ -200,8 +197,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $LocalizedMetaKeyword
-     *
+     * @param  string[]  $LocalizedMetaKeyword
      * @return self
      */
     public function setLocalizedMetaKeyword(array $LocalizedMetaKeyword)
@@ -220,8 +216,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $localizedFriendlyUrl
-     *
+     * @param  string[]  $localizedFriendlyUrl
      * @return self
      */
     public function setLocalizedFriendlyUrl(array $localizedFriendlyUrl)
@@ -240,8 +235,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param string[] $localizedContent
-     *
+     * @param  string[]  $localizedContent
      * @return self
      */
     public function setLocalizedContent(array $localizedContent)
@@ -260,8 +254,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param bool|null $isIndexedForSearch
-     *
+     * @param  bool|null  $isIndexedForSearch
      * @return self
      */
     public function setIsIndexedForSearch($isIndexedForSearch)
@@ -280,8 +273,7 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param bool|null $isDisplayed
-     *
+     * @param  bool|null  $isDisplayed
      * @return self
      */
     public function setIsDisplayed($isDisplayed)
@@ -300,11 +292,9 @@ class EditCmsPageCommand
     }
 
     /**
-     * @param array|null $shopAssociation
-     *
      * @return self
      */
-    public function setShopAssociation(array $shopAssociation = null)
+    public function setShopAssociation(?array $shopAssociation = null)
     {
         $this->shopAssociation = $shopAssociation;
 

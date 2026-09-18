@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,7 +27,9 @@
 class PageNotFoundControllerCore extends FrontController
 {
     public $php_self = 'pagenotfound';
+
     public $page_name = 'pagenotfound';
+
     public $ssl = true;
 
     /**

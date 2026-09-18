@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,9 +56,7 @@ class ModuleGuardListener implements EventSubscriberInterface
     private $logger;
 
     /**
-     * @param FolderGuardInterface $vendorFolderGuard
-     * @param string $modulesDir
-     * @param LoggerInterface $logger
+     * @param  string  $modulesDir
      */
     public function __construct(
         FolderGuardInterface $vendorFolderGuard,
@@ -81,13 +80,10 @@ class ModuleGuardListener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * @param ModuleManagementEvent $event
-     */
     public function protectModule(ModuleManagementEvent $event)
     {
         $moduleName = $event->getModule()->get('name');
-        $moduleVendorPath = $this->modulesDir . DIRECTORY_SEPARATOR . $moduleName . DIRECTORY_SEPARATOR . 'vendor';
+        $moduleVendorPath = $this->modulesDir.DIRECTORY_SEPARATOR.$moduleName.DIRECTORY_SEPARATOR.'vendor';
 
         try {
             $this->logger->info(sprintf('Protect vendor folder in module %s', $moduleName));

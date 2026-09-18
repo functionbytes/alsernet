@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,10 +43,7 @@ final class FreeShippingAction implements CartRuleActionInterface
      */
     private $giftProduct;
 
-    /**
-     * @param GiftProduct|null $giftProduct
-     */
-    public function __construct(GiftProduct $giftProduct = null)
+    public function __construct(?GiftProduct $giftProduct = null)
     {
         $this->giftProduct = $giftProduct;
     }

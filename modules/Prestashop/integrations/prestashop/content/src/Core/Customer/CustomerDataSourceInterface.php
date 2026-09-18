@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,10 +29,5 @@ namespace PrestaShop\PrestaShop\Core\Customer;
 
 interface CustomerDataSourceInterface
 {
-    /**
-     * @param string $email
-     *
-     * @return bool
-     */
     public function hasCustomerWithEmail(string $email): bool;
 }

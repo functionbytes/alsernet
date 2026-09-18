@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ final class ImageTagSourceParser implements ImageTagSourceParserInterface
     private $shopRootUri;
 
     /**
-     * @param string $shopRootUri
+     * @param  string  $shopRootUri
      */
     public function __construct($shopRootUri)
     {
@@ -55,7 +56,7 @@ final class ImageTagSourceParser implements ImageTagSourceParserInterface
         $replacement = 'src="/';
         $imageTag = preg_replace('/src="(\.\.\/|\.\/)+/', $replacement, $imageTag);
 
-        if (null === $imageTag) {
+        if ($imageTag === null) {
             return null;
         }
 

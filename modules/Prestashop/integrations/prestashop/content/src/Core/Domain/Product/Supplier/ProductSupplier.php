@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,11 +64,7 @@ class ProductSupplier
     private $productSupplierId;
 
     /**
-     * @param int $supplierId
-     * @param int $currencyId
-     * @param string $reference
-     * @param string $priceTaxExcluded
-     * @param int|null $productSupplierId Provide value to update existing resource. Null means this is new resource
+     * @param  int|null  $productSupplierId  Provide value to update existing resource. Null means this is new resource
      */
     public function __construct(
         int $supplierId,
@@ -83,41 +80,26 @@ class ProductSupplier
         $this->productSupplierId = $productSupplierId ? new ProductSupplierId($productSupplierId) : null;
     }
 
-    /**
-     * @return SupplierId
-     */
     public function getSupplierId(): SupplierId
     {
         return $this->supplierId;
     }
 
-    /**
-     * @return CurrencyId
-     */
     public function getCurrencyId(): CurrencyId
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;
     }
 
-    /**
-     * @return string
-     */
     public function getPriceTaxExcluded(): string
     {
         return $this->priceTaxExcluded;
     }
 
-    /**
-     * @return ProductSupplierId|null
-     */
     public function getProductSupplierId(): ?ProductSupplierId
     {
         return $this->productSupplierId;

@@ -102,13 +102,13 @@
                 <div id="ncNewContactForm" class="bv-step-hidden">
                     <div class="bv-form-field">
                         <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.newconv_new_contact_label') }}</label>
-                        <input type="text" id="ncNewName" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_full_name_placeholder') }}" class="bv-form-input">
+                        <input type="text" id="ncNewName" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_full_name_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.newconv_full_name_placeholder') }}" class="bv-form-input">
                     </div>
                     <div class="bv-form-field">
-                        <input type="email" id="ncNewEmail" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_email_placeholder') }}" class="bv-form-input">
+                        <input type="email" id="ncNewEmail" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_email_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.newconv_email_placeholder') }}" class="bv-form-input">
                     </div>
                     <div class="bv-form-field">
-                        <input type="tel" id="ncNewPhone" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_phone_placeholder') }}" class="bv-form-input">
+                        <input type="tel" id="ncNewPhone" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_phone_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.newconv_phone_placeholder') }}" class="bv-form-input">
                     </div>
                 </div>
 
@@ -116,7 +116,7 @@
                 <div id="ncHsmBlock" class="bv-step-hidden">
                     <div class="bv-form-field">
                         <label class="bv-form-label bv-form-label--plain">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_template_label') }} <span class="bv-req">*</span> <span class="bv-form-hint">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_required_hint') }}</span></label>
-                        <select id="ncHsmSelect" class="bv-form-input">
+                        <select id="ncHsmSelect" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_template_label') }}" class="bv-form-input">
                             <option value="">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_no_template') }}</option>
                         </select>
                     </div>
@@ -151,10 +151,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/newconv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/newconv.js')) }}" defer></script>
-@endpush
-@endonce

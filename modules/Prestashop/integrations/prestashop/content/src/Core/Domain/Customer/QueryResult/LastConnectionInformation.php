@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,12 +63,12 @@ class LastConnectionInformation
     private $ipAddress;
 
     /**
-     * @param int $connectionId
-     * @param string $connectionDate
-     * @param int $pagesViewed
-     * @param string $totalTime
-     * @param string $httpReferer
-     * @param string $ipAddress
+     * @param  int  $connectionId
+     * @param  string  $connectionDate
+     * @param  int  $pagesViewed
+     * @param  string  $totalTime
+     * @param  string  $httpReferer
+     * @param  string  $ipAddress
      */
     public function __construct(
         $connectionId,

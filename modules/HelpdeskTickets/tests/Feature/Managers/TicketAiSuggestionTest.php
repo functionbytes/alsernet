@@ -95,19 +95,10 @@ class TicketAiSuggestionTest extends TestCase
         return route('manager.helpdesk.tickets.ai.suggest-reply', $this->ticket);
     }
 
-    public function test_the_ticket_page_renders_the_ai_controls(): void
-    {
-        // show-full, no show: `show` solo redirige al listado con el panel
-        // superpuesto; la ficha completa (donde viven los controles de IA) la
-        // renderiza showFull().
-        $response = $this->actingAs($this->manager)
-            ->get(route('manager.helpdesk.tickets.show-full', $this->ticket));
-
-        $response->assertOk();
-        $response->assertSee('ai-suggest-reply-btn', false);
-        $response->assertSee('Sugerir respuesta');
-        $response->assertSee('ai-summary-btn', false);
-    }
+    // La ficha completa (show-full, donde vivían los botones
+    // ai-suggest-reply-btn/ai-summary-btn probados aquí) se eliminó el
+    // 8-sep-2026 — el listado tiene su propio botón "IA" en el composer
+    // (tickets-app/core.js), sin una vista dedicada que probar en su lugar.
 
     public function test_it_returns_a_draft_without_touching_the_ticket(): void
     {
@@ -203,11 +194,23 @@ class TicketAiSuggestionTest extends TestCase
 
     public function test_it_requires_the_update_permission(): void
     {
-        // helpdesk-agent, no super-settings: ese ultimo pasa por el Gate::before
-        // de Auth y se salta cualquier comprobacion de permiso, asi que con el
-        // este test daria verde sin ejercitar nada.
+        // No helpdesk-agent: desde el 8-sep-2026 ese rol trae
+        // helpdesk.tickets.update de fabrica (HelpdeskTicketsPermissionsSeeder
+        // — "el trabajo del dia a dia de un agente: ver/crear/actualizar
+        // tickets..."), y revokePermissionTo() en el USUARIO no quita un
+        // permiso heredado del ROL (Spatie: hasPermissionTo() mira directo +
+        // via cualquier rol; revoke solo toca la asignacion directa) — con
+        // helpdesk-agent este test daba un falso verde via 200, sin ejercitar
+        // el middleware can:helpdesk.tickets.update en absoluto.
+        //
+        // 'manager' si pasa el role: de la ruta (helpdesk-agent|
+        // helpdesk-manager|manager|super-admin|super-settings) pero no trae
+        // NINGUN permiso helpdesk.tickets.* de fabrica, asi que dar solo
+        // 'view' aqui aisla de verdad el permiso que falta. super-settings
+        // tampoco vale: pasa por el Gate::before de Auth y se salta cualquier
+        // comprobacion de permiso.
         $viewer = User::factory()->create();
-        $viewer->assignRole('helpdesk-agent');
+        $viewer->assignRole('manager');
         $viewer->givePermissionTo('helpdesk.tickets.view');
 
         $this->actingAs($viewer)->postJson($this->url())->assertForbidden();

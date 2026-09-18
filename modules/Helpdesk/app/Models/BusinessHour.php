@@ -4,6 +4,8 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 
 class BusinessHour extends Model
 {
@@ -18,6 +20,19 @@ class BusinessHour extends Model
         'closes_at',
         'timezone',
     ];
+
+    /**
+     * Red de seguridad para cualquier guardado que no pase por
+     * BusinessHoursController (que ya invalida manualmente): tinker,
+     * seeders, initializeDefaults(). Mismo patrón que Holiday::booted().
+     */
+    protected static function booted(): void
+    {
+        $forget = fn () => Cache::forget(BusinessHoursCalculator::CACHE_KEY);
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     public const DAY_NAMES = [
         0 => 'Domingo',
@@ -62,7 +77,7 @@ class BusinessHour extends Model
                     'is_open' => ! in_array($day, $closedDays),
                     'opens_at' => '09:00:00',
                     'closes_at' => '18:00:00',
-                    'timezone' => 'America/Mexico_City',
+                    'timezone' => 'Europe/Madrid',
                 ]
             );
         }

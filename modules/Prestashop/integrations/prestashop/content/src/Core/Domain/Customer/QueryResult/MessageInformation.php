@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,10 @@ class MessageInformation
     private $date;
 
     /**
-     * @param int $customerThreadId
-     * @param string $message
-     * @param string $status
-     * @param string $date
+     * @param  int  $customerThreadId
+     * @param  string  $message
+     * @param  string  $status
+     * @param  string  $date
      */
     public function __construct($customerThreadId, $message, $status, $date)
     {

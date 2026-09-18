@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\AutomationRule;
 use Modules\Helpdesk\Models\BusinessHour;
 use Modules\Helpdesk\Models\CannedReply;
+use Modules\Helpdesk\Models\ConversationTag;
+use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Macro;
 use Modules\Helpdesk\Models\SlaPolicy;
 
@@ -36,7 +38,7 @@ class HelpdeskDemoDataSeeder extends Seeder
         foreach ($schedule as $day => $data) {
             BusinessHour::updateOrCreate(
                 ['day_of_week' => $day],
-                array_merge($data, ['timezone' => 'America/Mexico_City'])
+                array_merge($data, ['timezone' => 'Europe/Madrid'])
             );
         }
     }
@@ -171,6 +173,13 @@ class HelpdeskDemoDataSeeder extends Seeder
 
     private function seedMacros(): void
     {
+        // add_tag/assign_group guardan el id de una etiqueta/grupo real (lo
+        // unico que el select del formulario puede producir), no su nombre:
+        // se resuelven aqui en vez de dejarlos fijos en el array para que el
+        // seeder siga siendo correcto en cualquier entorno.
+        $tagId = fn (string $name): string => (string) ConversationTag::firstOrCreate(['name' => $name])->id;
+        $technicalGroupId = (string) Group::firstOrCreate(['name' => 'Soporte Técnico'])->id;
+
         $macros = [
             [
                 'name' => 'Resolver y agradecer',
@@ -178,7 +187,7 @@ class HelpdeskDemoDataSeeder extends Seeder
                 'actions' => [
                     ['type' => 'send_reply',           'value' => 'Gracias por contactarnos. Hemos resuelto su solicitud. Si tiene alguna otra consulta, no dude en escribirnos.'],
                     ['type' => 'resolve_conversation', 'value' => null],
-                    ['type' => 'add_tag',              'value' => 'resuelta'],
+                    ['type' => 'add_tag',              'value' => $tagId('Resuelta')],
                 ],
                 'is_shared' => true,
                 'is_active' => true,
@@ -186,12 +195,12 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'name' => 'Escalar a soporte técnico',
-                'description' => 'Reasignar la conversacion al grupo de soporte tecnico nivel 2.',
+                'description' => 'Reasignar la conversacion al grupo de soporte tecnico.',
                 'actions' => [
-                    ['type' => 'assign_group',    'value' => 'Soporte Técnico N2'],
+                    ['type' => 'assign_group',    'value' => $technicalGroupId],
                     ['type' => 'change_priority', 'value' => 'high'],
-                    ['type' => 'add_tag',         'value' => 'escalada'],
-                    ['type' => 'add_note',        'value' => 'Escalada a Soporte Técnico N2 para revisión avanzada.'],
+                    ['type' => 'add_tag',         'value' => $tagId('Escalada')],
+                    ['type' => 'add_note',        'value' => 'Escalada a Soporte Técnico para revisión avanzada.'],
                 ],
                 'is_shared' => true,
                 'is_active' => true,
@@ -202,7 +211,7 @@ class HelpdeskDemoDataSeeder extends Seeder
                 'description' => 'Pedir al cliente datos adicionales para procesar la solicitud.',
                 'actions' => [
                     ['type' => 'send_reply', 'value' => 'Para poder ayudarle, necesitamos información adicional: (1) Número de pedido, (2) Fecha del incidente, (3) Capturas de pantalla si aplica.'],
-                    ['type' => 'add_tag',    'value' => 'pendiente-info'],
+                    ['type' => 'add_tag',    'value' => $tagId('Pendiente de información')],
                 ],
                 'is_shared' => true,
                 'is_active' => true,
@@ -214,7 +223,7 @@ class HelpdeskDemoDataSeeder extends Seeder
                 'actions' => [
                     ['type' => 'send_reply',         'value' => 'Cerramos este ticket por inactividad. Si necesita seguimiento, abra un nuevo ticket o contáctenos.'],
                     ['type' => 'close_conversation', 'value' => null],
-                    ['type' => 'add_tag',            'value' => 'cerrada-inactividad'],
+                    ['type' => 'add_tag',            'value' => $tagId('Cerrada por inactividad')],
                 ],
                 'is_shared' => true,
                 'is_active' => true,
@@ -222,10 +231,15 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'name' => 'Asignarme esta conversacion',
-                'description' => 'Asignar la conversacion al agente actual y marcarlo como en progreso.',
+                'description' => 'Asignar la conversacion al agente actual y marcarlo como abierta.',
                 'actions' => [
+                    // 'me': unico valor que el select de agentes no puede
+                    // producir; MacroExecutorService lo traduce al agente que
+                    // aplica el macro.
                     ['type' => 'assign_agent',  'value' => 'me'],
-                    ['type' => 'change_status', 'value' => 'in_progress'],
+                    // 'open', no 'in_progress': el formulario de change_status
+                    // solo ofrece open/pending/resolved (ver _form.blade.php).
+                    ['type' => 'change_status', 'value' => 'open'],
                 ],
                 'is_shared' => false,
                 'is_active' => true,
@@ -238,12 +252,24 @@ class HelpdeskDemoDataSeeder extends Seeder
         }
     }
 
+    /**
+     * Las variables {{...}} usan la sintaxis de
+     * TicketVariableInterpolator::availableVariables() (snake_case plano,
+     * sin puntos) — la fuente real que las resuelve al buscar respuestas con
+     * ?ticket_id= (CannedRepliesController::search()). Hasta el 11-sep-2026
+     * este seeder usaba notación de punto ({{contact.name}}, {{agent.name}},
+     * {{company.name}}) copiada de un formato que nunca existió aquí: nunca
+     * se reemplazaban y el agente las mandaba al cliente tal cual (mismo bug
+     * ya encontrado y corregido en HelpdeskTicketCannedReplySeeder). No hay
+     * variable de "nombre de la empresa" en el interpolador, así que esa
+     * frase se reformuló sin ella en vez de dejar una tercera sin resolver.
+     */
     private function seedCannedReplies(): void
     {
         $replies = [
             [
                 'title' => 'Saludo inicial',
-                'body' => 'Hola {{contact.name}}, gracias por contactar a {{company.name}}. Mi nombre es {{agent.name}} y estaré encantado de ayudarte hoy.',
+                'body' => 'Hola {{customer_name}}, gracias por contactarnos. Mi nombre es {{agent_name}} y estaré encantado de ayudarte hoy.',
                 'shortcut' => 'saludo',
                 'category' => 'General',
                 'is_global' => true,
@@ -251,7 +277,7 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'title' => 'Solicitar número de pedido',
-                'body' => 'Hola {{contact.name}}, para revisar el estado de tu pedido necesito que me compartas el número de orden. Lo encontrarás en el email de confirmación de compra.',
+                'body' => 'Hola {{customer_name}}, para revisar el estado de tu pedido necesito que me compartas el número de orden. Lo encontrarás en el email de confirmación de compra.',
                 'shortcut' => 'pedido',
                 'category' => 'Ventas',
                 'is_global' => true,
@@ -259,7 +285,7 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'title' => 'Problema en revisión',
-                'body' => 'Hola {{contact.name}}, hemos recibido tu reporte y nuestro equipo técnico ya está investigando el problema. Te notificaremos en cuanto tengamos una actualización. Gracias por tu paciencia.',
+                'body' => 'Hola {{customer_name}}, hemos recibido tu reporte y nuestro equipo técnico ya está investigando el problema. Te notificaremos en cuanto tengamos una actualización. Gracias por tu paciencia.',
                 'shortcut' => 'revision',
                 'category' => 'Soporte',
                 'is_global' => true,
@@ -267,7 +293,7 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'title' => 'Cierre satisfactorio',
-                'body' => 'Me alegra saber que hemos resuelto tu consulta, {{contact.name}}. Si necesitas algo más en el futuro, no dudes en contactarnos.',
+                'body' => 'Me alegra saber que hemos resuelto tu consulta, {{customer_name}}. Si necesitas algo más en el futuro, no dudes en contactarnos.',
                 'shortcut' => 'cierre',
                 'category' => 'General',
                 'is_global' => true,
@@ -283,7 +309,7 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'title' => 'Escalando a técnico',
-                'body' => 'Hola {{contact.name}}, este caso requiere atención especializada. Voy a transferirte con nuestro equipo de soporte técnico nivel 2. Te contactarán en las próximas 2 horas hábiles.',
+                'body' => 'Hola {{customer_name}}, este caso requiere atención especializada. Voy a transferirte con nuestro equipo de soporte técnico nivel 2. Te contactarán en las próximas 2 horas hábiles.',
                 'shortcut' => 'escalar',
                 'category' => 'Soporte',
                 'is_global' => true,
@@ -299,7 +325,7 @@ class HelpdeskDemoDataSeeder extends Seeder
             ],
             [
                 'title' => 'Resetear contraseña',
-                'body' => 'Hola {{contact.name}}, para restablecer tu contraseña visita el enlace de recuperación e ingresa tu correo electrónico registrado. Recibirás las instrucciones en tu bandeja de entrada.',
+                'body' => 'Hola {{customer_name}}, para restablecer tu contraseña visita el enlace de recuperación e ingresa tu correo electrónico registrado. Recibirás las instrucciones en tu bandeja de entrada.',
                 'shortcut' => 'password',
                 'category' => 'Cuenta',
                 'is_global' => true,

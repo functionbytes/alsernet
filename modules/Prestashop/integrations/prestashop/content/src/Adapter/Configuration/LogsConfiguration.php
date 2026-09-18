@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,12 +82,12 @@ class LogsConfiguration implements DataConfigurationInterface
             $invalidEmails = [];
 
             foreach ($checkEmails as $email) {
-                if (!$this->validate->isEmail($email)) {
+                if (! $this->validate->isEmail($email)) {
                     $invalidEmails[] = $email;
                 }
             }
 
-            if (!empty($invalidEmails)) {
+            if (! empty($invalidEmails)) {
                 $nbInvalidEmails = count($invalidEmails);
 
                 if ($nbInvalidEmails > 1) {
@@ -120,7 +121,7 @@ class LogsConfiguration implements DataConfigurationInterface
      */
     public function validateConfiguration(array $configuration)
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $resolver
             ->setRequired(['logs_by_email', 'logs_email_receivers'])
             ->resolve($configuration);

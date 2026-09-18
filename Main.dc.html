@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+    a { color: #5b7a0d; } a:hover { color: #3f5509; }
+    .mono { font-family: 'JetBrains Mono', 'Menlo', monospace; }
+  </style>
+</helmet>
+
+<div style="width: 340px; background: #fff; color: #18181b;">
+
+  <!-- Cabecera: el contador manda, la acción vive a la derecha -->
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #e4e4e7;">
+    <span class="mono" style="font-size: 26px; font-weight: 800; line-height: 1;">{{counts.total}}</span>
+    <div style="display: flex; flex-direction: column; gap: 1px; flex-grow: 1;">
+      <span style="font-size: 10px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: .08em;">Tickets</span>
+      <span style="font-size: 11.5px; color: #3f3f46;">{{counts.subtitle}}</span>
+    </div>
+    <button style="width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #e4e4e7; border-radius: 8px; background: #fff; color: #3f3f46; cursor: pointer;" title="Nuevo ticket">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div style="display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid #f4f4f5;">
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+      <button onClick="{{f.pick}}" style="{{f.style}}">
+        {{f.label}}<span style="{{f.countStyle}}">{{f.count}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- Lista -->
+  <div style="display: flex; flex-direction: column; gap: 7px; padding: 12px 16px;">
+    <sc-for list="{{tickets}}" as="t" hint-placeholder-count="3">
+      <div style="{{t.cardStyle}}">
+
+        <!-- Fila 1: el ASUNTO es lo primero que se lee, no el número -->
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span style="{{t.titleStyle}}">{{t.subject}}</span>
+          <span style="{{t.statusStyle}}">{{t.status}}</span>
+        </div>
+
+        <!-- Fila 2: identificador y procedencia, en gris y a un solo renglón.
+             "De esta conversación" ya no es un badge que compite con el estado:
+             es el eslabón delante del número, con su tooltip. -->
+        <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+          <sc-if value="{{t.fromThisConversation}}" hint-placeholder-val="{{ true }}">
+            <span style="display: inline-flex; color: #5b7a0d; flex-shrink: 0;" title="Creado desde esta conversación">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
+            </span>
+          </sc-if>
+          <span class="mono" style="font-size: 10.5px; color: #71717a; font-weight: 500; white-space: nowrap;">{{t.number}}</span>
+          <span style="width: 3px; height: 3px; border-radius: 50%; background: #d4d4d8; flex-shrink: 0;"></span>
+          <span style="font-size: 10.5px; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{t.age}}</span>
+        </div>
+
+        <!-- Fila 3: quién lo lleva y dónde vive. Separada por una línea fina:
+             es información de gestión, no de identificación. -->
+        <div style="display: flex; align-items: center; gap: 8px; padding-top: 7px; border-top: 1px solid #f4f4f5;">
+          <span style="{{t.assigneeStyle}}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>
+            {{t.assignee}}
+          </span>
+          <sc-if value="{{t.category}}" hint-placeholder-val="{{ true }}">
+            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: #71717a; min-width: 0;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{t.category}}</span>
+            </span>
+          </sc-if>
+        </div>
+
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "$preview": {"width": 340, "height": 640},
+  "density": {"editor": "enum", "options": ["cómoda", "compacta"], "default": "cómoda", "section": "Diseño"},
+  "accent": {"editor": "color", "default": "#5b7a0d", "options": ["#5b7a0d", "#18181b", "#3730a3", "#0f766e"], "section": "Diseño"}
+}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+
+  data() {
+    // Tickets reales del panel de FRANCISCO MARTINEZ RUIZ (conversación 2790),
+    // más un cerrado y un urgente para que los cuatro filtros tengan qué filtrar.
+    return [
+      { number: '#TCK-2026-00116', subject: 'Pregunta sobre garantía', status: 'Nuevo', priority: 'normal', assignee: null, category: null, age: 'hace 9 m', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00115', subject: 'Pregunta sobre garantía', status: 'Nuevo', priority: 'normal', assignee: null, category: 'Canal interno', age: 'hace 1 h', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00111', subject: 'Prueba de enrutado por datos de gestión', status: 'Abierto', priority: 'high', assignee: 'Marta Ruiz', category: 'Trabaja con nosotros', age: 'hace 3 h', fromThisConversation: true, closed: false },
+      { number: '#TCK-2026-00104', subject: 'Pedido 829575 sin recibir', status: 'Abierto', priority: 'urgent', assignee: 'Javier Alonso', category: 'Incidencias', age: 'hace 2 d', fromThisConversation: false, closed: false },
+      { number: '#TCK-2026-00098', subject: 'Cambio de dirección de envío', status: 'Resuelto', priority: 'low', assignee: 'Marta Ruiz', category: 'Pedidos', age: 'hace 6 d', fromThisConversation: false, closed: true }
+    ];
+  }
+
+  // Los cuatro colores de prioridad son los que ya usa .tk-card en
+  // conversations.css: la barra izquierda no cambia de significado.
+  prioColor(p) {
+    return { urgent: '#3730a3', high: '#f59e0b', normal: '#3b82f6', low: '#10b981' }[p] || '#3b82f6';
+  }
+
+  renderVals() {
+    var self = this;
+    var compact = (this.props.density || 'cómoda') === 'compacta';
+    var accent = this.props.accent || '#5b7a0d';
+    var all = this.data();
+    var filter = (this.state && this.state.filter) || 'all';
+
+    var counts = {
+      all: all.length,
+      open: all.filter(function (t) { return !t.closed; }).length,
+      closed: all.filter(function (t) { return t.closed; }).length,
+      urgent: all.filter(function (t) { return t.priority === 'urgent'; }).length
+    };
+
+    var defs = [
+      { id: 'all', label: 'Todos', count: counts.all },
+      { id: 'open', label: 'Abiertos', count: counts.open },
+      { id: 'closed', label: 'Cerrados', count: counts.closed },
+      { id: 'urgent', label: 'Urgentes', count: counts.urgent }
+    ];
+
+    var pillBase = 'display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; font-family: inherit;';
+
+    var filters = defs.map(function (d) {
+      var on = d.id === filter;
+      return {
+        label: d.label,
+        count: d.count,
+        style: pillBase + (on
+          ? ' background: #18181b; color: #fff;'
+          : ' background: #f4f4f5; color: #71717a;'),
+        countStyle: 'font-size: 10.5px; font-weight: 600; opacity: ' + (on ? '.85' : '.7') + ';',
+        pick: function () { self.setState({ filter: d.id }); }
+      };
+    });
+
+    var visible = all.filter(function (t) {
+      if (filter === 'open') return !t.closed;
+      if (filter === 'closed') return t.closed;
+      if (filter === 'urgent') return t.priority === 'urgent';
+      return true;
+    });
+
+    var pad = compact ? '9px 11px' : '11px 12px';
+
+    var tickets = visible.map(function (t) {
+      var closed = t.closed;
+      return {
+        number: t.number,
+        subject: t.subject,
+        status: t.status,
+        age: t.age,
+        category: t.category,
+        assignee: t.assignee || 'Sin asignar',
+        fromThisConversation: t.fromThisConversation,
+
+        cardStyle: 'display: flex; flex-direction: column; gap: 6px; padding: ' + pad +
+          '; border: 1px solid #e4e4e7; border-left: 3px solid ' + self.prioColor(t.priority) +
+          '; border-radius: 7px; background: #fff; text-align: left; cursor: pointer;' +
+          (closed ? ' opacity: .62;' : ''),
+
+        // El asunto crece hasta dos líneas antes de recortar: es lo que
+        // identifica el ticket, y a 340px una sola línea lo dejaba en
+        // "Prueba de enrutado por datos de…" en casi todos los casos.
+        titleStyle: 'flex-grow: 1; min-width: 0; font-size: 12.5px; font-weight: 600; line-height: 1.35; letter-spacing: -.005em; color: #18181b;' +
+          ' display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;' +
+          (closed ? ' text-decoration: line-through; text-decoration-color: #d4d4d8;' : ''),
+
+        // El estado, arriba a la derecha y sin nada que le dispute el sitio.
+        statusStyle: 'flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; white-space: nowrap;' +
+          (closed
+            ? ' background: #f4f4f5; color: #a1a1aa;'
+            : (t.status === 'Nuevo'
+              ? ' background: ' + accent + '1a; color: ' + accent + ';'
+              : ' background: #f4f4f5; color: #3f3f46;')),
+
+        assigneeStyle: 'display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' +
+          (t.assignee ? ' color: #3f3f46;' : ' color: #a1a1aa; font-style: italic;')
+      };
+    });
+
+    return {
+      filters: filters,
+      tickets: tickets,
+      counts: {
+        total: counts.all,
+        subtitle: counts.open + (counts.open === 1 ? ' abierto' : ' abiertos') +
+          (counts.urgent ? ' · ' + counts.urgent + ' urgente' + (counts.urgent === 1 ? '' : 's') : '')
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

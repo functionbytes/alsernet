@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Currency\Exception;
 /**
  * Exception is thrown on currencies bulk toggle failure
  */
-class BulkToggleCurrenciesException extends BulkDeleteCurrenciesException
-{
-}
+class BulkToggleCurrenciesException extends BulkDeleteCurrenciesException {}

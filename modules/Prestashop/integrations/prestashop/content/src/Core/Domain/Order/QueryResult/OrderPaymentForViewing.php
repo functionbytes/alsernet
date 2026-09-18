@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,18 +81,6 @@ class OrderPaymentForViewing
      */
     private $cardHolder;
 
-    /**
-     * @param int $paymentId
-     * @param DateTimeImmutable $date
-     * @param string $paymentMethod
-     * @param string $transactionId
-     * @param string $amount
-     * @param string|null $invoiceNumber
-     * @param string $cardNumber
-     * @param string $cardBrand
-     * @param string $cardExpiration
-     * @param string $cardHolder
-     */
     public function __construct(
         int $paymentId,
         DateTimeImmutable $date,
@@ -116,81 +105,51 @@ class OrderPaymentForViewing
         $this->cardHolder = $cardHolder;
     }
 
-    /**
-     * @return int
-     */
     public function getPaymentId(): int
     {
         return $this->paymentId;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getDate(): DateTimeImmutable
     {
         return $this->date;
     }
 
-    /**
-     * @return string
-     */
     public function getPaymentMethod(): string
     {
         return $this->paymentMethod;
     }
 
-    /**
-     * @return string
-     */
     public function getTransactionId(): string
     {
         return $this->transactionId;
     }
 
-    /**
-     * @return string
-     */
     public function getAmount(): string
     {
         return $this->amount;
     }
 
-    /**
-     * @return string|null
-     */
     public function getInvoiceNumber(): ?string
     {
         return $this->invoiceNumber;
     }
 
-    /**
-     * @return string
-     */
     public function getCardNumber(): string
     {
         return $this->cardNumber;
     }
 
-    /**
-     * @return string
-     */
     public function getCardBrand(): string
     {
         return $this->cardBrand;
     }
 
-    /**
-     * @return string
-     */
     public function getCardExpiration(): string
     {
         return $this->cardExpiration;
     }
 
-    /**
-     * @return string
-     */
     public function getCardHolder(): string
     {
         return $this->cardHolder;

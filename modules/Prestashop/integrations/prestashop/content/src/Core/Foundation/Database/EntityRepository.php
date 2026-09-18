@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,18 +35,22 @@ class EntityRepository
      * @var EntityManager
      */
     protected $entityManager;
+
     /**
      * @var DatabaseInterface
      */
     protected $db;
+
     /**
      * @var string
      */
     protected $tablesPrefix;
+
     /**
      * @var EntityMetaData
      */
     protected $entityMetaData;
+
     /**
      * @var QueryBuilder
      */
@@ -65,10 +70,10 @@ class EntityRepository
 
     public function __call($method, $arguments)
     {
-        if (0 === strpos($method, 'findOneBy')) {
+        if (strpos($method, 'findOneBy') === 0) {
             $one = true;
             $by = substr($method, 9);
-        } elseif (0 === strpos($method, 'findBy')) {
+        } elseif (strpos($method, 'findBy') === 0) {
             $one = false;
             $by = substr($method, 6);
         } else {
@@ -79,7 +84,7 @@ class EntityRepository
             throw new Exception(sprintf('Method %s takes exactly one argument.', $method));
         }
 
-        if (!$by) {
+        if (! $by) {
             $where = $arguments[0];
         } else {
             $where = [];
@@ -94,8 +99,7 @@ class EntityRepository
      * Convert a camelCase field name to a snakeCase one
      * e.g.: findAllByIdCMS => id_cms.
      *
-     * @param string $camel_case_field_name
-     *
+     * @param  string  $camel_case_field_name
      * @return string
      */
     private function convertToDbFieldName($camel_case_field_name)
@@ -130,7 +134,7 @@ class EntityRepository
      */
     protected function getTableNameWithPrefix()
     {
-        return $this->db->escape($this->tablesPrefix . $this->entityMetaData->getTableName());
+        return $this->db->escape($this->tablesPrefix.$this->entityMetaData->getTableName());
     }
 
     /**
@@ -152,7 +156,7 @@ class EntityRepository
     {
         $entityClassName = $this->entityMetaData->getEntityClassName();
 
-        return new $entityClassName();
+        return new $entityClassName;
     }
 
     /**
@@ -162,7 +166,7 @@ class EntityRepository
      * Null is returned when there are no rows, and an exception is thrown
      * if there are too many rows.
      *
-     * @param array $rows Database rows
+     * @param  array  $rows  Database rows
      */
     protected function hydrateOne(array $rows)
     {
@@ -194,9 +198,7 @@ class EntityRepository
     /**
      * Constructs and performs 'SELECT' in DB.
      *
-     * @param bool $one
-     * @param array $cumulativeConditions
-     *
+     * @param  bool  $one
      * @return array|mixed|null
      *
      * @throws Exception
@@ -205,7 +207,7 @@ class EntityRepository
     {
         $whereClause = $this->queryBuilder->buildWhereConditions('AND', $cumulativeConditions);
 
-        $sql = 'SELECT * FROM ' . $this->getTableNameWithPrefix() . ' WHERE ' . $whereClause;
+        $sql = 'SELECT * FROM '.$this->getTableNameWithPrefix().' WHERE '.$whereClause;
 
         $rows = $this->db->select($sql);
 
@@ -219,8 +221,7 @@ class EntityRepository
     /**
      * Find one entity in DB.
      *
-     * @param int $id
-     *
+     * @param  int  $id
      * @return array|mixed|null
      *
      * @throws Exception
@@ -240,7 +241,7 @@ class EntityRepository
      */
     public function findAll()
     {
-        $sql = 'SELECT * FROM ' . $this->getTableNameWithPrefix();
+        $sql = 'SELECT * FROM '.$this->getTableNameWithPrefix();
 
         return $this->hydrateMany($this->db->select($sql));
     }

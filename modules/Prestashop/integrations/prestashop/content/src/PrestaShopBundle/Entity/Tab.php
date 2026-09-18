@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Tab.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\TabRepository")
  */
 class Tab
@@ -40,7 +42,9 @@ class Tab
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_tab", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -172,17 +176,11 @@ class Tab
         return $this->tabLangs;
     }
 
-    /**
-     * @return string|null
-     */
     public function getWording(): ?string
     {
         return $this->wording;
     }
 
-    /**
-     * @return string|null
-     */
     public function getWordingDomain(): ?string
     {
         return $this->wordingDomain;
@@ -191,8 +189,7 @@ class Tab
     /**
      * Set active.
      *
-     * @param bool $active
-     *
+     * @param  bool  $active
      * @return Tab
      */
     public function setActive($active)
@@ -211,8 +208,7 @@ class Tab
     }
 
     /**
-     * @param string $routeName
-     *
+     * @param  string  $routeName
      * @return Tab
      */
     public function setRouteName($routeName)
@@ -231,8 +227,7 @@ class Tab
     }
 
     /**
-     * @param bool $enabled
-     *
+     * @param  bool  $enabled
      * @return Tab
      */
     public function setEnabled($enabled)

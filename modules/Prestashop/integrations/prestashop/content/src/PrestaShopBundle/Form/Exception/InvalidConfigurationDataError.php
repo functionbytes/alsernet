@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ class InvalidConfigurationDataError
 
     /**
      * InvalidConfigurationDataError constructor.
-     *
-     * @param int $errorCode
-     * @param string $fieldName
-     * @param int|null $languageId
      */
     public function __construct(int $errorCode, string $fieldName, ?int $languageId = null)
     {
@@ -59,25 +56,16 @@ class InvalidConfigurationDataError
         $this->languageId = $languageId;
     }
 
-    /**
-     * @return int
-     */
     public function getErrorCode(): int
     {
         return $this->errorCode;
     }
 
-    /**
-     * @return string
-     */
     public function getFieldName(): string
     {
         return $this->fieldName;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLanguageId(): ?int
     {
         return $this->languageId;

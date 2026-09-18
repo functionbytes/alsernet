@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class ConversionRateKpi implements KpiInterface
     {
         $translator = Context::getContext()->getTranslator();
 
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-conversion-rate';
         $helper->icon = 'assessment';
         $helper->color = 'color1';
@@ -59,7 +60,7 @@ final class ConversionRateKpi implements KpiInterface
         }
 
         $helper->source = Context::getContext()->link->getAdminLink('AdminStats')
-            . '&ajax=1&action=getKpi&kpi=conversion_rate';
+            .'&ajax=1&action=getKpi&kpi=conversion_rate';
         $helper->refresh = (bool) (ConfigurationKPI::get('CONVERSION_RATE_EXPIRE') < time());
 
         return $helper->generate();

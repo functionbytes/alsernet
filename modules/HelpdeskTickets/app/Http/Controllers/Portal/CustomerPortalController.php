@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\CustomerSession;
+use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Http\Requests\Portal\PortalLoginRequest;
@@ -134,7 +137,25 @@ class CustomerPortalController extends Controller
         // mano y faltaba.
         request()->session()->regenerate();
 
-        session(['portal_customer_id' => $customer->id]);
+        // El nombre va en la sesión junto al id porque la cabecera del portal
+        // lo pinta en TODAS las páginas: leerlo de aquí evita un
+        // Customer::find() dentro de la vista del layout, que era una consulta
+        // extra por cada carga del portal solo para escribir el nombre.
+        session([
+            'portal_customer_id' => $customer->id,
+            'portal_customer_name' => $customer->name,
+            'portal_last_activity_at' => now()->timestamp,
+        ]);
+
+        CustomerSession::query()->updateOrCreate(
+            ['session_id' => request()->session()->getId()],
+            [
+                'customer_id' => $customer->id,
+                'ip_address' => request()->ip(),
+                'user_agent' => substr((string) request()->userAgent(), 0, 255),
+                'last_activity_at' => now(),
+            ],
+        );
 
         return redirect()->route('portal.tickets');
     }
@@ -142,7 +163,8 @@ class CustomerPortalController extends Controller
     /** POST /portal/logout */
     public function logout(Request $request): RedirectResponse
     {
-        $request->session()->forget('portal_customer_id');
+        CustomerSession::query()->where('session_id', $request->session()->getId())->delete();
+        $request->session()->forget(['portal_customer_id', 'portal_customer_name', 'portal_last_activity_at']);
 
         // invalidate() + regenerateToken(): forget() solo quita la clave y deja
         // viva la sesión y su token CSRF.
@@ -202,7 +224,16 @@ class CustomerPortalController extends Controller
             ->get()
             ->flatMap(fn (TicketMessage $msg) => $msg->attachments);
 
-        return view('helpdesktickets::portal.tickets.show', compact('customer', 'ticket', 'messages', 'attachments'));
+        $attachmentSettings = [
+            'max_kilobytes' => app(HelpdeskSettings::class)->attachmentMaxKilobytes(),
+            'extensions' => app(HelpdeskSettings::class)->attachmentExtensions(),
+            'user_upload_enabled' => filter_var(
+                Setting::get('tickets.user_file_upload_enable', true),
+                FILTER_VALIDATE_BOOLEAN,
+            ),
+        ];
+
+        return view('helpdesktickets::portal.tickets.show', compact('customer', 'ticket', 'messages', 'attachments', 'attachmentSettings'));
     }
 
     /**
@@ -304,8 +335,16 @@ class CustomerPortalController extends Controller
 
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
         $statuses = TicketStatus::active()->ordered()->get(['id', 'name', 'color']);
+        $attachmentSettings = [
+            'max_kilobytes' => app(HelpdeskSettings::class)->attachmentMaxKilobytes(),
+            'extensions' => app(HelpdeskSettings::class)->attachmentExtensions(),
+            'user_upload_enabled' => filter_var(
+                Setting::get('tickets.user_file_upload_enable', true),
+                FILTER_VALIDATE_BOOLEAN,
+            ),
+        ];
 
-        return view('helpdesktickets::portal.tickets.create', compact('customer', 'categories', 'statuses'));
+        return view('helpdesktickets::portal.tickets.create', compact('customer', 'categories', 'statuses', 'attachmentSettings'));
     }
 
     /** POST /portal/tickets */
@@ -468,7 +507,12 @@ class CustomerPortalController extends Controller
      */
     private function storeAttachments(array $files, int $ticketId): void
     {
-        app(TicketService::class)->storeAttachments($files, $ticketId, [], 5 * 1024 * 1024);
+        app(TicketService::class)->storeAttachments(
+            $files,
+            $ticketId,
+            [],
+            app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024,
+        );
     }
 
     private function getAuthenticatedCustomer(): ?Customer
@@ -495,7 +539,8 @@ class CustomerPortalController extends Controller
         }
 
         if ($customer->banned_at !== null) {
-            session()->forget('portal_customer_id');
+            CustomerSession::query()->where('session_id', request()->session()->getId())->delete();
+            session()->forget(['portal_customer_id', 'portal_customer_name', 'portal_last_activity_at']);
 
             return redirect()->route('portal.login')
                 ->withErrors(['email' => __('helpdesktickets::helpdesktickets.portal.account_suspended')]);

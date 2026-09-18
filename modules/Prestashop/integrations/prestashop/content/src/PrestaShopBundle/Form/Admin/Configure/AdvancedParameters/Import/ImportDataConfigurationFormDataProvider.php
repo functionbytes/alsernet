@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,13 +64,6 @@ final class ImportDataConfigurationFormDataProvider implements ImportFormDataPro
      */
     private $dataMatchSaver;
 
-    /**
-     * @param ImportDirectory $importDirectory
-     * @param DataRowCollectionFactoryInterface $dataRowCollectionFactory
-     * @param ImportMatchRepository $importMatchRepository
-     * @param DataMatchSaver $dataMatchSaver
-     * @param array $entityFieldChoices
-     */
     public function __construct(
         ImportDirectory $importDirectory,
         DataRowCollectionFactoryInterface $dataRowCollectionFactory,
@@ -89,7 +83,7 @@ final class ImportDataConfigurationFormDataProvider implements ImportFormDataPro
      */
     public function getData(ImportConfigInterface $importConfig)
     {
-        $importFile = new SplFileInfo($this->importDirectory . $importConfig->getFileName());
+        $importFile = new SplFileInfo($this->importDirectory.$importConfig->getFileName());
         $dataRowCollection = $this->dataRowCollectionFactory->buildFromFile($importFile, 1);
 
         // Getting the number of cells in the first row
@@ -119,7 +113,7 @@ final class ImportDataConfigurationFormDataProvider implements ImportFormDataPro
             }
 
             $data['type_value'][] = $choice;
-            ++$numberOfValuesAdded;
+            $numberOfValuesAdded++;
         }
 
         return $data;
@@ -162,8 +156,7 @@ final class ImportDataConfigurationFormDataProvider implements ImportFormDataPro
     /**
      * Checks if the configuration is already saved with the same name.
      *
-     * @param string $matchName
-     *
+     * @param  string  $matchName
      * @return bool
      */
     private function configurationNameExists($matchName)

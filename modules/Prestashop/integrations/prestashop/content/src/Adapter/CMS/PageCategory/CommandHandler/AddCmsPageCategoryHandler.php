@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,11 +48,11 @@ final class AddCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler imp
      */
     public function handle(AddCmsPageCategoryCommand $command)
     {
-        if (!$this->assertHasDefaultLanguage($command->getLocalisedName())) {
+        if (! $this->assertHasDefaultLanguage($command->getLocalisedName())) {
             throw new CmsPageCategoryConstraintException('Missing name in default language', CmsPageCategoryConstraintException::MISSING_DEFAULT_LANGUAGE_FOR_NAME);
         }
 
-        if (!$this->assertHasDefaultLanguage($command->getLocalisedFriendlyUrl())) {
+        if (! $this->assertHasDefaultLanguage($command->getLocalisedFriendlyUrl())) {
             throw new CmsPageCategoryConstraintException('Missing friendly url in default language', CmsPageCategoryConstraintException::MISSING_DEFAULT_LANGUAGE_FOR_FRIENDLY_URL);
         }
 
@@ -59,7 +60,7 @@ final class AddCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler imp
         $this->assertDescriptionContainsCleanHtml($command->getLocalisedDescription());
 
         try {
-            $cmsPageCategory = new CMSCategory();
+            $cmsPageCategory = new CMSCategory;
             $cmsPageCategory->name = $command->getLocalisedName();
             $cmsPageCategory->active = $command->isDisplayed();
             $cmsPageCategory->id_parent = $command->getParentId()->getValue();
@@ -70,7 +71,7 @@ final class AddCmsPageCategoryHandler extends AbstractCmsPageCategoryHandler imp
 
             $cmsPageCategory->link_rewrite = $command->getLocalisedFriendlyUrl();
 
-            if (false === $cmsPageCategory->add()) {
+            if ($cmsPageCategory->add() === false) {
                 throw new CannotAddCmsPageCategoryException('Failed to add cms page category');
             }
 

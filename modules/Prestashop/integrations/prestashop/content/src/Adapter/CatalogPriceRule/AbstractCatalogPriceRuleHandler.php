@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,6 @@ abstract class AbstractCatalogPriceRuleHandler
 {
     /**
      * Gets legacy SpecificPriceRule
-     *
-     * @param CatalogPriceRuleId $catalogPriceRuleId
-     *
-     * @return SpecificPriceRule
      */
     protected function getSpecificPriceRule(CatalogPriceRuleId $catalogPriceRuleId): SpecificPriceRule
     {
@@ -64,7 +61,6 @@ abstract class AbstractCatalogPriceRuleHandler
     /**
      * Deletes legacy SpecificPriceRule
      *
-     * @param SpecificPriceRule $specificPriceRule
      *
      * @return bool
      *
@@ -80,9 +76,6 @@ abstract class AbstractCatalogPriceRuleHandler
     }
 
     /**
-     * @param DateTime $from
-     * @param DateTime $to
-     *
      * @throws CatalogPriceRuleConstraintException
      */
     protected function assertDateRangeIsNotInverse(DateTime $from, DateTime $to)

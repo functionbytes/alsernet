@@ -67,7 +67,10 @@ class CatalogCacheService
      */
     public static function agents(): Collection
     {
-        return Cache::remember('helpdesk:catalogs:agents', self::AGENTS_TTL, fn () => User::select(['id', 'firstname', 'lastname', 'email'])
+        // last_login_at entra en el select porque AgentAvailabilityService lo
+        // necesita para distinguir a un agente real de una cuenta que nunca ha
+        // llegado a usarse; sin ella todos parecían recién creados.
+        return Cache::remember('helpdesk:catalogs:agents', self::AGENTS_TTL, fn () => User::select(['id', 'firstname', 'lastname', 'email', 'last_login_at'])
             ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
             ->where('available', true)
             ->orderBy('firstname')

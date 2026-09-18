@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class DeleteCatalogPriceRuleHandler extends AbstractCatalogPriceRuleHandle
         $catalogPriceRuleId = $command->getCatalogPriceRuleId();
         $specificPriceRule = $this->getSpecificPriceRule($catalogPriceRuleId);
 
-        if (!$this->deleteSpecificPriceRule($specificPriceRule)) {
+        if (! $this->deleteSpecificPriceRule($specificPriceRule)) {
             throw new CannotDeleteCatalogPriceRuleException(sprintf('Cannot delete SpecificPriceRule object with id "%s".', $catalogPriceRuleId->getValue()), CannotDeleteCatalogPriceRuleException::FAILED_DELETE);
         }
     }

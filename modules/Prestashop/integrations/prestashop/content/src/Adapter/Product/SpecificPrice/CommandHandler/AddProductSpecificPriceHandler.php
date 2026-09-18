@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class AddProductSpecificPriceHandler implements AddProductSpecificPriceHan
      */
     private $specificPriceRepository;
 
-    /**
-     * @param SpecificPriceRepository $specificPriceRepository
-     */
     public function __construct(SpecificPriceRepository $specificPriceRepository)
     {
         $this->specificPriceRepository = $specificPriceRepository;
@@ -68,16 +66,14 @@ final class AddProductSpecificPriceHandler implements AddProductSpecificPriceHan
     /**
      * Creates legacy SpecificPrice object from command
      *
-     * @param AddProductSpecificPriceCommand $command
      *
-     * @return SpecificPrice
      *
      * @throws PrestaShopException
      * @throws SpecificPriceConstraintException
      */
     private function createSpecificPriceFromCommand(AddProductSpecificPriceCommand $command): SpecificPrice
     {
-        $specificPrice = new SpecificPrice();
+        $specificPrice = new SpecificPrice;
 
         $specificPrice->id_product = $command->getProductId()->getValue();
         $specificPrice->reduction_type = $command->getReduction()->getType();
@@ -87,7 +83,7 @@ final class AddProductSpecificPriceHandler implements AddProductSpecificPriceHan
         $specificPrice->from_quantity = $command->getFromQuantity();
         $specificPrice->id_shop_group = $command->getShopGroupId() ?? 0;
         $specificPrice->id_shop = $command->getShopId() ?? 0;
-        $specificPrice->id_product_attribute = null !== $command->getCombinationId() ? $command->getCombinationId()->getValue() : 0;
+        $specificPrice->id_product_attribute = $command->getCombinationId() !== null ? $command->getCombinationId()->getValue() : 0;
         $specificPrice->id_currency = $command->getCurrencyId() ?? 0;
         $specificPrice->id_country = $command->getCountryId() ?? 0;
         $specificPrice->id_group = $command->getGroupId() ?? 0;
@@ -96,12 +92,12 @@ final class AddProductSpecificPriceHandler implements AddProductSpecificPriceHan
         $specificPrice->to = DateTimeUtil::NULL_VALUE;
 
         $from = $command->getDateTimeFrom();
-        if (null !== $from) {
+        if ($from !== null) {
             $specificPrice->from = $from->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT);
         }
 
         $to = $command->getDateTimeTo();
-        if (null !== $to) {
+        if ($to !== null) {
             $specificPrice->to = $to->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT);
         }
 

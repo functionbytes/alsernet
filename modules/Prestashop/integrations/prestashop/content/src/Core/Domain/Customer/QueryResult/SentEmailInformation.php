@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,10 @@ class SentEmailInformation
     private $template;
 
     /**
-     * @param string $date
-     * @param string $language
-     * @param string $subject
-     * @param string $template
+     * @param  string  $date
+     * @param  string  $language
+     * @param  string  $subject
+     * @param  string  $template
      */
     public function __construct($date, $language, $subject, $template)
     {

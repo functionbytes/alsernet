@@ -2,6 +2,7 @@
 
 namespace Modules\Erp\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Modules\Core\Models\Setting;
 use Modules\Supplier\Services\Integrations\ErpService;
@@ -132,7 +133,7 @@ class ErpCheckCommand extends Command
                 ['Total Requests', number_format((int) $settings['erp_total_requests'])],
                 ['Failed Requests', number_format((int) $settings['erp_failed_requests'])],
                 ['Success Rate', number_format((float) $settings['erp_success_rate'] ?? 100.0, 2).'%'],
-                ['Last Check', $settings['erp_last_connection_check'] ? \Carbon\Carbon::parse($settings['erp_last_connection_check'])->diffForHumans() : 'Never'],
+                ['Last Check', $settings['erp_last_connection_check'] ? Carbon::parse($settings['erp_last_connection_check'])->diffForHumans() : 'Never'],
                 ['Last Status', ucfirst($settings['erp_last_connection_status'] ?? 'unknown')],
             ]
         );

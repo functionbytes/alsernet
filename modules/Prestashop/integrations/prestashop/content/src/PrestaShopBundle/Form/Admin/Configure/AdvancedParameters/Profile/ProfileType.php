@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,7 +62,7 @@ class ProfileType extends AbstractType
             ->add('name', TranslatableType::class, [
                 'type' => TextType::class,
                 'constraints' => [
-                    new DefaultLanguage(),
+                    new DefaultLanguage,
                 ],
                 'options' => [
                     'constraints' => [
@@ -84,7 +85,6 @@ class ProfileType extends AbstractType
                 'attr' => [
                     'accept' => 'gif,jpg,jpeg,jpe,png',
                 ],
-            ])
-        ;
+            ]);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,10 +45,6 @@ final class CancellationFormDataHandler implements FormDataHandlerInterface
      */
     private $queryBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     * @param CommandBusInterface $queryBus
-     */
     public function __construct(CommandBusInterface $commandBus, CommandBusInterface $queryBus)
     {
         $this->commandBus = $commandBus;
@@ -57,10 +54,7 @@ final class CancellationFormDataHandler implements FormDataHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function create(array $data)
-    {
-        return;
-    }
+    public function create(array $data) {}
 
     /**
      * {@inheritdoc}
@@ -69,8 +63,8 @@ final class CancellationFormDataHandler implements FormDataHandlerInterface
     {
         $cancelledProducts = [];
         foreach ($data['inventaries'] as $product) {
-            if (isset($data['selected_' . $product->getOrderDetailId()]) && $data['selected_' . $product->getOrderDetailId()]) {
-                $cancelledProducts[$product->getOrderDetailId()] = $data['quantity_' . $product->getOrderDetailId()] ?? 0;
+            if (isset($data['selected_'.$product->getOrderDetailId()]) && $data['selected_'.$product->getOrderDetailId()]) {
+                $cancelledProducts[$product->getOrderDetailId()] = $data['quantity_'.$product->getOrderDetailId()] ?? 0;
             }
         }
 

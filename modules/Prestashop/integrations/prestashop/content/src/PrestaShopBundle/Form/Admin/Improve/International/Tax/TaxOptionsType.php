@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,7 @@ class TaxOptionsType extends TranslatorAwareType
      *
      * Backwards compatibility break introduced in 1.7.8.0 due to extension of TranslatorAwareType
      *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $ecoTaxEnabled
-     * @param FormChoiceProviderInterface $taxAddressTypeChoiceProvider
-     * @param FormChoiceProviderInterface $taxRuleGroupChoiceProvider
+     * @param  bool  $ecoTaxEnabled
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -123,8 +120,7 @@ class TaxOptionsType extends TranslatorAwareType
                 'help' => $this->trans(
                     'If you disable the ecotax, the ecotax for all your inventaries will be set to 0.',
                     'Admin.International.Help'),
-            ])
-        ;
+            ]);
 
         if ($this->ecoTaxEnabled) {
             $builder->add('eco_tax_rule_group', ChoiceType::class, [

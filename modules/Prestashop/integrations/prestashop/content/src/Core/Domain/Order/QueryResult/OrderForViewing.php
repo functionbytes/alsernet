@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,6 +53,7 @@ class OrderForViewing
      * @var OrderInvoiceAddressForViewing
      */
     private $invoiceAddress;
+
     /**
      * @var string
      */
@@ -197,41 +199,6 @@ class OrderForViewing
      */
     private $note;
 
-    /**
-     * @param int $orderId
-     * @param int $currencyId
-     * @param int $carrierId
-     * @param string $carrierName
-     * @param int $shopId
-     * @param string $reference
-     * @param bool $isVirtual
-     * @param string $taxMethod
-     * @param bool $isTaxIncluded
-     * @param bool $isValid
-     * @param bool $hasBeenPaid
-     * @param bool $hasInvoice
-     * @param bool $isDelivered
-     * @param bool $isShipped
-     * @param bool $invoiceManagementIsEnabled
-     * @param DateTimeImmutable $createdAt
-     * @param OrderCustomerForViewing|null $customer
-     * @param OrderShippingAddressForViewing $shippingAddress
-     * @param OrderInvoiceAddressForViewing $invoiceAddress
-     * @param OrderProductsForViewing $products
-     * @param OrderHistoryForViewing $history
-     * @param OrderDocumentsForViewing $documents
-     * @param OrderShippingForViewing $shipping
-     * @param OrderReturnsForViewing $returns
-     * @param OrderPaymentsForViewing $payments
-     * @param OrderMessagesForViewing $messages
-     * @param OrderPricesForViewing $prices
-     * @param OrderDiscountsForViewing $discounts
-     * @param OrderSourcesForViewing $sources
-     * @param LinkedOrdersForViewing $linkedOrders
-     * @param string $shippingAddressFormatted
-     * @param string $invoiceAddressFormatted
-     * @param string $note
-     */
     public function __construct(
         int $orderId,
         int $currencyId,
@@ -302,25 +269,16 @@ class OrderForViewing
         $this->note = $note;
     }
 
-    /**
-     * @return int
-     */
     public function getId(): int
     {
         return $this->orderId;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrencyId(): int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int
-     */
     public function getCarrierId(): int
     {
         return $this->carrierId;
@@ -331,225 +289,141 @@ class OrderForViewing
         return $this->carrierName;
     }
 
-    /**
-     * @return int
-     */
     public function getShopId(): int
     {
         return $this->shopId;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;
     }
 
-    /**
-     * @return bool
-     */
     public function isValid(): bool
     {
         return $this->isValid;
     }
 
-    /**
-     * @return OrderCustomerForViewing|null
-     */
     public function getCustomer(): ?OrderCustomerForViewing
     {
         return $this->customer;
     }
 
-    /**
-     * @return OrderShippingAddressForViewing
-     */
     public function getShippingAddress(): OrderShippingAddressForViewing
     {
         return $this->shippingAddress;
     }
 
-    /**
-     * @return OrderInvoiceAddressForViewing
-     */
     public function getInvoiceAddress(): OrderInvoiceAddressForViewing
     {
         return $this->invoiceAddress;
     }
 
-    /**
-     * @return OrderProductsForViewing
-     */
     public function getProducts(): OrderProductsForViewing
     {
         return $this->products;
     }
 
-    /**
-     * @return string
-     */
     public function getTaxMethod(): string
     {
         return $this->taxMethod;
     }
 
-    /**
-     * @return OrderHistoryForViewing
-     */
     public function getHistory(): OrderHistoryForViewing
     {
         return $this->history;
     }
 
-    /**
-     * @return OrderDocumentsForViewing
-     */
     public function getDocuments(): OrderDocumentsForViewing
     {
         return $this->documents;
     }
 
-    /**
-     * @return OrderShippingForViewing
-     */
     public function getShipping(): OrderShippingForViewing
     {
         return $this->shipping;
     }
 
-    /**
-     * @return OrderReturnsForViewing
-     */
     public function getReturns(): OrderReturnsForViewing
     {
         return $this->returns;
     }
 
-    /**
-     * @return OrderPaymentsForViewing
-     */
     public function getPayments(): OrderPaymentsForViewing
     {
         return $this->payments;
     }
 
-    /**
-     * @return bool
-     */
     public function hasPayments(): bool
     {
         return count($this->payments->getPayments()) > 0;
     }
 
-    /**
-     * @return OrderMessagesForViewing
-     */
     public function getMessages(): OrderMessagesForViewing
     {
         return $this->messages;
     }
 
-    /**
-     * @return bool
-     */
     public function isDelivered(): bool
     {
         return $this->isDelivered;
     }
 
-    /**
-     * @return bool
-     */
     public function isShipped(): bool
     {
         return $this->isShipped;
     }
 
-    /**
-     * @return OrderPricesForViewing
-     */
     public function getPrices(): OrderPricesForViewing
     {
         return $this->prices;
     }
 
-    /**
-     * @return bool
-     */
     public function isTaxIncluded(): bool
     {
         return $this->isTaxIncluded;
     }
 
-    /**
-     * @return bool
-     */
     public function hasBeenPaid(): bool
     {
         return $this->hasBeenPaid;
     }
 
-    /**
-     * @return bool
-     */
     public function hasInvoice(): bool
     {
         return $this->hasInvoice;
     }
 
-    /**
-     * @return OrderDiscountsForViewing
-     */
     public function getDiscounts(): OrderDiscountsForViewing
     {
         return $this->discounts;
     }
 
-    /**
-     * @return LinkedOrdersForViewing
-     */
     public function getLinkedOrders(): LinkedOrdersForViewing
     {
         return $this->linkedOrders;
     }
 
-    /**
-     * @return DateTimeImmutable
-     */
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    /**
-     * @return bool
-     */
     public function isVirtual(): bool
     {
         return $this->isVirtual;
     }
 
-    /**
-     * @return bool
-     */
     public function isInvoiceManagementIsEnabled(): bool
     {
         return $this->invoiceManagementIsEnabled;
     }
 
-    /**
-     * @return OrderSourcesForViewing
-     */
     public function getSources(): OrderSourcesForViewing
     {
         return $this->sources;
     }
 
-    /**
-     * @return bool
-     */
     public function isRefundable(): bool
     {
         /** @var OrderProductForViewing $product */
@@ -562,25 +436,16 @@ class OrderForViewing
         return $this->prices->getShippingRefundableAmountRaw()->isGreaterThanZero();
     }
 
-    /**
-     * @return string
-     */
     public function getShippingAddressFormatted(): string
     {
         return $this->shippingAddressFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getInvoiceAddressFormatted(): string
     {
         return $this->invoiceAddressFormatted;
     }
 
-    /**
-     * @return string
-     */
     public function getNote(): string
     {
         return $this->note;

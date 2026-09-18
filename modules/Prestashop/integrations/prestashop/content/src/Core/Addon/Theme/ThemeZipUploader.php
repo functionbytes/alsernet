@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class ThemeZipUploader implements ThemeUploaderInterface
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -57,10 +55,10 @@ final class ThemeZipUploader implements ThemeUploaderInterface
         $this->assertUploadedFileIsZip($uploadedTheme);
 
         $themesDir = $this->configuration->get('_PS_ALL_THEMES_DIR_');
-        $destination = $themesDir . $uploadedTheme->getClientOriginalName();
+        $destination = $themesDir.$uploadedTheme->getClientOriginalName();
 
-        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $uploadedTheme->getClientOriginalName())) {
-            $destination = $themesDir . sha1_file($uploadedTheme->getPathname()) . '.zip';
+        if (! preg_match('/^[a-zA-Z0-9_.-]+$/', $uploadedTheme->getClientOriginalName())) {
+            $destination = $themesDir.sha1_file($uploadedTheme->getPathname()).'.zip';
         }
 
         move_uploaded_file(
@@ -72,13 +70,11 @@ final class ThemeZipUploader implements ThemeUploaderInterface
     }
 
     /**
-     * @param UploadedFile $uploadedTheme
-     *
      * @throws ThemeUploadException
      */
     private function assertThemeWasUploadedWithoutErrors(UploadedFile $uploadedTheme)
     {
-        if (UPLOAD_ERR_OK === $uploadedTheme->getError()) {
+        if ($uploadedTheme->getError() === UPLOAD_ERR_OK) {
             return;
         }
 
@@ -90,8 +86,6 @@ final class ThemeZipUploader implements ThemeUploaderInterface
     }
 
     /**
-     * @param UploadedFile $uploadedTheme
-     *
      * @throws ThemeUploadException
      */
     private function assertUploadedFileIsZip(UploadedFile $uploadedTheme)

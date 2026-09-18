@@ -71,8 +71,14 @@
                 <i class="far fa-envelope" aria-hidden="true"></i>
             </button>
             @endif
-            @if(helpdesk_tickets_enabled() && helpdesk_feature_enabled('tickets'))
-            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}">
+            {{-- canCreateTickets() consulta la TicketPolicy de HelpdeskTickets a
+                 través del contrato (Helpdesk no puede importar sus clases). Sin
+                 esto el botón se pintaba a todo el mundo y quien no tuviera el
+                 permiso solo se enteraba al recibir el error del POST. --}}
+            @if(helpdesk_tickets_enabled()
+                && helpdesk_feature_enabled('tickets')
+                && app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->canCreateTickets())
+            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}">
                 <i class="fas fa-ticket" aria-hidden="true"></i>
             </button>
             @endif
@@ -141,10 +147,17 @@
                         <i class="far fa-star"></i>{{ __('helpdesk::helpdesk.inbox.thread.send_csat_survey') }}
                     </button>
                     @endif
+                    <button data-bv-modal="supervisor-review"><i class="fas fa-user-shield"></i>{{ __('helpdesk::helpdesk.inbox.thread.supervisor_review') }}</button>
 
                     <button data-bv-modal="audit-log"><i class="fas fa-clock-rotate-left"></i>{{ __('helpdesk::helpdesk.inbox.thread.conversation_activity') }}</button>
                     @can('helpdesk.manage')
                         <button data-bv-modal="auto-assign"><i class="fas fa-shuffle"></i>{{ __('helpdesk::helpdesk.inbox.thread.auto_assignment') }}</button>
+                    @endcan
+                    @can("roles.permissions.view")
+                        <button data-bv-modal="role-perms"><i class="fas fa-shield-halved"></i>{{ __('helpdesk::helpdesk.inbox.thread.role_permissions') }}</button>
+                    @endcan
+                    @can('helpdesk.sla-policies.view')
+                        <button data-bv-modal="sla-config"><i class="far fa-clock"></i>{{ __('helpdesk::helpdesk.inbox.thread.sla_config') }}</button>
                     @endcan
                     @if(helpdesk_helpcenter_enabled())
                         <button data-bv-modal="help-center"><i class="far fa-circle-question"></i>{{ __('helpdesk::helpdesk.inbox.thread.help_center') }}</button>
@@ -207,7 +220,7 @@
                     <button type="button" class="bv-load-older-btn btn btn-sm btn-light"
                             data-url="{{ url('panel/helpdesk/conversations/'.$convo->id.'/items') }}"
                             data-oldest-id="{{ $items->first()?->id }}">
-                        <i class="fas fa-arrow-up"></i> {{ __('helpdesk::helpdesk.inbox.thread.load_older') }}
+                        {{ __('helpdesk::helpdesk.inbox.thread.load_older') }}
                     </button>
                 </div>
             @endif
@@ -313,7 +326,7 @@
                                     class="bv-translate-item-btn btn btn-sm btn-link text-muted px-0 py-0"
                                     data-item-id="{{ $item->id }}"
                                     title="{{ __('helpdesktranslate::messages.thread.btn_translate_title') }}">
-                                <i class="fas fa-language"></i> {{ __('helpdesktranslate::messages.thread.btn_translate') }}
+                                {{ __('helpdesktranslate::messages.thread.btn_translate') }}
                             </button>
                         @endif
 
@@ -330,7 +343,11 @@
                                         <p class="bv-lp-desc">{{ $linkPreview['description'] }}</p>
                                     @endif
                                     <div class="bv-lp-meta">
-                                        <i class="fas fa-link"></i>
+                                        @if(! empty($linkPreview['favicon']))
+                                            <img src="{{ $linkPreview['favicon'] }}" alt="" class="bv-lp-favicon" loading="lazy" onerror="this.remove()">
+                                        @else
+                                            <i class="fas fa-link"></i>
+                                        @endif
                                         <span>{{ $linkPreview['site'] ?? parse_url($linkPreview['url'], PHP_URL_HOST) }}</span>
                                     </div>
                                 </div>
@@ -482,7 +499,7 @@
                             <span>{{ $isOut ? $authorLabel.' · ' : '' }}{{ $time }}</span>
                             @if($isOut && ! $isInternal)
                                 @if(! empty($item->metadata['send_failed']))
-                                    <span class="bv-send-failed text-danger" data-bv-item-id="{{ $item->id }}">
+                                    <span class="bv-send-failed text-dark" data-bv-item-id="{{ $item->id }}">
                                         <i class="fas fa-triangle-exclamation"></i> {{ __('helpdesk::helpdesk.inbox.thread.not_delivered') }}
                                         <button type="button" class="btn btn-link btn-sm p-0 align-baseline bv-retry-send"
                                                 data-bv-retry-url="{{ route('manager.helpdesk.conversation-items.retry-send', $item) }}">
@@ -534,6 +551,14 @@
                         <i class="fas fa-magnifying-glass"></i>
                         <input type="text" id="bv-hsm-search" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.search_template_placeholder') }}">
                     </div>
+                    {{-- Por defecto la lista solo muestra el idioma del cliente (ver
+                         applyHsmFilters en conversations-thread.js); este toggle deja
+                         al agente revelar las demás. Se muestra solo cuando existe al
+                         menos una plantilla en el idioma del cliente. --}}
+                    <label class="bv-hsm-lang-toggle d-none" id="bv-hsm-lang-toggle">
+                        <input type="checkbox" id="bv-hsm-lang-toggle-input">
+                        <span class="bv-hsm-lang-toggle-label"></span>
+                    </label>
                     {{-- Templates cargados dinámicamente vía JS --}}
                 </div>
                 <div class="bv-hsm-detail">
@@ -578,7 +603,7 @@
                 <i class="fas fa-lock bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.internal_note') }}
             </button>
             @endif
-            @if(helpdesk_feature_enabled('composer_hsm'))
+            @if(helpdesk_feature_enabled('composer_hsm') && $convo?->channel === 'whatsapp')
             <button class="bv-composer-tab" data-bv-tab="hsm">
                 <i class="fas fa-rectangle-list bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}
             </button>
@@ -591,7 +616,7 @@
 
         {{-- Área de texto --}}
         <div class="bv-composer-box" id="bv-composer-box">
-            <textarea class="bv-composer-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_placeholder') }}" rows="2" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.composer_aria_label') }}"></textarea>
+            <textarea class="bv-composer-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_placeholder') }}" data-bv-note-placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_note_placeholder') }}" rows="2" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.composer_aria_label') }}"></textarea>
             <div class="bv-composer-toolbar">
                 {{-- Adjuntar con menú --}}
                 @if(helpdesk_feature_enabled('composer_attach'))
@@ -775,228 +800,41 @@
         </div>
     </div>
 </div>
+@endif
 
+{{-- Estos dos bloques deben renderizarse SIEMPRE (no solo cuando hay una
+     conversación seleccionada): la vista "pane" (AJAX, ver pane.blade.php)
+     nunca emite el stack 'scripts', así que el <script> de thread-extension.js
+     y el markup de #hdArticleOverlay solo llegan al navegador si ya estaban
+     en la carga completa inicial de /panel/helpdesk/conversations (sin
+     conversación seleccionada). Si se dejan dentro de "@if($convo)", el botón
+     "Buscar artículo de ayuda" queda con un onclick a una función que nunca
+     se define (ReferenceError: openArticleModal is not defined) en cualquier
+     sesión que abra su primera conversación vía SPA (el caso normal). --}}
 @stack('hd-thread-modals')
 
 @once
 @push('scripts')
 
-<script>
-(function() {
-    var hdCsrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
-
-    // Contexto para reemplazar placeholders en plantillas
-    var hdCtx = {
-        'contact.name':    '{{ addslashes($cust?->name ?? '') }}',
-        'contact.email':   '{{ addslashes($cust?->email ?? '') }}',
-        'contact.phone':   '{{ addslashes($cust?->phone ?? '') }}',
-        'agent.name':      '{{ addslashes(auth()->user()->name ?? '') }}',
-        'agent.email':     '{{ addslashes(auth()->user()->email ?? '') }}',
-        'company.name':    '{{ addslashes(config("app.name")) }}',
-        'conversation.id': '{{ $convo?->id ?? '' }}',
-    };
-
-    function hdReplace(text) {
-        if (!text) { return text; }
-        return text.replace(/\{\{([^}]+)\}\}/g, function(match, key) {
-            var k = key.trim();
-            return hdCtx.hasOwnProperty(k) ? hdCtx[k] : match;
-        });
-    }
-
-    function hdEscape(str) {
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    document.getElementById('hdCannedOverlay').addEventListener('click', function(e) {
-        if (e.target === this) closeCannedModal();
-    });
-
-    // Los .media-pill son <span role="button"> (filtros de categoría): activar con Enter/Espacio.
-    document.getElementById('hdCannedOverlay').addEventListener('keydown', function(e) {
-        if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('media-pill')) {
-            e.preventDefault();
-            e.target.click();
-        }
-    });
-
-    // ── CANNED REPLIES ─────────────────────────────────────
-    var hdCannedAll = [], hdCannedFiltered = [], hdCannedActive = -1, hdCannedSelId = null, hdCannedTimer = null, hdCannedCat = '';
-
-    window.openCannedModal = function() {
-        document.getElementById('hdCannedOverlay').classList.add('open');
-        var inp = document.getElementById('hdCannedSearch');
-        inp.value = ''; inp.focus();
-        if (!hdCannedAll.length) { hdCannedFetch(''); }
-        else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
-    };
-    window.closeCannedModal = function() {
-        document.getElementById('hdCannedOverlay').classList.remove('open');
-    };
-    window.hdCannedFilter = function(cat) {
-        hdCannedCat = cat;
-        document.querySelectorAll('#hdCannedSeg .media-pill').forEach(function(b) {
-            b.classList.toggle('on', b.dataset.cat === cat);
-        });
-        hdCannedRender(hdCannedApplyFilters(hdCannedAll, cat));
-    };
-
-    function hdCannedFetch(q) {
-        var url = '{{ route("manager.helpdesk.canned-replies.search") }}' + (q ? '?q=' + encodeURIComponent(q) : '');
-        fetch(url, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': hdCsrf } })
-            .then(function(r){ return r.json(); })
-            .then(function(data) {
-                if (!q) { hdCannedAll = data; hdCannedBuildSeg(); }
-                hdCannedRender(hdCannedApplyFilters(data, hdCannedCat));
-            });
-    }
-
-    function hdCannedBuildSeg() {
-        var cats = [];
-        hdCannedAll.forEach(function(r) { if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category); });
-        var seg = document.getElementById('hdCannedSeg');
-        var html = '<span class="media-pill ' + (!hdCannedCat ? 'on' : '') + '" data-cat="" role="button" tabindex="0" onclick="hdCannedFilter(\'\')">'
-            + 'Todas <span class="c">' + hdCannedAll.length + '</span></span>';
-        cats.forEach(function(cat) {
-            var cnt = hdCannedAll.filter(function(r){ return r.category === cat; }).length;
-            html += '<span class="media-pill ' + (hdCannedCat === cat ? 'on' : '') + '" data-cat="' + hdEscape(cat)
-                + '" role="button" tabindex="0" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
-                + hdEscape(cat) + ' <span class="c">' + cnt + '</span></span>';
-        });
-        seg.innerHTML = html;
-    }
-
-    function hdCannedApplyFilters(list, cat) {
-        var q = document.getElementById('hdCannedSearch').value.toLowerCase();
-        return list.filter(function(r) {
-            var matchCat = !cat || r.category === cat;
-            var matchQ   = !q || (r.name && r.name.toLowerCase().includes(q))
-                               || (r.shortcut && r.shortcut.toLowerCase().includes(q))
-                               || (r.body && r.body.toLowerCase().includes(q));
-            return matchCat && matchQ;
-        });
-    }
-
-    function hdCannedRender(list) {
-        hdCannedFiltered = list;
-        hdCannedActive   = list.length ? 0 : -1;
-        hdCannedSelId    = list.length ? list[0].id : null;
-        var el = document.getElementById('hdCannedList');
-        if (!list.length) {
-            el.innerHTML = '<div class="bv-list-state">Sin resultados</div>';
-            document.getElementById('hdCannedPreview').value = '';
-            return;
-        }
-        el.innerHTML = list.map(function(r, i) {
-            return '<button class="list-item ' + (i === 0 ? 'on' : '') + '" data-idx="' + i + '" onclick="hdCannedSelect(' + i + ')">'
-                + (r.shortcut ? '<span class="kbd">/' + hdEscape(r.shortcut) + '</span>' : '<span class="kbd"></span>')
-                + '<div class="body"><span class="t">' + hdEscape(r.name) + '</span>'
-                + '<span class="s">' + (r.category ? hdEscape(r.category) + ' · ' : '') + 'usada ' + (r.usage_count || 0) + ' veces</span>'
-                + '</div></button>';
-        }).join('');
-        document.getElementById('hdCannedPreview').value = hdReplace(list[0].body || '');
-    }
-
-    window.hdCannedSelect = function(idx) {
-        hdCannedActive = idx;
-        hdCannedSelId  = hdCannedFiltered[idx] ? hdCannedFiltered[idx].id : null;
-        document.querySelectorAll('#hdCannedList .list-item').forEach(function(el, i) {
-            el.classList.toggle('on', i === idx);
-        });
-        document.getElementById('hdCannedPreview').value = hdCannedFiltered[idx] ? hdReplace(hdCannedFiltered[idx].body || '') : '';
-    };
-
-    window.hdInsertCanned = function() {
-        var txt = document.getElementById('hdCannedPreview').value;
-        if (!txt.trim()) { return; }
-        var ta = document.querySelector('.bv-composer-input');
-        if (ta) { ta.value = txt; ta.focus(); ta.dispatchEvent(new Event('input')); }
-        if (hdCannedSelId) {
-            fetch('/panel/helpdesk/canned-replies/' + hdCannedSelId + '/use', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': hdCsrf }
-            }).catch(function(){});
-        }
-        closeCannedModal();
-    };
-
-    var hdCannedSearchInp = document.getElementById('hdCannedSearch');
-    hdCannedSearchInp.addEventListener('input', function() {
-        clearTimeout(hdCannedTimer);
-        var q = this.value.trim();
-        hdCannedTimer = setTimeout(function() {
-            if (q) { hdCannedFetch(q); }
-            else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
-        }, 250);
-    });
-    hdCannedSearchInp.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowDown') { e.preventDefault(); if (hdCannedActive < hdCannedFiltered.length - 1) hdCannedSelect(hdCannedActive + 1); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); if (hdCannedActive > 0) hdCannedSelect(hdCannedActive - 1); }
-        else if (e.key === 'Enter') { e.preventDefault(); hdInsertCanned(); }
-        else if (e.key === 'Escape') { closeCannedModal(); }
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key !== 'Escape') return;
-        if (document.getElementById('hdCannedOverlay').classList.contains('open')) { closeCannedModal(); return; }
-    });
-
-    // ── CSAT ───────────────────────────────────────────────
-    $(document).on('click', '#bv-btn-send-csat', function() {
-        var url = $(this).data('csat-url');
-        if (!url) { toastr.error('No hay conversación seleccionada'); return; }
-        var $btn = $(this).prop('disabled', true);
-        $.ajax({
-            url: url,
-            method: 'POST',
-            dataType: 'json',
-            headers: { 'X-CSRF-TOKEN': hdCsrf, 'Accept': 'application/json' },
-        }).done(function(resp) {
-        }).fail(function(xhr) {
-            var msg = xhr?.responseJSON?.message || 'No se pudo enviar la encuesta';
-            toastr.error(msg);
-        }).always(function() {
-            $btn.prop('disabled', false);
-            $('#bv-more-menu').removeClass('open');
-        });
-    });
-
-    // ── CREAR TICKET ────────────────────────────────────────
-    // El handler real vive en conversations.js (línea ~6014): construye la
-    // URL desde la conversación activa (.bv-composer data-bv-conversation-id)
-    // y envía subject/description/priority/category_id/assignee_id. Este
-    // handler duplicado leía un atributo data-ticket-url que nadie escribía
-    // nunca — disparaba "No hay conversación seleccionada" en cada clic
-    // (el otro handler seguía ejecutándose después y sí creaba el ticket,
-    // pero con un toast de error espurio de por medio).
-
-    // ── Integración con el slash-menu de conversations.js ───────
-    // conversations.js ya incluye su propio slash menu (#bv-slash-menu).
-    // Aquí solo configuramos la URL de búsqueda y aplicamos
-    // reemplazo de placeholders cuando se inserta una plantilla.
-    window.bvCannedRepliesUrl = '{{ route("manager.helpdesk.canned-replies.search") }}';
-
-    // Reemplazar marcadores de posición en el composer después de insertar una plantilla.
-    // Usamos jQuery .on() porque conversations.js dispara $textarea.trigger('input'),
-    // que no siempre propaga al addEventListener nativo.
-    $(document).on('input', '.bv-composer-input', function() {
-        var ta = this;
-        var val = ta.value;
-        if (!/\{\{/.test(val)) return;
-        var replaced = hdReplace(val);
-        if (replaced !== val) {
-            var pos = ta.selectionStart;
-            ta.value = replaced;
-            ta.setSelectionRange(pos, pos);
-            // Evento nativo para auto-resize (ya sin {{}} no vuelve a procesar)
-            ta.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    });
-})();
-</script>
+{{-- Config para el modal de "respuesta rápida" (#hdCannedOverlay) y el
+     reemplazo de placeholders {{...}} en plantillas — lógica extraída a
+     conversations-thread.js (bloque "Respuesta rápida + envío de CSAT" al
+     final del archivo). Solo puede viajar como datos: son valores de Blade
+     (cliente/agente/empresa actuales) que un .js estático no puede resolver. --}}
+@php
+    $hdThreadCtx = [
+        'contact.name'    => $cust?->name ?? '',
+        'contact.email'   => $cust?->email ?? '',
+        'contact.phone'   => $cust?->phone ?? '',
+        'agent.name'      => auth()->user()->name ?? '',
+        'agent.email'     => auth()->user()->email ?? '',
+        'company.name'    => config('app.name'),
+        'conversation.id' => $convo?->id ?? '',
+    ];
+@endphp
+<script>window.HdThreadCtx = @json($hdThreadCtx);</script>
 
 @stack('hd-thread-scripts')
 
 @endpush
 @endonce
-@endif

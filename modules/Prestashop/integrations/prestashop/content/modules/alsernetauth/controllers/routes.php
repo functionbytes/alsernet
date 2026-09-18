@@ -1,15 +1,15 @@
 <?php
 
-require_once(dirname(__FILE__).'/../../../config/config.inc.php');
-require_once(dirname(__FILE__).'/../../../init.php');
-include_once(dirname(__FILE__).'/front/AuthController.php');
+require_once dirname(__FILE__).'/../../../config/config.inc.php';
+require_once dirname(__FILE__).'/../../../init.php';
+include_once dirname(__FILE__).'/front/AuthController.php';
 
 class Routes extends Module
 {
     public function routes()
     {
 
-        $secret = "6LcRY40nAAAAAFJjZX46U5wcWquOwY_g7MDeBUly";
+        $secret = '6LcRY40nAAAAAFJjZX46U5wcWquOwY_g7MDeBUly';
         $response = Tools::getValue('g-recaptcha-response');
 
         // if (!empty($response)) {
@@ -39,7 +39,7 @@ class Routes extends Module
         //         $captcha_success = json_decode($verify);
 
         //         if (isset($captcha_success) && $captcha_success->success) {
-                    $response = $this->handleAction();
+        $response = $this->handleAction();
         //         } else {
         //             $response = array(
         //                 'status' => 'warning',
@@ -63,7 +63,7 @@ class Routes extends Module
     {
 
         $action = Tools::getValue('action');
-        $controller = new AuthController();
+        $controller = new AuthController;
         $response = null;
 
         switch ($action) {
@@ -84,10 +84,10 @@ class Routes extends Module
                 break;
 
             default:
-                $response = array(
+                $response = [
                     'status' => 'error',
                     'message' => 'Invalid action',
-                );
+                ];
                 break;
         }
 
@@ -102,5 +102,5 @@ class Routes extends Module
         exit; // Asegúrate de salir después de enviar la respuesta
     }
 }
-$routes = new Routes();
+$routes = new Routes;
 $routes->routes();

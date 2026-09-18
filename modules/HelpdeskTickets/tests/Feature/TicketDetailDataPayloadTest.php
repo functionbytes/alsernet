@@ -63,12 +63,80 @@ class TicketDetailDataPayloadTest extends TestCase
         ], $attributes));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function pulse(Ticket $ticket): array
+    {
+        return $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.pulse', $ticket))
+            ->assertOk()
+            ->json();
+    }
+
     private function payload(Ticket $ticket): array
     {
         return $this->actingAs($this->manager)
             ->getJson(route('manager.helpdesk.tickets.data', $ticket))
             ->assertOk()
             ->json();
+    }
+
+    // ─── sonda del refresco automático ───────────────────────────────────────
+
+    public function test_la_sonda_cambia_cuando_llega_un_mensaje(): void
+    {
+        // El panel pregunta a /pulse cada pocos segundos y solo pide el hilo
+        // completo si la respuesta cambió. Si la firma no se moviera al entrar
+        // un mensaje, el correo del cliente seguiría sin aparecer — que es el
+        // fallo que este endpoint viene a cubrir.
+        $ticket = $this->makeTicket();
+
+        $antes = $this->pulse($ticket);
+
+        $ticket->items()->create([
+            'type' => 'message',
+            'author_id' => $ticket->customer_id,
+            'body' => 'Hola, necesito una respuesta',
+            'is_internal' => false,
+        ]);
+
+        $despues = $this->pulse($ticket);
+
+        $this->assertSame($antes['items'] + 1, $despues['items']);
+        $this->assertGreaterThan($antes['last_item_id'], $despues['last_item_id']);
+    }
+
+    public function test_la_sonda_no_cambia_si_no_pasa_nada(): void
+    {
+        // Igual de importante: una firma inestable haría que el panel recargara
+        // el hilo entero cada tres segundos para nada.
+        $ticket = $this->makeTicket();
+
+        $this->assertSame($this->pulse($ticket), $this->pulse($ticket));
+    }
+
+    public function test_la_sonda_es_diminuta_comparada_con_el_detalle(): void
+    {
+        // Es la razón de que exista: /data arma traducciones, adjuntos, correos
+        // y tickets relacionados, y no se puede pedir en bucle.
+        $ticket = $this->makeTicket();
+
+        $sonda = strlen((string) $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.pulse', $ticket))->getContent());
+        $detalle = strlen((string) $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))->getContent());
+
+        $this->assertLessThan($detalle / 10, $sonda);
+    }
+
+    public function test_la_sonda_respeta_el_permiso_de_ver_el_ticket(): void
+    {
+        $ticket = $this->makeTicket();
+
+        $this->actingAs(User::factory()->create())
+            ->getJson(route('manager.helpdesk.tickets.pulse', $ticket))
+            ->assertForbidden();
     }
 
     // ─── panel Formulario ────────────────────────────────────────────────────
@@ -261,5 +329,40 @@ class TicketDetailDataPayloadTest extends TestCase
         // openFilePreviewModal() en el JS para formatearlo con su propio
         // formatFileSize(), el mismo que ya usa la pestaña Adjuntos.
         $this->assertSame(28, $found['attachments'][0]['bytes']);
+    }
+
+    // ─── contadores de "Tickets del cliente" ───────────────────────────────
+
+    /**
+     * customerTicketsFor() calculaba total/open/resolved con 3 count()
+     * separados (uno de ellos con whereHas('status', ...), que añade su
+     * propio EXISTS) — un leftJoin + agregación condicional en una sola
+     * query los sustituye (perfilado con DB::listen contra un ticket real:
+     * las 3-4 queries de conteo del cliente desaparecen). Este test fija el
+     * resultado para que una regresión en el SQL crudo (case/sum invertidos,
+     * join equivocado) se note aquí y no en producción.
+     */
+    public function test_los_contadores_de_tickets_del_cliente_distinguen_abiertos_y_resueltos(): void
+    {
+        $open = TicketStatus::firstOrCreate(
+            ['slug' => 'payload-test-open-status'],
+            ['name' => 'Abierto (payload counts)', 'is_open' => true]
+        );
+        $closed = TicketStatus::firstOrCreate(
+            ['slug' => 'payload-test-closed-status'],
+            ['name' => 'Cerrado (payload counts)', 'is_open' => false]
+        );
+
+        $current = $this->makeTicket(['status_id' => $open->id]);
+        $customerId = $current->customer_id;
+
+        $this->makeTicket(['customer_id' => $customerId, 'status_id' => $open->id]);
+        $this->makeTicket(['customer_id' => $customerId, 'status_id' => $closed->id, 'resolved_at' => now()]);
+
+        $counts = $this->payload($current)['customer_tickets']['counts'];
+
+        $this->assertSame(3, $counts['total']);
+        $this->assertSame(2, $counts['open']);
+        $this->assertSame(1, $counts['resolved']);
     }
 }

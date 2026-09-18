@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,24 +37,24 @@ final class ImageFileDeleter implements ImageFileDeleterInterface
      */
     public function deleteFromPath($path, $recursively = false, $deleteSubdirectories = false, $format = 'jpg')
     {
-        if (!$path || !$format || !is_dir($path)) {
+        if (! $path || ! $format || ! is_dir($path)) {
             return false;
         }
 
         foreach (scandir($path, SCANDIR_SORT_NONE) as $file) {
-            $pattern = '/^[0-9]+(\-(.*))?\.' . $format . '$/';
+            $pattern = '/^[0-9]+(\-(.*))?\.'.$format.'$/';
 
-            if ($recursively && is_dir($path . $file) && (preg_match('/^[0-9]$/', $file))) {
+            if ($recursively && is_dir($path.$file) && (preg_match('/^[0-9]$/', $file))) {
                 // Recursion
-                $this->deleteFromPath($path . $file . '/', $recursively, $deleteSubdirectories, $format);
+                $this->deleteFromPath($path.$file.'/', $recursively, $deleteSubdirectories, $format);
             }
 
             // Delete the file by regex pattern
             $this->deleteByPattern($pattern, $path, $file);
 
             // Delete fileType file if it exists in the same directory.
-            if (file_exists($path . 'fileType')) {
-                unlink($path . 'fileType');
+            if (file_exists($path.'fileType')) {
+                unlink($path.'fileType');
             }
         }
 
@@ -69,8 +70,8 @@ final class ImageFileDeleter implements ImageFileDeleterInterface
 
             if ($removeFolder) {
                 // we're only removing index.php if it's a folder we want to delete
-                if (file_exists($path . 'index.php')) {
-                    unlink($path . 'index.php');
+                if (file_exists($path.'index.php')) {
+                    unlink($path.'index.php');
                 }
                 rmdir($path);
             }
@@ -86,7 +87,7 @@ final class ImageFileDeleter implements ImageFileDeleterInterface
     {
         foreach (scandir($path, SCANDIR_SORT_NONE) as $file) {
             $this->deleteByPattern(
-                '/(.*)\.' . $format . '$/',
+                '/(.*)\.'.$format.'$/',
                 $path,
                 $file
             );
@@ -96,14 +97,14 @@ final class ImageFileDeleter implements ImageFileDeleterInterface
     /**
      * Delete images by given regex pattern from given path.
      *
-     * @param string $pattern regex pattern
-     * @param string $path file directory path
-     * @param string $filename
+     * @param  string  $pattern  regex pattern
+     * @param  string  $path  file directory path
+     * @param  string  $filename
      */
     private function deleteByPattern($pattern, $path, $filename)
     {
         if (preg_match($pattern, $filename)) {
-            unlink($path . $filename);
+            unlink($path.$filename);
         }
     }
 }

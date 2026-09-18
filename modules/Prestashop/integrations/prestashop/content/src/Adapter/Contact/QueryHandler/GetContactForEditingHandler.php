@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class GetContactForEditingHandler implements GetContactForEditingHandlerIn
      */
     private $stringArrayToIntegerArrayDataTransformer;
 
-    /**
-     * @param DataTransformerInterface $stringArrayToIntegerArrayDataTransformer
-     */
     public function __construct(DataTransformerInterface $stringArrayToIntegerArrayDataTransformer)
     {
         $this->stringArrayToIntegerArrayDataTransformer = $stringArrayToIntegerArrayDataTransformer;
@@ -65,7 +63,7 @@ final class GetContactForEditingHandler implements GetContactForEditingHandlerIn
         try {
             $contact = new Contact($query->getContactId()->getValue());
 
-            if (0 >= $contact->id) {
+            if ($contact->id <= 0) {
                 throw new ContactNotFoundException(sprintf('Contact object with id %s was not found', var_export($query->getContactId()->getValue(), true)));
             }
             $editableContact = new EditableContact(

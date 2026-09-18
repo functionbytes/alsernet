@@ -34,16 +34,38 @@ class FinalizeBirthdayCampaigns extends Command
         $this->rescueStuck();
 
         $closed = 0;
+        $expired = 0;
 
-        BirthdayCampaign::query()->active()->each(function (BirthdayCampaign $campaign) use ($campaigns, &$closed): void {
-            if ($campaigns->finalizeIfDone($campaign)) {
-                $closed++;
-            }
-        });
+        // También las pausadas: una campaña que se quedó en pausa el martes no
+        // debe poder reanudarse el viernes y soltar de golpe las felicitaciones
+        // de aquel día.
+        BirthdayCampaign::query()
+            ->whereIn('status', [
+                ...BirthdayCampaign::ACTIVE_STATUSES,
+                BirthdayCampaign::STATUS_PAUSED,
+            ])
+            ->each(function (BirthdayCampaign $campaign) use ($campaigns, &$closed, &$expired): void {
+                $caducados = $campaigns->expireIfOverdue($campaign);
 
+                if ($caducados > 0) {
+                    $expired += $caducados;
+
+                    return;
+                }
+
+                if ($campaigns->finalizeIfDone($campaign)) {
+                    $closed++;
+                }
+            });
+
+        $abandoned = $this->purgeAbandonedDrafts();
         $purged = $this->purgeOld();
 
-        $this->info("Campañas cerradas: {$closed}. Campañas purgadas: {$purged}.");
+        if ($abandoned > 0) {
+            $this->warn("Borradores de días pasados descartados: {$abandoned}.");
+        }
+
+        $this->info("Campañas cerradas: {$closed}. Envíos caducados: {$expired}. Campañas purgadas: {$purged}.");
 
         return self::SUCCESS;
     }
@@ -59,6 +81,25 @@ class FinalizeBirthdayCampaigns extends Command
                 'status' => BirthdayRecipient::STATUS_PENDING,
                 'updated_at' => now(),
             ]);
+    }
+
+    /**
+     * Descarta los borradores de días ya pasados que nunca llegaron a reunir a
+     * nadie.
+     *
+     * Son la huella de una preparación que murió a mitad: una campaña sin
+     * destinatarios, sin cupones y sin nada que explicar, que además ocupa el
+     * UNIQUE de su día. Borrarlas deja el listado diciendo la verdad —ese día
+     * no hubo campaña— en vez de enseñar una fila vacía que parece un error de
+     * datos.
+     */
+    private function purgeAbandonedDrafts(): int
+    {
+        return BirthdayCampaign::query()
+            ->where('status', BirthdayCampaign::STATUS_DRAFT)
+            ->whereDate('campaign_date', '<', CarbonImmutable::today()->toDateString())
+            ->whereDoesntHave('recipients')
+            ->delete();
     }
 
     private function purgeOld(): int

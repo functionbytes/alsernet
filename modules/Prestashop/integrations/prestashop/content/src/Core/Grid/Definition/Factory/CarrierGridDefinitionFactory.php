@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,8 +54,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
 {
-    use DeleteActionTrait;
     use BulkDeleteActionTrait;
+    use DeleteActionTrait;
 
     const GRID_ID = 'carrier';
 
@@ -79,7 +80,7 @@ class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('bulk'))
                     ->setOptions([
@@ -161,7 +162,7 @@ class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_carrier', TextType::class))
                     ->setAssociatedColumn('id_carrier')
@@ -225,7 +226,7 @@ class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
 
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -245,7 +246,7 @@ class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
 
     private function getRowActions(): RowActionCollectionInterface
     {
-        return (new RowActionCollection())
+        return (new RowActionCollection)
             ->add(
                 (new LinkRowAction('edit'))
                     ->setName($this->trans('Edit', [], 'Admin.Actions'))
@@ -268,7 +269,7 @@ class CarrierGridDefinitionFactory extends AbstractGridDefinitionFactory
 
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))

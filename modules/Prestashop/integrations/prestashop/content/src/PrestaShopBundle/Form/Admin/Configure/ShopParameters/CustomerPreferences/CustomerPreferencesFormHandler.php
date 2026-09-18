@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,6 @@ final class CustomerPreferencesFormHandler extends Handler
         return $errors;
     }
 
-    /**
-     * @param TabRepository $tabRepository
-     */
     public function setTabRepository(TabRepository $tabRepository)
     {
         $this->tabRepository = $tabRepository;
@@ -65,7 +63,7 @@ final class CustomerPreferencesFormHandler extends Handler
     /**
      * Based on B2b mode, we need to enable/disable some tabs.
      *
-     * @param bool $b2bMode Current B2B mode status
+     * @param  bool  $b2bMode  Current B2B mode status
      *
      * @throws \InvalidArgumentException
      */

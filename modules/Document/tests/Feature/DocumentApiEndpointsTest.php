@@ -3,6 +3,7 @@
 namespace Modules\Document\Tests\Feature;
 
 use App\Models\User;
+use Modules\Document\Entities\Document;
 use Tests\TestCase;
 
 /**
@@ -35,14 +36,14 @@ class DocumentApiEndpointsTest extends TestCase
         $this->actingAs($this->user);
 
         // USAR DOCUMENTO REAL de la base de datos
-        $document = \Modules\Document\Entities\Document::where('validation_status', 'pending')
+        $document = Document::where('validation_status', 'pending')
             ->first();
 
         if ($document) {
             $this->documentUid = $document->uid;
         } else {
             // Usar cualquier documento si no hay pending
-            $document = \Modules\Document\Entities\Document::first();
+            $document = Document::first();
             $this->documentUid = $document ? $document->uid : 'test-uid-'.uniqid();
         }
     }

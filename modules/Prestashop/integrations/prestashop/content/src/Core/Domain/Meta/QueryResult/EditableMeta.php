@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,12 +70,12 @@ class EditableMeta
     /**
      * EditableMeta constructor.
      *
-     * @param int $metaId
-     * @param string $pageName
-     * @param string[] $localisedPageTitles
-     * @param string[] $localisedMetaDescriptions
-     * @param string[] $localisedMetaKeywords
-     * @param string[] $localisedUrlRewrites
+     * @param  int  $metaId
+     * @param  string  $pageName
+     * @param  string[]  $localisedPageTitles
+     * @param  string[]  $localisedMetaDescriptions
+     * @param  string[]  $localisedMetaKeywords
+     * @param  string[]  $localisedUrlRewrites
      *
      * @throws Exception\MetaConstraintException
      * @throws MetaException

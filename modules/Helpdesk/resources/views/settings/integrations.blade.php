@@ -28,7 +28,7 @@
                         <div class="d-flex align-items-center justify-content-between p-3 rounded border bg-light mb-3">
                             <div>
                                 <span class="fw-semibold">
-                                    <i class="fas fa-plug text-success me-2"></i>{{ $module['name'] }}
+                                    {{ $module['name'] }}
                                 </span>
                                 <small class="d-block text-muted mt-1">
                                     Integración con el módulo {{ $module['name'] }} del helpdesk
@@ -57,11 +57,11 @@
                                     <small class="text-muted d-block mb-1">Módulo instalado</small>
                                     @if($module['installed'])
                                         <span class="badge bg-success-subtle text-success">
-                                            <i class="fas fa-check me-1"></i>Sí
+                                            Sí
                                         </span>
                                     @else
                                         <span class="badge bg-secondary-subtle text-secondary">
-                                            <i class="fas fa-xmark me-1"></i>No
+                                            No
                                         </span>
                                     @endif
                                 </div>
@@ -71,11 +71,11 @@
                                     <small class="text-muted d-block mb-1">Módulo habilitado</small>
                                     @if($module['moduleEnabled'])
                                         <span class="badge bg-success-subtle text-success">
-                                            <i class="fas fa-check me-1"></i>Sí
+                                            Sí
                                         </span>
                                     @else
                                         <span class="badge bg-warning-subtle text-warning">
-                                            <i class="fas fa-pause me-1"></i>Deshabilitado
+                                            Deshabilitado
                                         </span>
                                     @endif
                                 </div>
@@ -86,11 +86,11 @@
                                         <small class="text-muted d-block mb-1">Config (.env)</small>
                                         @if($module['configEnabled'])
                                             <span class="badge bg-success-subtle text-success">
-                                                <i class="fas fa-check me-1"></i>Permitido
+                                                Permitido
                                             </span>
                                         @else
-                                            <span class="badge bg-danger-subtle text-danger">
-                                                <i class="fas fa-ban me-1"></i>Bloqueado
+                                            <span class="badge bg-info-subtle text-info">
+                                                Bloqueado
                                             </span>
                                         @endif
                                     </div>
@@ -100,19 +100,16 @@
 
                         @if(! $module['installed'])
                             <div class="alert alert-warning mb-0">
-                                <i class="fas fa-circle-info me-1"></i>
                                 El módulo <strong>{{ $module['name'] }}</strong> no está instalado. Instálalo primero para poder habilitar esta integración.
                             </div>
                         @elseif(! $module['moduleEnabled'])
                             <div class="alert alert-warning mb-0">
-                                <i class="fas fa-circle-info me-1"></i>
                                 El módulo {{ $module['name'] }} está instalado pero deshabilitado. Habilítalo desde
                                 <strong>Panel → Módulos</strong> o ejecuta
                                 <code>php artisan module:enable {{ $module['name'] }}</code>.
                             </div>
                         @elseif($module['configEnabled'] === false)
                             <div class="alert alert-info mb-0">
-                                <i class="fas fa-circle-info me-1"></i>
                                 El flag <code>HELPDESK_TICKETS_ENABLED=false</code> en <code>.env</code> está bloqueando
                                 la integración. El toggle solo es efectivo cuando este flag no fuerza el modo deshabilitado.
                             </div>
@@ -192,7 +189,7 @@
             <div class="card-body">
                 @foreach($toggleableModules as $module)
                     <h6 class="fw-semibold mb-2 @unless($loop->first) mt-3 @endunless">
-                        <i class="fas fa-plug text-success me-1"></i> {{ $module['name'] }}
+                        {{ $module['name'] }}
                     </h6>
                     <p class="text-muted small mb-0">{{ $module['description'] }}</p>
                 @endforeach
@@ -207,13 +204,16 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Guardado');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+@php
+    $hdIntegrationsConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error'),
+    'flashSuccessTitle' => 'Guardado'
+];
+@endphp
+window.HdIntegrationsConfig = @json($hdIntegrationsConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/integrations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/integrations.js')) }}" defer></script>
 @endpush

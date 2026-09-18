@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -109,19 +110,11 @@ class AbstractEditAddressCommand
      */
     protected $other;
 
-    /**
-     * @return string|null
-     */
     public function getAddressAlias(): ?string
     {
         return $this->addressAlias;
     }
 
-    /**
-     * @param string $addressAlias
-     *
-     * @return self
-     */
     public function setAddressAlias(string $addressAlias): self
     {
         $this->addressAlias = $addressAlias;
@@ -129,19 +122,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getFirstName(): ?string
     {
         return $this->firstName;
     }
 
-    /**
-     * @param string $firstName
-     *
-     * @return self
-     */
     public function setFirstName(string $firstName): self
     {
         $this->firstName = $firstName;
@@ -149,19 +134,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getLastName(): ?string
     {
         return $this->lastName;
     }
 
-    /**
-     * @param string $lastName
-     *
-     * @return self
-     */
     public function setLastName(string $lastName): self
     {
         $this->lastName = $lastName;
@@ -169,19 +146,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    /**
-     * @param string $address
-     *
-     * @return self
-     */
     public function setAddress(string $address): self
     {
         $this->address = $address;
@@ -189,19 +158,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCity(): ?string
     {
         return $this->city;
     }
 
-    /**
-     * @param string $city
-     *
-     * @return self
-     */
     public function setCity(string $city): self
     {
         $this->city = $city;
@@ -209,19 +170,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getPostCode(): ?string
     {
         return $this->postCode;
     }
 
-    /**
-     * @param string $postCode
-     *
-     * @return self
-     */
     public function setPostCode(string $postCode): self
     {
         $this->postCode = $postCode;
@@ -229,19 +182,12 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return CountryId|null
-     */
     public function getCountryId(): ?CountryId
     {
         return $this->countryId;
     }
 
     /**
-     * @param int $countryId
-     *
-     * @return self
-     *
      * @throws CountryConstraintException
      */
     public function setCountryId(int $countryId): self
@@ -251,19 +197,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDni(): ?string
     {
         return $this->dni;
     }
 
-    /**
-     * @param string $dni
-     *
-     * @return self
-     */
     public function setDni(string $dni): self
     {
         $this->dni = $dni;
@@ -271,19 +209,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getCompany(): ?string
     {
         return $this->company;
     }
 
-    /**
-     * @param string $company
-     *
-     * @return self
-     */
     public function setCompany(string $company): self
     {
         $this->company = $company;
@@ -291,19 +221,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getVatNumber(): ?string
     {
         return $this->vatNumber;
     }
 
-    /**
-     * @param string $vatNumber
-     *
-     * @return self
-     */
     public function setVatNumber(string $vatNumber): self
     {
         $this->vatNumber = $vatNumber;
@@ -311,19 +233,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAddress2(): ?string
     {
         return $this->address2;
     }
 
-    /**
-     * @param string $address2
-     *
-     * @return self
-     */
     public function setAddress2(string $address2): self
     {
         $this->address2 = $address2;
@@ -331,19 +245,12 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return StateId|null
-     */
     public function getStateId(): ?StateId
     {
         return $this->stateId;
     }
 
     /**
-     * @param int $stateId
-     *
-     * @return self
-     *
      * @throws StateConstraintException
      */
     public function setStateId(int $stateId): self
@@ -353,19 +260,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getHomePhone(): ?string
     {
         return $this->homePhone;
     }
 
-    /**
-     * @param string $homePhone
-     *
-     * @return self
-     */
     public function setHomePhone(string $homePhone): self
     {
         $this->homePhone = $homePhone;
@@ -373,19 +272,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMobilePhone(): ?string
     {
         return $this->mobilePhone;
     }
 
-    /**
-     * @param string $mobilePhone
-     *
-     * @return self
-     */
     public function setMobilePhone(string $mobilePhone): self
     {
         $this->mobilePhone = $mobilePhone;
@@ -393,19 +284,11 @@ class AbstractEditAddressCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getOther(): ?string
     {
         return $this->other;
     }
 
-    /**
-     * @param string $other
-     *
-     * @return self
-     */
     public function setOther(string $other): self
     {
         $this->other = $other;

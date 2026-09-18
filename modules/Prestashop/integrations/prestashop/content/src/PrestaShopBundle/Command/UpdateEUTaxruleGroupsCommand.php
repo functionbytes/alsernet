@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -80,9 +81,9 @@ class UpdateEUTaxruleGroupsCommand extends ContainerAwareCommand
         /* Tweak */
         $this->output = $output;
 
-        $localizationPacksRoot = $this->getContainer()->getParameter('kernel.root_dir') . '/../localization';
+        $localizationPacksRoot = $this->getContainer()->getParameter('kernel.root_dir').'/../localization';
 
-        if (!$localizationPacksRoot) {
+        if (! $localizationPacksRoot) {
             $output->writeln(
                 "<error>Could not find the folder containing the localization files (should be 'localization' at the root of the PrestaShop folder)</error>"
             );
@@ -93,22 +94,22 @@ class UpdateEUTaxruleGroupsCommand extends ContainerAwareCommand
         $euLocalizationFiles = [];
 
         foreach (scandir($localizationPacksRoot, SCANDIR_SORT_ASCENDING) as $entry) {
-            if (!preg_match('/\.xml$/', $entry)) {
+            if (! preg_match('/\.xml$/', $entry)) {
                 continue;
             }
 
-            $localizationPackFile = $localizationPacksRoot . DIRECTORY_SEPARATOR . $entry;
+            $localizationPackFile = $localizationPacksRoot.DIRECTORY_SEPARATOR.$entry;
 
             $localizationPack = @simplexml_load_file($localizationPackFile);
 
             // Some packs do not have taxes
-            if (!($localizationPack instanceof SimpleXMLElement) || !isset($localizationPack->taxes->tax)) {
+            if (! ($localizationPack instanceof SimpleXMLElement) || ! isset($localizationPack->taxes->tax)) {
                 continue;
             }
 
             foreach ($localizationPack->taxes->tax as $tax) {
                 if ((string) $tax['eu-tax-group'] === 'virtual') {
-                    if (!isset($euLocalizationFiles[$localizationPackFile])) {
+                    if (! isset($euLocalizationFiles[$localizationPackFile])) {
                         $euLocalizationFiles[$localizationPackFile] = [
                             'virtualTax' => $tax,
                             'pack' => $localizationPack,
@@ -144,7 +145,7 @@ class UpdateEUTaxruleGroupsCommand extends ContainerAwareCommand
             }
 
             // This is the first tax id we're allowed to use.
-            ++$taxId;
+            $taxId++;
 
             // Prepare new taxRulesGroup
 
@@ -169,7 +170,7 @@ class UpdateEUTaxruleGroupsCommand extends ContainerAwareCommand
 
                 $this->addTaxRule($taxRulesGroup, $tax, $foreignFile['iso_code_country']);
 
-                ++$taxId;
+                $taxId++;
             }
 
             foreach ($nodesToKill as $node) {
@@ -197,7 +198,7 @@ class UpdateEUTaxruleGroupsCommand extends ContainerAwareCommand
         $taxRulesGroups = $taxes->xpath('//taxRulesGroup[1]');
         $insertBefore = $taxRulesGroups[0] ?? false;
 
-        if (!$insertBefore) {
+        if (! $insertBefore) {
             return $this->output->writeln("<error>Could not find any `taxRulesGroup`, don't know where to append the tax.");
         }
 

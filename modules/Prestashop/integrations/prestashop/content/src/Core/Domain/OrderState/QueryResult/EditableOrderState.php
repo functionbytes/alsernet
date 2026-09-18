@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,50 +39,62 @@ class EditableOrderState
      * @var OrderStateId
      */
     private $orderStateId;
+
     /**
      * @var array
      */
     private $localizedNames;
+
     /**
      * @var string
      */
     private $color;
+
     /**
      * @var bool
      */
     private $loggable;
+
     /**
      * @var bool
      */
     private $invoice;
+
     /**
      * @var bool
      */
     private $hidden;
+
     /**
      * @var bool
      */
     private $sendEmail;
+
     /**
      * @var bool
      */
     private $pdfInvoice;
+
     /**
      * @var bool
      */
     private $pdfDelivery;
+
     /**
      * @var bool
      */
     private $shipped;
+
     /**
      * @var bool
      */
     private $paid;
+
     /**
      * @var bool
      */
     private $delivery;
+
     /**
      * @var array
      */

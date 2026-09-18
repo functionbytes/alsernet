@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,10 +36,15 @@ interface LocalizationPackImportConfigInterface
      * Available content to import.
      */
     public const CONTENT_STATES = 'states';
+
     public const CONTENT_TAXES = 'taxes';
+
     public const CONTENT_CURRENCIES = 'currencies';
+
     public const CONTENT_LANGUAGES = 'languages';
+
     public const CONTENT_UNITS = 'units';
+
     public const CONTENT_GROUPS = 'groups';
 
     /**

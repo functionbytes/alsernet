@@ -5,8 +5,10 @@ namespace Modules\HelpdeskErp\Http\Controllers\Managers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskErp\Http\Resources\CustomerContextResource;
+use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
 use Modules\HelpdeskErp\Services\ErpContextService;
 
 class ErpContextWebController extends Controller
@@ -34,12 +36,50 @@ class ErpContextWebController extends Controller
         // por defecto el acceso a prospectos (bypass del gate para helpdesk-agent).
         $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
 
-        $customerId = $request->query('customer_id') ? (int) $request->query('customer_id') : null;
+        // customer_id se resuelve server-side a partir del email ya validado
+        // arriba — ver mismo fix en el gemelo API (ErpContextController::show).
+        $customerId = Customer::where('email', $email)->value('id');
         $data = $this->service->getCustomerContext($email, null, $customerId);
 
         return response()->json([
             'success' => true,
             'data' => (new CustomerContextResource($data, $email))->toArray($request),
+        ]);
+    }
+
+    /**
+     * Reintento manual de la búsqueda del cliente en el ERP.
+     *
+     * Lo pide un agente desde el aviso "Sin cliente en gestión", así que salta
+     * el enfriamiento: si alguien está mirando la ficha es porque sabe algo que
+     * el automatismo no —acaban de dar de alta al cliente en gestión, o el ERP
+     * ya volvió a estar en pie.
+     */
+    public function relink(Request $request, int $customerId): JsonResponse
+    {
+        if (! $request->user()?->can('helpdeskerp.view')) {
+            return response()->json(['success' => false], 403);
+        }
+
+        $customer = Customer::find($customerId);
+
+        if ($customer === null) {
+            return response()->json(['success' => false, 'message' => 'Cliente no encontrado.'], 404);
+        }
+
+        // El agente solo puede reintentar sobre clientes de sus bandejas, igual
+        // que para ver su contexto ERP.
+        $this->assertScopedToCustomerEmail((string) $customer->email, 'helpdeskerp.prospect.view');
+
+        if (! helpdesk_erp_enabled()) {
+            return response()->json(['success' => false, 'message' => 'La integración con gestión está desactivada.'], 422);
+        }
+
+        LinkCustomerToErpJob::dispatch($customer->id, null, null, force: true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Buscando el cliente en gestión…',
         ]);
     }
 

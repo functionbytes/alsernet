@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,6 @@ class SslMiddleware
      * Registered as kernel.request event listener.
      *
      * If the condition needs a redirection to HTTPS, then the current process is interrupted, the headers are sent directly.
-     *
-     * @param GetResponseEvent $event
      */
     public function onKernelRequest(GetResponseEvent $event)
     {
@@ -53,8 +52,8 @@ class SslMiddleware
             return;
         }
 
-        $enabled = (1 == Configuration::get('PS_SSL_ENABLED'));
-        $forced = (1 == Configuration::get('PS_SSL_ENABLED_EVERYWHERE'));
+        $enabled = (Configuration::get('PS_SSL_ENABLED') == 1);
+        $forced = (Configuration::get('PS_SSL_ENABLED_EVERYWHERE') == 1);
         $serverParams = $event->getRequest()->server;
         $refererSsl = ($serverParams->has('HTTP_REFERER') && strpos($serverParams->get('HTTP_REFERER'), 'https') === 0);
 
@@ -66,7 +65,7 @@ class SslMiddleware
     private function redirectToSsl(GetResponseEvent $event)
     {
         $event->stopPropagation();
-        $redirect = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $redirect = 'https://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
         header('HTTP/1.1 302 Found');
         header("Location: $redirect");
         exit();

@@ -27,7 +27,9 @@ class AiTagsController extends Controller
         $this->authorize('create', AiAgent::class);
 
         $validated = $request->validated();
-        $validated['is_active'] = $request->has('is_active');
+        // boolean(), no has(): el modal manda is_active SIEMPRE (select '0'/'1'),
+        // asi que has() era true incluso eligiendo Inactivo y todo se creaba activo.
+        $validated['is_active'] = $request->boolean('is_active');
 
         AiAgentTag::create($validated);
 

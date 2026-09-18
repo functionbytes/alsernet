@@ -19,7 +19,7 @@
             {{-- Search / create --}}
             <div class="bv-modal-search bv-mb-10">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="tags-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.tags_search_placeholder') }}" autocomplete="off">
+                <input id="tags-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.tags_search_placeholder') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.tags_search_placeholder') }}" autocomplete="off">
             </div>
 
             {{-- Applied section --}}
@@ -65,10 +65,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/tags.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/tags.js')) }}" defer></script>
-@endpush
-@endonce

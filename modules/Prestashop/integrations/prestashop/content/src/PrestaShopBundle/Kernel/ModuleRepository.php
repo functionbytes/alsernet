@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ final class ModuleRepository
     public function __construct(Connection $connection, $databasePrefix)
     {
         $this->connection = $connection;
-        $this->tableName = $databasePrefix . 'module';
+        $this->tableName = $databasePrefix.'module';
     }
 
     /**
@@ -68,8 +69,8 @@ final class ModuleRepository
      */
     public function getActiveModules()
     {
-        if (null === $this->activeModules) {
-            $sth = $this->connection->query('SELECT name FROM ' . $this->tableName . ' WHERE active = 1');
+        if ($this->activeModules === null) {
+            $sth = $this->connection->query('SELECT name FROM '.$this->tableName.' WHERE active = 1');
 
             $this->activeModules = $sth->fetchAll(\PDO::FETCH_COLUMN);
         }
@@ -84,7 +85,7 @@ final class ModuleRepository
      */
     public function getActiveModulesPaths()
     {
-        if (null === $this->activeModulesPaths) {
+        if ($this->activeModulesPaths === null) {
             $this->activeModulesPaths = [];
             $modulesFiles = Finder::create()->directories()->in(_PS_MODULE_DIR_)->depth(0);
             $activeModules = $this->getActiveModules();

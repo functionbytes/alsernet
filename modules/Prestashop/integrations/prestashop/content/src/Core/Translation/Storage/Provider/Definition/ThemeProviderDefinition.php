@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,12 +44,9 @@ class ThemeProviderDefinition implements ProviderDefinitionInterface
      */
     private $themeName;
 
-    /**
-     * @param string|null $themeName
-     */
     public function __construct(?string $themeName = null)
     {
-        if (null === $themeName) {
+        if ($themeName === null) {
             $themeName = static::DEFAULT_THEME_NAME;
         }
 
@@ -63,9 +61,6 @@ class ThemeProviderDefinition implements ProviderDefinitionInterface
         return ProviderDefinitionInterface::TYPE_THEMES;
     }
 
-    /**
-     * @return string
-     */
     public function getThemeName(): string
     {
         return $this->themeName;

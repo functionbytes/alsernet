@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,6 +35,7 @@ use Doctrine\ORM\Mapping as ORM;
  * ShopUrl
  *
  * @ORM\Table()
+ *
  * @ORM\Entity
  */
 class ShopUrl
@@ -42,13 +44,16 @@ class ShopUrl
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_shop_url", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Shop")
+     *
      * @ORM\JoinColumn(name="id_shop", referencedColumnName="id_shop", nullable=false)
      */
     private $shop;
@@ -95,17 +100,12 @@ class ShopUrl
      */
     private $active;
 
-    /**
-     * @return int
-     */
     public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * @param string $domain
-     *
      * @return $this
      */
     public function setDomain(string $domain): self
@@ -115,17 +115,12 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDomain(): string
     {
         return $this->domain;
     }
 
     /**
-     * @param string $domainSsl
-     *
      * @return $this
      */
     public function setDomainSsl(string $domainSsl): self
@@ -135,17 +130,12 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDomainSsl(): string
     {
         return $this->domainSsl;
     }
 
     /**
-     * @param string $physicalUri
-     *
      * @return $this
      */
     public function setPhysicalUri(string $physicalUri): self
@@ -155,17 +145,12 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getPhysicalUri(): string
     {
         return $this->physicalUri;
     }
 
     /**
-     * @param string $virtualUri
-     *
      * @return $this
      */
     public function setVirtualUri(string $virtualUri): self
@@ -175,17 +160,12 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getVirtualUri(): string
     {
         return $this->virtualUri;
     }
 
     /**
-     * @param bool $main
-     *
      * @return $this
      */
     public function setMain(bool $main): self
@@ -195,17 +175,12 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function getMain(): bool
     {
         return $this->main;
     }
 
     /**
-     * @param bool $active
-     *
      * @return $this
      */
     public function setActive(bool $active): self
@@ -215,9 +190,6 @@ class ShopUrl
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function getActive(): bool
     {
         return $this->active;
@@ -225,8 +197,6 @@ class ShopUrl
 
     /**
      * Get shopGroup.
-     *
-     * @return Shop
      */
     public function getShop(): Shop
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,6 @@ final class ProductWithoutImageQueryBuilder extends AbstractProductQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @return QueryBuilder
      */
@@ -72,7 +72,7 @@ final class ProductWithoutImageQueryBuilder extends AbstractProductQueryBuilder
 
         $imageSubQuery = $this->connection->createQueryBuilder()
             ->select(1)
-            ->from($this->dbPrefix . 'image_shop', 'img')
+            ->from($this->dbPrefix.'image_shop', 'img')
             ->andWhere('p.id_product = img.id_product');
 
         if ($this->multistoreContextChecker->isSingleShopContext()) {
@@ -81,7 +81,7 @@ final class ProductWithoutImageQueryBuilder extends AbstractProductQueryBuilder
             $imageSubQuery->andWhere('img.id_shop = p.id_shop_default');
         }
 
-        $qb->andWhere('NOT EXISTS(' . $imageSubQuery->getSQL() . ')');
+        $qb->andWhere('NOT EXISTS('.$imageSubQuery->getSQL().')');
 
         return $qb;
     }

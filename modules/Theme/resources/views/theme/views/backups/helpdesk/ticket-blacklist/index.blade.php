@@ -134,7 +134,7 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <small class="text-muted">{{ $entry->addedBy?->name ?? '—' }}</small>
+                                            <small class="text-muted">{{ $entry->addedBy?->full_name ?? '—' }}</small>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
@@ -259,7 +259,7 @@
     </div>
 
     {{-- Bulk toolbar --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>

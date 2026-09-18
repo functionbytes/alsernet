@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
     /**
      * OrderReturnLazyArray constructor.
      *
-     * @param string $prefix
-     * @param Link $link
-     * @param array $orderReturn
+     * @param  string  $prefix
      *
      * @throws \ReflectionException
      */
@@ -85,7 +84,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
             'order-detail',
             true,
             null,
-            'id_order=' . (int) $this->orderReturn['id_order']
+            'id_order='.(int) $this->orderReturn['id_order']
         );
     }
 
@@ -100,7 +99,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
             'order-return',
             true,
             null,
-            'id_order_return=' . (int) $this->orderReturn['id_order_return']
+            'id_order_return='.(int) $this->orderReturn['id_order_return']
         );
     }
 
@@ -111,7 +110,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
      */
     public function getReturnNumber()
     {
-        return $this->prefix . sprintf('%06d', $this->orderReturn['id_order_return']);
+        return $this->prefix.sprintf('%06d', $this->orderReturn['id_order_return']);
     }
 
     /**
@@ -138,7 +137,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
                 'pdf-order-return',
                 true,
                 null,
-                'id_order_return=' . (int) $this->orderReturn['id_order_return']
+                'id_order_return='.(int) $this->orderReturn['id_order_return']
             )
             : '';
     }

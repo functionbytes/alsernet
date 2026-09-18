@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,7 @@ class HintTextExtension extends AbstractTypeExtension
             ->setDefaults([
                 'hint' => null,
             ])
-            ->setAllowedTypes('hint', ['null', 'string'])
-        ;
+            ->setAllowedTypes('hint', ['null', 'string']);
     }
 
     /**

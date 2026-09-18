@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ use SpecificPrice;
 class SpecificPriceValidator extends AbstractObjectModelValidator
 {
     /**
-     * @param SpecificPrice $specificPrice
-     *
      * @throws CoreException
      * @throws SpecificPriceConstraintException
      */
@@ -69,10 +68,6 @@ class SpecificPriceValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param SpecificPrice $specificPrice
-     * @param string $property
-     * @param int $errorCode
-     *
      * @throws CoreException
      * @throws SpecificPriceConstraintException
      */
@@ -84,7 +79,6 @@ class SpecificPriceValidator extends AbstractObjectModelValidator
     /**
      * Checks if date range values are not inverse. (range from not bigger than range to)
      *
-     * @param SpecificPrice $specificPrice
      *
      * @throws SpecificPriceConstraintException
      */

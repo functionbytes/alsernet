@@ -1,18 +1,17 @@
 <?php
+
 ini_set('max_execution_time', 176000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include(dirname(__FILE__) . '/../../config/config.inc.php');
-
+include dirname(__FILE__).'/../../config/config.inc.php';
 
 /**ACTIVAR TODAS**/
-Db::getInstance()->execute("UPDATE aalv_category SET active = 1 WHERE id_parent > 1 and id_category not in (
+Db::getInstance()->execute('UPDATE aalv_category SET active = 1 WHERE id_parent > 1 and id_category not in (
 98475,98476,98477,98478,98479,98480,98481,98482,98483,98487,104092,98507,98508,98509,98510,98511,98512,98513,98514,98515,98516,98517,98518,
 98519,98520,98521,98522,98523,98524,98525,98526,98527,98528,98529,98530,98532,98533,98534,98535,98543,98545,98547,98551,98553,98556,98559,
 98955,98956,98962,98964,98965,98966,98967,98968,98969,98970,98982,98984,98992,98994,98998,98999,99000,99474,99475,99493,99496,99497,99500,
@@ -241,26 +240,25 @@ Db::getInstance()->execute("UPDATE aalv_category SET active = 1 WHERE id_parent 
 99452,99453,99454,99455,99456,99457,99458,99459,64177,66161,104066,81243,84880,84883,85275,85276,97923,99616,99617,99618,104635,104636,
 104637,104638,104639,104640,104641,104642,104643,104644,104645,104646,104647,104648,144,2215,2216,2217,2218,2219,2222,2223,2220,2221,2820,
 104762,104787,104822,104785,1743
-)");
+)');
 
 /**
  * SELECCIONO LAS CATEGORIAS DE PRIMER NIVEL DE NAVEGACION(HIJAS de DEPORTES Y LAS MARCAS)
  */
-$categories_sql = "SELECT * FROM aalv_category WHERE id_parent BETWEEN 3 AND 11";
+$categories_sql = 'SELECT * FROM aalv_category WHERE id_parent BETWEEN 3 AND 11';
 $categories = Db::getInstance()->executeS($categories_sql);
 $accion = 'desactivar';  // 'desactivar' o 'activar'
 
-//cambiarEstadoCategoria(64);
+// cambiarEstadoCategoria(64);
 
 foreach ($categories as $category) {
     cambiarEstadoCategoria($category['id_category']);
 }
 
 /**FINALMENTE REGENERO MENU Y REINDEXO AMAZING FILTER*/
-peticionget("https://www.a-alvarez.com/modules/alsernetmenu/generate.php");
-peticionget("https://www.a-alvarez.com/module/amazzingfilter/cron?token=f5124ec297f7c93221b04682bbf772be&id_shop=1&action=index-all");
-peticionget("https://www.a-alvarez.com/module/ambjolisearch/cron?token=HnWQ3MLs&step_size=1142");
-
+peticionget('https://www.a-alvarez.com/modules/alsernetmenu/generate.php');
+peticionget('https://www.a-alvarez.com/module/amazzingfilter/cron?token=f5124ec297f7c93221b04682bbf772be&id_shop=1&action=index-all');
+peticionget('https://www.a-alvarez.com/module/ambjolisearch/cron?token=HnWQ3MLs&step_size=1142');
 
 function peticionget($url)
 {
@@ -274,7 +272,6 @@ function peticionget($url)
     return $content;
 
 }
-
 
 // Función recursiva para desactivar las categorías en la rama
 function desactivarCategoriaYDescendientes($categoriaId)
@@ -301,16 +298,14 @@ function desactivarCategoriaYDescendientes($categoriaId)
         }
     }
 
-
     // Si todos los hijos ya fueron desactivados y no hay productos activos, desactivar esta categoría
-    if ($todosHijosInactivos && !tieneProductosActivos($categoriaId)) {
+    if ($todosHijosInactivos && ! tieneProductosActivos($categoriaId)) {
         Db::getInstance()->executeS("UPDATE aalv_category SET active = 0 WHERE id_category = $categoriaId");
         echo "Categoría $categoriaId desactivada con éxito.\n";
     } else {
         Db::getInstance()->executeS("UPDATE aalv_category SET active = 1 WHERE id_category = $categoriaId");
         echo "No se puede desactivar la categoría $categoriaId porque tiene hijos activos.\n";
     }
-
 
 }
 
@@ -337,20 +332,22 @@ function tieneProductosActivos($categoriaId)
          * TODO Comprobar aca si está activo y visible prro no tiene stock
          */
         foreach ($activos_and_visibles as $activo) {
-            $comprobar_stock_query = "SELECT COALESCE(SUM(quantity), 0) AS stock_total
+            $comprobar_stock_query = 'SELECT COALESCE(SUM(quantity), 0) AS stock_total
                                         FROM (
                                             -- Stock de producto simple (sin combinaciones)
                                             SELECT sa.quantity
                                             FROM aalv_stock_available sa
-                                            WHERE sa.id_product = ".$activo['id_product']." AND sa.id_product_attribute = 0
+                                            WHERE sa.id_product = '.$activo['id_product'].' AND sa.id_product_attribute = 0
                                             UNION ALL
                                             -- Stock de todas las combinaciones (si las hay)
                                             SELECT sa.quantity
                                             FROM aalv_stock_available sa
-                                            WHERE sa.id_product = ".$activo['id_product']." AND sa.id_product_attribute > 0
-                                        ) AS stock_union;";
+                                            WHERE sa.id_product = '.$activo['id_product'].' AND sa.id_product_attribute > 0
+                                        ) AS stock_union;';
             $comprobar_stock = DB::getInstance()->getValue($comprobar_stock_query);
-            if((int)$comprobar_stock > 0) return true;
+            if ((int) $comprobar_stock > 0) {
+                return true;
+            }
         }
 
         return false;
@@ -358,7 +355,3 @@ function tieneProductosActivos($categoriaId)
         return false;
     }
 }
-
-
-
-

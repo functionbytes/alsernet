@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -122,13 +123,6 @@ class AddSpecificPriceCommand
     private $dateTimeTo;
 
     /**
-     * @param int $productId
-     * @param string $reductionType
-     * @param float $reductionValue
-     * @param bool $includeTax
-     * @param float $price
-     * @param int $fromQuantity
-     *
      * @throws DomainConstraintException
      */
     public function __construct(
@@ -146,145 +140,92 @@ class AddSpecificPriceCommand
         $this->fromQuantity = $fromQuantity;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return Reduction
-     */
     public function getReduction(): Reduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @return bool
-     */
     public function isIncludeTax(): bool
     {
         return $this->includeTax;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return int
-     */
     public function getFromQuantity(): int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeFrom(): ?DateTime
     {
         return $this->dateTimeFrom;
     }
 
-    /**
-     * @param DateTime|null $dateTimeFrom
-     */
     public function setDateTimeFrom(?DateTime $dateTimeFrom): void
     {
         $this->dateTimeFrom = $this->createDateTime($dateTimeFrom);
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopGroupId(): ?int
     {
         return $this->shopGroupId;
     }
 
-    /**
-     * @param int $shopGroupId
-     */
     public function setShopGroupId(int $shopGroupId): void
     {
         $this->shopGroupId = $shopGroupId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopId(): ?int
     {
         return $this->shopId;
     }
 
-    /**
-     * @param int $shopId
-     */
     public function setShopId(int $shopId): void
     {
         $this->shopId = $shopId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCartId(): ?int
     {
         return $this->cartId;
     }
 
-    /**
-     * @param int $cartId
-     */
     public function setCartId(int $cartId): void
     {
         $this->cartId = $cartId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getProductAttributeId(): ?int
     {
         return $this->productAttributeId;
     }
 
-    /**
-     * @param int $productAttributeId
-     */
     public function setProductAttributeId(int $productAttributeId): void
     {
         $this->productAttributeId = $productAttributeId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCurrencyId(): ?int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @param int $currencyId
-     */
     public function setCurrencyId(int $currencyId): void
     {
         $this->currencyId = $currencyId;
     }
 
     /**
-     * @return int|null
-     *
      * @deprecated use getCatalogPriceRuleId() instead. (wrong naming used in migration process)
      */
     public function getCartRuleId(): ?int
@@ -292,17 +233,12 @@ class AddSpecificPriceCommand
         return $this->catalogPriceRuleId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCatalogPriceRuleId(): ?int
     {
         return $this->catalogPriceRuleId;
     }
 
     /**
-     * @param int $cartRuleId
-     *
      * @deprecated use setCatalogPriceRuleId() instead. (wrong naming used in migration process)
      */
     public function setCartRuleId(int $cartRuleId): void
@@ -310,83 +246,52 @@ class AddSpecificPriceCommand
         $this->catalogPriceRuleId = $cartRuleId;
     }
 
-    /**
-     * @param int $catalogPriceRuleId
-     */
     public function setCatalogPriceRuleId(int $catalogPriceRuleId): void
     {
         $this->catalogPriceRuleId = $catalogPriceRuleId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCountryId(): ?int
     {
         return $this->countryId;
     }
 
-    /**
-     * @param int $countryId
-     */
     public function setCountryId(int $countryId): void
     {
         $this->countryId = $countryId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getGroupId(): ?int
     {
         return $this->groupId;
     }
 
-    /**
-     * @param int $groupId
-     */
     public function setGroupId(int $groupId): void
     {
         $this->groupId = $groupId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCustomerId(): ?int
     {
         return $this->customerId;
     }
 
-    /**
-     * @param int $customerId
-     */
     public function setCustomerId(int $customerId): void
     {
         $this->customerId = $customerId;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeTo(): ?DateTime
     {
         return $this->dateTimeTo;
     }
 
-    /**
-     * @param DateTime|null $dateTimeTo
-     */
     public function setDateTimeTo(?DateTime $dateTimeTo): void
     {
         $this->dateTimeTo = $this->createDateTime($dateTimeTo);
     }
 
     /**
-     * @param string $dateTime
-     *
-     * @return DateTime
-     *
      * @throws SpecificPriceConstraintException
      */
     private function createDateTime(string $dateTime): DateTime

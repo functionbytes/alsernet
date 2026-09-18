@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class NewsletterRegistrationsKpi implements KpiInterface
     private $sourceUrl;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $kpiConfiguration
-     * @param string $sourceUrl
+     * @param  string  $sourceUrl
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -71,7 +70,7 @@ final class NewsletterRegistrationsKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-newsletter';
         $helper->icon = 'mail_outline';
         $helper->color = 'color3';
@@ -79,7 +78,7 @@ final class NewsletterRegistrationsKpi implements KpiInterface
         $helper->title = $this->translator->trans('Newsletter Registrations', [], 'Admin.Orderscustomers.Feature');
         $helper->subtitle = $this->translator->trans('All Time', [], 'Admin.Global');
 
-        if (false !== $this->kpiConfiguration->get('NEWSLETTER_REGISTRATIONS')) {
+        if ($this->kpiConfiguration->get('NEWSLETTER_REGISTRATIONS') !== false) {
             $helper->value = $this->kpiConfiguration->get('NEWSLETTER_REGISTRATIONS');
         }
 

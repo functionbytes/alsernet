@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class AlphaIsoCode
     private $isoCode;
 
     /**
-     * @param string $isoCode
+     * @param  string  $isoCode
      *
      * @throws CurrencyConstraintException
      */
@@ -63,13 +64,13 @@ class AlphaIsoCode
     }
 
     /**
-     * @param string $isoCode
+     * @param  string  $isoCode
      *
      * @throws CurrencyConstraintException
      */
     private function assertIsValidIsoCode($isoCode)
     {
-        if (!is_string($isoCode) || !preg_match(self::PATTERN, $isoCode)) {
+        if (! is_string($isoCode) || ! preg_match(self::PATTERN, $isoCode)) {
             throw new CurrencyConstraintException(sprintf('Given iso code "%s" is not valid. It did not matched given regex %s', var_export($isoCode, true), self::PATTERN), CurrencyConstraintException::INVALID_ISO_CODE);
         }
     }

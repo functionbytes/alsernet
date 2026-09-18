@@ -32,6 +32,4 @@ use PrestaShop\PrestaShop\Core\Domain\Exception\DomainException;
 /**
  * Base class for Showcase card exceptions
  */
-class ShowcaseCardException extends DomainException
-{
-}
+class ShowcaseCardException extends DomainException {}

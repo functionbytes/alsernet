@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,6 @@ class Type
     private $type;
 
     /**
-     * @param string $type
-     *
      * @throws NotificationException
      */
     public function __construct(string $type)
@@ -56,23 +55,18 @@ class Type
         $this->type = $type;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->type;
     }
 
     /**
-     * @param string $type
-     *
      * @throws NotificationException
      */
     private function assertIsValidType(string $type)
     {
         $allowedTypes = [self::ORDER, self::CUSTOMER, self::CUSTOMER_MESSAGE];
-        if (!in_array($type, $allowedTypes)) {
+        if (! in_array($type, $allowedTypes)) {
             throw new NotificationException(sprintf('Type %s is invalid. Supported types are: %s', var_export($type, true), implode(', ', $allowedTypes)));
         }
     }

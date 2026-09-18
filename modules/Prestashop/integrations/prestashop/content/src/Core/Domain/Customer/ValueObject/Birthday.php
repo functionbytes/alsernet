@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,7 +56,7 @@ class Birthday
     }
 
     /**
-     * @param string $birthday
+     * @param  string  $birthday
      */
     public function __construct($birthday)
     {
@@ -78,22 +79,22 @@ class Birthday
      */
     public function isEmpty()
     {
-        return self::EMPTY_BIRTHDAY === $this->birthday;
+        return $this->birthday === self::EMPTY_BIRTHDAY;
     }
 
     /**
      * Birthday cannot be date in a future
      *
-     * @param string $birthday
+     * @param  string  $birthday
      */
     private function assertBirthdayIsNotAFutureDate($birthday)
     {
-        if (self::EMPTY_BIRTHDAY === $birthday) {
+        if ($birthday === self::EMPTY_BIRTHDAY) {
             return;
         }
 
         $birthdayDateTime = new DateTime($birthday);
-        $now = new DateTime();
+        $now = new DateTime;
 
         if ($birthdayDateTime > $now) {
             throw new CustomerConstraintException(sprintf('Invalid birthday "%s" provided. Birthday must be a past date.', $birthdayDateTime->format('Y-m-d')), CustomerConstraintException::INVALID_BIRTHDAY);
@@ -103,15 +104,15 @@ class Birthday
     /**
      * Assert that birthday is actual date
      *
-     * @param string $birthday
+     * @param  string  $birthday
      */
     private function assertBirthdayIsInValidFormat($birthday)
     {
-        if (self::EMPTY_BIRTHDAY === $birthday) {
+        if ($birthday === self::EMPTY_BIRTHDAY) {
             return;
         }
 
-        if (!is_string($birthday) || false === strtotime($birthday)) {
+        if (! is_string($birthday) || strtotime($birthday) === false) {
             throw new CustomerConstraintException(sprintf('Invalid birthday %s value provided.', var_export($birthday, true)), CustomerConstraintException::INVALID_BIRTHDAY);
         }
     }

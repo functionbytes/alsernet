@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -102,17 +103,6 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
      */
     private $countryId;
 
-    /**
-     * @param CombinationRepository $combinationRepository
-     * @param StockAvailableRepository $stockAvailableRepository
-     * @param AttributeRepository $attributeRepository
-     * @param ProductRepository $productRepository
-     * @param ProductImageRepository $productImageRepository
-     * @param NumberExtractor $numberExtractor
-     * @param TaxComputer $taxComputer
-     * @param int $contextLanguageId
-     * @param int $countryId
-     */
     public function __construct(
         CombinationRepository $combinationRepository,
         StockAvailableRepository $stockAvailableRepository,
@@ -155,11 +145,6 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
         );
     }
 
-    /**
-     * @param CombinationId $combinationId
-     *
-     * @return string
-     */
     private function getCombinationName(CombinationId $combinationId): string
     {
         $attributesInformation = $this->attributeRepository->getAttributesInfoByCombinationIds(
@@ -177,11 +162,6 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
         }, $attributes));
     }
 
-    /**
-     * @param Combination $combination
-     *
-     * @return CombinationDetails
-     */
     private function getDetails(Combination $combination): CombinationDetails
     {
         return new CombinationDetails(
@@ -194,12 +174,6 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
         );
     }
 
-    /**
-     * @param Combination $combination
-     * @param Product $product
-     *
-     * @return CombinationPrices
-     */
     private function getPrices(Combination $combination, Product $product): CombinationPrices
     {
         $priceTaxExcluded = $this->numberExtractor->extract($combination, 'price');
@@ -218,14 +192,9 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
         );
     }
 
-    /**
-     * @param Combination $combination
-     *
-     * @return CombinationStock
-     */
     private function getStock(Combination $combination): CombinationStock
     {
-        $stockAvailable = $this->stockAvailableRepository->getForCombination(new Combinationid($combination->id));
+        $stockAvailable = $this->stockAvailableRepository->getForCombination(new CombinationId($combination->id));
 
         return new CombinationStock(
             (int) $stockAvailable->quantity,
@@ -233,13 +202,11 @@ final class GetCombinationForEditingHandler implements GetCombinationForEditingH
             (int) $combination->low_stock_threshold,
             (bool) $combination->low_stock_alert,
             $stockAvailable->location,
-            DateTimeUtil::NULL_DATE === $combination->available_date ? null : new DateTime($combination->available_date)
+            $combination->available_date === DateTimeUtil::NULL_DATE ? null : new DateTime($combination->available_date)
         );
     }
 
     /**
-     * @param Combination $combination
-     *
      * @return int[]
      */
     private function getImages(Combination $combination): array

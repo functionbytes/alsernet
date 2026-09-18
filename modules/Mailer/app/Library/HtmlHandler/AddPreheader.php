@@ -2,7 +2,6 @@
 
 namespace Modules\Mailer\Library;
 
-
 use League\Pipeline\StageInterface;
 use Soundasleep\Html2Text;
 

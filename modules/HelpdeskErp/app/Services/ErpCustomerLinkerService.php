@@ -5,9 +5,18 @@ namespace Modules\HelpdeskErp\Services;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
+use Modules\HelpdeskIntegration\Services\CustomerIntegrationService;
 
 class ErpCustomerLinkerService
 {
+    /**
+     * ¿Alguna de las búsquedas de esta pasada murió por un fallo del manager
+     * (timeout, conexión, 5xx)? Distingue "el cliente no está en el ERP" de
+     * "el ERP no contestó": el primero es definitivo y el segundo merece que
+     * el job lo reintente más adelante.
+     */
+    private bool $searchFailed = false;
+
     public function __construct(
         private readonly ErpContextService $erp,
         private readonly PhoneNormalizerService $phoneNormalizer,
@@ -28,15 +37,14 @@ class ErpCustomerLinkerService
             return (int) $existing->external_id;
         }
 
+        $this->searchFailed = false;
+
         // 1. Buscar por email (descartamos correos anónimos del chat web)
         $email = $customer->email;
         if ($email && ! str_ends_with($email, '@anonymous.local')) {
             $erpId = $this->searchByEmail($email);
             if ($erpId !== null) {
-                $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => 'email']);
-                Log::info('HelpdeskErp: cliente vinculado por email', ['customer_id' => $customer->id, 'erp_id' => $erpId]);
-
-                return $erpId;
+                return $this->persistLink($customer, $erpId, 'email');
             }
         }
 
@@ -53,10 +61,7 @@ class ErpCustomerLinkerService
 
             $erpId = $this->searchByPhone($digits);
             if ($erpId !== null) {
-                $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => 'phone']);
-                Log::info('HelpdeskErp: cliente vinculado por teléfono', ['customer_id' => $customer->id, 'erp_id' => $erpId]);
-
-                return $erpId;
+                return $this->persistLink($customer, $erpId, 'phone');
             }
         }
 
@@ -67,14 +72,95 @@ class ErpCustomerLinkerService
         if ($psEmail && $psEmail !== $email) {
             $erpId = $this->searchByEmail($psEmail);
             if ($erpId !== null) {
-                $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => 'prestashop_email']);
-                Log::info('HelpdeskErp: cliente vinculado por email de PrestaShop', ['customer_id' => $customer->id, 'erp_id' => $erpId]);
-
-                return $erpId;
+                return $this->persistLink($customer, $erpId, 'prestashop_email');
             }
         }
 
+        // Ninguna estrategia encontró al cliente. Antes esto se iba en un
+        // Log::info y no quedaba nada consultable; ahora se guarda para que la
+        // UI pueda avisar al agente y el job sepa que ya se intentó. Se
+        // distingue "no está en el ERP" de "el ERP no contestó": lo primero es
+        // definitivo, lo segundo merece reintento.
+        $status = $this->searchFailed ? 'error' : 'not_found';
+
+        $customer->recordErpLookup($status);
+        $this->auditFailedLookup($customer, $status);
+
+        Log::info('HelpdeskErp: cliente no vinculado', [
+            'customer_id' => $customer->id,
+            'status' => $status,
+        ]);
+
         return null;
+    }
+
+    /**
+     * Escribe el vínculo pasando por CustomerIntegrationService cuando está
+     * disponible, para que los vínculos automáticos aparezcan en el mismo
+     * historial de integraciones que los que hace un agente a mano — hasta
+     * ahora solo se auditaban estos últimos.
+     *
+     * HelpdeskIntegration es opcional (HelpdeskErp no depende de él; la
+     * dependencia va en el otro sentido, su ErpIntegrationDriver usa
+     * ErpContextService), así que sin él se escribe igual, solo sin auditar.
+     */
+    private function persistLink(Customer $customer, int $erpId, string $via): int
+    {
+        if (class_exists(CustomerIntegrationService::class)) {
+            app(CustomerIntegrationService::class)
+                ->linkAutomatically($customer, 'erp', (string) $erpId, $via);
+        } else {
+            $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => $via]);
+        }
+
+        $customer->recordErpLookup('linked');
+
+        // Invalidar el contexto cacheado de este cliente.
+        //
+        // getCustomerContext() cachea también los negativos (miss_ttl, 60 s por
+        // defecto). Si algo preguntó por este email mientras aún no estaba
+        // vinculado —o la consulta anterior murió por timeout de Oracle— queda
+        // un "found: false" en caché, y quien lo lea justo después verá un
+        // cliente sin ficha aunque el vínculo acabe de escribirse. Eso rompía
+        // en concreto a ErpFactsService: CustomerErpResolved se emite un
+        // instante después de este método, así que las reglas de enrutado
+        // evaluaban erp_linked=false para un cliente que sí está en gestión.
+        $this->forgetContextCache($customer);
+
+        Log::info('HelpdeskErp: cliente vinculado', [
+            'customer_id' => $customer->id,
+            'erp_id' => $erpId,
+            'via' => $via,
+        ]);
+
+        return $erpId;
+    }
+
+    /**
+     * Tira el contexto cacheado del cliente por todas sus identidades: el
+     * email y los teléfonos, porque la clave de caché usa el email si lo hay y
+     * `phone:{phone}` cuando el cliente se encontró solo por número.
+     */
+    private function forgetContextCache(Customer $customer): void
+    {
+        $email = (string) ($customer->email ?? '');
+
+        $this->erp->forgetAllFor($email, [
+            $customer->whatsapp_phone,
+            $customer->phone,
+        ]);
+    }
+
+    /**
+     * @param  'not_found'|'error'  $status
+     */
+    private function auditFailedLookup(Customer $customer, string $status): void
+    {
+        if (! class_exists(CustomerIntegrationService::class)) {
+            return;
+        }
+
+        app(CustomerIntegrationService::class)->logFailedLookup($customer, 'erp', $status);
     }
 
     private function searchByEmail(string $email): ?int
@@ -86,6 +172,7 @@ class ErpCustomerLinkerService
         try {
             $results = $this->erp->searchCustomers($email, 'email');
         } catch (\Throwable $e) {
+            $this->searchFailed = true;
             Log::warning('HelpdeskErp: linkCustomer no pudo buscar por email.', ['error' => $e->getMessage()]);
 
             return null;
@@ -112,6 +199,7 @@ class ErpCustomerLinkerService
         try {
             $results = $this->erp->searchCustomers($digits, 'phone');
         } catch (\Throwable $e) {
+            $this->searchFailed = true;
             Log::warning('HelpdeskErp: linkCustomer no pudo buscar por teléfono.', ['error' => $e->getMessage()]);
 
             return null;

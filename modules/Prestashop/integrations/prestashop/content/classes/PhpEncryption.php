@@ -24,6 +24,7 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use Defuse\Crypto\Core;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 
 /**
@@ -77,7 +78,7 @@ class PhpEncryptionCore
     /**
      * @return string
      *
-     * @throws \Defuse\Crypto\Exception\EnvironmentIsBrokenException
+     * @throws EnvironmentIsBrokenException
      */
     public static function saveBytesToChecksummedAsciiSafeString($header, $bytes)
     {
@@ -110,7 +111,7 @@ class PhpEncryptionCore
      */
     public static function resolveEngineToUse()
     {
-        if (in_array(\Defuse\Crypto\Core::CIPHER_METHOD, openssl_get_cipher_methods()) === false) {
+        if (in_array(Core::CIPHER_METHOD, openssl_get_cipher_methods()) === false) {
             return self::LEGACY_ENGINE;
         }
 

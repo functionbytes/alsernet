@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Tax\Exception;
 /**
  * Is thrown when tax is not found by provided id
  */
-class TaxNotFoundException extends TaxException
-{
-}
+class TaxNotFoundException extends TaxException {}

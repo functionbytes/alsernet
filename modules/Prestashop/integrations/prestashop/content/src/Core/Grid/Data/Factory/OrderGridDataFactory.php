@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,10 +59,7 @@ final class OrderGridDataFactory implements GridDataFactoryInterface
     private $configuration;
 
     /**
-     * @param GridDataFactoryInterface $dataFactory
-     * @param RepositoryInterface $localeRepository
-     * @param ConfigurationInterface $configuration
-     * @param string $contextLocale
+     * @param  string  $contextLocale
      */
     public function __construct(
         GridDataFactoryInterface $dataFactory,
@@ -87,7 +85,7 @@ final class OrderGridDataFactory implements GridDataFactoryInterface
         $isInvoicesEnabled = $this->configuration->get('PS_INVOICE');
 
         foreach ($records as &$record) {
-            if (!$record['company']) {
+            if (! $record['company']) {
                 $record['company'] = '--';
             }
 

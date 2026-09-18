@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,13 +50,12 @@ class LegacyBlockHelperSubscriber implements EventSubscriberInterface
     /**
      * Renders a Kpi block for a given legacy controller name.
      *
-     * @param RenderingHookEvent $event
      *
      * @throws \Exception
      */
     public function renderKpi(RenderingHookEvent $event)
     {
-        if (!array_key_exists('kpi_controller', $event->getHookParameters())) {
+        if (! array_key_exists('kpi_controller', $event->getHookParameters())) {
             throw new \Exception('The legacy_kpi hook need a kpi_controller parameter (legacy controller full class name).');
         }
 

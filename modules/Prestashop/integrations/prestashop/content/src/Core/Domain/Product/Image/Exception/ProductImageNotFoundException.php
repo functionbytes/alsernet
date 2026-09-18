@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\Image\Exception;
 /**
  * Is thrown when product image is not found
  */
-class ProductImageNotFoundException extends ProductImageException
-{
-}
+class ProductImageNotFoundException extends ProductImageException {}

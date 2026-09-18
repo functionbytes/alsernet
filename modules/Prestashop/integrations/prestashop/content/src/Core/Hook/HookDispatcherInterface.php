@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,23 +37,19 @@ interface HookDispatcherInterface extends EventDispatcherInterface
 {
     /**
      * Dispatch given hook.
-     *
-     * @param HookInterface $hook
      */
     public function dispatchHook(HookInterface $hook);
 
     /**
      * Dispatch hook with raw parameters.
      *
-     * @param string $hookName
-     * @param array $hookParameters
+     * @param  string  $hookName
      */
     public function dispatchWithParameters($hookName, array $hookParameters = []);
 
     /**
      * Dispatch rendering hook.
      *
-     * @param HookInterface $hook
      *
      * @return RenderedHookInterface
      */
@@ -61,9 +58,7 @@ interface HookDispatcherInterface extends EventDispatcherInterface
     /**
      * Dispatch rendering hook with parameters.
      *
-     * @param string $hookName
-     * @param array $hookParameters
-     *
+     * @param  string  $hookName
      * @return RenderedHookInterface
      */
     public function dispatchRenderingWithParameters($hookName, array $hookParameters = []);

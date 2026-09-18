@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -14,7 +15,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 
 class MessageReceived implements ShouldBroadcast
 {
-    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $conversation;
 

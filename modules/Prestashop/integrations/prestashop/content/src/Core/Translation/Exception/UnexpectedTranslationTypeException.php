@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,6 +35,4 @@ use Exception;
  * A translation type represents a part of the application logic (modules, themes, backoffice, frontoffice ...).
  * The available types are listed in TranslationCatalogueBuilder::ALLOWED_TYPES.
  */
-class UnexpectedTranslationTypeException extends Exception
-{
-}
+class UnexpectedTranslationTypeException extends Exception {}

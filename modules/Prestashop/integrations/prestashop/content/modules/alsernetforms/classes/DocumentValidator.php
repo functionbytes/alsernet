@@ -241,7 +241,7 @@ class DocumentValidator
         $sql = 'SELECT * FROM '._DB_PREFIX_.'alsernet_forms_requests
                 WHERE id_alsernetforms_request = '.(int) $requestId;
 
-        return \Db::getInstance()->getRow($sql);
+        return Db::getInstance()->getRow($sql);
     }
 
     public function getPendingRequestsForUid($uid)
@@ -252,7 +252,6 @@ class DocumentValidator
                 AND status IN ("pending", "server_unavailable")
                 ORDER BY created_at DESC';
 
-        return \Db::getInstance()->executeS($sql);
+        return Db::getInstance()->executeS($sql);
     }
-
 }

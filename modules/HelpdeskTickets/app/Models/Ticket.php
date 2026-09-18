@@ -838,7 +838,19 @@ class Ticket extends Model
     /**
      * Calculate SLA due dates based on policy
      */
-    public function calculateSlaDueDates(bool $persist = true): self
+    /**
+     * @param  bool  $onlyMissing  no pisar los vencimientos que ya vengan
+     *                             puestos. Lo usa TicketObserver::creating():
+     *                             quien crea un ticket pasando una fecha de SLA
+     *                             explícita —una importación, una migración, la
+     *                             corrección de un caso concreto— la está
+     *                             fijando a propósito, y sobrescribirla dejaba
+     *                             el valor pedido en nada sin decir una palabra.
+     *                             Los recálculos (cambio de política o de
+     *                             prioridad) siguen sobrescribiendo, que es su
+     *                             trabajo.
+     */
+    public function calculateSlaDueDates(bool $persist = true, bool $onlyMissing = false): self
     {
         if (! $this->slaPolicy) {
             return $this;
@@ -857,7 +869,8 @@ class Ticket extends Model
         $multiplier = $priorityMultipliers[$this->priority] ?? 1.0;
 
         // Calculate first response due date (if not already responded)
-        if (! $this->first_response_at && $policy->first_response_time) {
+        if (! $this->first_response_at && $policy->first_response_time
+            && ! ($onlyMissing && $this->sla_first_response_due_at !== null)) {
             $minutes = (int) ($policy->first_response_time * $multiplier);
             $this->sla_first_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
@@ -866,13 +879,13 @@ class Ticket extends Model
         // una réplica del cliente). Antes la columna sla_next_response_due_at
         // existía pero nunca se rellenaba: el vencimiento de siguiente respuesta
         // quedaba sin control.
-        if ($policy->next_response_time) {
+        if ($policy->next_response_time && ! ($onlyMissing && $this->sla_next_response_due_at !== null)) {
             $minutes = (int) ($policy->next_response_time * $multiplier);
             $this->sla_next_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
 
         // Calculate resolution due date
-        if ($policy->resolution_time) {
+        if ($policy->resolution_time && ! ($onlyMissing && $this->sla_resolution_due_at !== null)) {
             $minutes = (int) ($policy->resolution_time * $multiplier);
             $this->sla_resolution_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
@@ -1002,7 +1015,13 @@ class Ticket extends Model
         $this->items()->create([
             'type' => 'assigned',
             'user_id' => $userId,
-            'body' => "Ticket assigned to {$this->assignee?->name}",
+            // fullName() y no ->name: el User de esta app no tiene atributo
+            // 'name' (guarda firstname/lastname), así que la línea del hilo
+            // salía literalmente "Ticket assigned to " sin nadie detrás.
+            // Se resuelve por $userId y no por la relación $this->assignee,
+            // que sigue cacheada con el agente ANTERIOR justo después del
+            // update() de arriba.
+            'body' => 'Ticket asignado a '.(User::find($userId)?->fullName() ?: 'un agente'),
             'metadata' => ['assignee_id' => $userId],
         ]);
 
@@ -1039,13 +1058,17 @@ class Ticket extends Model
             'close_reason' => $reason ?: $this->close_reason,
             'close_root_cause' => $analysis['root_cause'] ?? $this->close_root_cause,
             'close_summary' => $analysis['summary'] ?? $this->close_summary,
-            'close_skip_survey' => $analysis['skip_survey'] ?? $this->close_skip_survey,
+            // ?? false al final: close_skip_survey es NOT NULL, y en una
+            // instancia recién creada con Ticket::create() el atributo todavía
+            // no está hidratado desde la BD — cerrarlo ahí mismo (lo hace la
+            // unificación de duplicados) reventaba con "cannot be null".
+            'close_skip_survey' => $analysis['skip_survey'] ?? $this->close_skip_survey ?? false,
         ]);
 
         // Create system event
         $this->items()->create([
             'type' => 'closed',
-            'body' => 'Ticket closed',
+            'body' => 'Ticket cerrado',
         ]);
 
         return $this;
@@ -1074,7 +1097,7 @@ class Ticket extends Model
         // Create system event
         $this->items()->create([
             'type' => 'status_change',
-            'body' => 'Ticket resolved',
+            'body' => 'Ticket resuelto',
             'metadata' => ['resolved_at' => now()->toIso8601String()],
         ]);
 
@@ -1102,7 +1125,7 @@ class Ticket extends Model
         // Create system event
         $this->items()->create([
             'type' => 'reopened',
-            'body' => 'Ticket reopened',
+            'body' => 'Ticket reabierto',
         ]);
 
         return $this;
@@ -1414,8 +1437,13 @@ class Ticket extends Model
     {
         return [
             'url' => route('manager.helpdesk.tickets.show', ['ticket' => '__TICKET__']),
-            'url_full' => route('manager.helpdesk.tickets.show-full', ['ticket' => '__TICKET__']),
             'url_data' => route('manager.helpdesk.tickets.data', ['ticket' => '__TICKET__']),
+            // Modal 03 "Plantillas de email": el mismo listado de
+            // TicketCannedReply que ya viaja en data-canned-replies, pero con
+            // {{...}} resuelto contra este ticket concreto.
+            'url_canned_replies' => route('manager.helpdesk.tickets.canned-replies', ['ticket' => '__TICKET__']),
+            // Sonda del refresco automático; ver TicketDetailDataController::pulse().
+            'url_pulse' => route('manager.helpdesk.tickets.pulse', ['ticket' => '__TICKET__']),
             'url_message_store' => route('manager.helpdesk.tickets.messages.store', ['ticket' => '__TICKET__']),
             'url_update' => route('manager.helpdesk.tickets.update', ['ticket' => '__TICKET__']),
             'url_close' => route('manager.helpdesk.tickets.close', ['ticket' => '__TICKET__']),
@@ -1436,6 +1464,12 @@ class Ticket extends Model
             'url_ai_suggest_reply' => route('manager.helpdesk.tickets.ai.suggest-reply', ['ticket' => '__TICKET__']),
             // Modal 46: candidatos a duplicado del mismo cliente.
             'url_duplicates' => route('manager.helpdesk.tickets.ai.duplicates', ['ticket' => '__TICKET__']),
+            // Unificar duplicados (v2): resumen de cada ticket y unificación en
+            // bloque. La v1 (url_duplicates + url_merge) se mantiene intacta.
+            'url_unify_summary' => route('manager.helpdesk.tickets.unify.summary', ['ticket' => '__TICKET__']),
+            'url_unify' => route('manager.helpdesk.tickets.unify', ['ticket' => '__TICKET__']),
+            // Lista negra desde el propio ticket (correo y/o dominio) + borrado.
+            'url_blacklist' => route('manager.helpdesk.tickets.blacklist', ['ticket' => '__TICKET__']),
             'url_note_destroy_template' => route('manager.helpdesk.tickets.notes.destroy', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_note_pin_template' => route('manager.helpdesk.tickets.notes.pin', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_note_color_template' => route('manager.helpdesk.tickets.notes.color', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
@@ -1455,6 +1489,13 @@ class Ticket extends Model
             'url_split' => route('manager.helpdesk.tickets.split', ['ticket' => '__TICKET__']),
             // Modal 23: avisar a un agente presente en el ticket.
             'url_presence_nudge' => route('manager.helpdesk.tickets.presence.nudge', ['ticket' => '__TICKET__']),
+            // Late mientras el detalle está abierto ("estoy viendo/
+            // respondiendo este ticket") y avisa al cerrarlo — el mismo
+            // heartbeat/leave de TicketPresenceController que ya existía
+            // pero ningún JS llamaba (QA 14-sep-2026): el listado ahora
+            // pinta un punto de presencia por fila con este dato.
+            'url_presence_heartbeat' => route('manager.helpdesk.tickets.presence.heartbeat', ['ticket' => '__TICKET__']),
+            'url_presence_leave' => route('manager.helpdesk.tickets.presence.leave', ['ticket' => '__TICKET__']),
             // Modal 25: pedidos PrestaShop del cliente, bajo demanda.
             'url_customer_orders' => route('manager.helpdesk.tickets.customer-360.orders', ['ticket' => '__TICKET__']),
             // Modal 32: enviar el enlace mágico de acceso al portal.
@@ -1592,6 +1633,14 @@ class Ticket extends Model
             'created_at_human' => $this->created_at?->diffForHumans(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'assigned_at' => $this->assigned_at?->toIso8601String(),
+            // Si el agente ya respondió al cliente — dato distinto del SLA
+            // de resolución (sla_text/sla_kind, que sigue el plazo de
+            // CERRAR el ticket, no el de responder). Sin esto la fila del
+            // listado no podía distinguir "nadie le ha contestado todavía"
+            // de "ya le contestamos, solo falta cerrarlo" — confusión real
+            // de un agente que veía "vencido" en negro tras haber respondido
+            // (QA visual 14-sep-2026).
+            'first_response_at' => $this->first_response_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'close_reason' => $this->close_reason,
             'close_reason_label' => $this->close_reason

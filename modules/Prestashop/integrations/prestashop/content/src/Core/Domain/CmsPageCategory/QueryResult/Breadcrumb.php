@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class Breadcrumb implements IteratorAggregate
     private $cmsPageCategories;
 
     /**
-     * @param BreadcrumbItem[] $cmsPageCategories
+     * @param  BreadcrumbItem[]  $cmsPageCategories
      */
     public function __construct(array $cmsPageCategories)
     {

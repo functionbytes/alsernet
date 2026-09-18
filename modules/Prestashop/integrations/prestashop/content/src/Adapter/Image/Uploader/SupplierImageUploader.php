@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class SupplierImageUploader extends AbstractImageUploader implements Image
         $tempImageName = $this->createTemporaryImage($image);
         $this->deleteOldImage($supplierId);
 
-        $destination = _PS_SUPP_IMG_DIR_ . $supplierId . '.jpg';
+        $destination = _PS_SUPP_IMG_DIR_.$supplierId.'.jpg';
         $this->uploadFromTemp($tempImageName, $destination);
 
         if (file_exists($destination)) {
@@ -55,14 +56,14 @@ final class SupplierImageUploader extends AbstractImageUploader implements Image
     /**
      * Deletes old image
      *
-     * @param int $id
+     * @param  int  $id
      */
     private function deleteOldImage($id)
     {
         $supplier = new Supplier($id);
         $supplier->deleteImage();
 
-        $currentLogo = _PS_TMP_IMG_DIR_ . 'supplier_mini_' . $id . '.jpg';
+        $currentLogo = _PS_TMP_IMG_DIR_.'supplier_mini_'.$id.'.jpg';
 
         if (file_exists($currentLogo)) {
             unlink($currentLogo);

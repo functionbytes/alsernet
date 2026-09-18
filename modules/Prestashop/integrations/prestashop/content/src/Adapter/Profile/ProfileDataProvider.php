@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,7 @@ class ProfileDataProvider
     private $superAdminProfileId;
 
     /**
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
-     * @param int $superAdminProfileId
+     * @param  int  $superAdminProfileId
      */
     public function __construct(
         ContextEmployeeProviderInterface $contextEmployeeProvider,
@@ -59,15 +59,14 @@ class ProfileDataProvider
     /**
      * Get employee profiles.
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array
      */
     public function getProfiles($languageId)
     {
         $profiles = Profile::getProfiles($languageId);
 
-        if ($profiles && !$this->contextEmployeeProvider->isSuperAdmin()) {
+        if ($profiles && ! $this->contextEmployeeProvider->isSuperAdmin()) {
             foreach ($profiles as $key => $profile) {
                 if ($profile['id_profile'] == $this->superAdminProfileId) {
                     unset($profiles[$key]);

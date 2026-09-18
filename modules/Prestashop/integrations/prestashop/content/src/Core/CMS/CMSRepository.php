@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,19 +36,18 @@ class CMSRepository extends EntityRepository
     /**
      * Return all CMSRepositories depending on $id_lang/$id_shop tuple.
      *
-     * @param int $id_lang
-     * @param int $id_shop
-     *
+     * @param  int  $id_lang
+     * @param  int  $id_shop
      * @return array|null
      */
     public function i10nFindAll($id_lang, $id_shop)
     {
         $sql = '
 			SELECT *
-			FROM `' . $this->getTableNameWithPrefix() . '` c
-			JOIN `' . $this->getPrefix() . 'cms_lang` cl ON c.`id_cms`= cl.`id_cms`
-			WHERE cl.`id_lang` = ' . (int) $id_lang . '
-			AND cl.`id_shop` = ' . (int) $id_shop . '
+			FROM `'.$this->getTableNameWithPrefix().'` c
+			JOIN `'.$this->getPrefix().'cms_lang` cl ON c.`id_cms`= cl.`id_cms`
+			WHERE cl.`id_lang` = '.(int) $id_lang.'
+			AND cl.`id_shop` = '.(int) $id_shop.'
 
 		';
 
@@ -57,10 +57,9 @@ class CMSRepository extends EntityRepository
     /**
      * Return all CMSRepositories depending on $id_lang/$id_shop tuple.
      *
-     * @param int $id_cms
-     * @param int $id_lang
-     * @param int $id_shop
-     *
+     * @param  int  $id_cms
+     * @param  int  $id_lang
+     * @param  int  $id_shop
      * @return CMS|null
      *
      * @throws Exception
@@ -69,11 +68,11 @@ class CMSRepository extends EntityRepository
     {
         $sql = '
 			SELECT *
-			FROM `' . $this->getTableNameWithPrefix() . '` c
-			JOIN `' . $this->getPrefix() . 'cms_lang` cl ON c.`id_cms`= cl.`id_cms`
-			WHERE c.`id_cms` = ' . (int) $id_cms . '
-			AND cl.`id_lang` = ' . (int) $id_lang . '
-			AND cl.`id_shop` = ' . (int) $id_shop . '
+			FROM `'.$this->getTableNameWithPrefix().'` c
+			JOIN `'.$this->getPrefix().'cms_lang` cl ON c.`id_cms`= cl.`id_cms`
+			WHERE c.`id_cms` = '.(int) $id_cms.'
+			AND cl.`id_lang` = '.(int) $id_lang.'
+			AND cl.`id_shop` = '.(int) $id_shop.'
 			LIMIT 0 , 1
 		';
 

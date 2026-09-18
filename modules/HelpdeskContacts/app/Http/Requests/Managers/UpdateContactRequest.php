@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskContacts\Http\Requests\Managers;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateContactRequest extends FormRequest
 {
@@ -12,13 +13,22 @@ class UpdateContactRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                // Sin withoutTrashed(): el indice unico de helpdesk_customers.email
+                // tambien choca contra filas soft-deleted, asi que la validacion
+                // debe considerarlas tambien (antes un email duplicado con un
+                // contacto borrado producia un 500 por UniqueConstraintViolationException).
+                Rule::unique('helpdesk.helpdesk_customers', 'email')->ignore($this->route('customer')),
+            ],
             'phone' => ['nullable', 'string', 'max:50'],
             'language' => ['nullable', 'string', 'max:10'],
             'timezone' => ['nullable', 'string', 'max:60'],
@@ -36,6 +46,7 @@ class UpdateContactRequest extends FormRequest
             'name.max' => 'El nombre no puede superar los 255 caracteres.',
             'email.email' => 'El correo electrónico no tiene un formato válido.',
             'email.max' => 'El correo electrónico no puede superar los 255 caracteres.',
+            'email.unique' => 'Ya existe otro contacto con este correo electrónico. Si son la misma persona, fusiona los contactos duplicados en vez de editar el email.',
             'phone.max' => 'El teléfono no puede superar los 50 caracteres.',
             'language.max' => 'El idioma no puede superar los 10 caracteres.',
             'timezone.max' => 'La zona horaria no puede superar los 60 caracteres.',

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,11 +42,6 @@ class StockType extends TranslatorAwareType
      */
     private $packStockTypeChoiceProvider;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FormChoiceProviderInterface $packStockTypeChoiceProvider
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -73,8 +69,7 @@ class StockType extends TranslatorAwareType
                 'label_tag_name' => 'h2',
                 'required' => false,
             ])
-            ->add('availability', AvailabilityType::class)
-        ;
+            ->add('availability', AvailabilityType::class);
     }
 
     /**

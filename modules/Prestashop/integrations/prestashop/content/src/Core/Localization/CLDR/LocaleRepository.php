@@ -49,15 +49,14 @@ class LocaleRepository
     /**
      * Get a CLDR Locale by simplified IETF tag.
      *
-     * @param string $localeCode e.g.: fr-FR, en-US...
-     *
+     * @param  string  $localeCode  e.g.: fr-FR, en-US...
      * @return CldrLocale|null A CldrLocale object. Null if not found
      */
     public function getLocale($localeCode)
     {
         $localeData = $this->dataSource->getLocaleData($localeCode);
 
-        if (null === $localeData) {
+        if ($localeData === null) {
             return null;
         }
 

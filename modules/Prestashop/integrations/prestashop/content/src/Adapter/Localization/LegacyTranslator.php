@@ -37,14 +37,13 @@ use Translate;
 class LegacyTranslator
 {
     /**
-     * @param string $moduleName Module name
-     * @param string $originalString String to translate
-     * @param string|false $source
-     * @param null $sprintf
-     * @param bool $js
-     * @param string|null $locale
-     * @param bool $fallback [default=true] If true, this method falls back to the new translation system if no translation is found
-     *
+     * @param  string  $moduleName  Module name
+     * @param  string  $originalString  String to translate
+     * @param  string|false  $source
+     * @param  null  $sprintf
+     * @param  bool  $js
+     * @param  string|null  $locale
+     * @param  bool  $fallback  [default=true] If true, this method falls back to the new translation system if no translation is found
      * @return mixed|string
      *
      * @throws \Exception

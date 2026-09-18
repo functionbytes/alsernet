@@ -8,7 +8,12 @@
 
 @section('content')
     <div class="row">
-        <div class="col-12">
+        {{-- col-lg-8, no col-12: esta columna y la lateral de "Estado del
+             documento" (col-lg-4) van en la MISMA fila, y 12 + 4 no caben en las
+             12 de la rejilla. El panel lateral se iba entero debajo del
+             contenido, dejando media pantalla vacia a la derecha en cuanto
+             habia sitio. En movil sigue ocupando el ancho completo. --}}
+        <div class="col-12 col-lg-8">
             <!-- Order Details (Permission-Controlled) -->
             @if(auth()->user()->canDocument('order-details'))
             <div class="card mb-3">

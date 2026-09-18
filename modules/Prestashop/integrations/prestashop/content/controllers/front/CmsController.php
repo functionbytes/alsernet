@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,11 +27,14 @@
 class CmsControllerCore extends FrontController
 {
     public $php_self = 'cms';
+
     public $assignCase;
+
     public $cms;
 
     /** @var CMSCategory */
     public $cms_category;
+
     public $ssl = false;
 
     public function canonicalRedirection($canonicalURL = '')
@@ -66,8 +70,8 @@ class CmsControllerCore extends FrontController
 
         // assignCase (1 = CMS page, 2 = CMS category)
         if (Validate::isLoadedObject($this->cms)) {
-            $adtoken = Tools::getAdminToken('AdminCmsContent' . (int) Tab::getIdFromClassName('AdminCmsContent') . (int) Tools::getValue('id_employee'));
-            if (!$this->cms->isAssociatedToShop() || !$this->cms->active && Tools::getValue('adtoken') != $adtoken) {
+            $adtoken = Tools::getAdminToken('AdminCmsContent'.(int) Tab::getIdFromClassName('AdminCmsContent').(int) Tools::getValue('id_employee'));
+            if (! $this->cms->isAssociatedToShop() || ! $this->cms->active && Tools::getValue('adtoken') != $adtoken) {
                 $this->redirect_after = '404';
                 $this->redirect();
             } else {
@@ -101,7 +105,7 @@ class CmsControllerCore extends FrontController
                 $id_shop = null,
                 $chain = true
             );
-            if (!empty($filteredCmsContent['object'])) {
+            if (! empty($filteredCmsContent['object'])) {
                 $cmsVar = $filteredCmsContent['object'];
             }
 
@@ -130,7 +134,7 @@ class CmsControllerCore extends FrontController
                 $id_shop = null,
                 $chain = true
             );
-            if (!empty($filteredCmsCategoryContent['object'])) {
+            if (! empty($filteredCmsCategoryContent['object'])) {
                 $cmsCategoryVar = $filteredCmsCategoryContent['object'];
             }
 
@@ -184,10 +188,10 @@ class CmsControllerCore extends FrontController
         $page = parent::getTemplateVarPage();
 
         if ($this->assignCase == 2) {
-            $page['body_classes']['cms-id-' . $this->cms_category->id] = true;
+            $page['body_classes']['cms-id-'.$this->cms_category->id] = true;
         } else {
-            $page['body_classes']['cms-id-' . $this->cms->id] = true;
-            if (!$this->cms->indexation) {
+            $page['body_classes']['cms-id-'.$this->cms->id] = true;
+            if (! $this->cms->indexation) {
                 $page['meta']['robots'] = 'noindex';
             }
         }

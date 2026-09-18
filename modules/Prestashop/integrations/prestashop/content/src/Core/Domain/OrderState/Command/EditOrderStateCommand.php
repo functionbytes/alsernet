@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -106,7 +107,7 @@ class EditOrderStateCommand
     private $template;
 
     /**
-     * @param int $orderStateId
+     * @param  int  $orderStateId
      */
     public function __construct($orderStateId)
     {
@@ -130,8 +131,7 @@ class EditOrderStateCommand
     }
 
     /**
-     * @param array<string> $name
-     *
+     * @param  array<string>  $name
      * @return self
      */
     public function setName($name)

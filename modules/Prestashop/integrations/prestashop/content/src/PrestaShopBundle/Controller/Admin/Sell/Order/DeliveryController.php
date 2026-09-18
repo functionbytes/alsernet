@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,8 @@ class DeliveryController extends FrameworkBundleAdminController
      * Main page for Delivery slips.
      *
      * @Template("@PrestaShop/Admin/Sell/Order/Delivery/slip.html.twig")
-     * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @return array|RedirectResponse
      */
@@ -88,8 +88,6 @@ class DeliveryController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function generatePdfAction(Request $request)
@@ -119,7 +117,7 @@ class DeliveryController extends FrameworkBundleAdminController
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         }
 

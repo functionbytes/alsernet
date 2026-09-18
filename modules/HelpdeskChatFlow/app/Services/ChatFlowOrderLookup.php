@@ -37,7 +37,7 @@ class ChatFlowOrderLookup
         $email = $customer['email'] ?? null;
 
         $tryErp = in_array($source, ['auto', 'erp'], true) && $this->erp && $erpId;
-        $tryPs = in_array($source, ['auto', 'ps'], true) && $this->ps && ($psId || $email);
+        $wantsPs = in_array($source, ['auto', 'ps'], true) && $this->ps;
 
         if ($tryErp) {
             $order = $this->fromErp((int) $erpId, $orderId);
@@ -46,11 +46,21 @@ class ChatFlowOrderLookup
             }
         }
 
-        if ($tryPs) {
-            $order = $this->fromPs($orderId, $psId ? (int) $psId : null, $email);
+        if ($wantsPs && $email) {
+            $order = $this->fromPs($orderId, $email);
             if ($order['found']) {
                 return $order;
             }
+        } elseif ($wantsPs && $psId) {
+            // PrestashopContextService::getOrderDetail() fails closed without
+            // an email — order ownership is an IDOR guard only verifiable by
+            // email, ps_id alone can't confirm the order belongs to this
+            // customer. Skip deliberately instead of making a call that's
+            // guaranteed to be rejected downstream with just a log warning.
+            Log::info('ChatFlowOrderLookup: PS lookup omitido, solo se conoce ps_id sin email', [
+                'order_id' => $orderId,
+                'ps_id' => $psId,
+            ]);
         }
 
         return $this->notFound();
@@ -69,7 +79,7 @@ class ChatFlowOrderLookup
         return $raw ? $this->normalize($raw, 'erp') : $this->notFound();
     }
 
-    private function fromPs(int $orderId, ?int $psCustomerId, ?string $email): array
+    private function fromPs(int $orderId, string $email): array
     {
         try {
             $raw = $this->ps->getOrderDetail($orderId, $email);

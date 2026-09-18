@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,23 +45,17 @@ final class UpdateCartAddressesHandler extends AbstractCartHandler implements Up
      */
     private $updateCartCarrierHandler;
 
-    /**
-     * @param UpdateCartCarrierHandlerInterface $updateCartCarrierHandler
-     */
     public function __construct(UpdateCartCarrierHandlerInterface $updateCartCarrierHandler)
     {
         $this->updateCartCarrierHandler = $updateCartCarrierHandler;
     }
 
-    /**
-     * @param UpdateCartAddressesCommand $command
-     */
     public function handle(UpdateCartAddressesCommand $command)
     {
         $cart = $this->getCart($command->getCartId());
         $this->fillCartWithCommandData($cart, $command);
 
-        if (false === $cart->update()) {
+        if ($cart->update() === false) {
             throw new CartException(sprintf('Failed to update addresses for cart with id "%s"', $cart->id));
         }
 
@@ -69,9 +64,6 @@ final class UpdateCartAddressesHandler extends AbstractCartHandler implements Up
 
     /**
      * Fetches updatable fields from command to cart
-     *
-     * @param Cart $cart
-     * @param UpdateCartAddressesCommand $command
      */
     private function fillCartWithCommandData(Cart $cart, UpdateCartAddressesCommand $command): void
     {

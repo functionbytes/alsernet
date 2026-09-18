@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,9 +40,6 @@ class CheckRequirements
      */
     private $translator;
 
-    /**
-     * @param TranslatorInterface $translator
-     */
     public function __construct(TranslatorInterface $translator)
     {
         $this->translator = $translator;
@@ -58,16 +56,16 @@ class CheckRequirements
 
         $isHostMode = defined('_PS_HOST_MODE_');
 
-        $paramsOptionalResults = !$isHostMode ? ConfigurationTest::check(ConfigurationTest::getDefaultTestsOp()) : [];
+        $paramsOptionalResults = ! $isHostMode ? ConfigurationTest::check(ConfigurationTest::getDefaultTestsOp()) : [];
 
         $failRequired = in_array('fail', $paramsRequiredResults);
 
         $testsErrors = $this->getErrorMessages();
 
-        if ($failRequired && 'ok' !== $paramsRequiredResults['files']) {
+        if ($failRequired && $paramsRequiredResults['files'] !== 'ok') {
             $tmp = ConfigurationTest::test_files(true);
             if (is_array($tmp) && count($tmp)) {
-                $testsErrors['files'] = $testsErrors['files'] . '<br/>(' . implode(', ', $tmp) . ')';
+                $testsErrors['files'] = $testsErrors['files'].'<br/>('.implode(', ', $tmp).')';
             }
         }
 
@@ -79,7 +77,7 @@ class CheckRequirements
             'testsRequired' => $paramsRequiredResults,
         ];
 
-        if (!$isHostMode) {
+        if (! $isHostMode) {
             $results = array_merge($results, [
                 'testsErrors' => $this->fillMissingDescriptions($testsErrors, $paramsOptionalResults),
                 'failOptional' => in_array('fail', $paramsOptionalResults),
@@ -136,9 +134,8 @@ class CheckRequirements
     /**
      * Add default message on missing check descriptions.
      *
-     * @param array $errorMessages
-     * @param array $checks
-     *
+     * @param  array  $errorMessages
+     * @param  array  $checks
      * @return array Error messages with fallback for missing entries
      */
     private function fillMissingDescriptions($errorMessages, $checks)

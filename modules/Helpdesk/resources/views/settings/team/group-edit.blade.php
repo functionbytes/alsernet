@@ -42,7 +42,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Nombre del grupo
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <input type="text" name="name" class="form-control" value="{{ old('name', $group->name) }}" required placeholder="Ej: Soporte Técnico, Ventas, Atención al Cliente">
                             <small class="form-text text-muted">Un nombre descriptivo que identifique al equipo</small>
@@ -56,7 +56,7 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Modo de asignación
-                                <span class="text-danger">*</span>
+                                <span class="text-brand">*</span>
                             </label>
                             <select name="assignment_mode" class="form-select select2" required>
                                 <option value="">Seleccionar modo de asignación</option>
@@ -236,142 +236,7 @@
 
 @endsection
 
-@section('scripts')
-<script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: false,
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    // Initialize Select2 for priority dropdowns
-    function initPrioritySelect2() {
-        $('.select2-priority').each(function() {
-            if (!$(this).hasClass('select2-hidden-accessible')) {
-                $(this).select2({
-                    minimumResultsForSearch: Infinity, // Hide search box
-                    allowClear: false,
-                    dropdownAutoWidth: true,
-                    width: '100%',
-                    language: {
-                        noResults: function() {
-                            return 'Sin resultados';
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    // Initialize on page load
-    initPrioritySelect2();
-
-    // Update summary counter
-    function updateSummary() {
-        const count = $('.member-checkbox:checked').length;
-        $('#totalMembers').text(count);
-    }
-
-    // Select all checkbox
-    $('#selectAll').on('change', function() {
-        const isChecked = $(this).is(':checked');
-        $('.member-checkbox').each(function() {
-            $(this).prop('checked', isChecked);
-            const priorityCell = $(this).closest('tr').find('.priority-cell');
-            priorityCell.toggleClass('d-none', ! isChecked);
-        });
-
-        // Reindex all checked members
-        if (isChecked) {
-            $('.member-checkbox:checked').each(function(index) {
-                $(this).attr('name', `members[${index}][user_id]`);
-                $(this).siblings('.priority-input').attr('name', `members[${index}][priority]`);
-            });
-        } else {
-            $('.member-checkbox').each(function() {
-                $(this).removeAttr('name');
-                $(this).siblings('.priority-input').removeAttr('name');
-            });
-        }
-
-        updateSummary();
-    });
-
-    // Individual checkbox change
-    $('.member-checkbox').on('change', function() {
-        const priorityCell = $(this).closest('tr').find('.priority-cell');
-        const isChecked = $(this).is(':checked');
-
-        priorityCell.toggle(isChecked);
-
-        // Reindex all checked members
-        $('.member-checkbox:checked').each(function(index) {
-            $(this).attr('name', `members[${index}][user_id]`);
-            $(this).siblings('.priority-input').attr('name', `members[${index}][priority]`);
-        });
-
-        // Remove name attribute from unchecked boxes
-        $('.member-checkbox:not(:checked)').each(function() {
-            $(this).removeAttr('name');
-            $(this).siblings('.priority-input').removeAttr('name');
-        });
-
-        updateSummary();
-
-        // Update select all checkbox state
-        const totalCheckboxes = $('.member-checkbox').length;
-        const checkedCheckboxes = $('.member-checkbox:checked').length;
-        $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
-    });
-
-    // Priority select change
-    $('.priority-select').on('change', function() {
-        const priorityInput = $(this).closest('tr').find('.priority-input');
-        priorityInput.val($(this).val());
-
-        // Update the index for the inputs
-        $('.member-checkbox:checked').each(function(index) {
-            $(this).attr('name', `members[${index}][user_id]`);
-            $(this).closest('tr').find('.priority-input').attr('name', `members[${index}][priority]`);
-        });
-    });
-
-    // Form validation
-    $('#groupForm').on('submit', function(e) {
-        const checkedMembers = $('.member-checkbox:checked').length;
-        if (checkedMembers === 0) {
-            e.preventDefault();
-            toastr.error('Debe seleccionar al menos un miembro para el grupo', 'Error de Validación');
-            return false;
-        }
-
-        // Show loading state
-        const submitBtn = $(this).find('button[type="submit"]');
-        submitBtn.prop('disabled', true);
-        submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
-    });
-
-    // Initialize summary on page load
-    updateSummary();
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-});
-</script>
-
+@push('styles')
 <style>
 .round-48 {
     width: 48px;
@@ -382,4 +247,16 @@ $(document).ready(function() {
     background-color: #f5f6f8;
 }
 </style>
-@endsection
+@endpush
+
+@push('scripts')
+<script>
+window.TeamGroupFormConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+    submitLoadingText: 'Guardando...',
+};
+</script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/team-group-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/team-group-form.js')) }}" defer></script>
+@endpush

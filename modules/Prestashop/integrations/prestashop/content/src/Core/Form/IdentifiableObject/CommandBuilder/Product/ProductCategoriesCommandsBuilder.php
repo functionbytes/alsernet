@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class ProductCategoriesCommandsBuilder implements ProductCommandsBuilderInterfac
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['categories']['product_categories'])) {
+        if (! isset($formData['categories']['product_categories'])) {
             return [];
         }
 
@@ -65,7 +66,7 @@ class ProductCategoriesCommandsBuilder implements ProductCommandsBuilderInterfac
         }
 
         // Default is always amongst the associated
-        if (!empty($defaultCategoryId) && !in_array($defaultCategoryId, $associatedCategoryIds)) {
+        if (! empty($defaultCategoryId) && ! in_array($defaultCategoryId, $associatedCategoryIds)) {
             $associatedCategoryIds[] = $defaultCategoryId;
         }
 

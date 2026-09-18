@@ -37,27 +37,27 @@ class LanguageImageManager
     /**
      * Path where images are saved to
      */
-    public const IMG_PATH = _PS_IMG_DIR_ . '/l/';
+    public const IMG_PATH = _PS_IMG_DIR_.'/l/';
 
     /**
      * Path were source images are stored
      */
-    public const IMG_SOURCE_PATH = _PS_IMG_SOURCE_DIR_ . '/l/';
+    public const IMG_SOURCE_PATH = _PS_IMG_SOURCE_DIR_.'/l/';
 
     /**
      * Path where flags are stored
      */
-    public const FLAGS_SOURCE = _PS_IMG_SOURCE_DIR_ . 'flags/%s.jpg';
+    public const FLAGS_SOURCE = _PS_IMG_SOURCE_DIR_.'flags/%s.jpg';
 
     /**
      * Path where flags are copied to
      */
-    public const FLAGS_DESTINATION = self::IMG_PATH . '%d.jpg';
+    public const FLAGS_DESTINATION = self::IMG_PATH.'%d.jpg';
 
     /**
      * Default flag
      */
-    public const FALLBACK_FLAG_SOURCE = self::IMG_SOURCE_PATH . 'none.jpg';
+    public const FALLBACK_FLAG_SOURCE = self::IMG_SOURCE_PATH.'none.jpg';
 
     public const IMAGE_DIRECTORIES = [
         _PS_CAT_IMG_DIR_,
@@ -76,9 +76,9 @@ class LanguageImageManager
     /**
      * Sets up the language flag image for the given language
      *
-     * @param string $localeCode IETF language tag
-     * @param int $langId Language id
-     * @param string|null $flagCode If provided, use this flag code. By default, auto-detect using locale code.
+     * @param  string  $localeCode  IETF language tag
+     * @param  int  $langId  Language id
+     * @param  string|null  $flagCode  If provided, use this flag code. By default, auto-detect using locale code.
      */
     public function setupLanguageFlag(string $localeCode, int $langId, ?string $flagCode = null): void
     {
@@ -86,7 +86,7 @@ class LanguageImageManager
 
         $flagPath = $this->getFlagPath($flagCode);
 
-        if (!file_exists($flagPath)) {
+        if (! file_exists($flagPath)) {
             $flagPath = static::FALLBACK_FLAG_SOURCE;
         }
 
@@ -100,7 +100,7 @@ class LanguageImageManager
     /**
      * Creates default copies for the "no image" image
      *
-     * @param string $isoCode 2-letter ISO code
+     * @param  string  $isoCode  2-letter ISO code
      */
     public function setupDefaultImagePlaceholder(string $isoCode): void
     {
@@ -109,7 +109,7 @@ class LanguageImageManager
         ];
 
         $imageTypes = ImageType::getAll();
-        if (!empty($imageTypes)) {
+        if (! empty($imageTypes)) {
             foreach (array_keys($imageTypes) as $alias) {
                 $formattedImageType = ImageType::getFormattedName($alias);
                 $from = $this->getPlaceholderImageFilename(static::DEFAULT_LANGUAGE_CODE, $formattedImageType);
@@ -120,7 +120,7 @@ class LanguageImageManager
 
         foreach (static::IMAGE_DIRECTORIES as $destinationDir) {
             foreach ($filesToCopy as $sourceFile => $newFile) {
-                @copy(static::IMG_SOURCE_PATH . $sourceFile, $destinationDir . $newFile);
+                @copy(static::IMG_SOURCE_PATH.$sourceFile, $destinationDir.$newFile);
             }
         }
     }
@@ -128,8 +128,7 @@ class LanguageImageManager
     /**
      * Deletes images associated with the language
      *
-     * @param int $langId
-     * @param string $isoCode 2-letter ISO code
+     * @param  string  $isoCode  2-letter ISO code
      */
     public function deleteImages(int $langId, string $isoCode): void
     {
@@ -143,37 +142,25 @@ class LanguageImageManager
         ];
         foreach (static::IMAGE_DIRECTORIES as $directory) {
             foreach ($images as $image) {
-                $this->unlinkIfExists($directory . $image);
-                $this->unlinkIfExists(static::IMG_PATH . $langId . '.jpg');
+                $this->unlinkIfExists($directory.$image);
+                $this->unlinkIfExists(static::IMG_PATH.$langId.'.jpg');
             }
         }
     }
 
     /**
-     * @param string $locale IETF language tag
-     *
-     * @return string
+     * @param  string  $locale  IETF language tag
      */
     private function getFlagCountryCodeFromLocale(string $locale): string
     {
         return strtolower(explode('-', $locale)[1]);
     }
 
-    /**
-     * @param string $countryCode
-     *
-     * @return string
-     */
     private function getFlagPath(string $countryCode): string
     {
         return sprintf(static::FLAGS_SOURCE, $countryCode);
     }
 
-    /**
-     * @param int $langId
-     *
-     * @return string
-     */
     private function getFlagDestination(int $langId): string
     {
         return sprintf(static::FLAGS_DESTINATION, $langId);
@@ -181,8 +168,6 @@ class LanguageImageManager
 
     /**
      * Removes a file if it exists
-     *
-     * @param string $file
      */
     private function unlinkIfExists(string $file): void
     {
@@ -191,15 +176,9 @@ class LanguageImageManager
         }
     }
 
-    /**
-     * @param string $isoCode
-     * @param string|null $imageTypeName
-     *
-     * @return string
-     */
-    private function getPlaceholderImageFilename(string $isoCode, string $imageTypeName = null): string
+    private function getPlaceholderImageFilename(string $isoCode, ?string $imageTypeName = null): string
     {
-        if (null !== $imageTypeName) {
+        if ($imageTypeName !== null) {
             return sprintf(static::PLACEHOLDER_IMAGE_NAME_PATTERNS[1], $isoCode, $imageTypeName);
         }
 

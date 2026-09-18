@@ -67,7 +67,7 @@ class TabTranslator extends EntityTranslator
      */
     private function buildIndex(): array
     {
-        $tableName = $this->dbPrefix . 'tab';
+        $tableName = $this->dbPrefix.'tab';
 
         $sql = "SELECT id_tab, wording, wording_domain FROM $tableName";
         $results = $this->db->executeS($sql);

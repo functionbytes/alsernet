@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,6 @@ class Customization
         $this->customizationFieldsData = $customizationFieldsData;
     }
 
-    /**
-     * @return int
-     */
     public function getCustomizationId(): int
     {
         return $this->customizationId;

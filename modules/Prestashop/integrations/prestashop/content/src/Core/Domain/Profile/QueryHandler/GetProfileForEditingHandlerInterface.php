@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,6 @@ use PrestaShop\PrestaShop\Core\Domain\Profile\Query\GetProfileForEditing;
 interface GetProfileForEditingHandlerInterface
 {
     /**
-     * @param GetProfileForEditing $query
-     *
      * @return mixed
      */
     public function handle(GetProfileForEditing $query);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class DefaultLanguageValidator extends ConstraintValidator
     private $defaultLanguageId;
 
     /**
-     * @param int $defaultLanguageId
+     * @param  int  $defaultLanguageId
      */
     public function __construct($defaultLanguageId)
     {
@@ -54,11 +55,11 @@ class DefaultLanguageValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof DefaultLanguage) {
+        if (! $constraint instanceof DefaultLanguage) {
             throw new UnexpectedTypeException($constraint, DefaultLanguage::class);
         }
 
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             throw new UnexpectedTypeException($value, 'array');
         }
 
@@ -69,8 +70,7 @@ class DefaultLanguageValidator extends ConstraintValidator
                     '%field_name%',
                     $this->context->getObject() ? $this->context->getObject()->getName() : ''
                 )
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

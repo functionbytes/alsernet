@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,8 @@ final class DataCell implements DataCellInterface
     private $value;
 
     /**
-     * @param string $key
-     * @param string $value
+     * @param  string  $key
+     * @param  string  $value
      */
     public function __construct($key, $value)
     {

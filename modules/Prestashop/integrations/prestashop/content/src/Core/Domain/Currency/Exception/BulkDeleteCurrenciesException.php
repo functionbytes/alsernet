@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,12 +43,11 @@ class BulkDeleteCurrenciesException extends CurrencyException
     private $currenciesIds;
 
     /**
-     * @param int[] $currenciesIds
-     * @param string $message
-     * @param int $code
-     * @param Exception $previous
+     * @param  int[]  $currenciesIds
+     * @param  string  $message
+     * @param  int  $code
      */
-    public function __construct(array $currenciesIds, $message = '', $code = 0, Exception $previous = null)
+    public function __construct(array $currenciesIds, $message = '', $code = 0, ?Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
 
@@ -68,7 +68,7 @@ class BulkDeleteCurrenciesException extends CurrencyException
     public function getCurrenciesNames(): array
     {
         $names = [];
-        if (!empty($this->getCurrenciesIds())) {
+        if (! empty($this->getCurrenciesIds())) {
             foreach ($this->getCurrenciesIds() as $id) {
                 $names[] = (new Currency((int) $id))->getName();
             }

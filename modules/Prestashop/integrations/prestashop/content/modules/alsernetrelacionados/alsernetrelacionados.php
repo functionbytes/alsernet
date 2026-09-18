@@ -1,5 +1,8 @@
 <?php
-if (!defined('_PS_VERSION_')) { exit; }
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 class Alsernetrelacionados extends Module
 {
@@ -32,11 +35,11 @@ class Alsernetrelacionados extends Module
     {
         // Usar AdminParentCatalog si existe; si no, AdminCatalog
         $id_parent = (int) Tab::getIdFromClassName('AdminParentCatalog');
-        if (!$id_parent) {
+        if (! $id_parent) {
             $id_parent = (int) Tab::getIdFromClassName('AdminCatalog');
         }
 
-        $tab = new Tab();
+        $tab = new Tab;
         $tab->active = 1;
         $tab->class_name = 'AdminAlsernetRelacionados';
         foreach (Language::getLanguages(false) as $lang) {
@@ -44,6 +47,7 @@ class Alsernetrelacionados extends Module
         }
         $tab->id_parent = $id_parent ?: 0;
         $tab->module = $this->name;
+
         return (bool) $tab->add();
     }
 
@@ -52,8 +56,10 @@ class Alsernetrelacionados extends Module
         $id_tab = (int) Tab::getIdFromClassName('AdminAlsernetRelacionados');
         if ($id_tab) {
             $tab = new Tab($id_tab);
+
             return (bool) $tab->delete();
         }
+
         return true;
     }
 }

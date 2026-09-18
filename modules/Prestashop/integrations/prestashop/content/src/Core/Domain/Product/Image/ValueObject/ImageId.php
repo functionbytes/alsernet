@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,26 +41,18 @@ class ImageId
      */
     private $value;
 
-    /**
-     * @param int $value
-     */
     public function __construct(int $value)
     {
         $this->assertIntegerIsGreaterThanZero($value);
         $this->value = $value;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $value
-     *
      * @throws ProductImageConstraintException
      */
     private function assertIntegerIsGreaterThanZero(int $value): void

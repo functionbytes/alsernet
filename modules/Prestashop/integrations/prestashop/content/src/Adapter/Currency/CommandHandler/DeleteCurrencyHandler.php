@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,7 @@ final class DeleteCurrencyHandler implements DeleteCurrencyHandlerInterface
     private $defaultCurrencyId;
 
     /**
-     * @param int $defaultCurrencyId
+     * @param  int  $defaultCurrencyId
      */
     public function __construct($defaultCurrencyId)
     {
@@ -67,7 +68,7 @@ final class DeleteCurrencyHandler implements DeleteCurrencyHandlerInterface
     {
         $entity = new Currency($command->getCurrencyId()->getValue());
 
-        if (0 >= $entity->id) {
+        if ($entity->id <= 0) {
             throw new CurrencyNotFoundException(sprintf('Currency object with id "%s" has not been found for deletion.', $command->getCurrencyId()->getValue()));
         }
 
@@ -75,7 +76,7 @@ final class DeleteCurrencyHandler implements DeleteCurrencyHandlerInterface
         $this->assertDefaultCurrencyIsNotBeingRemovedFromAnyShop($entity);
 
         try {
-            if (false === $entity->delete()) {
+            if ($entity->delete() === false) {
                 throw new CannotDeleteCurrencyException(sprintf('Unable to delete currency object with id "%s"', $command->getCurrencyId()->getValue()));
             }
         } catch (PrestaShopException $e) {
@@ -84,7 +85,7 @@ final class DeleteCurrencyHandler implements DeleteCurrencyHandlerInterface
     }
 
     /**
-     * @param int $currencyId
+     * @param  int  $currencyId
      *
      * @throws CannotDeleteDefaultCurrencyException
      */
@@ -98,7 +99,6 @@ final class DeleteCurrencyHandler implements DeleteCurrencyHandlerInterface
     /**
      * Prevents from removing the currency from any shop context.
      *
-     * @param Currency $currency
      *
      * @throws DefaultCurrencyInMultiShopException
      */

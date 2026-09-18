@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,7 @@ final class NamingConventionLinterCommand extends ContainerAwareCommand
     {
         $this
             ->setName('prestashop:linter:naming-convention')
-            ->setDescription('Checks if Back Office routes and controllers follow naming convention.')
-        ;
+            ->setDescription('Checks if Back Office routes and controllers follow naming convention.');
     }
 
     /**
@@ -71,7 +71,7 @@ final class NamingConventionLinterCommand extends ContainerAwareCommand
 
         $io = new SymfonyStyle($input, $output);
 
-        if (!empty($ioTableRows)) {
+        if (! empty($ioTableRows)) {
             $io->title('PrestaShop routes follow admin_{resources}_{action} naming convention structure');
             $io->warning(sprintf(
                 '%s routes are not following naming conventions:',

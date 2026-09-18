@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetshopping}prestashop>summary_8d11ea42eb87c7c24779e8d020ceff31'] = '%label%';
 $_MODULE['<{alsernetshopping}prestashop>customer_04176f095283bc729f1e3926967e7034'] = 'Nome';
 $_MODULE['<{alsernetshopping}prestashop>customer_dff4bf10409100d989495c6d5486035e'] = 'Cognome';

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,21 +66,15 @@ class DiscountApplicationType
      */
     private $type;
 
-    /**
-     * @param string $type
-     */
     public function __construct(string $type)
     {
-        if (!in_array($type, self::AVAILABLE_TYPES)) {
+        if (! in_array($type, self::AVAILABLE_TYPES)) {
             throw new CartRuleConstraintException(sprintf('Invalid cart rule discount application type %s. Available types are: %s', var_export($type, true), implode(', ', self::AVAILABLE_TYPES)), CartRuleConstraintException::INVALID_DISCOUNT_APPLICATION_TYPE);
         }
 
         $this->type = $type;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->type;

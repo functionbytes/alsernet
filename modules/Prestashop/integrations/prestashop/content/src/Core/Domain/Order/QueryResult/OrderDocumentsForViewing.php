@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,7 @@ class OrderDocumentsForViewing
     private $canGenerateDeliverySlip;
 
     /**
-     * @param bool $canGenerateInvoice
-     * @param bool $canGenerateDeliverySlip
-     * @param OrderDocumentForViewing[] $documents
+     * @param  OrderDocumentForViewing[]  $documents
      */
     public function __construct(bool $canGenerateInvoice, bool $canGenerateDeliverySlip, array $documents)
     {
@@ -66,17 +65,11 @@ class OrderDocumentsForViewing
         return $this->documents;
     }
 
-    /**
-     * @return bool
-     */
     public function canGenerateInvoice(): bool
     {
         return $this->canGenerateInvoice;
     }
 
-    /**
-     * @return bool
-     */
     public function canGenerateDeliverySlip(): bool
     {
         return $this->canGenerateDeliverySlip;

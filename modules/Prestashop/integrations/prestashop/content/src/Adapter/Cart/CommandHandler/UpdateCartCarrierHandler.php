@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,9 +45,6 @@ final class UpdateCartCarrierHandler extends AbstractCartHandler implements Upda
      */
     private $contextStateManager;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(ContextStateManager $contextStateManager)
     {
         $this->contextStateManager = $contextStateManager;
@@ -74,22 +72,20 @@ final class UpdateCartCarrierHandler extends AbstractCartHandler implements Upda
     }
 
     /**
-     * @param int $carrierId
-     *
      * @throws CartConstraintException
      */
     private function assertActiveCarrier(int $carrierId): void
     {
-        if (0 === $carrierId) {
+        if ($carrierId === 0) {
             return;
         }
 
         $carrier = new Carrier($carrierId);
 
-        if (!Validate::isLoadedObject($carrier) || (int) $carrier->id !== $carrierId) {
+        if (! Validate::isLoadedObject($carrier) || (int) $carrier->id !== $carrierId) {
             throw new CartConstraintException(sprintf('Carrier with id "%d" was not found', $carrierId), CartConstraintException::INVALID_CARRIER);
         }
-        if (!$carrier->active) {
+        if (! $carrier->active) {
             throw new CartConstraintException(sprintf('Carrier with id "%d" is not active', $carrierId), CartConstraintException::INVALID_CARRIER);
         }
     }
@@ -102,10 +98,6 @@ final class UpdateCartCarrierHandler extends AbstractCartHandler implements Upda
      *
      * However the structure of deliveryOptions is still used with comma in legacy, so
      * this method provides assurance for deliveryOption structure until major refactoring
-     *
-     * @param int $carrierId
-     *
-     * @return string
      */
     private function formatLegacyDeliveryOptionFromCarrierId(int $carrierId): string
     {

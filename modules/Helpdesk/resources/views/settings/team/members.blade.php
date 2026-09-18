@@ -3,7 +3,11 @@
 @section('title', 'Miembros del Equipo')
 
 @push('styles')
-<style>.hd-member-avatar { width: 36px; height: 36px; background-color: #f5f6f8; color: #90bb13; font-weight: 600; font-size: 0.85rem; }</style>
+<style>
+    .hd-member-avatar { width: 36px; height: 36px; background-color: #f5f6f8; color: #90bb13; font-weight: 600; font-size: 0.85rem; }
+    .tm-filter-badge { font-size: .6rem; }
+    .tm-bulk-toolbar { z-index: 1050; }
+</style>
 @endpush
 
 @section('page_header')
@@ -26,11 +30,6 @@
                         <p class="small mb-0 text-muted">Gestiona el equipo de soporte, roles y configuraciones de disponibilidad</p>
                     </div>
                     <div class="d-flex gap-2">
-                        @if(request('search') || request('role') != 'all' || request('group_id') != 'all')
-                            <a href="{{ route('settings.helpdesk.team.members') }}" class="btn btn-secondary">
-                                Limpiar filtros
-                            </a>
-                        @endif
                         <a href="{{ route('settings.helpdesk.team.groups') }}" class="btn btn-primary">
                             Ver grupos
                         </a>
@@ -168,39 +167,61 @@
                 </div>
             </div>
 
-            <!-- Filters -->
+            <!-- Busqueda y filtros -->
             <div class="card-body border-bottom">
+                @php
+                    $advancedKeys = ['role', 'group_id', 'availability'];
+                    $isSet = fn ($k) => request()->filled($k) && request($k) !== 'all';
+                    $activeFilterCount = collect($advancedKeys)->filter($isSet)->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                    $availabilityLabels = ['yes' => 'Disponible', 'working_hours' => 'Solo en horario', 'no' => 'No disponible'];
+                @endphp
+
                 <form method="GET" action="{{ route('settings.helpdesk.team.members') }}" id="filterForm">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Buscar</label>
-                            <input type="text" name="search" class="form-control"
-                                   placeholder="Nombre, apellido o email..."
-                                   value="{{ request('search') }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Rol</label>
-                            <select name="role" class="form-select select2">
-                                <option value="all">Todos los roles</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
-                                        {{ ucfirst($role->name) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Grupo</label>
-                            <select name="group_id" class="form-select select2">
-                                <option value="all">Todos los grupos</option>
-                                @foreach($groups as $group)
-                                    <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
-                                        {{ $group->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <input type="hidden" name="role"         id="filter-role"         value="{{ request('role') }}">
+                    <input type="hidden" name="group_id"     id="filter-group"        value="{{ request('group_id') }}">
+                    <input type="hidden" name="availability" id="filter-availability" value="{{ request('availability') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar por nombre, apellido o email..."
+                               value="{{ request('search') }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#members-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary tm-filter-badge">{{ $activeFilterCount }}</span>
+                            @endif
+                        </button>
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
+                            </button>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('settings.helpdesk.team.members') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if($isSet('role'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Rol: {{ ucfirst(request('role')) }}</span>
+                            @endif
+                            @if($isSet('group_id'))
+                                @php $tmGroup = $groups->firstWhere('id', request('group_id')); @endphp
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Grupo: {{ $tmGroup->name ?? request('group_id') }}</span>
+                            @endif
+                            @if($isSet('availability'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Disponibilidad: {{ $availabilityLabels[request('availability')] ?? request('availability') }}</span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -211,7 +232,8 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col" width="30%">Miembro</th>
+                                    <th scope="col" width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th scope="col" width="27%">Miembro</th>
                                     <th scope="col" width="15%">Rol</th>
                                     <th scope="col" width="25%">Grupos</th>
                                     <th scope="col" width="15%" class="text-center">Disponibilidad</th>
@@ -222,6 +244,7 @@
                             <tbody>
                                 @foreach($members as $member)
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $member->id }}"></td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
                                                 <div>
@@ -311,7 +334,7 @@
                         </div>
                         <h6 class="mb-1">No hay miembros encontrados</h6>
                         <p class="text-muted mb-0">
-                            @if(request('search') || request('role') != 'all' || request('group_id') != 'all')
+                            @if($hasAnyFilter)
                                 No se encontraron resultados para los filtros aplicados
                             @else
                                 No hay miembros del equipo registrados
@@ -339,44 +362,114 @@
 
     </div>
 
+    {{-- Filtros avanzados --}}
+    <div class="modal fade" id="members-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rol</label>
+                        <select id="modal-role" class="form-control select2-filter-modal">
+                            <option value="">Todos los roles</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->name }}" @selected(request('role') === $role->name)>{{ ucfirst($role->name) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Grupo</label>
+                        <select id="modal-group" class="form-control select2-filter-modal">
+                            <option value="">Todos los grupos</option>
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}" @selected(request('group_id') == $group->id)>{{ $group->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Disponibilidad</label>
+                        <select id="modal-availability" class="form-control select2-filter-modal">
+                            <option value="">Cualquiera</option>
+                            @foreach($availabilityLabels as $value => $label)
+                                <option value="{{ $value }}" @selected(request('availability') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="members-filter-apply-btn" class="btn btn-primary w-100 mb-1">Aplicar filtros</button>
+                    <button type="button" id="members-filter-clear-btn" class="btn btn-secondary w-100">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Barra flotante de seleccion --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none tm-bulk-toolbar">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Accion masiva --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara sobre <strong><span data-bulk-count>0</span> miembro(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2-bulk">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="availability">Cambiar disponibilidad</option>
+                            <option value="add_group">Añadir a un grupo</option>
+                            <option value="remove_group">Quitar de un grupo</option>
+                        </select>
+                    </div>
+                    <div class="mb-0 d-none" id="bulk-availability-wrap">
+                        <label class="form-label fw-semibold">Disponibilidad</label>
+                        <select id="bulk-availability" class="form-select select2-bulk">
+                            @foreach($availabilityLabels as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-0 d-none" id="bulk-group-wrap">
+                        <label class="form-label fw-semibold">Grupo</label>
+                        <select id="bulk-group" class="form-select select2-bulk">
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-$(document).ready(function() {
-
-    $('.select2').select2({
-        allowClear: false,
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            },
-            searching: function() {
-                return 'Buscando...';
-            }
-        }
-    });
-
-    $('.select2').on('change', function() {
-        $('#filterForm').submit();
-    });
-
-    // Search on enter
-    $('input[name="search"]').on('keypress', function(e) {
-        if (e.which === 13) {
-            $('#filterForm').submit();
-        }
-    });
-
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-});
+window.TeamMembersIndexConfig = {
+    flash: { success: @json(session('success')), error: @json(session('error')) },
+    clearFilterUrl: @json(route('settings.helpdesk.team.members')),
+    bulkActionUrl: @json(route('settings.helpdesk.team.members.bulk-action')),
+};
 </script>
-
-@endsection
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/team-members-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/team-members-index.js')) }}" defer></script>
+@endpush

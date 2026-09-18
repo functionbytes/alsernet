@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,6 @@ class BestSalesProductSearchProvider implements ProductSearchProviderInterface
     }
 
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchQuery $query
-     *
      * @return ProductSearchResult
      */
     public function runQuery(
@@ -69,11 +67,11 @@ class BestSalesProductSearchProvider implements ProductSearchProviderInterface
             $this->translator->trans('Sales, highest to lowest', [], 'Shop.Theme.Catalog')
         );
 
-        if (!Tools::getValue('order', 0)) {
+        if (! Tools::getValue('order', 0)) {
             $query->setSortOrder($sortBySales);
         }
 
-        if (!$products = ProductSale::getBestSales(
+        if (! $products = ProductSale::getBestSales(
             $context->getIdLang(),
             $query->getPage(),
             $query->getResultsPerPage(),
@@ -85,9 +83,9 @@ class BestSalesProductSearchProvider implements ProductSearchProviderInterface
 
         $count = (int) ProductSale::getNbSales();
 
-        $result = new ProductSearchResult();
+        $result = new ProductSearchResult;
 
-        if (!empty($products)) {
+        if (! empty($products)) {
             $result
                 ->setProducts($products)
                 ->setTotalProductsCount($count);

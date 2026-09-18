@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,6 @@ class CustomizationFieldDeleter
      */
     private $productsById = [];
 
-    /**
-     * @param CustomizationFieldRepository $customizationFieldRepository
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         CustomizationFieldRepository $customizationFieldRepository,
         ProductRepository $productRepository
@@ -71,9 +68,6 @@ class CustomizationFieldDeleter
         $this->productRepository = $productRepository;
     }
 
-    /**
-     * @param CustomizationFieldId $customizationFieldId
-     */
     public function delete(CustomizationFieldId $customizationFieldId): void
     {
         $customizationField = $this->customizationFieldRepository->get($customizationFieldId);
@@ -81,8 +75,6 @@ class CustomizationFieldDeleter
     }
 
     /**
-     * @param array $customizationFieldIds
-     *
      * @throws CannotBulkDeleteCustomizationFieldException
      */
     public function bulkDelete(array $customizationFieldIds): void
@@ -108,9 +100,6 @@ class CustomizationFieldDeleter
         );
     }
 
-    /**
-     * @param CustomizationField $customizationField
-     */
     private function performDeletion(CustomizationField $customizationField): void
     {
         $product = $this->getProduct((int) $customizationField->id_product);
@@ -125,16 +114,12 @@ class CustomizationFieldDeleter
     }
 
     /**
-     * @param int $productId
-     *
-     * @return Product
-     *
      * @throws ProductException
      * @throws ProductNotFoundException
      */
     private function getProduct(int $productId): Product
     {
-        if (!isset($this->productsById[$productId])) {
+        if (! isset($this->productsById[$productId])) {
             $this->productsById[$productId] = $this->productRepository->get(new ProductId($productId));
         }
 

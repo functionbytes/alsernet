@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,7 @@ class DefaultEmptyDataExtension extends AbstractTypeExtension
     {
         // We cannot use null as empty value so we create a private object that will allow us to detect that the
         // empty_view_data option has been explicitly set EVEN if it is null
-        $this->privateEmptyValue = new stdClass();
+        $this->privateEmptyValue = new stdClass;
 
         $resolver
             ->setDefaults([
@@ -60,8 +61,7 @@ class DefaultEmptyDataExtension extends AbstractTypeExtension
                 'empty_view_data' => $this->privateEmptyValue,
             ])
             ->setAllowedTypes('default_empty_data', ['null', 'string', 'int', 'array', 'object', 'bool', 'float'])
-            ->setAllowedTypes('empty_view_data', ['null', 'string', 'int', 'array', 'object', 'bool', 'float'])
-        ;
+            ->setAllowedTypes('empty_view_data', ['null', 'string', 'int', 'array', 'object', 'bool', 'float']);
     }
 
     /**
@@ -70,7 +70,7 @@ class DefaultEmptyDataExtension extends AbstractTypeExtension
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
-        if (!isset($options['default_empty_data'])) {
+        if (! isset($options['default_empty_data'])) {
             return;
         }
 

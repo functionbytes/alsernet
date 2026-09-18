@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,17 +41,11 @@ class GetAttachmentInformationList
      */
     private $languageId;
 
-    /**
-     * @param int $languageId
-     */
     public function __construct(int $languageId)
     {
         $this->languageId = new LanguageId($languageId);
     }
 
-    /**
-     * @return LanguageId
-     */
     public function getLanguageId(): LanguageId
     {
         return $this->languageId;

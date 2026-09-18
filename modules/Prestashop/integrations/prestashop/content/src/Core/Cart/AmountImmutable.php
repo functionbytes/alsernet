@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,7 @@ class AmountImmutable
     }
 
     /**
-     * @param float $taxIncluded
-     *
+     * @param  float  $taxIncluded
      * @return AmountImmutable
      */
     protected function setTaxIncluded($taxIncluded)
@@ -79,8 +79,7 @@ class AmountImmutable
     }
 
     /**
-     * @param float $taxExcluded
-     *
+     * @param  float  $taxExcluded
      * @return AmountImmutable
      */
     protected function setTaxExcluded($taxExcluded)
@@ -93,7 +92,6 @@ class AmountImmutable
     /**
      * Sums another amount object.
      *
-     * @param AmountImmutable $amount
      *
      * @return AmountImmutable
      */
@@ -108,7 +106,6 @@ class AmountImmutable
     /**
      * Substract another amount object.
      *
-     * @param AmountImmutable $amount
      *
      * @return AmountImmutable
      */
@@ -116,7 +113,7 @@ class AmountImmutable
     {
         return new static(
             $this->getTaxIncluded() - $amount->getTaxIncluded(),
-        $this->getTaxExcluded() - $amount->getTaxExcluded()
+            $this->getTaxExcluded() - $amount->getTaxExcluded()
         );
     }
 }

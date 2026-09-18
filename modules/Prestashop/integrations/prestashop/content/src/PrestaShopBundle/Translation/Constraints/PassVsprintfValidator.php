@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,11 +38,11 @@ class PassVsprintfValidator extends ConstraintValidator
 {
     public function validate($translation, Constraint $constraint)
     {
-        if (!$constraint instanceof PassVsprintf) {
+        if (! $constraint instanceof PassVsprintf) {
             throw new UnexpectedTypeException($constraint, 'PrestaShopBundle\Translation\Constraints\PassVsprintf');
         }
 
-        if (!$translation instanceof Translation) {
+        if (! $translation instanceof Translation) {
             throw new UnexpectedTypeException($translation, 'PrestaShopBundle\Entity\Translation');
         }
 

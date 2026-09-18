@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ use Hook;
 class HookInformationProvider
 {
     /**
-     * @param string $hookName
-     *
+     * @param  string  $hookName
      * @return bool
      */
     public function isDisplayHookName($hookName)
@@ -46,9 +46,8 @@ class HookInformationProvider
     /**
      * Return Hooks List.
      *
-     * @param bool $position Where position is active
-     * @param bool $onlyDisplayHooks Only hook with display hook name
-     *
+     * @param  bool  $position  Where position is active
+     * @param  bool  $onlyDisplayHooks  Only hook with display hook name
      * @return array Hooks List
      */
     public function getHooks($position = false, $onlyDisplayHooks = false)
@@ -59,9 +58,8 @@ class HookInformationProvider
     /**
      * Return Hooks list.
      *
-     * @param int $hookId Hook id
-     * @param int $moduleId Module id
-     *
+     * @param  int  $hookId  Hook id
+     * @param  int  $moduleId  Module id
      * @return array modules list
      */
     public function getModulesFromHook($hookId, $moduleId = null)

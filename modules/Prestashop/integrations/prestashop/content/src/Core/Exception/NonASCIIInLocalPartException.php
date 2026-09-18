@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ use Egulias\EmailValidator\Exception\InvalidEmail;
 /**
  * Exception thrown when email local part contains non-ascii characters
  */
-class NonASCIIInLocalPartException extends InvalidEmail
-{
-}
+class NonASCIIInLocalPartException extends InvalidEmail {}

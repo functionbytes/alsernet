@@ -33,6 +33,7 @@ class TicketItem extends Model
         'attachment_urls',
         'is_internal',
         'metadata',
+        'idempotency_key',
         'sentiment',
         'sentiment_score',
         // Mismo par que helpdesk_conversation_items (HelpdeskTranslate): lo

@@ -11,9 +11,18 @@
         </div>
         <div class="bv-modal-body">
 
-            <div id="rolePermsLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
+            {{-- Paso 0: solo aparece si el modal se abrió sin roleId de contexto
+                 (p. ej. desde "Más opciones" del inbox, sin partir de una fila
+                 de agente/rol concreta). --}}
+            <div id="rolePermsPickRole" class="bv-step-hidden">
+                <div class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_pick_role') }}</div>
+                <select id="rolePermsRoleSelect" class="fselect"></select>
+                <button class="btn-primary bv-x31" id="bv-role-perms-pick-continue">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_continue') }}</button>
+            </div>
 
-            <div id="rolePermsContent" style="display:none">
+            <div id="rolePermsLoading" class="bv-cv-loading-msg bv-step-hidden"><i class="fas fa-spinner fa-spin"></i></div>
+
+            <div id="rolePermsContent" class="bv-step-hidden">
                 <table class="bv-perm-matrix" id="rolePermsTable">
                     <thead>
                         <tr>
@@ -41,11 +50,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/role-perms.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/role-perms.js')) }}" defer></script>
-@endpush
-@endonce

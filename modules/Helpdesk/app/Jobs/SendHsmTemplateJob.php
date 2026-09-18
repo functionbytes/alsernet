@@ -72,6 +72,13 @@ class SendHsmTemplateJob implements ShouldQueue
             return;
         }
 
+        // Idempotencia ante reintentos del job: si la plantilla ya se envió
+        // en un intento previo (wa_message_id persistido) no se reenvía,
+        // para no duplicar el mensaje al cliente.
+        if (filled($item->metadata['wa_message_id'] ?? null)) {
+            return;
+        }
+
         try {
             $result = $hsm->send(
                 conversation: $conversation,

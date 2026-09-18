@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class ExchangeRate
      */
     private $exchangeRate;
 
-    /**
-     * @param DecimalNumber $exchangeRate
-     */
     public function __construct(DecimalNumber $exchangeRate)
     {
         $this->exchangeRate = $exchangeRate;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getValue(): DecimalNumber
     {
         return $this->exchangeRate;

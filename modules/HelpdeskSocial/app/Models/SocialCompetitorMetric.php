@@ -16,6 +16,7 @@ class SocialCompetitorMetric extends Model
         'social_competitor_id',
         'metric_type',
         'value',
+        'source',
         'captured_at',
     ];
 

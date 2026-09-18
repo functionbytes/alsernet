@@ -13,19 +13,7 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <link rel="stylesheet" href="{{ themeAsset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
-    <style>
-        body { background: #f5f6f8; }
-        .helpcenter-hero { background: #90bb13; color: #fff; padding: 64px 0 48px; }
-        .helpcenter-hero input { border: none; border-radius: 30px; padding: 12px 20px; font-size: 1rem; }
-        .helpcenter-hero .btn { border-radius: 30px; }
-        .article-card { transition: box-shadow .2s, transform .2s; border: 1px solid rgba(0, 0, 0, 0.05); }
-        .article-card:hover { box-shadow: 0 4px 18px rgba(0, 0, 0, .1); transform: translateY(-2px); }
-        .helpcenter-search { max-width: 560px; margin: 0 auto; }
-        .category-link { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; color: #444; text-decoration: none; border-radius: .5rem; }
-        .category-link:hover { background: #f1f3f5; color: #90bb13; }
-        .category-link i { color: #90bb13; }
-        .empty-illustration { font-size: 3rem; opacity: .25; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskhelpcenter/css/public-portal.css') }}?v={{ filemtime(public_path('modules/helpdeskhelpcenter/css/public-portal.css')) }}">
 </head>
 <body>
 

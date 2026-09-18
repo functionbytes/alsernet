@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ class TaxRulesGroupId
     private $id;
 
     /**
-     * @param int $id
-     *
      * @throws TaxRulesGroupConstraintException
      */
     public function __construct(int $id)
@@ -49,22 +48,17 @@ class TaxRulesGroupId
         $this->id = $id;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->id;
     }
 
     /**
-     * @param int $value
-     *
      * @throws TaxRulesGroupConstraintException
      */
     private function assertPositiveInt(int $value): void
     {
-        if (0 > $value) {
+        if ($value < 0) {
             throw new TaxRulesGroupConstraintException(sprintf('Invalid tax rules group id "%s".', var_export($value, true)), TaxRulesGroupConstraintException::INVALID_ID);
         }
     }

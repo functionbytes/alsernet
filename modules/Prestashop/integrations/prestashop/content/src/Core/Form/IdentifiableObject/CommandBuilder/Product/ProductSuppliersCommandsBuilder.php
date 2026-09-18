@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ final class ProductSuppliersCommandsBuilder implements ProductCommandsBuilderInt
      */
     public function buildCommands(ProductId $productId, array $formData): array
     {
-        if (!isset($formData['options']['suppliers']['product_suppliers']) && !isset($formData['options']['suppliers']['default_supplier_id'])) {
+        if (! isset($formData['options']['suppliers']['product_suppliers']) && ! isset($formData['options']['suppliers']['default_supplier_id'])) {
             return [];
         }
 
@@ -66,7 +67,7 @@ final class ProductSuppliersCommandsBuilder implements ProductCommandsBuilderInt
             ),
         ];
 
-        if (!empty($formData['options']['suppliers']['default_supplier_id'])) {
+        if (! empty($formData['options']['suppliers']['default_supplier_id'])) {
             $commands[] = new SetProductDefaultSupplierCommand(
                 $productId->getValue(),
                 (int) $formData['options']['suppliers']['default_supplier_id']
@@ -77,9 +78,6 @@ final class ProductSuppliersCommandsBuilder implements ProductCommandsBuilderInt
     }
 
     /**
-     * @param int $supplierId
-     * @param array $productSupplierData
-     *
      * @return array<string, mixed>
      */
     private function formatProductSupplier(int $supplierId, array $productSupplierData): array

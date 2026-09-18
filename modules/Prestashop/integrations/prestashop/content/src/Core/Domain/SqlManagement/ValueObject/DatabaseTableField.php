@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class DatabaseTableField
     private $type;
 
     /**
-     * @param string $name
-     * @param string $type
+     * @param  string  $name
+     * @param  string  $type
      *
      * @throws SqlManagementConstraintException
      */
@@ -65,15 +66,14 @@ class DatabaseTableField
     }
 
     /**
-     * @param string $name
-     *
+     * @param  string  $name
      * @return self
      *
      * @throws SqlManagementConstraintException
      */
     private function setName($name)
     {
-        if (!is_string($name) || empty($name)) {
+        if (! is_string($name) || empty($name)) {
             throw new SqlManagementConstraintException(sprintf('Invalid database table field name %s supplied', var_export($name, true)), SqlManagementConstraintException::INVALID_DATABASE_TABLE_FIELD_NAME);
         }
 
@@ -91,15 +91,14 @@ class DatabaseTableField
     }
 
     /**
-     * @param string $type
-     *
+     * @param  string  $type
      * @return self
      *
      * @throws SqlManagementConstraintException
      */
     private function setType($type)
     {
-        if (!is_string($type) || empty($type)) {
+        if (! is_string($type) || empty($type)) {
             throw new SqlManagementConstraintException(sprintf('Invalid database table field type %s supplied', var_export($type, true)), SqlManagementConstraintException::INVALID_DATABASE_TABLE_FIELD_TYPE);
         }
 

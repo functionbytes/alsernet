@@ -208,8 +208,8 @@
 }
 
 .bv-cart-line .rm:hover {
-    background: var(--bv-danger-bg);
-    color: var(--bv-danger);
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 
 /* ───── Stepper de cantidad ───── */
@@ -1320,10 +1320,10 @@
 
 /* Fila con error de sincronizacion */
 .bv-modal .bv-intg-row.is-error .meta .st {
-    color: var(--bv-danger, #b91c1c);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-modal .bv-intg-row.is-error .meta .st .dot {
-    background: var(--bv-danger, #b91c1c);
+    background: var(--bv-primary, #90bb13);
 }
 
 /* Fila sincronizando (equivalente a .intg-spin del mockup) */
@@ -1396,17 +1396,17 @@
     color: var(--bv-text, #18181b);
 }
 .bv-modal .bv-intg-mini-danger {
-    border: 1px solid var(--bv-danger, #b91c1c);
-    background: var(--bv-danger, #b91c1c);
+    border: 1px solid var(--bv-primary-strong, #5e7a0d);
+    background: var(--bv-primary, #90bb13);
     color: #fff;
 }
 .bv-modal .bv-intg-mini-danger:hover {
-    background: #991b1b;
+    background: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-modal .bv-intg-mini-danger:disabled {
     opacity: .5;
     cursor: not-allowed;
-    background: var(--bv-danger, #b91c1c);
+    background: var(--bv-primary, #90bb13);
 }
 
 /* Botones de accion en icono (sincronizar / desvincular) */
@@ -1429,9 +1429,9 @@
     border-color: var(--bv-border-strong, #d4d4d8);
 }
 .bv-modal .bv-intg-act-icon.danger:hover {
-    color: var(--bv-danger, #b91c1c);
-    border-color: #fca5a5;
-    background: #fef2f2;
+    color: var(--bv-primary-strong, #5e7a0d);
+    border-color: rgba(144,187,19,.35);
+    background: rgba(144,187,19,.12);
 }
 
 /* Confirmacion inline de desvinculacion (sustituye la fila mientras se confirma) */
@@ -1562,9 +1562,9 @@
     box-shadow: 0 0 0 3px rgba(0, 0, 0, .06);
 }
 .bv-modal .bv-vi-otp-input.err {
-    border-color: var(--bv-danger, #b91c1c);
-    background: #fef2f2;
-    color: var(--bv-danger, #b91c1c);
+    border-color: var(--bv-primary-strong, #5e7a0d);
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 
 /* Fila con varios enlaces tipo texto (buscar/reasignar cliente) */
@@ -1612,8 +1612,8 @@
     color: var(--bv-text-soft, #3f3f46);
 }
 .bv-modal .bv-vi-ring.bad {
-    background: #fef2f2;
-    color: var(--bv-danger, #b91c1c);
+    background: rgba(144,187,19,.12);
+    color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-modal .bv-vi-center {
     text-align: center;
@@ -1859,7 +1859,7 @@
 
 .rp3-order .st.is-completed { background: #dcfce7; color: #166534; }
 .rp3-order .st.is-shipped { background: #dbeafe; color: #1e3a8a; }
-.rp3-order .st.is-cancelled { background: var(--bv-danger-bg); color: var(--bv-danger); }
+.rp3-order .st.is-cancelled { background: rgba(144,187,19,.12); color: var(--bv-primary-strong, #5e7a0d); }
 .rp3-order .st.is-pending { background: #fef9c3; color: #854d0e; }
 
 /* ───── Modal detalle de pedido (#37 ve-order-view) ───── */
@@ -1880,7 +1880,7 @@
 
 .bv-ov-st.is-completed { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
 .bv-ov-st.is-shipped { background: #dbeafe; border-color: #bfdbfe; color: #1e3a8a; }
-.bv-ov-st.is-cancelled { background: var(--bv-danger-bg); border-color: transparent; color: var(--bv-danger); }
+.bv-ov-st.is-cancelled { background: rgba(144,187,19,.12); border-color: rgba(144,187,19,.35); color: var(--bv-primary-strong, #5e7a0d); }
 .bv-ov-st.is-pending { background: #fef9c3; border-color: #fde68a; color: #854d0e; }
 
 .bv-ov-lines {
@@ -2175,7 +2175,7 @@
 .bv-modal .mv4-tl-item .dot.success { background: var(--bv-success, #0d7a3f); }
 .bv-modal .mv4-tl-item .dot.info    { background: var(--bv-info, #3b82f6); }
 .bv-modal .mv4-tl-item .dot.warning { background: var(--bv-warning, #b45309); }
-.bv-modal .mv4-tl-item .dot.danger  { background: var(--bv-danger, #b91c1c); }
+.bv-modal .mv4-tl-item .dot.danger  { background: var(--bv-primary, #90bb13); }
 .bv-modal .mv4-tl-item b { font-weight: 600; color: var(--bv-text, #18181b); }
 .bv-modal .mv4-tl-item .t { color: var(--bv-text-muted, #71717a); }
 
@@ -2284,7 +2284,7 @@
 }
 
 /* ───── Tarjeta de ticket (tab Tickets, estilo rp3-order) ───── */
-.rp3-ticket.prio-urgent .thumb { color: #ef4444; background: rgba(239, 68, 68, .12); }
+.rp3-ticket.prio-urgent .thumb { color: var(--bv-primary-strong, #5e7a0d); background: rgba(144,187,19,.12); }
 .rp3-ticket.prio-high .thumb { color: #f59e0b; background: rgba(245, 158, 11, .12); }
 .rp3-ticket.prio-normal .thumb { color: #3b82f6; background: rgba(59, 130, 246, .12); }
 .rp3-ticket.prio-low .thumb { color: #10b981; background: rgba(16, 185, 129, .12); }
@@ -2292,7 +2292,7 @@
 
 .bv-tickets-dot.is-open { background: #10b981; }
 .bv-tickets-dot.is-closed { background: #71717a; }
-.bv-tickets-fire { color: #ef4444; }
+.bv-tickets-fire { color: var(--bv-primary-strong, #5e7a0d); }
 
 /* ───── Historial de estados del pedido (modal order) ───── */
 .bv-order-timeline {
@@ -2742,7 +2742,7 @@ a.bv-om-pc-name-link i {
 .bv-po-loading, .bv-po-error {
     padding: 40px 20px; text-align: center; font-size: 12.5px; color: #6b7280;
 }
-.bv-po-error { color: #b91c1c; }
+.bv-po-error { color: var(--bv-primary-strong, #5e7a0d); }
 .bv-po-loading .fa-spinner { margin-right: 6px; }
 
 .bv-po-grid { display: grid; grid-template-columns: 1fr 372px; gap: 14px; padding: 16px; background: #eceef1; }

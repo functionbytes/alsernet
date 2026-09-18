@@ -42,16 +42,20 @@ Route::prefix('ai')->group(function () {
     });
 
     // Flows
-    Route::get('/', [AiAgentFlowsController::class, 'index'])->name('flows.index');
-    Route::get('/create', [AiAgentFlowsController::class, 'create'])->name('flows.create');
-    Route::post('/', [AiAgentFlowsController::class, 'store'])->name('flows.store');
-    Route::get('/{flow}/edit', [AiAgentFlowsController::class, 'edit'])->name('flows.edit');
-    Route::put('/{flow}', [AiAgentFlowsController::class, 'update'])->name('flows.update');
-    Route::delete('/{flow}', [AiAgentFlowsController::class, 'destroy'])->name('flows.destroy');
-    Route::post('flows/{flow}/publish', [AiAgentFlowsController::class, 'publish'])->name('flows.publish');
-    Route::post('flows/{flow}/archive', [AiAgentFlowsController::class, 'archive'])->name('flows.archive');
-    Route::post('flows/{flow}/duplicate', [AiAgentFlowsController::class, 'duplicate'])->name('flows.duplicate');
-
-    // Flow Structure
-    Route::put('flows/{flow}/structure', [AiAgentFlowsController::class, 'updateStructure'])->name('flows.structure');
+    // Con su propio prefijo: la CRUD colgaba de la raíz del grupo, así que
+    // flows.index era /panel/helpdesk/ai a secas y flows.edit el comodín
+    // /ai/{cualquier-cosa}/edit — /ai/settings solo se salvaba por el orden de
+    // registro. Los nombres de ruta no cambian; las URLs pasan a /ai/flows/...
+    Route::prefix('flows')->group(function () {
+        Route::get('/', [AiAgentFlowsController::class, 'index'])->name('flows.index');
+        Route::get('/create', [AiAgentFlowsController::class, 'create'])->name('flows.create');
+        Route::post('/', [AiAgentFlowsController::class, 'store'])->name('flows.store');
+        Route::get('/{flow}/edit', [AiAgentFlowsController::class, 'edit'])->name('flows.edit');
+        Route::put('/{flow}', [AiAgentFlowsController::class, 'update'])->name('flows.update');
+        Route::delete('/{flow}', [AiAgentFlowsController::class, 'destroy'])->name('flows.destroy');
+        Route::post('/{flow}/publish', [AiAgentFlowsController::class, 'publish'])->name('flows.publish');
+        Route::post('/{flow}/archive', [AiAgentFlowsController::class, 'archive'])->name('flows.archive');
+        Route::post('/{flow}/duplicate', [AiAgentFlowsController::class, 'duplicate'])->name('flows.duplicate');
+        Route::put('/{flow}/structure', [AiAgentFlowsController::class, 'updateStructure'])->name('flows.structure');
+    });
 });

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\Customization\Exception;
 /**
  * Thrown when customization field update fails
  */
-class CannotUpdateCustomizationFieldException extends CustomizationFieldException
-{
-}
+class CannotUpdateCustomizationFieldException extends CustomizationFieldException {}

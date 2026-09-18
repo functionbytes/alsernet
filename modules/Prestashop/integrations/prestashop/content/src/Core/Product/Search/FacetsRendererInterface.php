@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,9 +33,6 @@ namespace PrestaShop\PrestaShop\Core\Product\Search;
 interface FacetsRendererInterface
 {
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchResult $result
-     *
      * @return string HTML content is expected here
      */
     public function renderFacets(
@@ -43,9 +41,6 @@ interface FacetsRendererInterface
     );
 
     /**
-     * @param ProductSearchContext $context
-     * @param ProductSearchResult $result
-     *
      * @return string HTML content is expected here
      */
     public function renderActiveFilters(

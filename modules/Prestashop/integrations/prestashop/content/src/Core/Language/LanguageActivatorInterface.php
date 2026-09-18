@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,14 +35,14 @@ interface LanguageActivatorInterface
     /**
      * Activate language.
      *
-     * @param int $langId
+     * @param  int  $langId
      */
     public function enable($langId);
 
     /**
      * Deactivate language.
      *
-     * @param int $langId
+     * @param  int  $langId
      */
     public function disable($langId);
 }

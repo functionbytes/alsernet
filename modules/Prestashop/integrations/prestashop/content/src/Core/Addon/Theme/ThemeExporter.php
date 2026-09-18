@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,14 +40,17 @@ class ThemeExporter
      * @var ConfigurationInterface
      */
     protected $configuration;
+
     /**
      * @var Filesystem
      */
     protected $fileSystem;
+
     /**
      * @var LangRepository
      */
     protected $langRepository;
+
     /**
      * @var TranslationsExporter
      */
@@ -65,19 +69,17 @@ class ThemeExporter
     }
 
     /**
-     * @param Theme $theme
-     *
      * @return false|string
      */
     public function export(Theme $theme)
     {
-        $cacheDir = $this->configuration->get('_PS_CACHE_DIR_') . 'export-' . $theme->getName() . '-' . time() . DIRECTORY_SEPARATOR;
+        $cacheDir = $this->configuration->get('_PS_CACHE_DIR_').'export-'.$theme->getName().'-'.time().DIRECTORY_SEPARATOR;
 
         $this->copyTheme($theme->getDirectory(), $cacheDir);
         $this->copyModuleDependencies((array) $theme->get('dependencies.modules'), $cacheDir);
         $this->copyTranslations($theme, $cacheDir);
 
-        $finalFile = $this->configuration->get('_PS_ALL_THEMES_DIR_') . DIRECTORY_SEPARATOR . $theme->getName() . '.zip';
+        $finalFile = $this->configuration->get('_PS_ALL_THEMES_DIR_').DIRECTORY_SEPARATOR.$theme->getName().'.zip';
         $this->createZip($cacheDir, $finalFile);
 
         $this->fileSystem->remove($cacheDir);
@@ -86,8 +88,8 @@ class ThemeExporter
     }
 
     /**
-     * @param string $themeDir
-     * @param string $cacheDir
+     * @param  string  $themeDir
+     * @param  string  $cacheDir
      */
     private function copyTheme($themeDir, $cacheDir)
     {
@@ -100,8 +102,7 @@ class ThemeExporter
     }
 
     /**
-     * @param array $moduleList
-     * @param string $cacheDir
+     * @param  string  $cacheDir
      */
     private function copyModuleDependencies(array $moduleList, $cacheDir)
     {
@@ -109,22 +110,21 @@ class ThemeExporter
             return;
         }
 
-        $dependencyDir = $cacheDir . '/dependencies/modules/';
+        $dependencyDir = $cacheDir.'/dependencies/modules/';
         $this->fileSystem->mkdir($dependencyDir);
         $moduleDir = $this->configuration->get('_PS_MODULE_DIR_');
 
         foreach ($moduleList as $moduleName) {
-            $this->fileSystem->mirror($moduleDir . $moduleName, $dependencyDir . $moduleName);
+            $this->fileSystem->mirror($moduleDir.$moduleName, $dependencyDir.$moduleName);
         }
     }
 
     /**
-     * @param Theme $theme
-     * @param string $cacheDir
+     * @param  string  $cacheDir
      */
     protected function copyTranslations(Theme $theme, $cacheDir)
     {
-        $translationsDir = $cacheDir . 'translations';
+        $translationsDir = $cacheDir.'translations';
 
         $this->fileSystem->remove($translationsDir);
         $this->fileSystem->mkdir($translationsDir);
@@ -147,14 +147,13 @@ class ThemeExporter
     }
 
     /**
-     * @param string $sourceDir
-     * @param string $destinationFileName
-     *
+     * @param  string  $sourceDir
+     * @param  string  $destinationFileName
      * @return bool
      */
     private function createZip($sourceDir, $destinationFileName)
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($destinationFileName, ZipArchive::CREATE);
 
         $files = Finder::create()

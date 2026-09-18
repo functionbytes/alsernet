@@ -130,17 +130,16 @@ final class Currency implements CurrencyInterface
     /**
      * Get the display name for the passed count context.
      *
-     * @param string $countContext
-     *                             The count context
-     *                             "default" = talking about the currency (e.g.: "used currency is Euro")
-     *                             "one"     = talking about one unit of this currency (e.g.: "one euro")
-     *                             "other"   = talking about several units of this currency (e.g.: "ten euros")
-     *
+     * @param  string  $countContext
+     *                                The count context
+     *                                "default" = talking about the currency (e.g.: "used currency is Euro")
+     *                                "one"     = talking about one unit of this currency (e.g.: "one euro")
+     *                                "other"   = talking about several units of this currency (e.g.: "ten euros")
      * @return string The wanted display name
      */
     public function getDisplayName($countContext = CurrencyInterface::DISPLAY_NAME_COUNT_DEFAULT)
     {
-        if (!in_array($countContext, [CurrencyInterface::DISPLAY_NAME_COUNT_DEFAULT, CurrencyInterface::DISPLAY_NAME_COUNT_ONE, CurrencyInterface::DISPLAY_NAME_COUNT_OTHER])) {
+        if (! in_array($countContext, [CurrencyInterface::DISPLAY_NAME_COUNT_DEFAULT, CurrencyInterface::DISPLAY_NAME_COUNT_ONE, CurrencyInterface::DISPLAY_NAME_COUNT_OTHER])) {
             throw new LocalizationException(sprintf('Unknown display name: "%s"', print_r($countContext, true)));
         }
 
@@ -150,15 +149,14 @@ final class Currency implements CurrencyInterface
     /**
      * Get the symbol of this currency. Narrow symbol is returned by default.
      *
-     * @param string $type Possible value: "default" ("$") and "narrow" ("US$")
-     *
+     * @param  string  $type  Possible value: "default" ("$") and "narrow" ("US$")
      * @return string|null The currency's symbol
      *
      * @throws LocalizationException When an invalid symbol type is passed
      */
     public function getSymbol($type = CurrencyInterface::SYMBOL_TYPE_NARROW)
     {
-        if (!in_array($type, [CurrencyInterface::SYMBOL_TYPE_NARROW, CurrencyInterface::SYMBOL_TYPE_DEFAULT])) {
+        if (! in_array($type, [CurrencyInterface::SYMBOL_TYPE_NARROW, CurrencyInterface::SYMBOL_TYPE_DEFAULT])) {
             throw new LocalizationException(sprintf('Unknown symbol type: "%s"', print_r($type, true)));
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,8 @@ class BulkUpdateEmployeeStatusCommand
     private $employeeIds;
 
     /**
-     * @param int[] $employeeIds
-     * @param bool $status
+     * @param  int[]  $employeeIds
+     * @param  bool  $status
      */
     public function __construct(array $employeeIds, $status)
     {
@@ -71,7 +72,7 @@ class BulkUpdateEmployeeStatusCommand
     }
 
     /**
-     * @param int[] $employeeIds
+     * @param  int[]  $employeeIds
      */
     private function setEmployeeIds(array $employeeIds)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ interface LayoutVariablesBuilderInterface
     public const BUILD_MAIL_LAYOUT_VARIABLES_HOOK = 'actionBuildMailLayoutVariables';
 
     /**
-     * @param LayoutInterface $layout
-     * @param LanguageInterface $language
-     *
      * @return array
      */
     public function buildVariables(LayoutInterface $layout, LanguageInterface $language);

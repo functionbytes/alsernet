@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param CatalogPriceRuleFilters $catalogPriceRuleFilters
-     *
      * @return Response
      */
     public function indexAction(
@@ -80,8 +78,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -101,10 +97,10 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      * Deletes catalog price rule
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_catalog_price_rules_index")
+     *
      * @DemoRestricted(redirectRoute="admin_catalog_price_rules_index")
      *
-     * @param int|string $catalogPriceRuleId
-     *
+     * @param  int|string  $catalogPriceRuleId
      * @return RedirectResponse
      */
     public function deleteAction($catalogPriceRuleId)
@@ -126,9 +122,8 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      * Deletes catalogPriceRules on bulk action
      *
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute="admin_catalog_price_rules_index")
-     * @DemoRestricted(redirectRoute="admin_catalog_price_rules_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_catalog_price_rules_index")
      *
      * @return RedirectResponse
      */
@@ -153,10 +148,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      * Show & process catalog price rule creation.
      *
      * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))")
-     *
-     * @param Request $request
-     *
-     * @return Response
      */
     public function createAction(Request $request): Response
     {
@@ -165,7 +156,7 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
         $result = $this->getFormHandler()->handle($catalogPriceRuleForm);
 
         try {
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_catalog_price_rules_index');
@@ -185,11 +176,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
      * Show & process catalog price rule editing.
      *
      * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller'))")
-     *
-     * @param int $catalogPriceRuleId
-     * @param Request $request
-     *
-     * @return Response
      */
     public function editAction(Request $request, int $catalogPriceRuleId): Response
     {
@@ -225,8 +211,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
 
     /**
      * Provides translated error messages for exceptions
-     *
-     * @return array
      */
     private function getErrorMessages(): array
     {
@@ -255,7 +239,6 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
     /**
      * Provides catalog price rule ids from request of bulk action
      *
-     * @param Request $request
      *
      * @return array
      */
@@ -263,7 +246,7 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
     {
         $catalogPriceRuleIds = $request->request->get('catalog_price_rule_bulk');
 
-        if (!is_array($catalogPriceRuleIds)) {
+        if (! is_array($catalogPriceRuleIds)) {
             return [];
         }
 
@@ -274,17 +257,11 @@ class CatalogPriceRuleController extends FrameworkBundleAdminController
         return $catalogPriceRuleIds;
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.handler.catalog_price_rule_form_handler');
     }
 
-    /**
-     * @return FormBuilderInterface
-     */
     private function getFormBuilder(): FormBuilderInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.builder.catalog_price_rule_form_builder');

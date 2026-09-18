@@ -1,29 +1,36 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
 class AddressController extends Module
 {
     public $module;
+
     protected $controllerName;
+
     protected $customer;
+
     protected $cart;
+
     protected $iso;
+
     protected $lang;
+
     protected $language;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->bootstrap = true;
         $iso = Tools::getValue('iso');
-        $this->module =  Module::getInstanceByName("alsernetcustomer");
+        $this->module = Module::getInstanceByName('alsernetcustomer');
         $this->context = Context::getContext();
         $this->customer = $this->context->customer;
         $this->cart = $this->context->cart;
         $this->language = new Language(Language::getIdByIso($iso));
         $this->iso = $iso;
-        $this->lang = (int)$this->context->language->id;
+        $this->lang = (int) $this->context->language->id;
         parent::__construct();
     }
 
@@ -34,7 +41,7 @@ class AddressController extends Module
             $context = Context::getContext();
             $customer = $context->customer;
 
-            if (!$context->customer || !$context->customer->isLogged()) {
+            if (! $context->customer || ! $context->customer->isLogged()) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('Unauthorized access.', 'addresscontroller'),
@@ -42,7 +49,7 @@ class AddressController extends Module
                 ];
             }
 
-            $address = new Address();
+            $address = new Address;
             $address->id_customer = (int) $context->customer->id;
             $address->alias = Tools::getValue('alias');
             $address->firstname = Tools::getValue('firstname');
@@ -56,9 +63,9 @@ class AddressController extends Module
             $address->phone = Tools::getValue('phone');
             $address->phone_mobile = Tools::getValue('phone_mobile');
             $address->active = 1;
-            $address->default      = (int)Tools::getValue('default', 0);
+            $address->default = (int) Tools::getValue('default', 0);
 
-            $this->enforceUniqueDefaultAddress((int)$customer->id, (int)$address->id, (int)$address->default);
+            $this->enforceUniqueDefaultAddress((int) $customer->id, (int) $address->id, (int) $address->default);
             // Validar dirección antes de guardar
             $errors = $address->validateFieldsRequiredDatabase();
             if (count($errors)) {
@@ -69,7 +76,7 @@ class AddressController extends Module
                 ];
             }
 
-            if (!$address->add()) {
+            if (! $address->add()) {
                 return [
                     'status' => 'warning',
                     'operation' => $this->l('Error creating address.', 'addresscontroller'),
@@ -94,8 +101,8 @@ class AddressController extends Module
         }
     }
 
-
-    public function editaddress(){
+    public function editaddress()
+    {
 
         try {
 
@@ -104,7 +111,7 @@ class AddressController extends Module
             $id_address = Tools::getValue('id_address');
             $iso = Tools::getValue('iso');
 
-            if (!$id_address || !Validate::isUnsignedId($id_address)) {
+            if (! $id_address || ! Validate::isUnsignedId($id_address)) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('Invalid address ID.', 'addresscontroller'),
@@ -112,8 +119,8 @@ class AddressController extends Module
                 ];
             }
 
-            $address = new Address((int)$id_address);
-            if (!Validate::isLoadedObject($address)) {
+            $address = new Address((int) $id_address);
+            if (! Validate::isLoadedObject($address)) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('Address not found.', 'addresscontroller'),
@@ -122,7 +129,7 @@ class AddressController extends Module
             }
 
             $context = Context::getContext();
-            if (!$context->customer || $context->customer->id != $address->id_customer) {
+            if (! $context->customer || $context->customer->id != $address->id_customer) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('Unauthorized access.', 'addresscontroller'),
@@ -144,11 +151,11 @@ class AddressController extends Module
             $address->phone = Tools::getValue('phone');
             $address->phone_mobile = Tools::getValue('phone_mobile');
             $address->active = 1;
-            $address->default      = (int)Tools::getValue('default', (int)$address->default); // <- viene del form
+            $address->default = (int) Tools::getValue('default', (int) $address->default); // <- viene del form
 
-            $this->enforceUniqueDefaultAddress((int)$customer->id, (int)$address->id, (int)$address->default);
+            $this->enforceUniqueDefaultAddress((int) $customer->id, (int) $address->id, (int) $address->default);
 
-            if (!$address->update()) {
+            if (! $address->update()) {
                 return [
                     'status' => 'warning',
                     'message' => $this->l('Error updating address.', 'addresscontroller'),
@@ -156,13 +163,11 @@ class AddressController extends Module
                 ];
             }
 
-
             return [
                 'status' => 'success',
                 'message' => $this->l('Address updated successfully.', 'addresscontroller'),
                 'data' => [],
             ];
-
 
         } catch (Exception $e) {
             return [
@@ -175,50 +180,50 @@ class AddressController extends Module
 
     public function getaddaddressfields()
     {
-        $context   = Context::getContext();
+        $context = Context::getContext();
         $iso = Tools::getValue('iso');
-        $lenguage =  $context->language;
-        $cart      = $context->cart;
-        $customer  = $context->customer;
-        $type      = Tools::getValue('type') ?: 'delivery'; // 'delivery' | 'invoice'
-        $id_address = (int)Tools::getValue('id_address');
-        $address   = null;
+        $lenguage = $context->language;
+        $cart = $context->cart;
+        $customer = $context->customer;
+        $type = Tools::getValue('type') ?: 'delivery'; // 'delivery' | 'invoice'
+        $id_address = (int) Tools::getValue('id_address');
+        $address = null;
 
         $hasAddresses = false;
         if ($customer && $customer->isLogged()) {
-            $existingAddresses = $customer->getSimpleAddresses((int)$context->language->id);
-            $hasAddresses = !empty($existingAddresses);
+            $existingAddresses = $customer->getSimpleAddresses((int) $context->language->id);
+            $hasAddresses = ! empty($existingAddresses);
         }
 
         if ($id_address && Validate::isUnsignedId($id_address)) {
 
             $address = new Address($id_address);
 
-            if (!Validate::isLoadedObject($address)) {
+            if (! Validate::isLoadedObject($address)) {
                 return [
-                    'status'  => 'warning',
+                    'status' => 'warning',
                     'message' => $this->l('Address not found', 'addresscontroller'),
-                    'data'    => [],
+                    'data' => [],
                 ];
             }
 
-            if (!$customer || $customer->id != $address->id_customer) {
+            if (! $customer || $customer->id != $address->id_customer) {
                 return [
-                    'status'  => 'warning',
+                    'status' => 'warning',
                     'message' => $this->l('Unauthorized access', 'addresscontroller'),
-                    'data'    => [],
+                    'data' => [],
                 ];
             }
 
         } else {
 
-            $address = new Address();
-            $address->id_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
+            $address = new Address;
+            $address->id_country = (int) Configuration::get('PS_COUNTRY_DEFAULT');
 
             if ($customer && $customer->isLogged()) {
-                if (!$hasAddresses) {
+                if (! $hasAddresses) {
                     $address->firstname = $customer->firstname;
-                    $address->lastname  = $customer->lastname;
+                    $address->lastname = $customer->lastname;
                     $address->default = $hasAddresses ? 0 : 1;
                 }
             }
@@ -235,52 +240,51 @@ class AddressController extends Module
             }
             if ($field === 'Country:name') {
                 $label = $this->l('Country', 'addresscontroller');
-            }elseif ($field === 'Firstname') {
+            } elseif ($field === 'Firstname') {
                 $label = $this->l('Firstname', 'addresscontroller');
-            }elseif ($field === 'Lastname') {
+            } elseif ($field === 'Lastname') {
                 $label = $this->l('Lastname', 'addresscontroller');
-            }elseif ($field === 'Postcode') {
+            } elseif ($field === 'Postcode') {
                 $label = $this->l('Postcode', 'addresscontroller');
-            }elseif ($field === 'State:name') {
+            } elseif ($field === 'State:name') {
                 $label = $this->l('State', 'addresscontroller');
-            }elseif ($field === 'Vat number') {
+            } elseif ($field === 'Vat number') {
                 $label = $this->l('Vat number', 'addresscontroller');
-            }elseif ($field === 'Address1') {
+            } elseif ($field === 'Address1') {
                 $label = $this->l('Address1', 'addresscontroller');
-            }else {
+            } else {
                 $label = ucfirst(str_replace(['_', ':name'], [' ', ''], $field));
             }
 
             $fieldData = [
-                'name'     => $field,
-                'label'    => $this->l($label, 'addresscontroller'),
+                'name' => $field,
+                'label' => $this->l($label, 'addresscontroller'),
                 'required' => in_array($field, $requiredFields),
-                'type'     => 'text',
+                'type' => 'text',
             ];
 
             if ($field === 'Country:name') {
 
                 $fieldData['type'] = 'select';
                 $fieldData['name'] = 'id_country';
-                $fieldData['value'] = ((int)$address->id === 0) ? (int)$context->country->id : (int)$address->id_country;
+                $fieldData['value'] = ((int) $address->id === 0) ? (int) $context->country->id : (int) $address->id_country;
                 $fieldData['options'] = array_values(array_map(function ($country) {
                     return [
-                        'value' => (int)$country['id_country'],
+                        'value' => (int) $country['id_country'],
                         'label' => $country['name'],
                     ];
                 }, Country::getCountries($context->language->id, true)));
 
-
             } elseif ($field === 'State:name') {
-                $countryIdToCheck = ((int)$address->id === 0) ? (int)$context->country->id : (int)$address->id_country;
+                $countryIdToCheck = ((int) $address->id === 0) ? (int) $context->country->id : (int) $address->id_country;
                 $states = State::getStatesByIdCountry($countryIdToCheck, $context->language->id);
-                if (!empty($states)) {
+                if (! empty($states)) {
                     $fieldData['type'] = 'select';
                     $fieldData['name'] = 'id_state';
-                    $fieldData['value'] = (int)$address->id_state;
+                    $fieldData['value'] = (int) $address->id_state;
                     $fieldData['options'] = array_map(function ($state) {
                         return [
-                            'value' => (int)$state['id_state'],
+                            'value' => (int) $state['id_state'],
                             'label' => $state['name'],
                         ];
                     }, $states);
@@ -288,7 +292,7 @@ class AddressController extends Module
                     continue;
                 }
 
-            }elseif ($field === 'postcode') {
+            } elseif ($field === 'postcode') {
                 $fieldData['required'] = true;
             } else {
                 $prop = str_replace(':name', '', $field);
@@ -300,8 +304,8 @@ class AddressController extends Module
 
         $isDefaultSelected = 0;
 
-        if ((int)$address->id) {
-            $isDefaultSelected = (int)$address->default;
+        if ((int) $address->id) {
+            $isDefaultSelected = (int) $address->default;
         } else {
             $existingAddresses = [];
             if ($customer && $customer->isLogged()) {
@@ -313,12 +317,12 @@ class AddressController extends Module
         $labelDefault = $this->l('Use as default address', 'addresscontroller');
 
         $defaultField = [
-            'name'     => 'default',
-            'label'    => $labelDefault,
+            'name' => 'default',
+            'label' => $labelDefault,
             'required' => false,
-            'type'     => 'select',
-            'value'    => $isDefaultSelected,
-            'options'  => [
+            'type' => 'select',
+            'value' => $isDefaultSelected,
+            'options' => [
                 ['value' => 1, 'label' => $this->l('Yes', 'addresscontroller')],
                 ['value' => 0, 'label' => $this->l('No', 'addresscontroller')],
             ],
@@ -327,49 +331,48 @@ class AddressController extends Module
         $fieldsData[] = $defaultField;
 
         return [
-            'status'  => 'success',
+            'status' => 'success',
             'message' => $this->l('Address loaded successfully', 'addresscontroller'),
-            'data'    => [
+            'data' => [
                 'type' => $type,
                 'default' => $isDefaultSelected === 1,
                 'country' => $context->country->id,
             ],
-            'fields'  => $fieldsData,
+            'fields' => $fieldsData,
         ];
     }
 
-
     public function getaddressfields()
     {
-        $context    = Context::getContext();
-        $cart       = $context->cart;
-        $customer   = $context->customer;
-        $type       = Tools::getValue('type') ?: 'delivery';
+        $context = Context::getContext();
+        $cart = $context->cart;
+        $customer = $context->customer;
+        $type = Tools::getValue('type') ?: 'delivery';
         $id_address = Tools::getValue('id_address');
 
-        if (!$id_address || !Validate::isUnsignedId($id_address)) {
+        if (! $id_address || ! Validate::isUnsignedId($id_address)) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Invalid address ID', 'addresscontroller'),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
-        $address = new Address((int)$id_address);
+        $address = new Address((int) $id_address);
 
-        if (!Validate::isLoadedObject($address)) {
+        if (! Validate::isLoadedObject($address)) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Address not found', 'addresscontroller'),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
-        if (!$customer || $customer->id != $address->id_customer) {
+        if (! $customer || $customer->id != $address->id_customer) {
             return [
-                'status'  => 'warning',
+                'status' => 'warning',
                 'message' => $this->l('Unauthorized access', 'addresscontroller'),
-                'data'    => [],
+                'data' => [],
             ];
         }
 
@@ -384,27 +387,27 @@ class AddressController extends Module
             }
             if ($field === 'Country:name') {
                 $label = $this->l('Country', 'addresscontroller');
-            }elseif ($field === 'Firstname') {
+            } elseif ($field === 'Firstname') {
                 $label = $this->l('Firstname', 'addresscontroller');
-            }elseif ($field === 'Lastname') {
+            } elseif ($field === 'Lastname') {
                 $label = $this->l('Lastname', 'addresscontroller');
-            }elseif ($field === 'Postcode') {
+            } elseif ($field === 'Postcode') {
                 $label = $this->l('Postcode', 'addresscontroller');
-            }elseif ($field === 'State:name') {
+            } elseif ($field === 'State:name') {
                 $label = $this->l('State', 'addresscontroller');
-            }elseif ($field === 'Vat number') {
+            } elseif ($field === 'Vat number') {
                 $label = $this->l('Vat number', 'addresscontroller');
-            }elseif ($field === 'Address1') {
+            } elseif ($field === 'Address1') {
                 $label = $this->l('Address1', 'addresscontroller');
-            }else {
+            } else {
                 $label = ucfirst(str_replace(['_', ':name'], [' ', ''], $field));
             }
 
             $fieldData = [
-                'name'     => $field,
-                'label'    => $this->l($label, 'addresscontroller'),
+                'name' => $field,
+                'label' => $this->l($label, 'addresscontroller'),
                 'required' => in_array($field, $requiredFields),
-                'type'     => 'text',
+                'type' => 'text',
             ];
 
             if ($field === 'Country:name') {
@@ -412,28 +415,28 @@ class AddressController extends Module
                 $options = [];
                 foreach ($countries as $country) {
                     $options[] = [
-                        'value' => (int)$country['id_country'],
+                        'value' => (int) $country['id_country'],
                         'label' => $country['name'],
                     ];
                 }
-                $fieldData['type']    = 'select';
-                $fieldData['name']    = 'id_country';
+                $fieldData['type'] = 'select';
+                $fieldData['name'] = 'id_country';
                 $fieldData['options'] = $options;
-                $fieldData['value']   = (int)$address->id_country;
+                $fieldData['value'] = (int) $address->id_country;
 
             } elseif ($field === 'State:name') {
-                $states  = State::getStatesByIdCountry((int)$address->id_country, $context->language->id);
+                $states = State::getStatesByIdCountry((int) $address->id_country, $context->language->id);
                 $options = [];
                 foreach ($states as $state) {
                     $options[] = [
-                        'value' => (int)$state['id_state'],
+                        'value' => (int) $state['id_state'],
                         'label' => $state['name'],
                     ];
                 }
-                $fieldData['type']    = 'select';
-                $fieldData['name']    = 'id_state';
+                $fieldData['type'] = 'select';
+                $fieldData['name'] = 'id_state';
                 $fieldData['options'] = $options;
-                $fieldData['value']   = (int)$address->id_state;
+                $fieldData['value'] = (int) $address->id_state;
 
             } else {
                 // mapear propiedad real (ej: 'firstname', 'address1', etc.)
@@ -444,33 +447,33 @@ class AddressController extends Module
             $fieldsData[] = $fieldData;
         }
 
-        $isDefaultSelected = (int)$address->default;
+        $isDefaultSelected = (int) $address->default;
 
         $labelDefault = ($type === 'invoice') ? $this->l('Use as default invoice address', 'addresscontroller') : $this->l('Use as default delivery address', 'addresscontroller');
 
         $defaultField = [
-            'name'     => 'default',
-            'label'    => $labelDefault,
+            'name' => 'default',
+            'label' => $labelDefault,
             'required' => true,
-            'type'     => 'select',
-            'value'    => $isDefaultSelected,
-            'options'  => [
+            'type' => 'select',
+            'value' => $isDefaultSelected,
+            'options' => [
                 ['value' => 1, 'label' => $this->l('Yes', 'addresscontroller')],
                 ['value' => 0, 'label' => $this->l('No', 'addresscontroller')],
             ],
-            'meta'     => ['applies_to' => $type, 'address_id' => (int)$address->id],
+            'meta' => ['applies_to' => $type, 'address_id' => (int) $address->id],
         ];
 
         $fieldsData[] = $defaultField;
 
         return [
-            'status'  => 'success',
+            'status' => 'success',
             'message' => $this->l('Address loaded successfully', 'addresscontroller'),
-            'data'    => [
-                'type'       => $type,
-                'id_address' => (int)$address->id,
+            'data' => [
+                'type' => $type,
+                'id_address' => (int) $address->id,
             ],
-            'fields'  => $fieldsData,
+            'fields' => $fieldsData,
         ];
     }
 
@@ -492,7 +495,7 @@ class AddressController extends Module
             'update' => $this->l('Update', 'addresscontroller'),
         ];
 
-        if (!$customer || !$customer->isLogged()) {
+        if (! $customer || ! $customer->isLogged()) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('You must be logged in to see your addresses.', 'addresscontroller'),
@@ -517,7 +520,6 @@ class AddressController extends Module
             'translations' => $translations,
         ]);
 
-
         $html = $context->smarty->fetch('module:alsernetcustomer/views/templates/_partials/address.tpl');
 
         return [
@@ -530,19 +532,21 @@ class AddressController extends Module
     private function enforceUniqueDefaultAddress(int $idCustomer, int $idAddress, int $isDefault): void
     {
 
-        $customer = new \Customer($idCustomer);
+        $customer = new Customer($idCustomer);
         $allAddresses = $customer->getAddresses($this->lang);
-        $validAddresses = array_filter($allAddresses, function($row) {
-            return (int)$row['deleted'] === 0;
+        $validAddresses = array_filter($allAddresses, function ($row) {
+            return (int) $row['deleted'] === 0;
         });
 
         if ($isDefault === 1) {
 
             foreach ($validAddresses as $row) {
-                $aid = (int)$row['id_address'];
+                $aid = (int) $row['id_address'];
                 $addr = new Address($aid);
 
-                if (!Validate::isLoadedObject($addr)) continue;
+                if (! Validate::isLoadedObject($addr)) {
+                    continue;
+                }
 
                 $addr->default = ($aid === $idAddress) ? 1 : 0;
                 $addr->update();
@@ -552,17 +556,17 @@ class AddressController extends Module
             $hasOtherDefault = false;
 
             foreach ($validAddresses as $row) {
-                $aid = (int)$row['id_address'];
+                $aid = (int) $row['id_address'];
                 if ($aid !== $idAddress) { // No contar la dirección actual
                     $addr = new Address($aid);
-                    if (Validate::isLoadedObject($addr) && (int)$addr->default === 1) {
+                    if (Validate::isLoadedObject($addr) && (int) $addr->default === 1) {
                         $hasOtherDefault = true;
                         break;
                     }
                 }
             }
 
-            if (!$hasOtherDefault) {
+            if (! $hasOtherDefault) {
                 $currentAddr = new Address($idAddress);
                 if (Validate::isLoadedObject($currentAddr)) {
                     $currentAddr->default = 1;
@@ -572,7 +576,6 @@ class AddressController extends Module
         }
     }
 
-
     public function getstates()
     {
         $context = Context::getContext();
@@ -580,7 +583,7 @@ class AddressController extends Module
         $id_lang = (int) $context->language->id;
         $iso = Tools::getValue('iso');
 
-        if (!$id_country || !Validate::isUnsignedId($id_country)) {
+        if (! $id_country || ! Validate::isUnsignedId($id_country)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid country ID', 'addresscontroller'),
@@ -607,13 +610,12 @@ class AddressController extends Module
         ];
     }
 
-
     public function deleteaddress()
     {
         $id_address = Tools::getValue('id_address');
         $iso = Tools::getValue('iso');
 
-        if (!$id_address || !Validate::isUnsignedId($id_address)) {
+        if (! $id_address || ! Validate::isUnsignedId($id_address)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Invalid address ID', 'addresscontroller'),
@@ -621,9 +623,9 @@ class AddressController extends Module
             ];
         }
 
-        $address = new Address((int)$id_address);
+        $address = new Address((int) $id_address);
 
-        if (!Validate::isLoadedObject($address)) {
+        if (! Validate::isLoadedObject($address)) {
             return [
                 'status' => 'warning',
                 'message' => $this->l('Address not found', 'addresscontroller'),
@@ -655,27 +657,27 @@ class AddressController extends Module
         ];
     }
 
-
-    public function getaddress(){
+    public function getaddress()
+    {
 
         try {
 
             $id_address = Tools::getValue('id_address');
             $iso = Tools::getValue('iso');
 
-            if (!$id_address || !Validate::isUnsignedId($id_address)) {
+            if (! $id_address || ! Validate::isUnsignedId($id_address)) {
                 http_response_code(400);
                 throw new Exception('Invalid address ID', 'addresscontroller');
             }
 
-            $address = new Address((int)$id_address);
-            if (!Validate::isLoadedObject($address)) {
+            $address = new Address((int) $id_address);
+            if (! Validate::isLoadedObject($address)) {
                 http_response_code(404);
                 throw new Exception('Address not found', 'addresscontroller');
             }
 
             $context = Context::getContext();
-            if (!$context->customer || $context->customer->id != $address->id_customer) {
+            if (! $context->customer || $context->customer->id != $address->id_customer) {
                 http_response_code(403);
                 throw new Exception('Unauthorized access', 'addresscontroller');
             }
@@ -710,10 +712,10 @@ class AddressController extends Module
             ];
         }
 
-
     }
 
-    public function l($string, $specific = false, $locale = null){
+    public function l($string, $specific = false, $locale = null)
+    {
 
         return $this->getModuleTranslation(
             $this->module,
@@ -725,7 +727,7 @@ class AddressController extends Module
         );
     }
 
-    public  function getModuleTranslation(
+    public function getModuleTranslation(
         $module,
         $originalString,
         $source,
@@ -744,55 +746,53 @@ class AddressController extends Module
         // $translations_merged is a cache of wether a specific module's translations have already been added to $_MODULES
         static $translationsMerged = [];
 
-
         $name = $module->name;
         $iso = $this->language->iso_code;
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
                 // PrestaShop 1.5 translations
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
                 // PrestaShop 1.4 translations
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
                 // Translations in theme
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int) $js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 // if translation was not found in module, look for it in AdminController or Helpers
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
@@ -801,8 +801,8 @@ class AddressController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -818,9 +818,9 @@ class AddressController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -832,9 +832,4 @@ class AddressController extends Module
 
         return $ret;
     }
-
-
 }
-
-
-

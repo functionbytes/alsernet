@@ -680,7 +680,7 @@ class ErpService
         float $importeVenta,
         float $importeInicialTarjetaRegalo,
         string $origen
-    ): ?array {
+    ): array {
         // `origen` viaja en la query, no en el cuerpo: la documentación lo
         // lista como parámetro de URL y su ejemplo es
         // client.put(.../bono/100003106/?origen=web, data=data). Mandarlo en el

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,14 +53,11 @@ class HookExtension extends \Twig_Extension
 
     /**
      * Constructor.
-     *
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param ModuleDataProvider $moduleDataProvider
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
         ModuleDataProvider $moduleDataProvider,
-        ModuleRepository $moduleRepository = null
+        ?ModuleRepository $moduleRepository = null
     ) {
         $this->hookDispatcher = $hookDispatcher;
         $this->moduleDataProvider = $moduleDataProvider;
@@ -110,16 +108,15 @@ class HookExtension extends \Twig_Extension
      *
      * The listeners will then return html data to display in the Twig template.
      *
-     * @param string $hookName the name of the hook to trigger
-     * @param array $hookParameters the parameters to send to the Hook
+     * @param  string  $hookName  the name of the hook to trigger
+     * @param  array  $hookParameters  the parameters to send to the Hook
+     * @return array[string] All listener's responses, ordered by the listeners' priorities
      *
      * @throws \Exception if the hookName is missing
-     *
-     * @return array[string] All listener's responses, ordered by the listeners' priorities
      */
     public function renderHooksArray($hookName, $hookParameters = [])
     {
-        if ('' == $hookName) {
+        if ($hookName == '') {
             throw new \Exception('Hook name missing');
         }
 
@@ -149,12 +146,11 @@ class HookExtension extends \Twig_Extension
      *
      * The listeners will then return html data to display in the Twig template.
      *
-     * @param string $hookName the name of the hook to trigger
-     * @param array $hookParameters the parameters to send to the Hook
+     * @param  string  $hookName  the name of the hook to trigger
+     * @param  array  $hookParameters  the parameters to send to the Hook
+     * @return string all listener's responses, concatenated in a simple string, ordered by the listeners' priorities
      *
      * @throws \Exception if the hookName is missing
-     *
-     * @return string all listener's responses, concatenated in a simple string, ordered by the listeners' priorities
      */
     public function renderHook($hookName, array $hookParameters = [])
     {
@@ -170,13 +166,12 @@ class HookExtension extends \Twig_Extension
     /**
      * Return the concatenated content of a renderHooksArray response
      *
-     * @param array $hooksArray the array returned by the renderHooksArray function
-     *
+     * @param  array  $hooksArray  the array returned by the renderHooksArray function
      * @return string
      */
     public function hooksArrayContent($hooksArray)
     {
-        if (!is_array($hooksArray)) {
+        if (! is_array($hooksArray)) {
             return '';
         }
 
@@ -195,13 +190,12 @@ class HookExtension extends \Twig_Extension
      *
      * @deprecated since 1.7.7.0
      *
-     * @param string $hookName
-     *
+     * @param  string  $hookName
      * @return number the listeners count that will respond to the hook name
      */
     public function hookCount($hookName)
     {
-        @trigger_error('The ' . __METHOD__ . ' method is deprecated since version 1.7.7.0.', E_USER_DEPRECATED);
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 1.7.7.0.', E_USER_DEPRECATED);
 
         return count($this->hookDispatcher->getListeners(strtolower($hookName)));
     }

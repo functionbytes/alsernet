@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,11 +52,9 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
     private $criteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $criteriaApplicator
-     * @param int $contextLangId
-     * @param int[] $contextShopIds
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
+     * @param  int[]  $contextShopIds
      */
     public function __construct(
         Connection $connection,
@@ -104,23 +103,21 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
     }
 
     /**
-     * @param SearchCriteriaInterface $searchCriteria
-     *
      * @return QueryBuilder
      */
     private function getCustomerQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $queryBuilder = $this->connection->createQueryBuilder()
-            ->from($this->dbPrefix . 'customer', 'c')
+            ->from($this->dbPrefix.'customer', 'c')
             ->leftJoin(
                 'c',
-                $this->dbPrefix . 'gender_lang',
+                $this->dbPrefix.'gender_lang',
                 'gl',
                 'c.id_gender = gl.id_gender AND gl.id_lang = :context_lang_id'
             )
             ->leftJoin(
                 'c',
-                $this->dbPrefix . 'shop',
+                $this->dbPrefix.'shop',
                 's',
                 'c.id_shop = s.id_shop'
             )
@@ -134,45 +131,37 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
         return $queryBuilder;
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     */
     private function appendTotalSpentQuery(QueryBuilder $queryBuilder)
     {
         $totalSpentQueryBuilder = $this->connection->createQueryBuilder()
             ->select('SUM(total_paid_real / conversion_rate)')
-            ->from($this->dbPrefix . 'orders', 'o')
+            ->from($this->dbPrefix.'orders', 'o')
             ->where('o.id_customer = c.id_customer')
             ->andWhere('o.id_shop IN (:context_shop_ids)')
             ->andWhere('o.valid = 1')
             ->setParameter('context_shop_ids', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
 
-        $queryBuilder->addSelect('(' . $totalSpentQueryBuilder->getSQL() . ') as total_spent');
+        $queryBuilder->addSelect('('.$totalSpentQueryBuilder->getSQL().') as total_spent');
     }
 
     /**
      * Append "last visit" column to customers query builder.
-     *
-     * @param QueryBuilder $queryBuilder
      */
     private function appendLastVisitQuery(QueryBuilder $queryBuilder)
     {
         $lastVisitQueryBuilder = $this->connection->createQueryBuilder()
             ->select('con.date_add')
-            ->from($this->dbPrefix . 'guest', 'g')
-            ->leftJoin('g', $this->dbPrefix . 'connections', 'con', 'con.id_guest = g.id_guest')
+            ->from($this->dbPrefix.'guest', 'g')
+            ->leftJoin('g', $this->dbPrefix.'connections', 'con', 'con.id_guest = g.id_guest')
             ->where('g.id_customer = c.id_customer')
             ->orderBy('con.date_add', 'DESC')
             ->setMaxResults(1);
 
-        $queryBuilder->addSelect('(' . $lastVisitQueryBuilder->getSQL() . ') as connect');
+        $queryBuilder->addSelect('('.$lastVisitQueryBuilder->getSQL().') as connect');
     }
 
     /**
      * Apply filters to customers query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
      */
     private function applyFilters(array $filters, QueryBuilder $qb)
     {
@@ -190,25 +179,25 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $filterValue) {
-            if (!in_array($filterName, $allowedFilters)) {
+            if (! in_array($filterName, $allowedFilters)) {
                 continue;
             }
 
             if (in_array($filterName, ['active', 'newsletter', 'optin', 'id_customer'])) {
-                $qb->andWhere('c.`' . $filterName . '` = :' . $filterName);
+                $qb->andWhere('c.`'.$filterName.'` = :'.$filterName);
                 $qb->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            if ('social_title' === $filterName) {
-                $qb->andWhere('gl.id_gender = :' . $filterName);
+            if ($filterName === 'social_title') {
+                $qb->andWhere('gl.id_gender = :'.$filterName);
                 $qb->setParameter($filterName, $filterValue);
 
                 continue;
             }
 
-            if ('date_add' === $filterName) {
+            if ($filterName === 'date_add') {
                 if (isset($filterValue['from'])) {
                     $qb->andWhere('c.date_add >= :date_from');
                     $qb->setParameter('date_from', sprintf('%s 0:0:0', $filterValue['from']));
@@ -222,16 +211,13 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            $qb->andWhere('c.`' . $filterName . '` LIKE :' . $filterName);
-            $qb->setParameter($filterName, '%' . $filterValue . '%');
+            $qb->andWhere('c.`'.$filterName.'` LIKE :'.$filterName);
+            $qb->setParameter($filterName, '%'.$filterValue.'%');
         }
     }
 
     /**
      * Apply sorting so search query builder for customers.
-     *
-     * @param QueryBuilder $searchQueryBuilder
-     * @param SearchCriteriaInterface $searchCriteria
      */
     private function applySorting(QueryBuilder $searchQueryBuilder, SearchCriteriaInterface $searchCriteria)
     {
@@ -245,7 +231,7 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
             case 'active':
             case 'newsletter':
             case 'optin':
-                $orderBy = 'c.' . $searchCriteria->getOrderBy();
+                $orderBy = 'c.'.$searchCriteria->getOrderBy();
 
                 break;
             case 'social_title':

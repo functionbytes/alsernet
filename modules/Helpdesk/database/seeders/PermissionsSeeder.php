@@ -50,6 +50,13 @@ class PermissionsSeeder extends Seeder
             // la conversación).
             'helpdesk.documents.manage',
 
+            // Vincular a una conversación un expediente KYC cuyo email/teléfono
+            // NO coincide con el cliente (búsqueda global + asignación manual
+            // "a la fuerza"). Deliberadamente NO se otorga a nadie por defecto:
+            // solo roles de confianza elevada deben poder saltarse el match de
+            // pertenencia, y cada uso queda auditado en el historial del expediente.
+            'helpdesk.documents.force-link',
+
             // Agents
             'helpdesk.agents.manage',
 
@@ -87,10 +94,6 @@ class PermissionsSeeder extends Seeder
             'helpdesk.groups.update',
             'helpdesk.groups.delete',
             'helpdesk.groups.manage',
-
-            // Skills
-            'helpdesk.skills.view',
-            'helpdesk.skills.manage',
 
             // Webhooks
             'helpdesk.webhooks.view',

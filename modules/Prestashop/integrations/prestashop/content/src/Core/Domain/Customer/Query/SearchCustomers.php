@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class SearchCustomers
     private $phrases;
 
     /**
-     * @param string[] $phrases
+     * @param  string[]  $phrases
      */
     public function __construct(array $phrases)
     {
@@ -57,7 +58,7 @@ class SearchCustomers
     }
 
     /**
-     * @param string[] $phrases
+     * @param  string[]  $phrases
      */
     private function assertPhrasesAreNotEmpty(array $phrases)
     {

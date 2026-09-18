@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,7 +33,7 @@ class LinkedOrdersForViewing
     private $linkedOrders = [];
 
     /**
-     * @param LinkedOrderForViewing[] $linkedOrders
+     * @param  LinkedOrderForViewing[]  $linkedOrders
      */
     public function __construct(array $linkedOrders)
     {
@@ -49,9 +50,6 @@ class LinkedOrdersForViewing
         return $this->linkedOrders;
     }
 
-    /**
-     * @param LinkedOrderForViewing $order
-     */
     private function addLinkedOrder(LinkedOrderForViewing $order): void
     {
         $this->linkedOrders[] = $order;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -111,7 +112,6 @@ class ProductPreferencesFormDataProvider implements FormDataProviderInterface
     /**
      * Perform validation on form data before saving it.
      *
-     * @param array $data
      *
      * @return array Return array of errors
      */
@@ -120,7 +120,7 @@ class ProductPreferencesFormDataProvider implements FormDataProviderInterface
         $invalidFields = [];
 
         $newDaysNumber = $data['general']['new_days_number'];
-        if (!is_numeric($newDaysNumber) || 0 > $newDaysNumber) {
+        if (! is_numeric($newDaysNumber) || $newDaysNumber < 0) {
             $invalidFields[] = $this->translator->trans(
                 'Number of days for which the product is considered \'new\'',
                 [],
@@ -129,7 +129,7 @@ class ProductPreferencesFormDataProvider implements FormDataProviderInterface
         }
 
         $shortDescriptionLimit = $data['general']['short_description_limit'];
-        if (!is_numeric($shortDescriptionLimit) || 0 >= $shortDescriptionLimit) {
+        if (! is_numeric($shortDescriptionLimit) || $shortDescriptionLimit <= 0) {
             $invalidFields[] = $this->translator->trans(
                 'Max size of product summary',
                 [],
@@ -138,7 +138,7 @@ class ProductPreferencesFormDataProvider implements FormDataProviderInterface
         }
 
         $displayLastQuantities = $data['page']['display_last_quantities'];
-        if (!is_numeric($displayLastQuantities) || 0 > $displayLastQuantities) {
+        if (! is_numeric($displayLastQuantities) || $displayLastQuantities < 0) {
             $invalidFields[] = $this->translator->trans(
                 'Display remaining quantities when the quantity is lower than',
                 [],
@@ -147,7 +147,7 @@ class ProductPreferencesFormDataProvider implements FormDataProviderInterface
         }
 
         $productsPerPage = $data['pagination']['products_per_page'];
-        if (!is_numeric($productsPerPage) || 0 > $productsPerPage) {
+        if (! is_numeric($productsPerPage) || $productsPerPage < 0) {
             $invalidFields[] = $this->translator->trans('Products per page', [], 'Admin.Shopparameters.Feature');
         }
 

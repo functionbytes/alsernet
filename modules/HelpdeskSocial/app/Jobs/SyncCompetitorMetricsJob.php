@@ -57,8 +57,22 @@ class SyncCompetitorMetricsJob implements ShouldQueue
         }
     }
 
+    /**
+     * No hay integracion real con la API del competidor todavia: solo
+     * generamos metricas simuladas, y solo si demo_mode esta activo (y nunca
+     * en produccion, sin importar el config, para que un despliegue no
+     * termine mostrando datos inventados como reales).
+     */
     private function syncMetricsForCompetitor(SocialCompetitor $competitor): void
     {
+        if (app()->isProduction() || ! config('helpdesksocial.competitors.demo_mode', true)) {
+            Log::info('SyncCompetitorMetricsJob: demo_mode disabled, skipping simulated metrics', [
+                'competitor_id' => $competitor->id,
+            ]);
+
+            return;
+        }
+
         Log::info('SyncCompetitorMetricsJob: Fetching metrics (simulated)', [
             'competitor_id' => $competitor->id,
             'name' => $competitor->name,
@@ -72,6 +86,7 @@ class SyncCompetitorMetricsJob implements ShouldQueue
                 'social_competitor_id' => $competitor->id,
                 'metric_type' => $metric['type'],
                 'value' => $metric['value'],
+                'source' => 'simulated',
                 'captured_at' => now(),
             ]);
         }

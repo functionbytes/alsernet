@@ -19,7 +19,7 @@
                     <p class="text-muted small mb-3">Nombre y descripcion de la automatizacion</p>
 
                     <div class="mb-3">
-                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <label class="form-label">Nombre <span class="text-brand">*</span></label>
                         <input type="text" name="name" class="form-control" value="{{ old('name', $automation->name) }}" required>
                     </div>
 
@@ -32,7 +32,7 @@
                     <p class="text-muted small mb-3">Evento que dispara esta automatizacion</p>
 
                     <div class="mb-3">
-                        <label class="form-label">Evento <span class="text-danger">*</span></label>
+                        <label class="form-label">Evento <span class="text-brand">*</span></label>
                         <select name="trigger_event" class="form-select select2" required>
                             @foreach($triggerEvents as $key => $label)
                                 <option value="{{ $key }}" {{ old('trigger_event', $automation->trigger_event) == $key ? 'selected' : '' }}>{{ $label }}</option>
@@ -142,9 +142,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-});
-</script>
+<script src="{{ asset('modules/helpdesktickets/js/select2-init.js') }}"></script>
 @endpush

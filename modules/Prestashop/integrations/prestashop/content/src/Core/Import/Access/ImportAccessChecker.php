@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ final class ImportAccessChecker implements ImportAccessCheckerInterface
      */
     private $contextEmployeeProvider;
 
-    /**
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
-     */
     public function __construct(ContextEmployeeProviderInterface $contextEmployeeProvider)
     {
         $this->contextEmployeeProvider = $contextEmployeeProvider;

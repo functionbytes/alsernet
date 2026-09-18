@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShopBundle\Routing\Converter\Exception;
  * an already converted url. Thus you can detect no redirection is needed
  * and avoid an infinite loop.
  */
-class AlreadyConvertedException extends RoutingException
-{
-}
+class AlreadyConvertedException extends RoutingException {}

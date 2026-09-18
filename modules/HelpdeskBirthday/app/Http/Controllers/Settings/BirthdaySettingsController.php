@@ -3,12 +3,10 @@
 namespace Modules\HelpdeskBirthday\Http\Controllers\Settings;
 
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\HelpdeskBirthday\Http\Requests\UpdateBirthdaySettingsRequest;
-use Modules\HelpdeskBirthday\Services\BirthdayCouponService;
 use Modules\HelpdeskBirthday\Services\BirthdayScheduleCalculator;
 use Modules\HelpdeskBirthday\Services\BirthdayTestSendService;
 use Modules\HelpdeskBirthday\Support\BirthdaySettings;
@@ -17,7 +15,6 @@ class BirthdaySettingsController extends Controller
 {
     public function __construct(
         private readonly BirthdaySettings $settings,
-        private readonly BirthdayCouponService $coupons,
     ) {}
 
     public function index(BirthdayScheduleCalculator $calculator): View
@@ -76,27 +73,5 @@ class BirthdaySettingsController extends Controller
         return back()->with('success', __('helpdeskbirthday::messages.test_send_ok', [
             'emails' => implode(', ', $result['sent']),
         ]));
-    }
-
-    /**
-     * Comprueba contra gestión el cupón configurado y devuelve lo que responde,
-     * para que el admin vea las fechas reales antes de dejarlo fijado.
-     */
-    public function validateCoupon(): JsonResponse
-    {
-        $resolved = $this->coupons->resolve($this->settings->all());
-
-        if ($resolved === []) {
-            return response()->json([
-                'success' => false,
-                'message' => __('helpdeskbirthday::messages.coupon_missing'),
-            ], 422);
-        }
-
-        return response()->json([
-            'success' => true,
-            'source' => $resolved['coupon_source'],
-            'data' => $resolved,
-        ]);
     }
 }

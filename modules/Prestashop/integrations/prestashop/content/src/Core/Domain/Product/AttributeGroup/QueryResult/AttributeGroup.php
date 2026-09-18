@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,13 +69,9 @@ class AttributeGroup
     private $attributes;
 
     /**
-     * @param int $attributeGroupId
-     * @param string[] $localizedNames
-     * @param string[] $localizedPublicNames
-     * @param string $groupType
-     * @param bool $isColorGroup
-     * @param int $position
-     * @param Attribute[]|null $attributes
+     * @param  string[]  $localizedNames
+     * @param  string[]  $localizedPublicNames
+     * @param  Attribute[]|null  $attributes
      */
     public function __construct(
         int $attributeGroupId,
@@ -94,9 +91,6 @@ class AttributeGroup
         $this->attributes = $attributes;
     }
 
-    /**
-     * @return int
-     */
     public function getAttributeGroupId(): int
     {
         return $this->attributeGroupId;
@@ -118,25 +112,16 @@ class AttributeGroup
         return $this->localizedPublicNames;
     }
 
-    /**
-     * @return string
-     */
     public function getGroupType(): string
     {
         return $this->groupType;
     }
 
-    /**
-     * @return bool
-     */
     public function isColorGroup(): bool
     {
         return $this->isColorGroup;
     }
 
-    /**
-     * @return int
-     */
     public function getPosition(): int
     {
         return $this->position;

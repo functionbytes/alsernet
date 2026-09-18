@@ -15,9 +15,9 @@ class BulkActionCategoryRequest extends FormRequest
     {
         return [
             'action' => ['required', 'string', 'in:delete,enable,disable'],
-            'ids'    => ['required', 'array', 'min:1'],
-            'ids.*'  => ['integer'],
-            'type'   => ['nullable', 'string', 'in:categories,sports'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+            'type' => ['nullable', 'string', 'in:categories,sports'],
         ];
     }
 

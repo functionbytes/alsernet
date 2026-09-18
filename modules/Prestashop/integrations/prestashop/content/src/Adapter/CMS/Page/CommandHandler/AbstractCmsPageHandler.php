@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,7 @@ abstract class AbstractCmsPageHandler extends AbstractObjectModelHandler
     /**
      * Gets cms object if it exists. If it does not exist it throws exceptions.
      *
-     * @param int $cmsId
-     *
+     * @param  int  $cmsId
      * @return CMS
      *
      * @throws CmsPageException
@@ -56,7 +56,7 @@ abstract class AbstractCmsPageHandler extends AbstractObjectModelHandler
         try {
             $cms = new CMS($cmsId);
 
-            if (0 >= $cms->id) {
+            if ($cms->id <= 0) {
                 throw new CmsPageNotFoundException(sprintf('Cms page with id "%s" not found', $cmsId));
             }
         } catch (PrestaShopException $exception) {
@@ -69,7 +69,7 @@ abstract class AbstractCmsPageHandler extends AbstractObjectModelHandler
     /**
      * Checks whether cms page category exists by provided id.
      *
-     * @param int $cmsCategoryId
+     * @param  int  $cmsCategoryId
      *
      * @throws CmsPageCategoryException
      */
@@ -77,7 +77,7 @@ abstract class AbstractCmsPageHandler extends AbstractObjectModelHandler
     {
         try {
             $cmsCategory = new CMSCategory($cmsCategoryId);
-            if (0 >= $cmsCategory->id) {
+            if ($cmsCategory->id <= 0) {
                 throw new CmsPageCategoryNotFoundException(sprintf('Cms page category with id "%s" not found', $cmsCategoryId));
             }
         } catch (PrestaShopException $exception) {

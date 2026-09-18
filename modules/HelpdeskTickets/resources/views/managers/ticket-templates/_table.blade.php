@@ -1,5 +1,7 @@
-{{-- Tabla reutilizable de plantillas — generales y personales comparten el mismo layout,
-     solo cambia si se muestran las acciones de editar/eliminar (segun $canManage). --}}
+{{-- Tabla reutilizable de plantillas — generales y personales comparten el mismo layout.
+     $canManage decide el checkbox de selección masiva y Editar/Eliminar; "Duplicar como
+     mía" no depende de él — cualquier fila que aparece aquí ya es visible para el
+     usuario (TicketTemplatePolicy::view()), así que se puede duplicar siempre. --}}
 @if($templates->count() > 0)
     <div class="table-responsive">
         <table class="table table-hover align-middle">
@@ -13,9 +15,12 @@
                     <th>Categoría</th>
                     <th>Prioridad</th>
                     <th class="text-center">Estado</th>
-                    @if($canManage)
-                        <th class="text-center">Acciones</th>
-                    @endif
+                    {{-- Ya no depende de $canManage: "Duplicar" (dentro del
+                         dropdown) está disponible para cualquier plantilla
+                         visible aquí, tenga o no el usuario permiso para
+                         editar/borrar la original — es justo lo que permite
+                         partir de una general sin ese permiso. --}}
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,19 +62,27 @@
                                 <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
                             @endif
                         </td>
-                        @if($canManage)
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-vertical"></i>
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-vertical"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form method="POST" action="{{ route('manager.helpdesk.ticket-templates.duplicate', $template->id) }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                Duplicar como mía
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @if($canManage)
+                                        <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item" href="{{ route('manager.helpdesk.ticket-templates.edit', $template->id) }}">
                                                 Editar
                                             </a>
                                         </li>
-                                        <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item delete-btn" href="#"
                                                data-bs-toggle="modal"
@@ -79,10 +92,10 @@
                                                 Eliminar
                                             </a>
                                         </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        @endif
+                                    @endif
+                                </ul>
+                            </div>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>

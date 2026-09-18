@@ -2055,7 +2055,7 @@ class CartCore extends ObjectModel
      * @param  bool  $keepOrderPrices  When true use the Order saved prices instead of the most recent ones from catalog (if Order exists)
      * @return float Order total
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getOrderTotal(
         $withTaxes = true,
@@ -2086,7 +2086,7 @@ class CartCore extends ObjectModel
             Cart::ONLY_PHYSICAL_PRODUCTS_WITHOUT_SHIPPING,
         ];
         if (! in_array($type, $allowedTypes)) {
-            throw new \Exception('Invalid calculation type: '.$type);
+            throw new Exception('Invalid calculation type: '.$type);
         }
 
         // EARLY RETURNS
@@ -2173,7 +2173,7 @@ class CartCore extends ObjectModel
 
                 break;
             default:
-                throw new \Exception('unknown cart calculation type : '.$type);
+                throw new Exception('unknown cart calculation type : '.$type);
         }
 
         // TAXES ?
@@ -2193,7 +2193,7 @@ class CartCore extends ObjectModel
      * @param  int  $id_carrier  carrier id (fees calculation)
      * @param  int|null  $computePrecision
      * @param  bool  $keepOrderPrices  When true use the Order saved prices instead of the most recent ones from catalog (if Order exists)
-     * @return \PrestaShop\PrestaShop\Core\Cart\Calculator
+     * @return Calculator
      */
     public function newCalculator($products, $cartRules, $id_carrier, $computePrecision = null, bool $keepOrderPrices = false)
     {
@@ -5152,8 +5152,8 @@ class CartCore extends ObjectModel
     }
 
     /**
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function getTaxCountry(): Country
     {

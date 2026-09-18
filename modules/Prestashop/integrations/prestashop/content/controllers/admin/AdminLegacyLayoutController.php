@@ -28,22 +28,29 @@ class AdminLegacyLayoutControllerCore extends AdminController
 {
     /** @var string */
     public $outPutHtml = '';
+
     /** @var string[] */
     public $jsRouterMetadata;
+
     /** @var array */
     protected $headerToolbarBtn = [];
+
     /** @var string */
     protected $title;
+
     /** @var bool */
     protected $showContentHeader = true;
+
     /** @var string */
     protected $headerTabContent = '';
+
     /**
      * See the $helpLink phpDoc below
      *
      * @var bool
      */
     protected $enableSidebar = false;
+
     /**
      * The Help Link is used for the 'Help' button in the top right of Back Office pages
      *
@@ -55,23 +62,25 @@ class AdminLegacyLayoutControllerCore extends AdminController
      * @var string
      */
     protected $helpLink;
+
     /** @var bool */
     protected $useRegularH1Structure;
+
     /** @var bool */
     protected $lockedToAllShopContext = false;
 
     /**
-     * @param string $controllerName
-     * @param string $title
-     * @param array $headerToolbarBtn
-     * @param string $displayType
-     * @param bool $showContentHeader
-     * @param string $headerTabContent
-     * @param bool $enableSidebar
-     * @param string $helpLink
-     * @param string[] $jsRouterMetadata array to provide base_url and security token for JS Router
-     * @param string $metaTitle
-     * @param bool $useRegularH1Structure allows complex <h1> structure if set to false
+     * @param  string  $controllerName
+     * @param  string  $title
+     * @param  array  $headerToolbarBtn
+     * @param  string  $displayType
+     * @param  bool  $showContentHeader
+     * @param  string  $headerTabContent
+     * @param  bool  $enableSidebar
+     * @param  string  $helpLink
+     * @param  string[]  $jsRouterMetadata  array to provide base_url and security token for JS Router
+     * @param  string  $metaTitle
+     * @param  bool  $useRegularH1Structure  allows complex <h1> structure if set to false
      */
     public function __construct(
         $controllerName = '',
@@ -127,12 +136,10 @@ class AdminLegacyLayoutControllerCore extends AdminController
      * This helps avoiding handling legacy processes when in Symfony Controllers.
      * Otherwise when using POST action to render form you sometimes get an exception.
      */
-    public function initProcess()
-    {
-    }
+    public function initProcess() {}
 
     /**
-     * @param bool $isNewTheme
+     * @param  bool  $isNewTheme
      */
     public function setMedia($isNewTheme = false)
     {
@@ -140,8 +147,7 @@ class AdminLegacyLayoutControllerCore extends AdminController
     }
 
     /**
-     * @param bool $disable
-     *
+     * @param  bool  $disable
      * @return bool
      */
     public function viewAccess($disable = false)
@@ -171,16 +177,16 @@ class AdminLegacyLayoutControllerCore extends AdminController
         $this->show_page_header_toolbar = (bool) $this->showContentHeader;
 
         // @todo remove once the product page has been made responsive
-        $isProductPage = ('AdminProducts' === $this->controller_name);
+        $isProductPage = ($this->controller_name === 'AdminProducts');
 
         $vars = [
-            'maintenance_mode' => !(bool) Configuration::get('PS_SHOP_ENABLE'),
+            'maintenance_mode' => ! (bool) Configuration::get('PS_SHOP_ENABLE'),
             'debug_mode' => (bool) _PS_MODE_DEV_,
             'headerTabContent' => $this->headerTabContent,
-            'content' => '{$content}', //replace content by original smarty tag var
+            'content' => '{$content}', // replace content by original smarty tag var
             'enableSidebar' => $this->enableSidebar,
             'lite_display' => $this->lite_display,
-            'url_post' => self::$currentIndex . '&token=' . $this->token,
+            'url_post' => self::$currentIndex.'&token='.$this->token,
             'show_page_header_toolbar' => $this->show_page_header_toolbar,
             'page_header_toolbar_title' => $this->page_header_toolbar_title,
             'title' => $this->title ? $this->title : $this->page_header_toolbar_title,
@@ -197,7 +203,7 @@ class AdminLegacyLayoutControllerCore extends AdminController
             'hideLegacyStoreContextSelector' => $this->container->get('prestashop.adapter.multistore_feature')->isUsed(),
         ];
 
-        if ($this->helpLink === false || !empty($this->helpLink)) {
+        if ($this->helpLink === false || ! empty($this->helpLink)) {
             $vars['help_link'] = $this->helpLink;
         }
 

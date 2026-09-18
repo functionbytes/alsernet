@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,6 +29,7 @@ namespace PrestaShopBundle\Service\DataProvider\Marketplace;
 
 use GuzzleHttp\Client;
 use PrestaShop\PrestaShop\Adapter\Addons\AddonsDataProvider;
+use PrestaShop\PrestaShop\Adapter\Tools;
 
 class ApiClient
 {
@@ -42,10 +44,11 @@ class ApiClient
     private $queryParameters = [
         'format' => 'json',
     ];
+
     private $defaultQueryParameters;
 
     /**
-     * @var \PrestaShop\PrestaShop\Adapter\Tools
+     * @var Tools
      */
     private $toolsAdapter;
 
@@ -60,7 +63,7 @@ class ApiClient
         $this->addonsApiClient = $addonsApiClient;
         $this->toolsAdapter = $toolsAdapter;
 
-        list($isoLang) = explode('-', $locale);
+        [$isoLang] = explode('-', $locale);
 
         $this->setIsoLang($isoLang)
             ->setIsoCode($isoCode)
@@ -76,8 +79,6 @@ class ApiClient
     }
 
     /**
-     * @param Client $client
-     *
      * @return $this
      */
     public function setClient(Client $client)
@@ -143,9 +144,8 @@ class ApiClient
     /**
      * Prepare and call API for PrestaTrust integrity and property module details.
      *
-     * @param string $hash Hash of module files
-     * @param string $sc_address Smart contract (Module licence)
-     *
+     * @param  string  $hash  Hash of module files
+     * @param  string  $sc_address  Smart contract (Module licence)
      * @return object List of checks made and their results
      */
     public function getPrestaTrustCheck($hash, $sc_address)
@@ -190,7 +190,7 @@ class ApiClient
 
         $responseArray = json_decode($response);
 
-        if (!empty($responseArray->modules)) {
+        if (! empty($responseArray->modules)) {
             return $responseArray->modules[0];
         }
     }
@@ -198,9 +198,7 @@ class ApiClient
     /**
      * Call API for module ZIP content (= download).
      *
-     * @param int $moduleId
-     * @param string $moduleChannel
-     *
+     * @param  int  $moduleId
      * @return string binary content (zip format)
      */
     public function getModuleZip($moduleId, string $moduleChannel = AddonsDataProvider::ADDONS_API_MODULE_CHANNEL_STABLE)
@@ -221,7 +219,7 @@ class ApiClient
 
         $responseArray = json_decode($response);
 
-        if (!empty($responseArray->modules)) {
+        if (! empty($responseArray->modules)) {
             return $responseArray->modules;
         }
 
@@ -241,11 +239,11 @@ class ApiClient
 
         $responseDecoded = json_decode($response);
 
-        if (!empty($responseDecoded->themes)) {
+        if (! empty($responseDecoded->themes)) {
             return $responseDecoded->themes;
         }
 
-        return new \stdClass();
+        return new \stdClass;
     }
 
     public function getResponse()
@@ -308,11 +306,6 @@ class ApiClient
         return $this;
     }
 
-    /**
-     * @param string $moduleChannel
-     *
-     * @return self
-     */
     public function setModuleChannel(string $moduleChannel): self
     {
         $this->queryParameters['channel'] = $moduleChannel;

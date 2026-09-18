@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,10 @@ class ProductCombinationFiltersBuilder extends AbstractFiltersBuilder implements
     /**
      * {@inheritdoc}
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
         $filterParameters = ProductCombinationFilters::getDefaults();
-        if (null !== $filters) {
+        if ($filters !== null) {
             $filterParameters = array_replace($filterParameters, $filters->all());
         }
 
@@ -73,8 +74,6 @@ class ProductCombinationFiltersBuilder extends AbstractFiltersBuilder implements
     /**
      * Fetch the product ID from request attributes (based on routing attribute since the product ID is in the URL)
      * This method might need to evolve if the ID were to passed differently (GET or POST for example).
-     *
-     * @return int
      */
     private function getProductId(): int
     {

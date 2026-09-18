@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ class DoctrineNamingStrategy extends UnderscoreNamingStrategy
      *
      * Prefix is given by injection, set in app/config/parameters.yml.
      *
-     * @param string $prefix
+     * @param  string  $prefix
      */
     public function __construct($prefix = 'ps_')
     {
@@ -57,7 +58,7 @@ class DoctrineNamingStrategy extends UnderscoreNamingStrategy
     {
         $underscored = parent::classToTableName($className);
 
-        return $this->prefix . $underscored;
+        return $this->prefix.$underscored;
     }
 
     /**
@@ -67,6 +68,6 @@ class DoctrineNamingStrategy extends UnderscoreNamingStrategy
      */
     public function joinTableName($sourceEntity, $targetEntity, $propertyName = null)
     {
-        return $this->prefix . parent::classToTableName($sourceEntity) . '_' . parent::classToTableName($targetEntity);
+        return $this->prefix.parent::classToTableName($sourceEntity).'_'.parent::classToTableName($targetEntity);
     }
 }

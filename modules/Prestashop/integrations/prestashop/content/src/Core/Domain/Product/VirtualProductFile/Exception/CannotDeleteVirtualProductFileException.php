@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\VirtualProductFile\Exception
 /**
  * Is thrown when virtual product file deletion fails
  */
-class CannotDeleteVirtualProductFileException extends VirtualProductFileException
-{
-}
+class CannotDeleteVirtualProductFileException extends VirtualProductFileException {}

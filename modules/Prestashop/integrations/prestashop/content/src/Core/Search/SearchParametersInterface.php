@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: dev
@@ -33,9 +34,7 @@ interface SearchParametersInterface
      * Retrieve list of filters from User Request (ONLY those present in
      * the request).
      *
-     * @param Request $request
-     * @param string $filterClass the filter class
-     *
+     * @param  string  $filterClass  the filter class
      * @return Filters A collection of filters
      */
     public function getFiltersFromRequest(Request $request, $filterClass);
@@ -43,12 +42,11 @@ interface SearchParametersInterface
     /**
      * Retrieve list of filters from User searches (ONLY those saved in repository).
      *
-     * @param int $employeeId
-     * @param int $shopId
-     * @param string $filterClass the filter class
-     * @param string $controller the controller name
-     * @param string $action the action name
-     *
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  string  $filterClass  the filter class
+     * @param  string  $controller  the controller name
+     * @param  string  $action  the action name
      * @return Filters|null A collection of filters
      */
     public function getFiltersFromRepository($employeeId, $shopId, $controller, $action, $filterClass);

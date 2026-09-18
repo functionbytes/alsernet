@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,7 +59,7 @@ class LegacyHookSubscriber implements EventSubscriberInterface
 
         // Hack Symfony cache clear : if context not mounted, bypass legacy call
         $legacyContext = Context::getContext();
-        if (!$legacyContext || empty($legacyContext->shop) || empty($legacyContext->employee)) {
+        if (! $legacyContext || empty($legacyContext->shop) || empty($legacyContext->employee)) {
             return $listeners;
         }
 
@@ -79,11 +80,11 @@ class LegacyHookSubscriber implements EventSubscriberInterface
                 if (is_array($modules)) {
                     foreach ($modules as $order => $module) {
                         $moduleId = $module['id_module'];
-                        $functionName = 'call_' . $id . '_' . $moduleId;
+                        $functionName = 'call_'.$id.'_'.$moduleId;
                         $moduleListeners[] = [$functionName, 2000 - $order];
                     }
                 } else {
-                    $moduleListeners[] = ['call_' . $id . '_0', 2000];
+                    $moduleListeners[] = ['call_'.$id.'_0', 2000];
                 }
 
                 $listeners[$name] = $moduleListeners;
@@ -99,33 +100,33 @@ class LegacyHookSubscriber implements EventSubscriberInterface
      * These methods are built with the following syntax:
      * "call_<hookID>_<moduleID>(HookEvent $event, $hookName)"
      *
-     * @param string $name The method called
-     * @param array $args The HookEvent, and then the hook name (eventName)
+     * @param  string  $name  The method called
+     * @param  array  $args  The HookEvent, and then the hook name (eventName)
      *
      * @throws \BadMethodCallException
      */
     public function __call($name, $args)
     {
         if (strpos($name, 'call_') !== 0) {
-            throw new \BadMethodCallException('The call to \'' . $name . '\' is not recognized.');
+            throw new \BadMethodCallException('The call to \''.$name.'\' is not recognized.');
         }
 
         $ids = explode('_', $name);
         array_shift($ids); // remove 'call'
 
         if (count($ids) !== 2) {
-            throw new \BadMethodCallException('The call to \'' . $name . '\' is not recognized.');
+            throw new \BadMethodCallException('The call to \''.$name.'\' is not recognized.');
         }
 
         $moduleId = (int) $ids[1];
-        list($event, $hookName) = $args;
+        [$event, $hookName] = $args;
 
         $content = Hook::exec($hookName, $event->getHookParameters(), $moduleId, ($event instanceof RenderingHookEvent));
 
         if (
             $event instanceof RenderingHookEvent
-            && 0 !== $moduleId
-            && !empty($content)
+            && $moduleId !== 0
+            && ! empty($content)
         ) {
             $event->setContent([array_values($content)[0]], array_keys($content)[0]);
         }

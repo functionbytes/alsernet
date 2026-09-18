@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,7 @@ class ModuleDataProvider
     /**
      * Translator.
      *
-     * @var \Symfony\Component\Translation\TranslatorInterface
+     * @var TranslatorInterface
      */
     private $translator;
 
@@ -68,7 +69,7 @@ class ModuleDataProvider
      */
     private $employeeID;
 
-    public function __construct(LoggerInterface $logger, TranslatorInterface $translator, EntityManager $entityManager = null)
+    public function __construct(LoggerInterface $logger, TranslatorInterface $translator, ?EntityManager $entityManager = null)
     {
         $this->logger = $logger;
         $this->translator = $translator;
@@ -77,7 +78,7 @@ class ModuleDataProvider
     }
 
     /**
-     * @param int $employeeID
+     * @param  int  $employeeID
      */
     public function setEmployeeId($employeeID)
     {
@@ -87,20 +88,19 @@ class ModuleDataProvider
     /**
      * Return all module information from database.
      *
-     * @param string $name The technical module name to search
-     *
+     * @param  string  $name  The technical module name to search
      * @return array
      */
     public function findByName($name)
     {
-        $result = Db::getInstance()->getRow('SELECT `id_module` as `id`, `active`, `version` FROM `' . _DB_PREFIX_ . 'module` WHERE `name` = "' . pSQL($name) . '"');
+        $result = Db::getInstance()->getRow('SELECT `id_module` as `id`, `active`, `version` FROM `'._DB_PREFIX_.'module` WHERE `name` = "'.pSQL($name).'"');
         if ($result) {
             $result['installed'] = 1;
             $result['active'] = $this->isEnabled($name);
             $result['active_on_mobile'] = (bool) ($this->getDeviceStatus($name) & AddonListFilterDeviceStatus::DEVICE_MOBILE);
             $lastAccessDate = '0000-00-00 00:00:00';
 
-            if (!Tools::isPHPCLI() && null !== $this->entityManager && $this->employeeID) {
+            if (! Tools::isPHPCLI() && $this->entityManager !== null && $this->employeeID) {
                 $moduleID = isset($result['id']) ? (int) $result['id'] : 0;
 
                 $qb = $this->entityManager->createQueryBuilder();
@@ -127,8 +127,7 @@ class ModuleDataProvider
     /**
      * Return translated module *Display Name*.
      *
-     * @param string $module The technical module name
-     *
+     * @param  string  $module  The technical module name
      * @return string The translated Module displayName
      */
     public function getModuleName($module)
@@ -139,9 +138,8 @@ class ModuleDataProvider
     /**
      * Check current employee permission on a given module.
      *
-     * @param string $action
-     * @param string $name
-     *
+     * @param  string  $action
+     * @param  string  $name
      * @return bool True if allowed
      */
     public function can($action, $name)
@@ -158,20 +156,19 @@ class ModuleDataProvider
     /**
      * Check if a module is enabled in the current shop context.
      *
-     * @param bool $name The technical module name
-     *
+     * @param  bool  $name  The technical module name
      * @return bool True if enable
      */
     public function isEnabled($name)
     {
-        $id_shops = (new Context())->getContextListShopID();
+        $id_shops = (new Context)->getContextListShopID();
         // ToDo: Load list of all installed modules ?
 
         $result = Db::getInstance()->getRow('SELECT m.`id_module` as `active`, ms.`id_module` as `shop_active`
-        FROM `' . _DB_PREFIX_ . 'module` m
-        LEFT JOIN `' . _DB_PREFIX_ . 'module_shop` ms ON m.`id_module` = ms.`id_module`
-        WHERE `name` = "' . pSQL($name) . '"
-        AND ms.`id_shop` IN (' . implode(',', array_map('intval', $id_shops)) . ')');
+        FROM `'._DB_PREFIX_.'module` m
+        LEFT JOIN `'._DB_PREFIX_.'module_shop` ms ON m.`id_module` = ms.`id_module`
+        WHERE `name` = "'.pSQL($name).'"
+        AND ms.`id_shop` IN ('.implode(',', array_map('intval', $id_shops)).')');
         if ($result) {
             return (bool) ($result['active'] && $result['shop_active']);
         } else {
@@ -188,37 +185,35 @@ class ModuleDataProvider
     /**
      * Return the Module Id
      *
-     * @param string $name The technical module name
-     *
+     * @param  string  $name  The technical module name
      * @return int the Module Id, or 0 if not found
      */
     public function getModuleIdByName($name)
     {
         return (int) Db::getInstance()->getValue(
-            'SELECT `id_module` FROM `' . _DB_PREFIX_ . 'module` WHERE `name` = "' . pSQL($name) . '"'
+            'SELECT `id_module` FROM `'._DB_PREFIX_.'module` WHERE `name` = "'.pSQL($name).'"'
         );
     }
 
     /**
      * We won't load an invalid class. This function will check any potential parse error.
      *
-     * @param string $name The technical module name to check
-     *
+     * @param  string  $name  The technical module name to check
      * @return bool true if valid
      */
     public function isModuleMainClassValid($name)
     {
-        if (!Validate::isModuleName($name)) {
+        if (! Validate::isModuleName($name)) {
             return false;
         }
 
-        $file_path = _PS_MODULE_DIR_ . $name . '/' . $name . '.php';
+        $file_path = _PS_MODULE_DIR_.$name.'/'.$name.'.php';
         // Check if file exists (slightly faster than file_exists)
-        if (!(int) @filemtime($file_path)) {
+        if (! (int) @filemtime($file_path)) {
             return false;
         }
 
-        $parser = (new PhpParser\ParserFactory())->create(PhpParser\ParserFactory::ONLY_PHP7);
+        $parser = (new PhpParser\ParserFactory)->create(PhpParser\ParserFactory::ONLY_PHP7);
         $log_context_data = [
             'object_type' => 'Module',
             'object_id' => LegacyModule::getModuleIdByName($name),
@@ -275,13 +270,12 @@ class ModuleDataProvider
     /**
      * Check if the module is in the modules folder, with a valid class.
      *
-     * @param string $name The technical module name to find
-     *
+     * @param  string  $name  The technical module name to find
      * @return bool True if found
      */
     public function isOnDisk($name)
     {
-        $path = _PS_MODULE_DIR_ . $name . '/' . $name . '.php';
+        $path = _PS_MODULE_DIR_.$name.'/'.$name.'.php';
 
         return file_exists($path);
     }
@@ -289,20 +283,19 @@ class ModuleDataProvider
     /**
      * Check if the module has been enabled on mobile.
      *
-     * @param string $name The technical module name to check
-     *
+     * @param  string  $name  The technical module name to check
      * @return int|false The devices enabled for this module
      */
     private function getDeviceStatus($name)
     {
-        $id_shops = (new Context())->getContextListShopID();
+        $id_shops = (new Context)->getContextListShopID();
         // ToDo: Load list of all installed modules ?
 
         $result = Db::getInstance()->getRow('SELECT m.`id_module` as `active`, ms.`id_module` as `shop_active`, ms.`enable_device` as `enable_device`
-            FROM `' . _DB_PREFIX_ . 'module` m
-            LEFT JOIN `' . _DB_PREFIX_ . 'module_shop` ms ON m.`id_module` = ms.`id_module`
-            WHERE `name` = "' . pSQL($name) . '"
-            AND ms.`id_shop` IN (' . implode(',', array_map('intval', $id_shops)) . ')');
+            FROM `'._DB_PREFIX_.'module` m
+            LEFT JOIN `'._DB_PREFIX_.'module_shop` ms ON m.`id_module` = ms.`id_module`
+            WHERE `name` = "'.pSQL($name).'"
+            AND ms.`id_shop` IN ('.implode(',', array_map('intval', $id_shops)).')');
         if ($result) {
             return (int) $result['enable_device'];
         }

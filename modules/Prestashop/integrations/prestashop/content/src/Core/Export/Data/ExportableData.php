@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,7 @@ final class ExportableData implements ExportableDataInterface
     private $rows;
 
     /**
-     * @param string[] $titles
-     * @param array $rows
+     * @param  string[]  $titles
      */
     public function __construct(array $titles, array $rows)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,16 +51,14 @@ abstract class AbstractFiltersBuilder implements FiltersBuilderInterface
     /**
      * {@inheritdoc}
      */
-    abstract public function buildFilters(Filters $filters = null);
+    abstract public function buildFilters(?Filters $filters = null);
 
     /**
-     * @param Filters|null $filters
-     *
      * @return string
      */
-    protected function getFilterId(Filters $filters = null)
+    protected function getFilterId(?Filters $filters = null)
     {
-        if (null === $filters) {
+        if ($filters === null) {
             return $this->filterId;
         }
 

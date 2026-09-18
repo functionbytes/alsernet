@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,6 @@ class CustomerNameValidatorFactory implements ConstraintValidatorFactoryInterfac
 
     /**
      * CustomerNameValidatorFactory constructor.
-     *
-     * @param CharacterCleaner $characterCleaner
      */
     public function __construct(CharacterCleaner $characterCleaner)
     {
@@ -50,8 +49,6 @@ class CustomerNameValidatorFactory implements ConstraintValidatorFactoryInterfac
     }
 
     /**
-     * @param Constraint $constraint
-     *
      * @return ConstraintValidatorInterface
      */
     public function getInstance(Constraint $constraint)

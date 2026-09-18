@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,18 +49,18 @@ class DefaultCatalogueFinder extends AbstractCatalogueFinder
     private $filenameFilters;
 
     /**
-     * @param string $defaultCatalogueDirectory Directory where to look files
-     * @param string[] $filenameFilters Array of globs to use to match files
+     * @param  string  $defaultCatalogueDirectory  Directory where to look files
+     * @param  string[]  $filenameFilters  Array of globs to use to match files
      *
      * @throws TranslationFilesNotFoundException
      */
     public function __construct(string $defaultCatalogueDirectory, array $filenameFilters)
     {
-        if (!is_dir($defaultCatalogueDirectory) || !is_readable($defaultCatalogueDirectory)) {
+        if (! is_dir($defaultCatalogueDirectory) || ! is_readable($defaultCatalogueDirectory)) {
             throw new TranslationFilesNotFoundException(sprintf('Directory %s does not exist', $defaultCatalogueDirectory));
         }
 
-        if (!$this->assertIsArrayOfString($filenameFilters)) {
+        if (! $this->assertIsArrayOfString($filenameFilters)) {
             throw new \InvalidArgumentException('Given filename filters are invalid. An array of strings was expected.');
         }
 
@@ -70,16 +71,14 @@ class DefaultCatalogueFinder extends AbstractCatalogueFinder
     /**
      * Return the translation catalogue for the provided locale
      *
-     * @param string $locale
      *
-     * @return MessageCatalogue
      *
      * @throws TranslationFilesNotFoundException
      */
     public function getCatalogue(string $locale): MessageCatalogue
     {
         $defaultCatalogue = new MessageCatalogue($locale);
-        $translationFinder = new TranslationFinder();
+        $translationFinder = new TranslationFinder;
 
         foreach ($this->filenameFilters as $filter) {
             $filteredCatalogue = $translationFinder->getCatalogueFromPaths(
@@ -98,7 +97,6 @@ class DefaultCatalogueFinder extends AbstractCatalogueFinder
     /**
      * Empties out the catalogue by removing translations but leaving keys
      *
-     * @param MessageCatalogue $messageCatalogue
      *
      * @return MessageCatalogue Empty the catalogue
      */

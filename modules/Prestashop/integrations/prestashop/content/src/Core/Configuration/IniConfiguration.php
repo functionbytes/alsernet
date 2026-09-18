@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -24,7 +25,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
-namespace  PrestaShop\PrestaShop\Core\Configuration;
+namespace PrestaShop\PrestaShop\Core\Configuration;
 
 /**
  * Gets ini configuration.
@@ -57,8 +58,7 @@ class IniConfiguration
     /**
      * Convert a numeric value to bytes.
      *
-     * @param string $value
-     *
+     * @param  string  $value
      * @return int
      */
     private function convertToBytes($value)
@@ -69,10 +69,10 @@ class IniConfiguration
         switch ($last) {
             case 'g':
                 $bytes *= 1024;
-            // no break to fall-through
+                // no break to fall-through
             case 'm':
                 $bytes *= 1024;
-            // no break to fall-through
+                // no break to fall-through
             case 'k':
                 $bytes *= 1024;
         }

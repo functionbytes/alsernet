@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class UpdateCategoryPositionHandler implements UpdateCategoryPositionHandl
         $position = null;
 
         foreach ($command->getPositions() as $key => $value) {
-            list(, $positionParentCategoryId, $positionCategoryId) = explode('_', $value);
+            [, $positionParentCategoryId, $positionCategoryId] = explode('_', $value);
 
             if ((int) $positionParentCategoryId === $parentCategoryId && (int) $positionCategoryId === $categoryId) {
                 $position = $key;
@@ -57,19 +58,19 @@ final class UpdateCategoryPositionHandler implements UpdateCategoryPositionHandl
             }
         }
 
-        if (null === $position) {
+        if ($position === null) {
             throw new CategoryException('Category position cannot be updated');
         }
 
         $category = new Category($categoryId);
 
-        if (!$category->id) {
+        if (! $category->id) {
             throw new CategoryNotFoundException($command->getCategoryId(), sprintf('Category with id "%s" was not found', $categoryId));
         }
 
         if ($category->updatePosition($command->getWay(), $position)) {
-            /* Position '0' was not found in given positions so try to reorder parent category*/
-            if (!$command->isFoundFirst()) {
+            /* Position '0' was not found in given positions so try to reorder parent category */
+            if (! $command->isFoundFirst()) {
                 Category::cleanPositions((int) $category->id_parent);
             }
         }

@@ -10,7 +10,11 @@
 
   @include('core::components.alerts')
 
-  <div class="card">
+  <div class="row g-3">
+
+    {{-- Formulario --}}
+    <div class="col-12 col-lg-8">
+    <div class="card">
 
     <div class="card-header p-4 border-bottom border-light">
       <h5 class="mb-1 fw-bold">Nueva sección</h5>
@@ -57,16 +61,43 @@
             </div>
           </div>
 
-          <div class="card-footer d-flex justify-content-end gap-2">
-            <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-outline-secondary">
-              Cancelar
-            </a>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save me-1"></i> Guardar
-            </button>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary w-100 mb-1">Guardar</button>
+            <a href="{{ route('manager.helpcenter.categories') }}" class="btn btn-light w-100">Cancelar</a>
           </div>
         </form>
       </div>
+
+        </div>
+
+        {{-- Panel de instrucciones --}}
+        <div class="col-12 col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las secciones</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-0">
+                        Una seccion agrupa articulos dentro de una categoria. Es el nivel donde el
+                        cliente elige el subtema antes de llegar al articulo.
+                    </p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">Agrupa por lo que el cliente busca, no por area interna</li>
+                        <li class="mb-2">Evita secciones con un solo articulo</li>
+                        <li class="mb-0">La posicion decide el orden dentro de la categoria</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
 @endsection
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,23 +41,21 @@ class VirtualProductController extends FrameworkBundleAdminController
     /**
      * Process Ajax Form to create/update virtual product.
      *
-     * @param string|int $idProduct
-     * @param Request $request
-     *
+     * @param  string|int  $idProduct
      * @return JsonResponse
      */
     public function saveAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $legacyContext = $this->get('prestashop.adapter.legacy.context');
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
         $router = $this->get('router');
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        if (!$product || !$request->isXmlHttpRequest()) {
+        if (! $product || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 
@@ -93,8 +92,7 @@ class VirtualProductController extends FrameworkBundleAdminController
     /**
      * Download the content of the virtual product.
      *
-     * @param int $idProduct
-     *
+     * @param  int  $idProduct
      * @return BinaryFileResponse
      */
     public function downloadFileAction($idProduct)
@@ -107,7 +105,7 @@ class VirtualProductController extends FrameworkBundleAdminController
             ]);
 
         $response = new BinaryFileResponse(
-            $configuration->get('_PS_DOWNLOAD_DIR_') . $download->getFilename()
+            $configuration->get('_PS_DOWNLOAD_DIR_').$download->getFilename()
         );
 
         $response->setContentDisposition(
@@ -121,21 +119,19 @@ class VirtualProductController extends FrameworkBundleAdminController
     /**
      * Process Ajax Form to remove attached file.
      *
-     * @param string|int $idProduct
-     * @param Request $request
-     *
+     * @param  string|int  $idProduct
      * @return JsonResponse
      */
     public function removeFileAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        if (!$product || !$request->isXmlHttpRequest()) {
+        if (! $product || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 
@@ -147,21 +143,19 @@ class VirtualProductController extends FrameworkBundleAdminController
     /**
      * Process Ajax remove action.
      *
-     * @param string|int $idProduct
-     * @param Request $request
-     *
+     * @param  string|int  $idProduct
      * @return JsonResponse
      */
     public function removeAction($idProduct, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $productAdapter = $this->get('prestashop.adapter.data_provider.product');
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
 
-        if (!$product || !$request->isXmlHttpRequest()) {
+        if (! $product || ! $request->isXmlHttpRequest()) {
             return $response;
         }
 

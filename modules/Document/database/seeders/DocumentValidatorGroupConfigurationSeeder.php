@@ -8,7 +8,6 @@ use Modules\Document\Entities\DocumentValidatorGroupConfiguration;
 
 class DocumentValidatorGroupConfigurationSeeder extends Seeder
 {
-
     public function run(): void
     {
         // Get validator groups

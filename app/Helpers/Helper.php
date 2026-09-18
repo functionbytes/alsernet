@@ -1,5 +1,8 @@
 <?php
 
+use Modules\Core\Helpers\SiteHelper;
+use Modules\Core\Services\HttpClientService;
+
 /**
  * Application Global Helpers (Deprecated - Use Module-Specific Helpers)
  *
@@ -189,7 +192,7 @@ if (! function_exists('is_non_web_link')) {
 if (! function_exists('url_get_contents_ssl_safe')) {
     function url_get_contents_ssl_safe($url)
     {
-        return \Modules\Core\Services\HttpClientService::getContentSslSafe($url);
+        return HttpClientService::getContentSslSafe($url);
     }
 }
 
@@ -199,7 +202,7 @@ if (! function_exists('url_get_contents_ssl_safe')) {
 // Location: modules/Core/app/Helpers/RateLimitHelper.php
 
 if (! function_exists('execute_with_limits')) {
-    function execute_with_limits(array $rateTrackers, array $creditTrackers, ?\Closure $task = null)
+    function execute_with_limits(array $rateTrackers, array $creditTrackers, ?Closure $task = null)
     {
         return \Modules\Core\Helpers\execute_with_limits($rateTrackers, $creditTrackers, $task);
     }
@@ -213,21 +216,21 @@ if (! function_exists('execute_with_limits')) {
 if (! function_exists('getSiteName')) {
     function getSiteName(): string
     {
-        return \Modules\Core\Helpers\SiteHelper::getSiteName();
+        return SiteHelper::getSiteName();
     }
 }
 
 if (! function_exists('getSiteKeyword')) {
     function getSiteKeyword(): string
     {
-        return \Modules\Core\Helpers\SiteHelper::getSiteKeyword();
+        return SiteHelper::getSiteKeyword();
     }
 }
 
 if (! function_exists('getSiteTitle')) {
     function getSiteTitle(): string
     {
-        return \Modules\Core\Helpers\SiteHelper::getSiteTitle();
+        return SiteHelper::getSiteTitle();
     }
 }
 

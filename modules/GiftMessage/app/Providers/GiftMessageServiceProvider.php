@@ -77,7 +77,7 @@ class GiftMessageServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem($this->moduleNameLower, [
-            'icon' => 'fas fa-gift',
+            'icon' => 'gift',
             'tooltip' => 'Mensaje regalo',
             'sidebar_id' => $this->moduleNameLower,
             'order' => 61,

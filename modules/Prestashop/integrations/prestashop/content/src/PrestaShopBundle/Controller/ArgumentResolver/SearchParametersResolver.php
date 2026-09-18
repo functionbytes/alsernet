@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,8 @@
 
 namespace PrestaShopBundle\Controller\ArgumentResolver;
 
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMInvalidArgumentException;
 use PrestaShop\PrestaShop\Core\Search\ControllerAction;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 use PrestaShop\PrestaShop\Core\Search\SearchParametersInterface;
@@ -74,11 +77,7 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     /**
      * SearchParametersResolver constructor.
      *
-     * @param SearchParametersInterface $searchParameters
-     * @param TokenStorageInterface $tokenStorage
-     * @param AdminFilterRepository $adminFilterRepository
-     * @param EventDispatcherInterface $dispatcher
-     * @param int $shopId The Shop id
+     * @param  int  $shopId  The Shop id
      */
     public function __construct(
         SearchParametersInterface $searchParameters,
@@ -106,12 +105,12 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     /**
      * {@inheritdoc}
      *
-     * @throws \Doctrine\ORM\ORMInvalidArgumentException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMInvalidArgumentException
+     * @throws OptimisticLockException
      */
     public function resolve(Request $request, ArgumentMetadata $argument)
     {
-        list($controller, $action) = ControllerAction::fromString($request->get('_controller'));
+        [$controller, $action] = ControllerAction::fromString($request->get('_controller'));
         $filtersClass = $argument->getType();
         /** @var Filters $filters */
         $filters = $this->buildDefaultFilters($filtersClass);
@@ -131,10 +130,8 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param Filters $filters
-     * @param string $controller
-     * @param string $action
-     *
+     * @param  string  $controller
+     * @param  string  $action
      * @return bool Indicates if filters have been overridden
      */
     private function overrideWithSavedFilters(Filters $filters, $controller, $action)
@@ -157,9 +154,6 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param Request $request
-     * @param Filters $filters
-     *
      * @return bool Indicates if filters have been overridden
      */
     private function overrideWithRequest(Request $request, Filters $filters)
@@ -176,17 +170,16 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param Filters $filters
-     * @param string $controller
-     * @param string $action
+     * @param  string  $controller
+     * @param  string  $action
      *
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws OptimisticLockException
      */
     private function persistFilters(Filters $filters, $controller, $action)
     {
-        //Update the saved filters (which have been modified by the query)
+        // Update the saved filters (which have been modified by the query)
         $filtersToSave = $filters->all();
-        unset($filtersToSave['offset']); //We don't save the page as it can be confusing for UX
+        unset($filtersToSave['offset']); // We don't save the page as it can be confusing for UX
 
         $this->adminFilterRepository->createOrUpdateByEmployeeAndRouteParams(
             $this->employee->getId(),
@@ -198,8 +191,7 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param string $filtersClass
-     *
+     * @param  string  $filtersClass
      * @return mixed
      */
     private function buildDefaultFilters($filtersClass)
@@ -210,8 +202,6 @@ class SearchParametersResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param TokenStorageInterface $tokenStorage
-     *
      * @return Employee|null
      */
     private function getEmployee(TokenStorageInterface $tokenStorage)

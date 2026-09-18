@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,16 +60,15 @@ interface ProductInterface
     /**
      * Will persist set of parameters for product filters.
      *
-     * @param string[] $parameters
+     * @param  string[]  $parameters
      */
     public function persistFilterParameters(array $parameters);
 
     /**
      * Combines new filter values with old ones (persisted), then persists the combination and returns it.
      *
-     * @param string[]|null $paramsIn New filter params values to take into account. If not given, the method will simply return persisted values.
-     * @param bool $avoidPersistence true to avoid persisting these preferences (for an export for example)
-     *
+     * @param  string[]|null  $paramsIn  New filter params values to take into account. If not given, the method will simply return persisted values.
+     * @param  bool  $avoidPersistence  true to avoid persisting these preferences (for an export for example)
      * @return string[] The new filter params values
      */
     public function combinePersistentCatalogProductFilter($paramsIn = [], $avoidPersistence = false);
@@ -76,14 +76,13 @@ interface ProductInterface
     /**
      * Return a collection of inventaries, using default language, currency and others, from Context.
      *
-     * @param int|string $offset an offset, or the 'last' token
-     * @param int|string $limit a limit, or the 'last' token
-     * @param string $orderBy Field name to sort during SQL query
-     * @param string $sortOrder 'asc' or 'desc'
-     * @param string[] $post filter params values to take into acount (often comes from POST data)
-     * @param bool $avoidPersistence True to avoid persisting these preferences (for an export for example)
-     * @param bool $formatCldr False to avoid CLDR formatting (heavy memory usage)
-     *
+     * @param  int|string  $offset  an offset, or the 'last' token
+     * @param  int|string  $limit  a limit, or the 'last' token
+     * @param  string  $orderBy  Field name to sort during SQL query
+     * @param  string  $sortOrder  'asc' or 'desc'
+     * @param  string[]  $post  filter params values to take into acount (often comes from POST data)
+     * @param  bool  $avoidPersistence  True to avoid persisting these preferences (for an export for example)
+     * @param  bool  $formatCldr  False to avoid CLDR formatting (heavy memory usage)
      * @return array[mixed[]] A list of inventaries, as an array of arrays of raw data
      */
     public function getCatalogProductList($offset, $limit, $orderBy, $sortOrder, $post = [], $avoidPersistence = false, $formatCldr = true);

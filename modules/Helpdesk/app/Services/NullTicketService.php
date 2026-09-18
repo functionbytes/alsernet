@@ -20,6 +20,11 @@ class NullTicketService implements TicketServiceContract
         return false;
     }
 
+    public function canCreateTickets(): bool
+    {
+        return false;
+    }
+
     public function createFromConversation(Conversation $conversation, array $payload = []): ?array
     {
         return null;
@@ -41,6 +46,11 @@ class NullTicketService implements TicketServiceContract
     }
 
     public function getCategories(): Collection
+    {
+        return collect();
+    }
+
+    public function getTicketGroups(): Collection
     {
         return collect();
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,12 +56,6 @@ class CacheClearer
      */
     private $smartyCacheClearer;
 
-    /**
-     * @param CacheClearerInterface $cacheClearerChain
-     * @param CacheClearerInterface $symfonyCacheClearer
-     * @param CacheClearerInterface $mediaCacheClearer
-     * @param CacheClearerInterface $smartyCacheClearer
-     */
     public function __construct(
         CacheClearerInterface $cacheClearerChain,
         CacheClearerInterface $symfonyCacheClearer,

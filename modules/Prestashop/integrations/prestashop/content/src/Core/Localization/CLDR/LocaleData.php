@@ -109,34 +109,33 @@ class LocaleData
     /**
      * Override this object's data with another LocaleData object.
      *
-     * @param LocaleData $localeData Locale data to use for the override
-     *
+     * @param  LocaleData  $localeData  Locale data to use for the override
      * @return $this Fluent interface
      */
     public function overrideWith(LocaleData $localeData)
     {
-        if (null !== $localeData->getLocaleCode()) {
+        if ($localeData->getLocaleCode() !== null) {
             $this->setLocaleCode($localeData->getLocaleCode());
         }
 
-        if (null !== $localeData->getNumberingSystems()) {
-            if (null === $this->numberingSystems) {
+        if ($localeData->getNumberingSystems() !== null) {
+            if ($this->numberingSystems === null) {
                 $this->numberingSystems = [];
             }
             $this->setNumberingSystems(array_merge($this->numberingSystems, $localeData->getNumberingSystems()));
         }
 
-        if (null !== $localeData->getDefaultNumberingSystem()) {
+        if ($localeData->getDefaultNumberingSystem() !== null) {
             $this->setDefaultNumberingSystem($localeData->getDefaultNumberingSystem());
         }
 
-        if (null !== $localeData->getMinimumGroupingDigits()) {
+        if ($localeData->getMinimumGroupingDigits() !== null) {
             $this->setMinimumGroupingDigits($localeData->getMinimumGroupingDigits());
         }
 
-        if (null !== $localeData->getNumberSymbols()) {
+        if ($localeData->getNumberSymbols() !== null) {
             foreach ($localeData->getNumberSymbols() as $numberingSystem => $symbolsData) {
-                if (!isset($this->numberSymbols[$numberingSystem])) {
+                if (! isset($this->numberSymbols[$numberingSystem])) {
                     $this->numberSymbols[$numberingSystem] = $symbolsData;
 
                     continue;
@@ -145,31 +144,32 @@ class LocaleData
             }
         }
 
-        if (null !== $localeData->getDecimalPatterns()) {
-            if (null === $this->decimalPatterns) {
+        if ($localeData->getDecimalPatterns() !== null) {
+            if ($this->decimalPatterns === null) {
                 $this->decimalPatterns = [];
             }
             $this->setDecimalPatterns(array_merge($this->decimalPatterns, $localeData->getDecimalPatterns()));
         }
 
-        if (null !== $localeData->getPercentPatterns()) {
-            if (null === $this->percentPatterns) {
+        if ($localeData->getPercentPatterns() !== null) {
+            if ($this->percentPatterns === null) {
                 $this->percentPatterns = [];
             }
             $this->setPercentPatterns(array_merge($this->numberingSystems, $localeData->getPercentPatterns()));
         }
 
-        if (null !== $localeData->getCurrencyPatterns()) {
-            if (null === $this->currencyPatterns) {
+        if ($localeData->getCurrencyPatterns() !== null) {
+            if ($this->currencyPatterns === null) {
                 $this->currencyPatterns = [];
             }
             $this->setCurrencyPatterns(array_merge($this->currencyPatterns, $localeData->getCurrencyPatterns()));
         }
 
-        if (null !== $localeData->getCurrencies()) {
+        if ($localeData->getCurrencies() !== null) {
             foreach ($localeData->getCurrencies() as $code => $currencyData) {
-                if (!isset($this->currencies[$code])) {
+                if (! isset($this->currencies[$code])) {
                     $this->currencies[$code] = $currencyData;
+
                     continue;
                 }
                 $this->currencies[$code]->overrideWith($currencyData);
@@ -188,8 +188,7 @@ class LocaleData
     }
 
     /**
-     * @param string $localeCode
-     *
+     * @param  string  $localeCode
      * @return LocaleData
      */
     public function setLocaleCode($localeCode)
@@ -208,8 +207,7 @@ class LocaleData
     }
 
     /**
-     * @param string[] $numberingSystems
-     *
+     * @param  string[]  $numberingSystems
      * @return LocaleData
      */
     public function setNumberingSystems($numberingSystems)
@@ -228,8 +226,7 @@ class LocaleData
     }
 
     /**
-     * @param string $defaultNumberingSystem
-     *
+     * @param  string  $defaultNumberingSystem
      * @return LocaleData
      */
     public function setDefaultNumberingSystem($defaultNumberingSystem)
@@ -248,8 +245,7 @@ class LocaleData
     }
 
     /**
-     * @param int $minimumGroupingDigits
-     *
+     * @param  int  $minimumGroupingDigits
      * @return LocaleData
      */
     public function setMinimumGroupingDigits($minimumGroupingDigits)
@@ -268,8 +264,7 @@ class LocaleData
     }
 
     /**
-     * @param NumberSymbolsData[] $numberSymbols
-     *
+     * @param  NumberSymbolsData[]  $numberSymbols
      * @return LocaleData
      */
     public function setNumberSymbols($numberSymbols)
@@ -288,8 +283,7 @@ class LocaleData
     }
 
     /**
-     * @param string[] $decimalPatterns
-     *
+     * @param  string[]  $decimalPatterns
      * @return LocaleData
      */
     public function setDecimalPatterns($decimalPatterns)
@@ -308,8 +302,7 @@ class LocaleData
     }
 
     /**
-     * @param string[] $percentPatterns
-     *
+     * @param  string[]  $percentPatterns
      * @return LocaleData
      */
     public function setPercentPatterns($percentPatterns)
@@ -328,8 +321,7 @@ class LocaleData
     }
 
     /**
-     * @param string[] $currencyPatterns
-     *
+     * @param  string[]  $currencyPatterns
      * @return LocaleData
      */
     public function setCurrencyPatterns($currencyPatterns)
@@ -348,8 +340,7 @@ class LocaleData
     }
 
     /**
-     * @param string $currencyIsoCode
-     *
+     * @param  string  $currencyIsoCode
      * @return CurrencyData|null
      */
     public function getCurrencyByIsoCode($currencyIsoCode)
@@ -364,8 +355,7 @@ class LocaleData
     }
 
     /**
-     * @param CurrencyData[] $currencies
-     *
+     * @param  CurrencyData[]  $currencies
      * @return LocaleData
      */
     public function setCurrencies($currencies)

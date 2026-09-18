@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,7 +54,7 @@ class CategoryControllerCore extends ProductListingFrontController
 
     public function getCanonicalURL()
     {
-        if (!Validate::isLoadedObject($this->category)) {
+        if (! Validate::isLoadedObject($this->category)) {
             return '';
         }
         $canonicalUrl = $this->context->link->getCategoryLink($this->category);
@@ -91,14 +92,14 @@ class CategoryControllerCore extends ProductListingFrontController
 
         parent::init();
 
-        if (!Validate::isLoadedObject($this->category) || !$this->category->active) {
+        if (! Validate::isLoadedObject($this->category) || ! $this->category->active) {
             header('HTTP/1.1 404 Not Found');
             header('Status: 404 Not Found');
             $this->setTemplate('errors/404');
             $this->notFound = true;
 
             return;
-        } elseif (!$this->category->checkAccess($this->context->customer->id)) {
+        } elseif (! $this->category->checkAccess($this->context->customer->id)) {
             header('HTTP/1.1 403 Forbidden');
             header('Status: 403 Forbidden');
             $this->errors[] = $this->trans('You do not have access to this category.', [], 'Shop.Notifications.Error');
@@ -119,7 +120,7 @@ class CategoryControllerCore extends ProductListingFrontController
             $id_shop = null,
             $chain = true
         );
-        if (!empty($filteredCategory['object'])) {
+        if (! empty($filteredCategory['object'])) {
             $categoryVar = $filteredCategory['object'];
         }
 
@@ -158,7 +159,7 @@ class CategoryControllerCore extends ProductListingFrontController
      */
     public function getLayout()
     {
-        if (!$this->category->checkAccess($this->context->customer->id) || $this->notFound) {
+        if (! $this->category->checkAccess($this->context->customer->id) || $this->notFound) {
             return 'layouts/layout-full-width.tpl';
         }
 
@@ -176,7 +177,7 @@ class CategoryControllerCore extends ProductListingFrontController
 
     protected function getProductSearchQuery()
     {
-        $query = new ProductSearchQuery();
+        $query = new ProductSearchQuery;
         $query
             ->setIdCategory($this->category->id)
             ->setSortOrder(new SortOrder('product', Tools::getProductsOrder('by'), Tools::getProductsOrder('way')));
@@ -239,7 +240,7 @@ class CategoryControllerCore extends ProductListingFrontController
         $breadcrumb = parent::getBreadcrumbLinks();
 
         foreach ($this->category->getAllParents() as $category) {
-            if ($category->id_parent != 0 && !$category->is_root_category && $category->active) {
+            if ($category->id_parent != 0 && ! $category->is_root_category && $category->active) {
                 $breadcrumb['links'][] = [
                     'title' => $category->name,
                     'url' => $this->context->link->getCategoryLink($category),
@@ -247,7 +248,7 @@ class CategoryControllerCore extends ProductListingFrontController
             }
         }
 
-        if ($this->category->id_parent != 0 && !$this->category->is_root_category && $category->active) {
+        if ($this->category->id_parent != 0 && ! $this->category->is_root_category && $category->active) {
             $breadcrumb['links'][] = [
                 'title' => $this->category->name,
                 'url' => $this->context->link->getCategoryLink($this->category),
@@ -271,10 +272,10 @@ class CategoryControllerCore extends ProductListingFrontController
             $page['body_classes']['pagenotfound'] = true;
             $page['title'] = $this->trans('The page you are looking for was not found.', [], 'Shop.Theme.Global');
         } else {
-            $page['body_classes']['category-id-' . $this->category->id] = true;
-            $page['body_classes']['category-' . $this->category->name] = true;
-            $page['body_classes']['category-id-parent-' . $this->category->id_parent] = true;
-            $page['body_classes']['category-depth-level-' . $this->category->level_depth] = true;
+            $page['body_classes']['category-id-'.$this->category->id] = true;
+            $page['body_classes']['category-'.$this->category->name] = true;
+            $page['body_classes']['category-id-parent-'.$this->category->id_parent] = true;
+            $page['body_classes']['category-depth-level-'.$this->category->level_depth] = true;
         }
 
         return $page;
@@ -282,7 +283,7 @@ class CategoryControllerCore extends ProductListingFrontController
 
     public function getListingLabel()
     {
-        if (!Validate::isLoadedObject($this->category)) {
+        if (! Validate::isLoadedObject($this->category)) {
             $this->category = new Category(
                 (int) Tools::getValue('id_category'),
                 $this->context->language->id

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,10 +63,6 @@ class OrderDetailUpdater
      */
     private $shopConfiguration;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     * @param ShopConfigurationInterface $shopConfiguration
-     */
     public function __construct(
         ContextStateManager $contextStateManager,
         ShopConfigurationInterface $shopConfiguration
@@ -75,11 +72,6 @@ class OrderDetailUpdater
     }
 
     /**
-     * @param OrderDetail $orderDetail
-     * @param Order $order
-     * @param DecimalNumber $priceTaxExcluded
-     * @param DecimalNumber $priceTaxIncluded
-     *
      * @throws OrderException
      */
     public function updateOrderDetail(
@@ -88,7 +80,7 @@ class OrderDetailUpdater
         DecimalNumber $priceTaxExcluded,
         DecimalNumber $priceTaxIncluded
     ): void {
-        list($roundType, $computingPrecision, $taxAddress) = $this->prepareOrderContext($order);
+        [$roundType, $computingPrecision, $taxAddress] = $this->prepareOrderContext($order);
 
         try {
             $ecotax = new DecimalNumber($orderDetail->ecotax);
@@ -121,12 +113,6 @@ class OrderDetailUpdater
     }
 
     /**
-     * @param Order $order
-     * @param int $productId
-     * @param int $combinationId
-     * @param DecimalNumber $priceTaxExcluded
-     * @param DecimalNumber $priceTaxIncluded
-     *
      * @throws OrderException
      */
     public function updateOrderDetailsForProduct(
@@ -136,7 +122,7 @@ class OrderDetailUpdater
         DecimalNumber $priceTaxExcluded,
         DecimalNumber $priceTaxIncluded
     ): void {
-        list($roundType, $computingPrecision, $taxAddress) = $this->prepareOrderContext($order);
+        [$roundType, $computingPrecision, $taxAddress] = $this->prepareOrderContext($order);
 
         try {
             $this->applyUpdatesForProduct(
@@ -154,12 +140,9 @@ class OrderDetailUpdater
         }
     }
 
-    /**
-     * @param Order $order
-     */
     public function updateOrderDetailsTaxes(Order $order): void
     {
-        list($roundType, $computingPrecision, $taxAddress) = $this->prepareOrderContext($order);
+        [$roundType, $computingPrecision, $taxAddress] = $this->prepareOrderContext($order);
 
         try {
             $orderDetailsData = $order->getProducts();
@@ -167,12 +150,12 @@ class OrderDetailUpdater
                 $orderDetail = new OrderDetail($orderDetailData['id_order_detail']);
 
                 // Clean existing order_detail_tax
-                Db::getInstance()->delete('order_detail_tax', 'id_order_detail = ' . (int) $orderDetail->id);
+                Db::getInstance()->delete('order_detail_tax', 'id_order_detail = '.(int) $orderDetail->id);
 
                 $taxCalculator = $this->getTaxCalculatorByAddress($taxAddress, $orderDetail);
                 $taxesAmount = $taxCalculator->getTaxesAmount($orderDetail->unit_price_tax_excl);
                 $unitAmount = $totalAmount = 0;
-                if (!empty($taxesAmount)) {
+                if (! empty($taxesAmount)) {
                     $orderDetailTaxes = [];
                     foreach ($taxesAmount as $taxId => $amount) {
                         switch ($roundType) {
@@ -208,7 +191,7 @@ class OrderDetailUpdater
                 // Update OrderDetail values
                 $orderDetail->unit_price_tax_incl = (float) $orderDetail->unit_price_tax_excl + $unitAmount;
                 $orderDetail->total_price_tax_incl = (float) $orderDetail->total_price_tax_incl + $totalAmount;
-                if (!$orderDetail->update()) {
+                if (! $orderDetail->update()) {
                     throw new OrderException('An error occurred while editing the product line.');
                 }
             }
@@ -217,11 +200,6 @@ class OrderDetailUpdater
         }
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return array
-     */
     private function prepareOrderContext(Order $order): array
     {
         $shopConstraint = ShopConstraint::shop((int) $order->id_shop);
@@ -231,7 +209,7 @@ class OrderDetailUpdater
         $country = new Country($taxAddress->id_country);
         $currency = new Currency($order->id_currency);
         $shop = new Shop($order->id_shop);
-        $computingPrecision = (new ComputingPrecision())->getPrecision((int) $currency->precision);
+        $computingPrecision = (new ComputingPrecision)->getPrecision((int) $currency->precision);
 
         $this->contextStateManager
             ->saveCurrentContext()
@@ -240,19 +218,12 @@ class OrderDetailUpdater
             ->setLanguage($order->getAssociatedLanguage())
             ->setCurrency($currency)
             ->setCountry($country)
-            ->setShop($shop)
-        ;
+            ->setShop($shop);
 
         return [$roundType, $computingPrecision, $taxAddress];
     }
 
     /**
-     * @param OrderDetail $orderDetail
-     * @param DecimalNumber $priceTaxExcluded
-     * @param DecimalNumber $priceTaxIncluded
-     * @param int $roundType
-     * @param int $computingPrecision
-     *
      * @throws OrderException
      */
     private function applyOrderDetailPriceUpdate(
@@ -289,21 +260,12 @@ class OrderDetailUpdater
                 break;
         }
 
-        if (!$orderDetail->update()) {
+        if (! $orderDetail->update()) {
             throw new OrderException('An error occurred while editing the product line.');
         }
     }
 
     /**
-     * @param Order $order
-     * @param int $productId
-     * @param int $combinationId
-     * @param DecimalNumber $priceTaxExcluded
-     * @param DecimalNumber $priceTaxIncluded
-     * @param int $roundType
-     * @param int $computingPrecision
-     * @param Address $taxAddress
-     *
      * @throws OrderException
      */
     private function applyUpdatesForProduct(
@@ -351,13 +313,6 @@ class OrderDetailUpdater
         }
     }
 
-    /**
-     * @param Order $order
-     * @param int $productId
-     * @param int $combinationId
-     *
-     * @return array
-     */
     private function getOrderDetailsForProduct(
         Order $order,
         int $productId,
@@ -379,14 +334,6 @@ class OrderDetailUpdater
      * Since prices in input are sometimes rounded they don't precisely match, so in this case
      * if the price is different from catalog we use price included as a base and recompute the
      * price tax excluded with additional precision.
-     *
-     * @param DecimalNumber $priceTaxIncluded
-     * @param DecimalNumber $priceTaxExcluded
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param Address $taxAddress
-     *
-     * @return DecimalNumber
      */
     private function getPrecisePriceTaxExcluded(
         DecimalNumber $priceTaxIncluded,
@@ -419,14 +366,6 @@ class OrderDetailUpdater
      * Since prices in input are sometimes rounded they don't precisely match, so in this case
      * if the price is the same as the catalog we use price excluded as a base and recompute the
      * price tax included with additional precision.
-     *
-     * @param DecimalNumber $priceTaxIncluded
-     * @param DecimalNumber $priceTaxExcluded
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param Address $taxAddress
-     *
-     * @return DecimalNumber
      */
     private function getPrecisePriceTaxIncluded(
         DecimalNumber $priceTaxIncluded,
@@ -438,7 +377,7 @@ class OrderDetailUpdater
         $productOriginalPrice = $this->getProductRegularPrice($order, $orderDetail, $taxAddress);
 
         // If provided price is different from the catalog price we use the input price tax included as a base
-        if (!$productOriginalPrice->equals($priceTaxExcluded)) {
+        if (! $productOriginalPrice->equals($priceTaxExcluded)) {
             return $priceTaxIncluded;
         }
 
@@ -448,13 +387,6 @@ class OrderDetailUpdater
         return $priceTaxExcluded->times($taxFactor);
     }
 
-    /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param Address $taxAddress
-     *
-     * @return DecimalNumber
-     */
     private function getProductRegularPrice(
         Order $order,
         OrderDetail $orderDetail,
@@ -483,11 +415,6 @@ class OrderDetailUpdater
 
     /**
      * Get a TaxCalculator adapted for the OrderDetail's product and the specified address
-     *
-     * @param Address $address
-     * @param OrderDetail $orderDetail
-     *
-     * @return TaxCalculator
      */
     private function getTaxCalculatorByAddress(Address $address, OrderDetail $orderDetail): TaxCalculator
     {
@@ -498,10 +425,6 @@ class OrderDetailUpdater
 
     /**
      * Get a TaxCalculator adapted for Ecotax
-     *
-     * @param Address $address
-     *
-     * @return TaxCalculator
      */
     private function getTaxCalculatorForEcotax(Address $address): TaxCalculator
     {

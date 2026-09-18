@@ -1,6 +1,9 @@
 <?php
 
+use filemanager\include\FtpClient;
+use filemanager\include\FtpException;
 use filemanager\include\imageLib;
+use filemanager\include\Response;
 
 if (! isset($_SESSION['RF']) || $_SESSION['RF']['verify'] != 'RESPONSIVEfilemanager') {
     exit('forbiden');
@@ -14,7 +17,7 @@ if (! function_exists('response')) {
      * @param  string  $content
      * @param  int  $statusCode
      * @param  array  $headers
-     * @return \filemanager\include\Response|\Illuminate\Http\Response
+     * @return Response|Illuminate\Http\Response
      */
     function response($content = '', $statusCode = 200, $headers = [])
     {
@@ -151,7 +154,7 @@ function deleteFile($path, $path_thumb, $config)
             try {
                 $ftp->delete('/'.$path);
                 @$ftp->delete('/'.$path_thumb);
-            } catch (\filemanager\include\FtpException $e) {
+            } catch (FtpException $e) {
                 return;
             }
         } else {
@@ -204,7 +207,7 @@ function deleteDir($dir, $ftp = null, $config = null)
             $ftp->rmdir($dir);
 
             return true;
-        } catch (\filemanager\include\FtpException $e) {
+        } catch (FtpException $e) {
             return null;
         }
     } else {
@@ -246,7 +249,7 @@ function duplicate_file($old_path, $name, $ftp = null, $config = null)
             unlink($tmp);
 
             return true;
-        } catch (\filemanager\include\FtpException $e) {
+        } catch (FtpException $e) {
             return null;
         }
     } else {
@@ -276,7 +279,7 @@ function rename_file($old_path, $name, $ftp = null, $config = null)
     if ($ftp) {
         try {
             return $ftp->rename('/'.$old_path, '/'.$new_path);
-        } catch (\filemanager\include\FtpException $e) {
+        } catch (FtpException $e) {
             return false;
         }
     } else {
@@ -351,14 +354,14 @@ function ftp_con($config)
         include 'include/FtpException.php';
         include 'include/FtpWrapper.php';
 
-        $ftp = new \filemanager\include\FtpClient;
+        $ftp = new FtpClient;
         try {
             $ftp->connect($config['ftp_host'], $config['ftp_ssl'], $config['ftp_port']);
             $ftp->login($config['ftp_user'], $config['ftp_pass']);
             $ftp->pasv(true);
 
             return $ftp;
-        } catch (\filemanager\include\FtpException $e) {
+        } catch (FtpException $e) {
             echo 'Error: ';
             echo $e->getMessage();
             echo ' to server ';
@@ -382,7 +385,7 @@ function ftp_con($config)
  * @param  string  $option  Type of resize
  * @return bool
  *
- * @throws \Exception
+ * @throws Exception
  */
 function create_img($imgfile, $imgthumb, $newwidth, $newheight = null, $option = 'crop', $config = [])
 {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ class RequiredFieldsAddressType extends AbstractType
      */
     private $addressRequiredFieldsChoicesProvider;
 
-    /**
-     * @param FormChoiceProviderInterface $addressRequiredFieldsChoicesProvider
-     */
     public function __construct(FormChoiceProviderInterface $addressRequiredFieldsChoicesProvider)
     {
         $this->addressRequiredFieldsChoicesProvider = $addressRequiredFieldsChoicesProvider;
@@ -58,7 +56,6 @@ class RequiredFieldsAddressType extends AbstractType
             ->add('required_fields', MaterialChoiceTableType::class, [
                 'label' => false,
                 'choices' => $this->addressRequiredFieldsChoicesProvider->getChoices(),
-            ])
-        ;
+            ]);
     }
 }

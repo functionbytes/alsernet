@@ -2,6 +2,7 @@
 
 namespace Modules\Erp\Traits;
 
+use Modules\Core\Models\Setting;
 use Modules\Erp\Services\OCI8Service;
 
 /**
@@ -22,7 +23,7 @@ trait UsesOCI8Performance
 
         // Read cache setting from database if not explicitly set
         if ($useCache === null) {
-            $settings = \Modules\Core\Models\Setting::getErpSettings();
+            $settings = Setting::getErpSettings();
             $useCache = $settings['oracle_enable_cache'] ?? true;
         }
 

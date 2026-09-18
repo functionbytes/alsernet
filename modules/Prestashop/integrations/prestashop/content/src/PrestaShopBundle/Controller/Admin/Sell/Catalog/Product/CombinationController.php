@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,11 +63,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
-     *
-     * @param Request $request
-     * @param int $combinationId
-     *
-     * @return Response
      */
     public function editAction(Request $request, int $combinationId): Response
     {
@@ -111,8 +107,6 @@ class CombinationController extends FrameworkBundleAdminController
      * It can only be embedded into another view (does not have a route), it is included in this template:
      *
      * src/PrestaShopBundle/Resources/views/Admin/Sell/Catalog/Product/Tabs/combinations.html.twig
-     *
-     * @return Response
      */
     public function paginatedListAction(): Response
     {
@@ -126,10 +120,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param int $productId
-     *
-     * @return JsonResponse
      */
     public function getAttributeGroupsAction(int $productId): JsonResponse
     {
@@ -141,8 +131,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @return JsonResponse
      */
     public function getAllAttributeGroupsAction(): JsonResponse
     {
@@ -154,11 +142,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
-     *
-     * @param int $productId
-     * @param ProductCombinationFilters $combinationFilters
-     *
-     * @return JsonResponse
      */
     public function getListAction(int $productId, ProductCombinationFilters $combinationFilters): JsonResponse
     {
@@ -177,10 +160,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
-     *
-     * @param int $productId
-     *
-     * @return JsonResponse
      */
     public function getListIdsAction(int $productId): JsonResponse
     {
@@ -198,10 +177,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('delete', request.get('_legacy_controller'))")
-     *
-     * @param int $combinationId
-     *
-     * @return JsonResponse
      */
     public function removeAction(int $combinationId): JsonResponse
     {
@@ -220,11 +195,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))")
-     *
-     * @param int $combinationId
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function updateCombinationFromListingAction(int $combinationId, Request $request): JsonResponse
     {
@@ -236,7 +206,7 @@ class CombinationController extends FrameworkBundleAdminController
         try {
             $result = $this->getCombinationItemFormHandler()->handleFor($combinationId, $form);
 
-            if (!$result->isValid()) {
+            if (! $result->isValid()) {
                 return $this->json(['errors' => $this->getFormErrorsForJS($form)], Response::HTTP_BAD_REQUEST);
             }
         } catch (Exception $e) {
@@ -253,11 +223,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['create', 'update'], request.get('_legacy_controller'))")
-     *
-     * @param int $productId
-     * @param Request $request
-     *
-     * @return JsonResponse
      */
     public function generateCombinationsAction(int $productId, Request $request): JsonResponse
     {
@@ -279,13 +244,14 @@ class CombinationController extends FrameworkBundleAdminController
         }
 
         return $this->json([
-            'combination_ids' => array_map(function (CombinationId $combinationId) { return $combinationId->getValue(); }, $combinationsIds),
+            'combination_ids' => array_map(function (CombinationId $combinationId) {
+                return $combinationId->getValue();
+            }, $combinationsIds),
         ]);
     }
 
     /**
-     * @param AttributeGroup[] $attributeGroups
-     *
+     * @param  AttributeGroup[]  $attributeGroups
      * @return array<int, array<string, mixed>>
      */
     private function formatAttributeGroupsForPresentation(array $attributeGroups): array
@@ -302,7 +268,7 @@ class CombinationController extends FrameworkBundleAdminController
                     'id' => $attribute->getAttributeId(),
                     'name' => $attributeNames[$contextLangId] ?? reset($attributeNames),
                 ];
-                if (null !== $attribute->getColor()) {
+                if ($attribute->getColor() !== null) {
                     $attributeData['color'] = $attribute->getColor();
                 }
                 $attributes[] = $attributeData;
@@ -322,8 +288,6 @@ class CombinationController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param CombinationListForEditing $combinationListForEditing
-     *
      * @return array<string, array<int, array<string,bool|int|string>>|int>
      */
     private function formatListForPresentation(CombinationListForEditing $combinationListForEditing): array
@@ -350,9 +314,6 @@ class CombinationController extends FrameworkBundleAdminController
         return $data;
     }
 
-    /**
-     * @return string
-     */
     private function getFallbackImageUrl(): string
     {
         $imageUrlFactory = $this->get('prestashop.adapter.product.image.product_image_url_factory');
@@ -360,33 +321,21 @@ class CombinationController extends FrameworkBundleAdminController
         return $imageUrlFactory->getNoImagePath(ProductImagePathFactory::IMAGE_TYPE_SMALL_DEFAULT);
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getCombinationItemFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.combination_item_form_handler');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getCombinationFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.combination_form_handler');
     }
 
-    /**
-     * @return FormBuilderInterface
-     */
     private function getCombinationFormBuilder(): FormBuilderInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.builder.combination_form_builder');
     }
 
-    /**
-     * @return FormBuilderInterface
-     */
     private function getCombinationItemFormBuilder(): FormBuilderInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.builder.combination_item_form_builder');
@@ -394,10 +343,6 @@ class CombinationController extends FrameworkBundleAdminController
 
     /**
      * Gets an error by exception class and its code.
-     *
-     * @param Exception $e
-     *
-     * @return array
      */
     private function getErrorMessages(Exception $e): array
     {

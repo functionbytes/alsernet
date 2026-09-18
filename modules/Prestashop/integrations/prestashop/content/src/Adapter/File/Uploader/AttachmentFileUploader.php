@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -74,7 +75,7 @@ final class AttachmentFileUploader implements AttachmentFileUploaderInterface
         string $filePath,
         string $uniqueFileName,
         int $fileSize,
-        int $id = null,
+        ?int $id = null,
         $throwExceptionOnFailure = true
     ): void {
         $this->checkFileAllowedForUpload($fileSize);
@@ -85,7 +86,7 @@ final class AttachmentFileUploader implements AttachmentFileUploaderInterface
     }
 
     /**
-     * @param bool $throwExceptionOnFailure
+     * @param  bool  $throwExceptionOnFailure
      *
      * @throws AttachmentNotFoundException
      * @throws CannotUnlinkAttachmentException
@@ -94,7 +95,7 @@ final class AttachmentFileUploader implements AttachmentFileUploaderInterface
     {
         try {
             $attachment = new Attachment($attachmentId);
-            $fileLink = _PS_DOWNLOAD_DIR_ . $attachment->file;
+            $fileLink = _PS_DOWNLOAD_DIR_.$attachment->file;
 
             try {
                 unlink($fileLink);
@@ -126,7 +127,7 @@ final class AttachmentFileUploader implements AttachmentFileUploaderInterface
         }
 
         try {
-            move_uploaded_file($filePath, _PS_DOWNLOAD_DIR_ . $uniqid);
+            move_uploaded_file($filePath, _PS_DOWNLOAD_DIR_.$uniqid);
         } catch (FileException $e) {
             throw new AttachmentUploadFailedException(sprintf('Failed to copy the file %s.', $filePath));
         }

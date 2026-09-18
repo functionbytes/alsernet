@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ class AttributeGroupController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param AttributeGroupFilters $attributeGroupFilters
-     *
      * @return Response
      */
     public function indexAction(Request $request, AttributeGroupFilters $attributeGroupFilters)
@@ -81,7 +79,7 @@ class AttributeGroupController extends FrameworkBundleAdminController
      */
     public function createAction()
     {
-        //@todo: implement in antoher pr
+        // @todo: implement in antoher pr
         return $this->redirectToRoute('admin_attribute_groups_index');
     }
 
@@ -91,13 +89,11 @@ class AttributeGroupController extends FrameworkBundleAdminController
      *     message="You do not have permission to update this."
      * )
      *
-     * @param int $attributeGroupId
-     *
      * @return RedirectResponse
      */
     public function editAction(int $attributeGroupId)
     {
-        //@todo: implement in antoher pr
+        // @todo: implement in antoher pr
         return $this->redirectToRoute('admin_attribute_groups_index');
     }
 
@@ -108,13 +104,11 @@ class AttributeGroupController extends FrameworkBundleAdminController
      * )
 
      *
-     * @param int $attributeGroupId
-     *
      * @return RedirectResponse
      */
     public function exportAction(int $attributeGroupId)
     {
-        //@todo: implement in antoher pr
+        // @todo: implement in antoher pr
         return $this->redirectToRoute('admin_attribute_groups_index');
     }
 
@@ -124,8 +118,6 @@ class AttributeGroupController extends FrameworkBundleAdminController
      * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))",
      *     redirectRoute="admin_attribute_groups_index"
      * )
-     *
-     * @param Request $request
      *
      * @return RedirectResponse
      */
@@ -160,8 +152,7 @@ class AttributeGroupController extends FrameworkBundleAdminController
      *     redirectRoute="admin_attribute_groups_index",
      * )
      *
-     * @param int $attributeGroupId
-     *
+     * @param  int  $attributeGroupId
      * @return RedirectResponse
      */
     public function deleteAction($attributeGroupId)
@@ -186,15 +177,13 @@ class AttributeGroupController extends FrameworkBundleAdminController
      *     redirectRoute="admin_attribute_groups_index",
      * )
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function bulkDeleteAction(Request $request)
     {
         try {
             $this->getCommandBus()->handle(new BulkDeleteAttributeGroupCommand(
-                    $this->getAttributeGroupIdsFromRequest($request))
+                $this->getAttributeGroupIdsFromRequest($request))
             );
             $this->addFlash(
                 'success',
@@ -208,15 +197,13 @@ class AttributeGroupController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @return array
      */
     private function getAttributeGroupIdsFromRequest(Request $request)
     {
         $attributeGroupIds = $request->request->get('attribute_group_bulk');
 
-        if (!is_array($attributeGroupIds)) {
+        if (! is_array($attributeGroupIds)) {
             return [];
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class CmsPageCategoryFormDataHandler implements FormDataHandlerInterface
      */
     private $commandBus;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     */
     public function __construct(CommandBusInterface $commandBus)
     {
         $this->commandBus = $commandBus;
@@ -69,8 +67,7 @@ final class CmsPageCategoryFormDataHandler implements FormDataHandlerInterface
             ->setLocalisedMetaDescription($data['meta_description'])
             ->setLocalisedMetaKeywords($data['meta_keywords'])
             ->setLocalisedMetaTitle($data['meta_title'])
-            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         /** @var CmsPageCategoryId $result */
         $result = $this->commandBus->handle($addCmsPageCategoryCommand);
@@ -96,8 +93,7 @@ final class CmsPageCategoryFormDataHandler implements FormDataHandlerInterface
             ->setLocalisedMetaDescription($data['meta_description'])
             ->setLocalisedMetaKeywords($data['meta_keywords'])
             ->setLocalisedMetaTitle($data['meta_title'])
-            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : [])
-        ;
+            ->setShopAssociation(is_array($data['shop_association']) ? $data['shop_association'] : []);
 
         $this->commandBus->handle($editCmsPageCategoryCommand);
     }

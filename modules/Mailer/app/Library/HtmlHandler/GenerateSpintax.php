@@ -2,7 +2,6 @@
 
 namespace Modules\Mailer\Library;
 
-
 use bjoernffm\Spintax\Parser;
 use League\Pipeline\StageInterface;
 

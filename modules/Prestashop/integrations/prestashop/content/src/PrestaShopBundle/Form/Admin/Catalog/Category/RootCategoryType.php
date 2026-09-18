@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,4 @@
 
 namespace PrestaShopBundle\Form\Admin\Catalog\Category;
 
-class RootCategoryType extends AbstractCategoryType
-{
-}
+class RootCategoryType extends AbstractCategoryType {}

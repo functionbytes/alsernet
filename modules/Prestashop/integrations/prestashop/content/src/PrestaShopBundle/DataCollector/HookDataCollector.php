@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ final class HookDataCollector extends DataCollector
     /**
      * {@inheritdoc}
      */
-    public function collect(Request $request, Response $response, \Exception $exception = null)
+    public function collect(Request $request, Response $response, ?\Exception $exception = null)
     {
         $hooks = $this->registry->getHooks();
         $calledHooks = $this->registry->getCalledHooks();
@@ -118,8 +119,6 @@ final class HookDataCollector extends DataCollector
     }
 
     /**
-     * @param array $hooksList
-     *
      * @return array a better representation of arguments for HTML rendering
      */
     private function stringifyHookArguments(array &$hooksList)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,6 @@ final class DataRowCollectionPresenter implements DataRowCollectionPresenterInte
      */
     private $dataRowPresenter;
 
-    /**
-     * @param DataRowPresenterInterface $dataRowPresenter
-     */
     public function __construct(DataRowPresenterInterface $dataRowPresenter)
     {
         $this->dataRowPresenter = $dataRowPresenter;
@@ -69,13 +67,12 @@ final class DataRowCollectionPresenter implements DataRowCollectionPresenterInte
      * Normalize the data row by adding empty data cells until the expected row size is reached.
      * This allows all rows to be equal in size.
      *
-     * @param DataRowInterface $dataRow
-     * @param int $expectedRowSize number of columns this row will reach
+     * @param  int  $expectedRowSize  number of columns this row will reach
      */
     private function normalizeDataRow(DataRowInterface $dataRow, $expectedRowSize)
     {
         while (count($dataRow) < $expectedRowSize) {
-            $dataRow->addCell(new EmptyDataCell());
+            $dataRow->addCell(new EmptyDataCell);
         }
     }
 }

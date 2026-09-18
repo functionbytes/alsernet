@@ -3,6 +3,7 @@
 namespace Modules\Prestashop\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
@@ -10,7 +11,7 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Called before routes are registered.
      *
-     * @param  \Illuminate\Routing\Router  $router
+     * @param  Router  $router
      */
     public function boot(): void
     {

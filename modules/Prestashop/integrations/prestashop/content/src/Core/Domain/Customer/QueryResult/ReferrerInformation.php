@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,9 @@ class ReferrerInformation
     private $shop;
 
     /**
-     * @param string $date
-     * @param string $name
-     * @param string $shop
+     * @param  string  $date
+     * @param  string  $name
+     * @param  string  $shop
      */
     public function __construct($date, $name, $shop)
     {

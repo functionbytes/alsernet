@@ -22,7 +22,11 @@ class EmbedArticleOnSave
             return;
         }
 
-        $locale = app()->getLocale() ?: 'es';
+        // config('app.locale'), no app()->getLocale(): este listener corre en
+        // el ciclo de guardado del artículo, así que el locale "actual" es el
+        // de la request que lo disparó (p.ej. un admin con locale=en editando
+        // el cuerpo base en es), no el idioma del contenido guardado.
+        $locale = config('app.locale', 'es');
 
         RegenerateArticleEmbeddingsJob::dispatch($article, $locale);
 

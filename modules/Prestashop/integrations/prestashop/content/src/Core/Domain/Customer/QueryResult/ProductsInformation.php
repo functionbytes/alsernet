@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,8 @@ class ProductsInformation
     private $viewedProductsInformation;
 
     /**
-     * @param BoughtProductInformation[] $boughtProductsInformation
-     * @param ViewedProductInformation[] $viewedProductsInformation
+     * @param  BoughtProductInformation[]  $boughtProductsInformation
+     * @param  ViewedProductInformation[]  $viewedProductsInformation
      */
     public function __construct(array $boughtProductsInformation, array $viewedProductsInformation)
     {

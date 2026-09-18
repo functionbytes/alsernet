@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,6 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
      */
     private $contextStateManager;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(ContextStateManager $contextStateManager)
     {
         $this->contextStateManager = $contextStateManager;
@@ -69,11 +67,11 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
      */
     public function handle(AddOrderFromBackOfficeCommand $command)
     {
-        $paymentModule = !Configuration::get('PS_CATALOG_MODE') ?
+        $paymentModule = ! Configuration::get('PS_CATALOG_MODE') ?
             Module::getInstanceByName($command->getPaymentModuleName()) :
-            new BoOrderCore();
+            new BoOrderCore;
 
-        if (false === $paymentModule) {
+        if ($paymentModule === false) {
             throw new OrderException(sprintf('Payment method "%s" does not exist.', $paymentModule));
         }
         /** @var PaymentModule $paymentModule */
@@ -81,7 +79,7 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
 
         $this->assertAddressesAreNotDisabled($cart);
 
-        //Context country, language and currency is used in PaymentModule::validateOrder (it should rely on cart address country instead)
+        // Context country, language and currency is used in PaymentModule::validateOrder (it should rely on cart address country instead)
         $this->setCartContext($this->contextStateManager, $cart);
 
         $translator = Context::getContext()->getTranslator();
@@ -95,7 +93,7 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
 
         try {
             $orderMessage = $command->getOrderMessage();
-            if (!empty($orderMessage)) {
+            if (! empty($orderMessage)) {
                 $this->addOrderMessage($cart, $orderMessage);
             }
 
@@ -111,12 +109,12 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
                 $cart->secure_key
             );
         } catch (Exception $e) {
-            throw new OrderException('Failed to add order. ' . $e->getMessage(), 0, $e);
+            throw new OrderException('Failed to add order. '.$e->getMessage(), 0, $e);
         } finally {
             $this->contextStateManager->restorePreviousContext();
         }
 
-        if (!$paymentModule->currentOrder) {
+        if (! $paymentModule->currentOrder) {
             throw new OrderException('Failed to add order.');
         }
 
@@ -126,8 +124,6 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
     /**
      * Saves customer message and link it to the cart.
      *
-     * @param Cart $cart
-     * @param string $orderMessage
      *
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
@@ -135,7 +131,7 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
      */
     private function addOrderMessage(Cart $cart, string $orderMessage): void
     {
-        if (!Validate::isMessage($orderMessage)) {
+        if (! Validate::isMessage($orderMessage)) {
             throw new OrderConstraintException('The order message is invalid', OrderConstraintException::INVALID_CUSTOMER_MESSAGE);
         }
 
@@ -150,13 +146,10 @@ final class AddOrderFromBackOfficeHandler extends AbstractOrderCommandHandler im
         $message->save();
     }
 
-    /**
-     * @param Cart $cart
-     */
     private function assertAddressesAreNotDisabled(Cart $cart)
     {
-        $isDeliveryCountryDisabled = !Address::isCountryActiveById((int) $cart->id_address_delivery);
-        $isInvoiceCountryDisabled = !Address::isCountryActiveById((int) $cart->id_address_invoice);
+        $isDeliveryCountryDisabled = ! Address::isCountryActiveById((int) $cart->id_address_delivery);
+        $isInvoiceCountryDisabled = ! Address::isCountryActiveById((int) $cart->id_address_invoice);
 
         if ($isDeliveryCountryDisabled) {
             throw new OrderException(sprintf('Delivery country for cart with id "%d" is disabled.', $cart->id));

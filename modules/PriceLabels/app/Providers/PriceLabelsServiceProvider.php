@@ -79,7 +79,7 @@ class PriceLabelsServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem($this->moduleNameLower, [
-            'icon' => 'fas fa-tags',
+            'icon' => 'tag',
             'tooltip' => 'Etiquetas de precio',
             'sidebar_id' => $this->moduleNameLower,
             'order' => 60,

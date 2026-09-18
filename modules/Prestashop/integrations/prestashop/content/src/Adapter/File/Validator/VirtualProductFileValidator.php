@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ class VirtualProductFileValidator
      */
     private $maxFileSizeInMegabytes;
 
-    /**
-     * @param string $maxFileSizeInMegabytes
-     */
     public function __construct(
         string $maxFileSizeInMegabytes
     ) {
@@ -58,8 +56,6 @@ class VirtualProductFileValidator
     }
 
     /**
-     * @param string $filePath
-     *
      * @throws InvalidFileException
      */
     public function validate(string $filePath): void
@@ -83,13 +79,11 @@ class VirtualProductFileValidator
     }
 
     /**
-     * @param string $filePath
-     *
      * @throws InvalidFileException
      */
     private function assertIsFile(string $filePath): void
     {
-        if (!is_file($filePath)) {
+        if (! is_file($filePath)) {
             throw new FileNotFoundException(sprintf('"%s" is not a file', $filePath));
         }
     }

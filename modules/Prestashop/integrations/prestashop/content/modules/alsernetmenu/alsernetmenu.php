@@ -1,15 +1,15 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
 use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
 
-class Alsernetmenu  extends Module implements WidgetInterface
+class Alsernetmenu extends Module implements WidgetInterface
 {
-
-    public function __construct(){
+    public function __construct()
+    {
 
         $this->name = 'alsernetmenu';
         $this->tab = 'administration';
@@ -25,80 +25,78 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
         $this->confirmUninstall = $this->l('Estas seguro que deseas desistalar el modulo');
 
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '8.0');
+        $this->ps_versions_compliancy = ['min' => '1.6', 'max' => '8.0'];
     }
 
-    public function install(){
-        return parent::install() && $this->registerHook('displayTop')  && $this->registerHook('displayBeforeBodyClosingTag')  && $this->registerHook('displayLeftColumn')  && $this->registerHook('header');
+    public function install()
+    {
+        return parent::install() && $this->registerHook('displayTop') && $this->registerHook('displayBeforeBodyClosingTag') && $this->registerHook('displayLeftColumn') && $this->registerHook('header');
     }
 
-    public function uninstall(){
-        return parent::uninstall()&& $this->unregisterHook('displayTop')  && $this->unregisterHook('displayBeforeBodyClosingTag')   && $this->unregisterHook('displayLeftColumn')  && $this->unregisterHook('header');
+    public function uninstall()
+    {
+        return parent::uninstall() && $this->unregisterHook('displayTop') && $this->unregisterHook('displayBeforeBodyClosingTag') && $this->unregisterHook('displayLeftColumn') && $this->unregisterHook('header');
     }
 
-    public function renderWidget($hookName = null, array $configuration = []){
+    public function renderWidget($hookName = null, array $configuration = [])
+    {
 
         if ($hookName == 'displayBeforeBodyClosingTag') {
 
-
             $iso_lang = $this->context->language->iso_code;
 
-            $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/category.json';
+            $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/category.json';
 
-                $categories = [];
+            $categories = [];
 
-                if (file_exists($jsonFilePath)) {
+            if (file_exists($jsonFilePath)) {
 
-                    $jsonContent = file_get_contents($jsonFilePath);
-                    $categories = json_decode($jsonContent, true);
+                $jsonContent = file_get_contents($jsonFilePath);
+                $categories = json_decode($jsonContent, true);
 
+                foreach ($categories as &$category) {
 
-                    foreach ($categories as &$category) {
+                    if ($category['id'] != 0) {
 
-                        if($category["id"] != 0){
+                        $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category['id'].'/subcategory.json';
 
-                            $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category['id'] . '/subcategory.json';
+                        if (file_exists($jsonFilePathSubcategory)) {
 
-                            if (file_exists($jsonFilePathSubcategory)) {
+                            $jsonContent = file_get_contents($jsonFilePathSubcategory);
 
-                                $jsonContent = file_get_contents($jsonFilePathSubcategory);
+                            $subcategories = json_decode($jsonContent, true);
 
-                                $subcategories = json_decode($jsonContent, true);
-
-                                $category["subcategories"] = $subcategories;
-                            }
-
-                            $jsonFilePathUrls = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category['id'] . '/url.json';
-
-                            if (file_exists($jsonFilePathUrls)) {
-
-                                $jsonContent = file_get_contents($jsonFilePathUrls);
-
-                                $urls = json_decode($jsonContent, true);
-
-                                $category["urls"] = $urls;
-                            }
-
+                            $category['subcategories'] = $subcategories;
                         }
+
+                        $jsonFilePathUrls = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category['id'].'/url.json';
+
+                        if (file_exists($jsonFilePathUrls)) {
+
+                            $jsonContent = file_get_contents($jsonFilePathUrls);
+
+                            $urls = json_decode($jsonContent, true);
+
+                            $category['urls'] = $urls;
+                        }
+
                     }
-
-
-                } else {
-                    $categories = null;
                 }
 
+            } else {
+                $categories = null;
+            }
 
-                $smarty = $this->context->smarty;
+            $smarty = $this->context->smarty;
 
-                $smarty->assign(array(
-                    'iso_lang' => $iso_lang,
-                    'categories_mobile' => $categories,
-                ));
+            $smarty->assign([
+                'iso_lang' => $iso_lang,
+                'categories_mobile' => $categories,
+            ]);
 
+            return $this->fetch('module:alsernetmenu/views/templates/hook/mobile.tpl');
 
-                return $this->fetch('module:alsernetmenu/views/templates/hook/mobile.tpl');
-
-        }elseif (isset($configuration['type'])) {
+        } elseif (isset($configuration['type'])) {
 
             if ($configuration['type'] == 'supernav') {
 
@@ -106,117 +104,109 @@ class Alsernetmenu  extends Module implements WidgetInterface
                 $this->context->smarty->assign('categories', $data['categories']);
 
                 return $this->fetch('module:alsernetmenu/views/templates/hook/supernav.tpl');
-            }elseif($configuration['type'] == 'navs'){
+            } elseif ($configuration['type'] == 'navs') {
 
                 $iso_lang = Context::getContext()->language->iso_code;
 
-                    $category = $this->getWidgetVariablesCategoriesDetail($hookName, $configuration);
-
-                    if($category){
-
-                        $subcategories = [];
-
-                            if ($category['grandfather'] == 2) {
-
-                                $id_rewrite = $category['category']->id;
-                                $subcategories = $this->getWidgetVariablesCategory($id_rewrite);
-                                $specials = $this->getWidgetVariablesSpecial($id_rewrite);
-
-                                $this->smarty->assign(array(
-                                    'category' => $category,
-                                    'name' => $category['category']->name,
-                                    'subcategories' => $subcategories,
-                                    'specials' => $specials,
-                                ));
-
-
-                                return $this->fetch('module:alsernetmenu/views/templates/hook/nav.tpl');
-
-                            } else {
-
-
-                                if (count($category['subcategories']) == 0) {
-
-                                    $subcategories = [];
-
-                                    $parent = new Category($category['id'], $this->context->language->id);
-                                    $link = new Link();
-                                    $links = $link->getCategoryLink($parent->id, NULL, $this->context->language->id);
-                                    $parent = $category['grandfather'];
-
-                                }else {
-
-                                    $grandfather = $this->getPenultimateParentCategory((int)$category['id']);
-                                    $parent = new Category((int)$grandfather->id, $this->context->language->id);
-                                    $subcategories = $category['category']->getSubCategories($this->context->language->id);
-                                    $links = $parent->link_rewrite;
-                                    $parent = $parent->id;
-                                }
-
-
-                                foreach ($subcategories as &$subcategory) {
-                                    $link = new Link();
-                                    $subcategory['link_rewrite'] = $link->getCategoryLink($subcategory['id_category'], NULL, $this->context->language->id);
-                                }
-
-
-                                $name = $this->searchJsonSubcategory($category['grandfather'] , $category);
-
-                                if($name!=""){
-                                    $name =  $name;
-                                }else{
-                                    $grandfather = new Category((int)$category['grandfather'], $this->context->language->id);
-                                    $name =  $grandfather->name;
-                                }
-
-                                if($category['grandfather'] = 2821){
-                                    $name = $category['category']->name;
-                                }
-
-
-                                $this->smarty->assign(array(
-                                    'category' => $category['category']->name,
-                                    'parent' => $parent,
-                                    'name' => $name,
-                                    'link' => $links,
-                                    'categories' => $subcategories,
-                                ));
-
-                                return $this->fetch('module:alsernetmenu/views/templates/hook/category.tpl');
-
-
-                            }
-                    }
-
-            }elseif($configuration['type'] == 'urls'){
                 $category = $this->getWidgetVariablesCategoriesDetail($hookName, $configuration);
-                $cache_id = 'alsernetmenu_urls_' . (isset($category['category']) ? $category['category']->id : 'default');
 
-                if (!$this->isCached('module:alsernetmenu/views/templates/hook/url.tpl', $cache_id)) {
+                if ($category) {
+
+                    $subcategories = [];
 
                     if ($category['grandfather'] == 2) {
-                        $grandfather = new Category((int)$this->context->controller->getCategory()->id, $this->context->language->id);
+
+                        $id_rewrite = $category['category']->id;
+                        $subcategories = $this->getWidgetVariablesCategory($id_rewrite);
+                        $specials = $this->getWidgetVariablesSpecial($id_rewrite);
+
+                        $this->smarty->assign([
+                            'category' => $category,
+                            'name' => $category['category']->name,
+                            'subcategories' => $subcategories,
+                            'specials' => $specials,
+                        ]);
+
+                        return $this->fetch('module:alsernetmenu/views/templates/hook/nav.tpl');
+
+                    } else {
+
+                        if (count($category['subcategories']) == 0) {
+
+                            $subcategories = [];
+
+                            $parent = new Category($category['id'], $this->context->language->id);
+                            $link = new Link;
+                            $links = $link->getCategoryLink($parent->id, null, $this->context->language->id);
+                            $parent = $category['grandfather'];
+
+                        } else {
+
+                            $grandfather = $this->getPenultimateParentCategory((int) $category['id']);
+                            $parent = new Category((int) $grandfather->id, $this->context->language->id);
+                            $subcategories = $category['category']->getSubCategories($this->context->language->id);
+                            $links = $parent->link_rewrite;
+                            $parent = $parent->id;
+                        }
+
+                        foreach ($subcategories as &$subcategory) {
+                            $link = new Link;
+                            $subcategory['link_rewrite'] = $link->getCategoryLink($subcategory['id_category'], null, $this->context->language->id);
+                        }
+
+                        $name = $this->searchJsonSubcategory($category['grandfather'], $category);
+
+                        if ($name != '') {
+                            $name = $name;
+                        } else {
+                            $grandfather = new Category((int) $category['grandfather'], $this->context->language->id);
+                            $name = $grandfather->name;
+                        }
+
+                        if ($category['grandfather'] = 2821) {
+                            $name = $category['category']->name;
+                        }
+
+                        $this->smarty->assign([
+                            'category' => $category['category']->name,
+                            'parent' => $parent,
+                            'name' => $name,
+                            'link' => $links,
+                            'categories' => $subcategories,
+                        ]);
+
+                        return $this->fetch('module:alsernetmenu/views/templates/hook/category.tpl');
+
+                    }
+                }
+
+            } elseif ($configuration['type'] == 'urls') {
+                $category = $this->getWidgetVariablesCategoriesDetail($hookName, $configuration);
+                $cache_id = 'alsernetmenu_urls_'.(isset($category['category']) ? $category['category']->id : 'default');
+
+                if (! $this->isCached('module:alsernetmenu/views/templates/hook/url.tpl', $cache_id)) {
+
+                    if ($category['grandfather'] == 2) {
+                        $grandfather = new Category((int) $this->context->controller->getCategory()->id, $this->context->language->id);
                         $id_rewrite = $grandfather->id;
-                    }else {
-                        $grandfather = $this->getPenultimateParentCategory((int)$category['id']);
-                        $parent = new Category((int)$grandfather->id, $this->context->language->id);
+                    } else {
+                        $grandfather = $this->getPenultimateParentCategory((int) $category['id']);
+                        $parent = new Category((int) $grandfather->id, $this->context->language->id);
                         $id_rewrite = $parent->id;
                     }
 
                     $urls = $this->getWidgetVariablesCategoryUrls($id_rewrite);
 
-
                     // if ($urls != null) {
-                        $this->context->smarty->assign("urls", $urls);
+                    $this->context->smarty->assign('urls', $urls);
                     // }
 
                     return $this->fetch('module:alsernetmenu/views/templates/hook/url.tpl');
 
                 }
-            }elseif($configuration['type'] == 'images'){
+            } elseif ($configuration['type'] == 'images') {
 
                 // $category = $this->getWidgetVariablesCategoriesDetail($hookName, $configuration);
-
 
                 //     $link_rewrite = $category['category']->link_rewrite;
                 //     $images = $this->getWidgetVariablesCategoryImages($link_rewrite);
@@ -227,7 +217,7 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
                 // return $this->fetch('module:alsernetmenu/views/templates/hook/images.tpl');
 
-            }elseif($configuration['type'] == 'brands'){
+            } elseif ($configuration['type'] == 'brands') {
                 $this->context->smarty->assign('sports', $configuration['sports']);
 
                 return $this->fetch('module:alsernetmenu/views/templates/hook/sports.tpl');
@@ -236,124 +226,121 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
     }
 
-    public function handleCategory($category_id, $iso_lang = false){
+    public function handleCategory($category_id, $iso_lang = false)
+    {
 
         $html = '';
         $column = '';
         $columns = '';
 
-        if (!$iso_lang) $iso_lang = Context::getContext()->language->iso_code;
+        if (! $iso_lang) {
+            $iso_lang = Context::getContext()->language->iso_code;
+        }
 
-         $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category_id . '/subcategory.json';
+        $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category_id.'/subcategory.json';
 
-         $jsonFilePathUrl = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category_id . '/url.json';
+        $jsonFilePathUrl = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category_id.'/url.json';
 
-         $jsonFilePathCategories = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang .'/category.json';
+        $jsonFilePathCategories = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/category.json';
 
-         $jsonContentCategories = file_get_contents($jsonFilePathCategories);
+        $jsonContentCategories = file_get_contents($jsonFilePathCategories);
 
-            $categories = json_decode($jsonContentCategories, true);
+        $categories = json_decode($jsonContentCategories, true);
 
-            foreach($categories as $key => $category) {
+        foreach ($categories as $key => $category) {
 
-                if($category['id'] == $category_id) {
-                    $column    = $category;
-                    $columns = isset($column['column']) ? intval($column['column']) : 1;
+            if ($category['id'] == $category_id) {
+                $column = $category;
+                $columns = isset($column['column']) ? intval($column['column']) : 1;
+            }
+        }
+
+        $html .= "<div class='panel-inventaries'>";
+
+        if (file_exists($jsonFilePathSubcategory)) {
+
+            $jsonContent = file_get_contents($jsonFilePathSubcategory);
+
+            $subcategories = json_decode($jsonContent, true);
+
+            $col_width = 12 / $columns;
+            $col_class = ($col_width == 2.4) ? 'col-md-2-4' : 'col-md-'.$col_width;
+
+            $html .= "<div class='panel-submenu'>";
+
+            $subcategories_sorted = [];
+
+            foreach ($subcategories as $subcategory) {
+                $column = isset($subcategory['column']) ? intval($subcategory['column']) : 0;
+                $subcategories_sorted[$column][] = $subcategory;
+            }
+
+            foreach ($subcategories_sorted as $column_index => $column_subcategory) {
+
+                $html .= "<div class='$col_class'>";
+
+                foreach ($column_subcategory as $subcategorie_index => $subcategorie) {
+
+                    $sub_cat_class = (($column_index == 0) && ($subcategorie_index == 0)) ? 'first-column' : '';
+
+                    $html .= "<div class='item_sub $sub_cat_class' data-column='$column_index' data-subcounter='$column_index'>";
+                    $html .= "<ul class='subcategorie-title'>".$subcategorie['title'];
+                    $html .= '</ul>';
+                    $html .= "<ul class='subcategorie-items'>";
+
+                    foreach ($subcategorie['items'] as $item_index => $item) {
+                        if ($item['visible'] == 1 || $item['visible'] == 3) {
+                            $html .= "<li><a href='".$item['url']."' >".$item['title'].'</a></li>';
+                        }
+                    }
+
+                    $html .= '</ul>';
+                    $html .= '</div>';
                 }
-            }
 
-         $html .= "<div class='panel-inventaries'>";
-
-
-            if (file_exists($jsonFilePathSubcategory)) {
-
-                $jsonContent = file_get_contents($jsonFilePathSubcategory);
-
-                $subcategories = json_decode($jsonContent, true);
-
-                        $col_width = 12 / $columns;
-                        $col_class = ($col_width == 2.4) ? 'col-md-2-4' : 'col-md-' . $col_width;
-
-
-                            $html .= "<div class='panel-submenu'>";
-
-                                $subcategories_sorted = [];
-
-                                    foreach ($subcategories as $subcategory) {
-                                        $column = isset($subcategory['column']) ? intval($subcategory['column']) : 0;
-                                        $subcategories_sorted[$column][] = $subcategory;
-                                    }
-
-                                    foreach ($subcategories_sorted as $column_index => $column_subcategory) {
-
-                                        $html .= "<div class='$col_class'>";
-
-                                            foreach ($column_subcategory as $subcategorie_index => $subcategorie) {
-
-                                                    $sub_cat_class = (($column_index == 0) && ($subcategorie_index == 0)) ? 'first-column' : '';
-
-                                                    $html .= "<div class='item_sub $sub_cat_class' data-column='$column_index' data-subcounter='$column_index'>";
-                                                            $html .= "<ul class='subcategorie-title'>" . $subcategorie['title'];
-                                                            $html .= "</ul>";
-                                                            $html .= "<ul class='subcategorie-items'>";
-
-                                                                    foreach ($subcategorie['items'] as $item_index => $item) {
-                                                                        if($item['visible'] == 1 || $item['visible'] == 3){
-                                                                            $html .= "<li><a href='" . $item["url"] . "' >" . $item["title"] . "</a></li>";
-                                                                        }
-                                                                    }
-
-                                                            $html .= "</ul>";
-                                                    $html .= "</div>";
-                                        }
-
-                                        $html .= "</div>";
-
-                                    }
-
-
-                            $html .= "</div>";
-
+                $html .= '</div>';
 
             }
 
-        $html .= "</div>";
+            $html .= '</div>';
+
+        }
+
+        $html .= '</div>';
 
         if (file_exists($jsonFilePathUrl)) {
 
             $jsonContent = file_get_contents($jsonFilePathUrl);
 
-
             $urls = json_decode($jsonContent, true);
 
+            $col_width = 12 / $columns;
+            $col_class = ($col_width == 2.4) ? 'col-md-2-4' : 'col-md-'.$col_width;
 
-                    $col_width = 12 / $columns;
-                    $col_class = ($col_width == 2.4) ? 'col-md-2-4' : 'col-md-' . $col_width;
-
-                    $html .= "<div class='panel-itemmenu'>";
-                        foreach ($urls as $index => $subcategory) {
-                            $html .= "<div class='row'>";
-                                foreach ($subcategory['items'] as $item) {
-                                    $html .= "<div class='$col_class'><a href='" . $item["url"] . "' >" . $item["title"] . "</a></div>";
-                                }
-                                $html .= "</div>";
-                                $html .= "</div>";
-                        }
-
+            $html .= "<div class='panel-itemmenu'>";
+            foreach ($urls as $index => $subcategory) {
+                $html .= "<div class='row'>";
+                foreach ($subcategory['items'] as $item) {
+                    $html .= "<div class='$col_class'><a href='".$item['url']."' >".$item['title'].'</a></div>';
+                }
+                $html .= '</div>';
+                $html .= '</div>';
+            }
 
         }
 
-        $html .= "</div>";
+        $html .= '</div>';
 
         return $html;
 
     }
 
-    public function handleMobile($iso){
+    public function handleMobile($iso)
+    {
 
         $context = Context::getContext();
 
-        $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso . '/category.json';
+        $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso.'/category.json';
 
         $categories = [];
 
@@ -363,9 +350,9 @@ class Alsernetmenu  extends Module implements WidgetInterface
             $categories = json_decode($jsonContent, true);
 
             foreach ($categories as &$category) {
-                if($category["id"] != 0){
+                if ($category['id'] != 0) {
 
-                    $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso . '/' . $category['id'] . '/subcategory.json';
+                    $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso.'/'.$category['id'].'/subcategory.json';
 
                     if (file_exists($jsonFilePathSubcategory)) {
 
@@ -373,10 +360,10 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
                         $subcategories = json_decode($jsonContent, true);
 
-                        $category["subcategories"] = $subcategories;
+                        $category['subcategories'] = $subcategories;
                     }
 
-                    $jsonFilePathUrls = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso . '/' . $category['id'] . '/url.json';
+                    $jsonFilePathUrls = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso.'/'.$category['id'].'/url.json';
 
                     if (file_exists($jsonFilePathUrls)) {
 
@@ -384,39 +371,38 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
                         $urls = json_decode($jsonContent, true);
 
-                        $category["urls"] = $urls;
+                        $category['urls'] = $urls;
                     }
 
                 }
             }
 
-
         } else {
             $categories = null;
         }
 
-
         $smarty = $this->context->smarty;
 
-        $smarty->assign(array(
+        $smarty->assign([
             'iso_lang' => $iso,
             'categories_mobile' => $categories,
-        ));
+        ]);
 
         return $this->fetch('module:alsernetmenu/views/templates/hook/mobile.tpl');
 
     }
 
-    public function handleMobiles(){
+    public function handleMobiles()
+    {
 
-        $html= "";
+        $html = '';
         $context = Context::getContext();
         $iso_lang = $context->language->iso_code;
 
-        $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/category.json';
+        $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/category.json';
 
-        $html .= "<div>";
-        $title_products = "";
+        $html .= '<div>';
+        $title_products = '';
 
         if (file_exists($jsonFilePath)) {
 
@@ -456,7 +442,7 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
                 if ($category['id'] == 0) {
                     $title_products = $category['title'];
-                }else{
+                } else {
 
                     $html .= "<li class='nav-item'>
                             <a class='category-item' title='{$category['title']}'>
@@ -475,96 +461,92 @@ class Alsernetmenu  extends Module implements WidgetInterface
                                 </a>
                                 <div class='items-submenu'>";
 
-                $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category['id'] . '/subcategory.json';
+                    $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category['id'].'/subcategory.json';
 
-                if (file_exists($jsonFilePathSubcategory)) {
+                    if (file_exists($jsonFilePathSubcategory)) {
 
-                    $jsonContent = file_get_contents($jsonFilePathSubcategory);
+                        $jsonContent = file_get_contents($jsonFilePathSubcategory);
 
-                    $subcategories = json_decode($jsonContent, true);
+                        $subcategories = json_decode($jsonContent, true);
 
-                    $html .= "<div class='panel-submenu'>";
+                        $html .= "<div class='panel-submenu'>";
 
-                    $subcategories_sorted = [];
-                    foreach ($subcategories as $subcategory) {
-                        $column = isset($subcategory['column']) ? intval($subcategory['column']) : 0;
-                        $subcategories_sorted[$column][] = $subcategory;
-                    }
+                        $subcategories_sorted = [];
+                        foreach ($subcategories as $subcategory) {
+                            $column = isset($subcategory['column']) ? intval($subcategory['column']) : 0;
+                            $subcategories_sorted[$column][] = $subcategory;
+                        }
 
-                    foreach ($subcategories_sorted as $column_index => $column_subcategory) {
-                        foreach ($column_subcategory as $subcategorie_index => $subcategorie) {
-                            $html .= "<div class='item_sub'>
+                        foreach ($subcategories_sorted as $column_index => $column_subcategory) {
+                            foreach ($column_subcategory as $subcategorie_index => $subcategorie) {
+                                $html .= "<div class='item_sub'>
                                         <ul class='title-subcategory'>{$subcategorie['title']}";
-                            if (count($subcategorie['items']) > 0) {
-                                $html .= "<span class='navbar-toggler collapse-icons'>
+                                if (count($subcategorie['items']) > 0) {
+                                    $html .= "<span class='navbar-toggler collapse-icons'>
                                             <i class='fa fa-chevron-down down'></i>
                                             <i class='fa fa-chevron-up up'></i>
                                         </span>";
-                            }
-                            $html .= "</ul>
+                                }
+                                $html .= "</ul>
                                     <ul class='item-subcategory'>";
-                            foreach ($subcategorie['items'] as $item_index => $item) {
-                                $html .= "<li><a href='{$item["url"]}' >{$item["title"]}</a></li>";
+                                foreach ($subcategorie['items'] as $item_index => $item) {
+                                    $html .= "<li><a href='{$item['url']}' >{$item['title']}</a></li>";
+                                }
+                                $html .= '</ul>
+                                    </div>';
                             }
-                            $html .= "</ul>
-                                    </div>";
                         }
+                        $html .= '</div>';
                     }
-                    $html .= "</div>";
-                }
 
+                    $html .= '</div>';
 
-                $html .= "</div>";
+                    $jsonFilePathUrl = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category['id'].'/url.json';
+                    if (file_exists($jsonFilePathUrl)) {
 
-                $jsonFilePathUrl = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category['id'] . '/url.json';
-                if (file_exists($jsonFilePathUrl)) {
+                        $jsonContent = file_get_contents($jsonFilePathUrl);
 
-                    $jsonContent = file_get_contents($jsonFilePathUrl);
-
-                    $urls = json_decode($jsonContent, true);
-                    $html .= "<div class='panel-urls'>";
-                    foreach ($urls as $url) {
-                        $html .= "<div class='item_sub'>";
-                        foreach ($url['items'] as $item_index => $itemdemos) {
-                            $html .= "<a href='{$itemdemos["url"]}' >{$itemdemos["title"]}</a>";
+                        $urls = json_decode($jsonContent, true);
+                        $html .= "<div class='panel-urls'>";
+                        foreach ($urls as $url) {
+                            $html .= "<div class='item_sub'>";
+                            foreach ($url['items'] as $item_index => $itemdemos) {
+                                $html .= "<a href='{$itemdemos['url']}' >{$itemdemos['title']}</a>";
+                            }
+                            $html .= '</div>';
                         }
-                        $html .= "</div>";
+                        $html .= '</div>';
+                        $html .= '</div>';
                     }
-                    $html .= "</div>";
-                    $html .= "</div>";
-                }
 
-
-                $html .= "</li>";
+                    $html .= '</li>';
 
                 }
-
-
 
             }
 
-            $html .= "</ul>
+            $html .= '</ul>
                     </div>
-                    </nav>";
+                    </nav>';
         }
 
-        $html .= "</div>";
+        $html .= '</div>';
 
         return $html;
     }
 
-    public function handleSubcategory($category,$subcategory){
+    public function handleSubcategory($category, $subcategory)
+    {
 
         $iso_lang = Context::getContext()->language->iso_code;
-        $jsonFilePathCategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category . '/subcategory.json';
+        $jsonFilePathCategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category.'/subcategory.json';
 
-        if (!file_exists($jsonFilePathCategory)) {
+        if (! file_exists($jsonFilePathCategory)) {
             return '';
         }
 
         $jsonContent = file_get_contents($jsonFilePathCategory);
         $categories = json_decode($jsonContent, true);
-
 
         if ($categories === null) {
             return '';
@@ -573,8 +555,8 @@ class Alsernetmenu  extends Module implements WidgetInterface
         foreach ($categories as $itemCategory) {
             if ($itemCategory['id'] == $subcategory) {
                 $htmlItems = array_map(function ($item) {
-                    if($item['visible'] == 1 || $item['visible'] == 2){
-                        return "<div class='item'><a href='" . htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') . "' >" . htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') . "</a></div>";
+                    if ($item['visible'] == 1 || $item['visible'] == 2) {
+                        return "<div class='item'><a href='".htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8')."' >".htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8').'</a></div>';
                     }
                 }, $itemCategory['items']);
 
@@ -586,14 +568,15 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
     }
 
-    public function getTrees($resultParents, $resultIds, $maxDepth, $id_category = null, $category = null, $currentDepth = 0){
+    public function getTrees($resultParents, $resultIds, $maxDepth, $id_category = null, $category = null, $currentDepth = 0)
+    {
 
         $desc = '';
         $children = [];
 
         if (isset($resultParents[$id_category]) && count($resultParents[$id_category]) && ($maxDepth == 0 || $currentDepth < $maxDepth)) {
             foreach ($resultParents[$id_category] as $subcat) {
-                $children[] = $this->getTrees($resultParents, $resultIds, $maxDepth, $subcat['id_category'],$category, $currentDepth + 1);
+                $children[] = $this->getTrees($resultParents, $resultIds, $maxDepth, $subcat['id_category'], $category, $currentDepth + 1);
             }
         }
 
@@ -606,26 +589,25 @@ class Alsernetmenu  extends Module implements WidgetInterface
             $id_parent = null;
         }
 
-
         return [
             'link' => $link,
             'desc' => $desc,
             'subcategories' => $children,
             'category' => $category,
             'name' => $name,
-            'parent' => (int)$id_parent,
-            'id' => (int)$id_category,
-            'grandfather' => (int)$category->id_parent,
+            'parent' => (int) $id_parent,
+            'id' => (int) $id_category,
+            'grandfather' => (int) $category->id_parent,
         ];
-
 
     }
 
-    function getPenultimateParentCategory($categoryId){
+    public function getPenultimateParentCategory($categoryId)
+    {
 
         $category = new Category($categoryId);
 
-        if (!Validate::isLoadedObject($category)) {
+        if (! Validate::isLoadedObject($category)) {
             return false;
         }
 
@@ -641,16 +623,16 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
     }
 
-    public function searchJsonSubcategory($category , $subcategory){
-        $link = new Link();
-        $link =  $link->getCategoryLink($subcategory['id'], NULL, NULL, NULL, $this->context->language->id);
+    public function searchJsonSubcategory($category, $subcategory)
+    {
+        $link = new Link;
+        $link = $link->getCategoryLink($subcategory['id'], null, null, null, $this->context->language->id);
         $url = preg_replace('/^https?:\/\/[^\/]+/i', '', $link);
-
 
         $context = Context::getContext();
         $iso_lang = $context->language->iso_code;
 
-        $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category . '/subcategory.json';
+        $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category.'/subcategory.json';
 
         if (file_exists($jsonFilePathSubcategory)) {
 
@@ -669,10 +651,10 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
         }
 
-
     }
 
-    public function getFirstCategoryAtDepth($targetLevelDepth){
+    public function getFirstCategoryAtDepth($targetLevelDepth)
+    {
         $currentCategory = $this->context->controller->getCategory();
 
         while ($currentCategory->level_depth < $targetLevelDepth) {
@@ -687,15 +669,16 @@ class Alsernetmenu  extends Module implements WidgetInterface
         }
     }
 
-    public function getCategoryFullUrl($category, $context){
-        $self =  $this->context->controller->getCategory();
+    public function getCategoryFullUrl($category, $context)
+    {
+        $self = $this->context->controller->getCategory();
 
         $resultIds = [];
         $resultParents = [];
 
         $category = new Category(
-               (int)$self->id_category,
-               $this->context->language->id
+            (int) $self->id_category,
+            $this->context->language->id
         );
 
         $categories = $category->getSubCategories($this->context->language->id);
@@ -705,18 +688,19 @@ class Alsernetmenu  extends Module implements WidgetInterface
             $resultIds[$row['id_category']] = $row;
         }
 
-        return $this->getTrees($resultParents, $resultIds, 0, ($category ? $category->id : null),$category);
+        return $this->getTrees($resultParents, $resultIds, 0, ($category ? $category->id : null), $category);
     }
 
-    public function getWidgetVariablesCategoriesDetail($hookName = null, array $configuration = []){
+    public function getWidgetVariablesCategoriesDetail($hookName = null, array $configuration = [])
+    {
         if (method_exists($this->context->controller, 'getCategory')) {
-            $self =  $this->context->controller->getCategory();
+            $self = $this->context->controller->getCategory();
 
             $resultIds = [];
             $resultParents = [];
 
             $category = new Category(
-                (int)$self->id_category,
+                (int) $self->id_category,
                 $this->context->language->id
             );
 
@@ -727,19 +711,19 @@ class Alsernetmenu  extends Module implements WidgetInterface
                 $resultIds[$row['id_category']] = $row;
             }
 
-            return $this->getTrees($resultParents, $resultIds, 0, ($category ? $category->id : null),$category);
-        }else{
+            return $this->getTrees($resultParents, $resultIds, 0, ($category ? $category->id : null), $category);
+        } else {
             return false;
         }
     }
 
-    public function getWidgetVariables($hookName, $configuration){
-    }
+    public function getWidgetVariables($hookName, $configuration) {}
 
-    public function getWidgetVariablesCategories(){
+    public function getWidgetVariablesCategories()
+    {
 
         $iso_lang = Context::getContext()->language->iso_code;
-        $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/category.json';
+        $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/category.json';
 
         if (file_exists($jsonFilePath)) {
 
@@ -747,24 +731,23 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
             $categories = json_decode($jsonContent, true);
 
-            $filteredCategories = array_filter($categories, function($category) {
+            $filteredCategories = array_filter($categories, function ($category) {
                 return $category['id'] != 0;
             });
 
-
-            foreach($filteredCategories as $key => $category) {
+            foreach ($filteredCategories as $key => $category) {
                 $url = $this->context->link->getModuleLink('alsernetmenu', 'menu');
 
-                if($iso_lang != "es") {
-                    $category['url'] = $iso_lang . '/' . $category['url'];
+                if ($iso_lang != 'es') {
+                    $category['url'] = $iso_lang.'/'.$category['url'];
                 }
 
-                $category['action'] = $url . '?method=category&category=' . $category['id'];
+                $category['action'] = $url.'?method=category&category='.$category['id'];
                 $filteredCategories[$key] = $category;
             }
 
         } else {
-            $filteredCategories = array();
+            $filteredCategories = [];
         }
 
         $data = [
@@ -778,7 +761,7 @@ class Alsernetmenu  extends Module implements WidgetInterface
     {
 
         $iso_lang = Context::getContext()->language->iso_code;
-        $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category . '/subcategory.json';
+        $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category.'/subcategory.json';
 
         if (file_exists($jsonFilePathSubcategory)) {
 
@@ -792,10 +775,10 @@ class Alsernetmenu  extends Module implements WidgetInterface
                     'menu'
                 );
 
-                $subcategories[$key]['action'] = $url . '?method=subcategory&category=' . $category . '&subcategory=' . $subcategorie['id'];
+                $subcategories[$key]['action'] = $url.'?method=subcategory&category='.$category.'&subcategory='.$subcategorie['id'];
             }
 
-            usort($subcategories, function($a, $b) {
+            usort($subcategories, function ($a, $b) {
                 return $a['position_category'] <=> $b['position_category'];
             });
 
@@ -803,16 +786,18 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
         } else {
 
-            $categories = array();
+            $categories = [];
+
             return $categories;
 
         }
     }
 
-    public function getWidgetVariablesSpecial($category){
+    public function getWidgetVariablesSpecial($category)
+    {
 
         $iso_lang = Context::getContext()->language->iso_code;
-        $jsonFilePathSubcategory = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category . '/special.json';
+        $jsonFilePathSubcategory = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category.'/special.json';
 
         if (file_exists($jsonFilePathSubcategory)) {
 
@@ -822,19 +807,21 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
             return $specials;
 
-        }else {
+        } else {
 
-            $specials = array();
+            $specials = [];
+
             return $specials;
 
         }
     }
 
-    public function getWidgetVariablesCategoryUrls($category){
+    public function getWidgetVariablesCategoryUrls($category)
+    {
 
         $iso_lang = Context::getContext()->language->iso_code;
 
-        $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/' . $category . '/url.json';
+        $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/'.$category.'/url.json';
 
         if (file_exists($jsonFilePath)) {
 
@@ -843,23 +830,21 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
             return $url[0];
 
-
         } else {
 
-            return array();
+            return [];
 
         }
 
-
     }
 
-    public function getWidgetVariablesCategoryImages($category){
+    public function getWidgetVariablesCategoryImages($category)
+    {
 
         $images = [];
         $iso_lang = Context::getContext()->language->iso_code;
 
-        $jsonFilePath = _PS_MODULE_DIR_ . 'alsernetmenu/json/' . $iso_lang . '/categories2.json';
-
+        $jsonFilePath = _PS_MODULE_DIR_.'alsernetmenu/json/'.$iso_lang.'/categories2.json';
 
         if (file_exists($jsonFilePath)) {
 
@@ -867,15 +852,15 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
             $categories = json_decode($jsonContent, true);
 
-            foreach($categories as $key => $item) {
+            foreach ($categories as $key => $item) {
 
                 if ($item['url'] == $category) {
 
-                   foreach($item['subcategories'] as $key => $subcategory) {
+                    foreach ($item['subcategories'] as $key => $subcategory) {
 
-                        if ($subcategory['type'] ==  "images") {
+                        if ($subcategory['type'] == 'images') {
 
-                            $images[]= $subcategory;
+                            $images[] = $subcategory;
 
                         }
                     }
@@ -885,30 +870,30 @@ class Alsernetmenu  extends Module implements WidgetInterface
 
             return $images;
 
-
         } else {
-            $categories = array();
+            $categories = [];
         }
-
 
     }
 
-    public function hookdisplayBeforeBodyClosingTag($params){
+    public function hookdisplayBeforeBodyClosingTag($params)
+    {
         return $this->renderWidget('displayBeforeBodyClosingTag', $params);
     }
 
-    public function hookdisplayTop($params){
+    public function hookdisplayTop($params)
+    {
         return $this->renderWidget('displayTop', $params);
     }
 
-    public function hookDisplayLeftColumn($params){
+    public function hookDisplayLeftColumn($params)
+    {
         return $this->renderWidget('displayLeftColumn', $params);
     }
 
-    public function hookHeader($params){
-        $this->context->controller->addCSS($this->_path . 'views/css/front/style.css', 'all');
-        $this->context->controller->addJS($this->_path . 'views/js/front/scripts.js');
+    public function hookHeader($params)
+    {
+        $this->context->controller->addCSS($this->_path.'views/css/front/style.css', 'all');
+        $this->context->controller->addJS($this->_path.'views/js/front/scripts.js');
     }
-
 }
-

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,18 +41,17 @@ final class DoctrineQueryParser implements QueryParserInterface
     {
         $values = [];
         foreach ($queryParameters as $key => $value) {
-            if (!is_string($key)) {
+            if (! is_string($key)) {
                 throw new UnsupportedParameterException('Only named parameters are supported in prepared queries.');
             }
-            $values[':' . $key] = $this->parseValue($value);
+            $values[':'.$key] = $this->parseValue($value);
         }
 
         return strtr($query, $values);
     }
 
     /**
-     * @param mixed $value the parameter value
-     *
+     * @param  mixed  $value  the parameter value
      * @return string|float|int the partial raw parameter
      *
      * @throws UnsupportedParameterException
@@ -78,22 +78,20 @@ final class DoctrineQueryParser implements QueryParserInterface
             return 'NULL';
         }
 
-        throw new UnsupportedParameterException('Unsupported value type: ' . gettype($value));
+        throw new UnsupportedParameterException('Unsupported value type: '.gettype($value));
     }
 
     /**
-     * @param string $value
-     *
+     * @param  string  $value
      * @return string
      */
     private function parseStringParameter($value)
     {
-        return "'" . addslashes($value) . "'";
+        return "'".addslashes($value)."'";
     }
 
     /**
-     * @param int|float $value
-     *
+     * @param  int|float  $value
      * @return int|float
      */
     private function parseNumericParameter($value)
@@ -102,18 +100,15 @@ final class DoctrineQueryParser implements QueryParserInterface
     }
 
     /**
-     * @param array $value
-     *
      * @return string
      */
     private function parseArrayParameter(array $value)
     {
-        return "'" . implode("', '", array_map('addslashes', $value)) . "'";
+        return "'".implode("', '", array_map('addslashes', $value))."'";
     }
 
     /**
-     * @param bool $value
-     *
+     * @param  bool  $value
      * @return string
      */
     private function parseBooleanParameter($value)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,7 @@ class EditableProfile
     private $avatarUrl;
 
     /**
-     * @param ProfileId $profileId
-     * @param string[] $localizedNames
-     * @param string|null $avatarUrl
+     * @param  string[]  $localizedNames
      */
     public function __construct(
         ProfileId $profileId,
@@ -79,9 +78,6 @@ class EditableProfile
         return $this->localizedNames;
     }
 
-    /**
-     * @return string|null
-     */
     public function getAvatarUrl(): ?string
     {
         return $this->avatarUrl;

@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -61,7 +63,7 @@ class af_producttagsprotagsModuleFrontControllerOverride extends af_producttagsp
             if (Group::isFeatureActive()) {
                 $groups = FrontController::getCurrentCustomerGroups();
 
-                $tags = JPresta\SpeedPack\JprestaUtils::dbSelectRows('
+                $tags = JprestaUtils::dbSelectRows('
                     SELECT t.name, adTag.`adtag_link_rewrite`
                     FROM `'._DB_PREFIX_.'tag_count` pt
                     LEFT JOIN `'._DB_PREFIX_.'tag` t ON (t.id_tag = pt.id_tag)
@@ -69,7 +71,7 @@ class af_producttagsprotagsModuleFrontControllerOverride extends af_producttagsp
                     WHERE (adTag.`adtag_is_show` = 1 OR adTag.`adtag_is_show` IS NULL) AND pt.`id_group` '.(count($groups) ? 'IN ('.implode(',', $groups).')' : '= 1').'
                     AND pt.`id_lang` = '.(int) $id_lang.' AND pt.`id_shop` = '.(int) $context->shop->id);
             } else {
-                $tags = JPresta\SpeedPack\JprestaUtils::dbSelectRows('
+                $tags = JprestaUtils::dbSelectRows('
                     SELECT t.name
                     FROM `'._DB_PREFIX_.'tag_count` pt
                     LEFT JOIN `'._DB_PREFIX_.'tag` t ON (t.id_tag = pt.id_tag)
@@ -100,6 +102,6 @@ class af_producttagsprotagsModuleFrontControllerOverride extends af_producttagsp
                     LEFT JOIN `'._DB_PREFIX_.'af_advanced_tags` adTag ON (adTag.adtag_id_tag = t.id_tag)
                     WHERE (adTag.`adtag_is_show` = 1 OR adTag.`adtag_is_show` IS NULL) AND pt.id_group = '.(Group::isFeatureActive() ? 1 : 0).' AND pt.`id_lang` = '.(int) Configuration::get('PS_LANG_DEFAULT').' AND pt.`id_shop` = '.(int) Shop::getContextShopID();
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountPages);
+        return (int) JprestaUtils::dbGetValue($queryCountPages);
     }
 }

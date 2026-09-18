@@ -101,6 +101,26 @@ class TicketGroupsControllerTest extends TestCase
     }
 
     /**
+     * total_members contaba sobre helpdesk_ticket_group_user, la tabla
+     * histórica que quedó huérfana con la unificación de helpdesk_groups
+     * (TicketGroup::users() usa helpdesk_group_user desde entonces) — daba
+     * 0 siempre, sin importar cuántos agentes tuviera un grupo real.
+     */
+    public function test_total_members_cuenta_sobre_la_tabla_real_del_pivot(): void
+    {
+        [$manager, $agent] = $this->makeManagerAndAgent();
+
+        $group = TicketGroup::create(['name' => 'Grupo con miembros'.uniqid()]);
+        $group->users()->attach($agent->id, ['conversation_priority' => 'primary']);
+
+        $response = $this->actingAs($manager)
+            ->get(route('manager.helpdesk.settings.ticket-groups.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('stats', fn (array $stats) => $stats['total_members'] >= 1);
+    }
+
+    /**
      * @return array{0: User, 1: User}
      */
     private function makeManagerAndAgent(): array

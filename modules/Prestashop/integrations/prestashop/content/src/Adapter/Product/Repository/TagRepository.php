@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ class TagRepository
 
         try {
             // assign new tags to product
-            if (!Tag::addTags($langIdValue, $productIdValue, $localizedTags->getTags())) {
+            if (! Tag::addTags($langIdValue, $productIdValue, $localizedTags->getTags())) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to update product #%d tags in lang #%d', $productIdValue, $langIdValue),
                     CannotUpdateProductException::FAILED_UPDATE_TAGS
@@ -57,13 +58,11 @@ class TagRepository
         } catch (PrestaShopException $e) {
             throw new CoreException(
                 sprintf('Error occurred when trying to add tags to product #%d', $productIdValue
-            ));
+                ));
         }
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @throws CannotUpdateProductException
      * @throws CoreException
      */
@@ -72,7 +71,7 @@ class TagRepository
         $productIdValue = $productId->getValue();
 
         try {
-            if (!Tag::deleteTagsForProduct($productIdValue)) {
+            if (! Tag::deleteTagsForProduct($productIdValue)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to delete all tags for product #%d', $productIdValue),
                     CannotUpdateProductException::FAILED_UPDATE_TAGS
@@ -81,14 +80,11 @@ class TagRepository
         } catch (PrestaShopException $e) {
             throw new CoreException(
                 sprintf('Error occurred when trying to delete product #%d tags', $productIdValue
-            ));
+                ));
         }
     }
 
     /**
-     * @param ProductId $productId
-     * @param LanguageId $languageId
-     *
      * @throws CannotUpdateProductException
      * @throws CoreException
      */
@@ -98,7 +94,7 @@ class TagRepository
         $langIdValue = $languageId->getValue();
 
         try {
-            if (!Tag::deleteProductTagsInLang($productIdValue, $langIdValue)) {
+            if (! Tag::deleteProductTagsInLang($productIdValue, $langIdValue)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to delete product #%d previous tags in lang #%d', $productIdValue, $langIdValue),
                     CannotUpdateProductException::FAILED_UPDATE_TAGS
@@ -107,7 +103,7 @@ class TagRepository
         } catch (PrestaShopException $e) {
             throw new CoreException(
                 sprintf('Error occurred when trying to delete product #%d tags', $productIdValue
-            ));
+                ));
         }
     }
 }

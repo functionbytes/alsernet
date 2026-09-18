@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,19 +32,7 @@ namespace PrestaShop\PrestaShop\Core\Domain\Country;
  */
 interface ZipCodePatternResolverInterface
 {
-    /**
-     * @param string $format
-     * @param string $isoCode
-     *
-     * @return string
-     */
     public function getRegexPattern(string $format, string $isoCode): string;
 
-    /**
-     * @param string $format
-     * @param string $isoCode
-     *
-     * @return string
-     */
     public function getHumanReadablePattern(string $format, string $isoCode): string;
 }

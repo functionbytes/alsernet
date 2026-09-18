@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,7 +36,9 @@ use PrestaShopBundle\Translation\Constraints\PassVsprintf;
  * @ORM\Table(
  *     indexes={@ORM\Index(name="key", columns={"domain"})},
  * )
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\TranslationRepository")
+ *
  * @PassVsprintf
  */
 class Translation
@@ -44,7 +47,9 @@ class Translation
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_translation", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -53,6 +58,7 @@ class Translation
      * @var Lang
      *
      * @ORM\ManyToOne(targetEntity="Lang", inversedBy="translations")
+     *
      * @ORM\JoinColumn(name="id_lang", referencedColumnName="id_lang", nullable=false)
      */
     private $lang;
@@ -128,9 +134,8 @@ class Translation
     }
 
     /**
-     * @param string $key
-     *
-     * @return \PrestaShopBundle\Entity\Translation
+     * @param  string  $key
+     * @return Translation
      */
     public function setKey($key)
     {
@@ -140,9 +145,8 @@ class Translation
     }
 
     /**
-     * @param string $translation
-     *
-     * @return \PrestaShopBundle\Entity\Translation
+     * @param  string  $translation
+     * @return Translation
      */
     public function setTranslation($translation)
     {
@@ -152,9 +156,7 @@ class Translation
     }
 
     /**
-     * @param Lang $lang
-     *
-     * @return \PrestaShopBundle\Entity\Translation
+     * @return Translation
      */
     public function setLang(Lang $lang)
     {
@@ -164,9 +166,8 @@ class Translation
     }
 
     /**
-     * @param string $domain
-     *
-     * @return \PrestaShopBundle\Entity\Translation
+     * @param  string  $domain
+     * @return Translation
      */
     public function setDomain($domain)
     {
@@ -184,9 +185,8 @@ class Translation
     }
 
     /**
-     * @param string $theme
-     *
-     * @return \PrestaShopBundle\Entity\Translation
+     * @param  string  $theme
+     * @return Translation
      */
     public function setTheme($theme)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ final class DeleteAttributeHandler extends AbstractAttributeHandler implements D
     {
         $attribute = $this->getAttributeById($command->getAttributeId());
 
-        if (false === $this->deleteAttribute($attribute)) {
+        if ($this->deleteAttribute($attribute) === false) {
             throw new DeleteAttributeException(sprintf('Failed to delete attribute with id "%s".', $attribute->id), DeleteAttributeException::FAILED_DELETE);
         }
     }

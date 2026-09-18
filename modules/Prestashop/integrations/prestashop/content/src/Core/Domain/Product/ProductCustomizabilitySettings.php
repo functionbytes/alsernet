@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,7 +52,5 @@ class ProductCustomizabilitySettings
     /**
      * This class shouldn't be instantiated as its purpose is to hold some setting values
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

@@ -4,6 +4,13 @@ namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
+use Modules\Erp\Models\Oracle\Configuracion\Cierre;
+use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
+use Modules\Erp\Models\Oracle\Configuracion\Regpais;
+use Modules\Erp\Models\Oracle\Factura\FacturacliCentral;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -62,7 +69,7 @@ class AlbarancliCapthaya extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -71,7 +78,7 @@ class AlbarancliCapthaya extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -80,7 +87,7 @@ class AlbarancliCapthaya extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -89,7 +96,7 @@ class AlbarancliCapthaya extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -98,7 +105,7 @@ class AlbarancliCapthaya extends Model
      */
     public function seriealbarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
+        return $this->belongsTo(SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
     }
 
     /**
@@ -107,7 +114,7 @@ class AlbarancliCapthaya extends Model
      */
     public function cierre()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Cierre::class, 'idcierre', 'idcierre');
+        return $this->belongsTo(Cierre::class, 'idcierre', 'idcierre');
     }
 
     /**
@@ -116,7 +123,7 @@ class AlbarancliCapthaya extends Model
      */
     public function tipoalbarancli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
+        return $this->belongsTo(Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
     }
 
     /**
@@ -125,7 +132,7 @@ class AlbarancliCapthaya extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -134,7 +141,7 @@ class AlbarancliCapthaya extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -143,6 +150,6 @@ class AlbarancliCapthaya extends Model
      */
     public function facturacli()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
+        return $this->belongsTo(FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
     }
 }

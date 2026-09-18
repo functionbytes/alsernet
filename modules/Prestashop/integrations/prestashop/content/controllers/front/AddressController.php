@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,12 +27,17 @@
 class AddressControllerCore extends FrontController
 {
     public $auth = true;
+
     public $guestAllowed = true;
+
     public $php_self = 'address';
+
     public $authRedirection = 'addresses';
+
     public $ssl = true;
 
     protected $address_form;
+
     protected $should_redirect = false;
 
     /**
@@ -65,7 +71,7 @@ class AddressControllerCore extends FrontController
 
         // Submit the address, don't care if it's an edit or add
         if (Tools::isSubmit('submitAddress')) {
-            if (!$this->address_form->submit()) {
+            if (! $this->address_form->submit()) {
                 $this->errors[] = $this->trans('Please fix the error below.', [], 'Shop.Notifications.Error');
             } else {
                 if ($id_address) {
@@ -79,7 +85,7 @@ class AddressControllerCore extends FrontController
         }
 
         // There is no id_adress, no need to continue
-        if (!$id_address) {
+        if (! $id_address) {
             return;
         }
 
@@ -120,10 +126,10 @@ class AddressControllerCore extends FrontController
      */
     public function initContent()
     {
-        if (!$this->ajax && $this->should_redirect) {
+        if (! $this->ajax && $this->should_redirect) {
             if (($back = Tools::getValue('back')) && Tools::urlBelongsToShop($back)) {
                 $mod = Tools::getValue('mod');
-                $this->redirectWithNotifications('index.php?controller=' . $back . ($mod ? '&back=' . $mod : ''));
+                $this->redirectWithNotifications('index.php?controller='.$back.($mod ? '&back='.$mod : ''));
             } else {
                 $this->redirectWithNotifications('index.php?controller=addresses');
             }

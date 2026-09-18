@@ -34,7 +34,7 @@
 
                             <div class="col-12 col-md-8">
                                 <div class="mb-3">
-                                    <label class="form-label">Titulo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Titulo <span class="text-brand">*</span></label>
                                     <input type="text" name="title"
                                            class="form-control @error('title') is-invalid @enderror"
                                            value="{{ old('title', $banner->title ?? '') }}"
@@ -48,7 +48,7 @@
 
                             <div class="col-12 col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Tipo <span class="text-brand">*</span></label>
                                     <select name="type" class="form-select @error('type') is-invalid @enderror" required>
                                         <option value="info" {{ old('type', $banner->type ?? '') === 'info' ? 'selected' : '' }}>Info</option>
                                         <option value="success" {{ old('type', $banner->type ?? '') === 'success' ? 'selected' : '' }}>Exito</option>
@@ -63,7 +63,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Contenido <span class="text-danger">*</span></label>
+                                    <label class="form-label">Contenido <span class="text-brand">*</span></label>
                                     <textarea name="body"
                                               class="form-control @error('body') is-invalid @enderror"
                                               rows="4"
@@ -194,7 +194,7 @@
                         <li class="mb-2"><span class="badge bg-primary-subtle text-primary me-2">Info</span> Mensajes informativos generales</li>
                         <li class="mb-2"><span class="badge bg-success-subtle text-success me-2">Exito</span> Novedades o mejoras</li>
                         <li class="mb-2"><span class="badge bg-warning-subtle text-warning me-2">Advertencia</span> Mantenimientos programados</li>
-                        <li class="mb-0"><span class="badge bg-danger-subtle text-danger me-2">Peligro</span> Incidentes o interrupciones</li>
+                        <li class="mb-0"><span class="badge bg-info-subtle text-info me-2">Peligro</span> Incidentes o interrupciones</li>
                     </ul>
                 </div>
             </div>
@@ -218,3 +218,7 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+@endpush

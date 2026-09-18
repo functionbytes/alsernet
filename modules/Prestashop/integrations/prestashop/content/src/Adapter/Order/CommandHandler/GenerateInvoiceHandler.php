@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class GenerateInvoiceHandler extends AbstractOrderHandler implements Gener
     {
         $order = $this->getOrder($command->getOrderId());
 
-        if (!Configuration::get('PS_INVOICE', null, null, $order->id_shop)) {
+        if (! Configuration::get('PS_INVOICE', null, null, $order->id_shop)) {
             throw new OrderException('Invoice management has been disabled.');
         }
 

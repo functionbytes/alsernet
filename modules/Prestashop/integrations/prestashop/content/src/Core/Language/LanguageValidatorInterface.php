@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface LanguageValidatorInterface
     /**
      * Checks if language is installed by comparing locale.
      *
-     * @param string $locale
-     *
+     * @param  string  $locale
      * @return bool
      */
     public function isInstalledByLocale($locale);

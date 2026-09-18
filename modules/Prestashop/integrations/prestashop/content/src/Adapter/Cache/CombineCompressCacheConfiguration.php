@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -100,7 +101,7 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
             $this->updateCachesVersionsIfNeeded($configuration);
             if ($configuration['smart_cache_css'] || $configuration['smart_cache_js']) {
                 // Manage JS & CSS Smart cache
-                if (!$this->createThemeCacheFolder()) {
+                if (! $this->createThemeCacheFolder()) {
                     $errors[] = [
                         'key' => 'To use Smarty Cache, the directory %directorypath% must be writable.',
                         'domain' => 'Admin.Advparameters.Notification',
@@ -139,7 +140,7 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
      */
     private function getThemeCacheFolder()
     {
-        return $this->themePath . '/' . $this->themeName . '/cache/';
+        return $this->themePath.'/'.$this->themeName.'/cache/';
     }
 
     /**
@@ -161,8 +162,6 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
 
     /**
      * Update Cache version of assets if needed.
-     *
-     * @param array $configuration
      */
     private function updateCachesVersionsIfNeeded(array $configuration)
     {
@@ -188,8 +187,7 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
     /**
      * Creates .htaccess if Apache optimization feature is enabled.
      *
-     * @param bool $enabled
-     *
+     * @param  bool  $enabled
      * @return array not empty in case of error
      */
     private function manageApacheOptimization($enabled)
@@ -198,9 +196,9 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
         $isCurrentlyEnabled = (bool) $this->configuration->get('PS_HTACCESS_CACHE_CONTROL');
 
         // feature activation
-        if (false === $isCurrentlyEnabled && true === $enabled) {
+        if ($isCurrentlyEnabled === false && $enabled === true) {
             $this->configuration->set('PS_HTACCESS_CACHE_CONTROL', true);
-            if (!$this->tools->generateHtaccess()) {
+            if (! $this->tools->generateHtaccess()) {
                 $errors = [
                     'key' => 'Before being able to use this tool, you need to:[1][2]Create a blank .htaccess in your root directory.[/2][2]Give it write permissions (CHMOD 666 on Unix system).[/2][/1]',
                     'domain' => 'Admin.Advparameters.Notification',
@@ -215,7 +213,7 @@ class CombineCompressCacheConfiguration implements DataConfigurationInterface
             }
         }
 
-        if (true === $isCurrentlyEnabled && false === $enabled) {
+        if ($isCurrentlyEnabled === true && $enabled === false) {
             $this->configuration->set('PS_HTACCESS_CACHE_CONTROL', false);
             $this->tools->generateHtaccess();
         }

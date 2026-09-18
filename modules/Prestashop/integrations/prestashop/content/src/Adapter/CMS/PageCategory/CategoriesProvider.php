@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,15 +48,16 @@ class CategoriesProvider
     private $contextShopIds;
 
     /**
-     * @param int $contextLanguageId
-     * @param array $contextShopIds
+     * @param  int  $contextLanguageId
      */
     public function __construct(
         $contextLanguageId,
         array $contextShopIds
     ) {
         $this->contextLanguageId = (int) $contextLanguageId;
-        $this->contextShopIds = array_map(function ($item) { return (int) $item; }, $contextShopIds);
+        $this->contextShopIds = array_map(function ($item) {
+            return (int) $item;
+        }, $contextShopIds);
     }
 
     /**
@@ -73,8 +75,7 @@ class CategoriesProvider
     /**
      * Gets recursive category ids and names
      *
-     * @param int $cmsPageCategoryId
-     *
+     * @param  int  $cmsPageCategoryId
      * @return array - [
      *               'id_cms_category' => 1,
      *               'name' => 'root category',
@@ -85,7 +86,7 @@ class CategoriesProvider
      */
     private function collectNestedCategoriesIdsAndNames($cmsPageCategoryId)
     {
-        $mainCategoryQuery = new DbQuery();
+        $mainCategoryQuery = new DbQuery;
         $mainCategoryQuery
             ->select('c.`id_cms_category`, cl.`name`')
             ->from('cms_category', 'c')
@@ -94,16 +95,15 @@ class CategoriesProvider
                 'cl',
                 'cl.`id_cms_category` = c.`id_cms_category`'
             )
-            ->where('c.`id_cms_category` = ' . (int) $cmsPageCategoryId)
-            ->where('cl.`id_lang` = ' . $this->contextLanguageId)
-            ->where('cl.`id_shop` IN (' . implode(',', $this->contextShopIds) . ')')
-            ->groupBy('c.`id_cms_category`')
-        ;
+            ->where('c.`id_cms_category` = '.(int) $cmsPageCategoryId)
+            ->where('cl.`id_lang` = '.$this->contextLanguageId)
+            ->where('cl.`id_shop` IN ('.implode(',', $this->contextShopIds).')')
+            ->groupBy('c.`id_cms_category`');
 
         $result = Db::getInstance()->getRow($mainCategoryQuery);
         $categories = is_array($result) ? $result : [];
 
-        $childrenQuery = new DbQuery();
+        $childrenQuery = new DbQuery;
         $childrenQuery
             ->select('c.`id_cms_category`, cl.`name`')
             ->from('cms_category', 'c')
@@ -112,11 +112,10 @@ class CategoriesProvider
                 'cl',
                 'cl.`id_cms_category` = c.`id_cms_category`'
             )
-            ->where('c.`id_parent` = ' . (int) $cmsPageCategoryId)
-            ->where('cl.`id_lang` = ' . $this->contextLanguageId)
-            ->where('cl.`id_shop` IN (' . implode(',', $this->contextShopIds) . ')')
-            ->groupBy('c.`id_cms_category`')
-        ;
+            ->where('c.`id_parent` = '.(int) $cmsPageCategoryId)
+            ->where('cl.`id_lang` = '.$this->contextLanguageId)
+            ->where('cl.`id_shop` IN ('.implode(',', $this->contextShopIds).')')
+            ->groupBy('c.`id_cms_category`');
 
         $childCategories = Db::getInstance()->executeS($childrenQuery);
         $childCategories = is_array($childCategories) ? $childCategories : [];

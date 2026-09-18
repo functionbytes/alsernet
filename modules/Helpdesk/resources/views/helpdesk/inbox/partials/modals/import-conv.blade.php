@@ -15,16 +15,16 @@
                 <i class="fas fa-cloud-arrow-up bv-dropzone__ico"></i>
                 <div class="bv-dropzone__title">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_title') }}</div>
                 <div class="bv-dropzone__hint">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_hint_or') }} <span class="bv-dropzone__link" id="importConvBrowse">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_browse') }}</span> {{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_max_size') }}</div>
-                <input type="file" id="importConvFile" accept=".csv,.xlsx" style="display:none">
+                <input type="file" id="importConvFile" accept=".csv,.xlsx" class="bv-hidden">
             </div>
 
-            <div id="importConvFileRow" style="display:none;margin-top:8px" class="bv-lp-row bv-lp-row--active">
+            <div id="importConvFileRow" class="bv-lp-row bv-lp-row--active bv-step-hidden bv-mt-8">
                 <i class="far fa-file-lines"></i>
                 <span id="importConvFileName" class="bv-lp-row__k"></span>
                 <span id="importConvRowCount" class="bv-lp-row__v"></span>
             </div>
 
-            <div id="importConvMapping" style="display:none">
+            <div id="importConvMapping" class="bv-step-hidden">
                 <div class="bv-form-label bv-x29">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_field_mapping') }}</div>
                 <div class="bv-lp-row">
                     <span class="bv-lp-row__k">email_cliente →</span>
@@ -61,11 +61,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/import-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/import-conv.js')) }}" defer></script>
-@endpush
-@endonce

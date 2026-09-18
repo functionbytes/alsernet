@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,10 +32,5 @@ use PrestaShop\PrestaShop\Core\Domain\Order\QueryResult\OrderForViewing;
 
 interface GetOrderForViewingHandlerInterface
 {
-    /**
-     * @param GetOrderForViewing $query
-     *
-     * @return OrderForViewing
-     */
     public function handle(GetOrderForViewing $query): OrderForViewing;
 }

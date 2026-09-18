@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,16 +47,13 @@ final class TransformGuestToCustomerHandler implements TransformGuestToCustomerH
     private $contextLangId;
 
     /**
-     * @param int $contextLangId
+     * @param  int  $contextLangId
      */
     public function __construct($contextLangId)
     {
         $this->contextLangId = $contextLangId;
     }
 
-    /**
-     * @param TransformGuestToCustomerCommand $command
-     */
     public function handle(TransformGuestToCustomerCommand $command)
     {
         $customerId = $command->getCustomerId();
@@ -64,15 +62,12 @@ final class TransformGuestToCustomerHandler implements TransformGuestToCustomerH
         $this->assertCustomerExists($customerId, $customer);
         $this->assertCustomerIsGuest($customer);
 
-        if (!$customer->transformToCustomer($this->contextLangId)) {
+        if (! $customer->transformToCustomer($this->contextLangId)) {
             throw new CustomerTransformationException(sprintf('Failed to transform guest into customer'), CustomerTransformationException::TRANSFORMATION_FAILED);
         }
     }
 
     /**
-     * @param CustomerId $customerId
-     * @param Customer $customer
-     *
      * @throws CustomerNotFoundException
      */
     private function assertCustomerExists(CustomerId $customerId, Customer $customer)
@@ -83,8 +78,6 @@ final class TransformGuestToCustomerHandler implements TransformGuestToCustomerH
     }
 
     /**
-     * @param Customer $customer
-     *
      * @throws CustomerTransformationException
      */
     private function assertCustomerIsGuest(Customer $customer)

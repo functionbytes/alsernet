@@ -102,9 +102,20 @@ class BirthdayDashboardService
             return ['available' => false, 'redemptions' => 0, 'attributed' => 0, 'revenue' => 0.0, 'rate' => 0.0];
         }
 
+        // Campañas que repartieron ALGÚN bono. Antes se filtraba por
+        // `coupon_code`, que es el código único de campaña: desde que gestión
+        // emite un bono por cliente ese campo está siempre vacío, así que el
+        // filtro descartaba absolutamente todas las campañas y el panel no ha
+        // podido enseñar un solo canje —ni «Bonos usados», ni «Facturado», ni
+        // el paso «Compraron» del embudo— en ningún periodo.
+        //
+        // Se mira el bono de los destinatarios, y se conserva el `coupon_code`
+        // para las promociones antiguas que sí repartían un código para todos.
         $campaigns = BirthdayCampaign::query()
             ->whereBetween('campaign_date', [$from->toDateString(), $to->toDateString()])
-            ->whereNotNull('coupon_code')
+            ->where(fn ($q) => $q
+                ->whereHas('recipients', fn ($r) => $r->withCoupon())
+                ->orWhereNotNull('coupon_code'))
             ->get();
 
         // Una sola consulta para todo el periodo: pedirlo campaña a campaña
@@ -133,23 +144,38 @@ class BirthdayDashboardService
     }
 
     /**
-     * Cumpleañeros por día, para la barra de tendencia del panel.
+     * Cumpleañeros y correos enviados por día, para la gráfica del panel.
      *
-     * @return array<int, array{date: string, label: string, sent: int, total: int}>
+     * Devuelve TODOS los días del periodo, también aquellos sin campaña: si se
+     * devolvieran solo las campañas, dos separadas por tres días se pintarían
+     * contiguas y la gráfica aparentaría un calendario que no es.
+     *
+     * @return array<int, array{date: string, label: string, sent: int, total: int, has_campaign: bool}>
      */
     private function trend(CarbonImmutable $from, CarbonImmutable $to): array
     {
         $rows = BirthdayCampaign::query()
             ->whereBetween('campaign_date', [$from->toDateString(), $to->toDateString()])
             ->orderBy('campaign_date')
-            ->get(['campaign_date', 'sent_count', 'recipients_total']);
+            ->get(['campaign_date', 'sent_count', 'recipients_total'])
+            ->keyBy(fn (BirthdayCampaign $c): string => $c->campaign_date->toDateString());
 
-        return $rows->map(fn (BirthdayCampaign $c): array => [
-            'date' => $c->campaign_date->toDateString(),
-            'label' => $c->campaign_date->format('d/m'),
-            'sent' => (int) $c->sent_count,
-            'total' => (int) $c->recipients_total,
-        ])->all();
+        $trend = [];
+
+        for ($day = $from->startOfDay(); $day->lessThanOrEqualTo($to); $day = $day->addDay()) {
+            $date = $day->toDateString();
+            $campaign = $rows->get($date);
+
+            $trend[] = [
+                'date' => $date,
+                'label' => $day->format('d/m'),
+                'sent' => (int) ($campaign->sent_count ?? 0),
+                'total' => (int) ($campaign->recipients_total ?? 0),
+                'has_campaign' => $campaign !== null,
+            ];
+        }
+
+        return $trend;
     }
 
     /**
@@ -173,12 +199,24 @@ class BirthdayDashboardService
             ->where('status', BirthdayRecipient::STATUS_PENDING)
             ->min('scheduled_at');
 
+        // El objetivo son los que sí se van a intentar: los omitidos nunca
+        // entraron en la cola, así que no pueden contar en el denominador.
+        $target = max(0, (int) $campaign->recipients_total - (int) $campaign->skipped_count);
+
         return [
             'id' => $campaign->id,
             'status' => $campaign->status,
             'progress' => $campaign->progressPercent(),
             'sent' => (int) $campaign->sent_count,
+            'failed' => (int) $campaign->failed_count,
+            'skipped' => (int) $campaign->skipped_count,
             'total' => (int) $campaign->recipients_total,
+            // Enviados y fallidos por separado sobre el mismo objetivo: la barra
+            // los apila en vez de sumarlos, que era lo que hacía que 139 de 577
+            // enviados se dibujaran como un 60% de avance.
+            'target' => $target,
+            'sent_percent' => $target > 0 ? (int) round(($campaign->sent_count / $target) * 100) : 0,
+            'failed_percent' => $target > 0 ? (int) round(($campaign->failed_count / $target) * 100) : 0,
             'pending' => $campaign->pendingCount(),
             'next_at' => $nextAt,
             'coupon_code' => $campaign->coupon_code,

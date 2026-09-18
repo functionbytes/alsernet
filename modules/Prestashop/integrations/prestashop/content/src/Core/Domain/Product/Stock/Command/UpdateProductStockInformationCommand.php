@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -95,35 +96,22 @@ class UpdateProductStockInformationCommand
      */
     private $availableDate;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return PackStockType|null
-     */
     public function getPackStockType(): ?PackStockType
     {
         return $this->packStockType;
     }
 
     /**
-     * @param int $packStockType
-     *
-     * @return UpdateProductStockInformationCommand
-     *
      * @throws ProductPackConstraintException
      */
     public function setPackStockType(int $packStockType): UpdateProductStockInformationCommand
@@ -133,19 +121,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getQuantity(): ?int
     {
         return $this->quantity;
     }
 
-    /**
-     * @param int $quantity
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setQuantity(int $quantity): UpdateProductStockInformationCommand
     {
         $this->quantity = $quantity;
@@ -153,17 +133,12 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return OutOfStockType|null
-     */
     public function getOutOfStockType(): ?OutOfStockType
     {
         return $this->outOfStockType;
     }
 
     /**
-     * @param int $outOfStockType
-     *
      * @return $this
      *
      * @throws ProductStockConstraintException
@@ -175,19 +150,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getMinimalQuantity(): ?int
     {
         return $this->minimalQuantity;
     }
 
-    /**
-     * @param int $minimalQuantity
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setMinimalQuantity(int $minimalQuantity): UpdateProductStockInformationCommand
     {
         $this->minimalQuantity = $minimalQuantity;
@@ -195,19 +162,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getLocation(): ?string
     {
         return $this->location;
     }
 
-    /**
-     * @param string $location
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setLocation(string $location): UpdateProductStockInformationCommand
     {
         $this->location = $location;
@@ -215,19 +174,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLowStockThreshold(): ?int
     {
         return $this->lowStockThreshold;
     }
 
-    /**
-     * @param int $lowStockThreshold
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setLowStockThreshold(int $lowStockThreshold): UpdateProductStockInformationCommand
     {
         $this->lowStockThreshold = $lowStockThreshold;
@@ -235,19 +186,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isLowStockAlertEnabled(): ?bool
     {
         return $this->lowStockAlertEnabled;
     }
 
-    /**
-     * @param bool $enabled
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setLowStockAlert(bool $enabled): UpdateProductStockInformationCommand
     {
         $this->lowStockAlertEnabled = $enabled;
@@ -264,9 +207,7 @@ class UpdateProductStockInformationCommand
     }
 
     /**
-     * @param string[] $localizedAvailableNowLabels
-     *
-     * @return UpdateProductStockInformationCommand
+     * @param  string[]  $localizedAvailableNowLabels
      */
     public function setLocalizedAvailableNowLabels(array $localizedAvailableNowLabels): UpdateProductStockInformationCommand
     {
@@ -284,9 +225,7 @@ class UpdateProductStockInformationCommand
     }
 
     /**
-     * @param string[] $localizedAvailableLaterLabels
-     *
-     * @return UpdateProductStockInformationCommand
+     * @param  string[]  $localizedAvailableLaterLabels
      */
     public function setLocalizedAvailableLaterLabels(array $localizedAvailableLaterLabels): UpdateProductStockInformationCommand
     {
@@ -295,19 +234,11 @@ class UpdateProductStockInformationCommand
         return $this;
     }
 
-    /**
-     * @return DateTimeInterface|null
-     */
     public function getAvailableDate(): ?DateTimeInterface
     {
         return $this->availableDate;
     }
 
-    /**
-     * @param DateTimeInterface $availableDate
-     *
-     * @return UpdateProductStockInformationCommand
-     */
     public function setAvailableDate(DateTimeInterface $availableDate): UpdateProductStockInformationCommand
     {
         $this->availableDate = $availableDate;

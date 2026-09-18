@@ -4,6 +4,8 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
+use Modules\Erp\Models\Oracle\Cliente\Cliente;
+use Modules\Erp\Models\Oracle\Configuracion\Idioma;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -69,7 +71,7 @@ class CambioPublicidadEmail extends Model
      */
     public function cambioPublicidadEmail()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CambioPublicidadEmail::class, 'idcambio_publicidad_email', 'idcambio_publicidad_email');
+        return $this->belongsTo(CambioPublicidadEmail::class, 'idcambio_publicidad_email', 'idcambio_publicidad_email');
     }
 
     /**
@@ -78,7 +80,7 @@ class CambioPublicidadEmail extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
     }
 
     /**
@@ -87,6 +89,6 @@ class CambioPublicidadEmail extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 }

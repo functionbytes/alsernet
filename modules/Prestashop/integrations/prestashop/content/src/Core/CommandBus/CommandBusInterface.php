@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ interface CommandBusInterface
     /**
      * Handle command.
      *
-     * @param object $command
+     * @param  object  $command
      */
     public function handle($command);
 }

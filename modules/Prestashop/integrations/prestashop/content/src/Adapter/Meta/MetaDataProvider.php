@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,10 @@ class MetaDataProvider implements MetaDataProviderInterface
      */
     public function getIdByPage($pageName)
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query->select('`id_meta`');
         $query->from('meta');
-        $query->where('`page`= "' . pSQL($pageName) . '"');
+        $query->where('`page`= "'.pSQL($pageName).'"');
 
         $idMeta = 0;
         $result = Db::getInstance()->getValue($query);
@@ -69,10 +70,10 @@ class MetaDataProvider implements MetaDataProviderInterface
      */
     public function getDefaultMetaPageNameById($metaId)
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query->select('`page`');
         $query->from('meta');
-        $query->where('`id_meta`=' . (int) $metaId);
+        $query->where('`id_meta`='.(int) $metaId);
         $query->where('`page` NOT LIKE "module-%"');
         $result = Db::getInstance()->getValue($query);
 
@@ -84,10 +85,10 @@ class MetaDataProvider implements MetaDataProviderInterface
      */
     public function getModuleMetaPageNameById($metaId)
     {
-        $query = new DbQuery();
+        $query = new DbQuery;
         $query->select('`page`');
         $query->from('meta');
-        $query->where('`id_meta`=' . (int) $metaId);
+        $query->where('`id_meta`='.(int) $metaId);
         $query->where('`page` LIKE "module-%"');
 
         $result = Db::getInstance()->getValue($query);
@@ -104,7 +105,7 @@ class MetaDataProvider implements MetaDataProviderInterface
 
         $result = [];
         foreach ($pages as $pageName => $fileName) {
-            if (!$this->isModuleFile($fileName)) {
+            if (! $this->isModuleFile($fileName)) {
                 $result[$pageName] = $fileName;
             }
         }
@@ -132,12 +133,11 @@ class MetaDataProvider implements MetaDataProviderInterface
     /**
      * Checks whenever the file contains module file pattern.
      *
-     * @param string $fileName
-     *
+     * @param  string  $fileName
      * @return bool
      */
     private function isModuleFile($fileName)
     {
-        return 0 === strncmp($fileName, 'module-', 7);
+        return strncmp($fileName, 'module-', 7) === 0;
     }
 }

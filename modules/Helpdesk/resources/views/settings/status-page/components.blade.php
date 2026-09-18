@@ -37,7 +37,7 @@
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('settings.helpdesk.status.components.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo componente
+                            Nuevo componente
                         </a>
                     </div>
                 </div>
@@ -155,7 +155,7 @@
                         <h5 class="fw-bold mb-2">No hay componentes registrados</h5>
                         <p class="text-muted mb-4">Agrega los servicios que deseas monitorear en la pagina de estado</p>
                         <a href="{{ route('settings.helpdesk.status.components.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo componente
+                            Nuevo componente
                         </a>
                     </div>
                 @endif
@@ -184,18 +184,15 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
+@php
+    $hdStatusComponentsConfig = [
+    'flashSuccess' => session('success'),
+    'flashError' => session('error')
+];
+@endphp
+window.HdStatusComponentsConfig = @json($hdStatusComponentsConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/status-components-index.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/status-components-index.js')) }}" defer></script>
 @endpush

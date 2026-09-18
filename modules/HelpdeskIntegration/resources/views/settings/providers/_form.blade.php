@@ -3,7 +3,7 @@
     {{-- Platform slug --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Identificador (platform) @if(!isset($provider) || !$provider?->isNative())<span class="text-danger">*</span>@endif
+            Identificador (platform) @if(!isset($provider) || !$provider?->isNative())<span class="text-brand">*</span>@endif
         </label>
         @if(isset($provider) && $provider?->isNative())
             <input type="text" class="form-control" value="{{ $provider->platform }}" disabled>
@@ -22,7 +22,7 @@
 
     {{-- Label --}}
     <div class="col-12 col-md-6">
-        <label class="form-label">Etiqueta <span class="text-danger">*</span></label>
+        <label class="form-label">Etiqueta <span class="text-brand">*</span></label>
         <input type="text" name="label"
             class="form-control @error('label') is-invalid @enderror"
             value="{{ old('label', $provider->label ?? '') }}"
@@ -89,23 +89,44 @@
     {{-- Credentials --}}
     <div class="col-12">
         <label class="form-label">Credenciales</label>
+        <div class="alert alert-warning py-2 px-3 small mb-2">
+            <i class="fas fa-circle-info me-1"></i>Solo informativas: ningún driver las lee todavía (los proveedores personalizados no tienen driver). Se guardan cifradas por si un driver genérico las usa en el futuro.
+        </div>
         <div class="row g-2">
             <div class="col-md-4">
                 <input type="password" name="credentials[api_key]" class="form-control form-control-sm"
                     placeholder="{{ !empty($provider->credentials['api_key'] ?? null) ? '•••• (sin cambios)' : 'API key' }}"
                     autocomplete="new-password">
+                @if(!empty($provider->credentials['api_key'] ?? null))
+                <div class="form-check mt-1">
+                    <input type="checkbox" name="credentials_clear[]" value="api_key" class="form-check-input" id="clearApiKey">
+                    <label class="form-check-label small" for="clearApiKey">Borrar credencial guardada</label>
+                </div>
+                @endif
             </div>
             <div class="col-md-4">
                 <input type="password" name="credentials[api_secret]" class="form-control form-control-sm"
                     placeholder="{{ !empty($provider->credentials['api_secret'] ?? null) ? '•••• (sin cambios)' : 'API secret' }}"
                     autocomplete="new-password">
+                @if(!empty($provider->credentials['api_secret'] ?? null))
+                <div class="form-check mt-1">
+                    <input type="checkbox" name="credentials_clear[]" value="api_secret" class="form-check-input" id="clearApiSecret">
+                    <label class="form-check-label small" for="clearApiSecret">Borrar credencial guardada</label>
+                </div>
+                @endif
             </div>
             <div class="col-md-4">
                 <input type="text" name="credentials[base_url]" class="form-control form-control-sm"
                     placeholder="URL base" value="{{ old('credentials.base_url', $provider->credentials['base_url'] ?? '') }}">
+                @if(!empty($provider->credentials['base_url'] ?? null))
+                <div class="form-check mt-1">
+                    <input type="checkbox" name="credentials_clear[]" value="base_url" class="form-check-input" id="clearBaseUrl">
+                    <label class="form-check-label small" for="clearBaseUrl">Borrar credencial guardada</label>
+                </div>
+                @endif
             </div>
         </div>
-        <div class="form-text">Se guardan cifradas. Deja el secret vacío para mantener el valor actual.</div>
+        <div class="form-text">Se guardan cifradas. Deja un campo vacío para mantener el valor actual; marca "Borrar" para purgarlo (ej. tras rotar un secreto).</div>
     </div>
 
     {{-- Is active --}}
@@ -150,11 +171,5 @@
 </div>
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    $('#providerIconInput').on('input', function () {
-        var value = $.trim($(this).val()) || 'fas fa-plug';
-        $('#providerIconPreview i').attr('class', value);
-    });});
-</script>
+<script src="{{ asset('vendor/helpdeskintegration/provider-form.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/provider-form.js')) }}" defer></script>
 @endpush

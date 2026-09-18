@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -88,7 +89,6 @@ class UnconfirmedModuleActionException extends CoreException
     /**
      * Module setter.
      *
-     * @param Module $module
      *
      * @return $this
      */
@@ -102,8 +102,7 @@ class UnconfirmedModuleActionException extends CoreException
     /**
      * Action setter.
      *
-     * @param string $action
-     *
+     * @param  string  $action
      * @return $this
      */
     public function setAction($action)
@@ -116,8 +115,7 @@ class UnconfirmedModuleActionException extends CoreException
     /**
      * Subject setter.
      *
-     * @param string $subject
-     *
+     * @param  string  $subject
      * @return $this
      */
     public function setSubject($subject)

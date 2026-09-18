@@ -22,7 +22,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger-solid" id="bv-block-contact-confirm">{{ __('helpdesk::helpdesk.inbox.modals.block_contact_confirm') }}</button>
+            <button class="btn-brand-solid" id="bv-block-contact-confirm">{{ __('helpdesk::helpdesk.inbox.modals.block_contact_confirm') }}</button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
@@ -30,38 +30,8 @@
 
 @once
 @push('scripts')
-<script>
-$(document).on('click', '#bv-block-contact-confirm', function () {
-    var url = $('#bv-btn-block-contact').data('block-url');
-    if (!url) {
-        if (window.toastr) toastr.warning('No hay conversación activa');
-        return;
-    }
-
-    var $btn = $(this).prop('disabled', true);
-
-    $.ajax({
-        url: url,
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json',
-        },
-    })
-    .done(function () {
-        $('[data-bv-modal-name="block-contact"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) $('body').css('overflow', '');
-        if (window.toastr) toastr.success('Contacto bloqueado.');
-        $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-    })
-    .fail(function (xhr) {
-        var msg = xhr?.responseJSON?.message || 'Error al bloquear el contacto';
-        if (window.toastr) toastr.error(msg);
-    })
-    .always(function () {
-        $btn.prop('disabled', false);
-    });
-});
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/block-contact.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/block-contact.js')) }}" defer></script>
 @endpush
 @endonce

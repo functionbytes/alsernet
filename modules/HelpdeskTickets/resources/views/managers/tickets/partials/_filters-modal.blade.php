@@ -5,15 +5,26 @@
      envoltorio visual — no se generó con openModal() porque los <option
      selected> ya vienen resueltos por el servidor. --}}
 <div class="tkt-modal-backdrop" id="tkt-filters-modal-backdrop">
-    <div class="tkt-modal w-md">
+    <div class="tkt-modal w-lg" role="dialog" aria-modal="true" aria-labelledby="tkt-filters-modal-title" tabindex="-1">
         <form method="get" id="htk-filters-form" action="{{ route('manager.helpdesk.tickets.index') }}">
+            {{-- El mismo arrastre que hace la barra de filtros, en el otro
+                 sentido: este formulario controla 16 campos, pero la pantalla
+                 tiene más estado en la URL (la pestaña abierta, el orden, la
+                 vista guardada, el ticket seleccionado). Sin estos hidden,
+                 aplicar un filtro desde aquí te devolvía a la pestaña "Todos",
+                 al orden por defecto y sin el ticket abierto. --}}
+            @foreach(request()->except(['status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status', 'search', 'archived', 'tag', 'mail_status', 'mail_type', 'mailbox', 'has_attachments', 'created_from', 'created_to', 'page']) as $carryKey => $carryValue)
+                @if(is_scalar($carryValue) && filled($carryValue))
+                    <input type="hidden" name="{{ $carryKey }}" value="{{ $carryValue }}">
+                @endif
+            @endforeach
             <div class="tkt-modal-head">
                 <div class="tkt-modal-icon"><i class="fa-solid fa-sliders"></i></div>
                 <div class="hdt-flex-fill-min">
                     <div class="tkt-modal-kicker">Tickets · Filtros</div>
-                    <div class="tkt-modal-title">Filtrar tickets</div>
+                    <div class="tkt-modal-title" id="tkt-filters-modal-title">Filtrar tickets</div>
                 </div>
-                <button type="button" class="tkt-modal-close" id="tkt-filters-modal-close"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="tkt-modal-close" id="tkt-filters-modal-close" aria-label="Cerrar filtros"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
 
             <div class="tkt-modal-body">
@@ -130,17 +141,33 @@
                            placeholder="Ej: vip, reembolso"/>
                 </div>
 
-                <div class="tkt-field-row">
-                    <div class="tkt-field">
-                        <label class="tkt-label" for="htk-f-created-from">Creado desde</label>
-                        <input type="date" id="htk-f-created-from" name="created_from" class="tkt-input"
-                               value="{{ request('created_from') }}"/>
-                    </div>
-                    <div class="tkt-field">
-                        <label class="tkt-label" for="htk-f-created-to">Creado hasta</label>
-                        <input type="date" id="htk-f-created-to" name="created_to" class="tkt-input"
-                               value="{{ request('created_to') }}"/>
-                    </div>
+                {{-- Un único campo de rango en vez de los dos <input type="date">
+                     que había antes: su calendario lo pintaba el navegador —con su
+                     tipografía, sus flechas y el azul del sistema— y no hay CSS
+                     que lo alcance. Es el mismo daterangepicker del chip "fecha"
+                     de la barra (bindDateRange en tickets-app.js), y sigue
+                     mandando created_from/created_to en los dos hidden. --}}
+                @php
+                    $modalFrom = request('created_from') ? \Illuminate\Support\Carbon::parse(request('created_from')) : null;
+                    $modalTo = request('created_to') ? \Illuminate\Support\Carbon::parse(request('created_to')) : null;
+                    $modalRangeLabel = match (true) {
+                        $modalFrom && $modalTo => $modalFrom->translatedFormat('d M Y').' – '.$modalTo->translatedFormat('d M Y'),
+                        (bool) $modalFrom => 'desde '.$modalFrom->translatedFormat('d M Y'),
+                        (bool) $modalTo => 'hasta '.$modalTo->translatedFormat('d M Y'),
+                        default => 'Cualquier fecha',
+                    };
+                @endphp
+                <div class="tkt-field">
+                    <label class="tkt-label" for="htk-f-created-range">Creado entre</label>
+                    <button type="button" id="htk-f-created-range" class="tkt-input tkt-daterange-field"
+                            aria-haspopup="dialog" aria-expanded="false"
+                            data-from="{{ request('created_from') }}" data-to="{{ request('created_to') }}"
+                            data-from-input="#htk-f-created-from" data-to-input="#htk-f-created-to">
+                        <span class="tkt-daterange-text {{ ($modalFrom || $modalTo) ? 'on' : '' }}">{{ $modalRangeLabel }}</span>
+                        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <input type="hidden" id="htk-f-created-from" name="created_from" value="{{ request('created_from') }}"/>
+                    <input type="hidden" id="htk-f-created-to" name="created_to" value="{{ request('created_to') }}"/>
                 </div>
 
                 <div class="tkt-field-row">
@@ -190,7 +217,7 @@
             </div>
 
             <div class="tkt-modal-foot">
-                <button type="submit" class="tkt-btn tkt-btn-primary"><i class="fa-solid fa-check"></i> Aplicar filtros</button>
+                <button type="submit" class="tkt-btn tkt-btn-primary">Aplicar filtros</button>
                 <button type="button" class="tkt-btn" id="htk-f-save-view">Guardar vista</button>
                 <a href="{{ route('manager.helpdesk.tickets.index') }}" class="tkt-btn">Limpiar</a>
             </div>

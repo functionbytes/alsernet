@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,8 +57,8 @@ class LanguageList
 
     public static function getInstance()
     {
-        if (!self::$_instance) {
-            self::$_instance = new self();
+        if (! self::$_instance) {
+            self::$_instance = new self;
         }
 
         return self::$_instance;
@@ -66,7 +67,7 @@ class LanguageList
     public function __construct()
     {
         // English language is required
-        if (!file_exists(_PS_INSTALL_LANGS_PATH_ . 'en/language.xml')) {
+        if (! file_exists(_PS_INSTALL_LANGS_PATH_.'en/language.xml')) {
             throw new PrestashopInstallerException('English language is missing');
         }
 
@@ -75,7 +76,7 @@ class LanguageList
         ];
 
         // Load other languages
-        foreach ((new Finder())->files()->name('language.xml')->in(_PS_INSTALL_LANGS_PATH_) as $langFile) {
+        foreach ((new Finder)->files()->name('language.xml')->in(_PS_INSTALL_LANGS_PATH_) as $langFile) {
             $this->languages[$langFile->getRelativePath()] = new Language($langFile->getRelativePath());
         }
         uasort($this->languages, function ($a, $b) {
@@ -92,12 +93,12 @@ class LanguageList
     /**
      * Set current language.
      *
-     * @param string $iso Language iso
+     * @param  string  $iso  Language iso
      */
     public function setLanguage($iso)
     {
-        if (!in_array($iso, $this->getIsoList())) {
-            throw new PrestashopInstallerException('Language ' . $iso . ' not found');
+        if (! in_array($iso, $this->getIsoList())) {
+            throw new PrestashopInstallerException('Language '.$iso.' not found');
         }
         $this->language = $iso;
     }
@@ -119,7 +120,7 @@ class LanguageList
      */
     public function getLanguage($iso = null)
     {
-        if (!isset($this->languages[$iso])) {
+        if (! isset($this->languages[$iso])) {
             $iso = $this->language;
         }
 
@@ -150,24 +151,19 @@ class LanguageList
     {
         static $countries = null;
 
-        if (null === $countries) {
+        if ($countries === null) {
             $countries = $this->getCountriesByLanguage();
         }
 
         return $countries;
     }
 
-    /**
-     * @param string|null $iso
-     *
-     * @return array
-     */
     public function getCountriesByLanguage(?string $iso = null): array
     {
         $countryList = [];
         $langCountries = $this->getLanguage($iso)->getCountries();
         $defaultCountries = $this->getLanguage(self::DEFAULT_ISO)->getCountries();
-        $xml = @simplexml_load_file(_PS_INSTALL_DATA_PATH_ . 'xml/country.xml');
+        $xml = @simplexml_load_file(_PS_INSTALL_DATA_PATH_.'xml/country.xml');
         if ($xml) {
             foreach ($xml->entities->country as $country) {
                 $iso = strtolower((string) $country['iso_code']);
@@ -188,13 +184,13 @@ class LanguageList
     {
         // This code is from a php.net comment : http://www.php.net/manual/fr/reserved.variables.server.php#94237
         $split_languages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
-        if (!is_array($split_languages)) {
+        if (! is_array($split_languages)) {
             return false;
         }
 
         foreach ($split_languages as $lang) {
-            $pattern = '/^(?P<primarytag>[a-zA-Z]{2,8})' .
-                '(?:-(?P<subtag>[a-zA-Z]{2,8}))?(?:(?:;q=)' .
+            $pattern = '/^(?P<primarytag>[a-zA-Z]{2,8})'.
+                '(?:-(?P<subtag>[a-zA-Z]{2,8}))?(?:(?:;q=)'.
                 '(?P<quantifier>\d\.\d))?$/';
             if (preg_match($pattern, $lang, $m)) {
                 if (in_array($m['primarytag'], $this->getIsoList())) {

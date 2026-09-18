@@ -56,7 +56,7 @@ class SocialCompetitorsController extends Controller
 
     public function destroy(SocialCompetitor $competitor): JsonResponse
     {
-        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.competitors.manage'), 403);
 
         $competitor->delete();
 

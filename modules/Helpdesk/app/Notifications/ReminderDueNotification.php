@@ -15,7 +15,9 @@ class ReminderDueNotification extends Notification implements ShouldQueue
 
     public function __construct(
         private readonly Reminder $reminder,
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(mixed $notifiable): array
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ final class WebserviceKeyFormDataProvider implements FormDataProviderInterface
     private $shopIds;
 
     /**
-     * @param CommandBusInterface $queryBus
-     * @param int[] $shopIds
+     * @param  int[]  $shopIds
      */
     public function __construct(CommandBusInterface $queryBus, array $shopIds)
     {
@@ -88,7 +88,6 @@ final class WebserviceKeyFormDataProvider implements FormDataProviderInterface
     /**
      * Normalizes resource permissions to be in format that is accepted by form
      *
-     * @param array $resourcePermissions
      *
      * @return array
      */

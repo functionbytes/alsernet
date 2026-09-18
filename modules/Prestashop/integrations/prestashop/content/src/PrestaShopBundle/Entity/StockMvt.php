@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,7 @@ use PrestaShop\PrestaShop\Adapter\Configuration;
  * StockMvt.
  *
  * @ORM\Table(indexes={@ORM\Index(name="id_stock", columns={"id_stock"}), @ORM\Index(name="id_stock_mvt_reason", columns={"id_stock_mvt_reason"})})
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\StockMovementRepository")
  */
 class StockMvt
@@ -41,7 +43,9 @@ class StockMvt
      * @var int
      *
      * @ORM\Column(name="id_stock_mvt", type="bigint")
+     *
      * @ORM\Id
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $idStockMvt;
@@ -146,7 +150,7 @@ class StockMvt
 
     public function __construct()
     {
-        $configuration = new Configuration();
+        $configuration = new Configuration;
         $this->setIdStockMvtReason($this->getSign() >= 1 ? $configuration->get('PS_STOCK_MVT_INC_EMPLOYEE_EDITION') : $configuration->get('PS_STOCK_MVT_DEC_EMPLOYEE_EDITION'));
     }
 
@@ -163,8 +167,7 @@ class StockMvt
     /**
      * Set idStock.
      *
-     * @param int $idStock
-     *
+     * @param  int  $idStock
      * @return StockMvt
      */
     public function setIdStock($idStock)
@@ -187,8 +190,7 @@ class StockMvt
     /**
      * Set idOrder.
      *
-     * @param int $idOrder
-     *
+     * @param  int  $idOrder
      * @return StockMvt
      */
     public function setIdOrder($idOrder)
@@ -211,8 +213,7 @@ class StockMvt
     /**
      * Set idSupplyOrder.
      *
-     * @param int $idSupplyOrder
-     *
+     * @param  int  $idSupplyOrder
      * @return StockMvt
      */
     public function setIdSupplyOrder($idSupplyOrder)
@@ -235,8 +236,7 @@ class StockMvt
     /**
      * Set idStockMvtReason.
      *
-     * @param int $idStockMvtReason
-     *
+     * @param  int  $idStockMvtReason
      * @return StockMvt
      */
     public function setIdStockMvtReason($idStockMvtReason)
@@ -259,8 +259,7 @@ class StockMvt
     /**
      * Set idEmployee.
      *
-     * @param int $idEmployee
-     *
+     * @param  int  $idEmployee
      * @return StockMvt
      */
     public function setIdEmployee($idEmployee)
@@ -283,8 +282,7 @@ class StockMvt
     /**
      * Set employeeLastname.
      *
-     * @param string $employeeLastname
-     *
+     * @param  string  $employeeLastname
      * @return StockMvt
      */
     public function setEmployeeLastname($employeeLastname)
@@ -307,8 +305,7 @@ class StockMvt
     /**
      * Set employeeFirstname.
      *
-     * @param string $employeeFirstname
-     *
+     * @param  string  $employeeFirstname
      * @return StockMvt
      */
     public function setEmployeeFirstname($employeeFirstname)
@@ -331,8 +328,7 @@ class StockMvt
     /**
      * Set physicalQuantity.
      *
-     * @param int $physicalQuantity
-     *
+     * @param  int  $physicalQuantity
      * @return StockMvt
      */
     public function setPhysicalQuantity($physicalQuantity)
@@ -355,8 +351,7 @@ class StockMvt
     /**
      * Set dateAdd.
      *
-     * @param \DateTime $dateAdd
-     *
+     * @param  \DateTime  $dateAdd
      * @return StockMvt
      */
     public function setDateAdd($dateAdd)
@@ -379,8 +374,7 @@ class StockMvt
     /**
      * Set sign.
      *
-     * @param int $sign
-     *
+     * @param  int  $sign
      * @return StockMvt
      */
     public function setSign($sign)
@@ -403,8 +397,7 @@ class StockMvt
     /**
      * Set priceTe.
      *
-     * @param string $priceTe
-     *
+     * @param  string  $priceTe
      * @return StockMvt
      */
     public function setPriceTe($priceTe)
@@ -427,8 +420,7 @@ class StockMvt
     /**
      * Set lastWa.
      *
-     * @param string $lastWa
-     *
+     * @param  string  $lastWa
      * @return StockMvt
      */
     public function setLastWa($lastWa)
@@ -451,8 +443,7 @@ class StockMvt
     /**
      * Set currentWa.
      *
-     * @param string $currentWa
-     *
+     * @param  string  $currentWa
      * @return StockMvt
      */
     public function setCurrentWa($currentWa)
@@ -475,8 +466,7 @@ class StockMvt
     /**
      * Set referer.
      *
-     * @param int $referer
-     *
+     * @param  int  $referer
      * @return StockMvt
      */
     public function setReferer($referer)

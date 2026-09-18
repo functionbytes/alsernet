@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,9 @@ use PrestaShop\PrestaShop\Core\Domain\Meta\Exception\MetaConstraintException;
 abstract class AbstractMetaCommand
 {
     /**
-     * @param int $languageId
-     * @param string $value
-     * @param int $constraintErrorCode
+     * @param  int  $languageId
+     * @param  string  $value
+     * @param  int  $constraintErrorCode
      *
      * @throws MetaConstraintException
      */
@@ -44,7 +45,7 @@ abstract class AbstractMetaCommand
     {
         $regex = '/^[^<>={}]*$/u';
 
-        if ($value && !preg_match($regex, $value)) {
+        if ($value && ! preg_match($regex, $value)) {
             throw new MetaConstraintException(sprintf('Value "%s" for language id %s did not passed the regex expression: %s', $value, $languageId, $regex), $constraintErrorCode);
         }
     }

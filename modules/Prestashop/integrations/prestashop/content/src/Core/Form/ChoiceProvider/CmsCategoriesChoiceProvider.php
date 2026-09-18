@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,9 +36,6 @@ final class CmsCategoriesChoiceProvider implements FormChoiceProviderInterface
      */
     private $nestedCategories;
 
-    /**
-     * @param array $nestedCategories
-     */
     public function __construct(array $nestedCategories)
     {
         $this->nestedCategories = $nestedCategories;
@@ -54,8 +52,6 @@ final class CmsCategoriesChoiceProvider implements FormChoiceProviderInterface
     }
 
     /**
-     * @param array $category
-     *
      * @return array
      */
     private function buildChoiceTree(array $category)

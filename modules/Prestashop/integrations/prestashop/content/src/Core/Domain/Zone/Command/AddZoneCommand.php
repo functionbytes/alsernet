@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,6 @@ class AddZoneCommand
      */
     private $shopAssociation;
 
-    /**
-     * @param string $name
-     * @param bool $enabled
-     * @param array $shopAssociation
-     */
     public function __construct(string $name, bool $enabled, array $shopAssociation)
     {
         $this->name = $name;
@@ -60,25 +56,16 @@ class AddZoneCommand
         $this->shopAssociation = $shopAssociation;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;
     }
 
-    /**
-     * @return array
-     */
     public function getShopAssociation(): array
     {
         return $this->shopAssociation;

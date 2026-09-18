@@ -178,42 +178,11 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+{{-- Solo datos: la lógica entera vive en macros-index.js. --}}
 <script>
-$(document).ready(function () {
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
-    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
-
-    $('#bulk-modal').on('hide.bs.modal', function () {
-        $('#bulk-action-select').val('').trigger('change');
-        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-        bulk.reset();
-    });
-
-    $('#bulk-apply-btn').on('click', function () {
-        const action = $('#bulk-action-select').val();
-        const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una acción.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una macro.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' macro(s) seleccionadas?')) { return; }
-
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-        $.ajax({
-            url: '{{ route("manager.helpdesk.settings.macros.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message);
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
-    });
-});
+window.hdtMacrosIndexConfig = {
+    bulkActionUrl: @json(route('manager.helpdesk.settings.macros.bulk-action')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/macros-index.js') }}"></script>
 @endpush

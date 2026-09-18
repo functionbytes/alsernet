@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,7 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextShopIds;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -72,13 +70,11 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb
             ->select('slip.id_order_slip, slip.id_order, slip.date_add')
-            ->groupBy('slip.id_order_slip')
-        ;
+            ->groupBy('slip.id_order_slip');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -89,8 +85,7 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT slip.`id_order_slip`)')
-        ;
+            ->select('COUNT(DISTINCT slip.`id_order_slip`)');
 
         return $qb;
     }
@@ -98,7 +93,6 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with the common sql for credit slip listing.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -106,14 +100,13 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'order_slip', 'slip')
+            ->from($this->dbPrefix.'order_slip', 'slip')
             ->leftJoin(
                 'slip',
-                $this->dbPrefix . 'orders',
+                $this->dbPrefix.'orders',
                 'orders',
                 'slip.id_order = orders.id_order'
-            )
-        ;
+            );
         $qb->andWhere('orders.id_shop IN (:contextShopIds)');
         $qb->setParameter('contextShopIds', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
         $this->applyFilters($qb, $filters);
@@ -121,10 +114,6 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param array $filters
-     */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
         $availableFiltersMap = [
@@ -134,26 +123,27 @@ final class CreditSlipQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $availableFiltersMap)) {
+            if (! array_key_exists($filterName, $availableFiltersMap)) {
                 continue;
             }
 
-            if ('id_credit_slip' === $filterName || 'id_order' === $filterName) {
-                $qb->andWhere($availableFiltersMap[$filterName] . "= :$filterName");
+            if ($filterName === 'id_credit_slip' || $filterName === 'id_order') {
+                $qb->andWhere($availableFiltersMap[$filterName]."= :$filterName");
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            if ('date_issued' === $filterName) {
+            if ($filterName === 'date_issued') {
                 if (isset($value['from'])) {
-                    $qb->andWhere($availableFiltersMap[$filterName] . ' >= :date_from');
+                    $qb->andWhere($availableFiltersMap[$filterName].' >= :date_from');
                     $qb->setParameter('date_from', sprintf('%s 0:0:0', $value['from']));
                 }
                 if (isset($value['to'])) {
-                    $qb->andWhere($availableFiltersMap[$filterName] . ' <= :date_to');
+                    $qb->andWhere($availableFiltersMap[$filterName].' <= :date_to');
                     $qb->setParameter('date_to', sprintf('%s 23:59:59', $value['to']));
                 }
+
                 continue;
             }
         }

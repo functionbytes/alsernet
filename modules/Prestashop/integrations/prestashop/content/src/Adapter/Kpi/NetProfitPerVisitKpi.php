@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ final class NetProfitPerVisitKpi implements KpiInterface
     {
         $translator = Context::getContext()->getTranslator();
 
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-net-profit-visit';
         $helper->icon = 'account_box';
         $helper->color = 'color1';
@@ -55,7 +56,7 @@ final class NetProfitPerVisitKpi implements KpiInterface
         }
 
         $helper->source = Context::getContext()->link->getAdminLink('AdminStats')
-            . '&ajax=1&action=getKpi&kpi=netprofit_visit';
+            .'&ajax=1&action=getKpi&kpi=netprofit_visit';
         $helper->refresh = (bool) (ConfigurationKPI::get('NETPROFIT_VISIT_EXPIRE') < time());
 
         return $helper->generate();

@@ -4,6 +4,7 @@ namespace Modules\Document\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -13,7 +14,6 @@ use Modules\Document\Console\Commands\CreateBlockedProductDocuments;
 use Modules\Document\Console\Commands\InitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\MigrateProductBlockades;
 use Modules\Document\Console\Commands\MonitorEmailJobs;
-use Modules\Document\Console\Commands\ProcessEmailBouncesCommand;
 use Modules\Document\Console\Commands\ReinitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\RetryFailedEmailJobs;
 use Modules\Document\Console\Commands\RevalidateDocumentTypes;
@@ -28,10 +28,10 @@ use Modules\Document\Entities\DocumentPermission;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Http\ViewComposers\NavigationComposer;
 use Modules\Document\Policies\DocumentPolicy;
-use Modules\Document\Services\DocumentEmailLogPanelRenderer;
 use Modules\Document\Policies\SettingsPolicy;
-use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
+use Modules\Document\Services\DocumentEmailLogPanelRenderer;
 use Modules\Document\Services\PermissionService;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -39,6 +39,11 @@ use RecursiveIteratorIterator;
 
 class DocumentsServiceProvider extends ServiceProvider
 {
+    private const PERMISSION_NAMES_CACHE_KEY = 'document:permission-names';
+
+    /** @var array<int, string>|null */
+    private static ?array $permissionNames = null;
+
     use PathNamespace;
 
     protected string $name = 'Document';
@@ -150,34 +155,75 @@ class DocumentsServiceProvider extends ServiceProvider
         // Register dynamic gates for document permissions
         // This allows using middleware('can:permission-name') with any permission from document_permissions table
         Gate::before(function ($user, $ability) {
-            // Super-admin bypass
+            // Este gancho existe para resolver los permisos que viven en la
+            // tabla `document_permissions`, que no son permisos de Spatie y por
+            // eso hay que comprobarlos a mano contra los grupos validadores.
+            //
+            // El atajo de super-admin estaba ANTES de esa comprobación y sin
+            // acotar por ability, así que concedía cualquier permiso de
+            // cualquiera de los 40 módulos —no solo los de Document— a los 212
+            // usuarios con ese rol: un Gate::before de un módulo satélite
+            // decidiendo sobre todo el sistema. Ahora se responde únicamente
+            // dentro del dominio propio, igual que hace Supplier con el suyo, y
+            // fuera de aquí manda el permiso asignado.
+            if (! class_exists('Modules\Document\Entities\DocumentPermission')) {
+                return null;
+            }
+
+            // La comprobación de "¿es esto un permiso de Document?" era un
+            // SELECT EXISTS contra document_permissions… en CADA can() de la
+            // aplicación entera, no solo de este módulo. Medido en la bandeja
+            // de conversaciones: 95 de sus 171 consultas eran esta, repetida,
+            // para una tabla de 53 filas que cambia una vez al año. Ahora la
+            // lista se resuelve una vez por petición (y se cachea 10 minutos)
+            // y la comparación es en memoria.
+            if (! in_array($ability, self::documentPermissionNames(), true)) {
+                return null; // No es un permiso de Document: no opinamos.
+            }
+
             if ($user->hasRole('super-admin')) {
                 return true;
             }
 
-            // Check if this ability exists in document permissions
-            if (class_exists('Modules\Document\Entities\DocumentPermission')) {
-                $permission = DocumentPermission::where('name', $ability)->first();
-
-                if ($permission) {
-                    // Get user's validator groups
-                    $userGroups = DocumentValidatorGroup::whereHas('users', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    })->get();
-
-                    // Check if any of the user's groups have this permission
-                    foreach ($userGroups as $group) {
-                        if ($group->permissions()->where('name', $ability)->exists()) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            }
-
-            return null; // Let other gates/policies handle it
+            // Una sola consulta en vez de 1 (traer los grupos) + N (preguntar
+            // grupo a grupo si tiene el permiso).
+            return DocumentValidatorGroup::query()
+                ->whereHas('users', fn ($q) => $q->where('user_id', $user->id))
+                ->whereHas('permissions', fn ($q) => $q->where('name', $ability))
+                ->exists();
         });
+    }
+
+    /**
+     * Nombres de los permisos que gobierna este módulo.
+     *
+     * Memo estático por petición + caché corta: el Gate::before de arriba se
+     * consulta decenas de veces por pantalla y esta lista es de 53 filas que
+     * solo cambian cuando se instala o amplía el módulo. La caché se limpia
+     * desde DocumentPermissionsCache::forget() al tocar los permisos.
+     *
+     * @return array<int, string>
+     */
+    public static function documentPermissionNames(): array
+    {
+        if (self::$permissionNames !== null) {
+            return self::$permissionNames;
+        }
+
+        return self::$permissionNames = Cache::remember(
+            self::PERMISSION_NAMES_CACHE_KEY,
+            600,
+            fn () => DocumentPermission::query()->pluck('name')->all()
+        );
+    }
+
+    /**
+     * Invalida la lista cacheada (crear/borrar permisos de Document).
+     */
+    public static function forgetPermissionNames(): void
+    {
+        self::$permissionNames = null;
+        Cache::forget(self::PERMISSION_NAMES_CACHE_KEY);
     }
 
     /**
@@ -218,7 +264,6 @@ class DocumentsServiceProvider extends ServiceProvider
             MonitorEmailJobs::class,
             AnalyzeEmailJobErrors::class,
             RetryFailedEmailJobs::class,
-            ProcessEmailBouncesCommand::class,
         ]);
     }
 
@@ -250,26 +295,6 @@ class DocumentsServiceProvider extends ServiceProvider
             // Buzones de rebote) antes de desplegar este cambio — esos
             // Settings ya no los lee nadie.
         });
-    }
-
-    /**
-     * Register the bounce-checking schedule (every 10 minutes) if enabled via Settings.
-     */
-    protected function registerBounceProcessingSchedule(Schedule $schedule): void
-    {
-        try {
-            if (Setting::get('documents.bounce_imap_enabled', 'no') !== 'yes') {
-                return;
-            }
-
-            $schedule->command('documents:process-bounces')
-                ->everyTenMinutes()
-                ->withoutOverlapping()
-                ->runInBackground()
-                ->appendOutputTo(storage_path('logs/document-bounces.log'));
-        } catch (\Exception $e) {
-            // No interrumpir el boot si la tabla settings aún no existe
-        }
     }
 
     /**
@@ -396,7 +421,7 @@ class DocumentsServiceProvider extends ServiceProvider
     {
         // Mini-nav item para Documentos (operaciones)
         NavService::registerMiniItem('documents', [
-            'icon' => 'fa-duotone fa-thin fa-album-collection-circle-plus',
+            'icon' => 'wallet',
             'tooltip' => 'Documentos',
             'sidebar_id' => 'documents',
             'order' => 20,
@@ -414,6 +439,7 @@ class DocumentsServiceProvider extends ServiceProvider
         // Agregar configuraciones de documentos al sidebar genérico 'settings'
         NavService::registerSidebar('settings', [
             'title' => 'Documentos',
+            'order' => 110,
             'items' => [
                 ['label' => 'Configuración global', 'route' => 'settings.documents.configurations.global'],
                 ['label' => 'Almacenamiento', 'route' => 'settings.documents.configurations.storage'],

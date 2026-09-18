@@ -51,6 +51,52 @@ class HelpdeskTicketsPermissionsSeeder extends Seeder
             $role->givePermissionTo($permissionNames);
         }
 
+        // Hasta el 8-sep-2026 este seeder SOLO daba permisos a los roles de
+        // administrador: helpdesk-agent/helpdesk-manager se quedaban con
+        // cero permisos de tickets, así que aunque el gate de rol de la ruta
+        // (ver HelpdeskTicketsServiceProvider::loadManagerRoutes()) dejara
+        // pasar a un agente real, TicketPolicy le denegaba todo de todas
+        // formas — el sistema de permisos fino no gobernaba nada en la
+        // práctica.
+        //
+        // El trabajo del día a día de un agente: ver/crear/actualizar
+        // tickets, asignarlos (incluido asignárselos a sí mismo), cerrarlos y
+        // resolverlos, y mandar/leer los correos del hilo. NO incluye
+        // eliminar, fusionar ni la configuración del módulo (categorías,
+        // SLA, estados) — eso sigue siendo cosa de un manager o admin.
+        $agentPermissions = [
+            'helpdesk.tickets.view',
+            'helpdesk.tickets.create',
+            'helpdesk.tickets.update',
+            'helpdesk.tickets.assign',
+            'helpdesk.tickets.close',
+            'helpdesk.tickets.resolve',
+            'helpdesk.tickets.emails.view',
+            'helpdesk.tickets.emails.send',
+        ];
+
+        if ($agentRole = Role::where('name', 'helpdesk-agent')->first()) {
+            $agentRole->givePermissionTo($agentPermissions);
+        }
+
+        // Un manager hace todo lo del agente sobre CUALQUIER equipo
+        // (helpdesk.tickets.manage — ver TicketPolicy::inScope()), y además
+        // fusiona/elimina tickets y reenvía o borra correos del hilo. La
+        // configuración del módulo (helpdesk.tickets.settings) sigue sin
+        // dársele: eso es de administración, no de gestión del día a día.
+        $managerPermissions = array_merge($agentPermissions, [
+            'helpdesk.tickets.manage',
+            'helpdesk.tickets.delete',
+            'helpdesk.tickets.merge',
+            'helpdesk.tickets.emails.resend',
+            'helpdesk.tickets.emails.delete',
+            'helpdesk.tickets.emails.send_to_any',
+        ]);
+
+        if ($managerRole = Role::where('name', 'helpdesk-manager')->first()) {
+            $managerRole->givePermissionTo($managerPermissions);
+        }
+
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

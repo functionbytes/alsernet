@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,7 @@ use PrestaShop\PrestaShop\Core\Repository\RepositoryInterface;
 /**
  * Class RequestSqlRepository is responsible for retrieving RequestSql data from database.
  */
-class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderInterface
+class RequestSqlRepository implements DoctrineQueryBuilderInterface, RepositoryInterface
 {
     /**
      * @var Connection
@@ -57,7 +58,7 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
     {
         $this->connection = $connection;
         $this->dbPrefix = $dbPrefix;
-        $this->requestSqlTable = $dbPrefix . 'request_sql';
+        $this->requestSqlTable = $dbPrefix.'request_sql';
     }
 
     /**
@@ -86,20 +87,19 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
     /**
      * Get query that searches grid rows.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @deprecated since 1.7.8.0
      * @see RequestSqlQueryBuilder::getSearchQueryBuilder()
      *
      * @return QueryBuilder
      */
-    public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria = null)
+    public function getSearchQueryBuilder(?SearchCriteriaInterface $searchCriteria = null)
     {
         @trigger_error(
             sprintf(
                 'The "%s()" method is deprecated since 1.7.8.0. Use %s instead.',
                 __METHOD__,
-                RequestSqlQueryBuilder::class . '::getSearchQueryBuilder()'
+                RequestSqlQueryBuilder::class.'::getSearchQueryBuilder()'
             ),
             E_USER_DEPRECATED
         );
@@ -116,20 +116,19 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
     /**
      * Get query that counts grid rows.
      *
-     * @param SearchCriteriaInterface $searchCriteria
      *
      * @deprecated since 1.7.8.0
      * @see RequestSqlQueryBuilder::getCountQueryBuilder()
      *
      * @return QueryBuilder
      */
-    public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria = null)
+    public function getCountQueryBuilder(?SearchCriteriaInterface $searchCriteria = null)
     {
         @trigger_error(
             sprintf(
                 'The "%s()" method is deprecated since 1.7.8.0. Use %s instead.',
                 __METHOD__,
-                RequestSqlQueryBuilder::class . '::getCountQueryBuilder()'
+                RequestSqlQueryBuilder::class.'::getCountQueryBuilder()'
             ),
             E_USER_DEPRECATED
         );
@@ -143,7 +142,6 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
     /**
      * Build partial query by search criteria.
      *
-     * @param SearchCriteriaInterface $criteria
      *
      * @deprecated since 1.7.8.0
      * @see RequestSqlQueryBuilder::buildQueryBySearchCriteria()
@@ -156,7 +154,7 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
             sprintf(
                 'The "%s()" method is deprecated since 1.7.8.0. Use %s instead.',
                 __METHOD__,
-                RequestSqlQueryBuilder::class . '::buildQueryBySearchCriteria()'
+                RequestSqlQueryBuilder::class.'::buildQueryBySearchCriteria()'
             ),
             E_USER_DEPRECATED
         );
@@ -169,7 +167,7 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
                 continue;
             }
 
-            if ('id_request_sql' === $filterName) {
+            if ($filterName === 'id_request_sql') {
                 $qb->andWhere('rs.id_request_sql = :id_request_sql');
                 $qb->setParameter('id_request_sql', $value);
 
@@ -177,7 +175,7 @@ class RequestSqlRepository implements RepositoryInterface, DoctrineQueryBuilderI
             }
 
             $qb->andWhere("`$filterName` LIKE :$filterName");
-            $qb->setParameter($filterName, '%' . $value . '%');
+            $qb->setParameter($filterName, '%'.$value.'%');
         }
 
         return $qb;

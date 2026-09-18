@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,12 +41,19 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 class Module implements ModuleInterface
 {
     public const ACTION_INSTALL = 'install';
+
     public const ACTION_UNINSTALL = 'uninstall';
+
     public const ACTION_ENABLE = 'enable';
+
     public const ACTION_DISABLE = 'disable';
+
     public const ACTION_ENABLE_MOBILE = 'enable_mobile';
+
     public const ACTION_DISABLE_MOBILE = 'disable_mobile';
+
     public const ACTION_RESET = 'reset';
+
     public const ACTION_UPGRADE = 'upgrade';
 
     /**
@@ -56,21 +64,21 @@ class Module implements ModuleInterface
     /**
      * Module attributes (name, displayName etc.).
      *
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var ParameterBag
      */
     public $attributes;
 
     /**
      * Module attributes from disk.
      *
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var ParameterBag
      */
     public $disk;
 
     /**
      * Module attributes from database.
      *
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var ParameterBag
      */
     public $database;
 
@@ -144,11 +152,6 @@ class Module implements ModuleInterface
         'date_upd' => null,
     ];
 
-    /**
-     * @param array $attributes
-     * @param array $disk
-     * @param array $database
-     */
     public function __construct(array $attributes = [], array $disk = [], array $database = [])
     {
         $this->attributes = new ParameterBag($this->attributes_default);
@@ -161,13 +164,13 @@ class Module implements ModuleInterface
 
         if ($this->database->get('installed')) {
             $version = $this->database->get('version');
-        } elseif (null === $this->attributes->get('version') && $this->disk->get('is_valid')) {
+        } elseif ($this->attributes->get('version') === null && $this->disk->get('is_valid')) {
             $version = $this->disk->get('version');
         } else {
             $version = $this->attributes->get('version');
         }
 
-        if (!$this->attributes->has('version_available')) {
+        if (! $this->attributes->has('version_available')) {
             $this->attributes->set('version_available', $this->disk->get('version'));
         }
 
@@ -188,7 +191,7 @@ class Module implements ModuleInterface
      */
     public function getInstance()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return;
         }
 
@@ -235,7 +238,7 @@ class Module implements ModuleInterface
      */
     public function onInstall()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
@@ -262,12 +265,12 @@ class Module implements ModuleInterface
      */
     public function onUninstall()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
         $result = $this->instance->uninstall();
-        $this->database->set('installed', !$result);
+        $this->database->set('installed', ! $result);
 
         return $result;
     }
@@ -287,7 +290,7 @@ class Module implements ModuleInterface
      */
     public function onEnable()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
@@ -302,12 +305,12 @@ class Module implements ModuleInterface
      */
     public function onDisable()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
         $result = $this->instance->disable();
-        $this->database->set('active', !$result);
+        $this->database->set('active', ! $result);
 
         return $result;
     }
@@ -317,7 +320,7 @@ class Module implements ModuleInterface
      */
     public function onMobileEnable()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
@@ -332,12 +335,12 @@ class Module implements ModuleInterface
      */
     public function onMobileDisable()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
         $result = $this->instance->disableDevice(AddonListFilterDeviceStatus::DEVICE_MOBILE);
-        $this->database->set('active_on_mobile', !$result);
+        $this->database->set('active_on_mobile', ! $result);
 
         return $result;
     }
@@ -347,7 +350,7 @@ class Module implements ModuleInterface
      */
     public function onReset()
     {
-        if (!$this->hasValidInstance()) {
+        if (! $this->hasValidInstance()) {
             return false;
         }
 
@@ -365,16 +368,15 @@ class Module implements ModuleInterface
          */
         $path = $this->disk->get('path', ''); // Variable needed for empty() test
         if (empty($path)) {
-            $this->disk->set('path', _PS_MODULE_DIR_ . DIRECTORY_SEPARATOR . $this->attributes->get('name'));
+            $this->disk->set('path', _PS_MODULE_DIR_.DIRECTORY_SEPARATOR.$this->attributes->get('name'));
         }
         // End of temporary content
-        require_once $this->disk->get('path') . DIRECTORY_SEPARATOR . $this->attributes->get('name') . '.php';
+        require_once $this->disk->get('path').DIRECTORY_SEPARATOR.$this->attributes->get('name').'.php';
         $this->instance = LegacyModule::getInstanceByName($this->attributes->get('name'));
     }
 
     /**
-     * @param string $attribute
-     *
+     * @param  string  $attribute
      * @return mixed
      */
     public function get($attribute)
@@ -383,8 +385,8 @@ class Module implements ModuleInterface
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      */
     public function set($attribute, $value)
     {
@@ -392,8 +394,7 @@ class Module implements ModuleInterface
     }
 
     /**
-     * @param string $value
-     *
+     * @param  string  $value
      * @return mixed|string
      */
     private function convertType($value)
@@ -413,14 +414,14 @@ class Module implements ModuleInterface
     {
         $img = $this->attributes->get('img');
         if (empty($img)) {
-            $this->attributes->set('img', __PS_BASE_URI__ . 'img/questionmark.png');
+            $this->attributes->set('img', __PS_BASE_URI__.'img/questionmark.png');
         }
-        $this->attributes->set('logo', __PS_BASE_URI__ . 'img/questionmark.png');
+        $this->attributes->set('logo', __PS_BASE_URI__.'img/questionmark.png');
 
         foreach (['logo.png', 'logo.gif'] as $logo) {
-            $logo_path = _PS_MODULE_DIR_ . $this->get('name') . DIRECTORY_SEPARATOR . $logo;
+            $logo_path = _PS_MODULE_DIR_.$this->get('name').DIRECTORY_SEPARATOR.$logo;
             if (file_exists($logo_path)) {
-                $this->attributes->set('img', __PS_BASE_URI__ . basename(_PS_MODULE_DIR_) . '/' . $this->get('name') . '/' . $logo);
+                $this->attributes->set('img', __PS_BASE_URI__.basename(_PS_MODULE_DIR_).'/'.$this->get('name').'/'.$logo);
                 $this->attributes->set('logo', $logo);
 
                 break;
@@ -462,8 +463,7 @@ class Module implements ModuleInterface
     /**
      * Return installed modules.
      *
-     * @param int $position Take only positionnables modules
-     *
+     * @param  int  $position  Take only positionnables modules
      * @return array modules
      */
     public function getModulesInstalled($position = 0)
@@ -474,8 +474,7 @@ class Module implements ModuleInterface
     /**
      * Return an instance of the specified module.
      *
-     * @param int $moduleId Module id
-     *
+     * @param  int  $moduleId  Module id
      * @return Module|false
      */
     public function getInstanceById($moduleId)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,12 +54,6 @@ class UpdateOrderShippingDetailsCommand
      */
     private $currentOrderCarrierId;
 
-    /**
-     * @param int $orderId
-     * @param int $currentOrderCarrierId
-     * @param int $newCarrierId
-     * @param string $trackingNumber
-     */
     public function __construct(int $orderId, int $currentOrderCarrierId, int $newCarrierId, ?string $trackingNumber = '')
     {
         $this->orderId = new OrderId($orderId);
@@ -67,33 +62,21 @@ class UpdateOrderShippingDetailsCommand
         $this->currentOrderCarrierId = $currentOrderCarrierId;
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return int
-     */
     public function getNewCarrierId(): int
     {
         return $this->newCarrierId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getShippingTrackingNumber(): ?string
     {
         return $this->trackingNumber;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrentOrderCarrierId(): int
     {
         return $this->currentOrderCarrierId;

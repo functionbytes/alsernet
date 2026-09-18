@@ -1,21 +1,24 @@
 <?php
+
 class EventsController extends Module
 {
     public $module;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->bootstrap = true;
-        $this->module =  Module::getInstanceByName("alserneteventmanager");
+        $this->module = Module::getInstanceByName('alserneteventmanager');
         parent::__construct();
     }
+
     public function isActive($eventId)
     {
         $event = Db::getInstance()->getRow('
         SELECT * FROM '._DB_PREFIX_.'alsernet_event_manager
-        WHERE id_event = '.(int)$eventId
+        WHERE id_event = '.(int) $eventId
         );
 
-        if (!$event) {
+        if (! $event) {
             return false;
         }
 
@@ -32,7 +35,8 @@ class EventsController extends Module
         return true;
     }
 
-    public function getAlls(){
+    public function getAlls()
+    {
 
         $currentDate = date('Y-m-d H:i:s');
 
@@ -67,17 +71,23 @@ class EventsController extends Module
                 if ($language['id_event'] == $event['id_event']) {
 
                     switch ($language['id_lang']) {
-                        case 1: $id_country = 6; break;
-                        case 2: $id_country = 17; break;
-                        case 3: $id_country = 8; break;
-                        case 4: $id_country = 15; break;
-                        case 5: $id_country = 1; break;
-                        case 6: $id_country = 10; break;
+                        case 1: $id_country = 6;
+                            break;
+                        case 2: $id_country = 17;
+                            break;
+                        case 3: $id_country = 8;
+                            break;
+                        case 4: $id_country = 15;
+                            break;
+                        case 5: $id_country = 1;
+                            break;
+                        case 6: $id_country = 10;
+                            break;
                         default: continue 2;
                     }
 
-                    $country = new Country($id_country, (int)$language['id_lang']);
-                    $iso_code = ($id_country == 17) ?'en' : $country->iso_code;
+                    $country = new Country($id_country, (int) $language['id_lang']);
+                    $iso_code = ($id_country == 17) ? 'en' : $country->iso_code;
                     $eventLanguages[] = [
                         'id_country' => $country->id,
                         'name' => $country->name,
@@ -107,15 +117,16 @@ class EventsController extends Module
             ];
         }
 
-        return array(
-             'status' => 'success',
-             'message' => 'success',
-             'data' => $response,
-        );
+        return [
+            'status' => 'success',
+            'message' => 'success',
+            'data' => $response,
+        ];
 
     }
 
-    public function l($string, $specific = false, $locale = null){
+    public function l($string, $specific = false, $locale = null)
+    {
 
         return $this->getModuleTranslation(
             $this->module,
@@ -127,8 +138,7 @@ class EventsController extends Module
         );
     }
 
-
-    public  function getModuleTranslation(
+    public function getModuleTranslation(
         $module,
         $originalString,
         $source,
@@ -147,7 +157,7 @@ class EventsController extends Module
 
         $name = $module->name;
 
-        if (null !== $locale) {
+        if ($locale !== null) {
             $iso = Language::getIsoByLocale($locale);
         }
 
@@ -155,48 +165,47 @@ class EventsController extends Module
             $iso = Context::getContext()->language->iso_code;
         }
 
-        if (!isset($translationsMerged[$name][$iso])) {
+        if (! isset($translationsMerged[$name][$iso])) {
             $filesByPriority = [
-                _PS_MODULE_DIR_ . $name . '/translations/' . $iso . '.php',
-                _PS_MODULE_DIR_ . $name . '/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/translations/' . $iso . '.php',
-                _PS_THEME_DIR_ . 'modules/' . $name . '/' . $iso . '.php',
+                _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
+                _PS_MODULE_DIR_.$name.'/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php',
+                _PS_THEME_DIR_.'modules/'.$name.'/'.$iso.'.php',
             ];
             foreach ($filesByPriority as $file) {
                 if (file_exists($file)) {
                     include_once $file;
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    $_MODULES = ! empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
                 }
             }
             $translationsMerged[$name][$iso] = true;
         }
 
-
         $string = preg_replace("/\\\*'/", "\'", $originalString);
         $key = md5($string);
 
-        $cacheKey = $name . '|' . $string . '|' . $source . '|' . (int) $js . '|' . $iso;
+        $cacheKey = $name.'|'.$string.'|'.$source.'|'.(int) $js.'|'.$iso;
         if (isset($langCache[$cacheKey])) {
             $ret = $langCache[$cacheKey];
         } else {
-            $currentKey = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-            $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
+            $currentKey = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$source).'_'.$key;
+            $defaultKey = strtolower('<{'.$name.'}prestashop>'.$source).'_'.$key;
 
-            if ('controller' == substr($source, -10, 10)) {
+            if (substr($source, -10, 10) == 'controller') {
                 $file = substr($source, 0, -10);
-                $currentKeyFile = strtolower('<{' . $name . '}' . _THEME_NAME_ . '>' . $file) . '_' . $key;
-                $defaultKeyFile = strtolower('<{' . $name . '}prestashop>' . $file) . '_' . $key;
+                $currentKeyFile = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$file).'_'.$key;
+                $defaultKeyFile = strtolower('<{'.$name.'}prestashop>'.$file).'_'.$key;
             }
 
-            if (isset($currentKeyFile) && !empty($_MODULES[$currentKeyFile])) {
+            if (isset($currentKeyFile) && ! empty($_MODULES[$currentKeyFile])) {
                 $ret = stripslashes($_MODULES[$currentKeyFile]);
-            } elseif (isset($defaultKeyFile) && !empty($_MODULES[$defaultKeyFile])) {
+            } elseif (isset($defaultKeyFile) && ! empty($_MODULES[$defaultKeyFile])) {
                 $ret = stripslashes($_MODULES[$defaultKeyFile]);
-            } elseif (!empty($_MODULES[$currentKey])) {
+            } elseif (! empty($_MODULES[$currentKey])) {
                 $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (!empty($_MODULES[$defaultKey])) {
+            } elseif (! empty($_MODULES[$defaultKey])) {
                 $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (!empty($_LANGADM)) {
+            } elseif (! empty($_LANGADM)) {
                 $ret = stripslashes(Translate::getGenericAdminTranslation($string, $key, $_LANGADM));
             } else {
                 $ret = stripslashes($string);
@@ -204,8 +213,8 @@ class EventsController extends Module
 
             if (
                 $sprintf !== null &&
-                (!is_array($sprintf) || !empty($sprintf)) &&
-                !(count($sprintf) === 1 && isset($sprintf['legacy']))
+                (! is_array($sprintf) || ! empty($sprintf)) &&
+                ! (count($sprintf) === 1 && isset($sprintf['legacy']))
             ) {
                 $ret = Translate::checkAndReplaceArgs($ret, $sprintf);
             }
@@ -221,9 +230,9 @@ class EventsController extends Module
             }
         }
 
-        if (!is_array($sprintf) && null !== $sprintf) {
+        if (! is_array($sprintf) && $sprintf !== null) {
             $sprintf_for_trans = [$sprintf];
-        } elseif (null === $sprintf) {
+        } elseif ($sprintf === null) {
             $sprintf_for_trans = [];
         } else {
             $sprintf_for_trans = $sprintf;
@@ -235,9 +244,4 @@ class EventsController extends Module
 
         return $ret;
     }
-
-
 }
-
-
-

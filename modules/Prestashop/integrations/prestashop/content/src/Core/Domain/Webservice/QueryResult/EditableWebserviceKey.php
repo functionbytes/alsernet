@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,12 +65,9 @@ class EditableWebserviceKey
     private $associatedShops;
 
     /**
-     * @param WebserviceKeyId $webserviceKeyId
-     * @param string $key
-     * @param string $description
-     * @param bool $status
-     * @param array $resourcePermissions
-     * @param array $associatedShops
+     * @param  string  $key
+     * @param  string  $description
+     * @param  bool  $status
      */
     public function __construct(
         WebserviceKeyId $webserviceKeyId,

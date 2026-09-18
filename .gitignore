@@ -4,6 +4,16 @@ vendor/
 # repo; si no, cualquier despliegue se queda sin ellas y la vista no funciona.
 !modules/*/public/**/vendor/
 !public/modules/*/**/vendor/
+# Excepcion: los assets publicados del propio Helpdesk (core y satelites) viven
+# en public/vendor/helpdesk*/ por convencion del proyecto, no son un vendor de
+# terceros — sin esto, archivos nuevos ahi quedan silenciosamente fuera del repo.
+# Git no permite re-incluir un hijo de un directorio ya excluido (aqui,
+# "public/vendor" cae bajo la regla "vendor/" de la linea 1), asi que hace
+# falta des-excluir el propio public/vendor/ primero y volver a excluir todo
+# lo que no sea helpdesk*/ (p.ej. leaflet/, scribe/, que si son de terceros).
+!public/vendor/
+public/vendor/*
+!public/vendor/helpdesk*/
 node_modules/
 stubs/
 

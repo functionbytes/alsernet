@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ class ZipManager
 {
     public function createArchive($filename, $folder)
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         $zip->open($filename, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
@@ -44,7 +45,7 @@ class ZipManager
         );
 
         foreach ($files as $filename => $file) {
-            if (!$file->isDir()) {
+            if (! $file->isDir()) {
                 $filePath = $file->getRealPath();
                 $relativePath = substr($filename, strlen($folder) + 1);
 

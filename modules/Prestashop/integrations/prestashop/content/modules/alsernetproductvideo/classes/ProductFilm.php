@@ -3,12 +3,19 @@
 class ProductFilm extends ObjectModel
 {
     public $id_productvideo;
+
     public $id_product;
+
     public $id_video;
+
     public $title;
+
     public $provider;
+
     public $url;
+
     public $position;
+
     public $available;
 
     public static $definition = [
@@ -24,4 +31,3 @@ class ProductFilm extends ObjectModel
         ],
     ];
 }
-

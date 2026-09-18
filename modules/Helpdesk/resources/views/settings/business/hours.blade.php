@@ -87,7 +87,7 @@
                                                 value="{{ $hour->opens_at ? \Illuminate\Support\Str::substr($hour->opens_at, 0, 5) : '09:00' }}"
                                                 {{ ! $hour->is_open ? 'disabled' : '' }}>
                                             @error("hours.{$hour->day_of_week}.opens_at")
-                                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                                <div class="text-dark small mt-1">{{ $message }}</div>
                                             @enderror
                                         </td>
                                         <td>
@@ -99,7 +99,7 @@
                                                 value="{{ $hour->closes_at ? \Illuminate\Support\Str::substr($hour->closes_at, 0, 5) : '18:00' }}"
                                                 {{ ! $hour->is_open ? 'disabled' : '' }}>
                                             @error("hours.{$hour->day_of_week}.closes_at")
-                                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                                <div class="text-dark small mt-1">{{ $message }}</div>
                                             @enderror
                                         </td>
                                     </tr>
@@ -114,11 +114,11 @@
                     <button type="submit" class="btn btn-primary w-100 mb-2">
                         Guardar horarios
                     </button>
-                    <a href="{{ route('manager.helpdesk.settings.tickets.general') }}" class="btn btn-light w-100 mb-2">
+                    <a href="{{ route('manager.helpdesk.settings.tickets.general') }}" class="btn btn-secondary w-100 mb-2">
                         Cancelar
                     </a>
                     <a href="{{ route('settings.helpdesk.business.hours.reset') }}"
-                        class="btn btn-outline-secondary w-100"
+                        class="btn btn-secondary w-100"
                         onclick="event.preventDefault(); window.__confirm('¿Restablecer los horarios a los valores predeterminados?', function () { window.location.href = '{{ route('settings.helpdesk.business.hours.reset') }}'; });">
                         Restablecer
                     </a>
@@ -153,36 +153,12 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-
-    function toggleDayInputs(day, isOpen) {
-        var $row = $('[data-day="' + day + '"]').closest('tr');
-        $row.find('.time-input').prop('disabled', !isOpen);
-
-        if (isOpen) {
-            $row.removeClass('bh-row-closed');
-        } else {
-            $row.addClass('bh-row-closed');
-        }
-    }
-
-    // Initialize state on load
-    $('.day-toggle').each(function () {
-        toggleDayInputs($(this).data('day'), $(this).is(':checked'));
-    });
-
-    // Toggle on change
-    $(document).on('change', '.day-toggle', function () {
-        toggleDayInputs($(this).data('day'), $(this).is(':checked'));
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdBusinessHoursConfig = {
+    flashSuccess: @json(session('success')),
+    flashError: @json(session('error')),
+};
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/business-hours.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/business-hours.js')) }}" defer></script>
 @endpush

@@ -37,6 +37,16 @@ class DispatchDueBirthdayEmails extends Command
         $active = BirthdayCampaign::query()->active()->orderBy('campaign_date')->get();
 
         foreach ($active as $campaign) {
+            // Antes de encolar nada: a una campaña de ayer ya no se le envía.
+            // Un «feliz cumpleaños» con un día de retraso es peor que ninguno,
+            // y sin este corte los pendientes de ayer salían hoy mezclados con
+            // los de hoy.
+            $campaigns->expireIfOverdue($campaign);
+
+            if (! $campaign->isActive()) {
+                continue;
+            }
+
             $dispatched += $this->dispatchFor($campaign, $limit - $dispatched);
 
             if ($campaign->pendingCount() === 0) {
@@ -70,6 +80,11 @@ class DispatchDueBirthdayEmails extends Command
 
         $ids = $campaign->recipients()
             ->due()
+            // Solo quien tiene su bono emitido, salvo que la promoción reparta
+            // un código único para todos (el de la campaña). Encolar a quien no
+            // lo tiene era un bucle: el job lo devolvía a pendiente y la
+            // siguiente pasada volvía a cogerlo, un minuto tras otro.
+            ->when(! $campaign->coupon_code, fn ($q) => $q->withCoupon())
             ->orderBy('scheduled_at')
             ->limit($limit)
             ->pluck('id')

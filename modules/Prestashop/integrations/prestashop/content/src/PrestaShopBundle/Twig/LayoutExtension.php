@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,7 @@ class LayoutExtension extends \Twig_Extension implements GlobalsInterface
      *
      * Keeps the Context to look inside language backups.
      *
-     * @param LegacyContext $context
-     * @param string $environment
-     * @param Configuration $configuration
-     * @param CurrencyDataProvider $currencyDataProvider
+     * @param  string  $environment
      */
     public function __construct(
         LegacyContext $context,
@@ -87,12 +85,12 @@ class LayoutExtension extends \Twig_Extension implements GlobalsInterface
 
         try {
             $defaultCurrency = $this->context->getEmployeeCurrency() ?: $this->currencyDataProvider->getDefaultCurrency();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $defaultCurrency = null;
         }
         try {
             $rootUrl = $this->context->getRootUrl();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $rootUrl = null;
         }
 
@@ -135,13 +133,12 @@ class LayoutExtension extends \Twig_Extension implements GlobalsInterface
     /**
      * Return a legacy configuration key.
      *
-     * @param string $key
-     * @param mixed $default Default value is null
-     * @param ShopConstraint $shopConstraint Default value is null
-     *
+     * @param  string  $key
+     * @param  mixed  $default  Default value is null
+     * @param  ShopConstraint  $shopConstraint  Default value is null
      * @return mixed
      */
-    public function getConfiguration($key, $default = null, ShopConstraint $shopConstraint = null)
+    public function getConfiguration($key, $default = null, ?ShopConstraint $shopConstraint = null)
     {
         return $this->configuration->get($key, $default, $shopConstraint);
     }
@@ -152,20 +149,19 @@ class LayoutExtension extends \Twig_Extension implements GlobalsInterface
      * Parameters can be set manually into twig template or sent from controller
      * For details : check Resources/views/Admin/Layout.html.twig
      *
-     * @param string $controllerName The legacy controller name
-     * @param string $title The page title to override default one
-     * @param array $headerToolbarBtn The header toolbar to override
-     * @param string $displayType The legacy display type variable
-     * @param bool $showContentHeader Can force header toolbar (buttons and title) to be hidden with false value
-     * @param array|string $headerTabContent Tabs labels
-     * @param bool $enableSidebar Allow to use right sidebar to display docs for instance
-     * @param string $helpLink If specified, will be used instead of legacy one
-     * @param string $metaTitle
-     * @param bool $useRegularH1Structure allows complex <h1> structure if set to false
+     * @param  string  $controllerName  The legacy controller name
+     * @param  string  $title  The page title to override default one
+     * @param  array  $headerToolbarBtn  The header toolbar to override
+     * @param  string  $displayType  The legacy display type variable
+     * @param  bool  $showContentHeader  Can force header toolbar (buttons and title) to be hidden with false value
+     * @param  array|string  $headerTabContent  Tabs labels
+     * @param  bool  $enableSidebar  Allow to use right sidebar to display docs for instance
+     * @param  string  $helpLink  If specified, will be used instead of legacy one
+     * @param  string  $metaTitle
+     * @param  bool  $useRegularH1Structure  allows complex <h1> structure if set to false
+     * @return string The html layout
      *
      * @throws Exception if legacy layout has no $content var replacement
-     *
-     * @return string The html layout
      */
     public function getLegacyLayout(
         $controllerName = '',
@@ -213,8 +209,8 @@ EOF;
             $useRegularH1Structure
         );
 
-        //test if legacy template from "content.tpl" has '{$content}'
-        if (false === strpos($layout, '{$content}')) {
+        // test if legacy template from "content.tpl" has '{$content}'
+        if (strpos($layout, '{$content}') === false) {
             throw new Exception('PrestaShopBundle\Twig\LayoutExtension cannot find the {$content} string in legacy layout template', 1);
         }
 
@@ -230,7 +226,7 @@ EOF;
                  {% block content %}{% endblock %}
                  {% block content_footer %}{% endblock %}
                  {% block sidebar_right %}{% endblock %}',
-                'var currentIndex = \'' . $this->context->getAdminLink($controllerName) . '\';',
+                'var currentIndex = \''.$this->context->getAdminLink($controllerName).'\';',
                 '{% block stylesheets %}{% endblock %}{% block extra_stylesheets %}{% endblock %}</head>',
                 '{% block javascripts %}{% endblock %}{% block extra_javascripts %}{% endblock %}{% block translate_javascripts %}{% endblock %}</body>',
             ],
@@ -243,10 +239,9 @@ EOF;
     /**
      * This is a Twig port of the Smarty {$link->getAdminLink()} function.
      *
-     * @param string $controllerName
-     * @param bool $withToken
-     * @param array<string> $extraParams
-     *
+     * @param  string  $controllerName
+     * @param  bool  $withToken
+     * @param  array<string>  $extraParams
      * @return string
      */
     public function getAdminLink($controllerName, $withToken = true, $extraParams = [])
@@ -261,7 +256,7 @@ EOF;
     {
         $embedUrl = str_replace(['watch?v=', 'youtu.be/'], ['embed/', 'youtube.com/embed/'], $watchUrl);
 
-        return '<iframe width="560" height="315" src="' . $embedUrl .
+        return '<iframe width="560" height="315" src="'.$embedUrl.
             '" frameborder="0" allowfullscreen class="youtube-iframe m-x-auto"></iframe>';
     }
 

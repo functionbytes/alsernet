@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,33 +66,21 @@ class EditableCartRuleActions
         $this->giftCombinationId = $giftCombinationId;
     }
 
-    /**
-     * @return bool
-     */
     public function isFreeShipping(): bool
     {
         return $this->freeShipping;
     }
 
-    /**
-     * @return EditableCartRuleReduction
-     */
     public function getReduction(): EditableCartRuleReduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @return ProductId|null
-     */
     public function getGiftProductId(): ?ProductId
     {
         return $this->giftProductId;
     }
 
-    /**
-     * @return CombinationId|null
-     */
     public function getGiftCombinationId(): ?CombinationId
     {
         return $this->giftCombinationId;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,11 +45,6 @@ class ImportLocalizationPackType extends TranslatorAwareType
      */
     private $localizationPackChoices;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $localizationPackChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

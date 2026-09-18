@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,12 +33,19 @@ namespace PrestaShop\PrestaShop\Core\Translation\Storage\Provider\Definition;
 interface ProviderDefinitionInterface
 {
     public const TYPE_BACK = 'back';
+
     public const TYPE_FRONT = 'front';
+
     public const TYPE_MAILS = 'mails';
+
     public const TYPE_MAILS_BODY = 'mails_body';
+
     public const TYPE_OTHERS = 'others';
+
     public const TYPE_MODULES = 'modules';
+
     public const TYPE_THEMES = 'themes';
+
     public const TYPE_CORE_DOMAIN = 'core_domain';
 
     public const ALLOWED_TYPES = [
@@ -61,9 +69,6 @@ interface ProviderDefinitionInterface
         self::TYPE_THEMES,
     ];
 
-    /**
-     * @return string
-     */
     public function getType(): string;
 
     /**

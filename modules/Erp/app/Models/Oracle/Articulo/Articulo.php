@@ -5,7 +5,23 @@ namespace Modules\Erp\Models\Oracle\Articulo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Catalogo\Modelo;
+use Modules\Erp\Models\Oracle\Configuracion\Impuesto;
+use Modules\Erp\Models\Oracle\Configuracion\Marca;
+use Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl;
+use Modules\Erp\Models\Oracle\Configuracion\Tipoart;
+use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
+use Modules\Erp\Models\Oracle\Configuracion\Tipounidades;
+use Modules\Erp\Models\Oracle\Lote\Lote;
+use Modules\Erp\Models\Oracle\Otros\Calibre;
+use Modules\Erp\Models\Oracle\Otros\GrupoCl;
+use Modules\Erp\Models\Oracle\Otros\PeriodoCuota;
+use Modules\Erp\Models\Oracle\Otros\StockCentral;
+use Modules\Erp\Models\Oracle\Otros\TarifaCabecera;
+use Modules\Erp\Models\Oracle\Pedido\LpedidocliCentral;
+use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierProduct;
 
 /**
  * Modelo para la tabla ARTICULO (Productos/Artículos)
@@ -155,7 +171,7 @@ class Articulo extends Model
      */
     public function stocks()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\StockCentral::class, 'idarticulo', 'idarticulo');
+        return $this->hasMany(StockCentral::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -165,7 +181,7 @@ class Articulo extends Model
      */
     public function lineasPedido()
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCentral::class, 'idarticulo', 'idarticulo');
+        return $this->hasMany(LpedidocliCentral::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -174,7 +190,7 @@ class Articulo extends Model
      */
     public function marca()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Marca::class, 'idmarca', 'idmarca');
+        return $this->belongsTo(Marca::class, 'idmarca', 'idmarca');
     }
 
     /**
@@ -183,7 +199,7 @@ class Articulo extends Model
      */
     public function modelo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Modelo::class, 'idmodelo', 'idmodelo');
+        return $this->belongsTo(Modelo::class, 'idmodelo', 'idmodelo');
     }
 
     /**
@@ -192,7 +208,7 @@ class Articulo extends Model
      */
     public function subfamilia()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idsubfamilia', 'idsubfamilia_cl');
+        return $this->belongsTo(SubfamiliaCl::class, 'idsubfamilia', 'idsubfamilia_cl');
     }
 
     /**
@@ -201,7 +217,7 @@ class Articulo extends Model
      */
     public function tipoArticulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipoart::class, 'idtipoart', 'idtipoart');
+        return $this->belongsTo(Tipoart::class, 'idtipoart', 'idtipoart');
     }
 
     /**
@@ -210,7 +226,7 @@ class Articulo extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -219,7 +235,7 @@ class Articulo extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 
     /**
@@ -228,7 +244,7 @@ class Articulo extends Model
      */
     public function tipoart()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipoart::class, 'idtipoart', 'idtipoart');
+        return $this->belongsTo(Tipoart::class, 'idtipoart', 'idtipoart');
     }
 
     /**
@@ -237,7 +253,7 @@ class Articulo extends Model
      */
     public function tipounidades()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipounidades::class, 'idtipounidades', 'idtipounidades');
+        return $this->belongsTo(Tipounidades::class, 'idtipounidades', 'idtipounidades');
     }
 
     /**
@@ -246,7 +262,7 @@ class Articulo extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -255,7 +271,7 @@ class Articulo extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
     }
 
     /**
@@ -264,7 +280,7 @@ class Articulo extends Model
      */
     public function grupoCl()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
+        return $this->belongsTo(GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
     }
 
     /**
@@ -273,7 +289,7 @@ class Articulo extends Model
      */
     public function calibre()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Calibre::class, 'idcalibre', 'idcalibre');
+        return $this->belongsTo(Calibre::class, 'idcalibre', 'idcalibre');
     }
 
     /**
@@ -282,7 +298,7 @@ class Articulo extends Model
      */
     public function periodoCuota()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\PeriodoCuota::class, 'idperiodo_cuota', 'idperiodo_cuota');
+        return $this->belongsTo(PeriodoCuota::class, 'idperiodo_cuota', 'idperiodo_cuota');
     }
 
     /**
@@ -290,7 +306,7 @@ class Articulo extends Model
      */
     public function supplierProducts(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierProduct::class, 'erp_product_id', 'idarticulo');
+        return $this->hasMany(SupplierProduct::class, 'erp_product_id', 'idarticulo');
     }
 
     /**
@@ -299,7 +315,7 @@ class Articulo extends Model
      */
     public function tarifasCabecera(): HasMany
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\TarifaCabecera::class, 'idarticulo', 'idarticulo');
+        return $this->hasMany(TarifaCabecera::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -308,7 +324,7 @@ class Articulo extends Model
      */
     public function perfilesProd(): HasMany
     {
-        return $this->hasMany(\Modules\Erp\Models\Oracle\Web\WPerfilesProd::class, 'idarticulo', 'idarticulo');
+        return $this->hasMany(WPerfilesProd::class, 'idarticulo', 'idarticulo');
     }
 
     /**

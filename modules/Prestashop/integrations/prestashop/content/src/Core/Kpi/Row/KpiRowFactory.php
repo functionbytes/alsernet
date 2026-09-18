@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,13 +41,10 @@ final class KpiRowFactory implements KpiRowFactoryInterface
      */
     private $kpis;
 
-    /**
-     * @param KpiInterface ...$kpis
-     */
     public function __construct(KpiInterface ...$kpis)
     {
         @trigger_error(
-            'Using `KpiRowFactory` class is deprecated and will be removed in the next major,' .
+            'Using `KpiRowFactory` class is deprecated and will be removed in the next major,'.
             'use HookableKpiRowFactory instead',
             E_USER_DEPRECATED
         );
@@ -59,7 +57,7 @@ final class KpiRowFactory implements KpiRowFactoryInterface
      */
     public function build()
     {
-        $kpiRow = new KpiRow();
+        $kpiRow = new KpiRow;
 
         foreach ($this->kpis as $kpi) {
             $kpiRow->addKpi($kpi);

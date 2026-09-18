@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,15 +44,15 @@ final class AddManufacturerHandler extends AbstractManufacturerHandler implement
      */
     public function handle(AddManufacturerCommand $command)
     {
-        $manufacturer = new Manufacturer();
+        $manufacturer = new Manufacturer;
         $this->fillLegacyManufacturerWithData($manufacturer, $command);
 
         try {
-            if (false === $manufacturer->validateFields(false)) {
+            if ($manufacturer->validateFields(false) === false) {
                 throw new ManufacturerException('Manufacturer contains invalid field values');
             }
 
-            if (!$manufacturer->add()) {
+            if (! $manufacturer->add()) {
                 throw new ManufacturerException(sprintf('Failed to add new manufacturer "%s"', $command->getName()));
             }
             $this->addShopAssociation($manufacturer, $command);
@@ -65,8 +66,6 @@ final class AddManufacturerHandler extends AbstractManufacturerHandler implement
     /**
      * Add manufacturer and shop association
      *
-     * @param Manufacturer $manufacturer
-     * @param AddManufacturerCommand $command
      *
      * @throws \PrestaShopDatabaseException
      */
@@ -78,10 +77,6 @@ final class AddManufacturerHandler extends AbstractManufacturerHandler implement
         );
     }
 
-    /**
-     * @param Manufacturer $manufacturer
-     * @param AddManufacturerCommand $command
-     */
     private function fillLegacyManufacturerWithData(Manufacturer $manufacturer, AddManufacturerCommand $command)
     {
         $manufacturer->name = $command->getName();

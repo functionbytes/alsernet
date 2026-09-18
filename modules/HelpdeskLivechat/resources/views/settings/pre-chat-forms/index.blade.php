@@ -23,7 +23,7 @@
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('settings.helpdesk-livechat.pre-chat-forms.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo formulario
+                            Nuevo formulario
                         </a>
                     </div>
                 </div>
@@ -178,7 +178,7 @@
                             <a href="{{ route('settings.helpdesk-livechat.pre-chat-forms.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('settings.helpdesk-livechat.pre-chat-forms.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nuevo formulario
+                                Nuevo formulario
                             </a>
                         @endif
                     </div>
@@ -207,19 +207,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-});
-</script>
+<script>window.PreChatFormsFlash = @json(['success' => session('success'), 'error' => session('error')]);</script>
+<script src="{{ asset('modules/helpdesklivechat/js/pre-chat-forms-index.js') }}?v={{ filemtime(public_path('modules/helpdesklivechat/js/pre-chat-forms-index.js')) }}"></script>
 @endpush

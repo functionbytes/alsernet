@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,9 +44,6 @@ final class CustomerAddressGridDataFactoryDecorator implements GridDataFactoryIn
      */
     private $customerAddressDoctrineGridDataFactory;
 
-    /**
-     * @param GridDataFactoryInterface $customerAddressDoctrineGridDataFactory
-     */
     public function __construct(
         GridDataFactoryInterface $customerAddressDoctrineGridDataFactory
     ) {
@@ -69,8 +67,6 @@ final class CustomerAddressGridDataFactoryDecorator implements GridDataFactoryIn
     }
 
     /**
-     * @param RecordCollectionInterface $addresses
-     *
      * @return RecordCollection
      */
     private function applyModifications(RecordCollectionInterface $addresses)
@@ -92,9 +88,9 @@ final class CustomerAddressGridDataFactoryDecorator implements GridDataFactoryIn
                 $address['city']
             );
 
-            if (!empty($address['phone'])) {
+            if (! empty($address['phone'])) {
                 $address['phone_number'] = $address['phone'];
-            } elseif (!empty($address['phone_mobile'])) {
+            } elseif (! empty($address['phone_mobile'])) {
                 $address['phone_number'] = $address['phone_mobile'];
             } else {
                 $address['phone_number'] = '--';

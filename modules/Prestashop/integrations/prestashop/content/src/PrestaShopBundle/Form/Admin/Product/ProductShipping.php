@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,22 +48,27 @@ class ProductShipping extends CommonAbstractType
      * @var array<string, string>
      */
     private $carriersChoices;
+
     /**
      * @var Currency
      */
     public $currency;
+
     /**
      * @var LegacyContext
      */
     public $legacyContext;
+
     /**
      * @var array<int|array>
      */
     public $locales;
+
     /**
      * @var TranslatorInterface
      */
     public $translator;
+
     /**
      * @var array
      */
@@ -71,10 +77,10 @@ class ProductShipping extends CommonAbstractType
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param LegacyContext $legacyContext
-     * @param WarehouseDataProvider $warehouseDataProvider
-     * @param CarrierDataProvider $carrierDataProvider
+     * @param  TranslatorInterface  $translator
+     * @param  LegacyContext  $legacyContext
+     * @param  WarehouseDataProvider  $warehouseDataProvider
+     * @param  CarrierDataProvider  $carrierDataProvider
      */
     public function __construct($translator, $legacyContext, $warehouseDataProvider, $carrierDataProvider)
     {
@@ -94,9 +100,9 @@ class ProductShipping extends CommonAbstractType
         );
         $this->carriersChoices = [];
         foreach ($carriers as $carrier) {
-            $choiceId = $carrier['id_carrier'] . ' - ' . $carrier['name'];
+            $choiceId = $carrier['id_carrier'].' - '.$carrier['name'];
             if ($carrier['name']) {
-                $choiceId .= ' (' . $carrier['delay'] . ')';
+                $choiceId .= ' ('.$carrier['delay'].')';
             }
 
             $this->carriersChoices[$choiceId] = $carrier['id_reference'];
@@ -117,7 +123,7 @@ class ProductShipping extends CommonAbstractType
                 'required' => false,
                 'label' => $this->translator->trans('Width', [], 'Admin.Catalog.Feature'),
                 'constraints' => [
-                    new Assert\NotBlank(),
+                    new Assert\NotBlank,
                     new Assert\Type(['type' => 'numeric']),
                 ],
             ]
@@ -129,7 +135,7 @@ class ProductShipping extends CommonAbstractType
                     'required' => false,
                     'label' => $this->translator->trans('Height', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -141,7 +147,7 @@ class ProductShipping extends CommonAbstractType
                     'required' => false,
                     'label' => $this->translator->trans('Depth', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -153,7 +159,7 @@ class ProductShipping extends CommonAbstractType
                     'required' => false,
                     'label' => $this->translator->trans('Weight', [], 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'numeric']),
                     ],
                 ]
@@ -166,7 +172,7 @@ class ProductShipping extends CommonAbstractType
                     'label' => $this->translator->trans('Shipping fees', [], 'Admin.Catalog.Feature'),
                     'currency' => $this->currency->iso_code,
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'float']),
                     ],
                 ]
@@ -238,7 +244,7 @@ class ProductShipping extends CommonAbstractType
 
         foreach ($this->warehouses as $warehouse) {
             $builder->add(
-                'warehouse_combination_' . $warehouse['id_warehouse'],
+                'warehouse_combination_'.$warehouse['id_warehouse'],
                 CollectionType::class,
                 [
                     'entry_type' => 'PrestaShopBundle\Form\Admin\Product\ProductWarehouseCombination',

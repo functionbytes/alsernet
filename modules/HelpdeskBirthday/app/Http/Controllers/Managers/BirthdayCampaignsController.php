@@ -10,10 +10,14 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Models\BirthdayRedemption;
+use Modules\HelpdeskBirthday\Services\BirthdayCampaignDashboardService;
 use Modules\HelpdeskBirthday\Services\BirthdayCampaignService;
 use Modules\HelpdeskBirthday\Services\BirthdayCouponService;
 use Modules\HelpdeskBirthday\Services\BirthdayDashboardService;
+use Modules\HelpdeskBirthday\Services\BirthdayReconciliationService;
 use Modules\HelpdeskBirthday\Services\BirthdayRedemptionService;
+use Modules\HelpdeskBirthday\Services\BirthdayRedemptionSyncService;
 use Modules\HelpdeskBirthday\Support\BirthdayMailRenderer;
 use Modules\HelpdeskEmailActivity\Enums\SuppressionReason;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
@@ -29,6 +33,9 @@ class BirthdayCampaignsController extends Controller
     public function index(Request $request, BirthdayDashboardService $dashboard): View
     {
         $campaigns = BirthdayCampaign::query()
+            // Bonos emitidos por campaña, de una sola consulta: en el listado
+            // sustituyen al código único, que ya no existe.
+            ->withCount(['recipients as coupons_count' => fn ($q) => $q->withCoupon()])
             ->orderByDesc('campaign_date')
             ->paginate(25);
 
@@ -47,11 +54,35 @@ class BirthdayCampaignsController extends Controller
         ]);
     }
 
+    /**
+     * El cuadro de mando de la campaña: sus bonos, su dinero y su descuadre.
+     *
+     * Antes esta ruta abría directamente la lista de destinatarios, que es el
+     * detalle y no el resumen: para saber si la campaña había funcionado había
+     * que leer 577 filas. Los destinatarios siguen a un clic, en su pestaña.
+     */
     public function show(
+        BirthdayCampaign $campaign,
+        BirthdayCampaignDashboardService $dashboard,
+    ): View {
+        return view('helpdeskbirthday::campaigns.dashboard', [
+            'campaign' => $campaign,
+            'tab' => 'summary',
+            'stats' => $dashboard->forCampaign($campaign),
+            'skipReasons' => $dashboard->skipReasons($campaign),
+            'baseline' => $dashboard->historicalBaseline(),
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
+        ]);
+    }
+
+    /**
+     * La lista de destinatarios, con su estado de envío y su bono.
+     */
+    public function recipients(
         Request $request,
         BirthdayCampaign $campaign,
         EmailDeliveryLookupService $lookup,
-        BirthdayRedemptionService $redemptions,
+        BirthdayCampaignDashboardService $dashboard,
     ): View {
         $recipients = $campaign->recipients()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
@@ -69,14 +100,21 @@ class BirthdayCampaignsController extends Controller
             BirthdayDashboardService::MODULE,
         );
 
-        return view('helpdeskbirthday::campaigns.show', [
+        // Quién gastó su bono, de la copia local: ya no se consulta PrestaShop
+        // al pintar la tabla.
+        $redeemers = BirthdayRedemption::query()
+            ->where('campaign_id', $campaign->id)
+            ->whereIn('customer_email', array_map('mb_strtolower', $recipients->pluck('email')->all()))
+            ->get()
+            ->keyBy(fn (BirthdayRedemption $r): string => (string) $r->customer_email);
+
+        return view('helpdeskbirthday::campaigns.recipients', [
             'campaign' => $campaign,
+            'tab' => 'recipients',
             'recipients' => $recipients,
             'delivery' => $delivery,
-            // Quién usó el cupón de verdad (PrestaShop). Vacío si esa BD no
-            // está configurada: la columna se oculta en ese caso.
-            'redeemers' => $redemptions->redeemersFor($campaign),
-            'redemption' => $redemptions->forCampaign($campaign),
+            'redeemers' => $redeemers,
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
             'statuses' => [
                 BirthdayRecipient::STATUS_PENDING,
                 BirthdayRecipient::STATUS_SENDING,
@@ -85,6 +123,29 @@ class BirthdayCampaignsController extends Controller
                 BirthdayRecipient::STATUS_SKIPPED,
             ],
         ]);
+    }
+
+    /**
+     * Trae de la tienda los canjes de esta campaña, ahora.
+     *
+     * El scheduler ya lo hace cada hora; esto es para cuando alguien acaba de
+     * mirar un pedido en PrestaShop y quiere verlo reflejado sin esperar.
+     */
+    public function syncRedemptions(
+        BirthdayCampaign $campaign,
+        BirthdayRedemptionSyncService $sync,
+    ): RedirectResponse {
+        if (! $sync->isAvailable()) {
+            return back()->with('error', __('helpdeskbirthday::messages.redemptions_unavailable'));
+        }
+
+        // Desde el día de la campaña: el bono no se puede gastar antes de que
+        // exista, y acotar evita releer tres años en cada clic.
+        $result = $sync->sync(CarbonImmutable::parse($campaign->campaign_date));
+
+        return back()->with('success', __('helpdeskbirthday::messages.redemptions_synced', [
+            'count' => $result['saved'],
+        ]));
     }
 
     /**
@@ -197,10 +258,70 @@ class BirthdayCampaignsController extends Controller
     {
         return view('helpdeskbirthday::campaigns.redemptions', [
             'campaign' => $campaign,
+            'tab' => 'redemptions',
+            'withoutCoupon' => $campaign->recipients()->whereNull('coupon_code')->whereIn('status', ['pending', 'skipped'])->count(),
             'available' => $redemptions->isAvailable(),
             'summary' => $redemptions->forCampaign($campaign),
             'rows' => $redemptions->detailFor($campaign),
+            // Cuántos bonos se emitieron: con uno por cliente, es el número que
+            // da sentido a los canjes, y sustituye al código único de campaña.
+            'couponCount' => $campaign->recipients()->withCoupon()->count(),
+            // Marcar un bono escribe en el ERP: la acción solo se pinta a quien
+            // puede gestionar campañas.
+            'canManage' => request()->user()?->can('helpdeskbirthday.manage') ?? false,
         ]);
+    }
+
+    /**
+     * El descuadre con gestión: bonos que la tienda descontó y el ERP no restó.
+     */
+    public function reconciliation(
+        BirthdayCampaign $campaign,
+        BirthdayReconciliationService $reconciliation,
+        BirthdayCampaignDashboardService $dashboard,
+    ): View {
+        return view('helpdeskbirthday::campaigns.reconciliation', [
+            'campaign' => $campaign,
+            'tab' => 'reconciliation',
+            'rows' => $reconciliation->pending($campaign)->paginate(50)->withQueryString(),
+            'summary' => $reconciliation->summary($campaign),
+            // El agujero de toda la tienda, no solo de esta campaña: el corte de
+            // `marcarbono` afecta a todos los bonos, y verlo aquí evita creer
+            // que es un problema de este día.
+            'global' => $reconciliation->summary(),
+            'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
+        ]);
+    }
+
+    /**
+     * Marca en gestión los bonos seleccionados.
+     *
+     * ESCRIBE EN EL ERP y no se puede deshacer: por eso llega una selección
+     * explícita y no un «marcar todo».
+     */
+    public function reconcile(
+        Request $request,
+        BirthdayCampaign $campaign,
+        BirthdayReconciliationService $reconciliation,
+    ): RedirectResponse {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $result = $reconciliation->markInErp($data['ids'], $campaign);
+
+        if ($result['ok'] === 0 && $result['failed'] === 0) {
+            return back()->with('error', __('helpdeskbirthday::messages.reconcile_nothing'));
+        }
+
+        return back()->with(
+            $result['ok'] > 0 ? 'success' : 'error',
+            __('helpdeskbirthday::messages.reconcile_done', [
+                'ok' => $result['ok'],
+                'failed' => $result['failed'],
+            ])
+        );
     }
 
     /**
@@ -213,16 +334,29 @@ class BirthdayCampaignsController extends Controller
         Request $request,
         BirthdayCampaign $campaign,
         BirthdayCouponService $coupons,
+        BirthdayRedemptionService $redemptions,
     ): RedirectResponse {
         $data = $request->validate([
             'sale_amount' => ['required', 'numeric', 'min:0'],
+            // Con un bono por cliente hay que decir CUÁL se marca: el de la
+            // campaña solo existe en las promociones de código único, y usarlo
+            // aquí marcaba el bono equivocado o ninguno.
+            'coupon_code' => ['nullable', 'string', 'max:60'],
         ]);
 
-        if (! $campaign->coupon_code) {
+        $code = trim((string) ($data['coupon_code'] ?? '')) ?: (string) $campaign->coupon_code;
+
+        if ($code === '') {
             return back()->with('error', __('helpdeskbirthday::messages.coupon_missing'));
         }
 
-        $result = $coupons->markAsUsed($campaign->coupon_code, (float) $data['sale_amount']);
+        // El código tiene que ser uno de esta campaña: sin esta comprobación,
+        // un POST a mano podría consumir en Gestión el bono de cualquiera.
+        if (! in_array($code, $redemptions->codesFor($campaign), true)) {
+            return back()->with('error', __('helpdeskbirthday::messages.coupon_not_in_campaign'));
+        }
+
+        $result = $coupons->markAsUsed($code, (float) $data['sale_amount']);
 
         return back()->with($result['ok'] ? 'success' : 'error', $result['message']);
     }
@@ -256,6 +390,31 @@ class BirthdayCampaignsController extends Controller
         ]);
 
         return back()->with('success', __('helpdeskbirthday::messages.failed_requeued', ['count' => $requeued]));
+    }
+
+    /**
+     * Vuelve a pedir a Gestión los bonos que no llegó a emitir.
+     *
+     * Es lo que desatasca una campaña que se quedó sin poder enviar: quien
+     * recupera su bono vuelve a la cola con hora de ahora. A quien ya lo tiene
+     * no se le toca — regenerarlo le cambiaría un código que quizá ya está en
+     * su buzón.
+     */
+    public function retryBonos(BirthdayCampaign $campaign): RedirectResponse
+    {
+        $result = $this->campaigns->retryBonos($campaign);
+
+        if ($result['generated'] === 0 && $result['failed'] === 0) {
+            return back()->with('error', __('helpdeskbirthday::messages.no_bonos_to_retry'));
+        }
+
+        return back()->with(
+            $result['generated'] > 0 ? 'success' : 'error',
+            __('helpdeskbirthday::messages.bonos_retried', [
+                'generated' => $result['generated'],
+                'failed' => $result['failed'],
+            ])
+        );
     }
 
     public function prepare(Request $request): RedirectResponse

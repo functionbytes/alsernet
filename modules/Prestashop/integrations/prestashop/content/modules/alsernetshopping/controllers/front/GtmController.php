@@ -1,23 +1,28 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once dirname(__FILE__) . '/BaseController.php';
+require_once dirname(__FILE__).'/BaseController.php';
 
 use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
+
 class GtmController extends BaseController
 {
-
     public $module;
-    public $context;
-    public $language;
-    public $lang;
-    public $iso;
-    public $present;
-    public $currency;
 
+    public $context;
+
+    public $language;
+
+    public $lang;
+
+    public $iso;
+
+    public $present;
+
+    public $currency;
 
     public function __construct()
     {
@@ -27,7 +32,7 @@ class GtmController extends BaseController
         $this->iso = $this->context->language->iso_code;
         $this->lang = Language::getIdByIso($this->iso);
         $this->present = (new CartPresenter($this->context))->present($this->cart, false);
-        $this->module = Module::getInstanceByName("alsernetshopping");
+        $this->module = Module::getInstanceByName('alsernetshopping');
         $this->currency = $this->context->currency ?: Currency::getCurrencyInstance(
             (int) Configuration::get('PS_CURRENCY_DEFAULT')
         );
@@ -42,7 +47,7 @@ class GtmController extends BaseController
         $shippingTier = Tools::getValue('shipping_tier', '');
         $transactionId = Tools::getValue('transaction_id', '');
         $page = Tools::getValue('transaction_id', '');
-        $value = (float)Tools::getValue('value', 0);
+        $value = (float) Tools::getValue('value', 0);
 
         $customer = $this->customer;
         $context = $this->context;
@@ -63,7 +68,7 @@ class GtmController extends BaseController
         $totalShipping = $totals['total_shipping']['amount'] ?? 0;
         $totalDiscounts = 0;
 
-        if (!empty($discounts)) {
+        if (! empty($discounts)) {
             foreach ($discounts as $discount) {
                 $totalDiscounts += abs($discount['value'] ?? 0);
             }
@@ -77,15 +82,14 @@ class GtmController extends BaseController
             $manufacturer = new Manufacturer($productObj->id_manufacturer, $context->language->id);
             $category = new Category($productObj->id_category_default, $context->language->id);
 
-            $originalPrice = (float)$product['regular_price'];
-            $currentPrice = (float)$product['price2'];
+            $originalPrice = (float) $product['regular_price'];
+            $currentPrice = (float) $product['price2'];
             $itemDiscount = max(0, $originalPrice - $currentPrice);
 
-
             $gtmItems[] = [
-                'item_id' => (string)$product['id_product'],
-                'item_unique_id' => (string)($product['id_product_attribute'] > 0 ?
-                    $product['id_product'] . '-' . $product['id_product_attribute'] :
+                'item_id' => (string) $product['id_product'],
+                'item_unique_id' => (string) ($product['id_product_attribute'] > 0 ?
+                    $product['id_product'].'-'.$product['id_product_attribute'] :
                     $product['id_product']),
                 'item_name' => $product['name'],
                 'item_brand' => $manufacturer->name ?? '',
@@ -96,25 +100,25 @@ class GtmController extends BaseController
                 'item_list_id' => $this->getItemListName($context),
                 'price' => $currentPrice,
                 'discount' => $itemDiscount,
-                'quantity' => (int)$product['quantity']
+                'quantity' => (int) $product['quantity'],
             ];
         }
 
-        $userId = $isLogged ? (string)$customer->id : '';
+        $userId = $isLogged ? (string) $customer->id : '';
         $userType = $isLogged ? 'registrado' : 'guest';
 
         // Get current addresses if available
         $currentDeliveryAddress = null;
         $currentInvoiceAddress = null;
 
-        if (!empty($cart->id_address_delivery)) {
+        if (! empty($cart->id_address_delivery)) {
             $deliveryAddress = new Address($cart->id_address_delivery);
             if ($deliveryAddress->id) {
                 $currentDeliveryAddress = $cart->id_address_delivery;
             }
         }
 
-        if (!empty($cart->id_address_invoice)) {
+        if (! empty($cart->id_address_invoice)) {
             $invoiceAddress = new Address($cart->id_address_invoice);
             if ($invoiceAddress->id) {
                 $currentInvoiceAddress = $cart->id_address_invoice;
@@ -123,7 +127,7 @@ class GtmController extends BaseController
 
         $finalShippingTier = $shippingTier;
 
-        if (empty($finalShippingTier) && !empty($cart->id_carrier)) {
+        if (empty($finalShippingTier) && ! empty($cart->id_carrier)) {
             $carrier = new Carrier($cart->id_carrier, $context->language->id);
             if ($carrier->id) {
                 $finalShippingTier = $carrier->name;
@@ -146,7 +150,7 @@ class GtmController extends BaseController
                 'total_discounts' => $totalDiscounts,
                 'transaction_id' => $transactionId ?: '', // Usar parámetro si viene
                 'affiliation' => Configuration::get('PS_SHOP_NAME'),
-                'items' => $gtmItems
+                'items' => $gtmItems,
             ],
             'customerData' => [
                 'user_id' => $userId,
@@ -157,8 +161,8 @@ class GtmController extends BaseController
                 'payment_type' => $paymentType, // Usar parámetro que viene
                 'shipping_tier' => $finalShippingTier,
                 'current_delivery_address' => $currentDeliveryAddress,
-                'current_invoice_address' => $currentInvoiceAddress
-            ]
+                'current_invoice_address' => $currentInvoiceAddress,
+            ],
         ];
 
         $response = [
@@ -169,7 +173,7 @@ class GtmController extends BaseController
             'totalValue' => $totalValue,
             'currency' => $currency->iso_code,
             'timestamp' => time(),
-            'datetime' => date('Y-m-d H:i:s')
+            'datetime' => date('Y-m-d H:i:s'),
         ];
 
         if ($eventType) {
@@ -178,10 +182,9 @@ class GtmController extends BaseController
                 'payment_type' => $paymentType,
                 'shipping_tier' => $finalShippingTier,
                 'transaction_id' => $transactionId,
-                'value' => $value ?: $totalValue
+                'value' => $value ?: $totalValue,
             ]);
         }
-
 
         return $response;
     }
@@ -191,7 +194,7 @@ class GtmController extends BaseController
      */
     private function toNum($value, $decimals = 2)
     {
-        return round((float)$value, $decimals);
+        return round((float) $value, $decimals);
     }
 
     /**
@@ -220,8 +223,8 @@ class GtmController extends BaseController
                 'item_name' => $product['product_name'],
                 'category' => $category->name ?: 'General',
                 'item_brand' => $manufacturer->name ?: '',
-                'quantity' => (int)$product['product_quantity'],
-                'price' => $this->toNum($product['unit_price_tax_incl'], 0)  // Using toNum with 0 decimals like JS
+                'quantity' => (int) $product['product_quantity'],
+                'price' => $this->toNum($product['unit_price_tax_incl'], 0),  // Using toNum with 0 decimals like JS
             ];
         }
 
@@ -239,7 +242,7 @@ class GtmController extends BaseController
 
         return [
             'event' => 'purchase',
-            'user_id' => $customer->isLogged() ? (string)$customer->id : 'guest',
+            'user_id' => $customer->isLogged() ? (string) $customer->id : 'guest',
             'user_type' => $customer->isLogged() ? 'registered' : 'guest',
             'country' => $deliveryCountry->iso_code ?: 'ES',
             'page_type' => 'checkout',
@@ -247,14 +250,14 @@ class GtmController extends BaseController
             'payment_type' => $paymentMethod,
             'shipping_tier' => $shippingTier,
             'ecommerce' => [
-                'transaction_id' => (string)$order->id,
+                'transaction_id' => (string) $order->id,
                 'affiliation' => Configuration::get('PS_SHOP_NAME') ?: 'Store',
                 'value' => $totalValue,
                 'tax' => $totalTax,
                 'shipping' => $totalShipping,
                 'currency' => $currency->iso_code,
-                'items' => $gtmItems
-            ]
+                'items' => $gtmItems,
+            ],
         ];
     }
 
@@ -289,11 +292,12 @@ class GtmController extends BaseController
 
         return $options;
     }
+
     private function getProductVariant($product)
     {
         if (empty($product['attributes'])) {
             // Fallback común en PrestaShop
-            return !empty($product['attributes_small']) && is_string($product['attributes_small'])
+            return ! empty($product['attributes_small']) && is_string($product['attributes_small'])
                 ? $product['attributes_small']
                 : '';
         }
@@ -312,6 +316,7 @@ class GtmController extends BaseController
                 if (is_string($attr)) {
                     // A veces vienen como lista de strings
                     $out[] = $attr;
+
                     continue;
                 }
                 if (is_array($attr)) {
@@ -320,29 +325,35 @@ class GtmController extends BaseController
                     $value = $attr['attribute_name'] ?? $attr['value'] ?? $attr['attribute'] ?? null;
 
                     if ($group !== null && $value !== null) {
-                        $out[] = $group . ': ' . $value;
+                        $out[] = $group.': '.$value;
+
                         continue;
                     }
 
                     // Último recurso: aplana par clave=valor legible
                     $flat = [];
                     foreach ($attr as $k => $v) {
-                        if (is_scalar($v)) $flat[] = "$k=$v";
+                        if (is_scalar($v)) {
+                            $flat[] = "$k=$v";
+                        }
                     }
-                    if ($flat) $out[] = implode(' ', $flat);
+                    if ($flat) {
+                        $out[] = implode(' ', $flat);
+                    }
                 }
             }
 
-            if (!empty($out)) {
+            if (! empty($out)) {
                 return implode(', ', $out);
             }
         }
 
         // Fallback final
-        return !empty($product['attributes_small']) && is_string($product['attributes_small'])
+        return ! empty($product['attributes_small']) && is_string($product['attributes_small'])
             ? $product['attributes_small']
             : '';
     }
+
     private function getProductSecondaryVariant($product)
     {
         // Reutilizamos la representación textual y cogemos el segundo segmento
@@ -353,8 +364,10 @@ class GtmController extends BaseController
 
         // Separa por coma: "Color: Rojo, Talla: M" -> ["Color: Rojo", "Talla: M"]
         $parts = array_map('trim', explode(',', $variantStr));
+
         return $parts[1] ?? '';
     }
+
     private function getItemListName($context)
     {
         $controller = $context->controller;
@@ -368,11 +381,13 @@ class GtmController extends BaseController
             return 'Product Page';
         } elseif ($controller instanceof CategoryController) {
             $category = new Category($context->controller->getCategory()->id, $context->language->id);
-            return 'Category: ' . $category->name;
+
+            return 'Category: '.$category->name;
         }
 
         return 'General';
     }
+
     private function getCurrentCheckoutStep()
     {
         $step = Tools::getValue('step');
@@ -401,10 +416,18 @@ class GtmController extends BaseController
             $controller instanceof OrderController) {
             // Try to determine specific step from URL or form data
             $uri = $_SERVER['REQUEST_URI'] ?? '';
-            if (strpos($uri, 'address') !== false) return '1';
-            if (strpos($uri, 'delivery') !== false || strpos($uri, 'shipping') !== false) return '2';
-            if (strpos($uri, 'payment') !== false) return '3';
-            if (strpos($uri, 'confirmation') !== false || strpos($uri, 'order') !== false) return '4';
+            if (strpos($uri, 'address') !== false) {
+                return '1';
+            }
+            if (strpos($uri, 'delivery') !== false || strpos($uri, 'shipping') !== false) {
+                return '2';
+            }
+            if (strpos($uri, 'payment') !== false) {
+                return '3';
+            }
+            if (strpos($uri, 'confirmation') !== false || strpos($uri, 'order') !== false) {
+                return '4';
+            }
 
             return '1'; // Default to address step
         }

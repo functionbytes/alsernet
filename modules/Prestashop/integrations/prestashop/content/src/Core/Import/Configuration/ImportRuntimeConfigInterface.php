@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,8 +67,8 @@ interface ImportRuntimeConfigInterface
     /**
      * Add a shared data item.
      *
-     * @param string $key
-     * @param mixed $value
+     * @param  string  $key
+     * @param  mixed  $value
      */
     public function addSharedDataItem($key, $value);
 
@@ -95,35 +96,34 @@ interface ImportRuntimeConfigInterface
     /**
      * Set number of rows processed during import process runtime.
      *
-     * @param int $number
+     * @param  int  $number
      */
     public function setNumberOfProcessedRows($number);
 
     /**
      * Set request size in bytes.
      *
-     * @param int $size
+     * @param  int  $size
      */
     public function setRequestSizeInBytes($size);
 
     /**
      * Set post size limit in bytes.
      *
-     * @param int $size
+     * @param  int  $size
      */
     public function setPostSizeLimitInBytes($size);
 
     /**
      * Set the total number of rows to be imported.
      *
-     * @param int $number
+     * @param  int  $number
      */
     public function setTotalNumberOfRows($number);
 
     /**
      * Set notices that occurred during the import process.
      *
-     * @param array $notices
      *
      * @return array
      */
@@ -132,7 +132,6 @@ interface ImportRuntimeConfigInterface
     /**
      * Set warnings that occurred during the import process.
      *
-     * @param array $warnings
      *
      * @return array
      */
@@ -141,7 +140,6 @@ interface ImportRuntimeConfigInterface
     /**
      * Set errors that occurred during the import process.
      *
-     * @param array $errors
      *
      * @return array
      */

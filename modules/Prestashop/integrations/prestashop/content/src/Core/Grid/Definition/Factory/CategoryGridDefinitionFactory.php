@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,11 +82,8 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
     private $multistoreContextChecker;
 
     /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param string $resetActionUrl
-     * @param string $redirectActionUrl
-     * @param MultistoreContextCheckerInterface $multistoreContextChecker
-     * @param AccessibilityCheckerInterface $categoryForViewAccessibilityChecker
+     * @param  string  $resetActionUrl
+     * @param  string  $redirectActionUrl
      */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -122,7 +120,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new IdentifierColumn('id_category'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -182,8 +180,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
                             'update_route' => 'admin_categories_update_position',
                         ])
                 )
-                ->addBefore('id_category', new DraggableColumn('position_drag'))
-            ;
+                ->addBefore('id_category', new DraggableColumn('position_drag'));
         }
 
         return $columns;
@@ -194,7 +191,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     protected function getFilters()
     {
-        $filters = (new FilterCollection())
+        $filters = (new FilterCollection)
             ->add(
                 (new Filter('id_category', TextType::class))
                     ->setAssociatedColumn('id_category')
@@ -262,7 +259,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new LinkGridAction('import'))
                     ->setName($this->trans('Import', [], 'Admin.Actions'))
@@ -304,7 +301,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 (new SubmitBulkAction('enable_selection'))
                     ->setName($this->trans('Enable selection', [], 'Admin.Actions'))
@@ -333,7 +330,7 @@ final class CategoryGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     private function getRowActions()
     {
-        return (new RowActionCollection())
+        return (new RowActionCollection)
             ->add(
                 (new LinkRowAction('view'))
                     ->setName($this->trans('View', [], 'Admin.Actions'))

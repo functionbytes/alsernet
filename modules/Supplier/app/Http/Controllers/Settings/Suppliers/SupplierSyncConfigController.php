@@ -163,28 +163,28 @@ class SupplierSyncConfigController extends Controller
         // Leer TODOS los settings globales de sync
         $storedSettings = SyncSetting::query()->pluck('value', 'key')->toArray();
 
-        $globalDateFrom       = $storedSettings['filter_date_from']       ?? config('supplier.erp_sync.filter_date_from');
-        $globalLimit          = (int) ($storedSettings['default_limit']   ?? 0);
-        $globalMode           = $storedSettings['default_mode']           ?? 'filter';
-        $globalSkipAi         = (bool) ($storedSettings['default_skip_ai']         ?? false);
-        $globalDescEmpty      = ($storedSettings['default_description_empty'] ?? '1') !== '0';
-        $globalWebFilter      = $storedSettings['default_web_filter']     ?? '2';
-        $globalForce          = ($storedSettings['default_force']         ?? '0') === '1';
-        $globalRegisterOnly   = (bool) ($storedSettings['default_register_only']   ?? false);
-        $globalDryRun         = (bool) ($storedSettings['default_dry_run']         ?? false);
+        $globalDateFrom = $storedSettings['filter_date_from'] ?? config('supplier.erp_sync.filter_date_from');
+        $globalLimit = (int) ($storedSettings['default_limit'] ?? 0);
+        $globalMode = $storedSettings['default_mode'] ?? 'filter';
+        $globalSkipAi = (bool) ($storedSettings['default_skip_ai'] ?? false);
+        $globalDescEmpty = ($storedSettings['default_description_empty'] ?? '1') !== '0';
+        $globalWebFilter = $storedSettings['default_web_filter'] ?? '2';
+        $globalForce = ($storedSettings['default_force'] ?? '0') === '1';
+        $globalRegisterOnly = (bool) ($storedSettings['default_register_only'] ?? false);
+        $globalDryRun = (bool) ($storedSettings['default_dry_run'] ?? false);
 
         // Merge con metadata del schedule (permite override por horario)
-        $meta             = $schedule->metadata ?? [];
-        $dateFrom         = ($meta['date_from'] ?? null) ?: ($globalDateFrom ?: null);
-        $dateField        = $meta['date_field']        ?? 'creation';
-        $mode             = $meta['mode']              ?? $globalMode;
+        $meta = $schedule->metadata ?? [];
+        $dateFrom = ($meta['date_from'] ?? null) ?: ($globalDateFrom ?: null);
+        $dateField = $meta['date_field'] ?? 'creation';
+        $mode = $meta['mode'] ?? $globalMode;
         $descriptionEmpty = array_key_exists('description_empty', $meta) ? (bool) $meta['description_empty'] : $globalDescEmpty;
-        $webFilter        = $meta['web_filter']        ?? $globalWebFilter;
-        $skipAi           = array_key_exists('skip_ai', $meta)  ? (bool) $meta['skip_ai']  : $globalSkipAi;
-        $force            = array_key_exists('force', $meta)    ? (bool) $meta['force']    : $globalForce;
-        $registerOnly     = array_key_exists('register_only', $meta) ? (bool) $meta['register_only'] : $globalRegisterOnly;
-        $dryRun           = array_key_exists('dry_run', $meta)  ? (bool) $meta['dry_run']  : $globalDryRun;
-        $limit            = isset($meta['limit']) && $meta['limit'] > 0
+        $webFilter = $meta['web_filter'] ?? $globalWebFilter;
+        $skipAi = array_key_exists('skip_ai', $meta) ? (bool) $meta['skip_ai'] : $globalSkipAi;
+        $force = array_key_exists('force', $meta) ? (bool) $meta['force'] : $globalForce;
+        $registerOnly = array_key_exists('register_only', $meta) ? (bool) $meta['register_only'] : $globalRegisterOnly;
+        $dryRun = array_key_exists('dry_run', $meta) ? (bool) $meta['dry_run'] : $globalDryRun;
+        $limit = isset($meta['limit']) && $meta['limit'] > 0
                             ? (int) $meta['limit']
                             : ($globalLimit > 0 ? $globalLimit : null);
 
@@ -193,28 +193,28 @@ class SupplierSyncConfigController extends Controller
             : 'Sincronización manual de productos';
 
         $batch = SyncBatch::create([
-            'batch_name'      => $batchName,
-            'sync_type'       => $schedule->sync_type,
-            'status'          => 'pending',
-            'priority'        => 'normal',
-            'triggered_by'    => 'manual',
+            'batch_name' => $batchName,
+            'sync_type' => $schedule->sync_type,
+            'status' => 'pending',
+            'priority' => 'normal',
+            'triggered_by' => 'manual',
             'filter_criteria' => [
-                'date_from'         => $dateFrom,
-                'date_field'        => $dateField,
+                'date_from' => $dateFrom,
+                'date_field' => $dateField,
                 'description_empty' => $descriptionEmpty,
-                'web_filter'        => $webFilter,
-                'skip_ai'           => $skipAi,
-                'force'             => $force,
-                'register_only'     => $registerOnly,
-                'dry_run'           => $dryRun,
-                'limit'             => $limit,
+                'web_filter' => $webFilter,
+                'skip_ai' => $skipAi,
+                'force' => $force,
+                'register_only' => $registerOnly,
+                'dry_run' => $dryRun,
+                'limit' => $limit,
             ],
         ]);
 
         $schedule->update([
-            'last_run_at'      => now(),
-            'last_run_status'  => 'running',
-            'last_batch_id'    => $batch->id,
+            'last_run_at' => now(),
+            'last_run_status' => 'running',
+            'last_batch_id' => $batch->id,
         ]);
 
         if ($schedule->sync_type === 'model') {
@@ -238,9 +238,9 @@ class SupplierSyncConfigController extends Controller
         }
 
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'batch_id' => $batch->id,
-            'message'  => 'Sincronización iniciada',
+            'message' => 'Sincronización iniciada',
         ]);
     }
 

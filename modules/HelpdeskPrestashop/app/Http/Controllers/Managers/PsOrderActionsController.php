@@ -6,9 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
+use Modules\HelpdeskPrestashop\Http\Controllers\Concerns\BuildsIdempotencyKey;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\AddOrderNoteRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\ChangeOrderStatusRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\SendOrderEmailRequest;
@@ -16,6 +16,7 @@ use Modules\HelpdeskPrestashop\Http\Requests\Managers\SetOrderAddressRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\SetOrderTrackingRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\StartOrderReturnRequest;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
+use Modules\HelpdeskPrestashop\Support\OrderDetailCache;
 
 /**
  * Acciones mutadoras del workspace de pedido PrestaShop (cambiar estado,
@@ -29,6 +30,8 @@ use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
  */
 class PsOrderActionsController extends Controller
 {
+    use BuildsIdempotencyKey;
+
     public function __construct(
         private readonly PrestashopContextService $service
     ) {}
@@ -66,7 +69,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->setOrderAddress($order, (int) $data['address_id'], $data['type'] ?? 'delivery', $customer->email, (string) Str::uuid());
+            $result = $this->service->setOrderAddress($order, (int) $data['address_id'], $data['type'] ?? 'delivery', $customer->email, $this->idempotencyKey($request, $order, 'order.set_address', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó el cambio (pedido/dirección no válidos o sin acceso).'], 422);
         }
@@ -89,7 +92,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->sendOrderEmail($order, $data['type'], $customer->email, (string) Str::uuid());
+            $result = $this->service->sendOrderEmail($order, $data['type'], $customer->email, $this->idempotencyKey($request, $order, 'order.send_email', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó el envío (pedido no encontrado o sin acceso).'], 422);
         }
@@ -110,7 +113,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->startOrderReturn($order, $data['items'], $customer->email, (string) Str::uuid());
+            $result = $this->service->startOrderReturn($order, $data['items'], $customer->email, $this->idempotencyKey($request, $order, 'order.start_return', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó la devolución (pedido no encontrado o sin acceso).'], 422);
         }
@@ -132,10 +135,10 @@ class PsOrderActionsController extends Controller
 
         $data = $request->validated();
 
-        $agent = trim(($request->user()->firstname ?? '').' '.($request->user()->lastname ?? '')) ?: 'Helpdesk';
+        $agent = $request->user()->fullName() ?: 'Helpdesk';
 
         try {
-            $result = $this->service->addOrderNote($order, $data['note'], $agent, $customer->email, (string) Str::uuid());
+            $result = $this->service->addOrderNote($order, $data['note'], $agent, $customer->email, $this->idempotencyKey($request, $order, 'order.add_note', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó la nota (pedido no encontrado o sin acceso).'], 422);
         }
@@ -163,7 +166,7 @@ class PsOrderActionsController extends Controller
                 (int) $data['state_id'],
                 (bool) ($data['notify'] ?? false),
                 $customer->email,
-                (string) Str::uuid(),
+                $this->idempotencyKey($request, $order, 'order.change_status', $data),
             );
         } catch (PsUpstreamException) {
             return response()->json([
@@ -195,7 +198,7 @@ class PsOrderActionsController extends Controller
                 (string) $data['tracking_number'],
                 isset($data['carrier_id']) ? (int) $data['carrier_id'] : null,
                 $customer->email,
-                (string) Str::uuid(),
+                $this->idempotencyKey($request, $order, 'order.set_tracking', $data),
             );
         } catch (PsUpstreamException) {
             return response()->json([
@@ -259,6 +262,6 @@ class PsOrderActionsController extends Controller
      */
     private function forgetDetailCache(int $order, string $email): void
     {
-        Cache::forget('ps_order_detail:'.$order.':'.md5($email));
+        Cache::forget(OrderDetailCache::key($order, $email));
     }
 }

@@ -3,7 +3,9 @@
 namespace Modules\HelpdeskTickets\Jobs\Helpdesks;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
@@ -13,10 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
-// uploading.allowed_extensions vive en helpdesk_settings (Modules\Helpdesk\Models\Setting),
-// distinta de Modules\Core\Models\Setting (tabla `settings`, usada aquí para
-// incoming_email) — alias explícito para no confundir las dos clases "Setting".
-use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskEmailActivity\Services\EmailBounceCorrelatorService;
 use Modules\HelpdeskEmailActivity\Support\DsnMessageParser;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
@@ -27,6 +26,7 @@ use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\SpamClassifierService;
+use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Support\EmailReplyQuoteStripper;
@@ -36,13 +36,29 @@ use Webklex\PHPIMAP\Client as ImapClient;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message as ImapMessage;
 
-class FetchTicketEmailsJob implements ShouldQueue
+class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
     public int $timeout = 600;
+
+    /**
+     * Una sola lectura del buzón a la vez.
+     *
+     * Antes esto lo hacía el withoutOverlapping() de la tarea programada, pero
+     * ahí protegía lo que no toca: el comando solo despacha este trabajo y
+     * termina en milisegundos. Con la lectura cada pocos segundos, ese cerrojo
+     * se quedaba tomado y la bandeja dejaba de leer correo durante minutos
+     * —reproducido varias veces el 7-sep-2026—. El solape de verdad puede
+     * ocurrir aquí, leyendo el mismo buzón dos veces a la vez, y aquí es donde
+     * se evita.
+     *
+     * uniqueFor corto para que una caída a media lectura no deje el cerrojo
+     * tomado más de un minuto; el trabajo entero tarda menos de un segundo.
+     */
+    public int $uniqueFor = 60;
 
     /** @var array<int, int> */
     public array $backoff = [30, 60, 120];
@@ -90,7 +106,7 @@ class FetchTicketEmailsJob implements ShouldQueue
             // no hay nada que hacer: caer al legacy procesaría el buzón
             // equivocado.
             if (empty($connections)) {
-                if ($this->onlyConnectionId !== null) {
+                if (isset($this->onlyConnectionId)) {
                     return;
                 }
 
@@ -157,7 +173,18 @@ class FetchTicketEmailsJob implements ShouldQueue
         $data = json_decode((string) $raw, true);
         $connections = $data['imap']['connections'] ?? [];
 
-        if ($this->onlyConnectionId !== null) {
+        // isset() y no !== null: $onlyConnectionId es una propiedad tipada con
+        // default null promovida por constructor. Illuminate\Queue\SerializesModels
+        // omite del payload cualquier propiedad cuyo valor sea igual a su default
+        // (optimizacion de tamano) — como el dispatch normal (sin ambito) siempre
+        // deja este valor en null, nunca viaja serializada, y __unserialize() jamas
+        // la toca: queda SIN INICIALIZAR en el job reconstruido por el worker, no en
+        // null. Leerla con !== null explota con "must not be accessed before
+        // initialization" en cuanto el job pasa de verdad por la cola (no se via
+        // hasta ahora porque Horizon llevaba tiempo caido). isset() sobre una
+        // propiedad tipada sin inicializar da false sin lanzar, que es exactamente
+        // la semantica que se busca aqui (sin ambito = procesar todos los canales).
+        if (isset($this->onlyConnectionId)) {
             return array_values(array_filter(
                 $connections,
                 fn ($connection) => ($connection['id'] ?? null) === $this->onlyConnectionId
@@ -194,7 +221,16 @@ class FetchTicketEmailsJob implements ShouldQueue
 
         try {
             $folder = $client->getFolder($connection['folder'] ?? 'INBOX');
-            $messages = $folder->query()->whereUnseen()->get();
+            $query = $folder->query()->whereUnseen();
+
+            // Punto de corte configurado en el canal ("Sincronizar desde"):
+            // criterio IMAP SINCE, filtra por dia completo (sin hora) del lado
+            // del servidor, antes de traer un solo mensaje.
+            if (! empty($connection['sync_since'])) {
+                $query->whereSince($connection['sync_since']);
+            }
+
+            $messages = $query->get();
 
             foreach ($messages as $message) {
                 $this->processMessage($message, $connection);
@@ -212,9 +248,9 @@ class FetchTicketEmailsJob implements ShouldQueue
      * setFlag('Seen') falla (visto en producción: error de IMAP silencioso),
      * el mensaje seguiría apareciendo como no leído y se reprocesaría cada
      * minuto — el guard de idempotencia al inicio de processIncomingEmail()
-     * (por message_id) es quien evita que eso vuelva a crear un ticket
-     * duplicado o reenvíe la confirmación al cliente; aquí solo se distingue
-     * el log para que ese caso no se confunda con un fallo real de
+     * (por message_id o UID IMAP) es quien evita que eso vuelva a crear un
+     * ticket duplicado o reenvíe la confirmación al cliente; aquí solo se
+     * distingue el log para que ese caso no se confunda con un fallo real de
      * procesamiento.
      */
     protected function processMessage(ImapMessage $message, array $connection): void
@@ -327,19 +363,18 @@ class FetchTicketEmailsJob implements ShouldQueue
      */
     protected function processIncomingEmail(ImapMessage $message, array $connection = []): void
     {
-        // Idempotencia por Message-ID: si este correo ya se guardó en un
-        // TicketMail, reprocesarlo (típicamente porque setFlag('Seen') falló
-        // en la corrida anterior y el mensaje sigue apareciendo como no
-        // leído) NO debe crear un segundo ticket ni reenviar la confirmación
-        // al cliente — solo se necesita reintentar el flag, lo que hace el
-        // caller (processMessage()). Se comprueba el Message-ID real del
-        // mensaje (antes de aplicar el fallback generateMessageId() de más
-        // abajo): un correo entrante sin su propio Message-ID recibiría un
-        // valor aleatorio distinto en cada intento y este guard nunca
-        // engancharía, así que ahí no hay protección posible por esta vía.
+        // Idempotencia por Message-ID/UID IMAP: si este correo ya se guardó
+        // en un TicketMail, reprocesarlo (típicamente porque setFlag('Seen')
+        // falló y el mensaje sigue apareciendo como no leído) NO debe crear
+        // un segundo ticket ni reenviar la confirmación al cliente. Algunos
+        // emisores omiten Message-ID; en ese caso usamos el UID estable del
+        // buzón, con el canal/carpeta dentro del namespace.
         $messageId = $this->stringAttribute($message->message_id);
+        if (! $messageId) {
+            $messageId = $this->stableImapMessageId($message, $connection);
+        }
 
-        if ($messageId && TicketMail::where('message_id', $messageId)->exists()) {
+        if ($messageId && TicketMail::withTrashed()->where('message_id', $messageId)->exists()) {
             Log::info('FetchTicketEmailsJob: email already processed, skipping (message_id already recorded)', [
                 'message_id' => $messageId,
             ]);
@@ -393,7 +428,24 @@ class FetchTicketEmailsJob implements ShouldQueue
         // sin recortar -- es el registro de auditoría ("Correo"/"Ver
         // original" en el panel), tiene que conservar el correo tal cual
         // llegó.
-        $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
+        try {
+            $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
+        } catch (QueryException $e) {
+            // El guard anterior cubre el caso normal. Este segundo cierre es
+            // necesario si dos workers pasan el guard al mismo tiempo: el
+            // índice UNIQUE de message_id gana la carrera y el perdedor debe
+            // tratarse como ya procesado, no quedar reintentándose para
+            // siempre con el correo aún marcado como no leído.
+            if ($messageId && TicketMail::withTrashed()->where('message_id', $messageId)->exists()) {
+                Log::warning('FetchTicketEmailsJob: duplicate email rejected by unique message_id index, skipping', [
+                    'message_id' => $messageId,
+                ]);
+
+                return;
+            }
+
+            throw $e;
+        }
 
         // Create a TicketItem for the timeline (customer message). Los
         // adjuntos entran por attachment_urls (rutas de storage), el mismo
@@ -559,7 +611,7 @@ class FetchTicketEmailsJob implements ShouldQueue
 
             if ($existingMail?->ticket) {
                 if ($this->senderMatchesTicket($existingMail->ticket, $fromEmail)) {
-                    return $existingMail->ticket;
+                    return $this->threadedTicket($existingMail->ticket);
                 }
 
                 Log::warning('FetchTicketEmailsJob: Message-ID thread sender does not match ticket customer, not threading', [
@@ -575,7 +627,7 @@ class FetchTicketEmailsJob implements ShouldQueue
         if (preg_match('/#(TCK-\d{4}-\d{5})/', $parsed['subject'], $matches)) {
             $ticket = Ticket::with('customer:id,email')->where('ticket_number', $matches[1])->first();
             if ($ticket && $this->senderMatchesTicket($ticket, $fromEmail)) {
-                return $ticket;
+                return $this->threadedTicket($ticket);
             }
 
             if ($ticket) {
@@ -606,19 +658,6 @@ class FetchTicketEmailsJob implements ShouldQueue
             Log::info("Created new customer: {$fromEmail}");
         }
 
-        // Vincula el cliente con el ERP por email, en segundo plano — mismo
-        // mecanismo que ConversationCreated → DispatchErpLinkJob →
-        // LinkCustomerToErpJob en el núcleo Helpdesk (helpdesk_erp_enabled()
-        // respeta el toggle de Settings → Integraciones). LinkCustomerToErpJob
-        // ya es idempotente (no repite si el cliente ya tiene id_cliente
-        // vinculado) y best-effort: si el email no existe en el ERP, o el ERP
-        // no responde, simplemente no se vincula — nunca bloquea ni descarta
-        // el ticket. class_exists() porque HelpdeskErp es un módulo aparte que
-        // puede no estar instalado.
-        if (helpdesk_erp_enabled() && class_exists(LinkCustomerToErpJob::class)) {
-            LinkCustomerToErpJob::dispatch($customer->id);
-        }
-
         // Create new ticket inside a transaction so the lockForUpdate in
         // generateTicketNumber() is effective and numbers never collide.
         $ticket = DB::transaction(fn () => Ticket::create([
@@ -645,7 +684,45 @@ class FetchTicketEmailsJob implements ShouldQueue
         // el MessageAdded::dispatch() de más arriba.
         TicketCreated::dispatch($ticket);
 
+        // Después del Ticket::create(), no antes: el trabajo lleva el ticket de
+        // origen para que CustomerErpResolved pueda enrutar ESTE ticket y no
+        // todo lo que el cliente tenga abierto.
+        $this->dispatchErpLookup($customer->id, $ticket->id);
+
         return $ticket;
+    }
+
+    /**
+     * Un correo que se engancha a un ticket ya abierto también pide la búsqueda.
+     *
+     * Antes solo se pedía en la rama que crea ticket: si el ERP estaba caído
+     * ese día, o el cliente aún no existía en gestión, nada volvía a intentarlo
+     * nunca. El enfriamiento de LinkCustomerToErpJob es lo que evita que esto
+     * consulte el ERP en cada respuesta.
+     */
+    protected function threadedTicket(Ticket $ticket): Ticket
+    {
+        if ($ticket->customer_id) {
+            $this->dispatchErpLookup($ticket->customer_id, $ticket->id);
+        }
+
+        return $ticket;
+    }
+
+    /**
+     * Best-effort y asíncrono: si el email no está en el ERP, o el ERP no
+     * responde, no se vincula nada — nunca bloquea ni descarta el correo.
+     * class_exists() porque HelpdeskErp es un módulo aparte que puede no estar
+     * instalado, y helpdesk_erp_enabled() respeta el toggle de
+     * Ajustes → Integraciones.
+     */
+    protected function dispatchErpLookup(int $customerId, int $ticketId): void
+    {
+        if (! helpdesk_erp_enabled() || ! class_exists(LinkCustomerToErpJob::class)) {
+            return;
+        }
+
+        LinkCustomerToErpJob::dispatch($customerId, 'ticket', $ticketId);
     }
 
     /**
@@ -744,10 +821,36 @@ class FetchTicketEmailsJob implements ShouldQueue
                 return null;
             }
 
+            $content = $attachment->getContent();
+            $maxBytes = app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024;
+            if (strlen($content) > $maxBytes) {
+                $skippedAttachments[] = $filename;
+                Log::warning('FetchTicketEmailsJob: skipped oversized attachment', [
+                    'filename' => $filename,
+                    'size' => strlen($content),
+                    'max_bytes' => $maxBytes,
+                ]);
+
+                return null;
+            }
+
             $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
             $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
 
-            Storage::disk($disk)->put($path, $attachment->getContent());
+            Storage::disk($disk)->put($path, $content);
+
+            try {
+                app(TicketAttachmentSecurityService::class)->assertSafeStored($disk, $path, $filename);
+            } catch (\Throwable $exception) {
+                Storage::disk($disk)->delete($path);
+                $skippedAttachments[] = $filename;
+                Log::warning('FetchTicketEmailsJob: skipped attachment blocked by malware scan', [
+                    'filename' => $filename,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return null;
+            }
 
             return $path;
         } catch (\Exception $e) {
@@ -769,19 +872,7 @@ class FetchTicketEmailsJob implements ShouldQueue
      */
     private function allowedAttachmentExtensions(): array
     {
-        $stored = HelpdeskGeneralSetting::get('uploading.allowed_extensions');
-
-        if (is_string($stored) && trim($stored) !== '') {
-            return array_values(array_filter(array_map(
-                fn (string $ext) => strtolower(trim($ext)),
-                explode(',', $stored)
-            )));
-        }
-
-        return array_map(
-            'strtolower',
-            config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'])
-        );
+        return app(HelpdeskSettings::class)->attachmentExtensions();
     }
 
     /**
@@ -858,10 +949,16 @@ class FetchTicketEmailsJob implements ShouldQueue
             return [];
         }
 
+        // RFC 5322 suele separar References con espacios, aunque algunos
+        // servidores/clientes los entregan separados por comas. Aceptar solo
+        // comas rompía el hilado cuando el correo no traía In-Reply-To y
+        // References venía en su formato habitual: <id1> <id2>.
+        preg_match_all('/<([^<>]+)>|([^\s,<>]+)/', $references, $matches, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL);
+
         return array_values(array_filter(array_map(
-            fn ($id) => trim($id, " \t\n\r\0\x0B<>"),
-            explode(',', $references)
-        )));
+            static fn (array $match): string => trim((string) ($match[1] ?? $match[2] ?? '')),
+            $matches,
+        ), static fn (string $id): bool => $id !== ''));
     }
 
     protected function stringAttribute(?ImapAttribute $attribute): ?string
@@ -961,5 +1058,36 @@ class FetchTicketEmailsJob implements ShouldQueue
     protected function generateMessageId(): string
     {
         return uniqid().'@'.config('app.name');
+    }
+
+    /**
+     * Genera una identidad determinista para un mensaje IMAP sin
+     * Message-ID. El UID solo es único dentro de una carpeta, por eso el
+     * namespace incluye id/host/usuario/carpeta del canal. Si el doble de
+     * pruebas o un proveedor IMAP no expone UID, se conserva el fallback
+     * aleatorio de generateMessageId() y no se inventa una deduplicación
+     * basada en asunto/cuerpo (podría borrar dos correos legítimos iguales).
+     */
+    protected function stableImapMessageId(ImapMessage $message, array $connection = []): ?string
+    {
+        try {
+            $uid = $message->uid;
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! is_int($uid) && ! (is_string($uid) && ctype_digit($uid))) {
+            return null;
+        }
+
+        $config = $connection !== [] ? $connection : (array) config('helpdesk.email.imap', []);
+        $scope = implode('|', [
+            $config['id'] ?? '',
+            $config['server'] ?? $config['host'] ?? '',
+            $config['username'] ?? '',
+            $config['folder'] ?? 'INBOX',
+        ]);
+
+        return 'imap-'.hash('sha256', $scope.'|'.$uid).'@'.config('app.name');
     }
 }

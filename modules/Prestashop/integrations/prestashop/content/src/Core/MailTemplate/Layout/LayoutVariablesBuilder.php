@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,11 +51,6 @@ class LayoutVariablesBuilder implements LayoutVariablesBuilderInterface
      */
     private $languageDefaultFonts;
 
-    /**
-     * @param HookDispatcherInterface $hookDispatcher
-     * @param LanguageDefaultFontsCatalog $languageDefaultFonts
-     * @param array $defaultVariables
-     */
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
         LanguageDefaultFontsCatalog $languageDefaultFonts,
@@ -71,7 +67,7 @@ class LayoutVariablesBuilder implements LayoutVariablesBuilderInterface
     public function buildVariables(LayoutInterface $mailLayout, LanguageInterface $language)
     {
         $languageDefaultFont = $this->languageDefaultFonts->getDefaultFontByLanguage($language);
-        if (!empty($languageDefaultFont)) {
+        if (! empty($languageDefaultFont)) {
             $languageDefaultFont .= ',';
         }
 
@@ -83,7 +79,7 @@ class LayoutVariablesBuilder implements LayoutVariablesBuilderInterface
             'locale' => $language->getLocale(),
         ]);
 
-        //This hook allows to change the variables of a layout
+        // This hook allows to change the variables of a layout
         $this->hookDispatcher->dispatchWithParameters(
             LayoutVariablesBuilderInterface::BUILD_MAIL_LAYOUT_VARIABLES_HOOK,
             [

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,6 +29,4 @@ namespace PrestaShop\PrestaShop\Core\Image\Uploader\Exception;
 
 use PrestaShop\PrestaShop\Core\Image\Exception\ImageException;
 
-class MemoryLimitException extends ImageException
-{
-}
+class MemoryLimitException extends ImageException {}

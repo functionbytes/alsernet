@@ -1,5 +1,7 @@
 <?php
 
+use PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException;
+
 /**
  * 2012-2021 INNERCODE
  *
@@ -30,7 +32,7 @@ class FreeShippingAmountDisplayOverride extends FreeShippingAmountDisplay
      * @param  string  $position
      * @param  array  $data
      *
-     * @throws \PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException
+     * @throws LocalizationException
      */
     public function getMessageHTML($position = 'checkout', $data = [])
     {

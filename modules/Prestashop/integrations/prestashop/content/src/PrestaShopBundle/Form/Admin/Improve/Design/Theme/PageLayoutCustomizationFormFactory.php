@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ final class PageLayoutCustomizationFormFactory implements PageLayoutCustomizatio
     private $shopThemeName;
 
     /**
-     * @param FormFactoryInterface $formFactory
-     * @param ThemeRepository $themeRepository
-     * @param string $shopThemeName
+     * @param  string  $shopThemeName
      */
     public function __construct(
         FormFactoryInterface $formFactory,
@@ -81,9 +80,7 @@ final class PageLayoutCustomizationFormFactory implements PageLayoutCustomizatio
     }
 
     /**
-     * @param Theme $theme
-     * @param LayoutCustomizationPage[] $customizationPages
-     *
+     * @param  LayoutCustomizationPage[]  $customizationPages
      * @return array
      */
     private function getCustomizablePageLayouts(Theme $theme, array $customizationPages)

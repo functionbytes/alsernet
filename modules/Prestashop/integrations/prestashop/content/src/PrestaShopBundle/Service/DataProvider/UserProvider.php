@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShopBundle\Service\DataProvider;
 
+use Symfony\Bundle\FrameworkBundle\Controller;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\User\User;
 
@@ -44,7 +46,7 @@ class UserProvider
     }
 
     /**
-     * @see \Symfony\Bundle\FrameworkBundle\Controller::getUser()
+     * @see Controller::getUser()
      */
     public function getUser()
     {
@@ -52,7 +54,7 @@ class UserProvider
             return;
         }
 
-        if (!is_object($user = $token->getUser())) {
+        if (! is_object($user = $token->getUser())) {
             // e.g. anonymous authentication
             return;
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,20 +33,25 @@ use Doctrine\ORM\Mapping as ORM;
  * AttributeLang.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\AttributeLangRepository")
  */
 class AttributeLang
 {
     /**
      * @ORM\Id
+     *
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Attribute", inversedBy="attributeLangs")
+     *
      * @ORM\JoinColumn(name="id_attribute", referencedColumnName="id_attribute", nullable=false)
      */
     private $attribute;
 
     /**
      * @ORM\Id
+     *
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Lang")
+     *
      * @ORM\JoinColumn(name="id_lang", referencedColumnName="id_lang", nullable=false, onDelete="CASCADE")
      */
     private $lang;
@@ -70,8 +76,7 @@ class AttributeLang
     /**
      * Set name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return AttributeLang
      */
     public function setName($name)
@@ -94,7 +99,6 @@ class AttributeLang
     /**
      * Set attribute.
      *
-     * @param \PrestaShopBundle\Entity\Attribute $attribute
      *
      * @return AttributeLang
      */
@@ -108,7 +112,7 @@ class AttributeLang
     /**
      * Get attribute.
      *
-     * @return \PrestaShopBundle\Entity\Attribute
+     * @return Attribute
      */
     public function getAttribute()
     {
@@ -118,7 +122,6 @@ class AttributeLang
     /**
      * Set lang.
      *
-     * @param \PrestaShopBundle\Entity\Lang $lang
      *
      * @return AttributeLang
      */
@@ -132,7 +135,7 @@ class AttributeLang
     /**
      * Get lang.
      *
-     * @return \PrestaShopBundle\Entity\Lang
+     * @return Lang
      */
     public function getLang()
     {

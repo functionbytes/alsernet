@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,11 +51,6 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
      */
     private $stringModifier;
 
-    /**
-     * @param array $hookDescriptions
-     * @param StringValidatorInterface $stringValidator
-     * @param StringModifierInterface $stringModifier
-     */
     public function __construct(
         array $hookDescriptions,
         StringValidatorInterface $stringValidator,
@@ -75,7 +71,7 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
             $suffix = isset($hookDescription['suffix']) ? $hookDescription['suffix'] : '';
 
             if ($this->stringValidator->startsWithAndEndsWith($hookName, $prefix, $suffix) &&
-                !$this->stringValidator->doesContainsWhiteSpaces($hookName)
+                ! $this->stringValidator->doesContainsWhiteSpaces($hookName)
             ) {
                 $hookId = $this->extractHookId($hookName, $prefix, $suffix);
 
@@ -97,10 +93,9 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
     /**
      * Removes from hook name id prefix and suffix.
      *
-     * @param string $hookName
-     * @param string $prefix
-     * @param string $suffix
-     *
+     * @param  string  $hookName
+     * @param  string  $prefix
+     * @param  string  $suffix
      * @return string
      */
     private function extractHookId($hookName, $prefix, $suffix)
@@ -111,14 +106,13 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
     /**
      * Gets text with replaced hook id.
      *
-     * @param string $description
-     * @param string $hookId
-     *
+     * @param  string  $description
+     * @param  string  $hookId
      * @return string
      */
     private function getTextWithHookId($description, $hookId)
     {
-        if (!$this->doesHookDescriptionContainsPlaceholder($description)) {
+        if (! $this->doesHookDescriptionContainsPlaceholder($description)) {
             return $description;
         }
 
@@ -138,24 +132,22 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
     /**
      * Checks if hook description contains placeholder value.
      *
-     * @param string $description
-     *
+     * @param  string  $description
      * @return bool
      */
     private function doesHookDescriptionContainsPlaceholder($description)
     {
-        return false !== strpos($description, '%s');
+        return strpos($description, '%s') !== false;
     }
 
     /**
      * Checks if placeholder is the first element of the string.
      *
-     * @param string $description
-     *
+     * @param  string  $description
      * @return bool
      */
     private function doesPlaceholderIsTheFirstElementOfTheDescription($description)
     {
-        return 0 === strncmp($description, '%s', 2);
+        return strncmp($description, '%s', 2) === 0;
     }
 }

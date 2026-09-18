@@ -16,6 +16,13 @@ class Macro extends Model
 
     protected $table = 'helpdesk_macros';
 
+    /**
+     * Valor de la columna discriminadora `module`. La tabla `helpdesk_macros`
+     * la comparte con Modules\HelpdeskTickets\Models\Macro (macros de
+     * ticket), que tiene un vocabulario de acciones distinto e incompatible.
+     */
+    public const MODULE = 'helpdesk';
+
     protected $fillable = [
         'name',
         'description',
@@ -40,6 +47,24 @@ class Macro extends Model
         'resolve_conversation' => 'Resolver conversacion',
         'close_conversation' => 'Cerrar conversacion',
     ];
+
+    /**
+     * Acota TODA consulta de este modelo a sus propias filas y sella el
+     * origen al crear. Al ser un global scope tambien filtra el binding
+     * implicito de ruta (editar/borrar una macro ajena da 404) y los
+     * whereIn de las acciones en bloque, sin tener que repetir el filtro en
+     * cada uno de los consumidores.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('module', function (Builder $query): void {
+            $query->where($query->getModel()->qualifyColumn('module'), self::MODULE);
+        });
+
+        static::creating(function (self $macro): void {
+            $macro->module = self::MODULE;
+        });
+    }
 
     protected function casts(): array
     {

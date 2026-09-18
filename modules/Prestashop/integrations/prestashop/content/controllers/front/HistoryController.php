@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,9 +29,13 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Order\OrderPresenter;
 class HistoryControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'history';
+
     public $authRedirection = 'history';
+
     public $ssl = true;
+
     public $order_presenter;
 
     /**
@@ -45,7 +50,7 @@ class HistoryControllerCore extends FrontController
         }
 
         if ($this->order_presenter === null) {
-            $this->order_presenter = new OrderPresenter();
+            $this->order_presenter = new OrderPresenter;
         }
 
         if (Tools::isSubmit('slowvalidation')) {
@@ -83,9 +88,9 @@ class HistoryControllerCore extends FrontController
         $url_to_invoice = '';
 
         if ((bool) Configuration::get('PS_INVOICE') && OrderState::invoiceAvailable($order->current_state) && count($order->getInvoicesCollection())) {
-            $url_to_invoice = $context->link->getPageLink('pdf-invoice', true, null, 'id_order=' . $order->id);
-            if (!$context->customer->isLogged()) {
-                $url_to_invoice .= '&secure_key=' . $order->secure_key;
+            $url_to_invoice = $context->link->getPageLink('pdf-invoice', true, null, 'id_order='.$order->id);
+            if (! $context->customer->isLogged()) {
+                $url_to_invoice .= '&secure_key='.$order->secure_key;
             }
         }
 
@@ -95,8 +100,8 @@ class HistoryControllerCore extends FrontController
     public static function getUrlToReorder($id_order, $context)
     {
         $url_to_reorder = '';
-        if (!(bool) Configuration::get('PS_DISALLOW_HISTORY_REORDERING')) {
-            $url_to_reorder = $context->link->getPageLink('order', true, null, 'submitReorder&id_order=' . (int) $id_order);
+        if (! (bool) Configuration::get('PS_DISALLOW_HISTORY_REORDERING')) {
+            $url_to_reorder = $context->link->getPageLink('order', true, null, 'submitReorder&id_order='.(int) $id_order);
         }
 
         return $url_to_reorder;

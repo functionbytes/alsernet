@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ class CountryId
     private $id;
 
     /**
-     * @param int $id
-     *
      * @throws CountryConstraintException
      */
     public function __construct(int $id)
@@ -49,22 +48,17 @@ class CountryId
         $this->id = $id;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->id;
     }
 
     /**
-     * @param int $value
-     *
      * @throws CountryConstraintException
      */
     private function assertPositiveInt(int $value)
     {
-        if (0 > $value) {
+        if ($value < 0) {
             throw new CountryConstraintException(sprintf('Invalid country id "%s".', var_export($value, true)), CountryConstraintException::INVALID_ID);
         }
     }

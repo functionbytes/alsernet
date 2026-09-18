@@ -144,15 +144,20 @@
     --bv-success-bg:     #ecfdf5;
     --bv-success-border: #a7f3d0;
 
-    /* Warning — SLA warn, pendiente, en proceso */
-    --bv-warning:        #b45309;
-    --bv-warning-bg:     #fffbeb;
-    --bv-warning-border: #fde68a;
+    /* Warning — SLA warn, pendiente, en proceso. Sin ámbar en la paleta de
+       la casa (ver nota de --bv-danger): un tono de verde más claro que
+       --bv-primary-strong, para diferenciar "warning" de "danger"/"urgent"
+       solo por saturación, nunca por matiz rojo/naranja. */
+    --bv-warning:        #4f6b0a;
+    --bv-warning-bg:     rgba(182,211,74,.18);
+    --bv-warning-border: rgba(182,211,74,.5);
 
-    /* Danger — SLA breach, urgente, error */
-    --bv-danger:         #b91c1c;
-    --bv-danger-bg:      #fef2f2;
-    --bv-danger-border:  #fecaca;
+    /* Danger — SLA breach, urgente, error. Sin rojos en la paleta de la
+       casa: indigo oscuro en vez de rojo, manteniendo la misma estructura
+       clara/media/oscura que success y warning, y distinto de info/neutral. */
+    --bv-danger:         #3730a3;
+    --bv-danger-bg:      #eef2ff;
+    --bv-danger-border:  #c7d2fe;
 
     /* Info — leído, link, neutral activo */
     --bv-info:           #64748b;
@@ -189,24 +194,26 @@
     --bv-av-c2: linear-gradient(135deg, #8b5cf6, #6366f1);  /* púrpura → indigo */
     --bv-av-c3: linear-gradient(135deg, #06b6d4, #0ea5e9);  /* cian → azul */
     --bv-av-c4: linear-gradient(135deg, #10b981, #059669);  /* esmeralda */
-    --bv-av-c5: linear-gradient(135deg, #ec4899, #f43f5e);  /* rosa → rojo */
+    --bv-av-c5: linear-gradient(135deg, #ec4899, #4338ca);  /* rosa → indigo */
     --bv-av-c6: linear-gradient(135deg, #3b82f6, #6366f1);  /* azul → indigo */
     --bv-av-c7: linear-gradient(135deg, #f59e0b, #d97706);  /* ámbar */
     --bv-av-c8: linear-gradient(135deg, #14b8a6, #0d9488);  /* teal */
 }
 
 
-/* ═══ PRIORIDADES (paleta grises + rojos, sin amarillo/azul) ═════════════════
-   Decisión del chat: usar grises escalonados + rojos para urgentes
+/* ═══ PRIORIDADES (paleta grises + indigo, sin amarillo/azul/rojo) ═══════════
+   Decisión del chat (histórica): usaba grises escalonados + rojos para
+   urgentes. Actualizado para seguir la paleta de la casa sin rojos —
+   revertir si esa decisión debía preservarse tal cual.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
     --bv-priority-low:     #a1a1aa;   /* gris claro */
     --bv-priority-normal:  #52525b;   /* gris medio */
-    --bv-priority-high:    #b91c1c;   /* rojo */
-    --bv-priority-urgent:  #dc2626;   /* rojo intenso (con halo) */
+    --bv-priority-high:    #3730a3;   /* indigo — token sin uso, ningún selector lo referencia */
+    --bv-priority-urgent:  #5e7a0d;   /* sin rojos en la paleta de la casa: verde oscuro de marca (con halo) */
 
-    --bv-priority-urgent-bg:    #fef2f2;
-    --bv-priority-urgent-glow:  rgba(220, 38, 38, .18);
+    --bv-priority-urgent-bg:    rgba(144,187,19,.12);
+    --bv-priority-urgent-glow:  rgba(144,187,19,.35);
 }
 
 
@@ -259,7 +266,7 @@
         0 0 0 3px rgba(24, 24, 27, .08);
 
     --bv-ring-danger:
-        0 0 0 3px rgba(220, 38, 38, .12);
+        0 0 0 3px rgba(55, 48, 163, .12);
 
     --bv-ring-success:
         0 0 0 2.5px rgba(13, 122, 63, .18);
@@ -324,7 +331,7 @@
 
     --bv-success-bg:  rgba(13, 122, 63, .18);
     --bv-warning-bg:  rgba(180, 83, 9, .18);
-    --bv-danger-bg:   rgba(185, 28, 28, .18);
+    --bv-danger-bg:   rgba(55, 48, 163, .18);
     --bv-info-bg:     rgba(100, 116, 139, .18);
 
     --bv-shadow-modal:

@@ -48,8 +48,8 @@ class LocalizedCurrencyId
     private $localeCode;
 
     /**
-     * @param string $currencyCode ISO 4217 currency code
-     * @param string $localeCode IETF tag (e.g.: fr-FR, en-US...)
+     * @param  string  $currencyCode  ISO 4217 currency code
+     * @param  string  $localeCode  IETF tag (e.g.: fr-FR, en-US...)
      */
     public function __construct($currencyCode, $localeCode)
     {
@@ -59,7 +59,7 @@ class LocalizedCurrencyId
 
     public function __toString()
     {
-        return $this->currencyCode . '-' . $this->localeCode;
+        return $this->currencyCode.'-'.$this->localeCode;
     }
 
     /**

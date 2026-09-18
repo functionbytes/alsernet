@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -69,13 +70,10 @@ class ProductSupplierForEditing
     private $combinationId;
 
     /**
-     * @param int $productSupplierId ProductSupplier entity record id
-     * @param int $productId the associated product id
-     * @param int $supplierId the associated supplier id
-     * @param string $reference the reference for this product supplier
-     * @param string $priceTaxExcluded
-     * @param int $currencyId
-     * @param int|null $combinationId
+     * @param  int  $productSupplierId  ProductSupplier entity record id
+     * @param  int  $productId  the associated product id
+     * @param  int  $supplierId  the associated supplier id
+     * @param  string  $reference  the reference for this product supplier
      */
     public function __construct(
         int $productSupplierId,
@@ -95,57 +93,36 @@ class ProductSupplierForEditing
         $this->combinationId = $combinationId;
     }
 
-    /**
-     * @return int
-     */
     public function getProductSupplierId(): int
     {
         return $this->productSupplierId;
     }
 
-    /**
-     * @return int
-     */
     public function getProductId(): int
     {
         return $this->productId;
     }
 
-    /**
-     * @return int
-     */
     public function getSupplierId(): int
     {
         return $this->supplierId;
     }
 
-    /**
-     * @return string
-     */
     public function getReference(): string
     {
         return $this->reference;
     }
 
-    /**
-     * @return string
-     */
     public function getPriceTaxExcluded(): string
     {
         return $this->priceTaxExcluded;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrencyId(): int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCombinationId(): ?int
     {
         return $this->combinationId;

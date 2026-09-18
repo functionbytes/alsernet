@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,9 +54,8 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
     private $isB2bFeatureEnabled;
 
     /**
-     * @param CommandBusInterface $bus
-     * @param int $contextShopId
-     * @param bool $isB2bFeatureEnabled
+     * @param  int  $contextShopId
+     * @param  bool  $isB2bFeatureEnabled
      */
     public function __construct(
         CommandBusInterface $bus,
@@ -91,8 +91,6 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param array $data
-     *
      * @return AddCustomerCommand
      */
     private function buildCustomerAddCommandFromFormData(array $data)
@@ -115,7 +113,7 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
             $data['birthday'] ?: Birthday::EMPTY_BIRTHDAY
         );
 
-        if (!$this->isB2bFeatureEnabled) {
+        if (! $this->isB2bFeatureEnabled) {
             return $command;
         }
 
@@ -126,16 +124,13 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
             ->setWebsite((string) $data['website'])
             ->setAllowedOutstandingAmount((float) $data['allowed_outstanding_amount'])
             ->setMaxPaymentDays((int) $data['max_payment_days'])
-            ->setRiskId((int) $data['risk_id'])
-        ;
+            ->setRiskId((int) $data['risk_id']);
 
         return $command;
     }
 
     /**
-     * @param int $customerId
-     * @param array $data
-     *
+     * @param  int  $customerId
      * @return EditCustomerCommand
      */
     private function buildCustomerEditCommand($customerId, array $data)
@@ -153,10 +148,9 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
             ->setIsPartnerOffersSubscribed($data['is_partner_offers_subscribed'])
             ->setDefaultGroupId((int) $data['default_group_id'])
             ->setGroupIds($groupIds)
-            ->setBirthday($data['birthday'] ?: Birthday::EMPTY_BIRTHDAY)
-        ;
+            ->setBirthday($data['birthday'] ?: Birthday::EMPTY_BIRTHDAY);
 
-        if (null !== $data['password']) {
+        if ($data['password'] !== null) {
             $command->setPassword($data['password']);
         }
 
@@ -168,8 +162,7 @@ final class CustomerFormDataHandler implements FormDataHandlerInterface
                 ->setWebsite((string) $data['website'])
                 ->setAllowedOutstandingAmount((float) $data['allowed_outstanding_amount'])
                 ->setMaxPaymentDays((int) $data['max_payment_days'])
-                ->setRiskId((int) $data['risk_id'])
-            ;
+                ->setRiskId((int) $data['risk_id']);
         }
 
         return $command;

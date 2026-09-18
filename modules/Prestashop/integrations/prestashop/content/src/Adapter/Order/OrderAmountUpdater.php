@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -88,12 +89,6 @@ class OrderAmountUpdater
      */
     private $keepOrderPrices = true;
 
-    /**
-     * @param ShopConfigurationInterface $shopConfiguration
-     * @param ContextStateManager $contextStateManager
-     * @param OrderDetailUpdater $orderDetailUpdater
-     * @param OrderProductRemover $orderProductRemover
-     */
     public function __construct(
         ShopConfigurationInterface $shopConfiguration,
         ContextStateManager $contextStateManager,
@@ -107,10 +102,6 @@ class OrderAmountUpdater
     }
 
     /**
-     * @param Order $order
-     * @param Cart $cart
-     * @param int|null $orderInvoiceId
-     *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -129,8 +120,7 @@ class OrderAmountUpdater
             ->setCustomer(new Customer($cart->id_customer))
             ->setLanguage($cart->getAssociatedLanguage())
             ->setCountry($cart->getTaxCountry())
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
 
         try {
             // @todo: use https://github.com/PrestaShop/decimal for price computations
@@ -154,7 +144,7 @@ class OrderAmountUpdater
             $this->updateOrderCarrier($order, $cart);
 
             // Order::update is called after previous functions so that we only call it once
-            if (!$order->update()) {
+            if (! $order->update()) {
                 throw new OrderException('Could not update order invoice in database.');
             }
 
@@ -167,9 +157,7 @@ class OrderAmountUpdater
     /**
      * Synchronizes modified inventaries from the cart with the order
      *
-     * @param CartProductUpdate[] $modifiedProducts
-     * @param Cart $cart
-     * @param Order $order
+     * @param  CartProductUpdate[]  $modifiedProducts
      *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
@@ -181,11 +169,11 @@ class OrderAmountUpdater
         foreach ($modifiedProducts as $modifiedProduct) {
             $orderProduct = $this->findProductInOrder($modifiedProduct, $order);
             $cartProduct = $this->findProductInCart($modifiedProduct, $cart);
-            if (null === $cartProduct) {
+            if ($cartProduct === null) {
                 // The product is not in the cart anymore: delete it from the order
                 $orderDetail = new OrderDetail($orderProduct['id_order_detail']);
                 $this->orderProductRemover->deleteProductFromOrder($order, $orderDetail, false);
-            } elseif (null === $orderProduct) {
+            } elseif ($orderProduct === null) {
                 // The product is not in the order but in the cart: add it to the order
                 $productsToAddToOrder[] = $cartProduct;
             } else {
@@ -201,20 +189,14 @@ class OrderAmountUpdater
             }
         }
         if (count($productsToAddToOrder) > 0) {
-            $orderDetail = new OrderDetail();
+            $orderDetail = new OrderDetail;
             $orderDetail->createList($order, $cart, $order->getCurrentState(), $productsToAddToOrder);
         }
     }
 
-    /**
-     * @param CartProductUpdate $productUpdate
-     * @param Cart $cart
-     *
-     * @return array|null
-     */
     private function findProductInCart(CartProductUpdate $productUpdate, Cart $cart): ?array
     {
-        $combinationId = null === $productUpdate->getCombinationId()
+        $combinationId = $productUpdate->getCombinationId() === null
             ? 0
             : $productUpdate->getCombinationId()->getValue();
         foreach ($cart->getProducts() as $product) {
@@ -227,15 +209,9 @@ class OrderAmountUpdater
         return null;
     }
 
-    /**
-     * @param CartProductUpdate $productUpdate
-     * @param Order $order
-     *
-     * @return array|null
-     */
     private function findProductInOrder(CartProductUpdate $productUpdate, Order $order): ?array
     {
-        $combinationId = null === $productUpdate->getCombinationId()
+        $combinationId = $productUpdate->getCombinationId() === null
             ? 0
             : $productUpdate->getCombinationId()->getValue();
         foreach ($order->getProducts() as $product) {
@@ -266,11 +242,6 @@ class OrderAmountUpdater
         Cache::clean('getPackageShippingCost_*');
     }
 
-    /**
-     * @param Order $order
-     * @param Cart $cart
-     * @param int $computingPrecision
-     */
     private function updateOrderTotals(Order $order, Cart $cart, int $computingPrecision): void
     {
         $orderProducts = $order->getCartProducts();
@@ -308,7 +279,7 @@ class OrderAmountUpdater
         $order->total_shipping_tax_excl = $cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $orderProducts, $carrierId, false, $this->keepOrderPrices);
         $order->total_shipping_tax_incl = $cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $orderProducts, $carrierId, false, $this->keepOrderPrices);
 
-        if (!$this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
+        if (! $this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
             $freeShipping = $this->isFreeShipping($order);
 
             if ($freeShipping) {
@@ -328,9 +299,6 @@ class OrderAmountUpdater
     }
 
     /**
-     * @param Order $order
-     * @param Cart $cart
-     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -344,13 +312,13 @@ class OrderAmountUpdater
             $orderCarrier->shipping_cost_tax_excl = (float) $order->total_shipping_tax_excl;
 
             if ($orderCarrier->update()) {
-                $order->weight = sprintf('%.3f ' . $this->getOrderConfiguration('PS_WEIGHT_UNIT', $order), $orderCarrier->weight);
+                $order->weight = sprintf('%.3f '.$this->getOrderConfiguration('PS_WEIGHT_UNIT', $order), $orderCarrier->weight);
             }
         }
 
-        if (!$cart->isVirtualCart() && isset($order->id_carrier)) {
+        if (! $cart->isVirtualCart() && isset($order->id_carrier)) {
             $carrier = new Carrier((int) $order->id_carrier, (int) $cart->id_lang);
-            if (null !== $carrier && Validate::isLoadedObject($carrier)) {
+            if ($carrier !== null && Validate::isLoadedObject($carrier)) {
                 $taxAddressId = (int) $order->{$this->getOrderConfiguration('PS_TAX_ADDRESS_TYPE', $order)};
                 $order->carrier_tax_rate = $carrier->getTaxesRate(new Address($taxAddressId));
             }
@@ -358,9 +326,6 @@ class OrderAmountUpdater
     }
 
     /**
-     * @param Order $order
-     * @param Cart $cart
-     *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -382,17 +347,10 @@ class OrderAmountUpdater
         }
     }
 
-    /**
-     * @param array $cartProducts
-     * @param int $productId
-     * @param int $productAttributeId
-     *
-     * @return array
-     */
     private function getProductFromCart(array $cartProducts, int $productId, int $productAttributeId): array
     {
         $cartProduct = array_reduce($cartProducts, function ($carry, $item) use ($productId, $productAttributeId) {
-            if (null !== $carry) {
+            if ($carry !== null) {
                 return $carry;
             }
 
@@ -403,7 +361,7 @@ class OrderAmountUpdater
         });
 
         // This shouldn't happen, if it does something was not done before updating the Order (removing an OrderDetail maybe)
-        if (null === $cartProduct) {
+        if ($cartProduct === null) {
             throw new OrderException('Could not find the product in cart, meaning Order and Cart are out of sync');
         }
 
@@ -416,10 +374,6 @@ class OrderAmountUpdater
      * - global shop cart rules may be added/removed
      * - cart rules amount may vary because other cart rules have been added/removed
      *
-     * @param Order $order
-     * @param Cart $cart
-     * @param int $computingPrecision
-     * @param int|null $orderInvoiceId
      *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
@@ -454,12 +408,13 @@ class OrderAmountUpdater
                     $orderCartRule->value = Tools::ps_round($cartRuleData->getDiscountApplied()->getTaxIncluded(), $computingPrecision);
                     $orderCartRule->value_tax_excl = Tools::ps_round($cartRuleData->getDiscountApplied()->getTaxExcluded(), $computingPrecision);
 
-                    if ($orderCartRule->free_shipping && !$this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
+                    if ($orderCartRule->free_shipping && ! $this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
                         $orderCartRule->value = $orderCartRule->value - $calculator->getFees()->getInitialShippingFees()->getTaxIncluded() + $order->total_shipping;
                         $orderCartRule->value_tax_excl = $orderCartRule->value_tax_excl - $calculator->getFees()->getInitialShippingFees()->getTaxExcluded() + $order->total_shipping_tax_excl;
                     }
 
                     $orderCartRule->save();
+
                     continue 2;
                 }
             }
@@ -468,7 +423,7 @@ class OrderAmountUpdater
             $orderCartRule = new OrderCartRule($orderCartRuleData['id_order_cart_rule']);
             // This one really needs to be deleted because it doesn't match the applied cart rules any more
             // we don't use soft deleted here (unlike in the handler) but hard delete
-            if (!$orderCartRule->delete()) {
+            if (! $orderCartRule->delete()) {
                 throw new OrderException('Could not delete order cart rule from database.');
             }
         }
@@ -484,7 +439,7 @@ class OrderAmountUpdater
             }
 
             // Add missing order cart rule
-            $orderCartRule = new OrderCartRule();
+            $orderCartRule = new OrderCartRule;
             $orderCartRule->id_order = $order->id;
             $orderCartRule->id_cart_rule = $cartRule->id;
             $orderCartRule->id_order_invoice = $orderInvoiceId ?? 0;
@@ -497,10 +452,6 @@ class OrderAmountUpdater
     }
 
     /**
-     * @param Order $order
-     * @param Cart $cart
-     * @param int $computingPrecision
-     *
      * @throws OrderException
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -509,7 +460,7 @@ class OrderAmountUpdater
     {
         $invoiceProducts = [];
         foreach ($order->getCartProducts() as $orderProduct) {
-            if (!empty($orderProduct['id_order_invoice'])) {
+            if (! empty($orderProduct['id_order_invoice'])) {
                 $invoiceProducts[$orderProduct['id_order_invoice']][] = $orderProduct;
             }
         }
@@ -559,7 +510,7 @@ class OrderAmountUpdater
             $invoice->total_shipping_tax_excl = $cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $currentInvoiceProducts, $carrierId, false, $this->keepOrderPrices);
             $invoice->total_shipping_tax_incl = $cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $currentInvoiceProducts, $carrierId, false, $this->keepOrderPrices);
 
-            if (!$this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
+            if (! $this->getOrderConfiguration('PS_ORDER_RECALCULATE_SHIPPING', $order)) {
                 $freeShipping = $this->isFreeShipping($order);
 
                 if ($freeShipping) {
@@ -570,23 +521,18 @@ class OrderAmountUpdater
                 $invoice->total_shipping_tax_incl = $totalShippingTaxIncluded;
                 $invoice->total_shipping_tax_excl = $totalShippingTaxExcluded;
 
-                if (!$freeShipping) {
+                if (! $freeShipping) {
                     $invoice->total_paid_tax_incl -= ($invoice->total_shipping_tax_incl - $totalShippingTaxIncluded);
                     $invoice->total_paid_tax_excl -= ($invoice->total_shipping_tax_excl - $totalShippingTaxExcluded);
                 }
             }
 
-            if (!$invoice->update()) {
+            if (! $invoice->update()) {
                 throw new OrderException('Could not update order invoice in database.');
             }
         }
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return bool
-     */
     protected function isFreeShipping(Order $order): bool
     {
         foreach ($order->getCartRules() as $cartRule) {
@@ -598,23 +544,15 @@ class OrderAmountUpdater
         return false;
     }
 
-    /**
-     * @param Cart $cart
-     *
-     * @return int
-     */
     private function getPrecisionFromCart(Cart $cart): int
     {
-        $computingPrecision = new ComputingPrecision();
+        $computingPrecision = new ComputingPrecision;
         $currency = new Currency((int) $cart->id_currency);
 
         return $computingPrecision->getPrecision((int) $currency->precision);
     }
 
     /**
-     * @param string $key
-     * @param Order $order
-     *
      * @return mixed
      */
     private function getOrderConfiguration(string $key, Order $order)
@@ -622,15 +560,10 @@ class OrderAmountUpdater
         return $this->shopConfiguration->get($key, null, $this->getOrderShopConstraint($order));
     }
 
-    /**
-     * @param Order $order
-     *
-     * @return ShopConstraint
-     */
     private function getOrderShopConstraint(Order $order): ShopConstraint
     {
-        $constraintKey = $order->id_shop . '-' . $order->id_shop_group;
-        if (!isset($this->orderConstraints[$constraintKey])) {
+        $constraintKey = $order->id_shop.'-'.$order->id_shop_group;
+        if (! isset($this->orderConstraints[$constraintKey])) {
             $this->orderConstraints[$constraintKey] = ShopConstraint::shop((int) $order->id_shop);
         }
 

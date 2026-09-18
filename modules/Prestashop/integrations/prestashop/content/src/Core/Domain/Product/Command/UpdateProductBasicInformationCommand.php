@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,17 +56,11 @@ class UpdateProductBasicInformationCommand
      */
     private $localizedShortDescriptions;
 
-    /**
-     * @param int $productId
-     */
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
@@ -80,9 +75,7 @@ class UpdateProductBasicInformationCommand
     }
 
     /**
-     * @param string[] $localizedNames
-     *
-     * @return UpdateProductBasicInformationCommand
+     * @param  string[]  $localizedNames
      */
     public function setLocalizedNames(array $localizedNames): self
     {
@@ -100,9 +93,7 @@ class UpdateProductBasicInformationCommand
     }
 
     /**
-     * @param string[] $localizedDescriptions
-     *
-     * @return UpdateProductBasicInformationCommand
+     * @param  string[]  $localizedDescriptions
      */
     public function setLocalizedDescriptions(array $localizedDescriptions): UpdateProductBasicInformationCommand
     {
@@ -120,9 +111,7 @@ class UpdateProductBasicInformationCommand
     }
 
     /**
-     * @param string[] $localizedShortDescriptions
-     *
-     * @return UpdateProductBasicInformationCommand
+     * @param  string[]  $localizedShortDescriptions
      */
     public function setLocalizedShortDescriptions(array $localizedShortDescriptions): UpdateProductBasicInformationCommand
     {

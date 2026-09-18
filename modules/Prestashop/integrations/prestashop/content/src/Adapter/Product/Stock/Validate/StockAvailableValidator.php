@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use StockAvailable;
 class StockAvailableValidator extends AbstractObjectModelValidator
 {
     /**
-     * @param StockAvailable $stockAvailable
-     *
      * @throws CoreException
      */
     public function validate(StockAvailable $stockAvailable): void
@@ -56,10 +55,6 @@ class StockAvailableValidator extends AbstractObjectModelValidator
     }
 
     /**
-     * @param StockAvailable $stockAvailable
-     * @param string $property
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     private function validateStockAvailableProperty(StockAvailable $stockAvailable, string $property, int $errorCode = 0): void

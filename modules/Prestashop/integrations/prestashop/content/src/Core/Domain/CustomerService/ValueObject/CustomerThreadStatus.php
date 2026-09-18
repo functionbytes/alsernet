@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,11 @@ use PrestaShop\PrestaShop\Core\Domain\CustomerService\Exception\CustomerServiceE
 final class CustomerThreadStatus
 {
     public const OPEN = 'open';
+
     public const CLOSED = 'closed';
+
     public const PENDING_1 = 'pending1';
+
     public const PENDING_2 = 'pending2';
 
     /**
@@ -44,7 +48,7 @@ final class CustomerThreadStatus
     private $status;
 
     /**
-     * @param string $status
+     * @param  string  $status
      */
     public function __construct($status)
     {
@@ -55,7 +59,7 @@ final class CustomerThreadStatus
             self::PENDING_2,
         ];
 
-        if (!in_array($status, $availableStatuses)) {
+        if (! in_array($status, $availableStatuses)) {
             throw new CustomerServiceException(sprintf('Customer thread status "%s" is not defined, available statuses are "%s"', $status, implode(',', $availableStatuses)));
         }
 

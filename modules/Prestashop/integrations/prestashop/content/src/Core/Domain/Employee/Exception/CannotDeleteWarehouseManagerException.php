@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Employee\Exception;
 /**
  * Is thrown when warehouse manager cannot be deleted
  */
-class CannotDeleteWarehouseManagerException extends EmployeeException
-{
-}
+class CannotDeleteWarehouseManagerException extends EmployeeException {}

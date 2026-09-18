@@ -63,8 +63,8 @@
                             <span class="t">{{ __('helpdesk::helpdesk.inbox.modals.close_conv_reason_other') }}</span>
                             <input type="text" id="close-other-input"
                                    placeholder="{{ __('helpdesk::helpdesk.inbox.modals.close_conv_other_placeholder') }}"
-                                   class="finput bv-close-other-input mt-1"
-                                   style="display:none">
+                                   aria-label="{{ __('helpdesk::helpdesk.inbox.modals.close_conv_other_placeholder') }}"
+                                   class="finput bv-close-other-input mt-1 bv-step-hidden">
                         </div>
                         <div class="radio"></div>
                     </div>
@@ -99,18 +99,8 @@
 
 @once
 @push('scripts')
-<script>
-$(document).on('click', '[data-bv-modal-name="close-conv"] .reason', function () {
-    $('[data-bv-modal-name="close-conv"] .reason').removeClass('on');
-    $(this).addClass('on');
-    $(this).find('input[type="radio"]').prop('checked', true);
-    $('#close-other-input').hide();
-    if ($(this).data('reason') === 'other') {
-        $('#close-other-input').show().focus();
-    }
-});
-
-
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/close-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/close-conv.js')) }}" defer></script>
 @endpush
 @endonce

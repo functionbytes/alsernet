@@ -54,7 +54,7 @@ return new class extends Migration
 
     private function hasForeignKey(string $name): bool
     {
-        return (bool) \DB::selectOne(
+        return (bool) DB::selectOne(
             'SELECT COUNT(*) as cnt FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = "FOREIGN KEY"',
             ['document_mails', $name]
         )->cnt;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,9 @@ final class GridData implements GridDataInterface
     private $query;
 
     /**
-     * @param RecordCollectionInterface $records Filtered & paginated rows data
-     * @param int $recordsTotal Total number of rows (without pagination)
-     * @param string $query Query used to get rows
+     * @param  RecordCollectionInterface  $records  Filtered & paginated rows data
+     * @param  int  $recordsTotal  Total number of rows (without pagination)
+     * @param  string  $query  Query used to get rows
      */
     public function __construct(RecordCollectionInterface $records, $recordsTotal, $query = '')
     {

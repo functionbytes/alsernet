@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,8 +48,8 @@ class BulkDeleteCategoriesCommand
     private $deleteMode;
 
     /**
-     * @param int[] $categoryIds
-     * @param string $deleteMode
+     * @param  int[]  $categoryIds
+     * @param  string  $deleteMode
      *
      * @throws CategoryConstraintException
      * @throws CategoryException
@@ -57,8 +58,7 @@ class BulkDeleteCategoriesCommand
     {
         $this
             ->setCategoryIds($categoryIds)
-            ->setDeleteMode($deleteMode)
-        ;
+            ->setDeleteMode($deleteMode);
     }
 
     /**
@@ -78,8 +78,7 @@ class BulkDeleteCategoriesCommand
     }
 
     /**
-     * @param string $mode
-     *
+     * @param  string  $mode
      * @return self
      */
     private function setDeleteMode($mode)
@@ -90,12 +89,11 @@ class BulkDeleteCategoriesCommand
     }
 
     /**
-     * @param int[] $categoryIds
+     * @param  int[]  $categoryIds
+     * @return self
      *
      * @throws CategoryConstraintException
      * @throws CategoryException
-     *
-     * @return self
      */
     private function setCategoryIds(array $categoryIds)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ class EditFeatureValueHandler implements EditFeatureValueHandlerInterface
      */
     private $featureValueRepository;
 
-    /**
-     * @param FeatureValueRepository $featureValueRepository
-     */
     public function __construct(FeatureValueRepository $featureValueRepository)
     {
         $this->featureValueRepository = $featureValueRepository;
@@ -57,10 +55,10 @@ class EditFeatureValueHandler implements EditFeatureValueHandlerInterface
     {
         $featureValue = $this->featureValueRepository->get($command->getFeatureValueId());
 
-        if (null !== $command->getLocalizedValues()) {
+        if ($command->getLocalizedValues() !== null) {
             $featureValue->value = $command->getLocalizedValues();
         }
-        if (null !== $command->getFeatureId()) {
+        if ($command->getFeatureId() !== null) {
             $featureValue->id_feature = $command->getFeatureId()->getValue();
         }
 

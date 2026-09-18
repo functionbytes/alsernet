@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class GetManufacturerForViewing
     private $languageId;
 
     /**
-     * @param int $manufacturerId
-     * @param int $languageId
+     * @param  int  $manufacturerId
+     * @param  int  $languageId
      */
     public function __construct($manufacturerId, $languageId)
     {

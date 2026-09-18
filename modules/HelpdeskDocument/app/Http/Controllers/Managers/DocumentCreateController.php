@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Document\Entities\Document;
+use Modules\Document\Entities\DocumentAction;
 use Modules\Document\Entities\DocumentType;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\HelpdeskDocument\Concerns\AuthorizesConversationDocuments;
 use Modules\HelpdeskDocument\Http\Requests\Managers\CreateConversationDocumentRequest;
 use Modules\HelpdeskDocument\Services\ConversationDocumentCreator;
 use Modules\HelpdeskDocument\Services\ConversationDocumentLinker;
@@ -20,6 +22,8 @@ use Modules\HelpdeskDocument\Support\PhoneMatcher;
  */
 class DocumentCreateController extends Controller
 {
+    use AuthorizesConversationDocuments;
+
     /**
      * Tipos de documento disponibles para el modal "Nuevo expediente".
      */
@@ -87,6 +91,15 @@ class DocumentCreateController extends Controller
      * uno a la conversación desde el modal. Devuelve campos estructurados (en
      * vez de un único string) para que el frontend pinte cada resultado como
      * una card con icono/nombre/subtítulo, no una línea de texto plana.
+     *
+     * IMPORTANTE (P0 — expedientes KYC): sin permiso `helpdesk.documents.force-link`
+     * la búsqueda queda restringida a expedientes del cliente de la conversación
+     * (mismo criterio de email/teléfono/ya-vinculados que el guard de ownership) y
+     * NO expone `customer_email` de terceros. Antes devolvía email/nombre de
+     * hasta 20 expedientes de CUALQUIER cliente ante cualquier término de
+     * búsqueda. Con el permiso elevado se mantiene la búsqueda global (necesaria
+     * para el flujo real de "vincular a la fuerza" un expediente que no
+     * auto-coincide, ver DocumentCreateController::link()).
      */
     public function search(Conversation $conversation, Request $request): JsonResponse
     {
@@ -101,6 +114,8 @@ class DocumentCreateController extends Controller
         if (mb_strlen($q) < 2) {
             return response()->json(['results' => []]);
         }
+
+        $canSearchGlobally = (bool) auth()->user()?->hasPermissionTo('helpdesk.documents.force-link', 'web');
 
         $documents = Document::query()
             ->with('documentType')
@@ -118,12 +133,33 @@ class DocumentCreateController extends Controller
                         ->orWhere('order_id', (int) $q);
                 }
             })
+            ->when(! $canSearchGlobally, function ($query) use ($conversation) {
+                $email = trim((string) $conversation->customer?->email);
+                $phone = PhoneMatcher::normalize($conversation->customer?->phone ?: $conversation->customer?->whatsapp_phone);
+                $linkedIds = app(ConversationDocumentLinker::class)->linkedDocumentIds($conversation);
+
+                $query->where(function ($scope) use ($email, $phone, $linkedIds) {
+                    $scope->whereRaw('0 = 1');
+
+                    if ($email !== '') {
+                        $scope->orWhere('documents.customer_email', $email);
+                    }
+
+                    if ($phone !== null) {
+                        $scope->orWhere('documents.customer_cellphone_normalized', $phone);
+                    }
+
+                    if ($linkedIds !== []) {
+                        $scope->orWhereIn('documents.id', $linkedIds);
+                    }
+                });
+            })
             ->latest('id')
             ->limit(20)
             ->get();
 
         return response()->json([
-            'results' => $documents->map(function (Document $document) {
+            'results' => $documents->map(function (Document $document) use ($canSearchGlobally) {
                 $name = trim(($document->customer_firstname ?? '').' '.($document->customer_lastname ?? ''));
 
                 return [
@@ -131,7 +167,7 @@ class DocumentCreateController extends Controller
                     'order_reference' => $document->order_reference ?: (string) $document->id,
                     'type_label' => $document->documentType?->label,
                     'customer_name' => $name !== '' ? $name : null,
-                    'customer_email' => $document->customer_email,
+                    'customer_email' => $canSearchGlobally ? $document->customer_email : null,
                 ];
             })->values(),
         ]);
@@ -141,6 +177,18 @@ class DocumentCreateController extends Controller
      * Asigna (vincula) un expediente YA EXISTENTE a la conversación, en lugar de
      * crear uno nuevo. Reutiliza ConversationDocumentLinker::link() (mismo
      * mecanismo que el auto-enlace: persiste metadata.document_id + snapshot).
+     *
+     * IMPORTANTE (P0 — expedientes KYC): antes de persistir el vínculo se
+     * verifica que el expediente PERTENEZCA al cliente de la conversación
+     * (mismo criterio de email/teléfono que ConversationDocumentLinker /
+     * AuthorizesConversationDocuments), porque `assertDocumentBelongsToConversation`
+     * confía ciegamente en metadata.document_ids para TODAS las lecturas y
+     * mutaciones futuras del expediente — este es el único punto donde se
+     * puede negar un vínculo que no case. Vincular un expediente de OTRO
+     * cliente exige el permiso `helpdesk.documents.force-link` y queda
+     * auditado en el historial del expediente; sin ese permiso responde 404,
+     * igual que el resto del guard de ownership (para no revelar si el
+     * expediente ajeno existe).
      */
     public function link(
         Conversation $conversation,
@@ -151,6 +199,38 @@ class DocumentCreateController extends Controller
 
         if ($customer) {
             $this->authorize('view', $customer);
+        }
+
+        $forced = ! $this->documentIsLinkedToConversation($conversation, $document)
+            && ! $this->documentMatchesConversationCustomer($conversation, $document);
+
+        if ($forced) {
+            // hasPermissionTo() en vez de can(): el bypass de Gate::before para
+            // super-settings (AuthServiceProvider) no debe eximir de esta
+            // comprobación, igual que el resto del guard de ownership, que
+            // tampoco distingue por rol.
+            if (! auth()->user()?->hasPermissionTo('helpdesk.documents.force-link', 'web')) {
+                abort(404);
+            }
+
+            DocumentAction::logAction(
+                documentId: $document->id,
+                actionType: 'forced_link',
+                actionName: 'Expediente vinculado manualmente sin coincidencia de cliente',
+                description: sprintf(
+                    'Vínculo forzado: el email/teléfono del expediente #%d no coincide con el cliente de la conversación #%d.',
+                    $document->id,
+                    $conversation->id
+                ),
+                metadata: [
+                    'conversation_id' => $conversation->id,
+                    'conversation_customer_id' => $customer?->id,
+                    'conversation_customer_email' => $customer?->email,
+                    'document_customer_email' => $document->customer_email,
+                ],
+                performedBy: auth()->id(),
+                performedByType: 'admin',
+            );
         }
 
         $linker->link($conversation, $document);

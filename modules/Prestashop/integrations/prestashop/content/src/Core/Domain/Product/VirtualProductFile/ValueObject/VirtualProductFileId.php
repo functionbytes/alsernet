@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,31 +41,23 @@ class VirtualProductFileId
      */
     private $value;
 
-    /**
-     * @param int $virtualProductFileId
-     */
     public function __construct(int $virtualProductFileId)
     {
         $this->assertValueIsGreaterThanZero($virtualProductFileId);
         $this->value = $virtualProductFileId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $value
-     *
      * @throws VirtualProductFileConstraintException
      */
     private function assertValueIsGreaterThanZero(int $value): void
     {
-        if (0 > $value) {
+        if ($value < 0) {
             throw new VirtualProductFileConstraintException(
                 sprintf('Invalid virtual product file id "%d" value', $value),
                 VirtualProductFileConstraintException::INVALID_ID

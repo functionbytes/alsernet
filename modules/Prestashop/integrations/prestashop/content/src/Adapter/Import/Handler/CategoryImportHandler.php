@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,23 +78,11 @@ final class CategoryImportHandler extends AbstractImportHandler
     private $dbPrefix;
 
     /**
-     * @param ImportDataFormatter $dataFormatter
-     * @param array $allShopIds
-     * @param array $contextShopIds
-     * @param int $currentContextShopId
-     * @param bool $isMultistoreEnabled
-     * @param int $contextLanguageId
-     * @param TranslatorInterface $translator
-     * @param LoggerInterface $logger
-     * @param int $employeeId
-     * @param Database $legacyDatabase
-     * @param CacheClearerInterface $cacheClearer
-     * @param Configuration $configuration
-     * @param Validate $validate
-     * @param ImageCopier $imageCopier
-     * @param Tools $tools
-     * @param Connection $connection
-     * @param string $dbPrefix
+     * @param  int  $currentContextShopId
+     * @param  bool  $isMultistoreEnabled
+     * @param  int  $contextLanguageId
+     * @param  int  $employeeId
+     * @param  string  $dbPrefix
      */
     public function __construct(
         ImportDataFormatter $dataFormatter,
@@ -172,7 +161,7 @@ final class CategoryImportHandler extends AbstractImportHandler
         if ($categoryId && ($importConfig->forceIds() || ObjectModel::existsInDatabase($categoryId, 'category'))) {
             $category = new Category((int) $categoryId);
         } else {
-            $category = new Category();
+            $category = new Category;
         }
 
         $category->id_shop_default = $this->currentContextShopId;
@@ -198,7 +187,7 @@ final class CategoryImportHandler extends AbstractImportHandler
      */
     public function tearDown(ImportConfigInterface $importConfig, ImportRuntimeConfigInterface $runtimeConfig)
     {
-        if (!$runtimeConfig->shouldValidateData() && $runtimeConfig->isFinished()) {
+        if (! $runtimeConfig->shouldValidateData() && $runtimeConfig->isFinished()) {
             /* Import has finished, we can regenerate the categories nested tree */
             Category::regenerateEntireNtree();
         }
@@ -209,7 +198,7 @@ final class CategoryImportHandler extends AbstractImportHandler
     /**
      * Checks if given category ID is allowed in the import.
      *
-     * @param int $categoryId
+     * @param  int  $categoryId
      */
     private function checkCategoryId($categoryId)
     {
@@ -221,23 +210,21 @@ final class CategoryImportHandler extends AbstractImportHandler
                     'Admin.Advparameters.Notification'
                 )
             );
-            throw new InvalidDataRowException();
+            throw new InvalidDataRowException;
         }
     }
 
     /**
      * Find the parent category for category that's being imported.
      *
-     * @param Category $category
-     * @param ImportRuntimeConfigInterface $runtimeConfig
-     * @param int $categoryId
+     * @param  int  $categoryId
      */
     private function findParentCategory(
         Category $category,
         ImportRuntimeConfigInterface $runtimeConfig,
         $categoryId
     ) {
-        if (!isset($category->parent)) {
+        if (! isset($category->parent)) {
             return;
         }
 
@@ -248,12 +235,12 @@ final class CategoryImportHandler extends AbstractImportHandler
             // Validation for parenting itself
             if ($isValidation && $category->parent == $category->id) {
                 $this->error($this->translator->trans(
-                'The category ID must be unique. It can\'t be the same as the one for the parent category (ID: %1$s).',
+                    'The category ID must be unique. It can\'t be the same as the one for the parent category (ID: %1$s).',
                     $categoryId ?: null,
                     'Admin.Advparameters.Notification'
                 ));
 
-                throw new InvalidDataRowException();
+                throw new InvalidDataRowException;
             }
 
             $sharedData = $runtimeConfig->getSharedData();
@@ -274,7 +261,7 @@ final class CategoryImportHandler extends AbstractImportHandler
                     )
                 );
 
-                throw new InvalidDataRowException();
+                throw new InvalidDataRowException;
             }
             $categoryParent = Category::searchByName($this->languageId, $category->parent, true);
             if ($categoryParent['id_category']) {
@@ -282,7 +269,7 @@ final class CategoryImportHandler extends AbstractImportHandler
                 $category->level_depth = (int) $categoryParent['level_depth'] + 1;
             } else {
                 $unfriendlyError = $this->configuration->getBoolean('UNFRIENDLY_ERROR');
-                $categoryToCreate = new Category();
+                $categoryToCreate = new Category;
                 $categoryToCreate->name = $this->dataFormatter->createMultiLangField($category->parent);
                 $categoryToCreate->active = true;
                 $linkRewrite = $this->dataFormatter->createFriendlyUrl(
@@ -294,29 +281,29 @@ final class CategoryImportHandler extends AbstractImportHandler
 
                 $fieldsError = $category->validateFields($unfriendlyError, true);
                 $langFieldsError = $category->validateFieldsLang($unfriendlyError, true);
-                $isValid = true === $fieldsError && true === $langFieldsError;
+                $isValid = $fieldsError === true && $langFieldsError === true;
 
-                if ($isValid && !$isValidation && $categoryToCreate->add()) {
+                if ($isValid && ! $isValidation && $categoryToCreate->add()) {
                     $category->id_parent = $categoryToCreate->id;
                 } else {
-                    if (!$isValidation) {
+                    if (! $isValidation) {
                         $this->error(
                             $this->translator->trans(
                                 '%category_name% (ID: %id%) cannot be saved',
                                 [
                                     '%category_name%' => $categoryToCreate->name[$this->languageId],
-                                    '%id%' => !empty($categoryToCreate->id) ? $categoryToCreate->id : 'null',
+                                    '%id%' => ! empty($categoryToCreate->id) ? $categoryToCreate->id : 'null',
                                 ],
                                 'Admin.Advparameters.Notification'
                             )
                         );
                     }
 
-                    if (!$isValid) {
-                        $error = true !== $fieldsError ? $fieldsError : '';
-                        $error .= true !== $langFieldsError ? $langFieldsError : '';
+                    if (! $isValid) {
+                        $error = $fieldsError !== true ? $fieldsError : '';
+                        $error .= $langFieldsError !== true ? $langFieldsError : '';
 
-                        $this->error($error . $this->legacyDatabase->getErrorMessage());
+                        $this->error($error.$this->legacyDatabase->getErrorMessage());
                     }
                 }
             }
@@ -326,12 +313,11 @@ final class CategoryImportHandler extends AbstractImportHandler
     /**
      * Fill link rewrite value for category.
      *
-     * @param Category $category
-     * @param int $categoryId
+     * @param  int  $categoryId
      */
     private function fillLinkRewrite(Category $category, $categoryId)
     {
-        if (isset($category->link_rewrite) && !empty($category->link_rewrite[$this->defaultLanguageId])) {
+        if (isset($category->link_rewrite) && ! empty($category->link_rewrite[$this->defaultLanguageId])) {
             $validLinkRewrite = $this->validate->isLinkRewrite($category->link_rewrite[$this->defaultLanguageId]);
             $linkRewrite = $category->link_rewrite[$this->defaultLanguageId];
         } else {
@@ -339,7 +325,7 @@ final class CategoryImportHandler extends AbstractImportHandler
             $linkRewrite = $category->link_rewrite;
         }
 
-        if (empty($linkRewrite) || !$validLinkRewrite) {
+        if (empty($linkRewrite) || ! $validLinkRewrite) {
             $category->link_rewrite = $this->dataFormatter->createFriendlyUrl(
                 $category->name[$this->defaultLanguageId]
             );
@@ -358,13 +344,13 @@ final class CategoryImportHandler extends AbstractImportHandler
             $category->link_rewrite = $this->dataFormatter->createMultiLangField($category->link_rewrite);
         }
 
-        if (!$validLinkRewrite) {
+        if (! $validLinkRewrite) {
             $this->notice(
                 $this->translator->trans(
                     'Rewrite link for %1$s (ID %2$s): re-written as %3$s.',
                     [
                         '%1$s' => $linkRewrite,
-                        '%2$s' => !empty($categoryId) ? $categoryId : 'null',
+                        '%2$s' => ! empty($categoryId) ? $categoryId : 'null',
                         '%3$s' => $category->link_rewrite[$this->defaultLanguageId],
                     ],
                     'Admin.Advparameters.Notification'
@@ -376,12 +362,9 @@ final class CategoryImportHandler extends AbstractImportHandler
     /**
      * Create the category.
      *
-     * @param Category $category
-     * @param ImportConfigInterface $importConfig
-     * @param ImportRuntimeConfigInterface $runtimeConfig
-     * @param int $categoryId
-     * @param string $categoryName
-     * @param string $shopData
+     * @param  int  $categoryId
+     * @param  string  $categoryName
+     * @param  string  $shopData
      */
     private function createCategory(
         Category $category,
@@ -397,7 +380,7 @@ final class CategoryImportHandler extends AbstractImportHandler
 
         $fieldsError = $category->validateFields($unfriendlyError, true);
         $langFieldsError = $category->validateFieldsLang($unfriendlyError, true);
-        $isValid = true === $fieldsError && true === $langFieldsError;
+        $isValid = $fieldsError === true && $langFieldsError === true;
 
         if ($isValid && empty($this->getErrors())) {
             $categoryAlreadyCreated = Category::searchByNameAndParentCategoryId(
@@ -419,15 +402,15 @@ final class CategoryImportHandler extends AbstractImportHandler
                 $this->error(
                     sprintf(
                         $this->translator->trans(
-                'A category cannot be its own parent. The parent category ID is either missing or unknown (ID: %1$s).',
+                            'A category cannot be its own parent. The parent category ID is either missing or unknown (ID: %1$s).',
                             [],
                             'Admin.Advparameters.Notification'
                         ),
-                        !empty($categoryId) ? $categoryId : 'null'
+                        ! empty($categoryId) ? $categoryId : 'null'
                     )
                 );
 
-                throw new InvalidDataRowException();
+                throw new InvalidDataRowException;
             }
 
             /* No automatic nTree regeneration for import */
@@ -436,8 +419,8 @@ final class CategoryImportHandler extends AbstractImportHandler
             // If id category AND id category already in base, trying to update
             if ($category->id &&
                 $category->categoryExists($category->id) &&
-                !in_array($category->id, $this->coreCategories) &&
-                !$runtimeConfig->shouldValidateData()
+                ! in_array($category->id, $this->coreCategories) &&
+                ! $runtimeConfig->shouldValidateData()
             ) {
                 $result = $category->update();
             }
@@ -452,7 +435,7 @@ final class CategoryImportHandler extends AbstractImportHandler
             }
             // If no id_category or update failed
             $category->force_id = (bool) $importConfig->forceIds();
-            if (!$result && !$runtimeConfig->shouldValidateData()) {
+            if (! $result && ! $runtimeConfig->shouldValidateData()) {
                 $result = $category->add();
                 if ($categoryId && $category->id != $categoryId) {
                     $movedCategories[$categoryId] = $category->id;
@@ -471,36 +454,36 @@ final class CategoryImportHandler extends AbstractImportHandler
         }
 
         if ($runtimeConfig->shouldValidateData()) {
-            throw new SkippedIterationException();
+            throw new SkippedIterationException;
         }
 
-        //copying images of categories
-        if (!empty($category->image)) {
+        // copying images of categories
+        if (! empty($category->image)) {
             $copyResult = $this->imageCopier->copyImg(
                 $category->id,
                 null,
                 $category->image,
                 'categories',
-                !$importConfig->skipThumbnailRegeneration()
+                ! $importConfig->skipThumbnailRegeneration()
             );
 
-            if (!$copyResult) {
+            if (! $copyResult) {
                 $this->warning(
-                    $category->image .
-                    ' ' .
+                    $category->image.
+                    ' '.
                     $this->translator->trans('cannot be copied.', [], 'Admin.Advparameters.Notification')
                 );
             }
         }
 
         // If both failed, mysql error
-        if (!$result) {
+        if (! $result) {
             $this->error(
                 $this->translator->trans(
                     '%1$s (ID: %2$s) cannot be %3$s',
                     [
-                        !empty($categoryName) ? $this->tools->sanitize($categoryName) : 'No Name',
-                        !empty($categoryId) ? $this->tools->sanitize($categoryId) : 'No ID',
+                        ! empty($categoryName) ? $this->tools->sanitize($categoryName) : 'No Name',
+                        ! empty($categoryId) ? $this->tools->sanitize($categoryId) : 'No ID',
                         $runtimeConfig->shouldValidateData() ? 'validated' : 'saved',
                     ],
                     'Admin.Advparameters.Notification'
@@ -517,7 +500,7 @@ final class CategoryImportHandler extends AbstractImportHandler
             // Associate category to shop
             if ($this->isMultistoreEnabled) {
                 $this->connection->delete(
-                    $this->dbPrefix . 'category_shop',
+                    $this->dbPrefix.'category_shop',
                     [
                         'id_category' => (int) $category->id,
                     ]
@@ -531,8 +514,8 @@ final class CategoryImportHandler extends AbstractImportHandler
                 $shopData = explode($importConfig->getMultipleValueSeparator(), $shopData);
 
                 foreach ($shopData as $shop) {
-                    if (!empty($shop)) {
-                        if (!is_numeric($shop)) {
+                    if (! empty($shop)) {
+                        if (! is_numeric($shop)) {
                             $category->addShop(Shop::getIdByName($shop));
                         } else {
                             $category->addShop($shop);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,8 +42,8 @@ class ProductIdentity
     private $combinationId = 0;
 
     /**
-     * @param int $productId
-     * @param int $combinationId
+     * @param  int  $productId
+     * @param  int  $combinationId
      */
     public function __construct($productId, $combinationId = 0)
     {
@@ -51,13 +52,11 @@ class ProductIdentity
     }
 
     /**
-     * @param array $identifiers
-     *
      * @return ProductIdentity
      */
     public static function fromArray(array $identifiers)
     {
-        if (!array_key_exists('product_id', $identifiers)) {
+        if (! array_key_exists('product_id', $identifiers)) {
             throw new BadRequestHttpException('The "productId" parameter is required');
         }
 

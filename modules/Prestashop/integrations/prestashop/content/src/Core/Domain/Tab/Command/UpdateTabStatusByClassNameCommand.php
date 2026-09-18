@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,17 +47,11 @@ class UpdateTabStatusByClassNameCommand
         $this->status = $status;
     }
 
-    /**
-     * @return bool
-     */
     public function isStatus(): bool
     {
         return $this->status;
     }
 
-    /**
-     * @return string
-     */
     public function getClassName(): string
     {
         return $this->className;

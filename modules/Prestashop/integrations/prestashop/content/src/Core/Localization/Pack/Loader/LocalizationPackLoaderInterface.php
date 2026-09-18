@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,7 @@ interface LocalizationPackLoaderInterface
     /**
      * Get single localization pack data.
      *
-     * @param string $countryIso Country ISO Alpha-2 code
-     *
+     * @param  string  $countryIso  Country ISO Alpha-2 code
      * @return SimpleXMLElement|null
      */
     public function getLocalizationPack($countryIso);

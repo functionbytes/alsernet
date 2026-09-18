@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,20 +65,15 @@ class InvalidRefundException extends OrderException
     public const NO_GENERATION = 5;
 
     /**
-     * @param int $code
-     * @param int $refundableQuantity
-     * @param string $message
-     * @param Throwable|null $previous
+     * @param  int  $code
+     * @param  string  $message
      */
-    public function __construct($code = 0, int $refundableQuantity = 0, $message = '', Throwable $previous = null)
+    public function __construct($code = 0, int $refundableQuantity = 0, $message = '', ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
         $this->refundableQuantity = $refundableQuantity;
     }
 
-    /**
-     * @return int
-     */
     public function getRefundableQuantity(): int
     {
         return $this->refundableQuantity;

@@ -63,21 +63,21 @@ class RunModelSyncCommand extends Command
             ->toArray();
 
         $globalDateFrom = $storedSettings['filter_date_from'] ?? config('supplier.erp_sync.filter_date_from');
-        $globalLimit    = (int) ($storedSettings['default_limit'] ?? 0);
+        $globalLimit = (int) ($storedSettings['default_limit'] ?? 0);
 
         // Merge con metadata del schedule (permite override por horario); fallback a defaults globales
-        $meta             = $schedule?->metadata ?? [];
-        $dateFrom         = ($meta['date_from'] ?? null) ?: ($globalDateFrom ?: null);
-        $dateField        = $meta['date_field']        ?? 'creation';
+        $meta = $schedule?->metadata ?? [];
+        $dateFrom = ($meta['date_from'] ?? null) ?: ($globalDateFrom ?: null);
+        $dateField = $meta['date_field'] ?? 'creation';
         $descriptionEmpty = $meta['description_empty'] ?? (($storedSettings['default_description_empty'] ?? '1') !== '0');
-        $webFilter        = $meta['web_filter']        ?? ($storedSettings['default_web_filter'] ?? '2');
-        $skipAi           = (bool) ($meta['skip_ai']   ?? !empty($storedSettings['default_skip_ai']));
-        $dryRun           = (bool) ($meta['dry_run']   ?? !empty($storedSettings['default_dry_run']));
-        $registerOnly     = (bool) ($meta['register_only'] ?? !empty($storedSettings['default_register_only']));
+        $webFilter = $meta['web_filter'] ?? ($storedSettings['default_web_filter'] ?? '2');
+        $skipAi = (bool) ($meta['skip_ai'] ?? ! empty($storedSettings['default_skip_ai']));
+        $dryRun = (bool) ($meta['dry_run'] ?? ! empty($storedSettings['default_dry_run']));
+        $registerOnly = (bool) ($meta['register_only'] ?? ! empty($storedSettings['default_register_only']));
 
         $limit = $this->option('limit') ? (int) $this->option('limit') : null;
         $limit = $limit ?? ($globalLimit > 0 ? $globalLimit : null);
-        $force = $this->option('force') || !empty($storedSettings['default_force']);
+        $force = $this->option('force') || ! empty($storedSettings['default_force']);
 
         $mode = $meta['mode'] ?? ($storedSettings['default_mode'] ?? ($providerId ? 'legacy' : 'filter'));
 

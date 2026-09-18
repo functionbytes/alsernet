@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ class ColorBrightnessCalculatorExtension extends AbstractExtension
      */
     private $brightnessCalculator;
 
-    /**
-     * @param ColorBrightnessCalculator $brightnessCalculator
-     */
     public function __construct(ColorBrightnessCalculator $brightnessCalculator)
     {
         $this->brightnessCalculator = $brightnessCalculator;

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Traits\UsesOCI8Performance;
+use Modules\Supplier\Entities\SupplierSport;
 
 /**
  * Modelo para la tabla DEPORTE_CL
@@ -54,7 +55,7 @@ class DeporteCl extends Model
      */
     public function deporteCl()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\DeporteCl::class, 'iddeporte_cl', 'iddeporte_cl');
+        return $this->belongsTo(DeporteCl::class, 'iddeporte_cl', 'iddeporte_cl');
     }
 
     /**
@@ -62,6 +63,6 @@ class DeporteCl extends Model
      */
     public function supplierSports(): HasMany
     {
-        return $this->hasMany(\Modules\Supplier\Entities\SupplierSport::class, 'erp_sport_id', 'iddeporte_cl');
+        return $this->hasMany(SupplierSport::class, 'erp_sport_id', 'iddeporte_cl');
     }
 }

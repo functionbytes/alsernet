@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -66,12 +67,9 @@ class SetUpUrlType extends TranslatorAwareType
     /**
      * SetUpUrlType constructor.
      *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param array $canonicalUrlChoices
-     * @param bool $isHtaccessFileWritable
-     * @param bool $isHostMode
-     * @param bool $doesMainShopUrlExist
+     * @param  bool  $isHtaccessFileWritable
+     * @param  bool  $isHostMode
+     * @param  bool  $doesMainShopUrlExist
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -100,12 +98,12 @@ class SetUpUrlType extends TranslatorAwareType
             'Admin.Shopparameters.Help'
         );
 
-        if (!$this->isModRewriteActive) {
+        if (! $this->isModRewriteActive) {
             $friendlyUrlHelp .=
-                '<br/>' . $this->trans(
-                'URL rewriting (mod_rewrite) is not active on your server, or it is not possible to check your server configuration. If you want to use Friendly URLs, you must activate this mod.',
+                '<br/>'.$this->trans(
+                    'URL rewriting (mod_rewrite) is not active on your server, or it is not possible to check your server configuration. If you want to use Friendly URLs, you must activate this mod.',
                     'Admin.Shopparameters.Help'
-            );
+                );
         }
 
         $builder
@@ -130,7 +128,7 @@ class SetUpUrlType extends TranslatorAwareType
                 ]
             );
 
-        if (!$this->isHostMode && $this->isHtaccessFileWritable && $this->doesMainShopUrlExist) {
+        if (! $this->isHostMode && $this->isHtaccessFileWritable && $this->doesMainShopUrlExist) {
             $builder
                 ->add('disable_apache_multiview', SwitchType::class, [
                     'label' => $this->trans('Disable Apache\'s MultiViews option', 'Admin.Shopparameters.Feature'),

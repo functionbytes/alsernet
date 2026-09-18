@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ interface KpiRowInterface
 {
     /**
      * Add a KPI to this row.
-     *
-     * @param KpiInterface $kpi
      */
     public function addKpi(KpiInterface $kpi);
 
@@ -46,7 +45,7 @@ interface KpiRowInterface
     public function getKpis();
 
     /**
-     * @param bool $allowRefresh
+     * @param  bool  $allowRefresh
      */
     public function setAllowRefresh($allowRefresh);
 

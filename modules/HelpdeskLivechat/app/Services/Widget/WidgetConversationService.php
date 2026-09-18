@@ -421,7 +421,7 @@ class WidgetConversationService
             ] : null,
             'agent' => $assignee ? [
                 'id' => $assignee->id,
-                'name' => trim(($assignee->firstname ?? '').' '.($assignee->lastname ?? '')) ?: 'Agente',
+                'name' => $assignee->fullName() ?: 'Agente',
                 'avatar' => method_exists($assignee, 'getAvatarUrl') ? $assignee->getAvatarUrl() : null,
             ] : null,
         ];

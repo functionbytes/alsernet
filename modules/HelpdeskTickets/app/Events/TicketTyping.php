@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -9,7 +10,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 class TicketTyping implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets;
 
     public function __construct(
         public readonly int $ticketId,

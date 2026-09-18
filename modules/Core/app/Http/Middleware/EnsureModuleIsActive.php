@@ -81,6 +81,7 @@ class EnsureModuleIsActive
                     'giftmessage' => 'GiftMessage',
                     'pricelabels' => 'PriceLabels',
                     'faq' => 'Faq',
+                    'forms' => 'Forms',
                 ];
 
                 if (isset($resourceModuleMap[$resource])) {

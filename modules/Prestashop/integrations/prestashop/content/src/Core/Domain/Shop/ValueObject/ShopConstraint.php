@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,8 +53,6 @@ class ShopConstraint
     /**
      * Constraint to get configuration for a specific shop
      *
-     * @param int $shopId
-     * @param bool $isStrict
      *
      * @return static
      *
@@ -67,8 +66,6 @@ class ShopConstraint
     /**
      * Constraint to get configuration for a specific shop group
      *
-     * @param int $shopGroupId
-     * @param bool $isStrict
      *
      * @return static
      *
@@ -82,7 +79,6 @@ class ShopConstraint
     /**
      * Constraint to get configuration for all shops (the global value)
      *
-     * @param bool $isStrict
      *
      * @return static
      */
@@ -92,38 +88,25 @@ class ShopConstraint
     }
 
     /**
-     * @param int|null $shopId
-     * @param int|null $shopGroupId
-     * @param bool $strict
-     *
      * @throws ShopException
      */
     protected function __construct(?int $shopId, ?int $shopGroupId, bool $strict = false)
     {
-        $this->shopId = null !== $shopId ? new ShopId($shopId) : null;
-        $this->shopGroupId = null !== $shopGroupId ? new ShopGroupId($shopGroupId) : null;
+        $this->shopId = $shopId !== null ? new ShopId($shopId) : null;
+        $this->shopGroupId = $shopGroupId !== null ? new ShopGroupId($shopGroupId) : null;
         $this->strict = $strict;
     }
 
-    /**
-     * @return ShopId|null
-     */
     public function getShopId(): ?ShopId
     {
         return $this->shopId;
     }
 
-    /**
-     * @return ShopGroupId|null
-     */
     public function getShopGroupId(): ?ShopGroupId
     {
         return $this->shopGroupId;
     }
 
-    /**
-     * @return bool
-     */
     public function isStrict(): bool
     {
         return $this->strict;

@@ -86,7 +86,7 @@ class ContentFilterService
         if ($request->boolean('no_sources')) {
             $query->where(function (Builder $q) {
                 $q->whereNull('sources_used')
-                  ->orWhereJsonLength('sources_used', 0);
+                    ->orWhereJsonLength('sources_used', 0);
             });
         }
 

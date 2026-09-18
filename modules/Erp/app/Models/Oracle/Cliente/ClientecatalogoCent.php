@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -57,7 +58,7 @@ class ClientecatalogoCent extends Model
      */
     public function clientecatalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientecatalogoCent::class, 'idclientecatalogo', 'idclientecatalogo');
+        return $this->belongsTo(ClientecatalogoCent::class, 'idclientecatalogo', 'idclientecatalogo');
     }
 
     /**
@@ -66,7 +67,7 @@ class ClientecatalogoCent extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -75,6 +76,6 @@ class ClientecatalogoCent extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 }

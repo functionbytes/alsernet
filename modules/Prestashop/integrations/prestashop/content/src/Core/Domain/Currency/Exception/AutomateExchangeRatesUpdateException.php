@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,5 +33,6 @@ namespace PrestaShop\PrestaShop\Core\Domain\Currency\Exception;
 class AutomateExchangeRatesUpdateException extends CurrencyException
 {
     public const CRON_TASK_CREATION_FAILED = 1;
+
     public const CRON_TASK_MANAGER_MODULE_NOT_INSTALLED = 2;
 }

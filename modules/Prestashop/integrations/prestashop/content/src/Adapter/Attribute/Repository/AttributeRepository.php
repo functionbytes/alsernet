@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,6 @@ class AttributeRepository extends AbstractObjectModelRepository
      */
     private $dbPrefix;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix
@@ -64,7 +61,7 @@ class AttributeRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param int[] $attributeIds
+     * @param  int[]  $attributeIds
      */
     public function assertAllAttributesExist(array $attributeIds): void
     {
@@ -74,10 +71,9 @@ class AttributeRepository extends AbstractObjectModelRepository
 
         $qb = $this->connection->createQueryBuilder();
         $qb->select('COUNT(id_attribute) AS total')
-            ->from($this->dbPrefix . 'attribute')
+            ->from($this->dbPrefix.'attribute')
             ->where('id_attribute IN (:idsList)')
-            ->setParameter('idsList', $attributeIds, Connection::PARAM_INT_ARRAY)
-        ;
+            ->setParameter('idsList', $attributeIds, Connection::PARAM_INT_ARRAY);
 
         $result = (int) $qb->execute()->fetch()['total'];
 
@@ -87,8 +83,6 @@ class AttributeRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param ProductId $productId
-     *
      * @return array<int>
      */
     public function getProductAttributesIds(ProductId $productId): array
@@ -96,20 +90,17 @@ class AttributeRepository extends AbstractObjectModelRepository
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('pac.id_attribute')
-            ->from($this->dbPrefix . 'product_attribute_combination', 'pac')
-            ->innerJoin('pac', $this->dbPrefix . 'product_attribute', 'pa', 'pac.id_product_attribute = pa.id_product_attribute')
+            ->from($this->dbPrefix.'product_attribute_combination', 'pac')
+            ->innerJoin('pac', $this->dbPrefix.'product_attribute', 'pa', 'pac.id_product_attribute = pa.id_product_attribute')
             ->where('pa.id_product = :productId')
             ->groupBy('pac.id_attribute')
-            ->setParameter('productId', $productId->getValue())
-        ;
+            ->setParameter('productId', $productId->getValue());
 
         return $qb->execute()->fetchAll(FetchMode::COLUMN);
     }
 
     /**
-     * @param int[] $combinationIds
-     * @param LanguageId $langId
-     *
+     * @param  int[]  $combinationIds
      * @return array<int, array<int, mixed>>
      */
     public function getAttributesInfoByCombinationIds(array $combinationIds, LanguageId $langId): array
@@ -133,8 +124,7 @@ class AttributeRepository extends AbstractObjectModelRepository
     }
 
     /**
-     * @param int[] $combinationIds
-     *
+     * @param  int[]  $combinationIds
      * @return array<int, array<string, mixed>>
      */
     private function getAttributeCombinationAssociations(array $combinationIds): array
@@ -142,18 +132,15 @@ class AttributeRepository extends AbstractObjectModelRepository
         $qb = $this->connection->createQueryBuilder();
         $qb->select('pac.id_attribute')
             ->addSelect('pac.id_product_attribute')
-            ->from($this->dbPrefix . 'product_attribute_combination', 'pac')
+            ->from($this->dbPrefix.'product_attribute_combination', 'pac')
             ->where($qb->expr()->in('pac.id_product_attribute', ':combinationIds'))
-            ->setParameter('combinationIds', $combinationIds, Connection::PARAM_INT_ARRAY)
-        ;
+            ->setParameter('combinationIds', $combinationIds, Connection::PARAM_INT_ARRAY);
 
         return $qb->execute()->fetchAll();
     }
 
     /**
-     * @param int[] $attributeIds
-     * @param int $langId
-     *
+     * @param  int[]  $attributeIds
      * @return array<int, array<int, mixed>>
      */
     private function getAttributesInformation(array $attributeIds, int $langId): array
@@ -164,28 +151,27 @@ class AttributeRepository extends AbstractObjectModelRepository
             ->addSelect('al.name AS attribute_name')
             ->addSelect('agl.name AS attribute_group_name')
             ->addSelect('agl.public_name AS attribute_group_public_name')
-            ->from($this->dbPrefix . 'attribute', 'a')
+            ->from($this->dbPrefix.'attribute', 'a')
             ->leftJoin(
                 'a',
-                $this->dbPrefix . 'attribute_lang',
+                $this->dbPrefix.'attribute_lang',
                 'al',
                 'a.id_attribute = al.id_attribute AND al.id_lang = :langId'
             )->leftJoin(
                 'a',
-                $this->dbPrefix . 'attribute_group',
+                $this->dbPrefix.'attribute_group',
                 'ag',
                 'a.id_attribute_group = ag.id_attribute_group'
             )->leftJoin(
                 'ag',
-                $this->dbPrefix . 'attribute_group_lang',
+                $this->dbPrefix.'attribute_group_lang',
                 'agl',
                 'agl.id_attribute_group = ag.id_attribute_group AND agl.id_lang = :langId'
             )->where($qb->expr()->in('a.id_attribute', ':attributeIds'))
             ->addOrderBy('ag.position', 'ASC')
             ->addOrderBy('a.position', 'ASC')
             ->setParameter('attributeIds', $attributeIds, Connection::PARAM_INT_ARRAY)
-            ->setParameter('langId', $langId)
-        ;
+            ->setParameter('langId', $langId);
 
         $attributesInfo = $qb->execute()->fetchAll();
 

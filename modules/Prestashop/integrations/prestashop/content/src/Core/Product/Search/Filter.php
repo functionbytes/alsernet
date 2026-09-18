@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,8 +87,7 @@ class Filter
     }
 
     /**
-     * @param string $label the filter label
-     *
+     * @param  string  $label  the filter label
      * @return $this
      */
     public function setLabel($label)
@@ -106,8 +106,7 @@ class Filter
     }
 
     /**
-     * @param string $type the filter type
-     *
+     * @param  string  $type  the filter type
      * @return $this
      */
     public function setType($type)
@@ -126,9 +125,8 @@ class Filter
     }
 
     /**
-     * @param string $name the filter property name
-     * @param mixed $value the filter property value
-     *
+     * @param  string  $name  the filter property name
+     * @param  mixed  $value  the filter property value
      * @return $this
      */
     public function setProperty($name, $value)
@@ -139,13 +137,12 @@ class Filter
     }
 
     /**
-     * @param string $name the filter property name
-     *
+     * @param  string  $name  the filter property name
      * @return mixed|null
      */
     public function getProperty($name)
     {
-        if (!array_key_exists($name, $this->properties)) {
+        if (! array_key_exists($name, $this->properties)) {
             return null;
         }
 
@@ -153,8 +150,7 @@ class Filter
     }
 
     /**
-     * @param mixed $value
-     *
+     * @param  mixed  $value
      * @return $this
      */
     public function setValue($value)
@@ -173,8 +169,7 @@ class Filter
     }
 
     /**
-     * @param int $magnitude the filter magnitude
-     *
+     * @param  int  $magnitude  the filter magnitude
      * @return $this
      */
     public function setMagnitude($magnitude)
@@ -193,8 +188,7 @@ class Filter
     }
 
     /**
-     * @param bool $active sets the activation of the filter
-     *
+     * @param  bool  $active  sets the activation of the filter
      * @return $this
      */
     public function setActive($active = true)
@@ -213,8 +207,7 @@ class Filter
     }
 
     /**
-     * @param bool $displayed sets the display of the filter
-     *
+     * @param  bool  $displayed  sets the display of the filter
      * @return $this
      */
     public function setDisplayed($displayed = true)
@@ -233,8 +226,7 @@ class Filter
     }
 
     /**
-     * @param array $nextEncodedFacets
-     *
+     * @param  array  $nextEncodedFacets
      * @return $this
      */
     public function setNextEncodedFacets($nextEncodedFacets)

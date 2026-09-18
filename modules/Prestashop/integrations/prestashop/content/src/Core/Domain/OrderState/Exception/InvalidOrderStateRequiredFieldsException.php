@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\OrderState\Exception;
 /**
  * Thrown when trying to set invalid required fields for order state
  */
-class InvalidOrderStateRequiredFieldsException extends OrderStateException
-{
-}
+class InvalidOrderStateRequiredFieldsException extends OrderStateException {}

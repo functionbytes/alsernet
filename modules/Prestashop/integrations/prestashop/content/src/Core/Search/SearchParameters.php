@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,7 @@ final class SearchParameters implements SearchParametersInterface
             $action
         );
 
-        $parameters = null !== $adminFilter ? json_decode($adminFilter->getFilter(), true) : [];
+        $parameters = $adminFilter !== null ? json_decode($adminFilter->getFilter(), true) : [];
 
         return new $filterClass($parameters);
     }

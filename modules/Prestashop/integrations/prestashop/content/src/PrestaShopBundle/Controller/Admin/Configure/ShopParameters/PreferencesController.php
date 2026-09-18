@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,15 +44,13 @@ class PreferencesController extends FrameworkBundleAdminController
     public const CONTROLLER_NAME = 'AdminPreferences';
 
     /**
-     * @param Request $request
-     * @param FormInterface|null $form
-     *
      * @return Response
      *
      * @throws \Exception
+     *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      */
-    public function indexAction(Request $request, FormInterface $form = null)
+    public function indexAction(Request $request, ?FormInterface $form = null)
     {
         $form = $this->get('prestashop.adapter.preferences.form_handler')->getForm();
 
@@ -59,8 +58,6 @@ class PreferencesController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Request $request
-     *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))",
      *     message="You do not have permission to update this.",
      *     redirectRoute="admin_preferences")
@@ -83,7 +80,7 @@ class PreferencesController extends FrameworkBundleAdminController
             $data = $form->getData();
             $saveErrors = $this->get('prestashop.adapter.preferences.form_handler')->save($data);
 
-            if (0 === count($saveErrors)) {
+            if (count($saveErrors) === 0) {
                 $this->getCommandBus()->handle(
                     new UpdateTabStatusByClassNameCommand(
                         'AdminShopGroup',
@@ -108,7 +105,7 @@ class PreferencesController extends FrameworkBundleAdminController
         $toolsAdapter = $this->get('prestashop.adapter.tools');
 
         // SSL URI is used for the merchant to check if he has SSL enabled
-        $sslUri = 'https://' . $toolsAdapter->getShopDomainSsl() . $request->getRequestUri();
+        $sslUri = 'https://'.$toolsAdapter->getShopDomainSsl().$request->getRequestUri();
 
         return $this->render('@PrestaShop/Admin/Configure/ShopParameters/preferences.html.twig', [
             'layoutHeaderToolbarBtn' => [],

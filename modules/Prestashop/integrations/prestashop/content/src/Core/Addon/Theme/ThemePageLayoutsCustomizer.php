@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,6 @@ final class ThemePageLayoutsCustomizer implements ThemePageLayoutsCustomizerInte
      */
     private $smartyCacheClearer;
 
-    /**
-     * @param Theme $theme
-     * @param ThemeManager $themeManager
-     * @param CacheClearerInterface $smartyCacheClearer
-     */
     public function __construct(Theme $theme, ThemeManager $themeManager, CacheClearerInterface $smartyCacheClearer)
     {
         $this->theme = $theme;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,11 +38,8 @@ use PrestaShop\PrestaShop\Core\Domain\Notification\CommandHandler\UpdateEmployee
  */
 final class UpdateEmployeeNotificationLastElementHandler implements UpdateEmployeeNotificationLastElementCommandHandlerInterface
 {
-    /**
-     * @param UpdateEmployeeNotificationLastElementCommand $command
-     */
     public function handle(UpdateEmployeeNotificationLastElementCommand $command)
     {
-        (new Notification())->updateEmployeeLastElement($command->getType()->getValue());
+        (new Notification)->updateEmployeeLastElement($command->getType()->getValue());
     }
 }

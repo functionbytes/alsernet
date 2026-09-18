@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,11 +40,11 @@ class OrderPaymentId
     private $orderPaymentId;
 
     /**
-     * @param int $orderPaymentId
+     * @param  int  $orderPaymentId
      */
     public function __construct($orderPaymentId)
     {
-        if (!is_int($orderPaymentId) || 0 >= $orderPaymentId) {
+        if (! is_int($orderPaymentId) || $orderPaymentId <= 0) {
             throw new PaymentException('Invalid order payment id supplied.');
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -61,8 +62,6 @@ class OrderProductRemover
 
     /**
      * OrderProductRemover constructor.
-     *
-     * @param LoggerInterface $logger
      */
     public function __construct(LoggerInterface $logger, TranslatorInterface $translator)
     {
@@ -71,11 +70,7 @@ class OrderProductRemover
     }
 
     /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param bool $updateCart Used when you don't want to update the cart (CartRule removal for example)
-     *
-     * @return CartProductsComparator
+     * @param  bool  $updateCart  Used when you don't want to update the cart (CartRule removal for example)
      */
     public function deleteProductFromOrder(
         Order $order,
@@ -110,10 +105,6 @@ class OrderProductRemover
         return $this->cartProductComparator;
     }
 
-    /**
-     * @param Cart $cart
-     * @param OrderDetail $orderDetail
-     */
     private function updateCart(
         Cart $cart,
         OrderDetail $orderDetail
@@ -144,9 +135,6 @@ class OrderProductRemover
     }
 
     /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     *
      * @throws DeleteProductFromOrderException
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
@@ -155,23 +143,19 @@ class OrderProductRemover
         Order $order,
         OrderDetail $orderDetail
     ) {
-        if (!$orderDetail->delete()) {
+        if (! $orderDetail->delete()) {
             throw new DeleteProductFromOrderException('Could not delete order detail');
         }
 
         $order->update();
     }
 
-    /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     */
     private function deleteCustomization(Order $order, OrderDetail $orderDetail)
     {
-        if (!(int) $order->getCurrentState()) {
+        if (! (int) $order->getCurrentState()) {
             throw new DeleteCustomizedProductFromOrderException('Could not get a valid Order state before deletion');
         }
-        if (!Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . 'customization` WHERE `id_customization` = ' . (int) $orderDetail->id_customization . ' AND `id_cart` = ' . (int) $order->id_cart . ' AND `id_product` = ' . (int) $orderDetail->product_id)) {
+        if (! Db::getInstance()->execute('DELETE FROM `'._DB_PREFIX_.'customization` WHERE `id_customization` = '.(int) $orderDetail->id_customization.' AND `id_cart` = '.(int) $order->id_cart.' AND `id_product` = '.(int) $orderDetail->product_id)) {
             throw new DeleteCustomizedProductFromOrderException('Could not delete customization from database.');
         }
     }
@@ -180,10 +164,6 @@ class OrderProductRemover
      * The deleted OrderCartRule are ignored by CartRule:autoAdd and CartRule:autoRemove so it is not able to clean
      * them when the product is removed, hence the discount could never be re applied. So we manually check and remove
      * them.
-     *
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param Cart $cart
      */
     private function deleteOrderCartRule(
         Order $order,
@@ -199,13 +179,13 @@ class OrderProductRemover
         foreach ($orderCartRules as $orderCartRule) {
             $cartRule = new CartRule($orderCartRule['id_cart_rule']);
             $discountedProducts = $cartRule->checkProductRestrictionsFromCart($cart, true, false, true);
-            if (!is_array($discountedProducts)) {
+            if (! is_array($discountedProducts)) {
                 continue;
             }
             foreach ($discountedProducts as $discountedProduct) {
                 // The return value is the concatenation of productId and attributeId, but the attributeId is always replaced by 0
-                if ($discountedProduct === $orderDetail->product_id . '-0') {
-                    if (!in_array($orderCartRule['id_order_cart_rule'], $removedOrderCartRules)) {
+                if ($discountedProduct === $orderDetail->product_id.'-0') {
+                    if (! in_array($orderCartRule['id_order_cart_rule'], $removedOrderCartRules)) {
                         $removedOrderCartRules[] = $orderCartRule['id_order_cart_rule'];
                     }
                 }
@@ -218,18 +198,13 @@ class OrderProductRemover
         }
     }
 
-    /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     * @param Cart $cart
-     */
     private function deleteSpecificPrice(
         Order $order,
         OrderDetail $orderDetail,
         Cart $cart
     ): void {
         $productQuantity = $cart->getProductQuantity($orderDetail->product_id, $orderDetail->product_attribute_id);
-        if (!isset($productQuantity['quantity']) || (int) $productQuantity['quantity'] > 0) {
+        if (! isset($productQuantity['quantity']) || (int) $productQuantity['quantity'] > 0) {
             return;
         }
 
@@ -249,7 +224,7 @@ class OrderProductRemover
             false,
             $order->id_cart
         );
-        if (!empty($existingSpecificPriceId)) {
+        if (! empty($existingSpecificPriceId)) {
             $specificPrice = new SpecificPrice($existingSpecificPriceId);
             $specificPrice->delete();
         }

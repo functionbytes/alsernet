@@ -2,6 +2,8 @@
 
 @section('title', 'Etiquetas sociales')
 
+@include('helpdesksocial::partials.admin-css')
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Etiquetas sociales'])
 @endsection
@@ -32,12 +34,12 @@
                         @forelse($tags as $tag)
                         <tr data-tag-id="{{ $tag->id }}">
                             <td>
-                                <span class="badge" style="background-color: {{ $tag->color }}; color: #fff;">
+                                <span class="badge hso-tag-badge" data-tag-color="{{ $tag->color }}">
                                     {{ $tag->name }}
                                 </span>
                             </td>
                             <td>
-                                <span class="d-inline-block rounded-circle" style="width: 20px; height: 20px; background-color: {{ $tag->color }};"></span>
+                                <span class="d-inline-block rounded-circle hso-tag-dot" data-tag-color="{{ $tag->color }}"></span>
                                 <small class="text-muted ms-1">{{ $tag->color }}</small>
                             </td>
                             <td>{{ $tag->description ?? '-' }}</td>
@@ -74,7 +76,9 @@
 <div class="modal fade" id="tagModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="tagForm" method="POST" action="">
+            <form id="tagForm" method="POST" action=""
+                  data-store-url="{{ route('helpdesksocial.tags.store') }}"
+                  data-update-url-template="{{ route('helpdesksocial.tags.update', '__ID__') }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="tagModalLabel">Nueva etiqueta</h5>
@@ -121,32 +125,6 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function () {
-    function resetTagForm() {
-        $('#tagForm').attr('action', '{{ route('helpdesksocial.tags.store') }}');
-        $('#tagForm').find('input[name="_method"]').remove();
-        $('#tagForm')[0].reset();
-        $('#tagModalLabel').text('Nueva etiqueta');
-    }
-
-    function editTag(id, name, slug, color, description, isActive) {
-        $('#tagForm').attr('action', '{{ route('helpdesksocial.tags.update', '__ID__') }}'.replace('__ID__', id));
-        if ($('#tagForm').find('input[name="_method"]').length === 0) {
-            $('#tagForm').prepend('<input type="hidden" name="_method" value="PUT">');
-        }
-        $('#tagForm input[name="name"]').val(name);
-        $('#tagForm input[name="slug"]').val(slug).trigger('input');
-        $('#tagForm input[name="color"]').val(color).trigger('input');
-        $('#tagForm textarea[name="description"]').val(description);
-        $('#tagForm input[name="is_active"]').prop('checked', isActive === 1);
-        $('#tagModalLabel').text('Editar etiqueta');
-        $('#tagModal').modal('show');
-    }
-
-    window.resetTagForm = resetTagForm;
-    window.editTag = editTag;
-})();
-</script>
-@endsection
+@push('scripts')
+<script src="{{ asset('modules/helpdesksocial/js/social-tags-index.js') }}?v={{ filemtime(public_path('modules/helpdesksocial/js/social-tags-index.js')) }}"></script>
+@endpush

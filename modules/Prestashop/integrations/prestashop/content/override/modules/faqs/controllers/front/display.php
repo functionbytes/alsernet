@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -67,7 +69,7 @@ class FaqsDisplayModuleFrontControllerOverride extends FaqsDisplayModuleFrontCon
         // URL of the root
         $baseUrl = $links[] = Context::getContext()->link->getModuleLink('faqs', 'display', [], $id_shop, $id_lang);
         // URLs of categories
-        $cats = JPresta\SpeedPack\JprestaUtils::dbSelectRows('
+        $cats = JprestaUtils::dbSelectRows('
             SELECT c.id_gomakoil_faq_category, cl.link_rewrite
             FROM `'._DB_PREFIX_.'gomakoil_faq_category` c
             LEFT JOIN `'._DB_PREFIX_.'gomakoil_faq_category_shop` cs ON (c.id_gomakoil_faq_category = cs.id_gomakoil_faq_category)
@@ -80,7 +82,7 @@ class FaqsDisplayModuleFrontControllerOverride extends FaqsDisplayModuleFrontCon
                 $links[] = $baseUrl.$cat['link_rewrite'].'.html';
             }
             // URLs of FAQs
-            $faqs = JPresta\SpeedPack\JprestaUtils::dbSelectRows('
+            $faqs = JprestaUtils::dbSelectRows('
                 SELECT fl.link_rewrite
                 FROM `'._DB_PREFIX_.'gomakoil_faq` f
                 LEFT JOIN `'._DB_PREFIX_.'gomakoil_faq_shop` fs ON (f.id_gomakoil_faq = fs.id_gomakoil_faq)
@@ -119,8 +121,8 @@ class FaqsDisplayModuleFrontControllerOverride extends FaqsDisplayModuleFrontCon
                     WHERE f.`active` = 1 AND fs.`id_shop` = '.(int) Shop::getContextShopID();
         $countPagesRoot = 1;
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountPagesCat)
-            + (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountPagesFaq)
+        return (int) JprestaUtils::dbGetValue($queryCountPagesCat)
+            + (int) JprestaUtils::dbGetValue($queryCountPagesFaq)
             + $countPagesRoot;
     }
 }

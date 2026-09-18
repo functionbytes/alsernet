@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ final class NamingConventionLinter implements RouteLinterInterface
      */
     private $controllerNameParser;
 
-    /**
-     * @param ControllerNameParser $controllerNameParser
-     */
     public function __construct(ControllerNameParser $controllerNameParser)
     {
         $this->controllerNameParser = $controllerNameParser;
@@ -76,8 +74,6 @@ final class NamingConventionLinter implements RouteLinterInterface
     }
 
     /**
-     * @param Route $route
-     *
      * @return array
      */
     private function getControllerAndMethodName(Route $route)
@@ -88,7 +84,7 @@ final class NamingConventionLinter implements RouteLinterInterface
             $controller = $this->controllerNameParser->parse($controller);
         }
 
-        list($controller, $method) = explode('::', $controller, 2);
+        [$controller, $method] = explode('::', $controller, 2);
 
         $controllerParts = explode('\\', $controller);
         $controller = preg_replace('/Controller$/', '', end($controllerParts));

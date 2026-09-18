@@ -10,7 +10,6 @@ use Modules\Helpdesk\Jobs\ReattemptAutoAssignJob;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Services\AutoAssignmentService;
 use Modules\Helpdesk\Services\RoutingRuleService;
-use Modules\Helpdesk\Services\SkillsRoutingService;
 
 /**
  * Auto-assign / route a freshly created conversation.
@@ -32,7 +31,6 @@ class AutoAssignNewConversation implements ShouldQueue
 
     public function __construct(
         private readonly RoutingRuleService $routingRuleService,
-        private readonly SkillsRoutingService $skillsRoutingService,
         private readonly AutoAssignmentService $autoAssignmentService,
     ) {}
 
@@ -66,9 +64,6 @@ class AutoAssignNewConversation implements ShouldQueue
         }
 
         try {
-            // Detect skills first so the "skills" strategy has data to route on.
-            $this->skillsRoutingService->detectAndAttachSkills($conversation, (string) $firstItem->body);
-
             $userId = $this->autoAssignmentService->resolveAgent($conversation);
 
             if ($userId) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -113,7 +114,7 @@ class AdminAccessControllerCore extends AdminController
     {
         $this->display = 'edit';
 
-        if (!$this->loadObject(true)) {
+        if (! $this->loadObject(true)) {
             return;
         }
 
@@ -145,9 +146,9 @@ class AdminAccessControllerCore extends AdminController
         }
 
         if (Tools::isSubmit('submitAddAccess')) {
-            $access = new Access();
+            $access = new Access;
             $perm = Tools::getValue('perm');
-            if (!in_array($perm, ['view', 'add', 'edit', 'delete', 'all'])) {
+            if (! in_array($perm, ['view', 'add', 'edit', 'delete', 'all'])) {
                 throw new PrestaShopException('permission does not exist');
             }
 
@@ -156,7 +157,7 @@ class AdminAccessControllerCore extends AdminController
             $id_profile = (int) Tools::getValue('id_profile');
             $addFromParent = (int) Tools::getValue('addFromParent');
 
-            die($access->updateLgcAccess((int) $id_profile, $id_tab, $perm, $enabled, $addFromParent));
+            exit($access->updateLgcAccess((int) $id_profile, $id_tab, $perm, $enabled, $addFromParent));
         }
     }
 
@@ -170,17 +171,17 @@ class AdminAccessControllerCore extends AdminController
         }
 
         if (Tools::isSubmit('changeModuleAccess')) {
-            $access = new Access();
+            $access = new Access;
             $perm = Tools::getValue('perm');
             $enabled = (int) Tools::getValue('enabled');
             $id_module = (int) Tools::getValue('id_module');
             $id_profile = (int) Tools::getValue('id_profile');
 
-            if (!in_array($perm, ['view', 'configure', 'uninstall'])) {
+            if (! in_array($perm, ['view', 'configure', 'uninstall'])) {
                 throw new PrestaShopException('permission does not exist');
             }
 
-            die($access->updateLgcModuleAccess((int) $id_profile, $id_module, $perm, $enabled));
+            exit($access->updateLgcModuleAccess((int) $id_profile, $id_module, $perm, $enabled));
         }
     }
 
@@ -191,13 +192,12 @@ class AdminAccessControllerCore extends AdminController
      */
     public function getCurrentProfileId()
     {
-        return (isset($_GET['id_profile']) && !empty($_GET['id_profile']) && is_numeric($_GET['id_profile'])) ? (int) $_GET['id_profile'] : 1;
+        return (isset($_GET['id_profile']) && ! empty($_GET['id_profile']) && is_numeric($_GET['id_profile'])) ? (int) $_GET['id_profile'] : 1;
     }
 
     /**
-     * @param array $a module data
-     * @param array $b module data
-     *
+     * @param  array  $a  module data
+     * @param  array  $b  module data
      * @return int
      */
     protected function sortModuleByName($a, $b)

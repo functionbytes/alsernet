@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface LanguagePackInstallerInterface
     /**
      * Downloads and installs language pack data.
      *
-     * @param string $iso -3166-2 alpha-2 format code
-     *
+     * @param  string  $iso  -3166-2 alpha-2 format code
      * @return array - if not empty then it contains errors. In another case the function
      *               has been executed successfully
      */

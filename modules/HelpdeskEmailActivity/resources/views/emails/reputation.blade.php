@@ -188,24 +188,5 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-    // Filtra los chips de dominio (visibles y los del <details> colapsado)
-    // por subcadena — abre el desplegable automáticamente si hay coincidencias
-    // dentro de él, para no esconder resultados de la búsqueda.
-    const $filter = $('#evx-domain-filter');
-    if (!$filter.length) return;
-
-    const $chips = $('.evx-domain-chips .evx-tag');
-    const $details = $('.evx-domain-more');
-
-    $filter.on('input', function () {
-        const query = this.value.trim().toLowerCase();
-        $chips.each(function () {
-            $(this).toggle(!query || $(this).data('domain').includes(query));
-        });
-        if (query) $details.prop('open', true);
-    });
-});
-</script>
+<script src="{{ asset('modules/helpdeskemailactivity/js/reputation.js') }}?v={{ filemtime(public_path('modules/helpdeskemailactivity/js/reputation.js')) }}"></script>
 @endpush

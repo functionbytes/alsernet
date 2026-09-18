@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,11 +58,6 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
      */
     private $hookDispatcher;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param LogoUploader $logoUploader
-     * @param HookDispatcherInterface $hookDispatcher
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         LogoUploader $logoUploader,
@@ -83,19 +79,19 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
         $this->configuration->set('PS_IMG_UPDATE_TIME', time());
 
         try {
-            if (null !== $command->getUploadedHeaderLogo()) {
+            if ($command->getUploadedHeaderLogo() !== null) {
                 $this->uploadHeaderLogo($command->getUploadedHeaderLogo());
             }
 
-            if (null !== $command->getUploadedMailLogo()) {
+            if ($command->getUploadedMailLogo() !== null) {
                 $this->uploadMailLogo($command->getUploadedMailLogo());
             }
 
-            if (null !== $command->getUploadedInvoiceLogo()) {
+            if ($command->getUploadedInvoiceLogo() !== null) {
                 $this->uploadInvoiceLogo($command->getUploadedInvoiceLogo());
             }
 
-            if (null !== $command->getUploadedFavicon()) {
+            if ($command->getUploadedFavicon() !== null) {
                 $this->uploadFavicon($command->getUploadedFavicon());
             }
         } catch (PrestaShopException $exception) {
@@ -105,9 +101,6 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
         $this->hookDispatcher->dispatchWithParameters('actionAdminThemesControllerUpdate_optionsAfter');
     }
 
-    /**
-     * @param UploadedFile $uploadedFile
-     */
     private function uploadHeaderLogo(UploadedFile $uploadedFile)
     {
         $this->setUploadedFileToBeCompatibleWithLegacyUploader(ShopLogoSettings::HEADER_LOGO_FILE_NAME, $uploadedFile);
@@ -115,9 +108,6 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
         $this->logoUploader->updateHeader();
     }
 
-    /**
-     * @param UploadedFile $uploadedFile
-     */
     private function uploadMailLogo(UploadedFile $uploadedFile)
     {
         $this->setUploadedFileToBeCompatibleWithLegacyUploader(ShopLogoSettings::MAIL_LOGO_FILE_NAME, $uploadedFile);
@@ -125,9 +115,6 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
         $this->logoUploader->updateMail();
     }
 
-    /**
-     * @param UploadedFile $uploadedHeaderLogo
-     */
     private function uploadInvoiceLogo(UploadedFile $uploadedHeaderLogo)
     {
         $this->setUploadedFileToBeCompatibleWithLegacyUploader(ShopLogoSettings::INVOICE_LOGO_FILE_NAME, $uploadedHeaderLogo);
@@ -135,9 +122,6 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
         $this->logoUploader->updateInvoice();
     }
 
-    /**
-     * @param UploadedFile $uploadedHeaderLogo
-     */
     private function uploadFavicon(UploadedFile $uploadedHeaderLogo)
     {
         $this->setUploadedFileToBeCompatibleWithLegacyUploader(ShopLogoSettings::FAVICON_FILE_NAME, $uploadedHeaderLogo);
@@ -146,9 +130,7 @@ final class UploadLogosHandler implements UploadLogosHandlerInterface
     }
 
     /**
-     * @param string $legacyFileName
-     * @param UploadedFile $uploadedFile
-     *
+     * @param  string  $legacyFileName
      * @return array
      */
     private function setUploadedFileToBeCompatibleWithLegacyUploader($legacyFileName, UploadedFile $uploadedFile)

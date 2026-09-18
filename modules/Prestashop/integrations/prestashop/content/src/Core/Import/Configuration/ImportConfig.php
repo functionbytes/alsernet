@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -87,17 +88,17 @@ final class ImportConfig implements ImportConfigInterface
     private $skipRows;
 
     /**
-     * @param string $fileName
-     * @param int $entityType
-     * @param string $languageIso
-     * @param string $separator
-     * @param string $multipleValueSeparator
-     * @param bool $truncate
-     * @param bool $skipThumbnailRegeneration
-     * @param bool $matchReferences
-     * @param bool $forceIds
-     * @param bool $sendEmail
-     * @param int $skipRows
+     * @param  string  $fileName
+     * @param  int  $entityType
+     * @param  string  $languageIso
+     * @param  string  $separator
+     * @param  string  $multipleValueSeparator
+     * @param  bool  $truncate
+     * @param  bool  $skipThumbnailRegeneration
+     * @param  bool  $matchReferences
+     * @param  bool  $forceIds
+     * @param  bool  $sendEmail
+     * @param  int  $skipRows
      */
     public function __construct(
         $fileName,

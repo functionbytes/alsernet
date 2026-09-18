@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 2012-2021 INNERCODE
  *
@@ -20,10 +21,9 @@
  * @author    Innercode
  * @copyright Copyright (c) 2012 - 2021 INNERCODE, UAB. (https://www.innercode.lt)
  * @license   https://www.innercode.lt/ps-module-eula.txt
- * @package   freeshippingamountdisplay
+ *
  * @site      https://www.innercode.lt
  */
-
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
 

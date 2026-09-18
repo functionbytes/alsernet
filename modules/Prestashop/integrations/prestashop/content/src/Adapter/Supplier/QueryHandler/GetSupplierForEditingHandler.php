@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -86,18 +87,13 @@ final class GetSupplierForEditingHandler extends AbstractSupplierHandler impleme
         );
     }
 
-    /**
-     * @param int $imageId
-     *
-     * @return array|null
-     */
     private function getLogoImage(int $imageId): ?array
     {
-        $imagePath = _PS_SUPP_IMG_DIR_ . $imageId . '.jpg';
+        $imagePath = _PS_SUPP_IMG_DIR_.$imageId.'.jpg';
         $imageTag = $this->getTmpImageTag($imagePath, $imageId, 'supplier');
         $imageSize = $this->getImageSize($imagePath);
 
-        if (empty($imageTag) || null === $imageSize) {
+        if (empty($imageTag) || $imageSize === null) {
             return null;
         }
 

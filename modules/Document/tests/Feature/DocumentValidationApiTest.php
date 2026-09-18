@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithFaker;
 use Modules\Document\Entities\Document;
+use Modules\Mailer\Models\MailerTemplate;
 use Tests\TestCase;
 
 class DocumentValidationApiTest extends TestCase
@@ -96,6 +97,14 @@ class DocumentValidationApiTest extends TestCase
     /** @test */
     public function it_returns_error_when_no_custom_email_template_exists()
     {
+        // El seed real de la BD de dev SÍ trae una fila 'document_custom_email'
+        // (por eso este test "pasaba" antes sin más: el controlador buscaba
+        // la clave equivocada 'custom_document' y nunca la encontraba -- ver
+        // el fix de getCustomEmailTemplate()). Para probar de verdad el caso
+        // "no configurada" hay que borrarla explícitamente aquí; se revierte
+        // sola al final del test (DatabaseTransactions).
+        MailerTemplate::where('key', 'document_custom_email')->delete();
+
         $response = $this->getJson(route('api.documents.custom-email-template'));
 
         $response->assertStatus(200)

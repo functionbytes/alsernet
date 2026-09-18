@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,18 +39,12 @@ interface ImportHandlerInterface
 {
     /**
      * Executed before import process is started.
-     *
-     * @param ImportConfigInterface $importConfig
-     * @param ImportRuntimeConfigInterface $runtimeConfig
      */
     public function setUp(ImportConfigInterface $importConfig, ImportRuntimeConfigInterface $runtimeConfig);
 
     /**
      * Imports one data row.
      *
-     * @param ImportConfigInterface $importConfig
-     * @param ImportRuntimeConfigInterface $runtimeConfig
-     * @param DataRowInterface $dataRow
      *
      * @throws EmptyDataRowException
      */
@@ -61,9 +56,6 @@ interface ImportHandlerInterface
 
     /**
      * Executed when the import process is completed.
-     *
-     * @param ImportConfigInterface $importConfig
-     * @param ImportRuntimeConfigInterface $runtimeConfig
      */
     public function tearDown(ImportConfigInterface $importConfig, ImportRuntimeConfigInterface $runtimeConfig);
 
@@ -91,8 +83,7 @@ interface ImportHandlerInterface
     /**
      * Check whether this import handler supports given entity type.
      *
-     * @param int $importEntityType
-     *
+     * @param  int  $importEntityType
      * @return bool
      */
     public function supports($importEntityType);

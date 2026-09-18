@@ -51,7 +51,7 @@ class CustomerContextController extends Controller
             return $this->invalidEmailResponse();
         }
 
-        $this->assertScopedToCustomerEmail($email);
+        $this->assertScopedToCustomerEmail($email, 'helpdeskprestashop.prospect.view');
 
         $context = $this->service->getCustomerContext($email);
 
@@ -64,7 +64,7 @@ class CustomerContextController extends Controller
             return $this->invalidEmailResponse();
         }
 
-        $this->assertScopedToCustomerEmail($email);
+        $this->assertScopedToCustomerEmail($email, 'helpdeskprestashop.prospect.view');
 
         $this->service->forgetCache($email);
         $context = $this->service->getCustomerContext($email);

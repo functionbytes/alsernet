@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,10 +49,6 @@ final class EditAttachmentHandler extends AbstractAttachmentHandler implements E
      */
     protected $fileUploader;
 
-    /**
-     * @param ValidatorInterface $validator
-     * @param AttachmentFileUploaderInterface $fileUploader
-     */
     public function __construct(ValidatorInterface $validator, AttachmentFileUploaderInterface $fileUploader)
     {
         parent::__construct($validator);
@@ -85,9 +82,6 @@ final class EditAttachmentHandler extends AbstractAttachmentHandler implements E
     }
 
     /**
-     * @param Attachment $attachment
-     * @param EditAttachmentCommand $command
-     *
      * @throws AttachmentConstraintException
      * @throws AttachmentException
      * @throws AttachmentNotFoundException
@@ -96,7 +90,7 @@ final class EditAttachmentHandler extends AbstractAttachmentHandler implements E
     private function updateAttachmentFromCommandData(Attachment $attachment, EditAttachmentCommand $command)
     {
         try {
-            if (!$attachment->validateFields(false) && !$attachment->validateFieldsLang(false)) {
+            if (! $attachment->validateFields(false) && ! $attachment->validateFieldsLang(false)) {
                 throw new AttachmentConstraintException('Attachment contains invalid field values', AttachmentConstraintException::INVALID_FIELDS);
             }
 
@@ -108,7 +102,7 @@ final class EditAttachmentHandler extends AbstractAttachmentHandler implements E
 
             $this->assertValidFields($attachment);
 
-            if (null !== $command->getPathName()) {
+            if ($command->getPathName() !== null) {
                 $uniqueFileName = $this->getUniqueFileName();
 
                 $attachment->file_name = $command->getOriginalFileName();
@@ -125,7 +119,7 @@ final class EditAttachmentHandler extends AbstractAttachmentHandler implements E
                 );
             }
 
-            if (false === $attachment->update()) {
+            if ($attachment->update() === false) {
                 throw new CannotUpdateAttachmentException('Failed to update attachment');
             }
         } catch (PrestaShopException $e) {

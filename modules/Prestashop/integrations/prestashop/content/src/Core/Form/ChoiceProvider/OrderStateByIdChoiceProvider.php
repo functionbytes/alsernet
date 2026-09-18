@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,7 +37,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 /**
  * Class OrderStateByIdChoiceProvider provides order state choices with ID values.
  */
-final class OrderStateByIdChoiceProvider implements FormChoiceProviderInterface, FormChoiceAttributeProviderInterface, ConfigurableFormChoiceProviderInterface
+final class OrderStateByIdChoiceProvider implements ConfigurableFormChoiceProviderInterface, FormChoiceAttributeProviderInterface, FormChoiceProviderInterface
 {
     /**
      * @var int language ID
@@ -59,10 +60,7 @@ final class OrderStateByIdChoiceProvider implements FormChoiceProviderInterface,
     private $translator;
 
     /**
-     * @param int $languageId language ID
-     * @param OrderStateDataProviderInterface $orderStateDataProvider
-     * @param ColorBrightnessCalculator $colorBrightnessCalculator
-     * @param TranslatorInterface $translator
+     * @param  int  $languageId  language ID
      */
     public function __construct(
         $languageId,
@@ -79,7 +77,6 @@ final class OrderStateByIdChoiceProvider implements FormChoiceProviderInterface,
     /**
      * Get order state choices.
      *
-     * @param array $options
      *
      * @return array
      */
@@ -92,7 +89,7 @@ final class OrderStateByIdChoiceProvider implements FormChoiceProviderInterface,
             if ($orderState['deleted'] == 1 && (empty($options['current_state']) || $options['current_state'] != $orderState['id_order_state'])) {
                 continue;
             }
-            $orderState['name'] .= $orderState['deleted'] == 1 ? ' ' . $this->translator->trans('(deleted)', [], 'Admin.Global') : '';
+            $orderState['name'] .= $orderState['deleted'] == 1 ? ' '.$this->translator->trans('(deleted)', [], 'Admin.Global') : '';
             $choices[$orderState['name']] = $orderState['id_order_state'];
         }
 
@@ -110,7 +107,7 @@ final class OrderStateByIdChoiceProvider implements FormChoiceProviderInterface,
         $attrs = [];
 
         foreach ($orderStates as $orderState) {
-            $orderState['name'] .= $orderState['deleted'] == 1 ? ' ' . $this->translator->trans('(deleted)', [], 'Admin.Global') : '';
+            $orderState['name'] .= $orderState['deleted'] == 1 ? ' '.$this->translator->trans('(deleted)', [], 'Admin.Global') : '';
             $attrs[$orderState['name']]['data-background-color'] = $orderState['color'];
             $attrs[$orderState['name']]['data-is-bright'] = $this->colorBrightnessCalculator->isBright($orderState['color']);
         }

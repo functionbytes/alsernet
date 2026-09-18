@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,7 +57,7 @@ final class DisabledProductGridDefinitionFactory extends AbstractProductGridDefi
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('monitoring_products_bulk'))
                     ->setOptions([
@@ -98,7 +99,7 @@ final class DisabledProductGridDefinitionFactory extends AbstractProductGridDefi
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_product', TextType::class))
                     ->setAssociatedColumn('id_product')

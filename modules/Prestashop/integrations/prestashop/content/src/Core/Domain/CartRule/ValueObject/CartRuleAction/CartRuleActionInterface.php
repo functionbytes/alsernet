@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,22 +38,16 @@ interface CartRuleActionInterface
 {
     /**
      * Check if this cart rule is giving free shipping.
-     *
-     * @return bool
      */
     public function isFreeShipping(): bool;
 
     /**
      * Get the amount discount, which this cart rule action is giving.
-     *
-     * @return MoneyAmountCondition|null
      */
     public function getAmountDiscount(): ?MoneyAmountCondition;
 
     /**
      * Get the percentage discount, which this cart rule action is giving.
-     *
-     * @return PercentageDiscount|null
      */
     public function getPercentageDiscount(): ?PercentageDiscount;
 

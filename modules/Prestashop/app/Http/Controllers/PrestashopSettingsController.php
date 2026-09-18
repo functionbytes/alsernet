@@ -3,6 +3,7 @@
 namespace Modules\Prestashop\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -63,16 +64,16 @@ class PrestashopSettingsController extends Controller
 
             config([
                 'database.connections.prestashop_check' => [
-                    'driver'    => 'mysql',
-                    'host'      => $settings['prestashop_db_host'],
-                    'port'      => (int) $settings['prestashop_db_port'],
-                    'database'  => $settings['prestashop_db_database'],
-                    'username'  => $settings['prestashop_db_username'],
-                    'password'  => $settings['prestashop_db_password'],
-                    'charset'   => 'utf8mb4',
+                    'driver' => 'mysql',
+                    'host' => $settings['prestashop_db_host'],
+                    'port' => (int) $settings['prestashop_db_port'],
+                    'database' => $settings['prestashop_db_database'],
+                    'username' => $settings['prestashop_db_username'],
+                    'password' => $settings['prestashop_db_password'],
+                    'charset' => 'utf8mb4',
                     'collation' => 'utf8mb4_unicode_ci',
-                    'prefix'    => '',
-                    'strict'    => false,
+                    'prefix' => '',
+                    'strict' => false,
                 ],
             ]);
 
@@ -150,7 +151,7 @@ class PrestashopSettingsController extends Controller
         }
 
         $lastCheck = $stats['last_sync_check'] ?? null;
-        $lastCheckDate = $lastCheck ? \Carbon\Carbon::parse($lastCheck) : null;
+        $lastCheckDate = $lastCheck ? Carbon::parse($lastCheck) : null;
 
         return response()->json([
             'success' => true,
@@ -175,16 +176,16 @@ class PrestashopSettingsController extends Controller
 
             config([
                 'database.connections.prestashop_check' => [
-                    'driver'    => 'mysql',
-                    'host'      => $settings['prestashop_db_host'],
-                    'port'      => (int) $settings['prestashop_db_port'],
-                    'database'  => $settings['prestashop_db_database'],
-                    'username'  => $settings['prestashop_db_username'],
-                    'password'  => $settings['prestashop_db_password'],
-                    'charset'   => 'utf8mb4',
+                    'driver' => 'mysql',
+                    'host' => $settings['prestashop_db_host'],
+                    'port' => (int) $settings['prestashop_db_port'],
+                    'database' => $settings['prestashop_db_database'],
+                    'username' => $settings['prestashop_db_username'],
+                    'password' => $settings['prestashop_db_password'],
+                    'charset' => 'utf8mb4',
                     'collation' => 'utf8mb4_unicode_ci',
-                    'prefix'    => '',
-                    'strict'    => false,
+                    'prefix' => '',
+                    'strict' => false,
                 ],
             ]);
 
@@ -260,7 +261,7 @@ class PrestashopSettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'last_sync' => $lastSync ? \Carbon\Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
+            'last_sync' => $lastSync ? Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
             'sync_count' => (int) $syncCount,
             'total_blockades' => $totalBlockades,
         ]);

@@ -85,11 +85,16 @@
                                 <h6 class="mb-3">Credenciales y Configuración</h6>
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold text-dark">Usuario:</label>
-                                    <p class="text-muted mb-0">{{ config('database.connections.oracle.username') ?? 'N/A' }}</p>
+                                    {{-- De $settings, como el resto de campos de esta pantalla. Antes
+                                         leía config('database.connections.oracle.username'), es decir el
+                                         .env: mostraba "N/A" aunque las credenciales estuvieran guardadas
+                                         en ajustes, que es de donde las toma la conexión real (ver
+                                         ErpServiceProvider::applyDynamicOracleConfig). --}}
+                                    <p class="text-muted mb-0">{{ $settings['oracle_username'] ?? config('database.connections.oracle.username') ?: 'N/A' }}</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold text-dark">Contraseña:</label>
-                                    <p class="text-muted mb-0">{{ config('database.connections.oracle.password') ? '••••••••' : 'N/A' }}</p>
+                                    <p class="text-muted mb-0">{{ ($settings['oracle_password'] ?? config('database.connections.oracle.password')) ? '••••••••' : 'N/A' }}</p>
                                 </div>
                                 <div class="mb-0">
                                     <label class="form-label fw-semibold text-dark">Charset:</label>

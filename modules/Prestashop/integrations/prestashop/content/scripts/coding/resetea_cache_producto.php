@@ -1,13 +1,14 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include (dirname(__FILE__).'/../config/config.inc.php');
+include dirname(__FILE__).'/../config/config.inc.php';
 
 // $productos = [19628,
 // 63471,
@@ -28,9 +29,6 @@ include (dirname(__FILE__).'/../config/config.inc.php');
 // 60464,
 // 52055
 // ];
-
-
-
 
 // foreach ($productos as $id_producto) {
 //     echo "Vaciamos la cahe del id_product: ".$id_producto."\n";

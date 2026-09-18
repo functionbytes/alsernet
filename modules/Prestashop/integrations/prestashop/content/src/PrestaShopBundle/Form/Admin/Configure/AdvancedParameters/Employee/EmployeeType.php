@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -82,11 +83,8 @@ final class EmployeeType extends AbstractType
     private $defaultAvatarUrl;
 
     /**
-     * @param array $languagesChoices
-     * @param array $tabChoices
-     * @param array $profilesChoices
-     * @param bool $isMultistoreFeatureActive
-     * @param string $defaultAvatarUrl
+     * @param  bool  $isMultistoreFeatureActive
+     * @param  string  $defaultAvatarUrl
      */
     public function __construct(
         array $languagesChoices,
@@ -137,8 +135,7 @@ final class EmployeeType extends AbstractType
             ])
             ->add('has_enabled_gravatar', SwitchType::class, [
                 'required' => false,
-            ])
-        ;
+            ]);
 
         if ($options['is_restricted_access']) {
             $builder->add('change_password', ChangePasswordType::class);
@@ -154,7 +151,7 @@ final class EmployeeType extends AbstractType
             }
         } else {
             $builder->add('password', PasswordType::class, [
-                'required' => !$options['is_for_editing'],
+                'required' => ! $options['is_for_editing'],
                 'constraints' => [
                     $this->getLengthConstraint(Password::MAX_LENGTH, Password::MIN_LENGTH),
                 ],
@@ -167,10 +164,9 @@ final class EmployeeType extends AbstractType
             ])
             ->add('language', ChoiceType::class, [
                 'choices' => $this->languagesChoices,
-            ])
-        ;
+            ]);
 
-        if (!$options['is_restricted_access']) {
+        if (! $options['is_restricted_access']) {
             $builder
                 ->add(
                     'active',
@@ -185,8 +181,7 @@ final class EmployeeType extends AbstractType
                     [
                         'choices' => $this->profilesChoices,
                     ]
-                )
-            ;
+                );
 
             if ($this->isMultistoreFeatureActive) {
                 $builder->add('shop_association', ShopChoiceTreeType::class, [
@@ -227,14 +222,12 @@ final class EmployeeType extends AbstractType
             ])
             ->setAllowedTypes('is_restricted_access', 'bool')
             ->setAllowedTypes('is_for_editing', 'bool')
-            ->setAllowedTypes('show_addons_connect_button', 'bool')
-        ;
+            ->setAllowedTypes('show_addons_connect_button', 'bool');
     }
 
     /**
-     * @param int $maxLength
-     * @param int|null $minLength
-     *
+     * @param  int  $maxLength
+     * @param  int|null  $minLength
      * @return Length
      */
     private function getLengthConstraint($maxLength, $minLength = null)
@@ -248,7 +241,7 @@ final class EmployeeType extends AbstractType
             ),
         ];
 
-        if (null !== $minLength) {
+        if ($minLength !== null) {
             $options['min'] = $minLength;
             $options['minMessage'] = $this->trans(
                 'This field cannot be shorter than %limit% characters',

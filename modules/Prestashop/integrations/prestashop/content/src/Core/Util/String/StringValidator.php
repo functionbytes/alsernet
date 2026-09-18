@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ final class StringValidator implements StringValidatorInterface
     {
         $length = strlen($suffix);
 
-        if (0 === $length) {
+        if ($length === 0) {
             return false;
         }
 

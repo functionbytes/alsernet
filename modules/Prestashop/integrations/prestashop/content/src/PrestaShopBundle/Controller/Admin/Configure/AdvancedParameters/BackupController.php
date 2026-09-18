@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,6 @@ class BackupController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param BackupFilters $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, BackupFilters $filters)
@@ -95,11 +93,10 @@ class BackupController extends FrameworkBundleAdminController
      * Show file download view.
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller'))")
+     *
      * @DemoRestricted(redirectRoute="admin_backups_index")
      *
-     * @param Request $request
-     * @param string $downloadFileName
-     *
+     * @param  string  $downloadFileName
      * @return Response
      */
     public function downloadViewAction(Request $request, $downloadFileName)
@@ -121,10 +118,10 @@ class BackupController extends FrameworkBundleAdminController
      * Return a backup content as a download.
      *
      * @AdminSecurity("is_granted(['read'], request.get('_legacy_controller')~'_')")
+     *
      * @DemoRestricted(redirectRoute="admin_backup")
      *
-     * @param string $downloadFileName
-     *
+     * @param  string  $downloadFileName
      * @return BinaryFileResponse
      */
     public function downloadContentAction($downloadFileName)
@@ -138,9 +135,8 @@ class BackupController extends FrameworkBundleAdminController
      * Process backup options saving.
      *
      * @AdminSecurity("is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))")
-     * @DemoRestricted(redirectRoute="admin_backups_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_backups_index")
      *
      * @return RedirectResponse
      */
@@ -154,7 +150,7 @@ class BackupController extends FrameworkBundleAdminController
         if ($backupForm->isSubmitted()) {
             $errors = $backupFormHandler->save($backupForm->getData());
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $this->flashErrors($errors);
             } else {
                 $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
@@ -168,6 +164,7 @@ class BackupController extends FrameworkBundleAdminController
      * Create new backup.
      *
      * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))")
+     *
      * @DemoRestricted(redirectRoute="admin_backups_index")
      *
      * @return RedirectResponse
@@ -206,10 +203,10 @@ class BackupController extends FrameworkBundleAdminController
      * Process backup file deletion.
      *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))")
+     *
      * @DemoRestricted(redirectRoute="admin_backups_index")
      *
-     * @param string $deleteFileName
-     *
+     * @param  string  $deleteFileName
      * @return RedirectResponse
      */
     public function deleteAction($deleteFileName)
@@ -217,7 +214,7 @@ class BackupController extends FrameworkBundleAdminController
         $backup = new Backup($deleteFileName);
         $backupRemover = $this->get('prestashop.adapter.backup.backup_remover');
 
-        if (!$backupRemover->remove($backup)) {
+        if (! $backupRemover->remove($backup)) {
             $this->addFlash(
                 'error',
                 sprintf(
@@ -239,9 +236,8 @@ class BackupController extends FrameworkBundleAdminController
      * Process bulk backup deletion.
      *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller'))")
-     * @DemoRestricted(redirectRoute="admin_backups_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_backups_index")
      *
      * @return RedirectResponse
      */
@@ -264,12 +260,12 @@ class BackupController extends FrameworkBundleAdminController
         foreach ($backupsToDelete as $backupFileName) {
             $backup = new Backup($backupFileName);
 
-            if (!$backupRemover->remove($backup)) {
+            if (! $backupRemover->remove($backup)) {
                 $failedBackups[] = $backup->getFileName();
             }
         }
 
-        if (!empty($failedBackups)) {
+        if (! empty($failedBackups)) {
             $this->addFlash(
                 'error',
                 $this->trans('An error occurred while deleting this selection.', 'Admin.Notifications.Error')
@@ -295,8 +291,6 @@ class BackupController extends FrameworkBundleAdminController
 
     /**
      * Get backup form handler.
-     *
-     * @return FormHandlerInterface
      */
     protected function getBackupFormHandler(): FormHandlerInterface
     {

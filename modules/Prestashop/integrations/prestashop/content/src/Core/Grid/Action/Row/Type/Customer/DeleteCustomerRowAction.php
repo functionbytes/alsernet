@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,6 @@ final class DeleteCustomerRowAction extends AbstractRowAction
                 'customer_delete_route',
             ])
             ->setAllowedTypes('customer_id_field', 'string')
-            ->setAllowedTypes('customer_delete_route', 'string')
-        ;
+            ->setAllowedTypes('customer_delete_route', 'string');
     }
 }

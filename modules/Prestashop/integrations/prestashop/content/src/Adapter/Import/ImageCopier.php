@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,7 @@ final class ImageCopier
     private $hookDispatcher;
 
     /**
-     * @param ConfigurationInterface $configuration
-     * @param Tools $tools
-     * @param int $contextShopId
-     * @param HookDispatcherInterface $hookDispatcher
+     * @param  int  $contextShopId
      */
     public function __construct(
         ConfigurationInterface $configuration,
@@ -79,12 +77,11 @@ final class ImageCopier
     /**
      * Copy an image located in $url and save it in a path.
      *
-     * @param int $entityId id of product or category (set in entity)
-     * @param int $imageId id of the image if watermark enabled
-     * @param string $url path or url to use
-     * @param string $entity 'inventaries' or 'categories'
-     * @param bool $regenerate
-     *
+     * @param  int  $entityId  id of product or category (set in entity)
+     * @param  int  $imageId  id of the image if watermark enabled
+     * @param  string  $url  path or url to use
+     * @param  string  $entity  'inventaries' or 'categories'
+     * @param  bool  $regenerate
      * @return bool
      */
     public function copyImg($entityId, $imageId = null, $url = '', $entity = 'inventaries', $regenerate = true)
@@ -100,16 +97,16 @@ final class ImageCopier
                 $path = $image_obj->getPathForCreation();
                 break;
             case 'categories':
-                $path = $this->configuration->get('_PS_CAT_IMG_DIR_') . (int) $entityId;
+                $path = $this->configuration->get('_PS_CAT_IMG_DIR_').(int) $entityId;
                 break;
             case 'manufacturers':
-                $path = $this->configuration->get('_PS_MANU_IMG_DIR_') . (int) $entityId;
+                $path = $this->configuration->get('_PS_MANU_IMG_DIR_').(int) $entityId;
                 break;
             case 'suppliers':
-                $path = $this->configuration->get('_PS_SUPP_IMG_DIR_') . (int) $entityId;
+                $path = $this->configuration->get('_PS_SUPP_IMG_DIR_').(int) $entityId;
                 break;
             case 'stores':
-                $path = $this->configuration->get('_PS_STORE_IMG_DIR_') . (int) $entityId;
+                $path = $this->configuration->get('_PS_STORE_IMG_DIR_').(int) $entityId;
                 break;
         }
 
@@ -123,7 +120,7 @@ final class ImageCopier
                 $part = rawurlencode($part);
             }
             unset($part);
-            $parsedUrl['path'] = '/' . implode('/', $parts);
+            $parsedUrl['path'] = '/'.implode('/', $parts);
         }
 
         if (isset($parsedUrl['query'])) {
@@ -132,8 +129,8 @@ final class ImageCopier
             $parsedUrl['query'] = http_build_query($query_parts);
         }
 
-        if (!function_exists('http_build_url')) {
-            require_once $this->configuration->get('_PS_TOOL_DIR_') . 'http_build_url/http_build_url.php';
+        if (! function_exists('http_build_url')) {
+            require_once $this->configuration->get('_PS_TOOL_DIR_').'http_build_url/http_build_url.php';
         }
 
         $url = http_build_url('', $parsedUrl);
@@ -142,7 +139,7 @@ final class ImageCopier
 
         if ($this->tools->copy($url, $tmpFile)) {
             // Evaluate the memory required to resize the image: if it's too much, you can't resize it.
-            if (!ImageManager::checkImageMemoryLimit($tmpFile)) {
+            if (! ImageManager::checkImageMemoryLimit($tmpFile)) {
                 @unlink($tmpFile);
 
                 return false;
@@ -153,7 +150,7 @@ final class ImageCopier
             $error = 0;
             ImageManager::resize(
                 $tmpFile,
-                $path . '.jpg',
+                $path.'.jpg',
                 null,
                 null,
                 'jpg',
@@ -170,13 +167,13 @@ final class ImageCopier
             if ($regenerate) {
                 $previous_path = null;
                 $pathInfos = [];
-                $pathInfos[] = [$targetWidth, $targetHeight, $path . '.jpg'];
+                $pathInfos[] = [$targetWidth, $targetHeight, $path.'.jpg'];
                 foreach ($imagesTypes as $imageType) {
                     $tmpFile = $this->getBestPath($imageType['width'], $imageType['height'], $pathInfos);
 
                     if (ImageManager::resize(
                         $tmpFile,
-                        $path . '-' . stripslashes($imageType['name']) . '.jpg',
+                        $path.'-'.stripslashes($imageType['name']).'.jpg',
                         $imageType['width'],
                         $imageType['height'],
                         'jpg',
@@ -190,15 +187,15 @@ final class ImageCopier
                     )) {
                         // the last image should not be added in the candidate list if it's bigger than the original image
                         if ($targetWidth <= $sourceWidth && $targetHeight <= $sourceHeight) {
-                            $pathInfos[] = [$targetWidth, $targetHeight, $path . '-' . stripslashes($imageType['name']) . '.jpg'];
+                            $pathInfos[] = [$targetWidth, $targetHeight, $path.'-'.stripslashes($imageType['name']).'.jpg'];
                         }
                         if ($entity == 'inventaries') {
-                            $file = $tmpDir . 'product_mini_' . (int) $entityId . '.jpg';
+                            $file = $tmpDir.'product_mini_'.(int) $entityId.'.jpg';
                             if (is_file($file)) {
                                 unlink($file);
                             }
 
-                            $file = $tmpDir . 'product_mini_' . (int) $entityId . '_' . (int) $this->contextShopId . '.jpg';
+                            $file = $tmpDir.'product_mini_'.(int) $entityId.'_'.(int) $this->contextShopId.'.jpg';
                             if (is_file($file)) {
                                 unlink($file);
                             }
@@ -228,10 +225,9 @@ final class ImageCopier
     /**
      * Find the best path, compared to given dimensions.
      *
-     * @param int $targetWidth
-     * @param int $targetHeight
-     * @param array $pathInfos
-     *
+     * @param  int  $targetWidth
+     * @param  int  $targetHeight
+     * @param  array  $pathInfos
      * @return string
      */
     private function getBestPath($targetWidth, $targetHeight, $pathInfos)
@@ -239,7 +235,7 @@ final class ImageCopier
         $pathInfos = array_reverse($pathInfos);
         $path = '';
         foreach ($pathInfos as $pathInfo) {
-            list($width, $height, $path) = $pathInfo;
+            [$width, $height, $path] = $pathInfo;
             if ($width >= $targetWidth && $height >= $targetHeight) {
                 return $path;
             }

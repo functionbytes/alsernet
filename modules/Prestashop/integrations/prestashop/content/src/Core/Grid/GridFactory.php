@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,26 +60,20 @@ final class GridFactory implements GridFactoryInterface
      */
     private $hookDispatcher;
 
-    /**
-     * @param GridDefinitionFactoryInterface $definitionFactory
-     * @param GridDataFactoryInterface $dataFactory
-     * @param GridFilterFormFactoryInterface $filterFormFactory
-     * @param HookDispatcherInterface|null $hookDispatcher
-     */
     public function __construct(
         GridDefinitionFactoryInterface $definitionFactory,
         GridDataFactoryInterface $dataFactory,
         GridFilterFormFactoryInterface $filterFormFactory,
-        HookDispatcherInterface $hookDispatcher = null
+        ?HookDispatcherInterface $hookDispatcher = null
     ) {
         $this->definitionFactory = $definitionFactory;
         $this->dataFactory = $dataFactory;
         $this->filterFormFactory = $filterFormFactory;
 
-        if (null === $hookDispatcher) {
+        if ($hookDispatcher === null) {
             @trigger_error('The $hookDispatcher parameter should not be null, inject your main HookDispatcherInterface service, or NullDispatcher if you don\'t need hooks.', E_USER_DEPRECATED);
         }
-        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher();
+        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher;
     }
 
     /**
@@ -89,7 +84,7 @@ final class GridFactory implements GridFactoryInterface
         $definition = $this->definitionFactory->getDefinition();
         $data = $this->dataFactory->getData($searchCriteria);
 
-        $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($definition->getId()) . 'GridDataModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action'.Container::camelize($definition->getId()).'GridDataModifier', [
             'data' => &$data,
         ]);
 

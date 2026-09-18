@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ use StockAvailable;
  */
 final class BulkChangeOrderStatusHandler implements BulkChangeOrderStatusHandlerInterface
 {
-    /**
-     * @param BulkChangeOrderStatusCommand $command
-     */
     public function handle(BulkChangeOrderStatusCommand $command)
     {
         $orderState = new OrderState($command->getNewOrderStatusId());
@@ -70,11 +68,11 @@ final class BulkChangeOrderStatusHandler implements BulkChangeOrderStatusHandler
                 continue;
             }
 
-            $history = new OrderHistory();
+            $history = new OrderHistory;
             $history->id_order = $order->id;
             $history->id_employee = (int) Context::getContext()->employee->id;
 
-            $useExistingPayment = !$order->hasInvoice();
+            $useExistingPayment = ! $order->hasInvoice();
             $history->changeIdOrderState((int) $orderState->id, $order, $useExistingPayment);
 
             $carrier = new Carrier($order->id_carrier, (int) $order->getAssociatedLanguage()->getId());
@@ -84,13 +82,13 @@ final class BulkChangeOrderStatusHandler implements BulkChangeOrderStatusHandler
                 $templateVars['{followup}'] = str_replace('@', $order->shipping_number, $carrier->url);
             }
 
-            if (!$history->add()) {
+            if (! $history->add()) {
                 $ordersWithFailedToUpdateStatus[] = $orderId;
 
                 continue;
             }
 
-            if (!$history->sendEmail($order, $templateVars)) {
+            if (! $history->sendEmail($order, $templateVars)) {
                 $ordersWithFailedToSendEmail[] = $orderId;
 
                 continue;
@@ -105,17 +103,15 @@ final class BulkChangeOrderStatusHandler implements BulkChangeOrderStatusHandler
             }
         }
 
-        if (!empty($ordersWithFailedToUpdateStatus)
-            || !empty($ordersWithFailedToSendEmail)
-            || !empty($ordersWithAssignedStatus)
+        if (! empty($ordersWithFailedToUpdateStatus)
+            || ! empty($ordersWithFailedToSendEmail)
+            || ! empty($ordersWithAssignedStatus)
         ) {
             throw new ChangeOrderStatusException($ordersWithFailedToUpdateStatus, $ordersWithFailedToSendEmail, $ordersWithAssignedStatus, 'Failed to update status or sent email when changing order status.');
         }
     }
 
     /**
-     * @param OrderId $orderId
-     *
      * @return Order
      */
     private function getOrderObject(OrderId $orderId)

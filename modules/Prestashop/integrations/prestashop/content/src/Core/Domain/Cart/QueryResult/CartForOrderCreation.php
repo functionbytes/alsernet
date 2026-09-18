@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,14 +79,8 @@ class CartForOrderCreation
     private $summary;
 
     /**
-     * @param int $cartId
-     * @param array $products
-     * @param int $currencyId
-     * @param int $langId
-     * @param CartRule[] $cartRules
-     * @param CartAddress[] $addresses
-     * @param CartSummary $summary
-     * @param CartShipping $shipping
+     * @param  CartRule[]  $cartRules
+     * @param  CartAddress[]  $addresses
      */
     public function __construct(
         int $cartId,
@@ -95,7 +90,7 @@ class CartForOrderCreation
         array $cartRules,
         array $addresses,
         CartSummary $summary,
-        CartShipping $shipping = null
+        ?CartShipping $shipping = null
     ) {
         $this->cartId = $cartId;
         $this->products = $products;
@@ -107,9 +102,6 @@ class CartForOrderCreation
         $this->summary = $summary;
     }
 
-    /**
-     * @return int
-     */
     public function getCartId(): int
     {
         return $this->cartId;
@@ -123,17 +115,11 @@ class CartForOrderCreation
         return $this->products;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrencyId(): int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int
-     */
     public function getLangId(): int
     {
         return $this->langId;
@@ -155,17 +141,11 @@ class CartForOrderCreation
         return $this->addresses;
     }
 
-    /**
-     * @return CartShipping|null
-     */
     public function getShipping(): ?CartShipping
     {
         return $this->shipping;
     }
 
-    /**
-     * @return CartSummary
-     */
     public function getSummary(): CartSummary
     {
         return $this->summary;

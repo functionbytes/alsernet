@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ class ProductTagUpdater
      */
     private $tagRepository;
 
-    /**
-     * @param TagRepository $tagRepository
-     */
     public function __construct(
         TagRepository $tagRepository
     ) {
@@ -57,8 +55,7 @@ class ProductTagUpdater
     /**
      * Removes previous tags & sets new list of tags for a product.
      *
-     * @param Product $product
-     * @param LocalizedTags[] $localizedTagsList
+     * @param  LocalizedTags[]  $localizedTagsList
      *
      * @throws CannotUpdateProductException
      * @throws CoreException

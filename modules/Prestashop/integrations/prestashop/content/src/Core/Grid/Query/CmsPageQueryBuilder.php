@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShop\PrestaShop\Core\Grid\Query;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 
 /**
@@ -50,11 +52,8 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextIdLang;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
-     * @param int $contextIdLang
+     * @param  string  $dbPrefix
+     * @param  int  $contextIdLang
      */
     public function __construct(
         Connection $connection,
@@ -80,13 +79,11 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb
             ->select('c.`id_cms`, cl.`link_rewrite`, c.`active`, c.`position`, cl.`meta_title`, cl.`head_seo_title`')
             ->addSelect('c.`id_cms_category`')
-            ->groupBy('c.`id_cms`')
-        ;
+            ->groupBy('c.`id_cms`');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -97,8 +94,7 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT c.`id_cms`)')
-        ;
+            ->select('COUNT(DISTINCT c.`id_cms`)');
 
         return $qb;
     }
@@ -106,9 +102,8 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with the common sql for cms page listing.
      *
-     * @param array $filters
      *
-     * @return \Doctrine\DBAL\Query\QueryBuilder
+     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters)
     {
@@ -124,20 +119,19 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'cms', 'c')
+            ->from($this->dbPrefix.'cms', 'c')
             ->leftJoin(
                 'c',
-                $this->dbPrefix . 'cms_lang',
+                $this->dbPrefix.'cms_lang',
                 'cl',
                 'cl.`id_cms` = c.`id_cms`'
             )
             ->innerJoin(
                 'c',
-                $this->dbPrefix . 'cms_shop',
+                $this->dbPrefix.'cms_shop',
                 'cs',
                 'cs.`id_cms` = c.`id_cms`'
-            )
-        ;
+            );
 
         $qb->andWhere('cl.`id_lang` = :contextLangId');
         $qb->andWhere('cl.`id_shop` IN (:contextShopIds)');
@@ -147,11 +141,11 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb->setParameter('contextShopIds', $this->contextShopIds, Connection::PARAM_INT_ARRAY);
 
         foreach ($filters as $filterName => $value) {
-            if (!in_array($filterName, $availableFilters, true)) {
+            if (! in_array($filterName, $availableFilters, true)) {
                 continue;
             }
 
-            if ('id_cms_category_parent' === $filterName) {
+            if ($filterName === 'id_cms_category_parent') {
                 $qb->andWhere('c.`id_cms_category` = :id_cms_category_parent');
                 $qb->setParameter('id_cms_category_parent', $value);
 
@@ -159,21 +153,22 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
             }
 
             if (in_array($filterName, ['id_cms', 'active'], true)) {
-                $qb->andWhere('c.`' . $filterName . '` = :' . $filterName);
+                $qb->andWhere('c.`'.$filterName.'` = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            if ('position' === $filterName) {
+            if ($filterName === 'position') {
                 $modifiedPositionFilter = $this->getModifiedPositionFilter($value);
-                $qb->andWhere('c.`' . $filterName . '` = :' . $filterName);
+                $qb->andWhere('c.`'.$filterName.'` = :'.$filterName);
                 $qb->setParameter($filterName, $modifiedPositionFilter);
+
                 continue;
             }
 
-            $qb->andWhere('cl.`' . $filterName . '` LIKE :' . $filterName);
-            $qb->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere('cl.`'.$filterName.'` LIKE :'.$filterName);
+            $qb->setParameter($filterName, '%'.$value.'%');
         }
 
         return $qb;
@@ -183,17 +178,16 @@ final class CmsPageQueryBuilder extends AbstractDoctrineQueryBuilder
      * Gets modified position filter value. This is required due to in database position filter index starts from 0 and
      * for the customer which wants to filter results the value starts from 1 instead.
      *
-     * @param string|int $positionFilterValue
-     *
+     * @param  string|int  $positionFilterValue
      * @return int|null - if null is returned then no results are found since position field does not hold null values
      */
     private function getModifiedPositionFilter($positionFilterValue)
     {
-        if (!is_numeric($positionFilterValue)) {
+        if (! is_numeric($positionFilterValue)) {
             return null;
         }
         $reducedByOneFilterValue = $positionFilterValue - 1;
-        if (0 > $reducedByOneFilterValue) {
+        if ($reducedByOneFilterValue < 0) {
             return null;
         }
 

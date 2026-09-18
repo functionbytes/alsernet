@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class AliasFieldsProvider implements EntityFieldsProviderInterface
      */
     private $translator;
 
-    /**
-     * @param TranslatorInterface $translator
-     */
     public function __construct(TranslatorInterface $translator)
     {
         $this->translator = $translator;
@@ -66,9 +64,8 @@ final class AliasFieldsProvider implements EntityFieldsProviderInterface
     /**
      * A shorter name method for translations.
      *
-     * @param string $id translation ID
-     * @param string $domain translation domain
-     *
+     * @param  string  $id  translation ID
+     * @param  string  $domain  translation domain
      * @return string
      */
     private function trans($id, $domain = 'Admin.Advparameters.Feature')

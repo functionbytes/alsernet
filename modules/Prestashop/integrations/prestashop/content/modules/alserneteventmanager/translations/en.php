@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetcontents}prestashop>header-middle-top_be8df1f28c0abc85a0ed0c6860e5d832'] = 'Blog';
 $_MODULE['<{alsernetcontents}prestashop>header-middle-top_821b8ee6937cec96c30fdafbfe836d68'] = 'Stores';
 $_MODULE['<{alsernetcontents}prestashop>header-middle-top_9cfc9b74983d504ec71db33967591249'] = 'Contact Us';

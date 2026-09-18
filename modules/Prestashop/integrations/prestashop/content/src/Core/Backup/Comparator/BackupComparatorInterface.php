@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,6 @@ interface BackupComparatorInterface
     /**
      * Compare 2 backups.
      *
-     * @param BackupInterface $backup1
-     * @param BackupInterface $backup2
      *
      * @return int
      */

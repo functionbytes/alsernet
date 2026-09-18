@@ -12,14 +12,13 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\RoutingRule;
 use Modules\Helpdesk\Services\AutoAssignmentService;
 use Modules\Helpdesk\Services\RoutingRuleService;
-use Modules\Helpdesk\Services\SkillsRoutingService;
 use Tests\TestCase;
 
 class AutoAssignNewConversationTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private ConversationStatus $openStatus;
 
@@ -57,7 +56,6 @@ class AutoAssignNewConversationTest extends TestCase
     {
         return new AutoAssignNewConversation(
             app(RoutingRuleService::class),
-            app(SkillsRoutingService::class),
             app(AutoAssignmentService::class),
         );
     }

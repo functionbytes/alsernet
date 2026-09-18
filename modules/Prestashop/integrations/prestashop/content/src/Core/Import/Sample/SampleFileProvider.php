@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ final class SampleFileProvider implements SampleFileProviderInterface
      */
     private $configuration;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
@@ -53,15 +51,15 @@ final class SampleFileProvider implements SampleFileProviderInterface
      */
     public function getFile($sampleFileName)
     {
-        $path = $this->configuration->get('_PS_ROOT_DIR_') .
-              DIRECTORY_SEPARATOR .
-              'docs' .
-              DIRECTORY_SEPARATOR .
-              'csv_import' .
+        $path = $this->configuration->get('_PS_ROOT_DIR_').
+              DIRECTORY_SEPARATOR.
+              'docs'.
+              DIRECTORY_SEPARATOR.
+              'csv_import'.
               DIRECTORY_SEPARATOR;
 
         try {
-            $sampleFile = new File($path . $sampleFileName . '.csv');
+            $sampleFile = new File($path.$sampleFileName.'.csv');
         } catch (FileNotFoundException $e) {
             return null;
         }

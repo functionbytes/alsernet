@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ class BulkEnableSupplierCommand extends AbstractBulkSupplierCommand
     private $supplierIds;
 
     /**
-     * @param int[] $supplierIds
+     * @param  int[]  $supplierIds
      *
      * @throws SupplierException
      * @throws SupplierConstraintException
@@ -64,8 +65,6 @@ class BulkEnableSupplierCommand extends AbstractBulkSupplierCommand
     }
 
     /**
-     * @param array $supplierIds
-     *
      * @throws SupplierException
      */
     private function setSupplierIds(array $supplierIds)

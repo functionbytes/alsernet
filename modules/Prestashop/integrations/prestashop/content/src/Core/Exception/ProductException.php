@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Exception;
 /**
  * Class ProductException used when an error linked to a product occurs.
  */
-class ProductException extends TranslatableCoreException
-{
-}
+class ProductException extends TranslatableCoreException {}

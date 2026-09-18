@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,15 +46,15 @@ class DateRangeValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof DateRange) {
+        if (! $constraint instanceof DateRange) {
             throw new UnexpectedTypeException($constraint, DateRange::class);
         }
 
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             throw new UnexpectedTypeException($value, 'array');
         }
 
-        if (!empty($value['from']) && !empty($value['to'])) {
+        if (! empty($value['from']) && ! empty($value['to'])) {
             $this->validateRange(new DateTime($value['from']), new DateTime($value['to']), $constraint->message);
         }
     }
@@ -61,9 +62,7 @@ class DateRangeValidator extends ConstraintValidator
     /**
      * Validate that date range is not inverted. (the 'from' value is not higher than 'to')
      *
-     * @param DateTime $from
-     * @param DateTime $to
-     * @param string $message
+     * @param  string  $message
      */
     private function validateRange(DateTime $from, DateTime $to, $message)
     {
@@ -71,8 +70,7 @@ class DateRangeValidator extends ConstraintValidator
             $this->context->buildViolation($message)
                 ->atPath('[to]')
                 ->setTranslationDomain('Admin.Notifications.Error')
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

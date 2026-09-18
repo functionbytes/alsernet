@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,18 +47,18 @@ final class AddTaxHandler extends AbstractTaxHandler implements AddTaxHandlerInt
      */
     public function handle(AddTaxCommand $command)
     {
-        $tax = new Tax();
+        $tax = new Tax;
 
         $tax->name = $command->getLocalizedNames();
         $tax->rate = $command->getRate();
         $tax->active = $command->isEnabled();
 
         try {
-            if (false === $tax->validateFields(false) || false === $tax->validateFieldsLang(false)) {
+            if ($tax->validateFields(false) === false || $tax->validateFieldsLang(false) === false) {
                 throw new TaxException('Tax contains invalid field values');
             }
 
-            if (!$tax->save()) {
+            if (! $tax->save()) {
                 throw new TaxException(sprintf('Cannot create tax with id "%s"', $tax->id));
             }
         } catch (PrestaShopException $e) {

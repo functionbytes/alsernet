@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,11 +38,10 @@ use PrestaShopBundle\Entity\AdminFilter;
 class AdminFilterRepository extends EntityRepository
 {
     /**
-     * @param int $employeeId
-     * @param int $shopId
-     * @param string $controller
-     * @param string $action
-     *
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  string  $controller
+     * @param  string  $action
      * @return AdminFilter|null
      */
     public function findByEmployeeAndRouteParams($employeeId, $shopId, $controller, $action)
@@ -55,10 +55,9 @@ class AdminFilterRepository extends EntityRepository
     }
 
     /**
-     * @param int $employeeId
-     * @param int $shopId
-     * @param string $filterId
-     *
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  string  $filterId
      * @return AdminFilter|null
      */
     public function findByEmployeeAndFilterId($employeeId, $shopId, $filterId)
@@ -71,21 +70,20 @@ class AdminFilterRepository extends EntityRepository
     }
 
     /**
-     * @param int $employeeId
-     * @param int $shopId
-     * @param string $controller
-     * @param string $action
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  string  $controller
+     * @param  string  $action
+     * @return bool Return false if entity was not found
      *
      * @throws ORMInvalidArgumentException
      * @throws OptimisticLockException
-     *
-     * @return bool Return false if entity was not found
      */
     public function removeByEmployeeAndRouteParams($employeeId, $shopId, $controller, $action)
     {
         $adminFilter = $this->findByEmployeeAndRouteParams($employeeId, $shopId, $controller, $action);
 
-        if (null === $adminFilter) {
+        if ($adminFilter === null) {
             return false;
         }
 
@@ -98,7 +96,6 @@ class AdminFilterRepository extends EntityRepository
     /**
      * Removes filters from ps_admin_filter `filters` column using provided AdminFilter entity.
      *
-     * @param AdminFilter $adminFilter
      *
      * @throws OptimisticLockException
      */
@@ -119,10 +116,9 @@ class AdminFilterRepository extends EntityRepository
     /**
      * Persist (create or update) filters into database using employee and uuid
      *
-     * @param int $employeeId
-     * @param int $shopId
-     * @param array $filters
-     * @param string $filterId
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  string  $filterId
      *
      * @throws OptimisticLockException
      */
@@ -133,7 +129,7 @@ class AdminFilterRepository extends EntityRepository
         $filterId
     ) {
         $adminFilter = $this->findByEmployeeAndFilterId($employeeId, $shopId, $filterId);
-        $adminFilter = null === $adminFilter ? new AdminFilter() : $adminFilter;
+        $adminFilter = $adminFilter === null ? new AdminFilter : $adminFilter;
 
         $adminFilter
             ->setController('')
@@ -141,8 +137,7 @@ class AdminFilterRepository extends EntityRepository
             ->setFilterId($filterId)
             ->setEmployee($employeeId)
             ->setShop($shopId)
-            ->setFilter(json_encode($filters))
-        ;
+            ->setFilter(json_encode($filters));
 
         $this->getEntityManager()->persist($adminFilter);
         $this->getEntityManager()->flush();
@@ -151,11 +146,11 @@ class AdminFilterRepository extends EntityRepository
     /**
      * Persist (create or update) filters into database using employee and controller name and its action name.
      *
-     * @param int $employeeId
-     * @param int $shopId
-     * @param array $filters
-     * @param string $controller
-     * @param string $action
+     * @param  int  $employeeId
+     * @param  int  $shopId
+     * @param  array  $filters
+     * @param  string  $controller
+     * @param  string  $action
      *
      * @throws OptimisticLockException
      */
@@ -173,7 +168,7 @@ class AdminFilterRepository extends EntityRepository
             'action' => $action,
         ]);
 
-        $adminFilter = null === $adminFilter ? new AdminFilter() : $adminFilter;
+        $adminFilter = $adminFilter === null ? new AdminFilter : $adminFilter;
 
         $adminFilter
             ->setController($controller)
@@ -181,8 +176,7 @@ class AdminFilterRepository extends EntityRepository
             ->setFilterId('')
             ->setEmployee($employeeId)
             ->setShop($shopId)
-            ->setFilter(json_encode($filters))
-        ;
+            ->setFilter(json_encode($filters));
 
         $this->getEntityManager()->persist($adminFilter);
         $this->getEntityManager()->flush();

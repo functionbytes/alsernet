@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface ImportHandlerFinderInterface
     /**
      * Find the proper import handler for given entity type.
      *
-     * @param int $importEntityType
-     *
+     * @param  int  $importEntityType
      * @return ImportHandlerInterface
      */
     public function find($importEntityType);

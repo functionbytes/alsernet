@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -71,6 +73,6 @@ class PH_SimpleBlogCategoryModuleFrontControllerOverride extends PH_SimpleBlogCa
     {
         $queryCountCategories = 'SELECT count(*) FROM `'._DB_PREFIX_.'simpleblog_category` WHERE active=1';
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($queryCountCategories);
+        return (int) JprestaUtils::dbGetValue($queryCountCategories);
     }
 }

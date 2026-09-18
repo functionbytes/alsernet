@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,11 +35,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 class FormBuilderModifier
 {
     /**
-     * @param FormBuilderInterface $formBuilder
-     * @param string $targetFieldName
-     * @param string|FormBuilderInterface $newChild
-     * @param string|null $type
-     * @param array $options
+     * @param  string|FormBuilderInterface  $newChild
      */
     public function addAfter(FormBuilderInterface $formBuilder, string $targetFieldName, $newChild, ?string $type = null, array $options = []): void
     {
@@ -54,11 +51,7 @@ class FormBuilderModifier
     }
 
     /**
-     * @param FormBuilderInterface $formBuilder
-     * @param string $targetFieldName
-     * @param string|FormBuilderInterface $newChild
-     * @param string|null $type
-     * @param array $options
+     * @param  string|FormBuilderInterface  $newChild
      */
     public function addBefore(FormBuilderInterface $formBuilder, string $targetFieldName, $newChild, ?string $type = null, array $options = []): void
     {
@@ -73,11 +66,6 @@ class FormBuilderModifier
         }
     }
 
-    /**
-     * @param FormBuilderInterface $formBuilder
-     *
-     * @return array
-     */
     private function cleanAllChildren(FormBuilderInterface $formBuilder): array
     {
         $formTypes = [];
@@ -91,10 +79,6 @@ class FormBuilderModifier
         return $formTypes;
     }
 
-    /**
-     * @param FormBuilderInterface $formBuilder
-     * @param string $name
-     */
     private function assertFieldExists(FormBuilderInterface $formBuilder, string $name): void
     {
         if ($formBuilder->has($name)) {

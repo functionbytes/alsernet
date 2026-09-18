@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -74,11 +75,7 @@ class CustomerAddressType extends TranslatorAwareType
      * Backwards compatibility break introduced in 1.7.8.0 due to addition of Router as mandatory constructor argument
      * as well as extension of TranslationAwareType instead of using translator as dependency.
      *
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param ConfigurableFormChoiceProviderInterface $stateChoiceProvider
-     * @param int $contextCountryId
-     * @param RouterInterface $router
+     * @param  int  $contextCountryId
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -99,16 +96,16 @@ class CustomerAddressType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $data = $builder->getData();
-        $countryId = 0 !== $data['id_country'] ? $data['id_country'] : $this->contextCountryId;
+        $countryId = $data['id_country'] !== 0 ? $data['id_country'] : $this->contextCountryId;
         $genericInvalidCharsMessage = $this->trans(
             'Invalid characters:',
             'Admin.Notifications.Info'
-        ) . ' ' . TypedRegexValidator::GENERIC_NAME_CHARS;
+        ).' '.TypedRegexValidator::GENERIC_NAME_CHARS;
         $stateChoices = $this->stateChoiceProvider->getChoices(['id_country' => $countryId]);
 
-        $showStates = !empty($stateChoices);
+        $showStates = ! empty($stateChoices);
 
-        if (!isset($data['id_customer'])) {
+        if (! isset($data['id_customer'])) {
             $builder->add('customer_email', EmailType::class, [
                 'label' => $this->trans('Customer email', 'Admin.Orderscustomers.Feature'),
                 'required' => true,
@@ -118,11 +115,11 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field cannot be empty.', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new Email([
                         'message' => $this->trans('This field is invalid', 'Admin.Notifications.Error'),
                     ]),
-                    new ExistingCustomerEmail(),
+                    new ExistingCustomerEmail,
                 ],
                 'attr' => [
                     'data-customer-information-url' => $this->router->generate('admin_customer_for_address_information'),
@@ -141,7 +138,7 @@ class CustomerAddressType extends TranslatorAwareType
             'required' => false,
             'empty_data' => '',
             'constraints' => [
-                new CleanHtml(),
+                new CleanHtml,
                 new TypedRegex([
                     'type' => TypedRegex::TYPE_DNI_LITE,
                 ]),
@@ -165,7 +162,7 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field cannot be empty.', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_GENERIC_NAME,
                     ]),
@@ -184,7 +181,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'help' => $this->trans(
                     'Invalid characters:',
                     'Admin.Notifications.Info'
-                ) . ' ' . TypedRegexValidator::NAME_CHARS,
+                ).' '.TypedRegexValidator::NAME_CHARS,
                 'required' => true,
                 'constraints' => [
                     new NotBlank([
@@ -192,7 +189,7 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field cannot be empty.', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_NAME,
                     ]),
@@ -211,7 +208,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'help' => $this->trans(
                     'Invalid characters:',
                     'Admin.Notifications.Info'
-                ) . ' ' . TypedRegexValidator::NAME_CHARS,
+                ).' '.TypedRegexValidator::NAME_CHARS,
                 'required' => true,
                 'constraints' => [
                     new NotBlank([
@@ -219,7 +216,7 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field cannot be empty.', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_NAME,
                     ]),
@@ -239,7 +236,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'required' => false,
                 'empty_data' => '',
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_GENERIC_NAME,
                     ]),
@@ -258,7 +255,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'required' => false,
                 'empty_data' => '',
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_GENERIC_NAME,
                     ]),
@@ -281,7 +278,7 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field cannot be empty.', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_ADDRESS,
                     ]),
@@ -300,7 +297,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'required' => false,
                 'empty_data' => '',
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_ADDRESS,
                     ]),
@@ -323,7 +320,7 @@ class CustomerAddressType extends TranslatorAwareType
                         'id_country' => $countryId,
                         'required' => false,
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_POST_CODE,
                     ]),
@@ -346,7 +343,7 @@ class CustomerAddressType extends TranslatorAwareType
                             'This field is required', 'Admin.Notifications.Error'
                         ),
                     ]),
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_CITY_NAME,
                     ]),
@@ -395,7 +392,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'required' => false,
                 'empty_data' => '',
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_PHONE_NUMBER,
                     ]),
@@ -413,7 +410,7 @@ class CustomerAddressType extends TranslatorAwareType
                 'label' => $this->trans('Mobile phone', 'Admin.Global'),
                 'required' => false,
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_PHONE_NUMBER,
                     ]),
@@ -433,10 +430,10 @@ class CustomerAddressType extends TranslatorAwareType
                 'help' => $this->trans(
                     'Invalid characters:',
                     'Admin.Notifications.Info'
-                ) . ' ' . TypedRegexValidator::MESSAGE_CHARS,
+                ).' '.TypedRegexValidator::MESSAGE_CHARS,
                 'empty_data' => '',
                 'constraints' => [
-                    new CleanHtml(),
+                    new CleanHtml,
                     new TypedRegex([
                         'type' => TypedRegex::TYPE_MESSAGE,
                     ]),

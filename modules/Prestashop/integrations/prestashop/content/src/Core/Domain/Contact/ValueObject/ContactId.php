@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class ContactId
     private $contactId;
 
     /**
-     * @param int $contactId
+     * @param  int  $contactId
      *
      * @throws ContactException
      */
@@ -51,13 +52,13 @@ class ContactId
     }
 
     /**
-     * @param int $contactId
+     * @param  int  $contactId
      *
      * @throws ContactException
      */
     private function assertIsIntegerOrMoreThanZero($contactId)
     {
-        if (!is_int($contactId) || 0 >= $contactId) {
+        if (! is_int($contactId) || $contactId <= 0) {
             throw new ContactException(sprintf('Invalid Contact id: %s', var_export($contactId, true)));
         }
     }

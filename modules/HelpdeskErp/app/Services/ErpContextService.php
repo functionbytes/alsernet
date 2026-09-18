@@ -34,11 +34,11 @@ class ErpContextService
         // la misma clave para cualquier cliente sin email — el segundo
         // recibiría el contexto cacheado del primero. Se incorpora el
         // teléfono a la clave en ese caso.
-        $key = $this->cacheKey($email ?: 'phone:'.$phone);
+        $key = $this->cacheKey($this->identity($email, $phone));
         $cached = Cache::get($key);
 
         if ($cached !== null) {
-            $this->maybeScheduleRefresh($email, $cached);
+            $this->maybeScheduleRefresh($email, $phone, $cached);
             $result = $this->stripMeta($cached);
             $this->recordPulse($email, $start, cached: true, found: $result['customer']['found'] ?? false);
 
@@ -57,9 +57,36 @@ class ErpContextService
         return $result;
     }
 
-    public function forgetCache(string $email): void
+    public function forgetCache(string $email, ?string $phone = null): void
     {
-        Cache::forget($this->cacheKey($email));
+        Cache::forget($this->cacheKey($this->identity($email, $phone)));
+    }
+
+    /**
+     * Invalida todas las entradas de caché conocidas para un cliente: la
+     * clave por email y, si se conocen, las claves por teléfono (un cliente
+     * pudo quedar cacheado bajo `phone:` si en algún momento se consultó sin
+     * email). Pensado para webhooks que solo conocen el email pero quieren
+     * asegurar que ninguna copia stale sobrevive.
+     *
+     * @param  array<int, string|null>  $phones
+     */
+    public function forgetAllFor(string $email, array $phones = []): void
+    {
+        $this->forgetCache($email);
+
+        foreach (array_filter($phones) as $phone) {
+            $this->forgetCache('', (string) $phone);
+        }
+    }
+
+    /**
+     * Identidad de caché: el email si existe, o `phone:{phone}` como
+     * fallback para clientes encontrados solo por teléfono.
+     */
+    private function identity(string $email, ?string $phone): string
+    {
+        return $email !== '' ? $email : 'phone:'.$phone;
     }
 
     /**
@@ -164,11 +191,17 @@ class ErpContextService
                 ->retry(2, 200, throw: false)
                 ->get($this->url("erp/customer/{$customerId}/orders/{$orderId}"));
 
-            $this->recordSuccess();
-
             if (! $resp->successful()) {
+                // Solo 5xx cuenta como fallo del manager para el circuit breaker
+                // compartido; un 404 (pedido inexistente) no lo es.
+                if ($resp->status() >= 500) {
+                    $this->recordFailure();
+                }
+
                 return null;
             }
+
+            $this->recordSuccess();
 
             return $resp->json('data') ?? null;
         } catch (\Throwable $e) {
@@ -203,8 +236,14 @@ class ErpContextService
         $start = hrtime(true);
 
         try {
+            // El timeout tiene que dar margen a lo que de verdad tarda una
+            // consulta al ERP. Con 3 segundos la sonda expiraba SIEMPRE
+            // —medido el 7-sep-2026: una búsqueda real tarda entre 3,4 y 6,5 s
+            // contra Oracle— y el panel daba el ERP por degradado de forma
+            // permanente mientras funcionaba con normalidad. Se configura por
+            // si el entorno es más lento todavía.
             $resp = $this->http()
-                ->timeout(3)
+                ->timeout((int) config('helpdeskErp.health_timeout', 10))
                 ->get($this->url('erp/customer/search'), ['q' => '__healthcheck__', 'limit' => 1]);
 
             $latencyMs = (int) round((hrtime(true) - $start) / 1_000_000);
@@ -390,6 +429,14 @@ class ErpContextService
                 'linked_at' => now()->toIso8601String(),
                 'linked_by' => 'auto',
             ]);
+
+            // Esta es la segunda vía por la que nace un vínculo (la primera es
+            // ErpCustomerLinkerService, desde el correo entrante). Sin esto, un
+            // cliente podía acabar con vínculo pero con erp_lookup_status en
+            // 'error' o 'not_found' de un intento anterior — visto en una
+            // prueba real el 7-sep-2026 — y el enfriamiento seguiría contando
+            // como si el cliente no estuviera en gestión.
+            $customer?->recordErpLookup('linked');
         } catch (\Throwable $e) {
             Log::warning('HelpdeskErp: no se pudo guardar link ERP.', [
                 'helpdesk_customer_id' => $helpdeskCustomerId,
@@ -504,8 +551,16 @@ class ErpContextService
     /**
      * Dispara un refresh en background si el caché está cerca de expirar.
      */
-    private function maybeScheduleRefresh(string $email, array $cached): void
+    private function maybeScheduleRefresh(string $email, ?string $phone, array $cached): void
     {
+        // Sin email no hay forma fiable de re-consultar el ERP en background
+        // (la búsqueda por teléfono es fuzzy/ambigua, ver searchCustomerByPhone) —
+        // antes esto disparaba RefreshErpContextJob('') que ni encontraba la
+        // entrada de caché real (cacheKey distinto) ni refrescaba nada útil.
+        if ($email === '') {
+            return;
+        }
+
         $cachedAt = $cached['_cached_at'] ?? 0;
         $ttl = $cached['_ttl'] ?? config('helpdeskErp.cache_ttl', 600);
         $staleGrace = (int) config('helpdeskErp.stale_grace', 60);
@@ -513,7 +568,7 @@ class ErpContextService
         $age = time() - $cachedAt;
 
         if ($age >= ($ttl - $staleGrace)) {
-            RefreshErpContextJob::dispatch($email)->afterCommit();
+            RefreshErpContextJob::dispatch($email, $phone)->afterCommit();
         }
     }
 
@@ -531,6 +586,10 @@ class ErpContextService
 
     private function searchCustomer(string $email): ?array
     {
+        if (strlen($email) < 3) {
+            return null;
+        }
+
         $resp = $this->http()->get($this->url('erp/customer/search'), ['q' => $email]);
 
         if (! $resp->successful()) {

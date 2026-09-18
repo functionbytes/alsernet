@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,15 +39,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 class ProductSupplierCombination extends CommonAbstractType
 {
     private $translator;
+
     private $contextLegacy;
+
     private $currencyAdapter;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $contextLegacy
-     * @param object $currencyAdapter
+     * @param  object  $translator
+     * @param  object  $contextLegacy
+     * @param  object  $currencyAdapter
      */
     public function __construct($translator, $contextLegacy, $currencyAdapter)
     {
@@ -77,7 +80,7 @@ class ProductSupplierCombination extends CommonAbstractType
                 [
                     'required' => false,
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                         new Assert\Type(['type' => 'float']),
                     ],
                 ]
@@ -97,7 +100,7 @@ class ProductSupplierCombination extends CommonAbstractType
             ->add('product_id', FormType\HiddenType::class)
             ->add('supplier_id', FormType\HiddenType::class);
 
-        //set default minimal values for collection prototype
+        // set default minimal values for collection prototype
         $builder->setData([
             'product_price' => 0,
             'supplier_id' => $options['id_supplier'],

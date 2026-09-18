@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ class HtaccessFileGenerator
     /**
      * HtaccessFileGenerator constructor.
      *
-     * @param CacheClearer $cacheClearer
-     * @param Tools $tools
-     * @param bool $multipleViewsConfiguration
+     * @param  bool  $multipleViewsConfiguration
      */
     public function __construct(CacheClearer $cacheClearer, Tools $tools, $multipleViewsConfiguration)
     {
@@ -66,13 +65,12 @@ class HtaccessFileGenerator
     /**
      * Generates htaccess file and its content.
      *
-     * @param bool|null $disableMultiView if null, rely on the Shop configuration
-     *
+     * @param  bool|null  $disableMultiView  if null, rely on the Shop configuration
      * @return bool
      */
     public function generateFile($disableMultiView = null)
     {
-        if (null === $disableMultiView) {
+        if ($disableMultiView === null) {
             $disableMultiView = $this->multipleViewsConfiguration;
         }
 

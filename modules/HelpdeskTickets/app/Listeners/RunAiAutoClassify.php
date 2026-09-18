@@ -12,7 +12,14 @@ class RunAiAutoClassify implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public string $queue = 'default';
+    /**
+     * Cola de IA, no 'default': autoClassify() llama al proveedor de LLM y
+     * puede tardar decenas de segundos. En 'default' —que comparte worker con
+     * PDFs de etiquetas, exports y notificaciones broadcast— cada clasificación
+     * lenta retrasaba en fila todo lo demás. 'helpdesk-ai' existe justo para
+     * esto y la sirve webadmin-worker-helpdesk (timeout 300).
+     */
+    public string $queue = 'helpdesk-ai';
 
     public int $tries = 3;
 

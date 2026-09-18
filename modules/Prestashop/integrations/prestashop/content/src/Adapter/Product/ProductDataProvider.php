@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,7 @@ class ProductDataProvider
     /**
      * Get a new ProductCore instance.
      *
-     * @param int|null $idProduct
-     *
+     * @param  int|null  $idProduct
      * @return Product
      */
     public function getProductInstance($idProduct = null)
@@ -49,31 +49,30 @@ class ProductDataProvider
             return new Product($idProduct);
         }
 
-        return new Product();
+        return new Product;
     }
 
     /**
      * Get a product.
      *
-     * @param int $id_product
-     * @param bool $full
-     * @param int|null $id_lang
-     * @param int|null $id_shop
-     * @param object|null $context
+     * @param  int  $id_product
+     * @param  bool  $full
+     * @param  int|null  $id_lang
+     * @param  int|null  $id_shop
+     * @param  object|null  $context
+     * @return Product $product
      *
      * @throws \LogicException If the product id is not set
-     *
-     * @return Product $product
      */
     public function getProduct($id_product, $full = false, $id_lang = null, $id_shop = null, $context = null)
     {
-        if (!$id_product) {
+        if (! $id_product) {
             throw new \LogicException('You need to provide a product id', 5002);
         }
 
         $product = new Product($id_product, $full, $id_lang, $id_shop, $context);
 
-        if (!is_array($product->link_rewrite)) {
+        if (! is_array($product->link_rewrite)) {
             $linkRewrite = $product->link_rewrite;
         } else {
             $linkRewrite = $product->link_rewrite[$id_lang ? $id_lang : key($product->link_rewrite)];
@@ -92,7 +91,7 @@ class ProductDataProvider
      */
     public function getIdTaxRulesGroup()
     {
-        $product = new Product();
+        $product = new Product;
 
         return $product->getIdTaxRulesGroup();
     }
@@ -100,10 +99,9 @@ class ProductDataProvider
     /**
      * Get product quantity.
      *
-     * @param int $id_product
-     * @param int|null $id_product_attribute
-     * @param bool|null $cache_is_pack
-     *
+     * @param  int  $id_product
+     * @param  int|null  $id_product_attribute
+     * @param  bool|null  $cache_is_pack
      * @return int stock
      */
     public function getQuantity($id_product, $id_product_attribute = null, $cache_is_pack = null)
@@ -112,9 +110,8 @@ class ProductDataProvider
     }
 
     /**
-     * @param int $id_product
-     * @param int $id_product_attribute Optional
-     *
+     * @param  int  $id_product
+     * @param  int  $id_product_attribute  Optional
      * @return string
      */
     public function getLocation($id_product, $id_product_attribute = 0)
@@ -125,9 +122,8 @@ class ProductDataProvider
     /**
      * Get associated images to product.
      *
-     * @param int $id_product
-     * @param int $id_lang
-     *
+     * @param  int  $id_product
+     * @param  int  $id_lang
      * @return array
      */
     public function getImages($id_product, $id_lang)
@@ -144,8 +140,7 @@ class ProductDataProvider
     /**
      * Get an image.
      *
-     * @param int $id_image
-     *
+     * @param  int  $id_image
      * @return array()
      */
     public function getImage($id_image)
@@ -159,7 +154,7 @@ class ProductDataProvider
             'cover' => $imageData->cover ? true : false,
             'legend' => $imageData->legend,
             'format' => $imageData->image_format,
-            'base_image_url' => _THEME_PROD_DIR_ . $imageData->getImgPath(),
+            'base_image_url' => _THEME_PROD_DIR_.$imageData->getImgPath(),
         ];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,9 +55,8 @@ class PositionsController extends FrameworkBundleAdminController
      * Display hooks positions.
      *
      * @Template("@PrestaShop/Admin/Improve/Design/positions.html.twig")
-     * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller')~'_')", message="Access denied.")
      *
-     * @param Request $request
+     * @AdminSecurity("is_granted(['read', 'update', 'create', 'delete'], request.get('_legacy_controller')~'_')", message="Access denied.")
      *
      * @return array<string, mixed>
      */
@@ -88,7 +88,7 @@ class PositionsController extends FrameworkBundleAdminController
                 $this->selectedModule
             );
             // No module found, no need to continue
-            if (!is_array($hooks[$key]['modules'])) {
+            if (! is_array($hooks[$key]['modules'])) {
                 unset($hooks[$key]);
 
                 continue;
@@ -146,8 +146,6 @@ class PositionsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['delete'], request.get('_legacy_controller')~'_')", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function unhookAction(Request $request)
@@ -170,7 +168,7 @@ class PositionsController extends FrameworkBundleAdminController
             $module = $this->get('prestashop.adapter.legacy.module')->getInstanceById($moduleId);
             $hook = new Hook($hookId);
 
-            if (!$module) {
+            if (! $module) {
                 $errors[] = $this->trans(
                     'This module cannot be loaded.',
                     'Admin.modules.Notification'
@@ -179,7 +177,7 @@ class PositionsController extends FrameworkBundleAdminController
                 continue;
             }
 
-            if (!$validateAdapter->isLoadedObject($hook)) {
+            if (! $validateAdapter->isLoadedObject($hook)) {
                 $errors[] = $this->trans(
                     'Hook cannot be loaded.',
                     'Admin.modules.Notification'
@@ -188,7 +186,7 @@ class PositionsController extends FrameworkBundleAdminController
                 continue;
             }
 
-            if (!$module->unregisterHook($hookId, $context) || !$module->unregisterExceptions($hookId, $context)) {
+            if (! $module->unregisterHook($hookId, $context) || ! $module->unregisterExceptions($hookId, $context)) {
                 $errors[] = $this->trans(
                     'An error occurred while deleting the module from its hook.',
                     'Admin.modules.Notification'
@@ -196,7 +194,7 @@ class PositionsController extends FrameworkBundleAdminController
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->flashErrors($errors);
         } else {
             $this->addFlash(
@@ -217,7 +215,7 @@ class PositionsController extends FrameworkBundleAdminController
      * Manage legacy flashes, this code must be removed
      * when legacy edit will be migrated.
      *
-     * @param int $messageId The message id from legacy context
+     * @param  int  $messageId  The message id from legacy context
      */
     private function manageLegacyFlashes($messageId)
     {
@@ -243,8 +241,6 @@ class PositionsController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller')~'_')", message="Access denied.")
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
     public function toggleStatusAction(Request $request)
@@ -266,14 +262,11 @@ class PositionsController extends FrameworkBundleAdminController
             ];
         }
 
-        $response['hook_status'] = !$hookStatus;
+        $response['hook_status'] = ! $hookStatus;
 
         return $this->json($response);
     }
 
-    /**
-     * @return array
-     */
     private function getErrorMessages(): array
     {
         return [

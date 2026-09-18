@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,11 +56,11 @@ final class DeleteSqlRequestHandler implements DeleteSqlRequestHandlerInterface
         try {
             $entity = new RequestSql($entityId);
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new SqlRequestNotFoundException(sprintf('SqlRequest with id "%s" was not found for edit', var_export($entityId, true)));
             }
 
-            if (false === $entity->delete()) {
+            if ($entity->delete() === false) {
                 throw new CannotDeleteSqlRequestException(sprintf('Could not delete SqlRequest with id %s', var_export($entityId)), CannotDeleteSqlRequestException::CANNOT_SINGLE_DELETE);
             }
         } catch (PrestaShopException $e) {

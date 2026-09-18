@@ -57,11 +57,13 @@ class AgentCatalogController extends Controller
 
         $driver = $this->catalog->forWeb($this->resolveWeb($conversation));
 
+        $byId = $driver->findMany(array_map('strval', $validated['product_ids']));
+
+        // Conserva el orden en que el agente seleccionó los productos.
         $products = [];
         foreach ($validated['product_ids'] as $id) {
-            $product = $driver->find((string) $id);
-            if ($product) {
-                $products[] = $product;
+            if (isset($byId[$id])) {
+                $products[] = $byId[$id];
             }
         }
 

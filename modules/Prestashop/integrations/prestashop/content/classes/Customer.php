@@ -26,6 +26,7 @@
  */
 use PrestaShop\PrestaShop\Adapter\CoreException;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
+use PrestaShop\PrestaShop\Core\Crypto\Hashing;
 
 /***
  * Class CustomerCore
@@ -335,7 +336,7 @@ class CustomerCore extends ObjectModel
 
         try {
             return parent::update(true);
-        } catch (\PrestaShopException $exception) {
+        } catch (PrestaShopException $exception) {
             $message = $exception->getMessage();
             error_log($message);
 
@@ -440,18 +441,18 @@ class CustomerCore extends ObjectModel
      * @param  bool  $ignoreGuest
      * @return bool|Customer|CustomerCore Customer instance
      *
-     * @throws \InvalidArgumentException if given input is not valid
+     * @throws InvalidArgumentException if given input is not valid
      */
     public function getByEmail($email, $plaintextPassword = null, $ignoreGuest = true)
     {
         if (! Validate::isEmail($email)) {
-            throw new \InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'Cannot get customer by email as %s is not a valid email',
                 $email
             ));
         }
         if (($plaintextPassword && ! Validate::isPlaintextPassword($plaintextPassword))) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Cannot get customer by email as given password is not a valid password'
             );
         }
@@ -476,7 +477,7 @@ class CustomerCore extends ObjectModel
         $passwordHash = Db::getInstance()->getValue($sql);
 
         try {
-            /** @var \PrestaShop\PrestaShop\Core\Crypto\Hashing $crypto */
+            /** @var Hashing $crypto */
             $crypto = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
         } catch (CoreException $e) {
             return false;
@@ -1174,7 +1175,7 @@ class CustomerCore extends ObjectModel
             $language = Context::getContext()->language;
         }
 
-        /** @var \PrestaShop\PrestaShop\Core\Crypto\Hashing $crypto */
+        /** @var Hashing $crypto */
         $crypto = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
         $this->is_guest = 0;
         $this->passwd = $crypto->hash($password);
@@ -1235,7 +1236,7 @@ class CustomerCore extends ObjectModel
      */
     public function setWsPasswd($passwd)
     {
-        /** @var \PrestaShop\PrestaShop\Core\Crypto\Hashing $crypto */
+        /** @var Hashing $crypto */
         $crypto = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
         if ($this->id == 0 || $this->passwd != $passwd) {
             $this->passwd = $crypto->hash($passwd);
@@ -1331,7 +1332,7 @@ class CustomerCore extends ObjectModel
     public function validateController($htmlentities = true)
     {
         $errors = parent::validateController($htmlentities);
-        /** @var \PrestaShop\PrestaShop\Core\Crypto\Hashing $crypto */
+        /** @var Hashing $crypto */
         $crypto = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
         if ($value = Tools::getValue('passwd')) {
             $this->passwd = $crypto->hash($value);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,7 +79,7 @@ final class AddressGridDefinitionFactory extends AbstractFilterableGridDefinitio
      */
     protected function getColumns(): ColumnCollectionInterface
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('addresses_bulk'))
                     ->setOptions([
@@ -134,30 +135,29 @@ final class AddressGridDefinitionFactory extends AbstractFilterableGridDefinitio
                     ])
             )
             ->add((new ActionColumn('actions'))
-            ->setName($this->trans('Actions', [], 'Admin.Global'))
-            ->setOptions([
-                'actions' => (new RowActionCollection())
-                    ->add(
-                        (new LinkRowAction('edit'))
-                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                            ->setIcon('edit')
-                            ->setOptions([
-                                'route' => 'admin_addresses_edit',
-                                'route_param_name' => 'addressId',
-                                'route_param_field' => 'id_address',
-                            ])
-                    )
-                    ->add(
-                        $this->buildDeleteAction(
-                            'admin_addresses_delete',
-                            'addressId',
-                            'id_address',
-                            Request::METHOD_DELETE
+                ->setName($this->trans('Actions', [], 'Admin.Global'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection)
+                        ->add(
+                            (new LinkRowAction('edit'))
+                                ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                                ->setIcon('edit')
+                                ->setOptions([
+                                    'route' => 'admin_addresses_edit',
+                                    'route_param_name' => 'addressId',
+                                    'route_param_field' => 'id_address',
+                                ])
                         )
-                    ),
-            ])
-            )
-        ;
+                        ->add(
+                            $this->buildDeleteAction(
+                                'admin_addresses_delete',
+                                'addressId',
+                                'id_address',
+                                Request::METHOD_DELETE
+                            )
+                        ),
+                ])
+            );
 
         return $columns;
     }
@@ -167,7 +167,7 @@ final class AddressGridDefinitionFactory extends AbstractFilterableGridDefinitio
      */
     protected function getFilters(): FilterCollectionInterface
     {
-        $filters = (new FilterCollection())
+        $filters = (new FilterCollection)
             ->add(
                 (new Filter('id_address', NumberType::class))
                     ->setTypeOptions([
@@ -255,7 +255,7 @@ final class AddressGridDefinitionFactory extends AbstractFilterableGridDefinitio
      */
     protected function getGridActions(): GridActionCollectionInterface
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -278,7 +278,7 @@ final class AddressGridDefinitionFactory extends AbstractFilterableGridDefinitio
      */
     protected function getBulkActions(): BulkActionCollectionInterface
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 $this->buildBulkDeleteAction('admin_addresses_delete_bulk')
             );

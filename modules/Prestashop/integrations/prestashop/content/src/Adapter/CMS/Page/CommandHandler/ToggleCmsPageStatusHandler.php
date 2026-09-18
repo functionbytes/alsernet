@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,7 +48,7 @@ final class ToggleCmsPageStatusHandler extends AbstractCmsPageHandler implements
         $cms = $this->getCmsPageIfExistsById($command->getCmsPageId()->getValue());
 
         try {
-            if (false === $cms->toggleStatus()) {
+            if ($cms->toggleStatus() === false) {
                 throw new CannotToggleCmsPageException(sprintf('Failed to toggle cms page with id %s status', $command->getCmsPageId()->getValue()));
             }
         } catch (PrestaShopException $exception) {

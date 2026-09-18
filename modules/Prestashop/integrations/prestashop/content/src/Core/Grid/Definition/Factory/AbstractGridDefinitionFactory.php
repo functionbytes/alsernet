@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,21 +54,17 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
      */
     protected $hookDispatcher;
 
-    /**
-     * @param HookDispatcherInterface|null $hookDispatcher
-     */
-    public function __construct(HookDispatcherInterface $hookDispatcher = null)
+    public function __construct(?HookDispatcherInterface $hookDispatcher = null)
     {
-        if (null === $hookDispatcher) {
+        if ($hookDispatcher === null) {
             @trigger_error('The $hookDispatcher parameter should not be null, inject your main HookDispatcherInterface service, or NullDispatcher if you don\'t need hooks.', E_USER_DEPRECATED);
         }
-        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher();
+        $this->hookDispatcher = $hookDispatcher ? $hookDispatcher : new NullDispatcher;
     }
 
     /**
      * Set hook dispatcher.
      *
-     * @param HookDispatcherInterface $hookDispatcher
      *
      * @deprecated
      */
@@ -93,7 +90,7 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
             $this->getViewOptions()
         );
 
-        $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($definition->getId()) . 'GridDefinitionModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action'.Container::camelize($definition->getId()).'GridDefinitionModifier', [
             'definition' => $definition,
         ]);
 
@@ -129,7 +126,7 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
      */
     protected function getGridActions()
     {
-        return new GridActionCollection();
+        return new GridActionCollection;
     }
 
     /**
@@ -140,7 +137,7 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
      */
     protected function getBulkActions()
     {
-        return new BulkActionCollection();
+        return new BulkActionCollection;
     }
 
     /**
@@ -151,7 +148,7 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
      */
     protected function getViewOptions()
     {
-        return new ViewOptionsCollection();
+        return new ViewOptionsCollection;
     }
 
     /**
@@ -162,6 +159,6 @@ abstract class AbstractGridDefinitionFactory implements GridDefinitionFactoryInt
      */
     protected function getFilters()
     {
-        return new FilterCollection();
+        return new FilterCollection;
     }
 }

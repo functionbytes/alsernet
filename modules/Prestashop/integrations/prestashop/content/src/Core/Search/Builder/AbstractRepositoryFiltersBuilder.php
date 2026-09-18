@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,9 +56,7 @@ abstract class AbstractRepositoryFiltersBuilder extends AbstractFiltersBuilder
     protected $action;
 
     /**
-     * @param AdminFilterRepository $adminFilterRepository
-     * @param ContextEmployeeProviderInterface $employeeProvider
-     * @param int $shopId
+     * @param  int  $shopId
      */
     public function __construct(
         AdminFilterRepository $adminFilterRepository,
@@ -77,7 +76,7 @@ abstract class AbstractRepositoryFiltersBuilder extends AbstractFiltersBuilder
         $defaultController = $defaultAction = '';
         if (isset($config['request']) && $config['request'] instanceof Request) {
             $request = $config['request'];
-            list($defaultController, $defaultAction) = ControllerAction::fromString($request->get('_controller'));
+            [$defaultController, $defaultAction] = ControllerAction::fromString($request->get('_controller'));
         }
 
         $this->controller = isset($config['controller']) ? $config['controller'] : $defaultController;

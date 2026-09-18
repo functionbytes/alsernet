@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -95,7 +96,7 @@ final class GridPresenter implements GridPresenterInterface
             $presentedGrid['form_prefix'] = $searchCriteria->getFilterId();
         }
 
-        $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($definition->getId()) . 'GridPresenterModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action'.Container::camelize($definition->getId()).'GridPresenterModifier', [
             'presented_grid' => &$presentedGrid,
         ]);
 
@@ -106,7 +107,6 @@ final class GridPresenter implements GridPresenterInterface
      * Return the columns formatted as array, adds an additional position handle
      * column when needed.
      *
-     * @param GridInterface $grid
      *
      * @return array
      */
@@ -116,9 +116,9 @@ final class GridPresenter implements GridPresenterInterface
 
         /** @var ColumnInterface $positionColumn */
         $positionColumn = $this->getOrderingPosition($grid);
-        if (null !== $positionColumn) {
+        if ($positionColumn !== null) {
             array_unshift($columns, [
-                'id' => $positionColumn->getId() . '_handle',
+                'id' => $positionColumn->getId().'_handle',
                 'name' => $positionColumn->getName(),
                 'type' => 'position_handle',
                 'options' => $positionColumn->getOptions(),
@@ -129,8 +129,6 @@ final class GridPresenter implements GridPresenterInterface
     }
 
     /**
-     * @param GridInterface $grid
-     *
      * @return ColumnInterface|null
      */
     public function getOrderingPosition(GridInterface $grid)
@@ -151,7 +149,6 @@ final class GridPresenter implements GridPresenterInterface
     /**
      * Get filters that have associated columns.
      *
-     * @param GridDefinitionInterface $definition
      *
      * @return array
      */
@@ -170,15 +167,13 @@ final class GridPresenter implements GridPresenterInterface
     }
 
     /**
-     * @param GridInterface $grid
-     *
      * @return bool
      */
     private function isEmptyState(GridInterface $grid)
     {
         $filterFormData = $grid->getFilterForm()->getData();
         $dataRecordsTotal = $grid->getData()->getRecordsTotal();
-        if (empty($filterFormData) && 0 === $dataRecordsTotal) {
+        if (empty($filterFormData) && $dataRecordsTotal === 0) {
             return true;
         }
 
@@ -189,6 +184,6 @@ final class GridPresenter implements GridPresenterInterface
             }
         }
 
-        return 0 === $dataRecordsTotal;
+        return $dataRecordsTotal === 0;
     }
 }

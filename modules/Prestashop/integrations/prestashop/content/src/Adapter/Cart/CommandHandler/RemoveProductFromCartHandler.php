@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ final class RemoveProductFromCartHandler extends AbstractCartHandler implements 
      */
     private $contextStateManager;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         ContextStateManager $contextStateManager
     ) {
@@ -68,8 +66,7 @@ final class RemoveProductFromCartHandler extends AbstractCartHandler implements 
             ->setCurrency(new Currency($cart->id_currency))
             ->setLanguage($cart->getAssociatedLanguage())
             ->setCustomer(new Customer($cart->id_customer))
-            ->setShop(new Shop($cart->id_shop))
-        ;
+            ->setShop(new Shop($cart->id_shop));
 
         try {
             $removed = $cart->deleteProduct(
@@ -78,7 +75,7 @@ final class RemoveProductFromCartHandler extends AbstractCartHandler implements 
                 $command->getCustomizationId() ?: 0
             );
 
-            if (!$removed) {
+            if (! $removed) {
                 throw new CartException(sprintf('Failed to remove product with id "%d" from cart', $command->getProductId()->getValue()));
             }
         } finally {

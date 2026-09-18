@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,14 +37,15 @@ class TreeBuilder
      * @var string
      */
     private $locale;
+
     /**
      * @var string
      */
     private $theme;
 
     /**
-     * @param string $locale
-     * @param string $theme
+     * @param  string  $locale
+     * @param  string  $theme
      */
     public function __construct($locale, $theme)
     {
@@ -52,16 +54,14 @@ class TreeBuilder
     }
 
     /**
-     * @param AbstractProvider $provider
-     * @param null $search
-     *
+     * @param  null  $search
      * @return array|mixed
      */
     public function makeTranslationArray(AbstractProvider $provider, $search = null)
     {
         $provider->setLocale($this->locale);
 
-        if ('theme' === $provider->getIdentifier()) {
+        if ($provider->getIdentifier() === 'theme') {
             $defaultCatalogue = $provider->getMessageCatalogue();
         } else {
             $defaultCatalogue = $provider->getDefaultCatalogue();
@@ -92,7 +92,7 @@ class TreeBuilder
                     if (empty($data['xlf'])
                         && empty($data['db'])
                     ) {
-                        ++$missingTranslations;
+                        $missingTranslations++;
                     }
                 }
             }
@@ -108,9 +108,8 @@ class TreeBuilder
     /**
      * Check if data contains search word.
      *
-     * @param string|array|null $search
-     * @param array $data
-     *
+     * @param  string|array|null  $search
+     * @param  array  $data
      * @return bool
      */
     private function dataContainsSearchWord($search, $data)
@@ -118,18 +117,18 @@ class TreeBuilder
         if (is_string($search)) {
             $search = strtolower($search);
 
-            return false !== strpos(strtolower($data['default']), $search) ||
-                false !== strpos(strtolower($data['xlf']), $search) ||
-                false !== strpos(strtolower($data['db']), $search);
+            return strpos(strtolower($data['default']), $search) !== false ||
+                strpos(strtolower($data['xlf']), $search) !== false ||
+                strpos(strtolower($data['db']), $search) !== false;
         }
 
         if (is_array($search)) {
             $contains = true;
             foreach ($search as $s) {
                 $s = strtolower($s);
-                $contains &= false !== strpos(strtolower($data['default']), $s) ||
-                    false !== strpos(strtolower($data['xlf']), $s) ||
-                    false !== strpos(strtolower($data['db']), $s);
+                $contains &= strpos(strtolower($data['default']), $s) !== false ||
+                    strpos(strtolower($data['xlf']), $s) !== false ||
+                    strpos(strtolower($data['db']), $s) !== false;
             }
 
             return $contains;
@@ -155,7 +154,7 @@ class TreeBuilder
             foreach ($parts as $part) {
                 $subdomain = ucfirst($part);
 
-                if (!array_key_exists($subdomain, $subtree)) {
+                if (! array_key_exists($subdomain, $subtree)) {
                     $subtree[$subdomain] = [];
                 }
 
@@ -164,8 +163,8 @@ class TreeBuilder
 
             $subtree['__messages'] = [$domain => $messages];
             if (isset($messages['__metadata'])) {
-                $subtree['__fixed_length_id'] = '_' . sha1($domain);
-                list($subtree['__domain']) = explode('.', $domain);
+                $subtree['__fixed_length_id'] = '_'.sha1($domain);
+                [$subtree['__domain']] = explode('.', $domain);
                 $subtree['__metadata'] = $messages['__metadata'];
                 $subtree['__metadata']['domain'] = $subtree['__domain'];
                 unset($messages['__metadata']);
@@ -178,12 +177,10 @@ class TreeBuilder
     /**
      * Clean tree to use it with the new API system.
      *
-     * @param array $tree
-     * @param Router $router
-     * @param null $theme
-     * @param null $search
-     * @param null $module
-     *
+     * @param  array  $tree
+     * @param  null  $theme
+     * @param  null  $search
+     * @param  null  $module
      * @return array
      */
     public function cleanTreeToApi($tree, Router $router, $theme = null, $search = null, $module = null)
@@ -201,13 +198,13 @@ class TreeBuilder
         $index1 = 0;
         foreach ($tree as $k1 => $t1) {
             $index2 = 0;
-            if (is_array($t1) && '__' !== substr($k1, 0, 2)) {
+            if (is_array($t1) && substr($k1, 0, 2) !== '__') {
                 $this->addTreeInfo($router, $cleanTree, $index1, $k1, $k1, $this->theme, $search, $module);
 
                 if (array_key_exists('__messages', $t1)) {
                     $nbMessage = count(current($t1['__messages']));
                     if (array_key_exists('__metadata', $t1)) {
-                        --$nbMessage;
+                        $nbMessage--;
                     }
 
                     $cleanTree[$index1]['total_langs'] += $nbMessage;
@@ -221,13 +218,13 @@ class TreeBuilder
 
                 foreach ($t1 as $k2 => $t2) {
                     $index3 = 0;
-                    if (is_array($t2) && '__' !== substr($k2, 0, 2)) {
-                        $this->addTreeInfo($router, $cleanTree[$index1]['children'], $index2, $k2, $k1 . $k2, $this->theme, $search, $module);
+                    if (is_array($t2) && substr($k2, 0, 2) !== '__') {
+                        $this->addTreeInfo($router, $cleanTree[$index1]['children'], $index2, $k2, $k1.$k2, $this->theme, $search, $module);
 
                         if (array_key_exists('__messages', $t2)) {
                             $nbMessage = count(current($t2['__messages']));
                             if (array_key_exists('__metadata', $t2)) {
-                                --$nbMessage;
+                                $nbMessage--;
                             }
 
                             $cleanTree[$index1]['children'][$index2]['total_langs'] += $nbMessage;
@@ -242,13 +239,13 @@ class TreeBuilder
                         }
 
                         foreach ($t2 as $k3 => $t3) {
-                            if (is_array($t3) && '__' !== substr($k3, 0, 2)) {
-                                $this->addTreeInfo($router, $cleanTree[$index1]['children'][$index2]['children'], $index3, $k3, $k1 . $k2 . $k3, $this->theme, $search, $module);
+                            if (is_array($t3) && substr($k3, 0, 2) !== '__') {
+                                $this->addTreeInfo($router, $cleanTree[$index1]['children'][$index2]['children'], $index3, $k3, $k1.$k2.$k3, $this->theme, $search, $module);
 
                                 if (array_key_exists('__messages', $t3)) {
                                     $nbMessage = count(current($t3['__messages']));
                                     if (array_key_exists('__metadata', $t3)) {
-                                        --$nbMessage;
+                                        $nbMessage--;
                                     }
 
                                     $cleanTree[$index1]['children'][$index2]['children'][$index3]['total_langs'] += $nbMessage;
@@ -267,21 +264,21 @@ class TreeBuilder
                                 if (empty($cleanTree[$index1]['children'][$index2]['children'][$index3]['children'])) {
                                     unset($cleanTree[$index1]['children'][$index2]['children'][$index3]['children']);
                                 }
-                                ++$index3;
+                                $index3++;
                             }
                         }
 
                         if (empty($cleanTree[$index1]['children'][$index2]['children'])) {
                             unset($cleanTree[$index1]['children'][$index2]['children']);
                         }
-                        ++$index2;
+                        $index2++;
                     }
                 }
 
                 if (empty($cleanTree[$index1]['children'])) {
                     unset($cleanTree[$index1]['children']);
                 }
-                ++$index1;
+                $index1++;
             }
         }
 
@@ -289,20 +286,18 @@ class TreeBuilder
     }
 
     /**
-     * @param Router $router
-     * @param array $tree
-     * @param int $index
-     * @param string $name
-     * @param string $fullName
-     * @param bool $theme
-     * @param null $search
-     * @param bool $module
-     *
+     * @param  array  $tree
+     * @param  int  $index
+     * @param  string  $name
+     * @param  string  $fullName
+     * @param  bool  $theme
+     * @param  null  $search
+     * @param  bool  $module
      * @return mixed
      */
     private function addTreeInfo(Router $router, &$tree, $index, $name, $fullName, $theme = false, $search = null, $module = false)
     {
-        if (!isset($tree[$index])) {
+        if (! isset($tree[$index])) {
             $routeParams = [
                 'locale' => $this->locale,
                 'domain' => $fullName,
@@ -310,7 +305,7 @@ class TreeBuilder
                 'module' => $module,
             ];
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $routeParams['search'] = $search;
             }
 

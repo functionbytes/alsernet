@@ -1,6 +1,6 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -18,7 +18,7 @@ class ResponseHelper
         return [
             'status' => 'success',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ];
     }
 
@@ -30,7 +30,7 @@ class ResponseHelper
         return [
             'status' => 'error',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ];
     }
 
@@ -42,7 +42,7 @@ class ResponseHelper
         return [
             'status' => 'warning',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ];
     }
 
@@ -56,19 +56,19 @@ class ResponseHelper
             'message' => $message,
             'html' => $html,
             'id_carrier' => $carrierId,
-            'id_address' => $addressId
+            'id_address' => $addressId,
         ];
     }
 
     /**
      * Respuesta de autenticación requerida
      */
-    public static function authRequired(\Context $context): array
+    public static function authRequired(Context $context): array
     {
-        require_once dirname(__FILE__) . '/../../classes/TranslationManager.php';
+        require_once dirname(__FILE__).'/../../classes/TranslationManager.php';
 
         return self::error(
-            \TranslationManager::error('auth_required', $context->language->locale)
+            TranslationManager::error('auth_required', $context->language->locale)
         );
     }
 
@@ -82,7 +82,7 @@ class ResponseHelper
             'message' => $message,
             'html_delivery' => $htmlDelivery,
             'html_invoice' => $htmlInvoice,
-            'addresses' => $addresses
+            'addresses' => $addresses,
         ];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ class ProductCategoryUpdater
      */
     private $productRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductRepository $productRepository
     ) {
@@ -56,9 +54,8 @@ class ProductCategoryUpdater
     }
 
     /**
-     * @param Product $product
-     * @param CategoryId[] $categoryIds
-     * @param CategoryId $defaultCategoryId
+     * @param  CategoryId[]  $categoryIds
+     * @param  CategoryId  $defaultCategoryId
      *
      * Warning: $categoryIds will replace current categories, erasing previous data
      *
@@ -72,7 +69,7 @@ class ProductCategoryUpdater
         try {
             $this->assertCategoriesExists($categoryIds);
 
-            if (false === $product->updateCategories($categoryIds)) {
+            if ($product->updateCategories($categoryIds) === false) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to update product #%d categories', $product->id),
                     CannotUpdateProductException::FAILED_UPDATE_CATEGORIES
@@ -88,10 +85,6 @@ class ProductCategoryUpdater
         }
     }
 
-    /**
-     * @param Product $product
-     * @param CategoryId $defaultCategoryId
-     */
     private function updateDefaultCategory(Product $product, CategoryId $defaultCategoryId): void
     {
         $categoryId = $defaultCategoryId->getValue();
@@ -111,9 +104,7 @@ class ProductCategoryUpdater
      * append default category id to the list
      * and filter-out duplicate values
      *
-     * @param CategoryId[] $categoryIds
-     * @param CategoryId $defaultCategoryId
-     *
+     * @param  CategoryId[]  $categoryIds
      * @return int[]
      */
     private function formatCategoryIdsList(array $categoryIds, CategoryId $defaultCategoryId): array
@@ -129,14 +120,14 @@ class ProductCategoryUpdater
     }
 
     /**
-     * @param int[] $categoryIds
+     * @param  int[]  $categoryIds
      *
      * @throws CannotUpdateProductException|CoreException
      */
     private function assertCategoriesExists(array $categoryIds): void
     {
         try {
-            if (!Category::categoriesExists($categoryIds)) {
+            if (! Category::categoriesExists($categoryIds)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to update product categories. Some of categories doesn\'t exist.'),
                     CannotUpdateProductException::FAILED_UPDATE_CATEGORIES

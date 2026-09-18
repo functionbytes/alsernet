@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,10 +56,6 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
      */
     private $configuration;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $configuration
-     */
     public function __construct(TranslatorInterface $translator, ConfigurationInterface $configuration)
     {
         $this->translator = $translator;
@@ -72,8 +69,8 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
     {
         $cart = $this->getCart($command->getCartId());
 
-        if (($command->getGiftMessage() !== null) && (!Validate::isMessage($command->getGiftMessage()))) {
-            throw new InvalidGiftMessageException();
+        if (($command->getGiftMessage() !== null) && (! Validate::isMessage($command->getGiftMessage()))) {
+            throw new InvalidGiftMessageException;
         }
 
         $this->handleFreeShippingOption($cart, $command);
@@ -87,7 +84,7 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
 
         if ($shouldSaveCart) {
             try {
-                if (false === $cart->update()) {
+                if ($cart->update() === false) {
                     throw new CartException('Failed to update cart delivery backups');
                 }
             } catch (PrestaShopException $e) {
@@ -101,9 +98,7 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
      * but is not linked to the cart. We look for this cart rule
      * to avoid creating duplicates.
      *
-     * @param string $code
-     *
-     * @return CartRule|null
+     * @param  string  $code
      *
      * @throws PrestaShopException
      */
@@ -111,22 +106,16 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
     {
         $cartRuleId = CartRule::getIdByCode($code);
 
-        if (!$cartRuleId) {
+        if (! $cartRuleId) {
             return null;
         }
 
         return new CartRule((int) $cartRuleId);
     }
 
-    /**
-     * @param Cart $cart
-     * @param string $backOfficeOrderCode
-     *
-     * @return CartRule
-     */
     private function createCartRule(Cart $cart, string $backOfficeOrderCode): CartRule
     {
-        $freeShippingCartRule = new CartRule();
+        $freeShippingCartRule = new CartRule;
         $freeShippingCartRule->code = $backOfficeOrderCode;
         $freeShippingCartRule->name = [
             $this->configuration->get('PS_LANG_DEFAULT') => $this->translator->trans(
@@ -155,8 +144,6 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
      * 2. if free shipping should not be enabled and cart already does not have free shipping, do nothing
      * 3.if free shipping should not be enabled and cart has free shipping, disable it
      *
-     * @param Cart $cart
-     * @param UpdateCartDeliverySettingsCommand $command
      *
      * @throws CannotDeleteCartRuleException
      */
@@ -170,7 +157,7 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
 
         // Step 1
         if ($freeShippingShouldBeEnabled) {
-            if (null === $freeShippingCartRule) {
+            if ($freeShippingCartRule === null) {
                 // there is not yet a 'free shipping' cart rule available in the system so we create it
                 $freeShippingCartRule = $this->createCartRule($cart, $backOfficeOrderCode);
             }
@@ -179,14 +166,14 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
             return;
         }
 
-        if (null === $freeShippingCartRule) {
+        if ($freeShippingCartRule === null) {
             return;
         }
 
         $cart->removeCartRule((int) $freeShippingCartRule->id);
 
         try {
-            if (false === $freeShippingCartRule->delete()) {
+            if ($freeShippingCartRule->delete() === false) {
                 throw new CannotDeleteCartRuleException(sprintf('Failed deleting cart rule #%s', $freeShippingCartRule->id));
             }
         } catch (PrestaShopException $e) {
@@ -195,9 +182,6 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
     }
 
     /**
-     * @param Cart $cart
-     * @param UpdateCartDeliverySettingsCommand $command
-     *
      * @return bool should save the cart or not
      *
      * @throws CartException
@@ -215,9 +199,6 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
     }
 
     /**
-     * @param Cart $cart
-     * @param UpdateCartDeliverySettingsCommand $command
-     *
      * @return bool should save the cart or not
      */
     private function handleRecycledWrappingOption(Cart $cart, UpdateCartDeliverySettingsCommand $command): bool
@@ -232,9 +213,6 @@ final class UpdateCartDeliverySettingsHandler extends AbstractCartHandler implem
     }
 
     /**
-     * @param Cart $cart
-     * @param UpdateCartDeliverySettingsCommand $command
-     *
      * @return bool should save the cart or not
      */
     private function handleGiftMessageOption(Cart $cart, UpdateCartDeliverySettingsCommand $command): bool

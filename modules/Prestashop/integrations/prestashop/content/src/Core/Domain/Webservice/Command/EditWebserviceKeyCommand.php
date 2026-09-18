@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,7 +66,7 @@ class EditWebserviceKeyCommand
     private $shopAssociation;
 
     /**
-     * @param int $webserviceKeyId
+     * @param  int  $webserviceKeyId
      */
     public function __construct($webserviceKeyId)
     {
@@ -89,8 +90,7 @@ class EditWebserviceKeyCommand
     }
 
     /**
-     * @param string $key
-     *
+     * @param  string  $key
      * @return self
      */
     public function setKey($key)
@@ -109,8 +109,7 @@ class EditWebserviceKeyCommand
     }
 
     /**
-     * @param string $description
-     *
+     * @param  string  $description
      * @return self
      */
     public function setDescription($description)
@@ -129,8 +128,7 @@ class EditWebserviceKeyCommand
     }
 
     /**
-     * @param bool $status
-     *
+     * @param  bool  $status
      * @return self
      */
     public function setStatus($status)
@@ -149,8 +147,6 @@ class EditWebserviceKeyCommand
     }
 
     /**
-     * @param array $permissions
-     *
      * @return self
      */
     public function setPermissions(array $permissions)
@@ -169,8 +165,7 @@ class EditWebserviceKeyCommand
     }
 
     /**
-     * @param int[] $shopAssociation
-     *
+     * @param  int[]  $shopAssociation
      * @return self
      */
     public function setShopAssociation(array $shopAssociation)

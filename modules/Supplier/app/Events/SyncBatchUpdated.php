@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -19,7 +20,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class SyncBatchUpdated implements ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, SerializesModels;
 
     /**
      * Create a new event instance

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,12 +63,12 @@ class SwitchType extends AbstractType
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        if (true === $options['disabled']) {
+        if ($options['disabled'] === true) {
             $view->vars['disabled'] = true;
         }
         $view->vars['attr']['class'] = 'ps-switch';
         if (isset($options['attr']['class'])) {
-            $view->vars['attr']['class'] .= ' ' . $options['attr']['class'];
+            $view->vars['attr']['class'] .= ' '.$options['attr']['class'];
         }
     }
 

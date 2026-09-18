@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,6 +27,7 @@
 
 namespace PrestaShop\PrestaShop\Core\Search\Builder;
 
+use PrestaShop\PrestaShop\Core\Exception\TypeException;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 
 /**
@@ -42,9 +44,9 @@ final class ChainedFiltersBuilder extends AbstractFiltersBuilder
     private $builders;
 
     /**
-     * @param array $builders Array of FiltersBuilderInterface
+     * @param  array  $builders  Array of FiltersBuilderInterface
      *
-     * @throws \PrestaShop\PrestaShop\Core\Exception\TypeException
+     * @throws TypeException
      */
     public function __construct(array $builders = [])
     {
@@ -69,7 +71,7 @@ final class ChainedFiltersBuilder extends AbstractFiltersBuilder
     /**
      * {@inheritdoc}
      */
-    public function buildFilters(Filters $filters = null)
+    public function buildFilters(?Filters $filters = null)
     {
         if (empty($this->builders)) {
             return $filters;

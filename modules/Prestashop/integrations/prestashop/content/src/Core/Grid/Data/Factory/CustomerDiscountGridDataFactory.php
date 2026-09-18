@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,15 +44,12 @@ final class CustomerDiscountGridDataFactory implements GridDataFactoryInterface
      * @var int
      */
     private $contextLangId;
+
     /**
      * @var Customer
      */
     private $customer;
 
-    /**
-     * @param int $contextLangId
-     * @param Customer $customer
-     */
     public function __construct(
         int $contextLangId,
         Customer $customer

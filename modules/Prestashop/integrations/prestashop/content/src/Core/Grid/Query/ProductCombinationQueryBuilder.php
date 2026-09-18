@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,11 +41,6 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     private $searchCriteriaApplicator;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -59,7 +55,7 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
-        if (!$searchCriteria instanceof ProductCombinationFilters) {
+        if (! $searchCriteria instanceof ProductCombinationFilters) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Expected %s, but got %s',
@@ -72,8 +68,7 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -83,7 +78,7 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
-        if (!$searchCriteria instanceof ProductCombinationFilters) {
+        if (! $searchCriteria instanceof ProductCombinationFilters) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Expected %s, but got %s',
@@ -93,38 +88,29 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
         }
 
         return $this->getCombinationsQueryBuilder($searchCriteria)
-            ->select('COUNT(pa.id_product_attribute)')
-        ;
+            ->select('COUNT(pa.id_product_attribute)');
     }
 
-    /**
-     * @param ProductCombinationFilters $productCombinationFilters
-     *
-     * @return QueryBuilder
-     */
     private function getCombinationsQueryBuilder(ProductCombinationFilters $productCombinationFilters): QueryBuilder
     {
         $filters = $productCombinationFilters->getFilters();
         $productId = $productCombinationFilters->getProductId();
 
         $qb = $this->connection->createQueryBuilder();
-        $qb->from($this->dbPrefix . 'product_attribute', 'pa')
+        $qb->from($this->dbPrefix.'product_attribute', 'pa')
             ->where('pa.id_product = :productId')
-            ->setParameter('productId', $productId)
-        ;
+            ->setParameter('productId', $productId);
 
         // filter by attributes
         if (isset($filters['attributes'])) {
             $combinationIds = $this->getCombinationIdsByAttributeIds($productId, (array) $filters['attributes']);
             $qb->andWhere($qb->expr()->in('pa.id_product_attribute', ':combinationIds'))
-                ->setParameter('combinationIds', $combinationIds, Connection::PARAM_INT_ARRAY)
-            ;
+                ->setParameter('combinationIds', $combinationIds, Connection::PARAM_INT_ARRAY);
         }
 
         if (isset($filters['reference'])) {
             $qb->andWhere('pa.reference LIKE :reference')
-                ->setParameter('reference', '%' . $filters['reference'] . '%')
-            ;
+                ->setParameter('reference', '%'.$filters['reference'].'%');
         }
 
         if (isset($filters['default_on'])) {
@@ -135,27 +121,24 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
             }
         }
 
-        if (null === $productCombinationFilters->getOrderBy()) {
+        if ($productCombinationFilters->getOrderBy() === null) {
             $qb->addOrderBy('id_product_attribute', 'asc');
-        } elseif ('stock_quantity' === $productCombinationFilters->getOrderBy()) {
+        } elseif ($productCombinationFilters->getOrderBy() === 'stock_quantity') {
             $qb
                 ->addSelect('pa.quantity AS stock_quantity')
                 ->innerJoin(
                     'pa',
-                    $this->dbPrefix . 'stock_available',
+                    $this->dbPrefix.'stock_available',
                     'sa',
                     'pa.id_product_attribute = sa.id_product_attribute'
-                )
-            ;
+                );
         }
 
         return $qb;
     }
 
     /**
-     * @param int $productId
-     * @param array<int, int[]> $attributeGroups
-     *
+     * @param  array<int, int[]>  $attributeGroups
      * @return int[]
      */
     private function getCombinationIdsByAttributeIds(int $productId, array $attributeGroups): array
@@ -167,20 +150,19 @@ final class ProductCombinationQueryBuilder extends AbstractDoctrineQueryBuilder
             $allAttributes = array_merge($allAttributes, $attributeIds);
         }
         $qb->select('pac.id_product_attribute, pac.id_attribute')
-            ->from($this->dbPrefix . 'product_attribute_combination', 'pac')
+            ->from($this->dbPrefix.'product_attribute_combination', 'pac')
             ->leftJoin(
                 'pac',
-                $this->dbPrefix . 'product_attribute',
+                $this->dbPrefix.'product_attribute',
                 'pa',
                 'pac.id_product_attribute = pa.id_product_attribute'
             )
             ->where('pa.id_product = :productId')
             ->andWhere($qb->expr()->in('pac.id_attribute', ':attributes'))
             ->setParameter('attributes', $allAttributes, Connection::PARAM_INT_ARRAY)
-            ->setParameter('productId', $productId)
-        ;
+            ->setParameter('productId', $productId);
         $results = $qb->execute()->fetchAll();
-        if (!$results) {
+        if (! $results) {
             return [];
         }
 

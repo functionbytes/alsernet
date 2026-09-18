@@ -60,7 +60,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-danger mb-2">Fallidos</h6>
+                            <h6 class="card-title text-dark mb-2">Fallidos</h6>
                             <h4 class="mb-1 fw-bold">{{ number_format($stats['failed']) }}</h4>
                             <small class="text-muted">Con errores</small>
                         </div>
@@ -106,7 +106,7 @@
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-filter"></i> Filtrar
+                            Filtrar
                         </button>
                     </div>
                     @if(request('status') || request('channel'))
@@ -242,7 +242,7 @@
                         @if(! request('status') && ! request('channel'))
                             @can('helpdesk.broadcasts.manage')
                                 <a href="{{ route('settings.helpdesk.broadcasts.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus"></i> Crear primer broadcast
+                                    Crear primer broadcast
                                 </a>
                             @endcan
                         @endif
@@ -271,20 +271,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        const url = $(this).data('url');
-        $('#delete-form').attr('action', url);
-        $('#delete-modal').modal('show');
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
+window.HdPageFlash = { success: @json(session('success')), error: @json(session('error')) };
 </script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
 @endpush

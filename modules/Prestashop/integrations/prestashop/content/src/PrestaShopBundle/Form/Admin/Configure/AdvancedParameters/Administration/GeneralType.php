@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,9 @@ use Symfony\Component\Translation\TranslatorInterface;
 class GeneralType extends TranslatorAwareType
 {
     public const FIELD_FRONT_COOKIE_LIFETIME = 'front_cookie_lifetime';
+
     public const FIELD_BACK_COOKIE_LIFETIME = 'back_cookie_lifetime';
+
     public const FIELD_COOKIE_SAMESITE = 'cookie_samesite';
 
     /**
@@ -47,15 +50,10 @@ class GeneralType extends TranslatorAwareType
      */
     private $isDebug;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool|null $isDebug
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
-        bool $isDebug = null
+        ?bool $isDebug = null
     ) {
         parent::__construct($translator, $locales);
 

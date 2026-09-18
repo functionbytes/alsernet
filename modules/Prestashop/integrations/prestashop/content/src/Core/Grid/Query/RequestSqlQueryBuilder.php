@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,7 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
     private $searchCriteriaApplicator;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicator $searchCriteriaApplicator
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -60,13 +59,13 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
         parent::__construct($connection, $dbPrefix);
 
         $this->searchCriteriaApplicator = $searchCriteriaApplicator;
-        $this->requestSqlTable = $dbPrefix . 'request_sql';
+        $this->requestSqlTable = $dbPrefix.'request_sql';
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria = null): QueryBuilder
+    public function getSearchQueryBuilder(?SearchCriteriaInterface $searchCriteria = null): QueryBuilder
     {
         $searchQueryBuilder = $this->buildQueryBySearchCriteria($searchCriteria);
 
@@ -80,7 +79,7 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * {@inheritdoc}
      */
-    public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria = null)
+    public function getCountQueryBuilder(?SearchCriteriaInterface $searchCriteria = null)
     {
         $countQueryBuilder = $this->buildQueryBySearchCriteria($searchCriteria);
         $countQueryBuilder->select('COUNT(rs.id_request_sql)');
@@ -91,7 +90,6 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Build partial query by search criteria.
      *
-     * @param SearchCriteriaInterface $criteria
      *
      * @return QueryBuilder
      */
@@ -105,7 +103,7 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
                 continue;
             }
 
-            if ('id_request_sql' === $filterName) {
+            if ($filterName === 'id_request_sql') {
                 $qb->andWhere('rs.id_request_sql = :id_request_sql');
                 $qb->setParameter('id_request_sql', $value);
 
@@ -113,7 +111,7 @@ final class RequestSqlQueryBuilder extends AbstractDoctrineQueryBuilder
             }
 
             $qb->andWhere("`$filterName` LIKE :$filterName");
-            $qb->setParameter($filterName, '%' . $value . '%');
+            $qb->setParameter($filterName, '%'.$value.'%');
         }
 
         return $qb;

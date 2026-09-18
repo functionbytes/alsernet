@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,20 +42,14 @@ class LegacyUrlListener
      */
     private $converter;
 
-    /**
-     * @param LegacyUrlConverter $converter
-     */
     public function __construct(LegacyUrlConverter $converter)
     {
         $this->converter = $converter;
     }
 
-    /**
-     * @param GetResponseEvent $event
-     */
     public function onKernelRequest(GetResponseEvent $event)
     {
-        if (!$event->isMasterRequest()) {
+        if (! $event->isMasterRequest()) {
             return;
         }
 

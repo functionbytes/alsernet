@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,7 +53,6 @@ final class EditCustomerDiscountRowAction extends AbstractRowAction
             ->setRequired([
                 'id_cart_rule',
             ])
-            ->setAllowedTypes('id_cart_rule', 'string')
-        ;
+            ->setAllowedTypes('id_cart_rule', 'string');
     }
 }

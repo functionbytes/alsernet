@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Carrier\Exception;
 /**
  * Thrown when carrier was not found
  */
-class CarrierNotFoundException extends CarrierException
-{
-}
+class CarrierNotFoundException extends CarrierException {}

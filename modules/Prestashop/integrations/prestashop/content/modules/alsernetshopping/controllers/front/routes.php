@@ -1,17 +1,17 @@
 <?php
 
 use Checkout\CheckoutAddressController;
-use Checkout\CheckoutDeliveryController;
 use Checkout\CheckoutAuthenticationController;
+use Checkout\CheckoutDeliveryController;
 use Checkout\CheckoutPaymentController;
 
-include_once(dirname(__FILE__) . '/../front/CheckoutController.php');
-include_once(dirname(__FILE__) . '/../front/GtmController.php');
-include_once(dirname(__FILE__) . '/../front/Checkout/CheckoutAuthenticationController.php');
-include_once(dirname(__FILE__) . '/../front/Checkout/CheckoutDeliveryController.php');
-include_once(dirname(__FILE__) . '/../front/Checkout/CheckoutPaymentController.php');
-include_once(dirname(__FILE__) . '/../front/Checkout/CheckoutAddressController.php');
-include_once(dirname(__FILE__) . '/../front/CartController.php');
+include_once dirname(__FILE__).'/../front/CheckoutController.php';
+include_once dirname(__FILE__).'/../front/GtmController.php';
+include_once dirname(__FILE__).'/../front/Checkout/CheckoutAuthenticationController.php';
+include_once dirname(__FILE__).'/../front/Checkout/CheckoutDeliveryController.php';
+include_once dirname(__FILE__).'/../front/Checkout/CheckoutPaymentController.php';
+include_once dirname(__FILE__).'/../front/Checkout/CheckoutAddressController.php';
+include_once dirname(__FILE__).'/../front/CartController.php';
 
 class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
 {
@@ -32,7 +32,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
     {
         $context = Context::getContext();
         if (
-            !isset($context->country, $context->language, $context->customer)
+            ! isset($context->country, $context->language, $context->customer)
             || $context->customer->isLogged(true)
         ) {
             return;
@@ -47,10 +47,10 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
             10 => 6,  // Alemania  → Alemán
         ];
 
-        $countryId = (int)$context->country->id;
-        $desiredLangId = $map[$countryId] ?? (int)Configuration::get('PS_LANG_DEFAULT');
+        $countryId = (int) $context->country->id;
+        $desiredLangId = $map[$countryId] ?? (int) Configuration::get('PS_LANG_DEFAULT');
 
-        if ((int)$context->language->id !== $desiredLangId) {
+        if ((int) $context->language->id !== $desiredLangId) {
             $context->language = new Language($desiredLangId);
             $context->cookie->id_lang = $desiredLangId;
             $context->cookie->write();
@@ -78,7 +78,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         $context = Context::getContext();
 
         // No hacer nada si no hay contexto válido
-        if (!isset($context->country) || !isset($context->language)) {
+        if (! isset($context->country) || ! isset($context->language)) {
             return false;
         }
 
@@ -94,12 +94,13 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
             if ($context->language->iso_code !== $urlLanguageIso) {
                 return $this->forceLanguageByIso($urlLanguageIso);
             }
+
             // Si ya coincide, no hacer nada más
             return false;
         }
 
         // Solo sincronizar por país si NO hay prefijo de idioma en la URL
-        $countryId = (int)$context->country->id;
+        $countryId = (int) $context->country->id;
 
         // Mapa país → idioma
         $mapCountryToLang = [
@@ -113,14 +114,14 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
 
         $desiredLangId = isset($mapCountryToLang[$countryId])
             ? $mapCountryToLang[$countryId]
-            : (int)Configuration::get('PS_LANG_DEFAULT');
+            : (int) Configuration::get('PS_LANG_DEFAULT');
 
         // Solo cambiar si el idioma actual es diferente
-        if ((int)$context->language->id !== $desiredLangId) {
+        if ((int) $context->language->id !== $desiredLangId) {
 
             // Verificar que el idioma existe y está activo
             $language = new Language($desiredLangId);
-            if (!Validate::isLoadedObject($language) || !$language->active) {
+            if (! Validate::isLoadedObject($language) || ! $language->active) {
                 return false;
             }
 
@@ -155,14 +156,13 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         foreach ($languages as $language) {
             $isoCode = $language['iso_code'];
             // Verificar si la URL contiene el prefijo del idioma
-            if (preg_match('#^/?' . preg_quote($isoCode) . '/#', $requestUri)) {
+            if (preg_match('#^/?'.preg_quote($isoCode).'/#', $requestUri)) {
                 return $isoCode;
             }
         }
 
         return null;
     }
-
 
     /**
      * Fuerza el cambio de idioma por código ISO
@@ -182,7 +182,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
             }
         }
 
-        if (!$targetLanguage || !Validate::isLoadedObject($targetLanguage)) {
+        if (! $targetLanguage || ! Validate::isLoadedObject($targetLanguage)) {
             return false;
         }
 
@@ -202,7 +202,6 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         return true;
     }
 
-
     /**
      * Verifica si la URL actual contiene un prefijo de idioma
      * Ejemplo: /es/, /fr/, /en/, etc.
@@ -217,7 +216,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         foreach ($languages as $language) {
             $isoCode = $language['iso_code'];
             // Verificar si la URL contiene el prefijo del idioma
-            if (preg_match('#^/?' . preg_quote($isoCode) . '/#', $requestUri)) {
+            if (preg_match('#^/?'.preg_quote($isoCode).'/#', $requestUri)) {
                 return true;
             }
         }
@@ -241,7 +240,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         $currentLangIso = $context->language->iso_code;
 
-        return (strpos($requestUri, '/' . $currentLangIso . '/') !== false);
+        return strpos($requestUri, '/'.$currentLangIso.'/') !== false;
     }
 
     private function handleAction()
@@ -250,11 +249,10 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
         $action = Tools::getValue('action');
         $iso = Tools::getValue('iso');
 
-
         switch ($modalitie) {
             case 'shopping':
             case 'cart':
-                $controller = new CartController();
+                $controller = new CartController;
                 $response = null;
 
                 switch ($action) {
@@ -292,20 +290,21 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controller->deletecoupon();
                         break;
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
+
                 return $response;
             case 'checkout':
 
-                $controllerCheckout = new CheckoutController();
-                $controllerAddress = new CheckoutAddressController();
-                $controllerDelivery = new CheckoutDeliveryController();
-                $controllerPayment = new CheckoutPaymentController();
-                $controllerAuthentication = new CheckoutAuthenticationController();
+                $controllerCheckout = new CheckoutController;
+                $controllerAddress = new CheckoutAddressController;
+                $controllerDelivery = new CheckoutDeliveryController;
+                $controllerPayment = new CheckoutPaymentController;
+                $controllerAuthentication = new CheckoutAuthenticationController;
 
                 $response = null;
 
@@ -323,7 +322,6 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerCheckout->steps();
                         break;
 
-
                     case 'coupon':
                         $response = $controllerCheckout->coupon();
                         break;
@@ -334,7 +332,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerCheckout->stepsummary();
                         break;
 
-                    // Address actions
+                        // Address actions
                     case 'address':
                         $response = $controllerAddress->init();
                         break;
@@ -378,7 +376,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerAddress->stepaddress();
                         break;
 
-                    // Delivery actions
+                        // Delivery actions
                     case 'delivery':
                         $response = $controllerDelivery->init();
                         break;
@@ -398,8 +396,7 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerPayment->steppayment();
                         break;
 
-
-                    // Auth actions
+                        // Auth actions
                     case 'steplogin':
                         $response = $controllerAuthentication->steplogin();
                         break;
@@ -422,28 +419,27 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerAuthentication->changepassword();
                         break;
 
-
-                    // Payment actions
+                        // Payment actions
                     case 'steppayment':
                         $response = $controllerPayment->steppayment();
                         break;
-
 
                     case 'stepsummary':
                         $response = $controllerCheckout->stepsummary();
                         break;
 
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
+
                 return $response;
             case 'gtp':
 
-                $controllerGtm = new GtmController();
+                $controllerGtm = new GtmController;
 
                 $response = null;
 
@@ -452,19 +448,20 @@ class AlsernetshoppingRoutesModuleFrontController extends ModuleFrontController
                         $response = $controllerGtm->init();
                         break;
                     default:
-                        $response = array(
+                        $response = [
                             'status' => 'error',
                             'message' => 'Invalid action',
-                        );
+                        ];
                         break;
                 }
+
                 return $response;
 
             default:
-                return array(
+                return [
                     'status' => 'error',
                     'message' => 'Invalid modality',
-                );
+                ];
         }
     }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,6 @@ class ModuleDataUpdater
      */
     private $adminModuleDataProvider;
 
-    /**
-     * @param AddonsInterface $addonsDataProvider
-     * @param AdminModuleDataProvider $adminModuleDataProvider
-     */
     public function __construct(AddonsInterface $addonsDataProvider, AdminModuleDataProvider $adminModuleDataProvider)
     {
         $this->addonsDataProvider = $addonsDataProvider;
@@ -57,8 +54,7 @@ class ModuleDataUpdater
     }
 
     /**
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public function setModuleOnDiskFromAddons($name)
@@ -75,16 +71,15 @@ class ModuleDataUpdater
     }
 
     /**
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public function removeModuleFromDisk($name)
     {
-        $fs = new FileSystem();
+        $fs = new Filesystem;
 
         try {
-            $fs->remove(_PS_MODULE_DIR_ . '/' . $name);
+            $fs->remove(_PS_MODULE_DIR_.'/'.$name);
 
             return true;
         } catch (IOException $e) {
@@ -93,8 +88,7 @@ class ModuleDataUpdater
     }
 
     /**
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public function upgrade($name)
@@ -113,7 +107,7 @@ class ModuleDataUpdater
 
                 LegacyModule::upgradeModuleVersion($name, $module->version);
 
-                return !count($legacy_instance->getErrors());
+                return ! count($legacy_instance->getErrors());
             } elseif (LegacyModule::getUpgradeStatus($name)) {
                 return true;
             }

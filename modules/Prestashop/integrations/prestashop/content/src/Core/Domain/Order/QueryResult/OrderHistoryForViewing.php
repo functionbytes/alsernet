@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,7 @@ class OrderHistoryForViewing
     private $currentOrderStatusId;
 
     /**
-     * @param int $currentOrderStatusId
-     * @param OrderStatusForViewing[] $statuses
+     * @param  OrderStatusForViewing[]  $statuses
      */
     public function __construct(int $currentOrderStatusId, array $statuses)
     {
@@ -59,17 +59,11 @@ class OrderHistoryForViewing
         return $this->statuses;
     }
 
-    /**
-     * @return int
-     */
     public function getCurrentOrderStatusId(): int
     {
         return $this->currentOrderStatusId;
     }
 
-    /**
-     * @param OrderStatusForViewing $orderStatusForViewing
-     */
     private function add(OrderStatusForViewing $orderStatusForViewing): void
     {
         $this->statuses[] = $orderStatusForViewing;

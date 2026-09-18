@@ -28,6 +28,16 @@ class TicketMergeService
     public function merge(Ticket $ticket, Ticket $targetTicket): void
     {
         DB::transaction(function () use ($ticket, $targetTicket) {
+            // ANTES de migrar items(): close() crea un TicketItem propio
+            // ('closed'/'Ticket cerrado') sobre $ticket. Llamarlo DESPUÉS
+            // de reapuntar los items al destino (como estaba) dejaba ese
+            // aviso colgado del ticket ORIGEN, que dos líneas más abajo se
+            // borra — el registro "Ticket cerrado" del merge no aparecía
+            // NUNCA en el hilo del ticket destino (14-sep-2026, auditoría de
+            // lógica de negocio). Aquí sí queda incluido en el update()
+            // siguiente, igual que el resto de items del origen.
+            $ticket->close();
+
             $ticket->items()->update(['ticket_id' => $targetTicket->id]);
 
             // Migrar el resto de datos asociados para no perderlos al borrar el
@@ -47,6 +57,10 @@ class TicketMergeService
                     'user_id' => $watcher->user_id,
                 ]);
             });
+            // Los del origen se copian arriba, nunca se borran: quedaban
+            // huérfanos apuntando a un ticket_id que dos líneas más abajo
+            // deja de existir (auditoría de lógica de negocio, 14-sep-2026).
+            $ticket->watchers()->delete();
 
             // Reapuntar enlaces del origen al destino, descartando los que
             // quedarían auto-enlazados o duplicados en el destino.
@@ -74,7 +88,6 @@ class TicketMergeService
                 'metadata' => ['merged_from_ticket_id' => $ticket->id],
             ]);
 
-            $ticket->close();
             $ticket->delete();
         });
     }

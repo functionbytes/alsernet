@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -96,17 +97,6 @@ class CatalogueProviderFactory
      */
     private $themesDirectory;
 
-    /**
-     * @param DatabaseTranslationLoader $databaseTranslationLoader
-     * @param LegacyModuleExtractorInterface $legacyModuleExtractor
-     * @param LoaderInterface $legacyFileLoader
-     * @param ThemeExtractor $themeExtractor
-     * @param ThemeRepository $themeRepository
-     * @param Filesystem $filesystem
-     * @param string $themesDirectory
-     * @param string $modulesDirectory
-     * @param string $translationsDirectory
-     */
     public function __construct(
         DatabaseTranslationLoader $databaseTranslationLoader,
         LegacyModuleExtractorInterface $legacyModuleExtractor,
@@ -130,16 +120,12 @@ class CatalogueProviderFactory
     }
 
     /**
-     * @param ProviderDefinitionInterface $providerDefinition
-     *
-     * @return CatalogueLayersProviderInterface
-     *
      * @throws UnexpectedTranslationTypeException
      */
     public function getProvider(ProviderDefinitionInterface $providerDefinition): CatalogueLayersProviderInterface
     {
         $type = $providerDefinition->getType();
-        if (!in_array($type, ProviderDefinitionInterface::ALLOWED_TYPES)) {
+        if (! in_array($type, ProviderDefinitionInterface::ALLOWED_TYPES)) {
             throw new UnexpectedTranslationTypeException(sprintf('Unexpected type %s', $type));
         }
 
@@ -155,14 +141,9 @@ class CatalogueProviderFactory
         throw new UnexpectedTranslationTypeException(sprintf('Could not fetch provider for given definition type "%s"', $type));
     }
 
-    /**
-     * @param ProviderDefinitionInterface $providerDefinition
-     *
-     * @return CatalogueLayersProviderInterface
-     */
     private function getCoreCatalogueProvider(ProviderDefinitionInterface $providerDefinition): CatalogueLayersProviderInterface
     {
-        if (!isset($this->providers[$providerDefinition->getType()])) {
+        if (! isset($this->providers[$providerDefinition->getType()])) {
             $this->providers[$providerDefinition->getType()] = new CoreCatalogueLayersProvider(
                 $this->databaseTranslationLoader,
                 $this->translationsDirectory,
@@ -174,14 +155,9 @@ class CatalogueProviderFactory
         return $this->providers[$providerDefinition->getType()];
     }
 
-    /**
-     * @param ModuleProviderDefinition $providerDefinition
-     *
-     * @return CatalogueLayersProviderInterface
-     */
     private function getModuleCatalogueProvider(ModuleProviderDefinition $providerDefinition): CatalogueLayersProviderInterface
     {
-        if (!isset($this->providers[$providerDefinition->getType()])) {
+        if (! isset($this->providers[$providerDefinition->getType()])) {
             $this->providers[$providerDefinition->getType()] = new ModuleCatalogueLayersProvider(
                 $this->databaseTranslationLoader,
                 $this->legacyModuleExtractor,
@@ -197,15 +173,10 @@ class CatalogueProviderFactory
         return $this->providers[$providerDefinition->getType()];
     }
 
-    /**
-     * @param ThemeProviderDefinition $providerDefinition
-     *
-     * @return CatalogueLayersProviderInterface
-     */
     private function getThemeCatalogueProvider(ThemeProviderDefinition $providerDefinition): CatalogueLayersProviderInterface
     {
-        if (!isset($this->providers[$providerDefinition->getType()])) {
-            $coreFrontProviderDefinition = new FrontofficeProviderDefinition();
+        if (! isset($this->providers[$providerDefinition->getType()])) {
+            $coreFrontProviderDefinition = new FrontofficeProviderDefinition;
             $coreFrontProvider = new CoreCatalogueLayersProvider(
                 $this->databaseTranslationLoader,
                 $this->translationsDirectory,

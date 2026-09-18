@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,7 +63,7 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
             $oldCurrency = new Currency($order->id_currency);
             $newCurrency = new Currency($command->getNewCurrencyId()->getValue());
 
-            if (!Validate::isLoadedObject($oldCurrency) || !Validate::isLoadedObject($newCurrency)) {
+            if (! Validate::isLoadedObject($oldCurrency) || ! Validate::isLoadedObject($newCurrency)) {
                 throw new OrderException('Can\'t load Currency object');
             }
 
@@ -83,14 +84,9 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
         }
     }
 
-    /**
-     * @param int $orderCarrierId
-     * @param Currency $oldCurrency
-     * @param Currency $newCurrency
-     */
     private function updateOrderCarrier(int $orderCarrierId, Currency $oldCurrency, Currency $newCurrency): void
     {
-        if (!$orderCarrierId) {
+        if (! $orderCarrierId) {
             return;
         }
 
@@ -108,11 +104,6 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
         $order_carrier->update();
     }
 
-    /**
-     * @param Order $order
-     * @param Currency $oldCurrency
-     * @param Currency $newCurrency
-     */
     private function updateOrderDetail(Order $order, Currency $oldCurrency, Currency $newCurrency): void
     {
         foreach ($order->getOrderDetailList() as $orderDetailItem) {
@@ -142,14 +133,9 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
         }
     }
 
-    /**
-     * @param PrestaShopCollection $invoices
-     * @param Currency $oldCurrency
-     * @param Currency $newCurrency
-     */
     private function updateInvoices(PrestaShopCollection $invoices, Currency $oldCurrency, Currency $newCurrency): void
     {
-        if (!$invoices->count()) {
+        if (! $invoices->count()) {
             return;
         }
 
@@ -159,11 +145,6 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
         }
     }
 
-    /**
-     * @param Order $order
-     * @param Currency $oldCurrency
-     * @param Currency $newCurrency
-     */
     private function updateOrder(Order $order, Currency $oldCurrency, Currency $newCurrency): void
     {
         $this->convertPriceFields($order, $this->getSharedAmountFields(), $oldCurrency, $newCurrency);
@@ -173,10 +154,6 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
         $order->update();
     }
 
-    /**
-     * @param int $cartId
-     * @param Currency $newCurrency
-     */
     private function updateCart(int $cartId, Currency $newCurrency): void
     {
         $cart = new Cart($cartId);
@@ -187,8 +164,6 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
 
     /**
      * Provides fields for Order and OrderInvoice amounts update
-     *
-     * @return array
      */
     private function getSharedAmountFields(): array
     {
@@ -214,10 +189,7 @@ final class ChangeOrderCurrencyHandler extends AbstractOrderHandler implements C
     }
 
     /**
-     * @param Order|OrderDetail|OrderInvoice $object
-     * @param array $fields
-     * @param Currency $oldCurrency
-     * @param Currency $newCurrency
+     * @param  Order|OrderDetail|OrderInvoice  $object
      */
     private function convertPriceFields(
         ObjectModel $object,

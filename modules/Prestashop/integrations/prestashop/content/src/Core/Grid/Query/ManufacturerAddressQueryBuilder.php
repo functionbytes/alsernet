@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,8 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
     private $contextLangId;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLangId
+     * @param  string  $dbPrefix
+     * @param  int  $contextLangId
      */
     public function __construct(
         Connection $connection,
@@ -73,8 +72,7 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->searchCriteriaApplicator
             ->applySorting($searchCriteria, $qb)
-            ->applyPagination($searchCriteria, $qb)
-        ;
+            ->applyPagination($searchCriteria, $qb);
 
         return $qb;
     }
@@ -93,7 +91,6 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with common sql needed for manufacturer addresses grid.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -101,33 +98,28 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'address', 'a')
+            ->from($this->dbPrefix.'address', 'a')
             ->leftJoin(
                 'a',
-                $this->dbPrefix . 'country_lang',
+                $this->dbPrefix.'country_lang',
                 'cl',
                 'cl.id_country = a.id_country AND cl.id_lang = :lang'
             )
             ->setParameter('lang', $this->contextLangId)
             ->leftJoin(
                 'a',
-                $this->dbPrefix . 'manufacturer',
+                $this->dbPrefix.'manufacturer',
                 'm', 'm.id_manufacturer = a.id_manufacturer'
             )
             ->andWhere('a.id_customer = 0')
             ->andWhere('a.id_supplier = 0')
             ->andWhere('a.id_warehouse = 0')
-            ->andWhere('a.deleted = 0')
-        ;
+            ->andWhere('a.deleted = 0');
         $this->applyFilters($qb, $filters);
 
         return $qb;
     }
 
-    /**
-     * @param QueryBuilder $qb
-     * @param array $filters
-     */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
         $allowedFiltersMap = [
@@ -142,7 +134,7 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
         $exactMatchingFilters = ['id_address', 'country'];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap)) {
                 continue;
             }
 
@@ -151,14 +143,14 @@ final class ManufacturerAddressQueryBuilder extends AbstractDoctrineQueryBuilder
                     continue;
                 }
 
-                $qb->andWhere($allowedFiltersMap[$filterName] . " = :$filterName")
+                $qb->andWhere($allowedFiltersMap[$filterName]." = :$filterName")
                     ->setParameter($filterName, $value);
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersMap[$filterName] . " LIKE :$filterName")
-                ->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere($allowedFiltersMap[$filterName]." LIKE :$filterName")
+                ->setParameter($filterName, '%'.$value.'%');
         }
     }
 }

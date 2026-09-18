@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,10 +61,6 @@ class GetOrderProductsForViewing
     /**
      * Builds query for paginated results
      *
-     * @param int $orderId
-     * @param int $offset
-     * @param int $limit
-     * @param string $productsSorting
      *
      * @return GetOrderProductsForViewing
      *
@@ -76,7 +73,7 @@ class GetOrderProductsForViewing
         int $limit,
         string $productsSorting = QuerySorting::ASC
     ) {
-        $query = new self();
+        $query = new self;
 
         $query->orderId = new OrderId($orderId);
         $query->productsSorting = new QuerySorting($productsSorting);
@@ -89,8 +86,6 @@ class GetOrderProductsForViewing
     /**
      * Builds query for getting all results
      *
-     * @param int $orderId
-     * @param string $productsSorting
      *
      * @return GetOrderProductsForViewing
      *
@@ -99,40 +94,28 @@ class GetOrderProductsForViewing
      */
     public static function all(int $orderId, string $productsSorting = QuerySorting::ASC)
     {
-        $query = new self();
+        $query = new self;
         $query->orderId = new OrderId($orderId);
         $query->productsSorting = new QuerySorting($productsSorting);
 
         return $query;
     }
 
-    /**
-     * @return OrderId
-     */
     public function getOrderId(): OrderId
     {
         return $this->orderId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getOffset(): ?int
     {
         return $this->offset;
     }
 
-    /**
-     * @return int|null
-     */
     public function getLimit(): ?int
     {
         return $this->limit;
     }
 
-    /**
-     * @return QuerySorting
-     */
     public function getProductsSorting(): QuerySorting
     {
         return $this->productsSorting;

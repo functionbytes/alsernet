@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,7 @@ abstract class AbstractTaxRulesGroupHandler
     /**
      * Gets legacy TaxRuleGroup object
      *
-     * @param TaxRulesGroupId $taxRulesGroupId
      *
-     * @return TaxRulesGroup
      *
      * @throws TaxRulesGroupNotFoundException
      */
@@ -67,9 +66,7 @@ abstract class AbstractTaxRulesGroupHandler
     /**
      * Deletes legacy TaxRulesGroup
      *
-     * @param TaxRulesGroup $taxRulesGroup
      *
-     * @return bool
      *
      * @throws CannotDeleteTaxRulesGroupException
      */
@@ -85,8 +82,6 @@ abstract class AbstractTaxRulesGroupHandler
     /**
      * Set legacy tax rules group status
      *
-     * @param TaxRulesGroup $taxRulesGroup
-     * @param bool $newStatus
      *
      * @return bool
      *

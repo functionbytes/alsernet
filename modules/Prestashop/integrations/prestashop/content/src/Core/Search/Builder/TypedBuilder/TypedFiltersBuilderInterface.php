@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,10 +42,5 @@ use PrestaShop\PrestaShop\Core\Search\Builder\FiltersBuilderInterface;
  */
 interface TypedFiltersBuilderInterface extends FiltersBuilderInterface
 {
-    /**
-     * @param string $filterClassName
-     *
-     * @return bool
-     */
     public function supports(string $filterClassName): bool;
 }

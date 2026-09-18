@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,7 +66,7 @@ final class BulkDeleteLanguagesHandler extends AbstractLanguageHandler implement
             }
             $this->assertLanguageIsNotInUse($language);
 
-            if (false === $language->delete()) {
+            if ($language->delete() === false) {
                 throw new LanguageException(sprintf('Failed to delete language "%s"', $language->iso_code));
             }
         }

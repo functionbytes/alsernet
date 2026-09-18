@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,7 @@ class GeneratableTextType extends AbstractType
             ->setDefaults([
                 'generated_value_length' => self::DEFAULT_GENERATED_VALUE_LENGTH,
             ])
-            ->setAllowedTypes('generated_value_length', 'int')
-        ;
+            ->setAllowedTypes('generated_value_length', 'int');
     }
 
     /**

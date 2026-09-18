@@ -2,15 +2,15 @@
 
 namespace AlsernetShopping\Carriers;
 
-use Module;
 use Hook;
+use Module;
 
 /**
  * Gestor de delegación entre módulos
  * Detecta si módulo externo ya maneja carrier y delega o toma control
  *
- * @package AlsernetShopping\Carriers
  * @version 1.0.0
+ *
  * @since 2025-08-16
  */
 class ModuleDelegationManager
@@ -19,13 +19,15 @@ class ModuleDelegationManager
      * Estrategias de manejo de módulos
      */
     const STRATEGY_DELEGATE = 'delegate';     // Delegar al módulo externo
+
     const STRATEGY_OVERRIDE = 'override';     // Tomar control completo
+
     const STRATEGY_HYBRID = 'hybrid';         // Usar datos del módulo, UI nuestra
 
     private static $moduleStrategies = [
         'mondialrelay' => self::STRATEGY_HYBRID,  // Usar datos MR, UI nuestra
         'inpost' => self::STRATEGY_DELEGATE,      // Delegar completamente
-        'correosexpress' => self::STRATEGY_OVERRIDE // Tomar control
+        'correosexpress' => self::STRATEGY_OVERRIDE, // Tomar control
     ];
 
     /**
@@ -35,11 +37,11 @@ class ModuleDelegationManager
     {
         $externalModule = self::detectExternalModule($carrierId);
 
-        if (!$externalModule) {
+        if (! $externalModule) {
             return [
                 'strategy' => self::STRATEGY_OVERRIDE,
                 'module' => null,
-                'reason' => 'No external module detected'
+                'reason' => 'No external module detected',
             ];
         }
 
@@ -48,7 +50,7 @@ class ModuleDelegationManager
         return [
             'strategy' => $strategy,
             'module' => $externalModule,
-            'reason' => "Module {$externalModule} found, using {$strategy} strategy"
+            'reason' => "Module {$externalModule} found, using {$strategy} strategy",
         ];
     }
 
@@ -72,7 +74,7 @@ class ModuleDelegationManager
         // Verificar otros módulos por convención
         $possibleModules = [
             'inpost' => [98],
-            'correosexpress' => [66]
+            'correosexpress' => [66],
         ];
 
         foreach ($possibleModules as $module => $carriers) {
@@ -90,10 +92,11 @@ class ModuleDelegationManager
     private static function isCarrierInMondialRelay(int $carrierId): bool
     {
         try {
-            $sql = 'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'mondialrelay_carrier_method`
-                    WHERE `id_carrier` = ' . (int)$carrierId;
+            $sql = 'SELECT COUNT(*) FROM `'._DB_PREFIX_.'mondialrelay_carrier_method`
+                    WHERE `id_carrier` = '.(int) $carrierId;
 
             $count = \Db::getInstance()->getValue($sql);
+
             return $count > 0;
 
         } catch (\Exception $e) {
@@ -107,7 +110,7 @@ class ModuleDelegationManager
     public static function executeStrategy(int $carrierId, array $data, \Context $context): array
     {
         // Iniciar monitoreo de rendimiento
-        $monitor = \AlsernetShopping\Carriers\CarrierPerformanceMonitor::getInstance();
+        $monitor = CarrierPerformanceMonitor::getInstance();
         $monitor->startTimer("delegation_strategy_{$carrierId}");
 
         $strategyInfo = self::getCarrierStrategy($carrierId);
@@ -140,7 +143,7 @@ class ModuleDelegationManager
             $result['performance'] = [
                 'strategy' => $strategy,
                 'execution_time' => $executionTime,
-                'timestamp' => time()
+                'timestamp' => time(),
             ];
 
             return $result;
@@ -153,12 +156,12 @@ class ModuleDelegationManager
 
             return [
                 'status' => 'error',
-                'message' => 'Strategy execution failed: ' . $e->getMessage(),
+                'message' => 'Strategy execution failed: '.$e->getMessage(),
                 'strategy' => $strategy,
                 'performance' => [
                     'execution_time' => $executionTime,
-                    'error' => true
-                ]
+                    'error' => true,
+                ],
             ];
         }
     }
@@ -171,7 +174,7 @@ class ModuleDelegationManager
         try {
             $module = Module::getInstanceByName($moduleName);
 
-            if (!$module) {
+            if (! $module) {
                 throw new \Exception("Module {$moduleName} not available");
             }
 
@@ -188,11 +191,12 @@ class ModuleDelegationManager
                 'html' => $content,
                 'strategy' => 'delegated',
                 'module' => $moduleName,
-                'message' => "Delegated to {$moduleName} module"
+                'message' => "Delegated to {$moduleName} module",
             ];
 
         } catch (\Exception $e) {
-            error_log("DelegationManager: Delegate error - " . $e->getMessage());
+            error_log('DelegationManager: Delegate error - '.$e->getMessage());
+
             return self::executeOverride($carrierId, $data, $context);
         }
     }
@@ -206,7 +210,7 @@ class ModuleDelegationManager
             $registry = CarrierRegistry::getInstance();
             $handler = $registry->getHandler($carrierId);
 
-            if (!$handler) {
+            if (! $handler) {
                 throw new \Exception("No handler found for carrier {$carrierId}");
             }
 
@@ -218,8 +222,8 @@ class ModuleDelegationManager
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'message' => 'Override strategy failed: ' . $e->getMessage(),
-                'strategy' => 'override_failed'
+                'message' => 'Override strategy failed: '.$e->getMessage(),
+                'strategy' => 'override_failed',
             ];
         }
     }
@@ -237,7 +241,7 @@ class ModuleDelegationManager
             $registry = CarrierRegistry::getInstance();
             $handler = $registry->getHandler($carrierId);
 
-            if (!$handler) {
+            if (! $handler) {
                 throw new \Exception("No handler found for carrier {$carrierId}");
             }
 
@@ -252,7 +256,8 @@ class ModuleDelegationManager
             return $result;
 
         } catch (\Exception $e) {
-            error_log("DelegationManager: Hybrid error - " . $e->getMessage());
+            error_log('DelegationManager: Hybrid error - '.$e->getMessage());
+
             return self::executeOverride($carrierId, $data, $context);
         }
     }
@@ -281,8 +286,8 @@ class ModuleDelegationManager
     {
         try {
             // Obtener configuración del carrier desde BD
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'mondialrelay_carrier_method`
-                    WHERE `id_carrier` = ' . (int)$carrierId;
+            $sql = 'SELECT * FROM `'._DB_PREFIX_.'mondialrelay_carrier_method`
+                    WHERE `id_carrier` = '.(int) $carrierId;
 
             $carrierMethod = \Db::getInstance()->getRow($sql);
 
@@ -291,17 +296,18 @@ class ModuleDelegationManager
                 'webservice_enseigne' => \Configuration::get('MONDIALRELAY_WEBSERVICE_ENSEIGNE'),
                 'webservice_key' => \Configuration::get('MONDIALRELAY_WEBSERVICE_KEY'),
                 'display_map' => \Configuration::get('MONDIALRELAY_DISPLAY_MAP'),
-                'max_weight' => \Configuration::get('MONDIALRELAY_MAX_WEIGHT')
+                'max_weight' => \Configuration::get('MONDIALRELAY_MAX_WEIGHT'),
             ];
 
             return [
                 'external_carrier_method' => $carrierMethod,
                 'external_module_config' => $moduleConfig,
-                'external_selected_relay' => self::getMondialRelaySelectedRelay($context)
+                'external_selected_relay' => self::getMondialRelaySelectedRelay($context),
             ];
 
         } catch (\Exception $e) {
-            error_log("DelegationManager: Error getting MondialRelay data - " . $e->getMessage());
+            error_log('DelegationManager: Error getting MondialRelay data - '.$e->getMessage());
+
             return [];
         }
     }
@@ -311,12 +317,12 @@ class ModuleDelegationManager
      */
     private static function getMondialRelaySelectedRelay(\Context $context): ?array
     {
-        if (!$context->cart || !$context->cart->id) {
+        if (! $context->cart || ! $context->cart->id) {
             return null;
         }
 
-        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'mondialrelay_selected_relay`
-                WHERE `id_cart` = ' . (int)$context->cart->id;
+        $sql = 'SELECT * FROM `'._DB_PREFIX_.'mondialrelay_selected_relay`
+                WHERE `id_cart` = '.(int) $context->cart->id;
 
         return \Db::getInstance()->getRow($sql) ?: null;
     }
@@ -329,7 +335,7 @@ class ModuleDelegationManager
         // Implementar según estructura del módulo InPost
         return [
             'external_inpost_config' => [],
-            'external_selected_locker' => null
+            'external_selected_locker' => null,
         ];
     }
 
@@ -340,7 +346,7 @@ class ModuleDelegationManager
     {
         $stats = [
             'strategies' => self::$moduleStrategies,
-            'carriers_by_strategy' => []
+            'carriers_by_strategy' => [],
         ];
 
         // Analizar carriers por estrategia

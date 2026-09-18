@@ -252,12 +252,12 @@ class FetchTicketEmailsJobTest extends TestCase
      * "member function get() on null" en vez de simular limpiamente "esta
      * cabecera no vino en el correo".
      */
-    private function makeIncomingImapMessage(string $messageId, string $fromEmail, string $subject, string $body): FakeImapMessage
+    private function makeIncomingImapMessage(?string $messageId, string $fromEmail, string $subject, string $body): FakeImapMessage
     {
         [$mailbox, $host] = explode('@', $fromEmail, 2);
 
         $message = new FakeImapMessage;
-        $message->message_id = new ImapAttribute('message_id', $messageId);
+        $message->message_id = new ImapAttribute('message_id', $messageId ?? '');
         $message->in_reply_to = new ImapAttribute('in_reply_to');
         $message->references = new ImapAttribute('references');
         $message->from = new ImapAttribute('from', (object) ['personal' => '', 'mailbox' => $mailbox, 'host' => $host]);
@@ -299,6 +299,32 @@ class FetchTicketEmailsJobTest extends TestCase
 
         $this->assertSame(1, TicketMail::where('message_id', $messageId)->count());
         $this->assertSame(1, Ticket::where('subject', 'Necesito ayuda')->count());
+        Event::assertDispatched(TicketCreated::class, 1);
+    }
+
+    /**
+     * Algunos servidores entregan mensajes sin Message-ID. El UID IMAP sí
+     * permanece estable mientras el mensaje siga en la misma carpeta, por lo
+     * que tampoco se debe duplicar si el flag Seen falla y vuelve a entrar en
+     * la siguiente corrida.
+     */
+    public function test_processing_the_same_message_without_message_id_uses_imap_uid_for_idempotency(): void
+    {
+        Event::fake();
+
+        $connection = $this->baseConnection(['create_tickets' => true, 'create_replies' => true]);
+        $job = $this->makeJob();
+
+        $message = $this->makeIncomingImapMessage(null, 'uid@example.com', 'Correo sin identificador', 'Mismo correo.');
+        $message->uid = 7742;
+        $job->callProcessIncomingEmail($message, $connection);
+
+        $message = $this->makeIncomingImapMessage(null, 'uid@example.com', 'Correo sin identificador', 'Mismo correo.');
+        $message->uid = 7742;
+        $job->callProcessIncomingEmail($message, $connection);
+
+        $this->assertSame(1, TicketMail::where('direction', 'inbound')->where('subject', 'Correo sin identificador')->count());
+        $this->assertSame(1, Ticket::where('subject', 'Correo sin identificador')->count());
         Event::assertDispatched(TicketCreated::class, 1);
     }
 
@@ -560,6 +586,49 @@ class FetchTicketEmailsJobTest extends TestCase
             // inmediato.
             'in_reply_to' => null,
             'references' => 'algun-otro-id@example.com, '.$mail->message_id,
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Re: Help needed',
+            'body_text' => 'More info',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => false]));
+
+        $this->assertNotNull($result);
+        $this->assertSame($ticket->id, $result->id);
+    }
+
+    public function test_find_or_create_ticket_threads_via_space_separated_references_chain(): void
+    {
+        $customer = Customer::factory()->create(['email' => 'customer@example.com']);
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        $ticket = Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+        ]);
+
+        $mail = TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'message_id' => 'first@example.com',
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'subject' => 'Help needed',
+            'body_text' => 'Please help',
+            'status' => 'received',
+            'attachments' => [],
+            'headers' => [],
+        ]);
+
+        $parsed = [
+            'message_id' => 'reply@example.com',
+            'in_reply_to' => null,
+            'references' => '<unrelated@example.com> <'.$mail->message_id.'>',
             'from' => 'customer@example.com',
             'to' => 'support@example.com',
             'cc' => null,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,10 +52,6 @@ class GetProductImageHandler implements GetProductImageHandlerInterface
      */
     private $productImageUrlFactory;
 
-    /**
-     * @param ProductImageRepository $productImageRepository
-     * @param ProductImagePathFactory $productImageUrlFactory
-     */
     public function __construct(
         ProductImageRepository $productImageRepository,
         ProductImagePathFactory $productImageUrlFactory
@@ -73,11 +70,6 @@ class GetProductImageHandler implements GetProductImageHandlerInterface
         return $this->formatImage($image);
     }
 
-    /**
-     * @param Image $image
-     *
-     * @return ProductImage
-     */
     private function formatImage(Image $image): ProductImage
     {
         $imageId = new ImageId((int) $image->id);

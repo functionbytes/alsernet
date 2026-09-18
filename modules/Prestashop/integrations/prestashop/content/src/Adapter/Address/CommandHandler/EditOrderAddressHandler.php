@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -65,11 +66,6 @@ class EditOrderAddressHandler implements EditOrderAddressHandlerInterface
      */
     private $invoiceAddressHandler;
 
-    /**
-     * @param EditCustomerAddressHandlerInterface $addressHandler
-     * @param ChangeOrderDeliveryAddressHandlerInterface $deliveryAddressHandler
-     * @param ChangeOrderInvoiceAddressHandlerInterface $invoiceAddressHandler
-     */
     public function __construct(
         EditCustomerAddressHandlerInterface $addressHandler,
         ChangeOrderDeliveryAddressHandlerInterface $deliveryAddressHandler,
@@ -115,10 +111,6 @@ class EditOrderAddressHandler implements EditOrderAddressHandlerInterface
     }
 
     /**
-     * @param EditOrderAddressCommand $orderCommand
-     *
-     * @return EditCustomerAddressCommand
-     *
      * @throws AddressConstraintException
      * @throws CountryConstraintException
      * @throws StateConstraintException
@@ -137,49 +129,49 @@ class EditOrderAddressHandler implements EditOrderAddressHandlerInterface
                 break;
         }
         $addressCommand = new EditCustomerAddressCommand($addressId);
-        if (null !== $orderCommand->getAddressAlias()) {
+        if ($orderCommand->getAddressAlias() !== null) {
             $addressCommand->setAddressAlias($orderCommand->getAddressAlias());
         }
-        if (null !== $orderCommand->getFirstName()) {
+        if ($orderCommand->getFirstName() !== null) {
             $addressCommand->setFirstName($orderCommand->getFirstName());
         }
-        if (null !== $orderCommand->getLastName()) {
+        if ($orderCommand->getLastName() !== null) {
             $addressCommand->setLastName($orderCommand->getLastName());
         }
-        if (null !== $orderCommand->getAddress()) {
+        if ($orderCommand->getAddress() !== null) {
             $addressCommand->setAddress($orderCommand->getAddress());
         }
-        if (null !== $orderCommand->getCity()) {
+        if ($orderCommand->getCity() !== null) {
             $addressCommand->setCity($orderCommand->getCity());
         }
-        if (null !== $orderCommand->getPostCode()) {
+        if ($orderCommand->getPostCode() !== null) {
             $addressCommand->setPostCode($orderCommand->getPostCode());
         }
-        if (null !== $orderCommand->getCountryId()) {
+        if ($orderCommand->getCountryId() !== null) {
             $addressCommand->setCountryId($orderCommand->getCountryId()->getValue());
         }
-        if (null !== $orderCommand->getDni()) {
+        if ($orderCommand->getDni() !== null) {
             $addressCommand->setDni($orderCommand->getDni());
         }
-        if (null !== $orderCommand->getCompany()) {
+        if ($orderCommand->getCompany() !== null) {
             $addressCommand->setCompany($orderCommand->getCompany());
         }
-        if (null !== $orderCommand->getVatNumber()) {
+        if ($orderCommand->getVatNumber() !== null) {
             $addressCommand->setVatNumber($orderCommand->getVatNumber());
         }
-        if (null !== $orderCommand->getAddress2()) {
+        if ($orderCommand->getAddress2() !== null) {
             $addressCommand->setAddress2($orderCommand->getAddress2());
         }
-        if (null !== $orderCommand->getStateId()) {
+        if ($orderCommand->getStateId() !== null) {
             $addressCommand->setStateId($orderCommand->getStateId()->getValue());
         }
-        if (null !== $orderCommand->getHomePhone()) {
+        if ($orderCommand->getHomePhone() !== null) {
             $addressCommand->setHomePhone($orderCommand->getHomePhone());
         }
-        if (null !== $orderCommand->getMobilePhone()) {
+        if ($orderCommand->getMobilePhone() !== null) {
             $addressCommand->setMobilePhone($orderCommand->getMobilePhone());
         }
-        if (null !== $orderCommand->getOther()) {
+        if ($orderCommand->getOther() !== null) {
             $addressCommand->setOther($orderCommand->getOther());
         }
 

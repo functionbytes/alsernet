@@ -2,6 +2,7 @@
 
 namespace Modules\Forms\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -12,7 +13,7 @@ use Modules\Forms\Models\FormSubmission;
 
 class NewFormSubmission implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly Form $form,

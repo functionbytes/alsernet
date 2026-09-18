@@ -10,38 +10,38 @@ class SeoPromptTemplatesSeeder extends Seeder
     public function run(): void
     {
         $base = [
-            'scope'             => 'global',
-            'output_language'   => 'es-ES',
-            'tone'              => 'commercial',
-            'seo_focus'         => true,
+            'scope' => 'global',
+            'output_language' => 'es-ES',
+            'tone' => 'commercial',
+            'seo_focus' => true,
             'enable_web_search' => true,
-            'is_default'        => false,
-            'is_active'         => true,
-            'is_template'       => false,
+            'is_default' => false,
+            'is_active' => true,
+            'is_template' => false,
             'template_category' => 'description',
-            'content_type'      => 'description',
+            'content_type' => 'description',
         ];
 
         $prompts = [
             array_merge($base, [
-                'label'           => 'v1 — HTML estándar SEO (óptica, caza, accesorios técnicos)',
-                'priority'        => 100,
-                'is_default'      => true,
+                'label' => 'v1 — HTML estándar SEO (óptica, caza, accesorios técnicos)',
+                'priority' => 100,
+                'is_default' => true,
                 'prompt_template' => $this->v1(),
             ]),
             array_merge($base, [
-                'label'           => 'v2 — HTML con variantes por modelo (pesca, calzado, ropa)',
-                'priority'        => 90,
+                'label' => 'v2 — HTML con variantes por modelo (pesca, calzado, ropa)',
+                'priority' => 90,
                 'prompt_template' => $this->v2(),
             ]),
             array_merge($base, [
-                'label'           => 'v3 — HTML completo (nombre SEO + descripción corta + descripción larga)',
-                'priority'        => 80,
+                'label' => 'v3 — HTML completo (nombre SEO + descripción corta + descripción larga)',
+                'priority' => 80,
                 'prompt_template' => $this->v3(),
             ]),
             array_merge($base, [
-                'label'           => 'v4 — HTML narrativo SEO (golf, pádel, aventura, lifestyle)',
-                'priority'        => 70,
+                'label' => 'v4 — HTML narrativo SEO (golf, pádel, aventura, lifestyle)',
+                'priority' => 70,
                 'prompt_template' => $this->v4(),
             ]),
         ];
@@ -50,7 +50,7 @@ class SeoPromptTemplatesSeeder extends Seeder
             Prompt::updateOrCreate(['label' => $data['label']], $data);
         }
 
-        $this->command->info('Prompts creados/actualizados: ' . count($prompts));
+        $this->command->info('Prompts creados/actualizados: '.count($prompts));
     }
 
     /**

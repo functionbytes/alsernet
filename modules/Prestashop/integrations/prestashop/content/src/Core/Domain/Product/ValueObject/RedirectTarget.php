@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,6 @@ class RedirectTarget
     private $value;
 
     /**
-     * @param int $value
-     *
      * @throws ProductConstraintException
      */
     public function __construct(int $value)
@@ -58,17 +57,12 @@ class RedirectTarget
         return $this->value === static::NO_TARGET;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * @param int $value
-     *
      * @throws ProductConstraintException
      */
     private function assertTargetValueIsValid(int $value): void

@@ -23,7 +23,7 @@ class ProcessEmailInboundJob implements ShouldQueue
     public array $backoff = [10, 30, 60];
 
     /**
-     * @param  array{from: string, from_name: ?string, subject: string, body: string, message_id: ?string}  $parsed
+     * @param  array{from: string, from_name: ?string, subject: string, body: string, message_id: ?string, auth_header?: ?string, auth_spf_hint?: ?string, auth_dkim_hint?: ?string}  $parsed
      */
     public function __construct(
         public readonly array $parsed,

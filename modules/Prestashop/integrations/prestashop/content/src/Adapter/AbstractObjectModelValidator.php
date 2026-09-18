@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,12 @@ use PrestaShopException;
 abstract class AbstractObjectModelValidator
 {
     /**
-     * @param ObjectModel $objectModel
-     * @param string $propertyName
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function validateObjectModelProperty(ObjectModel $objectModel, string $propertyName, string $exceptionClass, int $errorCode = 0): void
     {
         try {
-            if (true !== $objectModel->validateField($propertyName, $objectModel->{$propertyName})) {
+            if ($objectModel->validateField($propertyName, $objectModel->{$propertyName}) !== true) {
                 throw new $exceptionClass(
                     sprintf(
                         'Invalid %s %s. Got "%s"',
@@ -69,11 +65,6 @@ abstract class AbstractObjectModelValidator
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param string $propertyName
-     * @param string $exceptionClass
-     * @param int $errorCode
-     *
      * @throws CoreException
      */
     protected function validateObjectModelLocalizedProperty(ObjectModel $objectModel, string $propertyName, string $exceptionClass, int $errorCode = 0)
@@ -82,7 +73,7 @@ abstract class AbstractObjectModelValidator
 
         try {
             foreach ($localizedValues as $langId => $value) {
-                if (true !== $objectModel->validateField($propertyName, $value, $langId)) {
+                if ($objectModel->validateField($propertyName, $value, $langId) !== true) {
                     throw new $exceptionClass(
                         sprintf(
                             'Invalid %s localized property "%s" for language with id "%d"',

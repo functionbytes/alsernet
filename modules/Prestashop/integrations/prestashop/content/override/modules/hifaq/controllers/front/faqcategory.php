@@ -1,5 +1,7 @@
 <?php
 
+use JPresta\SpeedPack\JprestaUtils;
+
 /**
  * Page Cache Ultimate, Page Cache standard and Speed pack are powered by Jpresta (jpresta . com)
  *
@@ -54,7 +56,7 @@ class HiFaqFaqCategoryModuleFrontControllerOverride extends HiFaqFaqCategoryModu
             LEFT JOIN `'._DB_PREFIX_.'hifaqcategory_lang` fl ON f.id=fl.id
             LEFT JOIN `'._DB_PREFIX_.'hifaqcategory_shop` fs ON f.id=fs.id
             WHERE f.active=1 AND fl.id_lang='.(int) $id_lang.' AND fs.id_shop='.(int) Shop::getContextShopID();
-        $faqs = JPresta\SpeedPack\JprestaUtils::dbSelectRows($sql);
+        $faqs = JprestaUtils::dbSelectRows($sql);
         foreach ($faqs as $faq) {
             if (Configuration::get('PS_REWRITING_SETTINGS')) {
                 $urls[] = $context->link->getPageLink('module-hifaq-faqcategory', null, $id_lang, ['faqc_link_rewrite' => $faq['friendly_url']]);
@@ -81,6 +83,6 @@ class HiFaqFaqCategoryModuleFrontControllerOverride extends HiFaqFaqCategoryModu
             LEFT JOIN `'._DB_PREFIX_.'hifaqcategory_shop` fs ON f.id=fs.id
             WHERE f.active=1 AND fl.id_lang='.(int) Configuration::get('PS_LANG_DEFAULT').' AND fs.id_shop='.(int) Shop::getContextShopID();
 
-        return (int) JPresta\SpeedPack\JprestaUtils::dbGetValue($sql);
+        return (int) JprestaUtils::dbGetValue($sql);
     }
 }

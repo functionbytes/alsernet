@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,24 +35,19 @@ namespace PrestaShop\PrestaShop\Core\Routing;
 interface EntityLinkBuilderInterface
 {
     /**
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $entity
      * @return string
      */
     public function getViewLink($entity, array $parameters);
 
     /**
-     * @param string $entity
-     * @param array $parameters
-     *
+     * @param  string  $entity
      * @return string
      */
     public function getEditLink($entity, array $parameters);
 
     /**
-     * @param string $entity
-     *
+     * @param  string  $entity
      * @return bool
      */
     public function canBuild($entity);

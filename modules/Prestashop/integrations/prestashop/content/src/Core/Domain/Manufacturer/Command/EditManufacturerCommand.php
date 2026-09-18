@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -79,7 +80,7 @@ class EditManufacturerCommand
     private $associatedShops;
 
     /**
-     * @param int $manufacturerId
+     * @param  int  $manufacturerId
      */
     public function __construct($manufacturerId)
     {
@@ -103,8 +104,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string|null $name
-     *
+     * @param  string|null  $name
      * @return self
      */
     public function setName($name)
@@ -131,8 +131,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string[]|null $localizedDescriptions
-     *
+     * @param  string[]|null  $localizedDescriptions
      * @return self
      */
     public function setLocalizedDescriptions($localizedDescriptions)
@@ -143,8 +142,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string[]|null $localizedShortDescriptions
-     *
+     * @param  string[]|null  $localizedShortDescriptions
      * @return self
      */
     public function setLocalizedShortDescriptions($localizedShortDescriptions)
@@ -163,8 +161,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string[]|null $localizedMetaTitles
-     *
+     * @param  string[]|null  $localizedMetaTitles
      * @return self
      */
     public function setLocalizedMetaTitles($localizedMetaTitles)
@@ -183,8 +180,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string[]|null $localizedMetaDescriptions
-     *
+     * @param  string[]|null  $localizedMetaDescriptions
      * @return self
      */
     public function setLocalizedMetaDescriptions($localizedMetaDescriptions)
@@ -203,8 +199,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param string[]|null $localizedMetaKeywords
-     *
+     * @param  string[]|null  $localizedMetaKeywords
      * @return self
      */
     public function setLocalizedMetaKeywords($localizedMetaKeywords)
@@ -223,8 +218,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param bool|null $enabled
-     *
+     * @param  bool|null  $enabled
      * @return self
      */
     public function setEnabled($enabled)
@@ -243,8 +237,7 @@ class EditManufacturerCommand
     }
 
     /**
-     * @param array $associatedShops
-     *
+     * @param  array  $associatedShops
      * @return self
      */
     public function setAssociatedShops($associatedShops)

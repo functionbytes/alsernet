@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,9 +39,9 @@ class FloatParser
      */
     private $arabicToLatinNumberConverter;
 
-    public function __construct(ArabicToLatinDigitConverter $arabicToLatinDigitConverter = null)
+    public function __construct(?ArabicToLatinDigitConverter $arabicToLatinDigitConverter = null)
     {
-        $this->arabicToLatinNumberConverter = $arabicToLatinDigitConverter ?? new ArabicToLatinDigitConverter();
+        $this->arabicToLatinNumberConverter = $arabicToLatinDigitConverter ?? new ArabicToLatinDigitConverter;
     }
 
     /**
@@ -57,21 +58,20 @@ class FloatParser
      * - '123,456,00' --> 123456.00
      * - '12,345,678 --> 12345.678
      *
-     * @param string $value
+     * @param  string  $value
+     * @return float
      *
      * @throws \InvalidArgumentException if the provided value is not a string
      *                                   or if it cannot be interpreted as a number
-     *
-     * @return float
      */
     public function fromString($value)
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new \InvalidArgumentException(sprintf('Invalid argument: string expected, got %s', gettype($value)));
         }
 
         $value = trim($value);
-        if ('' === $value) {
+        if ($value === '') {
             return 0.0;
         }
 
@@ -81,13 +81,13 @@ class FloatParser
         // remove all non-digit characters
         $split = preg_split('/[^\dE-]+/', $value);
 
-        if (1 === count($split)) {
+        if (count($split) === 1) {
             // there's no decimal part
             return (float) $value;
         }
 
         foreach ($split as $part) {
-            if ('' === $part) {
+            if ($part === '') {
                 throw new \InvalidArgumentException(sprintf('Invalid argument: "%s" cannot be interpreted as a number', $value));
             }
         }
@@ -96,7 +96,7 @@ class FloatParser
         $decimal = array_pop($split);
 
         // reconstruct the number using dot as decimal separator
-        $value = implode('', $split) . '.' . $decimal;
+        $value = implode('', $split).'.'.$decimal;
 
         return (float) $value;
     }

@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Http\Responses\ApiResponse;
+use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Http\Requests\Api\StoreMessageApiRequest;
 use Modules\HelpdeskTickets\Http\Resources\MessageResource;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -44,12 +45,18 @@ class MessagesController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            $ticket->update(['last_message_at' => now()]);
+            $ticket->update([
+                'last_message_at' => now(),
+                ...(! $request->boolean('is_internal') && ! $ticket->first_response_at
+                    ? ['first_response_at' => now()]
+                    : []),
+            ]);
 
             return $item;
         });
 
         $item->load('user:id,firstname,lastname');
+        MessageAdded::dispatch($item);
 
         return ApiResponse::created(new MessageResource($item), 'Mensaje enviado correctamente.');
     }

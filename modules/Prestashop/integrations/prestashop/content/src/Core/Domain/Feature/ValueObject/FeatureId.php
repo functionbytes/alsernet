@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class FeatureId
     private $featureId;
 
     /**
-     * @param int $featureId
+     * @param  int  $featureId
      */
     public function __construct($featureId)
     {
@@ -57,13 +58,13 @@ class FeatureId
     }
 
     /**
-     * @param int $featureId
+     * @param  int  $featureId
      *
      * @throws InvalidFeatureIdException
      */
     private function assertIntegerIsGreaterThanZero($featureId)
     {
-        if (!is_numeric($featureId) || 0 > $featureId) {
+        if (! is_numeric($featureId) || $featureId < 0) {
             throw new InvalidFeatureIdException(sprintf('Invalid feature id %s supplied. Feature id must be positive integer.', var_export($featureId, true)));
         }
     }

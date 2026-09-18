@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,8 +59,7 @@ class EmployeeProvider implements UserProviderInterface
      * Fetch the Employee entity that matches the given username.
      * Cache system doesn't supports "@" character, so we rely on a sha1 expression.
      *
-     * @param string $username
-     *
+     * @param  string  $username
      * @return Employee
      *
      * @throws UsernameNotFoundException
@@ -74,7 +74,7 @@ class EmployeeProvider implements UserProviderInterface
         }
 
         if (
-            null !== $this->legacyContext->employee
+            $this->legacyContext->employee !== null
             && $this->legacyContext->employee->email === $username
         ) {
             $employee = new Employee($this->legacyContext->employee);
@@ -94,13 +94,12 @@ class EmployeeProvider implements UserProviderInterface
     /**
      * Reload an Employee and returns a fresh instance.
      *
-     * @param UserInterface $employee
      *
      * @return Employee
      */
     public function refreshUser(UserInterface $employee)
     {
-        if (!$employee instanceof Employee) {
+        if (! $employee instanceof Employee) {
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', get_class($employee)));
         }
 
@@ -110,8 +109,7 @@ class EmployeeProvider implements UserProviderInterface
     /**
      * Tests if the given class supports the security layer. Here, only Employee class is allowed to be used to authenticate.
      *
-     * @param string $class
-     *
+     * @param  string  $class
      * @return bool
      */
     public function supportsClass($class)

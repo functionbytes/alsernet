@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,7 +39,6 @@ interface EntityFieldCollectionInterface extends ArrayAccess, Countable, Iterato
     /**
      * Add an entity field to the collection.
      *
-     * @param EntityFieldInterface $entityField
      *
      * @return self
      */
@@ -54,8 +54,7 @@ interface EntityFieldCollectionInterface extends ArrayAccess, Countable, Iterato
     /**
      * Creates a collection from array of entity fields.
      *
-     * @param array $entityFields array of objects implementing EntityFieldInterface
-     *
+     * @param  array  $entityFields  array of objects implementing EntityFieldInterface
      * @return self
      */
     public static function createFromArray(array $entityFields);

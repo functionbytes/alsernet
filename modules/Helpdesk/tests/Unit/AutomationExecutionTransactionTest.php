@@ -13,7 +13,6 @@ use Modules\Helpdesk\Services\Automation\AutomationEngine;
 use Modules\Helpdesk\Services\Automation\ConditionEvaluator;
 use Modules\Helpdesk\Services\Automation\Contracts\AutomationAction;
 use Modules\Helpdesk\Services\Macros\MacroExecutorService;
-use Modules\Helpdesk\Services\Templates\LiquidRenderer;
 use Modules\Helpdesk\Tests\HelpdeskTestCase;
 
 /**
@@ -111,7 +110,7 @@ class AutomationExecutionTransactionTest extends HelpdeskTestCase
             ],
         ]);
 
-        $service = new MacroExecutorService($registry, app(LiquidRenderer::class));
+        $service = new MacroExecutorService($registry);
         $result = $service->apply($macro, $conversation);
 
         // Rollback total: ni la prioridad cambió ni hay acciones "ejecutadas".
@@ -139,7 +138,7 @@ class AutomationExecutionTransactionTest extends HelpdeskTestCase
             ],
         ]);
 
-        $service = new MacroExecutorService($registry, app(LiquidRenderer::class));
+        $service = new MacroExecutorService($registry);
         $result = $service->apply($macro, $conversation);
 
         $this->assertSame('urgent', $conversation->fresh()->priority);

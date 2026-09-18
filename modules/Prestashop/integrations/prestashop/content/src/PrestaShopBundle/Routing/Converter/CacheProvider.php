@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,9 +69,9 @@ class CacheProvider extends AbstractLegacyRouteProvider
      */
     public function getLegacyRoutes()
     {
-        if (null === $this->legacyRoutes) {
+        if ($this->legacyRoutes === null) {
             $cacheItem = $this->cache->getItem($this->cacheKeyGenerator->getCacheKey());
-            if (!$cacheItem->isHit()) {
+            if (! $cacheItem->isHit()) {
                 $this->legacyRoutes = $this->legacyRouteProvider->getLegacyRoutes();
                 $cacheItem->set($this->serializeLegacyRoutes($this->legacyRoutes));
                 $this->cache->save($cacheItem);
@@ -83,8 +84,7 @@ class CacheProvider extends AbstractLegacyRouteProvider
     }
 
     /**
-     * @param LegacyRoute[] $legacyRoutes
-     *
+     * @param  LegacyRoute[]  $legacyRoutes
      * @return string
      */
     private function serializeLegacyRoutes(array $legacyRoutes)
@@ -97,7 +97,7 @@ class CacheProvider extends AbstractLegacyRouteProvider
                 if (empty($legacyLink['action'])) {
                     $legacyLinks[] = $legacyLink['controller'];
                 } else {
-                    $legacyLinks[] = $legacyLink['controller'] . ':' . $legacyLink['action'];
+                    $legacyLinks[] = $legacyLink['controller'].':'.$legacyLink['action'];
                 }
             }
             $flattenRoutes[] = [
@@ -111,8 +111,7 @@ class CacheProvider extends AbstractLegacyRouteProvider
     }
 
     /**
-     * @param string $serializedLegacyRoutes
-     *
+     * @param  string  $serializedLegacyRoutes
      * @return LegacyRoute[]
      */
     private function unserializeLegacyRoutes($serializedLegacyRoutes)

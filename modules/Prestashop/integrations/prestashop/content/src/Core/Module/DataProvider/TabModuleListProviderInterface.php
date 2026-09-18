@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface TabModuleListProviderInterface
     /**
      * Get tab modules.
      *
-     * @param string $tabClassName
-     *
+     * @param  string  $tabClassName
      * @return array
      */
     public function getTabModules($tabClassName);

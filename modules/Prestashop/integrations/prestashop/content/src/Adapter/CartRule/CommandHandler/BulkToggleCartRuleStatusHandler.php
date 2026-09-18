@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class BulkToggleCartRuleStatusHandler extends AbstractCartRuleHandler impl
             try {
                 $cartRule = $this->getCartRule($cartRuleId);
 
-                if (!$this->toggleCartRuleStatus($cartRule, $command->getExpectedStatus())) {
+                if (! $this->toggleCartRuleStatus($cartRule, $command->getExpectedStatus())) {
                     $errors[] = $cartRuleId->getValue();
                 }
             } catch (CartRuleException $e) {
@@ -58,7 +59,7 @@ final class BulkToggleCartRuleStatusHandler extends AbstractCartRuleHandler impl
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new BulkToggleCartRuleException($errors, 'Failed to toggle all of selected cart rules');
         }
     }

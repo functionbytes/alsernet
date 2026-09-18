@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,10 +47,8 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
     private $employeeIdLang;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $employeeIdLang
+     * @param  string  $dbPrefix
+     * @param  int  $employeeIdLang
      */
     public function __construct(
         Connection $connection,
@@ -71,13 +70,11 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
         $qb = $this->getQueryBuilder($searchCriteria->getFilters());
 
         $qb
-            ->select('t.`id_tax`, tl.`name`, t.`rate`, t.`active`')
-        ;
+            ->select('t.`id_tax`, tl.`name`, t.`rate`, t.`active`');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -88,8 +85,7 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria)
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT t.`id_tax`)')
-        ;
+            ->select('COUNT(DISTINCT t.`id_tax`)');
 
         return $qb;
     }
@@ -97,7 +93,6 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Gets query builder with the common sql used for displaying webservice list and applying filter actions.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -105,10 +100,10 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'tax', 't')
+            ->from($this->dbPrefix.'tax', 't')
             ->leftJoin(
                 't',
-                $this->dbPrefix . 'tax_lang',
+                $this->dbPrefix.'tax_lang',
                 'tl',
                 't.`id_tax` = tl.`id_tax`'
             );
@@ -131,19 +126,19 @@ final class TaxQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap)) {
                 continue;
             }
 
-            if ('active' === $filterName || 'id_tax' === $filterName) {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' = :' . $filterName);
+            if ($filterName === 'active' || $filterName === 'id_tax') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' = :'.$filterName);
                 $qb->setParameter($filterName, $value);
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersMap[$filterName] . ' LIKE :' . $filterName)
-                ->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere($allowedFiltersMap[$filterName].' LIKE :'.$filterName)
+                ->setParameter($filterName, '%'.$value.'%');
         }
     }
 }

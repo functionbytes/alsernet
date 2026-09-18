@@ -2,15 +2,21 @@
 
 return [
     /*
-     * AI / autonomous agent feature gates. Definidos aqui para que config()
-     * los resuelva siempre — incluso con config:cache (env() devuelve null cacheado).
+     * AI feature gate. Definido aqui para que config() lo resuelva siempre
+     * — incluso con config:cache (env() devuelve null cacheado).
+     *
+     * (agent_enabled/HELPDESK_AI_AGENT_ENABLED, el gate del agente autónomo
+     * de conversación, se retiró el 8-sep-2026 junto con AiAgentService/
+     * HandleWithAiAgent/Models\AiAgent — la implementación real de "agente
+     * de IA" vive en el módulo HelpdeskAgents desde antes; este era código
+     * legacy sin UI ni tests, apagado por defecto y sin caller que lo
+     * activara.)
      */
     'ai' => [
         // Fail-closed: la IA solo se activa si HELPDESK_AI_ENABLED=true está
         // presente en el entorno (consistente con el resto de flags). En un
         // despliegue nuevo la IA queda OFF hasta habilitarla explícitamente.
         'enabled' => env('HELPDESK_AI_ENABLED', false),
-        'agent_enabled' => env('HELPDESK_AI_AGENT_ENABLED', false),
     ],
 
     /*
@@ -132,8 +138,15 @@ return [
     ],
 
     'attachments' => [
-        'max_size' => 10240,
-        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'],
+        'max_size' => 25 * 1024,
+        // Debe reflejar 1:1 los mimes de 'allowed_mime_types' de abajo (image/webp,
+        // text/plain, text/csv ya estaban declarados ahí pero faltaban aquí, por lo
+        // que el composer los ofrecia en su UI y la validacion 'mimes:' los rechazaba
+        // igual con "Tipo de archivo no permitido"). Mismo problema con
+        // ppt/pptx/mp3/ogg/wav/m4a/webm (QA 18-sep-2026): el composer los anuncia
+        // en "Documento"/"Subir audio", y "Grabar audio" genera un .webm, pero
+        // ninguno estaba en esta lista por defecto.
+        'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv', 'zip', 'mp3', 'ogg', 'wav', 'm4a', 'webm'],
         'allowed_mime_types' => [
             'image/jpeg',
             'image/png',
@@ -144,16 +157,34 @@ return [
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'application/zip',
             'application/x-rar-compressed',
             'application/x-7z-compressed',
             'text/plain',
             'text/csv',
+            'audio/mpeg',
+            'audio/ogg',
+            'audio/wav',
+            'audio/x-wav',
+            'audio/mp4',
+            'audio/x-m4a',
+            'video/webm',
         ],
         'disk' => env('HELPDESK_ATTACHMENTS_DISK', 'public'),
         'path' => 'helpdesk/attachments',
         // Tope de tamaño al descargar media entrante (anti-OOM del worker). 25 MB.
         'max_download_bytes' => (int) env('HELPDESK_ATTACHMENTS_MAX_DOWNLOAD_BYTES', 26214400),
+        // Escaneo síncrono antes de persistir subidas del panel/portal. Se
+        // mantiene apagado por defecto para no bloquear instalaciones que no
+        // tengan ClamAV; cuando se activa, la ausencia del binario bloquea la
+        // subida (fail closed).
+        'virus_scan' => [
+            'enabled' => env('HELPDESK_TICKETS_VIRUS_SCAN_ENABLED', false),
+            'clamscan_path' => env('HELPDESK_TICKETS_CLAMSCAN_PATH', 'clamscan'),
+            'timeout' => (int) env('HELPDESK_TICKETS_VIRUS_SCAN_TIMEOUT', 300),
+        ],
     ],
 
     'cleanup' => [
@@ -187,6 +218,9 @@ return [
         'enabled' => env('HELPDESK_PORTAL_ENABLED', true),
         'token_expiry_hours' => env('HELPDESK_PORTAL_TOKEN_EXPIRY', 24),
         'max_tickets_per_page' => env('HELPDESK_PORTAL_PAGE_SIZE', 10),
+        // Idle timeout for the session created by the customer magic link.
+        // The timestamp is refreshed by PortalAuth on every protected request.
+        'session_idle_minutes' => env('HELPDESK_PORTAL_SESSION_IDLE_MINUTES', 120),
     ],
 
     'imap' => [
@@ -224,6 +258,22 @@ return [
         'mailgun_signing_key' => env('HELPDESK_MAILGUN_WEBHOOK_SIGNING_KEY', env('MAILGUN_WEBHOOK_SIGNING_KEY', '')),
         'sendgrid_webhook_secret' => env('HELPDESK_SENDGRID_WEBHOOK_SECRET', ''),
         'postmark_webhook_secret' => env('HELPDESK_POSTMARK_WEBHOOK_SECRET', ''),
+
+        /*
+         | EmailInboundService creaba la conversación con Conversation::create()
+         | a secas, sin emitir ConversationCreated. Consecuencia: los seis
+         | oyentes de ese evento —vínculo ERP, workflows, saludo, respuesta
+         | fuera de horario, puente de livechat y el broadcast que la pinta en
+         | tiempo real— quedaban inertes para todo el canal de correo.
+         |
+         | El vínculo con el ERP ya no depende de esto (se despacha directo,
+         | igual que hace HelpdeskTickets). Este interruptor gobierna solo la
+         | emisión del evento, y viene apagado a propósito: encenderlo hace que
+         | cada correo entrante pueda recibir un saludo automático y una
+         | respuesta fuera de horario que hoy no recibe. Antes de activarlo,
+         | revisa qué plantillas de bienvenida y qué horario hay configurados.
+         */
+        'dispatch_conversation_created' => env('HELPDESK_EMAIL_DISPATCH_CONVERSATION_CREATED', false),
     ],
 
     'escalation' => [

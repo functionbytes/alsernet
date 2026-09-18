@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,6 @@ class ProductPackUpdater
      */
     private $productPackRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param ProductPackRepository $productPackRepository
-     */
     public function __construct(
         ProductRepository $productRepository,
         ProductPackRepository $productPackRepository
@@ -69,8 +66,7 @@ class ProductPackUpdater
     }
 
     /**
-     * @param PackId $packId
-     * @param QuantifiedProduct[] $productsForPacking
+     * @param  QuantifiedProduct[]  $productsForPacking
      *
      * @throws CoreException
      * @throws ProductPackConstraintException
@@ -90,7 +86,7 @@ class ProductPackUpdater
 
         $this->productPackRepository->removeAllProductsFromPack($packId);
 
-        //reset cache_default_attribute
+        // reset cache_default_attribute
         $pack->setDefaultAttribute(CombinationId::NO_COMBINATION);
 
         try {
@@ -103,8 +99,6 @@ class ProductPackUpdater
     }
 
     /**
-     * @param int $productId
-     *
      * @throws CoreException
      * @throws ProductPackConstraintException
      */

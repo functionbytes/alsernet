@@ -14,7 +14,7 @@ class TicketEmailBlacklistControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $manager;
 
@@ -181,7 +181,7 @@ class TicketEmailBlacklistControllerTest extends TestCase
                 'redirect_ticket_id' => 999999,
             ]);
 
-        $response->assertRedirect(route('manager.helpdesk.tickets.show-full', 999999));
+        $response->assertRedirect(route('manager.helpdesk.tickets.show', 999999));
         $response->assertSessionHas('success');
     }
 

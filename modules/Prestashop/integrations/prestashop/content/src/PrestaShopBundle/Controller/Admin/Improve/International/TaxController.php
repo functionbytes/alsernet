@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,9 +57,6 @@ class TaxController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     * @param TaxFilters $filters
-     *
      * @return Response
      */
     public function indexAction(Request $request, TaxFilters $filters)
@@ -84,9 +82,8 @@ class TaxController extends FrameworkBundleAdminController
      *     "is_granted(['update', 'create', 'delete'], request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index"
      * )
-     * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
-     * @param Request $request
+     * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
      * @return RedirectResponse
      */
@@ -119,8 +116,6 @@ class TaxController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
-     * @param Request $request
-     *
      * @return RedirectResponse
      */
     public function searchAction(Request $request)
@@ -146,8 +141,6 @@ class TaxController extends FrameworkBundleAdminController
      *     redirectRoute="admin_taxes_index",
      * )
      *
-     * @param Request $request
-     *
      * @return Response
      */
     public function createAction(Request $request)
@@ -169,7 +162,7 @@ class TaxController extends FrameworkBundleAdminController
         try {
             $taxForm->handleRequest($request);
             $result = $taxFormHandler->handle($taxForm);
-            if (null !== $result->getIdentifiableObjectId()) {
+            if ($result->getIdentifiableObjectId() !== null) {
                 $this->addFlash(
                     'success',
                     $this->trans('Successful creation.', 'Admin.Notifications.Success')
@@ -201,9 +194,7 @@ class TaxController extends FrameworkBundleAdminController
      *     redirectRoute="admin_taxes_index",
      * )
      *
-     * @param Request $request
-     * @param int $taxId
-     *
+     * @param  int  $taxId
      * @return Response
      */
     public function editAction(Request $request, $taxId)
@@ -257,10 +248,10 @@ class TaxController extends FrameworkBundleAdminController
      *     "is_granted('delete', request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index",
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
-     * @param int $taxId
-     *
+     * @param  int  $taxId
      * @return RedirectResponse
      */
     public function deleteAction($taxId)
@@ -280,12 +271,13 @@ class TaxController extends FrameworkBundleAdminController
     /**
      * Toggles status.
      *
-     * @param int $taxId
+     * @param  int  $taxId
      *
      * @AdminSecurity(
      *     "is_granted('update', request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index",
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
      * @return RedirectResponse
@@ -295,7 +287,7 @@ class TaxController extends FrameworkBundleAdminController
         try {
             /** @var EditableTax $editableTax */
             $editableTax = $this->getQueryBus()->handle(new GetTaxForEditing((int) $taxId));
-            $this->getCommandBus()->handle(new ToggleTaxStatusCommand((int) $taxId, !$editableTax->isActive()));
+            $this->getCommandBus()->handle(new ToggleTaxStatusCommand((int) $taxId, ! $editableTax->isActive()));
             $this->addFlash(
                 'success',
                 $this->trans('The status has been successfully updated.', 'Admin.Notifications.Success')
@@ -310,12 +302,12 @@ class TaxController extends FrameworkBundleAdminController
     /**
      * Enables taxes status on bulk action.
      *
-     * @param Request $request
      *
      * @AdminSecurity(
      *     "is_granted('update', request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index",
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
      * @return RedirectResponse
@@ -339,12 +331,12 @@ class TaxController extends FrameworkBundleAdminController
     /**
      * Disables taxes status on bulk action.
      *
-     * @param Request $request
      *
      * @AdminSecurity(
      *     "is_granted('update', request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index",
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
      * @return RedirectResponse
@@ -368,12 +360,12 @@ class TaxController extends FrameworkBundleAdminController
     /**
      * Delete taxes on bulk action.
      *
-     * @param Request $request
      *
      * @AdminSecurity(
      *     "is_granted('delete', request.get('_legacy_controller'))",
      *     redirectRoute="admin_taxes_index",
      * )
+     *
      * @DemoRestricted(redirectRoute="admin_taxes_index")
      *
      * @return RedirectResponse
@@ -394,9 +386,6 @@ class TaxController extends FrameworkBundleAdminController
         return $this->redirectToRoute('admin_taxes_index');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getTaxOptionsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.tax_options.form_handler');

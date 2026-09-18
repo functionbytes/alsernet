@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,7 @@ use Symfony\Component\Security\Core\Role\RoleInterface;
 class DynamicRoleHierarchy implements RoleHierarchyInterface
 {
     /**
-     * @param array<RoleInterface> $roles An array of directly assigned roles
-     *
+     * @param  array<RoleInterface>  $roles  An array of directly assigned roles
      * @return RoleInterface[] An array of all reachable roles
      */
     public function getReachableRoles(array $roles)

@@ -4,14 +4,12 @@ namespace AlsernetShopping;
 
 use Cart;
 use Context;
+use Customer;
 use Db;
 use DbQuery;
-use Customer;
-use Configuration;
 use Tools;
-use Validate;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -37,30 +35,43 @@ class AbandonedCartManager
 
     // Constantes para tipos de abandono
     const STAGE_CART = 'cart';
+
     const STAGE_SHIPPING = 'shipping';
+
     const STAGE_PAYMENT = 'payment';
+
     const STAGE_REVIEW = 'review';
 
     // Constantes para tipos de trigger
     const TRIGGER_TIME = 'time_based';
+
     const TRIGGER_EXIT = 'exit_intent';
+
     const TRIGGER_SCROLL = 'scroll_based';
+
     const TRIGGER_BEHAVIOR = 'behavior_based';
 
     // Constantes para tipos de modal
     const MODAL_SIMPLE = 'simple_reminder';
+
     const MODAL_DISCOUNT = 'discount_offer';
+
     const MODAL_URGENCY = 'urgency_alert';
+
     const MODAL_RECOMMENDATIONS = 'related_products';
+
     const MODAL_RECOVERY = 'session_recovery';
 
     // Constantes para segmentos de usuario
     const SEGMENT_NEW = 'new_visitor';
+
     const SEGMENT_RETURNING = 'returning_customer';
+
     const SEGMENT_HIGH_VALUE = 'high_value';
+
     const SEGMENT_MOBILE = 'mobile_user';
 
-    public function __construct(Context $context = null)
+    public function __construct(?Context $context = null)
     {
         $this->context = $context ?: Context::getContext();
         $this->loadConfiguration();
@@ -75,12 +86,13 @@ class AbandonedCartManager
 
         if (isset(self::$cache[$cacheKey])) {
             $this->config = self::$cache[$cacheKey];
+
             return;
         }
 
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('config_key, config_value, config_type')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandonment_config')
+            ->from(_DB_PREFIX_.'alsernetshopping_abandonment_config')
             ->where('is_active = 1');
 
         $results = Db::getInstance()->executeS($sql);
@@ -116,7 +128,7 @@ class AbandonedCartManager
      */
     public function isTriggerEnabled(string $triggerType): bool
     {
-        if (!$this->isSystemActive()) {
+        if (! $this->isSystemActive()) {
             return false;
         }
 
@@ -124,10 +136,11 @@ class AbandonedCartManager
             self::TRIGGER_EXIT => 'exit_intent_enabled',
             self::TRIGGER_TIME => 'time_based_triggers_enabled',
             self::TRIGGER_SCROLL => 'scroll_triggers_enabled',
-            self::TRIGGER_BEHAVIOR => 'behavior_triggers_enabled'
+            self::TRIGGER_BEHAVIOR => 'behavior_triggers_enabled',
         ];
 
         $configKey = $triggerConfigs[$triggerType] ?? null;
+
         return $configKey ? ($this->config[$configKey] ?? false) : false;
     }
 
@@ -138,11 +151,11 @@ class AbandonedCartManager
     {
         switch ($type) {
             case 'boolean':
-                return (bool)$value;
+                return (bool) $value;
             case 'integer':
-                return (int)$value;
+                return (int) $value;
             case 'decimal':
-                return (float)$value;
+                return (float) $value;
             case 'json':
                 return json_decode($value, true) ?: [];
             default:
@@ -157,11 +170,11 @@ class AbandonedCartManager
     {
         try {
             // Verificar si el sistema está activo
-            if (!$this->isSystemActive()) {
+            if (! $this->isSystemActive()) {
                 return ['status' => 'disabled', 'reason' => 'system_inactive'];
             }
 
-            if (!$this->config['abandonment_enabled']) {
+            if (! $this->config['abandonment_enabled']) {
                 return ['status' => 'disabled', 'reason' => 'abandonment_disabled'];
             }
 
@@ -184,11 +197,12 @@ class AbandonedCartManager
                 'status' => 'success',
                 'abandonment_id' => $result['id'],
                 'triggers_available' => $this->getAvailableTriggers($result['id']),
-                'user_segment' => $this->determineUserSegment($customerData, $cartData)
+                'user_segment' => $this->determineUserSegment($customerData, $cartData),
             ];
 
         } catch (\Exception $e) {
-            error_log('AbandonedCartManager Error: ' . $e->getMessage());
+            error_log('AbandonedCartManager Error: '.$e->getMessage());
+
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
@@ -213,10 +227,10 @@ class AbandonedCartManager
             'utm_source' => Tools::getValue('utm_source'),
             'utm_campaign' => Tools::getValue('utm_campaign'),
             'date_add' => date('Y-m-d H:i:s'),
-            'date_upd' => date('Y-m-d H:i:s')
+            'date_upd' => date('Y-m-d H:i:s'),
         ];
 
-        $result = Db::getInstance()->insert(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts', $abandonmentData);
+        $result = Db::getInstance()->insert(_DB_PREFIX_.'alsernetshopping_abandoned_carts', $abandonmentData);
         $abandonmentId = Db::getInstance()->Insert_ID();
 
         // Crear registro de comportamiento asociado
@@ -250,10 +264,10 @@ class AbandonedCartManager
             'referrer_url' => $behaviorData['referrer'] ?? $_SERVER['HTTP_REFERER'] ?? '',
             'landing_page' => $behaviorData['landing_page'] ?? $_SERVER['REQUEST_URI'] ?? '',
             'date_add' => date('Y-m-d H:i:s'),
-            'date_upd' => date('Y-m-d H:i:s')
+            'date_upd' => date('Y-m-d H:i:s'),
         ];
 
-        return Db::getInstance()->insert(_DB_PREFIX_ . 'alsernetshopping_user_behavior', $behaviorRecord);
+        return Db::getInstance()->insert(_DB_PREFIX_.'alsernetshopping_user_behavior', $behaviorRecord);
     }
 
     /**
@@ -262,7 +276,7 @@ class AbandonedCartManager
     public function getAvailableTriggers(int $abandonmentId): array
     {
         $abandonment = $this->getAbandonmentById($abandonmentId);
-        if (!$abandonment) {
+        if (! $abandonment) {
             return [];
         }
 
@@ -273,7 +287,7 @@ class AbandonedCartManager
             $triggers[] = [
                 'type' => self::TRIGGER_EXIT,
                 'delay' => 2, // segundos
-                'conditions' => ['mouse_movement' => 'upward', 'speed' => 'fast']
+                'conditions' => ['mouse_movement' => 'upward', 'speed' => 'fast'],
             ];
         }
 
@@ -285,7 +299,7 @@ class AbandonedCartManager
             $triggers[] = [
                 'type' => self::TRIGGER_TIME,
                 'delay' => $nextInterval * 60, // convertir a segundos
-                'conditions' => ['inactivity' => $this->config['inactivity_threshold']]
+                'conditions' => ['inactivity' => $this->config['inactivity_threshold']],
             ];
         }
 
@@ -293,7 +307,7 @@ class AbandonedCartManager
         $triggers[] = [
             'type' => self::TRIGGER_SCROLL,
             'delay' => 0,
-            'conditions' => ['scroll_percentage' => 80, 'min_time' => 60]
+            'conditions' => ['scroll_percentage' => 80, 'min_time' => 60],
         ];
 
         return $triggers;
@@ -343,7 +357,7 @@ class AbandonedCartManager
             'variant' => $this->getModalVariant($modalType, $userSegment),
             'discount' => $discount,
             'urgency' => $urgency,
-            'personalization' => $this->getPersonalizationData($abandonment, $behavior, $userSegment)
+            'personalization' => $this->getPersonalizationData($abandonment, $behavior, $userSegment),
         ];
     }
 
@@ -355,10 +369,11 @@ class AbandonedCartManager
         $discounts = [
             0 => $this->config['discount_first_reminder'],
             1 => $this->config['discount_second_reminder'],
-            2 => $this->config['discount_final_reminder']
+            2 => $this->config['discount_final_reminder'],
         ];
 
         $discount = $discounts[$attempts] ?? $this->config['discount_final_reminder'];
+
         return min($discount, $this->config['max_discount_percentage']);
     }
 
@@ -380,7 +395,7 @@ class AbandonedCartManager
             'time_to_interaction' => $data['time_to_interaction'] ?? null,
             'user_segment' => $data['user_segment'] ?? null,
             'conversion_value' => $data['conversion_value'] ?? null,
-            'date_add' => date('Y-m-d H:i:s')
+            'date_add' => date('Y-m-d H:i:s'),
         ];
 
         // Actualizar contador de intentos de recuperación
@@ -393,7 +408,7 @@ class AbandonedCartManager
             $this->markAsRecovered($abandonmentId, 'modal_interaction');
         }
 
-        return Db::getInstance()->insert(_DB_PREFIX_ . 'alsernetshopping_modal_interactions', $interactionData);
+        return Db::getInstance()->insert(_DB_PREFIX_.'alsernetshopping_modal_interactions', $interactionData);
     }
 
     /**
@@ -405,20 +420,20 @@ class AbandonedCartManager
             'is_recovered' => 1,
             'recovery_timestamp' => date('Y-m-d H:i:s'),
             'recovery_method' => $method,
-            'date_upd' => date('Y-m-d H:i:s')
+            'date_upd' => date('Y-m-d H:i:s'),
         ];
 
         return Db::getInstance()->update(
-            _DB_PREFIX_ . 'alsernetshopping_abandoned_carts',
+            _DB_PREFIX_.'alsernetshopping_abandoned_carts',
             $updateData,
-            'id_abandoned_cart = ' . (int)$abandonmentId
+            'id_abandoned_cart = '.(int) $abandonmentId
         );
     }
 
     /**
      * Obtener analytics consolidados
      */
-    public function getAnalytics(string $dateFrom = null, string $dateTo = null): array
+    public function getAnalytics(?string $dateFrom = null, ?string $dateTo = null): array
     {
         $dateFrom = $dateFrom ?: date('Y-m-d', strtotime('-30 days'));
         $dateTo = $dateTo ?: date('Y-m-d');
@@ -429,7 +444,7 @@ class AbandonedCartManager
             'modal_performance' => $this->getModalPerformance($dateFrom, $dateTo),
             'user_segments' => $this->getUserSegmentAnalytics($dateFrom, $dateTo),
             'device_breakdown' => $this->getDeviceBreakdown($dateFrom, $dateTo),
-            'timing_analysis' => $this->getTimingAnalysis($dateFrom, $dateTo)
+            'timing_analysis' => $this->getTimingAnalysis($dateFrom, $dateTo),
         ];
     }
 
@@ -441,7 +456,7 @@ class AbandonedCartManager
             'id_customer' => $this->context->customer->id ?? null,
             'id_guest' => $this->context->cookie->id_guest ?? null,
             'is_logged_in' => $this->context->customer->isLogged(),
-            'previous_orders' => $this->context->customer->id ? Customer::getCustomerNbOrders($this->context->customer->id) : 0
+            'previous_orders' => $this->context->customer->id ? Customer::getCustomerNbOrders($this->context->customer->id) : 0,
         ];
     }
 
@@ -461,7 +476,7 @@ class AbandonedCartManager
             'exit_intent' => false,
             'mobile_data' => $this->getMobileInteractionData(),
             'referrer' => $_SERVER['HTTP_REFERER'] ?? '',
-            'landing_page' => $_SESSION['landing_page'] ?? $_SERVER['REQUEST_URI']
+            'landing_page' => $_SESSION['landing_page'] ?? $_SERVER['REQUEST_URI'],
         ];
     }
 
@@ -490,13 +505,13 @@ class AbandonedCartManager
             'products_count' => count($products),
             'categories' => array_unique($categories),
             'price_range' => $priceRange,
-            'inventaries' => $products
+            'inventaries' => $products,
         ];
     }
 
     private function determineUserSegment(array $customerData, array $cartData): string
     {
-        if (!$customerData['is_logged_in']) {
+        if (! $customerData['is_logged_in']) {
             return self::SEGMENT_NEW;
         }
 
@@ -532,7 +547,7 @@ class AbandonedCartManager
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
             'language' => $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '',
             'screen_resolution' => $_SESSION['screen_resolution'] ?? null,
-            'timezone' => $_SESSION['timezone'] ?? null
+            'timezone' => $_SESSION['timezone'] ?? null,
         ];
     }
 
@@ -541,7 +556,7 @@ class AbandonedCartManager
         return [
             'touch_interactions' => $_SESSION['touch_count'] ?? 0,
             'swipe_actions' => $_SESSION['swipe_count'] ?? 0,
-            'orientation_changes' => $_SESSION['orientation_changes'] ?? 0
+            'orientation_changes' => $_SESSION['orientation_changes'] ?? 0,
         ];
     }
 
@@ -549,14 +564,15 @@ class AbandonedCartManager
 
     private function getExistingAbandonmentId(int $cartId): ?int
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('id_abandoned_cart')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts')
-            ->where('id_cart = ' . (int)$cartId)
+            ->from(_DB_PREFIX_.'alsernetshopping_abandoned_carts')
+            ->where('id_cart = '.(int) $cartId)
             ->where('is_recovered = 0');
 
         $result = Db::getInstance()->getValue($sql);
-        return $result ? (int)$result : null;
+
+        return $result ? (int) $result : null;
     }
 
     private function updateAbandonment(int $abandonmentId, string $stage, array $behaviorData): array
@@ -564,13 +580,13 @@ class AbandonedCartManager
         $updateData = [
             'abandonment_stage' => $stage,
             'last_activity' => date('Y-m-d H:i:s'),
-            'date_upd' => date('Y-m-d H:i:s')
+            'date_upd' => date('Y-m-d H:i:s'),
         ];
 
         $result = Db::getInstance()->update(
-            _DB_PREFIX_ . 'alsernetshopping_abandoned_carts',
+            _DB_PREFIX_.'alsernetshopping_abandoned_carts',
             $updateData,
-            'id_abandoned_cart = ' . (int)$abandonmentId
+            'id_abandoned_cart = '.(int) $abandonmentId
         );
 
         return ['id' => $abandonmentId, 'updated' => $result];
@@ -579,42 +595,42 @@ class AbandonedCartManager
     private function incrementRecoveryAttempt(int $abandonmentId): bool
     {
         return Db::getInstance()->execute('
-            UPDATE ' . _DB_PREFIX_ . 'alsernetshopping_abandoned_carts
+            UPDATE '._DB_PREFIX_.'alsernetshopping_abandoned_carts
             SET recovery_attempts = recovery_attempts + 1,
                 date_upd = NOW()
-            WHERE id_abandoned_cart = ' . (int)$abandonmentId
+            WHERE id_abandoned_cart = '.(int) $abandonmentId
         );
     }
 
     private function getAbandonmentById(int $abandonmentId): ?array
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('*')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts')
-            ->where('id_abandoned_cart = ' . (int)$abandonmentId);
+            ->from(_DB_PREFIX_.'alsernetshopping_abandoned_carts')
+            ->where('id_abandoned_cart = '.(int) $abandonmentId);
 
         return Db::getInstance()->getRow($sql) ?: null;
     }
 
     private function getBehaviorByAbandonmentId(int $abandonmentId): ?array
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('*')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_user_behavior')
-            ->where('id_abandoned_cart = ' . (int)$abandonmentId);
+            ->from(_DB_PREFIX_.'alsernetshopping_user_behavior')
+            ->where('id_abandoned_cart = '.(int) $abandonmentId);
 
         return Db::getInstance()->getRow($sql) ?: null;
     }
 
     private function getCustomerDataById(?int $customerId): array
     {
-        if (!$customerId) {
+        if (! $customerId) {
             return ['is_logged_in' => false, 'previous_orders' => 0];
         }
 
         return [
             'is_logged_in' => true,
-            'previous_orders' => Customer::getCustomerNbOrders($customerId)
+            'previous_orders' => Customer::getCustomerNbOrders($customerId),
         ];
     }
 
@@ -631,10 +647,11 @@ class AbandonedCartManager
             self::MODAL_DISCOUNT => ['percentage', 'fixed_amount', 'progressive'],
             self::MODAL_URGENCY => ['stock_low', 'time_limited', 'popularity'],
             self::MODAL_RECOMMENDATIONS => ['similar', 'complementary', 'trending'],
-            self::MODAL_RECOVERY => ['welcome_back', 'price_drop', 'saved_items']
+            self::MODAL_RECOVERY => ['welcome_back', 'price_drop', 'saved_items'],
         ];
 
         $available = $variants[$modalType] ?? ['basic'];
+
         return $available[0]; // Por ahora retorna el primero, implementar lógica más sofisticada
     }
 
@@ -646,15 +663,38 @@ class AbandonedCartManager
             'products_count' => $abandonment['products_count'],
             'session_time' => $behavior['total_session_time'] ?? 0,
             'device_type' => $abandonment['device_type'],
-            'previous_attempts' => $abandonment['recovery_attempts']
+            'previous_attempts' => $abandonment['recovery_attempts'],
         ];
     }
 
     // Métodos de analytics (implementar según necesidades específicas)
-    private function getOverviewMetrics(string $dateFrom, string $dateTo): array { return []; }
-    private function getConversionFunnel(string $dateFrom, string $dateTo): array { return []; }
-    private function getModalPerformance(string $dateFrom, string $dateTo): array { return []; }
-    private function getUserSegmentAnalytics(string $dateFrom, string $dateTo): array { return []; }
-    private function getDeviceBreakdown(string $dateFrom, string $dateTo): array { return []; }
-    private function getTimingAnalysis(string $dateFrom, string $dateTo): array { return []; }
+    private function getOverviewMetrics(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
+
+    private function getConversionFunnel(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
+
+    private function getModalPerformance(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
+
+    private function getUserSegmentAnalytics(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
+
+    private function getDeviceBreakdown(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
+
+    private function getTimingAnalysis(string $dateFrom, string $dateTo): array
+    {
+        return [];
+    }
 }

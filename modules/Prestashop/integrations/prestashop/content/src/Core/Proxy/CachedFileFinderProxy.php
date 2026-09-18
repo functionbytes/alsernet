@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ final class CachedFileFinderProxy implements FileFinderInterface
     private $filesCache;
 
     /**
-     * @param FileFinderInterface $delegate instance of file finder
+     * @param  FileFinderInterface  $delegate  instance of file finder
      */
     public function __construct(FileFinderInterface $delegate)
     {
@@ -56,7 +57,7 @@ final class CachedFileFinderProxy implements FileFinderInterface
      */
     public function find()
     {
-        if (null === $this->filesCache) {
+        if ($this->filesCache === null) {
             $this->filesCache = $this->delegate->find();
         }
 

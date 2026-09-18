@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,11 @@ use Shop;
 class HookRepository
 {
     private $hookInfo;
+
     private $shop;
+
     private $db;
+
     private $db_prefix;
 
     public function __construct(
@@ -122,10 +126,10 @@ class HookRepository
     {
         foreach ($hooks as $hook_name => $module_names) {
             $id_hook = $this->getIdByName($hook_name);
-            if (!$id_hook) {
+            if (! $id_hook) {
                 $id_hook = $this->createHook($hook_name);
             }
-            if (!$id_hook) {
+            if (! $id_hook) {
                 throw new Exception(sprintf('Could not create hook `%1$s`.', $hook_name));
             }
 
@@ -141,9 +145,9 @@ class HookRepository
                     $extra_data = [];
                 }
 
-                ++$position;
+                $position++;
                 $id_module = $this->getIdModule($module_name);
-                if (!$id_module) {
+                if (! $id_module) {
                     continue;
                 }
 
@@ -156,7 +160,7 @@ class HookRepository
 
                 $this->db->insert('hook_module', $row);
 
-                if (!empty($extra_data['except_pages'])) {
+                if (! empty($extra_data['except_pages'])) {
                     $this->setModuleHookExceptions(
                         $id_module,
                         $id_hook,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,13 +61,6 @@ class CombinationPrices
      */
     private $wholesalePrice;
 
-    /**
-     * @param DecimalNumber $ecoTax
-     * @param DecimalNumber $impactOnPrice
-     * @param DecimalNumber $impactOnPriceTaxIncluded
-     * @param DecimalNumber $impactOnUnitPrice
-     * @param DecimalNumber $wholesalePrice
-     */
     public function __construct(
         DecimalNumber $ecoTax,
         DecimalNumber $impactOnPrice,
@@ -81,41 +75,26 @@ class CombinationPrices
         $this->wholesalePrice = $wholesalePrice;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getEcoTax(): DecimalNumber
     {
         return $this->ecoTax;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getImpactOnPrice(): DecimalNumber
     {
         return $this->impactOnPrice;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getImpactOnPriceTaxIncluded(): DecimalNumber
     {
         return $this->impactOnPriceTaxIncluded;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getImpactOnUnitPrice(): DecimalNumber
     {
         return $this->impactOnUnitPrice;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getWholesalePrice(): DecimalNumber
     {
         return $this->wholesalePrice;

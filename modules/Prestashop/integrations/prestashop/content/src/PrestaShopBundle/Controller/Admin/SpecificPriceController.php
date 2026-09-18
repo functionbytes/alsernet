@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,13 +49,12 @@ class SpecificPriceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['read'], 'ADMINPRODUCTS_')")
      *
-     * @param string|int $idProduct The product ID
-     *
+     * @param  string|int  $idProduct  The product ID
      * @return JsonResponse
      */
     public function listAction($idProduct)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
         $contextAdapter = $this->get('prestashop.adapter.legacy.context');
         $locales = $contextAdapter->getLanguages();
@@ -66,9 +66,9 @@ class SpecificPriceController extends FrameworkBundleAdminController
         $currencies = $this->get('prestashop.adapter.data_provider.currency')->getCurrencies();
         $groups = $this->get('prestashop.adapter.data_provider.group')->getGroups($locales[0]['id_lang']);
 
-        //get product
+        // get product
         $product = $productAdapter->getProduct((int) $idProduct);
-        if (!is_object($product) || empty($product->id)) {
+        if (! is_object($product) || empty($product->id)) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
 
             return $response;
@@ -91,19 +91,18 @@ class SpecificPriceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create', 'update'], 'ADMINPRODUCTS_')")
      *
-     * @param Request $request The request
-     *
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function addAction(Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $idProduct = isset($request->get('form')['id_product']) ? $request->get('form')['id_product'] : null;
 
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $errors = $adminProductWrapper->processProductSpecificPrice($idProduct, $request->get('form')['step2']['specific_price']);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $response->setData(implode(', ', $errors));
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
         }
@@ -118,8 +117,7 @@ class SpecificPriceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create', 'update'], 'ADMINPRODUCTS_')")
      *
-     * @param int $idSpecificPrice
-     *
+     * @param  int  $idSpecificPrice
      * @return Response|array
      */
     public function getUpdateFormAction($idSpecificPrice)
@@ -166,14 +164,12 @@ class SpecificPriceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['create', 'update'], 'ADMINPRODUCTS_')")
      *
-     * @param int $idSpecificPrice
-     * @param Request $request
-     *
+     * @param  int  $idSpecificPrice
      * @return JsonResponse
      */
     public function updateAction($idSpecificPrice, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
         $formData = $request->get('form');
 
         $idProduct = isset($formData['id_product']) ? $formData['id_product'] : null;
@@ -183,7 +179,7 @@ class SpecificPriceController extends FrameworkBundleAdminController
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $errors = $adminProductWrapper->processProductSpecificPrice($idProduct, $formValues, $idSpecificPrice);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $response->setData(implode(', ', $errors));
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
         }
@@ -196,14 +192,13 @@ class SpecificPriceController extends FrameworkBundleAdminController
      *
      * @AdminSecurity("is_granted(['delete'], 'ADMINPRODUCTS_')")
      *
-     * @param int $idSpecificPrice The specific price ID
-     * @param Request $request The request
-     *
+     * @param  int  $idSpecificPrice  The specific price ID
+     * @param  Request  $request  The request
      * @return JsonResponse
      */
     public function deleteAction($idSpecificPrice, Request $request)
     {
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
         $adminProductWrapper = $this->get('prestashop.adapter.admin.wrapper.product');
         $res = $adminProductWrapper->deleteSpecificPrice((int) $idSpecificPrice);
@@ -218,9 +213,8 @@ class SpecificPriceController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param int $id
-     * @param \SpecificPrice $price
-     *
+     * @param  int  $id
+     * @param  \SpecificPrice  $price
      * @return array
      */
     private function formatSpecificPriceToPrefillForm($id, $price)
@@ -251,7 +245,7 @@ class SpecificPriceController extends FrameworkBundleAdminController
             $formattedFormData['sp_id_customer'] = ['data' => [$price->id_customer]];
         }
         $cleanedFormData = array_map(function ($item) {
-            if (!$item) {
+            if (! $item) {
                 return null;
             }
 
@@ -262,15 +256,14 @@ class SpecificPriceController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param string $dateAsString
-     *
+     * @param  string  $dateAsString
      * @return string|null If date is 0000-00-00 00:00:00, null is returned
      *
      * @throws \PrestaShopDatabaseExceptionCore if date is not valid
      */
     private static function formatForDatePicker($dateAsString)
     {
-        if ('0000-00-00 00:00:00' === $dateAsString) {
+        if ($dateAsString === '0000-00-00 00:00:00') {
             return null;
         }
 

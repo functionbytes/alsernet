@@ -41,8 +41,11 @@ class AiToolsController extends Controller
 
         $validated = $request->validated();
         $validated['ai_agent_id'] = $agent->id;
-        $validated['requires_approval'] = $request->has('requires_approval');
-        $validated['is_active'] = $request->has('is_active');
+        // boolean(), no has(): mismo caso que is_active — el select siempre viaja.
+        $validated['requires_approval'] = $request->boolean('requires_approval');
+        // boolean(), no has(): el modal manda is_active SIEMPRE (select '0'/'1'),
+        // asi que has() era true incluso eligiendo Inactivo y todo se creaba activo.
+        $validated['is_active'] = $request->boolean('is_active');
 
         AiAgentTool::create($validated);
 

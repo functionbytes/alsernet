@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -56,10 +57,6 @@ final class MetaSettingsShopUrlsFormDataProvider implements FormDataProviderInte
 
     /**
      * MetaFormDataProvider constructor.
-     *
-     * @param DataConfigurationInterface $shopUrlsDataConfiguration
-     * @param TranslatorInterface $translator
-     * @param Validate $validate
      */
     public function __construct(
         DataConfigurationInterface $shopUrlsDataConfiguration,
@@ -86,7 +83,7 @@ final class MetaSettingsShopUrlsFormDataProvider implements FormDataProviderInte
     {
         $errors = $this->validateData($data);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $errors;
         }
 
@@ -96,7 +93,6 @@ final class MetaSettingsShopUrlsFormDataProvider implements FormDataProviderInte
     /**
      * Implements custom validation for configuration form.
      *
-     * @param array $data
      *
      * @return array - if array is not empty then error strings are returned
      *
@@ -105,7 +101,7 @@ final class MetaSettingsShopUrlsFormDataProvider implements FormDataProviderInte
     private function validateData(array $data)
     {
         $errors = [];
-        if (!$this->validate->isCleanHtml($data['domain'])) {
+        if (! $this->validate->isCleanHtml($data['domain'])) {
             $errors[] = $this->translator->trans(
                 'This domain is not valid.',
                 [],
@@ -113,7 +109,7 @@ final class MetaSettingsShopUrlsFormDataProvider implements FormDataProviderInte
             );
         }
 
-        if (!$this->validate->isCleanHtml($data['domain_ssl'])) {
+        if (! $this->validate->isCleanHtml($data['domain_ssl'])) {
             $errors[] = $this->translator->trans(
                 'The SSL domain is not valid.',
                 [],

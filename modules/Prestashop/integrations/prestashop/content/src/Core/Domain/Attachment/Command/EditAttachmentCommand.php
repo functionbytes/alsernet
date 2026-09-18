@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,38 +69,21 @@ class EditAttachmentCommand
      */
     private $fileSize;
 
-    /**
-     * @param AttachmentId $attachmentId
-     */
     public function __construct(AttachmentId $attachmentId)
     {
         $this->attachmentId = $attachmentId;
     }
 
-    /**
-     * @return AttachmentId
-     */
     public function getAttachmentId(): AttachmentId
     {
         return $this->attachmentId;
     }
 
-    /**
-     * @return string
-     */
     public function getPathName(): ?string
     {
         return $this->pathName;
     }
 
-    /**
-     * @param string $pathName
-     * @param string $mimeType
-     * @param string $originalFileName
-     * @param int $fileSize
-     *
-     * @return EditAttachmentCommand
-     */
     public function setFileInfo(
         string $pathName,
         string $mimeType,
@@ -114,17 +98,11 @@ class EditAttachmentCommand
         return $this;
     }
 
-    /**
-     * @return string|null
-     */
     public function getOriginalFileName(): ?string
     {
         return $this->originalFileName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getMimeType(): ?string
     {
         return $this->mimeType;
@@ -139,9 +117,7 @@ class EditAttachmentCommand
     }
 
     /**
-     * @param string[] $localizedNames
-     *
-     * @return EditAttachmentCommand
+     * @param  string[]  $localizedNames
      */
     public function setLocalizedNames(array $localizedNames): EditAttachmentCommand
     {
@@ -159,9 +135,7 @@ class EditAttachmentCommand
     }
 
     /**
-     * @param string[]|null $localizedDescriptions
-     *
-     * @return EditAttachmentCommand
+     * @param  string[]|null  $localizedDescriptions
      */
     public function setLocalizedDescriptions(?array $localizedDescriptions): EditAttachmentCommand
     {
@@ -170,9 +144,6 @@ class EditAttachmentCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getFileSize(): ?int
     {
         return $this->fileSize;

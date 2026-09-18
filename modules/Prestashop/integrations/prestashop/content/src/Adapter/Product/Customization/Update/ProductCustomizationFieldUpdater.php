@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,11 +59,6 @@ class ProductCustomizationFieldUpdater
      */
     private $productRepository;
 
-    /**
-     * @param CustomizationFieldRepository $customizationFieldRepository
-     * @param CustomizationFieldDeleter $customizationFieldDeleter
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         CustomizationFieldRepository $customizationFieldRepository,
         CustomizationFieldDeleter $customizationFieldDeleter,
@@ -74,8 +70,7 @@ class ProductCustomizationFieldUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param CustomizationField[] $customizationFields
+     * @param  CustomizationField[]  $customizationFields
      */
     public function setProductCustomizationFields(ProductId $productId, array $customizationFields): void
     {
@@ -94,14 +89,11 @@ class ProductCustomizationFieldUpdater
         $this->refreshProductCustomizability($product);
     }
 
-    /**
-     * @param Product $product
-     */
     public function refreshProductCustomizability(Product $product): void
     {
         if ($product->hasActivatedRequiredCustomizableFields()) {
             $product->customizable = ProductCustomizabilitySettings::REQUIRES_CUSTOMIZATION;
-        } elseif (!empty($product->getNonDeletedCustomizationFieldIds())) {
+        } elseif (! empty($product->getNonDeletedCustomizationFieldIds())) {
             $product->customizable = ProductCustomizabilitySettings::ALLOWS_CUSTOMIZATION;
         } else {
             $product->customizable = ProductCustomizabilitySettings::NOT_CUSTOMIZABLE;
@@ -120,9 +112,7 @@ class ProductCustomizationFieldUpdater
     /**
      * Checks provided customization fields against existing ones to determine which ones to delete
      *
-     * @param CustomizationField[] $providedCustomizationFields
-     * @param Product $product
-     *
+     * @param  CustomizationField[]  $providedCustomizationFields
      * @return CustomizationFieldId[] ids of customization fields which should be deleted
      */
     private function getDeletableFieldIds(array $providedCustomizationFields, Product $product): array

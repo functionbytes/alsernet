@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,8 +78,6 @@ class RedirectType
     private $value;
 
     /**
-     * @param string $type
-     *
      * @throws ProductConstraintException
      */
     public function __construct(string $type)
@@ -87,46 +86,32 @@ class RedirectType
         $this->value = $type;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
     }
 
-    /**
-     * @return bool
-     */
     public function isProductType(): bool
     {
         return in_array($this->value, [static::TYPE_PRODUCT_PERMANENT, static::TYPE_PRODUCT_TEMPORARY]);
     }
 
-    /**
-     * @return bool
-     */
     public function isCategoryType(): bool
     {
         return in_array($this->value, [static::TYPE_CATEGORY_PERMANENT, static::TYPE_CATEGORY_TEMPORARY]);
     }
 
-    /**
-     * @return bool
-     */
     public function isTypeNotFound(): bool
     {
         return $this->getValue() === static::TYPE_NOT_FOUND;
     }
 
     /**
-     * @param string $type
-     *
      * @throws ProductConstraintException
      */
     private function assertRedirectTypeIsAvailable(string $type): void
     {
-        if (!in_array($type, static::AVAILABLE_REDIRECT_TYPES)) {
+        if (! in_array($type, static::AVAILABLE_REDIRECT_TYPES)) {
             throw new ProductConstraintException(
                 sprintf(
                     'Invalid redirect type "%s". Available redirect types are: %s',

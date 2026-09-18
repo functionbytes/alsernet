@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,7 +42,7 @@ final class CombinationStockCommandsBuilder implements CombinationCommandsBuilde
      */
     public function buildCommands(CombinationId $combinationId, array $formData): array
     {
-        if (!isset($formData['stock'])) {
+        if (! isset($formData['stock'])) {
             return [];
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -64,8 +65,6 @@ interface PositionDefinitionInterface
 
     /**
      * Which value should be used for the first position (can be 0, 1 or anything else)
-     *
-     * @return int
      */
     public function getFirstPosition(): int;
 }

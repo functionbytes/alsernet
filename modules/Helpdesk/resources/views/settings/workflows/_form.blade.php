@@ -3,7 +3,7 @@
     {{-- Nombre --}}
     <div class="col-12">
         <label class="form-label">
-            Nombre <span class="text-danger">*</span>
+            Nombre <span class="text-brand">*</span>
         </label>
         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
             value="{{ old('name', $workflow->name ?? '') }}"
@@ -33,7 +33,7 @@
     {{-- Tipo de trigger --}}
     <div class="col-12 col-md-6">
         <label class="form-label">
-            Tipo de trigger <span class="text-danger">*</span>
+            Tipo de trigger <span class="text-brand">*</span>
         </label>
         <select name="trigger_type" class="form-select @error('trigger_type') is-invalid @enderror">
             <option value="">Seleccionar trigger...</option>
@@ -101,3 +101,9 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/workflows-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/workflows-form.js')) }}" defer></script>
+@endpush

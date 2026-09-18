@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -112,13 +113,6 @@ class AddProductSpecificPriceCommand
     private $dateTimeTo;
 
     /**
-     * @param int $productId
-     * @param string $reductionType
-     * @param float $reductionValue
-     * @param bool $includeTax
-     * @param float $price
-     * @param int $fromQuantity
-     *
      * @throws DomainConstraintException
      * @throws ProductConstraintException
      */
@@ -137,57 +131,37 @@ class AddProductSpecificPriceCommand
         $this->fromQuantity = $fromQuantity;
     }
 
-    /**
-     * @return ProductId
-     */
     public function getProductId(): ProductId
     {
         return $this->productId;
     }
 
-    /**
-     * @return Reduction
-     */
     public function getReduction(): Reduction
     {
         return $this->reduction;
     }
 
-    /**
-     * @return bool
-     */
     public function includesTax(): bool
     {
         return $this->includesTax;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return int
-     */
     public function getFromQuantity(): int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeFrom(): ?DateTime
     {
         return $this->dateTimeFrom;
     }
 
     /**
-     * @param DateTime|null $dateTimeFrom
-     *
      * @return $this
      */
     public function setDateTimeFrom(?DateTime $dateTimeFrom): self
@@ -197,17 +171,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopGroupId(): ?int
     {
         return $this->shopGroupId;
     }
 
     /**
-     * @param int $shopGroupId
-     *
      * @return $this
      */
     public function setShopGroupId(int $shopGroupId): self
@@ -217,17 +186,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopId(): ?int
     {
         return $this->shopId;
     }
 
     /**
-     * @param int $shopId
-     *
      * @return $this
      */
     public function setShopId(int $shopId): self
@@ -237,17 +201,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return CombinationId|null
-     */
     public function getCombinationId(): ?CombinationId
     {
         return $this->combinationId;
     }
 
     /**
-     * @param int $combinationId
-     *
      * @return $this
      */
     public function setCombinationId(int $combinationId): self
@@ -257,17 +216,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCurrencyId(): ?int
     {
         return $this->currencyId;
     }
 
     /**
-     * @param int $currencyId
-     *
      * @return $this
      */
     public function setCurrencyId(int $currencyId): self
@@ -277,17 +231,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCountryId(): ?int
     {
         return $this->countryId;
     }
 
     /**
-     * @param int $countryId
-     *
      * @return $this
      */
     public function setCountryId(int $countryId): self
@@ -297,17 +246,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getGroupId(): ?int
     {
         return $this->groupId;
     }
 
     /**
-     * @param int $groupId
-     *
      * @return $this
      */
     public function setGroupId(int $groupId): self
@@ -317,17 +261,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCustomerId(): ?int
     {
         return $this->customerId;
     }
 
     /**
-     * @param int $customerId
-     *
      * @return $this
      */
     public function setCustomerId(int $customerId): self
@@ -337,17 +276,12 @@ class AddProductSpecificPriceCommand
         return $this;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeTo(): ?DateTime
     {
         return $this->dateTimeTo;
     }
 
     /**
-     * @param DateTime|null $dateTimeTo
-     *
      * @return $this
      */
     public function setDateTimeTo(?DateTime $dateTimeTo): self

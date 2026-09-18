@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ final class GetNotificationLastElementsHandler implements GetNotificationLastEle
      */
     protected $configuration;
 
-    /**
-     * @param NotificationsConfiguration $notificationsConfiguration
-     */
     public function __construct(
         NotificationsConfiguration $notificationsConfiguration
     ) {
@@ -56,15 +54,13 @@ final class GetNotificationLastElementsHandler implements GetNotificationLastEle
     }
 
     /**
-     * @param GetNotificationLastElements $query
-     *
      * @return NotificationsResults
      *
      * {@inheritdoc}
      */
     public function handle(GetNotificationLastElements $query): NotificationsResults
     {
-        $elements = (new Notification())->getLastElements();
+        $elements = (new Notification)->getLastElements();
         $results = [];
         foreach ($elements as $type => $notifications) {
             $notificationsResult = [];
@@ -94,11 +90,6 @@ final class GetNotificationLastElementsHandler implements GetNotificationLastEle
         return new NotificationsResults($results);
     }
 
-    /**
-     * @param string $type
-     *
-     * @return bool
-     */
     protected function isDisplayed(string $type): bool
     {
         switch ($type) {

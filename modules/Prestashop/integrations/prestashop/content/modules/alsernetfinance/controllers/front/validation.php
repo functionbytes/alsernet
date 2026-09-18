@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @since 1.0.0
  */
@@ -12,25 +13,25 @@ class AlsernetfinanceValidationModuleFrontController extends ModuleFrontControll
     public function postProcess()
     {
         // Verifica si el contexto es válido y si la opción de pago está disponible
-        if (!$this->checkIfContextIsValid() || !$this->checkIfPaymentOptionIsAvailable()) {
+        if (! $this->checkIfContextIsValid() || ! $this->checkIfPaymentOptionIsAvailable()) {
             Tools::redirect($this->context->link->getPageLink('order', true));
         }
 
         // Obtén el cliente y valida si existe
         $customer = new Customer($this->context->cart->id_customer);
-        if (!Validate::isLoadedObject($customer)) {
+        if (! Validate::isLoadedObject($customer)) {
             Tools::redirect($this->context->link->getPageLink('order', true));
         }
 
         // Realiza la validación del pedido
         $this->module->validateOrder(
-            (int)$this->context->cart->id,
-            (int)Configuration::get('PS_OS_WAIT_FOR_FINANCE'),
-            (float)$this->context->cart->getOrderTotal(true, Cart::BOTH),
+            (int) $this->context->cart->id,
+            (int) Configuration::get('PS_OS_WAIT_FOR_FINANCE'),
+            (float) $this->context->cart->getOrderTotal(true, Cart::BOTH),
             $this->module->displayName,
             null,
-            array(),
-            (int)$this->context->currency->id,
+            [],
+            (int) $this->context->currency->id,
             false,
             $customer->secure_key
         );
@@ -40,12 +41,12 @@ class AlsernetfinanceValidationModuleFrontController extends ModuleFrontControll
             'order-confirmation',
             true,
             null,
-            array(
-                'id_cart' => (int)$this->context->cart->id,
-                'id_module' => (int)$this->module->id,
-                'id_order' => (int)$this->module->currentOrder,
+            [
+                'id_cart' => (int) $this->context->cart->id,
+                'id_module' => (int) $this->module->id,
+                'id_order' => (int) $this->module->currentOrder,
                 'key' => $customer->secure_key,
-            )
+            ]
         ));
     }
 
@@ -58,7 +59,7 @@ class AlsernetfinanceValidationModuleFrontController extends ModuleFrontControll
             && Validate::isUnsignedId($this->context->cart->id_customer)
             && Validate::isUnsignedId($this->context->cart->id_address_delivery)
             && Validate::isUnsignedId($this->context->cart->id_address_invoice)
-            && !$this->context->cart->isVirtualCart();
+            && ! $this->context->cart->isVirtualCart();
     }
 
     /**
@@ -72,6 +73,7 @@ class AlsernetfinanceValidationModuleFrontController extends ModuleFrontControll
                 return true;
             }
         }
+
         return false;
     }
 }

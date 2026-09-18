@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,12 +43,17 @@ final class IdentifiableObjectHookByFormTypeProvider implements HookByFormTypePr
     public const FORM_TYPE_POSITION_IN_CONSTRUCTOR_OF_FORM_BUILDER = 0;
 
     public const FORM_BUILDER_HOOK_PREFIX = 'action';
+
     public const FORM_BUILDER_HOOK_SUFFIX = 'FormBuilderModifier';
 
     public const FORM_HANDLER_UPDATE_BEFORE_PREFIX = 'actionBeforeUpdate';
+
     public const FORM_HANDLER_UPDATE_AFTER_PREFIX = 'actionAfterUpdate';
+
     public const FORM_HANDLER_CREATE_BEFORE_PREFIX = 'actionBeforeCreate';
+
     public const FORM_HANDLER_CREATE_AFTER_PREFIX = 'actionAfterCreate';
+
     public const FORM_HANDLER_SUFFIX = 'FormHandler';
 
     /**
@@ -55,9 +61,6 @@ final class IdentifiableObjectHookByFormTypeProvider implements HookByFormTypePr
      */
     private $formFactory;
 
-    /**
-     * @param FormFactoryInterface $formFactory
-     */
     public function __construct(FormFactoryInterface $formFactory)
     {
         $this->formFactory = $formFactory;
@@ -120,8 +123,7 @@ final class IdentifiableObjectHookByFormTypeProvider implements HookByFormTypePr
     /**
      * Gets form names which are used when generating hooks.
      *
-     * @param Definition[] $formTypes
-     *
+     * @param  Definition[]  $formTypes
      * @return Generator
      */
     private function getFormNames(array $formTypes)
@@ -140,14 +142,13 @@ final class IdentifiableObjectHookByFormTypeProvider implements HookByFormTypePr
     /**
      * Formats hook names.
      *
-     * @param string $hookStartsWith
-     * @param string $hookId
-     * @param string $hookEndsWidth
-     *
+     * @param  string  $hookStartsWith
+     * @param  string  $hookId
+     * @param  string  $hookEndsWidth
      * @return string
      */
     private function formatHookName($hookStartsWith, $hookId, $hookEndsWidth)
     {
-        return $hookStartsWith . Container::camelize($hookId) . $hookEndsWidth;
+        return $hookStartsWith.Container::camelize($hookId).$hookEndsWidth;
     }
 }

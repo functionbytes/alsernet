@@ -27,7 +27,9 @@ class SocialHealthCheckCommand extends Command
 
         if ($expiringAccounts->isNotEmpty()) {
             foreach ($expiringAccounts as $account) {
-                $days = (int) $account->token_expires_at->diffInDays(now());
+                // Carbon 3 devuelve diferencias con signo: token_expires_at->diffInDays(now())
+                // sale negativo cuando el token aún no expiró (now() es anterior).
+                $days = (int) now()->diffInDays($account->token_expires_at);
                 $issues[] = "[TOKEN] {$account->name} ({$account->platform}) expira en {$days} días";
                 $this->warn("Token de {$account->name} expira en {$days} días");
             }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,18 +41,12 @@ class GetCombinationForEditing
      */
     private $combinationId;
 
-    /**
-     * @param int $combinationId
-     */
     public function __construct(
         int $combinationId
     ) {
         $this->combinationId = new CombinationId($combinationId);
     }
 
-    /**
-     * @return CombinationId
-     */
     public function getCombinationId(): CombinationId
     {
         return $this->combinationId;

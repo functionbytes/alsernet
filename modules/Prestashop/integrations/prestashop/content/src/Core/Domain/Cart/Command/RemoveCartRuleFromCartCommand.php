@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,9 +47,6 @@ class RemoveCartRuleFromCartCommand
     private $cartRuleId;
 
     /**
-     * @param int $cartId
-     * @param int $cartRuleId
-     *
      * @throws CartConstraintException
      */
     public function __construct(int $cartId, int $cartRuleId)

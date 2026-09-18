@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,7 +36,7 @@ class Email extends ValueObjectEmail
 {
     public function __construct($email)
     {
-        @trigger_error(self::class . ' is deprecated. Use ' . ValueObjectEmail::class . ' instead', E_USER_DEPRECATED);
+        @trigger_error(self::class.' is deprecated. Use '.ValueObjectEmail::class.' instead', E_USER_DEPRECATED);
         parent::__construct($email);
     }
 }

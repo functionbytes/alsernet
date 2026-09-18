@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ final class GetAttachmentForEditingHandler implements GetAttachmentForEditingHan
             throw new AttachmentNotFoundException(sprintf('Attachment with id "%s" was not found.', $attachmentIdValue));
         }
 
-        $filePath = _PS_DOWNLOAD_DIR_ . $attachment->file;
+        $filePath = _PS_DOWNLOAD_DIR_.$attachment->file;
         $file = file_exists($filePath) ? new SplFileInfo($filePath) : null;
 
         $editableAttachment = new EditableAttachment(
@@ -69,7 +70,7 @@ final class GetAttachmentForEditingHandler implements GetAttachmentForEditingHan
             $attachment->description
         );
 
-        if (null !== $file) {
+        if ($file !== null) {
             $editableAttachment->setFile($file);
         }
 

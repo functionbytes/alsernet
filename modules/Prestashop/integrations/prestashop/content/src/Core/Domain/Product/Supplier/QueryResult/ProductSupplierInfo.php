@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,11 +49,6 @@ class ProductSupplierInfo
      */
     private $productSupplierForEditing;
 
-    /**
-     * @param string $supplierName
-     * @param int $supplierId
-     * @param ProductSupplierForEditing $productSupplierForEditing
-     */
     public function __construct(
         string $supplierName,
         int $supplierId,
@@ -63,25 +59,16 @@ class ProductSupplierInfo
         $this->productSupplierForEditing = $productSupplierForEditing;
     }
 
-    /**
-     * @return string
-     */
     public function getSupplierName(): string
     {
         return $this->supplierName;
     }
 
-    /**
-     * @return int
-     */
     public function getSupplierId(): int
     {
         return $this->supplierId;
     }
 
-    /**
-     * @return ProductSupplierForEditing
-     */
     public function getProductSupplierForEditing(): ProductSupplierForEditing
     {
         return $this->productSupplierForEditing;

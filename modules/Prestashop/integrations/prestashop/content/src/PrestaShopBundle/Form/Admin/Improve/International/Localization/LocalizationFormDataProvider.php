@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ class LocalizationFormDataProvider implements FormDataProviderInterface
      */
     private $dataConfiguration;
 
-    /**
-     * @param DataConfigurationInterface $dataConfiguration
-     */
     public function __construct(
         DataConfigurationInterface $dataConfiguration
     ) {

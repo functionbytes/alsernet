@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -103,22 +104,6 @@ class SpecificPriceForEditing
      */
     private $dateTimeTo;
 
-    /**
-     * @param int $specificPriceId
-     * @param string $reductionType
-     * @param DecimalNumber $reductionAmount
-     * @param bool $includesTax
-     * @param DecimalNumber $price
-     * @param int $fromQuantity
-     * @param int|null $shopGroupId
-     * @param int|null $shopId
-     * @param int|null $currencyId
-     * @param int|null $countryId
-     * @param int|null $groupId
-     * @param int|null $customerId
-     * @param DateTime|null $dateTimeFrom
-     * @param DateTime|null $dateTimeTo
-     */
     public function __construct(
         int $specificPriceId,
         string $reductionType,
@@ -151,113 +136,71 @@ class SpecificPriceForEditing
         $this->dateTimeTo = $dateTimeTo;
     }
 
-    /**
-     * @return int
-     */
     public function getSpecificPriceId(): int
     {
         return $this->specificPriceId;
     }
 
-    /**
-     * @return string
-     */
     public function getReductionType(): string
     {
         return $this->reductionType;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getReductionAmount(): DecimalNumber
     {
         return $this->reductionAmount;
     }
 
-    /**
-     * @return bool
-     */
     public function includesTax(): bool
     {
         return $this->includesTax;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getPrice(): DecimalNumber
     {
         return $this->price;
     }
 
-    /**
-     * @return int
-     */
     public function getFromQuantity(): int
     {
         return $this->fromQuantity;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopGroupId(): ?int
     {
         return $this->shopGroupId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getShopId(): ?int
     {
         return $this->shopId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCurrencyId(): ?int
     {
         return $this->currencyId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCountryId(): ?int
     {
         return $this->countryId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getGroupId(): ?int
     {
         return $this->groupId;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCustomerId(): ?int
     {
         return $this->customerId;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeFrom(): ?DateTime
     {
         return $this->dateTimeFrom;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateTimeTo(): ?DateTime
     {
         return $this->dateTimeTo;

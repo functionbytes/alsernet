@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,7 @@ class MailVariablesTransformation extends AbstractTransformation
     private $replaceVariables;
 
     /**
-     * @param string $type
-     * @param array $replaceVariables
+     * @param  string  $type
      *
      * @throws InvalidArgumentException
      */
@@ -60,13 +60,13 @@ class MailVariablesTransformation extends AbstractTransformation
     public function apply($templateContent, array $templateVariables)
     {
         $replaceVariables = $this->replaceVariables;
-        if (!empty($templateVariables['templateVars'])) {
+        if (! empty($templateVariables['templateVars'])) {
             $replaceVariables = array_merge_recursive(
                 $replaceVariables,
                 $templateVariables['templateVars']
             );
         }
-        if (!empty($replaceVariables)) {
+        if (! empty($replaceVariables)) {
             $templateContent = strtr($templateContent, $replaceVariables);
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,6 +33,7 @@ namespace PrestaShop\PrestaShop\Core\Feature;
 final class TokenInUrls
 {
     public const DISABLED = 'disabled';
+
     public const ENV_VAR = '_TOKEN_';
 
     /**

@@ -16,6 +16,7 @@ class ConversationMessageService
     public function __construct(
         private OutboundMessageService $outbound,
         private MentionParser $mentionParser,
+        private AttachmentSecurityService $attachmentSecurity,
     ) {}
 
     /**
@@ -110,7 +111,7 @@ class ConversationMessageService
 
         // Disparar evento por cada usuario único mencionado (excluyendo al autor)
         $author = auth()->user();
-        $authorName = trim(($author?->firstname ?? '').' '.($author?->lastname ?? '')) ?: ($author?->email ?? 'Alguien');
+        $authorName = $author?->fullName() ?: ($author?->email ?? 'Alguien');
         foreach ($mentions['users'] as $mentionedUser) {
             event(new MentionDetected($conversation, $item, $mentionedUser, $authorName));
         }
@@ -148,6 +149,7 @@ class ConversationMessageService
                 continue;
             }
 
+            $this->attachmentSecurity->assertSafe($file);
             $path = $file->store('helpdesk/attachments', 'public');
             $mime = $file->getMimeType() ?? 'application/octet-stream';
             $urls[] = [

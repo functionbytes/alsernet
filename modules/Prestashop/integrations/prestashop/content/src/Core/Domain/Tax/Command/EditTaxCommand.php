@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,7 +56,7 @@ class EditTaxCommand
     private $enabled;
 
     /**
-     * @param int $taxId
+     * @param  int  $taxId
      *
      * @throws TaxException
      */
@@ -81,8 +82,7 @@ class EditTaxCommand
     }
 
     /**
-     * @param array|null $localizedNames
-     *
+     * @param  array|null  $localizedNames
      * @return self
      */
     public function setLocalizedNames($localizedNames)
@@ -101,8 +101,7 @@ class EditTaxCommand
     }
 
     /**
-     * @param float|null $rate
-     *
+     * @param  float|null  $rate
      * @return self
      */
     public function setRate($rate)
@@ -121,8 +120,7 @@ class EditTaxCommand
     }
 
     /**
-     * @param bool|null $enabled
-     *
+     * @param  bool|null  $enabled
      * @return self
      */
     public function setEnabled($enabled)

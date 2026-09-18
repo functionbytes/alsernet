@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,9 +50,6 @@ final class UpdateOrderShippingDetailsHandler extends AbstractOrderHandler imple
      */
     private $orderAmountUpdater;
 
-    /**
-     * @param OrderAmountUpdater $orderAmountUpdater
-     */
     public function __construct(OrderAmountUpdater $orderAmountUpdater)
     {
         $this->orderAmountUpdater = $orderAmountUpdater;
@@ -69,15 +67,15 @@ final class UpdateOrderShippingDetailsHandler extends AbstractOrderHandler imple
         $oldTrackingNumber = $order->shipping_number;
 
         $orderCarrier = new OrderCarrier($command->getCurrentOrderCarrierId());
-        if (!Validate::isLoadedObject($orderCarrier)) {
+        if (! Validate::isLoadedObject($orderCarrier)) {
             throw new OrderException('The order carrier ID is invalid.');
         }
 
-        if (!empty($trackingNumber) && !Validate::isTrackingNumber($trackingNumber)) {
+        if (! empty($trackingNumber) && ! Validate::isTrackingNumber($trackingNumber)) {
             throw new OrderException('The tracking number is incorrect.');
         }
 
-        //update carrier - ONLY if changed - then refresh shipping cost
+        // update carrier - ONLY if changed - then refresh shipping cost
         $oldCarrierId = (int) $orderCarrier->id_carrier;
         if ($oldCarrierId !== $carrierId) {
             $cart = Cart::getCartByOrderId($order->id);
@@ -93,7 +91,7 @@ final class UpdateOrderShippingDetailsHandler extends AbstractOrderHandler imple
             $this->orderAmountUpdater->update($order, $cart);
         }
 
-        //load fresh order carrier because updated just before
+        // load fresh order carrier because updated just before
         $orderCarrier = new OrderCarrier((int) $order->getIdOrderCarrier());
 
         // update shipping number
@@ -103,13 +101,13 @@ final class UpdateOrderShippingDetailsHandler extends AbstractOrderHandler imple
 
         // Update order_carrier
         $orderCarrier->tracking_number = pSQL($trackingNumber);
-        if (!$orderCarrier->update()) {
+        if (! $orderCarrier->update()) {
             throw new OrderException('The order carrier cannot be updated.');
         }
 
-        //send mail only if tracking number is different AND not empty
-        if (!empty($trackingNumber) && $oldTrackingNumber != $trackingNumber) {
-            if (!$orderCarrier->sendInTransitEmail($order)) {
+        // send mail only if tracking number is different AND not empty
+        if (! empty($trackingNumber) && $oldTrackingNumber != $trackingNumber) {
+            if (! $orderCarrier->sendInTransitEmail($order)) {
                 throw new TransistEmailSendingException('An error occurred while sending an email to the customer.');
             }
 

@@ -30,24 +30,50 @@ trait AuthorizesConversationDocuments
             $this->authorize('view', $customer);
         }
 
-        $linkedIds = app(ConversationDocumentLinker::class)->linkedDocumentIds($conversation);
-
-        if (in_array($document->id, $linkedIds, true)) {
+        if ($this->documentIsLinkedToConversation($conversation, $document)
+            || $this->documentMatchesConversationCustomer($conversation, $document)) {
             return;
         }
+
+        abort(404);
+    }
+
+    /**
+     * True cuando el expediente ya figura en metadata.document_ids — un vínculo
+     * manual (forzado o no) previamente persistido. No implica por sí solo que
+     * el email/teléfono case; solo que ya fue asociado explícitamente.
+     */
+    protected function documentIsLinkedToConversation(Conversation $conversation, Document $document): bool
+    {
+        $linkedIds = app(ConversationDocumentLinker::class)->linkedDocumentIds($conversation);
+
+        return in_array($document->id, $linkedIds, true);
+    }
+
+    /**
+     * True cuando el email/teléfono del expediente coincide con el cliente de
+     * la conversación — el único criterio de "pertenencia real" (sin contar
+     * vínculos ya persistidos). Compartido con
+     * ConversationDocumentLinker::documentsForConversation() y usado por
+     * DocumentCreateController::link() para decidir si un vínculo manual
+     * necesita el permiso de vínculo forzado.
+     */
+    protected function documentMatchesConversationCustomer(Conversation $conversation, Document $document): bool
+    {
+        $customer = $conversation->customer;
 
         $conversationEmail = mb_strtolower(trim((string) $customer?->email));
         $documentEmail = mb_strtolower(trim((string) $document->customer_email));
 
         if ($conversationEmail !== '' && $conversationEmail === $documentEmail) {
-            return;
+            return true;
         }
 
         if ($conversationEmail === ''
             && PhoneMatcher::matches($customer?->phone ?: $customer?->whatsapp_phone, $document->customer_cellphone)) {
-            return;
+            return true;
         }
 
-        abort(404);
+        return false;
     }
 }

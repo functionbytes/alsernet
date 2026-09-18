@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,9 +58,7 @@ class RoutingCacheKeyGenerator implements CacheKeyGeneratorInterface
     /**
      * RoutingCacheKeyGenerator constructor.
      *
-     * @param array $coreRoutingPaths
-     * @param array $activeModulesPaths
-     * @param string $environment
+     * @param  string  $environment
      */
     public function __construct(
         array $coreRoutingPaths,
@@ -79,7 +78,7 @@ class RoutingCacheKeyGenerator implements CacheKeyGeneratorInterface
         $routingFiles = [];
 
         if (count($this->coreRoutingPaths)) {
-            $finder = new Finder();
+            $finder = new Finder;
             $finder->files()->in($this->coreRoutingPaths);
             $finder->name('/\.(yml|yaml)$/');
             /** @var SplFileInfo $yamlFile */
@@ -91,7 +90,7 @@ class RoutingCacheKeyGenerator implements CacheKeyGeneratorInterface
         foreach ($this->activeModulesPaths as $modulePath) {
             $extensions = ['yml', 'yaml'];
             foreach ($extensions as $extension) {
-                $routingFile = $modulePath . '/config/routes.' . $extension;
+                $routingFile = $modulePath.'/config/routes.'.$extension;
                 if (file_exists($routingFile)) {
                     $routingFiles[$routingFile] = filemtime($routingFile);
                 }
@@ -109,7 +108,7 @@ class RoutingCacheKeyGenerator implements CacheKeyGeneratorInterface
     public function getLatestModificationTime()
     {
         $lastModifications = $this->getLastModifications();
-        if (!count($lastModifications)) {
+        if (! count($lastModifications)) {
             return null;
         }
 
@@ -122,10 +121,10 @@ class RoutingCacheKeyGenerator implements CacheKeyGeneratorInterface
     public function getCacheKey()
     {
         $cacheKey = preg_replace('@\\\\@', '_', __NAMESPACE__);
-        if ('prod' !== $this->environment) {
+        if ($this->environment !== 'prod') {
             $latestModification = $this->getLatestModificationTime();
-            if (null !== $latestModification) {
-                $cacheKey .= '_' . $latestModification;
+            if ($latestModification !== null) {
+                $cacheKey .= '_'.$latestModification;
             }
         }
 

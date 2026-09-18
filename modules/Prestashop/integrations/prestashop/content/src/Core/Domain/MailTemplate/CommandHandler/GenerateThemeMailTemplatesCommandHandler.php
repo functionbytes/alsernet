@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,12 +61,8 @@ class GenerateThemeMailTemplatesCommandHandler implements GenerateThemeMailTempl
     private $defaultModulesMailFolder;
 
     /**
-     * @param LanguageRepositoryInterface $languageRepository
-     * @param ThemeCatalogInterface $themeCatalog
-     * @param MailTemplateGenerator $generator
-     * @param TranslatorInterface $translator
-     * @param string $defaultCoreMailsFolder
-     * @param string $defaultModulesMailFolder
+     * @param  string  $defaultCoreMailsFolder
+     * @param  string  $defaultModulesMailFolder
      */
     public function __construct(
         LanguageRepositoryInterface $languageRepository,
@@ -89,7 +86,7 @@ class GenerateThemeMailTemplatesCommandHandler implements GenerateThemeMailTempl
     public function handle(GenerateThemeMailTemplatesCommand $command)
     {
         $language = $this->languageRepository->getOneByLocaleOrIsoCode($command->getLanguage());
-        if (null === $language) {
+        if ($language === null) {
             throw new InvalidArgumentException(sprintf('Could not find Language for locale: %s', $command->getLanguage()));
         }
 

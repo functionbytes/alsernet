@@ -2,7 +2,6 @@
 
 namespace Modules\Mailer\Library;
 
-
 use League\Pipeline\StageInterface;
 
 class TransformTag implements StageInterface

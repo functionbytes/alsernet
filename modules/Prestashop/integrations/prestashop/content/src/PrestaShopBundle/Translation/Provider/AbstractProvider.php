@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,7 @@ use Symfony\Component\Translation\Loader\LoaderInterface;
 use Symfony\Component\Translation\MessageCatalogue;
 use Symfony\Component\Translation\MessageCatalogueInterface;
 
-abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInterface, DatabaseCatalogueInterface
+abstract class AbstractProvider implements DatabaseCatalogueInterface, ProviderInterface, XliffCatalogueInterface
 {
     public const DEFAULT_LOCALE = 'en-US';
 
@@ -97,7 +98,7 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
     }
 
     /**
-     * @param string $locale
+     * @param  string  $locale
      */
     public function setLocale($locale)
     {
@@ -200,8 +201,7 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
     /**
      * Get the Catalogue from database only.
      *
-     * @param null $theme
-     *
+     * @param  null  $theme
      * @return MessageCatalogue A MessageCatalogue instance
      */
     public function getDatabaseCatalogue($theme = null)
@@ -209,7 +209,7 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
         $databaseCatalogue = new MessageCatalogue($this->locale);
 
         foreach ($this->getTranslationDomains() as $translationDomain) {
-            if (!($this->getDatabaseLoader() instanceof DatabaseTranslationLoader)) {
+            if (! ($this->getDatabaseLoader() instanceof DatabaseTranslationLoader)) {
                 continue;
             }
             $domainCatalogue = $this->getDatabaseLoader()->load(null, $this->locale, $translationDomain, $theme);
@@ -227,7 +227,7 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
      */
     public function getResourceDirectory()
     {
-        return $this->resourceDirectory . DIRECTORY_SEPARATOR . $this->locale;
+        return $this->resourceDirectory.DIRECTORY_SEPARATOR.$this->locale;
     }
 
     /**
@@ -241,7 +241,6 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
     /**
      * Empties out the catalogue by removing translations but leaving keys
      *
-     * @param MessageCatalogueInterface $messageCatalogue
      *
      * @return MessageCatalogueInterface Empty the catalogue
      */
@@ -257,17 +256,16 @@ abstract class AbstractProvider implements ProviderInterface, XliffCatalogueInte
     }
 
     /**
-     * @param array $paths a list of paths when we can look for translations
-     * @param string $locale the Symfony (not the PrestaShop one) locale
-     * @param string|null $pattern a regular expression
-     *
+     * @param  array  $paths  a list of paths when we can look for translations
+     * @param  string  $locale  the Symfony (not the PrestaShop one) locale
+     * @param  string|null  $pattern  a regular expression
      * @return MessageCatalogue
      *
      * @throws FileNotFoundException
      */
     public function getCatalogueFromPaths($paths, $locale, $pattern = null)
     {
-        return (new TranslationFinder())->getCatalogueFromPaths($paths, $locale, $pattern);
+        return (new TranslationFinder)->getCatalogueFromPaths($paths, $locale, $pattern);
     }
 
     /**

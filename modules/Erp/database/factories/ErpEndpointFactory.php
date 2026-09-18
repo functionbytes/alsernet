@@ -3,6 +3,7 @@
 namespace Modules\Erp\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use Modules\Erp\Models\ErpEndpoint;
 
 class ErpEndpointFactory extends Factory
@@ -15,7 +16,7 @@ class ErpEndpointFactory extends Factory
 
         return [
             'name' => $name,
-            'slug' => \Illuminate\Support\Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 999999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 999999),
             'url' => $this->faker->url(),
             'method' => $this->faker->randomElement(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
             'description' => $this->faker->sentence(),

@@ -137,12 +137,14 @@ class AiAgentKnowledgeBase extends Model
         return $this;
     }
 
-    public function generateEmbedding(string $model = 'text-embedding-ada-002'): static
+    /**
+     * Clears the current embedding so AiAgentKnowledgeBaseObserver::saved()
+     * dispatches GenerateEmbeddingJob, which writes the real embedding and
+     * embedding_model (from config('helpdeskagents.embeddings.model')).
+     */
+    public function generateEmbedding(): static
     {
-        $this->update([
-            'embedding_model' => $model,
-            'embedding' => null,
-        ]);
+        $this->update(['embedding' => null]);
 
         return $this;
     }
@@ -152,18 +154,5 @@ class AiAgentKnowledgeBase extends Model
         $this->update(['summary' => $this->excerpt]);
 
         return $this;
-    }
-
-    public function findSimilar(int $limit = 5)
-    {
-        if (! $this->embedding) {
-            return collect();
-        }
-
-        return static::where('id', '!=', $this->id)
-            ->where('ai_agent_id', $this->ai_agent_id)
-            ->active()
-            ->limit($limit)
-            ->get();
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,6 +34,4 @@ use PrestaShop\PrestaShop\Core\Image\Exception\ImageException;
 /**
  * Thrown when file by provided path was not found
  */
-class ImageFileNotFoundException extends ImageException
-{
-}
+class ImageFileNotFoundException extends ImageException {}

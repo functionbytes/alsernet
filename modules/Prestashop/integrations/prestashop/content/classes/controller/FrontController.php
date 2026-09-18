@@ -24,11 +24,14 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use GeoIp2\Database\Reader;
+use GeoIp2\Exception\AddressNotFoundException;
 use PrestaShop\PrestaShop\Adapter\Configuration as ConfigurationAdapter;
 use PrestaShop\PrestaShop\Adapter\ContainerBuilder;
 use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
 use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
+use PrestaShop\PrestaShop\Core\Filter\FilterException;
 use Symfony\Component\Debug\Debug;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\IpUtils;
@@ -557,7 +560,7 @@ class FrontControllerCore extends Controller
      * @param  array  $object  Variables inserted in the template (see FrontController::assignGeneralPurposeVariables)
      * @return array Variables to be inserted in the "prestashop" javascript object
      *
-     * @throws \PrestaShop\PrestaShop\Core\Filter\FilterException
+     * @throws FilterException
      * @throws PrestaShopException
      */
     protected function buildFrontEndObject($object)
@@ -845,11 +848,11 @@ class FrontControllerCore extends Controller
             /* Check if Maxmind Database exists */
             if (@filemtime(_PS_GEOIP_DIR_._PS_GEOIP_CITY_FILE_)) {
                 if (! isset($this->context->cookie->iso_code_country) || (isset($this->context->cookie->iso_code_country) && ! in_array(strtoupper($this->context->cookie->iso_code_country), explode(';', Configuration::get('PS_ALLOWED_COUNTRIES'))))) {
-                    $reader = new GeoIp2\Database\Reader(_PS_GEOIP_DIR_._PS_GEOIP_CITY_FILE_);
+                    $reader = new Reader(_PS_GEOIP_DIR_._PS_GEOIP_CITY_FILE_);
 
                     try {
                         $record = $reader->city(Tools::getRemoteAddr());
-                    } catch (\GeoIp2\Exception\AddressNotFoundException $e) {
+                    } catch (AddressNotFoundException $e) {
                         $record = null;
                     }
 

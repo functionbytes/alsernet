@@ -58,11 +58,16 @@ Route::name('contacts.')
             ->name('external-platforms');
 
         Route::get('/external-search', [ContactsController::class, 'externalSearch'])
+            ->middleware(['audit.access:contacts,external_search', 'throttle:30,1'])
             ->name('external-search');
 
         // Ficha completa (direccion, pedidos, facturas) de un resultado de
         // búsqueda antes de decidir importarlo — keyed por email, sin crear nada.
+        // GDPR: devuelve datos completos (NIF, direcciones, pedidos/facturas)
+        // de ERP/PrestaShop — auditado y limitado por tasa además del
+        // aislamiento por inbox aplicado en el controlador.
         Route::get('/external-preview', [ContactsController::class, 'externalPreview'])
+            ->middleware(['audit.access:contacts,external_preview', 'throttle:30,1'])
             ->name('external-preview');
 
         Route::post('/external-create', [ContactsController::class, 'externalCreate'])

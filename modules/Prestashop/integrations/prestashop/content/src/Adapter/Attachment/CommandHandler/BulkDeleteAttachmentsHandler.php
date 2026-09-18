@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class BulkDeleteAttachmentsHandler extends AbstractAttachmentHandler imple
             try {
                 $attachment = $this->getAttachment($attachmentId);
 
-                if (!$this->deleteAttachment($attachment)) {
+                if (! $this->deleteAttachment($attachment)) {
                     $errors[] = $attachment->id;
                 }
             } catch (AttachmentException $e) {
@@ -58,7 +59,7 @@ final class BulkDeleteAttachmentsHandler extends AbstractAttachmentHandler imple
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new BulkDeleteAttachmentsException($errors, 'Failed to delete all of selected attachments');
         }
     }

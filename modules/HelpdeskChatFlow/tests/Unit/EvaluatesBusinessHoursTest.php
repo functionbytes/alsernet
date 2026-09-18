@@ -3,7 +3,9 @@
 namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Tests\TestCase;
 
 class EvaluatesBusinessHoursTest extends TestCase
@@ -20,11 +22,17 @@ class EvaluatesBusinessHoursTest extends TestCase
                 isWithinBusinessHours as public;
             }
         };
+
+        // Calendario de festivos vacío por defecto (equivalente a no tener
+        // HelpdeskSla instalado): evita que isHoliday() dispare una consulta
+        // real a helpdesk_holidays en cada test que no la necesita.
+        Cache::put(BusinessHoursCalculator::HOLIDAYS_CACHE_KEY, ['recurring' => [], 'dates' => []], 300);
     }
 
     protected function tearDown(): void
     {
         Carbon::setTestNow();
+        Cache::forget(BusinessHoursCalculator::HOLIDAYS_CACHE_KEY);
         parent::tearDown();
     }
 
@@ -131,5 +139,38 @@ class EvaluatesBusinessHoursTest extends TestCase
             'start_time' => '9:00',
             'end_time' => '18:00',
         ]));
+    }
+
+    public function test_returns_false_on_a_holiday_even_within_the_time_window(): void
+    {
+        // Wednesday 10:30 UTC — dentro del rango horario normal, pero festivo.
+        Carbon::setTestNow(Carbon::parse('2026-06-17 10:30:00', 'UTC'));
+
+        Cache::put(BusinessHoursCalculator::HOLIDAYS_CACHE_KEY, [
+            'recurring' => [],
+            'dates' => ['2026-06-17' => true],
+        ], 300);
+
+        $this->assertFalse($this->subject->isWithinBusinessHours([
+            'timezone' => 'UTC',
+            'days' => [1, 2, 3, 4, 5],
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+        ]));
+    }
+
+    public function test_overnight_window_pre_dawn_checks_the_holiday_of_the_day_the_shift_began(): void
+    {
+        // Saturday 02:00 — la franja de madrugada pertenece al turno que
+        // empezó el viernes: si el viernes es festivo, el turno no cuenta
+        // aunque el sábado (día del reloj) no lo sea.
+        Carbon::setTestNow(Carbon::parse('2026-06-20 02:00:00', 'UTC'));
+
+        Cache::put(BusinessHoursCalculator::HOLIDAYS_CACHE_KEY, [
+            'recurring' => [],
+            'dates' => ['2026-06-19' => true],
+        ], 300);
+
+        $this->assertFalse($this->subject->isWithinBusinessHours($this->overnightWindow()));
     }
 }

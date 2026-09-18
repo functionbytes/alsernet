@@ -25,7 +25,7 @@ class MetaApiClient implements SocialApiClientInterface
             ? "/{$commentId}/replies"
             : "/{$commentId}/comments";
 
-        $response = $this->request($accessToken)
+        $response = $this->requestWithoutRetry($accessToken)
             ->post($endpoint, ['message' => $message]);
 
         if ($response->failed()) {
@@ -43,7 +43,7 @@ class MetaApiClient implements SocialApiClientInterface
 
     public function hideComment(string $commentId, bool $hidden, string $accessToken): bool
     {
-        $response = $this->request($accessToken)
+        $response = $this->requestWithoutRetry($accessToken)
             ->post("/{$commentId}", ['is_hidden' => $hidden]);
 
         return $response->successful();
@@ -51,7 +51,7 @@ class MetaApiClient implements SocialApiClientInterface
 
     public function deleteComment(string $commentId, string $accessToken): bool
     {
-        $response = $this->request($accessToken)
+        $response = $this->requestWithoutRetry($accessToken)
             ->delete("/{$commentId}");
 
         return $response->successful();
@@ -113,7 +113,7 @@ class MetaApiClient implements SocialApiClientInterface
 
     public function sendMessage(string $recipientId, array $message, string $accessToken): ?string
     {
-        $response = $this->request($accessToken)
+        $response = $this->requestWithoutRetry($accessToken)
             ->post('/me/messages', [
                 'recipient' => ['id' => $recipientId],
                 'message' => $message,
@@ -189,13 +189,24 @@ class MetaApiClient implements SocialApiClientInterface
         return $response->json('access_token');
     }
 
+    /**
+     * Solo para GET/lectura: reintenta automáticamente. Las llamadas que
+     * mutan/envían algo (replyToComment, hideComment, deleteComment,
+     * sendMessage) usan requestWithoutRetry() — reintentar tras enviar el
+     * cuerpo arriesga duplicar la acción (p.ej. publicar la misma respuesta
+     * dos veces) si la petición original sí llegó pero la respuesta se perdió.
+     */
     private function request(string $accessToken): PendingRequest
+    {
+        return $this->requestWithoutRetry($accessToken)->retry(3, 500, throw: false);
+    }
+
+    private function requestWithoutRetry(string $accessToken): PendingRequest
     {
         return Http::baseUrl($this->baseUrl())
             ->withToken($accessToken)
             ->timeout(30)
-            ->connectTimeout(10)
-            ->retry(3, 500, throw: false);
+            ->connectTimeout(10);
     }
 
     private function baseUrl(): string

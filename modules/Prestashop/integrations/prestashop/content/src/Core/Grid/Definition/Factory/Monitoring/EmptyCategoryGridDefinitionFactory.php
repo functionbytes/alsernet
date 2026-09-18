@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -72,7 +73,7 @@ final class EmptyCategoryGridDefinitionFactory extends AbstractGridDefinitionFac
      */
     protected function getColumns()
     {
-        return (new ColumnCollection())
+        return (new ColumnCollection)
             ->add(
                 (new IdentifierColumn('id_category'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -118,7 +119,7 @@ final class EmptyCategoryGridDefinitionFactory extends AbstractGridDefinitionFac
      */
     protected function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_category', TextType::class))
                     ->setAssociatedColumn('id_category')
@@ -172,7 +173,7 @@ final class EmptyCategoryGridDefinitionFactory extends AbstractGridDefinitionFac
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -185,13 +186,13 @@ final class EmptyCategoryGridDefinitionFactory extends AbstractGridDefinitionFac
      */
     private function getRowActions()
     {
-        return (new RowActionCollection())
+        return (new RowActionCollection)
             ->add(
                 (new LinkRowAction('view'))
                     ->setName($this->trans('View', [], 'Admin.Actions'))
                     ->setIcon('zoom_in')
                     ->setOptions([
-                        'route' => 'admin_categories_index', //@todo: implement view inventaries of this category
+                        'route' => 'admin_categories_index', // @todo: implement view inventaries of this category
                         'route_param_name' => 'id_category',
                         'route_param_field' => 'id_category',
                     ])

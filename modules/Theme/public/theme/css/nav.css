@@ -569,7 +569,7 @@
     width: 80px;
     border-right: 1px solid #ededed;
     z-index: 9;
-    background-color: #f5f6f8;
+    background-color: #fafafa;
     transition-duration: 0.3s;
     transition-property: width, left;
     box-shadow: 0px 10px 10px rgba(var(--bs-secondary-rgb), 0.05);
@@ -595,17 +595,24 @@
     align-items: center;
     justify-content: center;
 }
-.app-navbar-tabs .nav-item .menu-link > i {
+.app-navbar-tabs .nav-item .menu-link .nav-icon {
     display: block;
-    font-size: 18px;
-    line-height: 1;
-    color: var(--bs-body-color);
+    width: 20px;
+    height: 20px;
+    --icon-stroke: #000000;
+    --icon-fill: #e4e4e7;
+}
+.app-navbar-tabs .nav-item .menu-link .nav-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 .app-navbar-tabs .nav-item .menu-link.active, .app-navbar-tabs .nav-item .menu-link:hover, .app-navbar-tabs .nav-item .menu-link:focus {
     background: #90bb13 !important;
 }
-.app-navbar-tabs .nav-item .menu-link.active i, .app-navbar-tabs .nav-item .menu-link:hover i, .app-navbar-tabs .nav-item .menu-link:focus i {
-    color: #ffffff;
+.app-navbar-tabs .nav-item .menu-link.active .nav-icon, .app-navbar-tabs .nav-item .menu-link:hover .nav-icon, .app-navbar-tabs .nav-item .menu-link:focus .nav-icon {
+    --icon-stroke: #ffffff;
+    --icon-fill: #ffffff;
 }
 .app-navbar-tabs .nav-item-hr {
     width: 24px;

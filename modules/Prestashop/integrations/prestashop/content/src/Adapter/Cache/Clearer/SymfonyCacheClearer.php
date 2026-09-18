@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,8 @@ final class SymfonyCacheClearer implements CacheClearerInterface
             // The cache may have been removed by Tools::clearSf2Cache, it happens during install
             // process, in which case we don't run the cache:clear command because it is not only
             // useless it will simply fail as the container caches classes have been removed
-            $cacheDir = _PS_ROOT_DIR_ . '/var/cache/' . _PS_ENV_ . '/';
-            if (!file_exists($cacheDir)) {
+            $cacheDir = _PS_ROOT_DIR_.'/var/cache/'._PS_ENV_.'/';
+            if (! file_exists($cacheDir)) {
                 return;
             }
 
@@ -74,12 +75,12 @@ final class SymfonyCacheClearer implements CacheClearerInterface
                 '--env' => _PS_ENV_,
             ]);
 
-            $output = new NullOutput();
+            $output = new NullOutput;
             $application->run($input, $output);
 
             // Reboot kernel
             $realCacheDir = $kernel->getContainer()->getParameter('kernel.cache_dir');
-            $warmupDir = substr($realCacheDir, 0, -1) . ('_' === substr($realCacheDir, -1) ? '-' : '_');
+            $warmupDir = substr($realCacheDir, 0, -1).(substr($realCacheDir, -1) === '_' ? '-' : '_');
             $kernel->reboot($warmupDir);
 
             Hook::exec('actionClearSf2Cache');

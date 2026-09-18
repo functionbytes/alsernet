@@ -41,7 +41,7 @@ class MainFilter implements FilterInterface
     private $filters;
 
     /**
-     * @param array $filters FilterInterface[] filters, indexed by key to filter
+     * @param  array  $filters  FilterInterface[] filters, indexed by key to filter
      */
     public function __construct(array $filters)
     {
@@ -57,7 +57,7 @@ class MainFilter implements FilterInterface
     {
         foreach ($this->filters as $key => $filter) {
             if (isset($subject[$key]) && $filter instanceof FilterInterface) {
-                if ($filter instanceof CollectionFilter && !is_array($subject[$key])) {
+                if ($filter instanceof CollectionFilter && ! is_array($subject[$key])) {
                     continue;
                 }
 

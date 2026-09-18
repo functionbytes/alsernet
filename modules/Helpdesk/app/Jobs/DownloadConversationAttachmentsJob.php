@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Services\AttachmentSecurityService;
 use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 /**
@@ -43,7 +44,7 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
         public readonly string $platform,
         public readonly ?string $bearerToken = null,
     ) {
-        $this->onQueue('helpdesk-webhooks');
+        $this->onQueue(config('helpdesk.queue.webhooks', 'helpdesk-webhooks'));
     }
 
     public function handle(): void
@@ -120,7 +121,22 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
         try {
             // stream => true: no cargamos el fichero entero en memoria de golpe;
             // lo leemos por trozos y cortamos si supera el máximo (anti-OOM).
-            $request = Http::timeout(45)->withOptions(['stream' => true]);
+            // on_redirect revalida CADA salto contra el guard SSRF (no basta con
+            // validar la URL inicial: un CDN legítimo puede redirigir a un host
+            // que el atacante no controla en el primer hop pero sí en el
+            // siguiente). No usamos withoutRedirecting() aquí porque los CDNs de
+            // media (Meta incluido) redirigen habitualmente.
+            $request = Http::timeout(45)->withOptions([
+                'stream' => true,
+                'allow_redirects' => [
+                    'max' => 5,
+                    'on_redirect' => function ($redirectRequest, $redirectResponse, $uri): void {
+                        if (! OutboundMediaUrlGuard::isAllowed((string) $uri)) {
+                            throw new \RuntimeException('Redirect target blocked by SSRF guard: '.substr((string) $uri, 0, 200));
+                        }
+                    },
+                ],
+            ]);
 
             $token = $this->resolveBearerToken();
             if (filled($token)) {
@@ -174,6 +190,21 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
 
             $disk = config('helpdesk.attachments.disk', 'public');
             Storage::disk($disk)->put($filename, $body);
+
+            try {
+                // Incoming media is an untrusted external input too. Scan it
+                // after the bounded download and before publishing its local
+                // URL to the conversation.
+                app(AttachmentSecurityService::class)->assertSafeStored($disk, $filename, $name);
+            } catch (\Throwable $exception) {
+                Storage::disk($disk)->delete($filename);
+                Log::warning('DownloadConversationAttachmentsJob: media blocked by attachment security', [
+                    'platform' => $this->platform,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return null;
+            }
 
             try {
                 $publicUrl = Storage::disk($disk)->url($filename);

@@ -136,7 +136,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2"
                                     onclick="copyEmbedCode()">
-                                <i class="far fa-copy me-1"></i>Copiar
+                                Copiar
                             </button>
                         </div>
                         <small class="text-muted">Token del widget: <code>{{ $channel->website_token }}</code></small>
@@ -154,7 +154,7 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="mb-3">
-                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <label class="form-label">Nombre <span class="text-brand">*</span></label>
                         <input type="text" name="name"
                                class="form-control @error('name') is-invalid @enderror"
                                value="{{ old('name', $inbox->name) }}"
@@ -165,7 +165,7 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Canal <span class="text-danger">*</span></label>
+                            <label class="form-label">Canal <span class="text-brand">*</span></label>
                             <select name="channel_type"
                                     class="form-select @error('channel_type') is-invalid @enderror"
                                     {{ $isEdit ? 'disabled' : '' }} required>
@@ -223,7 +223,7 @@
                     @if($isEdit && $inbox->channel_id && in_array($inbox->channel_type, ['whatsapp', 'email']))
                         <div class="flex-shrink-0 ms-3">
                             <button type="button" class="btn btn-sm btn-outline-primary" id="btn-test-connection">
-                                <i class="fas fa-plug me-1"></i>Probar conexión
+                                Probar conexión
                             </button>
                             <div id="test-result" class="small mt-2"></div>
                         </div>
@@ -251,19 +251,19 @@
                         {{-- whatsapp_cloud --}}
                         <div class="wa-provider-fields" data-provider="whatsapp_cloud">
                             <div class="mb-3">
-                                <label class="form-label">Business Account ID <span class="text-danger">*</span></label>
+                                <label class="form-label">Business Account ID <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[business_account_id]" class="form-control"
                                        value="{{ old('credentials.business_account_id', $inbox->getCredential('business_account_id', '')) }}"
                                        autocomplete="off" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Phone Number ID <span class="text-danger">*</span></label>
+                                <label class="form-label">Phone Number ID <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[phone_number_id]" class="form-control"
                                        value="{{ old('credentials.phone_number_id', $inbox->getCredential('phone_number_id', '')) }}"
                                        autocomplete="off" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Access Token <span class="text-danger">*</span></label>
+                                <label class="form-label">Access Token <span class="text-brand">*</span></label>
                                 @if($isEdit && ! old('credentials.access_token') && $inbox->getCredential('access_token'))
                                     <div class="input-group">
                                         <input type="password" name="credentials[access_token]" class="form-control"
@@ -279,7 +279,7 @@
                                 <small class="text-muted">Token permanente de Meta Cloud API</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Verify Token <span class="text-danger">*</span></label>
+                                <label class="form-label">Verify Token <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[verify_token]" class="form-control"
                                        value="{{ old('credentials.verify_token', $inbox->getCredential('verify_token', '')) }}"
                                        autocomplete="off" required>
@@ -306,13 +306,13 @@
                         {{-- 360dialog --}}
                         <div class="wa-provider-fields" data-provider="360dialog">
                             <div class="mb-3">
-                                <label class="form-label">Número de teléfono <span class="text-danger">*</span></label>
+                                <label class="form-label">Número de teléfono <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[phone_number]" class="form-control"
                                        value="{{ old('credentials.phone_number', $inbox->getCredential('phone_number', '')) }}"
                                        autocomplete="off" placeholder="+521234567890">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">API Key <span class="text-danger">*</span></label>
+                                <label class="form-label">API Key <span class="text-brand">*</span></label>
                                 @if($isEdit && ! old('credentials.api_key') && $inbox->getCredential('api_key'))
                                     <div class="input-group">
                                         <input type="password" name="credentials[api_key]" class="form-control"
@@ -327,7 +327,7 @@
                                 @endif
                             </div>
                             <div class="mb-0">
-                                <label class="form-label">Verify Token <span class="text-danger">*</span></label>
+                                <label class="form-label">Verify Token <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[verify_token_360]" class="form-control"
                                        value="{{ old('credentials.verify_token_360', $inbox->getCredential('verify_token_360', '')) }}"
                                        autocomplete="off">
@@ -337,19 +337,19 @@
                         {{-- evolution_api --}}
                         <div class="wa-provider-fields" data-provider="evolution_api">
                             <div class="mb-3">
-                                <label class="form-label">Nombre de instancia <span class="text-danger">*</span></label>
+                                <label class="form-label">Nombre de instancia <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[instance_name]" class="form-control"
                                        value="{{ old('credentials.instance_name', $inbox->getCredential('instance_name', '')) }}"
                                        autocomplete="off">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">URL de la API <span class="text-danger">*</span></label>
+                                <label class="form-label">URL de la API <span class="text-brand">*</span></label>
                                 <input type="text" name="credentials[api_url]" class="form-control"
                                        value="{{ old('credentials.api_url', $inbox->getCredential('api_url', '')) }}"
                                        autocomplete="off" placeholder="https://evo.tudominio.com">
                             </div>
                             <div class="mb-0">
-                                <label class="form-label">API Key <span class="text-danger">*</span></label>
+                                <label class="form-label">API Key <span class="text-brand">*</span></label>
                                 @if($isEdit && ! old('credentials.api_key') && $inbox->getCredential('api_key'))
                                     <div class="input-group">
                                         <input type="password" name="credentials[api_key]" class="form-control"
@@ -376,7 +376,7 @@
                             <div class="mb-3">
                                 <label class="form-label">
                                     {{ $field['label'] }}
-                                    @if(! empty($field['required']))<span class="text-danger">*</span>@endif
+                                    @if(! empty($field['required']))<span class="text-brand">*</span>@endif
                                 </label>
                                 @if($isPassword && $hasValue && ! old('credentials.'.$field['key']))
                                     <div class="input-group">
@@ -570,7 +570,7 @@
                             <option value="">— Sin asignar —</option>
                             @foreach($agents as $u)
                                 <option value="{{ $u->id }}" @selected(old('default_assignee_id', $inbox->default_assignee_id) == $u->id)>
-                                    {{ trim(($u->firstname ?? '').' '.($u->lastname ?? '')) ?: $u->email }}
+                                    {{ $u->fullName() ?: $u->email }}
                                 </option>
                             @endforeach
                         </select>
@@ -623,7 +623,7 @@
     {{-- Footer común --}}
     <div class="d-flex justify-content-between mt-4">
         <a href="{{ route('settings.helpdesk.inboxes.index') }}" class="btn btn-light">
-            <i class="fas fa-chevron-left me-1"></i>Volver
+            Volver
         </a>
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-check me-1"></i>
@@ -685,181 +685,16 @@
 
 @push('scripts')
 <script>
-$(function () {
-
-    // ── Persistencia de tab en URL hash ──────────────────────────────
-    $('#inboxTabs button').on('shown.bs.tab', function (e) {
-        window.location.hash = e.target.getAttribute('data-bs-target');
-    });
-
-    if (window.location.hash) {
-        const tabBtn = document.querySelector('[data-bs-target="' + window.location.hash + '"]');
-        if (tabBtn) {
-            bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-        }
-    }
-
-    // ── Autoexpandir tab del primer error de validación ───────────────
-    @if($errors->any())
-    (function () {
-        const firstError = document.querySelector('.is-invalid');
-        if (!firstError) { return; }
-        const pane = firstError.closest('.tab-pane');
-        if (!pane) { return; }
-        const btn = document.querySelector('[data-bs-target="#' + pane.id + '"]');
-        if (btn) { bootstrap.Tab.getOrCreateInstance(btn).show(); }
-    })();
-    @endif
-
-    // ── Horario laboral ───────────────────────────────────────────────
-    const $whToggle = $('#working_hours_enabled');
-    const $whBlock  = $('#inbox-schedule-block');
-
-    function toggleSchedule() {
-        $whBlock.toggle($whToggle.is(':checked'));
-    }
-
-    toggleSchedule();
-    $whToggle.on('change', toggleSchedule);
-
-    $(document).on('change', '.inbox-day-toggle', function () {
-        $(this).closest('.row').find('.inbox-day-time').prop('disabled', !this.checked);
-    });
-
-    // ── Selector de proveedor WhatsApp ────────────────────────────────
-    $('#wa_provider').on('change', function () {
-        const val = this.value;
-        $('.wa-provider-fields').hide();
-        $('[data-provider="' + val + '"]').show();
-    }).trigger('change');
-
-    // ── Copiar código de instalación ──────────────────────────────────
-    window.copyEmbedCode = function () {
-        const code = document.getElementById('embed-code').textContent;
-        navigator.clipboard.writeText(code);
-    };
-
-    // ── Desbloquear campo de credencial oculto ────────────────────────
-    $(document).on('click', '.btn-change-cred', function () {
-        const target = $(this).data('target');
-        $('#' + target).prop('disabled', false).attr('type', 'password').focus();
-        $(this).prop('disabled', true).text('Editando…');
-    });
-
-    // ── Probar conexión ───────────────────────────────────────────────
-    $('#btn-test-connection').on('click', function () {
-        const $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Verificando...');
-
-        $.ajax({
-            url: @json($isEdit ? route('settings.helpdesk.inboxes.test', $inbox) : ''),
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                const cls  = res.ok ? 'text-success' : 'text-danger';
-                const icon = res.ok ? 'fa-check-circle' : 'fa-times-circle';
-                $('#test-result')
-                    .html('<i class="fas ' + icon + ' me-1"></i>' + res.message)
-                    .attr('class', 'small mt-2 ' + cls);
-            },
-            error: function () {
-                $('#test-result')
-                    .html('<i class="fas fa-times-circle me-1"></i>Error al conectar')
-                    .attr('class', 'small mt-2 text-danger');
-            },
-            complete: function () {
-                $btn.prop('disabled', false).html('<i class="fas fa-plug me-1"></i>Probar conexión');
-            },
-        });
-    });
-
-    @if($showWidgetPreview)
-    // ── Widget preview live sync ─────────────────────────────────────
-    (function () {
-        const iframe = document.getElementById('widgetPreviewIframe');
-        if (!iframe) return;
-
-        let iframeReady = false;
-        let pendingSettings = null;
-
-        window.addEventListener('message', function (event) {
-            if (event.origin !== window.location.origin) return;
-            if (event.data?.source === 'be-backups-preview' && event.data?.type === 'appLoaded') {
-                iframeReady = true;
-                if (pendingSettings) {
-                    postSettings(pendingSettings);
-                    pendingSettings = null;
-                }
-            }
-        });
-
-        function getVal(name) {
-            const el = document.querySelector('[name="widget['+name+']"]:not([type=hidden])');
-            return el ? el.value : '';
-        }
-        function isChecked(name) {
-            const el = document.querySelector('input[type=checkbox][name="widget['+name+']"]');
-            return el ? el.checked : false;
-        }
-
-        function collectSettings() {
-            return {
-                primary_color:        getVal('widget_color') || '#90bb13',
-                secondary_color:      getVal('secondary_color') || '#ffffff',
-                header_title:         getVal('header_title'),
-                welcome_message:      getVal('welcome_message'),
-                input_placeholder:    getVal('input_placeholder'),
-                show_avatars:         isChecked('show_avatars'),
-                show_help_center:     isChecked('show_help_center'),
-                typing_indicator:     isChecked('typing_indicator'),
-                sound_notifications:  isChecked('sound_notifications'),
-                show_timestamps:      isChecked('show_timestamps'),
-                enable_email_transcripts: isChecked('enable_email_transcripts'),
-                hide_launcher:        isChecked('hide_launcher'),
-                position:             getVal('widget_position') || 'bottom-right',
-                side_spacing:         parseInt(getVal('side_spacing')) || 16,
-                bottom_spacing:       parseInt(getVal('bottom_spacing')) || 16,
-            };
-        }
-
-        function postSettings(s) {
-            if (!iframe.contentWindow) return;
-            iframe.contentWindow.postMessage({
-                source: 'be-backups-editor',
-                type:   'setValues',
-                values: s,
-            }, window.location.origin);
-        }
-
-        function syncPreview() {
-            const s = collectSettings();
-            if (iframeReady) postSettings(s);
-            else pendingSettings = s;
-        }
-
-        // Sync on any change inside #tab-widget
-        $('#tab-widget').on('change input', 'input, select, textarea', syncPreview);
-
-        // Switch preview screen tab
-        const previewToken = @json($previewToken);
-        $('#previewTabs').on('click', 'a.nav-link', function (e) {
-            e.preventDefault();
-            $('#previewTabs a.nav-link').removeClass('active');
-            $(this).addClass('active');
-            iframeReady = false;
-            try {
-                let url = iframe.src.split('?')[0] + '?preview=true&screen=' + $(this).data('screen');
-                if (previewToken) url += '&website_token=' + encodeURIComponent(previewToken);
-                iframe.src = url;
-            } catch (err) {}
-            pendingSettings = collectSettings();
-        });
-
-        // Initial sync
-        pendingSettings = collectSettings();
-    })();
-    @endif
-
-});
+@php
+    $hdInboxFormConfig = [
+    'testConnectionUrl' => $isEdit ? route('settings.helpdesk.inboxes.test', $inbox) : null,
+    'showWidgetPreview' => $showWidgetPreview,
+    'previewToken' => $showWidgetPreview ? ($channel?->website_token ?? null) : null
+];
+@endphp
+window.HdInboxFormConfig = @json($hdInboxFormConfig);
 </script>
+<script>window.HdSettingsCommonSkipAutoInit = true;</script>
+<script src="{{ asset('vendor/helpdesk/settings/settings-common.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/settings-common.js')) }}" defer></script>
+<script src="{{ asset('vendor/helpdesk/settings/inbox-form.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/settings/inbox-form.js')) }}" defer></script>
 @endpush

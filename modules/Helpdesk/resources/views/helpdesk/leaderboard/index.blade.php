@@ -6,6 +6,10 @@
     @include('core::components.card', ['title' => 'Leaderboard del equipo · Helpdesk'])
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
+@endpush
+
 @section('content')
 
     {{-- Header --}}
@@ -88,8 +92,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0"
-                                                 style="width:36px;height:36px">
+                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0 bv-wh-36">
                                                 <span class="text-white fw-bold small">{{ $initial }}</span>
                                             </div>
                                             <span class="fw-semibold">{{ $agent->name }}</span>
@@ -103,12 +106,12 @@
                                     </td>
                                     <td class="text-center">
                                         @php
-                                            $pctClass = $pct >= 75 ? 'success' : ($pct >= 50 ? 'warning' : 'danger');
+                                            $pctClass = $pct >= 75 ? 'success' : ($pct >= 50 ? 'warning' : 'info');
                                         @endphp
                                         <div class="d-flex align-items-center gap-2 justify-content-center">
-                                            <div class="progress flex-grow-1" style="height:6px;max-width:80px">
-                                                <div class="progress-bar bg-{{ $pctClass }}"
-                                                     style="width:{{ $pct }}%"></div>
+                                            <div class="progress flex-grow-1 bv-h-6 bv-maxw-80">
+                                                <div class="progress-bar bg-{{ $pctClass }} bv-progress-fill--dynamic"
+                                                     style="--bv-progress-pct: {{ $pct }}%"></div>
                                             </div>
                                             <small class="fw-semibold text-{{ $pctClass }}">{{ $pct }}%</small>
                                         </div>

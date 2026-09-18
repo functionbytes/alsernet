@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,12 +27,13 @@
 
 namespace PrestaShop\PrestaShop\Core\Cart;
 
-class CartRowCollection implements \Iterator, \Countable
+class CartRowCollection implements \Countable, \Iterator
 {
     /**
      * @var CartRow[]
      */
     protected $cartRows = [];
+
     protected $iteratorPosition = 0;
 
     public function addCartRow(CartRow $cartRow)
@@ -59,7 +61,7 @@ class CartRowCollection implements \Iterator, \Countable
 
     public function next()
     {
-        ++$this->iteratorPosition;
+        $this->iteratorPosition++;
     }
 
     public function valid()
@@ -74,7 +76,7 @@ class CartRowCollection implements \Iterator, \Countable
     protected function getKey($iteratorPosition)
     {
         $keys = array_keys($this->cartRows);
-        if (!isset($keys[$iteratorPosition])) {
+        if (! isset($keys[$iteratorPosition])) {
             return null;
         } else {
             return $keys[$iteratorPosition];

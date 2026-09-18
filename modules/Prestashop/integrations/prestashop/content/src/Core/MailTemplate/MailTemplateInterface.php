@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,11 @@ namespace PrestaShop\PrestaShop\Core\MailTemplate;
 interface MailTemplateInterface
 {
     public const CORE_CATEGORY = 'core';
+
     public const MODULES_CATEGORY = 'modules';
 
     public const HTML_TYPE = 'html';
+
     public const TXT_TYPE = 'txt';
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,16 +59,12 @@ final class DeleteProductFromOrderHandler extends AbstractOrderCommandHandler im
      * @var OrderAmountUpdater
      */
     private $orderAmountUpdater;
+
     /**
      * @var OrderProductQuantityUpdater
      */
     private $orderProductQuantityUpdater;
 
-    /**
-     * @param ContextStateManager $contextStateManager
-     * @param OrderAmountUpdater $orderAmountUpdater
-     * @param OrderProductQuantityUpdater $orderProductQuantityUpdater
-     */
     public function __construct(
         ContextStateManager $contextStateManager,
         OrderAmountUpdater $orderAmountUpdater,
@@ -94,8 +91,7 @@ final class DeleteProductFromOrderHandler extends AbstractOrderCommandHandler im
             ->setCart($cart)
             ->setCurrency(new Currency($order->id_currency))
             ->setCustomer(new Customer($order->id_customer))
-            ->setShop(new Shop($order->id_shop))
-        ;
+            ->setShop(new Shop($order->id_shop));
 
         try {
             $order = $this->orderProductQuantityUpdater->update(
@@ -111,17 +107,13 @@ final class DeleteProductFromOrderHandler extends AbstractOrderCommandHandler im
         }
     }
 
-    /**
-     * @param Order $order
-     * @param OrderDetail $orderDetail
-     */
     private function assertProductCanBeDeleted(Order $order, OrderDetail $orderDetail)
     {
-        if (!Validate::isLoadedObject($orderDetail)) {
+        if (! Validate::isLoadedObject($orderDetail)) {
             throw new OrderException('Order detail could not be found.');
         }
 
-        if (!Validate::isLoadedObject($order)) {
+        if (! Validate::isLoadedObject($order)) {
             throw new OrderNotFoundException(new OrderId((int) $order->id), 'Order could not be found.');
         }
 

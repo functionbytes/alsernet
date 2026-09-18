@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_5bf87bc3492cf8ad778f728ae2eae853'] = 'Consulte [b]AQUI[/b] a informação sobre os [b]TEMPOS DE ENTREGA[/b]';
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_e7701766b7e37bcc5107d59c9fce57b5'] = 'Por favor clique no link seguinte e siga as intruções: ';
 $_MODULE['<{alsernetforms}prestashop>alsernetforms_09f81c6db0942a118b6c80c1ca37dbbc'] = 'Subir documentação';

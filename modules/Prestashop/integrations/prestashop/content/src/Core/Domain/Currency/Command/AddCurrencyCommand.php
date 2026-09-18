@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,9 +78,9 @@ class AddCurrencyCommand
     protected $localizedTransformations = [];
 
     /**
-     * @param string $isoCode
-     * @param float $exchangeRate
-     * @param bool $isEnabled
+     * @param  string  $isoCode
+     * @param  float  $exchangeRate
+     * @param  bool  $isEnabled
      *
      * @throws CurrencyConstraintException
      */
@@ -101,18 +102,13 @@ class AddCurrencyCommand
         return $this->isoCode;
     }
 
-    /**
-     * @return Precision|null
-     */
     public function getPrecision(): ?Precision
     {
         return $this->precision;
     }
 
     /**
-     * @param int|string $precision
-     *
-     * @return self
+     * @param  int|string  $precision
      *
      * @throws CurrencyConstraintException
      */
@@ -140,8 +136,7 @@ class AddCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedNames currency's localized names, indexed by language id
-     *
+     * @param  string[]  $localizedNames  currency's localized names, indexed by language id
      * @return $this
      *
      * @throws CurrencyConstraintException
@@ -166,8 +161,7 @@ class AddCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedSymbols currency's localized symbols, indexed by language id
-     *
+     * @param  string[]  $localizedSymbols  currency's localized symbols, indexed by language id
      * @return $this
      *
      * @throws CurrencyConstraintException
@@ -200,8 +194,7 @@ class AddCurrencyCommand
     }
 
     /**
-     * @param int[] $shopIds
-     *
+     * @param  int[]  $shopIds
      * @return self
      */
     public function setShopIds(array $shopIds)
@@ -222,8 +215,7 @@ class AddCurrencyCommand
     }
 
     /**
-     * @param string[] $localizedTransformations currency's localized transformations, indexed by language id
-     *
+     * @param  string[]  $localizedTransformations  currency's localized transformations, indexed by language id
      * @return $this
      */
     public function setLocalizedTransformations(array $localizedTransformations): AddCurrencyCommand

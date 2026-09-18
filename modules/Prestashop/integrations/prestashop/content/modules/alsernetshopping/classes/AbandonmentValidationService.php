@@ -3,17 +3,15 @@
 namespace AlsernetShopping;
 
 use Cart;
+use Configuration;
 use Context;
+use Customer;
 use Db;
 use DbQuery;
-use Customer;
-use Configuration;
-use Tools;
-use Validate;
 use Product;
-use Address;
+use Validate;
 
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -41,7 +39,7 @@ class AbandonmentValidationService
     /** @var array */
     private $errors = [];
 
-    public function __construct(Context $context = null)
+    public function __construct(?Context $context = null)
     {
         $this->context = $context ?: Context::getContext();
         $this->cartManager = new AbandonedCartManager($this->context);
@@ -58,25 +56,25 @@ class AbandonmentValidationService
                 'required_configs' => ['system_active', 'abandonment_enabled'],
                 'min_cart_value' => 0,
                 'max_cart_value' => 50000,
-                'max_products_count' => 100
+                'max_products_count' => 100,
             ],
             'abandonment' => [
                 'valid_stages' => [
                     AbandonedCartManager::STAGE_CART,
                     AbandonedCartManager::STAGE_SHIPPING,
                     AbandonedCartManager::STAGE_PAYMENT,
-                    AbandonedCartManager::STAGE_REVIEW
+                    AbandonedCartManager::STAGE_REVIEW,
                 ],
                 'max_session_duration' => 86400, // 24 horas
                 'min_inactivity_time' => 30, // 30 segundos
-                'max_recovery_attempts' => 10
+                'max_recovery_attempts' => 10,
             ],
             'behavior' => [
                 'max_pages_visited' => 1000,
                 'max_product_views' => 500,
                 'max_scroll_depth' => 100,
                 'max_clicks' => 10000,
-                'max_session_time' => 86400
+                'max_session_time' => 86400,
             ],
             'modal' => [
                 'valid_types' => [
@@ -84,12 +82,12 @@ class AbandonmentValidationService
                     AbandonedCartManager::MODAL_DISCOUNT,
                     AbandonedCartManager::MODAL_URGENCY,
                     AbandonedCartManager::MODAL_RECOMMENDATIONS,
-                    AbandonedCartManager::MODAL_RECOVERY
+                    AbandonedCartManager::MODAL_RECOVERY,
                 ],
                 'valid_interactions' => ['shown', 'clicked', 'closed', 'ignored', 'converted'],
                 'max_discount_percentage' => 50,
-                'min_discount_percentage' => 1
-            ]
+                'min_discount_percentage' => 1,
+            ],
         ];
     }
 
@@ -101,17 +99,17 @@ class AbandonmentValidationService
         $this->errors = [];
 
         // Verificar si el sistema está activo
-        if (!$this->cartManager->isSystemActive()) {
+        if (! $this->cartManager->isSystemActive()) {
             $this->errors[] = [
                 'code' => 'SYSTEM_INACTIVE',
                 'message' => 'Abandonment system is not active',
-                'field' => 'system_active'
+                'field' => 'system_active',
             ];
         }
 
         // Verificar configuraciones requeridas
         foreach ($this->validationRules['system']['required_configs'] as $config) {
-            if (!$this->cartManager->isSystemActive() && $config === 'system_active') {
+            if (! $this->cartManager->isSystemActive() && $config === 'system_active') {
                 continue; // Ya validado arriba
             }
 
@@ -120,14 +118,14 @@ class AbandonmentValidationService
                 $this->errors[] = [
                     'code' => 'MISSING_CONFIG',
                     'message' => "Required configuration '{$config}' is missing or disabled",
-                    'field' => $config
+                    'field' => $config,
                 ];
             }
         }
 
         return [
             'valid' => empty($this->errors),
-            'errors' => $this->errors
+            'errors' => $this->errors,
         ];
     }
 
@@ -140,37 +138,37 @@ class AbandonmentValidationService
 
         // Validar sistema primero
         $systemValidation = $this->validateSystemStatus();
-        if (!$systemValidation['valid']) {
+        if (! $systemValidation['valid']) {
             return $systemValidation;
         }
 
         // Validar carrito
         $cartValidation = $this->validateCart($cart);
-        if (!$cartValidation['valid']) {
+        if (! $cartValidation['valid']) {
             $this->errors = array_merge($this->errors, $cartValidation['errors']);
         }
 
         // Validar stage
-        if (!in_array($stage, $this->validationRules['abandonment']['valid_stages'])) {
+        if (! in_array($stage, $this->validationRules['abandonment']['valid_stages'])) {
             $this->errors[] = [
                 'code' => 'INVALID_STAGE',
                 'message' => "Invalid abandonment stage: {$stage}",
-                'field' => 'stage'
+                'field' => 'stage',
             ];
         }
 
         // Validar datos de comportamiento
-        if (!empty($behaviorData)) {
+        if (! empty($behaviorData)) {
             $behaviorValidation = $this->validateBehaviorData($behaviorData);
-            if (!$behaviorValidation['valid']) {
+            if (! $behaviorValidation['valid']) {
                 $this->errors = array_merge($this->errors, $behaviorValidation['errors']);
             }
         }
 
         // Validar datos de sesión
-        if (!empty($sessionData)) {
+        if (! empty($sessionData)) {
             $sessionValidation = $this->validateSessionData($sessionData);
-            if (!$sessionValidation['valid']) {
+            if (! $sessionValidation['valid']) {
                 $this->errors = array_merge($this->errors, $sessionValidation['errors']);
             }
         }
@@ -180,7 +178,7 @@ class AbandonmentValidationService
         if ($existingAbandonment) {
             // Validar si se puede actualizar
             $updateValidation = $this->validateAbandonmentUpdate($existingAbandonment, $stage);
-            if (!$updateValidation['valid']) {
+            if (! $updateValidation['valid']) {
                 $this->errors = array_merge($this->errors, $updateValidation['errors']);
             }
         }
@@ -188,7 +186,7 @@ class AbandonmentValidationService
         return [
             'valid' => empty($this->errors),
             'errors' => $this->errors,
-            'existing_abandonment_id' => $existingAbandonment
+            'existing_abandonment_id' => $existingAbandonment,
         ];
     }
 
@@ -200,21 +198,22 @@ class AbandonmentValidationService
         $errors = [];
 
         // Verificar que el carrito existe y está cargado
-        if (!$cart || !Validate::isLoadedObject($cart)) {
+        if (! $cart || ! Validate::isLoadedObject($cart)) {
             $errors[] = [
                 'code' => 'INVALID_CART',
                 'message' => 'Cart is not valid or not loaded',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
+
             return ['valid' => false, 'errors' => $errors];
         }
 
         // Verificar ownership del carrito
-        if (!$this->validateCartOwnership($cart)) {
+        if (! $this->validateCartOwnership($cart)) {
             $errors[] = [
                 'code' => 'CART_OWNERSHIP',
                 'message' => 'Cart does not belong to current user',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
         }
 
@@ -224,8 +223,9 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'EMPTY_CART',
                 'message' => 'Cart is empty',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
+
             return ['valid' => false, 'errors' => $errors];
         }
 
@@ -234,7 +234,7 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'TOO_MANY_PRODUCTS',
                 'message' => 'Cart has too many inventaries',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
         }
 
@@ -244,7 +244,7 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'CART_VALUE_TOO_LOW',
                 'message' => 'Cart value is too low',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
         }
 
@@ -252,19 +252,19 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'CART_VALUE_TOO_HIGH',
                 'message' => 'Cart value is too high',
-                'field' => 'cart'
+                'field' => 'cart',
             ];
         }
 
         // Validar productos individualmente
         $productValidation = $this->validateCartProducts($products);
-        if (!$productValidation['valid']) {
+        if (! $productValidation['valid']) {
             $errors = array_merge($errors, $productValidation['errors']);
         }
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -277,24 +277,25 @@ class AbandonmentValidationService
 
         foreach ($products as $product) {
             // Verificar que el producto existe
-            if (!Product::existsInDatabase($product['id_product'], 'product')) {
+            if (! Product::existsInDatabase($product['id_product'], 'product')) {
                 $errors[] = [
                     'code' => 'PRODUCT_NOT_FOUND',
                     'message' => "Product {$product['id_product']} not found",
                     'field' => 'inventaries',
-                    'product_id' => $product['id_product']
+                    'product_id' => $product['id_product'],
                 ];
+
                 continue;
             }
 
             // Verificar que el producto está activo
             $productObj = new Product($product['id_product'], false, $this->context->language->id);
-            if (!$productObj->active) {
+            if (! $productObj->active) {
                 $errors[] = [
                     'code' => 'PRODUCT_INACTIVE',
                     'message' => "Product {$product['id_product']} is not active",
                     'field' => 'inventaries',
-                    'product_id' => $product['id_product']
+                    'product_id' => $product['id_product'],
                 ];
             }
 
@@ -308,7 +309,7 @@ class AbandonmentValidationService
                         'field' => 'inventaries',
                         'product_id' => $product['id_product'],
                         'available_stock' => $stock,
-                        'requested_quantity' => $product['cart_quantity']
+                        'requested_quantity' => $product['cart_quantity'],
                     ];
                 }
             }
@@ -316,7 +317,7 @@ class AbandonmentValidationService
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -331,7 +332,8 @@ class AbandonmentValidationService
         }
 
         // Si no hay customer, verificar por guest o sesión
-        $currentGuestId = (int)$this->context->cookie->id_guest;
+        $currentGuestId = (int) $this->context->cookie->id_guest;
+
         return $cart->id_guest == $currentGuestId || $cart->id_customer == 0;
     }
 
@@ -345,84 +347,84 @@ class AbandonmentValidationService
 
         // Validar páginas visitadas
         if (isset($data['pages_visited'])) {
-            $pages = (int)$data['pages_visited'];
+            $pages = (int) $data['pages_visited'];
             if ($pages < 0 || $pages > $rules['max_pages_visited']) {
                 $errors[] = [
                     'code' => 'INVALID_PAGES_VISITED',
                     'message' => 'Invalid pages visited count',
-                    'field' => 'pages_visited'
+                    'field' => 'pages_visited',
                 ];
             }
         }
 
         // Validar vistas de productos
         if (isset($data['product_views'])) {
-            $views = (int)$data['product_views'];
+            $views = (int) $data['product_views'];
             if ($views < 0 || $views > $rules['max_product_views']) {
                 $errors[] = [
                     'code' => 'INVALID_PRODUCT_VIEWS',
                     'message' => 'Invalid product views count',
-                    'field' => 'product_views'
+                    'field' => 'product_views',
                 ];
             }
         }
 
         // Validar scroll depth
         if (isset($data['max_scroll'])) {
-            $scroll = (int)$data['max_scroll'];
+            $scroll = (int) $data['max_scroll'];
             if ($scroll < 0 || $scroll > $rules['max_scroll_depth']) {
                 $errors[] = [
                     'code' => 'INVALID_SCROLL_DEPTH',
                     'message' => 'Invalid scroll depth',
-                    'field' => 'max_scroll'
+                    'field' => 'max_scroll',
                 ];
             }
         }
 
         // Validar clicks
         if (isset($data['clicks'])) {
-            $clicks = (int)$data['clicks'];
+            $clicks = (int) $data['clicks'];
             if ($clicks < 0 || $clicks > $rules['max_clicks']) {
                 $errors[] = [
                     'code' => 'INVALID_CLICKS_COUNT',
                     'message' => 'Invalid clicks count',
-                    'field' => 'clicks'
+                    'field' => 'clicks',
                 ];
             }
         }
 
         // Validar duración de sesión
         if (isset($data['session_duration'])) {
-            $duration = (int)$data['session_duration'];
+            $duration = (int) $data['session_duration'];
             if ($duration < 0 || $duration > $rules['max_session_time']) {
                 $errors[] = [
                     'code' => 'INVALID_SESSION_DURATION',
                     'message' => 'Invalid session duration',
-                    'field' => 'session_duration'
+                    'field' => 'session_duration',
                 ];
             }
         }
 
         // Validar arrays
-        if (isset($data['search_queries']) && !is_array($data['search_queries'])) {
+        if (isset($data['search_queries']) && ! is_array($data['search_queries'])) {
             $errors[] = [
                 'code' => 'INVALID_SEARCH_QUERIES',
                 'message' => 'Search queries must be an array',
-                'field' => 'search_queries'
+                'field' => 'search_queries',
             ];
         }
 
-        if (isset($data['categories']) && !is_array($data['categories'])) {
+        if (isset($data['categories']) && ! is_array($data['categories'])) {
             $errors[] = [
                 'code' => 'INVALID_CATEGORIES',
                 'message' => 'Categories must be an array',
-                'field' => 'categories'
+                'field' => 'categories',
             ];
         }
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -436,30 +438,30 @@ class AbandonmentValidationService
         // Validar session_id
         if (isset($data['session_id'])) {
             $sessionId = $data['session_id'];
-            if (!is_string($sessionId) || empty($sessionId) || strlen($sessionId) > 128) {
+            if (! is_string($sessionId) || empty($sessionId) || strlen($sessionId) > 128) {
                 $errors[] = [
                     'code' => 'INVALID_SESSION_ID',
                     'message' => 'Invalid session ID',
-                    'field' => 'session_id'
+                    'field' => 'session_id',
                 ];
             }
         }
 
         // Validar duración
         if (isset($data['duration'])) {
-            $duration = (int)$data['duration'];
+            $duration = (int) $data['duration'];
             if ($duration < 0 || $duration > $this->validationRules['abandonment']['max_session_duration']) {
                 $errors[] = [
                     'code' => 'INVALID_DURATION',
                     'message' => 'Invalid session duration',
-                    'field' => 'duration'
+                    'field' => 'duration',
                 ];
             }
         }
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -471,59 +473,59 @@ class AbandonmentValidationService
         $errors = [];
 
         // Verificar que el abandonment existe y pertenece al usuario
-        if (!$this->validateAbandonmentOwnership($abandonmentId)) {
+        if (! $this->validateAbandonmentOwnership($abandonmentId)) {
             $errors[] = [
                 'code' => 'INVALID_ABANDONMENT_OWNERSHIP',
                 'message' => 'Abandonment does not belong to current user',
-                'field' => 'abandonment_id'
+                'field' => 'abandonment_id',
             ];
         }
 
         // Validar tipo de modal
-        if (!in_array($modalType, $this->validationRules['modal']['valid_types'])) {
+        if (! in_array($modalType, $this->validationRules['modal']['valid_types'])) {
             $errors[] = [
                 'code' => 'INVALID_MODAL_TYPE',
                 'message' => "Invalid modal type: {$modalType}",
-                'field' => 'modal_type'
+                'field' => 'modal_type',
             ];
         }
 
         // Validar tipo de interacción
-        if (!in_array($interactionType, $this->validationRules['modal']['valid_interactions'])) {
+        if (! in_array($interactionType, $this->validationRules['modal']['valid_interactions'])) {
             $errors[] = [
                 'code' => 'INVALID_INTERACTION_TYPE',
                 'message' => "Invalid interaction type: {$interactionType}",
-                'field' => 'interaction_type'
+                'field' => 'interaction_type',
             ];
         }
 
         // Validar datos adicionales
         if (isset($data['discount'])) {
-            $discount = (float)$data['discount'];
+            $discount = (float) $data['discount'];
             if ($discount < $this->validationRules['modal']['min_discount_percentage'] ||
                 $discount > $this->validationRules['modal']['max_discount_percentage']) {
                 $errors[] = [
                     'code' => 'INVALID_DISCOUNT',
                     'message' => 'Invalid discount percentage',
-                    'field' => 'discount'
+                    'field' => 'discount',
                 ];
             }
         }
 
         if (isset($data['conversion_value'])) {
-            $value = (float)$data['conversion_value'];
+            $value = (float) $data['conversion_value'];
             if ($value < 0) {
                 $errors[] = [
                     'code' => 'INVALID_CONVERSION_VALUE',
                     'message' => 'Conversion value cannot be negative',
-                    'field' => 'conversion_value'
+                    'field' => 'conversion_value',
                 ];
             }
         }
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -532,20 +534,20 @@ class AbandonmentValidationService
      */
     public function validateAbandonmentOwnership(int $abandonmentId): bool
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('id_abandoned_cart')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts')
-            ->where('id_abandoned_cart = ' . (int)$abandonmentId);
+            ->from(_DB_PREFIX_.'alsernetshopping_abandoned_carts')
+            ->where('id_abandoned_cart = '.(int) $abandonmentId);
 
         if ($this->context->customer->isLogged()) {
-            $sql->where('id_customer = ' . (int)$this->context->customer->id);
+            $sql->where('id_customer = '.(int) $this->context->customer->id);
         } else {
             $sessionId = session_id();
-            $guestId = (int)$this->context->cookie->id_guest;
-            $sql->where('(session_id = "' . pSQL($sessionId) . '" OR id_guest = ' . $guestId . ')');
+            $guestId = (int) $this->context->cookie->id_guest;
+            $sql->where('(session_id = "'.pSQL($sessionId).'" OR id_guest = '.$guestId.')');
         }
 
-        return (bool)Db::getInstance()->getValue($sql);
+        return (bool) Db::getInstance()->getValue($sql);
     }
 
     /**
@@ -556,11 +558,11 @@ class AbandonmentValidationService
         $errors = [];
 
         // Verificar que el trigger está habilitado
-        if (!$this->cartManager->isTriggerEnabled($triggerType)) {
+        if (! $this->cartManager->isTriggerEnabled($triggerType)) {
             $errors[] = [
                 'code' => 'TRIGGER_DISABLED',
                 'message' => "Trigger type '{$triggerType}' is disabled",
-                'field' => 'trigger_type'
+                'field' => 'trigger_type',
             ];
         }
 
@@ -571,19 +573,19 @@ class AbandonmentValidationService
                     $errors[] = [
                         'code' => 'INVALID_MOUSE_VELOCITY',
                         'message' => 'Mouse velocity cannot be negative',
-                        'field' => 'mouse_velocity'
+                        'field' => 'mouse_velocity',
                     ];
                 }
                 break;
 
             case AbandonedCartManager::TRIGGER_TIME:
                 if (isset($conditions['inactivity_time'])) {
-                    $inactivity = (int)$conditions['inactivity_time'];
+                    $inactivity = (int) $conditions['inactivity_time'];
                     if ($inactivity < $this->validationRules['abandonment']['min_inactivity_time']) {
                         $errors[] = [
                             'code' => 'INSUFFICIENT_INACTIVITY_TIME',
                             'message' => 'Inactivity time is too short',
-                            'field' => 'inactivity_time'
+                            'field' => 'inactivity_time',
                         ];
                     }
                 }
@@ -591,12 +593,12 @@ class AbandonmentValidationService
 
             case AbandonedCartManager::TRIGGER_SCROLL:
                 if (isset($conditions['scroll_percentage'])) {
-                    $scroll = (int)$conditions['scroll_percentage'];
+                    $scroll = (int) $conditions['scroll_percentage'];
                     if ($scroll < 0 || $scroll > 100) {
                         $errors[] = [
                             'code' => 'INVALID_SCROLL_PERCENTAGE',
                             'message' => 'Scroll percentage must be between 0 and 100',
-                            'field' => 'scroll_percentage'
+                            'field' => 'scroll_percentage',
                         ];
                     }
                 }
@@ -605,7 +607,7 @@ class AbandonmentValidationService
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -618,12 +620,13 @@ class AbandonmentValidationService
 
         // Obtener abandono actual
         $abandonment = $this->getAbandonmentById($abandonmentId);
-        if (!$abandonment) {
+        if (! $abandonment) {
             $errors[] = [
                 'code' => 'ABANDONMENT_NOT_FOUND',
                 'message' => 'Abandonment not found',
-                'field' => 'abandonment_id'
+                'field' => 'abandonment_id',
             ];
+
             return ['valid' => false, 'errors' => $errors];
         }
 
@@ -632,7 +635,7 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'ABANDONMENT_ALREADY_RECOVERED',
                 'message' => 'Abandonment is already recovered',
-                'field' => 'abandonment_id'
+                'field' => 'abandonment_id',
             ];
         }
 
@@ -641,13 +644,13 @@ class AbandonmentValidationService
             $errors[] = [
                 'code' => 'MAX_RECOVERY_ATTEMPTS_REACHED',
                 'message' => 'Maximum recovery attempts reached',
-                'field' => 'recovery_attempts'
+                'field' => 'recovery_attempts',
             ];
         }
 
         return [
             'valid' => empty($errors),
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -655,14 +658,14 @@ class AbandonmentValidationService
 
     private function getConfigValue(string $key)
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('config_value, config_type')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandonment_config')
-            ->where('config_key = "' . pSQL($key) . '"')
+            ->from(_DB_PREFIX_.'alsernetshopping_abandonment_config')
+            ->where('config_key = "'.pSQL($key).'"')
             ->where('is_active = 1');
 
         $result = Db::getInstance()->getRow($sql);
-        if (!$result) {
+        if (! $result) {
             return null;
         }
 
@@ -673,11 +676,11 @@ class AbandonmentValidationService
     {
         switch ($type) {
             case 'boolean':
-                return (bool)$value;
+                return (bool) $value;
             case 'integer':
-                return (int)$value;
+                return (int) $value;
             case 'decimal':
-                return (float)$value;
+                return (float) $value;
             case 'json':
                 return json_decode($value, true) ?: [];
             default:
@@ -687,22 +690,23 @@ class AbandonmentValidationService
 
     private function getExistingAbandonmentId(int $cartId): ?int
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('id_abandoned_cart')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts')
-            ->where('id_cart = ' . (int)$cartId)
+            ->from(_DB_PREFIX_.'alsernetshopping_abandoned_carts')
+            ->where('id_cart = '.(int) $cartId)
             ->where('is_recovered = 0');
 
         $result = Db::getInstance()->getValue($sql);
-        return $result ? (int)$result : null;
+
+        return $result ? (int) $result : null;
     }
 
     private function getAbandonmentById(int $abandonmentId): ?array
     {
-        $sql = new DbQuery();
+        $sql = new DbQuery;
         $sql->select('*')
-            ->from(_DB_PREFIX_ . 'alsernetshopping_abandoned_carts')
-            ->where('id_abandoned_cart = ' . (int)$abandonmentId);
+            ->from(_DB_PREFIX_.'alsernetshopping_abandoned_carts')
+            ->where('id_abandoned_cart = '.(int) $abandonmentId);
 
         return Db::getInstance()->getRow($sql) ?: null;
     }

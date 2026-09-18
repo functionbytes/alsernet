@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,7 @@ class EditableFeatureValue
     private $localizedValues;
 
     /**
-     * @param FeatureValueId $featureValueId
-     * @param FeatureId $featureId
-     * @param string[] $localizedValues
+     * @param  string[]  $localizedValues
      */
     public function __construct(
         FeatureValueId $featureValueId,
@@ -66,17 +65,11 @@ class EditableFeatureValue
         $this->localizedValues = $localizedValues;
     }
 
-    /**
-     * @return FeatureValueId
-     */
     public function getFeatureValueId(): FeatureValueId
     {
         return $this->featureValueId;
     }
 
-    /**
-     * @return FeatureId
-     */
     public function getFeatureId(): FeatureId
     {
         return $this->featureId;

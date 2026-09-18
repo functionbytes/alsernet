@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class TabDataProvider
     private $contextEmployeeProfileId;
 
     /**
-     * @param int $contextEmployeeProfileId
-     * @param int $superAdminProfileId
+     * @param  int  $contextEmployeeProfileId
+     * @param  int  $superAdminProfileId
      */
     public function __construct($contextEmployeeProfileId, $superAdminProfileId)
     {
@@ -57,8 +58,7 @@ class TabDataProvider
     /**
      * Gets viewable tabs for current context employee.
      *
-     * @param int $languageId
-     *
+     * @param  int  $languageId
      * @return array
      */
     public function getViewableTabsForContextEmployee($languageId)
@@ -69,9 +69,8 @@ class TabDataProvider
     /**
      * Gets tabs that given employee profile can view.
      *
-     * @param int $profileId
-     * @param int $languageId
-     *
+     * @param  int  $profileId
+     * @param  int  $languageId
      * @return array
      */
     public function getViewableTabs($profileId, $languageId)
@@ -107,15 +106,14 @@ class TabDataProvider
     /**
      * Check if given profile can access a tab.
      *
-     * @param int $profileId
-     * @param int $tabId
-     * @param string $accessLevel view, add, edit or delete
-     *
+     * @param  int  $profileId
+     * @param  int  $tabId
+     * @param  string  $accessLevel  view, add, edit or delete
      * @return bool
      */
     private function canAccessTab($profileId, $tabId, $accessLevel = 'view')
     {
-        if (!in_array($accessLevel, ['view', 'add', 'edit', 'delete'])) {
+        if (! in_array($accessLevel, ['view', 'add', 'edit', 'delete'])) {
             return false;
         }
 

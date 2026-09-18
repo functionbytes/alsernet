@@ -282,6 +282,10 @@ class Campaign extends Model
      */
     public function publish(): static
     {
+        if (! $this->canTransitionTo(self::STATUS_ACTIVE)) {
+            throw new \RuntimeException("No se puede publicar una campaña en estado '{$this->status}'.");
+        }
+
         // No publicar una campaña que aún requiere aprobación: la ruta manual
         // de publish (panel/API) solo exige el permiso `update`, así que sin
         // este guard un usuario podía activar el envío masivo saltándose la
@@ -291,8 +295,10 @@ class Campaign extends Model
         }
 
         $this->update([
-            'status' => 'active',
-            'published_at' => now(),
+            'status' => self::STATUS_ACTIVE,
+            // Conserva un published_at ya fijado (campaña aprobada como
+            // "scheduled" para una fecha futura): publish() no debe pisarlo.
+            'published_at' => $this->published_at ?? now(),
         ]);
 
         CampaignPublished::dispatch($this);
@@ -313,8 +319,11 @@ class Campaign extends Model
      */
     public function pause(): static
     {
-        if ($this->is_active) {
-            $this->update(['status' => 'paused']);
+        // No-op (no throw) para estados no pausables: comportamiento previo
+        // preservado — los controllers que necesitan distinguir "no se hizo
+        // nada" comprueban canTransitionTo() ellos mismos antes de llamar.
+        if ($this->canTransitionTo(self::STATUS_PAUSED)) {
+            $this->update(['status' => self::STATUS_PAUSED]);
             CampaignPaused::dispatch($this);
         }
 
@@ -326,8 +335,8 @@ class Campaign extends Model
      */
     public function resume(): static
     {
-        if ($this->status === 'paused') {
-            $this->update(['status' => 'active']);
+        if ($this->canTransitionTo(self::STATUS_ACTIVE) && $this->status === self::STATUS_PAUSED) {
+            $this->update(['status' => self::STATUS_ACTIVE]);
             CampaignResumed::dispatch($this);
         }
 
@@ -339,8 +348,12 @@ class Campaign extends Model
      */
     public function end(): static
     {
+        if (! $this->canTransitionTo(self::STATUS_ENDED)) {
+            throw new \RuntimeException("No se puede finalizar una campaña en estado '{$this->status}'.");
+        }
+
         $this->update([
-            'status' => 'ended',
+            'status' => self::STATUS_ENDED,
             'ends_at' => now(),
         ]);
 
@@ -421,7 +434,10 @@ class Campaign extends Model
             return 0;
         }
 
-        $days = max(1, (int) now()->diffInDays($this->published_at));
+        // Carbon 3 devuelve diferencias con signo: now()->diffInDays($this->published_at)
+        // sale negativo (published_at es anterior a now()), así que max(1, ...) siempre
+        // ganaba con 1 y el promedio diario salía inflado para campañas con más de un día.
+        $days = max(1, (int) $this->published_at->diffInDays(now()));
 
         $impressions = $this->getImpressionsCountAttribute();
 

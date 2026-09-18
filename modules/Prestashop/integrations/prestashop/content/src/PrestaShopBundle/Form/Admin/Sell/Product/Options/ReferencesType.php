@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,8 +86,7 @@ class ReferencesType extends TranslatorAwareType
                     new TypedRegex(TypedRegex::TYPE_ISBN),
                 ],
                 'empty_data' => '',
-            ])
-        ;
+            ]);
     }
 
     /**

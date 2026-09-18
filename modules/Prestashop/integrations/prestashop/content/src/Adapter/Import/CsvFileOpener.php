@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,10 +48,6 @@ final class CsvFileOpener implements FileOpenerInterface
      */
     private $importDirectory;
 
-    /**
-     * @param FileConverterInterface $excelToCsvConverter
-     * @param ImportDirectory $importDirectory
-     */
     public function __construct(
         FileConverterInterface $excelToCsvConverter,
         ImportDirectory $importDirectory
@@ -68,8 +65,8 @@ final class CsvFileOpener implements FileOpenerInterface
         $filePath = $importFile->getPathname();
         $isReadableFile = is_file($filePath) && is_readable($filePath);
 
-        if (!$isReadableFile || !($handle = fopen($filePath, 'r'))) {
-            throw new UnreadableFileException();
+        if (! $isReadableFile || ! ($handle = fopen($filePath, 'r'))) {
+            throw new UnreadableFileException;
         }
 
         $this->rewindBomAware($handle);
@@ -80,11 +77,11 @@ final class CsvFileOpener implements FileOpenerInterface
     /**
      * Rewind the file handle, skipping BOM signature.
      *
-     * @param resource $handle
+     * @param  resource  $handle
      */
     private function rewindBomAware($handle)
     {
-        if (!is_resource($handle)) {
+        if (! is_resource($handle)) {
             return;
         }
 

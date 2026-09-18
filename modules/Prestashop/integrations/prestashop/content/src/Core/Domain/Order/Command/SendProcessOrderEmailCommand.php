@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,8 +41,6 @@ class SendProcessOrderEmailCommand
     private $cartId;
 
     /**
-     * @param int $cartId
-     *
      * @throws CartConstraintException
      */
     public function __construct(int $cartId)
@@ -49,9 +48,6 @@ class SendProcessOrderEmailCommand
         $this->cartId = new CartId($cartId);
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;

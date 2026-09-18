@@ -3,6 +3,7 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -50,7 +51,7 @@ class Traspaso extends Model
      */
     public function traspaso()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TraspasoCapthaya::class, 'idtraspaso', 'idtraspaso');
+        return $this->belongsTo(TraspasoCapthaya::class, 'idtraspaso', 'idtraspaso');
     }
 
     /**
@@ -59,6 +60,6 @@ class Traspaso extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

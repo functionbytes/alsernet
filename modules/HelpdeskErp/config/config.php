@@ -88,4 +88,37 @@ return [
      | Generar con: openssl rand -hex 32
      */
     'webhook_secret' => env('ERP_WEBHOOK_SECRET', ''),
+
+    /*
+     | Segundos que espera la sonda de salud antes de dar el ERP por caído.
+     |
+     | Estaba fijada en 3 y una búsqueda real tarda entre 3,4 y 6,5 segundos
+     | contra Oracle (medido el 7-sep-2026), así que la sonda expiraba siempre y
+     | el panel daba el ERP por degradado de forma permanente mientras
+     | funcionaba con normalidad.
+     |
+     | 10 segundos cubren ese rango con margen sin dejar la sonda colgada: por
+     | encima de eso el ERP está de verdad para pocas cosas, y ahí "degradado"
+     | es la respuesta correcta.
+     */
+    'health_timeout' => env('HELPDESK_ERP_HEALTH_TIMEOUT', 10),
+
+    /*
+     | Enfriamiento, en minutos, antes de volver a buscar en el ERP un cliente
+     | que ya se buscó y no apareció. Sin esto, cada correo de un remitente que
+     | no es cliente (proveedores, notificaciones, spam que pasa el filtro)
+     | vuelve a consultar el manager. La cola helpdesk-erp comparte procesos de
+     | supervisor con otras veinte colas, así que este freno importa.
+     |
+     | El estado vive en helpdesk_customers.erp_lookup_status/erp_lookup_at.
+     | Un reintento pedido a mano por el agente lo ignora.
+     */
+    'lookup_cooldown_minutes' => env('HELPDESK_ERP_LOOKUP_COOLDOWN', 1440),
+
+    /*
+     | Enfriamiento más corto cuando el intento anterior falló por caída del
+     | ERP en vez de por no existir el cliente: ahí el reintento sí tiene
+     | sentido pronto.
+     */
+    'lookup_error_cooldown_minutes' => env('HELPDESK_ERP_LOOKUP_ERROR_COOLDOWN', 30),
 ];

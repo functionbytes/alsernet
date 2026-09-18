@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,9 +41,6 @@ class RequiredFieldsType extends AbstractType
      */
     private $customerRequiredFieldsChoices;
 
-    /**
-     * @param array $customerRequiredFieldsChoices
-     */
     public function __construct(array $customerRequiredFieldsChoices)
     {
         $this->customerRequiredFieldsChoices = $customerRequiredFieldsChoices;
@@ -57,7 +55,6 @@ class RequiredFieldsType extends AbstractType
             ->add('required_fields', MaterialChoiceTableType::class, [
                 'label' => false,
                 'choices' => $this->customerRequiredFieldsChoices,
-            ])
-        ;
+            ]);
     }
 }

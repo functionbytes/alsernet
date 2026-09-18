@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,7 @@ final class BulkDeleteAttributeCommand
     private $attributeIds;
 
     /**
-     * @param int[] $attributeIds
+     * @param  int[]  $attributeIds
      *
      * @throws AttributeConstraintException
      */
@@ -58,8 +59,6 @@ final class BulkDeleteAttributeCommand
     }
 
     /**
-     * @param array $attributeIds
-     *
      * @throws AttributeConstraintException
      */
     private function setAttributeIds(array $attributeIds)

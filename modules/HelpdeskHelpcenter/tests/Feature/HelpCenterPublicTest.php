@@ -89,6 +89,27 @@ class HelpCenterPublicTest extends TestCase
             ->assertJsonCount(0, 'articles');
     }
 
+    /**
+     * Regresión: ?q[]=a&q[]=b llega como array. strlen($q) en search()
+     * lanzaba un TypeError (500) antes del fix.
+     */
+    public function test_public_search_with_array_query_does_not_500(): void
+    {
+        $this->getJson(route('public.helpcenter.search', ['q' => ['a', 'b']]))
+            ->assertOk()
+            ->assertJsonCount(0, 'articles');
+    }
+
+    /**
+     * Regresión: ?locale[]=es llega como array a extractLocaleCandidate(),
+     * que hacía strlen($candidate) directo sobre el valor crudo.
+     */
+    public function test_public_index_with_array_locale_does_not_500(): void
+    {
+        $this->get(route('public.helpcenter.index', ['locale' => ['es']]))
+            ->assertOk();
+    }
+
     // ─── show ─────────────────────────────────────────────────────────────────
 
     public function test_public_show_returns_published_article(): void

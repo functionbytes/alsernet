@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,7 +40,7 @@ class LanguageId
     private $id;
 
     /**
-     * @param int $id
+     * @param  int  $id
      */
     public function __construct($id)
     {
@@ -57,11 +58,11 @@ class LanguageId
     }
 
     /**
-     * @param int $id
+     * @param  int  $id
      */
     private function assertIsIntegerGreaterThanZero($id)
     {
-        if (!is_int($id) || 0 >= $id) {
+        if (! is_int($id) || $id <= 0) {
             throw new LanguageException(sprintf('Invalid language id %s provided', var_export($id, true)));
         }
     }

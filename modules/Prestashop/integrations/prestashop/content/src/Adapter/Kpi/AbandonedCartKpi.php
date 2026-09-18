@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,20 +44,20 @@ final class AbandonedCartKpi implements KpiInterface
     {
         $translator = Context::getContext()->getTranslator();
 
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-carts';
         $helper->icon = 'remove_shopping_cart';
         $helper->color = 'color1';
         $helper->title = $translator->trans('Abandoned Carts', [], 'Admin.Global');
         $helper->subtitle = $translator->trans('Today', [], 'Admin.Global');
-        $helper->href = Context::getContext()->link->getAdminLink('AdminCarts') . '&action=filterOnlyAbandonedCarts';
+        $helper->href = Context::getContext()->link->getAdminLink('AdminCarts').'&action=filterOnlyAbandonedCarts';
 
         if (ConfigurationKPI::get('ABANDONED_CARTS') !== false) {
             $helper->value = ConfigurationKPI::get('ABANDONED_CARTS');
         }
 
         $helper->source = Context::getContext()->link->getAdminLink('AdminStats')
-            . '&ajax=1&action=getKpi&kpi=abandoned_cart';
+            .'&ajax=1&action=getKpi&kpi=abandoned_cart';
         $helper->refresh = (bool) (ConfigurationKPI::get('ABANDONED_CARTS_EXPIRE') < time());
 
         return $helper->generate();

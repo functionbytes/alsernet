@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,43 +33,35 @@ namespace PrestaShop\PrestaShop\Core\MailTemplate\Layout;
  * the hook:
  *  ThemeCatalogInterface::LIST_MAIL_THEMES_HOOK = actionListMailThemes
  */
-interface LayoutCollectionInterface extends \IteratorAggregate, \Countable
+interface LayoutCollectionInterface extends \Countable, \IteratorAggregate
 {
     /**
-     * @param LayoutInterface $layout
-     *
+     * @param  LayoutInterface  $layout
      * @return bool
      */
     public function contains($layout);
 
     /**
-     * @param LayoutInterface $layout
+     * @param  LayoutInterface  $layout
      */
     public function add($layout);
 
     /**
-     * @param LayoutInterface $layout
+     * @param  LayoutInterface  $layout
      */
     public function remove($layout);
 
     /**
-     * @param LayoutInterface $oldLayout
-     * @param LayoutInterface $newLayout
-     *
      * @return bool
      */
     public function replace(LayoutInterface $oldLayout, LayoutInterface $newLayout);
 
     /**
-     * @param string $layoutName
-     * @param string $moduleName
-     *
+     * @param  string  $layoutName
+     * @param  string  $moduleName
      * @return LayoutInterface|null
      */
     public function getLayout($layoutName, $moduleName);
 
-    /**
-     * @param LayoutCollectionInterface $collection
-     */
     public function merge(LayoutCollectionInterface $collection);
 }

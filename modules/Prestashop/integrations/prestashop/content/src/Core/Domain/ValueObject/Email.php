@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class Email
     private $email;
 
     /**
-     * @param string $email
+     * @param  string  $email
      *
      * @throws DomainConstraintException
      */
@@ -68,7 +69,6 @@ class Email
     /**
      * Check if given email is the same as current
      *
-     * @param Email $email
      *
      * @return bool
      */
@@ -80,13 +80,13 @@ class Email
     /**
      * Check that email is not an empty string
      *
-     * @param string $email
+     * @param  string  $email
      *
      * @throws DomainConstraintException
      */
     public function assertEmailIsNotEmpty($email)
     {
-        if (0 === strlen($email)) {
+        if (strlen($email) === 0) {
             throw new DomainConstraintException('Email must not be empty', DomainConstraintException::INVALID_EMAIL);
         }
     }
@@ -94,7 +94,7 @@ class Email
     /**
      * Assert that email length does not exceed allowed value
      *
-     * @param string $email
+     * @param  string  $email
      *
      * @throws DomainConstraintException
      */
@@ -103,7 +103,7 @@ class Email
         $email = html_entity_decode($email, ENT_COMPAT, 'UTF-8');
 
         $length = function_exists('mb_strlen') ? mb_strlen($email, 'UTF-8') : strlen($email);
-        if (self::MAX_LENGTH < $length) {
+        if ($length > self::MAX_LENGTH) {
             throw new DomainConstraintException(sprintf('Email is too long. Max allowed length is %s', self::MAX_LENGTH), DomainConstraintException::INVALID_EMAIL);
         }
     }
@@ -111,13 +111,13 @@ class Email
     /**
      * Assert email is of type string
      *
-     * @param string $email
+     * @param  string  $email
      *
      * @throws DomainConstraintException
      */
     private function assertEmailIsString($email)
     {
-        if (!is_string($email)) {
+        if (! is_string($email)) {
             throw new DomainConstraintException('Email must be of type string', DomainConstraintException::INVALID_EMAIL);
         }
     }

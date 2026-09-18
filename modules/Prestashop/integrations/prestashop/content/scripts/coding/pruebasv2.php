@@ -1,25 +1,26 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include(dirname(__FILE__) . '/../../config/config.inc.php');
+include dirname(__FILE__).'/../../config/config.inc.php';
 
-include ('/home/alvarez/LOG_INTEGRACION/dbantigua.php');
+include '/home/alvarez/LOG_INTEGRACION/dbantigua.php';
 
 // // die();
 $dbcon = connectBD();
 
 //
-$sql = Db::getInstance()->ExecuteS("select 0 as producto, id_articulo, unidades_oferta, etiqueta, estado_gestion,activo, es_segunda_mano, externo_disponibilidad, codigo_proveedor, precio_costo_proveedor, tarifa_proveedor, es_arma, es_arma_fogueo, es_cartucho, categoria, familia, subfamilia, grupo  from aalv_combinaciones_import aci
+$sql = Db::getInstance()->ExecuteS('select 0 as producto, id_articulo, unidades_oferta, etiqueta, estado_gestion,activo, es_segunda_mano, externo_disponibilidad, codigo_proveedor, precio_costo_proveedor, tarifa_proveedor, es_arma, es_arma_fogueo, es_cartucho, categoria, familia, subfamilia, grupo  from aalv_combinaciones_import aci
 where id_articulo not in (100218271) and estado_gestion != 0
 order by id_articulo desc
 
-");
+');
 
 // UNION
 // select 1 as producto, id_articulo, unidades_oferta, etiqueta, estado_gestion,activo, es_segunda_mano, externo_disponibilidad, codigo_proveedor, precio_costo_proveedor, tarifa_proveedor, es_arma, es_arma_fogueo, es_cartucho, categoria, familia, subfamilia, grupo from aalv_combinacionunica_import aci where estado_gestion = 0
@@ -31,21 +32,21 @@ $total = count($sql);
 $suma = 0;
 $cc = 0;
 foreach ($sql as $value) {
-    # code...
+    // code...
 
-    $sql_antigua = "SELECT
+    $sql_antigua = 'SELECT
                         *
                     FROM
                         producto stoc
                     WHERE
-                        stoc.idarticulo = ".$value['id_articulo'];
-
+                        stoc.idarticulo = '.$value['id_articulo'];
 
     $data = mysqli_query($dbcon, $sql_antigua);
     $re = mysqli_fetch_array($data);
 
-    if(is_null($re)){
-        dump($value['id_articulo']);die();
+    if (is_null($re)) {
+        dump($value['id_articulo']);
+        exit();
     }
 
     // Arreglo para almacenar las diferencias
@@ -53,87 +54,87 @@ foreach ($sql as $value) {
 
     // Comparar cada valor con el valor de la base de datos
     if ($re['unidades_oferta'] != $value['unidades_oferta']) {
-        if(is_null($re["unidades_oferta"])){
-            $re["unidades_oferta"] = 0;
+        if (is_null($re['unidades_oferta'])) {
+            $re['unidades_oferta'] = 0;
         }
-        $diferencias[] = "unidades_oferta = ".$re["unidades_oferta"];
+        $diferencias[] = 'unidades_oferta = '.$re['unidades_oferta'];
     }
-    if ($re['etiqueta'] != $value['etiqueta'] && $value['etiqueta'] !== "SEGUNDA MANO") {
+    if ($re['etiqueta'] != $value['etiqueta'] && $value['etiqueta'] !== 'SEGUNDA MANO') {
         $diferencias[] = "etiqueta = '".$re['etiqueta']."'";
     }
     if ($re['estado_gestion'] != $value['estado_gestion']) {
-        $diferencias[] = "estado_gestion = ".$re['estado_gestion'];
+        $diferencias[] = 'estado_gestion = '.$re['estado_gestion'];
     }
     if ($re['activo'] != $value['activo']) {
-        $diferencias[] = "activo = ".$re['activo'];
+        $diferencias[] = 'activo = '.$re['activo'];
     }
     if ($re['es_segunda_mano'] != $value['es_segunda_mano']) {
-        $diferencias[] = "es_segunda_mano = ".$re['es_segunda_mano'];
+        $diferencias[] = 'es_segunda_mano = '.$re['es_segunda_mano'];
     }
     if ($re['externo_disponibilidad'] != $value['externo_disponibilidad']) {
-        $diferencias[] = "externo_disponibilidad = ".$re['externo_disponibilidad'];
+        $diferencias[] = 'externo_disponibilidad = '.$re['externo_disponibilidad'];
     }
     if ($re['codigo_proveedor'] != $value['codigo_proveedor']) {
         $diferencias[] = "codigo_proveedor = '".$re['codigo_proveedor']."'";
     }
     if ($re['es_arma'] != $value['es_arma']) {
-        $esarma             = $re["es_arma"];
-        if ($esarma){
-            $diferencias[] = "es_arma = ".$esarma;
+        $esarma = $re['es_arma'];
+        if ($esarma) {
+            $diferencias[] = 'es_arma = '.$esarma;
         }
     }
     if ($re['es_arma_fogueo'] != $value['es_arma_fogueo']) {
-        $esarmafogueo       = $re["es_arma_fogueo"];
-        if ($esarmafogueo){
-            $diferencias[] = "es_arma_fogueo = ".$esarmafogueo;
+        $esarmafogueo = $re['es_arma_fogueo'];
+        if ($esarmafogueo) {
+            $diferencias[] = 'es_arma_fogueo = '.$esarmafogueo;
         }
     }
     if ($re['es_cartucho'] != $value['es_cartucho']) {
-        $escartucho         = $re["es_cartucho"];
-        if ($escartucho){
-            $diferencias[] = "es_cartucho = ".$escartucho;
+        $escartucho = $re['es_cartucho'];
+        if ($escartucho) {
+            $diferencias[] = 'es_cartucho = '.$escartucho;
         }
     }
     if ($re['categoria'] != $value['categoria']) {
-        $categoria      = $re['categoria'];
-        $categoriaarray = explode("|", $categoria);
+        $categoria = $re['categoria'];
+        $categoriaarray = explode('|', $categoria);
         if (count($categoriaarray) > 1) {
             $categoria = $categoriaarray[0];
         }
-        if ($categoria){
-            $diferencias[] = "categoria = ".$categoria;
+        if ($categoria) {
+            $diferencias[] = 'categoria = '.$categoria;
         }
     }
 
     if ($re['familia'] != $value['familia']) {
         $familia = $re['familia'];
-        $familiaarray = explode("|", $familia);
+        $familiaarray = explode('|', $familia);
         if (count($familiaarray) > 1) {
             $familia = $familiaarray[0];
         }
-        if ($familia){
-            $diferencias[] = "familia = ".$familia;
+        if ($familia) {
+            $diferencias[] = 'familia = '.$familia;
         }
     }
 
     if ($re['subfamilia'] != $value['subfamilia']) {
         $subfamilia = $re['subfamilia'];
-        $subfamiliaarray = explode("|", $subfamilia);
+        $subfamiliaarray = explode('|', $subfamilia);
         if (count($subfamiliaarray) > 1) {
             $subfamilia = $subfamiliaarray[0];
         }
-        if ($subfamilia){
-            $diferencias[] = "subfamilia = ".$subfamilia;
+        if ($subfamilia) {
+            $diferencias[] = 'subfamilia = '.$subfamilia;
         }
     }
     if ($re['grupo'] != $value['grupo']) {
         $grupo = $re['grupo'];
-        $grupoarray = explode("|", $grupo);
+        $grupoarray = explode('|', $grupo);
         if (count($grupoarray) > 1) {
             $grupo = $grupoarray[0];
         }
-        if($grupo){
-            $diferencias[] = "grupo = ".$grupo;
+        if ($grupo) {
+            $diferencias[] = 'grupo = '.$grupo;
         }
     }
 
@@ -141,13 +142,13 @@ foreach ($sql as $value) {
     if (count($diferencias) > 0) {
         // Concatenar los cambios separados por coma
         $setClause = implode(', ', $diferencias);
-        if($value['producto'] == 0){
-            $sql = "UPDATE aalv_combinaciones_import SET ";
-        }else{
-            $sql = "UPDATE aalv_combinacionunica_import SET ";
+        if ($value['producto'] == 0) {
+            $sql = 'UPDATE aalv_combinaciones_import SET ';
+        } else {
+            $sql = 'UPDATE aalv_combinacionunica_import SET ';
         }
         // Construir la sentencia UPDATE
-        $sql .= $setClause." WHERE id_articulo = ".$value['id_articulo'];
+        $sql .= $setClause.' WHERE id_articulo = '.$value['id_articulo'];
         // dump($value);
         // dump($diferencias);
         // echo "\n";
@@ -214,79 +215,74 @@ foreach ($sql as $value) {
         // echo "Para el id_articulo ".$value['id_articulo']." todos los valores coinciden.<br>";
     }
 
-
 }
 
-
-
-
-
-
-
 function controlStock($etiqueta, $estado_gestion, $externo_disponibilidad, $stock)
-    {
-        if (ocultarVeranoInvierno($etiqueta)) {
-            return 0;
-        }elseif (controlEtiquetaStockWeb($etiqueta) || $estado_gestion == 2) {
-            return $stock;
-        }elseif ($externo_disponibilidad) {
-            return 999999;
-        } else {
-            return $stock;
+{
+    if (ocultarVeranoInvierno($etiqueta)) {
+        return 0;
+    } elseif (controlEtiquetaStockWeb($etiqueta) || $estado_gestion == 2) {
+        return $stock;
+    } elseif ($externo_disponibilidad) {
+        return 999999;
+    } else {
+        return $stock;
+    }
+}
+
+function ocultarVeranoInvierno($etiquetas)
+{
+    if ($etiquetas != '') {
+        $etiquetasarray = explode(',', $etiquetas);
+        foreach ($etiquetasarray as $key => $value) {
+            $etiquetasarray[$key] = trim($value);
+        }
+        if (count($etiquetasarray) > 0) {
+            $mes = (int) date('m');
+            $dia = (int) date('d');
+            if (in_array('TEMPORADA_INVIERNO', $etiquetasarray)) {
+                switch ($mes) {
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                        return true;
+                        break;
+                    case 8:
+                        if ($dia <= 15) {
+                            return true;
+                        }
+                        break;
+                }
+            }
+            if (in_array('TEMPORADA_VERANO', $etiquetasarray)) {
+                switch ($mes) {
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 1:
+                        return true;
+                        break;
+                    case 2:
+                        if ($dia <= 16) {
+                            return true;
+                        }
+                        break;
+                }
+            }
+
+            return false;
         }
     }
 
+    return false;
+}
 
-    function ocultarVeranoInvierno($etiquetas)
-    {
-        if ($etiquetas != "") {
-            $etiquetasarray = explode(",", $etiquetas);
-            foreach ($etiquetasarray as $key => $value) {
-                $etiquetasarray[$key] = trim($value);
-            }
-            if (count($etiquetasarray) > 0) {
-                $mes = (int)date("m");
-                $dia = (int)date("d");
-                if (in_array("TEMPORADA_INVIERNO", $etiquetasarray)) {
-                    switch ($mes) {
-                        case 4:
-                        case 5:
-                        case 6:
-                        case 7:
-                            return true;
-                            break;
-                        case 8:
-                            if ($dia <= 15) {
-                                return true;
-                            }
-                            break;
-                    }
-                }
-                if (in_array("TEMPORADA_VERANO", $etiquetasarray)) {
-                    switch ($mes) {
-                        case 10:
-                        case 11:
-                        case 12:
-                        case 1:
-                            return true;
-                            break;
-                        case 2:
-                            if ($dia <= 16) {
-                                return true;
-                            }
-                            break;
-                    }
-                }
-                return false;
-            }
-        }
-        return false;
-    }
+function controlEtiquetaStockWeb($etiquetas)
+{
+    $tags_exclude = Db::getInstance()->getValue('SELECT GROUP_CONCAT(etiqueta) from aalv_etiqueta_stock');
+    $tags_exclude = explode(',', $tags_exclude);
+    $tags_exclude = array_map('trim', $tags_exclude);
 
-    function controlEtiquetaStockWeb($etiquetas)
-    {
-        $tags_exclude = Db::getInstance()->getValue("SELECT GROUP_CONCAT(etiqueta) from aalv_etiqueta_stock");
-        $tags_exclude = explode(",", $tags_exclude);
-        $tags_exclude = array_map('trim', $tags_exclude);
-        return array_intersect($tags_exclude, explode(", ", $etiquetas))?true:false;
-    }
+    return array_intersect($tags_exclude, explode(', ', $etiquetas)) ? true : false;
+}

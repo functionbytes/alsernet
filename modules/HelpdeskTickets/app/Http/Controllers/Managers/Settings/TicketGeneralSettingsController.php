@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketGeneralSettingsRequest;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class TicketGeneralSettingsController extends Controller
 {
@@ -21,6 +22,14 @@ class TicketGeneralSettingsController extends Controller
         'restrict_to_reply_ticket' => false,
         'maximum_allow_replies' => 10,
         'reply_allow_in_hours' => 1,
+        // Asignación automática al responder: si el ticket no tenía dueño,
+        // quien responde pasa a serlo. Si ya tenía uno, no se lo quita.
+        'assign_on_reply' => true,
+        // Estado automático al responder al cliente. El agente ya no tiene que
+        // acordarse de marcar el ticket: al enviar la respuesta pasa solo al
+        // estado configurado. NO se aplica a notas internas.
+        'status_on_reply' => true,
+        'status_on_reply_slug' => 'resolved',
         'auto_responsetime_ticket' => false,
         'auto_responsetime_ticket_time' => 48,
         'auto_close_ticket' => true,
@@ -51,6 +60,8 @@ class TicketGeneralSettingsController extends Controller
     ];
 
     private const BOOL_KEYS = [
+        'assign_on_reply',
+        'status_on_reply',
         'restrict_to_create_ticket',
         'restrict_to_reply_ticket',
         'auto_responsetime_ticket',
@@ -84,7 +95,16 @@ class TicketGeneralSettingsController extends Controller
     {
         $settings = array_merge(self::DEFAULTS, Setting::allAsFlatArray(self::GROUP));
 
-        return view('helpdesktickets::managers.settings.general.index', compact('settings'));
+        // Estados elegibles para "estado al responder": los que tienen sentido
+        // como destino tras contestar al cliente. 'closed' queda fuera a
+        // propósito — cerrar es una acción con más consecuencias (encuesta,
+        // reapertura) que no debe dispararse por escribir una respuesta.
+        $replyStatuses = CatalogCacheService::statuses()
+            ->whereIn('slug', ['resolved', 'waiting-customer', 'on-hold', 'open'])
+            ->map(fn ($status) => ['slug' => $status->slug, 'name' => $status->name])
+            ->values();
+
+        return view('helpdesktickets::managers.settings.general.index', compact('settings', 'replyStatuses'));
     }
 
     public function update(UpdateTicketGeneralSettingsRequest $request): RedirectResponse
@@ -99,9 +119,7 @@ class TicketGeneralSettingsController extends Controller
             $validated[$key] = $request->boolean($key);
         }
 
-        foreach ($validated as $key => $value) {
-            Setting::set(self::GROUP.'.'.$key, $value, self::GROUP);
-        }
+        Setting::setMany($validated, self::GROUP, 'settings.ticket_general.updated');
 
         return back()->with('success', __('helpdesktickets::helpdesktickets.settings.general.updated'));
     }

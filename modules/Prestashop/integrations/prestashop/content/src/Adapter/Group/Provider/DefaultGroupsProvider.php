@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,8 +51,7 @@ final class DefaultGroupsProvider implements DefaultGroupsProviderInterface
     private $contextLangId;
 
     /**
-     * @param ConfigurationInterface $configuration
-     * @param int $contextLangId
+     * @param  int  $contextLangId
      */
     public function __construct(ConfigurationInterface $configuration, $contextLangId)
     {
@@ -70,20 +70,17 @@ final class DefaultGroupsProvider implements DefaultGroupsProviderInterface
 
         $visitorName = isset($visitorsGroup->name[$this->contextLangId]) ?
             $visitorsGroup->name[$this->contextLangId] :
-            reset($visitorsGroup->name)
-        ;
+            reset($visitorsGroup->name);
         $visitorsGroupDto = new DefaultGroup((int) $visitorsGroup->id, $visitorName);
 
         $groupsName = isset($guestsGroup->name[$this->contextLangId]) ?
             $guestsGroup->name[$this->contextLangId] :
-            $guestsGroup->name
-        ;
+            $guestsGroup->name;
         $guestsGroupDto = new DefaultGroup((int) $guestsGroup->id, $groupsName);
 
         $customersName = isset($customersGroup->name[$this->contextLangId]) ?
             $customersGroup->name[$this->contextLangId] :
-            reset($customersGroup->name)
-        ;
+            reset($customersGroup->name);
         $customersGroupDto = new DefaultGroup((int) $customersGroup->id, $customersName);
 
         return new DefaultGroups(

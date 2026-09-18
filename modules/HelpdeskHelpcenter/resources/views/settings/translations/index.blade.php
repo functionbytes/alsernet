@@ -104,20 +104,4 @@
 
 @endsection
 
-@push('scripts')
-<script>
-$(document).ready(function () {
-    $('.delete-btn').on('click', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-});
-</script>
-@endpush
+@include('helpdeskhelpcenter::partials.common-scripts')

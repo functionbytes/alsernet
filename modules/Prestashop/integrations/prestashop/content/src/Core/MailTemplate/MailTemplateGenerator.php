@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,25 +51,19 @@ class MailTemplateGenerator
     /** @var Filesystem */
     private $fileSystem;
 
-    /**
-     * @param MailTemplateRendererInterface $renderer
-     * @param LoggerInterface|null $logger
-     */
     public function __construct(
         MailTemplateRendererInterface $renderer,
-        LoggerInterface $logger = null
+        ?LoggerInterface $logger = null
     ) {
         $this->renderer = $renderer;
-        $this->logger = null !== $logger ? $logger : new NullLogger();
-        $this->fileSystem = new Filesystem();
+        $this->logger = $logger !== null ? $logger : new NullLogger;
+        $this->fileSystem = new Filesystem;
     }
 
     /**
-     * @param ThemeInterface $theme
-     * @param LanguageInterface $language
-     * @param string $coreOutputFolder
-     * @param string $modulesOutputFolder
-     * @param bool $overwriteTemplates [default=false]
+     * @param  string  $coreOutputFolder
+     * @param  string  $modulesOutputFolder
+     * @param  bool  $overwriteTemplates  [default=false]
      *
      * @throws FileNotFoundException
      */
@@ -79,11 +74,11 @@ class MailTemplateGenerator
         $modulesOutputFolder,
         $overwriteTemplates = false
     ) {
-        if (!is_dir($coreOutputFolder)) {
+        if (! is_dir($coreOutputFolder)) {
             throw new FileNotFoundException(sprintf('Invalid core output folder "%s"', $coreOutputFolder));
         }
 
-        if (!is_dir($modulesOutputFolder)) {
+        if (! is_dir($modulesOutputFolder)) {
             throw new FileNotFoundException(sprintf('Invalid modules output folder "%s"', $modulesOutputFolder));
         }
 
@@ -95,23 +90,23 @@ class MailTemplateGenerator
         $layouts = $theme->getLayouts();
         /** @var LayoutInterface $layout */
         foreach ($layouts as $layout) {
-            if (!empty($layout->getModuleName())) {
+            if (! empty($layout->getModuleName())) {
                 $outputFolder = implode(DIRECTORY_SEPARATOR, [$modulesOutputFolder, $layout->getModuleName(), 'mails', $language->getIsoCode()]);
             } else {
                 $outputFolder = implode(DIRECTORY_SEPARATOR, [$coreOutputFolder, $language->getIsoCode()]);
             }
 
-            //Generate HTML template
+            // Generate HTML template
             $htmlTemplatePath = $this->generateTemplatePath($layout, MailTemplateInterface::HTML_TYPE, $outputFolder);
-            if (!$this->fileSystem->exists($htmlTemplatePath) || $overwriteTemplates) {
+            if (! $this->fileSystem->exists($htmlTemplatePath) || $overwriteTemplates) {
                 $generatedTemplate = $this->renderer->renderHtml($layout, $language);
                 $this->fileSystem->dumpFile($htmlTemplatePath, $generatedTemplate);
                 $this->logger->info(sprintf('Generate html template %s at %s', $layout->getName(), $htmlTemplatePath));
             }
 
-            //Generate TXT template
+            // Generate TXT template
             $txtTemplatePath = $this->generateTemplatePath($layout, MailTemplateInterface::TXT_TYPE, $outputFolder);
-            if (!$this->fileSystem->exists($txtTemplatePath) || $overwriteTemplates) {
+            if (! $this->fileSystem->exists($txtTemplatePath) || $overwriteTemplates) {
                 $generatedTemplate = $this->renderer->renderTxt($layout, $language);
                 $this->fileSystem->dumpFile($txtTemplatePath, $generatedTemplate);
                 $this->logger->info(sprintf('Generate txt template %s at %s', $layout->getName(), $txtTemplatePath));
@@ -120,14 +115,12 @@ class MailTemplateGenerator
     }
 
     /**
-     * @param LayoutInterface $layout
-     * @param string $templateType
-     * @param string $outputFolder
-     *
+     * @param  string  $templateType
+     * @param  string  $outputFolder
      * @return string
      */
     private function generateTemplatePath(LayoutInterface $layout, $templateType, $outputFolder)
     {
-        return implode(DIRECTORY_SEPARATOR, [$outputFolder, $layout->getName()]) . '.' . $templateType;
+        return implode(DIRECTORY_SEPARATOR, [$outputFolder, $layout->getName()]).'.'.$templateType;
     }
 }

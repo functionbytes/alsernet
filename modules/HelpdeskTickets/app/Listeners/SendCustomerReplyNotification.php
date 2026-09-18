@@ -30,16 +30,28 @@ class SendCustomerReplyNotification implements ShouldQueue
     public function __construct(
         private readonly TicketChannelMailerService $channelMailer,
         private readonly TicketOutboundTranslator $outboundTranslator,
-    ) {
-        $this->queue = 'notifications';
+    ) {}
+
+    /**
+     * La cola va en viaQueue() y no en el constructor: el Dispatcher lee las
+     * opciones del listener sobre una instancia creada SIN constructor, así
+     * que un $this->queue de ahí nunca se aplicaba y el job caía en
+     * 'default' — cola que ningún worker atiende. Ver SendCustomerConfirmation.
+     */
+    public function viaQueue(): string
+    {
+        return 'notifications';
     }
 
     public function handle(MessageAdded $event): void
     {
         $item = $event->item;
 
-        // Only notify customer when an agent (user_id set) sends a non-internal message
-        if ($item->is_internal || $item->user_id === null) {
+        // System auto-responses are also customer-visible. All other
+        // user-less items (imports, placeholders or internal system records)
+        // must stay silent.
+        $isAutomaticResponse = (bool) data_get($item->metadata, 'auto_response', false);
+        if ($item->is_internal || ($item->user_id === null && ! $isAutomaticResponse)) {
             return;
         }
 
@@ -72,7 +84,7 @@ class SendCustomerReplyNotification implements ShouldQueue
             'CUSTOMER_NAME' => $ticket->customer->name ?? 'Cliente',
             'TICKET_NUMBER' => $ticket->ticket_number,
             'SUBJECT' => $ticket->subject,
-            'AGENT_NAME' => $item->user?->name ?? 'Soporte',
+            'AGENT_NAME' => $item->user?->fullName() ?: 'Soporte',
             // El contenido real de la respuesta — antes la plantilla no lo
             // incluía en absoluto: el cliente recibía "fulano te respondió"
             // sin ver qué decía la respuesta.

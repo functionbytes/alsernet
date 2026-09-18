@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,7 +45,7 @@ class CmsPageCategoryId
     private $cmsPageCategoryId;
 
     /**
-     * @param int $cmsPageCategoryId
+     * @param  int  $cmsPageCategoryId
      *
      * @throws CmsPageCategoryException
      */
@@ -65,13 +66,13 @@ class CmsPageCategoryId
     /**
      * Validates that the value is integer and is greater than zero.
      *
-     * @param int $cmsPageCategoryId
+     * @param  int  $cmsPageCategoryId
      *
      * @throws CmsPageCategoryException
      */
     private function assertIsIntegerGreaterThanZero($cmsPageCategoryId)
     {
-        if (!is_int($cmsPageCategoryId) || 0 >= $cmsPageCategoryId) {
+        if (! is_int($cmsPageCategoryId) || $cmsPageCategoryId <= 0) {
             throw new CmsPageCategoryException(sprintf('Invalid cms page category id %s', var_export($cmsPageCategoryId, true)));
         }
     }

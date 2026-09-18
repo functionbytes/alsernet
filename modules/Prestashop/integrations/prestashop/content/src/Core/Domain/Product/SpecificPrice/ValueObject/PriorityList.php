@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,11 @@ use PrestaShop\PrestaShop\Core\Domain\SpecificPrice\Exception\SpecificPriceConst
 class PriorityList
 {
     public const PRIORITY_COUNTRY = 'id_country';
+
     public const PRIORITY_CURRENCY = 'id_currency';
+
     public const PRIORITY_GROUP = 'id_group';
+
     public const PRIORITY_SHOP = 'id_shop';
 
     public const AVAILABLE_PRIORITIES = [
@@ -53,7 +57,7 @@ class PriorityList
     private $priorities;
 
     /**
-     * @param string[] $priorities
+     * @param  string[]  $priorities
      */
     public function __construct(array $priorities)
     {
@@ -70,7 +74,7 @@ class PriorityList
     }
 
     /**
-     * @param string[] $priorities
+     * @param  string[]  $priorities
      *
      * @throws SpecificPriceConstraintException
      */
@@ -78,7 +82,7 @@ class PriorityList
     {
         $checkedPriorities = [];
         foreach ($priorities as $priority) {
-            if (!in_array($priority, static::AVAILABLE_PRIORITIES, true)) {
+            if (! in_array($priority, static::AVAILABLE_PRIORITIES, true)) {
                 throw new SpecificPriceConstraintException(
                     sprintf('Invalid priority value "%s"', $priority),
                     SpecificPriceConstraintException::INVALID_PRIORITY

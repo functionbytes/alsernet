@@ -53,7 +53,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger" id="bv-mute-confirm">{{ __('helpdesk::helpdesk.inbox.modals.mute_chat_confirm') }}</button>
+            <button class="btn-brand" id="bv-mute-confirm">{{ __('helpdesk::helpdesk.inbox.modals.mute_chat_confirm') }}</button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
@@ -61,65 +61,8 @@
 
 @once
 @push('scripts')
-<script>
-(function ($) {
-    'use strict';
-
-    var _muteDuration = 60;
-
-    function getConvId() {
-        return $('.bv-composer').data('bv-conversation-id') || null;
-    }
-
-    function closeBvModal(name) {
-        $('[data-bv-modal-name="' + name + '"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
-    }
-
-    $(document).on('bv:modal:open', function (e, name) {
-        if (name !== 'mute-chat') { return; }
-        _muteDuration = 60;
-        $('#muteDurationList .bv-opt').removeClass('on');
-        $('#muteDurationList .bv-opt[data-mute-duration="60"]').addClass('on');
-
-        var customerName = $('[data-customer-name]').first().attr('data-customer-name') || '—';
-        var channel      = $('[data-conversation-channel]').first().attr('data-conversation-channel') || '—';
-        $('#muteCustomerName').text(customerName);
-        $('#muteChannel').text(channel);
-    });
-
-    $(document).on('click', '#muteDurationList .bv-opt', function () {
-        $('#muteDurationList .bv-opt').removeClass('on');
-        $(this).addClass('on');
-        _muteDuration = parseInt($(this).data('mute-duration'), 10);
-    });
-
-    $(document).on('click', '#bv-mute-confirm', function () {
-        var convId = getConvId();
-        if (!convId) {
-            if (window.toastr) { toastr.warning('Sin conversación activa'); }
-            return;
-        }
-        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Silenciando…');
-
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/mute',
-            method: 'POST',
-            data: { duration_minutes: _muteDuration },
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function () {
-            closeBvModal('mute-chat');
-            if (window.toastr) { toastr.success('Notificaciones silenciadas'); }
-            $(document).trigger('bv:conversation:muted', [convId, _muteDuration]);
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al silenciar notificaciones';
-            if (window.toastr) { toastr.error(msg); }
-        }).always(function () {
-            $btn.prop('disabled', false).text('Silenciar notificaciones');
-        });
-    });
-
-}(window.jQuery));
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/mute-chat.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/mute-chat.js')) }}" defer></script>
 @endpush
 @endonce

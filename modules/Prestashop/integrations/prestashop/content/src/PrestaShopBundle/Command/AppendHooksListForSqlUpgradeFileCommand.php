@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,8 +59,7 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
                 'ps-version',
                 InputArgument::REQUIRED,
                 'The prestashop version for which sql upgrade file will be searched'
-            )
-        ;
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -70,7 +70,7 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
 
         $io = new SymfonyStyle($input, $output);
 
-        if (!in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
+        if (! in_array($container->getParameter('kernel.environment'), ['dev', 'test'])) {
             $io->warning('Dev or test environment is required to fully list all the hooks');
 
             return 1;
@@ -120,11 +120,11 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     {
         /** @var LegacyContext $legacyContext */
         $legacyContext = $this->getContainer()->get('prestashop.adapter.legacy.context');
-        //We need to have an employee or the listing hooks don't work
-        //see LegacyHookSubscriber
-        if (!$legacyContext->getContext()->employee) {
-            //Even a non existing employee is fine
-            $legacyContext->getContext()->employee = new Employee();
+        // We need to have an employee or the listing hooks don't work
+        // see LegacyHookSubscriber
+        if (! $legacyContext->getContext()->employee) {
+            // Even a non existing employee is fine
+            $legacyContext->getContext()->employee = new Employee;
         }
     }
 
@@ -163,25 +163,23 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     /**
      * Gets sql upgrade file by PrestaShop version.
      *
-     * @param string $version
-     *
+     * @param  string  $version
      * @return SplFileInfo|null
      */
     private function getSqlUpgradeFileByPrestaShopVersion($version)
     {
-        $sqlUpgradeFilesLocation = $this->getContainer()->get('kernel')->getRootDir() . '/../install-dev/upgrade/sql/';
-        $sqlUpgradeFile = $version . '.sql';
+        $sqlUpgradeFilesLocation = $this->getContainer()->get('kernel')->getRootDir().'/../install-dev/upgrade/sql/';
+        $sqlUpgradeFile = $version.'.sql';
 
-        $filesFinder = new Finder();
+        $filesFinder = new Finder;
         $filesFinder
             ->files()
             ->in($sqlUpgradeFilesLocation)
-            ->name($sqlUpgradeFile)
-        ;
+            ->name($sqlUpgradeFile);
 
         $filesCount = $filesFinder->count();
 
-        if (1 !== $filesCount) {
+        if ($filesCount !== 1) {
             throw new FileNotFoundException(sprintf('Expected to find 1 file but %s files found with name %s', $filesFinder->count(), $sqlUpgradeFile));
         }
 
@@ -195,8 +193,7 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     /**
      * Gets sql insert statement.
      *
-     * @param HookDescription[] $hookDescriptions
-     *
+     * @param  HookDescription[]  $hookDescriptions
      * @return string
      */
     private function getSqlInsertStatement(array $hookDescriptions)
@@ -224,12 +221,12 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     /**
      * Appends new content to the given file.
      *
-     * @param string $pathToFile
-     * @param string $content
+     * @param  string  $pathToFile
+     * @param  string  $content
      */
     private function appendSqlToFile($pathToFile, $content)
     {
-        $fileSystem = new FileSystem();
+        $fileSystem = new Filesystem;
 
         $fileSystem->appendToFile($pathToFile, $content);
     }
@@ -237,7 +234,6 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     /**
      * Filters out already registered hooks.
      *
-     * @param array $hookNames
      *
      * @return array
      */
@@ -253,7 +249,6 @@ class AppendHooksListForSqlUpgradeFileCommand extends ContainerAwareCommand
     /**
      * Gets hook descriptions
      *
-     * @param array $hookNames
      *
      * @return HookDescription[]
      */

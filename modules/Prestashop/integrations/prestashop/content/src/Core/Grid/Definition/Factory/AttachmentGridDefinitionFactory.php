@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,6 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
 
     public const GRID_ID = 'attachment';
 
-    /**
-     * @param HookDispatcherInterface $hookDispatcher
-     */
     public function __construct(HookDispatcherInterface $hookDispatcher)
     {
         parent::__construct($hookDispatcher);
@@ -81,7 +79,7 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new BulkActionColumn('files_bulk'))
                     ->setOptions([
@@ -124,37 +122,37 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
                     ])
             )
             ->add((new ActionColumn('actions'))
-            ->setName($this->trans('Actions', [], 'Admin.Global'))
-            ->setOptions([
-                'actions' => (new RowActionCollection())
-                    ->add(
-                        (new LinkRowAction('edit'))
-                            ->setName($this->trans('Edit', [], 'Admin.Actions'))
-                            ->setIcon('edit')
-                            ->setOptions([
-                                'route' => 'admin_attachments_edit',
-                                'route_param_name' => 'attachmentId',
-                                'route_param_field' => 'id_attachment',
-                            ])
-                    )
-                    ->add(
-                        (new LinkRowAction('view'))
-                            ->setName($this->trans('View', [], 'Admin.Actions'))
-                            ->setIcon('zoom_in')
-                            ->setOptions([
-                                'route' => 'admin_attachments_view',
-                                'route_param_name' => 'attachmentId',
-                                'route_param_field' => 'id_attachment',
-                            ])
-                    )
-                    ->add(
-                        $this->buildDeleteAction(
-                            'admin_attachments_delete',
-                            'attachmentId',
-                            'id_attachment'
+                ->setName($this->trans('Actions', [], 'Admin.Global'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection)
+                        ->add(
+                            (new LinkRowAction('edit'))
+                                ->setName($this->trans('Edit', [], 'Admin.Actions'))
+                                ->setIcon('edit')
+                                ->setOptions([
+                                    'route' => 'admin_attachments_edit',
+                                    'route_param_name' => 'attachmentId',
+                                    'route_param_field' => 'id_attachment',
+                                ])
                         )
-                    ),
-            ])
+                        ->add(
+                            (new LinkRowAction('view'))
+                                ->setName($this->trans('View', [], 'Admin.Actions'))
+                                ->setIcon('zoom_in')
+                                ->setOptions([
+                                    'route' => 'admin_attachments_view',
+                                    'route_param_name' => 'attachmentId',
+                                    'route_param_field' => 'id_attachment',
+                                ])
+                        )
+                        ->add(
+                            $this->buildDeleteAction(
+                                'admin_attachments_delete',
+                                'attachmentId',
+                                'id_attachment'
+                            )
+                        ),
+                ])
             );
 
         return $columns;
@@ -165,7 +163,7 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
      */
     protected function getFilters()
     {
-        $filters = (new FilterCollection())
+        $filters = (new FilterCollection)
             ->add(
                 (new Filter('id_attachment', NumberType::class))
                     ->setTypeOptions([
@@ -226,7 +224,7 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SimpleGridAction('common_refresh_list'))
                     ->setName($this->trans('Refresh list', [], 'Admin.Advparameters.Feature'))
@@ -249,7 +247,7 @@ final class AttachmentGridDefinitionFactory extends AbstractFilterableGridDefini
      */
     protected function getBulkActions()
     {
-        return (new BulkActionCollection())
+        return (new BulkActionCollection)
             ->add(
                 $this->buildBulkDeleteAction('admin_attachments_delete_bulk')
             );

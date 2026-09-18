@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ class RelatedProductsUpdater
      */
     private $productRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     */
     public function __construct(
         ProductRepository $productRepository
     ) {
@@ -55,8 +53,7 @@ class RelatedProductsUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param ProductId[] $relatedProductIds
+     * @param  ProductId[]  $relatedProductIds
      */
     public function setRelatedProducts(ProductId $productId, array $relatedProductIds): void
     {
@@ -75,9 +72,6 @@ class RelatedProductsUpdater
     }
 
     /**
-     * @param Product $product
-     * @param array $relatedProductIds
-     *
      * @throws CoreException
      */
     private function insertRelatedProducts(Product $product, array $relatedProductIds): void
@@ -97,15 +91,13 @@ class RelatedProductsUpdater
     }
 
     /**
-     * @param Product $product
-     *
      * @throws CannotUpdateProductException
      * @throws CoreException
      */
     private function deleteRelatedProducts(Product $product): void
     {
         try {
-            if (!$product->deleteAccessories()) {
+            if (! $product->deleteAccessories()) {
                 throw new CannotUpdateProductException(sprintf(
                     'Failed to delete related inventaries for product #%d',
                     $product->id

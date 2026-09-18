@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,10 +53,6 @@ class ProductAttachmentUpdater
      */
     private $attachmentRepository;
 
-    /**
-     * @param ProductRepository $productRepository
-     * @param AttachmentRepository $attachmentRepository
-     */
     public function __construct(
         ProductRepository $productRepository,
         AttachmentRepository $attachmentRepository
@@ -65,9 +62,6 @@ class ProductAttachmentUpdater
     }
 
     /**
-     * @param ProductId $productId
-     * @param AttachmentId $attachmentId
-     *
      * @throws CannotUpdateProductException
      * @throws CoreException
      */
@@ -80,7 +74,7 @@ class ProductAttachmentUpdater
         $attachmentIdValue = $attachmentId->getValue();
 
         try {
-            if (!Attachment::associateProductAttachment($productIdValue, $attachmentIdValue)) {
+            if (! Attachment::associateProductAttachment($productIdValue, $attachmentIdValue)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to associate attachment #%d with product #%d', $attachmentIdValue, $productIdValue),
                     CannotUpdateProductException::FAILED_UPDATE_ATTACHMENTS
@@ -98,8 +92,7 @@ class ProductAttachmentUpdater
     /**
      * Removes previous association and sets new one with provided attachments
      *
-     * @param ProductId $productId
-     * @param AttachmentId[] $attachmentIds
+     * @param  AttachmentId[]  $attachmentIds
      *
      * @throws CannotUpdateProductException
      * @throws CoreException
@@ -116,7 +109,7 @@ class ProductAttachmentUpdater
                 $attachmentIdValues[] = $attachmentId->getValue();
             }
 
-            if (!Attachment::attachToProduct($productIdValue, $attachmentIdValues)) {
+            if (! Attachment::attachToProduct($productIdValue, $attachmentIdValues)) {
                 throw new CannotUpdateProductException(
                     sprintf('Failed to set product #%d attachments', $productIdValue),
                     CannotUpdateProductException::FAILED_UPDATE_ATTACHMENTS

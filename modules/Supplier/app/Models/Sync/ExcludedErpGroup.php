@@ -14,6 +14,7 @@ class ExcludedErpGroup extends Model
     protected $casts = ['erp_id' => 'integer'];
 
     const CACHE_KEY = 'supplier:excluded_erp_group_ids';
+
     const CACHE_TTL = 600; // 10 min
 
     /**
@@ -21,7 +22,7 @@ class ExcludedErpGroup extends Model
      * Incluye erp_id de todos los registros para comparar contra
      * idgrupo_cl, idsubfamilia_cl e idfamilia_cl del ERP.
      *
-     * @return array<int, bool>  clave = erp_id, valor = true
+     * @return array<int, bool> clave = erp_id, valor = true
      */
     public static function getExcludedSet(): array
     {

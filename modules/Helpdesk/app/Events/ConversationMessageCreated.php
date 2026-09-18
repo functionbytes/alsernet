@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Events;
 
+use App\Events\Concerns\BroadcastsOnServedQueue;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -11,7 +12,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 
 class ConversationMessageCreated implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsOnServedQueue, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public ConversationItem $item,
@@ -19,14 +20,19 @@ class ConversationMessageCreated implements ShouldBroadcastNow
     ) {}
 
     /**
-     * Broadcast on BOTH the conversation channel (for the open thread) and the
-     * global inbox channel (so the sidebar list updates without an extra event).
+     * SEC-01: broadcasts ONLY on the per-conversation channel now, which is
+     * authorized via ConversationPolicy::view (see routes/channels.php). The
+     * full payload below (body, html_body, attachment_urls, internal notes)
+     * used to also go out on the global 'helpdesk.inbox' channel, gated by a
+     * coarse permission with no per-inbox isolation. The sidebar now gets a
+     * separate, lightweight, per-inbox-authorized broadcast — see
+     * ConversationInboxItemCreated, dispatched by the BroadcastInboxSummary
+     * listener registered on this same event.
      */
     public function broadcastOn(): array
     {
         return [
             new PrivateChannel('helpdesk.conversation.'.$this->item->conversation_id),
-            new PrivateChannel('helpdesk.inbox'),
         ];
     }
 

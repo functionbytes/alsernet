@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,8 @@ class BulkUpdateCategoriesStatusCommand
     private $newStatus;
 
     /**
-     * @param int[] $categoryIds
-     * @param bool $newStatus
+     * @param  int[]  $categoryIds
+     * @param  bool  $newStatus
      *
      * @throws CategoryConstraintException
      * @throws CategoryException
@@ -56,8 +57,7 @@ class BulkUpdateCategoriesStatusCommand
     {
         $this
             ->setCategoryIds($categoryIds)
-            ->setNewStatus($newStatus)
-        ;
+            ->setNewStatus($newStatus);
     }
 
     /**
@@ -77,8 +77,7 @@ class BulkUpdateCategoriesStatusCommand
     }
 
     /**
-     * @param int[] $categoryIds
-     *
+     * @param  int[]  $categoryIds
      * @return self
      *
      * @throws CategoryConstraintException
@@ -98,13 +97,12 @@ class BulkUpdateCategoriesStatusCommand
     }
 
     /**
-     * @param bool $newStatus
-     *
+     * @param  bool  $newStatus
      * @return self
      */
     private function setNewStatus($newStatus)
     {
-        if (!is_bool($newStatus)) {
+        if (! is_bool($newStatus)) {
             throw new CategoryConstraintException(sprintf('Category status %s is invalid. Status must be of type "bool".', var_export($newStatus, true)), CategoryConstraintException::INVALID_STATUS);
         }
 

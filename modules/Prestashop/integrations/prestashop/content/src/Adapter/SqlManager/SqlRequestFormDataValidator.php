@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,9 +51,6 @@ class SqlRequestFormDataValidator
      */
     private $sqlQueryValidator;
 
-    /**
-     * @param SqlQueryValidator $sqlQueryValidator
-     */
     public function __construct(SqlQueryValidator $sqlQueryValidator)
     {
         $this->sqlQueryValidator = $sqlQueryValidator;
@@ -61,7 +59,6 @@ class SqlRequestFormDataValidator
     /**
      * Validate SqlRequest form data.
      *
-     * @param array $data
      *
      * @return array Errors if any
      */
@@ -71,7 +68,7 @@ class SqlRequestFormDataValidator
             return $errors;
         }
 
-        $requestSql = new RequestSql();
+        $requestSql = new RequestSql;
         $requestSql->name = $data['name'];
         $requestSql->sql = $data['sql'];
 

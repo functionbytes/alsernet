@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,13 +39,21 @@ class VirtualProductFileConstraintException extends VirtualProductFileException
      * Each of following constants respectively represents invalid entity properties
      */
     public const INVALID_ID = 10;
+
     public const INVALID_DISPLAY_NAME = 20;
+
     public const INVALID_FILENAME = 30;
+
     public const INVALID_CREATION_DATE = 40;
+
     public const INVALID_EXPIRATION_DATE = 50;
+
     public const INVALID_ACCESS_DAYS = 60;
+
     public const INVALID_DOWNLOAD_TIMES_LIMIT = 70;
+
     public const INVALID_ACTIVE = 80;
+
     public const INVALID_SHAREABLE = 90;
 
     /** Is thrown when file already exists for given product */

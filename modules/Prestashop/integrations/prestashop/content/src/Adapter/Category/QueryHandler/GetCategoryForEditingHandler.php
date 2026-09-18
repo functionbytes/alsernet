@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -51,9 +52,6 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
      */
     private $imageTagSourceParser;
 
-    /**
-     * @param ImageTagSourceParserInterface $imageTagSourceParser
-     */
     public function __construct(ImageTagSourceParserInterface $imageTagSourceParser)
     {
         $this->imageTagSourceParser = $imageTagSourceParser;
@@ -69,25 +67,25 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
     {
         $category = new Category($query->getCategoryId()->getValue());
 
-        if (!$category->id || (!$category->isAssociatedToShop() && Shop::getContext() == Shop::CONTEXT_SHOP)) {
+        if (! $category->id || (! $category->isAssociatedToShop() && Shop::getContext() == Shop::CONTEXT_SHOP)) {
             throw new CategoryNotFoundException($query->getCategoryId(), sprintf('Category with id "%s" was not found', $query->getCategoryId()->getValue()));
         }
 
         if ($category->isRootCategory()) {
-            throw new CannotEditRootCategoryException();
+            throw new CannotEditRootCategoryException;
         }
 
         /**
          * Select recursivly the subcategories in one SQL request
          */
         $subcategories = Db::getInstance()->query(
-            'SELECT id_category ' .
-            'FROM ( ' .
-            '  SELECT * FROM `' . _DB_PREFIX_ . 'category`' .
-            '  ORDER BY id_parent, id_category' .
-            ') category_sorted, ' .
-            '(SELECT @pv := ' . (int) $category->id . ') initialisation ' .
-            'WHERE FIND_IN_SET(id_parent, @pv) ' .
+            'SELECT id_category '.
+            'FROM ( '.
+            '  SELECT * FROM `'._DB_PREFIX_.'category`'.
+            '  ORDER BY id_parent, id_category'.
+            ') category_sorted, '.
+            '(SELECT @pv := '.(int) $category->id.') initialisation '.
+            'WHERE FIND_IN_SET(id_parent, @pv) '.
             'AND LENGTH(@pv := CONCAT(@pv, \',\', id_category))'
         );
 
@@ -114,18 +112,16 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
     }
 
     /**
-     * @param CategoryId $categoryId
-     *
      * @return array|null cover image data or null if category does not have cover
      */
     private function getCoverImage(CategoryId $categoryId)
     {
         $imageType = 'jpg';
-        $image = _PS_CAT_IMG_DIR_ . $categoryId->getValue() . '.' . $imageType;
+        $image = _PS_CAT_IMG_DIR_.$categoryId->getValue().'.'.$imageType;
 
         $imageTag = ImageManager::thumbnail(
             $image,
-            'category' . '_' . $categoryId->getValue() . '.' . $imageType,
+            'category'.'_'.$categoryId->getValue().'.'.$imageType,
             350,
             $imageType,
             true,
@@ -145,27 +141,25 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
     }
 
     /**
-     * @param CategoryId $categoryId
-     *
      * @return array|null
      */
     private function getThumbnailImage(CategoryId $categoryId)
     {
-        $image = _PS_CAT_IMG_DIR_ . $categoryId->getValue() . '.jpg';
+        $image = _PS_CAT_IMG_DIR_.$categoryId->getValue().'.jpg';
         $imageTypes = ImageType::getImagesTypes('categories');
 
         if (count($imageTypes) > 0) {
             $thumb = '';
             $imageTag = '';
             $formattedSmall = ImageType::getFormattedName('small');
-            $imageType = new ImageType();
+            $imageType = new ImageType;
             foreach ($imageTypes as $k => $imageType) {
                 if ($formattedSmall == $imageType['name']) {
-                    $thumb = _PS_CAT_IMG_DIR_ . $categoryId->getValue() . '-' . $imageType['name'] . '.jpg';
+                    $thumb = _PS_CAT_IMG_DIR_.$categoryId->getValue().'-'.$imageType['name'].'.jpg';
                     if (is_file($thumb)) {
                         $imageTag = ImageManager::thumbnail(
                             $thumb,
-                            'category_' . (int) $categoryId->getValue() . '-thumb.jpg',
+                            'category_'.(int) $categoryId->getValue().'-thumb.jpg',
                             (int) $imageType['width'],
                             'jpg',
                             true,
@@ -175,14 +169,14 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
                 }
             }
 
-            if (!is_file($thumb)) {
+            if (! is_file($thumb)) {
                 $thumb = $image;
-                $imageName = 'category_' . $categoryId->getValue() . '-thumb.jpg';
+                $imageName = 'category_'.$categoryId->getValue().'-thumb.jpg';
 
                 $imageTag = ImageManager::thumbnail($image, $imageName, 125, 'jpg', true, true);
                 ImageManager::resize(
-                    _PS_TMP_IMG_DIR_ . $imageName,
-                    _PS_TMP_IMG_DIR_ . $imageName,
+                    _PS_TMP_IMG_DIR_.$imageName,
+                    _PS_TMP_IMG_DIR_.$imageName,
                     (int) $imageType['width'],
                     (int) $imageType['height']
                 );
@@ -190,7 +184,7 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
 
             $thumbSize = file_exists($thumb) ? filesize($thumb) / 1000 : false;
 
-            if (empty($imageTag) || false === $thumbSize) {
+            if (empty($imageTag) || $thumbSize === false) {
                 return null;
             }
 
@@ -204,8 +198,6 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
     }
 
     /**
-     * @param CategoryId $categoryId
-     *
      * @return array
      */
     private function getMenuThumbnailImages(CategoryId $categoryId)
@@ -213,12 +205,12 @@ final class GetCategoryForEditingHandler implements GetCategoryForEditingHandler
         $menuThumbnails = [];
 
         foreach (MenuThumbnailId::ALLOWED_ID_VALUES as $id) {
-            $thumbnailPath = _PS_CAT_IMG_DIR_ . $categoryId->getValue() . '-' . $id . '_thumb.jpg';
+            $thumbnailPath = _PS_CAT_IMG_DIR_.$categoryId->getValue().'-'.$id.'_thumb.jpg';
 
             if (file_exists($thumbnailPath)) {
                 $imageTag = ImageManager::thumbnail(
                     $thumbnailPath,
-                    'category_' . $categoryId->getValue() . '-' . $id . '_thumb.jpg',
+                    'category_'.$categoryId->getValue().'-'.$id.'_thumb.jpg',
                     100,
                     'jpg',
                     true,

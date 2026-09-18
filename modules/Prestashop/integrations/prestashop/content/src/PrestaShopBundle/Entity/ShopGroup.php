@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,6 +35,7 @@ use Doctrine\ORM\Mapping as ORM;
  * ShopGroup.
  *
  * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\ShopGroupRepository")
  */
 class ShopGroup
@@ -42,7 +44,9 @@ class ShopGroup
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_shop_group", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
@@ -100,13 +104,14 @@ class ShopGroup
      * @var Collection
      *
      * One group shop has many shops. This is the inverse side.
+     *
      * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\Shop", mappedBy="shopGroup")
      */
     private $shops;
 
     public function __construct()
     {
-        $this->shops = new ArrayCollection();
+        $this->shops = new ArrayCollection;
     }
 
     /**
@@ -122,8 +127,7 @@ class ShopGroup
     /**
      * Set name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return ShopGroup
      */
     public function setName($name)
@@ -145,10 +149,6 @@ class ShopGroup
 
     /**
      * Set color
-     *
-     * @param string $color
-     *
-     * @return ShopGroup
      */
     public function setColor(string $color): ShopGroup
     {
@@ -159,8 +159,6 @@ class ShopGroup
 
     /**
      * Get color
-     *
-     * @return string|null
      */
     public function getColor(): ?string
     {
@@ -170,8 +168,7 @@ class ShopGroup
     /**
      * Set shareCustomer.
      *
-     * @param bool $shareCustomer
-     *
+     * @param  bool  $shareCustomer
      * @return ShopGroup
      */
     public function setShareCustomer($shareCustomer)
@@ -194,8 +191,7 @@ class ShopGroup
     /**
      * Set shareOrder.
      *
-     * @param bool $shareOrder
-     *
+     * @param  bool  $shareOrder
      * @return ShopGroup
      */
     public function setShareOrder($shareOrder)
@@ -218,8 +214,7 @@ class ShopGroup
     /**
      * Set shareStock.
      *
-     * @param bool $shareStock
-     *
+     * @param  bool  $shareStock
      * @return ShopGroup
      */
     public function setShareStock($shareStock)
@@ -242,8 +237,7 @@ class ShopGroup
     /**
      * Set active.
      *
-     * @param bool $active
-     *
+     * @param  bool  $active
      * @return ShopGroup
      */
     public function setActive($active)
@@ -266,8 +260,7 @@ class ShopGroup
     /**
      * Set deleted.
      *
-     * @param bool $deleted
-     *
+     * @param  bool  $deleted
      * @return ShopGroup
      */
     public function setDeleted($deleted)
@@ -287,9 +280,6 @@ class ShopGroup
         return $this->deleted;
     }
 
-    /**
-     * @return Collection
-     */
     public function getShops(): Collection
     {
         return $this->shops;

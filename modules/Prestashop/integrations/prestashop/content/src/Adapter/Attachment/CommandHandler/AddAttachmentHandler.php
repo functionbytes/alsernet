@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,10 +51,6 @@ final class AddAttachmentHandler extends AbstractAttachmentHandler implements Ad
      */
     protected $fileUploader;
 
-    /**
-     * @param ValidatorInterface $validator
-     * @param AttachmentFileUploaderInterface $fileUploader
-     */
     public function __construct(ValidatorInterface $validator, AttachmentFileUploaderInterface $fileUploader)
     {
         parent::__construct($validator);
@@ -75,7 +72,7 @@ final class AddAttachmentHandler extends AbstractAttachmentHandler implements Ad
                 throw new EmptyFileException('No file found to be uploaded');
             }
 
-            $attachment = new Attachment();
+            $attachment = new Attachment;
 
             $this->assertDescriptionContainsCleanHtml($command->getLocalizedDescriptions());
             $this->assertHasDefaultLanguage($command->getLocalizedNames());
@@ -92,7 +89,7 @@ final class AddAttachmentHandler extends AbstractAttachmentHandler implements Ad
 
             $this->fileUploader->upload($command->getFilePathName(), $uniqueFileName, $command->getFileSize());
 
-            if (false === $attachment->add()) {
+            if ($attachment->add() === false) {
                 throw new CannotAddAttachmentException('Failed to add attachment');
             }
         } catch (PrestaShopException $e) {

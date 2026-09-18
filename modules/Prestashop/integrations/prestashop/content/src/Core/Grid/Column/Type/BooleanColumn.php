@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,6 @@ final class BooleanColumn extends AbstractColumn
             ->setAllowedTypes('field', 'string')
             ->setAllowedTypes('true_name', 'string')
             ->setAllowedTypes('false_name', 'string')
-            ->setAllowedTypes('clickable', 'bool')
-        ;
+            ->setAllowedTypes('clickable', 'bool');
     }
 }

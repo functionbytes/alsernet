@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Catalogo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\Idioma;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -52,7 +53,7 @@ class Catalogoidioma extends Model
      */
     public function catalogoidioma()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogoidioma::class, 'idcatalogoidioma', 'idcatalogoidioma');
+        return $this->belongsTo(Catalogoidioma::class, 'idcatalogoidioma', 'idcatalogoidioma');
     }
 
     /**
@@ -61,7 +62,7 @@ class Catalogoidioma extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
     }
 
     /**
@@ -70,6 +71,6 @@ class Catalogoidioma extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 }

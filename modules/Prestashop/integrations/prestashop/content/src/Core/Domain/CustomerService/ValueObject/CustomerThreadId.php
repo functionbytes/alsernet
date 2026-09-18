@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,20 +40,17 @@ class CustomerThreadId
     private $customerThreadId;
 
     /**
-     * @param int $customerThreadId
+     * @param  int  $customerThreadId
      */
     public function __construct($customerThreadId)
     {
-        if (!is_int($customerThreadId) || 0 > $customerThreadId) {
+        if (! is_int($customerThreadId) || $customerThreadId < 0) {
             throw new CustomerServiceException('CustomerThreadId must be of type int and greater than zero.');
         }
 
         $this->customerThreadId = $customerThreadId;
     }
 
-    /**
-     * @return int
-     */
     public function getValue(): int
     {
         return $this->customerThreadId;

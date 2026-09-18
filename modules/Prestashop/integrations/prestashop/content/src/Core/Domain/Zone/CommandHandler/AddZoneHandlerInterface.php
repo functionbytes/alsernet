@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,10 +35,5 @@ use PrestaShop\PrestaShop\Core\Domain\Zone\ValueObject\ZoneId;
  */
 interface AddZoneHandlerInterface
 {
-    /**
-     * @param AddZoneCommand $command
-     *
-     * @return ZoneId
-     */
     public function handle(AddZoneCommand $command): ZoneId;
 }

@@ -25,6 +25,8 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
+use PhpParser\Error;
+use PhpParser\ParserFactory;
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\LegacyLogger;
 use PrestaShop\PrestaShop\Adapter\Module\ModuleDataProvider;
@@ -206,7 +208,7 @@ abstract class ModuleCore implements ModuleInterface
     /** @var bool Random session for modules perfs logs */
     public static $_log_modules_perfs_session = null;
 
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
+    /** @var ContainerInterface */
     private $container;
 
     /** @var array|null used to cache module ids */
@@ -1359,7 +1361,7 @@ abstract class ModuleCore implements ModuleInterface
                         }
                     }
 
-                    $item = new \stdClass;
+                    $item = new stdClass;
                     $item->id = 0;
                     $item->warning = '';
 
@@ -1396,10 +1398,10 @@ abstract class ModuleCore implements ModuleInterface
                     $file = trim(file_get_contents(_PS_MODULE_DIR_.$module.'/'.$module.'.php'));
 
                     try {
-                        $parser = (new PhpParser\ParserFactory)->create(PhpParser\ParserFactory::ONLY_PHP7);
+                        $parser = (new ParserFactory)->create(ParserFactory::ONLY_PHP7);
                         $parser->parse($file);
                         require_once $file_path;
-                    } catch (PhpParser\Error $e) {
+                    } catch (Error $e) {
                         $errors[] = Context::getContext()->getTranslator()->trans('%1$s (parse error in %2$s)', [$module, substr($file_path, strlen(_PS_ROOT_DIR_))], 'Admin.modules.Notification');
                     }
 
@@ -1416,7 +1418,7 @@ abstract class ModuleCore implements ModuleInterface
                     try {
                         $tmp_module = ServiceLocator::get($module);
 
-                        $item = new \stdClass;
+                        $item = new stdClass;
 
                         $item->id = (int) $tmp_module->id;
                         $item->warning = $tmp_module->warning;
@@ -1524,7 +1526,7 @@ abstract class ModuleCore implements ModuleInterface
                         }
 
                         if ($flag_found == 0) {
-                            $item = new \stdClass;
+                            $item = new stdClass;
                             $item->id = 0;
                             $item->warning = '';
                             $item->type = strip_tags((string) $f['type']);
@@ -1629,7 +1631,7 @@ abstract class ModuleCore implements ModuleInterface
     }
 
     /**
-     * @param  \StdClass  $modaddons  Addons Module object, provided by XML stream
+     * @param  StdClass  $modaddons  Addons Module object, provided by XML stream
      * @return string|null
      */
     public static function copyModAddonsImg($modaddons)
@@ -3459,7 +3461,7 @@ abstract class ModuleCore implements ModuleInterface
      *
      * @throws ServiceCircularReferenceException When a circular reference is detected
      * @throws ServiceNotFoundException When the service is not defined
-     * @throws \Exception
+     * @throws Exception
      */
     public function get($serviceName)
     {

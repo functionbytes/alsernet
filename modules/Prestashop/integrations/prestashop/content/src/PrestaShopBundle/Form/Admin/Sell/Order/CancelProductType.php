@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,7 +47,7 @@ class CancelProductType extends TranslatorAwareType
 
         foreach ($products as $product) {
             $builder
-                ->add('selected_' . $product->getOrderDetailId(), CheckboxType::class,
+                ->add('selected_'.$product->getOrderDetailId(), CheckboxType::class,
                     [
                         'required' => false,
                         'label' => false,
@@ -55,7 +56,7 @@ class CancelProductType extends TranslatorAwareType
                         ],
                     ]
                 )
-                ->add('quantity_' . $product->getOrderDetailId(), NumberType::class, [
+                ->add('quantity_'.$product->getOrderDetailId(), NumberType::class, [
                     'attr' => ['max' => $product->getQuantity(), 'class' => 'refund-quantity'],
                     'label' => $this->trans('Quantity', 'Admin.Global', []),
                     'invalid_message' => $this->trans('This field is invalid, it must contain numeric values', 'Admin.Notifications.Error', []),
@@ -63,7 +64,7 @@ class CancelProductType extends TranslatorAwareType
                     'data' => 0,
                     'scale' => 0,
                 ])
-                ->add('amount_' . $product->getOrderDetailId(), TextType::class, [
+                ->add('amount_'.$product->getOrderDetailId(), TextType::class, [
                     'attr' => ['max' => $product->getTotalPrice(), 'class' => 'refund-amount'],
                     'label' => sprintf(
                         '%s (%s)',

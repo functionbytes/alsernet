@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,9 +46,6 @@ class DoctrineBuilderExtension implements ContainerBuilderExtensionInterface
     /** @var EnvironmentInterface */
     private $environment;
 
-    /**
-     * @param EnvironmentInterface $environment
-     */
     public function __construct(EnvironmentInterface $environment)
     {
         $this->environment = $environment;
@@ -58,7 +56,7 @@ class DoctrineBuilderExtension implements ContainerBuilderExtensionInterface
      */
     public function build(ContainerBuilder $container)
     {
-        $configDirectories = [$container->getParameter('kernel.root_dir') . '/config'];
+        $configDirectories = [$container->getParameter('kernel.root_dir').'/config'];
         $fileLocator = new FileLocator($configDirectories);
 
         $configLoader = new ConfigYamlLoader($fileLocator);
@@ -66,8 +64,8 @@ class DoctrineBuilderExtension implements ContainerBuilderExtensionInterface
         $configLoader->load($configPath);
         $config = $configLoader->getConfig();
 
-        $container->registerExtension(new DoctrineExtension());
+        $container->registerExtension(new DoctrineExtension);
         $container->loadFromExtension('doctrine', $config['doctrine']);
-        $container->addCompilerPass(new ModulesDoctrineCompilerPass());
+        $container->addCompilerPass(new ModulesDoctrineCompilerPass);
     }
 }

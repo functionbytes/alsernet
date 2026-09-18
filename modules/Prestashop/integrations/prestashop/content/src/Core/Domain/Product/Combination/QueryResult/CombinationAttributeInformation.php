@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -53,12 +54,6 @@ class CombinationAttributeInformation
      */
     private $attributeName;
 
-    /**
-     * @param int $attributeGroupId
-     * @param string $attributeGroupName
-     * @param int $attributeId
-     * @param string $attributeName
-     */
     public function __construct(
         int $attributeGroupId,
         string $attributeGroupName,
@@ -71,33 +66,21 @@ class CombinationAttributeInformation
         $this->attributeName = $attributeName;
     }
 
-    /**
-     * @return int
-     */
     public function getAttributeGroupId(): int
     {
         return $this->attributeGroupId;
     }
 
-    /**
-     * @return string
-     */
     public function getAttributeGroupName(): string
     {
         return $this->attributeGroupName;
     }
 
-    /**
-     * @return int
-     */
     public function getAttributeId(): int
     {
         return $this->attributeId;
     }
 
-    /**
-     * @return string
-     */
     public function getAttributeName(): string
     {
         return $this->attributeName;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,7 +34,7 @@ use PrestaShop\PrestaShop\Core\Form\FormChoiceProviderInterface;
 /**
  * Class CountryByIdChoiceProvider provides country choices with ID values.
  */
-final class CountryByIdChoiceProvider implements FormChoiceProviderInterface, FormChoiceAttributeProviderInterface
+final class CountryByIdChoiceProvider implements FormChoiceAttributeProviderInterface, FormChoiceProviderInterface
 {
     /**
      * @var CountryDataProvider
@@ -61,8 +62,7 @@ final class CountryByIdChoiceProvider implements FormChoiceProviderInterface, Fo
     private $postcodeCountriesId;
 
     /**
-     * @param int $langId
-     * @param CountryDataProvider $countryDataProvider
+     * @param  int  $langId
      */
     public function __construct(
         $langId,
@@ -116,7 +116,7 @@ final class CountryByIdChoiceProvider implements FormChoiceProviderInterface, Fo
      */
     private function getCountries()
     {
-        if (null === $this->countries) {
+        if ($this->countries === null) {
             $this->countries = $this->countryDataProvider->getCountries($this->langId);
         }
 
@@ -128,7 +128,7 @@ final class CountryByIdChoiceProvider implements FormChoiceProviderInterface, Fo
      */
     private function getDniCountriesId()
     {
-        if (null === $this->dniCountriesId) {
+        if ($this->dniCountriesId === null) {
             $this->dniCountriesId = $this->countryDataProvider->getCountriesIdWhichNeedDni();
         }
 
@@ -137,7 +137,7 @@ final class CountryByIdChoiceProvider implements FormChoiceProviderInterface, Fo
 
     private function getPostcodeCountriesId()
     {
-        if (null === $this->postcodeCountriesId) {
+        if ($this->postcodeCountriesId === null) {
             $this->postcodeCountriesId = $this->countryDataProvider->getCountriesIdWhichNeedPostcode();
         }
 

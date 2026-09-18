@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,7 +51,7 @@ final class EditManufacturerAddressHandler extends AbstractAddressHandler implem
 
         try {
             $this->validateAddress($address);
-            if (!$address->update()) {
+            if (! $address->update()) {
                 throw new AddressException(sprintf('Cannot update address with id "%s"', $address->id));
             }
         } catch (PrestaShopException $e) {
@@ -61,54 +62,53 @@ final class EditManufacturerAddressHandler extends AbstractAddressHandler implem
     /**
      * Populates Address object with given data
      *
-     * @param Address $address
-     * @param EditManufacturerAddressCommand $command
+     * @param  EditManufacturerAddressCommand  $command
      */
     private function populateAddressWithData(Address $address, $command)
     {
-        if (null !== $command->getManufacturerId()) {
+        if ($command->getManufacturerId() !== null) {
             $address->id_manufacturer = $command->getManufacturerId();
         }
-        if (null !== $command->getLastName()) {
+        if ($command->getLastName() !== null) {
             $address->lastname = $command->getLastName();
         }
-        if (null !== $command->getFirstName()) {
+        if ($command->getFirstName() !== null) {
             $address->firstname = $command->getFirstName();
         }
-        if (null !== $command->getAddress()) {
+        if ($command->getAddress() !== null) {
             $address->address1 = $command->getAddress();
         }
-        if (null !== $command->getAddress2()) {
+        if ($command->getAddress2() !== null) {
             $address->address2 = $command->getAddress2();
         }
-        if (null !== $command->getPostCode()) {
+        if ($command->getPostCode() !== null) {
             $address->postcode = $command->getPostCode();
         }
-        if (null !== $command->getCity()) {
+        if ($command->getCity() !== null) {
             $address->city = $command->getCity();
         }
-        if (null !== $command->getCountryId()) {
+        if ($command->getCountryId() !== null) {
             $address->id_country = $command->getCountryId();
         }
-        if (null !== $command->getStateId()) {
+        if ($command->getStateId() !== null) {
             $address->id_state = $command->getStateId();
-        } elseif (null !== $command->getCountryId()) {
+        } elseif ($command->getCountryId() !== null) {
             // If country was changed but not state we check if state value needs to be reset
             $country = new Country($command->getCountryId());
-            if (!$country->contains_states) {
+            if (! $country->contains_states) {
                 $address->id_state = 0;
             }
         }
-        if (null !== $command->getHomePhone()) {
+        if ($command->getHomePhone() !== null) {
             $address->phone = $command->getHomePhone();
         }
-        if (null !== $command->getMobilePhone()) {
+        if ($command->getMobilePhone() !== null) {
             $address->phone_mobile = $command->getMobilePhone();
         }
-        if (null !== $command->getOther()) {
+        if ($command->getOther() !== null) {
             $address->other = $command->getOther();
         }
-        if (null !== $command->getDni()) {
+        if ($command->getDni() !== null) {
             $address->dni = $command->getDni();
         }
     }

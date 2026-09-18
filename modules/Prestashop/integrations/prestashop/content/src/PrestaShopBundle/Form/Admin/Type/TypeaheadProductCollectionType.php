@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,12 +40,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class TypeaheadProductCollectionType extends CommonAbstractType
 {
     protected $productAdapter;
+
     protected $categoryAdapter;
 
     /**
      * {@inheritdoc}
      *
-     * @param object $productAdapter
+     * @param  object  $productAdapter
      */
     public function __construct($productAdapter, $categoryAdapter)
     {
@@ -68,13 +70,13 @@ class TypeaheadProductCollectionType extends CommonAbstractType
         $view->vars['template_collection'] = $options['template_collection'];
         $view->vars['limit'] = $options['limit'];
 
-        //if form is submitted, inject datas to display collection
-        if (!empty($view->vars['value']) && !empty($view->vars['value']['data'])) {
+        // if form is submitted, inject datas to display collection
+        if (! empty($view->vars['value']) && ! empty($view->vars['value']['data'])) {
             $collection = [];
 
             $i = 0;
             foreach ($view->vars['value']['data'] as $id) {
-                if (!$id) {
+                if (! $id) {
                     continue;
                 }
 
@@ -93,15 +95,15 @@ class TypeaheadProductCollectionType extends CommonAbstractType
                         $product = $this->productAdapter->getProduct($id);
                         $collection[] = [
                             'id' => $id,
-                            'name' => reset($product->name) . ' (ref:' . $product->reference . ')',
+                            'name' => reset($product->name).' (ref:'.$product->reference.')',
                             'image' => $product->image,
                         ];
 
                         break;
                 }
-                ++$i;
+                $i++;
 
-                //if collection length is up to limit, break
+                // if collection length is up to limit, break
                 if ($options['limit'] != 0 && $i >= $options['limit']) {
                     break;
                 }

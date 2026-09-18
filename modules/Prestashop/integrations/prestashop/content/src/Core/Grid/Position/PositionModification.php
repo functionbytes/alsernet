@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,9 @@ final class PositionModification implements PositionModificationInterface
     private $newPosition;
 
     /**
-     * @param string|int $id
-     * @param int $oldPosition
-     * @param int $newPosition
+     * @param  string|int  $id
+     * @param  int  $oldPosition
+     * @param  int  $newPosition
      */
     public function __construct(
         $id,

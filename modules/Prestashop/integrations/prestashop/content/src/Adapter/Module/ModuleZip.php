@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -83,8 +84,7 @@ class ModuleZip
     }
 
     /**
-     * @param string|null $name
-     *
+     * @param  string|null  $name
      * @return $this
      */
     public function setName($name)
@@ -95,8 +95,7 @@ class ModuleZip
     }
 
     /**
-     * @param string|null $sandboxPath
-     *
+     * @param  string|null  $sandboxPath
      * @return $this
      */
     public function setSandboxPath($sandboxPath)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,12 +55,6 @@ class ProductSupplierType extends TranslatorAwareType
      */
     private $currencyIsoCode;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FormChoiceProviderInterface $currencyByIdChoiceProvider
-     * @param string $currencyIsoCode
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -102,7 +97,7 @@ class ProductSupplierType extends TranslatorAwareType
                 'scale' => self::PRESTASHOP_DECIMALS,
                 'attr' => ['data-display-price-precision' => self::PRESTASHOP_DECIMALS],
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'float']),
                 ],
                 'default_empty_data' => 0.0,
@@ -113,7 +108,6 @@ class ProductSupplierType extends TranslatorAwareType
                 // placeholder false is important to avoid empty option in select input despite required being false
                 'placeholder' => false,
                 'choices' => $this->currencyByIdChoiceProvider->getChoices(),
-            ])
-        ;
+            ]);
     }
 }

@@ -13,6 +13,15 @@ class Setting extends Model implements HasMedia
 
     public const UPLOAD_PATH = 'app/setting/';
 
+    /**
+     * Marca de "la clave no existe" dentro de la caché.
+     *
+     * Hace falta un centinela y no null porque null es un valor legítimo de un
+     * ajuste, y cachear el valor por defecto del primer llamador le daba a los
+     * demás un valor que no era suyo.
+     */
+    private const MISSING = '__setting_missing__';
+
     protected $fillable = ['key', 'value'];
 
     /**
@@ -58,18 +67,23 @@ class Setting extends Model implements HasMedia
 
         // Cache settings for 10 minutes to reduce database load
         // Cache key includes the setting name for granular invalidation
-        return cache()->remember("setting_{$name}", now()->addMinutes(10), function () use ($name, $defaultValue) {
+        //
+        // Lo que se cachea NO puede ser el $defaultValue de quien llamó primero:
+        // cada llamador pasa el suyo (la config de su módulo, '1', ''…), y con
+        // el default en la caché el segundo llamador recibía el ajuste ajeno
+        // durante diez minutos. Se cachea un centinela de "esta clave no existe"
+        // y el default lo pone siempre quien pregunta.
+        $value = cache()->remember("setting_{$name}", now()->addMinutes(10), function () use ($name) {
             $setting = self::where('key', $name)->first();
 
             if ($setting) {
                 return $setting->value;
-            } elseif (isset(self::defaultSettings()[$name])) {
-                return self::defaultSettings()[$name]['value'];
-            } else {
-                // @todo exception case not handled
-                return $defaultValue;
             }
+
+            return self::defaultSettings()[$name]['value'] ?? self::MISSING;
         });
+
+        return $value === self::MISSING ? $defaultValue : $value;
     }
 
     /**
@@ -1090,7 +1104,7 @@ class Setting extends Model implements HasMedia
             'erp_api_throttle' => env('ERP_API_THROTTLE', '60,1'),
             'erp_public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),
 
-            'erp_api_url' => env('ERP_URL', 'http://interges:8080/api-gestion'),
+            'erp_api_url' => env('ERP_URL', 'http://192.168.253.8:8080/api-gestion'),
             'erp_sync_url' => env('ERP_SYNC_URL', 'http://223.1.1.18:9000/integracion'),
             'erp_xmlrpc_url' => env('ERP_XMLRPC_URL', 'http://192.168.1.6:8081'),
             'erp_sms_url' => env('ERP_SMS_URL', 'http://213.134.40.126:8080'),

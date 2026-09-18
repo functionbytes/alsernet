@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -57,10 +58,7 @@ class InvoiceOptionsType extends TranslatorAwareType
     private $nextInvoiceNumber;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param FormChoiceProviderInterface $invoiceModelChoiceProvider
-     * @param int $nextInvoiceNumber the next available invoice number
+     * @param  int  $nextInvoiceNumber  the next available invoice number
      */
     public function __construct(
         TranslatorInterface $translator,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,7 +41,6 @@ class AddonsController extends FrameworkBundleAdminController
     /**
      * Controller responsible of the authentication on PrestaShop Addons.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -48,7 +48,7 @@ class AddonsController extends FrameworkBundleAdminController
     {
         $addonsProvider = $this->get('prestashop.core.admin.data_provider.addons_interface');
         $modulesProvider = $this->get('prestashop.core.admin.data_provider.module_interface');
-        $response = new JsonResponse();
+        $response = new JsonResponse;
 
         // Parameters needed in order to authenticate the merchant : login and password
         $params = [
@@ -60,11 +60,11 @@ class AddonsController extends FrameworkBundleAdminController
         try {
             $json = $addonsProvider->request('check_customer', $params);
             if ($json === null) {
-                throw new LoginErrorException();
+                throw new LoginErrorException;
             }
 
-            if (!empty($json->errors)) {
-                throw new LoginErrorException($json->errors->code . ': ' . $json->errors->label);
+            if (! empty($json->errors)) {
+                throw new LoginErrorException($json->errors->code.': '.$json->errors->label);
             }
 
             Configuration::updateValue('PS_LOGGED_ON_ADDONS', 1);
@@ -99,7 +99,6 @@ class AddonsController extends FrameworkBundleAdminController
     /**
      * Controller responsible of the authentication on PrestaShop Addons.
      *
-     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -109,7 +108,7 @@ class AddonsController extends FrameworkBundleAdminController
         $modulesProvider->clearCatalogCache();
 
         if ($request->isXmlHttpRequest()) {
-            $response = new JsonResponse();
+            $response = new JsonResponse;
             $response->setData([
                 'success' => 1,
                 'message' => '',

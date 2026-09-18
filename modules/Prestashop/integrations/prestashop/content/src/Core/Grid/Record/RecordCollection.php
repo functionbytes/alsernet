@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,7 +35,7 @@ use PrestaShop\PrestaShop\Core\Grid\Collection\AbstractCollection;
 final class RecordCollection extends AbstractCollection implements RecordCollectionInterface
 {
     /**
-     * @param array $records Raw records data
+     * @param  array  $records  Raw records data
      */
     public function __construct(array $records = [])
     {

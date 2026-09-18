@@ -1,17 +1,17 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include _PS_ADMIN_DIR_ . '/../../config/config.inc.php';
-die();
+include _PS_ADMIN_DIR_.'/../../config/config.inc.php';
+exit();
 /**
  * PRODUCTOS SIMPLES
- *
  */
 $sql_productos_simples = "SELECT aci2.id_product FROM aalv_combinacionunica_import aci2
                         LEFT JOIN aalv_product ap on ap.id_product = aci2.id_product
@@ -27,24 +27,21 @@ $sql_productos_simples = "SELECT aci2.id_product FROM aalv_combinacionunica_impo
                             'H220464','H100524N-C','H100520-N','H100523N-F','H100519R-C','H32010706','H20041N-70','H100102N-F','H300746T-125','H320258','H320257','H320256','H320255','H320254','H320253',
                             'H320252','H320251')";
 
-
 $productos_simples = Db::getInstance()->ExecuteS($sql_productos_simples);
-echo 'PRODUCTOS SIMPLES TOTAL  => ' . count($productos_simples) . "\n";
+echo 'PRODUCTOS SIMPLES TOTAL  => '.count($productos_simples)."\n";
 
 foreach ($productos_simples as $producto) {
     $query_update_productos_simples = "UPDATE aalv_combinacionunica_import
     SET etiqueta = TRIM(REPLACE(etiqueta, 'BF24,', ''))
-    WHERE id_product = " . $producto['id_product'];
+    WHERE id_product = ".$producto['id_product'];
 
     Db::getInstance()->ExecuteS($query_update_productos_simples);
-    echo 'PROCESADO SIMPLE => ' . (int)$producto['id_product'] . "\n";
-    peticionget("https://www.a-alvarez.com/?fc=module&module=pagecache&controller=clearcache&token=ApbUf8KuFaGPBhAk&product=" . $producto['id_product']);
+    echo 'PROCESADO SIMPLE => '.(int) $producto['id_product']."\n";
+    peticionget('https://www.a-alvarez.com/?fc=module&module=pagecache&controller=clearcache&token=ApbUf8KuFaGPBhAk&product='.$producto['id_product']);
 }
-
 
 /**
  * PRODUCTOS COMBINACION
- *
  */
 $sql_productos_combinaciones = "SELECT apa.id_product,apa.id_product_attribute FROM aalv_combinaciones_import aci
                                 LEFT  JOIN aalv_product_attribute apa ON apa.id_product_attribute = aci.id_product_attribute
@@ -62,18 +59,16 @@ $sql_productos_combinaciones = "SELECT apa.id_product,apa.id_product_attribute F
                                         'H320252','H320251')";
 
 $productos_combinaciones = Db::getInstance()->ExecuteS($sql_productos_combinaciones);
-echo 'PRODUCTOS COMBINACIONES TOTAL  => ' . count($productos_combinaciones) . "\n";
+echo 'PRODUCTOS COMBINACIONES TOTAL  => '.count($productos_combinaciones)."\n";
 foreach ($productos_combinaciones as $producto) {
     $query_update_productos_combinacion = "UPDATE aalv_combinaciones_import
     SET etiqueta = TRIM(REPLACE(etiqueta, 'BF24,', ''))
-    WHERE id_product_attribute = " . $producto['id_product_attribute'];
+    WHERE id_product_attribute = ".$producto['id_product_attribute'];
 
     Db::getInstance()->ExecuteS($query_update_productos_combinacion);
-    echo 'PROCESADO COMBINACION => ' . (int)$producto['id_product'] . "\n";
-    peticionget("https://www.a-alvarez.com/?fc=module&module=pagecache&controller=clearcache&token=ApbUf8KuFaGPBhAk&product=" .  $producto['id_product']);
+    echo 'PROCESADO COMBINACION => '.(int) $producto['id_product']."\n";
+    peticionget('https://www.a-alvarez.com/?fc=module&module=pagecache&controller=clearcache&token=ApbUf8KuFaGPBhAk&product='.$producto['id_product']);
 }
-
-
 
 function peticionget($url)
 {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -68,14 +69,10 @@ class ProductController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))", message="You do not have permission to create this.")
-     *
-     * @param Request $request
-     *
-     * @return Response
      */
     public function createAction(Request $request): Response
     {
-        if (!$this->isProductPageV2Enabled()) {
+        if (! $this->isProductPageV2Enabled()) {
             $this->addFlashMessageProductV2IsDisabled();
 
             return $this->redirectToRoute('admin_product_new');
@@ -105,15 +102,10 @@ class ProductController extends FrameworkBundleAdminController
 
     /**
      * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
-     *
-     * @param Request $request
-     * @param int $productId
-     *
-     * @return Response
      */
     public function editAction(Request $request, int $productId): Response
     {
-        if (!$this->isProductPageV2Enabled()) {
+        if (! $this->isProductPageV2Enabled()) {
             $this->addFlashMessageProductV2IsDisabled();
 
             return $this->redirectToRoute('admin_product_form', ['id' => $productId]);
@@ -158,12 +150,6 @@ class ProductController extends FrameworkBundleAdminController
         return $this->renderProductForm($productForm, $productId);
     }
 
-    /**
-     * @param FormInterface $productForm
-     * @param int|null $productId
-     *
-     * @return Response
-     */
     private function renderProductForm(FormInterface $productForm, ?int $productId = null): Response
     {
         $shopContext = $this->get('prestashop.adapter.shop.context');
@@ -181,10 +167,6 @@ class ProductController extends FrameworkBundleAdminController
 
     /**
      * Download the content of the virtual product.
-     *
-     * @param int $virtualProductFileId
-     *
-     * @return BinaryFileResponse
      */
     public function downloadVirtualFileAction(int $virtualProductFileId): BinaryFileResponse
     {
@@ -196,7 +178,7 @@ class ProductController extends FrameworkBundleAdminController
             ]);
 
         $response = new BinaryFileResponse(
-            $configuration->get('_PS_DOWNLOAD_DIR_') . $download->getFilename()
+            $configuration->get('_PS_DOWNLOAD_DIR_').$download->getFilename()
         );
 
         $response->setContentDisposition(
@@ -209,17 +191,12 @@ class ProductController extends FrameworkBundleAdminController
 
     /**
      * Gets form builder.
-     *
-     * @return FormBuilderInterface
      */
     private function getProductFormBuilder(): FormBuilderInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.builder.product_form_builder');
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getProductFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.core.form.identifiable_object.product_form_handler');
@@ -227,10 +204,6 @@ class ProductController extends FrameworkBundleAdminController
 
     /**
      * Gets an error by exception class and its code.
-     *
-     * @param Exception $e
-     *
-     * @return array
      */
     private function getErrorMessages(Exception $e): array
     {
@@ -253,15 +226,12 @@ class ProductController extends FrameworkBundleAdminController
         ];
     }
 
-    /**
-     * @return bool
-     */
     private function isProductPageV2Enabled(): bool
     {
         $productPageV2FeatureFlag = $this->get('prestashop.core.feature_flags.modifier')
             ->getOneFeatureFlagByName(FeatureFlagSettings::FEATURE_FLAG_PRODUCT_PAGE_V2);
 
-        if (null === $productPageV2FeatureFlag) {
+        if ($productPageV2FeatureFlag === null) {
             return false;
         }
 
@@ -283,12 +253,7 @@ class ProductController extends FrameworkBundleAdminController
         );
     }
 
-    /**
-     * @param int|null $productId
-     *
-     * @return Response
-     */
-    private function renderDisableMultistorePage(int $productId = null): Response
+    private function renderDisableMultistorePage(?int $productId = null): Response
     {
         return $this->render('@PrestaShop/Admin/Sell/Catalog/Product/disabled.html.twig', [
             'errorMessage' => $this->trans(
@@ -300,8 +265,8 @@ class ProductController extends FrameworkBundleAdminController
                 ]
             ),
             'standardPageUrl' => $this->generateUrl(
-                !empty($productId) ? 'admin_product_form' : 'admin_product_new',
-                !empty($productId) ? ['id' => $productId] : []
+                ! empty($productId) ? 'admin_product_form' : 'admin_product_new',
+                ! empty($productId) ? ['id' => $productId] : []
             ),
         ]);
     }

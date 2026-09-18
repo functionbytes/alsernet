@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,16 +40,14 @@ final class ManufacturerQueryBuilder extends AbstractDoctrineQueryBuilder
      * @var DoctrineSearchCriteriaApplicatorInterface
      */
     private $searchCriteriaApplicator;
+
     /**
      * @var int[]
      */
     private $contextShopIds;
 
     /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param array $contextShopIds
+     * @param  string  $dbPrefix
      */
     public function __construct(
         Connection $connection,
@@ -69,25 +68,22 @@ final class ManufacturerQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $addressesQb = $this->connection->createQueryBuilder();
         $addressesQb->select('COUNT(a.`id_manufacturer`) AS `addresses_count`')
-            ->from($this->dbPrefix . 'address', 'a')
+            ->from($this->dbPrefix.'address', 'a')
             ->where('a.`id_manufacturer` != 0')
             ->andWhere('m.`id_manufacturer` = a.`id_manufacturer`')
             ->andWhere('a.`deleted` = 0')
-            ->groupBy('a.`id_manufacturer`')
-        ;
+            ->groupBy('a.`id_manufacturer`');
 
         $qb = $this->getQueryBuilder($searchCriteria->getFilters());
         $qb
             ->select('m.`id_manufacturer`, m.`name`, m.`active`')
             ->addSelect('COUNT(p.`id_product`) AS `products_count`')
-            ->addSelect('(' . $addressesQb->getSQL() . ') AS addresses_count')
-            ->groupBy('m.`id_manufacturer`')
-        ;
+            ->addSelect('('.$addressesQb->getSQL().') AS addresses_count')
+            ->groupBy('m.`id_manufacturer`');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -106,7 +102,6 @@ final class ManufacturerQueryBuilder extends AbstractDoctrineQueryBuilder
     /**
      * Get generic query builder.
      *
-     * @param array $filters
      *
      * @return QueryBuilder
      */
@@ -116,32 +111,32 @@ final class ManufacturerQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'manufacturer', 'm')
+            ->from($this->dbPrefix.'manufacturer', 'm')
             ->innerJoin(
                 'm',
-                $this->dbPrefix . 'manufacturer_shop',
+                $this->dbPrefix.'manufacturer_shop',
                 'ms',
                 'ms.`id_manufacturer` = m.`id_manufacturer`'
             )
             ->leftJoin(
                 'm',
-                $this->dbPrefix . 'product',
+                $this->dbPrefix.'product',
                 'p',
                 'm.`id_manufacturer` = p.`id_manufacturer`'
-            )
-        ;
+            );
 
         foreach ($filters as $filterName => $value) {
-            if (!in_array($filterName, $allowedFilters, true)) {
+            if (! in_array($filterName, $allowedFilters, true)) {
                 continue;
             }
 
-            if ('name' === $filterName) {
-                $qb->andWhere('m.`name` LIKE :' . $filterName)
-                    ->setParameter($filterName, '%' . $value . '%');
+            if ($filterName === 'name') {
+                $qb->andWhere('m.`name` LIKE :'.$filterName)
+                    ->setParameter($filterName, '%'.$value.'%');
+
                 continue;
             }
-            $qb->andWhere('m.`' . $filterName . '` = :' . $filterName)
+            $qb->andWhere('m.`'.$filterName.'` = :'.$filterName)
                 ->setParameter($filterName, $value);
         }
 

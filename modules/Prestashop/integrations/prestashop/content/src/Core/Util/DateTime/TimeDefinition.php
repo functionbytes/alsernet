@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,12 +33,11 @@ namespace PrestaShop\PrestaShop\Core\Util\DateTime;
 final class TimeDefinition
 {
     public const HOUR_IN_SECONDS = 3600;
+
     public const DAY_IN_SECONDS = 86400;
 
     /**
      * Object is not suppose to be initialized as it's responsibility is to define time constants.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

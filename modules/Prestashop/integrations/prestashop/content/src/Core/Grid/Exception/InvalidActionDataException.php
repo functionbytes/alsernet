@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,6 +29,4 @@ namespace PrestaShop\PrestaShop\Core\Grid\Exception;
 
 use Exception;
 
-class InvalidActionDataException extends Exception implements ExceptionInterface
-{
-}
+class InvalidActionDataException extends Exception implements ExceptionInterface {}

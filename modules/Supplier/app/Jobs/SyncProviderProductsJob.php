@@ -15,7 +15,7 @@ use Modules\Supplier\Models\Sync\SyncSchedule;
 use Modules\Supplier\Services\Integrations\ErpProviderProductSyncService;
 use Modules\Supplier\Services\SyncStatusService;
 
-class SyncProviderProductsJob implements ShouldQueue, ShouldBeUnique
+class SyncProviderProductsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -59,6 +59,7 @@ class SyncProviderProductsJob implements ShouldQueue, ShouldBeUnique
                 'batch_id' => $this->batch->id,
                 'status' => $this->batch->status,
             ]);
+
             return;
         }
 

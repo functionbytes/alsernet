@@ -465,7 +465,45 @@ class TicketMail extends Model
      */
     public function safeBodyHtml(): string
     {
-        return self::purifyHtml($this->body_html);
+        $html = self::purifyHtml($this->body_html);
+
+        // Solo los ENTRANTES. El HTML de un correo saliente lo hemos compuesto
+        // nosotros (plantilla, firma, logo del dominio): bloquear ahí las
+        // imágenes no protege de nada —el agente ya sabe que ese mensaje salió
+        // de aquí— y le enseñaría su propia firma rota cada vez que repasa el
+        // hilo. El píxel de seguimiento es cosa de quien nos escribe.
+        return $this->direction === 'inbound' ? self::blockRemoteImages($html) : $html;
+    }
+
+    /**
+     * Desactiva las imágenes remotas del correo dejando el src en data-src.
+     *
+     * Purificar el HTML impide que se ejecute código, pero no que el navegador
+     * del agente PIDA los recursos que el correo referencia. Un `<img>` de un
+     * píxel alojado en el servidor del remitente es la técnica estándar para
+     * saber si un mensaje se ha abierto: con solo mirar un ticket, el agente le
+     * confirma al otro lado la hora exacta de lectura y su IP. Los clientes de
+     * correo llevan años bloqueándolas por defecto (Gmail las proxifica,
+     * Mailpit —en el que se inspira el inspector de HelpdeskEmailActivity— las
+     * corta), y aquí se cargaban todas sin preguntar.
+     *
+     * El src se guarda en data-src y lo restaura el botón "Mostrar imágenes"
+     * del panel, así que no se pierde nada: solo deja de ser automático.
+     *
+     * Las data: URI se quedan como están — van dentro del propio mensaje y no
+     * generan ninguna petición que delate al agente.
+     */
+    public static function blockRemoteImages(string $html): string
+    {
+        if ($html === '' || ! str_contains($html, '<img')) {
+            return $html;
+        }
+
+        return (string) preg_replace_callback(
+            '/<img\b([^>]*)\bsrc=(["\'])(?!data:)([^"\']*)\2([^>]*)>/i',
+            fn (array $m): string => '<img'.$m[1].'data-src='.$m[2].$m[3].$m[2].$m[4].' data-blocked="1">',
+            $html
+        );
     }
 
     /**
@@ -544,12 +582,62 @@ class TicketMail extends Model
 
         if (self::$htmlPurifier === null) {
             $config = HTMLPurifier_Config::createDefault();
-            $config->set('HTML.Allowed', 'p,br,b,strong,i,em,u,s,del,ins,a[href|title],ul,ol,li,blockquote,pre,code,'
-                .'h1,h2,h3,h4,h5,h6,img[src|alt|title|width|height],table,thead,tbody,tr,th,td,span[style],div,hr,sub,sup');
+
+            // Un correo HTML se maqueta con tablas y estilos EN LÍNEA: no hay
+            // hojas de estilo ni clases que valgan en un cliente de correo.
+            // Permitir `style` solo en <span> dejaba pasar el texto y tiraba
+            // el diseño entero — la cabecera de color se convertía en un <div>
+            // desnudo, las celdas perdían su relleno y sus bordes, y los
+            // titulares salían al tamaño por defecto del navegador. El agente
+            // veía una versión rota de lo que el cliente había recibido bien.
+            //
+            // Los atributos de tabla (width, cellpadding, align, bgcolor…) van
+            // aquí por lo mismo: son la maquetación real de un email, y muchos
+            // remitentes siguen enviándolos en vez de CSS.
+            $config->set('HTML.Allowed', implode(',', [
+                'p[style]', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'del', 'ins',
+                'a[href|title|style]', 'ul[style]', 'ol[style]', 'li[style]',
+                'blockquote[style]', 'pre[style]', 'code',
+                'h1[style]', 'h2[style]', 'h3[style]', 'h4[style]', 'h5[style]', 'h6[style]',
+                'img[src|alt|title|width|height|style]',
+                'table[style|width|border|cellpadding|cellspacing|align|bgcolor]',
+                'thead', 'tbody', 'tfoot',
+                'tr[style|align|valign|bgcolor]',
+                'th[style|width|height|align|valign|colspan|rowspan|bgcolor]',
+                'td[style|width|height|align|valign|colspan|rowspan|bgcolor]',
+                'span[style]', 'div[style]', 'hr[style]', 'sub', 'sup',
+                'center', 'font[color|face|size]',
+            ]));
             $config->set('HTML.TargetBlank', true);
             $config->set('HTML.Nofollow', true);
             $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
-            $config->set('CSS.AllowedProperties', ['color', 'background-color', 'font-weight', 'font-style', 'text-decoration', 'text-align']);
+
+            // Las propiedades que un correo necesita de verdad. HTMLPurifier
+            // valida ADEMÁS cada valor, así que un url(javascript:…) o una
+            // expression() no llegan a pintarse.
+            //
+            // `position` queda deliberadamente FUERA: es lo único de esta lista
+            // que permitiría a un correo sacar contenido de su hueco y taparle
+            // al agente algo del panel.
+            //
+            // Faltan también `display`, `border-radius` y el atributo `height`
+            // de <table>, pero por otro motivo: esta versión de HTMLPurifier no
+            // los conoce y cada aparición deja un warning en el log sin pintar
+            // nada. Las esquinas redondeadas de un correo se siguen perdiendo;
+            // el resto del diseño ya no.
+            $config->set('CSS.AllowedProperties', [
+                'color', 'background', 'background-color',
+                'font', 'font-family', 'font-size', 'font-weight', 'font-style',
+                'line-height', 'letter-spacing', 'text-align', 'text-decoration',
+                'text-transform', 'text-indent', 'vertical-align', 'white-space',
+                'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+                'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+                'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
+                'border-color', 'border-style', 'border-width',
+                'border-collapse', 'border-spacing',
+                'width', 'min-width', 'max-width', 'height', 'min-height', 'max-height',
+                'float', 'clear', 'list-style', 'list-style-type',
+            ]);
             $config->set('AutoFormat.AutoParagraph', false);
             $config->set('AutoFormat.RemoveEmpty', false);
             $config->set('Cache.DefinitionImpl', null);

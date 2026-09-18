@@ -57,7 +57,7 @@
                 </div>
             </div>
 
-            <div id="translateResult" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bv-bg-subtle,#f9fafb);border-radius:6px">
+            <div id="translateResult" class="bv-step-hidden bv-translate-result bv-mt-10">
                 <div class="bv-x72">{{ __('helpdesk::helpdesk.inbox.modals.translate_result_label') }}</div>
                 <div class="bv-x73" id="translateResultText"></div>
                 <div class="bv-x74">
@@ -77,11 +77,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/translate.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/translate.js')) }}" defer></script>
-@endpush
-@endonce

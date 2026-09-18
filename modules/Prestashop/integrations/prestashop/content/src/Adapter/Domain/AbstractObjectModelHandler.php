@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,14 +44,12 @@ abstract class AbstractObjectModelHandler
     /**
      * This function assigns stores ids to the given object. It removes previously set shop ids and adds new ids instead.
      *
-     * @param ObjectModel $objectModel
-     * @param array $shopAssociation
      *
      * @throws PrestaShopDatabaseException
      */
     protected function associateWithShops(ObjectModel $objectModel, array $shopAssociation)
     {
-        if (empty($shopAssociation) || !Shop::isFeatureActive()) {
+        if (empty($shopAssociation) || ! Shop::isFeatureActive()) {
             return;
         }
 
@@ -58,24 +57,24 @@ abstract class AbstractObjectModelHandler
         $primaryKeyName = (string) $objectModel::$definition['primary'];
         $primaryKeyValue = (int) $objectModel->id;
 
-        if (!Shop::isTableAssociated($tableName)) {
+        if (! Shop::isTableAssociated($tableName)) {
             return;
         }
 
         // Get list of shop id we want to exclude from asso deletion
         $excludeIds = $shopAssociation;
-        foreach (Db::getInstance()->executeS('SELECT id_shop FROM ' . _DB_PREFIX_ . 'shop') as $row) {
-            if (!Context::getContext()->employee->hasAuthOnShop($row['id_shop'])) {
+        foreach (Db::getInstance()->executeS('SELECT id_shop FROM '._DB_PREFIX_.'shop') as $row) {
+            if (! Context::getContext()->employee->hasAuthOnShop($row['id_shop'])) {
                 $excludeIds[] = $row['id_shop'];
             }
         }
 
         $excludeShopsCondtion =
-            ' AND id_shop NOT IN (' . implode(', ', array_map('intval', $excludeIds)) . ')';
+            ' AND id_shop NOT IN ('.implode(', ', array_map('intval', $excludeIds)).')';
 
         Db::getInstance()->delete(
-            $tableName . '_shop',
-            '`' . $primaryKeyName . '` = ' . $primaryKeyValue . $excludeShopsCondtion
+            $tableName.'_shop',
+            '`'.$primaryKeyName.'` = '.$primaryKeyValue.$excludeShopsCondtion
         );
 
         $insert = [];
@@ -90,7 +89,7 @@ abstract class AbstractObjectModelHandler
         }
 
         Db::getInstance()->insert(
-            $tableName . '_shop',
+            $tableName.'_shop',
             $insert,
             false,
             true,
@@ -99,9 +98,8 @@ abstract class AbstractObjectModelHandler
     }
 
     /**
-     * @param ObjectModel $objectModel
-     * @param array $multiStoreColumnAssociation - an array key contains shop id while values contains the mapping of
-     *                                           column and its value
+     * @param  array  $multiStoreColumnAssociation  - an array key contains shop id while values contains the mapping of
+     *                                              column and its value
      */
     protected function updateMultiStoreColumns(ObjectModel $objectModel, array $multiStoreColumnAssociation)
     {
@@ -112,7 +110,7 @@ abstract class AbstractObjectModelHandler
         foreach ($multiStoreColumnAssociation as $shopId => $items) {
             $shop = new Shop($shopId);
 
-            if (0 >= $shop->id || !is_array($items)) {
+            if ($shop->id <= 0 || ! is_array($items)) {
                 continue;
             }
 
@@ -122,25 +120,24 @@ abstract class AbstractObjectModelHandler
             }
 
             Db::getInstance()->update(
-                $tableName . '_shop',
+                $tableName.'_shop',
                 $update,
-                $primaryKey . '=' . $primaryKeyValue
+                $primaryKey.'='.$primaryKeyValue
             );
         }
     }
 
     /**
-     * @param string $imagePath the original image path
-     * @param int $imageId
-     * @param string $belongsTo object name to which image belongs (e.g. 'supplier', 'manufacturer')
-     *
+     * @param  string  $imagePath  the original image path
+     * @param  int  $imageId
+     * @param  string  $belongsTo  object name to which image belongs (e.g. 'supplier', 'manufacturer')
      * @return string
      */
     protected function getTmpImageTag($imagePath, $imageId, $belongsTo)
     {
         return ImageManager::thumbnail(
             $imagePath,
-            $belongsTo . '_' . $imageId . '.jpg',
+            $belongsTo.'_'.$imageId.'.jpg',
             350,
             'jpg',
             true,
@@ -151,8 +148,7 @@ abstract class AbstractObjectModelHandler
     /**
      * Calculates and returns image size in kb for provided image path. Return null if image doesn't exist
      *
-     * @param string $imagePath
-     *
+     * @param  string  $imagePath
      * @return float|null
      */
     protected function getImageSize($imagePath)

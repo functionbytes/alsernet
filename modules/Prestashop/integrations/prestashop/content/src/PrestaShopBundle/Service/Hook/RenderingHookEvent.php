@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,6 +39,7 @@ class RenderingHookEvent extends HookEvent
      * @var array
      */
     private $currentContent = [];
+
     /**
      * @var string
      */
@@ -50,9 +52,8 @@ class RenderingHookEvent extends HookEvent
      * This content will be pushed in a stack between each listener call.
      * Every response is kept, but a given listener cannot see the previous listeners' responses.
      *
-     * @param array $content The rendering content returned by the listener
-     * @param string $fromListener The listener that sets the content
-     *
+     * @param  array  $content  The rendering content returned by the listener
+     * @param  string  $fromListener  The listener that sets the content
      * @return $this for fluent use
      */
     public function setContent(array $content, $fromListener = '')

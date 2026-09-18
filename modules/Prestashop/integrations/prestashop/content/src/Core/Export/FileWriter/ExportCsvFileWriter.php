@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class ExportCsvFileWriter implements FileWriterInterface
      */
     private $exportDirectory;
 
-    /**
-     * @param ExportDirectory $exportDirectory
-     */
     public function __construct(ExportDirectory $exportDirectory)
     {
         $this->exportDirectory = $exportDirectory;
@@ -57,7 +55,7 @@ final class ExportCsvFileWriter implements FileWriterInterface
      */
     public function write($fileName, ExportableDataInterface $data)
     {
-        $filePath = $this->exportDirectory . $fileName;
+        $filePath = $this->exportDirectory.$fileName;
 
         try {
             $exportFile = new SplFileObject($filePath, 'w');

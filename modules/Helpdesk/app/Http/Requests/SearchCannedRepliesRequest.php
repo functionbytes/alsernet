@@ -8,7 +8,7 @@ class SearchCannedRepliesRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.cannedreplies.view') ?? false;
+        return $this->user()?->can('helpdesk.canned-replies.view') ?? false;
     }
 
     public function rules(): array

@@ -26,6 +26,7 @@
 class GetFileControllerCore extends FrontController
 {
     protected $display_header = false;
+
     protected $display_footer = false;
 
     public function init()
@@ -33,35 +34,35 @@ class GetFileControllerCore extends FrontController
         if (isset($this->context->employee) && $this->context->employee->isLoggedBack() && Tools::getValue('file')) {
             // Admin can directly access to file
             $filename = Tools::getValue('file');
-            if (!Validate::isSha1($filename)) {
-                die(Tools::displayError());
+            if (! Validate::isSha1($filename)) {
+                exit(Tools::displayError());
             }
-            $file = _PS_DOWNLOAD_DIR_ . (string) preg_replace('/\.{2,}/', '.', $filename);
+            $file = _PS_DOWNLOAD_DIR_.(string) preg_replace('/\.{2,}/', '.', $filename);
             $filename = ProductDownload::getFilenameFromFilename(Tools::getValue('file'));
             if (empty($filename)) {
                 $newFileName = Tools::getValue('filename');
-                if (!empty($newFileName)) {
+                if (! empty($newFileName)) {
                     $filename = Tools::getValue('filename');
                 } else {
                     $filename = 'file';
                 }
             }
 
-            if (!file_exists($file)) {
+            if (! file_exists($file)) {
                 Tools::redirect('index.php');
             }
         } else {
-            if (!($key = Tools::getValue('key'))) {
+            if (! ($key = Tools::getValue('key'))) {
                 $this->displayCustomError('Invalid key.');
             }
 
             Tools::setCookieLanguage();
-            if (!$this->context->customer->isLogged()) {
-                if (!Tools::getValue('secure_key') && !Tools::getValue('id_order')) {
-                    Tools::redirect('index.php?controller=authentication&back=get-file.php%26key=' . $key);
+            if (! $this->context->customer->isLogged()) {
+                if (! Tools::getValue('secure_key') && ! Tools::getValue('id_order')) {
+                    Tools::redirect('index.php?controller=authentication&back=get-file.php%26key='.$key);
                 } elseif (Tools::getValue('secure_key') && Tools::getValue('id_order')) {
                     $order = new Order((int) Tools::getValue('id_order'));
-                    if (!Validate::isLoadedObject($order)) {
+                    if (! Validate::isLoadedObject($order)) {
                         $this->displayCustomError('Invalid key.');
                     }
                     if ($order->secure_key != Tools::getValue('secure_key')) {
@@ -81,30 +82,30 @@ class GetFileControllerCore extends FrontController
             $filename = $tmp[0];
             $hash = $tmp[1];
 
-            if (!($info = OrderDetail::getDownloadFromHash($hash))) {
+            if (! ($info = OrderDetail::getDownloadFromHash($hash))) {
                 $this->displayCustomError('This product does not exist in our store.');
             }
 
             /* check whether order has been paid, which is required to download the product */
             $order = new Order((int) $info['id_order']);
             $state = $order->getCurrentOrderState();
-            if (!$state || !$state->paid) {
+            if (! $state || ! $state->paid) {
                 $this->displayCustomError('This order has not been paid.');
             }
 
             // Check whether the order was made by the current user
             // If the order was made by a guest, skip this step
             $customer = new Customer((int) $order->id_customer);
-            if (!$customer->is_guest && $order->secure_key !== $this->context->customer->secure_key) {
-                Tools::redirect('index.php?controller=authentication&back=get-file.php%26key=' . $key);
+            if (! $customer->is_guest && $order->secure_key !== $this->context->customer->secure_key) {
+                Tools::redirect('index.php?controller=authentication&back=get-file.php%26key='.$key);
             }
 
             /* Product no more present in catalog */
-            if (!isset($info['id_product_download']) || empty($info['id_product_download'])) {
+            if (! isset($info['id_product_download']) || empty($info['id_product_download'])) {
                 $this->displayCustomError('This product has been deleted.');
             }
 
-            if (!Validate::isFileName($info['filename']) || !file_exists(_PS_DOWNLOAD_DIR_ . $info['filename'])) {
+            if (! Validate::isFileName($info['filename']) || ! file_exists(_PS_DOWNLOAD_DIR_.$info['filename'])) {
                 $this->displayCustomError('This file no longer exists.');
             }
 
@@ -132,7 +133,7 @@ class GetFileControllerCore extends FrontController
             /* Access is authorized -> increment download value for the customer */
             OrderDetail::incrementDownload($info['id_order_detail']);
 
-            $file = _PS_DOWNLOAD_DIR_ . $info['filename'];
+            $file = _PS_DOWNLOAD_DIR_.$info['filename'];
             $filename = $info['display_filename'];
         }
 
@@ -145,12 +146,12 @@ class GetFileControllerCore extends FrontController
         } elseif (function_exists('mime_content_type')) {
             $mimeType = @mime_content_type($file);
         } elseif (function_exists('exec')) {
-            $mimeType = trim(@exec('file -b --mime-type ' . escapeshellarg($file)));
-            if (!$mimeType) {
-                $mimeType = trim(@exec('file --mime ' . escapeshellarg($file)));
+            $mimeType = trim(@exec('file -b --mime-type '.escapeshellarg($file)));
+            if (! $mimeType) {
+                $mimeType = trim(@exec('file --mime '.escapeshellarg($file)));
             }
-            if (!$mimeType) {
-                $mimeType = trim(@exec('file -bi ' . escapeshellarg($file)));
+            if (! $mimeType) {
+                $mimeType = trim(@exec('file -bi '.escapeshellarg($file)));
             }
         }
 
@@ -302,15 +303,15 @@ class GetFileControllerCore extends FrontController
 
         /* Set headers for download */
         header('Content-Transfer-Encoding: binary');
-        header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($file));
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        //prevents max execution timeout, when reading large files
+        header('Content-Type: '.$mimeType);
+        header('Content-Length: '.filesize($file));
+        header('Content-Disposition: attachment; filename="'.$filename.'"');
+        // prevents max execution timeout, when reading large files
         @set_time_limit(0);
         $fp = fopen($file, 'rb');
 
         if ($fp && is_resource($fp)) {
-            while (!feof($fp)) {
+            while (! feof($fp)) {
                 echo fgets($fp, 16384);
             }
         }
@@ -322,7 +323,7 @@ class GetFileControllerCore extends FrontController
      * Display an error message with js
      * and redirect using js function.
      *
-     * @param string $msg
+     * @param  string  $msg
      */
     protected function displayCustomError($msg)
     {

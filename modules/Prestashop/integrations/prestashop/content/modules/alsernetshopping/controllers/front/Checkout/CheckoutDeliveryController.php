@@ -181,17 +181,17 @@ class CheckoutDeliveryController extends \BaseController
                 || \CheckoutValidationService::checkNeedInvoiceByOrderTotal($cart);
         }
 
-        $this->giftAllowed = (bool) \Configuration::get('PS_GIFT_WRAPPING');
-        $this->giftCost = (float) \Configuration::get('PS_GIFT_WRAPPING_PRICE');
-        $this->recyclablePackAllowed = (bool) \Configuration::get('PS_RECYCLABLE_PACK');
+        $this->giftAllowed = (bool) Configuration::get('PS_GIFT_WRAPPING');
+        $this->giftCost = (float) Configuration::get('PS_GIFT_WRAPPING_PRICE');
+        $this->recyclablePackAllowed = (bool) Configuration::get('PS_RECYCLABLE_PACK');
 
-        $customerId = (int) \Context::getContext()->customer->id;
-        $psTaxEnabled = (bool) \Configuration::get('PS_TAX');
+        $customerId = (int) Context::getContext()->customer->id;
+        $psTaxEnabled = (bool) Configuration::get('PS_TAX');
 
         $includeByMethod = ! \Product::getTaxCalculationMethod($customerId);
         $this->includeTaxes = $psTaxEnabled ? $includeByMethod : false;
 
-        $this->displayTaxesLabel = $psTaxEnabled && ((int) \Configuration::get('PS_TAX_DISPLAY') === 1);
+        $this->displayTaxesLabel = $psTaxEnabled && ((int) Configuration::get('PS_TAX_DISPLAY') === 1);
     }
 
     public function getdeliverys()
@@ -278,7 +278,7 @@ class CheckoutDeliveryController extends \BaseController
             ];
         }
 
-        $deliveryOption = \Tools::getValue('delivery_option', []);
+        $deliveryOption = Tools::getValue('delivery_option', []);
 
         if (is_string($deliveryOption)) {
             $decoded = json_decode($deliveryOption, true);
@@ -303,14 +303,14 @@ class CheckoutDeliveryController extends \BaseController
             }
         }
 
-        $gift_message = (string) \Tools::getValue('gift_message', '');
+        $gift_message = (string) Tools::getValue('gift_message', '');
         $gift = ($gift_message != '') ? 1 : 0;
-        $delivery_message = (string) \Tools::getValue('delivery_message', '');
+        $delivery_message = (string) Tools::getValue('delivery_message', '');
 
         // Limpiar parámetros residuales de otros carriers que pueden causar conflictos
-        $mondialrelayParam = \Tools::getValue('mondialrelay_selectedRelay', '');
-        $correosParam = \Tools::getValue('correos_office', '');
-        $storePickupParam = \Tools::getValue('store_pickup', '');
+        $mondialrelayParam = Tools::getValue('mondialrelay_selectedRelay', '');
+        $correosParam = Tools::getValue('correos_office', '');
+        $storePickupParam = Tools::getValue('store_pickup', '');
 
         // Detectar carriers InPost que manejan direcciones automáticamente
         $inpostCarriers = [107, 108, 109, 110, 111]; // IDs de carriers InPost
@@ -341,7 +341,7 @@ class CheckoutDeliveryController extends \BaseController
                     $customerAddresses = $this->context->customer->getSimpleAddresses($this->context->language->id);
                     if (! empty($customerAddresses)) {
                         foreach ($customerAddresses as $addr) {
-                            $checkAddress = new \Address($addr['id_address']);
+                            $checkAddress = new Address($addr['id_address']);
                             if (\Validate::isLoadedObject($checkAddress) && ! $checkAddress->deleted) {
                                 $id_address = (int) $checkAddress->id;
                                 $this->setIdAddressDeliveryInline($id_address);
@@ -364,7 +364,7 @@ class CheckoutDeliveryController extends \BaseController
             }
             // Caso normal: validar y cambiar dirección si es válida
             else {
-                $address = new \Address($id_address);
+                $address = new Address($id_address);
                 if (\Validate::isLoadedObject($address) && ! $address->deleted) {
                     // Verificar que la dirección pertenece al cliente actual
                     if ($address->id_customer == $this->context->customer->id) {
@@ -399,7 +399,7 @@ class CheckoutDeliveryController extends \BaseController
         }
 
         // Verificar que el carrier existe y está activo
-        $carrier = new \Carrier($id_carrier);
+        $carrier = new Carrier($id_carrier);
         if (! \Validate::isLoadedObject($carrier) || ! $carrier->active) {
             return [
                 'status' => 'error',
@@ -486,7 +486,7 @@ class CheckoutDeliveryController extends \BaseController
     public function selectdelivery()
     {
 
-        $context = \Context::getContext();
+        $context = Context::getContext();
         $cart = $context->cart;
         $custId = (int) $context->customer->id;
 
@@ -497,9 +497,9 @@ class CheckoutDeliveryController extends \BaseController
             exit(json_encode(\ResponseHelper::error('Carrito no válido o no pertenece al usuario')));
         }
 
-        $id_carrier = (int) \Tools::getValue('id_carrier');
-        $type = (string) \Tools::getValue('type'); // 'pickup' | 'home' | ...
-        $payload = \Tools::getValue('payload');
+        $id_carrier = (int) Tools::getValue('id_carrier');
+        $type = (string) Tools::getValue('type'); // 'pickup' | 'home' | ...
+        $payload = Tools::getValue('payload');
 
         if ($warn = \ControllerHelper::validateCarrierParams($id_carrier)) {
             exit(json_encode($warn));
@@ -584,7 +584,7 @@ class CheckoutDeliveryController extends \BaseController
             exit(json_encode(\ResponseHelper::warning('No hay dirección de entrega seleccionada')));
         }
 
-        $address = new \Address($id_address);
+        $address = new Address($id_address);
 
         if (! \Validate::isLoadedObject($address) || $address->deleted) {
             exit(json_encode(\ResponseHelper::warning('La dirección de entrega no es válida')));
@@ -855,8 +855,8 @@ class CheckoutDeliveryController extends \BaseController
 
         $this->debug("Auto-loading interface for selected carrier: {$selectedCarrierId}");
 
-        $address = new \Address($cart->id_address_delivery);
-        $carrier = new \Carrier($selectedCarrierId, $this->getLanguageId());
+        $address = new Address($cart->id_address_delivery);
+        $carrier = new Carrier($selectedCarrierId, $this->getLanguageId());
 
         $addressData = \ControllerHelper::getAddressData($address, $this->context);
         $requestData = array_merge($addressData, [
@@ -963,7 +963,7 @@ class CheckoutDeliveryController extends \BaseController
             }
 
             // Validar que la dirección existe y es válida
-            $address = new \Address($id_address);
+            $address = new Address($id_address);
             if (! \Validate::isLoadedObject($address) || $address->deleted) {
                 return false;
             }
@@ -974,13 +974,13 @@ class CheckoutDeliveryController extends \BaseController
             }
 
             // Validar que el carrier existe y está activo
-            $carrier = new \Carrier($option);
+            $carrier = new Carrier($option);
             if (! \Validate::isLoadedObject($carrier) || ! $carrier->active) {
                 return false;
             }
 
             // Verificar que el carrier está disponible para la zona de la dirección
-            $zone = \Address::getZoneById($id_address);
+            $zone = Address::getZoneById($id_address);
             if (! $carrier->checkCarrierZone($carrier->id, $zone)) {
                 return false;
             }
@@ -1131,7 +1131,7 @@ class CheckoutDeliveryController extends \BaseController
      * Obtiene la dirección Por defecto del cliente
      * Similar a la lógica en CheckoutAddressController
      */
-    private function getCustomerDefaultAddress(): ?\Address
+    private function getCustomerDefaultAddress(): ?Address
     {
         if (! $this->customer || ! $this->customer->isLogged()) {
             return null;
@@ -1144,7 +1144,7 @@ class CheckoutDeliveryController extends \BaseController
 
         // Buscar dirección marcada como Por defecto
         foreach ($customerAddresses as $addr) {
-            $addressObj = new \Address($addr['id_address']);
+            $addressObj = new Address($addr['id_address']);
             if (
                 \Validate::isLoadedObject($addressObj) &&
                 ! $addressObj->deleted &&
@@ -1157,7 +1157,7 @@ class CheckoutDeliveryController extends \BaseController
 
         // Si no hay ninguna Por defecto, devolver la primera válida
         foreach ($customerAddresses as $addr) {
-            $addressObj = new \Address($addr['id_address']);
+            $addressObj = new Address($addr['id_address']);
             if (
                 \Validate::isLoadedObject($addressObj) &&
                 ! $addressObj->deleted &&
@@ -1486,7 +1486,7 @@ class CheckoutDeliveryController extends \BaseController
                     INNER JOIN `'._DB_PREFIX_.'country_shop` cs ON cs.`id_country`=st.`id_country` AND cs.`id_shop`='.$id_shop.'
                     INNER JOIN `'._DB_PREFIX_.'country_lang` cl ON cl.`id_country`=st.`id_country` AND cl.`id_lang`='.$id_lang.'
                     WHERE st.`id_state`='.(int) $provinces[substr($postal_code, 0, 2)];
-            $data = DB::getInstance()->getRow($sql);
+            $data = Db::getInstance()->getRow($sql);
             if ($data) {
                 $return['id_country'] = (int) $data['id_country'];
                 $return['country'] = (int) $data['name'];
@@ -1501,7 +1501,7 @@ class CheckoutDeliveryController extends \BaseController
                     INNER JOIN `'._DB_PREFIX_.'country_shop` cs ON cs.`id_country`=st.`id_country` AND cs.`id_shop`='.$id_shop.'
                     INNER JOIN `'._DB_PREFIX_.'country_lang` cl ON cl.`id_country`=st.`id_country` AND cl.`id_lang`='.$id_lang.'
                     WHERE st.`id_state`=353';
-            $data = DB::getInstance()->getRow($sql);
+            $data = Db::getInstance()->getRow($sql);
             if ($data) {
                 $return['id_country'] = (int) $data['id_country'];
                 $return['country'] = (int) $data['name'];

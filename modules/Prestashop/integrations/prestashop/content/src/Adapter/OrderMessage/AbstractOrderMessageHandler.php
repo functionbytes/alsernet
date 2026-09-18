@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -37,11 +38,6 @@ use PrestaShop\PrestaShop\Core\Domain\OrderMessage\ValueObject\OrderMessageId;
  */
 abstract class AbstractOrderMessageHandler
 {
-    /**
-     * @param OrderMessageId $orderMessageId
-     *
-     * @return OrderMessage
-     */
     protected function getOrderMessage(OrderMessageId $orderMessageId): OrderMessage
     {
         $orderMessage = new OrderMessage($orderMessageId->getValue());

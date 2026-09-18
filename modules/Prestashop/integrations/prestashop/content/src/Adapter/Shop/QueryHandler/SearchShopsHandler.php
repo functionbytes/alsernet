@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -52,9 +53,6 @@ final class SearchShopsHandler implements SearchShopsHandlerInterface
 
     /**
      * SearchShopsHandler constructor.
-     *
-     * @param ShopRepository $shopRepository
-     * @param ShopGroupRepository $shopGroupRepository
      */
     public function __construct(ShopRepository $shopRepository, ShopGroupRepository $shopGroupRepository)
     {
@@ -73,7 +71,7 @@ final class SearchShopsHandler implements SearchShopsHandlerInterface
         $result = [];
 
         foreach ($shopGroupList as $shopGroup) {
-            if (!$shopGroup->getShops()->isEmpty()) {
+            if (! $shopGroup->getShops()->isEmpty()) {
                 $result[] = new FoundShopGroup(
                     $shopGroup->getId(),
                     $shopGroup->getColor() ?? '',
@@ -83,7 +81,7 @@ final class SearchShopsHandler implements SearchShopsHandlerInterface
         }
 
         foreach ($shopList as $shop) {
-            if (!$shop->hasMainUrl()) {
+            if (! $shop->hasMainUrl()) {
                 continue;
             }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,13 +41,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SimpleCategory extends CommonAbstractType
 {
     private $translator;
+
     private $categories;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $categoryDataProvider
+     * @param  object  $translator
+     * @param  object  $categoryDataProvider
      */
     public function __construct($translator, $categoryDataProvider)
     {
@@ -57,7 +59,7 @@ class SimpleCategory extends CommonAbstractType
     /**
      * Create and format a valid array keys categories that can be validate by the choice SF2 cform component.
      *
-     * @param array $list The nested array categories
+     * @param  array  $list  The nested array categories
      */
     protected function formatValidList($list)
     {
@@ -85,7 +87,7 @@ class SimpleCategory extends CommonAbstractType
                 'class' => 'ajax',
             ],
             'constraints' => $options['ajax'] ? [] : [
-                new Assert\NotBlank(),
+                new Assert\NotBlank,
                 new Assert\Length(['min' => 1, 'max' => 128]),
             ],
         ])

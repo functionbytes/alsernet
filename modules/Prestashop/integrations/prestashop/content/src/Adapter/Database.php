@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -28,17 +29,17 @@ namespace PrestaShop\PrestaShop\Adapter;
 
 use Db;
 use DbQuery;
+use PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface;
 
 /**
  * Adapter for Db legacy class.
  */
-class Database implements \PrestaShop\PrestaShop\Core\Foundation\Database\DatabaseInterface
+class Database implements DatabaseInterface
 {
     /**
      * Perform a SELECT sql statement.
      *
-     * @param string $sqlString
-     *
+     * @param  string  $sqlString
      * @return array|false
      *
      * @throws \PrestaShopDatabaseException
@@ -51,8 +52,7 @@ class Database implements \PrestaShop\PrestaShop\Core\Foundation\Database\Databa
     /**
      * Escape $unsafe to be used into a SQL statement.
      *
-     * @param string $unsafeData
-     *
+     * @param  string  $unsafeData
      * @return string
      */
     public function escape($unsafeData)
@@ -63,10 +63,9 @@ class Database implements \PrestaShop\PrestaShop\Core\Foundation\Database\Databa
     /**
      * Return a value from the first row, first column of a SELECT query.
      *
-     * @param string|DbQuery $sql
-     * @param bool $useMaster
-     * @param bool $useCache
-     *
+     * @param  string|DbQuery  $sql
+     * @param  bool  $useMaster
+     * @param  bool  $useCache
      * @return string|false|null
      */
     public function getValue($sql, $useMaster = true, $useCache = true)

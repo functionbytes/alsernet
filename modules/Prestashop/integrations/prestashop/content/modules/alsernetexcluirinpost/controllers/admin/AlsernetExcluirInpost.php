@@ -1,4 +1,5 @@
 <?php
+
 class AlsernetExcluirInpostController extends ModuleAdminController
 {
     public function __construct()
@@ -58,7 +59,7 @@ class AlsernetExcluirInpostController extends ModuleAdminController
         // Array de Familias ya seleccionadas y no seleccionadas
         $selectLista = [
             'productTypeSelected' => [],
-            'productTypeUnselected' => []
+            'productTypeUnselected' => [],
         ];
 
         foreach ($product_type_selected as $lista_selected) {
@@ -71,5 +72,4 @@ class AlsernetExcluirInpostController extends ModuleAdminController
 
         return $selectLista;
     }
-
 }

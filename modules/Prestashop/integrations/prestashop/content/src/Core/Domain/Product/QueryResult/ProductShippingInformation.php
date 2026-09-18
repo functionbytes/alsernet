@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -81,15 +82,9 @@ class ProductShippingInformation
     private $localizedDeliveryTimeOutOfStockNotes;
 
     /**
-     * @param DecimalNumber $width
-     * @param DecimalNumber $height
-     * @param DecimalNumber $depth
-     * @param DecimalNumber $weight
-     * @param DecimalNumber $additionalShippingCost
-     * @param int[] $carrierReferences
-     * @param int $deliveryTimeNotesType
-     * @param string[] $localizedDeliveryTimeInStockNotes
-     * @param string[] $localizedDeliveryTimeOutOfStockNotes
+     * @param  int[]  $carrierReferences
+     * @param  string[]  $localizedDeliveryTimeInStockNotes
+     * @param  string[]  $localizedDeliveryTimeOutOfStockNotes
      */
     public function __construct(
         DecimalNumber $width,
@@ -113,41 +108,26 @@ class ProductShippingInformation
         $this->localizedDeliveryTimeOutOfStockNotes = $localizedDeliveryTimeOutOfStockNotes;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getWidth(): DecimalNumber
     {
         return $this->width;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getHeight(): DecimalNumber
     {
         return $this->height;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getDepth(): DecimalNumber
     {
         return $this->depth;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getWeight(): DecimalNumber
     {
         return $this->weight;
     }
 
-    /**
-     * @return DecimalNumber
-     */
     public function getAdditionalShippingCost(): DecimalNumber
     {
         return $this->additionalShippingCost;
@@ -161,9 +141,6 @@ class ProductShippingInformation
         return $this->carrierReferences;
     }
 
-    /**
-     * @return int
-     */
     public function getDeliveryTimeNoteType(): int
     {
         return $this->deliveryTimeNotesType;

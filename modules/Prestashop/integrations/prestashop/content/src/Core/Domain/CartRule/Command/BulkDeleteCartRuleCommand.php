@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,7 +43,7 @@ class BulkDeleteCartRuleCommand
     private $cartRuleIds;
 
     /**
-     * @param int[] $cartRuleIds
+     * @param  int[]  $cartRuleIds
      *
      * @throws CartRuleConstraintException
      */
@@ -60,7 +61,7 @@ class BulkDeleteCartRuleCommand
     }
 
     /**
-     * @param int[] $cartRuleIds
+     * @param  int[]  $cartRuleIds
      *
      * @throws CartRuleConstraintException
      */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,16 +55,14 @@ class UserTranslatedCatalogueFinder extends AbstractCatalogueFinder
      * You will need to give theme if you want only the translations linked to a specific theme.
      * If not given, the translations returns will be the ones with 'theme IS NULL'
      *
-     * @param DatabaseTranslationLoader $databaseTranslationReader
-     * @param array<int, string> $translationDomains
-     * @param string|null $themeName
+     * @param  array<int, string>  $translationDomains
      */
     public function __construct(
         DatabaseTranslationLoader $databaseTranslationReader,
         array $translationDomains,
         ?string $themeName = null
     ) {
-        if (!$this->assertIsArrayOfString($translationDomains)) {
+        if (! $this->assertIsArrayOfString($translationDomains)) {
             throw new \InvalidArgumentException('Given translation domains are invalid. An array of strings was expected.');
         }
 
@@ -74,10 +73,6 @@ class UserTranslatedCatalogueFinder extends AbstractCatalogueFinder
 
     /**
      * Return the translation catalogue for the provided locale
-     *
-     * @param string $locale
-     *
-     * @return MessageCatalogue
      */
     public function getCatalogue(string $locale): MessageCatalogue
     {

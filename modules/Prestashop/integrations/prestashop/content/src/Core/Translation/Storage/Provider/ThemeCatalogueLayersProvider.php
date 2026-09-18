@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -92,15 +93,6 @@ class ThemeCatalogueLayersProvider implements CatalogueLayersProviderInterface
      */
     private $theme;
 
-    /**
-     * @param CatalogueLayersProviderInterface $coreFrontProvider
-     * @param DatabaseTranslationLoader $databaseTranslationLoader
-     * @param ThemeExtractor $themeExtractor
-     * @param ThemeRepository $themeRepository
-     * @param Filesystem $filesystem
-     * @param string $themeResourcesDir
-     * @param string $themeName
-     */
     public function __construct(
         CatalogueLayersProviderInterface $coreFrontProvider,
         DatabaseTranslationLoader $databaseTranslationLoader,
@@ -133,10 +125,6 @@ class ThemeCatalogueLayersProvider implements CatalogueLayersProviderInterface
     }
 
     /**
-     * @param string $locale
-     *
-     * @return MessageCatalogue
-     *
      * @throws TranslationFilesNotFoundException
      */
     public function getFileTranslatedCatalogue(string $locale): MessageCatalogue
@@ -161,11 +149,6 @@ class ThemeCatalogueLayersProvider implements CatalogueLayersProviderInterface
         return $catalogue;
     }
 
-    /**
-     * @param string $locale
-     *
-     * @return MessageCatalogue
-     */
     public function getUserTranslatedCatalogue(string $locale): MessageCatalogue
     {
         return (new UserTranslatedCatalogueFinder(
@@ -183,8 +166,8 @@ class ThemeCatalogueLayersProvider implements CatalogueLayersProviderInterface
     {
         try {
             $theme = $this->themeRepository->getInstanceByName($this->themeName);
-            if (!$theme instanceof Theme) {
-                throw new InvalidThemeException();
+            if (! $theme instanceof Theme) {
+                throw new InvalidThemeException;
             }
             $this->theme = $theme;
         } catch (Exception $e) {
@@ -192,9 +175,6 @@ class ThemeCatalogueLayersProvider implements CatalogueLayersProviderInterface
         }
     }
 
-    /**
-     * @return string
-     */
     private function getResourceDirectory(): string
     {
         $resourceDirectory = implode(DIRECTORY_SEPARATOR, [

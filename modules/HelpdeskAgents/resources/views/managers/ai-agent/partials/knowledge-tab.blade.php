@@ -13,7 +13,7 @@
         <p class="text-muted mb-0 small">Documentos que el agente utiliza para generar respuestas precisas</p>
     </div>
     <button type="button" class="btn btn-primary" id="btn-new-knowledge">
-        <i class="fas fa-plus me-1"></i> Nuevo documento
+        Nuevo documento
     </button>
 </div>
 
@@ -53,9 +53,9 @@
     <div class="text-center py-5">
         <i class="fas fa-brain fa-3x mb-3 text-muted opacity-50"></i>
         <h5 class="fw-bold mb-2">No hay documentos en la base de conocimiento</h5>
-        <p class="text-muted mb-4">Agrega documentos, FAQs o articulos para que el agente responda con mas precision.</p>
+        <p class="text-muted mb-4">Agrega documentos, FAQs o artículos para que el agente responda con más precisión.</p>
         <button type="button" class="btn btn-primary" id="btn-new-knowledge-empty">
-            <i class="fas fa-plus me-1"></i> Nuevo documento
+            Nuevo documento
         </button>
     </div>
 @else
@@ -63,7 +63,7 @@
         <table class="table table-hover align-middle text-nowrap">
             <thead class="table-light">
                 <tr>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>Tipo</th>
                     <th>Usos</th>
                     <th>Embedding</th>
@@ -74,7 +74,7 @@
             <tbody>
                 @foreach($knowledge as $item)
                     @php
-                        $typeLabels = ['document' => 'Documento', 'faq' => 'FAQ', 'article' => 'Articulo', 'manual' => 'Manual', 'url' => 'URL'];
+                        $typeLabels = ['document' => 'Documento', 'faq' => 'FAQ', 'article' => 'Artículo', 'manual' => 'Manual', 'url' => 'URL'];
                     @endphp
                     <tr data-count-item>
                         <td>
@@ -144,155 +144,8 @@
     </div>
 
     @if($knowledge->hasPages())
-        <div class="d-flex justify-content-end mt-3">
+        <div class="d-flex justify-content-end mt-3" data-ajax-pagination>
             {{ $knowledge->links() }}
         </div>
     @endif
 @endif
-
-<script>
-$(function () {
-    const CSRF = $('meta[name="csrf-token"]').attr('content');
-
-    // New document
-    $(document).on('click', '#btn-new-knowledge, #btn-new-knowledge-empty', function () {
-        $('#knowledge_id').val('');
-        $('#knowledgeForm')[0].reset();
-        $('#knowledgeModalLabel').text('Nuevo documento');
-        $('#knowledgeModal').modal('show');
-    });
-
-    // Edit document (load via AJAX)
-    $(document).on('click', '.knowledge-edit-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-
-        $.get('{{ route("helpdesk.ai.knowledge.index") }}/' + id, function (data) {
-            $('#knowledge_id').val(data.id);
-            $('#knowledge_title').val(data.title);
-            $('#knowledge_content').val(data.content);
-            $('#knowledge_type').val(data.type);
-            $('#knowledge_source_url').val(data.source_url);
-            $('#knowledge_source_type').val(data.source_type);
-            $('#knowledge_tags').val(data.tags ? data.tags.join(', ') : '');
-            $('#knowledge_summary').val(data.summary);
-            $('#knowledge_is_active').val(data.is_active ? '1' : '0');
-            $('#knowledgeModalLabel').text('Editar documento');
-            $('#knowledgeModal').modal('show');
-        }).fail(function () {
-            toastr.error('Error al cargar el documento', 'Error');
-        });
-    });
-
-    // Toggle active
-    $(document).on('click', '.knowledge-toggle-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const active = $(this).data('active') == '1' ? 0 : 1;
-
-        $.ajax({
-            url: '{{ route("helpdesk.ai.knowledge.toggle", "__ID__") }}'.replace('__ID__', id),
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF },
-            data: { is_active: active }
-        }).done(function () {
-            toastr.success(active ? 'Documento activado' : 'Documento desactivado', 'Exito');
-            reloadKnowledgeTab();
-        }).fail(function () {
-            toastr.error('Error al actualizar el documento', 'Error');
-        });
-    });
-
-    // Generate embedding
-    $(document).on('click', '.knowledge-embedding-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-
-        $.ajax({
-            url: '{{ route("helpdesk.ai.knowledge.generate-embedding", "__ID__") }}'.replace('__ID__', id),
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF }
-        }).done(function () {
-            toastr.success('Embedding generado correctamente', 'Exito');
-            reloadKnowledgeTab();
-        }).fail(function () {
-            toastr.error('Error al generar el embedding', 'Error');
-        });
-    });
-
-    // Delete
-    $(document).on('click', '.knowledge-delete-btn', function (e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const name = $(this).data('name');
-
-        $('#delete-modal .modal-title').text('Eliminar documento: ' + name);
-        $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
-            ev.preventDefault();
-            $.ajax({
-                url: '{{ route("helpdesk.ai.knowledge.destroy", "__ID__") }}'.replace('__ID__', id),
-                method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': CSRF }
-            }).done(function () {
-                $('#delete-modal').modal('hide');
-                toastr.success('Documento eliminado correctamente', 'Exito');
-                reloadKnowledgeTab();
-            }).fail(function () {
-                toastr.error('Error al eliminar el documento', 'Error');
-            });
-        });
-        $('#delete-modal').modal('show');
-    });
-
-    // Form submit
-    $('#knowledgeForm').off('submit').on('submit', function (e) {
-        e.preventDefault();
-        const id = $('#knowledge_id').val();
-        const url = id
-            ? '{{ route("helpdesk.ai.knowledge.update", "__ID__") }}'.replace('__ID__', id)
-            : '{{ route("helpdesk.ai.knowledge.store") }}';
-
-        const tagsRaw = $('#knowledge_tags').val().trim();
-        const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
-
-        $('.is-invalid').removeClass('is-invalid');
-
-        $.ajax({
-            url: url,
-            method: id ? 'PUT' : 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF },
-            data: {
-                title: $('#knowledge_title').val(),
-                content: $('#knowledge_content').val(),
-                type: $('#knowledge_type').val(),
-                source_url: $('#knowledge_source_url').val(),
-                source_type: $('#knowledge_source_type').val(),
-                tags: tags,
-                summary: $('#knowledge_summary').val(),
-                is_active: $('#knowledge_is_active').val(),
-            }
-        }).done(function (res) {
-            $('#knowledgeModal').modal('hide');
-            toastr.success(res.message || 'Documento guardado correctamente', 'Exito');
-            reloadKnowledgeTab();
-        }).fail(function (xhr) {
-            if (xhr.status === 422) {
-                $.each(xhr.responseJSON.errors, function (field, messages) {
-                    $('#knowledge_' + field).addClass('is-invalid')
-                        .siblings('.invalid-feedback').text(messages[0]);
-                });
-            } else {
-                toastr.error(xhr.responseJSON?.message || 'Error al guardar el documento', 'Error');
-            }
-        });
-    });
-
-    function reloadKnowledgeTab() {
-        $.get('{{ route("helpdesk.ai.knowledge.index") }}', function (html) {
-            $('#knowledge-container').html(html);
-            const count = $('#knowledge-container [data-count-item]').length;
-            $('#knowledge-count').text(count);
-        });
-    }
-});
-</script>

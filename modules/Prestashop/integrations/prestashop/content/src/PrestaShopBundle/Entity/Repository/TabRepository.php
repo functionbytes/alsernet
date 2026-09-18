@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,7 @@ use PrestaShopBundle\Entity\Tab;
 class TabRepository extends EntityRepository
 {
     /**
-     * @param string $moduleName
-     *
+     * @param  string  $moduleName
      * @return Tab[]
      */
     public function findByModule($moduleName)
@@ -42,8 +42,7 @@ class TabRepository extends EntityRepository
     }
 
     /**
-     * @param int $idParent
-     *
+     * @param  int  $idParent
      * @return array
      */
     public function findByParentId($idParent)
@@ -52,9 +51,8 @@ class TabRepository extends EntityRepository
     }
 
     /**
-     * @param string $className
-     *
-     * @return \PrestaShopBundle\Entity\Tab|null
+     * @param  string  $className
+     * @return Tab|null
      */
     public function findOneByClassName($className)
     {
@@ -62,8 +60,7 @@ class TabRepository extends EntityRepository
     }
 
     /**
-     * @param string $className
-     *
+     * @param  string  $className
      * @return int|null
      */
     public function findOneIdByClassName($className)
@@ -79,21 +76,21 @@ class TabRepository extends EntityRepository
     /**
      * Changes tab status.
      *
-     * @param string $className tab's class name
-     * @param bool $status wanted status for the tab
+     * @param  string  $className  tab's class name
+     * @param  bool  $status  wanted status for the tab
      *
      * @throws \InvalidArgumentException
      */
     public function changeStatusByClassName($className, $status)
     {
-        if (!is_bool($status)) {
+        if (! is_bool($status)) {
             throw new \InvalidArgumentException(sprintf('Invalid type: bool expected, got %s', gettype($status)));
         }
 
         /** @var Tab $tab */
         $tab = $this->findOneByClassName($className);
 
-        if (null !== $tab) {
+        if ($tab !== null) {
             $tab->setActive($status);
             $this->getEntityManager()->persist($tab);
             $this->getEntityManager()->flush();
@@ -101,8 +98,8 @@ class TabRepository extends EntityRepository
     }
 
     /**
-     * @param string $moduleName
-     * @param bool $enabled
+     * @param  string  $moduleName
+     * @param  bool  $enabled
      */
     public function changeEnabledByModuleName($moduleName, $enabled)
     {

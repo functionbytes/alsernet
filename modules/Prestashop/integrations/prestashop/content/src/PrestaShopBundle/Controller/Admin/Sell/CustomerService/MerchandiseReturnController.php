@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -47,9 +48,6 @@ class MerchandiseReturnController extends FrameworkBundleAdminController
      *     redirectRoute="admin_merchandise_returns_index"
      * )
      *
-     * @param Request $request
-     * @param MerchandiseReturnFilters $filters
-     *
      * @return Response|RedirectResponse
      */
     public function indexAction(Request $request, MerchandiseReturnFilters $filters): Response
@@ -78,9 +76,6 @@ class MerchandiseReturnController extends FrameworkBundleAdminController
         ]);
     }
 
-    /**
-     * @return FormHandlerInterface
-     */
     private function getOptionsFormHandler(): FormHandlerInterface
     {
         return $this->get('prestashop.admin.merchandise_return_options.form_handler');

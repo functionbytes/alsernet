@@ -71,7 +71,10 @@ class MacrosController extends Controller
         $data['is_active'] = $request->boolean('is_active', true);
         $data['is_shared'] = $request->input('visibility') === 'global';
         $data['user_id'] = ! $data['is_shared'] ? $request->user()->id : null;
-        $data['language'] = $data['language'] ?: null;
+        // `language` es nullable en la request: si no viene en el payload,
+        // validated() ni siquiera trae la clave y el acceso directo reventaba
+        // el guardado con un 500.
+        $data['language'] = ($data['language'] ?? null) ?: null;
         unset($data['visibility']);
 
         Macro::create($data);
@@ -96,7 +99,10 @@ class MacrosController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $data['is_shared'] = $request->input('visibility') === 'global';
         $data['user_id'] = ! $data['is_shared'] ? ($macro->user_id ?? $request->user()->id) : null;
-        $data['language'] = $data['language'] ?: null;
+        // `language` es nullable en la request: si no viene en el payload,
+        // validated() ni siquiera trae la clave y el acceso directo reventaba
+        // el guardado con un 500.
+        $data['language'] = ($data['language'] ?? null) ?: null;
         unset($data['visibility']);
 
         $macro->update($data);

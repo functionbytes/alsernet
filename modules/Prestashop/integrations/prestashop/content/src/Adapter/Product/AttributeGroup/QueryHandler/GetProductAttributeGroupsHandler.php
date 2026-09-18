@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,10 +44,6 @@ class GetProductAttributeGroupsHandler extends AbstractAttributeGroupQueryHandle
      */
     protected $attributeRepository;
 
-    /**
-     * @param AttributeGroupRepository $attributeGroupRepository
-     * @param AttributeRepository $attributeRepository
-     */
     public function __construct(
         AttributeGroupRepository $attributeGroupRepository,
         AttributeRepository $attributeRepository

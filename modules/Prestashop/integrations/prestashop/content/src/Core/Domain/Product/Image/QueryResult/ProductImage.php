@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -63,14 +64,6 @@ class ProductImage
      */
     private $thumbnailUrl;
 
-    /**
-     * @param int $imageId
-     * @param bool $cover
-     * @param int $position
-     * @param array $localizedLegends
-     * @param string $imageUrl
-     * @param string $thumbnailUrl
-     */
     public function __construct(
         int $imageId,
         bool $cover,
@@ -87,49 +80,31 @@ class ProductImage
         $this->thumbnailUrl = $thumbnailUrl;
     }
 
-    /**
-     * @return int
-     */
     public function getImageId(): int
     {
         return $this->imageId;
     }
 
-    /**
-     * @return bool
-     */
     public function isCover(): bool
     {
         return $this->cover;
     }
 
-    /**
-     * @return array
-     */
     public function getLocalizedLegends(): array
     {
         return $this->localizedLegends;
     }
 
-    /**
-     * @return int
-     */
     public function getPosition(): int
     {
         return $this->position;
     }
 
-    /**
-     * @return string
-     */
     public function getImageUrl(): string
     {
         return $this->imageUrl;
     }
 
-    /**
-     * @return string
-     */
     public function getThumbnailUrl(): string
     {
         return $this->thumbnailUrl;

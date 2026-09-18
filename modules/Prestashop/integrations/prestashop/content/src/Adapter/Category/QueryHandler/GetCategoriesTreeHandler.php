@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,9 +43,6 @@ final class GetCategoriesTreeHandler implements GetCategoriesTreeHandlerInterfac
      */
     private $contextLangId;
 
-    /**
-     * @param string $contextLangId
-     */
     public function __construct(
         string $contextLangId
     ) {
@@ -63,9 +61,7 @@ final class GetCategoriesTreeHandler implements GetCategoriesTreeHandlerInterfac
     }
 
     /**
-     * @param array<string, array<string, mixed>> $categories
-     * @param int $langId
-     *
+     * @param  array<string, array<string, mixed>>  $categories
      * @return CategoryForTree[]
      */
     private function buildCategoriesTree(array $categories, int $langId): array
@@ -75,7 +71,7 @@ final class GetCategoriesTreeHandler implements GetCategoriesTreeHandlerInterfac
             $categoryId = (int) $category['id_category'];
             $categoryChildren = [];
 
-            if (!empty($category['children'])) {
+            if (! empty($category['children'])) {
                 $categoryChildren = $this->buildCategoriesTree($category['children'], $langId);
             }
 

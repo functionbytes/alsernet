@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,8 +34,6 @@ class MovementsCollection
     private $movements = [];
 
     /**
-     * @param array $stockMovementsParams
-     *
      * @return $this
      */
     public function fromArray(array $stockMovementsParams)
@@ -64,8 +63,6 @@ class MovementsCollection
     }
 
     /**
-     * @param callable $callback
-     *
      * @return array
      */
     public function map(callable $callback)

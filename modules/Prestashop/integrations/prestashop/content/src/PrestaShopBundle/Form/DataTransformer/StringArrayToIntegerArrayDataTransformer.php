@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,7 +49,7 @@ final class StringArrayToIntegerArrayDataTransformer implements DataTransformerI
      */
     public function reverseTransform($value)
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return $value;
         }
 

@@ -11,6 +11,11 @@
     var lcSelectedId = null;
     var lcSelectedName = '';
 
+    function emptyHintHtml() {
+        var hint = $('[data-bv-modal-name="link-customer"]').data('empty-hint') || '';
+        return '<div class="nc-empty-hint"><i class="fas fa-magnifying-glass"></i><span>' + $('<span>').text(hint).html() + '</span></div>';
+    }
+
     function resetLinkCustomerModal() {
         clearTimeout(lcTimer);
         lcSelectedId = null;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,11 +50,11 @@ final class ToggleCmsPageCategoryStatusHandler implements ToggleCmsPageCategoryS
         try {
             $entity = new CMSCategory($command->getCmsPageCategoryId()->getValue());
 
-            if (0 >= $entity->id) {
+            if ($entity->id <= 0) {
                 throw new CmsPageCategoryNotFoundException(sprintf('Cms category object with id "%s" has not been found for status changing.', $command->getCmsPageCategoryId()->getValue()));
             }
 
-            if (false === $entity->toggleStatus()) {
+            if ($entity->toggleStatus() === false) {
                 throw new CannotToggleCmsPageCategoryStatusException(sprintf('Unable to toggle cms category with id "%s"', $command->getCmsPageCategoryId()->getValue()));
             }
         } catch (PrestaShopException $exception) {

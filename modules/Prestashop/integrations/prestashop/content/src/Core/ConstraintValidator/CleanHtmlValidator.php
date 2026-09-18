@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,28 +55,27 @@ final class CleanHtmlValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof CleanHtml) {
+        if (! $constraint instanceof CleanHtml) {
             throw new UnexpectedTypeException($constraint, CleanHtml::class);
         }
 
-        if (!$value) {
+        if (! $value) {
             return;
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new UnexpectedTypeException($value, 'string');
         }
 
         $containsScriptTags = preg_match('/<[\s]*script/ims', $value) || preg_match('/.*script\:/ims', $value);
-        $containsJavascriptEvents = preg_match('/(' . $this->getJavascriptEvents() . ')[\s]*=/ims', $value);
+        $containsJavascriptEvents = preg_match('/('.$this->getJavascriptEvents().')[\s]*=/ims', $value);
 
-        $iframe = !$this->allowEmbeddableHtml && preg_match(self::EMBEDDABLE_HTML_PATTERN, $value);
+        $iframe = ! $this->allowEmbeddableHtml && preg_match(self::EMBEDDABLE_HTML_PATTERN, $value);
         if ($containsScriptTags || $containsJavascriptEvents || $iframe) {
             $this->context->buildViolation($constraint->message)
                 ->setTranslationDomain('Admin.Notifications.Error')
                 ->setParameter('%s', $this->formatValue($value))
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 

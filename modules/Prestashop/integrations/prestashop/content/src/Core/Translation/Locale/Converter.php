@@ -41,9 +41,6 @@ final class Converter
      */
     private $translationsMappingFile;
 
-    /**
-     * @param string $translationsMappingFile
-     */
     public function __construct(string $translationsMappingFile)
     {
         $this->translationsMappingFile = $translationsMappingFile;
@@ -62,8 +59,7 @@ final class Converter
     }
 
     /**
-     * @param string $legacyLocale the legacy PrestaShop locale
-     *
+     * @param  string  $legacyLocale  the legacy PrestaShop locale
      * @return string|bool the locale
      *
      * @throws Exception
@@ -78,7 +74,6 @@ final class Converter
     /**
      * Get the PrestaShop locale from real locale (like "fr-FR")
      *
-     * @param string $locale
      *
      * @return string The PrestaShop locale (like "fr_FR")
      */
@@ -100,7 +95,7 @@ final class Converter
         $legacyToStandardLocales = json_decode($legacyToStandardLocalesJson, true);
 
         $jsonLastErrorCode = json_last_error();
-        if (JSON_ERROR_NONE !== $jsonLastErrorCode) {
+        if ($jsonLastErrorCode !== JSON_ERROR_NONE) {
             throw new Exception('The legacy to standard locales JSON could not be decoded', $jsonLastErrorCode);
         }
 

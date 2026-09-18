@@ -1,5 +1,7 @@
 <?php
 
+use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -73,7 +75,7 @@ function withWidget($params, callable $cb)
 
     $moduleInstance = Module::getInstanceByName($moduleName);
 
-    if (! $moduleInstance instanceof PrestaShop\PrestaShop\Core\Module\WidgetInterface) {
+    if (! $moduleInstance instanceof WidgetInterface) {
         throw new Exception(sprintf(
             'Module `%1$s` is not a WidgetInterface.',
             $moduleName

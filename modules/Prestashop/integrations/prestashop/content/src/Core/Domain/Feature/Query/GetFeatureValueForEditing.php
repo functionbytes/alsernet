@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,8 +43,6 @@ class GetFeatureValueForEditing
     private $featureValueId;
 
     /**
-     * @param int $featureValueId
-     *
      * @throws InvalidFeatureValueIdException
      */
     public function __construct(int $featureValueId)
@@ -51,9 +50,6 @@ class GetFeatureValueForEditing
         $this->featureValueId = new FeatureValueId($featureValueId);
     }
 
-    /**
-     * @return FeatureValueId
-     */
     public function getFeatureValueId(): FeatureValueId
     {
         return $this->featureValueId;

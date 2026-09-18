@@ -33,15 +33,17 @@ class PsEventReceiverController extends Controller
         $cacheKey = "ps_webhook_seen:{$idemKey}";
 
         // Two-phase idempotency: first mark as "processing" with short TTL.
-        // If the same key already exists with "done", we deduplicate.
+        // If the same key is already "done" OR "processing" (another worker is
+        // mid-flight right now), deduplicate instead of processing in parallel.
         $existing = Cache::get($cacheKey);
 
-        if ($existing === 'done') {
+        if ($existing === 'done' || $existing === 'processing') {
             return response()->json(['ok' => true, 'deduplicated' => true]);
         }
 
-        // Acquire processing lock. If another worker already has it, deduplicate.
-        if ($existing === null && ! Cache::add($cacheKey, 'processing', self::PROCESSING_TTL_SECONDS)) {
+        // Acquire the processing lock atomically. If another worker raced us
+        // between the read above and this add, deduplicate too.
+        if (! Cache::add($cacheKey, 'processing', self::PROCESSING_TTL_SECONDS)) {
             return response()->json(['ok' => true, 'deduplicated' => true]);
         }
 

@@ -261,88 +261,19 @@
 
 @endsection
 
-@push('styles')
-<style>
-    .tt-bulk-toolbar { z-index: 1050; }
-    .tt-filter-badge { font-size: .6rem; }
-</style>
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
 @endpush
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+{{-- Solo datos: la lógica entera vive en ticket-templates-index.js. --}}
 <script>
-$(document).ready(function () {
-    @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
-    @endif
-    @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
-    @endif
-
-    $(document).on('click', '.delete-btn', function () {
-        $('#delete-modal .modal-title').text($(this).data('title'));
-        $('#delete-form').attr('action', $(this).data('url'));
-    });
-
-    // ── Filtros avanzados ────────────────────────────────────────────
-    $('.select2-filter-modal').select2({ dropdownParent: $('#tt-filter-modal'), width: '100%' });
-
-    $('#tt-filter-apply-btn').on('click', function () {
-        $('#tt-filter-category').val($('#tt-modal-category').val());
-        $('#tt-filter-priority').val($('#tt-modal-priority').val());
-        $('#tt-filter-status').val($('#tt-modal-status').val());
-        $('#tt-filter-modal').modal('hide');
-        $('#tt-filter-form').submit();
-    });
-
-    $('#tt-filter-clear-btn').on('click', function () {
-        $('#tt-modal-category, #tt-modal-priority, #tt-modal-status').val(null).trigger('change');
-    });
-
-    // ── Bulk: un BulkActions.init() por pestaña (Generales / Mis plantillas) ──
-    ['general', 'mine'].forEach(function (group) {
-        $('#bulk-' + group + '-action-select').select2({ dropdownParent: $('#bulk-' + group + '-modal'), width: '100%' });
-
-        var bulk = window.BulkActions.init({
-            checkbox: '.bulk-checkbox-' + group,
-            toolbar: '#bulk-toolbar-' + group,
-            selectAll: '#select-all-' + group,
-        });
-
-        $('#bulk-' + group + '-modal').on('hide.bs.modal', function () {
-            $('#bulk-' + group + '-action-select').val('').trigger('change');
-            $('#bulk-' + group + '-apply-btn').prop('disabled', false).text('Aplicar');
-            bulk.reset();
-        });
-
-        $('#bulk-' + group + '-apply-btn').on('click', function () {
-            var action = $('#bulk-' + group + '-action-select').val();
-            var ids = bulk.getIds();
-
-            if (! action) { toastr.warning('Selecciona una acción.'); return; }
-            if (! ids.length) { toastr.warning('Selecciona al menos una plantilla.'); return; }
-            if (action === 'delete' && ! confirm('¿Eliminar las ' + ids.length + ' plantilla(s) seleccionada(s)? No se puede deshacer.')) return;
-
-            $('#bulk-' + group + '-apply-btn').prop('disabled', true).text('Procesando...');
-
-            $.ajax({
-                url: '{{ route('manager.helpdesk.ticket-templates.bulk-action') }}',
-                method: 'POST',
-                data: JSON.stringify({ action: action, ids: ids }),
-                contentType: 'application/json',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    $('#bulk-' + group + '-modal').modal('hide');
-                    toastr.success(res.message);
-                    setTimeout(function () { location.reload(); }, 800);
-                },
-                error: function (xhr) {
-                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                    $('#bulk-' + group + '-apply-btn').prop('disabled', false).text('Aplicar');
-                },
-            });
-        });
-    });
-});
+window.hdtTicketTemplatesIndexConfig = {
+    bulkActionUrl: @json(route('manager.helpdesk.ticket-templates.bulk-action')),
+    successMessage: @json(session('success')),
+    errorMessage: @json(session('error')),
+};
 </script>
+<script src="{{ asset('modules/helpdesktickets/js/ticket-templates-index.js') }}"></script>
 @endpush

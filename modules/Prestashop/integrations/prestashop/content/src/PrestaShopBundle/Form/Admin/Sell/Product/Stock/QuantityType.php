@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,11 +44,6 @@ class QuantityType extends TranslatorAwareType
      */
     private $stockManagementEnabled;
 
-    /**
-     * @param TranslatorInterface $translator
-     * @param array $locales
-     * @param bool $stockManagementEnabled
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,
@@ -68,12 +64,11 @@ class QuantityType extends TranslatorAwareType
                     'required' => false,
                     'label' => $this->trans('Quantity', 'Admin.Catalog.Feature'),
                     'constraints' => [
-                        new NotBlank(),
+                        new NotBlank,
                         new Type(['type' => 'numeric']),
                     ],
                     'default_empty_data' => 0,
-                ])
-            ;
+                ]);
         }
 
         $builder
@@ -81,13 +76,12 @@ class QuantityType extends TranslatorAwareType
                 'label' => $this->trans('Minimum quantity for sale', 'Admin.Catalog.Feature'),
                 'label_help_box' => $this->trans('The minimum quantity required to buy this product (set to 1 to disable this feature). E.g.: if set to 3, customers will be able to purchase the product only if they take at least 3 in quantity.', 'Admin.Catalog.Help'),
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank,
                     new Type(['type' => 'numeric']),
                 ],
                 'required' => false,
                 'default_empty_data' => 0,
-            ])
-        ;
+            ]);
     }
 
     /**

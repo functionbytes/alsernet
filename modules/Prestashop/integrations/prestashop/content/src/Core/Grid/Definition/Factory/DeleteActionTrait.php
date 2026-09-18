@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,8 +60,7 @@ trait DeleteActionTrait
                     'close_button_label' => $this->trans('Cancel', [], 'Admin.Actions'),
                     'confirm_button_class' => 'btn-danger',
                 ]),
-            ])
-        ;
+            ]);
     }
 
     /**

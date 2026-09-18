@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -77,14 +78,6 @@ final class IssuePartialRefundHandler extends AbstractOrderCommandHandler implem
      */
     private $contextStateManager;
 
-    /**
-     * @param ConfigurationInterface $configuration
-     * @param OrderRefundCalculator $orderRefundCalculator
-     * @param OrderSlipCreator $orderSlipCreator
-     * @param VoucherGenerator $voucherGenerator
-     * @param OrderRefundUpdater $refundUpdater
-     * @param ContextStateManager $contextStateManager
-     */
     public function __construct(
         ConfigurationInterface $configuration,
         OrderRefundCalculator $orderRefundCalculator,
@@ -108,7 +101,7 @@ final class IssuePartialRefundHandler extends AbstractOrderCommandHandler implem
     {
         /** @var Order $order */
         $order = $this->getOrder($command->getOrderId());
-        if (!$order->hasBeenPaid() && !$order->hasPayments()) {
+        if (! $order->hasBeenPaid() && ! $order->hasPayments()) {
             throw new InvalidOrderStateException(
                 InvalidOrderStateException::NOT_PAID,
                 'Can not perform partial refund on an order which is not paid'
@@ -124,10 +117,6 @@ final class IssuePartialRefundHandler extends AbstractOrderCommandHandler implem
         }
     }
 
-    /**
-     * @param IssuePartialRefundCommand $command
-     * @param Order $order
-     */
     private function issuePartialRefund(IssuePartialRefundCommand $command, Order $order): void
     {
         $orderRefundSummary = $this->orderRefundCalculator->computeOrderRefund(
@@ -140,7 +129,7 @@ final class IssuePartialRefundHandler extends AbstractOrderCommandHandler implem
 
         // @todo This part should probably be in a share abstract class as it will probably be common with other handlers
         // Update order details and reinject quantities
-        $shouldReinjectProducts = !$order->hasBeenDelivered() || $command->restockRefundedProducts();
+        $shouldReinjectProducts = ! $order->hasBeenDelivered() || $command->restockRefundedProducts();
         foreach ($orderRefundSummary->getProductRefunds() as $orderDetailId => $productRefund) {
             $orderDetail = $orderRefundSummary->getOrderDetailById($orderDetailId);
             if ($shouldReinjectProducts) {

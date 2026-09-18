@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -40,14 +41,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 class ProductVirtual extends CommonAbstractType
 {
     private $translator;
+
     private $legacyContext;
+
     private $configuration;
 
     /**
      * Constructor.
      *
-     * @param object $translator
-     * @param object $legacyContext
+     * @param  object  $translator
+     * @param  object  $legacyContext
      */
     public function __construct($translator, $legacyContext)
     {
@@ -83,7 +86,7 @@ class ProductVirtual extends CommonAbstractType
                     'required' => false,
                     'label' => $this->translator->trans('File', [], 'Admin.Global'),
                     'constraints' => [
-                        new Assert\File(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE') . 'M']),
+                        new Assert\File(['maxSize' => $this->configuration->get('PS_ATTACHMENT_MAXIMUM_SIZE').'M']),
                     ],
                 ]
             )
@@ -93,7 +96,7 @@ class ProductVirtual extends CommonAbstractType
                 [
                     'label' => $this->translator->trans('Filename', [], 'Admin.Global'),
                     'constraints' => [
-                        new Assert\NotBlank(),
+                        new Assert\NotBlank,
                     ],
                 ]
             )
@@ -141,12 +144,12 @@ class ProductVirtual extends CommonAbstractType
             $form = $event->getForm();
             $data = $event->getData();
 
-            //if this partial form is submit from a parent form, disable it
+            // if this partial form is submit from a parent form, disable it
             if ($form->getParent()) {
                 $event->setData([]);
                 $form->add('name', FormType\TextType::class, ['mapped' => false]);
             } elseif ($data['is_virtual_file'] == 0) {
-                //disable name mapping when is virtual not defined to yes
+                // disable name mapping when is virtual not defined to yes
                 $form->add('name', FormType\TextType::class, ['mapped' => false]);
             }
         });

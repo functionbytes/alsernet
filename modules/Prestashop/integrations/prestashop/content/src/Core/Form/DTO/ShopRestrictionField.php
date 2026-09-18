@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,8 +44,8 @@ class ShopRestrictionField
     private $isRestrictedToContextShop;
 
     /**
-     * @param string $fieldName
-     * @param bool $isRestrictedToContextShop
+     * @param  string  $fieldName
+     * @param  bool  $isRestrictedToContextShop
      */
     public function __construct($fieldName, $isRestrictedToContextShop)
     {

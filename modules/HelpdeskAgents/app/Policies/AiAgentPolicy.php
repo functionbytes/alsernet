@@ -25,12 +25,12 @@ class AiAgentPolicy
         return $user->can('helpdesk.aiagents.create');
     }
 
-    public function update(User $user, AiAgent $agent): bool
+    public function update(User $user, ?AiAgent $agent = null): bool
     {
         return $user->can('helpdesk.aiagents.update');
     }
 
-    public function delete(User $user, AiAgent $agent): bool
+    public function delete(User $user, ?AiAgent $agent = null): bool
     {
         return $user->can('helpdesk.aiagents.delete');
     }

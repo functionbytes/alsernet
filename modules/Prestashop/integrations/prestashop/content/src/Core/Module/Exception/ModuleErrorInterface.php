@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -30,6 +31,4 @@ namespace PrestaShop\PrestaShop\Core\Module\Exception;
  * If an exception that implements this ModuleErrorInterface
  * is thrown, its message will be displayed to the end-user
  */
-interface ModuleErrorInterface
-{
-}
+interface ModuleErrorInterface {}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -33,10 +34,9 @@ class SimplexmlElement extends \SimpleXMLElement
     /**
      * Can add SimpleXMLElement values in XML tree.
      *
-     * @param string $name
-     * @param string|SimplexmlElement|null $value
-     * @param string|null $namespace
-     *
+     * @param  string  $name
+     * @param  string|SimplexmlElement|null  $value
+     * @param  string|null  $namespace
      * @return \SimpleXMLElement|void
      */
     public function addChild($name, $value = null, $namespace = null)

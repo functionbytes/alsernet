@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,16 +43,13 @@ use SpecificPrice;
 class SpecificPricePriorityUpdater extends AbstractObjectModelRepository
 {
     /**
-     * @param ProductId $productId
-     * @param PriorityList $priorityList
-     *
      * @throws CannotSetSpecificPricePrioritiesException
      * @throws CoreException
      */
     public function setPrioritiesForProduct(ProductId $productId, PriorityList $priorityList): void
     {
         try {
-            if (!SpecificPrice::setSpecificPriority($productId->getValue(), $priorityList->getPriorities())) {
+            if (! SpecificPrice::setSpecificPriority($productId->getValue(), $priorityList->getPriorities())) {
                 throw new CannotSetSpecificPricePrioritiesException(sprintf(
                     'Failed to set specific price priorities for product #%d',
                     $productId->getValue()
@@ -66,15 +64,13 @@ class SpecificPricePriorityUpdater extends AbstractObjectModelRepository
     }
 
     /**
-     * @param PriorityList $priorityList
-     *
      * @throws CannotSetSpecificPricePrioritiesException
      * @throws CoreException
      */
     public function setGlobalPriorities(PriorityList $priorityList): void
     {
         try {
-            if (!SpecificPrice::setPriorities($priorityList->getPriorities())) {
+            if (! SpecificPrice::setPriorities($priorityList->getPriorities())) {
                 throw new CannotSetSpecificPricePrioritiesException('Failed to set specific price priorities');
             }
         } catch (PrestaShopException $e) {

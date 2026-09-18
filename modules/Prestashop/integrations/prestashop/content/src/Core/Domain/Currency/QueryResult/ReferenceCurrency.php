@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,14 +59,6 @@ class ReferenceCurrency
      */
     private $precision;
 
-    /**
-     * @param string $isoCode
-     * @param string $numericIsoCode
-     * @param array $names
-     * @param array $symbols
-     * @param array $patterns
-     * @param int $precision
-     */
     public function __construct(
         string $isoCode,
         string $numericIsoCode,
@@ -84,8 +77,6 @@ class ReferenceCurrency
 
     /**
      * Currency ISO code
-     *
-     * @return string
      */
     public function getIsoCode(): string
     {
@@ -94,8 +85,6 @@ class ReferenceCurrency
 
     /**
      * Currency numeric ISO code
-     *
-     * @return string
      */
     public function getNumericIsoCode(): string
     {
@@ -104,8 +93,6 @@ class ReferenceCurrency
 
     /**
      * Currency's names, indexed by language id.
-     *
-     * @return array
      */
     public function getNames(): array
     {
@@ -114,8 +101,6 @@ class ReferenceCurrency
 
     /**
      * Currency's names, indexed by language id.
-     *
-     * @return array
      */
     public function getSymbols(): array
     {
@@ -124,8 +109,6 @@ class ReferenceCurrency
 
     /**
      * Currency's patterns, indexed by language id.
-     *
-     * @return array
      */
     public function getPatterns(): array
     {
@@ -134,8 +117,6 @@ class ReferenceCurrency
 
     /**
      * Currency decimal precision
-     *
-     * @return int
      */
     public function getPrecision(): int
     {

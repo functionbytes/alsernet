@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,8 +55,7 @@ final class BulkDeleteProfileHandler extends AbstractProfileHandler implements B
     private $contextEmployeeProvider;
 
     /**
-     * @param int $superAdminProfileId
-     * @param ContextEmployeeProviderInterface $contextEmployeeProvider
+     * @param  int  $superAdminProfileId
      */
     public function __construct($superAdminProfileId, ContextEmployeeProviderInterface $contextEmployeeProvider)
     {
@@ -90,7 +90,7 @@ final class BulkDeleteProfileHandler extends AbstractProfileHandler implements B
 
                 $this->assertProfileIsNotAssignedToEmployee($entity);
 
-                if (false === $entity->delete()) {
+                if ($entity->delete() === false) {
                     throw new FailedToDeleteProfileException(sprintf('Failed to delete Profile with id %s', var_export($entityIdValue, true)), FailedToDeleteProfileException::UNEXPECTED_ERROR);
                 }
             } catch (PrestaShopException $e) {

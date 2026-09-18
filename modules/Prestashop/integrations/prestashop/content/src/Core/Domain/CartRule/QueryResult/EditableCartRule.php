@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -82,49 +83,31 @@ class EditableCartRule
         $this->dateUpd = $dateUpd;
     }
 
-    /**
-     * @return CartRuleId
-     */
     public function getCartRuleId(): CartRuleId
     {
         return $this->cartRuleId;
     }
 
-    /**
-     * @return EditableCartRuleInformation
-     */
     public function getInformation(): EditableCartRuleInformation
     {
         return $this->information;
     }
 
-    /**
-     * @return EditableCartRuleConditions
-     */
     public function getConditions(): EditableCartRuleConditions
     {
         return $this->conditions;
     }
 
-    /**
-     * @return EditableCartRuleActions
-     */
     public function getActions(): EditableCartRuleActions
     {
         return $this->actions;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateAdd(): ?DateTime
     {
         return $this->dateAdd;
     }
 
-    /**
-     * @return DateTime|null
-     */
     public function getDateUpd(): ?DateTime
     {
         return $this->dateUpd;

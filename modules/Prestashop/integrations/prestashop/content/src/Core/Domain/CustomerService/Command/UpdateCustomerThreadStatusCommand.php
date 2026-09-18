@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class UpdateCustomerThreadStatusCommand
     private $customerThreadStatus;
 
     /**
-     * @param int $customerThreadId
-     * @param string $newCustomerThreadStatus
+     * @param  int  $customerThreadId
+     * @param  string  $newCustomerThreadStatus
      */
     public function __construct($customerThreadId, $newCustomerThreadStatus)
     {

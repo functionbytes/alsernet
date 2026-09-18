@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,10 +60,8 @@ final class EmptyCategoriesKpi implements KpiInterface
     private $hrefUrl;
 
     /**
-     * @param TranslatorInterface $translator
-     * @param ConfigurationInterface $configuration
-     * @param string $sourceUrl
-     * @param string $hrefUrl
+     * @param  string  $sourceUrl
+     * @param  string  $hrefUrl
      */
     public function __construct(
         TranslatorInterface $translator,
@@ -81,14 +80,14 @@ final class EmptyCategoriesKpi implements KpiInterface
      */
     public function render()
     {
-        $helper = new HelperKpi();
+        $helper = new HelperKpi;
         $helper->id = 'box-empty-categories';
         $helper->icon = 'bookmark';
         $helper->color = 'color2';
         $helper->href = $this->hrefUrl;
         $helper->title = $this->translator->trans('Empty Categories', [], 'Admin.Catalog.Feature');
 
-        if (false !== $this->configuration->get('EMPTY_CATEGORIES')) {
+        if ($this->configuration->get('EMPTY_CATEGORIES') !== false) {
             $helper->value = $this->configuration->get('EMPTY_CATEGORIES');
         }
 

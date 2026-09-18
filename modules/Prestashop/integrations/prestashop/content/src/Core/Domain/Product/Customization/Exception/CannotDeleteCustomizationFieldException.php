@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,6 +32,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Product\Customization\Exception;
 /**
  * Is thrown when customization field deletion fails
  */
-class CannotDeleteCustomizationFieldException extends CustomizationFieldException
-{
-}
+class CannotDeleteCustomizationFieldException extends CustomizationFieldException {}

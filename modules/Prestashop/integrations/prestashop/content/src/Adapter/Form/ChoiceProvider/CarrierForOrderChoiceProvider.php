@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,20 +56,15 @@ final class CarrierForOrderChoiceProvider implements ConfigurableFormChoiceProvi
         foreach ($carriers as $carrier) {
             $delay = $carrier['delay'] ? sprintf(' (%s)', $carrier['delay']) : '';
 
-            $choices[$carrier['name'] . $delay] = (int) $carrier['id_carrier'];
+            $choices[$carrier['name'].$delay] = (int) $carrier['id_carrier'];
         }
 
         return $choices;
     }
 
-    /**
-     * @param array $options
-     *
-     * @return array
-     */
     private function resolveOptions(array $options): array
     {
-        $resolver = new OptionsResolver();
+        $resolver = new OptionsResolver;
         $resolver->setRequired([
             'order_id',
         ]);

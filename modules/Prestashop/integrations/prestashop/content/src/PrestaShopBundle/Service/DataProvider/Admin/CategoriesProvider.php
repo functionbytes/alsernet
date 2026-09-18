@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,9 +37,11 @@ use stdClass;
 class CategoriesProvider
 {
     public const CATEGORY_OTHER = 'other';
+
     public const CATEGORY_OTHER_NAME = 'Other';
 
     public const CATEGORY_THEME = 'theme_modules';
+
     public const CATEGORY_THEME_NAME = 'Theme modules';
 
     /**
@@ -66,13 +69,12 @@ class CategoriesProvider
     /**
      * Return the list of categories with the associated modules.
      *
-     * @param array|AddonsCollection $modules
-     *
+     * @param  array|AddonsCollection  $modules
      * @return array the list of categories
      */
     public function getCategoriesMenu($modules): array
     {
-        if (null === $this->categories) {
+        if ($this->categories === null) {
             // The Root category is "Categories"
             $categories = $this->initializeCategories($this->categoriesFromSource);
             foreach ($modules as $module) {
@@ -96,8 +98,7 @@ class CategoriesProvider
      * Initialize categories from API or if this one is empty,
      * use theme and my modules categories.
      *
-     * @param object $categoriesListing Category listing
-     *
+     * @param  object  $categoriesListing  Category listing
      * @return array<string, stdClass>
      */
     private function initializeCategories($categoriesListing)
@@ -133,10 +134,6 @@ class CategoriesProvider
 
     /**
      * Considering a category name, return his category parent name.
-     *
-     * @param string $categoryName
-     *
-     * @return string
      */
     public function getParentCategory(string $categoryName): string
     {
@@ -153,13 +150,6 @@ class CategoriesProvider
 
     /**
      * Re-organize category data into a Menu item.
-     *
-     * @param string $menu
-     * @param string $name
-     * @param array $moduleIds
-     * @param string $tab
-     *
-     * @return stdClass
      */
     private function createMenuObject(string $menu, string $name, array $moduleIds = [], ?string $tab = null): stdClass
     {
@@ -175,13 +165,13 @@ class CategoriesProvider
     /**
      * Find module category.
      *
-     * @param ApiModule $installedProduct Installed product
-     * @param array $categories Available categories
+     * @param  ApiModule  $installedProduct  Installed product
+     * @param  array  $categories  Available categories
      */
     private function findModuleCategory(ApiModule $installedProduct, array $categories): string
     {
         $moduleCategoryParent = $installedProduct->attributes->get('categoryParentEnglishName');
-        if (!isset($categories['categories']->subMenu[$moduleCategoryParent])) {
+        if (! isset($categories['categories']->subMenu[$moduleCategoryParent])) {
             if (in_array($installedProduct->attributes->get('name'), $this->modulesTheme)) {
                 $moduleCategoryParent = self::CATEGORY_THEME;
             } else {
@@ -198,18 +188,14 @@ class CategoriesProvider
 
     /**
      * Sort addons categories by order field.
-     *
-     * @param array $categories
-     *
-     * @return stdClass
      */
     private function sortCategories(array $categories): stdClass
     {
         uasort(
             $categories,
             function ($a, $b) {
-                $a = !isset($a['order']) ? 0 : $a['order'];
-                $b = !isset($b['order']) ? 0 : $b['order'];
+                $a = ! isset($a['order']) ? 0 : $a['order'];
+                $b = ! isset($b['order']) ? 0 : $b['order'];
 
                 if ($a === $b) {
                     return 0;
@@ -226,10 +212,6 @@ class CategoriesProvider
     /**
      * Try to find the parent category depending on
      * the module's tab attribute.
-     *
-     * @param ApiModule $module
-     *
-     * @return ?string
      */
     private function getParentCategoryFromTabAttribute(ApiModule $module): ?string
     {

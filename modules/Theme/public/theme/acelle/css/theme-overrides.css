@@ -154,3 +154,47 @@
 .toast-warning {
     background-color: #939495 !important;
 }
+
+/* ── Toolbar de selección masiva (bulk actions), fijo abajo ──── */
+/* 9 vistas de ajustes de HelpdeskTickets/Theme repetían este mismo
+   style="z-index:1050;" inline en #bulk-toolbar (regla del proyecto:
+   nunca style="" en HTML, siempre clases CSS — auditoría 14-sep-2026).
+   Un solo id, nunca dos instancias en la misma página, así que un
+   selector por id aquí cubre las 9 sin tocar el CSS por vista. */
+#bulk-toolbar {
+    z-index: 1050;
+}
+
+/* ── Utilidades de color de marca (verde) ──────────────────────
+   Sustituyen a bg-danger/text-danger/btn-danger/bg-danger-subtle
+   en las vistas de Helpdesk: esas clases de Bootstrap ya
+   renderizaban en verde de marca en toda la app (--bs-danger esta
+   sobrescrito a #90bb13 en style.css), pero que el HTML dijera
+   "danger" para un color verde confundia sobre su significado real
+   — auditoria bg-danger/text-danger 17-sep-2026. */
+.text-brand {
+    color: #4f6b0a !important;
+}
+
+.bg-brand {
+    background-color: var(--color-teal);
+    color: #fff !important;
+}
+
+.bg-brand-subtle {
+    background-color: #b6d34a !important;
+    color: #4f6b0a !important;
+}
+
+.btn-brand {
+    background-color: var(--color-teal);
+    border-color: var(--color-teal);
+    color: #fff !important;
+}
+
+.btn-brand:hover,
+.btn-brand:focus {
+    background-color: var(--color-teal-hover);
+    border-color: var(--color-teal-hover);
+    color: #fff !important;
+}

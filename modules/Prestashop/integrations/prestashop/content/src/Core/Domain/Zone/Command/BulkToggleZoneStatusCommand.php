@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ class BulkToggleZoneStatusCommand
     private $zoneIds;
 
     /**
-     * @param bool $expectedStatus
-     * @param array<int, int> $zoneIds
+     * @param  array<int, int>  $zoneIds
      */
     public function __construct(bool $expectedStatus, array $zoneIds)
     {
@@ -55,9 +55,6 @@ class BulkToggleZoneStatusCommand
         $this->expectedStatus = $expectedStatus;
     }
 
-    /**
-     * @return bool
-     */
     public function getExpectedStatus(): bool
     {
         return $this->expectedStatus;
@@ -72,7 +69,7 @@ class BulkToggleZoneStatusCommand
     }
 
     /**
-     * @param array<int, int> $zoneIds
+     * @param  array<int, int>  $zoneIds
      */
     private function setZoneIds(array $zoneIds): void
     {

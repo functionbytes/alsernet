@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -78,13 +79,13 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
             $cartLanguage = $cart->getAssociatedLanguage();
             $langId = (int) $cartLanguage->getId();
 
-            if (!Mail::send(
+            if (! Mail::send(
                 $langId,
                 'backoffice_order',
                 $this->getSubject($cartLanguage),
                 $this->getEmailTemplateVars($cartId->getValue(), $cartLanguage, $customer),
                 $customer->email,
-                $customer->firstname . ' ' . $customer->lastname,
+                $customer->firstname.' '.$customer->lastname,
                 null,
                 null,
                 null,
@@ -103,7 +104,6 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
     /**
      * Provides legacy cart object
      *
-     * @param CartId $cartId
      *
      * @return Cart
      *
@@ -124,7 +124,6 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
     /**
      * Provides legacy customer object
      *
-     * @param CustomerId $customerId
      *
      * @return Customer
      *
@@ -144,10 +143,6 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
 
     /**
      * Provides translated subject for email
-     *
-     * @param Language $cartLanguage
-     *
-     * @return string
      */
     private function getSubject(Language $cartLanguage): string
     {
@@ -161,12 +156,6 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
 
     /**
      * Provides email template variables
-     *
-     * @param int $cartId
-     * @param Language $cartLanguage
-     * @param Customer $customer
-     *
-     * @return array
      */
     private function getEmailTemplateVars(int $cartId, Language $cartLanguage, Customer $customer): array
     {
@@ -177,7 +166,7 @@ class SendProcessOrderEmailHandler implements SendProcessOrderEmailHandlerInterf
             http_build_query([
                 'step' => 3,
                 'recover_cart' => $cartId,
-                'token_cart' => md5(_COOKIE_KEY_ . 'recover_cart_' . $cartId),
+                'token_cart' => md5(_COOKIE_KEY_.'recover_cart_'.$cartId),
             ])
         );
 

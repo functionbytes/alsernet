@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -42,21 +43,21 @@ final class OrderCountriesChoiceProvider implements FormChoiceProviderInterface
      */
     public function getChoices()
     {
-        if (!Country::isCurrentlyUsed('country', true)) {
+        if (! Country::isCurrentlyUsed('country', true)) {
             return [];
         }
 
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
 			SELECT DISTINCT c.id_country, cl.`name`
-			FROM `' . _DB_PREFIX_ . 'orders` o
-			' . Shop::addSqlAssociation('orders', 'o') . '
-			INNER JOIN `' . _DB_PREFIX_ . 'address` a
+			FROM `'._DB_PREFIX_.'orders` o
+			'.Shop::addSqlAssociation('orders', 'o').'
+			INNER JOIN `'._DB_PREFIX_.'address` a
 			    ON a.id_address = o.id_address_delivery
-			INNER JOIN `' . _DB_PREFIX_ . 'country` c
+			INNER JOIN `'._DB_PREFIX_.'country` c
 			    ON a.id_country = c.id_country
-			INNER JOIN `' . _DB_PREFIX_ . 'country_lang` cl
+			INNER JOIN `'._DB_PREFIX_.'country_lang` cl
 			    ON (c.`id_country` = cl.`id_country`
-			        AND cl.`id_lang` = ' . (int) Context::getContext()->language->id . ')
+			        AND cl.`id_lang` = '.(int) Context::getContext()->language->id.')
 			ORDER BY cl.name ASC'
         );
 

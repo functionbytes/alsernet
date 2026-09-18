@@ -87,10 +87,20 @@ class SendOutboundMessageJob implements ShouldQueue
             }
         }
 
+        $hasFailedAttachment = false;
+
         foreach ($this->attachments as $attachment) {
             $url = (string) ($attachment['url'] ?? '');
 
             if (blank($url)) {
+                continue;
+            }
+
+            $sentAttachmentIds = $item->metadata['sent_attachment_ids'] ?? [];
+
+            // Idempotencia ante reintentos: si este adjunto ya se entregó en
+            // un intento previo, no se reenvía.
+            if (in_array($url, $sentAttachmentIds, true)) {
                 continue;
             }
 
@@ -102,7 +112,19 @@ class SendOutboundMessageJob implements ShouldQueue
                 $attachment['name'] ?? null,
             );
 
+            if (blank($attExternalId)) {
+                $hasFailedAttachment = true;
+
+                continue;
+            }
+
             $externalId = $externalId ?: $attExternalId;
+
+            // Persistir de inmediato: si el job muere o falla un adjunto
+            // posterior, el reintento no reenvía este adjunto ya entregado.
+            $item->update(['metadata' => array_merge($item->metadata ?? [], [
+                'sent_attachment_ids' => array_merge($sentAttachmentIds, [$url]),
+            ])]);
         }
 
         if (! $externalId) {
@@ -111,9 +133,20 @@ class SendOutboundMessageJob implements ShouldQueue
             return;
         }
 
-        // Envío exitoso: limpiar cualquier marca previa de "no entregado".
+        if ($hasFailedAttachment) {
+            // Envío parcial: el texto y/o algún adjunto se entregó, pero al
+            // menos un adjunto falló. Se marca igual que un fallo total para
+            // que la UI lo muestre y el agente pueda reintentar —
+            // sent_attachment_ids evita reenviar lo ya entregado.
+            $this->markSendFailed($item);
+        }
+
         $meta = is_array($item->metadata) ? $item->metadata : [];
-        unset($meta['send_failed'], $meta['send_failed_at']);
+
+        if (! $hasFailedAttachment) {
+            // Envío exitoso: limpiar cualquier marca previa de "no entregado".
+            unset($meta['send_failed'], $meta['send_failed_at']);
+        }
 
         if ($this->correlation === 'metadata') {
             $item->update(['metadata' => array_merge($meta, [

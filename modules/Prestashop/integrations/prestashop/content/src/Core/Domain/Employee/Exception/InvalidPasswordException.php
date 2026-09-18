@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,6 +30,4 @@ namespace PrestaShop\PrestaShop\Core\Domain\Employee\Exception;
 /**
  * Class InvalidPasswordException thrown when employee password is invalid.
  */
-class InvalidPasswordException extends EmployeeException
-{
-}
+class InvalidPasswordException extends EmployeeException {}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,7 @@ class SupplierAddressProvider
     /**
      * Gets address id by supplier
      *
-     * @param int $supplierId
-     *
+     * @param  int  $supplierId
      * @return int
      */
     public function getIdBySupplier($supplierId)

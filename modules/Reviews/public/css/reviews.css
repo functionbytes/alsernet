@@ -1,0 +1,7 @@
+/* La ficha muestra el texto de la opinión en un campo de solo lectura: sin
+   altura automática, un comentario largo quedaba cortado. */
+.reviews-longtext {
+    height: auto;
+    min-height: 96px;
+    white-space: pre-wrap;
+}

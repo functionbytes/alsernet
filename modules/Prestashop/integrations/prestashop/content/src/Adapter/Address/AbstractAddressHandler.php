@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -39,8 +40,6 @@ use PrestaShopException;
 abstract class AbstractAddressHandler
 {
     /**
-     * @param AddressId $addressId
-     *
      * @return Address
      *
      * @throws AddressException
@@ -64,9 +63,7 @@ abstract class AbstractAddressHandler
     /**
      * Deletes legacy Address
      *
-     * @param Address $address
      *
-     * @return bool
      *
      * @throws AddressException
      */
@@ -80,8 +77,6 @@ abstract class AbstractAddressHandler
     }
 
     /**
-     * @param Address $address
-     *
      * @throws InvalidAddressFieldException
      * @throws PrestaShopException
      */

@@ -4,8 +4,10 @@ namespace Modules\Helpdesk\Services\Workflow;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Jobs\RunWorkflowJob;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\Workflow;
 use Modules\Helpdesk\Models\WorkflowRun;
 use Modules\Helpdesk\Support\OutboundUrlGuard;
@@ -144,7 +146,7 @@ class WorkflowEngine
             : null;
 
         match ($actionType) {
-            'send_text' => $this->actionSendText($conversation, $config),
+            'send_text' => $this->actionSendText($conversation, $config, $run),
             'set_status' => $this->actionSetStatus($conversation, $config),
             'set_priority' => $this->actionSetPriority($conversation, $config),
             'assign_user' => $this->actionAssignUser($conversation, $config),
@@ -167,54 +169,149 @@ class WorkflowEngine
 
     // ── Action implementations ────────────────────────────────────────
 
-    protected function actionSendText(?Conversation $conversation, array $config): void
+    /**
+     * Estas cuatro leían una clave que ningún nodo guardado usa nunca.
+     *
+     * El editor de workflows (y los tres workflows reales que hay en la BD:
+     * "Bienvenida y etiquetado automatico", "Escalado por incumplimiento de
+     * SLA", "Encuesta de satisfaccion tras cierre") guarda cada acción como
+     * {"action": "...", "value": "..."} — una única clave `value` para
+     * cualquier tipo de acción. Estos cuatro métodos, en cambio, buscaban
+     * `text`/`status_id`/`priority`/`user_id`, que no existen en ningún nodo
+     * real: `empty($config['status_id'])` siempre era true y el nodo no hacía
+     * nada, y `$config['text'] ?? ''` siempre daba cadena vacía — un mensaje
+     * "enviado" en blanco. Ejecutar cualquier workflow con estas acciones era
+     * un no-op silencioso pase lo que pase (verificado 8-sep-2026 con un
+     * WorkflowRun real que terminó `completed` sin producir efecto).
+     *
+     * Se lee `value` — la única clave que la data real usa — con la
+     * específica como fallback por si algún nodo antiguo la trajera.
+     */
+    protected function actionSendText(?Conversation $conversation, array $config, WorkflowRun $run): void
     {
         if (! $conversation) {
             return;
         }
 
+        $text = $config['value'] ?? $config['text'] ?? '';
+
+        if ($text === '') {
+            return;
+        }
+
+        if ($this->hasDedicatedAutoReply($conversation, $run->workflow?->trigger_type)) {
+            return;
+        }
+
         $conversation->items()->create([
             'type' => 'message',
-            'body' => $config['text'] ?? '',
+            'body' => $text,
             'direction' => 'outbound',
             'user_id' => null,
+            // Mismo marcador que greeting/off_hours/farewell: sin esto,
+            // PublicSimulatorService::present() (y cualquier otra vista que
+            // use la convención metadata.auto_reply) atribuye el mensaje al
+            // cliente en vez de al agente/bot.
+            'metadata' => ['auto_reply' => 'workflow'],
         ]);
+    }
+
+    /**
+     * conversation_created/conversation_closed ya tienen su propio sistema de
+     * auto-respuesta (SendGreetingOnConversationCreated, RespondOffHoursOnConversationCreated,
+     * SendFarewellOnConversationClosed — cada uno deja un ConversationItem con
+     * metadata.auto_reply). Un workflow "send_text" en el mismo trigger duplicaba o
+     * directamente contradecía ese mensaje: un cliente fuera de horario recibía
+     * "Estamos fuera de horario..." seguido de "en breve un agente te atendera."
+     * Ambos listeners dedicados se registran en EventServiceProvider ANTES que el
+     * trigger de workflows y corren de forma sincrona dentro del mismo evento,
+     * mientras que el envio del workflow pasa por un RunWorkflowJob encolado aparte
+     * (mismo queue 'helpdesk') que se procesa despues — por eso, cuando este método
+     * se ejecuta, el ConversationItem dedicado ya existe si le tocaba disparar.
+     */
+    private const DEDICATED_AUTO_REPLY_TYPES = [
+        'conversation_created' => ['greeting', 'off_hours'],
+        'conversation_closed' => ['farewell'],
+    ];
+
+    protected function hasDedicatedAutoReply(Conversation $conversation, ?string $triggerType): bool
+    {
+        $types = self::DEDICATED_AUTO_REPLY_TYPES[$triggerType] ?? [];
+
+        if ($types === []) {
+            return false;
+        }
+
+        return $conversation->items()->whereIn('metadata->auto_reply', $types)->exists();
     }
 
     protected function actionSetStatus(?Conversation $conversation, array $config): void
     {
-        if (! $conversation || empty($config['status_id'])) {
+        $statusId = $config['value'] ?? $config['status_id'] ?? null;
+
+        if (! $conversation || empty($statusId)) {
             return;
         }
 
-        $conversation->update(['status_id' => (int) $config['status_id']]);
+        $conversation->update(['status_id' => (int) $statusId]);
     }
 
     protected function actionSetPriority(?Conversation $conversation, array $config): void
     {
-        if (! $conversation || empty($config['priority'])) {
+        $priority = $config['value'] ?? $config['priority'] ?? null;
+
+        if (! $conversation || empty($priority)) {
             return;
         }
 
-        $conversation->update(['priority' => $config['priority']]);
+        $conversation->update(['priority' => $priority]);
     }
 
     protected function actionAssignUser(?Conversation $conversation, array $config): void
     {
-        if (! $conversation || empty($config['user_id'])) {
+        $userId = $config['value'] ?? $config['user_id'] ?? null;
+
+        if (! $conversation || empty($userId)) {
             return;
         }
 
-        $conversation->assignTo((int) $config['user_id']);
+        $conversation->assignTo((int) $userId);
     }
 
+    /**
+     * Igual que send_text/set_status/set_priority/assign_user: los nodos
+     * guardan `value`, aquí como NOMBRE de etiqueta ("nuevo-contacto"), no
+     * como `tag_id` numérico — por eso `empty($config['tag_id'])` era
+     * siempre true y la etiqueta nunca se aplicaba (workflow real "Bienvenida
+     * y etiquetado automatico", 320 ejecuciones sin efecto).
+     *
+     * Se resuelve por nombre con firstOrCreate: el editor de workflows no
+     * ofrece un selector de etiquetas existentes, así que exigir un tag_id
+     * real dejaría esta acción inutilizable en la práctica. Crear la
+     * etiqueta sobre la marcha si no existe es la única opción que hace que
+     * el nodo funcione tal como está guardado hoy en producción. `tag_id` se
+     * conserva como fallback por si algún nodo antiguo lo trajera.
+     */
     protected function actionAddTag(?Conversation $conversation, array $config): void
     {
-        if (! $conversation || empty($config['tag_id'])) {
+        if (! $conversation) {
             return;
         }
 
-        $conversation->conversationTags()->syncWithoutDetaching([(int) $config['tag_id']]);
+        $name = $config['value'] ?? null;
+
+        $tagId = $name
+            ? ConversationTag::firstOrCreate(
+                ['name' => $name],
+                ['slug' => Str::slug($name), 'color' => '#6c757d', 'is_active' => true]
+            )->id
+            : ($config['tag_id'] ?? null);
+
+        if (empty($tagId)) {
+            return;
+        }
+
+        $conversation->conversationTags()->syncWithoutDetaching([(int) $tagId]);
     }
 
     protected function actionHttpRequest(array $config, array $context): void

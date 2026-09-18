@@ -17,12 +17,12 @@
                 <div class="bv-dropzone__title">{{ __('helpdesk::helpdesk.inbox.modals.attach_file_dropzone_title') }}</div>
                 <div class="bv-dropzone__hint">{{ __('helpdesk::helpdesk.inbox.modals.attach_file_dropzone_hint_or') }} <span class="bv-dropzone__link" id="bvAttachBrowse">{{ __('helpdesk::helpdesk.inbox.modals.attach_file_dropzone_browse') }}</span></div>
                 <div class="bv-dropzone__types">{{ __('helpdesk::helpdesk.inbox.modals.attach_file_dropzone_types') }}</div>
-                <input type="file" id="bvAttachInput" multiple style="display:none"
+                <input type="file" id="bvAttachInput" multiple class="bv-hidden"
                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx,.zip,.csv,.txt">
             </div>
 
             {{-- File queue --}}
-            <div id="bvAttachList" style="display:none;margin-top:10px">
+            <div id="bvAttachList" class="bv-step-hidden bv-mt-10">
                 <div class="bv-form-label" id="bvAttachListLabel">{{ __('helpdesk::helpdesk.inbox.modals.attach_file_selected_label') }}</div>
                 <div class="bv-x15" id="bvAttachItems"></div>
             </div>
@@ -46,11 +46,3 @@
         </div>
     </div>
 </div>
-
-@once
-@push('scripts')
-    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
-         en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/attach-file.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/attach-file.js')) }}" defer></script>
-@endpush
-@endonce

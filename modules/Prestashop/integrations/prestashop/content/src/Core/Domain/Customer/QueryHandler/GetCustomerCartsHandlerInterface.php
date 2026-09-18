@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ use PrestaShop\PrestaShop\Core\Domain\Customer\QueryResult\CartSummary;
 interface GetCustomerCartsHandlerInterface
 {
     /**
-     * @param GetCustomerCarts $query
-     *
      * @return CartSummary[]
      */
     public function handle(GetCustomerCarts $query): array;

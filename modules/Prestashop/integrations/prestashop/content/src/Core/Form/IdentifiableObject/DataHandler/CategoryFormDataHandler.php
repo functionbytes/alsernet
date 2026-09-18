@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,12 +59,6 @@ final class CategoryFormDataHandler implements FormDataHandlerInterface
      */
     private $categoryMenuThumbnailUploader;
 
-    /**
-     * @param CommandBusInterface $commandBus
-     * @param ImageUploaderInterface $categoryCoverUploader
-     * @param ImageUploaderInterface $categoryThumbnailUploader
-     * @param ImageUploaderInterface $categoryMenuThumbnailUploader
-     */
     public function __construct(
         CommandBusInterface $commandBus,
         ImageUploaderInterface $categoryCoverUploader,
@@ -118,7 +113,6 @@ final class CategoryFormDataHandler implements FormDataHandlerInterface
     /**
      * Creates add category command from form data
      *
-     * @param array $data
      *
      * @return AddCategoryCommand
      */
@@ -147,9 +141,7 @@ final class CategoryFormDataHandler implements FormDataHandlerInterface
     /**
      * Creates edit category command from
      *
-     * @param int $categoryId
-     * @param array $data
-     *
+     * @param  int  $categoryId
      * @return EditCategoryCommand
      */
     private function createEditCategoryCommand($categoryId, array $data)
@@ -173,26 +165,23 @@ final class CategoryFormDataHandler implements FormDataHandlerInterface
     }
 
     /**
-     * @param CategoryId $categoryId
-     * @param UploadedFile $coverImage
-     * @param UploadedFile $thumbnailImage
-     * @param UploadedFile[] $menuThumbnailImages
+     * @param  UploadedFile[]  $menuThumbnailImages
      */
     private function uploadImages(
         CategoryId $categoryId,
-        UploadedFile $coverImage = null,
-        UploadedFile $thumbnailImage = null,
+        ?UploadedFile $coverImage = null,
+        ?UploadedFile $thumbnailImage = null,
         array $menuThumbnailImages = []
     ) {
-        if (null !== $coverImage) {
+        if ($coverImage !== null) {
             $this->categoryCoverUploader->upload($categoryId->getValue(), $coverImage);
         }
 
-        if (null !== $thumbnailImage) {
+        if ($thumbnailImage !== null) {
             $this->categoryThumbnailUploader->upload($categoryId->getValue(), $thumbnailImage);
         }
 
-        if (!empty($menuThumbnailImages)) {
+        if (! empty($menuThumbnailImages)) {
             foreach ($menuThumbnailImages as $menuThumbnail) {
                 $this->categoryMenuThumbnailUploader->upload($categoryId->getValue(), $menuThumbnail);
             }

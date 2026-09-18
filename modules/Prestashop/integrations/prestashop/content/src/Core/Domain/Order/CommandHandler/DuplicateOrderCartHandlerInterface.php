@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -35,8 +36,6 @@ use PrestaShop\PrestaShop\Core\Domain\Order\Command\DuplicateOrderCartCommand;
 interface DuplicateOrderCartHandlerInterface
 {
     /**
-     * @param DuplicateOrderCartCommand $command
-     *
      * @return CartId Duplicated cart id
      */
     public function handle(DuplicateOrderCartCommand $command);

@@ -1,18 +1,20 @@
 <?php
+
 ini_set('max_execution_time', 36000);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if (!defined('_PS_ADMIN_DIR_')) {
+if (! defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', __DIR__);
 }
-include _PS_ADMIN_DIR_ . '/../../config/config.inc.php';
+include _PS_ADMIN_DIR_.'/../../config/config.inc.php';
 // include ('/var/www/clients/client1/web1/home/alvarezadmin/dbantigua.php');
 function connectBD()
 {
     $dbcon = mysqli_connect('213.134.40.117', 'tiendalv', 'Alv.121126');
     mysqli_select_db($dbcon, 'tienda');
+
     return $dbcon;
 }
 
@@ -33,16 +35,16 @@ $sql = Db::getInstance()->ExecuteS("select * from aalv_product where active = 1 
 
 $id_country = $argv[1];
 $excluir_producto = [
-    63957, //JORNADA AQUALUNG+APEKS
-    32827, //Cheque regalo
-    32828, //Cheque Regalo
-    32829, //Cheque Regalo
-    32830, //Cheque Regalo
-    32831, //Cheque Regalo
-    32832, //Cheque Regalo
-    32833, //Cheque Regalo
-    32834, //Cheque Regalo
-    32835, //Cheque Regalo,
+    63957, // JORNADA AQUALUNG+APEKS
+    32827, // Cheque regalo
+    32828, // Cheque Regalo
+    32829, // Cheque Regalo
+    32830, // Cheque Regalo
+    32831, // Cheque Regalo
+    32832, // Cheque Regalo
+    32833, // Cheque Regalo
+    32834, // Cheque Regalo
+    32835, // Cheque Regalo,
     53609, // LICEN-PR-SR-INT-S-WE
     53608, // LICEN-PR-SR-VAL-S-WE
     53607, // LICENCIA-PR-SR-PV-S-
@@ -107,11 +109,9 @@ $excluir_producto = [
     72460, // G3HY00009-GEN_CUSTOM
     72461, // G3HY00009-GEN_CUSTOM
     72421, // G3HY00012-GEN_CUSTOM
-    72447 // G3HY00012-GEN_CUSTOM
+    72447, // G3HY00012-GEN_CUSTOM
 
 ];
-
-
 
 $dbcon = connectBD();
 $archivo_resultado = '/home/alvarez/web/scripts/coding/precios_diferencias_'.$id_country.'.csv'; // Cambia la ruta si quieres otro destino
@@ -122,26 +122,26 @@ foreach ($sql as $value) {
         continue;
     }
 
-    # code...
-    $feature_product_telefono = Db::getInstance()->executeS("select * from aalv_feature_product afp where id_product = ".$value['id_product']." and id_feature = 2 and id_feature_value = 5");
+    // code...
+    $feature_product_telefono = Db::getInstance()->executeS('select * from aalv_feature_product afp where id_product = '.$value['id_product'].' and id_feature = 2 and id_feature_value = 5');
 
-    if(count($feature_product_telefono) > 0){
+    if (count($feature_product_telefono) > 0) {
         continue;
     }
     // Verifica si el producto tiene combinaciones
-    $combinations = Db::getInstance()->executeS("SELECT pa.`id_product_attribute`, pa.`reference`
+    $combinations = Db::getInstance()->executeS('SELECT pa.`id_product_attribute`, pa.`reference`
         FROM `aalv_product_attribute` pa
         INNER JOIN aalv_product_attribute_shop product_attribute_shop
         ON (product_attribute_shop.id_product_attribute = pa.id_product_attribute AND product_attribute_shop.id_shop = 1)
-        WHERE pa.`id_product` = " . $value['id_product']);
+        WHERE pa.`id_product` = '.$value['id_product']);
 
     if (count($combinations) > 0) {
         // Verificamos los precios en la tabla specific_price para el id_country = 1
         foreach ($combinations as $combinationnnnn) {
 
-            $estado_gestion = Db::getInstance()->executeS("select aci.estado_gestion, aci.es_segunda_mano from aalv_combinaciones_import aci where aci.id_product_attribute = ".$combinationnnnn['id_product_attribute']);
+            $estado_gestion = Db::getInstance()->executeS('select aci.estado_gestion, aci.es_segunda_mano from aalv_combinaciones_import aci where aci.id_product_attribute = '.$combinationnnnn['id_product_attribute']);
 
-            if(count($estado_gestion) > 0 && $estado_gestion[0]['estado_gestion'] == 0){
+            if (count($estado_gestion) > 0 && $estado_gestion[0]['estado_gestion'] == 0) {
                 continue;
             }
 
@@ -205,13 +205,13 @@ foreach ($sql as $value) {
             //         }
             //     }
             // }
-            $web = compararWebAntigua($dbcon,$price_query,$combinationnnnn['reference'],$id_country);
-            if($web['estado']){
+            $web = compararWebAntigua($dbcon, $price_query, $combinationnnnn['reference'], $id_country);
+            if ($web['estado']) {
                 // if($price_query == 0){
 
-                    // dump($value['id_product'].";".$combinationnnnn['reference'].";".$price_query.";".$web['price']);
-                    $linea = $value['id_product'] . ";" . $combinationnnnn['reference'] . ";" . $price_query . ";" . $web['price'] . "\n";
-                    file_put_contents($archivo_resultado, $linea, FILE_APPEND);
+                // dump($value['id_product'].";".$combinationnnnn['reference'].";".$price_query.";".$web['price']);
+                $linea = $value['id_product'].';'.$combinationnnnn['reference'].';'.$price_query.';'.$web['price']."\n";
+                file_put_contents($archivo_resultado, $linea, FILE_APPEND);
                 // }
                 // dump("precio PS => ".$price_query);
                 // dump("precio antigua => ".$web['price']);
@@ -222,11 +222,11 @@ foreach ($sql as $value) {
             }
 
         }
-    }else{
+    } else {
 
-        $estado_gestion = Db::getInstance()->executeS("select aci.estado_gestion, aci.es_segunda_mano from aalv_combinacionunica_import aci where aci.id_product = ".$value['id_product']);
+        $estado_gestion = Db::getInstance()->executeS('select aci.estado_gestion, aci.es_segunda_mano from aalv_combinacionunica_import aci where aci.id_product = '.$value['id_product']);
 
-        if(count($estado_gestion) > 0 && $estado_gestion[0]['estado_gestion'] == 0){
+        if (count($estado_gestion) > 0 && $estado_gestion[0]['estado_gestion'] == 0) {
             continue;
         }
 
@@ -287,12 +287,12 @@ foreach ($sql as $value) {
         //         }
         //     }
         // }
-        $web = compararWebAntigua($dbcon,$price_query,$value['reference'],$id_country);
-        if($web['estado']){
+        $web = compararWebAntigua($dbcon, $price_query, $value['reference'], $id_country);
+        if ($web['estado']) {
             // if($price_query == 0){
-                // dump($value['id_product'].";".$value['reference'].";".$price_query.";".$web['price']);
-                $linea = $value['id_product'] . ";" . $value['reference'] . ";" . $price_query . ";" . $web['price'] . "\n";
-                file_put_contents($archivo_resultado, $linea, FILE_APPEND);
+            // dump($value['id_product'].";".$value['reference'].";".$price_query.";".$web['price']);
+            $linea = $value['id_product'].';'.$value['reference'].';'.$price_query.';'.$web['price']."\n";
+            file_put_contents($archivo_resultado, $linea, FILE_APPEND);
             // }
             // dump("precio PS => ".$price_query);
             // dump("precio antigua => ".$web['price']);
@@ -302,12 +302,10 @@ foreach ($sql as $value) {
         }
     }
 }
-dump("Listo");
+dump('Listo');
 
-
-
-
-function esComercial($numero,$id_country) {
+function esComercial($numero, $id_country)
+{
     // Aseguramos que tenga dos decimales
     $decimal = number_format($numero, 2, '.', '');
 
@@ -315,11 +313,11 @@ function esComercial($numero,$id_country) {
     $parteDecimal = substr($decimal, -2);
 
     // Verificamos si termina en .00 o si el último dígito (antes o después del punto) es 9
-    if($id_country == 15){
+    if ($id_country == 15) {
         if ($parteDecimal === '00' || $parteDecimal === '50' || substr($decimal, -1) === '9') {
             return false;
         }
-    }else{
+    } else {
         if ($parteDecimal === '00' || substr($decimal, -1) === '9') {
             return false;
         }
@@ -329,33 +327,34 @@ function esComercial($numero,$id_country) {
     return true;
 }
 
-function compararWebAntigua($dbco,$price_query,$reference,$id_country) {
-    if(is_null($reference) || $reference == ''){
-        return ["price" => 00000,0000, "estado" => false];
+function compararWebAntigua($dbco, $price_query, $reference, $id_country)
+{
+    if (is_null($reference) || $reference == '') {
+        return ['price' => 00000, 0000, 'estado' => false];
     }
     switch ($id_country) {
-        case '6': //España
+        case '6': // España
             $pais = 1;
             break;
-        case '15': //Portugal
+        case '15': // Portugal
             $pais = 2;
             break;
-        case '8': //Francia
+        case '8': // Francia
             $pais = 3;
             break;
-        case '1': //Alemania
+        case '1': // Alemania
             $pais = 4;
             break;
-        case '10': //Italia
+        case '10': // Italia
             $pais = 5;
             break;
-        case '2': //Austria
+        case '2': // Austria
             $pais = 6;
             break;
     }
 
-    //Buscamos las tarifas en la web Antigua
-    $sql_antigua    = " select
+    // Buscamos las tarifas en la web Antigua
+    $sql_antigua = " select
                             tl.pvp
                         from
                             tarifa_linea as tl
@@ -363,42 +362,40 @@ function compararWebAntigua($dbco,$price_query,$reference,$id_country) {
                             inner join producto as p on (p.idarticulo = tc.idarticulo)
                         where
                             p.referencia like '".$reference."'
-                            and tc.idregpais = ".$pais."
+                            and tc.idregpais = ".$pais.'
                             AND tl.estado = 1
-                        order by tl.udesde";
+                        order by tl.udesde';
 
-// $sql_antigua    = " select
-//                             tl.pvp
-//                         from
-//                             tarifa_linea as tl
-//                             inner join tarifa_cabecera as tc on (tc.idtarifa_cabecera = tl.idtarifa_cabecera AND tc.finicio <= NOW() AND (tc.ffin IS NULL OR tc.ffin >= NOW()) AND tc.estado = 1)
-//                             inner join producto as p on (p.idarticulo = tc.idarticulo)
-//                         where
-//                             p.referencia like '".$reference."'
-//                             and tc.idregpais = ".$pais."
-//                             and p.estado_gestion <> 0
-//                             AND tl.estado = 1
-//                         order by tl.udesde";
-
+    // $sql_antigua    = " select
+    //                             tl.pvp
+    //                         from
+    //                             tarifa_linea as tl
+    //                             inner join tarifa_cabecera as tc on (tc.idtarifa_cabecera = tl.idtarifa_cabecera AND tc.finicio <= NOW() AND (tc.ffin IS NULL OR tc.ffin >= NOW()) AND tc.estado = 1)
+    //                             inner join producto as p on (p.idarticulo = tc.idarticulo)
+    //                         where
+    //                             p.referencia like '".$reference."'
+    //                             and tc.idregpais = ".$pais."
+    //                             and p.estado_gestion <> 0
+    //                             AND tl.estado = 1
+    //                         order by tl.udesde";
 
     $result_antigua = mysqli_query($dbco, $sql_antigua);
     $re_antigua = mysqli_fetch_array($result_antigua, MYSQLI_ASSOC);
 
-    if (!is_array($re_antigua)) {
+    if (! is_array($re_antigua)) {
         $re_antigua['pvp'] = 0;
     }
 
-    $web_pvp = round((float)$re_antigua['pvp'], 2); // Asegura que sea float con 2 decimales
-    $ps_pvp = round((float)$price_query, 2);        // Asegura también
+    $web_pvp = round((float) $re_antigua['pvp'], 2); // Asegura que sea float con 2 decimales
+    $ps_pvp = round((float) $price_query, 2);        // Asegura también
 
     if ($web_pvp !== $ps_pvp) {
         // dump("refe => ".$reference);
         // dump("web antigua => " . $web_pvp);
         // dump("PS => " . $ps_pvp);
         // dump("-----------------------------");
-        return ["price" => $web_pvp, "estado" => true];
-    }
-    else{
-        return ["price" => $web_pvp, "estado" => false];
+        return ['price' => $web_pvp, 'estado' => true];
+    } else {
+        return ['price' => $web_pvp, 'estado' => false];
     }
 }

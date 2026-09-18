@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +55,7 @@ class FileSystem
 
     private function joinTwoPaths($a, $b)
     {
-        return $this->normalizePath($a) . DIRECTORY_SEPARATOR . $this->normalizePath($b);
+        return $this->normalizePath($a).DIRECTORY_SEPARATOR.$this->normalizePath($b);
     }
 
     /**
@@ -91,17 +92,16 @@ class FileSystem
      * If $path is a file and not a directory, just gets the file info for it
      * and return it in an array.
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return SplFileInfo[] Array of SplFileInfo object indexed by file path
      */
     public function listEntriesRecursively($path)
     {
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new Exception(sprintf('No such file or directory: %s', $path));
         }
 
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             throw new Exception(sprintf('%s is not a directory', $path));
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,14 +27,16 @@
 class PdfOrderReturnControllerCore extends FrontController
 {
     public $php_self = 'pdf-order-return';
+
     protected $display_header = false;
+
     protected $display_footer = false;
 
     public function postProcess()
     {
-        $from_admin = (Tools::getValue('adtoken') == Tools::getAdminToken('AdminReturn' . (int) Tab::getIdFromClassName('AdminReturn') . (int) Tools::getValue('id_employee')));
+        $from_admin = (Tools::getValue('adtoken') == Tools::getAdminToken('AdminReturn'.(int) Tab::getIdFromClassName('AdminReturn').(int) Tools::getValue('id_employee')));
 
-        if (!$from_admin && !$this->context->customer->isLogged()) {
+        if (! $from_admin && ! $this->context->customer->isLogged()) {
             Tools::redirect('index.php?controller=authentication&back=order-follow');
         }
 
@@ -41,12 +44,12 @@ class PdfOrderReturnControllerCore extends FrontController
             $this->orderReturn = new OrderReturn(Tools::getValue('id_order_return'));
         }
 
-        if (!isset($this->orderReturn) || !Validate::isLoadedObject($this->orderReturn)) {
-            die($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
-        } elseif (!$from_admin && $this->orderReturn->id_customer != $this->context->customer->id) {
-            die($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
+        if (! isset($this->orderReturn) || ! Validate::isLoadedObject($this->orderReturn)) {
+            exit($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
+        } elseif (! $from_admin && $this->orderReturn->id_customer != $this->context->customer->id) {
+            exit($this->trans('Order return not found.', [], 'Shop.Notifications.Error'));
         } elseif ($this->orderReturn->state < 2) {
-            die($this->trans('Order return not confirmed.', [], 'Shop.Notifications.Error'));
+            exit($this->trans('Order return not confirmed.', [], 'Shop.Notifications.Error'));
         }
     }
 

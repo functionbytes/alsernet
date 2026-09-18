@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,11 +63,11 @@ final class PositionUpdateFactory implements PositionUpdateFactoryInterface
     private $parentIdField;
 
     /**
-     * @param string $positionsField
-     * @param string $rowIdField
-     * @param string $oldPositionField
-     * @param string $newPositionField
-     * @param string $parentIdField
+     * @param  string  $positionsField
+     * @param  string  $rowIdField
+     * @param  string  $oldPositionField
+     * @param  string  $newPositionField
+     * @param  string  $parentIdField
      */
     public function __construct(
         $positionsField,
@@ -89,7 +90,7 @@ final class PositionUpdateFactory implements PositionUpdateFactoryInterface
     {
         $this->validateData($data, $positionDefinition);
 
-        $updates = new PositionModificationCollection();
+        $updates = new PositionModificationCollection;
         foreach ($data[$this->positionsField] as $index => $position) {
             $this->validatePositionData($position, $index);
 
@@ -110,39 +111,35 @@ final class PositionUpdateFactory implements PositionUpdateFactoryInterface
     }
 
     /**
-     * @param array $data
-     * @param PositionDefinition $positionDefinition
-     *
      * @throws PositionDataException
      */
     private function validateData(array $data, PositionDefinition $positionDefinition)
     {
         if (empty($data[$this->positionsField])) {
-            throw new PositionDataException('Missing ' . $this->positionsField . ' in your data.', 'Admin.Notifications.Failure');
+            throw new PositionDataException('Missing '.$this->positionsField.' in your data.', 'Admin.Notifications.Failure');
         }
 
-        if (null !== $positionDefinition->getParentIdField() && empty($data[$this->parentIdField])) {
-            throw new PositionDataException('Missing ' . $this->parentIdField . ' in your data.', 'Admin.Notifications.Failure');
+        if ($positionDefinition->getParentIdField() !== null && empty($data[$this->parentIdField])) {
+            throw new PositionDataException('Missing '.$this->parentIdField.' in your data.', 'Admin.Notifications.Failure');
         }
     }
 
     /**
      * Validate the position format, throw a PositionDataException if is not correct.
      *
-     * @param array $position
-     * @param int $index
+     * @param  int  $index
      *
      * @throws PositionDataException
      */
     private function validatePositionData(array $position, $index)
     {
-        if (!isset($position[$this->rowIdField])) {
+        if (! isset($position[$this->rowIdField])) {
             throw new PositionDataException(self::POSITION_KEY, 'Admin.Notifications.Failure', [$index, $this->rowIdField]);
         }
-        if (!isset($position[$this->oldPositionField])) {
+        if (! isset($position[$this->oldPositionField])) {
             throw new PositionDataException(self::POSITION_KEY, 'Admin.Notifications.Failure', [$index, $this->oldPositionField]);
         }
-        if (!isset($position[$this->newPositionField])) {
+        if (! isset($position[$this->newPositionField])) {
             throw new PositionDataException(self::POSITION_KEY, 'Admin.Notifications.Failure', [$index, $this->newPositionField]);
         }
     }

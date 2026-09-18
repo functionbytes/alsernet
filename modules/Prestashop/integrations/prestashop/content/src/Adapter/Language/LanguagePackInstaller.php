@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,9 +49,6 @@ final class LanguagePackInstaller implements LanguagePackInstallerInterface
 
     /**
      * LanguagePackInstaller constructor.
-     *
-     * @param TranslatorInterface $translator
-     * @param Version $version
      */
     public function __construct(TranslatorInterface $translator, Version $version)
     {
@@ -66,7 +64,7 @@ final class LanguagePackInstaller implements LanguagePackInstallerInterface
         $freshInstall = empty(Language::getIdByIso($iso));
         $result = Language::downloadAndInstallLanguagePack($iso, $this->version->getVersion(), null, $freshInstall);
 
-        if (false === $result) {
+        if ($result === false) {
             return [
                 $this->translator->trans(
                     'Fatal error: ISO code is not correct',
@@ -76,7 +74,7 @@ final class LanguagePackInstaller implements LanguagePackInstallerInterface
             ];
         }
 
-        if (is_array($result) && !empty($result)) {
+        if (is_array($result) && ! empty($result)) {
             return $result;
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -48,8 +49,7 @@ final class GetCmsPageCategoryNameForListingHandler implements GetCmsPageCategor
     private $requestStack;
 
     /**
-     * @param int $contextLanguageId
-     * @param RequestStack $requestStack
+     * @param  int  $contextLanguageId
      */
     public function __construct(
         $contextLanguageId,
@@ -78,7 +78,7 @@ final class GetCmsPageCategoryNameForListingHandler implements GetCmsPageCategor
     {
         $currentRequest = $this->requestStack->getCurrentRequest();
         $categoryIdFromRequest = null;
-        if (null !== $currentRequest) {
+        if ($currentRequest !== null) {
             $categoryIdFromRequest = $currentRequest->query->getInt('id_cms_category');
         }
 

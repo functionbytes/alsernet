@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\HelpdeskErp\Events\CustomerErpResolved;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Events\SlaWarning;
@@ -23,6 +24,7 @@ use Modules\HelpdeskTickets\Listeners\RecalculateSlaPolicy;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Listeners\RunAiAutoClassify;
 use Modules\HelpdeskTickets\Listeners\RunAiSentimentAnalysis;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnErpResolved;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketAssigned;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketClosed;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketCreated;
@@ -131,6 +133,12 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
         // módulo no está instalado.
         if (helpdesk_translate_enabled() && class_exists(CachedTranslator::class)) {
             $listen[MessageAdded::class][] = TranslateIncomingTicketMessage::class;
+        }
+
+        // Reglas "El ERP ha respondido": mismo criterio que la traducción, el
+        // evento lo emite HelpdeskErp y sin ese módulo la clase no existe.
+        if (function_exists('helpdesk_erp_enabled') && helpdesk_erp_enabled() && class_exists(CustomerErpResolved::class)) {
+            $listen[CustomerErpResolved::class][] = RunAutomationsOnErpResolved::class;
         }
 
         return $listen;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -59,7 +60,7 @@ class RadioWithChoiceChildrenType extends AbstractType
                 ],
                 'choices' => $childChoice['choices'],
                 'choice_attr' => $childChoiceAttr,
-                'expanded' => $childChoice['multiple'], //same value as multiple. We can only have Select or Checkboxes
+                'expanded' => $childChoice['multiple'], // same value as multiple. We can only have Select or Checkboxes
                 'multiple' => $childChoice['multiple'],
             ]);
         }
@@ -75,8 +76,7 @@ class RadioWithChoiceChildrenType extends AbstractType
                 'radio_name',
                 'radio_label',
                 'child_choice',
-            ])
-        ;
+            ]);
 
         $resolver->setAllowedTypes('child_choice', 'array');
         $resolver->setAllowedTypes('radio_name', 'string');

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -58,12 +59,6 @@ class LocalizationConfigurationType extends TranslatorAwareType
      */
     private $timezoneChoices;
 
-    /**
-     * @param array $languageChoices
-     * @param array $countryChoices
-     * @param array $currencyChoices
-     * @param array $timezoneChoices
-     */
     public function __construct(
         TranslatorInterface $translator,
         array $locales,

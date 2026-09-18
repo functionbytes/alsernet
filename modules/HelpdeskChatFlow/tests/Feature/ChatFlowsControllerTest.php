@@ -13,7 +13,7 @@ class ChatFlowsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $user;
 
@@ -25,10 +25,11 @@ class ChatFlowsControllerTest extends TestCase
 
         $this->seed(ChatFlowPermissionsSeeder::class);
 
-        // edit() consulta User::role(['administrative','manager','settings','super-settings'])
-        // para poblar el selector de agentes; el scope role() de Spatie revienta si
-        // alguno no existe, así que sembramos los cuatro (en producción ya existen).
-        foreach (['administrative', 'manager', 'settings', 'super-settings'] as $roleName) {
+        // edit() consulta User::role(['helpdesk-agent','helpdesk-admin','helpdesk-manager'])
+        // para poblar el selector de agentes (commit b3850a29d: 'settings' no era un rol
+        // real y el scope role() de Spatie revienta si alguno de los pedidos no existe);
+        // sembramos esos tres, más super-settings para el propio usuario de la prueba.
+        foreach (['helpdesk-agent', 'helpdesk-admin', 'helpdesk-manager', 'super-settings'] as $roleName) {
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
         $superAdmin = Role::findByName('super-settings', 'web');

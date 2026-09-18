@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -36,8 +37,6 @@ interface OrderInvoiceDataProviderInterface
     /**
      * Return all the order invoices that match the date interval.
      *
-     * @param DateTimeInterface $dateFrom
-     * @param DateTimeInterface $dateTo
      *
      * @return array collection of OrderInvoice objects
      */
@@ -46,8 +45,7 @@ interface OrderInvoiceDataProviderInterface
     /**
      * Return all the order invoices by given status.
      *
-     * @param int $orderStateId
-     *
+     * @param  int  $orderStateId
      * @return array collection of OrderInvoice objects
      */
     public function getByStatus($orderStateId);

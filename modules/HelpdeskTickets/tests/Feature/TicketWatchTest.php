@@ -5,6 +5,8 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\HelpdeskTickets\Events\TicketWatcherChanged;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Spatie\Permission\Models\Permission;
@@ -15,7 +17,7 @@ class TicketWatchTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private User $agent;
 
@@ -86,6 +88,44 @@ class TicketWatchTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonStructure(['watching', 'message']);
+    }
+
+    // ─── Aviso en vivo (8-sep-2026) ──────────────────────────────────────────
+    // Antes seguir/dejar de seguir era silencioso: nadie más con el ticket
+    // abierto se enteraba, y "seguidores: N" del panel se quedaba
+    // desactualizado hasta recargar. Ver TicketWatcherChanged.
+
+    public function test_watching_a_ticket_dispatches_watcher_changed_event(): void
+    {
+        Event::fake([TicketWatcherChanged::class]);
+
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->agent)
+            ->post(route('manager.helpdesk.tickets.watch', $ticket));
+
+        Event::assertDispatched(
+            TicketWatcherChanged::class,
+            fn (TicketWatcherChanged $e) => $e->ticket->id === $ticket->id
+        );
+    }
+
+    public function test_unwatching_a_ticket_dispatches_watcher_changed_event(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->agent)
+            ->post(route('manager.helpdesk.tickets.watch', $ticket));
+
+        Event::fake([TicketWatcherChanged::class]);
+
+        $this->actingAs($this->agent)
+            ->delete(route('manager.helpdesk.tickets.unwatch', $ticket));
+
+        Event::assertDispatched(
+            TicketWatcherChanged::class,
+            fn (TicketWatcherChanged $e) => $e->ticket->id === $ticket->id
+        );
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────

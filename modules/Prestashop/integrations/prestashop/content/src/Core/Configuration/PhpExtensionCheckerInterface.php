@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,8 +35,7 @@ interface PhpExtensionCheckerInterface
     /**
      * Check if PHP extension is loaded or not.
      *
-     * @param string $extension
-     *
+     * @param  string  $extension
      * @return bool
      */
     public function loaded($extension);

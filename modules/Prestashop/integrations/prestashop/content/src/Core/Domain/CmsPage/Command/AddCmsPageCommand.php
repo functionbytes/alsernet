@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -85,16 +86,15 @@ class AddCmsPageCommand
     private $shopAssociation;
 
     /**
-     * @param int $cmsPageCategoryId
-     * @param string[] $localizedTitle
-     * @param string[] $localizedMetaTitle
-     * @param string[] $localizedMetaDescription
-     * @param string[] $LocalizedMetaKeyword
-     * @param string[] $localizedFriendlyUrl
-     * @param string[] $localizedContent
-     * @param bool $indexedForSearch
-     * @param bool $displayed
-     * @param array $shopAssociation
+     * @param  int  $cmsPageCategoryId
+     * @param  string[]  $localizedTitle
+     * @param  string[]  $localizedMetaTitle
+     * @param  string[]  $localizedMetaDescription
+     * @param  string[]  $LocalizedMetaKeyword
+     * @param  string[]  $localizedFriendlyUrl
+     * @param  string[]  $localizedContent
+     * @param  bool  $indexedForSearch
+     * @param  bool  $displayed
      *
      * @throws CmsPageCategoryException
      */

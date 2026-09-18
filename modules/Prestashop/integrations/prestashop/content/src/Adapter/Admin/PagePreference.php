@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -60,7 +61,7 @@ class PagePreference implements AdminPagePreferenceInterface
             $this->session = $session;
         } else {
             $sessionClass = get_class($session);
-            $this->session = new $sessionClass(new PhpBridgeSessionStorage());
+            $this->session = new $sessionClass(new PhpBridgeSessionStorage);
         }
         $this->isDebug = $isDebug;
     }
@@ -70,11 +71,11 @@ class PagePreference implements AdminPagePreferenceInterface
      */
     public function getTemporaryShouldUseLegacyPage($page)
     {
-        if (!$page) {
+        if (! $page) {
             throw new InvalidParameterException('$page parameter missing');
         }
 
-        return $this->session->has('should_use_legacy_page_for_' . $page) && $this->session->get('should_use_legacy_page_for_' . $page, 0) == 1;
+        return $this->session->has('should_use_legacy_page_for_'.$page) && $this->session->get('should_use_legacy_page_for_'.$page, 0) == 1;
     }
 
     /**
@@ -82,14 +83,14 @@ class PagePreference implements AdminPagePreferenceInterface
      */
     public function setTemporaryShouldUseLegacyPage($page, $useLegacy)
     {
-        if (!$page) {
+        if (! $page) {
             throw new InvalidParameterException('$page parameter missing');
         }
 
         if ((bool) $useLegacy) {
-            $this->session->set('should_use_legacy_page_for_' . $page, 1);
+            $this->session->set('should_use_legacy_page_for_'.$page, 1);
         } else {
-            $this->session->remove('should_use_legacy_page_for_' . $page);
+            $this->session->remove('should_use_legacy_page_for_'.$page);
         }
     }
 
@@ -103,8 +104,8 @@ class PagePreference implements AdminPagePreferenceInterface
             return true;
         }
 
-        $version = Db::getInstance()->getValue('SELECT `value` FROM `' . _DB_PREFIX_ . 'configuration` WHERE `name` = "PS_INSTALL_VERSION"');
-        if (!$version) {
+        $version = Db::getInstance()->getValue('SELECT `value` FROM `'._DB_PREFIX_.'configuration` WHERE `name` = "PS_INSTALL_VERSION"');
+        if (! $version) {
             return false;
         }
         $installVersion = explode('.', $version);

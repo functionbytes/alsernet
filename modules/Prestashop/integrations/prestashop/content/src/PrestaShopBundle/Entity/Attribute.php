@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -27,6 +28,7 @@
 namespace PrestaShopBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -35,6 +37,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(
  *     indexes={@ORM\Index(name="attribute_group", columns={"id_attribute_group"})}
  * )
+ *
  * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\AttributeRepository")
  */
 class Attribute
@@ -43,13 +46,16 @@ class Attribute
      * @var int
      *
      * @ORM\Id
+     *
      * @ORM\Column(name="id_attribute", type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\AttributeGroup")
+     *
      * @ORM\JoinColumn(name="id_attribute_group", referencedColumnName="id_attribute_group", nullable=false)
      */
     private $attributeGroup;
@@ -70,6 +76,7 @@ class Attribute
 
     /**
      * @ORM\ManyToMany(targetEntity="PrestaShopBundle\Entity\Shop", cascade={"persist"})
+     *
      * @ORM\JoinTable(
      *      joinColumns={@ORM\JoinColumn(name="id_attribute", referencedColumnName="id_attribute")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="id_shop", referencedColumnName="id_shop", onDelete="CASCADE")}
@@ -87,8 +94,8 @@ class Attribute
      */
     public function __construct()
     {
-        $this->shops = new ArrayCollection();
-        $this->attributeLangs = new ArrayCollection();
+        $this->shops = new ArrayCollection;
+        $this->attributeLangs = new ArrayCollection;
     }
 
     /**
@@ -104,8 +111,7 @@ class Attribute
     /**
      * Set color.
      *
-     * @param string $color
-     *
+     * @param  string  $color
      * @return Attribute
      */
     public function setColor($color)
@@ -128,8 +134,7 @@ class Attribute
     /**
      * Set position.
      *
-     * @param int $position
-     *
+     * @param  int  $position
      * @return Attribute
      */
     public function setPosition($position)
@@ -152,7 +157,6 @@ class Attribute
     /**
      * Set attributeGroup.
      *
-     * @param \PrestaShopBundle\Entity\AttributeGroup $attributeGroup
      *
      * @return Attribute
      */
@@ -166,7 +170,7 @@ class Attribute
     /**
      * Get attributeGroup.
      *
-     * @return \PrestaShopBundle\Entity\AttributeGroup
+     * @return AttributeGroup
      */
     public function getAttributeGroup()
     {
@@ -176,7 +180,6 @@ class Attribute
     /**
      * Add shop.
      *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      *
      * @return Attribute
      */
@@ -189,8 +192,6 @@ class Attribute
 
     /**
      * Remove shop.
-     *
-     * @param \PrestaShopBundle\Entity\Shop $shop
      */
     public function removeShop(Shop $shop)
     {
@@ -200,7 +201,7 @@ class Attribute
     /**
      * Get shops.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getShops()
     {

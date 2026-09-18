@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -26,8 +27,11 @@
 class DiscountControllerCore extends FrontController
 {
     public $auth = true;
+
     public $php_self = 'discount';
+
     public $authRedirection = 'discount';
+
     public $ssl = true;
 
     /**
@@ -98,8 +102,6 @@ class DiscountControllerCore extends FrontController
     }
 
     /**
-     * @param $voucher
-     *
      * @return mixed
      */
     protected function getCombinableVoucherTranslation($voucher)
@@ -114,10 +116,6 @@ class DiscountControllerCore extends FrontController
     }
 
     /**
-     * @param $hasTaxIncluded
-     * @param $amount
-     * @param $currencyId
-     *
      * @return string
      */
     protected function formatReductionAmount($hasTaxIncluded, $amount, $currencyId)
@@ -129,14 +127,12 @@ class DiscountControllerCore extends FrontController
         }
 
         return sprintf(
-            '%s ' . $taxTranslation,
+            '%s '.$taxTranslation,
             $this->context->getCurrentLocale()->formatPrice($amount, Currency::getIsoCodeById((int) $currencyId))
         );
     }
 
     /**
-     * @param $percentage
-     *
      * @return string
      */
     protected function formatReductionInPercentage($percentage)
@@ -145,8 +141,7 @@ class DiscountControllerCore extends FrontController
     }
 
     /**
-     * @param array $voucher
-     *
+     * @param  array  $voucher
      * @return array
      */
     protected function accumulateCartRuleValue($voucher)
@@ -179,11 +174,6 @@ class DiscountControllerCore extends FrontController
         return $cartRuleValue;
     }
 
-    /**
-     * @param array $voucher
-     *
-     * @return array
-     */
     protected function buildCartRuleFromVoucher(array $voucher): array
     {
         $voucher['voucher_date'] = Tools::displayDate($voucher['date_to'], null, false);
@@ -201,7 +191,7 @@ class DiscountControllerCore extends FrontController
 
         $cartRuleValues = $this->accumulateCartRuleValue($voucher);
 
-        if (0 === count($cartRuleValues)) {
+        if (count($cartRuleValues) === 0) {
             $voucher['value'] = '-';
         } else {
             $voucher['value'] = implode(' + ', $cartRuleValues);

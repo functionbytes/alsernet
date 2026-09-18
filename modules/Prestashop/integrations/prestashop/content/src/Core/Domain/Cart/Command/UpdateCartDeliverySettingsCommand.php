@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -55,13 +56,6 @@ class UpdateCartDeliverySettingsCommand
      */
     private $giftMessage;
 
-    /**
-     * @param int $cartId
-     * @param bool $allowFreeShipping
-     * @param bool|null $isAGift
-     * @param bool|null $useRecycledPackaging
-     * @param string|null $giftMessage
-     */
     public function __construct(
         int $cartId,
         bool $allowFreeShipping,
@@ -76,41 +70,26 @@ class UpdateCartDeliverySettingsCommand
         $this->giftMessage = $giftMessage;
     }
 
-    /**
-     * @return CartId
-     */
     public function getCartId(): CartId
     {
         return $this->cartId;
     }
 
-    /**
-     * @return bool
-     */
     public function allowFreeShipping(): bool
     {
         return $this->allowFreeShipping;
     }
 
-    /**
-     * @return bool|null
-     */
     public function isAGift(): ?bool
     {
         return $this->isAGift;
     }
 
-    /**
-     * @return bool|null
-     */
     public function useRecycledPackaging(): ?bool
     {
         return $this->useRecycledPackaging;
     }
 
-    /**
-     * @return string|null
-     */
     public function getGiftMessage(): ?string
     {
         return $this->giftMessage;

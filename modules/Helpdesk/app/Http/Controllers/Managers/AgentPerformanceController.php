@@ -5,12 +5,16 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Concerns\FormatsAgentNames;
 use Modules\Helpdesk\Models\CsatRating;
 
 class AgentPerformanceController extends Controller
 {
+    use FormatsAgentNames;
+
     public function __construct()
     {
         $this->middleware('can:helpdesk.reports.view');
@@ -62,7 +66,8 @@ class AgentPerformanceController extends Controller
                 $user = $users->get($row->assignee_id);
 
                 return [
-                    'name' => $user ? trim("{$user->firstname} {$user->lastname}") : "Agente #{$row->assignee_id}",
+                    'agent_id' => (int) $row->assignee_id,
+                    'name' => $this->displayNameFor($user, "Agente #{$row->assignee_id}"),
                     'closed_count' => (int) $row->closed_count,
                     'csat_avg' => round((float) ($csatByAgent[$row->assignee_id] ?? 0), 2),
                     'avg_response_seconds' => (int) round($row->avg_response_sec ?? 0),
@@ -71,6 +76,33 @@ class AgentPerformanceController extends Controller
             })->sortByDesc('closed_count')->values();
         });
 
-        return view('helpdesk::helpdesk.reports.agents', compact('agents', 'from', 'to'));
+        return view('helpdesk::helpdesk.reports.agents', [
+            'agents' => $agents,
+            'from' => $from,
+            'to' => $to,
+            'stats' => $this->summarize($agents),
+        ]);
+    }
+
+    /**
+     * Cabecera de KPIs de la tabla: el total ya no exige que quien mire el
+     * informe sume la columna a mano, y el "CSAT medio" promedia solo entre
+     * agentes con valoraciones — incluir los 0 (sin datos) hundiría la media
+     * de forma artificial.
+     *
+     * @param  Collection<int, array<string, mixed>>  $agents
+     * @return array{agents: int, closed: int, avgCsat: ?float, avgResponseSeconds: int}
+     */
+    private function summarize($agents): array
+    {
+        $withCsat = $agents->filter(fn (array $a) => $a['csat_avg'] > 0);
+        $withResponse = $agents->filter(fn (array $a) => $a['avg_response_seconds'] > 0);
+
+        return [
+            'agents' => $agents->count(),
+            'closed' => (int) $agents->sum('closed_count'),
+            'avgCsat' => $withCsat->isNotEmpty() ? round($withCsat->avg('csat_avg'), 2) : null,
+            'avgResponseSeconds' => $withResponse->isNotEmpty() ? (int) round($withResponse->avg('avg_response_seconds')) : 0,
+        ];
     }
 }

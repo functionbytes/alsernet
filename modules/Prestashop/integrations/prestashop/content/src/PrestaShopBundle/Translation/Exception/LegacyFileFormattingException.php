@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -34,9 +35,8 @@ use Symfony\Component\Translation\Exception\InvalidResourceException;
 final class LegacyFileFormattingException extends InvalidResourceException
 {
     /**
-     * @param string $filePath the expected file path of the translations
-     * @param string $locale the translation locale
-     *
+     * @param  string  $filePath  the expected file path of the translations
+     * @param  string  $locale  the translation locale
      * @return self
      */
     public static function fileIsInvalid($filePath, $locale)

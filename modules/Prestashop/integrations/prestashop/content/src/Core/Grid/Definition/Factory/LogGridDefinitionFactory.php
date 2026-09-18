@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -70,7 +71,7 @@ final class LogGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        $columns = (new ColumnCollection)
             ->add(
                 (new DataColumn('id_log'))
                     ->setName($this->trans('ID', [], 'Admin.Global'))
@@ -156,7 +157,7 @@ final class LogGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     public function getFilters()
     {
-        return (new FilterCollection())
+        return (new FilterCollection)
             ->add(
                 (new Filter('id_log', TextType::class))
                     ->setTypeOptions([
@@ -228,7 +229,7 @@ final class LogGridDefinitionFactory extends AbstractGridDefinitionFactory
      */
     protected function getGridActions()
     {
-        return (new GridActionCollection())
+        return (new GridActionCollection)
             ->add(
                 (new SubmitGridAction('delete_all_email_logs'))
                     ->setName($this->trans('Erase all', [], 'Admin.Advparameters.Feature'))

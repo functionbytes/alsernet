@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,10 +45,6 @@ final class CmsPageCategoryFormDataProvider implements FormDataProviderInterface
      */
     private $contextShopIds;
 
-    /**
-     * @param CommandBusInterface $queryBus
-     * @param array $contextShopIds
-     */
     public function __construct(CommandBusInterface $queryBus, array $contextShopIds)
     {
         $this->queryBus = $queryBus;

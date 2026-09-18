@@ -1,9 +1,11 @@
 <?php
 
 namespace modules\alsernetmenu\controllers\admin;
-use ModuleAdminController;class ConfigurationController extends ModuleAdminController
-{
 
+use ModuleAdminController;
+
+class ConfigurationController extends ModuleAdminController
+{
     // public function __construct()
     // {
     //     $this->name = 'alsernetshortcodes';

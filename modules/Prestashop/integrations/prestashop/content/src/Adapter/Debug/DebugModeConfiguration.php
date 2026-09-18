@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,9 +51,7 @@ class DebugModeConfiguration implements DataConfigurationInterface
     private $configDefinesPath;
 
     /**
-     * @param DebugMode $debugMode
-     * @param Configuration $configuration
-     * @param string $configDefinesPath
+     * @param  string  $configDefinesPath
      */
     public function __construct(DebugMode $debugMode, Configuration $configuration, $configDefinesPath)
     {
@@ -146,8 +145,7 @@ class DebugModeConfiguration implements DataConfigurationInterface
     /**
      * Change Debug mode value if needed.
      *
-     * @param bool $enableStatus
-     *
+     * @param  bool  $enableStatus
      * @return int|null Status of update
      */
     private function updateDebugMode($enableStatus)
@@ -155,7 +153,7 @@ class DebugModeConfiguration implements DataConfigurationInterface
         $currentDebugMode = $this->debugMode->isDebugModeEnabled();
 
         if ($enableStatus !== $currentDebugMode) {
-            return (true === $enableStatus) ? $this->debugMode->enable() : $this->debugMode->disable();
+            return ($enableStatus === true) ? $this->debugMode->enable() : $this->debugMode->disable();
         }
 
         return null;

@@ -72,9 +72,8 @@ final class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayer
      *
      * Might be a file access, cache read, DB select...
      *
-     * @param mixed $currencyCode
-     *                            The CLDR CurrencyData object identifier
-     *
+     * @param  mixed  $currencyCode
+     *                               The CLDR CurrencyData object identifier
      * @return CurrencyData|null
      *                           The wanted CLDR CurrencyData object (null if not found)
      */
@@ -92,8 +91,8 @@ final class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayer
      */
     public function write($id, $data)
     {
-        if (!($data instanceof CurrencyData)) {
-            throw new LocalizationException('$data must be an instance of ' . CurrencyData::class);
+        if (! ($data instanceof CurrencyData)) {
+            throw new LocalizationException('$data must be an instance of '.CurrencyData::class);
         }
 
         return parent::write($id, $data);
@@ -104,10 +103,10 @@ final class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayer
      *
      * Might be a file edit, cache update, DB insert/update...
      *
-     * @param LocalizedCurrencyId $currencyDataId
-     *                                            The data object identifier
-     * @param CurrencyData $data
-     *                           The data object to be written
+     * @param  LocalizedCurrencyId  $currencyDataId
+     *                                               The data object identifier
+     * @param  CurrencyData  $data
+     *                              The data object to be written
      *
      * @throws DataLayerException
      *                            When write fails
@@ -119,7 +118,7 @@ final class CurrencyCache extends AbstractDataLayer implements CurrencyDataLayer
 
         $saved = $this->cache->save($cacheItem);
 
-        if (!$saved) {
+        if (! $saved) {
             throw new DataLayerException('Unable to persist data in cache data layer');
         }
     }

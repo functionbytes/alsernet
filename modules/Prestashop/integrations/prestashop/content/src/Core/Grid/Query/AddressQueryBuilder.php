@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -50,13 +51,6 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
      */
     private $contextShopIds;
 
-    /**
-     * @param Connection $connection
-     * @param string $dbPrefix
-     * @param DoctrineSearchCriteriaApplicatorInterface $searchCriteriaApplicator
-     * @param int $contextLangId
-     * @param array $contextShopIds
-     */
     public function __construct(
         Connection $connection,
         string $dbPrefix,
@@ -79,13 +73,11 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $qb
             ->select('a.`id_address`, a.`firstname`, a.`lastname`, a.`address1`, a.`postcode`, a.`city`')
-            ->addSelect('cl.`name` as country_name')
-        ;
+            ->addSelect('cl.`name` as country_name');
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb)
-        ;
+            ->applySorting($searchCriteria, $qb);
 
         return $qb;
     }
@@ -96,44 +88,39 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         $qb = $this->getQueryBuilder($searchCriteria->getFilters())
-            ->select('COUNT(DISTINCT a.`id_address`)')
-        ;
+            ->select('COUNT(DISTINCT a.`id_address`)');
 
         return $qb;
     }
 
     /**
      * Gets query builder with the common sql used for displaying addresses list and applying filter actions.
-     *
-     * @param array $filters
-     *
-     * @return QueryBuilder
      */
     private function getQueryBuilder(array $filters): QueryBuilder
     {
         $qb = $this->connection
             ->createQueryBuilder()
-            ->from($this->dbPrefix . 'address', 'a')
+            ->from($this->dbPrefix.'address', 'a')
             ->where('a.`id_customer` != 0')
             ->andWhere('a.`deleted` = 0');
 
         $qb->leftJoin(
             'a',
-            $this->dbPrefix . 'country',
+            $this->dbPrefix.'country',
             'c',
             'a.`id_country` = c.`id_country`'
         );
 
         $qb->leftJoin(
             'c',
-            $this->dbPrefix . 'country_lang',
+            $this->dbPrefix.'country_lang',
             'cl',
             'c.`id_country` = cl.`id_country` AND cl.`id_lang` = :idLang'
         );
 
         $qb->leftJoin(
             'a',
-            $this->dbPrefix . 'customer',
+            $this->dbPrefix.'customer',
             'customer',
             'a.`id_customer` = customer.`id_customer`'
         );
@@ -149,9 +136,6 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /**
      * Apply filters to address query builder.
-     *
-     * @param array $filters
-     * @param QueryBuilder $qb
      */
     private function applyFilters(QueryBuilder $qb, array $filters)
     {
@@ -166,19 +150,19 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
         ];
 
         foreach ($filters as $filterName => $value) {
-            if (!array_key_exists($filterName, $allowedFiltersMap) || empty($value)) {
+            if (! array_key_exists($filterName, $allowedFiltersMap) || empty($value)) {
                 continue;
             }
 
-            if ('id_country' === $filterName) {
-                $qb->andWhere($allowedFiltersMap[$filterName] . ' = :' . $filterName)
+            if ($filterName === 'id_country') {
+                $qb->andWhere($allowedFiltersMap[$filterName].' = :'.$filterName)
                     ->setParameter($filterName, $value);
 
                 continue;
             }
 
-            $qb->andWhere($allowedFiltersMap[$filterName] . ' LIKE :' . $filterName)
-                ->setParameter($filterName, '%' . $value . '%');
+            $qb->andWhere($allowedFiltersMap[$filterName].' LIKE :'.$filterName)
+                ->setParameter($filterName, '%'.$value.'%');
         }
     }
 }

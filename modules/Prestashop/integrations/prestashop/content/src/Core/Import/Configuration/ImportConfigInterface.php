@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -43,7 +44,7 @@ interface ImportConfigInterface
     /**
      * Get the import entity type.
      *
-     * @see constants defined in \PrestaShop\PrestaShop\Core\Import\Entity for available types.
+     * @see Constants defined in \PrestaShop\PrestaShop\Core\Import\Entity for available types.
      *
      * @return int
      */

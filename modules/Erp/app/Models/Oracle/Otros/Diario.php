@@ -4,6 +4,7 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Erp\Models\Oracle\Configuracion\Tipodiario;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -60,7 +61,7 @@ class Diario extends Model
      */
     public function diario()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Diario::class, 'iddiario', 'iddiario');
+        return $this->belongsTo(Diario::class, 'iddiario', 'iddiario');
     }
 
     /**
@@ -69,7 +70,7 @@ class Diario extends Model
      */
     public function ejercicioContable()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
+        return $this->belongsTo(EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
     }
 
     /**
@@ -78,6 +79,6 @@ class Diario extends Model
      */
     public function tipodiario()
     {
-        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodiario::class, 'idtipodiario', 'idtipodiario');
+        return $this->belongsTo(Tipodiario::class, 'idtipodiario', 'idtipodiario');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -44,8 +45,7 @@ class ProductSupplierOptions
     private $suppliersInfo;
 
     /**
-     * @param int $defaultSupplierId
-     * @param ProductSupplierInfo[] $suppliersInfo
+     * @param  ProductSupplierInfo[]  $suppliersInfo
      */
     public function __construct(
         int $defaultSupplierId,
@@ -55,9 +55,6 @@ class ProductSupplierOptions
         $this->suppliersInfo = $suppliersInfo;
     }
 
-    /**
-     * @return int
-     */
     public function getDefaultSupplierId(): int
     {
         return $this->defaultSupplierId;

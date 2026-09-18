@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -46,8 +47,7 @@ class DataListExtension extends AbstractTypeExtension
             ->setDefaults([
                 'data_list' => null,
             ])
-            ->setAllowedTypes('data_list', ['null', 'array'])
-        ;
+            ->setAllowedTypes('data_list', ['null', 'array']);
     }
 
     /**

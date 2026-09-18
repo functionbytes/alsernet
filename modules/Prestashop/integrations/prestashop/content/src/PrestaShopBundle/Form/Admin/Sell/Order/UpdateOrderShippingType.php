@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -41,9 +42,6 @@ class UpdateOrderShippingType extends AbstractType
      */
     private $carrierForOrderChoiceProvider;
 
-    /**
-     * @param ConfigurableFormChoiceProviderInterface $carrierForOrderChoiceProvider
-     */
     public function __construct(ConfigurableFormChoiceProviderInterface $carrierForOrderChoiceProvider)
     {
         $this->carrierForOrderChoiceProvider = $carrierForOrderChoiceProvider;
@@ -63,8 +61,7 @@ class UpdateOrderShippingType extends AbstractType
             ->add('current_order_carrier_id', HiddenType::class)
             ->add('tracking_number', TextType::class, [
                 'required' => false,
-            ])
-        ;
+            ]);
     }
 
     /**
@@ -76,7 +73,6 @@ class UpdateOrderShippingType extends AbstractType
             ->setRequired([
                 'order_id',
             ])
-            ->setAllowedTypes('order_id', 'int')
-        ;
+            ->setAllowedTypes('order_id', 'int');
     }
 }

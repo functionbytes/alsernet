@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -32,8 +33,7 @@ namespace PrestaShop\PrestaShop\Core\Util\HelperCard;
 interface DocumentationLinkProviderInterface
 {
     /**
-     * @param string $cardType
-     *
+     * @param  string  $cardType
      * @return string Link for documentation
      */
     public function getLink($cardType);

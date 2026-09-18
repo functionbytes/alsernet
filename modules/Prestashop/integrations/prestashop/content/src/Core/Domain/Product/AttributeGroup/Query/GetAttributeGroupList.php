@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,17 +39,11 @@ class GetAttributeGroupList
      */
     private $withAttributes;
 
-    /**
-     * @param bool $withAttributes
-     */
     public function __construct(bool $withAttributes)
     {
         $this->withAttributes = $withAttributes;
     }
 
-    /**
-     * @return bool
-     */
     public function withAttributes(): bool
     {
         return $this->withAttributes;

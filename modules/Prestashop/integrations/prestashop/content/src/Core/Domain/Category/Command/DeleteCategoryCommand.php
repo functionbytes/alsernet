@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -45,8 +46,8 @@ class DeleteCategoryCommand
     private $deleteMode;
 
     /**
-     * @param int $categoryId
-     * @param string $mode
+     * @param  int  $categoryId
+     * @param  string  $mode
      */
     public function __construct($categoryId, $mode)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -49,7 +50,7 @@ class BulkDeleteCarrierHandler extends AbstractCarrierHandler implements BulkDel
             $carrier = $this->getCarrier($carrierId);
 
             try {
-                if (!$carrier->delete()) {
+                if (! $carrier->delete()) {
                     throw new CannotDeleteCarrierException(sprintf('Cannot delete carrier with id "%d"', $carrierId->getValue()), CannotDeleteCarrierException::BULK_DELETE);
                 }
             } catch (PrestaShopException $e) {

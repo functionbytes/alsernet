@@ -25,10 +25,10 @@ class SendChatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'chat_uid'   => ['nullable', 'string'],
-            'message'    => ['nullable', 'string'],
+            'chat_uid' => ['nullable', 'string'],
+            'message' => ['nullable', 'string'],
             'prompt_uid' => ['nullable', 'string'],
-            'model'      => ['nullable', 'string', 'in:'.implode(',', self::ALL_MODELS)],
+            'model' => ['nullable', 'string', 'in:'.implode(',', self::ALL_MODELS)],
             'web_search' => ['nullable', 'boolean'],
         ];
     }

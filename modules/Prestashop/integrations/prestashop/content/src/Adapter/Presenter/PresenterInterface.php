@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -29,8 +30,7 @@ namespace PrestaShop\PrestaShop\Adapter\Presenter;
 interface PresenterInterface
 {
     /**
-     * @param mixed $object
-     *
+     * @param  mixed  $object
      * @return array|AbstractLazyArray
      */
     public function present($object);
