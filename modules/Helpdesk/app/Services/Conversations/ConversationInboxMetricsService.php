@@ -161,48 +161,76 @@ class ConversationInboxMetricsService
     }
 
     /**
+     * Forget the sidebar's structural counters — BANDEJAS/EQUIPOS/ETIQUETAS
+     * (sidebarInboxes/sidebarGroups/inboxTags) — all three are single global
+     * cache keys (not per-user), so one agent's action can invalidate what
+     * every connected agent sees. Called from ConversationObserver whenever
+     * a conversation's group/status/archived state changes, and from the
+     * tag add/remove/sync endpoints (pivot-table changes the observer never
+     * sees). Real-time push (ConversationUpdated on the inbox channel) tells
+     * the client when to re-fetch; this just makes sure that re-fetch is not
+     * served a stale cached value for up to 60s.
+     */
+    public function invalidateSidebarStructureCaches(): void
+    {
+        Cache::forget('helpdesk:inbox:sidebar-counts-by-inbox');
+        Cache::forget('helpdesk:inbox:sidebar-groups');
+        Cache::forget('helpdesk:inbox:tags');
+    }
+
+    /**
      * Per-inbox sidebar entries filtrados por los inboxes asignados al
      * agente. Managers (helpdesk.manage) ven todos.
+     *
+     * La LISTA de bandejas visibles varía por agente (whereIn barato, sin
+     * cachear), pero el CONTEO de cada bandeja es el mismo para todos —
+     * delegado a inboxConversationCounts(), cacheado en una única clave
+     * global en vez de una por agente. Antes cada agente tenía su propia
+     * copia cacheada ('helpdesk:inbox:sidebar-list:user:{id}'), imposible de
+     * invalidar para todos a la vez cuando algo cambia en tiempo real (ver
+     * invalidateSidebarStructureCaches()).
      *
      * @param  array<int>|null  $userInboxIds
      * @return Collection<int, Inbox>
      */
-    public function sidebarInboxes(?int $userId, ?array $userInboxIds): Collection
+    public function sidebarInboxes(?array $userInboxIds): Collection
     {
-        $cacheKey = $userInboxIds === null
-            ? 'helpdesk:inbox:sidebar-list:all'
-            : 'helpdesk:inbox:sidebar-list:user:'.$userId;
+        $inboxList = Inbox::query()
+            ->where('is_active', true)
+            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('id', $userInboxIds))
+            ->orderBy('name')
+            ->get(['id', 'name', 'channel_type', 'color', 'icon']);
 
+        $counts = $this->inboxConversationCounts();
+
+        return $inboxList->each(
+            fn (Inbox $inbox) => $inbox->setAttribute('conversations_count', (int) ($counts[$inbox->id] ?? 0))
+        );
+    }
+
+    /**
+     * Un único GROUP BY para todos los contadores por inbox (antes 1 COUNT
+     * por inbox — N+1 con N inboxes activos). Filtrado igual que la vista
+     * "Inbox" por defecto (is_open/is_archived/sin bot activo) para que el
+     * número mostrado en el sidebar coincida con lo que el agente realmente
+     * ve al abrir ese inbox — antes contaba TODO (incluidas conversaciones
+     * resueltas/archivadas), mostrando un número mayor a cero con la lista
+     * vacía debajo.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    private function inboxConversationCounts(): \Illuminate\Support\Collection
+    {
         return cache()->remember(
-            $cacheKey,
+            'helpdesk:inbox:sidebar-counts-by-inbox',
             60,
-            function () use ($userInboxIds) {
-                $inboxList = Inbox::query()
-                    ->where('is_active', true)
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('id', $userInboxIds))
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'channel_type', 'color', 'icon']);
-
-                // Un único GROUP BY para todos los contadores por inbox (antes 1
-                // COUNT por inbox — N+1 con N inboxes activos). Filtrado igual que
-                // la vista "Inbox" por defecto (is_open/is_archived/sin bot activo)
-                // para que el número mostrado en el sidebar coincida con lo que el
-                // agente realmente ve al abrir ese inbox — antes contaba TODO
-                // (incluidas conversaciones resueltas/archivadas), mostrando un
-                // número mayor a cero con la lista vacía debajo.
-                $counts = Conversation::query()
-                    ->whereIn('inbox_id', $inboxList->pluck('id'))
-                    ->whereHas('status', fn ($q) => $q->where('is_open', true))
-                    ->where('is_archived', false)
-                    ->withoutActiveBot()
-                    ->selectRaw('inbox_id, COUNT(*) as cnt')
-                    ->groupBy('inbox_id')
-                    ->pluck('cnt', 'inbox_id');
-
-                return $inboxList->each(
-                    fn (Inbox $inbox) => $inbox->setAttribute('conversations_count', (int) ($counts[$inbox->id] ?? 0))
-                );
-            }
+            fn () => Conversation::query()
+                ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                ->where('is_archived', false)
+                ->withoutActiveBot()
+                ->selectRaw('inbox_id, COUNT(*) as cnt')
+                ->groupBy('inbox_id')
+                ->pluck('cnt', 'inbox_id')
         );
     }
 

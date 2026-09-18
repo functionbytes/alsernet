@@ -4,12 +4,39 @@ namespace Modules\Helpdesk\Observers;
 
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 
 class ConversationObserver
 {
+    public function __construct(
+        private readonly ConversationInboxMetricsService $inboxMetrics,
+    ) {}
+
+    /**
+     * A new conversation immediately changes its inbox's (and, if assigned
+     * on creation, its team's) sidebar count.
+     */
+    public function created(Conversation $conversation): void
+    {
+        $this->inboxMetrics->invalidateSidebarStructureCaches();
+    }
+
     public function updated(Conversation $conversation): void
     {
-        if ($conversation->wasChanged(['priority', 'group_id', 'assignee_id', 'status_id'])) {
+        // These are exactly the fields the sidebar's BANDEJAS/EQUIPOS/
+        // ETIQUETAS counters filter on (is_open via status_id, is_archived,
+        // group_id) — bust the cache so the next fetch is not stale for up
+        // to 60s. is_archived was added here alongside the pre-existing
+        // ConversationUpdated trigger fields; archive()/unarchive() never
+        // broadcast that event before, so other agents never saw the
+        // sidebar counters move when someone archived a conversation.
+        $affectsSidebarCounters = $conversation->wasChanged(['group_id', 'status_id', 'is_archived']);
+
+        if ($affectsSidebarCounters) {
+            $this->inboxMetrics->invalidateSidebarStructureCaches();
+        }
+
+        if ($affectsSidebarCounters || $conversation->wasChanged(['priority', 'assignee_id'])) {
             ConversationUpdated::dispatch($conversation, auth()->id());
         }
     }

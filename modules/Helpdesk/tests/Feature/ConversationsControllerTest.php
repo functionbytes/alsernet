@@ -113,6 +113,42 @@ class ConversationsControllerTest extends TestCase
         $this->assertSame(1, $sidebarInboxes->firstWhere('id', $inboxB->id)->conversations_count);
     }
 
+    /**
+     * listJson() es el endpoint que el listener de Echo ya llama (debounced)
+     * en cada evento en tiempo real que puede afectar a los contadores de
+     * BANDEJAS/EQUIPOS/ETIQUETAS del sidebar — ver conversations-list.js
+     * (scheduleSidebarCountersRefresh/patchSidebarStructureCounts). Cerrar la
+     * conversación la saca del filtro is_open=true que usan esos contadores;
+     * sin invalidar la caché global (ConversationObserver::updated() ->
+     * ConversationInboxMetricsService::invalidateSidebarStructureCaches()),
+     * este segundo request seguiría sirviendo el valor cacheado durante 60s.
+     */
+    public function test_list_json_exposes_and_refreshes_sidebar_structure_counts(): void
+    {
+        $inbox = Inbox::create([
+            'name' => 'Inbox A', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true,
+        ]);
+        $conversation = $this->createConversation(['inbox_id' => $inbox->id]);
+
+        $before = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.conversations.list'))
+            ->assertOk()
+            ->json('sidebar.inboxes');
+
+        $this->assertSame(1, collect($before)->firstWhere('id', $inbox->id)['count']);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.close', $conversation))
+            ->assertOk();
+
+        $after = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.conversations.list'))
+            ->assertOk()
+            ->json('sidebar.inboxes');
+
+        $this->assertSame(0, collect($after)->firstWhere('id', $inbox->id)['count']);
+    }
+
     // ─── create ───────────────────────────────────────────────────────────────
 
     public function test_manager_can_view_create_form(): void

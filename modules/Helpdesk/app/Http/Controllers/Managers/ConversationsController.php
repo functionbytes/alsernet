@@ -19,6 +19,7 @@ use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationStatusChanged;
 use Modules\Helpdesk\Events\ConversationTagAdded;
+use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
@@ -148,7 +149,7 @@ class ConversationsController extends Controller
         $inboxTags = $this->inboxMetrics->inboxTags();
         $statusbarMetrics = $this->inboxMetrics->statusbarMetrics();
         $sidebarCounters = $this->inboxMetrics->sidebarCounters($userId, $userInboxIds);
-        $inboxes = $this->inboxMetrics->sidebarInboxes($userId, $userInboxIds);
+        $inboxes = $this->inboxMetrics->sidebarInboxes($userInboxIds);
 
         // Sin ?selected= explícito no se auto-selecciona la primera
         // conversación: se deja el estado vacío "elige un chat" ya diseñado
@@ -556,7 +557,35 @@ class ConversationsController extends Controller
             'success' => true,
             'html' => $html,
             'counts' => $counts,
+            // BANDEJAS/EQUIPOS/ETIQUETAS del sidebar — mismos datos cacheados
+            // que index(), servidos aquí también porque este es el endpoint
+            // que el listener de Echo ya llama (debounced) en cada evento en
+            // tiempo real que afecta a esos contadores (ver
+            // ConversationInboxMetricsService::invalidateSidebarStructureCaches()).
+            'sidebar' => $this->sidebarStructureCounts($userInboxIds),
         ]);
+    }
+
+    /**
+     * @param  int[]|null  $userInboxIds
+     * @return array{inboxes: array<int, array{id: int, count: int}>, groups: array<int, array{id: int, count: int}>, tags: array<int, array{id: int, count: int}>}
+     */
+    private function sidebarStructureCounts(?array $userInboxIds): array
+    {
+        return [
+            'inboxes' => $this->inboxMetrics->sidebarInboxes($userInboxIds)
+                ->map(fn (Inbox $inbox) => ['id' => $inbox->id, 'count' => $inbox->conversations_count])
+                ->values()
+                ->all(),
+            'groups' => $this->inboxMetrics->sidebarGroups()
+                ->map(fn (Group $group) => ['id' => $group->id, 'count' => $group->conversations_count])
+                ->values()
+                ->all(),
+            'tags' => $this->inboxMetrics->inboxTags()
+                ->map(fn ($tag) => ['id' => $tag->id, 'count' => $tag->conversations_count])
+                ->values()
+                ->all(),
+        ];
     }
 
     /**
@@ -808,6 +837,20 @@ class ConversationsController extends Controller
     }
 
     /**
+     * Tag mutations only touch the conversation_tag_pivot table, so they
+     * never trigger ConversationObserver::updated() (no column on
+     * `conversations` changes) — the sidebar ETIQUETAS counters would stay
+     * stale until the cache TTL expires. Bust the cache and reuse
+     * ConversationUpdated as the "something changed, refresh what you need"
+     * ping already broadcast on the inbox channel the sidebar listens to.
+     */
+    private function notifySidebarStructureChanged(Conversation $conversation): void
+    {
+        $this->inboxMetrics->invalidateSidebarStructureCaches();
+        ConversationUpdated::dispatch($conversation, auth()->id());
+    }
+
+    /**
      * Handle AJAX partial updates (tag toggle, priority, assignee).
      */
     private function handleAjaxUpdate(Conversation $conversation): JsonResponse
@@ -818,6 +861,8 @@ class ConversationsController extends Controller
         if ($action === 'add_tag') {
             $tag = $this->tagService->addTag($conversation, (int) $request->validated()['tag_id']);
 
+            $this->notifySidebarStructureChanged($conversation);
+
             return response()->json([
                 'success' => true,
                 'message' => __('helpdesk::helpdesk.messages.tag_added'),
@@ -827,6 +872,8 @@ class ConversationsController extends Controller
 
         if ($action === 'remove_tag') {
             $this->tagService->removeTag($conversation, (int) $request->validated()['tag_id']);
+
+            $this->notifySidebarStructureChanged($conversation);
 
             return response()->json([
                 'success' => true,
@@ -846,6 +893,8 @@ class ConversationsController extends Controller
             foreach ($conversation->conversationTags->whereIn('id', $newIds) as $tag) {
                 ConversationTagAdded::dispatch($conversation, $tag, auth()->id());
             }
+
+            $this->notifySidebarStructureChanged($conversation);
 
             return response()->json([
                 'success' => true,

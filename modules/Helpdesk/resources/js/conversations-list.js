@@ -710,6 +710,46 @@
         });
         console.log('[Inbox] Subscribing to', inboxChannels.length, 'private helpdesk.inbox.{id} channel(s)');
 
+        // BANDEJAS/EQUIPOS/ETIQUETAS del sidebar (contadores agregados, no
+        // solo la conversación tocada) — patchea por id en vez de recargar
+        // la página. Los tres bloques usan el mismo patrón data-bv-*-id que
+        // ya tienen los enlaces de equipo/etiqueta; se añadió data-bv-inbox-id
+        // al de bandejas para que este selector funcione igual en los tres.
+        function patchSidebarStructureCounts(sidebar) {
+            if (!sidebar) return;
+
+            function patchByAttr(entries, attr) {
+                (entries || []).forEach(function (entry) {
+                    $('.bv-nav-item[' + attr + '="' + entry.id + '"] .c').first().text(entry.count);
+                });
+            }
+
+            patchByAttr(sidebar.inboxes, 'data-bv-inbox-id');
+            patchByAttr(sidebar.groups, 'data-bv-team-id');
+            patchByAttr(sidebar.tags, 'data-bv-tag-id');
+        }
+
+        // Refresco ligero SOLO de los contadores de BANDEJAS/EQUIPOS/ETIQUETAS,
+        // independiente del refresco de la lista (scheduleRefresh): cuando no
+        // hay filtro activo, handleInboxConversationUpdated ya resuelve la fila
+        // con un patch in-place (sin AJAX) y nunca llama a scheduleRefresh, así
+        // que sin esto esos contadores solo se enterarían al recargar la
+        // página. Mismo endpoint que la lista (ya cacheado server-side); se
+        // ignora resp.html porque aquí no hace falta reemplazar la lista.
+        let sidebarCountersTimer = null;
+        function scheduleSidebarCountersRefresh() {
+            clearTimeout(sidebarCountersTimer);
+            sidebarCountersTimer = setTimeout(function () {
+                $.get('/panel/helpdesk/conversations/list', Object.fromEntries(new URLSearchParams(window.location.search)))
+                    .done(function (resp) {
+                        if (resp && resp.sidebar) patchSidebarStructureCounts(resp.sidebar);
+                    })
+                    .fail(function (xhr) {
+                        console.error('[Inbox] Sidebar counters refresh failed:', xhr.status);
+                    });
+            }, 800);
+        }
+
         function refreshConversationList(done) {
             const $list = $('.bv-list').first();
             if (!$list.length) {
@@ -735,6 +775,9 @@
                             $('[data-counter="' + k + '"]').text(resp.counts[k]);
                         }
                     });
+                }
+                if (resp && resp.sidebar) {
+                    patchSidebarStructureCounts(resp.sidebar);
                 }
             }).fail(function (xhr) {
                 console.error('[Inbox] List refresh failed:', xhr.status);
@@ -851,6 +894,12 @@
             // "Todas") el patch de abajo ya es suficiente y más barato.
             if (hasActiveInboxFilter()) {
                 scheduleRefresh(600);
+            } else {
+                // scheduleRefresh() ya trae resp.sidebar cuando corre (rama de
+                // arriba); si no hay filtro activo no se dispara, así que los
+                // contadores de BANDEJAS/EQUIPOS/ETIQUETAS necesitan este
+                // refresco propio o se quedarían desactualizados hasta recargar.
+                scheduleSidebarCountersRefresh();
             }
 
             const $item = $('.bv-conv[data-bv-conv-id="' + e.conversation_id + '"]');

@@ -210,6 +210,7 @@
                 @endphp
                 <a href="{{ route('manager.helpdesk.conversations.index', ['inbox' => $sbInbox->id]) }}"
                    class="bv-nav-item {{ $activeInboxId === (int) $sbInbox->id ? 'on' : '' }}"
+                   data-bv-inbox-id="{{ $sbInbox->id }}"
                    title="{{ $sbInbox->name }}">
                     <i class="{{ $iconClass }}"></i>
                     <span class="bv-nav-item-label">{{ $sbInbox->name }}</span>
