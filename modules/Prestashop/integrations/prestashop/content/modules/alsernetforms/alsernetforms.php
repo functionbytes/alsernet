@@ -381,15 +381,32 @@ class Alsernetforms extends Module implements WidgetInterface
                     //   - Verificar disponibilidad del servidor (incluido en validateToken())
                     //   - Si disponible: retorna 'success'
                     //   - Si no disponible: retorna 'pending' (circuit breaker activado)
-                    $documentAction = new DocumentAction;
-                    $validation = $documentAction->validateToken(
-                        $token,
-                        [
-                            'customer_id' => $this->context->customer->id ?? null,
-                            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
-                            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-                        ]
-                    );
+                    //
+                    // Sin `?token=...` (el link personalizado que solo llega por email) esta
+                    // pagina CMS publica la visitan sobre todo bots (Googlebot/Bingbot) que la
+                    // rastrean directo. Sin este guard, el token vacio se concatenaba igual en
+                    // la URL de validacion ("…/api/documents//validation", doble barra —
+                    // Laravel la rechaza con 404 de ruta) y encima quedaba encolado en la tabla
+                    // de reintentos sin ningun caso de negocio real detras. Se corta ANTES de
+                    // tocar BD/red: no hay nada que loguear ni reintentar aqui.
+                    if (empty($token)) {
+                        $validation = [
+                            'status' => 'error',
+                            'request_id' => null,
+                            'data' => [],
+                            'message' => 'Missing token',
+                        ];
+                    } else {
+                        $documentAction = new DocumentAction;
+                        $validation = $documentAction->validateToken(
+                            $token,
+                            [
+                                'customer_id' => $this->context->customer->id ?? null,
+                                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+                                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                            ]
+                        );
+                    }
 
                     // 4️⃣ VERIFICAR SI EL TOKEN FUE VALIDADO CORRECTAMENTE
                     if ($validation['status'] === 'error' && empty($validation['data'])) {

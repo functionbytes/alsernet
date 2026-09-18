@@ -28,6 +28,18 @@ class DocumentAction extends BaseAction
 
     public function validate($uid, array $context = [])
     {
+        // Defensa en profundidad: sin uid no hay nada que validar contra Laravel.
+        // Sin este guard, un uid vacio se concatenaba igual en la URL
+        // (".../api/documents//validation", doble barra) que Laravel rechaza con
+        // 404 de ruta, y encima quedaba logueado como si fuera un intento real.
+        if (empty($uid)) {
+            return [
+                'status' => 'error',
+                'request_id' => null,
+                'data' => [],
+                'message' => 'Missing uid',
+            ];
+        }
 
         $url = rtrim($this->apiManager->getBaseUrl(), '/').'/'.ltrim($this->endpoint, '/').'/'.$uid.'/validation';
 
@@ -76,6 +88,17 @@ class DocumentAction extends BaseAction
 
     public function validateToken($token, array $context = [])
     {
+        // Defensa en profundidad: ver el mismo guard en validate() de arriba.
+        // alsernetforms.php ya corta antes de llegar aqui, pero cualquier otro
+        // caller de este metodo queda igual protegido.
+        if (empty($token)) {
+            return [
+                'status' => 'error',
+                'request_id' => null,
+                'data' => [],
+                'message' => 'Missing token',
+            ];
+        }
 
         $url = rtrim($this->apiManager->getBaseUrl(), '/').'/'.ltrim($this->endpoint, '/').'/'.$token.'/validation';
 
