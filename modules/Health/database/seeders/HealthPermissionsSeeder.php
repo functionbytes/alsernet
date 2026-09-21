@@ -12,26 +12,26 @@ class HealthPermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'health.view',
-            'health.history.view',
-            'health.history.delete',
-            'health.alerts.view',
-            'health.alerts.create',
-            'health.alerts.update',
-            'health.alerts.delete',
-            'health.supervisor.generate',
+            'health.view' => 'Ver estado de salud del sistema',
+            'health.history.view' => 'Ver historial de salud del sistema',
+            'health.history.delete' => 'Eliminar historial de salud del sistema',
+            'health.alerts.view' => 'Ver alertas de salud del sistema',
+            'health.alerts.create' => 'Crear alertas de salud del sistema',
+            'health.alerts.update' => 'Actualizar alertas de salud del sistema',
+            'health.alerts.delete' => 'Eliminar alertas de salud del sistema',
+            'health.supervisor.generate' => 'Generar configuración de supervisor',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate([
-                'name' => $permission,
-                'guard_name' => 'web',
-            ]);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $superSettings = Role::where('name', 'super-settings')->first();
         if ($superSettings) {
-            $superSettings->givePermissionTo($permissions);
+            $superSettings->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

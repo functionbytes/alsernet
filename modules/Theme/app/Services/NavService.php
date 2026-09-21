@@ -421,7 +421,7 @@ class NavService
             // Verificar si el usuario tiene permiso para este módulo
             try {
                 if ($user->hasPermissionTo($permissionName)) {
-                    $sidebars[$sidebarId] = self::filterDisabledItems(self::sortSections($sidebar));
+                    $sidebars[$sidebarId] = self::filterDisabledItems(self::sortSections($sidebar), $user);
                 }
             } catch (PermissionDoesNotExist $e) {
                 logger()->warning("NavService: permission '{$permissionName}' not found. Run the module seeder.");
@@ -432,14 +432,20 @@ class NavService
     }
 
     /**
-     * Quita del sidebar los items individuales deshabilitados vía nav_item_enabled().
-     * No filtra por permisos: eso ya se resolvió en el llamador.
+     * Quita del sidebar los items individuales deshabilitados vía
+     * nav_item_enabled() y, cuando se pasa $user (cualquiera salvo
+     * super-settings, que ya lo ve todo en el llamador), también los que el
+     * usuario no puede ver por su campo 'permission' — antes se declaraba en
+     * 149 items de 23 módulos pero nunca se comprobaba aquí, así que un
+     * usuario con acceso al módulo veía TODOS sus enlaces sin importar sus
+     * permisos concretos (ver userCanAccessItem()).
      */
-    private static function filterDisabledItems(array $sidebar): array
+    private static function filterDisabledItems(array $sidebar, ?User $user = null): array
     {
         $filterItems = fn (array $items) => array_values(array_filter(
             $items,
-            fn ($item) => empty($item['route']) || nav_item_enabled('item:'.$item['route'])
+            fn ($item) => (empty($item['route']) || nav_item_enabled('item:'.$item['route']))
+                && ($user === null || self::userCanAccessItem($item, $user))
         ));
 
         if (isset($sidebar['sections'])) {

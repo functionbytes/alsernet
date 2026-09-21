@@ -452,7 +452,7 @@ class HelpdeskServiceProvider extends ServiceProvider
         NavService::registerSidebar('helpdesk', [
             'title' => 'Herramientas',
             'items' => [
-                ['label' => 'Búsqueda global', 'route' => 'manager.helpdesk.search', 'icon' => 'fas fa-search', 'permission' => 'helpdesk.view'],
+                ['label' => 'Búsqueda global', 'route' => 'manager.helpdesk.search', 'icon' => 'fas fa-search', 'permission' => 'helpdesk.search.use'],
             ],
         ]);
     }

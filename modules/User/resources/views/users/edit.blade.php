@@ -79,7 +79,7 @@
                                 <input type="email" class="form-control" name="email"
                                        value="{{ $user->email }}"
                                        placeholder="Ej: usuario@ejemplo.com" required>
-                                <small class="text-muted">Email para acceso al sistema</small>
+                                <small class="text-muted">Correo electrónico para acceso al sistema</small>
                             </div>
 
                             <div class="col-12 col-md-6 mb-3">
@@ -87,20 +87,6 @@
                                 <input type="password" class="form-control" name="password"
                                        placeholder="Dejar en blanco para mantener la actual">
                                 <small class="text-muted">Solo completar si deseas cambiar la contraseña (mínimo 8 caracteres)</small>
-                            </div>
-
-                            <div class="col-12 col-md-6 mb-3">
-                                <label class="form-label">Rol <span class="text-danger">*</span></label>
-                                <select class="form-select select2" id="roleSelect" name="role" data-placeholder="Seleccione un rol" required>
-                                    <option value=""></option>
-                                    @foreach($roles as $roleId => $roleName)
-                                        @php $userRoleId = optional($user->roles->first())->id; @endphp
-                                        <option value="{{ $roleId }}" {{ $userRoleId == $roleId ? 'selected' : '' }}>
-                                            {{ Str::title(str_replace('-', ' ', $roleName)) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <small class="text-muted">Rol del usuario en el sistema</small>
                             </div>
 
                             <div class="col-12 col-md-6 mb-3">
@@ -113,7 +99,7 @@
                                 <small class="text-muted">Estado de la cuenta</small>
                             </div>
 
-                            <div class="col-12 col-md-6 mb-3">
+                            <div class="col-12 mb-3">
                                 <label class="form-label">Usuario verificado</label>
                                 <select class="form-select select2" id="verifiedSelect" name="verified" data-placeholder="Seleccione estado de verificación">
                                     <option value=""></option>
@@ -121,6 +107,22 @@
                                     <option value="0" {{ !$user->email_verified_at ? 'selected' : '' }}>No verificado</option>
                                 </select>
                                 <small class="text-muted">Estado de verificación de email del usuario</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row mb-4">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Roles <span class="text-danger">*</span></label>
+                                <select class="form-select select2" id="roleSelect" name="roles[]" multiple data-placeholder="Seleccione uno o más roles" required>
+                                    @foreach($roles as $roleName)
+                                        <option value="{{ $roleName }}" {{ in_array($roleName, $userRoles) ? 'selected' : '' }}>
+                                            {{ \Modules\Role\Helpers\PermissionHelper::label($roleName) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Puede asignar varios roles combinados (por ejemplo, un rol de otro módulo junto a helpdesk-agent)</small>
                             </div>
                         </div>
 
@@ -172,7 +174,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">Roles del sistema</h6>
                     <p class="card-text text-muted mb-0">
-                        El rol define qué módulos y acciones puede realizar el usuario. Asigna siempre el rol con el menor nivel de acceso necesario para su función.
+                        Los roles definen qué módulos y acciones puede realizar el usuario. Puede combinar varios roles (por ejemplo, uno por cada módulo que necesite) y asignar siempre el menor conjunto de accesos necesario para su función.
                     </p>
                 </div>
                 <hr class="my-0">
@@ -223,7 +225,7 @@ $(document).ready(function() {
             lastname:       { required: true, minlength: 2, maxlength: 100 },
             email:          { required: true, email: true },
             password:       { required: false, minlength: 8 },
-            role:           { required: true },
+            "roles[]":      { required: true },
             cellphone:      { maxlength: 20 },
             identification: { maxlength: 50 }
         },
@@ -232,7 +234,7 @@ $(document).ready(function() {
             lastname:  { required: "El apellido es obligatorio.", minlength: "Mínimo 2 caracteres.", maxlength: "Máximo 100 caracteres." },
             email:     { required: "El email es obligatorio.", email: "Ingrese un email válido." },
             password:  { minlength: "Mínimo 8 caracteres." },
-            role:      { required: "Debe seleccionar un rol." }
+            "roles[]": { required: "Debe seleccionar al menos un rol." }
         },
         highlight: function(element) {
             $(element).addClass('is-invalid');

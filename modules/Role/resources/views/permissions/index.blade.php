@@ -122,11 +122,9 @@
                                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $permission->id }}"></td>
                                         <td>
                                             <a href="{{ route('settings.permissions.edit', $permission->id) }}" class="text-decoration-none fw-semibold">
-                                                {{ $permission->name }}
+                                                {{ \Modules\Role\Helpers\PermissionHelper::label($permission->name, $permission->description) }}
                                             </a>
-                                            @if($permission->description)
-                                                <small class="d-block text-muted">{{ Str::limit($permission->description, 50) }}</small>
-                                            @endif
+                                            <small class="d-block text-muted">{{ $permission->name }}</small>
                                         </td>
                                         <td>
                                             @if($permission->guard_name === 'web')

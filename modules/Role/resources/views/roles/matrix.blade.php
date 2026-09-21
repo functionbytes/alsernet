@@ -120,7 +120,7 @@
                             <div class="card-header bg-light border-bottom">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="mb-0 fw-bold">{{ Str::title($role->name) }}</h6>
+                                        <h6 class="mb-0 fw-bold">{{ \Modules\Role\Helpers\PermissionHelper::label($role->name) }}</h6>
                                     </div>
                                     <div>
                                         <span class="badge bg-primary permission-count-{{ $role->id }}">
@@ -136,7 +136,7 @@
                                             <div class="card border h-100">
                                                 <div class="card-header bg-light bg-opacity-10 border-bottom">
                                                     <h6 class="mb-0 fw-bold  text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;">
-                                                        {{ Str::title(str_replace('_', ' ', $module)) }}
+                                                        {{ \Modules\Role\Helpers\PermissionHelper::label($module) }}
                                                     </h6>
                                                 </div>
                                                 <div class="card-body p-3">
@@ -144,7 +144,7 @@
                                                         <div class="permission-category mb-3">
                                                             <div class="d-flex align-items-center justify-content-between mb-2">
                                                                 <span class="badge bg-light bg-opacity-10 text-dark" style="font-size: 0.7rem;">
-                                                                    {{ Str::title(str_replace('_', ' ', $category)) }}
+                                                                    {{ \Modules\Role\Helpers\PermissionHelper::label($category) }}
                                                                 </span>
                                                                 <small class="text-muted" style="font-size: 0.65rem;">{{ count($perms) }}</small>
                                                             </div>
@@ -167,7 +167,7 @@
                                                                             data-permission-name="{{ $permission->name }}"
                                                                             {{ $isChecked ? 'checked' : '' }}>
                                                                         <span class="small flex-grow-1" style="font-size: 0.75rem;">
-                                                                            {{ Str::title(str_replace('_', ' ', $permAction)) }}
+                                                                            {{ \Modules\Role\Helpers\PermissionHelper::label($permAction) }}
                                                                         </span>
                                                                     </label>
                                                                 @endforeach

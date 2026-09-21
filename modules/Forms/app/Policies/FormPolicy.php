@@ -42,6 +42,6 @@ class FormPolicy
 
     public function settings(User $user): bool
     {
-        return $user->can('Forms.settings.view');
+        return $user->can('Forms.settings.manage');
     }
 }

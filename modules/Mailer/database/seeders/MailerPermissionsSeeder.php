@@ -22,7 +22,10 @@ class MailerPermissionsSeeder extends Seeder
 
         // Create permissions
         foreach ($permissions as $permission => $description) {
-            Permission::findOrCreate($permission, 'web');
+            Permission::updateOrCreate(
+                ['name' => $permission, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         // Assign permissions to roles

@@ -353,7 +353,7 @@ class UserControllerTest extends TestCase
                 'lastname' => 'Name',
                 'email' => $target->email,
                 'available' => '1',
-                'role' => $this->adminRole->name,
+                'roles' => [$this->adminRole->name],
             ]);
 
         $response->assertOk()
@@ -377,7 +377,7 @@ class UserControllerTest extends TestCase
                 'lastname' => $target->lastname,
                 'email' => $target->email,
                 'available' => '1',
-                'role' => $this->adminRole->name,
+                'roles' => [$this->adminRole->name],
                 'password' => 'newpassword123',
             ]);
 
@@ -395,7 +395,7 @@ class UserControllerTest extends TestCase
                 'lastname' => $target->lastname,
                 'email' => $target->email,
                 'available' => '1',
-                'role' => $this->adminRole->name,
+                'roles' => [$this->adminRole->name],
             ])
             ->assertOk()
             ->assertJson(['success' => true]);
@@ -410,7 +410,7 @@ class UserControllerTest extends TestCase
                 'lastname' => 'Doe',
                 'email' => 'john@example.com',
                 'available' => '1',
-                'role' => $this->adminRole->name,
+                'roles' => [$this->adminRole->name],
             ])
             ->assertNotFound()
             ->assertJson(['success' => false]);
@@ -423,7 +423,7 @@ class UserControllerTest extends TestCase
         $this->actingAs($this->admin)
             ->postJson(route('settings.users.update'), ['uid' => $target->uid])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['firstname', 'lastname', 'email', 'available', 'role']);
+            ->assertJsonValidationErrors(['firstname', 'lastname', 'email', 'available', 'roles']);
     }
 
     // =========================================================================

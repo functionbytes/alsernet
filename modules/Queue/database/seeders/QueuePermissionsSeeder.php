@@ -19,7 +19,10 @@ class QueuePermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $name => $description) {
-            Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         foreach (['super-settings', 'settings'] as $roleName) {

@@ -162,7 +162,7 @@ class UsersController extends Controller
         $user = User::where('uid', $uid)->firstOrFail();
         $this->authorize('update', $user);
 
-        $roles = SpatieRole::orderBy('name')->pluck('name', 'id');
+        $roles = SpatieRole::orderBy('name')->pluck('name');
 
         return view('user::users.edit')->with([
             'user' => $user,
@@ -207,14 +207,14 @@ class UsersController extends Controller
 
             $user->save();
 
-            $user->syncRoles([$request->role]);
+            $user->syncRoles($request->roles);
 
             event(new UserUpdated($user, auth()->user()));
 
             Log::info('Usuario actualizado exitosamente', [
                 'user_id' => $user->id,
                 'user_email' => $user->email,
-                'assigned_role' => $request->role,
+                'assigned_roles' => $request->roles,
             ]);
 
             return response()->json([

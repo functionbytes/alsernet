@@ -18,11 +18,11 @@ class HelpdeskIntegrationPermissionsSeeder extends Seeder
         // role:super-admin|super-settings — conceder esta vista a otros roles
         // solo mostraba un enlace de nav que terminaba en 403 al pulsarlo.
         $settingsPermissions = [
-            'helpdeskintegration.providers.view',
-            'helpdeskintegration.providers.create',
-            'helpdeskintegration.providers.update',
-            'helpdeskintegration.providers.delete',
-            'helpdeskintegration.providers.manage',
+            'helpdeskintegration.providers.view' => 'Ver catálogo de proveedores de integración',
+            'helpdeskintegration.providers.create' => 'Crear proveedores de integración',
+            'helpdeskintegration.providers.update' => 'Actualizar proveedores de integración',
+            'helpdeskintegration.providers.delete' => 'Eliminar proveedores de integración',
+            'helpdeskintegration.providers.manage' => 'Gestionar proveedores de integración completamente',
         ];
 
         // Vincular/desvincular integraciones de un cliente desde el inbox.
@@ -32,15 +32,21 @@ class HelpdeskIntegrationPermissionsSeeder extends Seeder
         // del día a día, no de settings — se mantiene con el alcance amplio.
         $manageIntegrationsPermission = 'helpdesk.integrations.manage';
 
-        $permissions = [...$settingsPermissions, $manageIntegrationsPermission];
+        $permissions = [
+            ...$settingsPermissions,
+            $manageIntegrationsPermission => 'Vincular o desvincular integraciones de un cliente',
+        ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         Role::whereIn('name', ['super-admin', 'super-settings'])
             ->get()
-            ->each(fn (Role $role) => $role->givePermissionTo($settingsPermissions));
+            ->each(fn (Role $role) => $role->givePermissionTo(array_keys($settingsPermissions)));
 
         Role::whereIn('name', ['admin', 'super-admin', 'super-administrador', 'super-settings'])
             ->get()

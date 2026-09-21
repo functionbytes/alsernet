@@ -48,8 +48,14 @@ class UserPermissionController extends Controller
     {
         $permissions = $this->activePermissionService->getActivePermissions();
         $userPermissions = $user->permissions()->pluck('id')->toArray();
+        // getPermissionsViaRoles() no deduplica entre roles: si dos roles del
+        // usuario comparten un permiso (p. ej. super-admin ya lo tiene todo y
+        // el segundo rol repite un subconjunto), el mismo id sale más de una
+        // vez. Para in_array() da igual, pero un count() sobre esto sin
+        // unique() mentiría.
+        $rolePermissions = $user->getPermissionsViaRoles()->pluck('id')->unique()->values()->toArray();
 
-        return view('role::users.permissions', compact('user', 'permissions', 'userPermissions'));
+        return view('role::users.permissions', compact('user', 'permissions', 'userPermissions', 'rolePermissions'));
     }
 
     public function update(Request $request, User $user): JsonResponse

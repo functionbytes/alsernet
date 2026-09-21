@@ -109,7 +109,7 @@
                                 <option value="">Todos los roles</option>
                                 @forelse($availableRoles as $roleName => $roleLabel)
                                     <option value="{{ $roleName }}" {{ ($roleFilter ?? '') === $roleName ? 'selected' : '' }}>
-                                        {{ ucwords(str_replace('-', ' ', $roleName)) }}
+                                        {{ \Modules\Role\Helpers\PermissionHelper::label($roleName) }}
                                     </option>
                                 @empty
                                     <option disabled>No hay roles disponibles</option>
@@ -172,7 +172,7 @@
                                             $roleName = $user->getRoleNames()->first() ?? 'Sin rol';
                                         @endphp
                                         <span class="badge bg-light text-black">
-                                            {{ Str::title(str_replace('-', ' ', $roleName)) }}
+                                            {{ \Modules\Role\Helpers\PermissionHelper::label($roleName) }}
                                         </span>
                                     </td>
                                     <td>
@@ -318,7 +318,7 @@
                             <option value="">Elegir rol...</option>
                             @foreach($availableRoles as $roleName => $roleLabel)
                                 <option value="{{ $roleName }}">
-                                    {{ Str::title(str_replace('-', ' ', $roleName)) }}
+                                    {{ \Modules\Role\Helpers\PermissionHelper::label($roleName) }}
                                 </option>
                             @endforeach
                         </select>

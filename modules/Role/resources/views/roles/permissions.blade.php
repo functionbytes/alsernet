@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Gestionar permisos para el rol: ' . \$role->name)
+@section('title', 'Gestionar permisos para el rol: ' . $role->name)
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Gestionar permisos para el rol: ' . \$role->name])
+    @include('core::components.card', ['title' => 'Gestionar permisos para el rol: ' . $role->name])
 @endsection
 
 @section('content')
@@ -98,7 +98,7 @@
                                     <div class="card shadow-sm">
                                         <div class="card-header bg-light">
                                             <strong class="text-uppercase">
-                                                {{ ucwords(str_replace(['_', '-'], ' ', $group)) }}
+                                                {{ \Modules\Role\Helpers\PermissionHelper::label($group) }}
                                             </strong>
                                         </div>
                                         <div class="card-body">
@@ -112,8 +112,8 @@
                                                                    name="permissions[]"
                                                                    value="{{ $perm->id }}"
                                                                 {{ in_array($perm->id, $rolePermissionsArray) ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="permission_{{ $perm->id }}">
-                                                                {{ ucwords(str_replace(['.', '_'], ' ', $perm->name)) }}
+                                                            <label class="form-check-label" for="permission_{{ $perm->id }}" title="{{ $perm->name }}">
+                                                                {{ \Modules\Role\Helpers\PermissionHelper::label($perm->name, $perm->description) }}
                                                             </label>
                                                         </div>
                                                     </div>

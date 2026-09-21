@@ -207,7 +207,7 @@ class UserManagementTest extends TestCase
                 'lastname' => $target->lastname,
                 'email' => $target->email,
                 'available' => '1',
-                'role' => $this->basicRole->name,
+                'roles' => [$this->basicRole->name],
             ])
             ->assertOk()
             ->assertJson(['success' => true]);
@@ -231,11 +231,35 @@ class UserManagementTest extends TestCase
                 'lastname' => $target->lastname,
                 'email' => $target->email,
                 'available' => '1',
-                'role' => $newRole->name,
+                'roles' => [$newRole->name],
             ]);
 
         $this->assertTrue($target->fresh()->hasRole($newRole->name));
         $this->assertFalse($target->fresh()->hasRole($this->basicRole->name));
+    }
+
+    public function test_update_can_assign_multiple_roles(): void
+    {
+        $target = User::factory()->create();
+        $target->assignRole($this->basicRole);
+        $secondRole = Role::create(['name' => 'accounting', 'guard_name' => 'web']);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('settings.users.update'), [
+                'uid' => $target->uid,
+                'firstname' => $target->firstname,
+                'lastname' => $target->lastname,
+                'email' => $target->email,
+                'available' => '1',
+                'roles' => [$this->basicRole->name, $secondRole->name],
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $fresh = $target->fresh();
+        $this->assertTrue($fresh->hasRole($this->basicRole->name));
+        $this->assertTrue($fresh->hasRole($secondRole->name));
+        $this->assertCount(2, $fresh->roles);
     }
 
     // =========================================================================

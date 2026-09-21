@@ -24,7 +24,10 @@ class BackupPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $name => $description) {
-            Permission::findOrCreate($name, 'web');
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         foreach (['super-settings', 'settings'] as $roleName) {

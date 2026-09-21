@@ -3,36 +3,20 @@
 namespace Modules\Document\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Modules\Role\Helpers\PermissionHelper;
 use Spatie\Permission\Models\Permission;
 
 class ModulePermissionsSeeder extends Seeder
 {
-    /**
-     * Módulos disponibles en el sistema
-     */
-    private array $modules = [
-        'documents' => 'Documentos',
-        'mailers' => 'Emails',
-        'media' => 'Gestor de Medios',
-        'users' => 'Usuarios',
-        'events' => 'Eventos',
-        'warehouse' => 'Almacén',
-        'webhooks' => 'Webhooks',
-        'roles' => 'Roles y Permisos',
-        'auth' => 'Seguridad',
-        'notifications' => 'Notificaciones',
-        'backups' => 'Copias de seguridad',
-        'settings' => 'Configuraciones',
-        'helpdesk' => 'Helpdesk',
-        'campaigns' => 'Campañas',
-        'suppliers' => 'Proveedores',
-        'analytics' => 'Analytics',
-    ];
-
     public function run(): void
     {
-        // Crear permisos para cada módulo
-        foreach ($this->modules as $moduleId => $moduleName) {
+        // TODOS los módulos Composer instalados y habilitados (misma fuente
+        // que RoleController::showModules), no solo los que tienen entrada
+        // propia en el sidebar, para que la pantalla de "módulos visibles
+        // por rol" no deje ninguno fuera.
+        $modules = PermissionHelper::allModulesForVisibilityToggle();
+
+        foreach ($modules as $moduleId => $moduleName) {
             Permission::firstOrCreate(
                 ['name' => "modules.view.{$moduleId}", 'guard_name' => 'web'],
                 ['description' => "Ver módulo de {$moduleName}"]

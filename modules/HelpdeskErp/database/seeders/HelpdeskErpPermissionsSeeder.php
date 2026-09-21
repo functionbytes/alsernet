@@ -14,24 +14,27 @@ class HelpdeskErpPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'helpdeskerp.view',
-            'helpdeskerp.refresh',
-            'helpdeskerp.health.view',
-            'helpdeskerp.orders.detail.view',
+            'helpdeskerp.view' => 'Ver contexto ERP en tickets y pedidos',
+            'helpdeskerp.refresh' => 'Actualizar datos ERP del cliente',
+            'helpdeskerp.health.view' => 'Ver estado de salud de la integración ERP',
+            'helpdeskerp.orders.detail.view' => 'Ver detalle de pedidos del ERP',
             // Consulta de NO-clientes (prospectos) en el ERP: expone datos reales
             // (balance/crédito/pedidos) de cualquier email/id, así que se reserva
             // a roles de confianza (admins) y NO se da al rol de agente.
-            'helpdeskerp.prospect.view',
+            'helpdeskerp.prospect.view' => 'Ver datos de prospectos (no clientes) en el ERP',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 
         foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
+            $role->givePermissionTo(array_keys($permissions));
         }
 
         // Los agentes de helpdesk necesitan ver el contexto ERP en los tickets y pedidos

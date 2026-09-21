@@ -17,28 +17,36 @@ class HelpdeskPrestashopPermissionsSeeder extends Seeder
         $this->renameLegacyPermissions();
 
         $permissions = [
-            'helpdeskprestashop.view',
-            'helpdeskprestashop.refresh',
-            'helpdeskprestashop.orders.view',
-            'helpdeskprestashop.orders.return',
+            'helpdeskprestashop.view' => 'Ver contexto PrestaShop en el inbox',
+            'helpdeskprestashop.refresh' => 'Actualizar datos de PrestaShop del cliente',
+            'helpdeskprestashop.orders.view' => 'Ver pedidos de PrestaShop',
+            'helpdeskprestashop.orders.return' => 'Gestionar devoluciones de pedidos de PrestaShop',
             // Acciones que MUTAN el pedido en PrestaShop (cambiar estado,
             // asignar seguimiento) desde el workspace del inbox.
-            'helpdeskprestashop.orders.manage',
+            'helpdeskprestashop.orders.manage' => 'Modificar pedidos de PrestaShop (estado, seguimiento)',
+            // Acciones que MUTAN el carrito EN VIVO del cliente en PrestaShop
+            // (dirección, productos, cantidades, cupón) — permiso propio y
+            // separado de orders.manage: tocar un carrito activo es más
+            // sensible que un pedido ya cerrado, así que no se hereda de él.
+            'helpdeskprestashop.carts.manage' => 'Modificar el carrito en vivo del cliente en PrestaShop',
             // Consulta de NO-clientes (prospectos) en PrestaShop: expone datos
             // reales (pedidos, carrito) de cualquier email sin Customer local
             // asociado, así que se reserva a roles de confianza (admins) y NO
             // se da al rol de agente — mismo criterio que helpdeskerp.prospect.view.
-            'helpdeskprestashop.prospect.view',
+            'helpdeskprestashop.prospect.view' => 'Ver datos de prospectos (no clientes) en PrestaShop',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 
         foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
+            $role->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

@@ -14,20 +14,23 @@ class HelpdeskBirthdayPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'helpdeskbirthday.view',
-            'helpdeskbirthday.manage',
-            'helpdeskbirthday.settings.view',
-            'helpdeskbirthday.settings.update',
+            'helpdeskbirthday.view' => 'Ver campaña de cumpleaños',
+            'helpdeskbirthday.manage' => 'Gestionar campaña de cumpleaños',
+            'helpdeskbirthday.settings.view' => 'Ver configuración de cumpleaños',
+            'helpdeskbirthday.settings.update' => 'Actualizar configuración de cumpleaños',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 
         foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
+            $role->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

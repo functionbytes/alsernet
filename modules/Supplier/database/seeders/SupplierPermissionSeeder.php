@@ -26,6 +26,7 @@ class SupplierPermissionSeeder extends Seeder
 
             // management (sort 10-19)
             ['name' => 'suppliers.edit', 'description' => 'Editar información de proveedores'],
+            ['name' => 'suppliers.products.manage', 'description' => 'Editar productos del proveedor'],
             ['name' => 'suppliers.toggle', 'description' => 'Activar/desactivar proveedores'],
             ['name' => 'suppliers.sources.manage', 'description' => 'Gestionar fuentes de datos'],
             ['name' => 'suppliers.categories.manage', 'description' => 'Gestionar categorías'],

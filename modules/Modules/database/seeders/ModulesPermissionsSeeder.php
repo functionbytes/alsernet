@@ -13,7 +13,10 @@ class ModulesPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Permission::firstOrCreate(['name' => 'modules.manage', 'guard_name' => 'web']);
+        Permission::updateOrCreate(
+            ['name' => 'modules.manage', 'guard_name' => 'web'],
+            ['description' => 'Gestionar módulos del sistema'],
+        );
 
         $superSettings = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
         $superSettings->givePermissionTo('modules.manage');

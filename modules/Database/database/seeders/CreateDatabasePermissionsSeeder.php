@@ -66,7 +66,10 @@ class CreateDatabasePermissionsSeeder extends Seeder
     private function createPermissionsFor(array $permissions): void
     {
         foreach ($permissions as $permissionName => $description) {
-            Permission::findOrCreate($permissionName, 'web');
+            Permission::updateOrCreate(
+                ['name' => $permissionName, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $this->command->line('Created '.count($permissions).' permissions');

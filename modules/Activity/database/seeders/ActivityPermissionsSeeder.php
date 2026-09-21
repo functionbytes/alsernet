@@ -12,22 +12,22 @@ class ActivityPermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'activity.logs.view',
-            'activity.logs.export',
-            'activity.logs.delete',
-            'activity.audit.view',
+            'activity.logs.view' => 'Ver registro de actividad',
+            'activity.logs.export' => 'Exportar registro de actividad',
+            'activity.logs.delete' => 'Eliminar registro de actividad',
+            'activity.audit.view' => 'Ver auditoría',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate([
-                'name' => $permission,
-                'guard_name' => 'web',
-            ]);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $superSettings = Role::where('name', 'super-settings')->first();
         if ($superSettings) {
-            $superSettings->givePermissionTo($permissions);
+            $superSettings->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

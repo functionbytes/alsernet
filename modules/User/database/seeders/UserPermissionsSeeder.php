@@ -12,23 +12,26 @@ class UserPermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'view-users',
-            'create-users',
-            'edit-users',
-            'delete-users',
-            'impersonate-users',
-            'manage-users',
-            'bulk-action-users',
-            'export-users',
+            'view-users' => 'Ver usuarios',
+            'create-users' => 'Crear usuarios',
+            'edit-users' => 'Editar usuarios',
+            'delete-users' => 'Eliminar usuarios',
+            'impersonate-users' => 'Suplantar usuarios',
+            'manage-users' => 'Gestionar usuarios',
+            'bulk-action-users' => 'Acciones masivas sobre usuarios',
+            'export-users' => 'Exportar usuarios',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $permission => $description) {
+            Permission::updateOrCreate(
+                ['name' => $permission, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $superSettings = Role::where('name', 'super-settings')->first();
         if ($superSettings) {
-            $superSettings->givePermissionTo($permissions);
+            $superSettings->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

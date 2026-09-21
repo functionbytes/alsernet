@@ -8,7 +8,7 @@ class ResendSubmissionEmailRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('Forms.submissions.update');
+        return $this->user()->can('Forms.submissions.edit');
     }
 
     public function rules(): array

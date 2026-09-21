@@ -62,7 +62,7 @@ Route::group(['prefix' => ''], function () {
 
     // Global search (JSON autocomplete, throttled)
     Route::get('/search/global', GlobalSearchController::class)
-        ->middleware('throttle:60,1')
+        ->middleware(['can:helpdesk.search.use', 'throttle:60,1'])
         ->name('manager.helpdesk.search.global');
 
     // Agent presence state (heartbeat + manual state change)
@@ -75,6 +75,7 @@ Route::group(['prefix' => ''], function () {
 
     // Global search (full page with tabs)
     Route::get('/search', [SearchController::class, 'index'])
+        ->middleware('can:helpdesk.search.use')
         ->name('manager.helpdesk.search');
 
     // Main Helpdesk Index

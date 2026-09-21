@@ -15,32 +15,35 @@ class HelpdeskHelpcenterPermissionsSeeder extends Seeder
 
         $permissions = [
             // Module-wide
-            'helpdesk.helpcenter.view',
+            'helpdesk.helpcenter.view' => 'Ver centro de ayuda',
             // Articles
-            'helpdesk.helpcenter.articles.view',
-            'helpdesk.helpcenter.articles.create',
-            'helpdesk.helpcenter.articles.update',
-            'helpdesk.helpcenter.articles.delete',
-            'helpdesk.helpcenter.articles.manage',
-            'helpdesk.helpcenter.articles.translate',
-            'helpdesk.helpcenter.articles.embed',
-            'helpdesk.helpcenter.articles.vote-moderate',
+            'helpdesk.helpcenter.articles.view' => 'Ver artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.create' => 'Crear artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.update' => 'Actualizar artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.delete' => 'Eliminar artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.manage' => 'Gestionar artículos del centro de ayuda completamente',
+            'helpdesk.helpcenter.articles.translate' => 'Traducir artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.embed' => 'Incrustar artículos del centro de ayuda',
+            'helpdesk.helpcenter.articles.vote-moderate' => 'Moderar votos de artículos del centro de ayuda',
             // Categories
-            'helpdesk.helpcenter.categories.view',
-            'helpdesk.helpcenter.categories.create',
-            'helpdesk.helpcenter.categories.update',
-            'helpdesk.helpcenter.categories.delete',
-            'helpdesk.helpcenter.categories.manage',
+            'helpdesk.helpcenter.categories.view' => 'Ver categorías del centro de ayuda',
+            'helpdesk.helpcenter.categories.create' => 'Crear categorías del centro de ayuda',
+            'helpdesk.helpcenter.categories.update' => 'Actualizar categorías del centro de ayuda',
+            'helpdesk.helpcenter.categories.delete' => 'Eliminar categorías del centro de ayuda',
+            'helpdesk.helpcenter.categories.manage' => 'Gestionar categorías del centro de ayuda completamente',
         ];
 
-        foreach ($permissions as $name) {
-            Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         foreach (['super-admin', 'super-settings', 'admin', 'manager'] as $roleName) {
             $role = Role::query()->where('name', $roleName)->first();
             if ($role) {
-                $role->givePermissionTo($permissions);
+                $role->givePermissionTo(array_keys($permissions));
             }
         }
 

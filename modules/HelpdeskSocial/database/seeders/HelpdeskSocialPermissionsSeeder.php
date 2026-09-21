@@ -16,28 +16,31 @@ class HelpdeskSocialPermissionsSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $permissions = [
-            'helpdesksocial.view',
-            'helpdesksocial.manage',
-            'helpdesksocial.approver',
-            'helpdesksocial.accounts.manage',
-            'helpdesksocial.rules.manage',
-            'helpdesksocial.rules.view',
-            'helpdesksocial.templates.manage',
-            'helpdesksocial.templates.view',
-            'helpdesksocial.analytics.view',
-            'helpdesksocial.mentions.update',
-            'helpdesksocial.competitors.manage',
+            'helpdesksocial.view' => 'Ver redes sociales',
+            'helpdesksocial.manage' => 'Gestionar redes sociales',
+            'helpdesksocial.approver' => 'Aprobar publicaciones en redes sociales',
+            'helpdesksocial.accounts.manage' => 'Gestionar cuentas de redes sociales conectadas',
+            'helpdesksocial.rules.manage' => 'Gestionar reglas de asignación de redes sociales',
+            'helpdesksocial.rules.view' => 'Ver reglas de asignación de redes sociales',
+            'helpdesksocial.templates.manage' => 'Gestionar plantillas de respuesta de redes sociales',
+            'helpdesksocial.templates.view' => 'Ver plantillas de respuesta de redes sociales',
+            'helpdesksocial.analytics.view' => 'Ver analítica de redes sociales',
+            'helpdesksocial.mentions.update' => 'Actualizar menciones de redes sociales',
+            'helpdesksocial.competitors.manage' => 'Gestionar competidores monitorizados en redes sociales',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         // Assign to admin and super-admin roles if they exist
         $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 
         foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
+            $role->givePermissionTo(array_keys($permissions));
         }
     }
 }

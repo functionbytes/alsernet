@@ -12,20 +12,20 @@ class MediaPermissionSeeder extends Seeder
     public function run(): void
     {
         $permissionNames = [
-            'media.view',
-            'media.create',
-            'media.update',
-            'media.delete',
-            'media.manage',
-            'media.force-delete',
-            'media.settings.view',
-            'media.settings.update',
+            'media.view' => 'Ver medios',
+            'media.create' => 'Crear medios',
+            'media.update' => 'Actualizar medios',
+            'media.delete' => 'Eliminar medios',
+            'media.manage' => 'Gestionar medios completamente',
+            'media.force-delete' => 'Eliminar medios permanentemente',
+            'media.settings.view' => 'Ver configuración de medios',
+            'media.settings.update' => 'Actualizar configuración de medios',
         ];
 
-        $permissions = collect($permissionNames)->map(fn (string $name) => Permission::firstOrCreate([
-            'name' => $name,
-            'guard_name' => 'web',
-        ]));
+        $permissions = collect($permissionNames)->map(fn (string $description, string $name) => Permission::updateOrCreate(
+            ['name' => $name, 'guard_name' => 'web'],
+            ['description' => $description],
+        ));
 
         $adminRole = Role::where('guard_name', 'web')
             ->whereIn('name', ['admin', 'super-admin', 'super-settings'])

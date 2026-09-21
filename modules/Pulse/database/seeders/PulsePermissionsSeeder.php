@@ -12,21 +12,21 @@ class PulsePermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'pulse.dashboard.view',
-            'pulse.settings.view',
-            'pulse.settings.update',
+            'pulse.dashboard.view' => 'Ver panel de rendimiento (Pulse)',
+            'pulse.settings.view' => 'Ver configuración de Pulse',
+            'pulse.settings.update' => 'Actualizar configuración de Pulse',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate([
-                'name' => $permission,
-                'guard_name' => 'web',
-            ]);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $superSettings = Role::where('name', 'super-settings')->first();
         if ($superSettings) {
-            $superSettings->givePermissionTo($permissions);
+            $superSettings->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

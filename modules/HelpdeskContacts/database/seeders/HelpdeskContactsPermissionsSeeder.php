@@ -14,22 +14,26 @@ class HelpdeskContactsPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'modules.view.contacts',
-            'contacts.view',
-            'contacts.update',
-            'contacts.commerce',
-            'contacts.insights',
-            'contacts.merge',
+            'modules.view.contacts' => 'Ver módulo de Contactos',
+            'contacts.view' => 'Ver contactos',
+            'contacts.create' => 'Crear/importar contactos',
+            'contacts.update' => 'Actualizar contactos',
+            'contacts.commerce' => 'Ver datos comerciales del contacto (pedidos, carrito)',
+            'contacts.insights' => 'Ver estadísticas del contacto',
+            'contacts.merge' => 'Fusionar contactos duplicados',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 
         foreach ($adminRoles as $role) {
-            $role->givePermissionTo($permissions);
+            $role->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

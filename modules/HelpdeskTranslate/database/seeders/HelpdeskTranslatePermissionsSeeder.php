@@ -17,23 +17,26 @@ class HelpdeskTranslatePermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $usePermissions = ['helpdesk-translate.use'];
+        $usePermissions = ['helpdesk-translate.use' => 'Traducir mensajes en conversaciones del helpdesk'];
         $settingsPermissions = [
-            'helpdesk-translate.settings.view',
-            'helpdesk-translate.settings.update',
+            'helpdesk-translate.settings.view' => 'Ver configuración de traducción (DeepL)',
+            'helpdesk-translate.settings.update' => 'Actualizar configuración de traducción (DeepL)',
         ];
 
-        foreach ([...$usePermissions, ...$settingsPermissions] as $name) {
-            Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+        foreach ([...$usePermissions, ...$settingsPermissions] as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         // `helpdesk-translate.use` mirrors who can open helpdesk conversations:
         // anyone working the inbox should be able to translate messages.
-        $this->grantTo($usePermissions, $this->rolesWith('helpdesk.conversations.view'));
+        $this->grantTo(array_keys($usePermissions), $this->rolesWith('helpdesk.conversations.view'));
 
         // `helpdesk-translate.settings.*` mirrors helpdesk back-office access
         // (DeepL keys, provider, auto-translate toggles).
-        $this->grantTo($settingsPermissions, $this->rolesWith('helpdesk.helpcenter.view'));
+        $this->grantTo(array_keys($settingsPermissions), $this->rolesWith('helpdesk.helpcenter.view'));
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }

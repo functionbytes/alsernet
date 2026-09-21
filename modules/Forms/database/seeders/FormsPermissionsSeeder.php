@@ -22,8 +22,9 @@ class FormsPermissionsSeeder extends Seeder
     private function createPermissions(): void
     {
         foreach (config('forms.permissions', []) as $permission) {
-            Permission::firstOrCreate(
-                ['name' => $permission['flag'], 'guard_name' => 'web']
+            Permission::updateOrCreate(
+                ['name' => $permission['flag'], 'guard_name' => 'web'],
+                ['description' => $permission['label']],
             );
         }
     }

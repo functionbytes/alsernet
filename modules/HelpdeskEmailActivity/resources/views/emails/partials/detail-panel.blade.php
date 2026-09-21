@@ -1083,7 +1083,7 @@
                          completa (filtrable por log_name/evento/fecha), se
                          enlaza en vez de duplicarla aquí — ver
                          Modules\Activity\Http\Controllers\ActivityController::audit(). --}}
-                    @can('Activity.audit.index')
+                    @can('activity.audit.view')
                         <a href="{{ route('activity.audit', ['log_name' => 'email-log', 'search' => $log->uid]) }}"
                            class="evx-btn evx-btn-outline evx-btn-inline evx-section-head-btn" target="_blank" rel="noopener">
                             {{ __('helpdeskemailactivity::emaillog.activity_log.view_full_audit') }}

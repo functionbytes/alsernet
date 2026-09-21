@@ -14,6 +14,7 @@ use Modules\Role\Events\RoleCreated;
 use Modules\Role\Events\RoleDeleted;
 use Modules\Role\Events\RoleUpdated;
 use Modules\Role\Events\UserRoleChanged;
+use Modules\Role\Helpers\PermissionHelper;
 use Modules\Role\Http\Requests\Systems\RoleRequest;
 use Modules\Role\Services\ActivePermissionService;
 use Nwidart\Modules\Facades\Module;
@@ -399,25 +400,7 @@ class RoleController extends Controller
      */
     public function showModules(Role $role): View
     {
-        // Lista de módulos disponibles (debe coincidir con ModulePermissionsSeeder)
-        $modules = [
-            'documents' => 'Documentos',
-            'mailers' => 'Emails',
-            'media' => 'Gestor de Medios',
-            'users' => 'Usuarios',
-            'events' => 'Eventos',
-            'warehouse' => 'Almacén',
-            'webhooks' => 'Webhooks',
-            'roles' => 'Roles y Permisos',
-            'auth' => 'Seguridad',
-            'notifications' => 'Notificaciones',
-            'backups' => 'Copias de seguridad',
-            'settings' => 'Configuraciones',
-            'helpdesk' => 'Helpdesk',
-            'campaigns' => 'Campañas',
-            'suppliers' => 'Proveedores',
-            'analytics' => 'Analytics',
-        ];
+        $modules = PermissionHelper::allModulesForVisibilityToggle();
 
         // Obtener los módulos que actualmente tiene permiso este rol
         $roleModules = $role->permissions()

@@ -25,6 +25,7 @@ class SupplierRolePermissionsSeeder extends Seeder
             'suppliers.view.categories',
             'suppliers.view.sources',
             'suppliers.edit',
+            'suppliers.products.manage',
             'suppliers.toggle',
             'suppliers.sources.manage',
             'suppliers.categories.manage',

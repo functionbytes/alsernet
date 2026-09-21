@@ -23,17 +23,24 @@ class ReviewsPermissionsSeeder extends Seeder
 
         // 'reviews.settings' va aparte de 'moderate': quien modera decide qué se
         // publica, pero tocar las credenciales de las fichas de Google es otra cosa.
-        $permisos = ['reviews.view', 'reviews.moderate', 'reviews.settings'];
+        $permisos = [
+            'reviews.view' => 'Ver opiniones',
+            'reviews.moderate' => 'Moderar opiniones (publicar, retirar, responder)',
+            'reviews.settings' => 'Configurar credenciales de fichas de Google',
+        ];
 
-        foreach ($permisos as $nombre) {
-            Permission::firstOrCreate(['name' => $nombre, 'guard_name' => 'web']);
+        foreach ($permisos as $nombre => $descripcion) {
+            Permission::updateOrCreate(
+                ['name' => $nombre, 'guard_name' => 'web'],
+                ['description' => $descripcion],
+            );
         }
 
         foreach (self::ADMIN_ROLES as $nombre) {
             $rol = Role::where('name', $nombre)->where('guard_name', 'web')->first();
 
             if ($rol) {
-                $rol->givePermissionTo($permisos);
+                $rol->givePermissionTo(array_keys($permisos));
             }
         }
 

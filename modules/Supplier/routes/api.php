@@ -42,7 +42,7 @@ Route::prefix('sync')->name('sync.')->group(function () {
         Route::get('batches/{id}', [SyncApiController::class, 'showBatch'])->name('batches.show');
     });
     Route::post('trigger', [SyncApiController::class, 'trigger'])
-        ->middleware(['can:suppliers.sync.execute'])
+        ->middleware(['can:suppliers.sync.trigger'])
         ->name('trigger');
 });
 

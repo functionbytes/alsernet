@@ -1,21 +1,27 @@
 <?php
 
-namespace Modules\HelpdeskAnalytics\Database\Seeders;
+namespace Modules\Core\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
-class HelpdeskAnalyticsPermissionsSeeder extends Seeder
+class CorePermissionsSeeder extends Seeder
 {
+    /**
+     * El módulo Core nunca tuvo seeder de permisos propio. Su
+     * DashboardController (panel principal: KPIs, salud, seguridad, cola)
+     * autoriza con 'settings.view'/'settings.system', que no existían en
+     * ningún sitio — 403 permanente para cualquier usuario, incluido
+     * super-admin.
+     */
     public function run(): void
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'helpdeskanalytics.view' => 'Ver analítica del helpdesk',
-            'helpdeskanalytics.export' => 'Exportar analítica del helpdesk',
+            'settings.view' => 'Ver el panel principal (KPIs, actividad, salud del sistema)',
+            'settings.system' => 'Ver estado de las colas del sistema',
         ];
 
         foreach ($permissions as $name => $description) {
@@ -23,12 +29,6 @@ class HelpdeskAnalyticsPermissionsSeeder extends Seeder
                 ['name' => $name, 'guard_name' => 'web'],
                 ['description' => $description],
             );
-        }
-
-        $adminRoles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
-
-        foreach ($adminRoles as $role) {
-            $role->givePermissionTo(array_keys($permissions));
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

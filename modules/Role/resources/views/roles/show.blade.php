@@ -148,7 +148,7 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center justify-content-between mb-3">
                                                 <h6 class="mb-0 fw-bold text-uppercase">
-                                                    {{ ucwords(str_replace(['_', '-'], ' ', $module)) }}
+                                                    {{ \Modules\Role\Helpers\PermissionHelper::label($module) }}
                                                 </h6>
                                                 <span class="badge bg-primary rounded-pill">{{ $permissions->count() }}</span>
                                             </div>
@@ -156,7 +156,7 @@
                                                 @foreach($permissions->take(10) as $permission)
                                                     <div class="d-flex align-items-center gap-2 mb-2">
                                                         <i class="fas fa-check-circle text-success small"></i>
-                                                        <small class="text-muted">{{ str_replace($module . '.', '', $permission->name) }}</small>
+                                                        <small class="text-muted" title="{{ $permission->name }}">{{ \Modules\Role\Helpers\PermissionHelper::label($permission->name, $permission->description) }}</small>
                                                     </div>
                                                 @endforeach
                                                 @if($permissions->count() > 10)

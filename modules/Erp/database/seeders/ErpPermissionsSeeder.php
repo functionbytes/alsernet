@@ -16,17 +16,35 @@ class ErpPermissionsSeeder extends Seeder
         // Gestión de los ERP Endpoints salientes (crear/editar/ejecutar/tokens).
         // Antes no existía y las rutas solo pedían auth → cualquier usuario
         // autenticado podía configurar y ejecutar peticiones salientes (SSRF).
-        Permission::firstOrCreate(['name' => 'erp.endpoints.manage', 'guard_name' => 'web']);
+        Permission::updateOrCreate(
+            ['name' => 'erp.endpoints.manage', 'guard_name' => 'web'],
+            ['description' => 'Gestionar endpoints salientes del ERP'],
+        );
 
         // Superficie ERP de consulta (customer/products/suppliers/families/subfamilies/groups).
         // Estos permisos quedan listos pero inertes mientras `erp.api-auth` siga
         // deshabilitado (config('erp.api.enabled') = false): el middleware `can:`
         // nunca llega a evaluarse porque la ruta ya responde sin exigir auth.
-        Permission::firstOrCreate(['name' => 'erp.customer.view', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'erp.customer.update', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'erp.products.view', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'erp.suppliers.view', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'erp.jerarquia.view', 'guard_name' => 'web']);
+        Permission::updateOrCreate(
+            ['name' => 'erp.customer.view', 'guard_name' => 'web'],
+            ['description' => 'Ver clientes del ERP'],
+        );
+        Permission::updateOrCreate(
+            ['name' => 'erp.customer.update', 'guard_name' => 'web'],
+            ['description' => 'Actualizar clientes del ERP'],
+        );
+        Permission::updateOrCreate(
+            ['name' => 'erp.products.view', 'guard_name' => 'web'],
+            ['description' => 'Ver productos del ERP'],
+        );
+        Permission::updateOrCreate(
+            ['name' => 'erp.suppliers.view', 'guard_name' => 'web'],
+            ['description' => 'Ver proveedores del ERP'],
+        );
+        Permission::updateOrCreate(
+            ['name' => 'erp.jerarquia.view', 'guard_name' => 'web'],
+            ['description' => 'Ver jerarquía de familias y grupos del ERP'],
+        );
 
         $roles = Role::whereIn('name', ['admin', 'super-admin', 'super-administrador'])->get();
 

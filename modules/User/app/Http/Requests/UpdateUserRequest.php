@@ -24,7 +24,8 @@ class UpdateUserRequest extends FormRequest
             'lastname' => ['required', 'string', 'min:2', 'max:100'],
             'email' => ['required', 'email', "unique:users,email,{$userId}"],
             'available' => ['required', 'in:0,1'],
-            'role' => ['required', 'string', 'exists:roles,name'],
+            'roles' => ['required', 'array'],
+            'roles.*' => ['string', 'exists:roles,name'],
             'password' => ['nullable', 'string', 'min:8'],
             'identification' => ['nullable', 'string', 'max:50'],
             'cellphone' => ['nullable', 'string', 'max:20'],
@@ -39,7 +40,8 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'email.unique' => 'El correo electrónico ya está registrado en otro usuario.',
-            'role.exists' => 'El rol seleccionado no existe.',
+            'roles.required' => 'Debe seleccionar al menos un rol.',
+            'roles.*.exists' => 'Uno de los roles seleccionados no existe.',
             'timezone.timezone' => 'La zona horaria seleccionada no es válida.',
         ];
     }

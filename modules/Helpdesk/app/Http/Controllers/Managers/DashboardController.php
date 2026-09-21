@@ -12,7 +12,11 @@ class DashboardController extends Controller
 {
     public function index(TicketServiceContract $tickets): View
     {
-        $this->authorize('access_helpdesk');
+        // 'access_helpdesk' nunca existió como permiso sembrado (daba 403 a
+        // todo el mundo). El grupo de rutas ya exige helpdesk.view antes de
+        // llegar aquí (ver RouteServiceProvider); se repite explícitamente
+        // por consistencia con el resto de controladores del módulo.
+        $this->authorize('helpdesk.view');
 
         $ticketData = $tickets->getDashboardData();
 

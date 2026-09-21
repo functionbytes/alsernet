@@ -8,7 +8,7 @@ class UpdateSubmissionStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('Forms.submissions.update')
+        return $this->user()->can('Forms.submissions.edit')
             || $this->user()->can('Forms.submissions.index');
     }
 

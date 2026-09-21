@@ -73,6 +73,8 @@
                     <div class="alert alert-info border-0">
                         <i class="fas fa-circle-info me-2"></i>
                         Estos son permisos <strong>adicionales</strong> al rol del usuario. Se aplican junto con los permisos del rol asignado.
+                        Los marcados con <span class="badge bg-secondary-subtle text-secondary"><i class="fas fa-lock me-1"></i>Por rol</span>
+                        ya los tiene por su rol ({{ $user->getRoleNames()->implode(', ') ?: 'sin rol' }}) y no se pueden quitar desde aquí.
                     </div>
                 </div>
 
@@ -88,22 +90,29 @@
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-light">
                                         <strong class="text-uppercase">
-                                            {{ ucwords(str_replace(['_', '-'], ' ', $group)) }}
+                                            {{ \Modules\Role\Helpers\PermissionHelper::label($group) }}
                                         </strong>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
                                             @foreach($groupPermissions as $perm)
+                                                @php $fromRole = in_array($perm->id, $rolePermissions ?? []); @endphp
                                                 <div class="col-md-4">
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input permission-checkbox"
+                                                    <div class="form-check mb-2 d-flex align-items-center gap-1">
+                                                        <input class="form-check-input {{ $fromRole ? '' : 'permission-checkbox' }}"
                                                                type="checkbox"
                                                                id="permission_{{ $perm->id }}"
                                                                data-permission-id="{{ $perm->id }}"
-                                                               {{ in_array($perm->id, $userPermissions) ? 'checked' : '' }}>
-                                                        <label class="form-check-label" for="permission_{{ $perm->id }}">
-                                                            {{ ucwords(str_replace(['.', '_'], ' ', $perm->name)) }}
+                                                               {{ $fromRole || in_array($perm->id, $userPermissions) ? 'checked' : '' }}
+                                                               {{ $fromRole ? 'disabled' : '' }}>
+                                                        <label class="form-check-label" for="permission_{{ $perm->id }}" title="{{ $perm->name }}">
+                                                            {{ \Modules\Role\Helpers\PermissionHelper::label($perm->name, $perm->description) }}
                                                         </label>
+                                                        @if($fromRole)
+                                                            <span class="badge bg-secondary-subtle text-secondary" title="Ya lo tiene por su rol">
+                                                                <i class="fas fa-lock"></i>
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             @endforeach

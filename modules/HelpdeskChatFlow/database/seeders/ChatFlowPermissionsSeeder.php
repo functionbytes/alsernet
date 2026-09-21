@@ -13,15 +13,18 @@ class ChatFlowPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'chatflow.view',
-            'chatflow.create',
-            'chatflow.update',
-            'chatflow.delete',
-            'chatflow.manage',
+            'chatflow.view' => 'Ver flujos de chat',
+            'chatflow.create' => 'Crear flujos de chat',
+            'chatflow.update' => 'Actualizar flujos de chat',
+            'chatflow.delete' => 'Eliminar flujos de chat',
+            'chatflow.manage' => 'Gestionar flujos de chat completamente',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissions as $name => $description) {
+            Permission::updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
     }
 }

@@ -33,7 +33,7 @@
                 };
             @endphp
             <span class="badge {{ $badgeClass }}">
-                {{ Str::title(str_replace('-', ' ', $roleName)) }}
+                {{ \Modules\Role\Helpers\PermissionHelper::label($roleName) }}
             </span>
 
             <hr>

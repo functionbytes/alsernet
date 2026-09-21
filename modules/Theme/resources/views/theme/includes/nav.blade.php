@@ -98,7 +98,7 @@
                         <nav class="app-navbar" data-simplebar="">
                             <ul class="side-menubar">
                                 @foreach($sidebar['sections'] ?? [] as $section)
-                                    @if($section['title'])
+                                    @if($section['title'] && !empty($section['items']))
                                         <li class="menu-heading">
                                             <span class="menu-label">{{ $section['title'] }}</span>
                                         </li>
@@ -130,7 +130,7 @@
                         <nav class="app-navbar" data-simplebar="">
                             <ul class="side-menubar">
                                 @foreach($settingsSidebar['sections'] ?? [] as $section)
-                                    @if($section['title'])
+                                    @if($section['title'] && !empty($section['items']))
                                         <li class="menu-heading">
                                             <span class="menu-label">{{ $section['title'] }}</span>
                                         </li>

@@ -22,7 +22,7 @@ class ActivityController extends Controller
      */
     public function logs(Request $request): View
     {
-        $this->authorize('Activity.logs.index');
+        $this->authorize('activity.logs.view');
         $pageTitle = 'Registro de cambios';
         $breadcrumb = 'Historial / Registro de cambios';
 
@@ -92,7 +92,7 @@ class ActivityController extends Controller
      */
     public function audit(Request $request): View
     {
-        $this->authorize('Activity.audit.index');
+        $this->authorize('activity.audit.view');
         $pageTitle = 'Auditoría';
         $breadcrumb = 'Historial / Auditoría';
 
@@ -135,7 +135,7 @@ class ActivityController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $this->authorize('Activity.logs.export');
+        $this->authorize('activity.logs.export');
 
         $query = Activity::query()
             ->with('causer')
@@ -245,7 +245,7 @@ class ActivityController extends Controller
 
     public function stats(): JsonResponse
     {
-        $this->authorize('Activity.logs.index');
+        $this->authorize('activity.logs.view');
 
         $data = app(ActivityLogService::class)->countByEvent();
 
@@ -254,7 +254,7 @@ class ActivityController extends Controller
 
     public function bulkAction(Request $request): JsonResponse
     {
-        $this->authorize('Activity.logs.delete');
+        $this->authorize('activity.logs.delete');
 
         $validated = $request->validate([
             'action' => 'required|in:delete',
@@ -273,7 +273,7 @@ class ActivityController extends Controller
 
     public function show(int $id): View
     {
-        $this->authorize('Activity.logs.index');
+        $this->authorize('activity.logs.view');
 
         $activity = Activity::with('causer')->findOrFail($id);
 
@@ -285,7 +285,7 @@ class ActivityController extends Controller
 
     public function auditData(Request $request): JsonResponse
     {
-        $this->authorize('Activity.audit.index');
+        $this->authorize('activity.audit.view');
         $query = Activity::with('causer')->latest();
 
         if ($request->filled('search')) {

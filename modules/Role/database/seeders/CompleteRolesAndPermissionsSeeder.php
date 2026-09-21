@@ -19,7 +19,10 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         $permissions = $this->getAllPermissions();
 
         foreach ($permissions as $permission => $description) {
-            Permission::findOrCreate($permission, 'web');
+            Permission::updateOrCreate(
+                ['name' => $permission, 'guard_name' => 'web'],
+                ['description' => $description],
+            );
         }
 
         // Crear roles y asignar permisos

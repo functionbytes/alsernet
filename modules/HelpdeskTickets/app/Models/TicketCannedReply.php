@@ -201,7 +201,12 @@ class TicketCannedReply extends Model
      */
     public function canBeEditedBy($userId)
     {
-        return $this->user_id === $userId || auth()->user()?->can('manager.helpdesk.tickets.manage-canned-replies');
+        // 'manager.helpdesk.tickets.manage-canned-replies' nunca existió como
+        // permiso sembrado (parecía un nombre de ruta, no de permiso). El
+        // permiso real que gobierna la edición de respuestas compartidas es
+        // helpdesk.tickets.settings, el mismo que exige el controlador para
+        // entrar a esta pantalla (ver comentario en duplicate()).
+        return $this->user_id === $userId || auth()->user()?->can('helpdesk.tickets.settings');
     }
 
     /**

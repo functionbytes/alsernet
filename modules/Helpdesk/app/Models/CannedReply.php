@@ -143,7 +143,10 @@ class CannedReply extends Model
      */
     public function canBeEditedBy($userId)
     {
-        return $this->user_id === $userId || auth()->user()?->can('manage-helpdesk');
+        // 'manage-helpdesk' nunca existió como permiso sembrado. El permiso
+        // real que gobierna la edición de respuestas predefinidas es
+        // helpdesk.canned-replies.update (ver CannedRepliesController).
+        return $this->user_id === $userId || auth()->user()?->can('helpdesk.canned-replies.update');
     }
 
     /**

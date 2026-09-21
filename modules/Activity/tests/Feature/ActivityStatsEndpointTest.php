@@ -18,7 +18,7 @@ class ActivityStatsEndpointTest extends TestCase
     // 29-ago-2026) - nunca usar RefreshDatabase en este proyecto.
     protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
-    private const PERMISSION = 'Activity.logs.index';
+    private const PERMISSION = 'activity.logs.view';
 
     protected function setUp(): void
     {

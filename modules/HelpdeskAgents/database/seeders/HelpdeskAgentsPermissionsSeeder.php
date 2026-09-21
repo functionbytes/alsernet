@@ -30,9 +30,9 @@ class HelpdeskAgentsPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as [$name, $description]) {
-            Permission::firstOrCreate(
+            Permission::updateOrCreate(
                 ['name' => $name, 'guard_name' => 'web'],
-                ['description' => $description]
+                ['description' => $description],
             );
         }
     }

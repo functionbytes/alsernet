@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+use Modules\Role\Helpers\PermissionHelper;
 use Modules\Role\Services\ActivePermissionService;
 use Nwidart\Modules\Facades\Module;
 use Spatie\Permission\Models\Permission;
@@ -65,7 +65,7 @@ class RolePermissionsController extends Controller
             ->values()
             ->map(fn (string $slug) => [
                 'name' => $slug,
-                'label' => Str::ucfirst(str_replace(['_', '-'], ' ', $slug)),
+                'label' => PermissionHelper::label($slug),
             ]);
 
         $rolePermissionNames = $role->permissions->pluck('name');

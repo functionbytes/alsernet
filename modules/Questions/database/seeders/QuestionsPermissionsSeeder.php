@@ -15,17 +15,23 @@ class QuestionsPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $permisos = ['questions.view', 'questions.moderate'];
+        $permisos = [
+            'questions.view' => 'Ver preguntas',
+            'questions.moderate' => 'Moderar preguntas (responder, publicar, ocultar)',
+        ];
 
-        foreach ($permisos as $nombre) {
-            Permission::firstOrCreate(['name' => $nombre, 'guard_name' => 'web']);
+        foreach ($permisos as $nombre => $descripcion) {
+            Permission::updateOrCreate(
+                ['name' => $nombre, 'guard_name' => 'web'],
+                ['description' => $descripcion],
+            );
         }
 
         foreach (self::ADMIN_ROLES as $nombre) {
             $rol = Role::where('name', $nombre)->where('guard_name', 'web')->first();
 
             if ($rol) {
-                $rol->givePermissionTo($permisos);
+                $rol->givePermissionTo(array_keys($permisos));
             }
         }
 
