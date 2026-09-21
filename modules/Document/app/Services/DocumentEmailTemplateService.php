@@ -503,7 +503,7 @@ class DocumentEmailTemplateService
      * - Español (es): sin prefijo -> /solicitud-documentos
      * - Otros idiomas: con prefijo -> /pt/solicitud-documentos, /fr/solicitud-documentos
      */
-    public static function buildUploadUrl(Document $document): ?string
+    public static function buildUploadUrl(Document $document, ?string $localeOverride = null): ?string
     {
         $uploadPortalTemplate = Setting::get('documents.upload_portal_url');
 
@@ -511,8 +511,10 @@ class DocumentEmailTemplateService
             return null;
         }
 
-        // Obtener el código de idioma (iso_code)
-        $locale = $document->lang->iso_code ?? 'es';
+        // Obtener el código de idioma (iso_code); permite forzar uno distinto
+        // al del propio expediente (p. ej. al insertar un mensaje de
+        // solicitud en un idioma elegido a mano desde el chat).
+        $locale = $localeOverride ?: ($document->lang->iso_code ?? 'es');
 
         // Parsear la URL template para separar dominio y ruta
         $urlParts = parse_url(rtrim($uploadPortalTemplate));
