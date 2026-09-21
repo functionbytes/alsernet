@@ -203,7 +203,26 @@ class ContentGenerationService
                 );
 
             if (! $newPrompt) {
-                throw new Exception('No active prompt found. Please configure a prompt for this subfamily or a global default.');
+                $message = 'No active prompt found. Please configure a prompt for this subfamily or a global default.';
+
+                // Sin esto, un intento de regenerar que falla aquí (antes de
+                // llegar al try/catch de más abajo, que sí loguea vía
+                // ACTION_GENERATION_FAILED) no dejaba ningún rastro en el
+                // Historial del contenido — el agente solo tenía el toast,
+                // que desaparece. No se llama markAsFailed(): no hay
+                // contenido nuevo que haya fallado, el existente (si lo hay)
+                // sigue siendo válido; solo se registra el intento.
+                $content->log(AiContent::ACTION_GENERATION_FAILED, null, null, [
+                    'error' => $message,
+                    'reason' => 'no_prompt_configured',
+                ]);
+
+                // RuntimeException (no Exception genérica): SupplierContentController::action()
+                // solo trata como error "esperado" (400, mensaje propio) las RuntimeException —
+                // el resto cae al catch genérico y responde 500 "Error al ejecutar la acción",
+                // que en este caso concreto oscurecía que el paso anterior (refresh de datos
+                // ERP en el modo "datos actualizados" del botón Regenerar) sí se había guardado.
+                throw new \RuntimeException($message);
             }
         }
 

@@ -63,6 +63,7 @@
         'edited'               => ['icon' => 'fa-pen-to-square','color' => 'primary'],
         'published'            => ['icon' => 'fa-paper-plane',  'color' => 'success'],
         'synced_to_erp'        => ['icon' => 'fa-link',         'color' => 'info'],
+        'erp_data_refreshed'   => ['icon' => 'fa-arrows-rotate','color' => 'info'],
     ];
 @endphp
 
@@ -1152,6 +1153,7 @@
                             'edited'               => 'El contenido fue modificado manualmente por un usuario.',
                             'published'            => 'El contenido fue publicado y enviado al canal destino.',
                             'synced_to_erp'        => 'El contenido fue sincronizado con el sistema ERP.',
+                            'erp_data_refreshed'   => 'Se actualizaron las variantes/atributos del modelo desde el ERP (Gestión).',
                         ];
                         @endphp
                         @if($logs->isEmpty())

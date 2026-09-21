@@ -442,6 +442,14 @@
                                                         </button>
                                                     </li>
                                                 @endif
+                                                @if(! in_array($content->status, ['published', 'published_hidden']))
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item text-danger delete-content-btn" data-uid="{{ $content->uid }}">
+                                                            Eliminar
+                                                        </button>
+                                                    </li>
+                                                @endif
                                             </ul>
                                         </div>
                                     </td>
@@ -964,6 +972,48 @@
         </div>
     </div>
 
+    {{-- Modal: Eliminar contenido (individual) --}}
+    <div class="modal fade" id="delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom px-4 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="d-flex align-items-center justify-content-center rounded-circle bg-danger-subtle"
+                              style="width:32px;height:32px;flex-shrink:0;">
+                            <i class="fas fa-trash text-danger" style="font-size:.8rem;"></i>
+                        </span>
+                        <h6 class="modal-title fw-bold mb-0">Eliminar contenido generado</h6>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p class="text-muted small mb-3">Esta acción no se puede deshacer.</p>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="delete_scope" id="delete-scope-content" value="content" checked>
+                        <label class="form-check-label small fw-semibold" for="delete-scope-content">
+                            Solo el contenido generado
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="delete_scope" id="delete-scope-cascade" value="cascade">
+                        <label class="form-check-label small fw-semibold" for="delete-scope-cascade">
+                            Contenido + modelo y variantes del catálogo local
+                        </label>
+                        <div class="form-text ms-4">
+                            Si el modelo sigue activo en Gestión, puede volver a importarse en la próxima sincronización.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3 d-flex flex-column gap-2">
+                    <button id="delete-confirm-btn" type="button" class="btn btn-danger w-100">
+                        <i class="fas fa-trash me-1"></i> Eliminar
+                    </button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
@@ -1011,6 +1061,7 @@
                             @else
                                 <option value="hold">Marcar como sin contenido</option>
                             @endif
+                            <option value="delete">Eliminar</option>
                         </select>
                     </div>
                     @if($canAssignOthers)
@@ -1517,6 +1568,54 @@ $(document).ready(function() {
                 toastr.error(xhr.responseJSON?.message ?? 'Error al restaurar.');
             },
         });
+    });
+
+    // Eliminar (individual) — con opción de también borrar el modelo/variantes
+    // del catálogo local (soft-delete, reversible; no afecta a Gestión/ERP).
+    // Mismo patrón que el modal "Marcar como sin contenido" (#hold-modal).
+    let _deleteUid = null;
+    const deleteModal = new bootstrap.Modal(document.getElementById('delete-modal'));
+
+    $(document).on('click', '.delete-content-btn', function () {
+        _deleteUid = $(this).data('uid');
+        $('#delete-scope-content').prop('checked', true);
+        deleteModal.show();
+    });
+
+    $('#delete-confirm-btn').on('click', function () {
+        if (!_deleteUid) return;
+
+        const cascade = $('input[name="delete_scope"]:checked').val() === 'cascade';
+        const $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando…');
+
+        $.ajax({
+            url: '{{ route("settings.suppliers.content.bulk-action") }}',
+            method: 'POST',
+            data: JSON.stringify({ action: 'delete', ids: [_deleteUid], cascade_product: cascade, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                const failed = (res.results || []).filter(r => !r.success);
+                if (failed.length) {
+                    toastr.error(failed[0].message || 'No se pudo eliminar');
+                    $btn.prop('disabled', false).html('<i class="fas fa-trash me-1"></i> Eliminar');
+                    return;
+                }
+                deleteModal.hide();
+                toastr.success('Contenido eliminado' + (cascade ? ' junto con el modelo y sus variantes' : ''));
+                setTimeout(() => location.reload(), 600);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al eliminar.');
+                $btn.prop('disabled', false).html('<i class="fas fa-trash me-1"></i> Eliminar');
+            },
+        });
+    });
+
+    document.getElementById('delete-modal').addEventListener('hidden.bs.modal', function () {
+        _deleteUid = null;
+        $('#delete-scope-content').prop('checked', true);
+        $('#delete-confirm-btn').prop('disabled', false).html('<i class="fas fa-trash me-1"></i> Eliminar');
     });
 
     @if (session('success'))

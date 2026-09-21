@@ -17,12 +17,17 @@ class BulkActionContentRequest extends FormRequest
         // calls per ID; without a ceiling a single POST could trigger thousands
         // of paid API calls and starve PHP-FPM workers.
         return [
-            'action' => ['required', 'string', 'in:approve,reject,regenerate,assign,unassign,publish,hold,restore'],
+            'action' => ['required', 'string', 'in:approve,reject,regenerate,assign,unassign,publish,hold,restore,delete'],
             'ids' => ['required', 'array', 'min:1', 'max:200'],
             'ids.*' => ['required', 'string'],
             'user_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
             'publicar' => ['sometimes', 'nullable', 'integer', 'in:0,1'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            // Solo para action=delete: además del registro de contenido, borra
+            // (soft-delete) el modelo/producto y sus variantes en el catálogo
+            // local. Por defecto false — el borrado en lote nunca lo activa
+            // (solo la acción individual del listado ofrece el checkbox).
+            'cascade_product' => ['sometimes', 'boolean'],
         ];
     }
 

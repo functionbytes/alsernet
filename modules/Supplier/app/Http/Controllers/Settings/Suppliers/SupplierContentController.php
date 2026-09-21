@@ -777,6 +777,7 @@ class SupplierContentController extends Controller
                 'publish' => $this->publishMany($uids),
                 'hold' => $this->holdMany($uids, $request->input('notes')),
                 'restore' => $this->restoreMany($uids),
+                'delete' => $this->deleteMany($uids, $request->boolean('cascade_product')),
             };
 
             $successCount = collect($results)->where('success', true)->count();
@@ -1190,6 +1191,10 @@ class SupplierContentController extends Controller
                 return response()->json(['success' => false, 'message' => $refresh['message']], 400);
             }
             $content->refresh();
+            // Deja rastro en el Historial de que el paso 1 (variantes/atributos
+            // desde el ERP) sí se guardó, independientemente de si el paso 2
+            // (regenerar el texto, más abajo) tiene éxito o falla.
+            $content->log('erp_data_refreshed', null, null, ['source' => 'manual_regenerate_full_update']);
         }
 
         if ($action === 'publish_erp') {
@@ -1233,7 +1238,18 @@ class SupplierContentController extends Controller
                 ),
             };
         } catch (\RuntimeException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            $message = $e->getMessage();
+
+            // El refresh de datos ERP (arriba, línea ~1188) ya se guardó en este punto
+            // si llegamos aquí con full_update=1 — este catch es solo del paso 2
+            // (regenerar texto). Sin esta aclaración, el agente ve un error y asume
+            // que la sincronización entera falló, cuando las variantes/atributos ya
+            // quedaron actualizados.
+            if ($action === 'regenerate' && $request->boolean('full_update')) {
+                $message = 'Los datos del modelo (variantes/atributos) se actualizaron correctamente desde el ERP, pero no se pudo regenerar el texto: '.$message;
+            }
+
+            return response()->json(['success' => false, 'message' => $message], 400);
         } catch (\Throwable $e) {
             Log::error('Error performing action: '.$e->getMessage());
 
@@ -1514,6 +1530,63 @@ class SupplierContentController extends Controller
 
             try {
                 $content->holdWithNote($notes, $userId);
+                $results[] = ['uid' => $uid, 'success' => true];
+            } catch (\Throwable $e) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Elimina registros de contenido IA (borrado físico: AiContent no tiene
+     * SoftDeletes). Con $cascadeProduct=true, además hace soft-delete del
+     * Product y sus ProductAttribute (mismo mecanismo que usa el propio sync
+     * cuando una variante desaparece del ERP — reversible, no dispara nada
+     * hacia el ERP: SupplierProductObserver solo reacciona a `updated`, no a
+     * `deleted`). Se cascadea SIEMPRE que se pida, aunque exista otro
+     * AiContent apuntando al mismo producto — ese otro registro quedaría con
+     * su relación `supplierProduct` sin resolver (decisión explícita, no
+     * bloquear ni avisar).
+     *
+     * El modelo/producto NO se borra de Gestión (ERP) — solo de la copia
+     * local. Si el modelo sigue activo allí, el próximo sync puede volver a
+     * traerlo.
+     *
+     * @param  array<int, string>  $uids
+     * @return array<int, array{uid: string, success: bool, message?: string}>
+     */
+    private function deleteMany(array $uids, bool $cascadeProduct = false): array
+    {
+        $contents = AiContent::with('supplierProduct')->whereIn('uid', $uids)->get()->keyBy('uid');
+        $results = [];
+
+        foreach ($uids as $uid) {
+            $content = $contents->get($uid);
+
+            if (! $content) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No encontrado'];
+
+                continue;
+            }
+
+            if (in_array($content->status, [AiContent::STATUS_PUBLISHED, AiContent::STATUS_PUBLISHED_HIDDEN])) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => 'Ya está publicado en el ERP, no se puede eliminar'];
+
+                continue;
+            }
+
+            try {
+                $product = $content->supplierProduct;
+
+                $content->delete();
+
+                if ($cascadeProduct && $product) {
+                    $product->attributes()->delete();
+                    $product->delete();
+                }
+
                 $results[] = ['uid' => $uid, 'success' => true];
             } catch (\Throwable $e) {
                 $results[] = ['uid' => $uid, 'success' => false, 'message' => $e->getMessage()];
