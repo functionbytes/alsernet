@@ -61,6 +61,13 @@ Route::middleware('integration.enabled:document')->group(function () {
         ->middleware(['throttle:60,1', 'can:helpdesk.documents.manage'])
         ->name('manager.helpdesk.conversations.documents.search');
 
+    // Mensaje de "solicitar documento" (instrucciones traducidas + URL de
+    // subida) para insertar en el composer del chat — modal independiente
+    // del de crear/asignar expediente.
+    Route::get('/conversations/{conversation}/documents/{document}/request-message', [DocumentCreateController::class, 'requestMessage'])
+        ->middleware(['throttle:60,1', 'can:helpdesk.documents.manage'])
+        ->name('manager.helpdesk.conversations.documents.request-message');
+
     // Cargar documentos desde la galería del chat (importar adjuntos como documento)
     Route::post('/conversations/{conversation}/documents/import-from-chat', [ChatGalleryDocumentController::class, 'importFromChat'])
         ->middleware(['throttle:30,1', 'can:helpdesk.documents.manage'])

@@ -3,11 +3,13 @@
 namespace Modules\HelpdeskDocument\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentAction;
 use Modules\Document\Entities\DocumentType;
+use Modules\Document\Services\DocumentEmailTemplateService;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskDocument\Concerns\AuthorizesConversationDocuments;
 use Modules\HelpdeskDocument\Http\Requests\Managers\CreateConversationDocumentRequest;
@@ -23,6 +25,13 @@ use Modules\HelpdeskDocument\Support\PhoneMatcher;
 class DocumentCreateController extends Controller
 {
     use AuthorizesConversationDocuments;
+
+    /**
+     * Idiomas con textos de instrucciones traducidos en
+     * resources/lang/{locale}/documents.php — el selector de idioma del
+     * modal de "solicitar documento" no ofrece más que estos.
+     */
+    private const SUPPORTED_MESSAGE_LOCALES = ['es', 'en', 'it', 'de', 'pt'];
 
     /**
      * Tipos de documento disponibles para el modal "Nuevo expediente".
@@ -111,6 +120,19 @@ class DocumentCreateController extends Controller
 
         $q = trim((string) $request->query('q', ''));
 
+        // Búsqueda vacía: autosugerencia de los expedientes que YA tiene el
+        // cliente de la conversación (mismo criterio de email/teléfono/vínculo
+        // manual que el tab Documento), para no obligar al agente a teclear
+        // cuando el expediente que busca es el mismo de siempre. El modal de
+        // "asignar expediente" (docs-assign-search) nunca llama a esta ruta
+        // con q vacío — corta en el propio JS antes de los 2 caracteres —, así
+        // que esta rama solo la alcanza el nuevo modal de "solicitar documento".
+        if ($q === '') {
+            $documents = app(ConversationDocumentLinker::class)->documentsForConversation($conversation);
+
+            return response()->json(['results' => $this->presentSearchResults($documents, true)]);
+        }
+
         if (mb_strlen($q) < 2) {
             return response()->json(['results' => []]);
         }
@@ -159,17 +181,72 @@ class DocumentCreateController extends Controller
             ->get();
 
         return response()->json([
-            'results' => $documents->map(function (Document $document) use ($canSearchGlobally) {
-                $name = trim(($document->customer_firstname ?? '').' '.($document->customer_lastname ?? ''));
+            'results' => $this->presentSearchResults($documents, $canSearchGlobally),
+        ]);
+    }
 
-                return [
-                    'id' => $document->id,
-                    'order_reference' => $document->order_reference ?: (string) $document->id,
-                    'type_label' => $document->documentType?->label,
-                    'customer_name' => $name !== '' ? $name : null,
-                    'customer_email' => $canSearchGlobally ? $document->customer_email : null,
-                ];
-            })->values(),
+    /**
+     * @param  Collection<int, Document>  $documents
+     * @return array<int, array{id: int, order_reference: string, type_label: ?string, customer_name: ?string, customer_email: ?string}>
+     */
+    private function presentSearchResults(Collection $documents, bool $includeEmail): array
+    {
+        return $documents->map(function (Document $document) use ($includeEmail) {
+            $name = trim(($document->customer_firstname ?? '').' '.($document->customer_lastname ?? ''));
+
+            return [
+                'id' => $document->id,
+                'order_reference' => $document->order_reference ?: (string) $document->id,
+                'type_label' => $document->documentType?->label,
+                'customer_name' => $name !== '' ? $name : null,
+                'customer_email' => $includeEmail ? $document->customer_email : null,
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Arma el mensaje de "solicitud de documento" para insertar en el
+     * composer del chat: instrucciones del tipo de expediente ya traducidas
+     * (resources/lang/{locale}/documents.php, el mismo texto que usan los
+     * emails de solicitud) + la URL de subida, ambas en el idioma elegido
+     * (no necesariamente el idioma propio del expediente).
+     *
+     * Sin ?locale= explícito, el default es el idioma del CHAT (detectado por
+     * HelpdeskTranslate en helpdesk_customers.language a partir del primer
+     * mensaje del cliente), no el del expediente — pueden no coincidir (p. ej.
+     * expediente abierto en es, cliente escribiendo en en). Solo si ese idioma
+     * no está entre los soportados aquí cae al del propio expediente.
+     */
+    public function requestMessage(Conversation $conversation, Document $document, Request $request): JsonResponse
+    {
+        $this->assertDocumentBelongsToConversation($conversation, $document);
+
+        $locale = $request->query('locale');
+
+        if (! in_array($locale, self::SUPPORTED_MESSAGE_LOCALES, true)) {
+            $chatLocale = $conversation->customer?->language;
+            $locale = in_array($chatLocale, self::SUPPORTED_MESSAGE_LOCALES, true)
+                ? $chatLocale
+                : ($document->lang->iso_code ?? 'es');
+        }
+
+        $uploadUrl = DocumentEmailTemplateService::buildUploadUrl($document, $locale);
+
+        if (! $uploadUrl) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay un portal de carga de documentos configurado.',
+            ], 422);
+        }
+
+        $slug = $document->documentType?->slug ?: 'general';
+        $instructions = trim((string) trans("documents.types.{$slug}.instructions", [], $locale));
+
+        return response()->json([
+            'success' => true,
+            'message' => trim($instructions."\n\n".$uploadUrl),
+            'url' => $uploadUrl,
+            'locale' => $locale,
         ]);
     }
 
