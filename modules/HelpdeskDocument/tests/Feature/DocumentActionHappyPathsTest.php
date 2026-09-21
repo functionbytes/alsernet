@@ -147,6 +147,27 @@ class DocumentActionHappyPathsTest extends HelpdeskTestCase
     }
 
     /**
+     * Un agente con permiso sobre SU expediente no puede borrar, a través de él,
+     * el adjunto de otro expediente cambiando el id de la URL.
+     */
+    public function test_cannot_delete_an_attachment_that_belongs_to_another_document(): void
+    {
+        [$conversation, $document] = $this->makeOwnedExpediente();
+        [, $other] = $this->makeOwnedExpediente('otro@example.com');
+
+        $foreign = $other
+            ->addMedia(UploadedFile::fake()->create('ajeno.pdf', 80, 'application/pdf'))
+            ->toMediaCollection('additional_attachments');
+
+        $this->actingAs($this->manager)
+            ->deleteJson($this->urlFor('delete-attachment', $conversation, $document, $foreign->id))
+            ->assertNotFound()
+            ->assertJson(['success' => false]);
+
+        $this->assertCount(1, $other->fresh()->getMedia('additional_attachments'));
+    }
+
+    /**
      * BUG-04: un adjunto adicional no es un documento requerido — borrarlo no
      * debe reabrir un expediente ya aprobado/completado devolviéndolo a
      * "awaiting_documents" (root cause en DocumentValidationController::

@@ -165,6 +165,16 @@ class DocumentActionController extends Controller
     {
         $this->assertDocumentBelongsToConversation($conversation, $document);
 
+        // El delegado solo compara model_id, no model_type: un Media de otro
+        // modelo con el mismo id numérico que el expediente pasaba el guard.
+        // La relación media() acota por tipo e id.
+        if (! $document->media()->whereKey($mediaId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo no encontrado o no pertenece a este documento',
+            ], 404);
+        }
+
         return $this->validation->deleteAdditionalAttachment($document->uid, $mediaId);
     }
 
