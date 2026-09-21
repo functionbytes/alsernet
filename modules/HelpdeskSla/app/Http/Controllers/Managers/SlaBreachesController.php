@@ -30,8 +30,10 @@ class SlaBreachesController extends Controller
             ->with(['conversation' => fn ($query) => $query->with('customer')])
             ->when($request->filled('sla_type'), fn ($query) => $query->where('sla_type', $request->string('sla_type')))
             ->when($request->filled('resolved'), fn ($query) => $query->where('resolved', $request->boolean('resolved')))
-            ->when($request->filled('from'), fn ($query) => $query->whereDate('breached_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->whereDate('breached_at', '<=', $request->date('to')))
+            // Rangos sobre la columna en vez de whereDate(): DATE(breached_at)
+            // inutiliza el índice de breached_at.
+            ->when($request->filled('from'), fn ($query) => $query->where('breached_at', '>=', $request->date('from')->startOfDay()))
+            ->when($request->filled('to'), fn ($query) => $query->where('breached_at', '<=', $request->date('to')->endOfDay()))
             ->latest('breached_at')
             ->paginate($request->integer('per_page', 20));
 

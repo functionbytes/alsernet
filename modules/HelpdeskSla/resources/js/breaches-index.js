@@ -38,7 +38,7 @@
             var html = rows.map(function (r) {
                 var badge = r.resolved
                     ? '<span class="badge bg-success-subtle text-success">Resuelto</span>'
-                    : '<span class="badge bg-danger-subtle text-danger">Sin resolver</span>';
+                    : '<span class="badge bg-brand-subtle text-brand">Sin resolver</span>';
                 var actions = r.resolved ? '' :
                     '<div class="dropdown">' +
                       '<button class="btn btn-sm btn-link text-body" data-bs-toggle="dropdown" aria-expanded="false">' +
@@ -69,7 +69,7 @@
                 return;
             }
             $('#breach-pagination-info').removeClass('d-none');
-            $('#breach-pagination-summary').text('Pagina ' + meta.currentPage + ' de ' + meta.lastPage + ' — ' + meta.total + ' incumplimiento(s)');
+            $('#breach-pagination-summary').text('Página ' + meta.currentPage + ' de ' + meta.lastPage + ' — ' + meta.total + ' incumplimiento(s)');
             lastPage = meta.lastPage;
 
             $pag.append('<li class="page-item' + (meta.currentPage === 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (meta.currentPage - 1) + '">&laquo;</a></li>');

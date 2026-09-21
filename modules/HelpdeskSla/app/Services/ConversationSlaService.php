@@ -589,7 +589,14 @@ class ConversationSlaService
             $total = $this->businessHours->businessMinutesBetween($created, $due);
             $used = $this->businessHours->businessMinutesBetween($created, $now);
         } else {
-            $total = abs($created->diffInMinutes($due));
+            // resumeSla()/recalculate() ya estiraron $due por los minutos en
+            // pausa: hay que descontarlos también del plazo total, no solo del
+            // consumido. Si no, con 30 min de pausa en una política de 10 min
+            // (due = +40) el 80% real se calculaba como 8/40 = 20% y el aviso
+            // nunca saltaba antes del incumplimiento. En horas hábiles la
+            // extensión es en minutos naturales y no se puede descontar de
+            // forma exacta del tiempo hábil, así que ahí se deja como estaba.
+            $total = max(0, abs($created->diffInMinutes($due)) - $pausedMinutes);
             $used = abs($created->diffInMinutes($now));
         }
 
