@@ -958,21 +958,64 @@ class ConversationsController extends Controller
         }
 
         if ($request->has('status_id')) {
-            $conversation->status_id = $request->validated()['status_id'];
-            $statusChanged = $conversation->isDirty('status_id');
-            $conversation->save();
+            $targetStatus = ConversationStatus::find($request->validated()['status_id']);
+            $oldStatusId = $conversation->status_id;
+            $wasClosed = $conversation->closed_at !== null;
+            $slug = $targetStatus ? strtolower((string) ($targetStatus->slug ?: $targetStatus->name)) : null;
 
-            $status = $conversation->status()->first();
-
-            // Ver comentario equivalente en close()/reopen(): sin este dispatch,
-            // cambiar el estado desde el desplegable "Estado" del panel derecho no
-            // dejaba rastro en la pestaña "Actividad" ni notificaba al widget del
-            // cliente en tiempo real (único listener: LogActivityOnConversation
-            // StatusChanged, que escucha ConversationStatusChanged, no el genérico
-            // ConversationUpdated que dispara el observer).
-            if ($statusChanged && $status) {
-                ConversationStatusChanged::dispatch($conversation, $status, auth()->id());
+            // Elegir "Resuelto"/"Cerrado" (o reabrir) desde este desplegable
+            // antes hacía un UPDATE crudo de status_id: no llamaba a
+            // close()/resolve()/reopen() del modelo, así que se saltaba TODO
+            // lo que cuelga de ConversationClosed (encuesta CSAT, mensaje de
+            // despedida, alta en drip campaigns, automatizaciones "on
+            // closed") y nunca tocaba closed_at — una conversación reabierta
+            // desde aquí se quedaba con closed_at de cuando se cerró, aunque
+            // el estado ya no fuera "Cerrado". Ahora reutiliza los mismos
+            // métodos que el modal "Cerrar conversación"
+            // (ConversationsController::close()), para que cerrar/resolver
+            // tenga siempre el mismo efecto sin importar por qué UI se hizo.
+            if ($slug === 'resolved') {
+                $conversation->resolve();
+            } elseif ($slug === 'closed') {
+                $conversation->close();
+            } else {
+                // Nuevo/Activo/Esperando/Archivado: respeta el status_id
+                // exacto elegido (no el default de reopen(), que siempre usa
+                // el primer is_open=true por orden — aquí el agente ya
+                // escogió uno concreto).
+                $conversation->status_id = $targetStatus?->id ?? $conversation->status_id;
+                if ($wasClosed && $targetStatus?->is_open) {
+                    $conversation->closed_at = null;
+                }
+                $conversation->save();
+                $conversation->broadcastInboxChanged('status_changed');
             }
+
+            $statusChanged = $targetStatus && $targetStatus->id !== $oldStatusId;
+
+            if ($statusChanged && $targetStatus) {
+                // Ver comentario equivalente en close()/reopen(): sin este dispatch,
+                // cambiar el estado desde el desplegable "Estado" del panel derecho no
+                // dejaba rastro en la pestaña "Actividad" ni notificaba al widget del
+                // cliente en tiempo real (único listener: LogActivityOnConversation
+                // StatusChanged, que escucha ConversationStatusChanged, no el genérico
+                // ConversationUpdated que dispara el observer).
+                ConversationStatusChanged::dispatch($conversation, $targetStatus, auth()->id());
+
+                if (in_array($slug, ['resolved', 'closed'], true)) {
+                    ConversationClosed::dispatch($conversation);
+
+                    // Sin checkbox de "enviar CSAT" en este desplegable (a
+                    // diferencia del modal de cierre, donde el agente lo
+                    // marca a propósito): por defecto NO se manda encuesta
+                    // aquí, igual que el modal cuando el agente deja esa
+                    // casilla sin marcar — evitamos sorprender al cliente con
+                    // una encuesta por un cambio de estado rápido sin ese
+                    // control explícito.
+                }
+            }
+
+            $status = $conversation->fresh('status')->status;
 
             return response()->json([
                 'success' => true,
@@ -1103,7 +1146,15 @@ class ConversationsController extends Controller
     {
         $this->authorize('update', $conversation);
 
-        $conversation->close();
+        // El modal de cierre manda el motivo elegido en `reason`. Solo
+        // "Resuelto" desvía a resolve() (estado 'resolved'); el resto de
+        // motivos, incluido el nuevo "Cerrado" explícito, siguen cerrando
+        // como 'closed' — mismo comportamiento que antes de este fix.
+        if ($request->input('reason') === 'resolved') {
+            $conversation->resolve();
+        } else {
+            $conversation->close();
+        }
 
         ConversationClosed::dispatch($conversation);
 

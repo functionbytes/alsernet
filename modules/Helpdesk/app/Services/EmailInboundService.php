@@ -65,8 +65,16 @@ class EmailInboundService
         // wasRecentlyCreated distingue el hilo nuevo del que solo recibe otro
         // mensaje: resolveConversation() devuelve una u otra cosa según el
         // tag [CONV-{id}] del asunto.
-        if ($conversation->wasRecentlyCreated && config('helpdesk.email_inbound.dispatch_conversation_created', false)) {
-            ConversationCreated::dispatch($conversation);
+        if ($conversation->wasRecentlyCreated) {
+            if (config('helpdesk.email_inbound.dispatch_conversation_created', false)) {
+                ConversationCreated::dispatch($conversation);
+            }
+        } elseif (helpdesk_off_hours_feature_enabled() && ! app(BusinessHoursService::class)->isOpenNow()) {
+            // Mismo caso que InboundMessageIngestor::ingest(): correo en un
+            // hilo YA existente mientras seguimos fuera de horario. No
+            // depende del flag dispatch_conversation_created de arriba (ese
+            // solo gatea el aviso en el PRIMER correo del hilo).
+            app(OffHoursAutoReplyService::class)->maybeReplyToExistingConversation($conversation);
         }
 
         return $conversation;

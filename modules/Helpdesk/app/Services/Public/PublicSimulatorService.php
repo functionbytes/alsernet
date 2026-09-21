@@ -14,8 +14,10 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\BusinessHoursService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\Helpdesk\Services\InstagramService;
+use Modules\Helpdesk\Services\OffHoursAutoReplyService;
 use Modules\Helpdesk\Services\Webhooks\FacebookMessageProcessor;
 use Modules\Helpdesk\Services\Webhooks\InstagramMessageProcessor;
 use Modules\Helpdesk\Services\Webhooks\WhatsAppMessageProcessor;
@@ -335,6 +337,11 @@ class PublicSimulatorService
             // horario, workflows) corría al simular por el canal web.
             if ($conversation->wasRecentlyCreated) {
                 ConversationCreated::dispatch($conversation);
+            } elseif (helpdesk_off_hours_feature_enabled() && ! app(BusinessHoursService::class)->isOpenNow()) {
+                // Mismo caso que InboundMessageIngestor::ingest(): mensaje en
+                // una conversación simulada YA existente mientras seguimos
+                // fuera de horario.
+                app(OffHoursAutoReplyService::class)->maybeReplyToExistingConversation($conversation);
             }
 
             if ($conversation->assignee_id) {

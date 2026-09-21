@@ -886,6 +886,8 @@ return [
             'close_conv_reason_label' => 'Closing reason',
             'close_conv_reason_resolved' => 'Resolved',
             'close_conv_reason_resolved_desc' => 'The customer was satisfied with the solution',
+            'close_conv_reason_closed' => 'Closed',
+            'close_conv_reason_closed_desc' => 'General closing, without marking it as resolved',
             'close_conv_reason_duplicated' => 'Duplicate',
             'close_conv_reason_duplicated_desc' => 'There is already another open conversation for this case',
             'close_conv_reason_spam' => 'Spam / not applicable',

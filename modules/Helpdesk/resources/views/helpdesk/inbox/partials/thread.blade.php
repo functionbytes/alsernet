@@ -2,6 +2,9 @@
 @if(helpdesk_helpcenter_enabled())
     @includeIf('helpdeskhelpcenter::partials.thread-extension')
 @endif
+@if(helpdesk_document_enabled())
+    @includeIf('helpdeskdocument::partials.thread-extension')
+@endif
 @php
     $convo = $selectedConversation ?? null;
     $cust = $convo?->customer;

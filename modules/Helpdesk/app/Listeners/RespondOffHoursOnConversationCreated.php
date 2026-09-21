@@ -5,12 +5,9 @@ namespace Modules\Helpdesk\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Concerns\LocalizesAutoReplyMessage;
 use Modules\Helpdesk\Events\ConversationCreated;
-use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Models\OffHoursResponse;
 use Modules\Helpdesk\Services\BusinessHoursService;
-use Modules\Helpdesk\Services\OutboundMessageService;
+use Modules\Helpdesk\Services\OffHoursAutoReplyService;
 use Throwable;
 
 /**
@@ -39,7 +36,6 @@ use Throwable;
 class RespondOffHoursOnConversationCreated implements ShouldQueue
 {
     use InteractsWithQueue;
-    use LocalizesAutoReplyMessage;
 
     public string $queue = 'helpdesk';
 
@@ -57,51 +53,7 @@ class RespondOffHoursOnConversationCreated implements ShouldQueue
             return;
         }
 
-        $conversation = $event->conversation;
-
-        if ($this->customerRecentlyContacted($conversation)) {
-            return;
-        }
-
-        $source = strtolower(substr((string) config('app.locale', 'es'), 0, 2));
-        $customerLanguage = $this->resolveCustomerLanguage($conversation, $source);
-
-        $response = OffHoursResponse::findForChannel($conversation->channel, $customerLanguage);
-
-        if (! $response) {
-            return;
-        }
-
-        // Un OffHoursResponse con `language` propio fue redactado a mano para
-        // ese idioma exacto — se envía tal cual. Solo el genérico (sin idioma
-        // asignado) pasa por traducción automática al vuelo.
-        $message = $response->language
-            ? $response->message
-            : $this->localize($response->message, $customerLanguage, $source);
-
-        try {
-            // En canales externos (WhatsApp/FB/IG) empuja por la API; en web/widget
-            // devuelve null y el cliente recibe el mensaje a través del
-            // ConversationItem (el widget lo recoge por su propio canal/polling).
-            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message, fast: true);
-
-            ConversationItem::create([
-                'conversation_id' => $conversation->id,
-                'user_id' => null,
-                'type' => 'message',
-                'body' => $message,
-                'is_internal' => false,
-                'external_id' => $externalId,
-                'metadata' => ['auto_reply' => 'off_hours'],
-            ]);
-
-            $conversation->update(['last_message_at' => now()]);
-        } catch (Throwable $e) {
-            Log::warning('RespondOffHoursOnConversationCreated: failed to send off-hours reply', [
-                'conversation_id' => $conversation->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        app(OffHoursAutoReplyService::class)->maybeReplyToNewConversation($event->conversation);
     }
 
     public function failed(ConversationCreated $event, Throwable $exception): void

@@ -513,6 +513,31 @@ class Conversation extends Model
     }
 
     /**
+     * Resolve conversation: estado "Resuelto", distinto de close() ("Cerrado").
+     * Solo lo usa el modal de cierre del inbox cuando el agente elige
+     * explícitamente el motivo "Resuelto" — el resto de motivos (incluido el
+     * nuevo "Cerrado") siguen llamando a close(). No tocar close() para esto:
+     * otros llamadores (auto-close por inactividad, API pública, bulk
+     * actions) dependen de que SIEMPRE marque 'closed', nunca 'resolved' (ver
+     * comentario en close()).
+     */
+    public function resolve()
+    {
+        $resolvedStatus = Cache::remember('helpdesk:conv-resolved-status', 3600, fn () => ConversationStatus::where('slug', 'resolved')
+            ->orWhere('name', 'resolved')
+            ->first());
+
+        $this->update([
+            'status_id' => $resolvedStatus->id ?? $this->status_id,
+            'closed_at' => now(),
+        ]);
+
+        $this->broadcastInboxChanged('status_changed');
+
+        return $this;
+    }
+
+    /**
      * Reopen conversation
      */
     public function reopen()

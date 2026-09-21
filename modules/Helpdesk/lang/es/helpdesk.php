@@ -849,6 +849,8 @@ return [
             'close_conv_reason_label' => 'Motivo de cierre',
             'close_conv_reason_resolved' => 'Resuelto',
             'close_conv_reason_resolved_desc' => 'El cliente quedó satisfecho con la solución',
+            'close_conv_reason_closed' => 'Cerrado',
+            'close_conv_reason_closed_desc' => 'Cierre general, sin marcarla como resuelta',
             'close_conv_reason_duplicated' => 'Duplicado',
             'close_conv_reason_duplicated_desc' => 'Ya hay otra conversación abierta para este caso',
             'close_conv_reason_spam' => 'Spam / no procede',

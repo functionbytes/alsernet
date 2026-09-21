@@ -128,6 +128,16 @@
                 '<i class="fas fa-ticket"></i>', 'Crear ticket para «' + query + '»', null);
         }
 
+        // Recomendar producto (HelpdeskPrestashop) — solo si ese módulo/tab
+        // cargó su JS en esta página (window.openProductRecommend, definido en
+        // product-recommend.js). No depende del texto buscado: usa el cliente
+        // de la conversación abierta, igual que el tile del tab Tienda.
+        if (typeof window.openProductRecommend === 'function') {
+            _results.push({ action: 'recommend-product' });
+            html += itemHtml(_results.length - 1,
+                '<i class="fas fa-star"></i>', 'Recomendar producto', null);
+        }
+
         if (!found) {
             html = '<div class="bv-cmd-empty"><i class="fas fa-inbox"></i>' +
                    '<span>Sin resultados para «' + esc(query) + '»</span></div>' + html;
@@ -183,6 +193,8 @@
             openBvByName('newconv');
         } else if (r.action === 'create-ticket') {
             openBvByName('create-ticket');
+        } else if (r.action === 'recommend-product') {
+            window.openProductRecommend();
         } else if (r.url) {
             window.location.href = r.url;
         }

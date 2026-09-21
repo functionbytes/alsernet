@@ -12,6 +12,8 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\Helpdesk\Services\BusinessHoursService;
+use Modules\Helpdesk\Services\OffHoursAutoReplyService;
 use Modules\Helpdesk\Support\ChannelMetrics;
 
 /**
@@ -64,6 +66,14 @@ class InboundMessageIngestor
         if ($conversation->wasRecentlyCreated) {
             $customer->incrementConversationCount();
             ConversationCreated::dispatch($conversation);
+        } elseif (helpdesk_off_hours_feature_enabled() && ! app(BusinessHoursService::class)->isOpenNow()) {
+            // Mensaje entrante en una conversación YA existente mientras
+            // seguimos fuera de horario — antes esto no avisaba nunca (solo
+            // ConversationCreated lo hacía, y eso solo dispara en la
+            // primera). maybeReplyToExistingConversation() exige que la
+            // conversación siga abierta y no repite si ya se avisó hace poco
+            // (ver OffHoursAutoReplyService).
+            app(OffHoursAutoReplyService::class)->maybeReplyToExistingConversation($conversation);
         }
 
         if ($downloadAttachments !== []) {

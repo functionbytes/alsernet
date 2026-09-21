@@ -1,5 +1,15 @@
 {{-- Modal: Atajos de teclado (#56 ve-shortcuts · ?) --}}
 @php
+    $composerRows = [
+        ['Enviar mensaje', ['⌘', '⏎']],
+        ['Nueva línea', ['⇧', '⏎']],
+        ['Respuestas guardadas', ['/']],
+        ['Mencionar agente', ['@']],
+    ];
+    if (helpdesk_document_enabled()) {
+        $composerRows[] = ['Solicitar documento', ['D']];
+    }
+
     $shortcutCols = [
         ['Navegación', [
             ['Buscar global', ['⌘', 'K']],
@@ -19,12 +29,7 @@
             ['Aplicar macro', ['M']],
             ['Cerrar conversación', ['#']],
         ]],
-        ['Composer', [
-            ['Enviar mensaje', ['⌘', '⏎']],
-            ['Nueva línea', ['⇧', '⏎']],
-            ['Respuestas guardadas', ['/']],
-            ['Mencionar agente', ['@']],
-        ]],
+        ['Composer', $composerRows],
         ['Bandeja y sistema', [
             ['No leídas', ['G', 'U']],
             ['Mías', ['G', 'M']],

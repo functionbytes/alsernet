@@ -10843,6 +10843,32 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     outline: none;
 }
 
+/* select2 dentro de modales hd (mismo tratamiento que .bv-modal arriba, para
+   los overlays #hdCannedOverlay/#hdArticleOverlay/#hdDocReqOverlay) */
+.hd-modal .select2-container { width: 100% !important; font-family: inherit; }
+.hd-modal .select2-container .select2-selection--single {
+    height: auto;
+    border: 1px solid #dde0e3;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: #fff;
+}
+.hd-modal .select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    line-height: 1.4;
+    font-size: 14px;
+    color: #1f2937;
+}
+.hd-modal .select2-container .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    top: 0;
+    right: 8px;
+}
+.hd-modal .select2-container--default.select2-container--open .select2-selection--single,
+.hd-modal .select2-container--default .select2-selection--single:focus {
+    border-color: #374151;
+}
+
 
 /* checkboxes */
 .bv-modal .check {

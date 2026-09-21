@@ -29,6 +29,15 @@
                         </div>
                         <div class="radio"></div>
                     </div>
+                    <div class="reason" data-reason="closed">
+                        <input type="radio" name="close_reason" value="closed" class="d-none">
+                        <div class="ic"><i class="fa-solid fa-door-closed"></i></div>
+                        <div class="body">
+                            <span class="t">{{ __('helpdesk::helpdesk.inbox.modals.close_conv_reason_closed') }}</span>
+                            <span class="s">{{ __('helpdesk::helpdesk.inbox.modals.close_conv_reason_closed_desc') }}</span>
+                        </div>
+                        <div class="radio"></div>
+                    </div>
                     <div class="reason" data-reason="duplicated">
                         <input type="radio" name="close_reason" value="duplicated" class="d-none">
                         <div class="ic"><i class="fa-solid fa-copy"></i></div>
