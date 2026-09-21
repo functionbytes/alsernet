@@ -24,8 +24,11 @@ class HelpCenterPublicController extends Controller
             ->visibleToRole($request->user())
             ->select('id', 'title', 'slug', 'description', 'views_count', 'published_at');
 
-        if ($request->filled('q')) {
-            $term = $request->input('q');
+        // stringInput(): ?q[]=a llegaba como array a buildBooleanTerm(string) y
+        // a la interpolación del LIKE (TypeError → 500), igual que en search().
+        $term = trim($this->stringInput($request, 'q'));
+
+        if ($term !== '') {
             $booleanTerm = $this->buildBooleanTerm($term);
 
             if ($booleanTerm !== null) {
@@ -43,8 +46,9 @@ class HelpCenterPublicController extends Controller
             }
         }
 
-        if ($request->filled('category')) {
-            $categorySlug = $request->input('category');
+        $categorySlug = $this->stringInput($request, 'category');
+
+        if ($categorySlug !== '') {
             $query->whereHas('categories', function ($q) use ($categorySlug) {
                 $q->where('slug', $categorySlug)
                     ->orWhereHas('parent', fn ($p) => $p->where('slug', $categorySlug));
@@ -64,7 +68,7 @@ class HelpCenterPublicController extends Controller
             ->orderBy('position')
             ->get();
 
-        return view('helpdeskhelpcenter::public.helpcenter.index', compact('articles', 'categories', 'locale'));
+        return view('helpdeskhelpcenter::public.helpcenter.index', compact('articles', 'categories', 'locale', 'term'));
     }
 
     public function show(Request $request, string $slug): View

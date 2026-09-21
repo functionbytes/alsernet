@@ -24,7 +24,7 @@
         <form action="{{ route('public.helpcenter.index') }}" method="GET" class="mb-0">
             <label class="visually-hidden" for="helpcenter-search-input">Buscar en el centro de ayuda</label>
             <div class="input-group helpcenter-search">
-                <input type="text" id="helpcenter-search-input" name="q" class="form-control" placeholder="Busca un artículo..." value="{{ request('q') }}">
+                <input type="text" id="helpcenter-search-input" name="q" class="form-control" placeholder="Busca un artículo..." value="{{ $term }}">
                 <button class="btn btn-dark px-4" type="submit" aria-label="Buscar">
                     <i class="fas fa-search"></i>
                 </button>
@@ -62,9 +62,9 @@
 
         <section class="{{ $categories->isNotEmpty() ? 'col-lg-9' : 'col-12' }}">
 
-            @if(request()->filled('q'))
+            @if($term !== '')
                 <h5 class="mb-4 text-muted">
-                    Resultados para: <strong>{{ request('q') }}</strong>
+                    Resultados para: <strong>{{ $term }}</strong>
                     <a href="{{ route('public.helpcenter.index') }}" class="btn btn-sm btn-outline-secondary ms-2">
                         <i class="fas fa-times me-1"></i> Limpiar
                     </a>
@@ -79,13 +79,13 @@
                         </div>
                         <h5 class="mb-2">No se encontraron artículos</h5>
                         <p class="text-muted mb-3">
-                            @if(request()->filled('q'))
+                            @if($term !== '')
                                 Prueba con otros términos de búsqueda
                             @else
                                 Aún no hay artículos publicados
                             @endif
                         </p>
-                        @if(request()->filled('q'))
+                        @if($term !== '')
                             <a href="{{ route('public.helpcenter.index') }}" class="btn btn-outline-secondary btn-sm">
                                 Ver todos los artículos
                             </a>

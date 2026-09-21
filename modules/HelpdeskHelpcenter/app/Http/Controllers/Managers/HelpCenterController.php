@@ -580,7 +580,9 @@ class HelpCenterController extends Controller
 
         $this->authorize('viewAny', HelpCenterArticle::class);
 
-        $q = $request->get('q', '');
+        // ?q[]=a llegaba como array a buildBooleanTerm(string) (TypeError → 500).
+        $q = $request->input('q');
+        $q = is_string($q) ? $q : '';
 
         $articles = HelpCenterArticle::query()
             ->where('is_published', true)
@@ -684,7 +686,11 @@ class HelpCenterController extends Controller
     {
         $this->authorize('manage', HelpCenterCategory::class);
 
-        $ids = $request->input('ids', []);
+        $ids = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer'],
+        ])['ids'] ?? [];
+
         DB::connection('helpdesk')->transaction(function () use ($ids) {
             foreach ($ids as $position => $id) {
                 HelpCenterCategory::where('id', $id)->update(['position' => $position]);
@@ -699,10 +705,18 @@ class HelpCenterController extends Controller
     {
         $this->authorize('manage', HelpCenterArticle::class);
 
-        $ids = $request->input('ids', []);
-        DB::connection('helpdesk')->transaction(function () use ($ids) {
+        $ids = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer'],
+        ])['ids'] ?? [];
+
+        // Acotado a la sección de la URL: sin esto se podía reposicionar
+        // cualquier artículo del centro de ayuda pasando su id.
+        DB::connection('helpdesk')->transaction(function () use ($ids, $sectionId) {
             foreach ($ids as $position => $id) {
-                HelpCenterArticle::where('id', $id)->update(['position' => $position]);
+                HelpCenterArticle::where('id', $id)
+                    ->whereHas('categories', fn ($q) => $q->where('helpdesk_helpcenter_categories.id', $sectionId))
+                    ->update(['position' => $position]);
             }
         });
         $this->clearWidgetCache();

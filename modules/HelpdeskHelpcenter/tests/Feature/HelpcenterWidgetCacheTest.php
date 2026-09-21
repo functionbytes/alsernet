@@ -101,4 +101,51 @@ class HelpcenterWidgetCacheTest extends TestCase
         $payload = app(HelpcenterWidgetService::class)->getWidgetData();
         $this->assertLessThan($indexOf($payload, $first), $indexOf($payload, $second));
     }
+
+    /**
+     * Reordenar los artículos de una sección solo mueve los de esa sección: un
+     * id de otra sección incluido en la petición no debe reposicionarse.
+     */
+    public function test_reordering_articles_only_moves_articles_of_that_section(): void
+    {
+        $category = HelpCenterCategory::factory()->create(['name' => 'Cat '.uniqid()]);
+        $section = HelpCenterCategory::factory()->section($category)->create(['name' => 'Sec '.uniqid()]);
+        $otherSection = HelpCenterCategory::factory()->section($category)->create(['name' => 'Otra '.uniqid()]);
+
+        $inSection = HelpCenterArticle::factory()->published()->create(['position' => 5]);
+        $inSection->categories()->attach($section->id, ['position' => 1]);
+        $foreign = HelpCenterArticle::factory()->published()->create(['position' => 9]);
+        $foreign->categories()->attach($otherSection->id, ['position' => 1]);
+
+        $user = User::factory()->create();
+        $user->assignRole(Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']));
+        $user->givePermissionTo(Permission::firstOrCreate([
+            'name' => 'helpdesk.helpcenter.articles.manage',
+            'guard_name' => 'web',
+        ]));
+
+        $this->actingAs($user)
+            ->postJson(route('manager.helpcenter.api.articles.reorder', $section->id), [
+                'ids' => [$inSection->id, $foreign->id],
+            ])
+            ->assertOk();
+
+        $this->assertSame(0, (int) $inSection->fresh()->position);
+        $this->assertSame(9, (int) $foreign->fresh()->position);
+    }
+
+    public function test_reordering_with_a_non_array_ids_payload_is_a_validation_error(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole(Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']));
+        $user->givePermissionTo(Permission::firstOrCreate([
+            'name' => 'helpdesk.helpcenter.categories.manage',
+            'guard_name' => 'web',
+        ]));
+
+        $this->actingAs($user)
+            ->postJson(route('manager.helpcenter.api.categories.reorder'), ['ids' => 'abc'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ids');
+    }
 }

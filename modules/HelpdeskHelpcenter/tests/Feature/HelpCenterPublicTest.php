@@ -110,6 +110,20 @@ class HelpCenterPublicTest extends TestCase
             ->assertOk();
     }
 
+    /**
+     * Regresión: ?q[]=a&q[]=b y ?category[]=x llegaban como array a index()
+     * (buildBooleanTerm(string), interpolación del LIKE, where del slug) y
+     * daban 500 en la página pública; search() ya estaba protegido.
+     */
+    public function test_public_index_with_array_query_or_category_does_not_500(): void
+    {
+        $this->get(route('public.helpcenter.index', ['q' => ['abc', 'def']]))
+            ->assertOk();
+
+        $this->get(route('public.helpcenter.index', ['category' => ['x', 'y']]))
+            ->assertOk();
+    }
+
     // ─── show ─────────────────────────────────────────────────────────────────
 
     public function test_public_show_returns_published_article(): void
