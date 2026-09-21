@@ -46,13 +46,14 @@ class SuperSettingsExplicitPermissionsSeeder extends Seeder
         $todos = Permission::query()->pluck('name')->all();
 
         foreach (self::ROLES as $nombre) {
-            $role = Role::where('name', $nombre)->first();
-
-            if (! $role) {
-                $this->command?->warn("No existe el rol {$nombre}: se omite.");
-
-                continue;
-            }
+            // firstOrCreate y no where()->first(): ningún seeder del
+            // proyecto crea el rol 'super-admin' (25+ seeders le asignan
+            // permisos dando por hecho que existe), así que en un entorno
+            // nuevo este método se saltaba en silencio y el rol nunca
+            // llegaba a tener ni un permiso. No crea un usuario emparejado
+            // a propósito: a diferencia de RolesAndUsersSeeder, este rol es
+            // demasiado sensible para nacer con una contraseña de prueba.
+            $role = Role::firstOrCreate(['name' => $nombre, 'guard_name' => 'web']);
 
             $antes = $role->permissions()->count();
 

@@ -31,6 +31,41 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         // Asignar rol super-settings al usuario pages (ID=1)
         $this->assignDefaultAdminRole();
 
+        $this->backfillModuleVisibility();
+    }
+
+    /**
+     * Regla genérica para todo el sistema: si un rol tiene algún permiso
+     * "prefijo.algo" y existe un permiso "modules.view.prefijo", se lo
+     * concede — si no, el rol puede hacer cosas dentro de un módulo pero
+     * nunca ve su icono en el menú para llegar hasta ahí. Se detectó primero
+     * en Helpdesk (ni siquiera 'helpdesk-agent', con 12 usuarios reales,
+     * lo tenía) y al auditar el resto se encontró el mismo patrón en
+     * 'administrative' (documents, dashboard) y 'manager' (documents,
+     * dashboard, users, subscribers, campaigns, database). Excluye
+     * 'erp-service': es una cuenta de servicio sin sesión de panel, no
+     * necesita ver ningún icono.
+     */
+    private function backfillModuleVisibility(): void
+    {
+        $moduleViewPermissions = Permission::where('name', 'like', 'modules.view.%')
+            ->pluck('name')
+            ->mapWithKeys(fn (string $name) => [substr($name, strlen('modules.view.')) => $name]);
+
+        Role::with('permissions')
+            ->where('name', '!=', 'erp-service')
+            ->get()
+            ->each(function (Role $role) use ($moduleViewPermissions) {
+                $prefixes = $role->permissions->pluck('name')
+                    ->map(fn (string $name) => explode('.', $name)[0])
+                    ->unique();
+
+                foreach ($prefixes as $prefix) {
+                    if (isset($moduleViewPermissions[$prefix])) {
+                        $role->givePermissionTo($moduleViewPermissions[$prefix]);
+                    }
+                }
+            });
     }
 
     private function assignDefaultAdminRole(): void
