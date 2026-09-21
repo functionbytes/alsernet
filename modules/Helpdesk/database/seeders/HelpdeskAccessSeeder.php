@@ -43,6 +43,11 @@ class HelpdeskAccessSeeder extends Seeder
 
     private const AGENT_PERMISSIONS = [
         'helpdesk.view',
+        // Este seeder y HelpdeskRolesSeeder definen 'helpdesk-agent' por
+        // separado, cada uno con syncPermissions() (reemplaza todo): el que
+        // se ejecute último se queda con su propia lista. helpdesk.search.use
+        // tiene que estar en ambas o se pierde según el orden de ejecución.
+        'helpdesk.search.use',
         'helpdesk.conversations.view',
         'helpdesk.conversations.reply',
         'helpdesk.conversations.create',
@@ -88,6 +93,12 @@ class HelpdeskAccessSeeder extends Seeder
             ->pluck('name')
             ->push('modules.view.helpdesk')
             ->push('modules.view.contacts')
+            // No empiezan por 'helpdesk' ni 'contacts.' así que el LIKE de
+            // arriba no los engancha, pero son funcionalidad del módulo:
+            // alertas operativas y el modal "Permisos del rol" del inbox.
+            ->push('manage_helpdesk')
+            ->push('roles.permissions.view')
+            ->push('roles.permissions.manage')
             ->unique()
             ->all();
         $adminRole->syncPermissions($allHelpdeskPermissions);
