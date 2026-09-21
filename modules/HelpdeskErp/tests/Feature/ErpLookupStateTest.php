@@ -290,6 +290,29 @@ class ErpLookupStateTest extends TestCase
     }
 
     /**
+     * Si el job muere del todo (timeout, excepción no controlada), el evento
+     * tiene que salir igualmente con status 'error': sin él, las automatizaciones
+     * del ticket de origen no correrían nunca.
+     */
+    public function test_a_job_that_dies_still_announces_an_error_with_its_source(): void
+    {
+        Event::fake([CustomerErpResolved::class]);
+
+        $customer = $this->customerWithEmail($this->uniqueEmail());
+
+        (new LinkCustomerToErpJob($customer->id, 'ticket', 555))
+            ->failed(new \RuntimeException('timeout'));
+
+        Event::assertDispatched(CustomerErpResolved::class, function (CustomerErpResolved $e) use ($customer) {
+            return $e->customerId === $customer->id
+                && $e->sourceType === 'ticket'
+                && $e->sourceId === 555
+                && $e->status === 'error'
+                && ! $e->wasFound();
+        });
+    }
+
+    /**
      * El origen entra en la clave de unicidad: sin eso, dos tickets del mismo
      * cliente dentro de la ventana de 5 minutos compartirían trabajo y el
      * segundo nunca recibiría su evento.

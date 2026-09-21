@@ -4,6 +4,7 @@ namespace Modules\HelpdeskErp\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskErp\Http\Requests\CustomerContextRequest;
@@ -209,6 +210,11 @@ class ErpContextController extends Controller
             // Para el endpoint HTTP el contrato es 200 + data vacía: el panel
             // trata "sin resultados" y "error de plataforma" igual en la UI de
             // búsqueda, y el flag error permite distinguirlo si hace falta.
+            Log::warning('HelpdeskErp: la búsqueda de clientes en el ERP falló.', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json(['data' => [], 'error' => true]);
         }
 
@@ -233,7 +239,13 @@ class ErpContextController extends Controller
             return response()->json(['ok' => true, 'queued' => 0]);
         }
 
-        WarmErpCacheJob::dispatch($emails);
+        // Un job por lote pequeño, no uno con los 50: con el ERP caído cada
+        // email cuelga hasta http_timeout y un lote grande revienta el timeout
+        // del job antes de que el circuit breaker se abra (mismo criterio que
+        // helpdeskerp:warm-cache).
+        foreach (array_chunk($emails, WarmErpCacheJob::EMAILS_PER_JOB) as $chunk) {
+            WarmErpCacheJob::dispatch($chunk);
+        }
 
         return response()->json(['ok' => true, 'queued' => count($emails)]);
     }

@@ -24,7 +24,7 @@ class WarmErpCacheCommand extends Command
      * breaker llegara a abrirse, monopolizando el único worker que atiende
      * 'notifications' (ver reference_helpdesk_erp_warmcache_infinite_loop).
      */
-    private const CHUNK_SIZE = 3;
+    private const CHUNK_SIZE = WarmErpCacheJob::EMAILS_PER_JOB;
 
     public function handle(): int
     {

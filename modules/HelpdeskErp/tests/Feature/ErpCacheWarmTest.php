@@ -61,6 +61,24 @@ class ErpCacheWarmTest extends TestCase
         Queue::assertPushed(WarmErpCacheJob::class);
     }
 
+    /**
+     * Un lote de 7 emails se reparte en jobs de WarmErpCacheJob::EMAILS_PER_JOB
+     * (3+3+1): un único job con todos revienta su timeout con el ERP caído.
+     */
+    public function test_a_large_email_list_is_split_into_small_jobs(): void
+    {
+        Queue::fake();
+
+        $emails = array_map(fn (int $i): string => "user{$i}@example.com", range(1, 7));
+
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/helpdeskErp/cache/warm', ['emails' => $emails])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'queued' => 7]);
+
+        Queue::assertPushed(WarmErpCacheJob::class, 3);
+    }
+
     public function test_user_with_permission_and_no_emails_returns_zero_queued_without_dispatch(): void
     {
         Queue::fake();

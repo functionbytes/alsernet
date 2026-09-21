@@ -11,6 +11,13 @@ class WarmErpCacheJob implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * Emails por job (ver el razonamiento del timeout en WarmErpCacheCommand).
+     * Quien encole lotes debe partirlos con este tamaño: un lote mayor puede
+     * reventar el timeout del job con el ERP caído y bloquear el worker.
+     */
+    public const EMAILS_PER_JOB = 3;
+
     public int $tries = 1;
 
     // Debe quedar por debajo del retry_after (90s) de la conexión de cola

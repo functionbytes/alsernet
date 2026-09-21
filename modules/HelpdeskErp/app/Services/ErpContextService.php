@@ -491,6 +491,16 @@ class ErpContextService
             ];
         });
 
+        // Http::pool() no lanza los fallos de conexión: devuelve la
+        // ConnectionException como valor en lugar de un Response, y llamar a
+        // ->successful() sobre ella daba un Error que caía en el catch genérico
+        // ('unknown') en vez de tratarse como caída del ERP ('connection').
+        foreach ($responses as $response) {
+            if ($response instanceof \Throwable) {
+                throw $response;
+            }
+        }
+
         $summary = $responses['summary']->successful() ? ($responses['summary']->json('data') ?? []) : [];
         $balance = $responses['balance']->successful() ? ($responses['balance']->json('data') ?? []) : [];
         $ordersMeta = $responses['orders']->successful() ? ($responses['orders']->json('meta') ?? []) : [];

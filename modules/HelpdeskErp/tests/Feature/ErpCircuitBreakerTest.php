@@ -73,6 +73,27 @@ class ErpCircuitBreakerTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * Http::pool() no lanza los fallos de conexión, los devuelve como valor:
+     * una llamada del pool que se cuelga (balance) debe contar como caída de
+     * conexión, no como "error inesperado", aunque la búsqueda haya respondido.
+     */
+    public function test_a_pooled_call_that_fails_to_connect_is_a_connection_failure(): void
+    {
+        Http::fake([
+            '*/erp/customer/search*' => Http::response(['data' => [['id' => 1, 'label' => 'Ana', 'email' => 'ana@x.com']]]),
+            '*/erp/customer/1/balance' => function (): void {
+                throw new ConnectionException('cURL error 28: timeout');
+            },
+            '*' => Http::response(['data' => []]),
+        ]);
+
+        $result = $this->service->getCustomerContext('ana@x.com');
+
+        $this->assertSame('connection', $result['_error']['type']);
+        $this->assertSame(1, (int) Cache::get(self::CIRCUIT_KEY));
+    }
+
     public function test_successful_call_resets_the_failure_counter(): void
     {
         // Fake stateful: los dos primeros requests fallan (conexión), el tercero

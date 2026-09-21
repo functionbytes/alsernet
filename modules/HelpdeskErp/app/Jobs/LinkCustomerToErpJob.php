@@ -132,5 +132,18 @@ class LinkCustomerToErpJob implements ShouldBeUnique, ShouldQueue
             'customer_id' => $this->customerId,
             'error' => $exception->getMessage(),
         ]);
+
+        // El linker ya anuncia 'error' cuando el ERP falla al buscar; esto cubre
+        // que el propio job muera (timeout, excepción no controlada). Sin el
+        // evento, las automatizaciones y workflows del ticket o conversación de
+        // origen no correrían nunca.
+        try {
+            $this->announce(null, 'error');
+        } catch (\Throwable $e) {
+            Log::warning('LinkCustomerToErpJob: no se pudo anunciar el fallo', [
+                'customer_id' => $this->customerId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
