@@ -47,7 +47,7 @@ class AnalyticsIntegrationToggleTest extends TestCase
             ->assertExactJson([
                 'success' => true,
                 'available' => false,
-                'message' => 'La integración de Analytics está deshabilitada.',
+                'message' => __('helpdeskanalytics::messages.disabled'),
             ]);
     }
 
@@ -92,5 +92,38 @@ class AnalyticsIntegrationToggleTest extends TestCase
             ->getJson(route('helpdeskanalytics.data', ['from' => '2024-01-01', 'to' => '2024-06-01']))
             ->assertOk()
             ->assertJsonPath('available', true);
+    }
+
+    /**
+     * El tope de 366 días se mide contra el mismo rango efectivo que usa el
+     * controller (`to` = hoy), no contra el fin de mes: un `from` de hace 365
+     * días sin `to` es válido a cualquier día del mes.
+     */
+    public function test_data_feed_accepts_a_from_365_days_ago_without_explicit_to(): void
+    {
+        $from = now()->subDays(365)->toDateString();
+
+        $this->actingAs($this->user)
+            ->getJson(route('helpdeskanalytics.data', ['from' => $from]))
+            ->assertOk()
+            ->assertJsonPath('range.from', $from)
+            ->assertJsonPath('range.to', now()->toDateString());
+    }
+
+    public function test_data_feed_defaults_from_to_start_of_the_month_of_an_explicit_to(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson(route('helpdeskanalytics.data', ['to' => '2024-03-15']))
+            ->assertOk()
+            ->assertJsonPath('range.from', '2024-03-01')
+            ->assertJsonPath('range.to', '2024-03-15');
+    }
+
+    public function test_data_feed_rejects_a_from_in_the_future_without_explicit_to(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson(route('helpdeskanalytics.data', ['from' => now()->addDays(10)->toDateString()]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('from');
     }
 }

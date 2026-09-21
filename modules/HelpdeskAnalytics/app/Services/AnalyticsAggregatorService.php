@@ -121,7 +121,7 @@ class AnalyticsAggregatorService
      * que su lado del cruce sigue el mismo fail-closed que ticketMetrics(): solo se
      * suman con usuario sin restricción de bandeja (managers).
      *
-     * @return array<int, array{name: string, closed_count: int, csat_avg: float, avg_response_seconds: int, message_count: int, ticket_closed_count: int, ticket_avg_first_response_minutes: int, ticket_avg_resolution_minutes: int, total_closed: int}>
+     * @return array<int, array{name: string, closed_count: int, csat_avg: ?float, avg_response_seconds: int, message_count: int, ticket_closed_count: int, ticket_avg_first_response_minutes: int, ticket_avg_resolution_minutes: int, total_closed: int}>
      */
     public function agentPerformance(Carbon $from, Carbon $to, ?User $user = null): array
     {
@@ -207,7 +207,7 @@ class AnalyticsAggregatorService
                         ? (trim("{$u->firstname} {$u->lastname}") ?: "Agente #{$agentId}")
                         : "Agente #{$agentId}",
                     'closed_count' => $closedCount,
-                    'csat_avg' => round((float) ($csatByAgent[$agentId] ?? 0), 2),
+                    'csat_avg' => isset($csatByAgent[$agentId]) ? round((float) $csatByAgent[$agentId], 2) : null,
                     'avg_response_seconds' => (int) round((float) ($convRow->avg_response_sec ?? 0)),
                     'message_count' => (int) ($messagesByAgent[$agentId] ?? 0),
                     'ticket_closed_count' => $ticketClosedCount,

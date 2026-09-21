@@ -180,6 +180,12 @@ window.HelpdeskAnalyticsDashboard = {
         healthNeutral: @json(__('helpdeskanalytics::messages.health_neutral')),
         healthAtRisk: @json(__('helpdeskanalytics::messages.health_at_risk')),
         loadError: @json(__('helpdeskanalytics::messages.load_error')),
+        priorities: {
+            urgent: @json(__('helpdeskanalytics::messages.priority_urgent')),
+            high: @json(__('helpdeskanalytics::messages.priority_high')),
+            normal: @json(__('helpdeskanalytics::messages.priority_normal')),
+            low: @json(__('helpdeskanalytics::messages.priority_low')),
+        },
     },
 };
 </script>

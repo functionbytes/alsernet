@@ -44,11 +44,17 @@
             return Math.round(m / 60) + 'h';
         }
 
-        // Mismo mapeo que Ticket::activityPriorityLabel() en HelpdeskTickets:
-        // la API devuelve el slug crudo de la columna priority.
-        var PRIORITY_LABELS = { urgent: 'Urgente', high: 'Alta', normal: 'Normal', low: 'Baja' };
+        // La API devuelve el slug crudo de la columna priority; las etiquetas
+        // traducidas llegan desde la vista (i18n.priorities).
         function priorityLabel(p) {
-            return PRIORITY_LABELS[p] || p;
+            return (i18n.priorities || {})[p] || p;
+        }
+
+        var loadSeq = 0;
+
+        function showTableError(message) {
+            $('#agent-rows').html('<tr><td colspan="8" class="text-center text-muted py-3">' + $('<div>').text(message).html() + '</td></tr>');
+            $('#ticket-priority-rows').html('<tr><td colspan="2" class="text-center text-muted py-3">' + $('<div>').text(message).html() + '</td></tr>');
         }
 
         function renderAgents(rows) {
@@ -95,7 +101,24 @@
         }
 
         function load() {
+            var seq = ++loadSeq;
+
             $.get(dataUrl, $('#filters').serialize()).done(function (res) {
+                if (seq !== loadSeq) { return; }
+
+                if (res.available === false) {
+                    showTableError(res.message || t('loadError', 'Metrics could not be loaded.'));
+                    if (window.toastr) { toastr.warning(res.message || t('loadError', 'Metrics could not be loaded.')); }
+                    return;
+                }
+
+                // Los inputs vacíos usan el rango por defecto del servidor: se
+                // muestran para que se vea qué periodo cubren los datos.
+                if (res.range) {
+                    if (!$('#f-from').val()) { $('#f-from').val(res.range.from); }
+                    if (!$('#f-to').val()) { $('#f-to').val(res.range.to); }
+                }
+
                 var o = res.overview || {};
                 $('#kpi-conversations').text(o.conversations ?? 0);
                 $('#kpi-closed').text(o.closed ?? 0);
@@ -139,8 +162,18 @@
 
                 renderAgents(res.agents || []);
                 renderTickets(res.tickets);
-            }).fail(function () {
-                if (window.toastr) { toastr.error(t('loadError', 'Metrics could not be loaded.')); }
+            }).fail(function (xhr) {
+                if (seq !== loadSeq) { return; }
+
+                var message = t('loadError', 'Metrics could not be loaded.');
+                var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                if (xhr.status === 422 && errors) {
+                    var first = Object.keys(errors)[0];
+                    message = (first && errors[first][0]) || message;
+                }
+
+                showTableError(message);
+                if (window.toastr) { toastr.error(message); }
             });
         }
 

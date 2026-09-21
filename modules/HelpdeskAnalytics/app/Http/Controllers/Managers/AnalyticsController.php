@@ -35,15 +35,11 @@ class AnalyticsController extends Controller
             return response()->json([
                 'success' => true,
                 'available' => false,
-                'message' => 'La integración de Analytics está deshabilitada.',
+                'message' => __('helpdeskanalytics::messages.disabled'),
             ]);
         }
 
-        $from = $request->date('from') ?? now()->startOfMonth();
-        // $request->date('to') resuelve a medianoche del día indicado: sin
-        // endOfDay() el filtro `to` explícito excluía toda la actividad del
-        // propio día seleccionado.
-        $to = ($request->date('to') ?? now())->endOfDay();
+        [$from, $to] = $request->range();
 
         // Aislamiento por bandeja: sin helpdesk.manage, los agregados se
         // limitan a las bandejas asignadas al usuario (AgentInboxCapacity).
