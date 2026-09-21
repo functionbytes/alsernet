@@ -19,7 +19,14 @@
             <option value="">Todos los tipos</option>
             <option value="delete_soft">Anonimizado (soft)</option>
             <option value="delete_hard">Borrado (hard)</option>
-            <option value="export">Exportacion</option>
+            <option value="export">Exportación</option>
+        </select>
+        <label class="visually-hidden" for="f-status">Estado</label>
+        <select id="f-status" class="form-select form-select-sm">
+            <option value="">Todos los estados</option>
+            <option value="pending">Pendiente</option>
+            <option value="completed">Completada</option>
+            <option value="failed">Fallida</option>
         </select>
         <button id="btn-refresh" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-rotate me-1"></i>Actualizar
@@ -34,7 +41,7 @@
                 <tr>
                     <th>Cliente</th>
                     <th>Tipo</th>
-                    <th>Modulos afectados</th>
+                    <th>Módulos afectados</th>
                     <th>Estado</th>
                     <th>Fecha</th>
                 </tr>

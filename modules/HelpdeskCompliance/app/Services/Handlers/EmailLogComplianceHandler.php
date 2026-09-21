@@ -70,8 +70,15 @@ class EmailLogComplianceHandler
             ->withTrashed()
             ->where('recipients_index', 'like', $like)
             ->with('opens')
-            ->chunkById(200, function ($chunk) use (&$logs, &$opens, $hard): void {
+            ->chunkById(200, function ($chunk) use (&$logs, &$opens, $hard, $email): void {
                 foreach ($chunk as $log) {
+                    // El LIKE '%email%' de arriba es solo un prefiltro barato: también
+                    // casa 'joana@x.com' al buscar 'ana@x.com', y en modo hard eso
+                    // borraría de forma irreversible el log de otra persona.
+                    if (! self::mentionsRecipient($log->recipients_index, $email)) {
+                        continue;
+                    }
+
                     $opens += $log->opens->count();
 
                     if ($hard) {
@@ -109,5 +116,21 @@ class EmailLogComplianceHandler
             'suppressions' => $suppressions,
             'mode' => $hard ? 'deleted' : 'redacted',
         ];
+    }
+
+    /**
+     * True si $email aparece en $recipientsIndex como dirección completa, no
+     * como parte de otra (sin caracteres de dirección pegados por ningún lado).
+     * Es insensible a mayúsculas y tolera el formato "Nombre <email>".
+     */
+    public static function mentionsRecipient(?string $recipientsIndex, string $email): bool
+    {
+        $email = trim($email);
+
+        if ($recipientsIndex === null || $recipientsIndex === '' || $email === '') {
+            return false;
+        }
+
+        return preg_match('/(?<![\w.%+\-@])'.preg_quote($email, '/').'(?![\w.%+\-])/iu', $recipientsIndex) === 1;
     }
 }

@@ -15,6 +15,7 @@ class RequestIndexRequest extends FormRequest
     {
         return [
             'type' => ['nullable', 'string', 'in:export,delete_soft,delete_hard'],
+            'status' => ['nullable', 'string', 'in:pending,completed,failed'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
@@ -23,6 +24,7 @@ class RequestIndexRequest extends FormRequest
     {
         return [
             'type.in' => 'El tipo de solicitud no es válido.',
+            'status.in' => 'El estado de la solicitud no es válido.',
             'per_page.max' => 'El máximo por página es 100.',
         ];
     }
@@ -31,6 +33,7 @@ class RequestIndexRequest extends FormRequest
     {
         return [
             'type' => 'tipo',
+            'status' => 'estado',
             'per_page' => 'por página',
         ];
     }

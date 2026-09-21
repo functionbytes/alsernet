@@ -21,7 +21,7 @@
         var typeLabels = {
             delete_soft: 'Anonimizado',
             delete_hard: 'Borrado',
-            export: 'Exportacion',
+            export: 'Exportación',
         };
 
         function fmt(iso) {
@@ -29,14 +29,25 @@
             return new Date(iso).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
+        var statusLabels = {
+            pending: 'Pendiente',
+            completed: 'Completada',
+            failed: 'Fallida',
+        };
+
         // Sin rojos en la UI (paleta del proyecto): "failed" se resuelve en gris
         // oscuro con icono de aviso, igual que 'failed' => 'secondary' en
-        // Supplier/sync/index.blade.php, en vez de bg-danger-subtle.
+        // Supplier/sync/index.blade.php, en vez de bg-danger-subtle. "pending"
+        // lleva reloj para no confundir una cascada en curso con un fallo.
         function statusBadge(status) {
-            var label = $('<div>').text(status).html();
-            return status === 'completed'
-                ? '<span class="badge bg-success-subtle text-success"><i class="fas fa-check me-1"></i>' + label + '</span>'
-                : '<span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="fas fa-triangle-exclamation me-1"></i>' + label + '</span>';
+            var label = $('<div>').text(statusLabels[status] || status).html();
+            if (status === 'completed') {
+                return '<span class="badge bg-success-subtle text-success"><i class="fas fa-check me-1"></i>' + label + '</span>';
+            }
+            if (status === 'pending') {
+                return '<span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="fas fa-clock me-1"></i>' + label + '</span>';
+            }
+            return '<span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="fas fa-triangle-exclamation me-1"></i>' + label + '</span>';
         }
 
         function render(rows) {
@@ -48,9 +59,12 @@
                 var mods = (r.modulesAffected || []).map(function (m) {
                     return '<span class="badge bg-light text-dark me-1">' + $('<div>').text(m).html() + '</span>';
                 }).join('') || '<span class="text-muted">—</span>';
+                // Clases de marca (verde) en vez de danger/warning, ver
+                // Theme/acelle/css/theme-overrides.css: el borrado duro, el
+                // irreversible, va con el tono fuerte.
                 var typeBadge = r.type === 'delete_hard'
-                    ? '<span class="badge bg-danger-subtle text-danger">' + (typeLabels[r.type] || r.type) + '</span>'
-                    : '<span class="badge bg-warning-subtle text-warning">' + (typeLabels[r.type] || r.type) + '</span>';
+                    ? '<span class="badge bg-brand">' + (typeLabels[r.type] || r.type) + '</span>'
+                    : '<span class="badge bg-brand-subtle text-brand">' + (typeLabels[r.type] || r.type) + '</span>';
                 return '<tr>' +
                     '<td>' + (r.customer ? $('<div>').text(r.customer).html() : '<span class="text-muted">#' + (r.customerId || '?') + '</span>') + '</td>' +
                     '<td>' + typeBadge + '</td>' +
@@ -71,7 +85,7 @@
                 return;
             }
             $('#request-pagination-info').removeClass('d-none');
-            $('#request-pagination-summary').text('Pagina ' + meta.currentPage + ' de ' + meta.lastPage + ' — ' + meta.total + ' solicitud(es)');
+            $('#request-pagination-summary').text('Página ' + meta.currentPage + ' de ' + meta.lastPage + ' — ' + meta.total + ' solicitud(es)');
             lastPage = meta.lastPage;
 
             $pag.append('<li class="page-item' + (meta.currentPage === 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (meta.currentPage - 1) + '">&laquo;</a></li>');
@@ -85,17 +99,25 @@
             $pag.append('<li class="page-item' + (meta.currentPage === meta.lastPage ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (meta.currentPage + 1) + '">&raquo;</a></li>');
         }
 
+        var loadSeq = 0;
+
         function load(page) {
             currentPage = page || currentPage;
-            $.get(dataUrl, { type: $('#f-type').val(), page: currentPage })
+            var seq = ++loadSeq;
+            $.get(dataUrl, { type: $('#f-type').val(), status: $('#f-status').val(), page: currentPage })
                 .done(function (res) {
+                    if (seq !== loadSeq) { return; }
                     render(res.data || []);
                     renderPagination(res.meta);
                 })
-                .fail(function () { toastr.error('No se pudieron cargar las solicitudes.'); });
+                .fail(function () {
+                    if (seq !== loadSeq) { return; }
+                    $('#request-rows').html('<tr><td colspan="5" class="text-center text-muted py-4">No se pudieron cargar las solicitudes.</td></tr>');
+                    toastr.error('No se pudieron cargar las solicitudes.');
+                });
         }
 
-        $('#f-type').on('change', function () { load(1); });
+        $('#f-type, #f-status').on('change', function () { load(1); });
         $('#btn-refresh').on('click', function () { load(1); });
         $('#request-pagination').on('click', '.page-link', function (e) {
             e.preventDefault();

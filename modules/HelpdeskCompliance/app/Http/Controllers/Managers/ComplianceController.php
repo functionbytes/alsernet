@@ -28,7 +28,9 @@ class ComplianceController extends Controller
         $requests = ComplianceRequest::query()
             ->with('customer')
             ->when($request->filled('type'), fn ($query) => $query->where('type', $request->string('type')))
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->latest()
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 20));
 
         return response()->json([
