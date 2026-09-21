@@ -54,7 +54,16 @@ trait TranslatesMessage
             return false;
         }
 
-        return ($event->item ?? null) !== null && $event->item->conversation !== null;
+        if (($event->item ?? null) === null || $event->item->conversation === null) {
+            return false;
+        }
+
+        // ConversationMessageCreated también se emite para eventos de actividad
+        // ("La conversación fue silenciada"), notas y demás items que no son
+        // texto conversacional; con user_id nulo se confundían con mensajes del
+        // cliente: gastaban cupo del proveedor y su texto fijaba el idioma del
+        // cliente. Mismo criterio que MarkConversationFirstResponse (HelpdeskSla).
+        return ($event->item->type ?? 'message') === 'message' && ! $event->item->is_internal;
     }
 
     /**

@@ -115,6 +115,37 @@ class TranslateIncomingMessageListenerTest extends TestCase
     }
 
     /**
+     * ConversationMessageCreated también se emite para eventos de actividad
+     * ("La conversación fue silenciada"): con user_id nulo se confundían con un
+     * mensaje del cliente y gastaban cupo del proveedor.
+     */
+    public function test_skips_system_activity_items_that_have_no_user(): void
+    {
+        [, $item] = $this->incomingScenario(customerLang: 'en', body: 'La conversación fue silenciada');
+        $item->forceFill(['type' => 'activity', 'item_type' => 'activity'])->saveQuietly();
+
+        Http::fake([]);
+
+        $this->listener()->handle(new ConversationMessageCreated($item->fresh()));
+
+        Http::assertNothingSent();
+        $this->assertNull($item->fresh()->translated_body);
+    }
+
+    public function test_skips_internal_items_that_have_no_user(): void
+    {
+        [, $item] = $this->incomingScenario(customerLang: 'en', body: 'Resumen automático de la conversación.');
+        $item->forceFill(['is_internal' => true])->saveQuietly();
+
+        Http::fake([]);
+
+        $this->listener()->handle(new ConversationMessageCreated($item->fresh()));
+
+        Http::assertNothingSent();
+        $this->assertNull($item->fresh()->translated_body);
+    }
+
+    /**
      * @return array{0: Conversation, 1: ConversationItem}
      */
     private function incomingScenario(
