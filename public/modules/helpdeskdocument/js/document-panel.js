@@ -10,9 +10,27 @@
  * asset() sirve desde public/modules/helpdeskdocument/js/ — tras editar hay
  * que copiarlo alli (ver README del patron en HelpdeskErp/HelpdeskPrestashop).
  */
-(function ($) {
+(function docsPanelBoot($) {
     'use strict';
-    if (!window.jQuery) { return; }
+    // 22-sep-2026: este fichero llega por un <script> inyectado dinámicamente
+    // (ver right-panel-document-tab.blade.php) justo cuando se abre la
+    // pestaña Documentación por AJAX — en ese momento la jQuery del bundle
+    // principal puede no haber terminado de ejecutarse todavía. Antes, si
+    // eso pasaba, este guard hacía `return` sin más: el archivo se marcaba
+    // como "cargado" (el <script src> sí completó su petición HTTP) pero
+    // nunca registraba un solo handler, dejando "Crear expediente" y abrir
+    // cualquier expediente de la lista muertos al clic el resto de la
+    // sesión, sin error visible. Ahora reintenta con la misma jQuery en
+    // cuanto esté disponible, en vez de rendirse una sola vez.
+    if (!window.jQuery) {
+        docsPanelBoot._tries = (docsPanelBoot._tries || 0) + 1;
+        if (docsPanelBoot._tries > 100) {
+            console.error('[HelpdeskDocument] jQuery nunca cargó — document-panel.js no se pudo inicializar.');
+            return;
+        }
+        setTimeout(function () { docsPanelBoot(window.jQuery); }, 100);
+        return;
+    }
 
     function csrf() { return $('meta[name="csrf-token"]').attr('content'); }
     function notify(type, msg) { if (window.toastr) { toastr[type](msg); } else { alert(msg); } }

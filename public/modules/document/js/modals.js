@@ -9,10 +9,24 @@
  *   - click .docs-close, .docs-backdrop, [data-docs-modal-close] → cierra
  *   - tecla Escape mientras hay un modal abierto → cierra el ultimo
  */
-(function ($) {
+(function docsModalsBoot($) {
     'use strict';
 
+    // 22-sep-2026: mismo problema que document-panel.js (ver su comentario) —
+    // este fichero también llega por <script> inyectado dinámicamente al
+    // abrir el panel de expedientes por AJAX, y si jQuery del bundle
+    // principal todavía no estaba lista en ese instante, este guard hacía
+    // `return` sin definir window.DocsModal: el <script src> completaba su
+    // petición igual (por eso el loader del Blade lo marcaba "cargado"),
+    // pero ningún modal volvía a abrir en toda la sesión. Reintenta en vez
+    // de rendirse.
     if (!window.jQuery) {
+        docsModalsBoot._tries = (docsModalsBoot._tries || 0) + 1;
+        if (docsModalsBoot._tries > 100) {
+            console.error('[Document] jQuery nunca cargó — modals.js no se pudo inicializar.');
+            return;
+        }
+        setTimeout(function () { docsModalsBoot(window.jQuery); }, 100);
         return;
     }
 
