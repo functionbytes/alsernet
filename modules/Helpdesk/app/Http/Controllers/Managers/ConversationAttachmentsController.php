@@ -169,8 +169,15 @@ class ConversationAttachmentsController extends Controller
 
         // El adjunto debe pertenecer a una conversación a la que el agente
         // tenga acceso (evita IDOR: descargar adjuntos de inboxes ajenos).
+        //
+        // 22-sep-2026: attachment_urls es un cast 'array', y el cast array
+        // de Eloquent serializa con json_encode() SIN JSON_UNESCAPED_SLASHES
+        // — cada "/" queda guardado como "\/" en la columna. Buscar con el
+        // path tal cual (barras sin escapar) nunca matcheaba nada, así que
+        // TODA descarga de adjunto de chat daba 404 "Archivo no encontrado"
+        // pese a que el archivo sí existía en disco.
         $item = ConversationItem::query()
-            ->where('attachment_urls', 'like', '%'.$relPath.'%')
+            ->where('attachment_urls', 'like', '%'.str_replace('/', '\\\\/', $relPath).'%')
             ->with('conversation')
             ->first();
 
@@ -228,8 +235,11 @@ class ConversationAttachmentsController extends Controller
         // path por attachment_urls en vez de confiar en el formato del path —
         // rutas de social-media/attachments no llevan .../conversations/{id}/...
         // y antes se copiaban SIN comprobación alguna (IDOR entre inboxes).
+        // Mismo bug de barras escapadas que downloadAttachment() (ver
+        // comentario ahí) — $path también necesita "/" -> "\/" para matchear
+        // el JSON guardado en attachment_urls.
         $sourceItem = ConversationItem::query()
-            ->where('attachment_urls', 'like', '%'.$path.'%')
+            ->where('attachment_urls', 'like', '%'.str_replace('/', '\\\\/', $path).'%')
             ->with('conversation')
             ->first();
 
