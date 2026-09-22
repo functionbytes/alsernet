@@ -1504,11 +1504,15 @@
 
         // ─── Pestaña Anteriores: búsqueda/filtro + visor de conversación ───
         (function () {
-            // Este bloque solo se registraba en el Blade original dentro de
-            // @if(helpdesk_feature_enabled('email')) (aunque su contenido, la
-            // pestaña 'Anteriores' / visor de conversaciones, no es del feature de
-            // email — se preserva el mismo gate tal cual estaba).
-            if (document.querySelector('.bv-right')?.dataset.emailFeature !== '1') { return; }
+            // 22-sep-2026: el gate `emailFeature !== '1'` de más abajo (ahora
+            // eliminado) se había traído tal cual de un @if(helpdesk_feature_
+            // enabled('email')) del Blade original, pero nada de este bloque
+            // es del feature de email — es la pestaña "Anteriores" y el
+            // visor de conversaciones. Con el feature de email desactivado
+            // (caso real de producción, data-email-feature="0"), este IIFE
+            // entero devolvía antes de registrar un solo handler: las
+            // tarjetas de conversaciones anteriores se veían pero el clic no
+            // hacía nada, sin error en consola.
             // ── Previous tab: search + filter ──────────────────────────────
             $(document).on('input', '.bv-prev-search-input', function () {
                 var q = $(this).val().toLowerCase();
