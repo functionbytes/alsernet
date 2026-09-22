@@ -62,12 +62,9 @@
             return;
         }
 
-        if (!email) {
-            $('#ec-errors').text('El correo electrónico es obligatorio.').show();
-            $('#ec-email').focus();
-            return;
-        }
-
+        // 22-sep-2026: el email dejó de ser obligatorio (muchos contactos son
+        // solo-WhatsApp) — helpdesk_customers.email ya es nullable y
+        // UpdateCustomerRequest ya acepta null, este guard se quedó atrás.
         $('#ec-errors').hide().text('');
         var $btn = $(this).prop('disabled', true);
 
@@ -77,7 +74,7 @@
             dataType: 'json',
             data: {
                 name:           name,
-                email:          email,
+                email:          email || null,
                 phone:          $('#ec-phone').val().trim() || null,
                 language:       $('#ec-language').val() || null,
                 timezone:       $('#ec-timezone').val() || null,
