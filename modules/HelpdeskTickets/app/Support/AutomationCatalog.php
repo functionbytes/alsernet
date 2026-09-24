@@ -140,6 +140,24 @@ final class AutomationCatalog
                 'cast' => 'int',
                 'ops' => ['greater_than', 'less_than', 'equals'],
             ],
+            // Reglas por tiempo (disparador "Periódicamente"): horas enteras
+            // calculadas por AutomationEngine, no columnas del ticket.
+            [
+                'field' => 'hours_since_last_activity',
+                'label' => 'Las horas sin actividad',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'int',
+                'ops' => ['greater_than', 'less_than'],
+            ],
+            [
+                'field' => 'hours_since_created',
+                'label' => 'Las horas desde que se creó',
+                'input' => 'number',
+                'options' => null,
+                'cast' => 'int',
+                'ops' => ['greater_than', 'less_than'],
+            ],
             [
                 'field' => 'subject',
                 'label' => 'El asunto',
@@ -323,6 +341,10 @@ final class AutomationCatalog
             'ticket.resolved' => 'Se resuelve un ticket',
             'ticket.closed' => 'Se cierra un ticket',
             'ticket.erp_resolved' => 'El ERP responde sobre el cliente',
+            'ticket.customer_replied' => 'El cliente responde',
+            'ticket.reopened' => 'Se reabre un ticket',
+            'ticket.sla_breached' => 'Se incumple el SLA',
+            'ticket.time_elapsed' => 'Periódicamente (cada 15 min, por tiempo)',
         ];
 
         $out = [];

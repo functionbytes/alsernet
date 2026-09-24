@@ -60,6 +60,7 @@ class AutomationsController extends Controller
         $validated = $request->validated();
 
         $validated['conditions'] = json_decode($validated['conditions'], true);
+        $validated['match_mode'] = ($validated['match_mode'] ?? null) === 'any' ? 'any' : 'all';
         $validated['actions'] = json_decode($validated['actions'], true);
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['user_id'] = auth()->id();
@@ -88,6 +89,7 @@ class AutomationsController extends Controller
         $validated = $request->validated();
 
         $validated['conditions'] = json_decode($validated['conditions'], true);
+        $validated['match_mode'] = ($validated['match_mode'] ?? null) === 'any' ? 'any' : 'all';
         $validated['actions'] = json_decode($validated['actions'], true);
         $validated['is_active'] = $request->boolean('is_active', true);
 

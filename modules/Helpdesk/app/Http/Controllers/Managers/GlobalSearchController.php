@@ -97,7 +97,10 @@ class GlobalSearchController extends Controller
         }
 
         try {
+            // Acotado por equipo como el listado de tickets: la paleta ⌘K
+            // no puede enseñar tickets que el agente no podría abrir.
             return $ticketClass::query()
+                ->visibleToAgent(auth()->user())
                 ->search($q)
                 ->with('customer:id,name')
                 ->latest()

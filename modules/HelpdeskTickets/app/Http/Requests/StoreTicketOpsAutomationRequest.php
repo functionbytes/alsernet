@@ -34,6 +34,7 @@ class StoreTicketOpsAutomationRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'trigger_event' => ['required', 'string', Rule::in(array_keys(Automation::$triggerEvents))],
             'is_active' => ['nullable', 'boolean'],
+            'match_mode' => ['nullable', 'string', Rule::in(['all', 'any'])],
             'actions' => ['required', 'array', 'min:1', 'max:5'],
             'actions.*.type' => ['required', 'string', Rule::in(array_keys(AutomationCatalog::actionsByKey()))],
             'actions.*.value' => ['nullable'],

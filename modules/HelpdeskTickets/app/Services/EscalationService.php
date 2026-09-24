@@ -243,6 +243,18 @@ class EscalationService
 
         return Ticket::query()
             ->whereNull('closed_at')
+            // Solo lo que espera al equipo. Antes también subía de prioridad
+            // tickets resueltos, pospuestos, en un estado cerrado ("En
+            // Espera") o con el reloj de SLA parado (esperando al cliente):
+            // el 24-sep-2026, 40 de los tickets escalados a "Urgente" estaban
+            // en "En Espera" o "Resuelto", y "Urgente" dejó de significar nada.
+            ->whereNull('resolved_at')
+            ->whereNull('sla_paused_at')
+            ->notSnoozed()
+            // Sin estado (tickets antiguos o creados sin él) sigue contando
+            // como pendiente del equipo.
+            ->where(fn (Builder $q) => $q->whereNull('status_id')
+                ->orWhereHas('status', fn (Builder $st) => $st->where('is_open', true)->where('stops_sla_timer', false)))
             ->where('escalation_count', '<', $maxEscalations)
             ->where(function (Builder $q) use ($cooldownHours) {
                 $q->whereNull('escalated_at')

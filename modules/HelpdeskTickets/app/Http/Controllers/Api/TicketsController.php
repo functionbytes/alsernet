@@ -8,11 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Http\Requests\Api\StoreTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Requests\Api\UpdateTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Resources\TicketResource;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketGroup;
 
 class TicketsController extends Controller
 {
@@ -31,18 +31,7 @@ class TicketsController extends Controller
             // helpdesk.tickets.manage, aquí se aplica exactamente el mismo
             // scoping que TicketsCrudController::scopeToVisibleTickets()
             // (14-sep-2026, auditoría de seguridad).
-            ->when(! $user->hasPermissionTo('helpdesk.tickets.manage'), function ($q) use ($user) {
-                $groupIds = TicketGroup::idsForUser($user->id);
-
-                $q->where(function ($sub) use ($groupIds, $user) {
-                    $sub->where('assignee_id', $user->id)
-                        ->orWhereNull('group_id');
-
-                    if ($groupIds !== []) {
-                        $sub->orWhereIn('group_id', $groupIds);
-                    }
-                });
-            })
+            ->visibleToAgent($user)
             ->when($request->filled('status'), fn ($q) => $q->whereHas('status', fn ($s) => $s->where('slug', $request->status)))
             ->when($request->filled('category'), fn ($q) => $q->whereHas('category', fn ($s) => $s->where('slug', $request->category)))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->priority))
@@ -82,6 +71,10 @@ class TicketsController extends Controller
                 'source' => 'api',
             ]);
         });
+
+        // Mismo evento que el resto de vías de alta: confirmación al cliente,
+        // aviso a agentes, auto-asignación y automatizaciones.
+        TicketCreated::dispatch($ticket);
 
         $ticket->load(['customer:id,name,email', 'status:id,name,color,slug', 'category:id,name,slug']);
 

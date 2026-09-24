@@ -128,6 +128,10 @@ class TicketReportsService
             'slaComplianceRate' => $currentSlaRate,
             'avgResponseTime' => round($current->avg_response_time ?? 0),
             'avgResolutionTime' => round($current->avg_resolution_time ?? 0),
+            // Mediana y calidad de resolución (24-sep-2026). La media se
+            // dispara con un solo ticket olvidado un mes; la mediana dice
+            // cuánto tarda el caso típico.
+            ...$this->qualityMetrics($from, $to),
             'byStatus' => $byStatus,
             'byCategory' => $byCategory,
             'byPriority' => $byPriority,
@@ -153,6 +157,42 @@ class TicketReportsService
                 'totalResolved' => $this->pctChange((int) $current->total_resolved, (int) $previous->total_resolved),
                 'slaComplianceRate' => $this->pctChange($currentSlaRate, $previousSlaRate),
             ],
+        ];
+    }
+
+    /**
+     * Mediana de primera respuesta y de resolución, tasa de reapertura y
+     * resolución al primer contacto (un solo mensaje público de agente),
+     * sobre los tickets creados en el periodo.
+     *
+     * @return array{medianResponseTime: int, medianResolutionTime: int, reopenRate: float, firstContactResolutionRate: float}
+     */
+    private function qualityMetrics(Carbon $from, Carbon $to): array
+    {
+        $base = fn () => Ticket::query()->whereBetween('created_at', [$from, $to]);
+
+        $responseMinutes = $base()->whereNotNull('first_response_at')->limit(50000)->get(['created_at', 'first_response_at'])
+            ->map(fn (Ticket $t) => (int) $t->created_at->diffInMinutes($t->first_response_at));
+        $resolutionMinutes = $base()->whereNotNull('closed_at')->limit(50000)->get(['created_at', 'closed_at'])
+            ->map(fn (Ticket $t) => (int) $t->created_at->diffInMinutes($t->closed_at));
+
+        $finished = $base()->where(fn ($q) => $q->whereNotNull('resolved_at')->orWhereNotNull('closed_at'));
+        $finishedCount = (clone $finished)->count();
+
+        $reopened = $finishedCount === 0 ? 0 : (clone $finished)
+            ->whereHas('items', fn ($q) => $q->where('type', 'reopened'))
+            ->count();
+
+        $firstContact = $finishedCount === 0 ? 0 : (clone $finished)
+            ->whereDoesntHave('items', fn ($q) => $q->where('type', 'reopened'))
+            ->whereHas('items', fn ($q) => $q->where('type', 'message')->where('is_internal', false)->whereNotNull('user_id'), '=', 1)
+            ->count();
+
+        return [
+            'medianResponseTime' => (int) round($responseMinutes->median() ?? 0),
+            'medianResolutionTime' => (int) round($resolutionMinutes->median() ?? 0),
+            'reopenRate' => $finishedCount > 0 ? round($reopened / $finishedCount * 100, 1) : 0.0,
+            'firstContactResolutionRate' => $finishedCount > 0 ? round($firstContact / $finishedCount * 100, 1) : 0.0,
         ];
     }
 

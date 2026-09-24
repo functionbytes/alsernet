@@ -3,6 +3,9 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskErp\Services\ErpFactsService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
@@ -21,7 +24,11 @@ class AutomationEngine
             ->get();
 
         foreach ($automations as $automation) {
-            if (! $this->matchesConditions($automation->conditions, $ticket)) {
+            if (! $this->matchesConditions($automation->conditions ?? [], $ticket, $automation->match_mode ?? 'all')) {
+                continue;
+            }
+
+            if ($this->runawayGuardTripped($automation, $ticket)) {
                 continue;
             }
 
@@ -32,13 +39,47 @@ class AutomationEngine
     }
 
     /**
+     * Freno de bucles: dos reglas que se disparan la una a la otra (p. ej.
+     * "al asignar → cambiar equipo" y "al actualizar → reasignar") se
+     * alimentaban sin fin a través de la cola. Una misma regla no se ejecuta
+     * más de RUNAWAY_LIMIT veces por hora sobre el mismo ticket; el uso
+     * normal no se acerca ni de lejos.
+     */
+    private const RUNAWAY_LIMIT = 20;
+
+    private function runawayGuardTripped(Automation $automation, Ticket $ticket): bool
+    {
+        $key = "helpdesk:automation-runs:{$automation->id}:{$ticket->id}";
+
+        Cache::add($key, 0, now()->addHour());
+        $runs = Cache::increment($key);
+
+        if ($runs > self::RUNAWAY_LIMIT) {
+            if ($runs === self::RUNAWAY_LIMIT + 1) {
+                Log::warning('AutomationEngine: regla detenida por posible bucle', [
+                    'automation_id' => $automation->id,
+                    'ticket_id' => $ticket->id,
+                ]);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Pública para que "Probar regla" (modal de escalado) pueda comprobar en
      * seco unas condiciones contra tickets reales sin ejecutar acciones. Sin
      * esto habría que duplicar la tabla de operadores en el controlador, que
      * es justo la forma de que las dos se separen con el tiempo.
      */
-    public function matchesConditions(array $conditions, Ticket $ticket): bool
+    public function matchesConditions(array $conditions, Ticket $ticket, string $mode = 'all'): bool
     {
+        // 'any': basta una condición. Sin condiciones la regla vale para
+        // cualquier ticket en los dos modos.
+        $any = $mode === 'any' && $conditions !== [];
+
         $erpFacts = null;
 
         foreach ($conditions as $condition) {
@@ -53,6 +94,8 @@ class AutomationEngine
             if (is_string($field) && str_starts_with($field, 'erp_')) {
                 $erpFacts ??= $this->erpFacts($ticket);
                 $ticketValue = $erpFacts[$field] ?? null;
+            } elseif (in_array($field, self::TIME_FIELDS, true)) {
+                $ticketValue = $this->hoursSince($ticket, $field);
             } else {
                 $ticketValue = data_get($ticket, $field);
             }
@@ -76,12 +119,61 @@ class AutomationEngine
                 default => false,
             };
 
-            if (! $matches) {
+            if ($any && $matches) {
+                return true;
+            }
+
+            if (! $any && ! $matches) {
                 return false;
             }
         }
 
-        return true;
+        return ! $any;
+    }
+
+    /**
+     * Campos calculados para reglas por tiempo (no son columnas del ticket).
+     */
+    public const TIME_FIELDS = ['hours_since_last_activity', 'hours_since_created'];
+
+    private function hoursSince(Ticket $ticket, string $field): ?int
+    {
+        $from = $field === 'hours_since_created'
+            ? $ticket->created_at
+            : ($ticket->last_activity_at ?? $ticket->updated_at);
+
+        return $from ? (int) floor($from->diffInMinutes(now()) / 60) : null;
+    }
+
+    /**
+     * Reglas "Periódicamente" (ticket.time_elapsed) sobre un ticket. Cada
+     * regla actúa una sola vez por periodo de inactividad: la clave incluye
+     * la última actividad del ticket, así que vuelve a poder dispararse en
+     * cuanto alguien mueve el ticket y este se vuelve a quedar parado.
+     *
+     * @param  Collection<int, Automation>  $automations
+     */
+    public function runTimeBased(Collection $automations, Ticket $ticket): int
+    {
+        $ran = 0;
+        $period = ($ticket->last_activity_at ?? $ticket->updated_at)?->getTimestamp() ?? 0;
+
+        foreach ($automations as $automation) {
+            if (! $this->matchesConditions($automation->conditions ?? [], $ticket, $automation->match_mode ?? 'all')) {
+                continue;
+            }
+
+            if (! Cache::add("helpdesk:automation-time:{$automation->id}:{$ticket->id}:{$period}", 1, now()->addDays(30))) {
+                continue;
+            }
+
+            $this->runActions($automation->actions ?? [], $ticket);
+            $automation->increment('run_count');
+            $automation->update(['last_run_at' => now()]);
+            $ran++;
+        }
+
+        return $ran;
     }
 
     /**

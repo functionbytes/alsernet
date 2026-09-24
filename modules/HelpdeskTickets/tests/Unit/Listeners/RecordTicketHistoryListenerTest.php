@@ -2,131 +2,75 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Listeners;
 
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketHistory;
+use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\TestCase;
 
+/**
+ * 24-sep-2026: el listener iba en cola (auth()->id() siempre null: todas las
+ * filas sin autor) y duplicaba lo que ya registra TicketObserver (creado,
+ * estado, asignación), con el texto "Ticket asignado a " vacío.
+ */
 class RecordTicketHistoryListenerTest extends TestCase
 {
-    private function helpdeskConnectionAvailable(): bool
-    {
-        try {
-            DB::connection('helpdesk')->getPdo();
+    use SharesHelpdeskPdo;
 
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
+    public function test_es_sincrono_para_conservar_el_autor(): void
+    {
+        $this->assertNotInstanceOf(ShouldQueue::class, new RecordTicketHistory);
     }
 
-    // ─── structural contracts ─────────────────────────────────────────────────
-
-    public function test_listener_implements_should_queue(): void
+    public function test_registra_el_cierre_con_el_agente_que_lo_hizo(): void
     {
-        $listener = new RecordTicketHistory;
+        $agent = User::factory()->create();
+        $this->actingAs($agent);
 
-        $this->assertInstanceOf(ShouldQueue::class, $listener);
+        $ticket = $this->ticket();
+
+        (new RecordTicketHistory)->handle(new TicketClosed($ticket));
+
+        $row = TicketHistory::where('ticket_id', $ticket->id)->where('action_type', 'ticket_closed')->first();
+
+        $this->assertNotNull($row);
+        $this->assertSame($agent->id, (int) $row->user_id);
     }
 
-    public function test_listener_is_on_helpdesk_audit_queue(): void
+    public function test_no_duplica_el_alta_que_ya_registra_el_observer(): void
     {
-        $listener = new RecordTicketHistory;
+        $ticket = $this->ticket();
 
-        $this->assertEquals('helpdesk-audit', $listener->queue);
+        (new RecordTicketHistory)->handle(new TicketCreated($ticket));
+
+        $this->assertSame(0, TicketHistory::where('ticket_id', $ticket->id)->where('action_type', 'ticket_created')->count());
     }
 
-    public function test_listener_retries_three_times(): void
+    public function test_ignora_eventos_desconocidos(): void
     {
-        $listener = new RecordTicketHistory;
+        (new RecordTicketHistory)->handle(new \stdClass);
 
-        $this->assertEquals(3, $listener->tries);
+        $this->assertTrue(true);
     }
 
-    public function test_listener_has_backoff_strategy(): void
+    private function ticket(): Ticket
     {
-        $listener = new RecordTicketHistory;
+        $customer = Customer::firstOrCreate(
+            ['email' => 'history-listener@example.com'],
+            ['name' => 'History Listener'],
+        );
 
-        $this->assertIsArray($listener->backoff);
-        $this->assertNotEmpty($listener->backoff);
-    }
-
-    // ─── handle ───────────────────────────────────────────────────────────────
-
-    public function test_listener_handles_ticket_created_event_and_logs_history(): void
-    {
-        if (! $this->helpdeskConnectionAvailable()) {
-            $this->markTestSkipped('Helpdesk database connection is not available.');
-        }
-
-        $customer = Customer::factory()->create();
-
-        // Insert a minimal ticket directly
-        $ticketId = DB::connection('helpdesk')->table('helpdesk_tickets')->insertGetId([
-            'ticket_number' => 'TKT-HIST-'.uniqid(),
-            'subject' => 'History listener test',
+        return Ticket::create([
+            'subject' => 'History listener '.uniqid(),
+            'description' => 'x',
             'customer_id' => $customer->id,
             'priority' => 'normal',
             'source' => 'web',
-            'created_at' => now()->toDateTimeString(),
-            'updated_at' => now()->toDateTimeString(),
         ]);
-
-        $ticket = Ticket::on('helpdesk')->find($ticketId);
-
-        $event = new class($ticket)
-        {
-            public Ticket $ticket;
-
-            public function __construct(Ticket $ticket)
-            {
-                $this->ticket = $ticket;
-            }
-        };
-
-        // Cast to TicketCreated-compatible anonymous class
-        $ticketCreatedEvent = new class($ticket) extends TicketCreated
-        {
-            public function __construct(Ticket $ticket)
-            {
-                $this->ticket = $ticket;
-            }
-        };
-
-        $listener = new RecordTicketHistory;
-        $listener->handle($ticketCreatedEvent);
-
-        $history = DB::connection('helpdesk')
-            ->table('helpdesk_ticket_histories')
-            ->where('ticket_id', $ticketId)
-            ->where('action_type', 'ticket_created')
-            ->first();
-
-        $this->assertNotNull($history);
-        $this->assertEquals('ticket_created', $history->action_type);
-        $this->assertEquals('Ticket creado', json_decode($history->metadata, true)['description']);
-
-        // Cleanup
-        DB::connection('helpdesk')->table('helpdesk_ticket_histories')->where('ticket_id', $ticketId)->delete();
-        DB::connection('helpdesk')->table('helpdesk_tickets')->where('id', $ticketId)->delete();
-        $customer->forceDelete();
-    }
-
-    public function test_listener_ignores_unknown_event_types(): void
-    {
-        $listener = new RecordTicketHistory;
-
-        // Should not throw for an unknown event
-        $unknownEvent = new \stdClass;
-
-        try {
-            $listener->handle($unknownEvent);
-            $this->assertTrue(true);
-        } catch (\Throwable $e) {
-            $this->fail('Listener should not throw for unknown event: '.$e->getMessage());
-        }
     }
 }

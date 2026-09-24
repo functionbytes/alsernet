@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
@@ -435,6 +436,59 @@ class ManagersTicketsCrudTest extends TestCase
             collect($tickets)->firstWhere('id', $ticketSinEquipo->id),
             'Un ticket sin equipo debe verse aunque el agente no sea el asignado ni pertenezca a ningún equipo.'
         );
+    }
+
+    /**
+     * Ticket::scopeSearch() encadena orWhere sin agrupar; es seguro solo
+     * porque Eloquent agrupa las condiciones de un scope llamado sobre una
+     * consulta con wheres previos. Este test fija ese comportamiento.
+     */
+    public function test_buscar_en_el_listado_no_salta_la_visibilidad_por_equipo(): void
+    {
+        $agente = User::factory()->create();
+        $agente->assignRole('helpdesk-agent');
+        $agente->givePermissionTo('helpdesk.tickets.view');
+
+        $equipoAjeno = TicketGroup::create(['name' => 'Equipo ajeno '.uniqid()]);
+        $marca = 'zqx-busqueda-'.uniqid();
+
+        $ajeno = $this->createTicket(['subject' => "Ajeno {$marca}", 'group_id' => $equipoAjeno->id]);
+        $propio = $this->createTicket(['subject' => "Propio {$marca}", 'group_id' => null]);
+
+        $response = $this->actingAs($agente)->get(route('manager.helpdesk.tickets.index', ['search' => $marca]));
+        $response->assertOk();
+
+        preg_match('/data-tickets="([^"]*)"/', $response->getContent(), $matches);
+        $ids = collect(json_decode(html_entity_decode($matches[1]), true))->pluck('id');
+
+        $this->assertContains($propio->id, $ids);
+        $this->assertNotContains($ajeno->id, $ids, 'La búsqueda no debe mostrar tickets de un equipo al que el agente no pertenece.');
+    }
+
+    public function test_los_buscadores_de_tickets_acotan_por_equipo(): void
+    {
+        $agente = User::factory()->create();
+        $agente->assignRole('helpdesk-agent');
+        $agente->givePermissionTo(['helpdesk.tickets.view', 'helpdesk.search.use']);
+
+        $equipoAjeno = TicketGroup::create(['name' => 'Equipo ajeno '.uniqid()]);
+        $marca = 'zqx-avanzada-'.uniqid();
+        $ajeno = $this->createTicket(['subject' => "Ajeno {$marca}", 'group_id' => $equipoAjeno->id]);
+
+        $this->actingAs($agente)
+            ->get(route('manager.helpdesk.tickets.search', ['q' => $marca]))
+            ->assertOk()
+            ->assertDontSee($ajeno->ticket_number);
+
+        $this->actingAs($agente)
+            ->get(route('manager.helpdesk.search', ['q' => $marca]))
+            ->assertOk()
+            ->assertDontSee($ajeno->ticket_number);
+
+        $this->actingAs($agente)
+            ->getJson(route('manager.helpdesk.search.global', ['q' => $marca]))
+            ->assertOk()
+            ->assertJsonMissing(['id' => $ajeno->id]);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -19,11 +19,15 @@ class BulkTicketRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
-            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,delete,add_tag,assign_group,link_to_ticket,retry_failed_mail'],
+            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,change_priority,delete,add_tag,remove_tag,snooze,assign_group,link_to_ticket,retry_failed_mail'],
             'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
             'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
             'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
-            'tag' => ['required_if:action,add_tag', 'nullable', 'string', 'max:50'],
+            'tag' => ['required_if:action,add_tag,remove_tag', 'nullable', 'string', 'max:50'],
+            'priority' => ['required_if:action,change_priority', 'nullable', 'string', 'in:low,normal,high,urgent'],
+            // Horas desde ahora (1 h … 1 semana), mismo abanico que el modal
+            // individual de posponer.
+            'snooze_hours' => ['required_if:action,snooze', 'nullable', 'integer', 'min:1', 'max:720'],
             // "Vincular a un ticket" del mockup (modal 13, ve-mail-bulk):
             // mueve el hilo completo de cada ticket seleccionado a este.
             'merge_into_id' => ['required_if:action,link_to_ticket', 'nullable', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
@@ -45,7 +49,10 @@ class BulkTicketRequest extends FormRequest
             'status_id.exists' => 'El estado seleccionado no existe.',
             'group_id.required_if' => 'El grupo es obligatorio cuando la accion es asignar grupo.',
             'group_id.exists' => 'El grupo seleccionado no existe.',
-            'tag.required_if' => 'La etiqueta es obligatoria cuando la accion es anadir etiqueta.',
+            'tag.required_if' => 'La etiqueta es obligatoria para añadir o quitar etiquetas.',
+            'priority.required_if' => 'Elige la prioridad.',
+            'priority.in' => 'La prioridad no es válida.',
+            'snooze_hours.required_if' => 'Elige hasta cuándo posponer.',
             'merge_into_id.required_if' => 'El ticket destino es obligatorio para vincular la seleccion.',
             'merge_into_id.exists' => 'El ticket destino no existe.',
         ];
@@ -60,6 +67,8 @@ class BulkTicketRequest extends FormRequest
             'status_id' => 'estado',
             'group_id' => 'grupo',
             'tag' => 'etiqueta',
+            'priority' => 'prioridad',
+            'snooze_hours' => 'posponer',
             'merge_into_id' => 'ticket destino',
         ];
     }

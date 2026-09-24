@@ -26,9 +26,16 @@ Route::get('tickets/{ticketNumber}', [CustomerPortalController::class, 'showTick
 Route::get('tickets/{ticketNumber}/attachments/{attachment}', [CustomerPortalController::class, 'downloadAttachment'])
     ->name('tickets.attachments.download')
     ->whereNumber('attachment');
+// Adjuntos de las respuestas del agente (TicketItem.attachment_urls).
+Route::get('tickets/{ticketNumber}/items/{item}/attachments/{index}', [CustomerPortalController::class, 'downloadItemAttachment'])
+    ->name('tickets.item-attachments.download')
+    ->whereNumber(['item', 'index']);
 Route::post('tickets/{ticketNumber}/reply', [CustomerPortalController::class, 'replyToTicket'])
     ->middleware('throttle:helpdesk-customer-portal')
     ->name('tickets.reply');
+Route::post('tickets/{ticketNumber}/resolve', [CustomerPortalController::class, 'resolveTicket'])
+    ->middleware('throttle:helpdesk-customer-portal')
+    ->name('tickets.resolve');
 Route::post('tickets/{ticketNumber}/rate', [CustomerPortalController::class, 'rateTicket'])
     ->middleware('throttle:helpdesk-customer-portal')
     ->name('tickets.rate');

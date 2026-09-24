@@ -12,10 +12,12 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketResolved;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Services\TicketMergeService;
+use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Throwable;
 
 class BulkTicketsController extends Controller
@@ -23,6 +25,7 @@ class BulkTicketsController extends Controller
     public function __construct(
         private readonly TicketMergeService $merger,
         private readonly TicketMailsController $mailsController,
+        private readonly TicketUpdateService $updates,
     ) {}
 
     /**
@@ -39,8 +42,11 @@ class BulkTicketsController extends Controller
         'resolve' => 'resolve',
         'reopen' => 'reopen',
         'change_status' => 'update',
+        'change_priority' => 'update',
         'delete' => 'delete',
         'add_tag' => 'update',
+        'remove_tag' => 'update',
+        'snooze' => 'update',
         'assign_group' => 'update',
         // "Vincular a un ticket" del mockup: mismo permiso que la fusión
         // individual (merge() en TicketLifecycleController).
@@ -98,7 +104,8 @@ class BulkTicketsController extends Controller
             // Todas las ramas iteran modelos (no mass update/delete del builder)
             // para que TicketObserver registre historial y bumpee la caché de
             // reportes igual que en las acciones individuales.
-            $count = DB::transaction(function () use ($action, $validated, $authorized, $targetTicket): int {
+            $actor = $request->user();
+            $count = DB::transaction(function () use ($action, $validated, $authorized, $targetTicket, $actor): int {
                 return match ($action) {
                     // Antes hacía update() directo: no creaba el item de
                     // actividad ni disparaba TicketAssigned (a diferencia de
@@ -121,32 +128,74 @@ class BulkTicketsController extends Controller
                     'close' => $authorized
                         ->whereNull('closed_at')
                         ->each(function (Ticket $ticket): void {
+                            $previous = $ticket->status;
                             $ticket->close();
+                            $this->dispatchStatusChange($ticket, $previous);
                             TicketClosed::dispatch($ticket);
                         })
                         ->count(),
+                    // Solo los que siguen abiertos: antes pasaba a "Resuelto"
+                    // también tickets ya cerrados o ya resueltos.
                     'resolve' => $authorized
+                        ->filter(fn (Ticket $ticket) => $ticket->closed_at === null && $ticket->resolved_at === null)
                         ->each(function (Ticket $ticket): void {
+                            $previous = $ticket->status;
                             $ticket->resolve();
+                            $this->dispatchStatusChange($ticket, $previous);
                             TicketResolved::dispatch($ticket);
                         })
                         ->count(),
                     // Mismo bug que el botón individual "Reabrir": sin
                     // TicketReopened no se notifica al cliente al reabrir en bloque.
+                    // Cerrados Y resueltos, como el botón individual: antes
+                    // exigía closed_at y un ticket resuelto no se reabría.
                     'reopen' => $authorized
-                        ->whereNotNull('closed_at')
+                        ->filter(fn (Ticket $ticket) => $ticket->closed_at !== null || $ticket->resolved_at !== null)
                         ->each(function (Ticket $ticket): void {
+                            $previous = $ticket->status;
                             $ticket->reopen();
+                            $this->dispatchStatusChange($ticket, $previous);
                             TicketReopened::dispatch($ticket);
                         })
                         ->count(),
+                    // Mismo servicio que el selector de estado de la ficha:
+                    // pausa/reanuda el SLA, deja rastro en el hilo y dispara
+                    // TicketStatusChanged (aviso al cliente, automatizaciones).
+                    // Antes era un update() directo sin nada de eso.
                     'change_status' => $authorized
-                        ->each(fn (Ticket $ticket) => $ticket->update([
-                            'status_id' => $validated['status_id'],
-                        ]))
+                        ->each(fn (Ticket $ticket) => $this->updates->applyChanges(
+                            $ticket,
+                            ['status_id' => $validated['status_id']],
+                            $actor,
+                        ))
+                        ->count(),
+                    // Prioridad por el mismo servicio que la ficha: deja rastro
+                    // en el hilo y recalcula el SLA con su multiplicador.
+                    'change_priority' => $authorized
+                        ->each(fn (Ticket $ticket) => $this->updates->applyChanges(
+                            $ticket,
+                            ['priority' => $validated['priority']],
+                            $actor,
+                        ))
                         ->count(),
                     'delete' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->delete())
+                        ->count(),
+                    'remove_tag' => $authorized
+                        ->filter(fn (Ticket $ticket) => in_array($validated['tag'], $ticket->tags ?? [], true))
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'tags' => array_values(array_diff($ticket->tags ?? [], [$validated['tag']])),
+                        ]))
+                        ->count(),
+                    // Igual que "Posponer" individual sin pausar el SLA: el
+                    // ticket sale de la cola hasta la fecha y vuelve solo (o
+                    // antes, si el cliente responde).
+                    'snooze' => $authorized
+                        ->whereNull('closed_at')
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'snoozed_until' => now()->addHours((int) $validated['snooze_hours']),
+                            'snoozed_by' => $actor->id,
+                        ]))
                         ->count(),
                     'add_tag' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([
@@ -212,5 +261,19 @@ class BulkTicketsController extends Controller
             'updated_count' => $count,
             'skipped_ticket_ids' => $skipped->pluck('id')->values(),
         ]);
+    }
+
+    /**
+     * Igual que TicketLifecycleController::broadcastStatusChange(): cerrar,
+     * resolver o reabrir en bloque también es un cambio de estado (aviso al
+     * cliente, historial, automatizaciones "al cambiar estado").
+     */
+    private function dispatchStatusChange(Ticket $ticket, $previousStatus): void
+    {
+        $fresh = $ticket->fresh(['customer', 'status', 'category', 'assignee']);
+
+        if ($fresh && $previousStatus && $fresh->status && $previousStatus->id !== $fresh->status->id) {
+            TicketStatusChanged::dispatch($fresh, $previousStatus, $fresh->status);
+        }
     }
 }

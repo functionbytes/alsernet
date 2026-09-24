@@ -77,4 +77,34 @@ class SpamClassifierServiceTest extends TestCase
         $this->assertSame(1.0, $this->parse('{"spam": true, "score": 3}')['score']);
         $this->assertSame(0.0, $this->parse('{"spam": true, "score": -1}')['score']);
     }
+
+    // ─── Correo masivo por cabeceras (24-sep-2026) ───────────────────────────
+
+    public function test_detecta_boletines_listas_y_autorespuestas_por_cabecera(): void
+    {
+        $service = app(SpamClassifierService::class);
+
+        $this->assertNotNull($service->bulkReason(['List-Unsubscribe' => '<mailto:unsub@x.com>']));
+        $this->assertNotNull($service->bulkReason(['List-Id' => 'news.example.com']));
+        $this->assertNotNull($service->bulkReason(['Precedence' => 'bulk']));
+        $this->assertNotNull($service->bulkReason(['Auto-Submitted' => 'auto-replied']));
+    }
+
+    public function test_un_correo_normal_no_se_marca_como_masivo(): void
+    {
+        $service = app(SpamClassifierService::class);
+
+        $this->assertNull($service->bulkReason([]));
+        $this->assertNull($service->bulkReason(['Auto-Submitted' => 'no', 'Precedence' => 'normal']));
+    }
+
+    public function test_una_respuesta_a_un_hilo_nunca_va_a_cuarentena(): void
+    {
+        $result = app(SpamClassifierService::class)->quarantineIfBulk('boletin@example.com', [
+            'in_reply_to' => '<abc@helpdesk>',
+            'headers' => ['List-Unsubscribe' => '<mailto:unsub@x.com>'],
+        ]);
+
+        $this->assertNull($result);
+    }
 }

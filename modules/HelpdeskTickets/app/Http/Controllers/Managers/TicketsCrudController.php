@@ -472,22 +472,7 @@ class TicketsCrudController extends Controller
      */
     private function scopeToVisibleTickets(EloquentBuilder $query, ?int $userId): void
     {
-        $user = auth()->user();
-
-        if (! $user || $user->hasPermissionTo('helpdesk.tickets.manage')) {
-            return;
-        }
-
-        $groupIds = TicketGroup::idsForUser($userId);
-
-        $query->where(function (EloquentBuilder $q) use ($groupIds, $userId) {
-            $q->where('assignee_id', $userId)
-                ->orWhereNull('group_id');
-
-            if ($groupIds !== []) {
-                $q->orWhereIn('group_id', $groupIds);
-            }
-        });
+        $query->visibleToAgent(auth()->user());
     }
 
     /**

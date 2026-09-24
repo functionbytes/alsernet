@@ -26,10 +26,16 @@ class AutoCloseTicketsCommand extends Command
                 return Command::SUCCESS;
             }
 
-            $closedStatus = TicketStatus::where('is_open', false)->orderBy('order')->first();
+            // Por slug, igual que Ticket::close(). Antes: el primer estado con
+            // is_open=false por orden, que en la BD real es "En Espera" (no
+            // "Cerrado"), y el resuelto se buscaba con LIKE '%resolv%', que no
+            // casa con "Resuelto" — sin él, el WHERE por estado desaparecía y
+            // el comando "cerraba" (a En Espera) CUALQUIER ticket inactivo.
+            $closedStatus = TicketStatus::where('slug', 'closed')->first();
+            $resolvedStatus = TicketStatus::where('slug', 'resolved')->first();
 
-            if (! $closedStatus) {
-                $this->error('No closed status found.');
+            if (! $closedStatus || ! $resolvedStatus) {
+                $this->error('Missing "closed" or "resolved" ticket status (by slug); nothing closed.');
 
                 return Command::FAILURE;
             }
@@ -38,8 +44,6 @@ class AutoCloseTicketsCommand extends Command
             $days = $optionDays !== null
                 ? max(1, (int) $optionDays)
                 : $settings->integer('auto_close_ticket_time', 30);
-            $resolvedStatus = TicketStatus::where('name', 'like', '%resolv%')->first();
-
             $query = Ticket::query()
                 // Sin esto, leer $ticket->status más abajo (para tenerlo
                 // ANTES del update) disparaba una query lazy por ticket —
@@ -47,11 +51,8 @@ class AutoCloseTicketsCommand extends Command
                 // (14-sep-2026, auditoría de rendimiento).
                 ->with('status')
                 ->whereNull('closed_at')
+                ->where('status_id', $resolvedStatus->id)
                 ->where('updated_at', '<', now()->subDays($days));
-
-            if ($resolvedStatus) {
-                $query->where('status_id', $resolvedStatus->id);
-            }
 
             $count = 0;
 

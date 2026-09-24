@@ -15,6 +15,7 @@ use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
@@ -252,7 +253,14 @@ class TicketService
      */
     public function reopenIfCustomerCanReopen(Ticket $ticket): void
     {
+        // Resuelto (sin cerrar): la respuesta del cliente dice que no estaba
+        // resuelto, así que vuelve a la cola siempre. Antes se quedaba en
+        // "Resuelto" con un mensaje nuevo que nadie iba a mirar.
         if ($ticket->closed_at === null) {
+            if ($ticket->resolved_at !== null) {
+                $this->reopenTicket($ticket, 'El cliente respondió a un ticket resuelto.');
+            }
+
             return;
         }
 
@@ -282,28 +290,25 @@ class TicketService
     public function reopenTicket(Ticket $ticket, ?string $reason = null): Ticket
     {
         try {
-            if (! $ticket->closed_at) {
+            if (! $ticket->closed_at && ! $ticket->resolved_at) {
                 throw new \Exception('Ticket is not closed');
             }
 
             return DB::transaction(function () use ($ticket, $reason) {
-                $newStatus = TicketStatus::where('slug', 'new')->first();
+                $previousStatus = $ticket->status;
 
-                $ticket->update([
-                    'status_id' => $newStatus?->id ?? 1,
-                    'closed_at' => null,
-                    'closed_by' => null,
-                ]);
+                // Ticket::reopen(): estado "Reabierto" (antes "Nuevo", que lo
+                // confundía con un ticket recién llegado), limpia resuelto/
+                // cerrado y reinicia el plazo de resolución. El cambio de
+                // estado lo registra TicketObserver en el historial.
+                $ticket->reopen();
 
-                TicketHistory::logFieldChange(
-                    $ticket,
-                    'status_id',
-                    $ticket->getOriginal('status_id'),
-                    $newStatus?->id,
-                    auth()->user()
-                );
+                $fresh = $ticket->fresh(['customer', 'status', 'category', 'assignee']);
+                if ($previousStatus && $fresh?->status && $previousStatus->id !== $fresh->status->id) {
+                    TicketStatusChanged::dispatch($fresh, $previousStatus, $fresh->status);
+                }
 
-                event(new TicketReopened($ticket));
+                TicketReopened::dispatch($ticket);
 
                 Log::info('Ticket reopened', [
                     'ticket_id' => $ticket->id,

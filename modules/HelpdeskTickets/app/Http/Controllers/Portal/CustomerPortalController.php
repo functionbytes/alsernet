@@ -18,6 +18,9 @@ use Modules\Helpdesk\Models\CustomerSession;
 use Modules\Helpdesk\Models\Setting;
 use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Events\TicketResolved;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Http\Requests\Portal\PortalLoginRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\RateTicketRequest;
@@ -270,6 +273,69 @@ class CustomerPortalController extends Controller
         );
     }
 
+    /** POST /portal/tickets/{ticketNumber}/resolve */
+    public function resolveTicket(string $ticketNumber): RedirectResponse
+    {
+        $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
+
+        if ($customerOrRedirect instanceof RedirectResponse) {
+            return $customerOrRedirect;
+        }
+
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->where('customer_id', $customerOrRedirect->id)
+            ->firstOrFail();
+
+        if ($ticket->closed_at === null && $ticket->resolved_at === null) {
+            $previousStatus = $ticket->status;
+
+            $ticket->resolve();
+            $ticket->items()->create([
+                'type' => 'status_change',
+                'body' => 'El cliente marcó el ticket como resuelto desde el portal.',
+            ]);
+
+            $fresh = $ticket->fresh(['customer', 'status', 'category', 'assignee']);
+            if ($previousStatus && $fresh?->status && $previousStatus->id !== $fresh->status->id) {
+                TicketStatusChanged::dispatch($fresh, $previousStatus, $fresh->status);
+            }
+            TicketResolved::dispatch($ticket);
+        }
+
+        return redirect()->route('portal.tickets.show', $ticket->ticket_number)
+            ->with('status', 'Gracias por confirmarlo. Si vuelves a escribir, el ticket se reabrirá.');
+    }
+
+    /** GET /portal/tickets/{ticketNumber}/items/{item}/attachments/{index} */
+    public function downloadItemAttachment(string $ticketNumber, int $item, int $index): StreamedResponse|RedirectResponse
+    {
+        $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
+
+        if ($customerOrRedirect instanceof RedirectResponse) {
+            return $customerOrRedirect;
+        }
+
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->where('customer_id', $customerOrRedirect->id)
+            ->firstOrFail();
+
+        // El mensaje tiene que ser de este ticket y público: una nota interna
+        // con adjuntos nunca se sirve al cliente, aunque adivine el id.
+        $message = $ticket->items()
+            ->whereKey($item)
+            ->where('type', 'message')
+            ->where('is_internal', false)
+            ->firstOrFail();
+
+        $path = ($message->attachment_urls ?? [])[$index] ?? null;
+        abort_if(! is_string($path) || $path === '', 404);
+
+        $disk = config('helpdesk.attachments.disk', 'local');
+        abort_unless(Storage::disk($disk)->exists($path), 404);
+
+        return Storage::disk($disk)->download($path, basename($path));
+    }
+
     /** POST /portal/tickets/{ticketNumber}/reply */
     public function replyToTicket(ReplyTicketRequest $request, string $ticketNumber): RedirectResponse
     {
@@ -412,6 +478,11 @@ class CustomerPortalController extends Controller
 
             return $ticket;
         });
+
+        // Fuera de la transacción, igual que el alta del panel: sin el evento
+        // el ticket del portal no recibía confirmación, aviso a agentes,
+        // auto-asignación ni automatizaciones.
+        TicketCreated::dispatch($ticket);
 
         return redirect()->route('portal.tickets.show', $ticket->ticket_number)
             ->with('status', __('helpdesktickets::helpdesktickets.portal.ticket_created'));

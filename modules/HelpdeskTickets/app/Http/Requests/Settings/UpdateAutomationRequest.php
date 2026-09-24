@@ -19,6 +19,7 @@ class UpdateAutomationRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'trigger_event' => ['required', 'string', 'in:'.implode(',', array_keys(Automation::$triggerEvents))],
             'conditions' => ['required', 'json'],
+            'match_mode' => ['nullable', 'in:all,any'],
             'actions' => ['required', 'json'],
             'order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],

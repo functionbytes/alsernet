@@ -375,6 +375,13 @@ class TicketMailsController extends Controller
             ], 422);
         }
 
+        // Un correo al cliente desde el editor es una respuesta igual que una
+        // del hilo: antes no contaba para el SLA de primera respuesta ni
+        // cerraba el plazo de siguiente respuesta.
+        if (! $mail->is_internal) {
+            $ticket->recordAgentResponse();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Email enviado correctamente.',

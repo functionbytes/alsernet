@@ -82,6 +82,76 @@ class SpamClassifierService
     }
 
     /**
+     * Retiene en cuarentena los correos masivos o automáticos (boletines,
+     * listas, autorespuestas) de remitentes sin tickets previos. Se decide
+     * solo por cabeceras estándar que pone el propio emisor, sin IA: es
+     * barato, no tiene coste por correo y no depende de un umbral.
+     *
+     * No aplica a respuestas a un hilo (In-Reply-To/References): una
+     * respuesta de cliente enviada desde una herramienta que añada List-*
+     * seguiría su ticket.
+     *
+     * @param  array<string, mixed>  $parsed
+     */
+    public function quarantineIfBulk(string $fromEmail, array $parsed): ?TicketQuarantine
+    {
+        if (! config('helpdesktickets.bulk_mail_quarantine.enabled', true)) {
+            return null;
+        }
+
+        if (! empty($parsed['in_reply_to']) || ! empty($parsed['references'])) {
+            return null;
+        }
+
+        $reason = $this->bulkReason((array) ($parsed['headers'] ?? []));
+
+        if ($reason === null || $this->isKnownSender($fromEmail)) {
+            return null;
+        }
+
+        Log::info('SpamClassifierService: correo masivo retenido en cuarentena', [
+            'from' => $fromEmail,
+            'reason' => $reason,
+        ]);
+
+        return TicketQuarantine::query()->create([
+            'from_email' => $fromEmail,
+            'from_name' => $parsed['from_name'] ?? null,
+            'subject' => mb_substr((string) ($parsed['subject'] ?? ''), 0, 500),
+            'body_text' => $parsed['body_text'] ?? null,
+            'body_html' => $parsed['body_html'] ?? null,
+            'message_id' => $parsed['message_id'] ?? null,
+            'spam_score' => 0,
+            'reason' => $reason,
+            'status' => TicketQuarantine::STATUS_PENDING,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $headers
+     */
+    public function bulkReason(array $headers): ?string
+    {
+        $get = fn (string $name) => trim((string) ($headers[$name] ?? ''));
+
+        $autoSubmitted = strtolower($get('Auto-Submitted'));
+        if ($autoSubmitted !== '' && $autoSubmitted !== 'no') {
+            return 'Envío automático (Auto-Submitted: '.$autoSubmitted.')';
+        }
+
+        $precedence = strtolower($get('Precedence'));
+        if (in_array($precedence, ['bulk', 'list', 'junk'], true)) {
+            return 'Correo masivo (Precedence: '.$precedence.')';
+        }
+
+        if ($get('List-Unsubscribe') !== '' || $get('List-Id') !== '') {
+            return 'Boletín o lista de correo (cabecera List-*)';
+        }
+
+        return null;
+    }
+
+    /**
      * Un remitente con tickets previos es un cliente, no un spammer. Además de
      * evitar el falso positivo más caro, recorta el volumen que llega al
      * clasificador a solo los correos de gente nueva.

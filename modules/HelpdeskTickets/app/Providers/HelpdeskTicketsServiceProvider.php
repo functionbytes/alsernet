@@ -23,6 +23,7 @@ use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\PruneBlacklistHitsCommand;
 use Modules\HelpdeskTickets\Console\Commands\PublishHelpdeskTicketsAssetsCommand;
 use Modules\HelpdeskTickets\Console\Commands\ReviewTicketQualityCommand;
+use Modules\HelpdeskTickets\Console\Commands\RunTimeBasedAutomationsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledRepliesCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
@@ -358,6 +359,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
 
         $commands = array_values(array_filter([
             class_exists(AutoCloseTicketsCommand::class) ? AutoCloseTicketsCommand::class : null,
+            class_exists(RunTimeBasedAutomationsCommand::class) ? RunTimeBasedAutomationsCommand::class : null,
             class_exists(MarkOverdueTicketsCommand::class) ? MarkOverdueTicketsCommand::class : null,
             class_exists(AutoResponseTicketCommand::class) ? AutoResponseTicketCommand::class : null,
             class_exists(CleanupTrashedTicketsCommand::class) ? CleanupTrashedTicketsCommand::class : null,
@@ -436,6 +438,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             // queja del ritmo de conexiones.
             $this->scheduleMailboxFetch($schedule, $enabled);
             $schedule->command('ticket:autoclose')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('ticket:run-time-automations')->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autooverdue')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);

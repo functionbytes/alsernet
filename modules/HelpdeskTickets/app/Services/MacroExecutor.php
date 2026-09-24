@@ -2,9 +2,12 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
@@ -51,11 +54,18 @@ class MacroExecutor
             'reply' => $this->createMessage($ticket, $body, isInternal: false),
             'internal_note' => $this->createMessage($ticket, $body, isInternal: true),
             'assign_group' => $ticket->update(['group_id' => $value]),
-            'assign_user' => $ticket->update(['assignee_id' => $value]),
-            'set_priority' => $ticket->update(['priority' => $value]),
-            'set_status' => $ticket->update(['status_id' => $value]),
+            // Estado, agente y prioridad pasan por el mismo servicio que la
+            // ficha: antes eran update() directos, sin pausa/reanudación del
+            // SLA, sin TicketStatusChanged/TicketAssigned (ni aviso al agente
+            // ni al cliente) y sin recalcular el plazo por prioridad.
+            'assign_user' => $this->applyChange($ticket, ['assignee_id' => $value ?: null]),
+            'set_priority' => $this->applyChange($ticket, ['priority' => $value]),
+            'set_status' => $this->applyChange($ticket, ['status_id' => $value]),
             'add_tag' => $ticket->update(['tags' => array_unique(array_merge($ticket->tags ?? [], [$value]))]),
-            'close' => $ticket->update(['closed_at' => now()]),
+            // Igual que el botón "Cerrar ticket": estado Cerrado de verdad,
+            // TicketStatusChanged y TicketClosed (encuesta CSAT y
+            // automatizaciones "al cerrar"). Antes solo ponía closed_at.
+            'close' => $this->closeTicket($ticket),
             // Un tipo desconocido no puede abortar el resto del macro, pero
             // tampoco debe pasar inadvertido: antes del discriminador `module`
             // las macros de conversacion se colaban aqui y se "aplicaban"
@@ -65,6 +75,37 @@ class MacroExecutor
                 'ticket_id' => $ticket->id,
             ]),
         };
+    }
+
+    private function applyChange(Ticket $ticket, array $data): void
+    {
+        $actor = auth()->user();
+
+        if (! $actor instanceof User) {
+            // Sin agente autenticado no hay a quién atribuir el cambio en el
+            // hilo; se mantiene el comportamiento anterior.
+            $ticket->update($data);
+
+            return;
+        }
+
+        app(TicketUpdateService::class)->applyChanges($ticket, $data, $actor);
+        $ticket->refresh();
+    }
+
+    private function closeTicket(Ticket $ticket): void
+    {
+        $previousStatus = $ticket->status;
+
+        $ticket->close();
+
+        $fresh = $ticket->fresh(['customer', 'status', 'category', 'assignee']);
+
+        if ($fresh && $previousStatus && $fresh->status && $previousStatus->id !== $fresh->status->id) {
+            TicketStatusChanged::dispatch($fresh, $previousStatus, $fresh->status);
+        }
+
+        TicketClosed::dispatch($ticket);
     }
 
     /**

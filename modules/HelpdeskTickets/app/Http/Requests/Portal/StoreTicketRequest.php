@@ -23,7 +23,10 @@ class StoreTicketRequest extends FormRequest
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:5000'],
             'category_id' => ['nullable', 'integer'],
-            'priority' => ['nullable', 'string'],
+            // Sin 'urgent': el cliente no puede autoasignarse la prioridad más
+            // alta (la escala el agente o el escalado automático). Antes
+            // cualquier cadena pasaba y acababa en la columna tal cual.
+            'priority' => ['nullable', Rule::in(['low', 'normal', 'high'])],
             'attachments' => [
                 'nullable',
                 'array',

@@ -17,7 +17,11 @@ class TicketSearchController extends Controller
     {
         $this->authorize('helpdesk.tickets.view');
 
-        $query = Ticket::query()->with(['customer', 'category', 'status', 'assignee']);
+        // Mismo acotado por equipo que el listado: antes /search devolvía
+        // tickets de cualquier equipo a quien tuviera el permiso base.
+        $query = Ticket::query()
+            ->with(['customer', 'category', 'status', 'assignee'])
+            ->visibleToAgent($request->user());
 
         $semanticIds = [];
 

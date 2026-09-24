@@ -20,11 +20,11 @@ use Modules\HelpdeskTickets\Listeners\AutoAssignNewTicket;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentOfAssignment;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentsOnNewTicket;
 use Modules\HelpdeskTickets\Listeners\NotifyTicketWatchers;
-use Modules\HelpdeskTickets\Listeners\RecalculateSlaPolicy;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Listeners\RunAiAutoClassify;
 use Modules\HelpdeskTickets\Listeners\RunAiSentimentAnalysis;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnErpResolved;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketActivity;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketAssigned;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketClosed;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketCreated;
@@ -39,6 +39,7 @@ use Modules\HelpdeskTickets\Listeners\SendSlaBreachBroadcastNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaBreachNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaWarningBroadcastNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaWarningNotification;
+use Modules\HelpdeskTickets\Listeners\TrackTicketResponseSla;
 use Modules\HelpdeskTickets\Listeners\TranslateIncomingTicketMessage;
 use Modules\HelpdeskTickets\Listeners\UpdateTicketLastActivity;
 use Modules\HelpdeskTickets\Listeners\UpdateTicketOnClose;
@@ -47,18 +48,20 @@ use Modules\HelpdeskTranslate\Services\CachedTranslator;
 class HelpdeskTicketsEventServiceProvider extends ServiceProvider
 {
     protected $listen = [
+        // RecordTicketHistory ya no escucha TicketCreated/TicketUpdated/
+        // TicketAssigned/TicketStatusChanged: esos cambios los registra
+        // TicketObserver (con autor). Escuchar los dos duplicaba cada fila del
+        // historial ("status_change" + "status_changed"...).
         TicketCreated::class => [
             SendCustomerConfirmation::class,
             NotifyAgentsOnNewTicket::class,
             UpdateTicketLastActivity::class,
-            RecordTicketHistory::class,
             RunAutomationsOnTicketCreated::class,
             RunAiAutoClassify::class,
             // Auto-asignación global (#78): inerte salvo toggle on.
             AutoAssignNewTicket::class,
         ],
         TicketUpdated::class => [
-            RecordTicketHistory::class,
             RunAutomationsOnTicketUpdated::class,
         ],
         TicketClosed::class => [
@@ -69,30 +72,31 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
         TicketReopened::class => [
             RecordTicketHistory::class,
             SendCustomerReopenNotification::class,
+            RunAutomationsOnTicketActivity::class,
         ],
         TicketResolved::class => [
             RunAutomationsOnTicketResolved::class,
         ],
         TicketAssigned::class => [
-            RecordTicketHistory::class,
             NotifyAgentOfAssignment::class,
             RunAutomationsOnTicketAssigned::class,
         ],
         TicketStatusChanged::class => [
             SendCustomerStatusNotification::class,
-            RecordTicketHistory::class,
             RunAutomationsOnTicketStatusChanged::class,
-            RecalculateSlaPolicy::class,
         ],
         MessageAdded::class => [
+            TrackTicketResponseSla::class,
             SendCustomerReplyNotification::class,
             UpdateTicketLastActivity::class,
             RunAiSentimentAnalysis::class,
             NotifyTicketWatchers::class,
+            RunAutomationsOnTicketActivity::class,
         ],
         SlaBreached::class => [
             SendSlaBreachNotification::class,
             RecordTicketHistory::class,
+            RunAutomationsOnTicketActivity::class,
         ],
         SlaWarning::class => [
             SendSlaWarningNotification::class,

@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Tests\Feature\Portal;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
@@ -381,6 +382,57 @@ class PortalTicketFlowTest extends TestCase
     /**
      * @param  array<string, mixed>  $overrides
      */
+    // ─── 24-sep-2026: resolver desde el portal y adjuntos del agente ─────────
+
+    public function test_customer_can_mark_their_ticket_as_resolved(): void
+    {
+        $ticket = $this->createTicket($this->customer);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.resolve', $ticket->ticket_number))
+            ->assertRedirect(route('portal.tickets.show', $ticket->ticket_number));
+
+        $this->assertNotNull($ticket->fresh()->resolved_at);
+    }
+
+    public function test_customer_cannot_resolve_someone_elses_ticket(): void
+    {
+        $ticket = $this->createTicket(Customer::factory()->create());
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.resolve', $ticket->ticket_number))
+            ->assertNotFound();
+
+        $this->assertNull($ticket->fresh()->resolved_at);
+    }
+
+    public function test_agent_reply_attachment_is_downloadable_but_internal_note_attachment_is_not(): void
+    {
+        Storage::fake(config('helpdesk.attachments.disk', 'local'));
+        $disk = Storage::disk(config('helpdesk.attachments.disk', 'local'));
+
+        $ticket = $this->createTicket($this->customer);
+        $disk->put("helpdesk/tickets/{$ticket->id}/factura.pdf", 'pdf');
+        $disk->put("helpdesk/tickets/{$ticket->id}/interno.pdf", 'pdf');
+
+        $public = TicketItem::create([
+            'ticket_id' => $ticket->id, 'type' => 'message', 'body' => 'Adjunto factura',
+            'is_internal' => false, 'attachment_urls' => ["helpdesk/tickets/{$ticket->id}/factura.pdf"],
+        ]);
+        $internal = TicketItem::create([
+            'ticket_id' => $ticket->id, 'type' => 'message', 'body' => 'Nota',
+            'is_internal' => true, 'attachment_urls' => ["helpdesk/tickets/{$ticket->id}/interno.pdf"],
+        ]);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->get(route('portal.tickets.item-attachments.download', [$ticket->ticket_number, $public->id, 0]))
+            ->assertOk();
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->get(route('portal.tickets.item-attachments.download', [$ticket->ticket_number, $internal->id, 0]))
+            ->assertNotFound();
+    }
+
     private function createTicket(Customer $customer, array $overrides = []): Ticket
     {
         return Ticket::create(array_merge([

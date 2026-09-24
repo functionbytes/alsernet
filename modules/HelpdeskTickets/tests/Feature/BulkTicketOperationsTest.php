@@ -443,6 +443,67 @@ class BulkTicketOperationsTest extends TestCase
         $response->assertJson(['success' => true, 'updated_count' => 1]);
     }
 
+    // ─── Acciones nuevas (24-sep-2026) ─────────────────────────────────────────
+
+    public function test_bulk_change_priority_updates_priority(): void
+    {
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'change_priority',
+                'priority' => 'high',
+            ])->assertOk()->assertJson(['success' => true, 'updated_count' => 1]);
+
+        $this->assertSame('high', $ticket->fresh()->priority);
+    }
+
+    public function test_bulk_remove_tag_only_touches_tickets_with_that_tag(): void
+    {
+        $with = $this->createTestTicket(['tags' => ['vip', 'envio']]);
+        $without = $this->createTestTicket(['tags' => ['envio']]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$with->id, $without->id],
+                'action' => 'remove_tag',
+                'tag' => 'vip',
+            ])->assertOk()->assertJson(['updated_count' => 1]);
+
+        $this->assertSame(['envio'], $with->fresh()->tags);
+        $this->assertSame(['envio'], $without->fresh()->tags);
+    }
+
+    public function test_bulk_snooze_hides_tickets_until_the_given_hours(): void
+    {
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'snooze',
+                'snooze_hours' => 24,
+            ])->assertOk();
+
+        $snoozed = $ticket->fresh()->snoozed_until;
+        $this->assertNotNull($snoozed);
+        $this->assertTrue($snoozed->between(now()->addHours(23), now()->addHours(25)));
+    }
+
+    public function test_bulk_resolve_skips_closed_tickets(): void
+    {
+        $closed = $this->createTestTicket(['closed_at' => now()]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$closed->id],
+                'action' => 'resolve',
+            ]);
+
+        $this->assertNull($closed->fresh()->resolved_at);
+    }
+
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
     /**

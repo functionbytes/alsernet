@@ -588,6 +588,13 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
             return null;
         }
 
+        // Boletines y envíos automáticos de remitentes nuevos: a cuarentena,
+        // no a ticket. Antes Hostinger, JetBrains, Oracle o Mailrelay abrían
+        // tickets que además el escalado acababa subiendo a "Urgente".
+        if ($fromEmail && app(SpamClassifierService::class)->quarantineIfBulk($fromEmail, $parsed)) {
+            return null;
+        }
+
         // Try to find by Message-ID threading first — In-Reply-To es el padre
         // inmediato; References es la cadena completa del hilo (RFC 5322) y
         // cubre el caso en que el cliente responde a un mensaje intermedio
@@ -922,7 +929,10 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         // pasen por un filtro simplemente no traerán ninguna de las cuatro.
         // Header::get() normaliza guiones y mayúsculas internamente.
         $header = $message->getHeader();
-        foreach (['X-Spam-Score', 'X-Spam-Status', 'X-Spam-Level', 'X-Spam-Flag'] as $name) {
+        // List-*, Precedence y Auto-Submitted: marcan boletines, listas y
+        // respuestas automáticas (RFC 2369, 2919, 3834). Los usa
+        // SpamClassifierService::quarantineIfBulk().
+        foreach (['X-Spam-Score', 'X-Spam-Status', 'X-Spam-Level', 'X-Spam-Flag', 'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'] as $name) {
             $value = $header?->get($name);
             $value = $value === null ? null : trim((string) $value);
             if ($value !== null && $value !== '') {

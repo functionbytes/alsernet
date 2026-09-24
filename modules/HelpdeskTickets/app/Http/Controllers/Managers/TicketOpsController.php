@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
+use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
@@ -57,6 +58,9 @@ class TicketOpsController extends Controller
 
         $tickets = Ticket::query()
             ->with(['status:id,name,slug', 'customer:id,name'])
+            // Buscador de fusionar/vincular: sin esto listaba tickets de
+            // cualquier equipo a un agente base (24-sep-2026).
+            ->visibleToAgent($request->user())
             ->where(function ($query) use ($q) {
                 $query->where('ticket_number', 'like', "%{$q}%")
                     ->orWhere('subject', 'like', "%{$q}%");
@@ -452,6 +456,11 @@ class TicketOpsController extends Controller
 
             return $new;
         });
+
+        // Sin confirmación al cliente (ya está en conversación por el ticket
+        // original), pero sí aviso a agentes, automatizaciones y
+        // auto-asignación, que antes no corrían para un ticket dividido.
+        TicketCreated::dispatch($created, false);
 
         return response()->json([
             'success' => true,

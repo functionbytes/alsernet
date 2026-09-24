@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
@@ -43,7 +44,7 @@ class ProcessRecurringTicketsJob implements ShouldQueue
 
     public function handle(): void
     {
-        $due = RecurringTicket::dueToRun()->get();
+        $due = RecurringTicket::dueToRun()->with('priority')->get();
 
         Log::info("ProcessRecurringTicketsJob: processing {$due->count()} recurring ticket(s).");
 
@@ -54,14 +55,19 @@ class ProcessRecurringTicketsJob implements ShouldQueue
                 // tab del listado, la fila sale sin etiqueta y el SLA no
                 // arranca. Había tres tickets así generados por este job
                 // (TCK-2026-00033, 00034 y 00076).
-                Ticket::create([
+                $ticket = Ticket::create([
                     'subject' => $recurring->subject,
                     'description' => $recurring->description,
                     'category_id' => $recurring->category_id,
                     'assignee_id' => $recurring->assignee_id,
                     'status_id' => $this->defaultStatusId(),
+                    'priority' => $this->prioritySlug($recurring),
                     'source' => 'recurring',
                 ]);
+
+                // Sin el evento, el ticket recurrente no avisaba a nadie ni
+                // pasaba por automatizaciones ni auto-asignación.
+                TicketCreated::dispatch($ticket);
 
                 $recurring->update([
                     'last_run_at' => now(),
@@ -74,6 +80,21 @@ class ProcessRecurringTicketsJob implements ShouldQueue
                 Log::error("ProcessRecurringTicketsJob: failed for recurring [{$recurring->id}]: {$e->getMessage()}");
             }
         }
+    }
+
+    /**
+     * La plantilla recurrente guarda la prioridad del catálogo
+     * helpdesk_priorities (slugs en español), pero el ticket usa el enum
+     * low/normal/high/urgent. Antes se ignoraba y todo nacía "normal".
+     */
+    private function prioritySlug(RecurringTicket $recurring): string
+    {
+        return match ($recurring->priority?->slug) {
+            'baja', 'low' => 'low',
+            'alta', 'high' => 'high',
+            'urgente', 'urgent', 'critico', 'critical' => 'urgent',
+            default => 'normal',
+        };
     }
 
     /**

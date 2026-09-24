@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Http\Requests\Agents\AssignTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Agents\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
@@ -85,6 +86,10 @@ class TicketsController extends Controller
         if ($resolvedSubject !== $ticket->subject || $resolvedDescription !== $ticket->description) {
             $ticket->update(['subject' => $resolvedSubject, 'description' => $resolvedDescription]);
         }
+
+        // Tras interpolar, para que la confirmación al cliente salga con el
+        // asunto ya resuelto (mismo orden que TicketsCrudController::store()).
+        TicketCreated::dispatch($ticket);
 
         return redirect()->route('agent.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesk::helpdesk.messages.ticket_created'));

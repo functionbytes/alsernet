@@ -242,6 +242,13 @@ return [
         'threshold' => (float) env('HELPDESKTICKETS_SPAM_THRESHOLD', 0.9),
     ],
 
+    // Boletines, listas y autorespuestas de remitentes nuevos van a la
+    // cuarentena en vez de abrir un ticket (SpamClassifierService::
+    // quarantineIfBulk). Solo cabeceras estándar, sin IA.
+    'bulk_mail_quarantine' => [
+        'enabled' => env('HELPDESKTICKETS_BULK_MAIL_QUARANTINE', true),
+    ],
+
     'reports' => [
         'scheduled' => [
             'enabled' => env('HELPDESK_SCHEDULED_REPORTS_ENABLED', false),

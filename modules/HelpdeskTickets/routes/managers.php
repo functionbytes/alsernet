@@ -48,6 +48,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsCon
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketUnificationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
+use Modules\HelpdeskTickets\Http\Middleware\EnsureTicketFeatureEnabled;
 
 /*
  * Los 15 permisos `helpdesk.tickets.*` se sembraban y se podían asignar desde
@@ -77,7 +78,7 @@ Route::group(['prefix' => ''], function () {
 
     // Macros (apply to ticket)
     Route::get('/macros/available', [MacroApplyController::class, 'list'])->name('manager.helpdesk.macros.list');
-    Route::post('/tickets/{ticket}/macros/{macro}/apply', [MacroApplyController::class, 'apply'])->name('manager.helpdesk.tickets.macros.apply');
+    Route::post('/tickets/{ticket}/macros/{macro}/apply', [MacroApplyController::class, 'apply'])->middleware(EnsureTicketFeatureEnabled::class.':composer_macros')->name('manager.helpdesk.tickets.macros.apply');
 
     // Artículos del centro de ayuda sugeridos al responder (deflexión)
     Route::get('/tickets/{ticket}/suggested-articles', [SuggestedArticlesController::class, 'index'])->name('manager.helpdesk.tickets.suggested-articles');
@@ -100,7 +101,7 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/canned-replies/{reply}/duplicate', [TicketCannedRepliesController::class, 'duplicate'])->name('manager.helpdesk.tickets.canned-replies.duplicate');
 
     // Traducción de texto del ticket (mensaje entrante / borrador de respuesta)
-    Route::post('/tickets/{ticket}/translate', [TicketTranslationController::class, 'translate'])->name('manager.helpdesk.tickets.translate');
+    Route::post('/tickets/{ticket}/translate', [TicketTranslationController::class, 'translate'])->middleware(EnsureTicketFeatureEnabled::class.':composer_translate')->name('manager.helpdesk.tickets.translate');
 
     // Aplicar sugerencia de IA (categoría / prioridad)
     Route::post('/tickets/{ticket}/apply-ai-suggestion', [ApplyAiSuggestionController::class, 'apply'])->name('manager.helpdesk.tickets.apply-ai-suggestion');
@@ -114,7 +115,7 @@ Route::group(['prefix' => ''], function () {
     // Borrador de respuesta generado por IA. Throttle propio y bajo: cada
     // llamada dispara un bucle de tool-calling contra el proveedor (varias
     // peticiones facturadas), no es una consulta barata como el resto.
-    Route::post('/tickets/{ticket}/ai/suggest-reply', [TicketAiSuggestionController::class, 'suggestReply'])
+    Route::post('/tickets/{ticket}/ai/suggest-reply', [TicketAiSuggestionController::class, 'suggestReply'])->middleware(EnsureTicketFeatureEnabled::class.':composer_ai')
         ->middleware('throttle:20,1')
         ->name('manager.helpdesk.tickets.ai.suggest-reply');
 
@@ -142,7 +143,7 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.tickets.ai.dispute-review');
 
     // Recordatorios de seguimiento del ticket
-    Route::post('/tickets/{ticket}/followups', [TicketFollowupsController::class, 'store'])->name('manager.helpdesk.tickets.followups.store');
+    Route::post('/tickets/{ticket}/followups', [TicketFollowupsController::class, 'store'])->middleware(EnsureTicketFeatureEnabled::class.':composer_followup')->name('manager.helpdesk.tickets.followups.store');
     Route::delete('/tickets/{ticket}/followups', [TicketFollowupsController::class, 'destroyAll'])->name('manager.helpdesk.tickets.followups.destroy-all');
     Route::delete('/tickets/{ticket}/followups/{followup}', [TicketFollowupsController::class, 'destroy'])->name('manager.helpdesk.tickets.followups.destroy');
 
@@ -251,7 +252,7 @@ Route::group(['prefix' => ''], function () {
     // Modales 16/28/29/30: lectura agrupada de la configuración que consultan.
     Route::get('/tickets/settings-snapshot', [TicketOpsController::class, 'settingsSnapshot'])->name('manager.helpdesk.tickets.settings-snapshot');
     // Modal 39: separa mensajes del hilo en un ticket nuevo.
-    Route::post('/tickets/{ticket}/split', [TicketOpsController::class, 'split'])->name('manager.helpdesk.tickets.split');
+    Route::post('/tickets/{ticket}/split', [TicketOpsController::class, 'split'])->middleware(EnsureTicketFeatureEnabled::class.':action_split')->name('manager.helpdesk.tickets.split');
     // Modal 22: reputación y autenticación del dominio de envío.
     Route::get('/tickets/reputation', [TicketOpsController::class, 'reputation'])->name('manager.helpdesk.tickets.reputation');
     // Modal 22: guarda "avisar a managers"/"suprimir automáticamente".
@@ -327,7 +328,7 @@ Route::group(['prefix' => ''], function () {
     // Modal 40: la valoración recibida y el contexto para leerla.
     Route::get('/tickets/{ticket}/csat', [TicketOpsController::class, 'csat'])->name('manager.helpdesk.tickets.csat.show');
     Route::post('/tickets/{ticket}/unarchive', [TicketLifecycleController::class, 'unarchive'])->name('manager.helpdesk.tickets.unarchive');
-    Route::post('/tickets/{ticket}/merge', [TicketLifecycleController::class, 'merge'])->name('manager.helpdesk.tickets.merge');
+    Route::post('/tickets/{ticket}/merge', [TicketLifecycleController::class, 'merge'])->middleware(EnsureTicketFeatureEnabled::class.':action_merge')->name('manager.helpdesk.tickets.merge');
 
     /*
      * Unificar duplicados (v2 del aviso de duplicados). La v1 —fusionar de uno
@@ -339,10 +340,10 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/unify', [TicketUnificationController::class, 'unify'])->name('manager.helpdesk.tickets.unify');
 
     // Bloquear al remitente (correo y/o dominio) y borrar el ticket de una vez.
-    Route::post('/tickets/{ticket}/blacklist', [TicketUnificationController::class, 'blacklist'])->name('manager.helpdesk.tickets.blacklist');
-    Route::post('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'watch'])->name('manager.helpdesk.tickets.watch');
+    Route::post('/tickets/{ticket}/blacklist', [TicketUnificationController::class, 'blacklist'])->middleware(EnsureTicketFeatureEnabled::class.':action_blacklist')->name('manager.helpdesk.tickets.blacklist');
+    Route::post('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'watch'])->middleware(EnsureTicketFeatureEnabled::class.':mgmt_followers')->name('manager.helpdesk.tickets.watch');
     Route::delete('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'unwatch'])->name('manager.helpdesk.tickets.unwatch');
-    Route::post('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'snooze'])->name('manager.helpdesk.tickets.snooze');
+    Route::post('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'snooze'])->middleware(EnsureTicketFeatureEnabled::class.':action_snooze')->name('manager.helpdesk.tickets.snooze');
     Route::delete('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'unsnooze'])->name('manager.helpdesk.tickets.unsnooze');
     Route::post('/tickets/{ticket}/link', [TicketLifecycleController::class, 'linkTicket'])->name('manager.helpdesk.tickets.link');
     Route::delete('/tickets/{ticket}/link/{linkId}', [TicketLifecycleController::class, 'unlinkTicket'])->name('manager.helpdesk.tickets.unlink');

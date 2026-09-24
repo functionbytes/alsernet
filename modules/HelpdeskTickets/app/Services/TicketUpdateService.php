@@ -172,6 +172,16 @@ class TicketUpdateService
             $changed = array_merge($changed, array_keys($remaining));
         }
 
+        // El plazo depende del multiplicador de la prioridad. Antes lo
+        // recalculaba RecalculateSlaPolicy escuchando TicketStatusChanged,
+        // que nunca trae un cambio de prioridad: subir un ticket a urgente
+        // dejaba el plazo de "normal".
+        if (in_array('priority', $changed, true) && $ticket->sla_policy_id) {
+            $ticket->calculateSlaDueDates(
+                from: $ticket->created_at->copy()->addMinutes((int) $ticket->sla_paused_duration_minutes),
+            );
+        }
+
         if ($changed !== []) {
             // El listado necesita enterarse también de prioridad, categoría,
             // equipo y cualquier otro campo editable, no solo del estado o

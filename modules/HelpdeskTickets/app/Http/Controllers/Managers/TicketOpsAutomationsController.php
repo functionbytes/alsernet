@@ -39,7 +39,7 @@ class TicketOpsAutomationsController extends Controller
             ->orderBy('order')
             ->orderBy('id')
             ->limit(50)
-            ->get(['id', 'name', 'trigger_event', 'conditions', 'actions', 'is_active', 'run_count', 'last_run_at']);
+            ->get(['id', 'name', 'trigger_event', 'conditions', 'match_mode', 'actions', 'is_active', 'run_count', 'last_run_at']);
 
         return response()->json([
             'can_manage' => (bool) $request->user()?->can('helpdesk.tickets.settings'),
@@ -60,6 +60,7 @@ class TicketOpsAutomationsController extends Controller
             'name' => $request->validated('name'),
             'trigger_event' => $request->validated('trigger_event'),
             'conditions' => $request->condicionesNormalizadas(),
+            'match_mode' => $request->validated('match_mode') ?? 'all',
             'actions' => $request->accionesNormalizadas(),
             'is_active' => $request->boolean('is_active', true),
             // Al final de la cola: una regla nueva no debe adelantar a las que
@@ -119,9 +120,12 @@ class TicketOpsAutomationsController extends Controller
             ->limit($scanned)
             ->get(['id', 'ticket_number', 'subject', 'priority', 'status_id', 'group_id', 'assignee_id',
                 'category_id', 'escalation_count', 'sla_first_response_breached',
-                'sla_next_response_breached', 'sla_resolution_breached']);
+                'sla_next_response_breached', 'sla_resolution_breached',
+                // Para las condiciones por tiempo (horas sin actividad / desde el alta).
+                'created_at', 'updated_at', 'last_activity_at']);
 
-        $matches = $tickets->filter(fn (Ticket $t) => $engine->matchesConditions($conditions, $t));
+        $mode = $request->input('match_mode') === 'any' ? 'any' : 'all';
+        $matches = $tickets->filter(fn (Ticket $t) => $engine->matchesConditions($conditions, $t, $mode));
 
         return response()->json([
             'success' => true,
@@ -152,6 +156,7 @@ class TicketOpsAutomationsController extends Controller
             'run_count' => (int) $automation->run_count,
             'last_run_at_human' => $automation->last_run_at?->diffForHumans(),
             'conditions' => $automation->conditions ?? [],
+            'match_mode' => $automation->match_mode ?? 'all',
             'actions' => $automation->actions ?? [],
         ];
     }

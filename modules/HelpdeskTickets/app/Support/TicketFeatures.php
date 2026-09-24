@@ -71,6 +71,7 @@ class TicketFeatures
                 'mgmt_followers' => 'Seguidores',
                 'mgmt_sla_card' => 'Tarjeta SLA (con calendario)',
                 'mgmt_csat_card' => 'Encuesta de satisfacción (CSAT)',
+                'mgmt_time_card' => 'Tiempo invertido (imputación de horas)',
             ],
         ],
         'tabs' => [

@@ -100,7 +100,12 @@ class TicketExportController extends Controller
      */
     private function query(Request $request)
     {
-        $query = Ticket::query()->with(['customer', 'status', 'category', 'assignee', 'group']);
+        // Todo alcance (selección, filtro o histórico completo) queda dentro
+        // de lo que el agente puede ver: antes "all" exportaba tickets de
+        // cualquier equipo a quien no tenía helpdesk.tickets.manage.
+        $query = Ticket::query()
+            ->with(['customer', 'status', 'category', 'assignee', 'group'])
+            ->visibleToAgent($request->user());
 
         $scope = $request->input('scope', 'filter');
 

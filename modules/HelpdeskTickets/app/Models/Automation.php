@@ -20,6 +20,7 @@ class Automation extends Model
         'description',
         'trigger_event',
         'conditions',
+        'match_mode',
         'actions',
         'order',
         'is_active',
@@ -48,6 +49,10 @@ class Automation extends Model
         // o no. Es el único disparador desde el que las condiciones erp_* ven
         // datos: en ticket.created el trabajo sigue en la cola helpdesk-erp.
         'ticket.erp_resolved' => 'El ERP ha respondido',
+        'ticket.customer_replied' => 'El cliente responde',
+        'ticket.reopened' => 'Ticket reabierto',
+        'ticket.sla_breached' => 'SLA incumplido',
+        'ticket.time_elapsed' => 'Periódicamente (reglas por tiempo)',
     ];
 
     /**

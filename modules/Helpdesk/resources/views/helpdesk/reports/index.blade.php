@@ -407,6 +407,22 @@
                                 </span>
                             </div>
                             <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Mediana 1ª respuesta</span>
+                                <span class="fw-semibold">{{ $medianResponseTime ?? 0 }} min</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Mediana de resolución</span>
+                                <span class="fw-semibold">{{ $medianResolutionTime ?? 0 }} min</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Tasa de reapertura</span>
+                                <span class="fw-semibold">{{ $reopenRate ?? 0 }}%</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Resolución al primer contacto</span>
+                                <span class="fw-semibold">{{ $firstContactResolutionRate ?? 0 }}%</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
                                 <span class="text-muted">Tasa de cierre</span>
                                 <span class="fw-semibold text-{{ $totalCreated > 0 && ($totalClosed / $totalCreated) > 0.7 ? 'success' : 'warning' }}">
                                     {{ $totalCreated > 0 ? round(($totalClosed / $totalCreated) * 100, 1) : 0 }}%

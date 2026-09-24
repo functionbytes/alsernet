@@ -2,32 +2,22 @@
 
 namespace Modules\HelpdeskTickets\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Events\SlaWarning;
-use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
-use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
-use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 
 /**
- * Record all ticket events in the history table
+ * Registra en el historial los eventos que TicketObserver no ve (cierre,
+ * reapertura, SLA). Síncrono (antes ShouldQueue en helpdesk-audit): en cola auth()->id() es
+ * siempre null y todas las filas salían sin autor. Es un INSERT; no compensa
+ * perder quién cerró o reabrió el ticket.
  */
-class RecordTicketHistory implements ShouldQueue
+class RecordTicketHistory
 {
-    use InteractsWithQueue;
-
-    public string $queue = 'helpdesk-audit';
-
-    public int $tries = 3;
-
-    public array $backoff = [5, 15, 30];
-
     /**
      * Handle the event
      */
@@ -40,24 +30,6 @@ class RecordTicketHistory implements ShouldQueue
         $description = null;
 
         match (true) {
-            $event instanceof TicketCreated => [
-                $action = 'ticket_created',
-                $ticketId = $event->ticket->id,
-                $description = 'Ticket creado',
-            ],
-            $event instanceof TicketAssigned => [
-                $action = 'ticket_assigned',
-                $ticketId = $event->ticket->id,
-                $newValue = $event->agent->id,
-                $description = "Ticket asignado a {$event->agent->name}",
-            ],
-            $event instanceof TicketStatusChanged => [
-                $action = 'status_changed',
-                $ticketId = $event->ticket->id,
-                $oldValue = $event->previousStatus->id,
-                $newValue = $event->newStatus->id,
-                $description = "Estado cambiado de {$event->previousStatus->name} a {$event->newStatus->name}",
-            ],
             $event instanceof TicketClosed => [
                 $action = 'ticket_closed',
                 $ticketId = $event->ticket->id,
@@ -86,7 +58,13 @@ class RecordTicketHistory implements ShouldQueue
             default => null,
         };
 
-        if ($action && $ticketId) {
+        if (! $action || ! $ticketId) {
+            return;
+        }
+
+        // Al ser síncrono, un fallo aquí no puede tumbar el cierre o la
+        // reapertura que lo disparó: el historial es secundario.
+        try {
             TicketHistory::create([
                 'ticket_id' => $ticketId,
                 'user_id' => auth()->id(),
@@ -95,20 +73,12 @@ class RecordTicketHistory implements ShouldQueue
                 'new_value' => $newValue,
                 'metadata' => $description ? ['description' => $description] : null,
             ]);
-
-            Log::info('Ticket history recorded', [
+        } catch (\Throwable $e) {
+            Log::error('RecordTicketHistory failed', [
+                'event' => get_class($event),
                 'ticket_id' => $ticketId,
-                'action' => $action,
-                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    public function failed(object $event, \Throwable $e): void
-    {
-        Log::error('RecordTicketHistory listener failed', [
-            'event' => get_class($event),
-            'error' => $e->getMessage(),
-        ]);
     }
 }

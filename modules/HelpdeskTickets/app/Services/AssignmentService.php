@@ -154,7 +154,7 @@ class AssignmentService
     {
         try {
             $agents = $this->preferLanguageSpeakers(
-                $this->getAvailableAgents($ticket->category_id),
+                $this->preferTeamMembers($this->getAvailableAgents($ticket->category_id), $ticket),
                 $ticket
             );
 
@@ -210,7 +210,7 @@ class AssignmentService
     {
         try {
             $agents = $this->preferLanguageSpeakers(
-                $this->getAvailableAgents($ticket->category_id),
+                $this->preferTeamMembers($this->getAvailableAgents($ticket->category_id), $ticket),
                 $ticket
             );
 
@@ -282,6 +282,36 @@ class AssignmentService
         $agents = $query->orderBy('firstname')->get();
 
         return $this->filterByAvailability($agents);
+    }
+
+    /**
+     * Enrutado por equipo (24-sep-2026): un ticket con equipo se reparte
+     * entre los miembros disponibles de ese equipo. Antes el reparto
+     * automático ignoraba group_id y podía dar un ticket de Facturación a
+     * alguien de Logística. Igual que el idioma, estrecha la elección pero
+     * nunca deja el ticket sin asignar: si nadie del equipo está disponible,
+     * vale el grupo completo.
+     */
+    private function preferTeamMembers(Collection $agents, Ticket $ticket): Collection
+    {
+        if ($agents->isEmpty() || ! $ticket->group_id) {
+            return $agents;
+        }
+
+        try {
+            $memberIds = DB::connection('helpdesk')
+                ->table('helpdesk_group_user')
+                ->where('group_id', $ticket->group_id)
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        } catch (\Throwable) {
+            return $agents;
+        }
+
+        $members = $agents->filter(fn ($agent) => in_array((int) $agent->id, $memberIds, true))->values();
+
+        return $members->isNotEmpty() ? $members : $agents;
     }
 
     /**

@@ -31,6 +31,11 @@ class AutoResponseTicketCommand extends Command
 
             $tickets = Ticket::query()
                 ->whereNull('first_response_at')
+                // La marca de "ya contestado automáticamente" es el propio
+                // mensaje de sistema, no first_response_at (ver abajo).
+                ->whereDoesntHave('items', fn ($q) => $q->whereNull('user_id')
+                    ->whereNull('author_id')
+                    ->where('metadata', 'like', '%auto_response%'))
                 ->where('created_at', '<', now()->subHours($hours))
                 ->whereNull('closed_at')
                 ->cursor();
@@ -51,12 +56,16 @@ class AutoResponseTicketCommand extends Command
                         'type' => 'message',
                         'body' => $body,
                         'is_internal' => false,
-                        'sender_type' => 'system',
+                        // Sin user_id ni author_id = mensaje de sistema (la
+                        // columna sender_type que se mandaba aquí no existe).
                         'metadata' => ['auto_response' => true],
                     ]);
 
+                    // Sin first_response_at: un acuse automático no es una
+                    // respuesta de un agente. Marcarlo escondía el
+                    // incumplimiento del SLA de primera respuesta y rebajaba
+                    // el tiempo medio de primera respuesta de los informes.
                     $ticket->update([
-                        'first_response_at' => now(),
                         'last_message_at' => now(),
                     ]);
                     // Persisting the system message alone did not send an

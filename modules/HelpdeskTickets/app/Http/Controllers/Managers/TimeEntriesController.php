@@ -15,6 +15,10 @@ class TimeEntriesController extends Controller
      */
     public function index(Ticket $ticket): JsonResponse
     {
+        // Contra la instancia: antes bastaba con tener acceso a la ruta para
+        // leer el tiempo imputado en tickets de cualquier equipo.
+        $this->authorize('view', $ticket);
+
         $entries = $ticket->timeEntries()
             ->with('user:id,firstname,lastname')
             ->orderBy('logged_at', 'desc')
@@ -36,6 +40,8 @@ class TimeEntriesController extends Controller
      */
     public function store(StoreTimeEntryRequest $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('update', $ticket);
+
         $validated = $request->validated();
 
         $entry = TicketTimeEntry::create([

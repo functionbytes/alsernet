@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\AgentPresenceService;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
@@ -792,8 +793,28 @@ class TicketDetailDataController extends Controller
                         ->whereNull('closed_at')
                         ->count()
                     : null,
+                // Estado real del agente (heartbeat + estado elegido). Antes
+                // el panel pintaba "en línea" fijo para cualquier asignado.
+                'agent_presence' => $this->agentPresence($ticket->assignee_id),
             ],
         ]);
+    }
+
+    /**
+     * available|busy|away|offline, o null si no hay asignado o el módulo de
+     * presencia no está disponible (sin Redis el panel no debe romperse).
+     */
+    private function agentPresence(?int $userId): ?string
+    {
+        if (! $userId || ! class_exists(AgentPresenceService::class)) {
+            return null;
+        }
+
+        try {
+            return app(AgentPresenceService::class)->getState($userId);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /**

@@ -501,9 +501,13 @@ class Ticket extends Model
      */
     public function lastMessage(): HasOne
     {
+        // Sin mensajes de sistema (ni agente ni cliente: acuse automático,
+        // seguimientos): la fila
+        // del listado enseñaba "Hemos recibido su solicitud…" en casi todos
+        // los tickets en vez de lo último que dijo el cliente o el agente.
         return $this->hasOne(TicketItem::class, 'ticket_id')
-            ->where('type', 'message')
-            ->latestOfMany();
+            ->ofMany(['id' => 'max'], fn ($q) => $q->where('type', 'message')
+                ->where(fn ($w) => $w->whereNotNull('user_id')->orWhereNotNull('author_id')));
     }
 
     /**
@@ -802,11 +806,51 @@ class Ticket extends Model
     /**
      * Scope: Search by ticket number, subject or customer name
      */
+    /**
+     * Scope: tickets que el agente puede ver. Sin helpdesk.tickets.manage,
+     * solo los asignados a él, los de sus equipos y los que no tienen equipo
+     * (la cola compartida de triaje). Única fuente para listado, API y /search.
+     */
+    public function scopeVisibleToAgent(Builder $query, ?User $user): Builder
+    {
+        if (! $user || $user->hasPermissionTo('helpdesk.tickets.manage')) {
+            return $query;
+        }
+
+        $groupIds = TicketGroup::idsForUser($user->id);
+
+        return $query->where(function (Builder $q) use ($groupIds, $user) {
+            $q->where('assignee_id', $user->id)
+                ->orWhereNull('group_id');
+
+            if ($groupIds !== []) {
+                $q->orWhereIn('group_id', $groupIds);
+            }
+        });
+    }
+
     public function scopeSearch($query, $term)
     {
-        return $query->where('ticket_number', 'like', "%{$term}%")
+        $query->where('ticket_number', 'like', "%{$term}%")
             ->orWhere('subject', 'like', "%{$term}%")
-            ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$term}%"));
+            // Email además del nombre: es lo que el agente suele tener a mano
+            // cuando el cliente escribe desde otro canal.
+            ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%"));
+
+        // Texto de los mensajes (24-sep-2026). Usa el índice FULLTEXT que ya
+        // tenía helpdesk_ticket_items para la búsqueda dentro del hilo; antes
+        // desde el listado solo se encontraba por número, asunto o nombre.
+        // Con menos de 3 caracteres MySQL no indexa la palabra y no aporta.
+        if (mb_strlen(trim((string) $term)) >= 3 && in_array($query->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $query->orWhereIn('id', fn ($sub) => $sub->select('ticket_id')
+                ->from('helpdesk_ticket_items')
+                ->whereNull('deleted_at')
+                ->where('is_internal', false)
+                ->whereRaw('MATCH(body, html_body) AGAINST (? IN NATURAL LANGUAGE MODE)', [$term]));
+        }
+
+        return $query;
     }
 
     /**
@@ -850,14 +894,18 @@ class Ticket extends Model
      *                             prioridad) siguen sobrescribiendo, que es su
      *                             trabajo.
      */
-    public function calculateSlaDueDates(bool $persist = true, bool $onlyMissing = false): self
+    public function calculateSlaDueDates(bool $persist = true, bool $onlyMissing = false, ?Carbon $from = null): self
     {
         if (! $this->slaPolicy) {
             return $this;
         }
 
         $policy = $this->slaPolicy;
-        $now = Carbon::now();
+        // $from: desde cuándo cuentan primera respuesta y resolución. Al
+        // recalcular por un cambio de prioridad es el alta del ticket (más lo
+        // que estuvo en pausa), no "ahora": subir a urgente un ticket de tres
+        // días no puede regalarle un plazo nuevo entero.
+        $now = $from ?? Carbon::now();
 
         // Get priority multiplier
         $priorityMultipliers = $policy->priority_multipliers ?? [
@@ -875,11 +923,13 @@ class Ticket extends Model
             $this->sla_first_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
 
-        // Calculate next-response due date (agente debe responder de nuevo tras
-        // una réplica del cliente). Antes la columna sla_next_response_due_at
-        // existía pero nunca se rellenaba: el vencimiento de siguiente respuesta
-        // quedaba sin control.
-        if ($policy->next_response_time && ! ($onlyMissing && $this->sla_next_response_due_at !== null)) {
+        // Siguiente respuesta: solo hay plazo mientras haya una réplica del
+        // cliente pendiente de contestar, y lo abre TrackTicketResponseSla al
+        // llegar esa réplica. Aquí únicamente se reajusta uno ya abierto
+        // (cambio de política o de prioridad). Antes se fijaba al crear el
+        // ticket (creación + X) y no se movía nunca más: marcaba
+        // incumplimientos falsos en tickets sin réplica alguna.
+        if ($policy->next_response_time && $this->sla_next_response_due_at !== null && ! $onlyMissing && $from === null) {
             $minutes = (int) ($policy->next_response_time * $multiplier);
             $this->sla_next_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
@@ -903,6 +953,46 @@ class Ticket extends Model
     }
 
     /**
+     * Un agente respondió al cliente: primera respuesta si faltaba, y el
+     * plazo de "siguiente respuesta" queda cumplido. Lo usan tanto los
+     * mensajes del hilo (TrackTicketResponseSla) como el editor de correo.
+     */
+    public function recordAgentResponse(): void
+    {
+        $changes = ['sla_next_response_due_at' => null, 'last_message_at' => now()];
+
+        if (! $this->first_response_at) {
+            $changes['first_response_at'] = now();
+        }
+
+        $this->forceFill($changes)->saveQuietly();
+    }
+
+    /**
+     * Vencimiento de "siguiente respuesta" contando desde $from (la réplica
+     * del cliente), con el multiplicador de prioridad y el horario laboral de
+     * la política. Null si la política no fija ese plazo.
+     */
+    public function nextResponseDueFrom(Carbon $from): ?Carbon
+    {
+        $policy = $this->slaPolicy;
+
+        if (! $policy || ! $policy->next_response_time) {
+            return null;
+        }
+
+        $multipliers = $policy->priority_multipliers ?? [
+            'urgent' => 0.25,
+            'high' => 0.5,
+            'normal' => 1.0,
+            'low' => 2.0,
+        ];
+        $minutes = (int) ($policy->next_response_time * ($multipliers[$this->priority] ?? 1.0));
+
+        return $this->calculateBusinessTime($from, $minutes, $policy);
+    }
+
+    /**
      * Calculate business time (respecting business hours if enabled)
      */
     protected function calculateBusinessTime(Carbon $start, int $minutes, TicketSlaPolicy $policy): Carbon
@@ -911,8 +1001,10 @@ class Ticket extends Model
             return $start->copy()->addMinutes($minutes);
         }
 
-        // Parse business hours from policy
-        $businessHours = $policy->business_hours ?? [
+        // Parse business hours from policy. ?: y no ??: un horario guardado
+        // como [] (la validación solo exige array) no es null, y sin ningún
+        // día laborable el bucle de abajo no terminaba nunca.
+        $businessHours = $policy->business_hours ?: [
             'monday' => ['start' => '09:00', 'end' => '17:00'],
             'tuesday' => ['start' => '09:00', 'end' => '17:00'],
             'wednesday' => ['start' => '09:00', 'end' => '17:00'],
@@ -930,7 +1022,17 @@ class Ticket extends Model
             : null;
         $holidays = $calculator?->holidays() ?? ['recurring' => [], 'dates' => []];
 
+        // Tope de seguridad: si ningún día aporta minutos (inicio = fin en
+        // todos, o festivos que lo cubren todo) el bucle giraría para siempre
+        // dentro del job o de la petición. Dos años sin hueco laborable es
+        // una configuración rota: se cae a tiempo natural.
+        $daysScanned = 0;
+
         while ($remainingMinutes > 0) {
+            if (++$daysScanned > 730) {
+                return $start->copy()->addMinutes($minutes);
+            }
+
             $dayOfWeek = strtolower($current->format('l'));
 
             // Skip if not a business day or a holiday
@@ -1109,12 +1211,19 @@ class Ticket extends Model
      */
     public function reopen(): self
     {
-        $openStatus = Cache::remember('helpdesk:open-status', 3600, fn () => TicketStatus::where('is_open', true)->orderBy('order')->first());
+        // "Reabierto" por slug; antes era el primer estado abierto por orden,
+        // que es "Nuevo", y un ticket reabierto se confundía con uno recién
+        // llegado en listados e informes.
+        $openStatus = Cache::remember('helpdesk:reopened-status', 3600, fn () => TicketStatus::where('slug', 'reopened')->first()
+            ?? TicketStatus::where('is_open', true)->orderBy('order')->first());
 
         $this->update([
             'status_id' => $openStatus->id ?? $this->status_id,
             'closed_at' => null,
             'resolved_at' => null,
+            // El plazo de resolución vuelve a contar desde ahora (abajo), así
+            // que el incumplimiento del ciclo anterior no aplica al nuevo.
+            'sla_resolution_breached' => false,
         ]);
 
         // Recalculate SLA if policy exists
@@ -1474,6 +1583,9 @@ class Ticket extends Model
             'url_note_pin_template' => route('manager.helpdesk.tickets.notes.pin', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_note_color_template' => route('manager.helpdesk.tickets.notes.color', ['ticket' => '__TICKET__', 'note' => '__NOTE__']),
             'url_summary' => route('manager.helpdesk.tickets.summary', ['ticket' => '__TICKET__']),
+            // Tarjeta "Tiempo invertido" del panel de gestión.
+            'url_time_entries' => route('manager.helpdesk.tickets.time-entries.index', ['ticket' => '__TICKET__']),
+            'url_time_entry_destroy_template' => route('manager.helpdesk.tickets.time-entries.destroy', ['ticket' => '__TICKET__', 'timeEntry' => '__ENTRY__']),
             'url_watch' => route('manager.helpdesk.tickets.watch', ['ticket' => '__TICKET__']),
             'url_unwatch' => route('manager.helpdesk.tickets.unwatch', ['ticket' => '__TICKET__']),
             'url_destroy' => route('manager.helpdesk.tickets.destroy', ['ticket' => '__TICKET__']),
