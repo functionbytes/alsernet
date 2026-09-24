@@ -9,14 +9,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Modules\Erp\Http\Controllers\Api\CustomerController as ErpCustomerController;
 use Modules\Helpdesk\Jobs\SendBulkHsmTemplateJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Campaigns\WhatsAppTemplate;
+use Modules\Helpdesk\Models\Company;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\CustomerTag;
+use Modules\Helpdesk\Services\CustomerInsightsService;
 use Modules\Helpdesk\Services\HsmConversationService;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskContacts\Http\Requests\Managers\BulkContactActionRequest;
@@ -27,10 +33,15 @@ use Modules\HelpdeskContacts\Http\Requests\Managers\ExternalSearchRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ImportContactsRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\SendHsmRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\UpdateContactRequest;
-use Modules\Erp\Http\Controllers\Api\CustomerController as ErpCustomerController;
+use Modules\HelpdeskContacts\Jobs\ExportContactsJob;
+use Modules\HelpdeskContacts\Services\ContactAggregatorService;
+use Modules\HelpdeskContacts\Services\ContactCsvWriter;
+use Modules\HelpdeskContacts\Services\ContactOwnerCatalog;
+use Modules\HelpdeskContacts\Support\ContactLayouts;
 use Modules\HelpdeskErp\Services\ErpContextService;
 use Modules\HelpdeskIntegration\Services\CustomerIntegrationService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
+use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContactsController extends Controller
@@ -39,9 +50,10 @@ class ContactsController extends Controller
      * Split list/detail page with a paginated, searchable customer list.
      * Authorization is handled by the route middleware (can:contacts.view).
      */
-    public function index(Request $request): View
+    public function index(Request $request, CustomerInsightsService $insights, ContactAggregatorService $aggregator, ContactOwnerCatalog $ownerCatalog): View
     {
         $perPage = in_array((int) $request->input('per_page'), [15, 25, 50, 100]) ? (int) $request->input('per_page') : 25;
+        $view = in_array($request->input('view'), self::VIEWS, true) ? $request->input('view') : 'all';
 
         // Orden fijo (sin sorting por columna en la UI) — mismo patrón que
         // UsersController::index(), que usa latest() sin parámetros de sort.
@@ -49,8 +61,12 @@ class ContactsController extends Controller
         // incrementa (Customer::incrementConversationCount()) y nunca se
         // decrementa al borrar/reasignar conversaciones — encontrada
         // desincronizada en vivo (mostraba 15 con 0 conversaciones reales).
-        $customers = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
+        $query = $this->applyFilters(Customer::query()->forAgent($request->user()), $request);
+        $this->applyView($query, $view, $request->user(), $aggregator);
+
+        $customers = $query
             ->withCount('conversations')
+            ->with(['company:id,name', 'tags:id,name,color'])
             ->orderByDesc('last_seen_at')
             ->paginate($perPage)
             ->appends($request->query());
@@ -59,26 +75,47 @@ class ContactsController extends Controller
             ? Customer::query()->forAgent($request->user())->whereKey($request->integer('selected'))->first()
             : null;
 
+        // Salud y valor de la página actual — la de salud ya es batch
+        // (healthScoresFor, 4 consultas agrupadas); el valor de vida
+        // (lifetimeOrders) no lo es (busca por email en Remarketing) y se
+        // resuelve por fila, tolerable acotado a 100 filas máx por página.
+        $healthScores = $insights->healthScoresFor($customers->pluck('id')->all());
+        $values = $customers->getCollection()->mapWithKeys(
+            fn (Customer $c) => [$c->id => $aggregator->lifetimeOrders($c)]
+        );
+
         // Totales globales del alcance del agente (no del resultado filtrado/
         // paginado) — mismo criterio que UsersController::index(), y mismas
-        // queries que ya usa reports() para "verificados"/"suspendidos".
+        // queries que ya usa reports() para "verificados"/"suspendidos"/"en riesgo".
         // Cacheado 2 min por agente: forAgent() añade un WHERE EXISTS contra
-        // conversations/inboxes que se repetía 4 veces en cada carga de la
+        // conversations/inboxes que se repetía varias veces en cada carga de la
         // página más visitada del módulo, sin necesitar frescura al segundo.
         $stats = Cache::remember(
             "helpdeskcontacts:index-stats:{$request->user()->id}",
             120,
-            function () use ($request): array {
+            function () use ($request, $aggregator): array {
                 $scoped = fn () => Customer::query()->forAgent($request->user());
 
                 return [
                     'total' => $scoped()->count(),
                     'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
                     'banned' => $scoped()->whereNotNull('banned_at')->count(),
+                    'risk' => $this->applyView($scoped(), 'risk')->count(),
+                    'vip' => $scoped()->vip()->count(),
+                    'duplicates' => count($aggregator->duplicateCustomerIds($request->user())),
                     'new' => $scoped()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
                 ];
             },
         );
+
+        // "Mismo teléfono/email que X" por fila, solo en la vista de duplicados
+        // y en un número fijo de consultas (ver duplicateReasonsFor()).
+        $duplicateMatches = $view === 'duplicates'
+            ? $aggregator->duplicateMatchesFor($customers->getCollection(), $request->user())
+            : [];
+        $duplicateReasons = $view === 'duplicates'
+            ? array_map(fn (array $m): string => $m['reason'], $duplicateMatches)
+            : [];
 
         return view('contacts::contacts.index', [
             'customers' => $customers,
@@ -87,21 +124,152 @@ class ContactsController extends Controller
             'filters' => $request->only(['q', 'channel', 'last_seen', 'verified', 'banned']),
             'perPage' => $perPage,
             'stats' => $stats,
+            'view' => $view,
+            'healthScores' => $healthScores,
+            'values' => $values,
+            'duplicateReasons' => $duplicateReasons,
+            'duplicateMatches' => $duplicateMatches,
+            'allTags' => CustomerTag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+            'origins' => self::ORIGINS,
+            'owners' => $ownerCatalog->options(),
         ]);
+    }
+
+    /**
+     * Vistas guardadas soportadas por el listado (mockup "Vistas"): 'vip'
+     * filtra por la columna is_vip (Customer::scopeVip()) y 'duplicates' por
+     * los IDs que devuelve ContactAggregatorService::duplicateCustomerIds()
+     * (coincidencia exacta de email o de los últimos 9 dígitos de teléfono).
+     */
+    private const VIEWS = ['all', 'risk', 'vip', 'duplicates', 'banned'];
+
+    /**
+     * Apply one of the saved list views on top of the already-filtered query.
+     * "risk" reuses the exact criterion reports() already scores contacts by.
+     * "duplicates" necesita el agente (scope de bandeja) y el agregador, así
+     * que solo se puede resolver cuando el llamador los pasa.
+     */
+    private function applyView(Builder $query, string $view, ?User $user = null, ?ContactAggregatorService $aggregator = null): Builder
+    {
+        return match ($view) {
+            'risk' => $query->where(fn (Builder $q) => $q
+                ->where('last_seen_at', '<', now()->subDays(30))
+                ->orWhereNull('last_seen_at')),
+            'banned' => $query->whereNotNull('banned_at'),
+            'vip' => $query->vip(),
+            'duplicates' => $user === null
+                ? $query
+                : $query->whereIn('id', ($aggregator ?? app(ContactAggregatorService::class))->duplicateCustomerIds($user)),
+            default => $query,
+        };
     }
 
     /**
      * 360 tab-shell page for a single customer.
      * The customer is resolved via implicit binding on the 'helpdesk' connection.
      */
-    public function show(Customer $customer): View
+    public function show(Customer $customer, Request $request): View
     {
         $this->assertVisible($customer);
 
+        // ?action=<x> desde el listado (botones/menú de fila): la ficha abre
+        // al cargar el modal que ya existe allí. Whitelist estricta — cualquier
+        // otro valor se descarta en silencio, nunca se refleja tal cual.
+        $action = $request->query('action');
+
         return view('contacts::contacts.show', [
             'customer' => $customer,
+            'bannedBy' => $customer->banned_at ? $this->bannedBy($customer) : null,
+            'autoAction' => is_string($action) && in_array($action, self::AUTO_ACTIONS, true) ? $action : null,
+            // ?layout= previsualiza un estilo sin guardarlo (whitelist en ContactLayouts).
+            'layout' => ContactLayouts::current(is_string($request->query('layout')) ? $request->query('layout') : null),
         ]);
     }
+
+    /**
+     * Lista lateral del estilo "Maestro-detalle": los contactos del alcance
+     * del agente, más recientes primero, con búsqueda y filtros rápidos.
+     */
+    public function rail(Request $request): JsonResponse
+    {
+        $view = (string) $request->query('view', 'all');
+        $term = trim((string) $request->query('q', ''));
+
+        $query = Customer::query()
+            ->forAgent($request->user())
+            ->withCount(['conversations as open_conversations_count' => fn ($q) => $q->open()]);
+
+        if ($term !== '') {
+            $query->search(mb_substr($term, 0, 100));
+        }
+
+        match ($view) {
+            'open' => $query->whereHas('conversations', fn ($q) => $q->open()),
+            'vip' => $query->vip(),
+            'risk' => $this->applyView($query, 'risk'),
+            default => null,
+        };
+
+        $contacts = $query
+            ->orderByDesc('last_seen_at')
+            ->orderByDesc('id')
+            ->limit(40)
+            ->get(['id', 'name', 'email', 'phone', 'whatsapp_phone', 'is_vip', 'last_seen_at', 'banned_at']);
+
+        // El contacto abierto siempre en la lista (J/K parten de él), aunque
+        // no esté entre los 40 más recientes. Solo sin búsqueda ni filtro.
+        $currentId = $request->integer('current');
+        if ($currentId > 0 && $term === '' && $view === 'all' && ! $contacts->contains('id', $currentId)) {
+            $current = Customer::query()
+                ->forAgent($request->user())
+                ->withCount(['conversations as open_conversations_count' => fn ($q) => $q->open()])
+                ->whereKey($currentId)
+                ->first(['id', 'name', 'email', 'phone', 'whatsapp_phone', 'is_vip', 'last_seen_at', 'banned_at']);
+
+            if ($current) {
+                $contacts->prepend($current);
+            }
+        }
+
+        return response()->json([
+            'data' => $contacts->map(fn (Customer $c): array => [
+                'id' => $c->id,
+                'name' => $c->name ?: 'Sin nombre',
+                'initials' => $c->initials,
+                'sub' => $c->email ?: ($c->phone ?: $c->whatsapp_phone),
+                'isVip' => (bool) $c->is_vip,
+                'isBanned' => $c->banned_at !== null,
+                'open' => (int) $c->open_conversations_count,
+                'lastSeenAt' => $c->last_seen_at?->toIso8601String(),
+                'url' => route('contacts.show', $c),
+            ])->all(),
+        ]);
+    }
+
+    /**
+     * Quién bloqueó el contacto: no hay columna propia, sale del registro de
+     * actividad (LogsActivity) del último cambio que fijó banned_at.
+     */
+    private function bannedBy(Customer $customer): ?string
+    {
+        try {
+            $activity = Activity::forSubject($customer)
+                ->where('event', 'updated')
+                ->latest('id')
+                ->limit(20)
+                ->get()
+                ->first(fn ($a) => ! empty($a->properties['attributes']['banned_at'] ?? null));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $activity?->causer?->full_name;
+    }
+
+    /**
+     * Acciones de la ficha que el listado puede pedir por ?action=.
+     */
+    private const AUTO_ACTIONS = ['edit', 'ticket', 'merge', 'sync', 'ban', 'unban'];
 
     /**
      * Update editable fields on a customer contact.
@@ -110,11 +278,77 @@ class ContactsController extends Controller
     {
         $this->assertVisible($customer);
 
-        $customer->update($request->validated());
+        $data = $request->validated();
+        $tagNames = $data['tags'] ?? null;
+        unset($data['tags']);
+
+        // Empresa (campo libre del modal Editar): se busca por nombre sin
+        // distinguir mayúsculas y, si no existe, se crea. Vacío = sin empresa.
+        if (array_key_exists('company', $data)) {
+            $companyName = trim((string) $data['company']);
+            $data['company_id'] = $companyName === ''
+                ? null
+                : (Company::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($companyName)])->value('id')
+                    ?? Company::create(['name' => $companyName])->id);
+            unset($data['company']);
+        }
+
+        // is_vip y owner_id son columnas reales de helpdesk_customers ($fillable),
+        // así que viajan en $data igual que name/email. owner_id ausente = no se
+        // toca; null = quitar el responsable (ya validado contra el catálogo de
+        // agentes en UpdateContactRequest).
+        $customer->update($data);
+
+        // find-or-create por nombre: el selector de etiquetas del modal Editar
+        // permite creación libre (select2 tag mode), así que un nombre nuevo
+        // simplemente crea la etiqueta en el mismo request.
+        if ($tagNames !== null) {
+            $tagIds = collect($tagNames)
+                ->map(fn ($name) => trim((string) $name))
+                ->filter()
+                ->unique()
+                ->map(fn (string $name) => CustomerTag::findOrCreateByName($name)->id);
+
+            $changes = $customer->tags()->sync($tagIds);
+
+            // sync() no toca la fila del cliente, y ContactAggregatorService::
+            // resumen() cachea por customer.updated_at: sin esto, un cambio que
+            // solo afecte a etiquetas dejaba las viejas hasta 60 s tras recargar.
+            if ($changes['attached'] || $changes['detached']) {
+                $customer->touch();
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Contacto actualizado correctamente',
+        ]);
+    }
+
+    /**
+     * Etiquetas existentes, para el autocompletado del selector del modal
+     * Editar (select2 en modo tag, creación libre + sugerencias de las ya
+     * usadas por otros contactos).
+     */
+    public function tagsIndex(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'tags' => CustomerTag::query()->orderBy('name')->get(['id', 'name', 'slug', 'color']),
+        ]);
+    }
+
+    /**
+     * Agentes que se pueden asignar como responsable de un contacto, para los
+     * desplegables de la UI (modal Editar y "Asignar agente responsable" de
+     * Acciones masivas). Solo se sirve a quien puede editar contactos (ruta con
+     * can:contacts.update): el desplegable no tiene otro uso.
+     */
+    public function ownersIndex(ContactOwnerCatalog $owners): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'agents' => $owners->options(),
         ]);
     }
 
@@ -168,7 +402,9 @@ class ContactsController extends Controller
         $headers = array_map(fn (string $header): string => Str::ascii(strtolower(trim($header))), $headerRow);
         $nameCol = array_search('name', $headers) !== false ? array_search('name', $headers) : array_search('nombre', $headers);
         $emailCol = array_search('email', $headers) !== false ? array_search('email', $headers) : array_search('correo', $headers);
-        $phoneCol = array_search('phone', $headers) !== false ? array_search('phone', $headers) : array_search('telefono', $headers);
+        $phoneCol = collect(['phone', 'telefono', 'movil'])
+            ->map(fn (string $alias) => array_search($alias, $headers))
+            ->first(fn ($index) => $index !== false, false);
         $whatsappCol = array_search('whatsapp_phone', $headers) !== false ? array_search('whatsapp_phone', $headers) : array_search('whatsapp', $headers);
 
         if ($nameCol === false && $emailCol === false) {
@@ -183,7 +419,9 @@ class ContactsController extends Controller
             ->pluck('inbox_id')
             ->all();
 
-        $counters = ['created' => 0, 'updated' => 0, 'restored' => 0, 'skipped' => 0, 'invalid_email' => 0, 'invalid_whatsapp' => 0];
+        $counters = ['created' => 0, 'updated' => 0, 'restored' => 0, 'skipped' => 0, 'invalid_email' => 0, 'invalid_whatsapp' => 0, 'rejected' => []];
+        // "Actualizar los contactos que ya existan por email" (modal Importar).
+        $updateExisting = $request->has('update_existing') ? $request->boolean('update_existing') : true;
 
         $chunk = [];
 
@@ -191,13 +429,13 @@ class ContactsController extends Controller
             $chunk[] = $row;
 
             if (count($chunk) >= self::IMPORT_CHUNK_SIZE) {
-                $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters);
+                $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters, $updateExisting);
                 $chunk = [];
             }
         }
 
         if ($chunk !== []) {
-            $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters);
+            $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters, $updateExisting);
         }
 
         fclose($handle);
@@ -213,7 +451,42 @@ class ContactsController extends Controller
             $summary .= " ({$counters['invalid_whatsapp']} con WhatsApp inválido, contacto igualmente importado)";
         }
 
-        return redirect()->route('contacts.index')->with('success', $summary.'.');
+        $redirect = redirect()->route('contacts.index')->with('success', $summary.'.');
+
+        // Filas rechazadas descargables (mockup pieza 08): CSV con la fila
+        // original y el motivo, guardado 1 h y solo para el agente que importó.
+        if ($counters['rejected'] !== []) {
+            $key = (string) Str::uuid();
+            Cache::put('contacts:import-rejected:'.$key, [
+                'user_id' => $agent->id,
+                'header' => $headerRow,
+                'rows' => $counters['rejected'],
+            ], now()->addHour());
+            $redirect->with('import_rejected_url', route('contacts.import.rejected', $key))
+                ->with('import_rejected_count', count($counters['rejected']));
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * Descarga el CSV de filas rechazadas de la última importación del agente.
+     */
+    public function importRejected(Request $request, string $key): StreamedResponse
+    {
+        $payload = Cache::get('contacts:import-rejected:'.$key);
+
+        abort_unless(is_array($payload) && (int) $payload['user_id'] === (int) $request->user()->id, 404);
+
+        return response()->streamDownload(function () use ($payload): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [...$payload['header'], 'motivo']);
+            foreach ($payload['rows'] as $row) {
+                fputcsv($out, array_map(fn ($v) => $this->csvSafe((string) $v), $row));
+            }
+            fclose($out);
+        }, 'filas-rechazadas.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**
@@ -235,11 +508,17 @@ class ContactsController extends Controller
         $whatsappCol,
         User $agent,
         array $agentInboxIds,
-        array &$counters
+        array &$counters,
+        bool $updateExisting = true
     ): void {
         $phoneNormalizer = app(PhoneNormalizerService::class);
 
-        DB::connection('helpdesk')->transaction(function () use ($rows, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $phoneNormalizer, &$counters): void {
+        DB::connection('helpdesk')->transaction(function () use ($rows, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $phoneNormalizer, &$counters, $updateExisting): void {
+            $reject = function (array $row, string $reason) use (&$counters): void {
+                $counters['skipped']++;
+                $counters['rejected'][] = [...$row, $reason];
+            };
+
             foreach ($rows as $row) {
                 $name = ($nameCol !== false && isset($row[$nameCol])) ? trim((string) $row[$nameCol]) : null;
                 $email = ($emailCol !== false && isset($row[$emailCol])) ? trim((string) $row[$emailCol]) : null;
@@ -247,14 +526,14 @@ class ContactsController extends Controller
                 $whatsappRaw = ($whatsappCol !== false && isset($row[$whatsappCol])) ? trim((string) $row[$whatsappCol]) : null;
 
                 if (! $name && ! $email) {
-                    $counters['skipped']++;
+                    $reject($row, 'sin nombre ni email');
 
                     continue;
                 }
 
                 if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-                    $counters['skipped']++;
                     $counters['invalid_email']++;
+                    $reject($row, 'email con formato inválido');
 
                     continue;
                 }
@@ -277,6 +556,12 @@ class ContactsController extends Controller
                     ? Customer::query()->forAgent($agent)->where('email', $email)->first()
                     : null;
 
+                if ($existing && ! $updateExisting) {
+                    $reject($row, 'ya existe (no se actualizan existentes)');
+
+                    continue;
+                }
+
                 if ($existing) {
                     $existing->update(array_filter(
                         ['name' => $name, 'phone' => $phone, 'whatsapp_phone' => $whatsapp],
@@ -290,7 +575,7 @@ class ContactsController extends Controller
                 // El email existe pero pertenece a un contacto fuera del alcance
                 // del agente: no se modifica ni se duplica — se omite.
                 if ($email && Customer::query()->where('email', $email)->exists()) {
-                    $counters['skipped']++;
+                    $reject($row, 'el email pertenece a un contacto de otra bandeja');
 
                     continue;
                 }
@@ -327,7 +612,7 @@ class ContactsController extends Controller
                 // El email pertenece a un contacto eliminado fuera del alcance
                 // del agente: no se restaura ni se duplica — se omite.
                 if ($email && Customer::withTrashed()->onlyTrashed()->where('email', $email)->exists()) {
-                    $counters['skipped']++;
+                    $reject($row, 'el email pertenece a un contacto eliminado de otra bandeja');
 
                     continue;
                 }
@@ -353,43 +638,92 @@ class ContactsController extends Controller
     /**
      * Stream a CSV export of contacts matching the current filters.
      * Maximum 5 000 records.
+     *
+     * `columns` (array, optional) añade grupos de columnas opcionales al CSV
+     * fijo de siempre — 'health' (Salud/Valor de vida, mismos servicios que
+     * usa el listado) y 'external' (IDs de ERP/PrestaShop). Sin este
+     * parámetro se comporta exactamente igual que antes (solo columnas de
+     * contacto) — no rompe al enlace/test que lo llaman sin argumentos.
      */
-    public function export(Request $request): StreamedResponse
+    /**
+     * Filas que se descargan al momento; por encima se envía por email.
+     */
+    private const EXPORT_DIRECT_LIMIT = 5000;
+
+    public function export(Request $request, ContactAggregatorService $aggregator, ContactCsvWriter $writer): StreamedResponse|RedirectResponse
     {
         $filename = 'contactos-'.now()->format('Y-m-d').'.csv';
 
-        $query = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
-            ->latest('last_seen_at')
-            ->limit(5000);
+        $groups = $request->input('columns');
+        $groups = is_array($groups) ? $groups : [];
+        $includeHealth = in_array('health', $groups, true);
+        $includeExternal = in_array('external', $groups, true);
 
-        return response()->streamDownload(function () use ($query) {
+        $query = $this->applyFilters(Customer::query()->forAgent($request->user()), $request);
+        // 'view' opcional: permite exportar una vista guardada del listado
+        // (p.ej. "Exportar informe" desde el modal de riesgo, ?view=risk)
+        // con el mismo criterio que index()/applyView(), sin requerir que
+        // el agente haya navegado antes a esa vista en el listado.
+        $view = in_array($request->input('view'), self::VIEWS, true) ? $request->input('view') : 'all';
+        // Sin $request->user() aquí, 'duplicates' no filtraba nada (ver
+        // applyView(): $user === null devuelve el query intacto) y
+        // "Exportar informe" desde la vista de duplicados exportaba TODOS
+        // los contactos del agente en vez de solo los duplicados.
+        $this->applyView($query, $view, $request->user(), $aggregator);
+
+        // ids[] = "Exportar selección" del listado: se acota a esos contactos
+        // (siempre dentro del alcance del agente, forAgent() ya está aplicado).
+        $ids = collect(is_array($request->input('ids')) ? $request->input('ids') : [])
+            ->filter(fn ($id) => is_scalar($id) && ctype_digit((string) $id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->take(1000)
+            ->values();
+        if ($ids->isNotEmpty()) {
+            $query->whereIn('id', $ids->all());
+        }
+
+        // Más de 5.000 filas: no se descarga al momento, se genera en la cola
+        // "exports" y se envía al agente por email (mockup "Exportar contactos").
+        $total = (clone $query)->count();
+        if ($total > self::EXPORT_DIRECT_LIMIT) {
+            ExportContactsJob::dispatch(
+                $request->user()->id,
+                (clone $query)->pluck('id')->all(),
+                $includeHealth,
+                $includeExternal,
+            );
+
+            return redirect()->route('contacts.index')->with('success',
+                "La exportación tiene {$total} contactos: la preparamos en segundo plano y te llegará por email a {$request->user()->email}.");
+        }
+
+        $query->latest('last_seen_at');
+
+        return response()->streamDownload(function () use ($query, $includeHealth, $includeExternal, $writer) {
             $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, [
-                'ID', 'Nombre', 'Email', 'Teléfono', 'WhatsApp',
-                'País', 'Última visita', 'Conversaciones', 'Verificado', 'Suspendido', 'Canales',
-            ]);
-
-            $query->chunk(500, function ($customers) use ($handle) {
-                foreach ($customers as $customer) {
-                    fputcsv($handle, [
-                        $customer->id,
-                        $this->csvSafe($customer->name),
-                        $this->csvSafe($customer->email ?? ''),
-                        $this->csvSafe($customer->phone ?? ''),
-                        $this->csvSafe($customer->whatsapp_phone ?? ''),
-                        $this->csvSafe($customer->country ?? ''),
-                        $customer->last_seen_at?->toIso8601String() ?? '',
-                        $customer->total_conversations ?? 0,
-                        $customer->email_verified_at ? 'Sí' : 'No',
-                        $customer->banned_at ? 'Sí' : 'No',
-                        $this->csvSafe($this->channelList($customer)),
-                    ]);
-                }
-            });
-
+            $writer->write($handle, $query, $includeHealth, $includeExternal);
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Descarga de una exportación enviada por email (enlace firmado de 24 h,
+     * solo para el agente que la pidió: la ruta lleva su id en el path).
+     */
+    public function exportFile(Request $request, string $path): StreamedResponse
+    {
+        $decoded = base64_decode($path, true);
+
+        abort_unless(
+            is_string($decoded)
+            && str_starts_with($decoded, 'contacts-exports/'.$request->user()->id.'/')
+            && ! str_contains($decoded, '..')
+            && Storage::disk('local')->exists($decoded),
+            404
+        );
+
+        return Storage::disk('local')->download($decoded, basename($decoded), ['Content-Type' => 'text/csv']);
     }
 
     /**
@@ -408,13 +742,13 @@ class ContactsController extends Controller
     /**
      * Suspend a customer account.
      */
-    public function ban(Customer $customer): JsonResponse
+    public function ban(Customer $customer, Request $request): JsonResponse
     {
         $this->assertVisible($customer);
 
-        $customer->ban();
+        $customer->ban($request->string('reason')->trim()->value() ?: null);
 
-        return response()->json(['success' => true, 'message' => 'Contacto suspendido']);
+        return response()->json(['success' => true, 'message' => 'Contacto bloqueado']);
     }
 
     /**
@@ -426,7 +760,7 @@ class ContactsController extends Controller
 
         $customer->unban();
 
-        return response()->json(['success' => true, 'message' => 'Contacto reactivado']);
+        return response()->json(['success' => true, 'message' => 'Contacto desbloqueado']);
     }
 
     /**
@@ -704,7 +1038,10 @@ class ContactsController extends Controller
     }
 
     /**
-     * Apply a bulk action (ban, unban, delete) to a set of customer IDs.
+     * Apply a bulk action (ban, unban, delete, tag, assign) to a set of customer IDs.
+     *
+     * - tag: añade la etiqueta `tag` (find-or-create) SIN quitar las que ya tengan.
+     * - assign: fija `owner_id` como responsable (null = quitar el responsable).
      */
     public function bulkAction(BulkContactActionRequest $request): JsonResponse
     {
@@ -724,13 +1061,66 @@ class ContactsController extends Controller
             // motivo del baneo previo quedaba obsoleto tras reactivar en lote.
             'unban' => Customer::whereIn('id', $ids)->update(['banned_at' => null, 'ban_reason' => null]),
             'delete' => Customer::whereIn('id', $ids)->delete(),
+            'tag' => $this->attachTagToCustomers($ids, (string) $data['tag']),
+            // Builder::update() también fija updated_at, con lo que la caché de
+            // resumen() (clave por customer.updated_at) se invalida sola.
+            'assign' => Customer::whereIn('id', $ids)->update(['owner_id' => $data['owner_id'] ?? null]),
+        };
+
+        $total = count($ids);
+
+        $message = match ($data['action']) {
+            'tag' => "Etiqueta «{$data['tag']}» añadida a {$total} contactos",
+            'assign' => ($data['owner_id'] ?? null) === null
+                ? "Responsable quitado a {$total} contactos"
+                : "Responsable asignado a {$total} contactos",
+            default => "Acción aplicada a {$total} contactos",
         };
 
         return response()->json([
             'success' => true,
-            'message' => 'Acción aplicada a '.count($ids).' contactos',
-            'count' => count($ids),
+            'message' => $message,
+            'count' => $total,
         ]);
+    }
+
+    /**
+     * Añade una etiqueta (find-or-create por nombre) a varios contactos sin
+     * quitarles las que ya tienen: solo se insertan las filas de pivote que
+     * faltan, en lotes, en vez de un sync() por contacto. La tabla pivote no
+     * toca customers.updated_at, y resumen() cachea por esa columna, así que se
+     * hace un touch() de los contactos que cambian.
+     *
+     * @param  array<int, int>  $ids
+     */
+    private function attachTagToCustomers(array $ids, string $name): void
+    {
+        if ($ids === []) {
+            return;
+        }
+
+        $tag = CustomerTag::findOrCreateByName($name);
+        $pivot = DB::connection('helpdesk')->table('helpdesk_customer_tag_pivot');
+
+        $already = (clone $pivot)
+            ->where('tag_id', $tag->id)
+            ->whereIn('customer_id', $ids)
+            ->pluck('customer_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $now = now();
+
+        foreach (array_chunk(array_values(array_diff($ids, $already)), 500) as $chunk) {
+            $pivot->insert(array_map(fn (int $id): array => [
+                'customer_id' => $id,
+                'tag_id' => $tag->id,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $chunk));
+
+            Customer::whereIn('id', $chunk)->touch();
+        }
     }
 
     /**
@@ -778,10 +1168,74 @@ class ContactsController extends Controller
      */
     public function reports(Request $request): View
     {
+        return view('contacts::contacts.reports', $this->reportsPayload($request));
+    }
+
+    /**
+     * JSON summary for the "Informes y clientes en riesgo" modal (mockup
+     * pieza #14) — mismo payload cacheado que reports(), recortado a lo que
+     * el modal necesita (top-3 en riesgo + 3 stats, "Salud media" añadida).
+     */
+    public function reportsSummary(Request $request, CustomerInsightsService $insights): JsonResponse
+    {
+        $payload = $this->reportsPayload($request);
+
+        // "Salud media" no es una columna: healthScoresFor() hace 4 consultas
+        // agrupadas (no una por cliente), pero un whereIn() sobre el scope
+        // completo del agente (puede ser miles de IDs) sería un IN enorme
+        // solo para un promedio. Se aproxima sobre una muestra acotada de los
+        // 200 contactos vistos más recientemente — misma cache de 2 min que
+        // el resto del payload, así que el coste no se repite en cada apertura.
+        $sampleIds = Cache::remember(
+            "helpdeskcontacts:reports-health-sample:{$request->user()->id}",
+            120,
+            fn () => Customer::query()->forAgent($request->user())
+                ->whereNull('banned_at')
+                ->orderByDesc('last_seen_at')
+                ->limit(200)
+                ->pluck('id')
+                ->all(),
+        );
+        $scores = $insights->healthScoresFor($sampleIds);
+        $avgHealth = $scores === [] ? null : (int) round(array_sum($scores) / count($scores));
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total' => $payload['stats']['total'],
+                // 'inactive' ya es el COUNT() real (sin el límite de 50 de
+                // la colección $atRisk, usada solo para pintar filas).
+                'atRisk' => $payload['stats']['inactive'],
+                'avgHealth' => $avgHealth,
+            ],
+            // "Enviar plantilla a los N" (mockup: "Enviar campaña"): los en riesgo
+            // que pueden recibir WhatsApp — HelpdeskCampaigns está apagado, así
+            // que la acción real es el envío masivo de plantilla (bulk-send-hsm).
+            'campaignIds' => $payload['atRisk']
+                ->filter(fn (Customer $c) => $c->whatsapp_phone && ! $c->banned_at)
+                ->pluck('id')->values(),
+            'atRisk' => $payload['atRisk']->take(3)->map(fn (Customer $c) => [
+                'id' => $c->id,
+                'name' => $c->name ?: 'Sin nombre',
+                'score' => $insights->healthScore($c),
+                'reason' => $c->last_seen_at
+                    ? 'sin actividad desde '.$c->last_seen_at->diffForHumans(null, true)
+                    : 'sin actividad registrada',
+                'url' => route('contacts.show', $c),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * @return array{atRisk: Collection, topActive: Collection, stats: array}
+     */
+    private function reportsPayload(Request $request): array
+    {
         // Cacheado 2 min por agente: las 6 queries de este dashboard reevalúan
         // forAgent() (WHERE EXISTS contra conversations/inboxes) cada vez sin
-        // necesitar frescura al segundo — mismo criterio que index().
-        $payload = Cache::remember(
+        // necesitar frescura al segundo — mismo criterio que index(). Compartido
+        // entre reports() (página completa) y reportsSummary() (modal resumen).
+        return Cache::remember(
             "helpdeskcontacts:reports:{$request->user()->id}",
             120,
             function () use ($request): array {
@@ -817,8 +1271,71 @@ class ContactsController extends Controller
                 return ['atRisk' => $atRisk, 'topActive' => $topActive, 'stats' => $stats];
             },
         );
+    }
 
-        return view('contacts::contacts.reports', $payload);
+    /**
+     * Orígenes del filtro "Origen" del listado, en ORDEN DE PRIORIDAD. No hay
+     * columna de origen en helpdesk_customers: se DERIVA de datos reales y cada
+     * contacto cae en exactamente UN origen (el primero de esta lista cuyo
+     * criterio cumple), así que los conteos por origen suman el total:
+     *
+     *   erp        → tiene un external id de la plataforma 'erp'
+     *   prestashop → external id 'prestashop' (y ninguno de ERP)
+     *   whatsapp   → whatsapp_phone informado
+     *   facebook   → facebook_psid informado
+     *   instagram  → instagram_id informado
+     *   web        → alguna conversación por el canal 'web' (livechat)
+     *   email      → solo tiene email (ninguno de los anteriores)
+     *   otro       → ninguno de los anteriores (sin email ni canal alguno)
+     *
+     * @var array<string, string> valor → etiqueta en español para el desplegable
+     */
+    public const ORIGINS = [
+        'erp' => 'ERP',
+        'prestashop' => 'PrestaShop',
+        'whatsapp' => 'WhatsApp',
+        'facebook' => 'Facebook',
+        'instagram' => 'Instagram',
+        'web' => 'Chat web',
+        'email' => 'Email',
+        'otro' => 'Otro',
+    ];
+
+    /**
+     * Criterio POSITIVO de cada origen sobre el builder recibido (sin cargar
+     * nada en PHP: whereHas/whereNotNull). 'otro' no tiene criterio propio,
+     * es el complemento de todos los demás.
+     */
+    private function originCriterion(Builder $query, string $origin): Builder
+    {
+        return match ($origin) {
+            'erp' => $query->whereHas('externalIds', fn (Builder $q) => $q->where('platform', 'erp')),
+            'prestashop' => $query->whereHas('externalIds', fn (Builder $q) => $q->where('platform', 'prestashop')),
+            'whatsapp' => $query->whereNotNull('whatsapp_phone'),
+            'facebook' => $query->whereNotNull('facebook_psid'),
+            'instagram' => $query->whereNotNull('instagram_id'),
+            'web' => $query->whereHas('conversations', fn (Builder $q) => $q->where('channel', 'web')),
+            'email' => $query->whereNotNull('email'),
+            default => $query,
+        };
+    }
+
+    /**
+     * Aplica ?origin=<valor>: el criterio del origen pedido Y la negación de
+     * los de mayor prioridad, para que el resultado sea la partición exclusiva
+     * descrita en self::ORIGINS.
+     */
+    private function applyOrigin(Builder $query, string $origin): Builder
+    {
+        foreach (array_keys(self::ORIGINS) as $candidate) {
+            if ($candidate === $origin) {
+                break;
+            }
+
+            $query->whereNot(fn (Builder $q) => $this->originCriterion($q, $candidate));
+        }
+
+        return $origin === 'otro' ? $query : $this->originCriterion($query, $origin);
     }
 
     /**
@@ -861,6 +1378,24 @@ class ContactsController extends Controller
             $query->whereNotNull('banned_at');
         } elseif ($request->input('banned') === 'no') {
             $query->whereNull('banned_at');
+        }
+
+        if ($request->filled('tag')) {
+            $query->whereHas('tags', fn (Builder $q) => $q->where('slug', $request->string('tag')->toString()));
+        }
+
+        // ?owner=<id de agente> filtra por responsable; ?owner=none, los que no
+        // tienen ninguno. Un valor que no sea ni entero ni "none" se ignora.
+        $owner = $request->input('owner');
+        if ($owner === 'none') {
+            $query->whereNull('owner_id');
+        } elseif (is_string($owner) && ctype_digit($owner)) {
+            $query->where('owner_id', (int) $owner);
+        }
+
+        $origin = $request->input('origin');
+        if (is_string($origin) && array_key_exists($origin, self::ORIGINS)) {
+            $this->applyOrigin($query, $origin);
         }
 
         return $query;
@@ -981,31 +1516,6 @@ class ContactsController extends Controller
      */
     private function csvSafe(mixed $value): string
     {
-        $value = (string) $value;
-
-        return preg_match('/^[=+\-@\t\r]/', $value) === 1 ? "'".$value : $value;
-    }
-
-    /**
-     * Build a comma-separated list of active channel names for a customer.
-     */
-    private function channelList(Customer $customer): string
-    {
-        $channels = [];
-
-        if ($customer->email) {
-            $channels[] = 'email';
-        }
-        if ($customer->whatsapp_phone) {
-            $channels[] = 'whatsapp';
-        }
-        if ($customer->facebook_psid) {
-            $channels[] = 'facebook';
-        }
-        if ($customer->instagram_id) {
-            $channels[] = 'instagram';
-        }
-
-        return implode(', ', $channels);
+        return ContactCsvWriter::csvSafe($value);
     }
 }

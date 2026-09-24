@@ -18,6 +18,8 @@ class ImportContactsRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+            // Ausente = true (comportamiento histórico: actualizar por email).
+            'update_existing' => ['nullable', 'boolean'],
         ];
     }
 

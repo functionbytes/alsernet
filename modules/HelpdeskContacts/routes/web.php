@@ -2,8 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactCartController;
+use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactLinksController;
+use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactNotesController;
 use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactsController;
 use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactsMergeController;
+use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactsSettingsController;
 use Modules\HelpdeskContacts\Http\Controllers\Managers\ContactTabsController;
 
 /*
@@ -21,7 +24,13 @@ Route::name('contacts.')
 
         // Exportar contactos a CSV (aplica los mismos filtros que index)
         Route::get('/export', [ContactsController::class, 'export'])
+            ->middleware('audit.access:contacts,export')
             ->name('export');
+
+        // Exportación grande enviada por email (enlace firmado de 24 h)
+        Route::get('/export/file/{path}', [ContactsController::class, 'exportFile'])
+            ->middleware('signed')
+            ->name('export.file');
 
         // Importar contactos desde CSV
         Route::get('/import', [ContactsController::class, 'importForm'])
@@ -32,9 +41,20 @@ Route::name('contacts.')
             ->middleware('can:contacts.update')
             ->name('import.process');
 
+        // CSV con las filas rechazadas de la última importación (1 h, solo su autor)
+        Route::get('/import/rejected/{key}', [ContactsController::class, 'importRejected'])
+            ->whereUuid('key')
+            ->middleware('can:contacts.update')
+            ->name('import.rejected');
+
         // Reportes y dashboard at-risk — static paths before {customer} wildcard
         Route::get('/reports', [ContactsController::class, 'reports'])
             ->name('reports');
+
+        // Resumen JSON para el modal "Informes y clientes en riesgo" (mockup
+        // pieza #14) — mismo payload cacheado que /reports, recortado.
+        Route::get('/reports/summary', [ContactsController::class, 'reportsSummary'])
+            ->name('reports.summary');
 
         // Bulk actions sobre múltiples contactos
         Route::post('/bulk-action', [ContactsController::class, 'bulkAction'])
@@ -44,6 +64,16 @@ Route::name('contacts.')
         // Plantillas HSM aprobadas para el modal de envío WhatsApp
         Route::get('/hsm-templates', [ContactsController::class, 'hsmTemplates'])
             ->name('hsm-templates');
+
+        // Etiquetas existentes, para el autocompletado del selector del modal Editar
+        Route::get('/tags', [ContactsController::class, 'tagsIndex'])
+            ->name('tags.index');
+
+        // Agentes asignables como responsable, para los desplegables del modal
+        // Editar y de las acciones masivas
+        Route::get('/owners', [ContactsController::class, 'ownersIndex'])
+            ->middleware('can:contacts.update')
+            ->name('owners.index');
 
         // Envío masivo de plantilla HSM a varios contactos seleccionados
         Route::post('/bulk-send-hsm', [ContactsController::class, 'bulkSendHsm'])
@@ -73,6 +103,20 @@ Route::name('contacts.')
         Route::post('/external-create', [ContactsController::class, 'externalCreate'])
             ->middleware('can:contacts.update')
             ->name('external-create');
+
+        // Ajustes → Helpdesk · Contactos: estilo de la ficha 360
+        Route::get('/settings', [ContactsSettingsController::class, 'index'])
+            ->middleware('can:helpdesk.settings.view')
+            ->name('settings');
+
+        Route::put('/settings', [ContactsSettingsController::class, 'update'])
+            ->middleware('can:helpdesk.settings.update')
+            ->name('settings.update');
+
+        // Lista lateral del estilo "Maestro-detalle" (JSON, mismo alcance que el listado)
+        Route::get('/rail', [ContactsController::class, 'rail'])
+            ->middleware('throttle:120,1')
+            ->name('rail');
 
         // Actualizar datos del contacto
         Route::put('/{customer}', [ContactsController::class, 'update'])
@@ -118,6 +162,17 @@ Route::name('contacts.')
                 Route::get('/tickets', [ContactTabsController::class, 'tickets'])->name('tab.tickets');
             });
 
+        // Notas internas con autor y fecha
+        Route::post('/{customer}/notes', [ContactNotesController::class, 'store'])
+            ->whereNumber('customer')
+            ->middleware('can:contacts.update')
+            ->name('notes.store');
+
+        Route::delete('/{customer}/notes/{note}', [ContactNotesController::class, 'destroy'])
+            ->whereNumber(['customer', 'note'])
+            ->middleware('can:contacts.update')
+            ->name('notes.destroy');
+
         // Ban / Unban
         Route::post('/{customer}/ban', [ContactsController::class, 'ban'])
             ->whereNumber('customer')
@@ -140,6 +195,22 @@ Route::name('contacts.')
             ->whereNumber('customer')
             ->middleware('can:contacts.update')
             ->name('external-link');
+
+        // Modal "Vínculos e identidad": vinculadas, historial, desvincular y
+        // sugerencias cruzadas ERP ↔ PrestaShop (consulta remota, aparte).
+        Route::get('/{customer}/links', [ContactLinksController::class, 'show'])
+            ->whereNumber('customer')
+            ->name('links.show');
+
+        Route::get('/{customer}/links/suggestions', [ContactLinksController::class, 'suggestions'])
+            ->whereNumber('customer')
+            ->middleware('throttle:20,1')
+            ->name('links.suggestions');
+
+        Route::post('/{customer}/links/unlink', [ContactLinksController::class, 'unlink'])
+            ->whereNumber('customer')
+            ->middleware(['can:contacts.update', 'throttle:20,1'])
+            ->name('links.unlink');
 
         // Plataformas ya vinculadas, para la sección "Integraciones" de la ficha 360
         Route::get('/{customer}/external-integrations', [ContactsController::class, 'externalIntegrations'])

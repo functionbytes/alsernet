@@ -119,7 +119,14 @@ class ContactTabsController extends Controller
     {
         $this->assertVisible($customer);
 
-        return $this->tab(fn () => $this->aggregator->syncIntegrations($customer));
+        // ?platform=erp|prestashop sincroniza solo esa fuente (botón
+        // "Reintentar" por fila cuando solo una tiene error); sin el
+        // parámetro sincroniza ambas, comportamiento previo intacto.
+        $platform = in_array($request->string('platform')->value(), ['erp', 'prestashop'], true)
+            ? $request->string('platform')->value()
+            : null;
+
+        return $this->tab(fn () => $this->aggregator->syncIntegrations($customer, $platform));
     }
 
     /**

@@ -243,15 +243,24 @@ class ContactTabsControllerTest extends TestCase
             ->assertJsonStructure(['success', 'data']);
     }
 
-    public function test_erp_tab_reports_unavailable_when_customer_has_no_email(): void
+    public function test_erp_tab_explains_there_is_nothing_to_search_without_email_nor_phone(): void
     {
-        $customer = Customer::factory()->create(['email' => null]);
+        // Sin email pero con teléfono sí se busca en Gestión (contactos de
+        // WhatsApp); sin ninguno de los dos la ficha dice por qué no hay nada.
+        $customer = Customer::factory()->create(['email' => null, 'phone' => null, 'whatsapp_phone' => null]);
 
-        $this->actingAs($this->user)
+        $data = $this->actingAs($this->user)
             ->getJson('/panel/helpdesk/contacts/'.$customer->id.'/tab/erp')
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.available', false);
+            ->json('data');
+
+        if ($data['available'] === false) {
+            return; // HelpdeskErp apagado en este entorno: nada más que comprobar.
+        }
+
+        $this->assertTrue($data['noIdentifiers']);
+        $this->assertFalse($data['customer']['found']);
     }
 
     // ── PrestaShop (optional module / external service resilience) ──────────

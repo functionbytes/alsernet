@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ExecuteMergeRequest;
 use Modules\HelpdeskContacts\Services\ContactMergeService;
@@ -155,7 +156,14 @@ class ContactsMergeController extends Controller
             'name' => $customer->name,
             'email' => $customer->email,
             'phone' => $customer->phone,
-            'total_conversations' => $customer->total_conversations ?? 0,
+            'total_conversations' => $customer->conversations()->count(),
+            // Mensajes reales (items tipo "message") de sus conversaciones: lo
+            // que "se moverá" al principal según el modal de fusión.
+            'messages_count' => ConversationItem::query()
+                ->whereIn('conversation_id', $customer->conversations()->select('id'))
+                ->where('type', 'message')
+                ->count(),
+            'since_year' => $customer->created_at?->format('Y'),
             'integrations' => [
                 'erp_customer_id' => $customer->externalIdFor('erp'),
                 'whatsapp_phone' => $customer->whatsapp_phone,

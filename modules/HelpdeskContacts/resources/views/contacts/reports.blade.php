@@ -51,7 +51,7 @@
                 <div class="card-body">
                     <i class="fas fa-ban fa-2x text-brand mb-2"></i>
                     <h4 class="fw-bold mb-0">{{ number_format($stats['banned']) }}</h4>
-                    <small class="text-muted">Suspendidos</small>
+                    <small class="text-muted">Bloqueados</small>
                 </div>
             </div>
         </div>

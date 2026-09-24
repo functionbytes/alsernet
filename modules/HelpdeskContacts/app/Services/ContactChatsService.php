@@ -50,6 +50,7 @@ class ContactChatsService
         return [
             'available' => $livechatOn || $socialOn,
             'chats' => array_values($chats),
+            'visits' => $this->visitsSummary($customer),
         ];
     }
 
@@ -58,6 +59,61 @@ class ContactChatsService
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * Resumen de navegación del contacto en la web (helpdesk_page_visits):
+     * sesiones, páginas vistas, última visita y últimas páginas.
+     *
+     * @return array<string, mixed>
+     */
+    private function visitsSummary(Customer $customer): array
+    {
+        // Columnas de helpdesk_page_visits: page_url, referrer, duration_seconds,
+        // device_type, browser, created_at (fecha de la visita).
+        try {
+            $times = $customer->pageVisits()->latest('created_at')->limit(500)->pluck('created_at');
+            $recent = $customer->pageVisits()->latest('created_at')->limit(5)->get(['page_url', 'created_at']);
+        } catch (\Throwable) {
+            return ['sessions' => 0, 'pageViews' => 0, 'lastVisitAt' => null, 'recent' => []];
+        }
+
+        if ($times->isEmpty()) {
+            return ['sessions' => 0, 'pageViews' => 0, 'lastVisitAt' => null, 'recent' => []];
+        }
+
+        // Sesión = visitas separadas por menos de 30 min (criterio habitual de
+        // analítica web), sobre las 500 más recientes.
+        $sessions = 1;
+        $previous = null;
+        foreach ($times as $time) {
+            if ($previous !== null && $previous->diffInMinutes($time, true) > 30) {
+                $sessions++;
+            }
+            $previous = $time;
+        }
+
+        return [
+            'sessions' => $sessions,
+            'pageViews' => $customer->pageVisits()->count(),
+            'lastVisitAt' => $times->first()?->toIso8601String(),
+            'recent' => $recent->map(fn ($v): array => [
+                'url' => $this->pathOf((string) $v->page_url),
+                'title' => null,
+                'at' => $v->created_at?->toIso8601String(),
+            ])->all(),
+        ];
+    }
+
+    /**
+     * "/taladro-gsb?pedido=1" en vez de la URL absoluta.
+     */
+    private function pathOf(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $query = parse_url($url, PHP_URL_QUERY);
+
+        return $query ? $path.'?'.$query : $path;
+    }
+
     private function livechatSessions(Customer $customer): array
     {
         $model = app(self::WIDGET_SESSION);

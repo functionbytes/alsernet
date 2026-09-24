@@ -2,8 +2,10 @@
 
 namespace Modules\HelpdeskContacts\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\HelpdeskContacts\Listeners\LinkContactOnPrestashopSignup;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -30,6 +32,16 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(module_path($this->name, 'resources/views'), 'contacts');
         $this->registerRoutes();
         $this->registerNav();
+        $this->registerListeners();
+    }
+
+    protected function registerListeners(): void
+    {
+        // Alta en la tienda → vincula el contacto existente con ese email.
+        $psSignup = 'Modules\\HelpdeskPrestashop\\Events\\PsCustomerCreated';
+        if (class_exists($psSignup)) {
+            Event::listen($psSignup, [LinkContactOnPrestashopSignup::class, 'handle']);
+        }
     }
 
     protected function registerRoutes(): void
@@ -80,6 +92,15 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
                     'icon' => 'fas fa-address-book',
                     'permission' => 'contacts.view',
                 ],
+            ],
+        ]);
+
+        // Ajustes → Helpdesk · Contactos (estilo de la ficha 360).
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk · Contactos',
+            'order' => 215,
+            'items' => [
+                ['label' => 'Estilo de la ficha', 'route' => 'contacts.settings', 'permission' => 'helpdesk.settings.view'],
             ],
         ]);
 

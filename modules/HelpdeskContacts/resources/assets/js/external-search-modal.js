@@ -70,18 +70,62 @@
 
     function resetSearchView() {
         lastSearchKey = null;
+        currentResult = null;
         $('#ext-search-query').val('');
         $('#ext-search-results').html(
             '<div class="bv-oc-empty"><i class="fas fa-magnifying-glass"></i>' +
             '<div class="title">Buscar cliente</div>' +
-            '<div>Escribe al menos 2 caracteres para buscar en ERP y PrestaShop a la vez.</div></div>'
+            '<div>Escribe al menos 2 caracteres y pulsa Intro.</div></div>'
         );
+        renderSearchFoot();
+    }
+
+    // Pie de la búsqueda (mockup pieza 01): acciones sobre el resultado
+    // seleccionado. Sin selección solo queda "Cerrar".
+    function renderSearchFoot() {
+        var $box = $('#ext-search-actions').empty();
+        var r = currentResult;
+        if (!r) {
+            return;
+        }
+        var $modal = $('#external-search-modal');
+        var mode = $modal.data('mode');
+
+        if (r.linked_customer_id) {
+            $box.append($('<a class="btn-primary"></a>')
+                .attr('href', $modal.data('show-url-base') + '/' + r.linked_customer_id)
+                .text('Abrir la ficha ya vinculada'));
+            return;
+        }
+        if (mode === 'link') {
+            $box.append($('<button type="button" class="btn-primary ext-link-btn"></button>').text('Vincular a este contacto'));
+            return;
+        }
+        $box.append($('<button type="button" class="btn-primary ext-create-btn"></button>').text('Crear ficha con este resultado'));
+        if (r.matched_customer_id) {
+            $box.append($('<button type="button" class="btn-secondary ext-link-btn"></button>')
+                .attr('data-target-customer-id', r.matched_customer_id)
+                .text('Vincular a un contacto existente'));
+        }
+    }
+
+    function setHead(label, title) {
+        $('#extModalLabel').text(label);
+        $('#extModalTitle').text(title);
+    }
+
+    function searchHead() {
+        if ($('#external-search-modal').data('mode') === 'link') {
+            setHead('Contacto · Vincular', 'Vincular ERP o tienda');
+        } else {
+            setHead('Contactos · Alta', 'Buscar en ERP o tienda');
+        }
     }
 
     function openModal() {
         showView('extSearch');
         resetSearchView();
-        currentResult = null;
+        searchHead();
         hsmCustomerId = null;
         $('#external-search-modal').addClass('on');
     }
@@ -110,18 +154,6 @@
 
     // ─── vista búsqueda ────────────────────────────────────────────────
 
-    // select2 no es un <select> nativo por dentro — reinicializar tras
-    // reconstruir las <option> (en vez de dejar el widget viejo con la
-    // lista anterior). dropdownParent lo mantiene dentro del .bv-modal
-    // (si no, el dropdown se monta en <body> y queda detrás del overlay).
-    function initSelect2(selector) {
-        var $el = $(selector);
-        if ($el.hasClass('select2-hidden-accessible')) {
-            $el.select2('destroy');
-        }
-        $el.select2({ dropdownParent: $('#external-search-modal'), width: '100%' });
-    }
-
     function loadPlatforms() {
         if (platformsLoaded) {
             return;
@@ -135,14 +167,15 @@
             platformsLoaded = true;
 
             $select.empty();
-            $select.append($('<option></option>').val(ALL_PLATFORMS_VALUE).text('Todas (ERP + PrestaShop)'));
+            $select.append($('<option></option>').val(ALL_PLATFORMS_VALUE).text('Todas'));
+            var $seg = $('#ext-seg').empty()
+                .append('<button type="button" class="is-on" data-ext-seg="">Todas</button>');
             platforms.forEach(function (p) {
                 $select.append($('<option></option>').val(p.platform).text(p.label));
+                $seg.append($('<button type="button"></button>').attr('data-ext-seg', p.platform).text(p.platform === 'erp' ? 'ERP' : p.label));
             });
-
-            initSelect2('#ext-search-platform');
         }).fail(function () {
-            $select.html('<option value="">Error al cargar plataformas</option>');
+            $('#ext-seg').html('<button type="button" class="is-on" data-ext-seg="">Todas</button>');
         });
     }
 
@@ -164,56 +197,29 @@
             return;
         }
 
-        // Agrupados por plataforma y con el mismo estilo neutro (sin color por
-        // plataforma, ícono gris, id+email en el detalle) que usa el buscador
-        // del modal CLIENTE · IDENTIDAD — mismo componente visual en toda la app.
-        var order = [];
-        var groups = {};
         results.forEach(function (r, idx) {
             r.__idx = idx;
-            if (!groups[r.platform]) {
-                groups[r.platform] = [];
-                order.push(r.platform);
-            }
-            groups[r.platform].push(r);
         });
 
-        var html = order.map(function (platform, groupIdx) {
-            var items = groups[platform];
-            // Separador entre grupos de plataforma — clase en vez de
-            // style="" inline (.nc-platform-group--sep, contacts.css).
-            var groupClass = groupIdx > 0 ? ' nc-platform-group--sep' : '';
-
-            var rows = items.map(function (r) {
-                var detParts = [];
-                if (r.id) { detParts.push(escapeHtml(r.id)); }
-                if (r.email) { detParts.push(escapeHtml(r.email)); }
-                // Algunas búsquedas (ej. tipo "Teléfono" en ERP) ya traen el
-                // teléfono en el propio resultado — mostrarlo de una evita
-                // depender de la ficha completa para saber si hay con qué
-                // enviar WhatsApp más adelante.
-                if (r.phone) { detParts.push(escapeHtml(r.phone)); }
-                if (r.linked_customer_id) { detParts.push('ya vinculado'); }
-                else if (r.matched_customer_id) { detParts.push('coincide con un contacto'); }
-
-                return '<div class="bv-intg-row ext-result-row" data-idx="' + r.__idx + '">' +
-                    '<div class="ico"><i class="' + escapeHtml(platformIcon(r.platform)) + '"></i></div>' +
-                    '<div class="meta">' +
-                        '<span class="name">' + escapeHtml(r.name || '—') + '</span>' +
-                        '<span class="det">' + detParts.join(' · ') + '</span>' +
-                    '</div>' +
-                    '<button type="button" class="bv-intg-mini-outline" title="Ver ficha">' +
-                        '<i class="fas fa-chevron-right"></i>' +
-                    '</button>' +
+        // Lista plana (mockup pieza 01): icono de plataforma, nombre y en mono
+        // "ERP-44182 · NIF" / "PS-101443500 · email". Clic en la fila la
+        // selecciona para las acciones del pie; "Ver ficha" abre la vista previa.
+        var prefix = { erp: 'ERP-', prestashop: 'PS-' };
+        var html = '<div class="ext-result-list">' + results.map(function (r) {
+            var det = [];
+            if (r.id) { det.push((prefix[r.platform] || '') + r.id); }
+            if (r.email) { det.push(r.email); }
+            if (r.phone) { det.push(r.phone); }
+            if (r.linked_customer_id) { det.push('ya vinculado'); }
+            else if (r.matched_customer_id) { det.push('coincide con un contacto'); }
+            var selected = currentResult && currentResult.platform === r.platform && String(currentResult.id) === String(r.id);
+            return '<div class="ext-result-row' + (selected ? ' is-selected' : '') + '" data-idx="' + r.__idx + '" role="button">' +
+                '<span class="ext-result-ic"><i class="' + escapeHtml(platformIcon(r.platform)) + '"></i></span>' +
+                '<span class="ext-result-body"><span class="t">' + escapeHtml(r.name || '—') + '</span>' +
+                '<span class="s">' + escapeHtml(det.join(' · ')) + '</span></span>' +
+                '<button type="button" class="ext-result-view">Ver ficha</button>' +
                 '</div>';
-            }).join('');
-
-            return '<div class="nc-platform-group' + groupClass + '">' +
-                '<span class="bv-modal-label">' + escapeHtml(platformLabel(platform)) + ' (' + items.length + ')</span>' +
-                '<div class="bv-intg-list">' + rows + '</div>' +
-            '</div>';
-        }).join('');
-
+        }).join('') + '</div>';
         $box.html(warning + html);
     }
 
@@ -306,6 +312,11 @@
 
     $(document).on('change', '#ext-search-platform', runSearch);
 
+    $(document).on('click', '[data-ext-seg]', function () {
+        $(this).addClass('is-on').siblings().removeClass('is-on');
+        $('#ext-search-platform').val($(this).attr('data-ext-seg')).trigger('change');
+    });
+
     // Busca al terminar de escribir (Enter o al salir del campo), no en cada
     // pausa mientras se sigue escribiendo — antes buscaba con cada pausa de
     // 400ms, disparando búsquedas a medio escribir.
@@ -322,6 +333,17 @@
 
     $(document).on('click', '.ext-result-row', function () {
         var result = lastResults[$(this).data('idx')];
+        if (!result) {
+            return;
+        }
+        currentResult = result;
+        $(this).addClass('is-selected').siblings().removeClass('is-selected');
+        renderSearchFoot();
+    });
+
+    $(document).on('click', '.ext-result-view', function (e) {
+        e.stopPropagation();
+        var result = lastResults[$(this).closest('.ext-result-row').data('idx')];
         if (result) {
             openPreview(result);
         }
@@ -329,6 +351,7 @@
 
     function openPreview(result) {
         currentResult = result;
+        setHead((result.platform === 'erp' ? 'ERP' : platformLabel(result.platform)) + ' · Ficha completa', result.name || 'Cliente');
         // Si la búsqueda ya trajo teléfono (ej. tipo "Teléfono" en ERP), se
         // toma de una — la ficha completa lo puede sobrescribir si trae uno
         // más actualizado (ver renderPreviewProfile).
@@ -450,13 +473,13 @@
                 $actions.append('<div class="minfo"><i class="fas fa-circle-check"></i><div>Ya vinculado a este contacto.</div></div>');
             } else {
                 $actions.append(
-                    $('<a class="btn-secondary"></a>')
+                    $('<a class="btn-primary"></a>')
                         .attr('href', $modal.data('show-url-base') + '/' + result.linked_customer_id)
-                        .text('Ver ficha')
+                        .text('Abrir la ficha ya vinculada')
                 );
             }
             hsmCustomerId = result.linked_customer_id;
-            $actions.append($('<button type="button" class="btn-primary" id="ext-preview-send-hsm"></button>').text('Enviar plantilla WhatsApp'));
+            $actions.append($('<button type="button" class="btn-secondary" id="ext-preview-send-hsm"></button>').text('Enviar plantilla WhatsApp'));
             return;
         }
 
@@ -469,11 +492,15 @@
                     .text('Vincular a contacto existente')
             );
         } else {
-            $actions.append($('<button type="button" class="btn-primary ext-create-btn"></button>').text('Crear contacto nuevo'));
+            $actions.append($('<button type="button" class="btn-primary ext-create-btn"></button>').text('Importar como contacto nuevo'));
         }
     }
 
-    $(document).on('click', '#ext-preview-back', function () { showView('extSearch'); });
+    $(document).on('click', '#ext-preview-back', function () {
+        showView('extSearch');
+        searchHead();
+        renderSearchFoot();
+    });
 
     $(document).on('click', '#ext-preview-send-hsm', function () {
         openHsmStep();

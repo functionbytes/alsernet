@@ -20,6 +20,8 @@ class StoreContactTicketRequest extends FormRequest
             'subject' => ['required', 'string', 'max:191'],
             'category_id' => ['nullable', 'integer'],
             'message' => ['nullable', 'string', 'max:5000'],
+            'priority' => ['nullable', 'in:low,normal,high,urgent'],
+            'attach_context' => ['nullable', 'boolean'],
         ];
     }
 
