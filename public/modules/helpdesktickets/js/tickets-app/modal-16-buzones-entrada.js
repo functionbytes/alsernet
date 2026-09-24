@@ -164,7 +164,7 @@
                 headers: { Accept: 'application/json' },
                 success: function (res) {
                     var msg = (res && res.message) || 'Buzón guardado.';
-                    if (window.toastr) toastr.success(msg); else window.alert(msg);
+                    tktNotify('success', msg);
                     if (res && res.mailbox) {
                         boxes = boxes.map(function (m) { return String(m.id) === String(b.id) ? res.mailbox : m; });
                     }
@@ -175,7 +175,7 @@
                 },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo guardar el buzón.');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 },
                 complete: function () {
                     $btn.prop('disabled', !canManage).text('Guardar');

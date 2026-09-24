@@ -123,7 +123,7 @@
             }).fail(function (xhr) {
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message
                     || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo crear el ticket';
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
                 $btn.prop('disabled', false).text('Crear y abrir');
             });
         });

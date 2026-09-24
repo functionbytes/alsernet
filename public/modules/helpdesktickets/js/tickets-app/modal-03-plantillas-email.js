@@ -128,7 +128,7 @@
                 if (window.toastr) toastr.success((res && res.message) || 'Plantilla duplicada.');
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo duplicar la plantilla.');
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Duplicar como mía');
             });

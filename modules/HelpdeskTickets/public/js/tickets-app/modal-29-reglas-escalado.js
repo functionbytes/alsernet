@@ -458,7 +458,7 @@
             }).fail(function (xhr) {
                 $chip.prop('disabled', false);
                 var msg = escApiError(xhr, 'No se pudo cambiar el estado de la regla.')[0];
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             });
         });
 

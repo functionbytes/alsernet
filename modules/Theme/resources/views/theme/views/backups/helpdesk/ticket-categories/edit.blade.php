@@ -17,7 +17,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Editar: {{ $category->name }}</h5>
                         <small class="text-muted">Modifica las propiedades de la categoría</small>
                     </div>
@@ -172,7 +172,7 @@
                  data-destroy-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.destroy', [$category, '__FIELD__']) }}"
                  data-update-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.update', [$category, '__FIELD__']) }}"
                  data-reorder-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.reorder', $category) }}">
-                <div class="card-header p-3">
+                <div class="card-header border-bottom">
                     <h6 class="mb-0 fw-bold">Campos personalizados</h6>
                     <p class="text-muted small mb-0">Datos extra que se piden en los tickets de esta categoría (nº de pedido, modelo, fecha de compra…).</p>
                 </div>

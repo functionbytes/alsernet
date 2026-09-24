@@ -76,7 +76,7 @@
                 error: function (xhr) {
                     $btn.prop('disabled', false).text('Traducir');
                     var msg = apiErrorMessage(xhr, 'No se pudo traducir el texto');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 },
             });
         });
@@ -308,7 +308,7 @@
                 },
                 error: function (xhr) {
                     var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo enviar el email';
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                     $btn.prop('disabled', false).text(scheduled ? 'Programar envío' : 'Enviar ahora');
                 },
             });

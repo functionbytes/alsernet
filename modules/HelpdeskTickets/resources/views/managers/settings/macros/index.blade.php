@@ -169,7 +169,7 @@
             </div>
             <div class="modal-footer">
                 <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>

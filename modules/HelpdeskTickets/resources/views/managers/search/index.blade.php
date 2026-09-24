@@ -14,7 +14,7 @@
         {{-- Filters sidebar --}}
         <div class="col-12 col-lg-3">
             <div class="card">
-                <div class="card-header border-bottom p-3">
+                <div class="card-header border-bottom">
                     <h5 class="mb-0 fw-bold">Filtros</h5>
                 </div>
                 <div class="card-body">
@@ -105,7 +105,7 @@
         {{-- Results --}}
         <div class="col-12 col-lg-9">
             <div class="card">
-                <div class="card-header border-bottom p-3 d-flex align-items-center justify-content-between">
+                <div class="card-header border-bottom d-flex align-items-center justify-content-between">
                     <h5 class="mb-0 fw-bold">Resultados</h5>
                     <span class="badge bg-primary-subtle text-primary px-3 py-2">
                         {{ $results->total() }} {{ $results->total() == 1 ? 'ticket' : 'tickets' }}

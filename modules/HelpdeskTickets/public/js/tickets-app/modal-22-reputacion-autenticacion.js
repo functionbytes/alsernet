@@ -21,10 +21,10 @@
                     auto_suppress: $backdrop.find('#tkt-rep-suppress').is(':checked') ? 1 : 0,
                 },
             }).done(function (resp) {
-                if (window.toastr) toastr.success(resp.message || 'Guardado'); else window.alert(resp.message || 'Guardado');
+                tktNotify('success', resp.message || 'Guardado');
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             }).always(function () {
                 $btn.prop('disabled', false);
             });

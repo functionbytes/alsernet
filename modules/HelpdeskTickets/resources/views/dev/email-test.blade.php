@@ -12,7 +12,7 @@
         {{-- Left card: send email --}}
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header border-bottom p-3">
+                <div class="card-header border-bottom">
                     <h5 class="mb-0 fw-bold">Enviar correo de prueba</h5>
                     <small class="text-muted">Envía directamente a Mailpit omitiendo el MAIL_HOST configurado</small>
                 </div>
@@ -63,7 +63,7 @@
         {{-- Right card: sync --}}
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header border-bottom p-3">
+                <div class="card-header border-bottom">
                     <h5 class="mb-0 fw-bold">Sincronizar y ver tickets</h5>
                     <small class="text-muted">Ejecuta <code>imap:emailticket --sync</code> y muestra los últimos 5 tickets</small>
                 </div>

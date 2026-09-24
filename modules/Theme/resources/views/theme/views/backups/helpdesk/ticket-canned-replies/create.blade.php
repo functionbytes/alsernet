@@ -16,7 +16,7 @@
                 <form id="replyForm" action="{{ route('manager.helpdesk.settings.ticket-canned-replies.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nueva respuesta</h5>
                         <small class="text-muted">Crea una respuesta reutilizable para los agentes</small>
                     </div>

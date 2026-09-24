@@ -41,7 +41,7 @@
                 if (window.toastr) toastr.success((resp && resp.message) || 'Acceso enviado');
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo enviar el acceso.');
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Enviar acceso al cliente');
             });

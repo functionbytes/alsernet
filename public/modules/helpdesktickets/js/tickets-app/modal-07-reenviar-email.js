@@ -70,7 +70,7 @@
                 },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo reenviar el correo');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                     $btn.prop('disabled', false).text('Reenviar ahora');
                 },
             });

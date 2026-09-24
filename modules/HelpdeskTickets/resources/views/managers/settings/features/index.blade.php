@@ -17,7 +17,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Funcionalidades de la vista de ticket</h5>
                         <small class="text-muted">Habilita o deshabilita los botones y secciones disponibles al trabajar un ticket</small>
                     </div>

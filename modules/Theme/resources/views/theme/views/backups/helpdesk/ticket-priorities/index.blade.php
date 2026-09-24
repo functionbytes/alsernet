@@ -15,7 +15,7 @@
         <div class="card">
 
             {{-- Header --}}
-            <div class="card-header p-4 border-bottom border-light">
+            <div class="card-header border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Prioridades de tickets</h5>
@@ -231,7 +231,7 @@
                 </div>
                 <div class="modal-footer">
                     <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>

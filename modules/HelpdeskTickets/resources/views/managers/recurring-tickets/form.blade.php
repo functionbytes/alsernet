@@ -26,7 +26,7 @@
                         @method('PUT')
                     @endif
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">{{ $isEdit ? 'Editar ticket recurrente' : 'Nuevo ticket recurrente' }}</h5>
                         <small class="text-muted">{{ $isEdit ? 'Modifica la configuración de la programación' : 'Configura un nuevo ticket que se generará automáticamente' }}</small>
                     </div>

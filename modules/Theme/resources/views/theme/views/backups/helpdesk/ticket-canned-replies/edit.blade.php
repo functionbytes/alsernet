@@ -17,7 +17,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Editar: {{ $reply->title }}</h5>
                         <small class="text-muted">Modifica el contenido de la respuesta predefinida</small>
                     </div>

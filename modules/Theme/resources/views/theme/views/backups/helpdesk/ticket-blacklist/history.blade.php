@@ -15,7 +15,7 @@
         <div class="card">
 
             {{-- Header --}}
-            <div class="card-header p-4 border-bottom border-light">
+            <div class="card-header border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Historial de correos bloqueados</h5>

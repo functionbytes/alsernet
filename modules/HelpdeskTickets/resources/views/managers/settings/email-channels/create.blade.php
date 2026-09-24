@@ -16,7 +16,7 @@
                 <form id="channelForm" action="{{ route('manager.helpdesk.settings.email-channels.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nuevo canal de correo</h5>
                         <small class="text-muted">Conecta un buzón para que sus correos entrantes generen tickets</small>
                     </div>

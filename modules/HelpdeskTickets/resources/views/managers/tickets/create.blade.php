@@ -17,7 +17,7 @@
 
                 {{-- Información del ticket --}}
                 <div class="card mb-3">
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Información del ticket</h5>
                         <small class="text-muted">Asunto y descripción inicial del ticket</small>
                     </div>
@@ -79,7 +79,7 @@
 
                 {{-- Clasificación --}}
                 <div class="card mb-3">
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Clasificación</h5>
                         <small class="text-muted">Estado, prioridad, categoría y SLA aplicable</small>
                     </div>
@@ -153,7 +153,7 @@
 
                 {{-- Asignación --}}
                 <div class="card mb-3">
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Asignación</h5>
                         <small class="text-muted">Cliente y agente asignado</small>
                     </div>
@@ -207,7 +207,7 @@
 
                 {{-- Configuración --}}
                 <div class="card mb-3">
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Configuración</h5>
                         <small class="text-muted">Visibilidad y opciones adicionales</small>
                     </div>

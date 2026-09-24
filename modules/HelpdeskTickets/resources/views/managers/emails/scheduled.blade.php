@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="card">
-        <div class="card-header p-4 border-bottom d-flex align-items-center justify-content-between">
+        <div class="card-header border-bottom d-flex align-items-center justify-content-between">
             <div>
                 <h5 class="mb-1 fw-bold">Correos programados</h5>
                 <p class="small mb-0 text-muted">Correos de tickets aún no enviados, con fecha de envío futura — de todos los tickets a la vez.</p>

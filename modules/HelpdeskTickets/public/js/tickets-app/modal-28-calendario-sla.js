@@ -421,7 +421,7 @@
                 },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se ha podido cambiar la pausa del SLA');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                     $btn.prop('disabled', false);
                 },
             });

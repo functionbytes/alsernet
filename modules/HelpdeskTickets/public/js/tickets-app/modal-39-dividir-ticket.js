@@ -78,7 +78,7 @@
                 },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo dividir el ticket');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                     $btn.prop('disabled', false).text('Dividir ticket');
                 },
             });

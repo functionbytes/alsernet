@@ -16,7 +16,7 @@
                 <form id="statusForm" action="{{ route('manager.helpdesk.settings.ticket-statuses.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nuevo estado</h5>
                         <small class="text-muted">Define un estado para el ciclo de vida de los tickets</small>
                     </div>

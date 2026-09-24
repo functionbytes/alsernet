@@ -16,7 +16,7 @@
                 <form id="groupForm" action="{{ route('manager.helpdesk.settings.ticket-groups.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nuevo grupo</h5>
                         <small class="text-muted">Define un nuevo grupo para organizar agentes y asignar tickets</small>
                     </div>

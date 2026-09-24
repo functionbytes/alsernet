@@ -16,7 +16,7 @@
                 <form id="priorityForm" action="{{ route('manager.helpdesk.settings.ticket-priorities.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nueva prioridad</h5>
                         <small class="text-muted">Agrega una prioridad al catalogo</small>
                     </div>

@@ -53,11 +53,11 @@
             if (!t.url_presence_nudge) { $btn.prop('disabled', false); return; }
             $.post(t.url_presence_nudge, { to_user_id: $(this).data('nudge') })
                 .done(function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Aviso enviado'); else window.alert('Aviso enviado');
+                    tktNotify('success', (resp && resp.message) || 'Aviso enviado');
                 })
                 .fail(function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo avisar.');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });
         });

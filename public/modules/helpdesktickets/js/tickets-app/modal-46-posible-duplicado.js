@@ -68,7 +68,7 @@
                 dismissDuplicateBanner();
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo guardar la relación.');
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             });
         });
     }

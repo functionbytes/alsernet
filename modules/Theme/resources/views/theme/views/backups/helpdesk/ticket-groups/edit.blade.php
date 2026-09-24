@@ -17,7 +17,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Editar: {{ $group->name }}</h5>
                         <small class="text-muted">Modifica las propiedades del grupo</small>
                     </div>

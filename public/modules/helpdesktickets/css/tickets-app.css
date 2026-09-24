@@ -438,7 +438,6 @@ body:has(.tkt) .mc-content {
 .tkt-presence-dot::after { content: ""; position: absolute; inset: -1.5px; border-radius: 50%; background: var(--tkt-accent-dark); opacity: .5; animation: tkt-presence-ping 1.8s ease-out infinite; }
 @keyframes tkt-presence-ping { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.4); opacity: 0; } }
 
-
 .tkt-sla { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; }
 .tkt-sla-dot { width: 6px; height: 6px; border-radius: 50%; }
 .tkt-sla-ok      { color: var(--tkt-text-mute); }   .tkt-sla-ok .tkt-sla-dot      { background: var(--tkt-ok); }
@@ -510,7 +509,7 @@ body:has(.tkt) .mc-content {
 .tkt-detail-context .who > i { font-size: 9px; color: var(--tkt-text-faint); }
 .tkt-detail-context .mail { font-family: var(--tkt-mono); font-size: 10px; }
 .tkt-detail-customer-quick { display: inline-flex; align-items: center; min-width: 0; }
-.tkt-detail-customer-quick button { display: inline-flex; align-items: center; gap: 4px; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 6px; border: 1px solid var(--tkt-accent-line); border-radius: 12px; background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); font-size: 9.5px; font-weight: 700; cursor: pointer; }
+.tkt-detail-customer-quick button { display: inline-flex; align-items: center; gap: 4px; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 6px; border: 1px solid var(--tkt-accent-line); border-radius: 12px; background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); font-size: var(--tkt-t-xs); font-weight: 700; cursor: pointer; }
 .tkt-detail-customer-quick button:hover { background: var(--tkt-accent-bg); }
 .tkt-detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .tkt-detail-actions .tkt-btn-icon { width: 31px; height: 31px; font-size: 11px; }
@@ -531,7 +530,7 @@ body:has(.tkt) .mc-content {
    riesgo); en plazo no hay franja, solo el chip verde discreto de siempre
    (ver slaBanner/slaChip en renderDetail(), tickets-app/core.js). */
 .tkt-detail-sla-banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: var(--tkt-t-md); font-weight: 600; border-top: 1px solid var(--tkt-border); }
-.tkt-detail-sla-banner i { font-size: 12px; flex-shrink: 0; }
+.tkt-detail-sla-banner i { font-size: var(--tkt-t); flex-shrink: 0; }
 .tkt-detail-sla-banner b { font-weight: 800; }
 .tkt-detail-sla-banner .dim { font-weight: 500; opacity: .75; }
 .tkt-detail-sla-banner-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font: inherit; font-weight: 700; font-size: var(--tkt-t-sm); white-space: nowrap; background: none; border: none; padding: 0; cursor: pointer; color: inherit; }
@@ -562,7 +561,7 @@ body:has(.tkt) .mc-content {
 .tkt-detail-navbar { padding: 6px 14px; }
 .tkt-detail-head-row { gap: 8px 12px; padding: 10px 14px 8px; }
 .tkt-detail-title-col { gap: 4px; }
-.tkt-detail-title { font-size: 16px; }
+.tkt-detail-title { font-size: var(--tkt-t-xl); }
 .tkt-detail-chips { gap: 5px; }
 .tkt-detail-context { gap: 6px; }
 .tkt-detail-sla-banner { padding: 7px 14px; }
@@ -572,7 +571,7 @@ body:has(.tkt) .mc-content {
 .tkt-chip-mono { font-family: var(--tkt-mono); font-size: 10px; padding: 2px 7px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-soft); }
 .tkt-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 5px; font-size: var(--tkt-t-sm); font-weight: 700; }
 .tkt-chip-ok { background: var(--tkt-ok-bg); color: var(--tkt-ok-fg); }
-.tkt-chip-warn { background: var(--tkt-warn-bg); color: var(--tkt-warn-fg); }
+
 .tkt-chip-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
 .tkt-chip-info { background: var(--tkt-info-bg); color: var(--tkt-info); box-shadow: inset 0 0 0 1px var(--tkt-accent-line); }
 .tkt-chip-muted { background: var(--tkt-subtle); color: var(--tkt-text-soft); }
@@ -670,8 +669,7 @@ body:has(.tkt) .mc-content {
 .tkt-att-pill > .mono { font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); }
 
 /* hilo de conversación */
-.tkt-thread-day { display: flex; align-items: center; gap: 10px; }
-.tkt-thread-day::before, .tkt-thread-day::after { content: ""; flex: 1; height: 1px; background: var(--tkt-border); }
+
 .tkt-thread-day span { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); }
 
 /* trazabilidad y actividad */
@@ -770,11 +768,11 @@ body:has(.tkt) .mc-content {
   background-size: 8px 8px;
 }
 /* Fila de "Tickets del cliente". */
-.tkt-ctk { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 9px 2px; border: none; border-bottom: 1px solid var(--tkt-border-soft); background: none; text-align: left; }
+
 .tkt-ctk[data-last] { border-bottom: none; }
-.tkt-ctk:hover { background: var(--tkt-subtle); }
+
 .tkt-ctk .line1 { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.tkt-ctk .subj { flex: 1; min-width: 0; font-size: var(--tkt-t-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 .tkt-ctk .line2 { display: flex; align-items: center; gap: 6px; }
 .tkt-ctk .when { margin-left: auto; font-size: 10px; color: var(--tkt-text-mute); }
 /* Lista de elección del modal de asignación: una fila por agente con
@@ -844,7 +842,7 @@ body:has(.tkt) .mc-content {
 .tkt-drop-item.on { background: var(--tkt-subtle); font-weight: 700; }
 
 /* ── Piezas sueltas usadas dentro de paneles/modales ────── */
-.tkt-list-empty { padding: 40px 20px; text-align: center; font-size: var(--tkt-t); color: var(--tkt-text-faint); line-height: 1.6; }
+
 /* fila informativa con acción a la derecha (conversación paralela,
    tickets relacionados) — ya se usaba en tickets-app.js sin definir
    aquí: filas sin caja ni padding hasta este fix. */
@@ -875,15 +873,12 @@ body:has(.tkt) .mc-content {
    salto real era al 2xl) — casi cualquier modal con una lista con subtítulo,
    una tabla o un field-row de 2 columnas se veía apretado o con texto
    cortado, aunque ya usara 'lg'/'xl'. Se reabre la escala completa. */
-.tkt-modal.w-sm { max-width: 400px; }
-.tkt-modal.w-md { max-width: 480px; }
-.tkt-modal.w-lg { max-width: 580px; }
-.tkt-modal.w-xl { max-width: 680px; }
+
 /* Unificar duplicados necesita sitio: muestra el hilo completo de varios
    tickets a la vez, y a 430px cada mensaje salía en columna de tres palabras. */
-.tkt-modal.w-2xl { max-width: 760px; }
+
 .tkt-modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--tkt-border); flex-shrink: 0; }
-.tkt-modal-icon { width: 28px; height: 28px; border-radius: var(--tkt-r); background: var(--tkt-subtle); display: grid; place-items: center; font-size: 12px; }
+.tkt-modal-icon { width: 28px; height: 28px; border-radius: var(--tkt-r); background: var(--tkt-subtle); display: grid; place-items: center; font-size: var(--tkt-t); }
 .tkt-modal-icon.danger { background: var(--tkt-danger-soft); color: var(--tkt-danger-text); }
 .tkt-modal-icon.warn { background: var(--tkt-warn-soft); color: var(--tkt-warn-fg); }
 .tkt-modal-kicker { font-size: 9px; font-weight: 600; color: var(--tkt-text-faint); text-transform: uppercase; letter-spacing: .08em; }
@@ -893,8 +888,6 @@ body:has(.tkt) .mc-content {
 /* el cuerpo scrollea; cabecera y pie quedan fijos */
 .tkt-modal-body { padding: 14px; display: flex; flex-direction: column; gap: 11px; overflow-y: auto; min-height: 0; flex: 1 1 auto; }
 .tkt-modal-foot { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-shrink: 0; }
-.tkt-modal-foot .tkt-btn { width: 100%; }
-.tkt-modal-foot.two-col { grid-template-columns: 1fr 1fr; }
 
 /* ── Formularios (dentro de modales) ────────────────────── */
 .tkt-field { display: flex; flex-direction: column; gap: 5px; }
@@ -921,7 +914,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-input-btn > i { font-size: 9px; color: var(--tkt-text-faint); }
 .tkt-input-btn:hover { background: var(--tkt-subtle); }
 /* Caja de redacción con barra de formato encima. */
-.tkt-composer { border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); overflow: hidden; background: var(--tkt-panel); }
+
 .tkt-composer-bar { display: flex; align-items: center; gap: 2px; padding: 5px 6px; border-bottom: 1px solid var(--tkt-border-soft); background: var(--tkt-subtle); }
 .tkt-composer-bar > button { width: 26px; height: 24px; display: grid; place-items: center; border: none; border-radius: 5px; background: none; color: var(--tkt-text-soft); font-size: 11px; }
 .tkt-composer-bar > button:hover { background: var(--tkt-panel); color: var(--tkt-text); }
@@ -988,7 +981,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 /* Lista de adjuntos. */
 .tkt-filelist { display: flex; flex-direction: column; gap: 8px; }
 .tkt-filerow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; }
-.tkt-filerow > .ico { width: 30px; height: 30px; border-radius: var(--tkt-r-md); background: var(--tkt-subtle); display: grid; place-items: center; color: var(--tkt-text-soft); font-size: 12px; flex-shrink: 0; }
+.tkt-filerow > .ico { width: 30px; height: 30px; border-radius: var(--tkt-r-md); background: var(--tkt-subtle); display: grid; place-items: center; color: var(--tkt-text-soft); font-size: var(--tkt-t); flex-shrink: 0; }
 .tkt-filerow > .info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .tkt-filerow .n { font-size: var(--tkt-t); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tkt-filerow .s { font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
@@ -1093,7 +1086,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 @container tkt (max-width: 940px) {
   .tkt-app-card { min-width: 0; }
   .tkt-mobile-nav { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
-  .tkt-mobile-nav > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; cursor: pointer; }
+  .tkt-mobile-nav > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 7px 8px; border: 0; border-radius: var(--tkt-r); background: transparent; color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; cursor: pointer; }
   .tkt-mobile-nav > button.on { background: var(--tkt-text); color: #fff; font-weight: 700; }
   .tkt-mobile-nav > button > i { font-size: 10px; }
   .tkt-split-wrap { overflow-x: hidden; }
@@ -1253,7 +1246,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-kv-select .select2-selection--single { background: var(--tkt-panel) !important; }
 .tkt-field .select2-container, .tkt-modal-body .select2-container { width: 100% !important; }
 
-
 /* ────────────────────────────────────────────────────────────────────────
    Utilidades del listado de tickets.
 
@@ -1263,10 +1255,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    la base de datos.
    ──────────────────────────────────────────────────────────────────────── */
 .tkt-meta         { font-size: 11px; color: var(--tkt-text-mute); }
-.tkt-title-sm     { font-size: 11.5px; font-weight: 700; }
+.tkt-title-sm     { font-size: var(--tkt-t-md); font-weight: 700; }
 /* En el mockup el contador y "limpiar" van juntos al final de la barra,
    separados 10px, no el contador pegado al borde y limpiar a media línea. */
-.tkt-count        { margin-left: auto; color: var(--tkt-text-mute); font-size: 10.5px; }
+.tkt-count        { margin-left: auto; color: var(--tkt-text-mute); font-size: var(--tkt-t-sm); }
 .tkt-filter-bar .tkt-clear-link { margin-left: 10px; }
 
 .tkt-toolbar-right{ margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
@@ -1277,7 +1269,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 /* Columna elástica del modal de filtros (partial _filters-modal). */
 .hdt-flex-fill-min { flex: 1; min-width: 0; }
-
 
 /* ============================================================
    Pestaña "Hilo" — estructura del mockup
@@ -1303,19 +1294,19 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-thread-bar .tkt-seg {
     margin-left: auto;
 }
-.tkt-thread-search-wrap { display: inline-flex; align-items: center; gap: 6px; min-width: 150px; padding: 4px 8px; border: 1px solid var(--tkt-border); border-radius: 7px; background: var(--tkt-panel); color: var(--tkt-text-faint); }
+.tkt-thread-search-wrap { display: inline-flex; align-items: center; gap: 6px; min-width: 150px; padding: 4px 8px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); color: var(--tkt-text-faint); }
 .tkt-thread-search-wrap:focus-within { border-color: var(--tkt-accent-line); box-shadow: 0 0 0 2px var(--tkt-accent-soft); }
 .tkt-thread-search-wrap i { font-size: 10px; }
-.tkt-thread-search { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--tkt-text); font-size: 10.5px; }
+.tkt-thread-search { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--tkt-text); font-size: var(--tkt-t-sm); }
 .tkt-thread-search::placeholder { color: var(--tkt-text-faint); }
 .tkt-thread-no-results { margin-left: auto; color: var(--tkt-text-mute); font-size: 10px; font-style: italic; white-space: nowrap; }
 .tkt-thread-advanced-toggle { flex-shrink: 0; }
 .tkt-thread-advanced { flex: 1 0 100%; display: grid; grid-template-columns: minmax(130px, 1.4fr) repeat(4, minmax(86px, 1fr)) auto; align-items: end; gap: 7px; padding: 9px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-subtle); }
 .tkt-thread-advanced[hidden] { display: none; }
-.tkt-thread-advanced label { display: flex; flex-direction: column; gap: 4px; color: var(--tkt-text-mute); font-size: 9.5px; font-weight: 700; }
-.tkt-thread-advanced input, .tkt-thread-advanced select { min-width: 0; height: 29px; padding: 4px 7px; border: 1px solid var(--tkt-border); border-radius: 6px; background: var(--tkt-panel); color: var(--tkt-text); font-size: 10.5px; font-weight: 400; }
+.tkt-thread-advanced label { display: flex; flex-direction: column; gap: 4px; color: var(--tkt-text-mute); font-size: var(--tkt-t-xs); font-weight: 700; }
+.tkt-thread-advanced input, .tkt-thread-advanced select { min-width: 0; height: 29px; padding: 4px 7px; border: 1px solid var(--tkt-border); border-radius: 6px; background: var(--tkt-panel); color: var(--tkt-text); font-size: var(--tkt-t-sm); font-weight: 400; }
 .tkt-thread-advanced-actions { display: flex; gap: 5px; }
-.tkt-thread-load-more { align-self: center; padding: 6px 10px; border: 1px dashed var(--tkt-border-strong); border-radius: 7px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; cursor: pointer; }
+.tkt-thread-load-more { align-self: center; padding: 6px 10px; border: 1px dashed var(--tkt-border-strong); border-radius: var(--tkt-r); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; cursor: pointer; }
 .tkt-thread-load-more:hover { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); }
 .tkt-thread-load-more:disabled { opacity: .65; cursor: wait; }
 
@@ -1361,12 +1352,12 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-tnote-icon {
     width: 26px;
     height: 26px;
-    border-radius: 8px;
+    border-radius: var(--tkt-r-md);
     display: grid;
     place-items: center;
     background: #f5f6f8;
     color: #18181b;
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
     flex-shrink: 0;
 }
@@ -1387,7 +1378,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 }
 
 .tkt-tmsg-who {
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     font-weight: 700;
     min-width: 0;
     overflow: hidden;
@@ -1402,11 +1393,11 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    retirada por no tener ya ningún uso. */
 .tkt-tchip {
     padding: 1px 6px;
-    border-radius: 4px;
+    border-radius: var(--tkt-r-sm);
     background: #fff;
     border: 1px solid var(--tkt-border, #e8e8e8);
     color: #52525b;
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
     flex-shrink: 0;
 }
@@ -1452,7 +1443,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-tmsg-act {
     width: 22px;
     height: 22px;
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
 }
 
 .tkt-tmsg-body {
@@ -1474,7 +1465,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-tmsg-translation-text {
     margin-top: 4px;
-    font-size: 12px;
+    font-size: var(--tkt-t);
     font-style: italic;
     color: #52525b;
 }
@@ -1496,10 +1487,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     max-width: 260px;
     padding: 4px 9px;
     border: 1px solid var(--tkt-border, #e8e8e8);
-    border-radius: 7px;
+    border-radius: var(--tkt-r);
     background: #fff;
     color: #18181b;
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     text-decoration: none;
     cursor: pointer;
     transition: .12s;
@@ -1518,7 +1509,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-tatt .s {
     font-family: var(--tkt-mono, 'JetBrains Mono', ui-monospace, monospace);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     color: #71717a;
     flex-shrink: 0;
 }
@@ -1561,11 +1552,11 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     flex-shrink: 0;
 }
 
-.tkt-thread-new-marker { align-self: center; display: inline-flex; align-items: center; gap: 7px; margin: 2px 0 4px; padding: 6px 11px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); font-size: 10.5px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(24, 24, 27, .08); }
+.tkt-thread-new-marker { align-self: center; display: inline-flex; align-items: center; gap: 7px; margin: 2px 0 4px; padding: 6px 11px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); font-size: var(--tkt-t-sm); font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(24, 24, 27, .08); }
 .tkt-thread-new-marker:hover, .tkt-thread-new-marker:focus { background: var(--tkt-accent-soft); outline: 2px solid var(--tkt-accent-line); outline-offset: 1px; }
 .tkt-thread-expand { align-self: center; display: inline-flex; align-items: center; gap: 7px; margin: 0 0 2px; padding: 5px 10px; border: 1px solid var(--tkt-border); border-radius: 16px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; font-weight: 700; cursor: pointer; }
 .tkt-thread-expand:hover, .tkt-thread-expand:focus { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); outline: none; }
-.tkt-thread-latest-marker { position: absolute; z-index: 5; left: 50%; bottom: calc(var(--tkt-composer-height, 100px) + 8px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); box-shadow: 0 4px 12px rgba(24, 24, 27, .12); font-size: 10.5px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.tkt-thread-latest-marker { position: absolute; z-index: 5; left: 50%; bottom: calc(var(--tkt-composer-height, 100px) + 8px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--tkt-accent-line); border-radius: 20px; background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); box-shadow: 0 4px 12px rgba(24, 24, 27, .12); font-size: var(--tkt-t-sm); font-weight: 700; white-space: nowrap; cursor: pointer; }
 .tkt-thread-latest-marker:hover, .tkt-thread-latest-marker:focus { background: var(--tkt-accent-soft); outline: 2px solid var(--tkt-accent-line); outline-offset: 1px; }
 
 /* ── Separador de día: línea · fecha · línea ── */
@@ -1585,7 +1576,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     height: 1px;
     background: #f0f1f4;
 }
-
 
 /* Traza de entrega bajo un mensaje saliente ("enviado 10:42:11"). Antes era
    una fila de ancho completo con filete superior, igual de prominente que
@@ -1627,7 +1617,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-composer {
     background: #fff;
     border: 1px solid var(--tkt-border);
-    border-radius: 10px;
+    border-radius: var(--tkt-r-lg);
     /* overflow:hidden (antes) recortaba el desplegable de plantillas del
        "/": se abre hacia ARRIBA (bottom:100%, ver .tkt-drop-up) para no
        quedar cortado por el viewport, así que se desborda por encima del
@@ -1664,10 +1654,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     gap: 6px;
     padding: 6px 10px;
     border: 0;
-    border-radius: 7px;
+    border-radius: var(--tkt-r);
     background: transparent;
     color: var(--tkt-text-soft);
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     font-weight: 600;
     cursor: pointer;
 }
@@ -1692,10 +1682,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 20px;
     background: var(--tkt-subtle);
     color: var(--tkt-text-soft);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
 }
-.tkt-comp-draft-status { margin-left: auto; min-height: 15px; color: var(--tkt-text-faint); font-size: 9.5px; white-space: nowrap; }
+.tkt-comp-draft-status { margin-left: auto; min-height: 15px; color: var(--tkt-text-faint); font-size: var(--tkt-t-xs); white-space: nowrap; }
 .tkt-comp-draft-status.saved { color: var(--tkt-accent-dark); }
 
 /* Borrador sugerido por IA (TicketReplySuggestionService). Franja verde
@@ -1739,7 +1729,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-comp-ai-chip {
     padding: 1px 6px;
     border: 1px solid var(--tkt-accent-line);
-    border-radius: 4px;
+    border-radius: var(--tkt-r-sm);
     background: #fff;
     color: var(--tkt-accent-dark);
     font-size: 9px;
@@ -1748,7 +1738,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-comp-ai-text {
     color: var(--tkt-text-mid);
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
 }
 
 .tkt-comp-ai-actions {
@@ -1764,7 +1754,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 5px;
     background: var(--tkt-accent);
     color: #fff;
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     font-weight: 700;
     cursor: pointer;
 }
@@ -1775,7 +1765,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 5px;
     background: #fff;
     color: var(--tkt-accent-dark);
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     font-weight: 600;
     cursor: pointer;
 }
@@ -1786,7 +1776,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 5px;
     background: transparent;
     color: var(--tkt-text-mute);
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     cursor: pointer;
 }
 
@@ -1843,10 +1833,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     gap: 6px;
     padding: 7px 10px;
     border: 1px solid var(--tkt-border);
-    border-radius: 7px;
+    border-radius: var(--tkt-r);
     background: #fff;
     color: var(--tkt-text-soft);
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     font-weight: 600;
     cursor: pointer;
 }
@@ -1857,10 +1847,10 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     gap: 7px;
     padding: 7px 12px;
     border: 0;
-    border-radius: 7px;
+    border-radius: var(--tkt-r);
     background: var(--tkt-accent);
     color: #fff;
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     font-weight: 700;
     cursor: pointer;
 }
@@ -1869,7 +1859,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-comp-kbd {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     opacity: .8;
 }
 
@@ -1899,7 +1889,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-conflict-draft { width: 100%; min-height: 180px; resize: vertical; }
 .tkt-conflict-remote { min-height: 180px; padding: 10px 11px; overflow: auto; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: var(--tkt-t-md); line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
 .tkt-audit-changes { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; color: var(--tkt-text-soft); }
-.tkt-audit-change { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: 5px; background: var(--tkt-subtle); font-size: 9.5px; }
+.tkt-audit-change { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: 5px; background: var(--tkt-subtle); font-size: var(--tkt-t-xs); }
 .tkt-audit-change b { color: var(--tkt-text); }
 .tkt-audit-change i { color: var(--tkt-text-faint); font-size: 8px; }
 
@@ -1910,7 +1900,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-palette-item:hover, .tkt-palette-item:focus { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); outline: none; }
 .tkt-palette-item > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .tkt-palette-item b { font-size: 11px; }
-.tkt-palette-item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tkt-text-mute); font-size: 9.5px; }
+.tkt-palette-item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tkt-text-mute); font-size: var(--tkt-t-xs); }
 .tkt-palette-icon { display: grid; place-items: center; flex: 0 0 25px; width: 25px; height: 25px; border-radius: 6px; background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: 10px; }
 .tkt-palette-hint { margin-right: auto; color: var(--tkt-text-faint); font-size: 10px; }
 
@@ -1918,7 +1908,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-comp-macro-select {
     width: auto;
     padding: 3px 6px;
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
 }
 
 /* Lista sin resultados. En la columna estrecha el mockup no pone icono ni
@@ -1926,7 +1916,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-list-empty {
     padding: 40px 20px;
     text-align: center;
-    font-size: 12px;
+    font-size: var(--tkt-t);
     color: var(--tkt-text-faint);
     line-height: 1.7;
 }
@@ -1952,7 +1942,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-detail-error #tkt-retry-detail,
 .tkt-detail-error #tkt-error-queue {
     padding: 9px 14px;
-    font-size: 12px;
+    font-size: var(--tkt-t);
 }
 
 .tkt-detail-error #tkt-retry-detail { font-weight: 700; }
@@ -1967,7 +1957,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    Las tres líneas (asunto / cliente / metadatos) tenían los estilos en
    atributos style; aquí van como clases, con los tonos del mockup. */
 .tkt-kcard-title {
-    font-size: 12px;
+    font-size: var(--tkt-t);
     font-weight: 600;
     line-height: 1.4;
 }
@@ -2060,7 +2050,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 3px;
     background: var(--tkt-ok-bg);
     color: var(--tkt-ok-fg);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -2089,7 +2079,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     background: var(--tkt-subtle);
     color: var(--tkt-text-soft);
     font-family: var(--tkt-mono);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 600;
 }
 
@@ -2142,7 +2132,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     display: inline-flex;
     align-items: flex-start;
     gap: 6px;
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     line-height: 1.5;
     color: var(--tkt-text-faint);
 }
@@ -2179,13 +2169,13 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     gap: 8px;
     padding: 7px 0;
     border-bottom: 1px solid var(--tkt-border-soft);
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     color: inherit;
     text-decoration: none;
 }
 .tkt-form-file:last-child { border-bottom: 0; }
 .tkt-form-file .n { flex: 1; min-width: 0; }
-.tkt-form-file .s { color: var(--tkt-text-faint); font-size: 10.5px; flex-shrink: 0; }
+.tkt-form-file .s { color: var(--tkt-text-faint); font-size: var(--tkt-t-sm); flex-shrink: 0; }
 .tkt-form-file:hover .n { color: var(--tkt-accent-dark); }
 
 /* Tabla del modal "Ver completo" */
@@ -2232,8 +2222,8 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin-top: 8px;
     padding: 7px 9px;
     border: 1px solid var(--tkt-border);
-    border-radius: 7px;
-    font-size: 11.5px;
+    border-radius: var(--tkt-r);
+    font-size: var(--tkt-t-md);
 }
 
 /* Nota al pie del cuerpo de un modal (timestamp del snapshot, avisos de
@@ -2266,7 +2256,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     font-weight: 600;
 }
 
@@ -2293,9 +2283,9 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin-left: 8px;
     padding: 1px 6px;
     border: 1px solid var(--tkt-border-strong);
-    border-radius: 4px;
+    border-radius: var(--tkt-r-sm);
     font-family: var(--tkt-mono);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     color: var(--tkt-text);
     white-space: nowrap;
 }
@@ -2338,7 +2328,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-banner-ai-chips { display: inline-flex; gap: 5px; flex-wrap: wrap; }
 .tkt-banner-ai-chip {
     padding: 1px 6px;
-    border-radius: 4px;
+    border-radius: var(--tkt-r-sm);
     background: var(--tkt-subtle);
     border: 1px solid var(--tkt-border);
     font-size: 9px;
@@ -2380,13 +2370,6 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 
 .tkt-csat-stars { display: flex; gap: 2px; }
 
-.tkt-csat-star {
-    font-size: 12px;
-    color: var(--tkt-border-strong);
-}
-
-.tkt-csat-star.on { color: var(--tkt-accent); }
-
 .tkt-csat-label {
     font-size: 11px;
     color: var(--tkt-text-soft);
@@ -2412,7 +2395,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin: 4px 0 0;
     padding-left: 14px;
     list-style: disc;
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     line-height: 1.6;
     color: var(--tkt-text-mute);
 }
@@ -2446,7 +2429,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     margin-top: 3px;
 }
 .tkt-check.sm {
-    font-size: 10.5px;
+    font-size: var(--tkt-t-sm);
     color: var(--tkt-text-faint);
     gap: 5px;
 }
@@ -2532,13 +2515,13 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     border-radius: 50%;
     background: var(--tkt-accent-soft);
     color: var(--tkt-accent-dark);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
     flex-shrink: 0;
 }
 .tkt-step-num.sm { width: 15px; height: 15px; font-size: 8.5px; }
 .tkt-step-when { flex: 1; min-width: 0; font-weight: 600; }
-.tkt-step-rel { color: var(--tkt-text-faint); font-size: 10.5px; }
+.tkt-step-rel { color: var(--tkt-text-faint); font-size: var(--tkt-t-sm); }
 .tkt-followup.done .tkt-fill { color: var(--tkt-text-faint); }
 
 /* Vista comparada del modal de fusión */
@@ -2560,12 +2543,12 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     background: var(--tkt-panel);
 }
 .tkt-merge-side.winning { border-color: var(--tkt-accent); background: var(--tkt-accent-soft); }
-.tkt-merge-side .n { font-size: 11.5px; font-weight: 700; }
-.tkt-merge-side .s { font-size: 10.5px; color: var(--tkt-text-mute); }
+.tkt-merge-side .n { font-size: var(--tkt-t-md); font-weight: 700; }
+.tkt-merge-side .s { font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
 .tkt-merge-arrow {
     align-self: center;
     color: var(--tkt-text-faint);
-    font-size: 12px;
+    font-size: var(--tkt-t);
     flex-shrink: 0;
 }
 /* ─────────────────────────────────────────────────────────────────────────
@@ -2729,7 +2712,7 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
     height: 26px;
     border-radius: 50%;
     background: var(--tkt-subtle);
-    font-size: 9.5px;
+    font-size: var(--tkt-t-xs);
     font-weight: 700;
     color: var(--tkt-text-soft);
 }
@@ -2925,7 +2908,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .daterangepicker.tkt-drp:before { border-bottom-color: #e8e8e8; }
 .daterangepicker.tkt-drp .drp-calendar { padding: 10px; }
 .daterangepicker.tkt-drp .calendar-table th,
-.daterangepicker.tkt-drp .calendar-table td { font-size: 11.5px; min-width: 28px; width: 28px; height: 26px; border-radius: 6px; }
+.daterangepicker.tkt-drp .calendar-table td { font-size: var(--tkt-t-md); min-width: 28px; width: 28px; height: 26px; border-radius: 6px; }
 .daterangepicker.tkt-drp .calendar-table th { color: #71717a; font-weight: 600; }
 .daterangepicker.tkt-drp .month { font-size: 12px; font-weight: 600; color: #18181b; }
 .daterangepicker.tkt-drp td.available:hover,
@@ -2939,7 +2922,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .daterangepicker.tkt-drp td.active:hover { background: #90bb13; color: #fff; }
 /* La franja de rangos rápidos (Hoy, Últimos 7 días…): mismos 11,5px que el
    resto y el verde de marca en el activo, sin el azul del componente. */
-.daterangepicker.tkt-drp .ranges li { font-size: 11.5px; padding: 7px 12px; border-radius: 6px; margin: 0 6px; color: #3f3f46; }
+.daterangepicker.tkt-drp .ranges li { font-size: var(--tkt-t-md); padding: 7px 12px; border-radius: 6px; margin: 0 6px; color: #3f3f46; }
 .daterangepicker.tkt-drp .ranges li:hover { background: #f0f1f4; }
 .daterangepicker.tkt-drp .ranges li.active { background: #eef5d9; color: #5b7a0d; font-weight: 600; }
 .daterangepicker.tkt-drp .ranges ul { padding: 6px 0; }
@@ -2964,14 +2947,14 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     margin-top: 8px;
     padding: 7px 9px;
     border: 1px solid var(--tkt-border);
-    border-radius: 7px;
+    border-radius: var(--tkt-r);
     background: var(--tkt-bg-soft, rgba(125, 125, 125, .06));
 }
 
 .tkt-erp-missing-label {
     flex: 1 1 auto;
     min-width: 0;
-    font-size: 11.5px;
+    font-size: var(--tkt-t-md);
     color: var(--tkt-text-mute);
     overflow-wrap: anywhere;
 }
@@ -3010,7 +2993,6 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     background: var(--tkt-subtle);
 }
 
-
 /* ── Presencia de agentes en la cabecera del ticket ────────────────────────
    Burbujas estilo Drive: quién más tiene el ticket abierto. El banner de
    texto (#tkt-collision-banner) sigue existiendo, pero vive bajo las
@@ -3021,7 +3003,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     width: 26px; height: 26px; margin-left: -6px;
     border-radius: 50%; border: 2px solid var(--tkt-panel, #fff);
     background: var(--tkt-text); color: #fff;
-    font-size: 9.5px; font-weight: 700; letter-spacing: .02em;
+    font-size: var(--tkt-t-xs); font-weight: 700; letter-spacing: .02em;
     display: grid; place-items: center; cursor: pointer; padding: 0;
     transition: transform .12s ease;
 }
@@ -3171,7 +3153,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     gap: 20px 28px;
 }
 .tkt-cheat-h {
-    font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    font-size: var(--tkt-t-sm); font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
     color: var(--tkt-text-faint); margin-bottom: 8px;
 }
 .tkt-cheat-row {
@@ -3187,7 +3169,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     border-radius: 5px;
     background: var(--tkt-panel);
     font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 10.5px; font-weight: 600; color: var(--tkt-text);
+    font-size: var(--tkt-t-sm); font-weight: 600; color: var(--tkt-text);
 }
 @media (max-width: 720px) {
     .tkt-cheat-grid { grid-template-columns: 1fr; }
@@ -3247,7 +3229,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-ctk .subj { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--tkt-t-md); font-weight: 600; }
 .tkt-ctk .line2 { color: var(--tkt-text-faint); font-size: var(--tkt-t-sm); }
 .tkt-ctk .tkt-ticket-id { flex-shrink: 0; color: var(--tkt-text-mute); }
-.tkt-ctk-badge { flex-shrink: 0; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: 4px; background: var(--tkt-panel); color: var(--tkt-text-mute); font-size: 9px; font-weight: 700; }
+.tkt-ctk-badge { flex-shrink: 0; padding: 2px 6px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); background: var(--tkt-panel); color: var(--tkt-text-mute); font-size: 9px; font-weight: 700; }
 .tkt-ctk-badge.current { border-color: var(--tkt-accent-line); background: var(--tkt-accent-bg); color: var(--tkt-accent-dark); }
 .tkt-ctk-chevron { flex-shrink: 0; color: var(--tkt-text-faint); font-size: 9px; }
 .tkt-ctk-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--tkt-border-strong); flex-shrink: 0; }
@@ -3305,21 +3287,21 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-drop-below { top: 100%; left: 0; right: 0; max-height: 160px; overflow: auto; }
 .tkt-csat-star { font-size: 13px; color: var(--tkt-border-strong); }
 .tkt-csat-star.on { color: var(--tkt-accent); }
-.tkt-person-name { display: block; font-size: 12.5px; font-weight: 700; }
+.tkt-person-name { display: block; font-size: var(--tkt-t-lg); font-weight: 700; }
 .tkt-person-sub { display: block; font-size: 11px; color: var(--tkt-text-mute); }
 .tkt-badge-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .tkt-input-md { min-height: 90px; }
 .tkt-input-lg { min-height: 160px; }
 .tkt-person-avatar.is-xs { width: 22px; height: 22px; font-size: 9px; }
 .tkt-note-card-head { display: flex; align-items: center; gap: 6px; }
-.tkt-note-card-meta { flex: 1; min-width: 0; font-size: 10.5px; color: var(--tkt-text-faint); }
+.tkt-note-card-meta { flex: 1; min-width: 0; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
 .tkt-note-card-head .tkt-btn-icon { width: 20px; height: 20px; }
 .tkt-note-card-head .tkt-btn-icon > i { font-size: 9px; }
-.tkt-note-card-title { font-size: 11.5px; font-weight: 700; }
+.tkt-note-card-title { font-size: var(--tkt-t-md); font-weight: 700; }
 .tkt-note-card-body { font-size: 11.5px; line-height: 1.5; }
 .tkt-note-card-colors { display: flex; gap: 4px; margin-top: 4px; }
-.tkt-note-input { padding: 9px 10px; border: 1px solid var(--tkt-border); border-radius: 7px; font-size: 11.5px; min-height: 66px; }
-.tkt-row-label { flex: 1; font-size: 11.5px; }
+.tkt-note-input { padding: 9px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); font-size: var(--tkt-t-md); min-height: 66px; }
+.tkt-row-label { flex: 1; font-size: var(--tkt-t-md); }
 .tkt-line-link { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; color: inherit; text-decoration: none; }
 .tkt-stack-6 { display: flex; flex-direction: column; gap: 6px; }
 
@@ -3342,7 +3324,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
    ══════════════════════════════════════════════════════════════ */
 .tkt-compact-toggle { display: none; background: transparent; border: 0; }
 .tkt-compact-toggle[aria-expanded="true"] { color: var(--tkt-text); }
-.tkt-compact-toggle .c { margin-left: 4px; padding: 0 5px; border-radius: 8px; background: var(--tkt-accent); color: #fff; font-size: 9.5px; }
+.tkt-compact-toggle .c { margin-left: 4px; padding: 0 5px; border-radius: var(--tkt-r-md); background: var(--tkt-accent); color: #fff; font-size: var(--tkt-t-xs); }
 
 @media (max-height: 960px) {
   .tkt-compact-toggle { display: inline-flex; align-items: center; }
@@ -3379,7 +3361,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 /* Tarjeta "Tiempo invertido" del panel de gestión. */
 .tkt-time-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--tkt-border-soft); font-size: 11.5px; }
 .tkt-time-row:last-of-type { border-bottom: 0; }
-.tkt-time-dur { min-width: 52px; font-size: 10.5px; font-weight: 700; color: var(--tkt-accent-dark); }
+.tkt-time-dur { min-width: 52px; font-size: var(--tkt-t-sm); font-weight: 700; color: var(--tkt-accent-dark); }
 .tkt-time-row .tkt-btn-icon { width: 20px; height: 20px; }
 .tkt-time-row .tkt-btn-icon > i { font-size: 9px; }
 .tkt-time-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
@@ -3404,3 +3386,6 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-review-summary { margin: 0 0 6px; font-size: 11.5px; line-height: 1.5; color: var(--tkt-text-mid); }
 .tkt-review-issues { margin: 0 0 8px; padding-left: 16px; font-size: 11px; color: var(--tkt-text-soft); }
 .tkt-review-dispute { margin-top: 6px; }
+
+/* Aviso de tktNotify() en la barra de estado cuando no hay toastr. */
+.tkt-status-notice { font-weight: 600; color: var(--tkt-text); }

@@ -16,7 +16,7 @@
                 <form id="viewForm" action="{{ route('manager.helpdesk.settings.ticket-views.store') }}" method="POST">
                     @csrf
 
-                    <div class="card-header border-bottom p-3">
+                    <div class="card-header border-bottom">
                         <h5 class="mb-0 fw-bold">Nueva vista</h5>
                         <small class="text-muted">Guarda un filtro del listado de tickets para reutilizarlo</small>
                     </div>

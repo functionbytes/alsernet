@@ -236,7 +236,7 @@
                     var json = xhr.responseJSON || {};
                     var primerError = json.errors ? json.errors[Object.keys(json.errors)[0]][0] : null;
                     var msg = primerError || json.message || 'No se pudo guardar la recurrencia';
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 },
             });
         }
@@ -260,7 +260,7 @@
                 error: function (xhr) {
                     $backdrop.find('[data-rec-toggle="' + id + '"]').prop('disabled', false);
                     var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado de la recurrencia');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 },
             });
         }

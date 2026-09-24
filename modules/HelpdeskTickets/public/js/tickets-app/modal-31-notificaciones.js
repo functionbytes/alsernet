@@ -128,7 +128,7 @@
                 })
                 .fail(function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
-                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    tktNotify('error', msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });
         });
@@ -136,10 +136,10 @@
         $backdrop.on('click', '#tkt-notif-channels-test', function () {
             var $btn = $(this).prop('disabled', true).text('Enviando…');
             $.post(TKA.urls.notifTeamChannelsTest).done(function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Prueba enviada'); else window.alert('Prueba enviada');
+                tktNotify('success', (resp && resp.message) || 'Prueba enviada');
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo enviar la prueba.');
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
             }).always(function () {
                 $btn.prop('disabled', false).text('Enviar prueba');
             });
@@ -178,11 +178,11 @@
                 data: { preferences: preferences },
             }).done(function (res) {
                 var msg = (res && res.message) ? res.message : 'Preferencias de aviso guardadas.';
-                if (window.toastr) toastr.success(msg); else window.alert(msg);
+                tktNotify('success', msg);
                 closeModal();
             }).fail(function (xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se han podido guardar las preferencias.';
-                if (window.toastr) toastr.error(msg); else window.alert(msg);
+                tktNotify('error', msg);
                 $btn.prop('disabled', false);
             });
         });

@@ -12,7 +12,7 @@
         {{-- Main Preview --}}
         <div class="col-12 col-lg-8">
             <div class="card">
-                <div class="card-header p-3 border-bottom">
+                <div class="card-header border-bottom">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <h6 class="mb-0 fw-bold">
                             Vista previa
@@ -59,7 +59,7 @@
         <div class="col-12 col-lg-4">
             {{-- Hit Details Card --}}
             <div class="card mb-3">
-                <div class="card-header p-3 border-bottom bg-warning-subtle">
+                <div class="card-header border-bottom bg-brand-subtle">
                     <h6 class="mb-0 fw-bold">
                         Detalle del bloqueo
                     </h6>
@@ -114,7 +114,7 @@
 
             {{-- Actions Card --}}
             <div class="card mb-3">
-                <div class="card-header p-3 border-bottom">
+                <div class="card-header border-bottom">
                     <h6 class="mb-0 fw-bold">
                         Acciones rápidas
                     </h6>
