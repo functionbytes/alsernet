@@ -148,7 +148,9 @@ class ContactLinksController extends Controller
                 'smsEnabled' => function_exists('helpdesk_integration_identity_sms_enabled') && helpdesk_integration_identity_sms_enabled(),
                 'hasEmail' => filled($customer->email),
                 'hasPhone' => filled($customer->whatsapp_phone ?: $customer->phone),
-                'urls' => collect($routes)
+                // Las rutas de identidad de HelpdeskIntegration van tras
+                // can:helpdesk.view: sin ese permiso los botones darían 403.
+                'urls' => collect($user?->can('helpdesk.view') ? $routes : [])
                     ->filter(fn (string $name) => Route::has($name))
                     ->map(fn (string $name) => route($name, $customer))
                     ->all(),

@@ -66,7 +66,8 @@
                 @if($linksOn ?? false)
                     <li><button type="button" class="dropdown-item" data-c3k-open>Vínculos e identidad</button></li>
                 @endif
-                        <li><button type="button" class="dropdown-item" data-contact-cart-trigger>Carrito asistido</button></li>
+                        {{-- Sin Ecommerce no hay carrito asistido local: abre el carrito real de la tienda. --}}
+                        <li><button type="button" class="dropdown-item" data-contact-cart-trigger>{{ class_exists('Modules\\Ecommerce\\Services\\OrderService') ? 'Carrito asistido' : 'Carrito de la tienda' }}</button></li>
                         @if(helpdesk_integration_enabled())
                             <li><button type="button" class="dropdown-item external-link-trigger" data-customer-id="{{ $customer->id }}">Vincular plataforma</button></li>
                         @endif

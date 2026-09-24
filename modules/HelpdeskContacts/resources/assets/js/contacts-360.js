@@ -1476,7 +1476,7 @@
             acts += '<button type="button" class="c3-act-btn" data-bs-toggle="modal" data-bs-target="#contact-ticket-modal">Crear ticket</button>';
         }
         if (canUpdate) {
-            acts += '<button type="button" class="c3-act-btn" data-contact-cart-trigger>Carrito asistido</button>';
+            acts += '<button type="button" class="c3-act-btn" data-contact-cart-trigger>' + (String($root.data('assisted-cart')) === '1' ? 'Carrito asistido' : 'Carrito de la tienda') + '</button>';
         }
         if ($('#contact-merge-btn').length) {
             acts += '<button type="button" class="c3-act-btn" data-ctf-proxy="#contact-merge-btn">Fusionar duplicado</button>';

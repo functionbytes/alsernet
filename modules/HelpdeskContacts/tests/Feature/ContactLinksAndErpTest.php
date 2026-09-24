@@ -88,6 +88,22 @@ class ContactLinksAndErpTest extends TestCase
         $this->assertFalse($data['can']['unlink'], 'sin helpdesk.integrations.manage no se desvincula');
         $this->assertTrue($data['can']['link']);
         $this->assertArrayHasKey('verified', $data['identity']);
+        $this->assertSame([], $data['identity']['urls'], 'sin helpdesk.view no se ofrecen las rutas de identidad (darían 403)');
+    }
+
+    public function test_identity_urls_are_offered_with_helpdesk_view(): void
+    {
+        $this->requireIntegration();
+        Permission::findOrCreate('helpdesk.view', 'web');
+        $this->manager->givePermissionTo('helpdesk.view');
+
+        $urls = $this->actingAs($this->manager)
+            ->getJson(route('contacts.links.show', $this->customer()))
+            ->assertOk()
+            ->json('data.identity.urls');
+
+        $this->assertArrayHasKey('request', $urls);
+        $this->assertArrayHasKey('verify', $urls);
     }
 
     public function test_unlink_requires_integrations_manage(): void
