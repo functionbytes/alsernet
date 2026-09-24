@@ -1684,6 +1684,7 @@
                     (t.last_mail_status === 'failed' || t.last_mail_status === 'bounced'
                         ? '<span class="tkt-rchip bounce" title="El último correo saliente no llegó al cliente">Correo rebotado</span>'
                         : '') +
+                    escalationChip(t, 'tkt-rchip escalated') +
                     // slaRowText() devuelve el guion largo cuando el ticket no
                     // tiene plazo: es un valor "vacío" con forma de texto, así
                     // que un truthy a secas pintaba una etiqueta vacía en casi
@@ -1743,6 +1744,15 @@
         });
 
         return $row;
+    }
+
+    // Escalado vigente (24-sep-2026): con el escalado en modo 'flag' la
+    // prioridad ya no sube sola, así que esta etiqueta es lo que avisa.
+    function escalationChip(t, cls) {
+        var level = Number(t.escalation_level || 0);
+        if (!level) return '';
+        return '<span class="' + cls + '" title="Escalado automáticamente por tiempo sin resolver o SLA' +
+            (level > 1 ? ' (' + level + ' veces)' : '') + '">Escalado' + (level > 1 ? ' ×' + level : '') + '</span>';
     }
 
     function renderList() {
@@ -2487,6 +2497,7 @@
                             (t.priority ? '<span class="tkt-chip ' + priorityChipClass(t.priority) + '"><i class="fa-solid fa-flag"></i>' + escapeHtml(priorityLabel(t.priority)) + '</span>' : '') +
                             '<span class="tkt-chip-channel"><i class="' + (ORIGIN_ICON[t.source] || 'fa-solid fa-tag') + '"></i>' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
                             slaChip +
+                            escalationChip(t, 'tkt-chip tkt-chip-escalated') +
                             (t.has_attachments ? '<span class="tkt-chip-att" title="El último mensaje trae adjuntos"><i class="fa-solid fa-paperclip"></i> Adjuntos</span>' : '') +
                         '</div>' +
                         '<div class="tkt-detail-context">' +
@@ -2731,8 +2742,7 @@
             thread_per_page: TKA.state.threadPerPage || 30,
         });
 
-        $.getJSON(dataUrl)
-            .done(function (d) {
+        var applyDetail = function (d) {
                 if (TKA.state.currentTicket !== t || String(TKA.state.threadSearch || '').trim() !== requestedThreadSearch || JSON.stringify(threadFilterState()) !== JSON.stringify(requestedFilters)) return;
                 var previousDetail = TKA.state.currentDetail;
                 var previousThread = previousDetail && previousDetail.thread ? previousDetail.thread : [];
@@ -2777,7 +2787,17 @@
                 checkDuplicates(t);
                 TKA.state.threadRefreshMeta = null;
                 if (TKA.state.editConflictMessage) showEditConflict(TKA.state.editConflictMessage, true);
-            })
+        };
+
+        // Precargado al pasar el ratón por la fila: se pinta ya y la petición
+        // de abajo (la que marca leído) lo refresca en cuanto vuelve.
+        var prefetched = takeDetailPrefetch(t, requestedThreadSearch, requestedFilters, requestedPage, opts);
+        // En el siguiente tick: selectTicket() pinta después el panel lateral,
+        // que reinicia currentDetail, y lo precargado se perdería.
+        if (prefetched) setTimeout(function () { applyDetail(prefetched); }, 0);
+
+        $.getJSON(dataUrl)
+            .done(applyDetail)
             .fail(function () {
                 TKA.state.threadLoadingMore = false;
                 if (opts.appendThread) {
@@ -2786,6 +2806,50 @@
                 }
                 showDetailError(t);
             });
+    }
+
+    // ═══════════ Precarga del detalle (24-sep-2026) ═══════════
+    // Cada petición a este servidor cuesta ~1 s de base, casi todo fuera de
+    // /data (que en caliente tarda ~200 ms). Al dejar el ratón sobre una fila
+    // se pide el detalle con ?prefetch=1 (no marca leído); si el agente la
+    // abre en los 30 s siguientes, el hilo aparece al instante.
+    var DETAIL_PREFETCH_TTL = 30000;
+
+    function prefetchTicketDetail(t) {
+        if (!t || !t.url_data) return;
+        if (TKA.state.currentTicket && String(TKA.state.currentTicket.id) === String(t.id)) return;
+        var cache = TKA.state.detailPrefetch = TKA.state.detailPrefetch || {};
+        var hit = cache[t.id];
+        if (hit && Date.now() - hit.at < DETAIL_PREFETCH_TTL) return;
+        cache[t.id] = { at: Date.now(), data: null };
+        $.getJSON(appendQueryParams(t.url_data, { prefetch: 1, thread_page: 1, thread_per_page: TKA.state.threadPerPage || 30 }))
+            .done(function (d) { if (cache[t.id]) cache[t.id].data = d; })
+            .fail(function () { delete cache[t.id]; });
+    }
+
+    function takeDetailPrefetch(t, search, filters, page, opts) {
+        var cache = TKA.state.detailPrefetch || {};
+        var hit = cache[t.id];
+        if (!hit) return null;
+        delete cache[t.id];
+        if (!hit.data || Date.now() - hit.at > DETAIL_PREFETCH_TTL) return null;
+        if (search !== '' || page !== 1 || opts.appendThread) return null;
+        if (JSON.stringify(filters) !== JSON.stringify(threadFilterState({}))) return null;
+        return hit.data;
+    }
+
+    function bindDetailPrefetch() {
+        var timer = null;
+        $('#tkt-list')
+            .on('mouseenter.tktPrefetch', '.tkt-ticket-row', function () {
+                var id = String($(this).attr('data-id'));
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    var t = (TKA.state.tickets || []).find(function (x) { return String(x.id) === id; });
+                    prefetchTicketDetail(t);
+                }, 180);
+            })
+            .on('mouseleave.tktPrefetch', '.tkt-ticket-row', function () { clearTimeout(timer); });
     }
 
     function threadItemKey(item) {
@@ -9619,6 +9683,8 @@
         // en cliente los 50 tickets de la página (que era el motivo de que el
         // badge dijera 340 y la lista mostrara 6): se le pide al servidor la
         // primera página de ESA pestaña.
+        bindDetailPrefetch();
+
         $('.tkt-state-tab[data-filter], .tkt-view-pill[data-filter]').on('click', function () {
             var filter = String($(this).data('filter'));
             if (filter === TKA.state.filter) return;

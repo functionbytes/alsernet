@@ -79,6 +79,15 @@ return [
     | propios del motor de este módulo.
     */
     'escalation' => [
+        // Qué hace un escalado (24-sep-2026):
+        // - 'flag' (por defecto): marca el ticket como escalado (chip en la
+        //   lista y el detalle) y avisa al agente y a los managers, sin tocar
+        //   la prioridad. Subirla en automático acababa con casi todo en
+        //   "Urgente" (100 de 97 abiertos en local) y la prioridad dejaba de
+        //   distinguir nada.
+        // - 'priority': el comportamiento anterior, sube un nivel de prioridad.
+        'mode' => env('HELPDESK_ESCALATION_MODE', 'flag'),
+
         // Escalar también por SLA de resolución (vencido o próximo a vencer).
         'sla_enabled' => env('HELPDESK_ESCALATION_SLA_ENABLED', true),
 

@@ -3422,3 +3422,8 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-kanban-note { display: flex; align-items: center; gap: 10px; margin: 12px 16px 0; padding: 8px 12px; border: 1px solid var(--tkt-accent-line); border-radius: var(--tkt-r-md); background: var(--tkt-accent-soft); font-size: var(--tkt-t-md); color: var(--tkt-text-mid); }
 .tkt-kanban-note[hidden] { display: none; }
 .tkt-kcol-empty { padding: 18px 0; text-align: center; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+
+/* Ticket escalado (24-sep-2026): verde de marca con borde, distinto de la
+   prioridad (negro) y de "Sin responder" (discontinuo). */
+.tkt-rchip.escalated,
+.tkt-chip.tkt-chip-escalated { background: var(--tkt-accent-bg); border: 1px solid var(--tkt-accent-line); color: var(--tkt-accent-dark); font-weight: 700; }

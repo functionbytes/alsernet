@@ -293,6 +293,12 @@ class EscalationService
 
         $oldPriority = $ticket->priority;
 
+        // En modo 'flag' (el de por defecto, ver config escalation.mode) el
+        // escalado marca y avisa, pero la prioridad la decide una persona.
+        if (config('helpdesktickets.escalation.mode', 'flag') !== 'priority') {
+            $nextPriority = $oldPriority;
+        }
+
         $ticket->update([
             'priority' => $nextPriority,
             'escalated_at' => now(),
@@ -310,7 +316,7 @@ class EscalationService
             $this->recordSlaBreachAudit($ticket);
         }
 
-        Log::info("Ticket #{$ticket->id} escalated from {$oldPriority} to {$nextPriority}", [
+        Log::info("Ticket #{$ticket->id} escalated ({$oldPriority} → {$nextPriority})", [
             'ticket_id' => $ticket->id,
             'escalation_count' => $ticket->escalation_count,
             'reason' => $reason,

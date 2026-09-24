@@ -328,7 +328,12 @@ class TicketDetailDataController extends Controller
         // ambos caminos escriben en la misma tabla, así que $ticket->
         // activities() (relación que ya alimenta esta pestaña más abajo) la
         // recoge igual que cualquier cambio automático.
-        if (TicketRead::markAllReadFor($ticket, auth()->id()) > 0) {
+        //
+        // ?prefetch=1 (24-sep-2026): el panel precarga el detalle al pasar el
+        // ratón por una fila; eso no es abrir el ticket, así que ni se marca
+        // leído ni se registra "Ticket visto". La apertura real repite la
+        // petición sin el parámetro.
+        if (! request()->boolean('prefetch') && TicketRead::markAllReadFor($ticket, auth()->id()) > 0) {
             activity()
                 ->performedOn($ticket)
                 ->causedBy(auth()->user())

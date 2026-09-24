@@ -1781,6 +1781,11 @@ class Ticket extends Model
             // algo que el conteo no dice (hay algo nuevo que mirar).
             'message_count' => $this->message_count ?? null,
             'sla_kind' => $this->slaRowKind(),
+            // Nivel de escalado vigente (0 = sin escalar). Con el escalado en
+            // modo 'flag' es la única señal visible de que se escaló.
+            'escalation_level' => $this->escalated_at && ! $this->closed_at && ! $this->resolved_at
+                ? (int) $this->escalation_count
+                : 0,
             'sla_text' => $this->slaRowText(),
             'sla_status' => $this->sla_status,
             'sla_due_at' => $this->slaEffectiveDueDate()?->toIso8601String(),

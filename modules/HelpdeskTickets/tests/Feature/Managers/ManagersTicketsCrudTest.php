@@ -154,6 +154,31 @@ class ManagersTicketsCrudTest extends TestCase
         );
     }
 
+    public function test_prefetch_of_detail_does_not_mark_the_thread_as_read(): void
+    {
+        $ticket = $this->createTicket();
+        $ticket->items()->create([
+            'author_id' => $this->customer->id,
+            'type' => 'message',
+            'body' => 'Sigo sin recibir el pedido.',
+            'is_internal' => false,
+        ]);
+        $readCount = fn () => TicketRead::where('user_id', $this->manager->id)
+            ->whereIn('ticket_item_id', $ticket->items()->pluck('id'))
+            ->count();
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', [$ticket, 'prefetch' => 1]))
+            ->assertOk()
+            ->assertJsonCount(1, 'thread');
+        $this->assertSame(0, $readCount(), 'Pasar el ratón por la fila no es abrir el ticket.');
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertOk();
+        $this->assertSame(1, $readCount());
+    }
+
     public function test_repeated_message_with_same_idempotency_key_is_not_duplicated(): void
     {
         $ticket = $this->createTicket();

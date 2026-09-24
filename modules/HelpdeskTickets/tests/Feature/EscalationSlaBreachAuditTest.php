@@ -27,6 +27,9 @@ class EscalationSlaBreachAuditTest extends TestCase
 
         Mail::fake();
         config([
+            // Estos tests cubren el modo que sube la prioridad; el de por
+            // defecto ('flag') tiene su propio test en EscalateTicketsJobTest.
+            'helpdesktickets.escalation.mode' => 'priority',
             'helpdesk.escalation.enabled' => true,
             'helpdesktickets.escalation.sla_enabled' => true,
             'helpdesktickets.escalation.notify_managers' => false,

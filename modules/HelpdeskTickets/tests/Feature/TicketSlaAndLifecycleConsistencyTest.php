@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\SlaBreached;
@@ -219,7 +220,11 @@ class TicketSlaAndLifecycleConsistencyTest extends TestCase
 
     public function test_el_escalado_no_sube_la_prioridad_de_un_ticket_resuelto_ni_pospuesto(): void
     {
+        // El barrido recorre también los tickets reales: sin esto mandaba
+        // correos de escalado de verdad.
+        Mail::fake();
         config([
+            'helpdesktickets.escalation.mode' => 'priority',
             'helpdesk.escalation.enabled' => true,
             'helpdesktickets.escalation.sla_enabled' => true,
             'helpdesktickets.escalation.notify_managers' => false,

@@ -37,6 +37,9 @@ class EscalationBusinessHoursTest extends TestCase
         Mail::fake();
 
         config([
+            // Estos tests cubren el modo que sube la prioridad; el de por
+            // defecto ('flag') tiene su propio test en EscalateTicketsJobTest.
+            'helpdesktickets.escalation.mode' => 'priority',
             'helpdesk.escalation.enabled' => true,
             'helpdesk.escalation.thresholds.low' => 48,
             'helpdesk.escalation.thresholds.normal' => 24,

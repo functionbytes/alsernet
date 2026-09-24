@@ -34,6 +34,9 @@ class EscalateTicketsJobTest extends TestCase
         }
 
         config([
+            // Estos tests cubren el modo que sube la prioridad; el de por
+            // defecto ('flag') tiene su propio test en EscalateTicketsJobTest.
+            'helpdesktickets.escalation.mode' => 'priority',
             'helpdesk.escalation.enabled' => true,
             'helpdesk.escalation.thresholds.low' => 48,
             'helpdesk.escalation.thresholds.normal' => 24,
@@ -90,6 +93,24 @@ class EscalateTicketsJobTest extends TestCase
         $this->assertSame('high', $ticket->priority);
         $this->assertSame(1, $ticket->escalation_count);
         $this->assertNotNull($ticket->escalated_at);
+    }
+
+    public function test_flag_mode_marks_the_ticket_without_raising_its_priority(): void
+    {
+        Mail::fake();
+        config(['helpdesktickets.escalation.mode' => 'flag']);
+
+        $ticket = $this->makeTicket();
+        $ticket->forceFill(['created_at' => now()->subHours(30)])->saveQuietly();
+
+        $this->runJob();
+
+        $ticket->refresh();
+
+        $this->assertSame('normal', $ticket->priority, 'En modo flag la prioridad la decide una persona.');
+        $this->assertSame(1, $ticket->escalation_count);
+        $this->assertNotNull($ticket->escalated_at);
+        $this->assertSame(1, $ticket->toListRow()['escalation_level'] ?? null);
     }
 
     public function test_does_not_escalate_recent_ticket_without_sla(): void
