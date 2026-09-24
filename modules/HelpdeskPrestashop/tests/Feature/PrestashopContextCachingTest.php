@@ -42,7 +42,12 @@ class PrestashopContextCachingTest extends TestCase
     private function userWithPermission(string ...$permissions): User
     {
         $user = User::factory()->create();
-        $user->givePermissionTo($permissions);
+        // Los emails de estos tests no tienen Customer local (son
+        // "prospectos"): desde el endurecimiento del API ese camino exige
+        // además helpdeskprestashop.prospect.view (assertScopedToCustomerEmail).
+        // Solo se añade cuando el test ya da algún permiso: "sin permisos"
+        // debe seguir siendo un usuario sin ninguno.
+        $user->givePermissionTo($permissions === [] ? [] : array_merge($permissions, ['helpdeskprestashop.prospect.view']));
 
         return $user;
     }

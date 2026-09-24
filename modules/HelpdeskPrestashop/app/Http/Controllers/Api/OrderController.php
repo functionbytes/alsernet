@@ -65,11 +65,13 @@ class OrderController extends Controller
         $this->assertScopedToCustomerEmail($email, 'helpdeskprestashop.prospect.view');
 
         try {
+            // Argumento con nombre: el 4º parámetro del servicio es $externalId;
+            // pasar la clave ahí posicionalmente daba TypeError (500).
             $data = $this->service->startOrderReturn(
                 $order,
                 $items,
                 $email,
-                $this->idempotencyKey($request, $order, 'order.start_return', $items),
+                idempotencyKey: $this->idempotencyKey($request, $order, 'order.start_return', $items),
             );
         } catch (PsUpstreamException $e) {
             return response()->json([

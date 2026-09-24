@@ -1,0 +1,67 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "cartpay"
+   Pieza 02 (cobro del pedido pendiente) y pieza 32 (convertir o
+   vaciar carrito). Hereda los tokens --psc-* de prestashop-chat.css.
+   Solo verdes / grises; ámbar únicamente para errores de carga.
+   ============================================================ */
+
+/* ─── Pieza 32 · bloque dentro del modal de carrito ─────────── */
+.psc-cartpay { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.psc-cartpay-main,
+.psc-cartpay-confirm { display: flex; flex-direction: column; gap: 10px; }
+
+.psc-cartpay-sum {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 11px; border-radius: 8px;
+    background: var(--psc-surface-alt, #f6f7f5);
+    font-size: .75rem;
+}
+.psc-cartpay-sum .k { color: var(--psc-muted, #8a8a8a); }
+.psc-cartpay-sum .v { margin-left: auto; font-family: var(--psc-mono); font-weight: 700; color: var(--psc-ink, #2d2d2d); }
+
+.psc-cartpay-states { display: flex; flex-direction: column; gap: 6px; }
+.psc-cartpay-states .psc-radio-opt input { flex-shrink: 0; }
+
+.psc-cartpay-rows { border: 1px solid #ececec; border-radius: 8px; overflow: hidden; }
+.psc-cartpay-kv { display: flex; align-items: baseline; gap: 10px; padding: 7px 11px; font-size: .72rem; }
+.psc-cartpay-kv + .psc-cartpay-kv { border-top: 1px solid var(--psc-line, #f0f0f0); }
+.psc-cartpay-kv .k { flex-shrink: 0; width: 72px; color: var(--psc-muted, #8a8a8a); }
+.psc-cartpay-kv .v { flex: 1; min-width: 0; color: var(--psc-ink-soft, #565656); font-weight: 600; overflow-wrap: anywhere; }
+
+/* Botonera apilada a ancho completo, primario arriba. */
+.psc-cartpay-acts { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.psc-cartpay-hint { margin: 0; font-size: .63rem; color: var(--psc-faint, #a3a3a3); line-height: 1.45; text-align: center; }
+
+/* Casilla "Enviar el correo de confirmación" (hook actionEmailSendBefore del puente). */
+.psc-cartpay-mail { display: flex; flex-direction: column; gap: 4px; padding: 9px 11px; border: 1px solid #ececec; border-radius: 8px; }
+.psc-cartpay-mail .psc-check { color: var(--psc-ink, #2d2d2d); font-weight: 600; align-items: flex-start; }
+.psc-cartpay-mail .psc-check input { width: 14px; height: 14px; flex: 0 0 14px; margin: 2px 0 0; padding: 0; }
+.psc-cartpay-mail .psc-check span { flex: 1; min-width: 0; }
+.psc-cartpay-mail .psc-cartpay-hint { text-align: left; padding-left: 21px; }
+
+/* ─── Pieza 02 · hoja "Datos de pago" del workspace ─────────── */
+.psc-cartpay-ref { font-family: var(--psc-mono); font-weight: 600; color: var(--psc-muted, #8a8a8a); }
+
+.psc-cartpay-amount {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 12px 13px; border-radius: 9px;
+    background: var(--psc-primary-soft, rgba(144, 187, 19, .08));
+    border: 1px solid var(--psc-primary-line, rgba(144, 187, 19, .35));
+}
+.psc-cartpay-amount .k { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-primary-strong, #5e7a0d); }
+.psc-cartpay-amount .v { font-family: var(--psc-mono); font-size: 1.15rem; font-weight: 800; color: var(--psc-primary-strong, #5e7a0d); }
+.psc-cartpay-amount .s { font-size: .66rem; color: var(--psc-ink-soft, #565656); }
+
+/* El texto que se insertará conserva sus saltos de línea. */
+.psc-cartpay-pre { white-space: pre-line; font-family: var(--psc-mono); font-size: .69rem; }
+
+.psc-cartpay-card .psc-note { margin-top: 2px; }
+
+/* Cabecera plegable del bloque (cerrado por defecto: una sola fila). */
+.psc-cartpay-toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--psc-line, #f0f0f0); border-radius: 10px; background: #fbfbfa; text-align: left; cursor: pointer; }
+.psc-cartpay-toggle:hover { border-color: var(--psc-primary, #90bb13); }
+.psc-cartpay-toggle.is-loading { cursor: default; }
+.psc-cartpay-toggle-t { font-size: .78rem; font-weight: 700; color: var(--psc-ink, #2d2d2d); flex-shrink: 0; }
+.psc-cartpay-toggle-s { flex: 1; min-width: 0; font-size: .69rem; color: var(--psc-muted, #8a8a8a); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psc-cartpay-toggle .psc-chevron { color: #b4b4b4; font-size: .58rem; transition: transform .15s; }
+.psc-cartpay-toggle[aria-expanded="true"] .psc-chevron { transform: rotate(180deg); }

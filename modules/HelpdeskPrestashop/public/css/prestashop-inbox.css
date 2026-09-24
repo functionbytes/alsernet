@@ -742,6 +742,46 @@
 .ps-addr-line, .ps-addr-city { font-size: 0.8rem; color: #555; }
 .ps-addr-phone { font-size: 0.78rem; color: #888; margin-top: 3px; }
 .ps-addr-phone .fas { margin-right: 4px; }
+.ps-addr-use-btn { margin-top: 8px; }
+
+/* Carrito en vivo del cliente (modal psCartModal) */
+.ps-cart-item-meta { display: flex; align-items: center; gap: 10px; }
+.ps-cart-qty-stepper { display: inline-flex; align-items: center; gap: 6px; }
+.ps-cart-qty-btn {
+    width: 24px; height: 24px; flex-shrink: 0;
+    background: #f5f5f5; border: 1px solid #dee2e6; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; line-height: 1; color: #495057;
+}
+.ps-cart-qty-btn:hover { background: #e9ecef; }
+.ps-cart-qty-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ps-cart-qty-val { min-width: 18px; text-align: center; font-size: 0.85rem; font-weight: 600; display: inline-block; }
+.ps-cart-remove-btn {
+    margin-left: auto; background: none; border: none; padding: 4px 6px;
+    color: var(--bv-primary-strong, #5e7a0d); cursor: pointer; font-size: 0.8rem;
+}
+.ps-cart-remove-btn:hover { color: #3d5207; }
+.ps-cart-remove-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ps-cart-voucher-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid #f0f0f0; }
+.ps-cart-voucher-row .ps-cart-voucher-input { flex: 1; }
+.ps-cart-vouchers-applied { display: flex; flex-wrap: wrap; gap: 6px; margin-right: 4px; }
+.ps-cart-voucher-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px 2px 8px; border-radius: 999px;
+    background: #f0f7dc; color: var(--bv-primary-strong, #5e7a0d);
+    font-size: 0.72rem; font-weight: 600;
+}
+.ps-cart-voucher-chip .rm {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; padding: 0; border: 0; border-radius: 999px;
+    background: rgba(94, 122, 13, .15); color: inherit; font-size: .6rem; line-height: 1;
+    cursor: pointer;
+}
+.ps-cart-voucher-chip .rm:hover:not(:disabled) { background: rgba(94, 122, 13, .3); }
+.ps-cart-voucher-chip .rm:disabled { cursor: progress; opacity: .6; }
+.ps-cart-address-row { padding: 4px 14px 10px; }
+.ps-cart-error-banner {
+    margin: 8px 14px 0; padding: 8px 12px; border-radius: 6px;
+    background: #fdf3e0; color: #7a5b00; font-size: 0.78rem;
+}
 
 /* ── Ficha/recomendación de producto (movido del <style> inline de product-recommend.blade.php) ── */
 .ps-orig-price { font-size: 0.75rem; color: #999; text-decoration: line-through; display: block; line-height: 1; }

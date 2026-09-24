@@ -44,13 +44,23 @@ class PsOrderDetailController extends Controller
 
         $this->assertScopedToCustomerEmail($customerEmail, 'helpdeskprestashop.prospect.view');
 
-        // El email forma parte de la clave de caché: si no, el resultado del
-        // primer email se serviría a otro email sobre el mismo order id.
-        $cacheKey = OrderDetailCache::key($order, $customerEmail);
+        // external_id (opcional): lo manda Contacts 360 cuando el contacto de
+        // Helpdesk está vinculado explícitamente a un cliente de PrestaShop
+        // cuyo email no coincide con el suyo propio — sin esto, el bridge no
+        // podía resolver la propiedad del pedido y el detalle salía vacío.
+        $externalId = $request->query('external_id');
+        $externalId = ($externalId !== null && $externalId !== '') ? (int) $externalId : null;
 
-        $data = Cache::remember($cacheKey, 600, function () use ($order, $customerEmail) {
+        // El email (o el external_id, si vino) forma parte de la clave de
+        // caché: si no, el resultado del primero se serviría a otro sobre el
+        // mismo order id.
+        $cacheKey = $externalId !== null
+            ? OrderDetailCache::keyForExternalId($order, $externalId)
+            : OrderDetailCache::key($order, $customerEmail);
+
+        $data = Cache::remember($cacheKey, 600, function () use ($order, $customerEmail, $externalId) {
             try {
-                $result = $this->service->getOrderDetail($order, $customerEmail ?: null);
+                $result = $this->service->getOrderDetail($order, $customerEmail ?: null, $externalId);
 
                 return $result ?? 'not_found';
             } catch (PsUpstreamException) {

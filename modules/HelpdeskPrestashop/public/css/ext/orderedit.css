@@ -1,0 +1,45 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "orderedit"
+   Pieza 11 · Repetir pedido (hoja dentro del workspace de pedido).
+   Hereda los tokens --psc-* de prestashop-chat.css. Solo verdes y
+   grises; el ámbar queda para los avisos de error de carga.
+   ============================================================ */
+
+.psc-orderedit-ref { font-family: var(--psc-mono); font-size: .8rem; font-weight: 600; color: var(--psc-muted); margin-left: 4px; }
+
+.psc-orderedit-step { display: flex; flex-direction: column; gap: 12px; }
+.psc-orderedit-lines { display: flex; flex-direction: column; gap: 8px; }
+
+/* Línea del pedido: marcable si se puede volver a comprar */
+.psc-orderedit-line { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid var(--psc-line); border-radius: 10px; background: #fff; }
+.psc-orderedit-line.is-pickable { cursor: pointer; }
+.psc-orderedit-line.is-on { border-color: var(--psc-primary); background: rgba(144, 187, 19, .05); }
+.psc-orderedit-line.is-off { background: #fafafa; border-color: var(--psc-line-strong); }
+.psc-orderedit-line.is-off .psc-thumb { opacity: .55; }
+.psc-orderedit-line input[type="checkbox"] { accent-color: var(--psc-primary); flex-shrink: 0; }
+.psc-orderedit-line .nm { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.psc-orderedit-line .nm .t { font-size: .78rem; font-weight: 700; color: var(--psc-ink); line-height: 1.3; }
+.psc-orderedit-line.is-off .nm .t { color: var(--psc-ink-soft); font-weight: 600; }
+.psc-orderedit-line .nm .s { font-size: .66rem; color: var(--psc-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.psc-orderedit-line .nm .s .mono { font-family: var(--psc-mono); }
+.psc-orderedit-was { font-family: var(--psc-mono); text-decoration: line-through; color: var(--psc-faint); }
+.psc-orderedit-now { font-family: var(--psc-mono); font-weight: 700; color: var(--psc-primary-strong); }
+.psc-orderedit-line .psc-tag { flex-shrink: 0; }
+.psc-orderedit-amt { flex-shrink: 0; font-family: var(--psc-mono); font-size: .75rem; font-weight: 600; color: var(--psc-ink); min-width: 70px; text-align: right; }
+
+/* Stepper compacto (el .ps-qty-input base mide 38px de alto) */
+.psc-orderedit-qty { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.psc-orderedit-qty .ps-cart-qty-btn { width: 24px; height: 24px; }
+.psc-orderedit-qty input { width: 40px; height: 26px; text-align: center; border: 1px solid #ececec; border-radius: 6px; font-family: var(--psc-mono); font-size: .72rem; font-weight: 600; }
+.psc-orderedit-line:not(.is-on) .psc-orderedit-qty { opacity: .45; }
+
+/* Total del carrito nuevo */
+.psc-orderedit-total { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: 9px; background: var(--psc-surface-deep); color: #fff; }
+.psc-orderedit-total .k { font-size: .75rem; font-weight: 700; }
+.psc-orderedit-total .v { margin-left: auto; font-family: var(--psc-mono); font-size: .9rem; font-weight: 700; }
+.psc-orderedit-hint { margin: -4px 0 0; font-size: .66rem; color: var(--psc-faint); line-height: 1.45; }
+
+.psc-orderedit-acts { display: flex; flex-direction: column; gap: 8px; }
+
+/* Tarjeta de acceso en la pestaña Estado */
+.psc-orderedit-card-btn { width: 100%; }

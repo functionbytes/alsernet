@@ -1,0 +1,101 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "refunds"
+   Piezas 08 (reembolso parcial), 35 (resolver devolución) y 36
+   (instrucciones de retorno). Reutiliza el vocabulario .psc-* /
+   .ps-sheet / .ps-ret-line de prestashop-chat.css y sus tokens
+   --psc-*; aquí solo lo propio, con prefijo .psc-refunds-.
+   Solo verdes y grises; ámbar únicamente en avisos de error.
+   ============================================================ */
+
+/* ─── Hoja de reembolso ─────────────────────────────────────── */
+.psc-refunds-lines { display: flex; flex-direction: column; gap: 8px; }
+.psc-refunds-amt {
+    flex-shrink: 0;
+    min-width: 72px;
+    text-align: right;
+    font-family: var(--psc-mono);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--psc-ink);
+    white-space: nowrap;
+}
+.ps-ret-line.is-done .psc-refunds-amt { color: var(--psc-faint); font-weight: 500; }
+#psRefundsForm { display: flex; flex-direction: column; gap: 12px; }
+#psRefundsForm.bv-hidden { display: none; }
+#psRefundsSheet .psc-check input,
+.psc-refunds-rma .psc-check input { accent-color: var(--psc-primary); }
+
+/* ─── Resolver devolución ───────────────────────────────────── */
+.psc-refunds-chip {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #f4f4f5;
+    color: var(--psc-ink-soft);
+    font-family: var(--psc-mono);
+    font-size: .62rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    vertical-align: middle;
+}
+.psc-refunds-rma-body { display: flex; flex-direction: column; gap: 10px; }
+.psc-refunds-rma-items { display: flex; flex-direction: column; gap: 6px; }
+.psc-refunds-rma .psc-row .v .psc-tag { margin-left: 0; }
+.psc-refunds-rma .psc-field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+    font-size: .75rem;
+    color: var(--psc-ink);
+    background: #fff;
+}
+.psc-refunds-rma .psc-field select:focus,
+.psc-refunds-rma .psc-field textarea:focus { outline: none; border-color: var(--psc-primary); }
+
+/* ─── Etiqueta / instrucciones de retorno (pieza 36) ────────── */
+.psc-refunds-label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 11px;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    background: #fbfbfa;
+}
+.psc-refunds-addr {
+    padding: 0 11px;
+    font-size: .69rem;
+    color: var(--psc-ink-soft);
+    line-height: 1.45;
+    white-space: pre-line;
+    text-align: right;
+}
+.psc-refunds-hint { font-size: .66rem; color: var(--psc-muted); line-height: 1.45; }
+
+/* ─── Workspace de pedido: devoluciones del pedido ──────────── */
+.psc-refunds-rma-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px dashed var(--psc-line);
+}
+.psc-refunds-rma-row:first-of-type { border-top: 0; }
+.psc-refunds-rma-row .ref { font-family: var(--psc-mono); font-size: .69rem; font-weight: 600; color: var(--psc-ink); }
+.psc-refunds-link {
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: .69rem;
+    font-weight: 700;
+    color: var(--psc-primary-strong);
+    cursor: pointer;
+}
+.psc-refunds-link:hover { color: var(--psc-primary); }
+
+/* El textarea/select a ancho completo no debe desbordar el cuerpo de la hoja. */
+.psc-refunds-rma .psc-field textarea,
+.psc-refunds-rma .psc-field select { box-sizing: border-box; max-width: 100%; }

@@ -1,0 +1,70 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "catalog"
+   Piezas 10 (Comparar productos), 16 (Disponibilidad y plazos),
+   25 (Stock por almacén) y 26 (Precio por grupo).
+   Usa los tokens --psc-* de prestashop-chat.css. Solo verdes y
+   grises: el gris #565656 marca "sin stock / sin dato".
+   ============================================================ */
+
+/* ─── Ficha dentro de "Recomendar producto" (16 · 25 · 26) ──── */
+.psc-catalog-sheet { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.psc-catalog-sheet:empty { display: none; }
+.psc-catalog-sec-body { display: flex; flex-direction: column; gap: 6px; }
+.psc-catalog-sheet .psc-row .v.is-pos { color: var(--psc-primary-strong); }
+.psc-catalog-sheet .psc-row .v.is-zero { color: var(--psc-ink-soft); font-weight: 600; }
+.psc-catalog-sheet .psc-row--good { border: 1px solid var(--psc-primary-line); border-radius: 9px; }
+.psc-catalog-sheet .psc-row--total .k { color: #fff; }
+.psc-catalog-acts { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.psc-catalog-hint { margin: 0; font-size: .66rem; line-height: 1.45; color: var(--psc-muted); }
+.psc-catalog-sheet .psc-note { align-items: center; }
+
+/* ─── Modal "Comparar productos" (10) ───────────────────────── */
+.bv-modal .modal-icon.psc-catalog-icon { background: #f0f7dc; color: var(--psc-primary-strong); }
+.psc-catalog-cmp-body { gap: 11px; }
+
+.psc-catalog-cmp-cards { display: grid; gap: 9px; }
+.psc-catalog-cmp-cards.cols-1 { grid-template-columns: 1fr; }
+.psc-catalog-cmp-cards.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.psc-catalog-cmp-cards.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.psc-catalog-cmp-card { position: relative; border: 1px solid #ececec; border-radius: 8px; padding: 9px; background: #fff; min-width: 0; }
+.psc-catalog-cmp-card.is-base { border-color: var(--psc-primary); background: #fafafa; }
+.psc-catalog-cmp-thumb { width: 100%; height: 44px; overflow: hidden; }
+.psc-catalog-cmp-card .nm { margin-top: 6px; font-size: .72rem; font-weight: 700; line-height: 1.3; color: var(--psc-ink); overflow-wrap: anywhere; }
+.psc-catalog-cmp-card .pr { margin-top: 3px; font-family: var(--psc-mono); font-size: .75rem; font-weight: 700; color: var(--psc-ink); }
+.psc-catalog-cmp-card .st { margin-top: 3px; font-size: .66rem; color: var(--psc-primary-strong); }
+.psc-catalog-cmp-card .st.is-out { color: var(--psc-ink-soft); }
+.psc-catalog-cmp-x {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 5px;
+    background: rgba(255, 255, 255, .9); color: var(--psc-faint); display: grid; place-items: center;
+    font-size: .63rem; cursor: pointer; z-index: 1;
+}
+.psc-catalog-cmp-x:hover { color: var(--psc-primary-strong); background: var(--psc-primary-soft); }
+
+.psc-catalog-cmp-rows { display: flex; flex-direction: column; gap: 5px; }
+.psc-catalog-cmp-row { padding: 8px 11px; border-radius: 8px; background: var(--psc-surface-alt); }
+.psc-catalog-cmp-row .k { font-size: .66rem; color: var(--psc-muted); margin-bottom: 3px; }
+.psc-catalog-cmp-row .vals { display: grid; gap: 9px; }
+.psc-catalog-cmp-row .vals.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.psc-catalog-cmp-row .vals.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.psc-catalog-cmp-row .v { font-family: var(--psc-mono); font-size: .7rem; color: var(--psc-ink); overflow-wrap: anywhere; min-width: 0; }
+.psc-catalog-cmp-row .v.is-best { color: var(--psc-primary-strong); font-weight: 700; }
+.psc-catalog-cmp-row .v.is-empty { color: var(--psc-faint); }
+
+.psc-catalog-cmp-picker { display: flex; flex-direction: column; gap: 8px; padding: 10px 11px; border: 1px solid #ececec; border-radius: 9px; background: #fafafa; }
+.psc-catalog-cmp-sub { font-size: .6rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.psc-catalog-cmp-results { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+.psc-catalog-cmp-res {
+    display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 1px solid #ececec;
+    border-radius: 8px; background: #fff; text-align: left; cursor: pointer;
+}
+.psc-catalog-cmp-res:hover { border-color: var(--psc-primary); }
+.psc-catalog-cmp-res .info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.psc-catalog-cmp-res .t { font-size: .72rem; font-weight: 600; color: var(--psc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psc-catalog-cmp-res .s { font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-faint); }
+.psc-catalog-cmp-res .pr { font-family: var(--psc-mono); font-size: .69rem; font-weight: 700; color: var(--psc-ink); flex-shrink: 0; }
+
+/* Combinación agotada elegida solo para ver su plazo / pedir el aviso
+   (product-recommend.js no la selecciona para enviar). */
+#prAttrGroups .combo-row.dis { cursor: pointer; }
+#prAttrGroups .combo-row.dis.psc-catalog-picked { opacity: 1; border-color: var(--psc-primary); background: var(--psc-primary-soft); }

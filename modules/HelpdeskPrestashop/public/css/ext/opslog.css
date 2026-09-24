@@ -1,0 +1,118 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "opslog"
+   Pantallas de administración 37 "Registro del puente" y
+   38 "Eventos recibidos". Se apoya en el vocabulario .psc-* de
+   prestashop-chat.css (kpis, logtable, tags, chips, seg, notes).
+   Solo verdes y grises; ámbar únicamente para timeouts y errores
+   de carga.
+   ============================================================ */
+
+.psc-opslog { display: flex; flex-direction: column; gap: 16px; color: var(--psc-ink); }
+.psc-opslog [hidden] { display: none !important; }
+
+/* Las clases .psc-* nacieron para el panel lateral del inbox; en una
+   pantalla completa se leen mejor un punto más grandes. */
+.psc-opslog .psc-logtable-hd, .psc-opslog .psc-logrow { font-size: .8rem; }
+.psc-opslog .psc-logtable-hd { font-size: .64rem; }
+.psc-opslog .psc-kpi .l { font-size: .62rem; }
+.psc-opslog .psc-kpi .n { font-size: 1.25rem; }
+.psc-opslog .psc-kpi .n.is-good { color: #4f6b0a; }
+.psc-opslog .psc-kpi .d { font-size: .7rem; }
+.psc-opslog .psc-chip { font-size: .78rem; text-decoration: none; }
+.psc-opslog a.psc-chip:hover { border-color: var(--psc-primary); color: var(--psc-primary-strong); }
+.psc-opslog a.psc-chip.is-on:hover { color: #fff; }
+.psc-opslog .psc-card-head { font-size: .86rem; }
+.psc-opslog .psc-row { font-size: .8rem; }
+.psc-opslog .psc-note { font-size: .78rem; }
+
+.psc-opslog-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.psc-opslog-window { width: 240px; }
+.psc-opslog-window button { font-size: .75rem; }
+.psc-opslog-filter { flex: 1; min-width: 0; }
+
+.psc-opslog-iconbtn {
+    width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center;
+    border: 1px solid #d4d4d8; border-radius: 7px; background: #fff; color: var(--psc-ink-soft); cursor: pointer;
+}
+.psc-opslog-iconbtn:hover { border-color: var(--psc-primary); color: var(--psc-primary-strong); }
+
+.psc-opslog-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.psc-opslog-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.psc-opslog-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.psc-opslog-side .psc-card + .psc-card { margin-top: 0; }
+
+.psc-opslog-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Tabla de llamadas: columna "Cuándo" añadida al .psc-logtable base. */
+.psc-opslog-table { background: #fff; }
+.psc-opslog-table .act { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psc-opslog-table .when { width: 96px; text-align: right; font-family: var(--psc-mono); color: var(--psc-faint); font-size: .72rem; }
+.psc-opslog-table .psc-logtable-hd .when { font-family: inherit; font-size: inherit; }
+.psc-opslog-table .res { width: 92px; }
+.psc-opslog-table .psc-logrow.is-error { background: #f4f4f5; }
+.psc-opslog-table .psc-logrow.is-error .ms { color: #565656; }
+.psc-opslog-table .psc-logrow[title] { cursor: help; }
+.psc-opslog-skel { padding: 11px; }
+
+.psc-opslog-actions { border-top: 1px solid var(--psc-line); gap: 8px; }
+.psc-opslog-hint { font-size: .72rem; color: var(--psc-muted); line-height: 1.45; }
+
+.psc-opslog-flash { padding: 9px 11px; border-radius: 8px; font-size: .75rem; line-height: 1.4; }
+.psc-opslog-flash.is-good { background: var(--psc-primary-soft); border: 1px solid var(--psc-primary-line); color: var(--psc-primary-strong); }
+.psc-opslog-flash.is-warn { background: #fdf3e0; color: #7a5b00; }
+
+.psc-opslog-dead { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.psc-opslog-dead-row { display: flex; flex-direction: column; padding: 7px 10px; border: 1px solid var(--psc-line-strong); border-radius: 8px; background: #f4f4f5; }
+.psc-opslog-dead-row .nm { font-family: var(--psc-mono); font-size: .74rem; font-weight: 600; }
+.psc-opslog-dead-row .mt { font-size: .68rem; color: #7a7f74; margin-top: 1px; }
+
+.psc-opslog-actrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: .76rem; }
+.psc-opslog-actrow:last-child { border-bottom: 0; }
+.psc-opslog-actrow .nm { flex: 1; min-width: 0; font-family: var(--psc-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psc-opslog-actrow .c { width: 44px; text-align: right; font-family: var(--psc-mono); font-weight: 700; }
+.psc-opslog-actrow .ms { width: 72px; text-align: right; font-family: var(--psc-mono); color: var(--psc-muted); }
+.psc-opslog-actrow .psc-tag, .psc-opslog-actrow-ok { width: 34px; text-align: center; flex-shrink: 0; }
+
+/* ─── 38 · Eventos recibidos ─────────────────────────────────── */
+.psc-opslog-evfilter { width: 240px; }
+.psc-opslog-evfilter select { font-size: .78rem; }
+.psc-opslog-evlist { gap: 8px; padding: 12px; }
+
+.psc-opslog-evt { border: 1px solid #ececec; border-radius: 9px; background: #fff; }
+.psc-opslog-evt.is-pending { border-color: var(--psc-line-strong); background: #f4f4f5; }
+.psc-opslog-evt-main { display: flex; align-items: center; gap: 10px; padding: 9px 11px; }
+.psc-opslog-evt .info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.psc-opslog-evt .nm { font-family: var(--psc-mono); font-size: .78rem; font-weight: 600; }
+.psc-opslog-evt .mt { font-size: .74rem; color: var(--psc-faint); margin-top: 1px; }
+.psc-opslog-evt.is-pending .mt { color: #7a7f74; }
+.psc-opslog-evt .psc-tag { flex-shrink: 0; }
+
+.psc-opslog-reprocess { flex-shrink: 0; background: none; border: 0; padding: 4px 2px; font-size: .78rem; font-weight: 700; color: #565656; cursor: pointer; }
+.psc-opslog-reprocess:hover { color: var(--psc-surface-deep); text-decoration: underline; }
+.psc-opslog-reprocess:disabled { color: #a3a3a3; cursor: default; text-decoration: none; }
+
+.psc-opslog-evt-note { font-size: .72rem; margin-top: 3px; color: #565656; }
+.psc-opslog-evt-note.is-good { color: var(--psc-primary-strong); }
+.psc-opslog-evt-note.is-warn { color: #7a5b00; }
+
+.psc-opslog-evt-data { border-top: 1px dashed var(--psc-line); }
+.psc-opslog-evt-data summary { padding: 6px 11px; font-size: .7rem; color: var(--psc-muted); cursor: pointer; }
+.psc-opslog-evt-data pre {
+    margin: 0; padding: 9px 11px; max-height: 240px; overflow: auto;
+    font-family: var(--psc-mono); font-size: .7rem; color: var(--psc-ink-soft); background: var(--psc-surface-alt);
+    border-radius: 0 0 9px 9px; white-space: pre-wrap; word-break: break-word;
+}
+
+.psc-opslog-pages .pagination { margin: 0; }
+.psc-opslog-pages .page-item.active .page-link { background: var(--psc-primary); border-color: var(--psc-primary); color: #fff; }
+.psc-opslog-pages .page-link { color: var(--psc-primary-strong); }
+
+@media (max-width: 1100px) {
+    .psc-opslog-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .psc-opslog-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .psc-opslog-window, .psc-opslog-evfilter { width: 100%; }
+    .psc-opslog-table .when { display: none; }
+}

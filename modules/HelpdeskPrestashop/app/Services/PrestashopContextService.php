@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Concerns\HasCircuitBreaker;
+use Modules\Helpdesk\Models\Customer as HelpdeskCustomer;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
 use Modules\HelpdeskPrestashop\Jobs\RefreshPsContextJob;
 use Modules\HelpdeskPrestashop\Support\HmacSigner;
@@ -26,22 +27,19 @@ class PrestashopContextService
 
     private const CIRCUIT_CONFIG_PREFIX = 'helpdeskprestashop';
 
-    public function getCustomerContext(string $email): array
+    /**
+     * $helpdeskCustomerId/$externalId siguen el mismo patrón que
+     * ErpContextService::getCustomerContext(): $externalId permite resolver
+     * por id_customer de PrestaShop ya conocido en vez de solo por email (el
+     * caso de HelpdeskContacts, donde el email del contacto de Helpdesk no
+     * tiene por qué coincidir con el de su cuenta de PrestaShop — llegó por
+     * WhatsApp/teléfono y se vinculó a mano). Si se encuentra cliente y se
+     * pasó $helpdeskCustomerId, el vínculo se persiste automáticamente.
+     */
+    public function getCustomerContext(string $email, ?int $helpdeskCustomerId = null, ?int $externalId = null): array
     {
-        $email = $this->normalizeEmail($email);
-        $key = $this->cacheKey($email);
-        $cached = Cache::get($key);
-
-        if ($cached !== null) {
-            $this->maybeRevalidate($email, $cached);
-
-            unset($cached['_cached_at'], $cached['_ttl']);
-
-            return $cached;
-        }
-
         try {
-            $result = $this->fetchContext($email);
+            $result = $this->getCustomerContextOrFail($email, $helpdeskCustomerId, $externalId);
         } catch (PsUpstreamException $e) {
             Log::warning('HelpdeskPrestashop: upstream no disponible, se devuelve contexto vacío.', [
                 'email' => PiiMasker::email($email),
@@ -51,13 +49,85 @@ class PrestashopContextService
             return self::EMPTY_CONTEXT;
         }
 
-        if ($result === null) {
-            return self::EMPTY_CONTEXT;
+        unset($result['fetched_at']);
+
+        return $result;
+    }
+
+    /**
+     * Igual que getCustomerContext(), pero distingue "el puente no responde"
+     * de "el cliente no existe en PrestaShop": en el primer caso lanza la
+     * excepción en vez de devolver un contexto vacío que el panel pintaría
+     * como "Sin pedidos · datos actualizados".
+     *
+     * Añade 'fetched_at' (unix) con el momento real de la lectura, para el
+     * indicador de frescura del tab Tienda.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws PsUpstreamException
+     */
+    public function getCustomerContextOrFail(string $email, ?int $helpdeskCustomerId = null, ?int $externalId = null): array
+    {
+        $email = $this->normalizeEmail($email);
+        $key = $this->cacheKey($email);
+        $cached = Cache::get($key);
+
+        if ($cached !== null) {
+            $this->maybeRevalidate($email, $cached);
+
+            $cached['fetched_at'] = $cached['_cached_at'] ?? time();
+            unset($cached['_cached_at'], $cached['_ttl']);
+
+            return $cached;
+        }
+
+        $upstreamFailed = false;
+        $result = $this->fetchContext($email, $externalId, $upstreamFailed);
+
+        if ($result === null || ! ($result['customer']['found'] ?? false)) {
+            if ($upstreamFailed) {
+                throw new PsUpstreamException('PrestaShop no respondió al pedir el contexto del cliente.');
+            }
+
+            if ($result === null) {
+                return self::EMPTY_CONTEXT + ['fetched_at' => time()];
+            }
         }
 
         $this->putInCache($key, $result);
 
+        // El 'id' puede faltar: cuando customer.helpdesk_context falla y el
+        // contexto se reconstruye desde customer.orders (ver fetchContext()),
+        // el 'customer' sintetizado trae found=true pero sin 'id'.
+        if ($helpdeskCustomerId !== null && ($result['customer']['found'] ?? false) && isset($result['customer']['id'])) {
+            $this->persistPrestashopLink($helpdeskCustomerId, (int) $result['customer']['id']);
+        }
+
+        $result['fetched_at'] = time();
+
         return $result;
+    }
+
+    /**
+     * Persiste automáticamente el vínculo prestashop→cliente Helpdesk cuando
+     * getCustomerContext() lo encuentra por email — mismo patrón que
+     * ErpContextService::persistErpLink().
+     */
+    private function persistPrestashopLink(int $helpdeskCustomerId, int $prestashopCustomerId): void
+    {
+        try {
+            HelpdeskCustomer::on('helpdesk')->find($helpdeskCustomerId)
+                ?->linkExternalId('prestashop', (string) $prestashopCustomerId, [
+                    'linked_at' => now()->toIso8601String(),
+                    'linked_by' => 'auto',
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskPrestashop: no se pudo persistir el vínculo automático.', [
+                'helpdesk_customer_id' => $helpdeskCustomerId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -87,15 +157,37 @@ class PrestashopContextService
         Cache::forget($this->cacheKey($this->normalizeEmail($email)));
     }
 
-    public function getOrderDetail(int $orderId, ?string $customerEmail = null): ?array
+    /**
+     * Lectura pura de la caché del contexto: nunca hace HTTP ni programa un
+     * refresco (a diferencia de getCustomerContext()). Para llamadores que van
+     * por lote (listado de Contactos) y no pueden pagar la latencia del bridge.
+     * Devuelve null si el cliente aún no está cacheado (TTL cache_ttl).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function peekCachedContext(string $email): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.detail', $orderId)) {
+        $cached = Cache::get($this->cacheKey($this->normalizeEmail($email)));
+
+        if (! is_array($cached)) {
+            return null;
+        }
+
+        unset($cached['_cached_at'], $cached['_ttl']);
+
+        return $cached;
+    }
+
+    public function getOrderDetail(int $orderId, ?string $customerEmail = null, ?int $externalId = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.detail', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
         return $this->callApi('order.detail', [
             'order_id' => $orderId,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ]);
     }
 
@@ -175,16 +267,17 @@ class PrestashopContextService
         ]);
     }
 
-    public function startOrderReturn(int $orderId, array $items, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function startOrderReturn(int $orderId, array $items, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.start_return', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.start_return', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
         return $this->callApi('order.start_return', [
             'order_id' => $orderId,
             'items' => $items,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ], $idempotencyKey);
     }
 
@@ -195,9 +288,10 @@ class PrestashopContextService
      *
      * @return array{order_id:int,state_id:int,state_name:string,notified:bool,changed:bool}|null
      */
-    public function changeOrderStatus(int $orderId, int $stateId, bool $notify = false, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function changeOrderStatus(int $orderId, int $stateId, bool $notify = false, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.change_status', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.change_status', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
@@ -205,7 +299,7 @@ class PrestashopContextService
             'order_id' => $orderId,
             'state_id' => $stateId,
             'notify' => $notify,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ], $idempotencyKey);
     }
 
@@ -214,38 +308,51 @@ class PrestashopContextService
      *
      * @return array{invoices:array<int,array>,delivery_slips:array<int,array>}|null
      */
-    public function getOrderDocuments(int $orderId, ?string $customerEmail = null): ?array
+    public function getOrderDocuments(int $orderId, ?string $customerEmail = null, ?int $externalId = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.documents', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.documents', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
         return $this->callApi('order.documents', [
             'order_id' => $orderId,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ]);
     }
 
     /**
-     * Fail-closed: las acciones por-pedido NUNCA van al bridge sin lookup.email.
-     * Sin él, el bridge resolvería el pedido solo por su id secuencial, sin
-     * verificar que pertenezca al cliente (IDOR). La propiedad pedido↔email la
-     * aplica el bridge; aquí garantizamos que siempre tenga con qué aplicarla.
-     *
-     * @phpstan-assert-if-true string $customerEmail
+     * Fail-closed: las acciones por-pedido/carrito NUNCA van al bridge sin
+     * lookup.email y/o lookup.external_id. Sin ninguno de los dos, el bridge
+     * resolvería el pedido/carrito solo por su id secuencial, sin verificar
+     * que pertenezca al cliente (IDOR). La propiedad la aplica el bridge;
+     * aquí garantizamos que siempre tenga con qué aplicarla. external_id
+     * tiene prioridad en el bridge (ver alsernet_resolve_customer) — se
+     * admite porque el email del contacto de Helpdesk puede no coincidir con
+     * el de su cuenta de PrestaShop (ver ContactAggregatorService::prestashop()).
      */
-    private function assertOwnershipEmail(?string $customerEmail, string $action, int $orderId): bool
+    private function buildOwnershipLookup(?string $customerEmail, ?int $externalId, string $action, int $subjectId): ?array
     {
-        if ($customerEmail !== null && trim($customerEmail) !== '') {
-            return true;
+        $hasEmail = $customerEmail !== null && trim($customerEmail) !== '';
+
+        if (! $hasEmail && $externalId === null) {
+            Log::warning('PrestashopContextService: llamada por-pedido/carrito bloqueada sin email ni external_id de cliente', [
+                'action' => $action,
+                'id' => $subjectId,
+            ]);
+
+            return null;
         }
 
-        Log::warning('PrestashopContextService: llamada por-pedido bloqueada sin email de cliente', [
-            'action' => $action,
-            'order_id' => $orderId,
-        ]);
+        $lookup = [];
+        if ($hasEmail) {
+            $lookup['email'] = $this->normalizeEmail($customerEmail);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
 
-        return false;
+        return $lookup;
     }
 
     /**
@@ -254,9 +361,10 @@ class PrestashopContextService
      *
      * @return array{order_id:int,address_id:int,type:string}|null
      */
-    public function setOrderAddress(int $orderId, int $addressId, string $type = 'delivery', ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function setOrderAddress(int $orderId, int $addressId, string $type = 'delivery', ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.set_address', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.set_address', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
@@ -264,7 +372,7 @@ class PrestashopContextService
             'order_id' => $orderId,
             'address_id' => $addressId,
             'type' => $type,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ], $idempotencyKey);
     }
 
@@ -273,16 +381,17 @@ class PrestashopContextService
      *
      * @return array{order_id:int,type:string,sent:bool,to:string}|null
      */
-    public function sendOrderEmail(int $orderId, string $type, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function sendOrderEmail(int $orderId, string $type, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.send_email', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.send_email', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
         return $this->callApi('order.send_email', [
             'order_id' => $orderId,
             'type' => $type,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ], $idempotencyKey);
     }
 
@@ -293,9 +402,10 @@ class PrestashopContextService
      *
      * @return array{note_id:int|null,order_id:int,created_at:string,content:string}|null
      */
-    public function addOrderNote(int $orderId, string $note, string $agentName, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function addOrderNote(int $orderId, string $note, string $agentName, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.add_note', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.add_note', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
@@ -303,7 +413,7 @@ class PrestashopContextService
             'order_id' => $orderId,
             'note' => $note,
             'agent_name' => $agentName,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ], $idempotencyKey);
     }
 
@@ -381,16 +491,17 @@ class PrestashopContextService
      *
      * @return array{order_id:int,tracking_number:string,carrier_id:int}|null
      */
-    public function setOrderTracking(int $orderId, string $trackingNumber, ?int $carrierId = null, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    public function setOrderTracking(int $orderId, string $trackingNumber, ?int $carrierId = null, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
     {
-        if (! $this->assertOwnershipEmail($customerEmail, 'order.set_tracking', $orderId)) {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.set_tracking', $orderId);
+        if ($lookup === null) {
             return null;
         }
 
         $payload = [
             'order_id' => $orderId,
             'tracking_number' => $trackingNumber,
-            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+            'lookup' => $lookup,
         ];
 
         if ($carrierId !== null) {
@@ -398,6 +509,150 @@ class PrestashopContextService
         }
 
         return $this->callApi('order.set_tracking', $payload, $idempotencyKey);
+    }
+
+    /**
+     * Cambia la dirección de envío/facturación del carrito real del cliente en
+     * PrestaShop. El bridge exige que la dirección ya pertenezca al mismo
+     * cliente — no admite direcciones arbitrarias.
+     *
+     * @return array{cart_id:int,address_id:int,type:string}|null
+     */
+    public function setCartAddress(int $cartId, int $addressId, string $type = 'delivery', ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.set_address', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('cart.set_address', [
+            'cart_id' => $cartId,
+            'address_id' => $addressId,
+            'type' => $type,
+            'lookup' => $lookup,
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Añade un producto (opcionalmente una combinación) al carrito real del
+     * cliente, o incrementa su cantidad si ya estaba.
+     *
+     * @return array{cart_id:int,product_id:int,attribute_id:int|null,quantity:int}|null
+     */
+    public function addCartProduct(int $cartId, int $productId, int $quantity = 1, ?int $attributeId = null, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.add_product', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        $payload = [
+            'cart_id' => $cartId,
+            'product_id' => $productId,
+            'quantity' => $quantity,
+            'lookup' => $lookup,
+        ];
+
+        if ($attributeId !== null) {
+            $payload['attribute_id'] = $attributeId;
+        }
+
+        return $this->callApi('cart.add_product', $payload, $idempotencyKey);
+    }
+
+    /**
+     * Quita un producto (toda su cantidad) del carrito real del cliente.
+     *
+     * @return array{cart_id:int,product_id:int,attribute_id:int|null}|null
+     */
+    public function removeCartProduct(int $cartId, int $productId, ?int $attributeId = null, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.remove_product', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        $payload = [
+            'cart_id' => $cartId,
+            'product_id' => $productId,
+            'lookup' => $lookup,
+        ];
+
+        if ($attributeId !== null) {
+            $payload['attribute_id'] = $attributeId;
+        }
+
+        return $this->callApi('cart.remove_product', $payload, $idempotencyKey);
+    }
+
+    /**
+     * Fija la cantidad exacta de un producto en el carrito real del cliente
+     * (0 lo elimina). El bridge calcula el delta y lo aplica vía
+     * Cart::updateQty() de PrestaShop, no escritura directa — mantiene
+     * consistentes stock y reglas de precio.
+     *
+     * @return array{cart_id:int,product_id:int,quantity:int}|null
+     */
+    public function updateCartProductQuantity(int $cartId, int $productId, int $quantity, ?int $attributeId = null, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.update_quantity', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        $payload = [
+            'cart_id' => $cartId,
+            'product_id' => $productId,
+            'quantity' => $quantity,
+            'lookup' => $lookup,
+        ];
+
+        if ($attributeId !== null) {
+            $payload['attribute_id'] = $attributeId;
+        }
+
+        return $this->callApi('cart.update_quantity', $payload, $idempotencyKey);
+    }
+
+    /**
+     * Aplica un cupón al carrito real del cliente. El bridge valida que el
+     * cupón exista Y que aplique a ese carrito concreto (fechas, importe
+     * mínimo, límite por cliente) antes de escribirlo.
+     *
+     * @return array{applied:bool,cart_id?:int,code?:string,error?:string}|null
+     */
+    public function applyCartVoucher(int $cartId, string $code, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.apply_voucher', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('cart.apply_voucher', [
+            'cart_id' => $cartId,
+            'code' => $code,
+            'lookup' => $lookup,
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Quita un cupón (por código) del carrito real del cliente. El bridge solo
+     * desengancha reglas que están realmente aplicadas a ESE carrito.
+     *
+     * @return array{removed:bool,cart_id?:int,code?:string,error?:string}|null
+     */
+    public function removeCartVoucher(int $cartId, string $code, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'cart.remove_voucher', $cartId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('cart.remove_voucher', [
+            'cart_id' => $cartId,
+            'code' => $code,
+            'lookup' => $lookup,
+        ], $idempotencyKey);
     }
 
     public function testConnection(): array
@@ -422,15 +677,21 @@ class PrestashopContextService
         }
     }
 
-    private function fetchContext(string $email): ?array
+    private function fetchContext(string $email, ?int $externalId = null, bool &$upstreamFailed = false): ?array
     {
         // El `helpdesk_context` falla (HTTP 500) para ciertos clientes del bridge.
         // No dejamos que eso aborte el contexto: capturamos y seguimos con el
         // fallback fiable basado en `customer.orders`.
+        $lookup = ['email' => $email];
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
         try {
-            $context = $this->callApi('customer.helpdesk_context', ['lookup' => ['email' => $email]]);
+            $context = $this->callApi('customer.helpdesk_context', ['lookup' => $lookup]);
         } catch (PsUpstreamException) {
             $context = null;
+            $upstreamFailed = true;
         }
 
         $found = is_array($context) && ($context['customer']['found'] ?? false);
@@ -440,18 +701,19 @@ class PrestashopContextService
         // es fiable, asi que construimos/completamos el contexto con ella para que
         // los pedidos aparezcan siempre en la conversacion.
         if (! $found) {
-            $list = $this->fetchOrdersList($email);
+            $list = $this->fetchOrdersList($email, $externalId);
 
             if (empty($list)) {
                 return $context;
             }
 
             return [
-                'customer' => [
+                'customer' => array_filter([
                     'found' => true,
+                    'id' => $externalId,
                     'email' => $email,
                     'orders_count' => count($list),
-                ],
+                ], fn ($v) => $v !== null),
                 'orders' => array_map(fn ($o) => $this->mapOrder($o), $list),
                 'carts' => [],
             ];
@@ -460,7 +722,7 @@ class PrestashopContextService
         // `helpdesk_context` encontro al cliente pero devolvio `orders` vacio
         // aunque tenga pedidos: completamos con `customer.orders`.
         if (empty($context['orders']) && (int) ($context['customer']['orders_count'] ?? 0) > 0) {
-            $list = $this->fetchOrdersList($email);
+            $list = $this->fetchOrdersList($email, $externalId);
 
             if (! empty($list)) {
                 $context['orders'] = array_map(fn ($o) => $this->mapOrder($o), $list);
@@ -475,10 +737,10 @@ class PrestashopContextService
      *
      * @return array<int, array<string, mixed>>
      */
-    private function fetchOrdersList(string $email): array
+    private function fetchOrdersList(string $email, ?int $externalId = null): array
     {
         try {
-            $orders = $this->getCustomerOrders($email, null, 10, 1);
+            $orders = $this->getCustomerOrders($email, $externalId, 10, 1);
         } catch (\Throwable) {
             return [];
         }
@@ -608,7 +870,18 @@ class PrestashopContextService
             'order.set_tracking',
             'order.set_address',
             'order.send_email',
+            'cart.set_address',
+            'cart.add_product',
+            'cart.remove_product',
+            'cart.update_quantity',
+            'cart.apply_voucher',
+            'cart.remove_voucher',
+            'customer.address.create',
+            'customer.address.update',
+            'customer.create_voucher',
         ];
+        // Acciones de escritura de extensiones (config/ext/*.php → 'ext_write_actions').
+        $writeActions = array_merge($writeActions, (array) config('helpdeskprestashop.ext_write_actions', []));
         $headers = [
             'X-Alsernet-Signature' => $signature,
             'X-Alsernet-Timestamp' => (string) $timestamp,
@@ -631,6 +904,21 @@ class PrestashopContextService
                 ->withHeaders($headers)
                 ->withBody($bodyJson, 'application/json')
                 ->post($apiUrl);
+
+            // 404/422 con cuerpo {ok:false} = respuesta de negocio del bridge
+            // (pedido/RMA de otro cliente, recurso inexistente, validación):
+            // el puente está vivo, así que no es un fallo de infraestructura ni
+            // debe sumar al circuit breaker. Antes se convertía en
+            // PsUpstreamException y el panel decía "PrestaShop no responde".
+            if (in_array($response->status(), [404, 422], true) && is_array($response->json()) && ($response->json('ok') === false)) {
+                Log::info('HelpdeskPrestashop: el bridge rechazó la acción.', [
+                    'action' => $action,
+                    'status' => $response->status(),
+                    'error' => $response->json('error'),
+                ]);
+
+                return null;
+            }
 
             if (! $response->successful()) {
                 Log::warning('HelpdeskPrestashop: respuesta no exitosa del upstream.', [
@@ -678,23 +966,345 @@ class PrestashopContextService
     }
 
     /**
+     * Busca clientes de PrestaShop por email/id/nombre/NIF — usado por
+     * HelpdeskIntegration (verificación de identidad, "Vincular plataforma")
+     * y por CustomerCommerceSyncService (autoenlace al abrir conversación).
+     * Antes esta búsqueda se hacía con una conexión directa a la BD de
+     * PrestaShop desde Laravel (DB::connection('prestashop')); ahora pasa
+     * por el bridge, igual que el resto de la integración — sin exponer
+     * credenciales de esa BD en el .env de Laravel, y con caché corta para
+     * no repetir la query en cada tecla del buscador.
+     *
+     * $type: 'email'|'id'|'name'|'nif'|'name_or_nif' — la inferencia de
+     * 'auto' sigue en el caller (CustomerCommerceSyncService), no aquí.
+     *
+     * A diferencia de la mayoría de lecturas de este servicio, esta NO
+     * atrapa PsUpstreamException — CustomerCommerceSyncService::
+     * searchCustomersOrFail() necesita distinguir "sin resultados" de
+     * "la plataforma no respondió" (se lo pasa al modal de búsqueda como
+     * platform_error). Quien quiera la versión que se degrada a [] ya tiene
+     * ese wrapper en CustomerCommerceSyncService::searchCustomers().
+     *
+     * @return array<int, array{id:string,name:string,email:string,meta:string,nif:?string,phone:?string,city:?string,active:bool,created_at:string,gestion_id:?int}>
+     *
+     * @throws PsUpstreamException
+     */
+    public function searchCustomers(string $query, string $type = 'email', int $limit = 10): array
+    {
+        $query = trim($query);
+
+        if (mb_strlen($query) < 2) {
+            return [];
+        }
+
+        $cacheKey = 'ps.customer_search.'.md5($query.'|'.$type.'|'.$limit);
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $data = $this->callApi('customer.search', [
+            'query' => $query,
+            'type' => $type,
+            'limit' => $limit,
+        ]);
+
+        $customers = $data['customers'] ?? [];
+
+        Cache::put($cacheKey, $customers, 30);
+
+        return $customers;
+    }
+
+    /**
      * Returns PS shipping addresses for a customer by email.
      *
      * @return array<int, array<string, mixed>>
      */
-    public function getCustomerAddresses(string $email): array
+    public function getCustomerAddresses(string $email, ?int $externalId = null): array
     {
-        if ($email === '') {
+        if ($email === '' && $externalId === null) {
             return [];
         }
 
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
         try {
-            $data = $this->callApi('customer.addresses', ['lookup' => ['email' => $this->normalizeEmail($email)]]);
+            $data = $this->callApi('customer.addresses', ['lookup' => $lookup]);
         } catch (PsUpstreamException) {
             return [];
         }
 
         return $data['addresses'] ?? [];
+    }
+
+    /**
+     * Crea una dirección nueva para el cliente. $data admite: alias,
+     * firstname, lastname, company, address1, address2, postcode, city,
+     * id_country, id_state, phone, phone_mobile.
+     *
+     * @return array{id:int}|null
+     */
+    public function createCustomerAddress(array $data, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'customer.address.create', 0);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('customer.address.create', $data + ['lookup' => $lookup], $idempotencyKey);
+    }
+
+    /**
+     * Llamada genérica al bridge para las extensiones del módulo (servicios en
+     * app/Services/Ext). Misma firma HMAC, circuit breaker e idempotencia que
+     * las acciones nativas. Las de escritura deben declararse en
+     * config('helpdeskprestashop.ext_write_actions') (ver config/ext/*.php).
+     *
+     * @throws PsUpstreamException
+     */
+    public function callBridge(string $action, array $payload, ?string $idempotencyKey = null): ?array
+    {
+        return $this->callApi($action, $payload, $idempotencyKey);
+    }
+
+    /**
+     * Lookup de propiedad (email y/o external_id) para acciones por cliente;
+     * null si no hay forma de identificar al cliente (la llamada no debe hacerse).
+     *
+     * @return array{email?: string, external_id?: int}|null
+     */
+    public function ownershipLookup(?string $customerEmail, ?int $externalId, string $action): ?array
+    {
+        return $this->buildOwnershipLookup($customerEmail, $externalId, $action, 0);
+    }
+
+    /**
+     * Crea un vale de compensación (importe fijo, un solo uso) a nombre del
+     * cliente. El código lo genera el bridge (GES-XXXX); aquí solo viajan
+     * importe en céntimos, validez y motivo. El límite por rol lo aplica el
+     * controlador; el bridge tiene además su propio tope duro (500 €).
+     *
+     * @return array{created:bool, id?:int, code?:string, amount?:float, date_to?:string, error?:string}|null
+     */
+    public function createCompensationVoucher(int $amountCents, int $validityDays, string $reason, string $agentName, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'customer.create_voucher', 0);
+        if ($lookup === null) {
+            return null;
+        }
+
+        $result = $this->callApi('customer.create_voucher', [
+            'lookup' => $lookup,
+            'amount_cents' => $amountCents,
+            'validity_days' => $validityDays,
+            'reason' => $reason,
+            'agent' => $agentName,
+        ], $idempotencyKey);
+
+        if ($customerEmail) {
+            $this->forgetCache($customerEmail);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Actualiza una dirección existente (parcial — solo los campos
+     * presentes en $data). El bridge verifica que pertenezca al cliente
+     * resuelto por email/external_id antes de escribir.
+     *
+     * @return array{id:int}|null
+     */
+    public function updateCustomerAddress(int $addressId, array $data, ?string $customerEmail = null, ?int $externalId = null, ?string $idempotencyKey = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'customer.address.update', $addressId);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('customer.address.update', $data + [
+            'address_id' => $addressId,
+            'lookup' => $lookup,
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Provincias/estados de un país, para el desplegable del formulario de
+     * dirección. Cacheado 1h (cambian prácticamente nunca).
+     *
+     * @return array<int, array{id:int, name:string}>
+     */
+    public function getCountryStates(int $countryId): array
+    {
+        $cacheKey = 'ps.country_states.'.$countryId;
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $data = $this->callApi('country.states', ['id_country' => $countryId]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        $states = $data['states'] ?? [];
+
+        if ($states !== []) {
+            Cache::put($cacheKey, $states, 3600);
+        }
+
+        return $states;
+    }
+
+    /**
+     * Returns the customer's return (RMA) history — status, reason, line items.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomerReturns(string $email, ?int $externalId = null): array
+    {
+        if ($email === '' && $externalId === null) {
+            return [];
+        }
+
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
+        try {
+            $data = $this->callApi('customer.returns', ['lookup' => $lookup]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        return $data['returns'] ?? [];
+    }
+
+    /**
+     * Returns the customer's own vouchers/cart rules (code, discount, validity).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomerVouchers(string $email, ?int $externalId = null): array
+    {
+        if ($email === '' && $externalId === null) {
+            return [];
+        }
+
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
+        try {
+            $data = $this->callApi('customer.vouchers', ['lookup' => $lookup]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        return $data['vouchers'] ?? [];
+    }
+
+    /**
+     * Returns the customer's native PrestaShop message threads (contact/service).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomerMessages(string $email, ?int $externalId = null): array
+    {
+        if ($email === '' && $externalId === null) {
+            return [];
+        }
+
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
+        try {
+            $data = $this->callApi('customer.messages', ['lookup' => $lookup]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        return $data['messages'] ?? [];
+    }
+
+    /**
+     * Returns the customer's wishlist products (leofeature_wishlist module).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomerWishlist(string $email, ?int $externalId = null): array
+    {
+        if ($email === '' && $externalId === null) {
+            return [];
+        }
+
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
+        try {
+            $data = $this->callApi('customer.wishlist', ['lookup' => $lookup]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        return $data['items'] ?? [];
+    }
+
+    /**
+     * Returns the customer's real refunds (order_slip) — distinct from
+     * getCustomerReturns(), which is the RMA request, not the money back.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomerRefunds(string $email, ?int $externalId = null): array
+    {
+        if ($email === '' && $externalId === null) {
+            return [];
+        }
+
+        $lookup = [];
+        if ($email !== '') {
+            $lookup['email'] = $this->normalizeEmail($email);
+        }
+        if ($externalId !== null) {
+            $lookup['external_id'] = $externalId;
+        }
+
+        try {
+            $data = $this->callApi('customer.refunds', ['lookup' => $lookup]);
+        } catch (PsUpstreamException) {
+            return [];
+        }
+
+        return $data['refunds'] ?? [];
     }
 
     /**
@@ -749,37 +1359,45 @@ class PrestashopContextService
      */
     public function searchProducts(string $query, int $limit = 10, ?string $lang = null, int $offset = 0, bool $inStockOnly = false): array
     {
-        if (mb_strlen(trim($query)) < 2) {
+        $query = trim($query);
+
+        if (mb_strlen($query) < 2) {
             return [];
         }
 
-        $payload = ['query' => trim($query), 'limit' => $limit, 'offset' => $offset];
+        // TTL corto (no versionado con el catálogo): mitiga tecleo rápido/doble
+        // envío sobre el mismo texto sin arriesgar resultados obsoletos de stock.
+        $cacheKey = 'ps.search.'.md5($query.'|'.$limit.'|'.($lang ?? 'default').'|'.$offset.'|'.($inStockOnly ? 1 : 0));
 
-        if ($lang !== null) {
-            $payload['lang'] = $lang;
-        }
+        return Cache::remember($cacheKey, 45, function () use ($query, $limit, $lang, $offset, $inStockOnly): array {
+            $payload = ['query' => $query, 'limit' => $limit, 'offset' => $offset];
 
-        if ($inStockOnly) {
-            $payload['in_stock'] = true;
-        }
+            if ($lang !== null) {
+                $payload['lang'] = $lang;
+            }
 
-        try {
-            $result = $this->callApi('product.search', $payload);
-        } catch (PsUpstreamException) {
-            return [];
-        }
+            if ($inStockOnly) {
+                $payload['in_stock'] = true;
+            }
 
-        if (! is_array($result)) {
-            return [];
-        }
+            try {
+                $result = $this->callApi('product.search', $payload);
+            } catch (PsUpstreamException) {
+                return [];
+            }
 
-        $products = $result['products'] ?? $result;
+            if (! is_array($result)) {
+                return [];
+            }
 
-        if (! is_array($products)) {
-            return [];
-        }
+            $products = $result['products'] ?? $result;
 
-        return array_map(fn ($p) => $this->normalizeProduct($p), $products);
+            if (! is_array($products)) {
+                return [];
+            }
+
+            return array_map(fn ($p) => $this->normalizeProduct($p), $products);
+        });
     }
 
     /**
@@ -846,29 +1464,35 @@ class PrestashopContextService
      */
     private function fetchProductByKey(string $key, mixed $value, ?string $lang): ?array
     {
-        $payload = [$key => $value];
+        // Version-scoped como getCategories(): un cambio de catálogo
+        // (forgetCatalogCache()) invalida también estas búsquedas puntuales.
+        $cacheKey = 'ps.product.v'.$this->catalogCacheVersion().'.'.md5($key.'|'.$value.'|'.($lang ?? 'default'));
 
-        if ($lang !== null) {
-            $payload['lang'] = $lang;
-        }
+        return Cache::remember($cacheKey, 90, function () use ($key, $value, $lang): ?array {
+            $payload = [$key => $value];
 
-        try {
-            $result = $this->callApi('product.get', $payload);
-        } catch (PsUpstreamException) {
-            return null;
-        }
+            if ($lang !== null) {
+                $payload['lang'] = $lang;
+            }
 
-        if (! is_array($result)) {
-            return null;
-        }
+            try {
+                $result = $this->callApi('product.get', $payload);
+            } catch (PsUpstreamException) {
+                return null;
+            }
 
-        $product = $result['product'] ?? $result;
+            if (! is_array($result)) {
+                return null;
+            }
 
-        if (! is_array($product) || empty($product)) {
-            return null;
-        }
+            $product = $result['product'] ?? $result;
 
-        return $this->normalizeProduct($product);
+            if (! is_array($product) || empty($product)) {
+                return null;
+            }
+
+            return $this->normalizeProduct($product);
+        });
     }
 
     /**

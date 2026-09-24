@@ -1,0 +1,51 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "erpbridge"
+   Tarjeta "En Gestión (ERP)" en la pestaña Pago del workspace de
+   pedido. Reutiliza .psc-row, .psc-tag, .psc-note, .psc-state,
+   .psc-btn y .psc-loading de prestashop-chat.css; aquí solo lo
+   propio, con prefijo .psc-erpbridge-.
+   Paleta: verdes #90bb13 / #5e7a0d / #b6d34a y gris #565656.
+   ============================================================ */
+
+.psc-erpbridge-body { display: flex; flex-direction: column; gap: 10px; }
+.psc-erpbridge-body .psc-state { padding: 12px 8px 4px; }
+
+.psc-erpbridge-head { display: flex; align-items: center; gap: 10px; }
+.psc-erpbridge-head .psc-tag { margin-left: auto; flex-shrink: 0; }
+.psc-erpbridge-num { display: flex; flex-direction: column; min-width: 0; }
+.psc-erpbridge-num .lbl { font-size: .63rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--psc-muted, #8a8a8a); }
+.psc-erpbridge-num .n { font-family: var(--psc-mono, monospace); font-size: .9rem; font-weight: 700; color: var(--psc-primary-strong, #5e7a0d); }
+
+.psc-erpbridge-rows { display: flex; flex-direction: column; gap: 5px; }
+.psc-erpbridge-body .psc-row .v { text-align: right; min-width: 0; word-break: break-word; }
+.psc-erpbridge-body .psc-row .mono { font-family: var(--psc-mono, monospace); font-weight: 600; }
+
+.psc-erpbridge-sec { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--psc-line, #f0f0f0); }
+.psc-erpbridge-sec-t { font-size: .68rem; font-weight: 700; color: var(--psc-ink-soft, #565656); }
+.psc-erpbridge-hint { font-size: .64rem; line-height: 1.45; color: var(--psc-muted, #8a8a8a); }
+
+.psc-erpbridge-link { color: var(--psc-primary-strong, #5e7a0d); text-decoration: underline; text-underline-offset: 2px; }
+.psc-erpbridge-link:hover { color: var(--psc-primary, #90bb13); }
+
+/* Líneas (mismo ritmo que .bv-po-line, sin miniatura). */
+.psc-erpbridge-lines { display: flex; flex-direction: column; }
+.psc-erpbridge-line { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--psc-line, #f0f0f0); }
+.psc-erpbridge-line:last-child { border-bottom: none; }
+.psc-erpbridge-line .body { flex: 1; min-width: 0; }
+.psc-erpbridge-line .nm { font-size: .74rem; font-weight: 600; color: var(--psc-ink, #2d2d2d); word-break: break-word; }
+.psc-erpbridge-line .sku { font-family: var(--psc-mono, monospace); font-size: .62rem; color: var(--psc-muted, #8a8a8a); margin-top: 1px; }
+.psc-erpbridge-line .qty { font-family: var(--psc-mono, monospace); font-size: .68rem; color: var(--psc-ink-soft, #565656); white-space: nowrap; }
+.psc-erpbridge-line .price { font-family: var(--psc-mono, monospace); font-size: .74rem; font-weight: 700; color: var(--psc-ink, #2d2d2d); min-width: 64px; text-align: right; white-space: nowrap; }
+
+/* Historial de estados de Gestión. */
+.psc-erpbridge-hist { position: relative; display: flex; flex-direction: column; gap: 7px; padding-left: 16px; }
+.psc-erpbridge-hist::before { content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 2px; background: var(--psc-line-strong, #dcdcd6); }
+.psc-erpbridge-hist-i { position: relative; display: flex; align-items: baseline; gap: 8px; font-size: .7rem; }
+.psc-erpbridge-hist-i .dot { position: absolute; left: -16px; top: 3px; width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid var(--psc-primary-accent, #b6d34a); }
+.psc-erpbridge-hist-i.is-last .dot { background: var(--psc-primary, #90bb13); border-color: var(--psc-primary-strong, #5e7a0d); }
+.psc-erpbridge-hist-i .nm { font-weight: 600; color: var(--psc-ink, #2d2d2d); }
+.psc-erpbridge-hist-i.is-last .nm { color: var(--psc-primary-strong, #5e7a0d); }
+.psc-erpbridge-hist-i .dt { margin-left: auto; font-family: var(--psc-mono, monospace); font-size: .62rem; color: var(--psc-muted, #8a8a8a); white-space: nowrap; }
+
+.psc-erpbridge-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.psc-erpbridge-actions .psc-btn { flex: 1 1 auto; }

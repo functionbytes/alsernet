@@ -17,12 +17,15 @@
     $prestashopCssMtime = @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-inbox.css'));
     $prestashopCssMinMtime = @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-inbox.min.css'));
     $usePrestashopCssMin = $prestashopCssMinMtime !== false && $prestashopCssMtime !== false && $prestashopCssMinMtime >= $prestashopCssMtime;
+    $prestashopChatCssMtime = @filemtime(public_path('modules/helpdeskprestashop/css/prestashop-chat.css'));
 @endphp
 @if ($usePrestashopCssMin)
 <link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-inbox.min.css') }}?v={{ $prestashopCssMinMtime }}"/>
 @else
 <link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-inbox.css') }}?v={{ $prestashopCssMtime }}"/>
 @endif
+{{-- PrestaShop en el chat: tarjetas .psc-*, hojas .ps-sheet, workspace .ps-ws --}}
+<link rel="stylesheet" href="{{ asset('modules/helpdeskprestashop/css/prestashop-chat.css') }}?v={{ $prestashopChatCssMtime }}"/>
 
 <div class="bv-modal" data-bv-modal-name="cart-build">
     <div class="bv-modal-dialog xxl bv-po-dialog">

@@ -176,7 +176,11 @@ class PsEventReceiverTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_reusing_an_idempotency_key_across_requests_is_rejected(): void
+    // Misma clave de idempotencia = "esta acción ya se procesó": se
+    // deduplica en el controlador (200 + deduplicated) y NO se vuelve a
+    // procesar. Ya no se rechaza con 401 en el middleware: eso quemaba la
+    // clave aunque el procesamiento fallase (ver VerifyAlsernetHmac::isReplay).
+    public function test_reusing_an_idempotency_key_across_requests_is_deduplicated(): void
     {
         Event::fake([PsOrderCreated::class, PsCartAbandoned::class]);
 
@@ -196,7 +200,9 @@ class PsEventReceiverTest extends TestCase
             'HTTP_X_ALSERNET_SIGNATURE' => hash_hmac('sha256', $ts.':'.$bodyB, 'test-secret'),
             'HTTP_X_ALSERNET_EVENT' => 'order.created',
             'HTTP_X_ALSERNET_IDEMPOTENCY_KEY' => 'shared-key',
-        ])->assertUnauthorized();
+        ])->assertOk()->assertJsonPath('deduplicated', true);
+
+        Event::assertDispatchedTimes(PsOrderCreated::class, 1);
     }
 
     public function test_distinct_signed_requests_both_pass(): void

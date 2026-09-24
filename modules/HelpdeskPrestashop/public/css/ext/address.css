@@ -1,0 +1,38 @@
+/*
+ * HelpdeskPrestashop · extensión "address"
+ * - Pieza 27: extras del sub-formulario "Crear dirección nueva" (#psAddrNewForm).
+ * - Pieza 05: hoja de incidencia de envío (#psAddressClaimSheet).
+ * Paleta del chat: verdes, grises y ámbar solo para avisos de carga.
+ * Fuente: modules/HelpdeskPrestashop/public/css/ext/ — copiar a
+ * public/modules/helpdeskprestashop/css/ext/ tras editar.
+ */
+
+/* ── Pieza 27 · formulario de dirección ── */
+#psAddrNewForm { display: flex; flex-direction: column; gap: 10px; }
+.psc-address-hint { font-size: .63rem; color: #a3a3a3; margin-top: -4px; }
+.psc-address-hint.is-warn { padding: 7px 9px; margin-top: 0; border-radius: 6px; background: #fdf3e0; color: #7a5b00; }
+.psc-address-actions { display: flex; flex-direction: column; gap: 8px; }
+.psc-address-actions .psc-btn { width: 100%; }
+#psAddrNewForm .psc-field > .select2-container { width: 100% !important; }
+#psAddrNewForm .psc-fieldrow > .psc-field { min-width: 0; }
+
+/* ── Pieza 05 · incidencia de envío ── */
+.psc-address-ship { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 11px 12px; border: 1px solid #f0f0f0; border-radius: 8px; background: #f6f7f5; }
+.psc-address-ship-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: .75rem; color: #2d2d2d; }
+.psc-address-ship-col .k { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #a3a3a3; }
+.psc-address-ship-col .v { font-weight: 700; }
+.psc-address-ship-col .mono { font-family: var(--psc-mono, ui-monospace, monospace); font-size: .72rem; }
+.psc-address-ship-link { color: #5e7a0d; text-decoration: underline; }
+.psc-address-ship-link:hover { color: #90bb13; }
+.psc-address-muted { font-size: .69rem; color: #8a8a8a; }
+
+.psc-address-files { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px dashed #d4d4d8; border-radius: 8px; background: #fafafa; }
+.psc-address-files-hd { font-size: .63rem; font-weight: 600; color: #5e7a0d; }
+.psc-address-file { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border: 1px solid #f0f0f0; border-radius: 7px; background: #fff; cursor: pointer; }
+.psc-address-file.is-on { border-color: rgba(144, 187, 19, .35); background: rgba(144, 187, 19, .08); }
+.psc-address-file input { accent-color: #90bb13; }
+.psc-address-file .psc-thumb { color: #8a8a8a; }
+.psc-address-file-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; color: #565656; }
+.psc-address-empty { font-size: .69rem; color: #8a8a8a; text-align: center; padding: 4px 2px; }
+
+#psAddressClaimDetail { width: 100%; resize: vertical; }

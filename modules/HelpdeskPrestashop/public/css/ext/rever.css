@@ -1,0 +1,72 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "rever"
+   Cambios de producto gestionados por REVER: tarjeta del workspace
+   de pedido (pestaña Estado) y sección del tab Devoluciones.
+   Reutiliza .psc-tag, .psc-note, .psc-btn, .psc-rma y .bv-po-card;
+   aquí solo lo propio, con prefijo .psc-rever-.
+   Paleta: verdes #90bb13 / #5e7a0d / #b6d34a y grises. Nada de
+   rojo, azul ni morado (tampoco los colores de estado de REVER).
+   ============================================================ */
+
+/* ─── Workspace de pedido ───────────────────────────────────── */
+.psc-rever-card .psc-note { margin-top: 10px; }
+.psc-rever-list { display: flex; flex-direction: column; gap: 10px; }
+
+.psc-rever-ex {
+    border: 1px solid var(--psc-line-strong, #dcdcd6);
+    border-radius: 10px;
+    padding: 11px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    background: var(--psc-surface, #fff);
+}
+.psc-rever-ex .psc-note { margin-top: 0; }
+.psc-rever-ex-hd { display: flex; align-items: center; gap: 8px; }
+.psc-rever-ex-hd .psc-tag { margin-left: auto; }
+.psc-rever-ref { font-family: var(--psc-mono, monospace); font-size: .72rem; font-weight: 700; color: var(--psc-ink, #2d2d2d); }
+.psc-rever-meta { font-size: .69rem; color: var(--psc-muted, #8a8a8a); line-height: 1.45; }
+
+.psc-rever-proc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.psc-rever-mono { font-family: var(--psc-mono, monospace); font-size: .66rem; color: var(--psc-primary-strong, #5e7a0d); word-break: break-all; }
+.psc-rever-dates { font-size: .66rem; color: var(--psc-muted, #8a8a8a); }
+
+.psc-rever-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.psc-rever-col {
+    min-width: 0;
+    background: var(--psc-surface-alt, #f6f7f5);
+    border-radius: 8px;
+    padding: 8px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.psc-rever-lbl { font-size: .63rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--psc-primary-strong, #5e7a0d); }
+.psc-rever-lines { display: flex; flex-direction: column; gap: 5px; }
+.psc-rever-line { display: flex; align-items: baseline; gap: 6px; }
+.psc-rever-line .nm { flex: 1; min-width: 0; font-size: .7rem; font-weight: 600; color: var(--psc-ink, #2d2d2d); line-height: 1.3; }
+.psc-rever-line .rf { display: block; font-family: var(--psc-mono, monospace); font-size: .6rem; font-weight: 400; color: var(--psc-faint, #a3a3a3); }
+.psc-rever-line .qty,
+.psc-rever-line .pr { font-family: var(--psc-mono, monospace); font-size: .64rem; color: var(--psc-ink-soft, #565656); white-space: nowrap; }
+.psc-rever-src { font-size: .66rem; color: var(--psc-muted, #8a8a8a); line-height: 1.45; }
+.psc-rever-src a { color: var(--psc-primary-strong, #5e7a0d); font-weight: 600; }
+
+.psc-rever-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; border-top: 1px dashed var(--psc-line-strong, #dcdcd6); padding-top: 8px; }
+.psc-rever-kv > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.psc-rever-kv .k { font-size: .62rem; color: var(--psc-muted, #8a8a8a); }
+.psc-rever-kv .v { font-family: var(--psc-mono, monospace); font-size: .7rem; font-weight: 600; color: var(--psc-ink, #2d2d2d); }
+
+.psc-rever-acts { display: flex; flex-direction: column; gap: 6px; }
+
+@media (max-width: 520px) {
+    .psc-rever-cols,
+    .psc-rever-kv { grid-template-columns: 1fr; }
+}
+
+/* ─── Tab Devoluciones (panel derecho) ──────────────────────── */
+.psc-rever-sec { display: flex; flex-direction: column; gap: 9px; }
+.psc-rever-sec.bv-hidden { display: none; }
+.psc-rever-rma { background: var(--psc-surface, #fff); }
+.psc-rever-sum { display: flex; gap: 6px; font-size: .7rem; line-height: 1.4; }
+.psc-rever-sum .lbl { flex-shrink: 0; width: 62px; color: var(--psc-faint, #a3a3a3); }
+.psc-rever-sum .txt { flex: 1; min-width: 0; color: var(--psc-ink-soft, #565656); font-weight: 600; }

@@ -1,134 +1,279 @@
 {{--
    Inbox slot del módulo HelpdeskPrestashop.
-   Aporta los tabs de PrestaShop (Tienda/Devoluciones/Cupones/Direcciones) al
-   panel derecho del inbox. Si el módulo se desactiva, estos tabs desaparecen.
+   Aporta los tabs de PrestaShop (Tienda/Devoluciones/Cupones) al panel
+   derecho del inbox. Si el módulo se desactiva, estos tabs desaparecen.
    Recibe: $rpCust
-   El CSS del módulo (prestashop-inbox.css) se carga desde modals/cart-build.blade.php,
-   que siempre está presente cuando el módulo está activo (cubre modales + este tab).
+   El CSS del módulo (prestashop-inbox.css + prestashop-chat.css) se carga
+   desde modals/cart-build.blade.php, que siempre está presente cuando el
+   módulo está activo (cubre modales + este tab).
 
-   NOTA: no se invoca PrestashopContextService server-side aquí — el bridge de
-   PrestaShop puede tardar hasta 12s (connectTimeout 2s + timeout 10s) en cache
-   miss, y bloquearía el render del panel. Los pedidos se cargan de forma
-   diferida (lazy) vía right-panel-prestashop-tabs.js cuando se abre el tab
-   "Tienda", mismo patrón que right-panel-erp-tabs.blade.php.
+   Diseño: "Alvarez PrestaShop en el Chat" — pieza Unificado (orden de
+   bloques: cliente + métricas, direcciones, carrito en vivo, pedidos,
+   movimientos, acciones de chat) + piezas 13 (salud) y 14 (alertas).
+
+   NOTA: no se invoca PrestashopContextService server-side aquí — el bridge
+   puede tardar hasta 12s en cache miss y bloquearía el render del panel.
+   Todo el tab sale de UNA llamada diferida (/ps/orders devuelve el
+   customer.helpdesk_context completo) desde right-panel-prestashop-tabs.js.
 --}}
+@php
+    $psLinkSearchUrl = ($rpCust && \Illuminate\Support\Facades\Route::has('manager.helpdesk.customers.integrations.search'))
+        ? route('manager.helpdesk.customers.integrations.search', $rpCust) : '';
+    $psLinkUrl = ($rpCust && \Illuminate\Support\Facades\Route::has('manager.helpdesk.customers.integrations.link'))
+        ? route('manager.helpdesk.customers.integrations.link', $rpCust) : '';
+@endphp
 
-{{-- Tab: Tienda (secciones tipo tile) --}}
-<div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="ps-orders" id="bv-ps-orders"
+{{-- Tab: Tienda --}}
+<div class="bv-right-tab-content bv-tab-hidden psc-store" data-bv-tab-content="ps-orders" id="bv-ps-orders"
      data-ps-orders-url="{{ $rpCust ? route('manager.helpdesk.customers.ps.orders', $rpCust) : '' }}"
-     data-ps-order-detail-url="{{ url('panel/helpdesk/ps/orders') }}/">
+     data-ps-order-detail-url="{{ url('panel/helpdesk/ps/orders') }}/"
+     data-ps-link-search-url="{{ $psLinkSearchUrl }}"
+     data-ps-link-url="{{ $psLinkUrl }}"
+     data-ps-admin-url="{{ config('helpdeskprestashop.admin_url') }}"
+     data-ps-img-fallback="{{ config('helpdeskprestashop.image_fallback_host') }}">
 
-    <div class="ps-sections">
+    {{-- Sin cliente en PrestaShop (puente sano, found=false): todo el tab
+         colapsa a esta caja. Reutiliza la búsqueda y el vínculo manual de
+         HelpdeskIntegration (mismo registro y auditoría que Contactos 360). --}}
+    <div class="psc-card psc-link-box">
+        <div class="psc-card-body">
+            <div class="psc-state psc-state--compact">
+                <i class="fas fa-user-slash"></i>
+                <span class="t">{{ __('helpdeskprestashop::chat.states.no_customer') }}</span>
+                <span class="s" id="ps-link-intro"></span>
+            </div>
+            @if($psLinkSearchUrl)
+                <div class="psc-fieldrow">
+                    <div class="psc-field psc-field--grow">
+                        <input type="text" class="finput" id="ps-link-query" placeholder="Email, teléfono, nombre o ID" autocomplete="off">
+                    </div>
+                    <div class="psc-field">
+                        <select id="ps-link-type">
+                            <option value="email">Email</option>
+                            <option value="phone">Teléfono</option>
+                            <option value="name">Nombre</option>
+                            <option value="id">ID PrestaShop</option>
+                            <option value="nif">NIF / DNI</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="psc-btn psc-btn--outline" id="ps-link-search">{{ __('helpdeskprestashop::chat.states.link_customer') }}</button>
+                <div class="psc-link-results" id="ps-link-results"></div>
+                @if($psLinkUrl)
+                    <button type="button" class="psc-btn psc-btn--primary is-disabled" id="ps-link-submit" disabled>Vincular cliente</button>
+                @endif
+            @else
+                <div class="psc-note psc-note--info">La búsqueda de clientes necesita la integración activa en Ajustes → Integraciones.</div>
+            @endif
+        </div>
+    </div>
 
-        {{-- Pedidos: la tile la pinta right-panel-prestashop-tabs.js al recibir la respuesta --}}
-        <div id="ps-orders-tile-wrap">
-            <div class="ps-section-tile ps-section-tile--empty">
-                <span class="ps-st-icon"><i class="fas fa-box"></i></span>
-                <span class="ps-st-body">
-                    <span class="ps-st-title">Pedidos</span>
-                    <span class="ps-st-sub">Cargando…</span>
-                </span>
+    <div class="psc-store-main">
+        {{-- Alertas del cliente (pieza 14): las inyecta el JS, máximo tres.
+             Sin alertas, el bloque no existe. --}}
+        <div id="ps-alerts-wrap"></div>
+
+        {{-- Cliente + métricas: se pintan por JS con los datos del bridge;
+             hasta entonces, fallback mínimo con los datos locales. --}}
+        <div class="psc-card" id="ps-customer-card">
+            <div class="psc-card-body" id="ps-customer-body">
+                <div class="psc-cust-id">
+                    <span class="psc-avatar">{{ $rpCust ? mb_strtoupper(mb_substr($rpCust->name ?? $rpCust->email ?? '?', 0, 2)) : '?' }}</span>
+                    <span class="psc-cust-id-body">
+                        <span class="nm">{{ $rpCust?->name ?: ($rpCust?->email ?? '—') }}</span>
+                        <span class="s">{{ __('helpdeskprestashop::chat.customer.title') }}</span>
+                    </span>
+                </div>
+                <div class="psc-skel"></div>
             </div>
         </div>
 
-        {{-- Carrito: retirado — igual que la pestaña "Carritos" del panel
-             derecho, depende por completo de AssistedCartController, cuyas
-             rutas están comentadas en HelpdeskPrestashop/routes/managers.php
-             porque el módulo Ecommerce del que depende no existe en este
-             proyecto. El botón solo llevaba a "No se pudo cargar el
-             carrito". Ver decisión del usuario para el mismo caso en la
-             pestaña "Carritos". --}}
+        {{-- Direcciones por defecto (plegable, abierta por defecto) --}}
+        <div class="psc-card">
+            <button type="button" class="psc-card-head psc-card-head--toggle" data-psc-toggle="dirs" aria-expanded="true">
+                {{ __('helpdeskprestashop::chat.addresses.defaults') }}
+                <span class="psc-meta" id="ps-addr-summary">—</span>
+                <i class="fas fa-chevron-down psc-chevron"></i>
+            </button>
+            <div class="psc-card-body psc-collapse" data-psc-collapse="dirs" id="ps-addr-defaults">
+                <div class="psc-skel"></div>
+            </div>
+        </div>
 
-        {{-- Direcciones --}}
-        <button class="ps-section-tile" type="button" onclick="openPsAddressesModal()">
-            <span class="ps-st-icon"><i class="fas fa-location-dot"></i></span>
-            <span class="ps-st-body">
-                <span class="ps-st-title">Direcciones</span>
-                <span class="ps-st-sub">Direcciones de envío guardadas</span>
-            </span>
-            <i class="fas fa-chevron-right ps-st-arrow"></i>
+        {{-- Cupones del cliente (plegable, mismos datos que el tab "Cupones") --}}
+        <div class="psc-card">
+            <button type="button" class="psc-card-head psc-card-head--toggle" data-psc-toggle="cups" aria-expanded="true">
+                Cupones del cliente
+                <span class="psc-meta" id="ps-vch-summary">—</span>
+                <i class="fas fa-chevron-down psc-chevron"></i>
+            </button>
+            <div class="psc-card-body psc-collapse" data-psc-collapse="cups" id="ps-vch-inline">
+                <div class="psc-skel"></div>
+            </div>
+        </div>
+
+        {{-- Carrito en vivo --}}
+        <div id="ps-cart-live-wrap">
+            <div class="psc-live-hint psc-live-hint--muted">
+                <span class="dot"></span>
+                <span class="txt">{{ __('helpdeskprestashop::chat.states.loading') }}</span>
+            </div>
+        </div>
+
+        {{-- Pedidos --}}
+        <div class="psc-card">
+            <div class="psc-card-head">
+                <span class="psc-card-head-tt">
+                    <span>{{ __('helpdeskprestashop::chat.customer.orders') }}</span>
+                    <span class="s" id="ps-orders-sub"></span>
+                </span>
+                <span class="psc-count" id="ps-orders-count">—</span>
+            </div>
+            <div class="psc-card-body" id="ps-orders-body">
+                <div class="psc-skel"></div>
+                <div class="psc-skel"></div>
+            </div>
+        </div>
+
+        {{-- Reembolsos (pieza 7): solo lectura; vacío = la tarjeta no existe --}}
+        <div id="ps-refunds-wrap"></div>
+
+        {{-- Últimos movimientos: todo lo fechado del contexto (carrito,
+             pedidos, devoluciones, reembolsos, mensajes de la tienda) --}}
+        <div class="psc-card">
+            <div class="psc-card-head">
+                Últimos movimientos
+                <span class="psc-meta" id="ps-activity-meta"></span>
+            </div>
+            <div class="psc-card-body" id="ps-activity-body">
+                <div class="psc-skel"></div>
+            </div>
+        </div>
+
+        {{-- Respuestas con datos reales (pieza 17) --}}
+        <div id="ps-replies-wrap"></div>
+
+        {{-- Bloques de extensiones (js/ext/*.js, evento psc:store-rendered) --}}
+        <div id="ps-ext-wrap" class="psc-store-main"></div>
+    </div>
+
+    {{-- Acciones de chat: insertan en el composer sin enviar --}}
+    <div class="psc-card psc-actions-card">
+        <div class="psc-card-body">
+            <button type="button" class="psc-btn psc-btn--outline" onclick="openProductRecommend()">
+                {{ __('helpdeskprestashop::chat.actions.recommend') }}
+            </button>
+            <button type="button" class="psc-btn psc-btn--outline" onclick="HDCommerce.open('ps-wishlist-send')">
+                {{ __('helpdeskprestashop::chat.actions.wishlist') }}
+            </button>
+            @if(config('helpdeskprestashop.admin_url'))
+                <a class="psc-btn psc-btn--outline" target="_blank" rel="noopener"
+                   href="{{ config('helpdeskprestashop.admin_url') }}">
+                    {{ __('helpdeskprestashop::chat.actions.backoffice') }}
+                </a>
+            @endif
+        </div>
+    </div>
+
+    {{-- Frescura del dato y estado del puente (pieza 13) --}}
+    <div class="psc-health" id="ps-health">
+        <span class="dot"></span>
+        <span id="ps-health-txt">{{ __('helpdeskprestashop::chat.states.loading') }}</span>
+        <button type="button" class="psc-meta" data-psc-retry="store">
+            {{ __('helpdeskprestashop::chat.health.refresh') }}
         </button>
-
-        {{-- Recomendar producto --}}
-        <button class="ps-section-tile" type="button" onclick="openProductRecommend()">
-            <span class="ps-st-icon ps-st-icon--primary"><i class="fas fa-star"></i></span>
-            <span class="ps-st-body">
-                <span class="ps-st-title">Recomendar producto</span>
-                <span class="ps-st-sub">Buscar y enviar al chat</span>
-            </span>
-            <i class="fas fa-chevron-right ps-st-arrow"></i>
-        </button>
-
     </div>
 
 </div>
 
-{{-- Modal: lista de pedidos PS. Contenido pintado por JS (fetch en
-     right-panel-prestashop-tabs.js) tras abrir el tab "Tienda" o el propio modal. --}}
+{{-- Modal: pedidos del cliente (Bootstrap, como el resto de modales del
+     panel). Lo pinta prestashop-chat.js: buscador, chips de estado con
+     conteo que filtran en cliente, una fila por pedido y "Enviar resumen". --}}
 <div class="modal fade" id="psOrdersModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-box me-2"></i>Pedidos en PrestaShop</h5>
+            <div class="modal-header ps-cart-modal-head">
+                <span class="ic"><i class="fas fa-box"></i></span>
+                <span class="ps-cart-modal-titlewrap">
+                    <span class="lbl">PrestaShop &middot; Cliente</span>
+                    <h5 class="modal-title" id="psOrdersModalTitle">Pedidos</h5>
+                </span>
+                <span class="psc-count" id="psOrdersModalCount"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-0" id="psOrdersModalBody">
-                <div class="text-center py-4 text-muted">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <div class="ps-ord-tools">
+                <div class="search-field">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="text" class="finput" id="psOrdSearch" placeholder="Buscar por número, referencia o producto…" autocomplete="off">
                 </div>
+                <div class="psc-chips" id="psOrdChips"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-body" id="psOrdersModalBody">
+                <div class="psc-skel"></div>
+                <div class="psc-skel"></div>
+            </div>
+            <div class="modal-footer ps-modal-foot">
+                <button type="button" class="psc-btn psc-btn--primary" id="psOrdSummary">Enviar resumen al chat</button>
+                <button type="button" class="psc-btn psc-btn--outline" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Modal: direcciones PS --}}
+{{-- Modal: carrito en vivo (pieza 5). Contenido pintado por
+     right-panel-prestashop-tabs.js; cada operación repinta el bloque de
+     cupones y los totales sin cerrar el modal. --}}
+<div class="modal fade" id="psCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header ps-cart-modal-head">
+                <span class="ic"><i class="fas fa-cart-shopping"></i></span>
+                <span class="ps-cart-modal-titlewrap">
+                    <span class="lbl">PrestaShop &middot; Carrito en vivo</span>
+                    <h5 class="modal-title" id="psCartModalTitle">Carrito</h5>
+                    <span class="ps-cart-modal-meta" id="psCartModalMeta"></span>
+                </span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="psCartModalBody">
+                <div class="psc-card-body"><div class="psc-skel"></div></div>
+            </div>
+            <div class="modal-footer ps-modal-foot">
+                <button type="button" class="psc-btn psc-btn--primary bv-hidden" id="psCartSummaryBtn" data-psc-cart-summary>Enviar resumen al chat</button>
+                <button type="button" class="psc-btn psc-btn--outline" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal: selector de direcciones del carrito ("Cambiar") --}}
 <div class="modal fade" id="psAddressesModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-location-dot me-2"></i>Direcciones de envío</h5>
+            <div class="modal-header ps-cart-modal-head">
+                <span class="ic"><i class="fas fa-location-dot"></i></span>
+                <span class="ps-cart-modal-titlewrap">
+                    <span class="lbl">PrestaShop &middot; Carrito</span>
+                    <h5 class="modal-title" id="psAddressesTitle">Direcciones de envío</h5>
+                </span>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-0" id="psAddressesBody">
-                <div class="text-center py-4 text-muted">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-body p-0" id="psAddressesBody"></div>
+            <div class="modal-footer ps-modal-foot">
+                <button type="button" class="psc-btn psc-btn--outline" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Tab: Devoluciones --}}
+{{-- Tab: Devoluciones (pieza 1) — lo pinta renderPsReturnsTab() --}}
 <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="ps-returns" id="bv-ps-returns">
-    <div class="bv-tab-empty">
-        <i class="fas fa-rotate-left"></i>
-        <div class="bv-tab-empty-title">Sin devoluciones</div>
-        <div class="bv-tab-empty-sub">No hay devoluciones registradas en PrestaShop</div>
-    </div>
+    <div class="psc-card-body"><div class="psc-skel"></div><div class="psc-skel"></div></div>
 </div>
 
-{{-- Tab: Cupones --}}
+{{-- Tab: Cupones (pieza 2) — lo pinta renderPsVouchersTab() --}}
 <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="ps-vouchers" id="bv-ps-vouchers">
-    <div class="bv-tab-empty">
-        <i class="fas fa-tag"></i>
-        <div class="bv-tab-empty-title">Sin cupones</div>
-        <div class="bv-tab-empty-sub">Este cliente no tiene cupones en PrestaShop</div>
-    </div>
-</div>
-
-{{-- Tab: Direcciones --}}
-<div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="ps-addresses" id="bv-ps-addresses">
-    <div class="bv-tab-empty">
-        <i class="fas fa-location-dot"></i>
-        <div class="bv-tab-empty-title">Sin direcciones</div>
-        <div class="bv-tab-empty-sub">No hay direcciones registradas en PrestaShop</div>
-    </div>
+    <div class="psc-card-body"><div class="psc-skel"></div><div class="psc-skel"></div></div>
 </div>
 
 {{-- Tab: Carritos (pedidos vía custom_attributes + carrito abandonado).

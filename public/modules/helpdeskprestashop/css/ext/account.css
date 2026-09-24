@@ -1,0 +1,47 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "account" (workspace de cliente,
+   grupo "Cuenta"): editar ficha, grupo y descuento, acceso y RGPD.
+   Reutiliza el vocabulario .psc-* de prestashop-chat.css; aquí solo
+   lo propio, con prefijo .psc-account-. Solo verdes y grises.
+   ============================================================ */
+
+.psc-account { display: flex; flex-direction: column; gap: 12px; }
+.psc-account .psc-card-body { display: flex; flex-direction: column; gap: 10px; }
+
+.psc-account-form { display: flex; flex-direction: column; gap: 10px; }
+.psc-account-form .psc-field input:disabled,
+.psc-account-form .psc-field select:disabled { background: #f6f7f5; color: #8a8a8a; cursor: not-allowed; }
+.psc-account .psc-field input:focus,
+.psc-account .psc-field select:focus,
+.psc-account .psc-field textarea:focus { outline: 0; border-color: #90bb13; }
+
+.psc-account-hint { font-size: .63rem; line-height: 1.45; color: #a3a3a3; margin-top: -4px; }
+
+.psc-account-checks { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 2px 0; }
+
+.psc-account-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+
+/* Conflicto de versión: aviso gris oscuro (nunca rojo), con "Recargar". */
+.psc-account-conflict {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 11px; border-radius: 9px;
+    background: #565656; color: #fff; font-size: .72rem; line-height: 1.45;
+}
+.psc-account-conflict-act {
+    flex-shrink: 0; background: none; border: 0; padding: 0; color: #fff;
+    font-size: .69rem; font-weight: 700; text-decoration: underline; cursor: pointer;
+}
+
+/* Paso de confirmación dentro de la tarjeta (cambio de grupo, borrado). */
+.psc-account-confirm {
+    display: grid; grid-template-columns: 1fr; gap: 8px; padding: 11px;
+    border: 1px solid rgba(144, 187, 19, .35); border-radius: 9px; background: rgba(144, 187, 19, .08);
+}
+.psc-account-confirm--danger { border-color: #dcdcd6; background: #f4f4f5; }
+.psc-account-confirm-txt { font-size: .72rem; line-height: 1.5; color: #565656; }
+.psc-account-confirm-txt b { color: #2d2d2d; }
+
+.psc-account-yes { color: #5e7a0d; font-weight: 600; }
+.psc-account-no { color: #565656; }
+
+/* Atajo en el tab Tienda (bajo la ficha del cliente). */
+.psc-account-shortcut { display: grid; grid-template-columns: 1fr; }

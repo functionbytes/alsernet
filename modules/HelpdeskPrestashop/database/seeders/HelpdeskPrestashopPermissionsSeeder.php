@@ -34,6 +34,10 @@ class HelpdeskPrestashopPermissionsSeeder extends Seeder
             // asociado, así que se reserva a roles de confianza (admins) y NO
             // se da al rol de agente — mismo criterio que helpdeskerp.prospect.view.
             'helpdeskprestashop.prospect.view' => 'Ver datos de prospectos (no clientes) en PrestaShop',
+            // Vales de compensación desde el chat: crear hasta el límite de
+            // agente (config vouchers.agent_limit) / hasta el de supervisor.
+            'helpdeskprestashop.vouchers.create' => 'Crear vales de compensación en PrestaShop (hasta el límite de agente)',
+            'helpdeskprestashop.vouchers.approve' => 'Crear vales de compensación por encima del límite de agente',
         ];
 
         foreach ($permissions as $name => $description) {
@@ -47,6 +51,34 @@ class HelpdeskPrestashopPermissionsSeeder extends Seeder
 
         foreach ($adminRoles as $role) {
             $role->givePermissionTo(array_keys($permissions));
+        }
+
+        // Vales de compensación desde el chat: el agente crea hasta su límite
+        // (vouchers.agent_limit) y supervisores/responsables hasta el suyo
+        // (vouchers.approver_limit). El agente restringido no crea vales.
+        $voucherRoles = [
+            'helpdesk-agent' => ['helpdeskprestashop.vouchers.create'],
+            'helpdesk-supervisor' => ['helpdeskprestashop.vouchers.create', 'helpdeskprestashop.vouchers.approve'],
+            'helpdesk-manager' => ['helpdeskprestashop.vouchers.create', 'helpdeskprestashop.vouchers.approve'],
+            'helpdesk-admin' => ['helpdeskprestashop.vouchers.create', 'helpdeskprestashop.vouchers.approve'],
+        ];
+
+        foreach ($voucherRoles as $roleName => $rolePermissions) {
+            Role::where('name', $roleName)->where('guard_name', 'web')->first()?->givePermissionTo($rolePermissions);
+        }
+
+        // Permisos de las extensiones (config/ext/*.php): se crean, se dan a
+        // los roles admin y a los roles que cada extensión declare.
+        foreach ((array) config('helpdeskprestashop.ext', []) as $ext) {
+            foreach ((array) ($ext['permissions'] ?? []) as $name => $description) {
+                Permission::updateOrCreate(['name' => $name, 'guard_name' => 'web'], ['description' => $description]);
+                foreach ($adminRoles as $role) {
+                    $role->givePermissionTo($name);
+                }
+            }
+            foreach ((array) ($ext['role_permissions'] ?? []) as $roleName => $rolePermissions) {
+                Role::where('name', $roleName)->where('guard_name', 'web')->first()?->givePermissionTo((array) $rolePermissions);
+            }
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

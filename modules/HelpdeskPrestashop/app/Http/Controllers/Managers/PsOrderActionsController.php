@@ -5,7 +5,6 @@ namespace Modules\HelpdeskPrestashop\Http\Controllers\Managers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
 use Modules\HelpdeskPrestashop\Http\Controllers\Concerns\BuildsIdempotencyKey;
@@ -15,6 +14,7 @@ use Modules\HelpdeskPrestashop\Http\Requests\Managers\SendOrderEmailRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\SetOrderAddressRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\SetOrderTrackingRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\Managers\StartOrderReturnRequest;
+use Modules\HelpdeskPrestashop\Services\Ext\OpsmapStateNoticeService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 use Modules\HelpdeskPrestashop\Support\OrderDetailCache;
 
@@ -42,7 +42,21 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false], 403);
         }
 
-        return response()->json(['success' => true, 'states' => $this->service->getOrderStates()]);
+        // Avisos configurables por estado (Ajustes → Avisos de cambio de
+        // estado): "Notificar" por defecto y aviso libre para el agente.
+        $notices = app(OpsmapStateNoticeService::class);
+        $config = $notices->all();
+
+        $states = array_map(function (array $s) use ($config): array {
+            $cfg = $config[(int) ($s['id'] ?? 0)] ?? null;
+            $s['notify_default'] = $cfg['notify_default'] ?? null;
+            $s['agent_notice'] = $cfg['agent_notice'] ?? null;
+            $s['template_label'] = OpsmapStateNoticeService::templateLabel((string) ($s['template'] ?? ''));
+
+            return $s;
+        }, $this->service->getOrderStates());
+
+        return response()->json(['success' => true, 'states' => $states]);
     }
 
     public function documents(Request $request, Customer $customer, int $order): JsonResponse
@@ -52,7 +66,7 @@ class PsOrderActionsController extends Controller
         }
 
         try {
-            $data = $this->service->getOrderDocuments($order, $customer->email ?: null);
+            $data = $this->service->getOrderDocuments($order, $customer->email ?: null, $this->externalId($customer));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop no responde.'], 503);
         }
@@ -69,7 +83,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->setOrderAddress($order, (int) $data['address_id'], $data['type'] ?? 'delivery', $customer->email, $this->idempotencyKey($request, $order, 'order.set_address', $data));
+            $result = $this->service->setOrderAddress($order, (int) $data['address_id'], $data['type'] ?? 'delivery', $customer->email, $this->externalId($customer), $this->idempotencyKey($request, $order, 'order.set_address', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó el cambio (pedido/dirección no válidos o sin acceso).'], 422);
         }
@@ -78,7 +92,7 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false, 'message' => 'No se pudo cambiar la dirección.'], 422);
         }
 
-        $this->forgetDetailCache($order, $customer->email);
+        $this->forgetDetailCache($order, $customer);
 
         return response()->json(['success' => true, 'data' => $result]);
     }
@@ -92,7 +106,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->sendOrderEmail($order, $data['type'], $customer->email, $this->idempotencyKey($request, $order, 'order.send_email', $data));
+            $result = $this->service->sendOrderEmail($order, $data['type'], $customer->email, $this->externalId($customer), $this->idempotencyKey($request, $order, 'order.send_email', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó el envío (pedido no encontrado o sin acceso).'], 422);
         }
@@ -113,7 +127,7 @@ class PsOrderActionsController extends Controller
         $data = $request->validated();
 
         try {
-            $result = $this->service->startOrderReturn($order, $data['items'], $customer->email, $this->idempotencyKey($request, $order, 'order.start_return', $data));
+            $result = $this->service->startOrderReturn($order, $data['items'], $customer->email, $this->externalId($customer), $this->idempotencyKey($request, $order, 'order.start_return', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó la devolución (pedido no encontrado o sin acceso).'], 422);
         }
@@ -122,7 +136,7 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false, 'message' => 'No se pudo iniciar la devolución.'], 422);
         }
 
-        $this->forgetDetailCache($order, $customer->email);
+        $this->forgetDetailCache($order, $customer);
 
         return response()->json(['success' => true, 'data' => $result]);
     }
@@ -138,7 +152,7 @@ class PsOrderActionsController extends Controller
         $agent = $request->user()->fullName() ?: 'Helpdesk';
 
         try {
-            $result = $this->service->addOrderNote($order, $data['note'], $agent, $customer->email, $this->idempotencyKey($request, $order, 'order.add_note', $data));
+            $result = $this->service->addOrderNote($order, $data['note'], $agent, $customer->email, $this->externalId($customer), $this->idempotencyKey($request, $order, 'order.add_note', $data));
         } catch (PsUpstreamException) {
             return response()->json(['success' => false, 'message' => 'PrestaShop rechazó la nota (pedido no encontrado o sin acceso).'], 422);
         }
@@ -147,7 +161,7 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false, 'message' => 'No se pudo añadir la nota.'], 422);
         }
 
-        $this->forgetDetailCache($order, $customer->email);
+        $this->forgetDetailCache($order, $customer);
 
         return response()->json(['success' => true, 'data' => $result]);
     }
@@ -166,6 +180,7 @@ class PsOrderActionsController extends Controller
                 (int) $data['state_id'],
                 (bool) ($data['notify'] ?? false),
                 $customer->email,
+                $this->externalId($customer),
                 $this->idempotencyKey($request, $order, 'order.change_status', $data),
             );
         } catch (PsUpstreamException) {
@@ -179,7 +194,7 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false, 'message' => 'No se pudo cambiar el estado del pedido.'], 422);
         }
 
-        $this->forgetDetailCache($order, $customer->email);
+        $this->forgetDetailCache($order, $customer);
 
         return response()->json(['success' => true, 'data' => $result]);
     }
@@ -198,6 +213,7 @@ class PsOrderActionsController extends Controller
                 (string) $data['tracking_number'],
                 isset($data['carrier_id']) ? (int) $data['carrier_id'] : null,
                 $customer->email,
+                $this->externalId($customer),
                 $this->idempotencyKey($request, $order, 'order.set_tracking', $data),
             );
         } catch (PsUpstreamException) {
@@ -211,7 +227,7 @@ class PsOrderActionsController extends Controller
             return response()->json(['success' => false, 'message' => 'No se pudo asignar el seguimiento.'], 422);
         }
 
-        $this->forgetDetailCache($order, $customer->email);
+        $this->forgetDetailCache($order, $customer);
 
         return response()->json(['success' => true, 'data' => $result]);
     }
@@ -257,11 +273,25 @@ class PsOrderActionsController extends Controller
     }
 
     /**
-     * Invalida el detalle cacheado (misma clave que PsOrderDetailController)
-     * para que el panel refleje el cambio inmediatamente.
+     * external_id ya vinculado del cliente (mismo patrón que
+     * ContactAggregatorService::prestashop()): permite resolver la propiedad
+     * del pedido en el bridge aunque $customer->email no coincida con el de
+     * su cuenta de PrestaShop — necesario quien llama desde Contacts 360.
      */
-    private function forgetDetailCache(int $order, string $email): void
+    private function externalId(Customer $customer): ?int
     {
-        Cache::forget(OrderDetailCache::key($order, $email));
+        $externalId = $customer->externalIdFor('prestashop');
+
+        return $externalId !== null ? (int) $externalId : null;
+    }
+
+    /**
+     * Invalida el detalle cacheado (misma clave que PsOrderDetailController)
+     * para que el panel refleje el cambio inmediatamente, tanto si se vio
+     * desde el inbox (clave por email) como desde Contacts 360 (external_id).
+     */
+    private function forgetDetailCache(int $order, Customer $customer): void
+    {
+        OrderDetailCache::forget($order, $customer->email ?: null, $this->externalId($customer));
     }
 }

@@ -86,6 +86,49 @@ class PrestashopProductQueryService
     }
 
     /**
+     * Find many products by PrestaShop product ID in a single query — evita
+     * N llamadas HTTP secuenciales al bridge cuando el llamador necesita
+     * resolver un lote (recomendados, historial de pedidos).
+     *
+     * @param  int[]  $ids
+     * @return array<int, array<string, mixed>> product id => product, solo los encontrados
+     */
+    public function findByIds(array $ids, string $lang = 'es'): array
+    {
+        $ids = array_values(array_unique(array_filter($ids)));
+
+        if (! $this->isConfigured() || $ids === []) {
+            return [];
+        }
+
+        $storeUrl = $this->getStoreUrl();
+
+        $rows = $this->baseQuery($lang)
+            ->where('p.active', 1)
+            ->whereIn('p.id_product', $ids)
+            ->get();
+
+        $productIds = $rows->pluck('id_product')->map(fn ($id) => (int) $id)->all();
+        $effectivePrices = $this->resolveEffectivePriceMap($productIds);
+        $specificPrices = $this->resolveSpecificPriceMap($productIds);
+
+        $result = [];
+        foreach ($rows as $r) {
+            $row = (array) $r;
+            $id = (int) ($row['id_product'] ?? 0);
+
+            $result[$id] = $this->normalize(
+                $row,
+                $storeUrl,
+                $effectivePrices[$id] ?? null,
+                $specificPrices[$id] ?? null,
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * Return grouped attribute values and combination stock for a product.
      * Result: ['attributes' => [...groups...], 'combinations' => [...combos...]]
      */

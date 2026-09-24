@@ -66,6 +66,10 @@
     @include('helpdeskprestashop::modals.cart-detail')
     @include('helpdeskprestashop::modals.order-workspace')
     @include('helpdeskprestashop::modals.product-recommend')
+    @include('helpdeskprestashop::modals.ps-wishlist')
+    @include('helpdeskprestashop::modals.ps-customer-workspace')
+    @include('helpdeskprestashop::modals.ps-voucher-create')
+    @include('helpdeskprestashop::modals.ext-index')
 @endif
 
 @if(helpdesk_erp_enabled() && view()->exists('helpdeskerp::modals.order-workspace'))

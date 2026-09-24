@@ -1,0 +1,71 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "metrics"
+   «Métricas del chat · PrestaShop». Reutiliza .psc-kpis/.psc-kpi,
+   .psc-bars/.psc-h-N, .psc-chips/.psc-chip y .psc-logtable de
+   prestashop-chat.css; aquí solo lo propio (.psc-metrics-*).
+   Series en verdes (#90bb13, #b6d34a, #5e7a0d) y grises; nada de
+   rojo, azul ni morado.
+   ============================================================ */
+
+.psc-metrics-body { display: flex; flex-direction: column; gap: 12px; }
+.psc-metrics-hidden { display: none !important; }
+.psc-metrics-mono { font-family: var(--psc-mono); }
+
+/* Filtros: chips de periodo + agente */
+.psc-metrics-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.psc-metrics-filters .psc-chip { text-decoration: none; }
+.psc-metrics-filters .psc-chip:hover:not(.is-on) { border-color: var(--psc-primary); color: var(--psc-primary-strong); }
+.psc-metrics-select.form-select { width: auto; min-width: 180px; padding-top: 6px; padding-bottom: 6px; font-size: .75rem; border-color: #ececec; border-radius: 6px; color: var(--psc-ink-soft); }
+.psc-metrics-select.form-select:focus { border-color: var(--psc-primary); box-shadow: 0 0 0 3px rgba(144, 187, 19, .12); }
+.psc-metrics-inline-btn { width: auto; }
+.psc-metrics-caption { margin-left: auto; font-size: .7rem; color: var(--psc-muted); }
+
+/* KPIs */
+.psc-metrics-kpis { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.psc-metrics-kpis .psc-kpi { background: #fff; }
+.psc-metrics-kpis .psc-kpi .l { font-size: .6rem; }
+.psc-metrics-kpis .psc-kpi .n { font-size: 1.25rem; color: var(--psc-ink); }
+.psc-metrics-kpis .psc-kpi .d { font-size: .68rem; }
+.psc-metrics-kpi-note { display: block; margin-top: 3px; font-size: .62rem; color: var(--psc-faint); }
+
+/* Evolución semanal */
+.psc-metrics-serie-hd { display: flex; justify-content: space-between; gap: 8px; font-size: .72rem; font-weight: 700; color: var(--psc-ink); }
+.psc-metrics-serie-hd .psc-metrics-mono { font-weight: 500; color: var(--psc-muted); }
+.psc-metrics-bars { height: 190px; gap: 6px; padding: 10px 2px 4px; border-bottom: 1px solid var(--psc-line); }
+.psc-metrics-bars .col { min-width: 0; }
+.psc-metrics-track { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.psc-metrics-bars .bar { min-height: 0; flex-shrink: 0; }
+.psc-metrics-bars .bar.is-mid { background: var(--psc-primary-accent); }
+.psc-metrics-bars .bar.is-top { background: var(--psc-primary); }
+.psc-metrics-bars .col.is-top .psc-metrics-val { color: var(--psc-primary-strong); }
+.psc-metrics-h0 { height: 0; }
+.psc-metrics-val { font-family: var(--psc-mono); font-size: .58rem; font-weight: 700; color: var(--psc-ink-soft); min-height: .8rem; }
+.psc-metrics-bars .lbl { white-space: nowrap; }
+
+/* Ranking por agente */
+.psc-metrics-scroll { overflow-x: auto; }
+.psc-metrics-rank { min-width: 900px; }
+.psc-metrics-rank .psc-logrow { align-items: flex-start; }
+.psc-metrics-c-pos { width: 22px; flex-shrink: 0; font-family: var(--psc-mono); color: var(--psc-faint); }
+.psc-metrics-c-name { flex: 1; min-width: 130px; font-weight: 600; color: var(--psc-ink); }
+.psc-metrics-c-name a { color: var(--psc-primary-strong); text-decoration: none; }
+.psc-metrics-c-name a:hover { color: var(--psc-primary); text-decoration: underline; }
+.psc-metrics-c-num { width: 70px; flex-shrink: 0; text-align: right; font-family: var(--psc-mono); color: var(--psc-ink); }
+.psc-metrics-c-num small { display: block; font-size: .6rem; color: var(--psc-primary-strong); white-space: nowrap; }
+.psc-metrics-c-num.is-zero { color: #c9c9c9; }
+.psc-logtable-hd .psc-metrics-c-num { font-family: inherit; color: var(--psc-faint); }
+.psc-metrics-total { font-weight: 800; }
+.psc-metrics-system { background: var(--psc-surface-alt); }
+
+.psc-metrics-foot { display: flex; gap: 8px; flex-wrap: wrap; }
+.psc-metrics-foot .psc-btn { width: auto; flex: 1 1 220px; text-decoration: none; }
+
+.psc-metrics-help p, .psc-metrics-help li { font-size: .78rem; color: var(--psc-ink-soft); line-height: 1.55; }
+.psc-metrics-help ul { padding-left: 18px; margin-bottom: 10px; }
+.psc-metrics-help b { color: var(--psc-ink); }
+
+@media (max-width: 575px) {
+    .psc-metrics-caption { margin-left: 0; width: 100%; }
+    .psc-metrics-select.form-select { width: 100%; }
+    .psc-metrics-bars .lbl { font-size: .5rem; }
+}

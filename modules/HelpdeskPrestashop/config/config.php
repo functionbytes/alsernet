@@ -47,9 +47,14 @@ return [
     'stale_grace' => env('HELPDESK_PS_STALE_GRACE', 30),
 
     /*
-     | Segundos de timeout para llamadas HTTP al API de PrestaShop.
+     | Segundos de timeout para llamadas HTTP al API de PrestaShop. Subido de
+     | 10 a 25: varias escrituras (dirección de carrito/pedido, cambio de
+     | estado) medidas por encima de 10s en el bridge devolvían 422 al agente
+     | ("no válidos o sin acceso") aunque el cambio SÍ se aplicaba en
+     | PrestaShop — Laravel cortaba la conexión antes de que volviera la
+     | respuesta, no un rechazo real del bridge.
      */
-    'http_timeout' => env('HELPDESK_PS_HTTP_TIMEOUT', 10),
+    'http_timeout' => env('HELPDESK_PS_HTTP_TIMEOUT', 25),
 
     /*
      | Segundos máximos para establecer la conexión TCP con PrestaShop antes de
@@ -86,4 +91,30 @@ return [
      | http://localhost:8091/... hardcodeado en el JS).
      */
     'admin_url' => rtrim(env('ALSERNETBRIDGE_ADMIN_URL', ''), '/'),
+
+    /*
+     | Host de respaldo para las miniaturas de producto del chat: si una
+     | imagen no carga (staging sin img/p), se reintenta una vez con la misma
+     | ruta en este host. Solo en local por defecto; en producción las
+     | imágenes cargan directamente y no hace falta.
+     */
+    'image_fallback_host' => rtrim((string) env('HELPDESK_PS_IMAGE_FALLBACK_HOST', env('APP_ENV') === 'local' ? 'https://www.a-alvarez.com' : ''), '/'),
+
+    /*
+     | Vales de compensación creados desde el chat (importe fijo, un solo uso).
+     | Límite por vale según permiso: helpdeskprestashop.vouchers.create usa
+     | agent_limit; helpdeskprestashop.vouchers.approve usa approver_limit.
+     | Por encima de su límite el agente solo puede "Pedir aprobación". El
+     | bridge aplica además un tope duro de 500 €.
+     */
+    'vouchers' => [
+        'agent_limit' => (float) env('HELPDESK_PS_VOUCHER_AGENT_LIMIT', 25),
+        'approver_limit' => (float) env('HELPDESK_PS_VOUCHER_APPROVER_LIMIT', 150),
+        'validity_days' => [30, 60, 90],
+        'reasons' => [
+            'retraso' => 'Retraso en la entrega',
+            'defectuoso' => 'Producto defectuoso',
+            'gesto' => 'Gesto comercial',
+        ],
+    ],
 ];

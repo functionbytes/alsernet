@@ -1,0 +1,69 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "settings" («Ajustes del chat»)
+   Reutiliza .psc-field/.psc-note/.psc-btn de prestashop-chat.css
+   y solo añade lo propio (.psc-settings-*).
+   Solo verdes y grises; errores en ámbar, nada de rojo.
+   ============================================================ */
+
+.psc-settings-stack { display: flex; flex-direction: column; gap: 12px; }
+.psc-settings-stack form { display: flex; flex-direction: column; gap: 12px; }
+.psc-settings-stack .card { margin-bottom: 0; }
+.psc-settings-hidden { display: none !important; }
+.psc-settings-flash { margin: 0; }
+
+.psc-settings-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.psc-settings-head .psc-tag { flex-shrink: 0; }
+
+.psc-settings-body { display: flex; flex-direction: column; gap: 14px; }
+.psc-settings-fieldrow { flex-wrap: wrap; }
+.psc-settings-fieldrow > .psc-field { min-width: 200px; }
+.psc-settings-narrow { flex: 0 0 140px !important; min-width: 120px !important; }
+
+.psc-field input:focus, .psc-field textarea:focus { outline: 0; border-color: var(--psc-primary); box-shadow: 0 0 0 3px rgba(144, 187, 19, .12); }
+.psc-field input:disabled, .psc-field textarea:disabled { background: #f6f7f5; color: var(--psc-muted); }
+
+.psc-settings-err { font-size: .66rem; font-weight: 600; color: var(--psc-warn-ink); background: var(--psc-warn-bg); border-radius: 5px; padding: 3px 7px; align-self: flex-start; }
+
+.psc-settings-sub { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.psc-settings-subttl { font-size: .75rem; font-weight: 700; color: var(--psc-ink); }
+.psc-settings-subtxt { font-size: .66rem; color: var(--psc-muted); }
+
+.psc-settings-rows { display: flex; flex-direction: column; gap: 9px; }
+
+/* Motivo: clave + texto + quitar en una fila */
+.psc-settings-row { display: flex; align-items: flex-end; gap: 9px; flex-wrap: wrap; padding: 9px 11px; border: 1px solid var(--psc-line); border-radius: 9px; background: #fff; }
+.psc-settings-key { flex: 0 0 170px; }
+.psc-settings-remove.psc-btn { width: auto; flex-shrink: 0; }
+.psc-settings-rowerr { flex-basis: 100%; display: flex; flex-direction: column; gap: 4px; }
+.psc-settings-rowerr:empty { display: none; }
+
+/* Respuesta rápida: tarjeta con título/subtítulo + texto */
+.psc-settings-reply { display: flex; flex-direction: column; gap: 9px; padding: 11px 12px; border: 1px solid var(--psc-line); border-radius: 9px; background: var(--psc-surface-alt); }
+.psc-settings-reply .psc-fieldrow { flex-wrap: wrap; }
+.psc-settings-reply .psc-fieldrow > .psc-field { min-width: 200px; }
+.psc-settings-reply-foot { display: flex; justify-content: flex-end; }
+
+.psc-settings-add.psc-btn { width: 100%; }
+
+.psc-settings-foot { display: flex; flex-direction: column; gap: 8px; }
+.psc-settings-caption { font-size: .66rem; color: var(--psc-muted); line-height: 1.45; text-align: center; }
+
+.psc-settings-help p { font-size: .78rem; color: var(--psc-ink-soft); line-height: 1.55; }
+
+.psc-settings-vars { display: flex; flex-direction: column; gap: 6px; }
+.psc-settings-var {
+    display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left;
+    padding: 7px 10px; border: 1px solid var(--psc-line); border-radius: 7px; background: #fff; cursor: pointer;
+}
+.psc-settings-var:hover { border-color: var(--psc-primary-line); background: var(--psc-primary-soft); }
+.psc-settings-var .k { font-family: var(--psc-mono); font-size: .68rem; font-weight: 600; color: var(--psc-primary-strong); flex-shrink: 0; }
+.psc-settings-var .v { font-size: .68rem; color: var(--psc-ink-soft); }
+
+.psc-settings-resets { display: flex; flex-direction: column; gap: 8px; }
+.psc-settings-resets form { margin: 0; }
+
+@media (max-width: 575px) {
+    .psc-settings-key { flex-basis: 100%; }
+    .psc-settings-narrow { flex-basis: 100% !important; }
+    .psc-settings-head { flex-direction: column; }
+}

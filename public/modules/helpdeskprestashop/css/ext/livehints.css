@@ -1,0 +1,4 @@
+/* Extensión "livehints": detalles dentro del texto de los avisos en vivo
+   (.psc-live-hint de prestashop-chat.css). */
+.psc-live-hint .psc-livehints-why { color: var(--psc-ink-soft, #6b6b6b); font-weight: 400; }
+.psc-live-hint .psc-livehints-was { text-decoration: line-through; color: var(--psc-ink-soft, #6b6b6b); }

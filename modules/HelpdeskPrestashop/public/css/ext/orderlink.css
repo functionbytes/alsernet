@@ -1,0 +1,41 @@
+/* ============================================================
+   HelpdeskPrestashop · extensión "orderlink": pedidos ligados a la
+   conversación, arriba del tab Tienda (#ps-ext-wrap). Reutiliza
+   .psc-card / .psc-tag de prestashop-chat.css; aquí solo lo propio,
+   con prefijo .psc-orderlink-. Solo verdes y grises.
+   ============================================================ */
+
+.psc-orderlink { margin-bottom: 9px; }
+.psc-orderlink + .psc-card { margin-top: 0; }
+
+.psc-orderlink-list { display: flex; flex-direction: column; gap: 6px; }
+
+.psc-orderlink-item {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px;
+    padding: 6px 0; border-bottom: 1px solid var(--psc-line, #f0f0f0);
+}
+.psc-orderlink-item:last-child { border-bottom: 0; }
+
+.psc-orderlink-chip {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+    padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--psc-primary-line, rgba(144, 187, 19, .35));
+    background: var(--psc-primary-soft, rgba(144, 187, 19, .08));
+    color: var(--psc-primary-strong, #5e7a0d);
+    font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.psc-orderlink-chip:hover,
+.psc-orderlink-chip:focus-visible { background: var(--psc-primary-chip, rgba(144, 187, 19, .16)); outline: 0; }
+
+.psc-orderlink-ref { font-family: var(--psc-mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psc-orderlink-sep { color: var(--psc-faint, #a3a3a3); font-weight: 500; }
+
+.psc-orderlink-meta { font-size: .63rem; color: var(--psc-faint, #a3a3a3); }
+
+.psc-orderlink-unlink {
+    margin-left: auto; background: none; border: 0; padding: 0;
+    color: var(--psc-ink-soft, #565656); font-size: .66rem; font-weight: 600;
+    text-decoration: underline; cursor: pointer;
+}
+.psc-orderlink-unlink:hover { color: var(--psc-primary-strong, #5e7a0d); }
+.psc-orderlink-unlink:disabled { color: var(--psc-faint, #a3a3a3); cursor: default; text-decoration: none; }

@@ -1,0 +1,827 @@
+/* ============================================================
+   HelpdeskPrestashop · PrestaShop dentro del chat
+   Clases nuevas de las piezas diseñadas en
+   "Alvarez PrestaShop en el Chat". Se carga junto a
+   prestashop-inbox.css y hereda sus tokens --bv-*.
+
+   Reglas del sistema respetadas aquí:
+   - Solo verdes: #90bb13 primario, #5e7a0d fuerte, #b6d34a acento.
+   - NUNCA rojo, azul ni morado. "Peligro" = gris oscuro (#2d3324 /
+     #565656). Avisos = ámbar existente (#fdf3e0 / #7a5b00).
+   - Pie de modal: botones apilados a ancho completo, primario arriba.
+   - Botones con texto sin icono; solo-icono con icono.
+   ============================================================ */
+
+:root {
+    --psc-primary: #90bb13;
+    --psc-primary-strong: #5e7a0d;
+    --psc-primary-accent: #b6d34a;
+    --psc-primary-soft: rgba(144, 187, 19, .08);
+    --psc-primary-line: rgba(144, 187, 19, .35);
+    --psc-primary-chip: rgba(144, 187, 19, .16);
+    --psc-ink: #2d2d2d;
+    --psc-ink-soft: #565656;
+    --psc-muted: #8a8a8a;
+    --psc-faint: #a3a3a3;
+    --psc-line: #f0f0f0;
+    --psc-line-strong: #dcdcd6;
+    --psc-surface: #fff;
+    --psc-surface-alt: #f6f7f5;
+    --psc-surface-deep: #2d3324;
+    --psc-warn-bg: #fdf3e0;
+    --psc-warn-ink: #7a5b00;
+    --psc-mono: var(--bv-mono, 'JetBrains Mono', ui-monospace, monospace);
+}
+
+/* ─── Tarjetas del panel derecho ─────────────────────────────── */
+.psc-card {
+    background: var(--psc-surface);
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.psc-card + .psc-card { margin-top: 9px; }
+
+/* Identidad del cliente (mockup "Unificado": avatar + nombre + empresa) */
+.psc-cust-id { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+.psc-avatar {
+    width: 38px; height: 38px; border-radius: 999px; flex-shrink: 0;
+    background: var(--psc-primary-soft); color: var(--psc-primary-strong);
+    display: grid; place-items: center; font-size: .72rem; font-weight: 800;
+}
+.psc-cust-id-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.psc-cust-id-body .nm { font-size: .84rem; font-weight: 700; color: var(--psc-ink); }
+.psc-cust-id-body .s { font-size: .69rem; color: var(--psc-muted); margin-top: 1px; }
+
+.psc-card-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--psc-line);
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--psc-ink);
+    background: none;
+    text-align: left;
+}
+
+.psc-card-head .psc-meta {
+    margin-left: auto;
+    font-size: .67rem;
+    font-weight: 500;
+    color: var(--psc-faint);
+}
+
+.psc-card-head .psc-count {
+    margin-left: auto;
+    font-family: var(--psc-mono);
+    font-size: .6rem;
+    color: #7a7f74;
+    background: #f5f6f2;
+    padding: 1px 7px;
+    border-radius: 4px;
+}
+
+.psc-card-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+/* Cabecera plegable (direcciones, cupones, historial) */
+.psc-card-head--toggle { cursor: pointer; }
+.psc-card-head--toggle .psc-chevron { color: #b4b4b4; font-size: .58rem; transition: transform .15s; }
+.psc-card-head--toggle[aria-expanded="true"] .psc-chevron { transform: rotate(180deg); }
+.psc-collapse[hidden] { display: none; }
+
+/* Fila etiqueta + valor */
+.psc-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 11px;
+    border-radius: 8px;
+    background: var(--psc-surface-alt);
+    font-size: .78rem;
+}
+
+.psc-row .k { color: var(--psc-muted); }
+.psc-row .v { margin-left: auto; font-weight: 700; color: var(--psc-ink); }
+.psc-row .v.mono { font-family: var(--psc-mono); font-weight: 600; }
+.psc-row--good { background: var(--psc-primary-soft); }
+.psc-row--good .k, .psc-row--good .v { color: var(--psc-primary-strong); }
+
+.psc-row--total {
+    background: var(--psc-surface-deep);
+    color: #fff;
+    font-size: .84rem;
+    font-weight: 800;
+}
+
+.psc-row--total .v { color: #fff; font-family: var(--psc-mono); }
+
+/* Métricas en rejilla */
+.psc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.psc-stat { padding: 7px 4px; border-radius: 8px; background: var(--psc-surface-alt); text-align: center; }
+.psc-stat .n { font-family: var(--psc-mono); font-size: .78rem; font-weight: 700; }
+.psc-stat .n.is-good { color: var(--psc-primary-strong); }
+.psc-stat .l { font-size: .53rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--psc-faint); margin-top: 1px; }
+
+/* ─── Etiquetas de estado ────────────────────────────────────── */
+.psc-tag {
+    font-family: var(--psc-mono);
+    font-size: .53rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.psc-tag--pending  { background: rgba(182, 211, 74, .3);  color: var(--psc-primary-strong); }
+.psc-tag--progress { background: var(--psc-primary-chip);  color: var(--psc-primary-strong); }
+.psc-tag--done     { background: var(--psc-primary-strong); color: #fff; }
+.psc-tag--closed   { background: var(--psc-line);          color: #7a7f74; }
+/* "Denegado", "caducado", "cancelado": gris oscuro, nunca rojo/azul. */
+.psc-tag--blocked  { background: #e8e8e6;                  color: var(--psc-ink-soft); }
+
+/* ─── Devoluciones (RMA) ────────────────────────────────────── */
+.psc-rma { border: 1px solid var(--psc-line); border-radius: 10px; padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
+.psc-rma--blocked { border-color: var(--psc-line-strong); background: #fafafa; }
+.psc-rma-hd { display: flex; align-items: center; gap: 8px; }
+.psc-rma-ref { font-family: var(--psc-mono); font-size: .69rem; font-weight: 600; }
+.psc-rma-hd .psc-tag { margin-left: auto; }
+.psc-rma-meta { font-size: .69rem; color: var(--psc-muted); }
+.psc-rma-line { display: flex; align-items: center; gap: 8px; }
+.psc-rma-line .th { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; background: var(--psc-surface-alt); border: 1px solid #ececec; overflow: hidden; }
+.psc-rma-line .nm { flex: 1; min-width: 0; font-size: .72rem; font-weight: 600; line-height: 1.3; }
+.psc-rma-line .qty { font-family: var(--psc-mono); font-size: .66rem; color: var(--psc-muted); }
+.psc-rma-reason { border-top: 1px dashed var(--psc-line); padding-top: 8px; font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.45; }
+.psc-rma-reason .lbl { color: var(--psc-faint); }
+.psc-rma-acts { display: flex; align-items: center; gap: 12px; }
+.psc-rma-acts button { font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); background: none; border: 0; cursor: pointer; padding: 0; }
+
+/* ─── Cupones ───────────────────────────────────────────────── */
+.psc-vch { border: 1px solid var(--psc-line); border-radius: 9px; padding: 9px 10px; }
+.psc-vch--available { border-color: var(--psc-primary-line); background: rgba(144, 187, 19, .05); }
+.psc-vch--spent { background: #fbfbfa; }
+.psc-vch-hd { display: flex; align-items: center; gap: 8px; }
+.psc-vch-code { font-family: var(--psc-mono); font-size: .53rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-primary-strong); }
+.psc-vch--spent .psc-vch-code { color: var(--psc-faint); text-decoration: line-through; }
+.psc-vch-hd .psc-tag { margin-left: auto; }
+.psc-vch-value { display: flex; align-items: baseline; gap: 8px; margin-top: 3px; }
+.psc-vch-value b { font-size: .81rem; font-weight: 700; }
+.psc-vch-value span { font-size: .69rem; color: var(--psc-muted); }
+.psc-vch-acts { display: flex; align-items: center; gap: 12px; margin-top: 7px; }
+.psc-vch-acts button { font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); background: none; border: 0; cursor: pointer; }
+.psc-vch-acts button.is-secondary { font-weight: 600; color: #7a7f74; }
+.psc-vch-min { margin-top: 6px; font-size: .63rem; color: var(--psc-faint); }
+.psc-vch-code .ps-copy-btn { margin-left: 2px; }
+
+/* ─── Direcciones por defecto ───────────────────────────────── */
+.psc-addr { border: 1px solid var(--psc-line); border-radius: 9px; padding: 9px 10px; }
+.psc-addr--shipping { border-color: var(--psc-primary-line); background: rgba(144, 187, 19, .05); }
+.psc-addr-hd { display: flex; align-items: center; gap: 8px; }
+.psc-addr-kind { font-size: .53rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #7a7f74; }
+.psc-addr--shipping .psc-addr-kind { color: var(--psc-primary-strong); }
+.psc-addr-hd button { margin-left: auto; font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); background: none; border: 0; cursor: pointer; }
+.psc-addr-line { font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.45; margin-top: 3px; }
+.psc-addr-tax { font-family: var(--psc-mono); font-size: .63rem; color: var(--psc-faint); margin-top: 2px; }
+
+/* ─── Carrito en vivo ───────────────────────────────────────── */
+.psc-live { border: 1px solid #ececec; border-radius: 10px; overflow: hidden; }
+.psc-live-hd { display: flex; align-items: center; gap: 9px; padding: 9px 12px; background: var(--psc-surface-deep); }
+.psc-live-hd .t { font-size: .56rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-primary-accent); }
+.psc-live-hd .id { font-family: var(--psc-mono); font-size: .63rem; color: #c9cfbc; }
+.psc-live-hd .dot { margin-left: auto; width: 7px; height: 7px; border-radius: 999px; background: var(--psc-primary-accent); }
+.psc-live-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 7px; }
+.psc-live-amount { font-family: var(--psc-mono); font-size: 1.25rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.psc-live-sub { font-size: .69rem; color: var(--psc-muted); }
+.psc-live-when { display: inline; margin-left: 7px; font-family: var(--psc-mono, inherit); font-size: .63rem; font-weight: 500; letter-spacing: normal; color: #c9cfbc; }
+.psc-live-bar { height: 5px; border-radius: 3px; background: #f0f0ee; overflow: hidden; }
+.psc-live-bar span { display: block; height: 100%; background: var(--psc-primary); border-radius: 3px; }
+.psc-live-cap { font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-faint); }
+.psc-live-acts { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--psc-line); }
+.psc-live-acts button { padding: 9px 3px; text-align: center; font-size: .69rem; font-weight: 600; color: var(--psc-ink-soft); background: none; border: 0; border-right: 1px solid var(--psc-line); cursor: pointer; }
+.psc-live-acts button:last-child { border-right: 0; }
+.psc-live-acts button.is-primary { font-weight: 700; color: var(--psc-primary-strong); }
+
+/* ─── Historial de carritos / pedidos ───────────────────────── */
+.psc-hist-row { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--psc-line); border-radius: 9px; }
+.psc-hist-row--converted { border-color: var(--psc-primary-line); background: rgba(144, 187, 19, .05); }
+.psc-hist-row .amt { font-family: var(--psc-mono); font-size: .72rem; font-weight: 700; }
+.psc-hist-row .amt.is-good { color: var(--psc-primary-strong); }
+.psc-card-head-tt { display: flex; flex-direction: column; }
+.psc-card-head-tt .s { font-size: .63rem; font-weight: 500; color: var(--psc-faint); text-transform: none; letter-spacing: normal; margin-top: 1px; }
+/* .info envuelve ref/título/meta para que ocupen el espacio restante de la
+   fila y el importe quede alineado a la derecha (re-skin del tab "Tienda"). */
+.psc-ord-row .info,
+.psc-hist-row .info { flex: 1; min-width: 0; }
+
+.psc-ord-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--psc-line); border-radius: 10px; cursor: pointer; }
+.psc-ord-row:hover { border-color: var(--psc-primary); background: #fbfdf6; }
+.psc-ord-row .ref { font-family: var(--psc-mono); font-size: .69rem; color: var(--psc-muted); }
+.psc-ord-row .t { display: block; font-size: .78rem; font-weight: 700; margin-top: 4px; line-height: 1.3; }
+.psc-ord-row .m { display: block; font-size: .69rem; color: var(--psc-faint); margin-top: 3px; }
+.psc-ord-row .amt { font-family: var(--psc-mono); font-size: .81rem; font-weight: 700; }
+.psc-ord-row .act { font-size: .69rem; font-weight: 600; color: var(--psc-primary-strong); }
+
+.psc-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.psc-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid #e4e4e0; background: #fff; color: var(--psc-ink-soft); font-size: .72rem; font-weight: 600; cursor: pointer; }
+.psc-chip.is-on { background: var(--psc-surface-deep); border-color: var(--psc-surface-deep); color: #fff; font-weight: 700; }
+
+/* ─── Actividad / timeline ──────────────────────────────────── */
+.psc-act-row { display: flex; align-items: flex-start; gap: 9px; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+.psc-act-row:last-child { border-bottom: 0; }
+.psc-act-row .ic { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; background: var(--psc-surface-alt); color: #7a7f74; display: grid; place-items: center; font-size: .53rem; margin-top: 1px; }
+.psc-act-row .ic.is-good { background: #f0f7dc; color: var(--psc-primary-strong); }
+.psc-act-row .t { display: block; font-size: .72rem; font-weight: 600; line-height: 1.35; }
+.psc-act-row .m { display: block; font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-faint); margin-top: 1px; }
+
+/* ─── Avisos y alertas ──────────────────────────────────────── */
+.psc-note { display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px; border-radius: 9px; font-size: .72rem; line-height: 1.45; }
+.psc-note--good { background: var(--psc-primary-soft); border: 1px solid var(--psc-primary-line); color: var(--psc-primary-strong); }
+.psc-note--warn { background: var(--psc-warn-bg); color: var(--psc-warn-ink); }
+.psc-note--info { background: #f4f4f5; border: 1px solid var(--psc-line-strong); color: var(--psc-ink-soft); }
+.psc-note--lock { background: #f4f4f5; border: 1px solid var(--psc-line-strong); color: var(--psc-ink-soft); }
+
+.psc-live-hint { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px; background: var(--psc-primary-soft); border: 1px solid var(--psc-primary-line); }
+.psc-live-hint .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--psc-primary); flex-shrink: 0; }
+.psc-live-hint .txt { flex: 1; min-width: 0; font-size: .72rem; color: var(--psc-primary-strong); line-height: 1.4; }
+.psc-live-hint--muted { background: var(--psc-surface-alt); border-color: #ececec; }
+.psc-live-hint--muted .dot { background: var(--psc-primary-accent); }
+.psc-live-hint--muted .txt { color: var(--psc-ink-soft); }
+
+.psc-health { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 8px; background: var(--psc-surface-alt); font-size: .72rem; color: var(--psc-ink-soft); }
+.psc-health .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--psc-primary); }
+.psc-health--stale { background: var(--psc-warn-bg); color: var(--psc-warn-ink); }
+.psc-health--stale .dot { background: #c99a2e; }
+.psc-health--down { background: #f4f4f5; border: 1px solid var(--psc-line-strong); }
+.psc-health--down .dot { background: var(--psc-ink-soft); }
+
+/* ─── Hoja interna del workspace (devolución, dirección) ────── */
+.ps-sheet { position: absolute; inset: 0; background: var(--psc-surface); display: flex; flex-direction: column; z-index: 3; }
+.ps-sheet-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--psc-line); }
+.ps-sheet-head .ic { width: 34px; height: 34px; border-radius: 9px; background: #f0f7dc; color: var(--psc-primary-strong); display: grid; place-items: center; }
+.ps-sheet-head .lbl { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-faint); }
+.ps-sheet-head .ttl { font-size: .94rem; font-weight: 700; letter-spacing: -.02em; margin-top: 1px; }
+.ps-sheet-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.ps-sheet-foot { margin-top: auto; padding: 12px 16px 14px; border-top: 1px solid var(--psc-line); display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
+
+/* Líneas de devolución */
+.ps-ret-line { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--psc-line); border-radius: 10px; cursor: pointer; }
+.ps-ret-line.is-on { border-color: var(--psc-primary); background: rgba(144, 187, 19, .05); }
+.ps-ret-line.is-done { opacity: .5; cursor: not-allowed; }
+.ps-ret-line .stepper { opacity: .45; }
+.ps-ret-line.is-on .stepper { opacity: 1; }
+.ps-ret-summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; background: var(--psc-primary-soft); border: 1px solid var(--psc-primary-line); }
+.ps-ret-summary .c { font-size: .72rem; font-weight: 700; color: var(--psc-primary-strong); }
+.ps-ret-summary .a { margin-left: auto; font-family: var(--psc-mono); font-size: .78rem; font-weight: 600; }
+
+/* Opción de dirección */
+.ps-addr-opt { display: flex; align-items: flex-start; gap: 11px; padding: 11px 12px; border: 1px solid var(--psc-line); border-radius: 10px; cursor: pointer; }
+.ps-addr-opt.is-on { border-color: var(--psc-primary); background: rgba(144, 187, 19, .05); }
+.ps-addr-opt.is-current { opacity: .55; cursor: not-allowed; }
+.ps-addr-opt.is-current .psc-addr-kind { color: var(--psc-ink-soft); }
+.ps-addr-opt .ab { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ps-addr-opt .psc-addr-name { display: block; font-size: .78rem; font-weight: 700; color: var(--psc-ink); }
+
+/* ─── Workspace de cliente: menú + panel ────────────────────── */
+.ps-ws { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 460px; }
+.ps-ws-nav { border-right: 1px solid var(--psc-line); background: #fbfbfa; padding: 12px 10px; display: flex; flex-direction: column; gap: 14px; }
+.ps-ws-group { display: flex; flex-direction: column; gap: 4px; }
+.ps-ws-label { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-faint); padding: 0 6px 4px; }
+.ps-ws-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: none; border: 1px solid transparent; width: 100%; text-align: left; cursor: pointer; }
+.ps-ws-item .ic { width: 24px; height: 24px; border-radius: 7px; background: #f0f0ee; color: #6c757d; display: grid; place-items: center; font-size: .63rem; flex-shrink: 0; }
+.ps-ws-item .t { display: block; font-size: .78rem; font-weight: 600; }
+.ps-ws-item .s { display: block; font-size: .66rem; color: var(--psc-muted); margin-top: 1px; }
+.ps-ws-item .psc-chevron { color: #ccc; font-size: .56rem; }
+.ps-ws-item.is-on { background: #fff; border-color: var(--psc-primary); box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
+.ps-ws-item.is-on .ic { background: #f0f7dc; color: var(--psc-primary-strong); }
+.ps-ws-item.is-on .t { font-weight: 700; }
+.ps-ws-item.is-on .psc-chevron { visibility: hidden; }
+.ps-ws-pane { padding: 14px 16px; display: none; flex-direction: column; gap: 12px; }
+.ps-ws-pane.is-on { display: flex; }
+
+@media (max-width: 900px) {
+    .ps-ws { grid-template-columns: minmax(0, 1fr); }
+    .ps-ws-nav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--psc-line); }
+    .ps-ws-label { display: none; }
+}
+
+/* ─── Dashboard del cliente ─────────────────────────────────── */
+.psc-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.psc-kpi { border: 1px solid var(--psc-line); border-radius: 10px; padding: 11px 12px; }
+.psc-kpi .l { font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.psc-kpi .n { font-family: var(--psc-mono); font-size: 1rem; font-weight: 800; margin-top: 4px; }
+.psc-kpi .d { font-size: .66rem; color: var(--psc-muted); margin-top: 2px; }
+.psc-kpi .d.is-good { color: var(--psc-primary-strong); }
+
+.psc-bars { padding: 14px 13px; display: flex; align-items: flex-end; gap: 10px; height: 132px; }
+.psc-bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.psc-bars .bar { width: 100%; border-radius: 5px 5px 0 0; background: #e3ead0; }
+.psc-bars .bar.is-mid { background: #cfdfa4; }
+.psc-bars .bar.is-top { background: var(--psc-primary); }
+.psc-bars .lbl { font-family: var(--psc-mono); font-size: .56rem; color: var(--psc-faint); }
+.psc-bars .col.is-top .lbl { color: var(--psc-primary-strong); font-weight: 700; }
+
+.psc-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.psc-meter { display: flex; align-items: center; gap: 10px; }
+.psc-meter .t { display: block; font-size: .72rem; font-weight: 600; }
+.psc-meter .track { display: block; height: 4px; border-radius: 2px; background: #f0f0ee; margin-top: 4px; overflow: hidden; }
+.psc-meter .track span { display: block; height: 100%; background: var(--psc-primary-accent); }
+.psc-meter .track span.is-top { background: var(--psc-primary); }
+.psc-meter .pct { font-family: var(--psc-mono); font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); }
+
+/* ─── Botonera de pie (todos los modales nuevos) ────────────── */
+.psc-foot { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px 14px; border-top: 1px solid #ececec; background: #fafafa; }
+.psc-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; padding: 9px 13px; border-radius: 7px; font-size: .75rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+.psc-btn--primary { background: var(--psc-primary); color: #fff; }
+.psc-btn--primary:hover { background: var(--psc-primary-strong); }
+.psc-btn--outline { background: #fff; border-color: #d4d4d8; color: var(--psc-ink); }
+.psc-btn--outline:hover { border-color: var(--psc-primary); color: var(--psc-primary-strong); }
+/* Destructivo sin rojo ni azul: verde muy oscuro de marca. */
+.psc-btn--danger { background: var(--psc-surface-deep); color: #fff; }
+.psc-btn--danger:hover { background: #1f2419; }
+.psc-btn:disabled, .psc-btn.is-disabled { background: #f5f5f5; border-color: #f5f5f5; color: #9ca3af; cursor: not-allowed; }
+.psc-btn--dashed { background: #fbfbfa; border: 1px dashed #dee2e6; color: #7a7f74; }
+
+/* ─── Estados de lista (carga, vacío, error) ────────────────── */
+.psc-state { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 28px 18px; text-align: center; }
+.psc-state i { font-size: 1.25rem; color: #d6dcc4; }
+.psc-state .t { font-size: .78rem; font-weight: 700; }
+.psc-state .s { font-size: .69rem; color: var(--psc-faint); line-height: 1.45; }
+.psc-skel { height: 52px; border-radius: 9px; background: #f5f6f2; }
+.psc-skel + .psc-skel { margin-top: 9px; }
+.psc-loading { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: .72rem; color: var(--psc-faint); padding: 6px 0; }
+
+/* ─── Plantillas rápidas / tarjeta de pedido en el mensaje ─── */
+.psc-tpl { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 1px solid var(--psc-line); border-radius: 9px; background: #fff; cursor: pointer; text-align: left; }
+.psc-tpl.is-on { border-color: var(--psc-primary); background: #fafafa; }
+.psc-tpl .t { display: block; font-size: .72rem; font-weight: 600; }
+.psc-tpl.is-on .t { font-weight: 700; }
+.psc-tpl .s { display: block; font-size: .66rem; color: #7a7f74; margin-top: 1px; }
+.psc-tpl .act { font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); flex-shrink: 0; }
+
+.psc-ordcard { border: 1px solid var(--psc-line); border-radius: 10px; overflow: hidden; }
+.psc-ordcard-hd { display: flex; align-items: center; gap: 9px; padding: 9px 11px; background: var(--psc-surface-alt); border-bottom: 1px solid var(--psc-line); }
+.psc-ordcard-hd .ref { font-family: var(--psc-mono); font-size: .69rem; font-weight: 600; }
+.psc-ordcard-hd .psc-tag { margin-left: auto; }
+.psc-ordcard-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.psc-ordcard-total { display: flex; align-items: center; padding-top: 6px; border-top: 1px solid #f5f5f5; font-size: .78rem; font-weight: 800; }
+.psc-ordcard-total .v { margin-left: auto; font-family: var(--psc-mono); }
+.psc-ordcard-link { font-size: .66rem; color: var(--psc-primary-strong); }
+
+/* ─── Placeholder de imagen mientras no hay foto ───────────── */
+.psc-thumb {
+    background: repeating-linear-gradient(135deg, #f4f5f0, #f4f5f0 4px, #eaece3 4px, #eaece3 8px);
+    border: 1px solid #ececec;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    font-family: var(--psc-mono);
+    font-size: .47rem;
+    color: var(--psc-faint);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.psc-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.psc-thumb--sm { width: 28px; height: 28px; }
+.psc-thumb--md { width: 38px; height: 38px; }
+.psc-thumb--lg { width: 46px; height: 46px; }
+
+/* ─── Segunda ola: pedido, catálogo, cliente, operación ─────── */
+.psc-timeline-row { display: flex; gap: 11px; padding: 0 0 12px; }
+.psc-timeline-row:last-child { padding-bottom: 0; }
+.psc-timeline-row .dot { width: 9px; height: 9px; border-radius: 999px; background: #d4d4d0; margin-top: 4px; flex-shrink: 0; }
+.psc-timeline-row.is-current .dot { background: var(--psc-primary); box-shadow: 0 0 0 3px rgba(144, 187, 19, .18); }
+.psc-timeline-row .t { display: block; font-size: .78rem; font-weight: 600; }
+.psc-timeline-row.is-current .t { font-weight: 700; }
+.psc-timeline-row .m { display: block; font-size: .69rem; color: var(--psc-muted); margin-top: 2px; }
+.psc-timeline-row .mail { display: block; font-size: .66rem; color: var(--psc-primary-strong); margin-top: 2px; }
+
+.psc-note-item { border: 1px solid #ececec; border-radius: 8px; padding: 9px 11px; background: #fafafa; }
+.psc-note-item .txt { font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.45; }
+.psc-note-item .by { font-family: var(--psc-mono); font-size: .63rem; color: var(--psc-faint); }
+
+.psc-field { display: flex; flex-direction: column; gap: 5px; }
+.psc-field .lbl { font-size: .69rem; font-weight: 600; color: var(--psc-ink-soft); }
+.psc-field .finput, .psc-field select, .psc-field textarea, .psc-field input {
+    width: 100%; padding: 7px 10px; border: 1px solid #ececec; border-radius: 6px;
+    font-size: .75rem; color: var(--psc-ink); background: #fff;
+}
+.psc-field .finput.mono, .psc-field input.mono { font-family: var(--psc-mono); }
+.psc-field textarea { line-height: 1.55; min-height: 60px; resize: vertical; }
+.psc-field .hint { font-size: .63rem; color: var(--psc-faint); }
+.psc-fieldrow { display: flex; gap: 9px; }
+.psc-fieldrow > .psc-field { flex: 1; }
+
+.psc-radio-opt { display: flex; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid var(--psc-line); border-radius: 8px; cursor: pointer; }
+.psc-radio-opt.is-on { border-color: var(--psc-primary); background: #fafafa; }
+.psc-radio-opt.is-off { opacity: .55; cursor: not-allowed; }
+
+.psc-preview { border: 1px solid #ececec; border-radius: 8px; overflow: hidden; }
+.psc-preview-hd { padding: 8px 11px; background: #fafafa; border-bottom: 1px solid #ececec; font-size: .66rem; font-weight: 700; color: var(--psc-muted); text-transform: uppercase; letter-spacing: .06em; }
+.psc-preview-body { padding: 10px 11px; font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.5; }
+
+.psc-dropzone { padding: 12px; border: 1px dashed #d4d4d8; border-radius: 8px; text-align: center; font-size: .72rem; color: #7a7f74; background: #fafafa; }
+.psc-dropzone .s { font-size: .63rem; color: #b4b4b4; margin-top: 2px; }
+
+/* Precio + stock en la lista de deseos (mockup "6 · Mini-modal wishlist") */
+.ps-prc-item .ps-prc-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.ps-prc-item .ps-prc-price { font-family: var(--psc-mono); font-size: .78rem; font-weight: 700; color: var(--psc-ink); white-space: nowrap; }
+
+.ps-addr-current { padding: 10px 11px; border-radius: 9px; background: #fbfbfa; border: 1px solid #ececec; }
+.ps-addr-current .lbl { display: block; font-size: .56rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-faint); }
+.ps-addr-current .nm { display: block; font-size: .78rem; font-weight: 700; color: var(--psc-ink); margin-top: 3px; }
+.ps-addr-current .ln { display: block; font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.45; margin-top: 2px; }
+
+.psc-seg { display: flex; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px; }
+.psc-seg button { flex: 1; padding: 6px 8px; border: 0; border-radius: 6px; background: none; font-size: .69rem; font-weight: 600; color: var(--psc-muted); text-align: center; cursor: pointer; }
+.psc-seg button.is-on { background: #fff; color: var(--psc-ink); font-weight: 700; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+
+.psc-logtable { border: 1px solid #ececec; border-radius: 10px; overflow: hidden; }
+.psc-logtable-hd, .psc-logrow { display: flex; align-items: center; gap: 10px; padding: 9px 11px; font-size: .72rem; }
+.psc-logtable-hd { background: #fafafa; border-bottom: 1px solid #ececec; font-size: .59rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.psc-logrow { border-bottom: 1px solid #f5f5f5; }
+.psc-logrow:last-child { border-bottom: 0; }
+.psc-logrow .act { flex: 1; font-family: var(--psc-mono); }
+.psc-logrow .ms { width: 64px; text-align: right; font-family: var(--psc-mono); color: var(--psc-muted); }
+.psc-logrow .res { width: 78px; text-align: right; }
+.psc-logrow.is-slow { background: var(--psc-warn-bg); }
+.psc-logrow.is-slow .ms { color: var(--psc-warn-ink); }
+.psc-tag--cache { background: var(--psc-primary-chip); color: var(--psc-primary-strong); }
+.psc-tag--timeout { background: #f0e2c4; color: var(--psc-warn-ink); }
+
+.psc-maprow { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border: 1px solid var(--psc-line); border-radius: 9px; }
+.psc-maprow.is-muted { border-color: var(--psc-line-strong); background: #f4f4f5; }
+.psc-maprow .from { flex: 1; min-width: 0; font-size: .72rem; font-weight: 600; }
+.psc-maprow .to { width: 132px; }
+.psc-maprow .to select { width: 100%; padding: 6px 9px; border: 1px solid #ececec; border-radius: 6px; font-size: .72rem; }
+
+/* ─── Re-skin del carrito real (#psCartModal, mockup "5 · Aplicar cupón
+   al carrito"): el HTML lo genera psCartModalHtml() con clases Bootstrap
+   genéricas (form-control/btn-outline-primary) — se sobrescriben aquí en
+   vez de tocar el JS, para no arriesgar los handlers data-cart-action. ── */
+.ps-cart-voucher-row .ps-cart-voucher-input.form-control {
+    padding: 7px 10px; border: 1px solid #ececec; border-radius: 6px;
+    font-size: .75rem; color: var(--psc-ink); background: #fff; box-shadow: none;
+}
+.ps-cart-voucher-row .ps-cart-voucher-input.form-control:focus {
+    border-color: var(--psc-primary); box-shadow: 0 0 0 3px rgba(144, 187, 19, .12);
+}
+.ps-cart-voucher-row button[data-cart-action="apply-voucher"] {
+    background: var(--psc-primary); color: #fff; border: 1px solid transparent;
+    border-radius: 7px; font-size: .75rem; font-weight: 600; padding: 7px 14px;
+    white-space: nowrap;
+}
+.ps-cart-voucher-row button[data-cart-action="apply-voucher"]:hover { background: var(--psc-primary-strong); }
+.ps-cart-address-row button[data-cart-action="change-address"] {
+    background: none; border: 0; padding: 0; margin: 0;
+    font-size: .72rem; font-weight: 600; color: var(--psc-primary-strong);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.ps-cart-address-row button[data-cart-action="change-address"]:hover { color: var(--psc-primary); text-decoration: none; }
+
+/* Modal general "Direcciones de envío" (psAddressesModal, reusado desde
+   el carrito) — mismo botón .psc-btn--primary que el resto del sistema
+   en vez del btn-outline-primary de Bootstrap. */
+.ps-addr-card .ps-addr-use-btn {
+    width: 100%; display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 9px; padding: 9px 13px; border-radius: 7px; border: 1px solid transparent;
+    font-size: .75rem; font-weight: 600; background: var(--psc-primary); color: #fff;
+}
+.ps-addr-card .ps-addr-use-btn:hover { background: var(--psc-primary-strong); color: #fff; }
+
+/* Cabecera del modal de carrito (mismo patrón .modal-head con icono que el
+   resto de piezas del mockup, aplicado sobre el .modal-header de Bootstrap). */
+.ps-cart-modal-head { display: flex; align-items: center; gap: 12px; }
+.ps-cart-modal-head .ic {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    background: #f0f7dc; color: var(--psc-primary-strong); display: grid; place-items: center;
+}
+.ps-cart-modal-titlewrap { flex: 1; min-width: 0; }
+.ps-cart-modal-titlewrap .lbl { display: block; font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--psc-faint); }
+.ps-cart-modal-titlewrap .modal-title { font-size: .94rem; font-weight: 700; letter-spacing: -.02em; margin-top: 1px; }
+
+/* Desglose Subtotal/Envío/Total del carrito (antes solo "Total" sin estilo). */
+.ps-cart-totals { padding: 11px 14px 14px; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+.ps-cart-totals .row { display: flex; align-items: center; justify-content: space-between; font-size: .78rem; color: var(--psc-ink-soft); }
+.ps-cart-totals .row.is-total { margin-top: 5px; padding-top: 9px; border-top: 1px solid #f0f0f0; font-size: .88rem; font-weight: 800; color: var(--psc-ink); }
+.ps-cart-totals .row.is-total span:last-child { font-family: var(--psc-mono); }
+
+#psCartVoucherSuggestions:not(:empty) { padding: 0 14px 6px; display: flex; flex-direction: column; gap: 8px; }
+
+/* ============================================================
+   Fase 2 · implementación completa del documento
+   ============================================================ */
+
+/* ─── Tab Tienda: layout y modo "sin cliente" ───────────────── */
+.psc-store { display: flex; flex-direction: column; gap: 9px; }
+.psc-store-main { display: flex; flex-direction: column; gap: 9px; }
+.psc-store .psc-card + .psc-card { margin-top: 0; }
+.psc-store-main > div:empty { display: none; }
+.psc-link-box { display: none; }
+.psc-store--unlinked .psc-link-box { display: block; }
+.psc-store--unlinked .psc-store-main { display: none; }
+.psc-link-results { display: flex; flex-direction: column; gap: 6px; }
+.psc-link-results:empty { display: none; }
+.psc-state--compact { padding: 14px 8px 6px; }
+.psc-state .s b { color: var(--psc-ink-soft); }
+.psc-field--grow { flex: 1; min-width: 0; }
+
+/* Métricas: número arriba, etiqueta debajo (antes salían en línea) */
+.psc-stat .n, .psc-stat .l { display: block; }
+
+.psc-row .v { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.psc-avatar--sm { width: 28px; height: 28px; font-size: .6rem; }
+.psc-radio-body { display: flex; flex-direction: column; min-width: 0; }
+.psc-radio-body .t { font-size: .75rem; font-weight: 700; color: var(--psc-ink); }
+.psc-radio-body .s { font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-muted); margin-top: 1px; }
+
+.psc-link-ref { color: var(--psc-primary-strong); font-weight: 600; }
+
+/* ─── Alertas del cliente (pieza 14) ────────────────────────── */
+.psc-alerts { display: flex; flex-direction: column; gap: 6px; }
+.psc-alert { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 9px; background: var(--psc-warn-bg); font-size: .72rem; color: var(--psc-warn-ink); line-height: 1.4; }
+.psc-alert .dot { width: 7px; height: 7px; border-radius: 999px; background: #c99a2e; flex-shrink: 0; }
+.psc-alert .txt { flex: 1; min-width: 0; }
+.psc-alert .act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: var(--psc-warn-ink); text-decoration: underline; cursor: pointer; }
+
+/* Aviso con texto + acción (ámbar = fallo de carga, gris oscuro = bloqueo) */
+.psc-note-txt { flex: 1; min-width: 0; }
+.psc-note-act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; flex-shrink: 0; }
+
+/* ─── Carrito en vivo: barra frente al ticket medio ─────────── */
+.psc-live-acts--2 { grid-template-columns: repeat(2, 1fr); }
+.psc-w-0 { width: 0; } .psc-w-5 { width: 5%; } .psc-w-10 { width: 10%; } .psc-w-15 { width: 15%; }
+.psc-w-20 { width: 20%; } .psc-w-25 { width: 25%; } .psc-w-30 { width: 30%; } .psc-w-35 { width: 35%; }
+.psc-w-40 { width: 40%; } .psc-w-45 { width: 45%; } .psc-w-50 { width: 50%; } .psc-w-55 { width: 55%; }
+.psc-w-60 { width: 60%; } .psc-w-65 { width: 65%; } .psc-w-70 { width: 70%; } .psc-w-75 { width: 75%; }
+.psc-w-80 { width: 80%; } .psc-w-85 { width: 85%; } .psc-w-90 { width: 90%; } .psc-w-95 { width: 95%; }
+.psc-w-100 { width: 100%; }
+
+/* ─── Filas de pedido (tab, listado, workspace) ─────────────── */
+.psc-ord-top { display: flex; align-items: center; gap: 8px; }
+.psc-ord-top .psc-tag { flex-shrink: 0; }
+.psc-ord-end { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.psc-ord-end a.act { text-decoration: none; }
+.psc-ord-end a.act:hover { text-decoration: underline; }
+.psc-ord-list { display: flex; flex-direction: column; gap: 8px; }
+.psc-hist-row--static { cursor: default; }
+
+/* Listado de pedidos (psOrdersModal) */
+.ps-ord-tools { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--psc-line); }
+#psOrdersModalBody { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+#psOrdersModal .psc-count, #psCartModal .psc-count { font-family: var(--psc-mono); font-size: .66rem; color: #7a7f74; background: #f5f6f2; padding: 1px 8px; border-radius: 4px; }
+
+/* Pie de los modales Bootstrap del módulo: apilado, primario arriba */
+.ps-modal-foot { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 16px; background: #fafafa; }
+.ps-modal-foot > * { margin: 0; }
+
+/* ─── Carrito (pieza 5) ─────────────────────────────────────── */
+.ps-cart-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.ps-cart-body > .ps-sec-label { margin: 4px 0 0; }
+.ps-cart-lines { display: flex; flex-direction: column; gap: 8px; }
+.ps-cart-line { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid var(--psc-line); border-radius: 10px; background: #fff; }
+.ps-cart-line-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ps-cart-line-body .nm { font-size: .78rem; font-weight: 700; color: var(--psc-ink); line-height: 1.3; }
+.ps-cart-line-body .s { font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-muted); margin-top: 2px; }
+.ps-cart-line-amt { font-family: var(--psc-mono); font-size: .78rem; font-weight: 700; min-width: 76px; text-align: right; }
+.ps-cart-line-qty { font-family: var(--psc-mono); font-size: .69rem; color: var(--psc-muted); }
+.ps-cart-line .ps-cart-remove-btn { width: 26px; height: 26px; border-radius: 6px; border: 1px solid transparent; background: none; color: #a3a3a3; display: grid; place-items: center; cursor: pointer; }
+.ps-cart-line .ps-cart-remove-btn:hover { border-color: var(--psc-line-strong); color: var(--psc-ink-soft); }
+.ps-cart-voucher-row { display: flex; align-items: center; gap: 8px; }
+.ps-cart-voucher-row .ps-cart-voucher-input { flex: 1; min-width: 0; }
+.ps-cart-voucher-row button.is-busy { opacity: .7; cursor: progress; }
+.ps-cart-vouchers-applied { display: flex; flex-wrap: wrap; gap: 6px; }
+.ps-cart-voucher-chip .rm.is-armed { background: var(--psc-surface-deep); color: #fff; border-radius: 999px; }
+#psCartVoucherSuggestions:not(:empty) { padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ps-cart-sugg-lbl { font-size: .63rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.ps-cart-sugg { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border: 1px solid var(--psc-line); border-radius: 9px; background: #fff; }
+.ps-cart-sugg .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ps-cart-sugg .t { font-family: var(--psc-mono); font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); }
+.ps-cart-sugg .s { font-size: .66rem; color: var(--psc-muted); margin-top: 1px; }
+.ps-cart-sugg .act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); cursor: pointer; }
+.ps-cart-sugg.is-off { background: #fbfbfa; }
+.ps-cart-sugg.is-off .t { color: var(--psc-faint); text-decoration: line-through; }
+.ps-cart-address-row { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px; background: var(--psc-surface-alt); }
+.ps-cart-address-txt { flex: 1; min-width: 0; font-size: .72rem; color: var(--psc-ink-soft); line-height: 1.4; }
+.ps-cart-body .ps-cart-error-banner { margin: 0; }
+
+/* Totales: filas etiqueta/valor. Clase propia: ".row" chocaba con la
+   rejilla de Bootstrap (.row > * { width: 100% }) y apilaba cada celda. */
+.psc-totals { display: flex; flex-direction: column; gap: 5px; padding-top: 10px; border-top: 1px solid var(--psc-line); }
+.psc-tot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .78rem; color: var(--psc-ink-soft); }
+.psc-tot span:last-child { font-family: var(--psc-mono); }
+.psc-tot.is-discount { color: var(--psc-primary-strong); }
+.psc-tot.is-total { margin-top: 4px; padding: 9px 11px; border-radius: 8px; background: var(--psc-surface-deep); color: #fff; font-size: .86rem; font-weight: 800; }
+
+.ps-addr-card.is-current { background: #f4f4f5; }
+.ps-addr-card.is-current .ps-addr-alias { color: var(--psc-ink-soft); }
+
+/* ─── Cupones ───────────────────────────────────────────────── */
+.psc-vch-hd .ps-copy-btn { padding: 0 2px; }
+.psc-vch-desc { font-size: .66rem; color: var(--psc-muted); margin-top: 3px; }
+.psc-vch-acts button:disabled { color: #b4b4b4; cursor: not-allowed; }
+
+/* ─── Respuestas rápidas (pieza 17) ─────────────────────────── */
+.psc-tpl-body { flex: 1; min-width: 0; }
+
+/* ─── Workspace de cliente ──────────────────────────────────── */
+.bv-modal .modal.psc-ws-modal { max-width: 1040px; width: 96vw; }
+.psc-ws-modal .modal-body { overflow: hidden; }
+.psc-ws-modal .ps-ws { height: min(620px, calc(100vh - 220px)); }
+.psc-ws-modal .ps-ws-nav { overflow-y: auto; }
+.psc-ws-modal .ps-ws-pane { overflow-y: auto; }
+.ps-ws-item-body { flex: 1; min-width: 0; }
+.ps-ws-item .s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psc-ws-id { font-family: var(--psc-mono); font-size: .75rem; font-weight: 500; color: var(--psc-muted); }
+.ps-ws-pane .psc-card + .psc-card { margin-top: 0; }
+.psc-split > .psc-card { margin: 0; }
+.psc-kpi .l, .psc-kpi .n, .psc-kpi .d { display: block; }
+.psc-bars .bar { display: block; }
+.psc-h-4 { height: 4%; } .psc-h-5 { height: 5%; } .psc-h-10 { height: 10%; } .psc-h-15 { height: 15%; }
+.psc-h-20 { height: 20%; } .psc-h-25 { height: 25%; } .psc-h-30 { height: 30%; } .psc-h-35 { height: 35%; }
+.psc-h-40 { height: 40%; } .psc-h-45 { height: 45%; } .psc-h-50 { height: 50%; } .psc-h-55 { height: 55%; }
+.psc-h-60 { height: 60%; } .psc-h-65 { height: 65%; } .psc-h-70 { height: 70%; } .psc-h-75 { height: 75%; }
+.psc-h-80 { height: 80%; } .psc-h-85 { height: 85%; } .psc-h-90 { height: 90%; } .psc-h-95 { height: 95%; }
+.psc-h-100 { height: 100%; }
+.psc-bars .col { height: 100%; justify-content: flex-end; }
+.ps-cart-line--ro { background: #fbfbfa; }
+.psc-note-item { display: flex; flex-direction: column; gap: 5px; }
+.psc-note-item-hd { display: flex; align-items: center; gap: 8px; font-size: .72rem; }
+.psc-note-item-hd .by { margin-left: auto; }
+
+@media (max-width: 900px) {
+    .psc-ws-modal .ps-ws { height: auto; max-height: calc(100vh - 200px); }
+    .ps-ws-item { width: auto; flex-shrink: 0; }
+    .ps-ws-group { flex-direction: row; }
+}
+
+/* ─── Avisos sobre el composer (piezas 12 y 24) ─────────────── */
+.psc-live-strip { display: flex; flex-direction: column; gap: 6px; padding: 0 16px 8px; }
+.psc-live-strip:empty { display: none; }
+.psc-live-hint--toast { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .06); }
+.psc-live-hint .act, .psc-ref-card .act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: var(--psc-primary-strong); cursor: pointer; flex-shrink: 0; }
+.psc-live-hint .x, .psc-ref-card .x { background: none; border: 0; padding: 0 2px; color: #b4b4b4; cursor: pointer; font-size: .7rem; }
+.psc-ref-card { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border: 1px solid var(--psc-primary-line); border-radius: 9px; background: #fff; }
+.psc-ref-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.psc-ref-body .lbl { font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.psc-ref-body .t { font-size: .75rem; font-weight: 700; color: var(--psc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psc-ref-body .s { font-family: var(--psc-mono); font-size: .63rem; color: var(--psc-primary-strong); }
+
+/* ─── Workspace de pedido: hojas internas ──────────────────── */
+.bv-po-dialog.is-sheet-open .bv-modal-foot { display: none; }
+.bv-po-dialog.is-sheet-open .bv-po-body { min-height: 560px; }
+.ps-sheet-head .bv-modal-close { margin-left: auto; }
+.ps-sheet-head > span:nth-child(2) { display: flex; flex-direction: column; }
+.ps-sheet.is-busy .ps-sheet-body { opacity: .6; pointer-events: none; }
+.psc-sheet-intro { margin: 0; font-size: .75rem; color: var(--psc-ink-soft); line-height: 1.5; }
+.ps-ret-line .nm { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ps-ret-line .nm .t { font-size: .78rem; font-weight: 700; color: var(--psc-ink); line-height: 1.3; }
+.ps-ret-line .nm .s { font-family: var(--psc-mono); font-size: .6rem; color: var(--psc-muted); margin-top: 2px; }
+.ps-ret-line.is-done .nm .s { font-family: inherit; font-size: .66rem; color: var(--psc-ink-soft); }
+.ps-ret-line .stepper { flex-shrink: 0; }
+.psc-check { display: flex; align-items: center; gap: 8px; font-size: .75rem; color: var(--psc-ink-soft); cursor: pointer; }
+.bv-po-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.bv-po-stack .bv-po-btn { text-align: center; text-decoration: none; }
+.bv-po-chev { color: #9ca3af; font-size: 10px; }
+.psc-select2 + .select2-container .select2-selection--single { height: 34px; border: 1px solid #ececec; border-radius: 6px; }
+.psc-select2 + .select2-container .select2-selection__rendered { line-height: 32px; font-size: .75rem; }
+.psc-select2 + .select2-container .select2-selection__arrow { height: 32px; }
+
+/* Buscador dentro de modales Bootstrap (.search-field solo está estilado
+   dentro de .bv-modal en el core). */
+.ps-ord-tools .search-field { display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid #ececec; border-radius: 8px; background: #fff; }
+.ps-ord-tools .search-field i { color: var(--psc-faint); font-size: .75rem; }
+.ps-ord-tools .search-field .finput { flex: 1; min-width: 0; border: 0; padding: 9px 0; font-size: .78rem; color: var(--psc-ink); background: none; outline: none; box-shadow: none; }
+.ps-ord-tools .search-field:focus-within { border-color: var(--psc-primary); }
+.psc-radio-opt input, .psc-check input, .ps-ret-line input[type="checkbox"], #psRetAll { accent-color: var(--psc-primary); }
+.psc-ref-body .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psc-ref-body .t { white-space: normal; }
+.psc-ref-body .s { white-space: nowrap; }
+
+/* ─── Vale de compensación (pieza 04) ───────────────────────── */
+.psc-voucher-body { display: flex; flex-direction: column; gap: 12px; }
+.psc-money-input { display: flex; align-items: center; border: 1px solid #ececec; border-radius: 6px; background: #fff; }
+.psc-money-input:focus-within { border-color: var(--psc-primary); }
+.psc-money-input .finput { flex: 1; min-width: 0; border: 0 !important; background: none; font-size: .9rem !important; font-weight: 700; }
+.psc-money-input .sfx { padding: 0 11px; font-family: var(--psc-mono); font-size: .78rem; color: var(--psc-muted); }
+.psc-voucher-reasons { display: flex; flex-direction: column; gap: 6px; }
+.psc-radio-opt { justify-content: flex-start; text-align: left; }
+.psc-radio-opt input[type="radio"] { width: auto; flex: 0 0 auto; margin: 0; }
+.psc-radio-opt .psc-radio-body { flex: 1; }
+.psc-radio-opt.is-on { border-color: var(--psc-primary); background: rgba(144, 187, 19, .05); }
+.psc-money-input input::-webkit-outer-spin-button, .psc-money-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.psc-money-input input[type="number"] { -moz-appearance: textfield; }
+
+/* ============================================================
+   Revisión de diseño de modales (24-sep)
+   ============================================================ */
+
+/* Workspace de pedido · totales en fila. .row es también la rejilla de
+   Bootstrap (.row > * { width: 100% }) y apilaba etiqueta e importe. */
+.bv-po-totals .row { margin: 0; flex-wrap: nowrap; }
+.bv-po-totals .row > * { width: auto; max-width: none; flex: 0 1 auto; padding: 0; margin: 0; }
+.bv-po-totals .row .v { margin-left: auto; }
+
+/* Workspace de pedido · botones de los paneles. En el core .btn-primary /
+   .btn-secondary solo tienen estilo dentro de .bv-modal-foot, así que aquí
+   salían como texto plano. Mismo lenguaje que .psc-btn. */
+.bv-po-body .btn-primary, .bv-po-body .btn-secondary,
+.bv-po-dialog .bv-modal-head .btn-secondary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 13px; border-radius: 7px; border: 1px solid transparent;
+    font-size: .75rem; font-weight: 600; line-height: 1.2; cursor: pointer; text-decoration: none;
+}
+.bv-po-body .bv-po-btn { width: 100%; align-self: stretch; margin-top: 10px; }
+.bv-po-body .btn-primary { background: var(--psc-primary); color: #fff; }
+.bv-po-body .btn-primary:hover { background: var(--psc-primary-strong); color: #fff; }
+.bv-po-body .btn-secondary, .bv-po-dialog .bv-modal-head .btn-secondary { background: #fff; border-color: #d4d4d8; color: var(--psc-ink); }
+.bv-po-body .btn-secondary:hover, .bv-po-dialog .bv-modal-head .btn-secondary:hover { border-color: var(--psc-primary); color: var(--psc-primary-strong); }
+.bv-po-body .btn-primary:disabled, .bv-po-body .btn-secondary:disabled { background: #f5f5f5; border-color: #f5f5f5; color: #9ca3af; cursor: not-allowed; }
+.bv-po-body .btn-sm, .bv-po-dialog .bv-modal-head .btn-sm { padding: 5px 10px; font-size: .69rem; }
+.bv-po-cta .btn-primary { flex-shrink: 0; }
+
+/* Miniatura real de la línea del pedido (con fallback al placeholder). */
+.bv-po-line .thumb.psc-thumb { width: 44px; height: 44px; }
+.bv-po-line .thumb.psc-thumb img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Carrito · datos bajo el título, pista de cupones y filas de dirección. */
+.ps-cart-modal-meta { display: block; font-family: var(--psc-mono); font-size: .63rem; color: var(--psc-faint); margin-top: 2px; }
+.ps-cart-sugg-empty { display: block; font-size: .66rem; color: var(--psc-faint); padding: 0 2px; }
+.ps-cart-address-row + .ps-cart-address-row { margin-top: -4px; }
+.ps-cart-address-lbl { flex-shrink: 0; width: 78px; font-size: .59rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--psc-faint); }
+.ps-cart-address-txt.is-missing { color: var(--psc-ink-soft); font-style: italic; }
+.ps-cart-address-row button[data-cart-action="change-address"] { flex-shrink: 0; }
+
+/* Workspace de cliente · menú más compacto (14 secciones con extensiones). */
+.psc-ws-modal .ps-ws-nav { gap: 10px; padding: 10px 8px; }
+.psc-ws-modal .ps-ws-item { padding: 6px 8px; gap: 9px; }
+.psc-ws-modal .ps-ws-item .ic { width: 22px; height: 22px; }
+.psc-ws-modal .ps-ws-item .t { font-size: .75rem; }
+.psc-ws-modal .ps-ws-item .s { font-size: .63rem; }
+.bv-po-line .thumb.psc-thumb { font-family: var(--psc-mono); font-size: .5rem; color: var(--psc-faint); }
+.psc-state-info { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.psc-state-info:empty { display: none; }
+/* Pestañas del workspace de pedido con texto bajo el icono (antes solo icono). */
+.bv-po-tabs .bv-po-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bv-po-tab-lbl { font-size: .56rem; font-weight: 600; letter-spacing: .01em; line-height: 1; }
+
+/* ─── techsmall: pantallas estrechas ─── */
+@media (max-width: 575.98px) {
+    /* Carrito (#psCartModal): en una fila cabían miniatura, nombre, selector
+       de cantidad, importe y quitar; el nombre quedaba en ~100px y se partía
+       palabra a palabra. El nombre ocupa la primera fila y los controles
+       bajan a una segunda, alineados con el texto. */
+    .ps-cart-line { flex-wrap: wrap; row-gap: 8px; }
+    .ps-cart-line-body { flex: 1 1 calc(100% - 60px); }
+    .ps-cart-line .ps-cart-qty-stepper,
+    .ps-cart-line .ps-cart-line-qty { margin-left: 49px; }
+    .ps-cart-line .ps-cart-line-amt { margin-left: auto; min-width: 0; }
+    .ps-cart-line .ps-cart-remove-btn { margin-left: 4px; }
+    .ps-cart-address-lbl { width: 64px; }
+    .ps-cart-voucher-row { flex-wrap: wrap; }
+    .ps-cart-voucher-row .ps-cart-voucher-input { flex: 1 1 100%; min-width: 0; }
+    .ps-cart-voucher-row > button { flex: 1 1 100%; }
+
+    /* Listas de pedidos (#psOrdersModal y el workspace de cliente): una
+       etiqueta de estado larga («En espera de pago por transferencia
+       bancaria») se salía de su columna por encima del importe. */
+    .psc-ord-top { flex-wrap: wrap; row-gap: 4px; min-width: 0; }
+    .psc-ord-top .psc-tag { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Workspace de pedido: la etiqueta de estado (nowrap) aplastaba el título
+       a 9px y la referencia se pintaba encima. El estado baja a su propia
+       fila bajo el título; la cabecera conserva el botón de cerrar arriba. */
+    .bv-modal.on:has(> .bv-po-dialog) { padding: 8px; }
+    .bv-po-dialog .bv-modal-head { flex-wrap: wrap; row-gap: 6px; }
+    .bv-po-dialog .bv-modal-title-wrap { flex: 1 1 0; min-width: 0; }
+    .bv-po-dialog .bv-po-status { order: 10; flex: 1 1 100%; min-width: 0; }
+    .bv-po-dialog .bv-po-status .psc-tag { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+
+    /* Workspace de cliente: menú horizontal más compacto (sin subtítulo ni
+       flecha) para que se vean más secciones sin desplazar. */
+    .psc-ws-modal .ps-ws-item .s,
+    .psc-ws-modal .ps-ws-item .psc-chevron { display: none; }
+}
+
+@media (max-width: 900px) {
+    /* Workspace de cliente: con el menú arriba, el panel tiene altura fija y
+       sus tarjetas (overflow: hidden) se encogían hasta cortar el contenido
+       (p. ej. «Artículos del carrito» mostraba una sola línea) en vez de
+       dejar que el panel desplazase. */
+    .psc-ws-modal .ps-ws-pane > * { flex-shrink: 0; }
+    /* Con altura mínima fija, la fila del menú se estiraba (~135px con los
+       botones centrados en un hueco vacío). El menú toma solo su alto y el
+       resto es para el panel. */
+    .psc-ws-modal .ps-ws { grid-template-rows: auto minmax(0, 1fr); }
+    .psc-ws-modal .ps-ws-nav { align-items: flex-start; }
+}

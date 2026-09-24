@@ -14,9 +14,13 @@
     $_rpPsId         = $_rpCustEarly?->externalIdFor('prestashop') ?? '';
     $_rpErpId        = $_rpCustEarly?->externalIdFor('erp') ?? '';
     // ERP es un sistema único (Oracle Interges), no requiere integración por
-    // inbox: basta con que el customer tenga IDCLIENTE vinculado. PrestaShop sí
-    // varía por tienda, por eso mantiene el chequeo de PlatformIntegration.
-    $_rpHasPs        = helpdesk_prestashop_enabled() && ($_rpIntegrations->contains('platform', 'prestashop') || ! empty($_rpPsId));
+    // inbox: basta con que el customer tenga IDCLIENTE vinculado.
+    // PrestaShop: el tab se muestra para cualquier conversación con cliente
+    // (antes solo si la bandeja tenía integración PS o el cliente ya estaba
+    // vinculado). Sin cliente en la tienda, el propio tab ofrece "Buscar y
+    // vincular" — si no se mostraba, un contacto sin vincular no tenía forma
+    // de llegar a sus pedidos desde el chat.
+    $_rpHasPs        = helpdesk_prestashop_enabled() && ($_rpIntegrations->contains('platform', 'prestashop') || ! empty($_rpPsId) || $_rpCustEarly !== null);
     $_rpHasErp       = helpdesk_erp_enabled() && ($_rpIntegrations->contains('platform', 'erp') || ! empty($_rpErpId));
     $_rpEmail        = $_rpCustEarly?->email ?? '';
     $_rpPsStoreUrl   = $_rpIntegrations->firstWhere('platform', 'prestashop')?->store_url ?? '';
@@ -207,7 +211,8 @@
         $rpExternalPsId  = $rpCust?->externalIdFor('prestashop') ?? null;
         $rpExternalErpId = $rpCust?->externalIdFor('erp') ?? null;
         // Idem nota arriba: ERP es global, basta con que el customer esté vinculado.
-        $rpHasPs  = helpdesk_prestashop_enabled() && ($rpIntegrations->contains('platform', 'prestashop') || ! empty($rpExternalPsId));
+        // Misma regla que $_rpHasPs (cabecera): cualquier conversación con cliente.
+        $rpHasPs  = helpdesk_prestashop_enabled() && ($rpIntegrations->contains('platform', 'prestashop') || ! empty($rpExternalPsId) || $rpCust !== null);
         $rpHasErp = helpdesk_erp_enabled() && ($rpIntegrations->contains('platform', 'erp') || ! empty($rpExternalErpId));
     @endphp
 
@@ -348,9 +353,6 @@
             </button>
             <button type="button" class="tab bv-right-tab" data-bv-tab="ps-vouchers" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_vouchers') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_vouchers') }}">
                 <i class="fa-solid fa-tag" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-addresses" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_addresses') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_addresses') }}">
-                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
             </button>
         @endif
         @if($rpHasErp)

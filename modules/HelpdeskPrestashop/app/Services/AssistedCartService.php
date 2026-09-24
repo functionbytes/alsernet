@@ -353,17 +353,24 @@ class AssistedCartService
             return null;
         }
 
-        return EcommerceCustomer::query()->firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => $customerData['name'] ?? $cart->customer?->name ?? 'Cliente',
-                'phone' => $customerData['phone'] ?? $cart->customer?->phone,
-                // El cliente de paso no inicia sesión con esta clave; aun así
-                // usar aleatoriedad criptográfica (uniqid() no lo es).
-                'password' => bcrypt(Str::random(40)),
-                'status' => 'active',
-            ],
-        );
+        // firstOrCreate() evalúa el array de atributos siempre, aunque el
+        // cliente ya exista — eso ejecutaba bcrypt() (~50-100ms de CPU) en
+        // cada llamada. Comprobamos existencia primero y solo hasheamos al crear.
+        $existing = EcommerceCustomer::query()->where('email', $email)->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        return EcommerceCustomer::query()->create([
+            'email' => $email,
+            'name' => $customerData['name'] ?? $cart->customer?->name ?? 'Cliente',
+            'phone' => $customerData['phone'] ?? $cart->customer?->phone,
+            // El cliente de paso no inicia sesión con esta clave; aun así
+            // usar aleatoriedad criptográfica (uniqid() no lo es).
+            'password' => bcrypt(Str::random(40)),
+            'status' => 'active',
+        ]);
     }
 
     private function assertEditable(AssistedCart $cart): void

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskPrestashop\Events\PsBackInStock;
 use Modules\HelpdeskPrestashop\Events\PsCartAbandoned;
+use Modules\HelpdeskPrestashop\Events\PsCartUpdated;
+use Modules\HelpdeskPrestashop\Events\PsCustomerCreated;
+use Modules\HelpdeskPrestashop\Events\PsCustomerUpdated;
 use Modules\HelpdeskPrestashop\Events\PsOrderCreated;
 use Modules\HelpdeskPrestashop\Events\PsOrderReturned;
 use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
@@ -83,6 +86,9 @@ class PsEventReceiverController extends Controller
             'cart.abandoned' => $this->fire(new PsCartAbandoned($payload)),
             'product.price_dropped' => $this->fire(new PsPriceDropped($payload)),
             'product.back_in_stock' => $this->fire(new PsBackInStock($payload)),
+            'customer.created' => $this->fire(new PsCustomerCreated($payload)),
+            'customer.updated' => $this->fire(new PsCustomerUpdated($payload)),
+            'cart.updated' => $this->fire(new PsCartUpdated($payload)),
             default => false,
         };
     }
