@@ -22,6 +22,7 @@ use Modules\HelpdeskTickets\Console\Commands\FetchEmailTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\PruneBlacklistHitsCommand;
 use Modules\HelpdeskTickets\Console\Commands\PublishHelpdeskTicketsAssetsCommand;
+use Modules\HelpdeskTickets\Console\Commands\RepairTicketSlaDataCommand;
 use Modules\HelpdeskTickets\Console\Commands\ReviewTicketQualityCommand;
 use Modules\HelpdeskTickets\Console\Commands\RunTimeBasedAutomationsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
@@ -360,6 +361,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $commands = array_values(array_filter([
             class_exists(AutoCloseTicketsCommand::class) ? AutoCloseTicketsCommand::class : null,
             class_exists(RunTimeBasedAutomationsCommand::class) ? RunTimeBasedAutomationsCommand::class : null,
+            class_exists(RepairTicketSlaDataCommand::class) ? RepairTicketSlaDataCommand::class : null,
             class_exists(MarkOverdueTicketsCommand::class) ? MarkOverdueTicketsCommand::class : null,
             class_exists(AutoResponseTicketCommand::class) ? AutoResponseTicketCommand::class : null,
             class_exists(CleanupTrashedTicketsCommand::class) ? CleanupTrashedTicketsCommand::class : null,
