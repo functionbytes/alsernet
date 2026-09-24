@@ -325,6 +325,17 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
                     ]);
                 }
 
+                // Nota interna opcional (p. ej. el contexto de la ficha 360 que
+                // adjunta Contactos): solo la ven los agentes.
+                if (! blank($payload['internal_note'] ?? null)) {
+                    $ticket->items()->create([
+                        'type' => 'internal_note',
+                        'user_id' => auth()->id(),
+                        'body' => (string) $payload['internal_note'],
+                        'is_internal' => true,
+                    ]);
+                }
+
                 return $ticket;
             }
         );
