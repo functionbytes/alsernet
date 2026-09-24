@@ -29,7 +29,8 @@ class TicketObserver
         // fallback a la genérica (is_default). Sin políticas configuradas es un
         // no-op y el ticket queda sin SLA, como siempre.
         if (! $ticket->sla_policy_id) {
-            $ticket->sla_policy_id = TicketSlaPolicy::resolveForChannel($ticket->source)?->id;
+            // Canal + prioridad + cliente VIP (antes solo canal).
+            $ticket->sla_policy_id = TicketSlaPolicy::resolveForTicket($ticket)?->id;
         }
 
         // Los vencimientos de SLA se calculan AQUÍ, no en created(): dependen

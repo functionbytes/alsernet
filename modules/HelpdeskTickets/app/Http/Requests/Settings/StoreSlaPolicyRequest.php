@@ -17,6 +17,8 @@ class StoreSlaPolicyRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'channel' => ['nullable', 'string', 'max:50'],
+            'applies_to_priority' => ['nullable', 'in:low,normal,high,urgent'],
+            'applies_to_vip' => ['nullable', 'in:0,1'],
             'first_response_time' => ['required', 'integer', 'min:1'],
             'next_response_time' => ['nullable', 'integer', 'min:1'],
             'resolution_time' => ['required', 'integer', 'min:1'],

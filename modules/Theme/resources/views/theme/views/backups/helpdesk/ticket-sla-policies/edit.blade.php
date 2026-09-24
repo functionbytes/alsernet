@@ -76,6 +76,37 @@
 
                         </div>
 
+                        {{-- Cuándo se aplica (24-sep-2026): una política puede limitarse
+                             a una prioridad y/o a clientes VIP. Entre varias que casan
+                             gana la más específica (TicketSlaPolicy::resolveForTicket). --}}
+                        <h6 class="fw-semibold mb-1">Cuándo se aplica</h6>
+                        <p class="text-muted small mb-3">Déjalo en «Cualquiera» para que valga para todos los tickets. Si varias políticas encajan, se usa la que tenga más condiciones.</p>
+                        <div class="row g-3 mb-4">
+                            @php
+                                $sPrio = (string) old('applies_to_priority', $policy->applies_to_priority);
+                                $sVip = old('applies_to_vip', is_null($policy->applies_to_vip) ? null : (int) $policy->applies_to_vip);
+                                $sVip = $sVip === null || $sVip === '' ? '' : (string) (int) $sVip;
+                            @endphp
+                            <div class="col-md-6">
+                                <label class="form-label" for="applies_to_priority">Prioridad del ticket</label>
+                                <select name="applies_to_priority" id="applies_to_priority" class="form-select select2">
+                                    <option value="" @selected($sPrio === '')>Cualquiera</option>
+                                    <option value="urgent" @selected($sPrio === 'urgent')>Urgente</option>
+                                    <option value="high" @selected($sPrio === 'high')>Alta</option>
+                                    <option value="normal" @selected($sPrio === 'normal')>Normal</option>
+                                    <option value="low" @selected($sPrio === 'low')>Baja</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="applies_to_vip">Tipo de cliente</label>
+                                <select name="applies_to_vip" id="applies_to_vip" class="form-select select2">
+                                    <option value="" @selected($sVip === '')>Cualquiera</option>
+                                    <option value="1" @selected($sVip === '1')>Solo clientes VIP</option>
+                                    <option value="0" @selected($sVip === '0')>Solo clientes no VIP</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {{-- Tiempos de respuesta --}}
                         <h6 class="fw-semibold mb-1">Tiempos de respuesta</h6>
                         <p class="text-muted small mb-3">Limites en minutos para primera respuesta, respuestas siguientes y resolucion del ticket</p>

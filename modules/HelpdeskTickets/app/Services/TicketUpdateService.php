@@ -11,6 +11,7 @@ use Modules\HelpdeskTickets\Events\TicketUnassigned;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Exceptions\StaleTicketException;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 
 class TicketUpdateService
 {
@@ -176,6 +177,18 @@ class TicketUpdateService
         // recalculaba RecalculateSlaPolicy escuchando TicketStatusChanged,
         // que nunca trae un cambio de prioridad: subir un ticket a urgente
         // dejaba el plazo de "normal".
+        // Con políticas por prioridad, cambiar la prioridad puede cambiar de
+        // política: solo cuando la nueva o la actual dependen de la prioridad
+        // (una asignada a mano por canal/categoría se respeta).
+        if (in_array('priority', $changed, true)) {
+            $resolved = TicketSlaPolicy::resolveForTicket($ticket);
+            if ($resolved && $resolved->id !== $ticket->sla_policy_id
+                && ($resolved->applies_to_priority !== null || $ticket->slaPolicy?->applies_to_priority !== null)) {
+                $ticket->forceFill(['sla_policy_id' => $resolved->id])->saveQuietly();
+                $ticket->unsetRelation('slaPolicy');
+            }
+        }
+
         if (in_array('priority', $changed, true) && $ticket->sla_policy_id) {
             $ticket->calculateSlaDueDates(
                 from: $ticket->created_at->copy()->addMinutes((int) $ticket->sla_paused_duration_minutes),

@@ -25,6 +25,8 @@ class TicketSlaPolicy extends Model
         'name',
         'description',
         'channel',
+        'applies_to_priority',
+        'applies_to_vip',
         'first_response_time',
         'next_response_time',
         'resolution_time',
@@ -42,6 +44,7 @@ class TicketSlaPolicy extends Model
     protected function casts(): array
     {
         return [
+            'applies_to_vip' => 'boolean',
             'first_response_time' => 'integer',
             'next_response_time' => 'integer',
             'resolution_time' => 'integer',
@@ -125,6 +128,49 @@ class TicketSlaPolicy extends Model
      *     canal. NULL si no hay ninguna (los canales sin política siguen sin
      *     SLA, comportamiento histórico).
      */
+    /**
+     * Resuelve la política para un ticket concreto (24-sep-2026): canal,
+     * prioridad y cliente VIP. Entre las activas que casan, gana la más
+     * específica (cuantas más condiciones fija y cumple, mejor); a igualdad,
+     * la marcada por defecto y luego la más antigua. Sin coincidencia, la
+     * genérica por defecto, igual que resolveForChannel().
+     */
+    public static function resolveForTicket(Ticket $ticket): ?self
+    {
+        $isVip = (bool) data_get($ticket->customer, 'is_vip', false);
+
+        $best = static::query()
+            ->active()
+            ->where(fn ($q) => $q->whereNull('channel')->orWhere('channel', $ticket->source))
+            ->where(fn ($q) => $q->whereNull('applies_to_priority')->orWhere('applies_to_priority', $ticket->priority))
+            ->where(fn ($q) => $q->whereNull('applies_to_vip')->orWhere('applies_to_vip', $isVip))
+            ->get()
+            ->sortBy([
+                fn (self $a, self $b) => $b->specificity() <=> $a->specificity(),
+                fn (self $a, self $b) => (int) $b->is_default <=> (int) $a->is_default,
+                fn (self $a, self $b) => $a->id <=> $b->id,
+            ])
+            ->first();
+
+        // Una genérica sin condiciones solo vale si es la marcada por
+        // defecto (mismo criterio que resolveForChannel()).
+        if ($best && $best->specificity() === 0 && ! $best->is_default) {
+            return static::resolveForChannel(null);
+        }
+
+        return $best ?? static::resolveForChannel(null);
+    }
+
+    /**
+     * Cuántas condiciones fija la política (canal, prioridad, VIP).
+     */
+    public function specificity(): int
+    {
+        return (int) ($this->channel !== null && $this->channel !== '')
+            + (int) ($this->applies_to_priority !== null)
+            + (int) ($this->applies_to_vip !== null);
+    }
+
     public static function resolveForChannel(?string $channel): ?self
     {
         if ($channel !== null && $channel !== '') {

@@ -350,6 +350,24 @@ class TicketSlaAndLifecycleConsistencyTest extends TestCase
         $this->assertTrue($engine->matchesConditions([], $ticket, 'any'), 'Sin condiciones vale para cualquier ticket.');
     }
 
+    public function test_la_politica_mas_especifica_gana_por_prioridad_y_vip(): void
+    {
+        $general = TicketSlaPolicy::create(['name' => 'General '.uniqid(), 'first_response_time' => 60, 'resolution_time' => 1440, 'active' => true, 'is_default' => false]);
+        $urgente = TicketSlaPolicy::create(['name' => 'Urgente '.uniqid(), 'applies_to_priority' => 'urgent', 'first_response_time' => 15, 'resolution_time' => 240, 'active' => true, 'is_default' => false]);
+        $urgenteVip = TicketSlaPolicy::create(['name' => 'Urgente VIP '.uniqid(), 'applies_to_priority' => 'urgent', 'applies_to_vip' => true, 'first_response_time' => 5, 'resolution_time' => 120, 'active' => true, 'is_default' => false]);
+
+        $ticket = new Ticket(['priority' => 'urgent', 'source' => 'web', 'customer_id' => $this->customer->id]);
+        $ticket->setRelation('customer', $this->customer->forceFill(['is_vip' => false]));
+        $this->assertSame($urgente->id, TicketSlaPolicy::resolveForTicket($ticket)?->id);
+
+        $ticket->setRelation('customer', $this->customer->forceFill(['is_vip' => true]));
+        $this->assertSame($urgenteVip->id, TicketSlaPolicy::resolveForTicket($ticket)?->id);
+
+        $ticket->priority = 'low';
+        $this->assertNotContains(TicketSlaPolicy::resolveForTicket($ticket)?->id, [$urgente->id, $urgenteVip->id]);
+        $this->assertNotNull($general);
+    }
+
     private function ticket(array $overrides = []): Ticket
     {
         return Ticket::create(array_merge([
