@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Events\MessageAdded;
-use Modules\HelpdeskTickets\Events\NewTicketMessage;
-use Modules\HelpdeskTickets\Events\TicketMessageReceived;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
@@ -24,7 +22,8 @@ use Tests\TestCase;
  * en broadcastWith(). Cualquiera suscrito a ese canal por websocket, sin
  * login, recibía el contenido de la nota interna.
  *
- * Ninguno de los dos eventos (TicketMessageReceived, NewTicketMessage) tenía
+ * Ninguno de los dos eventos (TicketMessageReceived, NewTicketMessage; ambos
+ * eliminados el 24-sep-2026 por no tener ningún emisor) tenía
  * además listener ni consumidor real en el JS de este módulo — se retiraron
  * de createMessageItem() por completo en vez de solo guardarlos tras un
  * `if (! $isInternal)`.
@@ -71,7 +70,7 @@ class TicketMessagingControllerTest extends TestCase
 
     public function test_internal_note_does_not_broadcast_ticket_message_received(): void
     {
-        Event::fake([TicketMessageReceived::class, NewTicketMessage::class, MessageAdded::class]);
+        Event::fake([MessageAdded::class]);
 
         $this->actingAs($this->manager)
             ->postJson(route('manager.helpdesk.tickets.messages.store', $this->ticket), [
@@ -80,8 +79,6 @@ class TicketMessagingControllerTest extends TestCase
             ])
             ->assertSuccessful();
 
-        Event::assertNotDispatched(TicketMessageReceived::class);
-        Event::assertNotDispatched(NewTicketMessage::class);
         Event::assertDispatched(MessageAdded::class);
     }
 
@@ -91,7 +88,7 @@ class TicketMessagingControllerTest extends TestCase
         // TODO mensaje, no solo para notas internas. Este test fija ese
         // comportamiento: si algún día se reintroduce el broadcast, debe
         // ser deliberado y sobre un canal autenticado, no un descuido.
-        Event::fake([TicketMessageReceived::class, NewTicketMessage::class, MessageAdded::class]);
+        Event::fake([MessageAdded::class]);
 
         $this->actingAs($this->manager)
             ->postJson(route('manager.helpdesk.tickets.messages.store', $this->ticket), [
@@ -100,8 +97,6 @@ class TicketMessagingControllerTest extends TestCase
             ])
             ->assertSuccessful();
 
-        Event::assertNotDispatched(TicketMessageReceived::class);
-        Event::assertNotDispatched(NewTicketMessage::class);
         Event::assertDispatched(MessageAdded::class);
     }
 }

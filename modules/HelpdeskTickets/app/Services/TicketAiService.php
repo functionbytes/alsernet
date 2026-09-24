@@ -5,7 +5,6 @@ namespace Modules\HelpdeskTickets\Services;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketItem;
 
 class TicketAiService
 {
@@ -131,37 +130,6 @@ class TicketAiService
             'priority' => $winner,
             'confidence' => round($winnerHits / ($urgentHits + $highHits), 2),
         ];
-    }
-
-    /**
-     * Analyze sentiment for a TicketItem and update the ticket's average.
-     */
-    public function analyzeAndTag(TicketItem $item): void
-    {
-        // Only analyze customer messages (not internal notes or agent replies)
-        if ($item->is_internal || (! $item->author_id && $item->user_id)) {
-            return;
-        }
-
-        $result = $this->analyzeSentiment($item->body ?? '');
-
-        $item->update([
-            'sentiment' => $result['sentiment'],
-            'sentiment_score' => $result['score'],
-        ]);
-
-        $ticket = $item->ticket;
-
-        if (! $ticket) {
-            return;
-        }
-
-        $avg = $ticket->items()
-            ->whereNotNull('sentiment_score')
-            ->where('is_internal', false)
-            ->avg('sentiment_score');
-
-        $ticket->update(['customer_sentiment_avg' => $avg]);
     }
 
     /**

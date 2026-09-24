@@ -9,10 +9,8 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
-use Modules\HelpdeskTickets\Events\NewTicketMessage;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
-use Modules\HelpdeskTickets\Events\TicketMessageReceived;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -47,8 +45,6 @@ class PortalTicketFlowTest extends TestCase
             TicketClosed::class,
             TicketReopened::class,
             MessageAdded::class,
-            NewTicketMessage::class,
-            TicketMessageReceived::class,
         ]);
 
         $this->openStatus = TicketStatus::firstOrCreate(

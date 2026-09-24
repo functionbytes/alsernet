@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketReview;
-use Modules\HelpdeskTickets\Services\ReplyGuardService;
 use Modules\HelpdeskTickets\Services\TicketDuplicateService;
 use Modules\HelpdeskTickets\Services\TicketReplySuggestionService;
 
@@ -63,32 +62,6 @@ class TicketAiSuggestionController extends Controller
         return response()->json([
             'success' => true,
             'suggestion' => $suggestion,
-        ]);
-    }
-
-    /**
-     * Revisión del borrador antes de enviarlo.
-     *
-     * Avisa, no bloquea: la respuesta siempre es 200, incluso cuando hay
-     * avisos, y `checked=false` significa que no se pudo revisar (sin agente
-     * IA, borrador demasiado corto, proveedor caído). Quien llama debe dejar
-     * enviar en cualquiera de los dos casos — que un proveedor caído impida
-     * contestar a un cliente es peor que el problema que esto resuelve.
-     */
-    public function checkReply(Request $request, Ticket $ticket, ReplyGuardService $guard): JsonResponse
-    {
-        $this->authorize('update', $ticket);
-
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:20000'],
-        ]);
-
-        $result = $guard->check($ticket, $validated['body'], (int) $request->user()?->id);
-
-        return response()->json([
-            'success' => true,
-            'checked' => $result['checked'],
-            'warnings' => $result['warnings'],
         ]);
     }
 

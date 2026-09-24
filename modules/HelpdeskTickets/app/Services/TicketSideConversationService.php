@@ -147,11 +147,6 @@ class TicketSideConversationService
         ]);
     }
 
-    public function reopen(TicketSideConversation $side): void
-    {
-        $side->update(['status' => 'open']);
-    }
-
     private function appendMessage(TicketSideConversation $side, string $body, User $author): TicketSideConversationMessage
     {
         return $side->messages()->create([

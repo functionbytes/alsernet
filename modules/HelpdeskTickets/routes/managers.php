@@ -121,13 +121,6 @@ Route::group(['prefix' => ''], function () {
         ->middleware('throttle:20,1')
         ->name('manager.helpdesk.tickets.ai.suggest-reply');
 
-    // Revisión del borrador antes de enviar. Throttle más alto que la
-    // sugerencia: es una sola llamada y se dispara en cada envío, no a
-    // petición del agente.
-    Route::post('/tickets/{ticket}/ai/check-reply', [TicketAiSuggestionController::class, 'checkReply'])
-        ->middleware('throttle:60,1')
-        ->name('manager.helpdesk.tickets.ai.check-reply');
-
     // Posibles duplicados. GET porque solo lee y el resultado es cacheable
     // por el navegador mientras el agente navega por la ficha.
     // Modal 35: comprobar duplicados con lo escrito en el formulario, antes
@@ -150,7 +143,6 @@ Route::group(['prefix' => ''], function () {
     Route::delete('/tickets/{ticket}/followups/{followup}', [TicketFollowupsController::class, 'destroy'])->name('manager.helpdesk.tickets.followups.destroy');
 
     // Side conversations del ticket (hilos laterales privados)
-    Route::get('/tickets/{ticket}/side-conversations', [TicketSideConversationsController::class, 'index'])->name('manager.helpdesk.tickets.side-conversations.index');
     Route::post('/tickets/{ticket}/side-conversations', [TicketSideConversationsController::class, 'store'])->name('manager.helpdesk.tickets.side-conversations.store');
     Route::post('/tickets/{ticket}/side-conversations/{sideConversation}/messages', [TicketSideConversationsController::class, 'addMessage'])->name('manager.helpdesk.tickets.side-conversations.messages.store');
     Route::post('/tickets/{ticket}/side-conversations/{sideConversation}/close', [TicketSideConversationsController::class, 'close'])->name('manager.helpdesk.tickets.side-conversations.close');
@@ -237,7 +229,6 @@ Route::group(['prefix' => ''], function () {
     // stats de tickets-app.js (ambos con Accept: json).
     Route::get('/tickets/emails', [TicketMailsController::class, 'index'])->name('manager.helpdesk.tickets.emails.index');
     Route::get('/tickets/scheduled', [TicketMailsController::class, 'scheduled'])->name('manager.helpdesk.tickets.scheduled');
-    Route::get('/tickets/emails/export', [TicketMailsController::class, 'export'])->name('manager.helpdesk.tickets.emails.export');
     Route::get('/tickets/emails/templates', [TicketMailsController::class, 'templates'])->name('manager.helpdesk.tickets.emails.templates');
     Route::post('/tickets/emails', [TicketMailsController::class, 'store'])
         ->middleware('throttle:helpdesk-write')
@@ -367,8 +358,6 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/draft', [TicketDraftsController::class, 'update'])
         ->middleware('throttle:120,1')
         ->name('manager.helpdesk.tickets.draft.update');
-    Route::delete('/tickets/{ticket}/draft', [TicketDraftsController::class, 'destroy'])
-        ->name('manager.helpdesk.tickets.draft.destroy');
     Route::post('/tickets/{ticket}/typing', [TicketMessagingController::class, 'typing'])
         ->middleware('throttle:helpdesk-msg-actions')
         ->name('manager.helpdesk.tickets.typing');

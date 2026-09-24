@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 // para no confundir las dos clases "Setting".
 use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\Helpdesk\Services\HelpdeskSettings;
-use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
@@ -116,67 +115,6 @@ class TicketService
             });
         } catch (\Exception $e) {
             Log::error('Error updating ticket', [
-                'ticket_id' => $ticket->id,
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
-     * Add a message to a ticket.
-     *
-     * @deprecated Escribe en `helpdesk_ticket_messages` (TicketMessage), que NO
-     * es la tabla del hilo del inbox de manager — ese hilo se renderiza desde
-     * `$ticket->items` (TicketItem). Un mensaje creado por aquí NO aparecería en
-     * el hilo. Sin callers actuales. Para responder a un ticket usar la vía
-     * única TicketMessagingController::createMessageItem (TicketItem + eventos).
-     * TicketMessage solo debe usarse en el subsistema widget/portal/público
-     * (storeAttachments), no para el hilo del agente.
-     */
-    public function addMessage(Ticket $ticket, array $data): TicketMessage
-    {
-        try {
-            return DB::transaction(function () use ($ticket, $data) {
-                $data['ticket_id'] = $ticket->id;
-                $data['user_id'] = auth()->id();
-
-                $message = TicketMessage::create($data);
-
-                if (isset($data['adjuntos']) && is_array($data['adjuntos'])) {
-                    foreach ($data['adjuntos'] as $adjunto) {
-                        if (isset($adjunto['path'])) {
-                            $message->attachments()->create([
-                                'file_path' => $adjunto['path'],
-                                'file_name' => $adjunto['name'] ?? basename($adjunto['path']),
-                                'file_size' => $adjunto['size'] ?? null,
-                                'mime_type' => $adjunto['mime_type'] ?? null,
-                            ]);
-                        }
-                    }
-                }
-
-                $user = auth()->user();
-                if ($user && $user->hasRole('helpdesk-agent') && ! $ticket->first_response_at) {
-                    $ticket->update(['first_response_at' => now()]);
-                }
-
-                $ticket->update(['last_activity_at' => now()]);
-
-                event(new MessageAdded($message));
-                // El email al cliente lo envía el listener SendCustomerReplyNotification
-                // suscrito a MessageAdded — no duplicar aquí.
-
-                Log::info('Message added to ticket', [
-                    'ticket_id' => $ticket->id,
-                    'message_id' => $message->id,
-                    'is_internal' => $data['is_internal'] ?? false,
-                ]);
-
-                return $message->fresh();
-            });
-        } catch (\Exception $e) {
-            Log::error('Error adding message to ticket', [
                 'ticket_id' => $ticket->id,
                 'error' => $e->getMessage(),
             ]);

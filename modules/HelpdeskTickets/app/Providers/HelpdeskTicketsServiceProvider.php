@@ -578,7 +578,6 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->loadTicketTemplatesRoutes();
         $this->loadConversationBridgeRoutes();
         $this->loadApiRoutes();
-        $this->loadAgentRoutes();
         $this->loadPortalRoutes();
         $this->loadPublicRoutes();
 
@@ -688,20 +687,6 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
 
         Route::middleware(['web', 'auth', 'role:helpdesk-agent|helpdesk-manager|manager|super-admin|super-settings'])
             ->prefix('panel/helpdesk')
-            ->group($path);
-    }
-
-    protected function loadAgentRoutes(): void
-    {
-        $path = module_path($this->moduleName, 'routes/agents.php');
-
-        if (! file_exists($path)) {
-            return;
-        }
-
-        Route::middleware(['web', 'auth', 'role:helpdesk-agent|super-admin|super-settings|manager'])
-            ->prefix('panel/helpdesk/agent')
-            ->name('agent.helpdesk.')
             ->group($path);
     }
 

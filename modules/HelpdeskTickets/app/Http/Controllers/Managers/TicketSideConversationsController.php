@@ -22,30 +22,6 @@ class TicketSideConversationsController extends Controller
         $this->middleware('can:helpdesk.tickets.update')->only(['store', 'addMessage', 'close']);
     }
 
-    public function index(Ticket $ticket): JsonResponse
-    {
-        $sides = $ticket->sideConversations()
-            ->with(['messages', 'participantUser:id,firstname,lastname'])
-            ->get()
-            ->map(fn (TicketSideConversation $side) => [
-                'id' => $side->id,
-                'subject' => $side->subject,
-                'participant_type' => $side->participant_type,
-                'participant_email' => $side->participant_email,
-                'participant' => $side->participantUser?->full_name,
-                'status' => $side->status,
-                'messages' => $side->messages->map(fn ($m) => [
-                    'id' => $m->id,
-                    'body' => $m->body,
-                    'direction' => $m->direction,
-                    'user_id' => $m->user_id,
-                    'created_at' => $m->created_at?->toIso8601String(),
-                ]),
-            ]);
-
-        return response()->json(['success' => true, 'data' => $sides]);
-    }
-
     public function store(StoreSideConversationRequest $request, Ticket $ticket): JsonResponse
     {
         $side = $this->service->create($ticket, $request->validated(), $request->user());

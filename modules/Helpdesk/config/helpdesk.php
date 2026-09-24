@@ -82,11 +82,6 @@ return [
             ['label' => 'Agents', 'route' => 'manager.helpdesk.agents.index', 'icon' => 'fas fa-headset'],
             ['label' => 'Settings', 'route' => 'manager.helpdesk.settings.tickets', 'icon' => 'fas fa-cog'],
         ],
-        'agent' => [
-            ['label' => 'Dashboard', 'route' => 'agent.helpdesk.dashboard', 'icon' => 'fas fa-tachometer-alt'],
-            ['label' => 'My Tickets', 'route' => 'agent.helpdesk.tickets.index', 'icon' => 'fas fa-ticket-alt'],
-            ['label' => 'Reports', 'route' => 'agent.helpdesk.reports.index', 'icon' => 'fas fa-chart-bar'],
-        ],
         // Legacy keys kept for backwards compatibility
         'manager_settings' => [
             'icon' => 'fa-duotone fas fa-headset',

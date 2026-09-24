@@ -131,19 +131,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Guardia de salida (ReplyGuardService)
-    |--------------------------------------------------------------------------
-    | Revisa el borrador antes de enviarlo al cliente y avisa de datos que no
-    | están en el hilo o promesas que no respalda ninguna plantilla. NUNCA
-    | bloquea el envío: si la revisión falla o no hay agente IA, la respuesta
-    | sale igual.
-    */
-    'reply_guard' => [
-        'enabled' => env('HELPDESKTICKETS_REPLY_GUARD', true),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Deflexión en el portal (TicketDeflectionService)
     |--------------------------------------------------------------------------
     | Sugiere artículos del centro de ayuda mientras el cliente redacta, antes

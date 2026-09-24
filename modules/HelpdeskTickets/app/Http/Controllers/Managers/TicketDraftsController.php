@@ -39,13 +39,4 @@ class TicketDraftsController extends Controller
 
         return response()->json(['saved' => true]);
     }
-
-    public function destroy(Request $request, Ticket $ticket): JsonResponse
-    {
-        $this->authorize('view', $ticket);
-
-        TicketDraft::query()->where('ticket_id', $ticket->id)->where('user_id', $request->user()->id)->delete();
-
-        return response()->json(['saved' => false]);
-    }
 }

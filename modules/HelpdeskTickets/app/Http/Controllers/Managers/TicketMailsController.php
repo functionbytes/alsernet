@@ -26,7 +26,6 @@ use Modules\HelpdeskTickets\Services\TicketMailInboxService;
 use Modules\HelpdeskTickets\Services\TicketMailRecipientResolver;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * La bandeja global de LECTURA/browsing de helpdesk_ticket_mails se retiró
@@ -484,50 +483,6 @@ class TicketMailsController extends Controller
             'message' => $message,
             'skipped_ids' => $skipped->pluck('id')->values(),
         ]);
-    }
-
-    public function export(Request $request): StreamedResponse
-    {
-        $this->authorize('viewAny', TicketMail::class);
-
-        // reorder() quita el latest() de filteredQuery() (pensado para el
-        // listado paginado): lazyById() pagina forzando su propio ORDER BY
-        // id y pisaría ese orden en cada iteración si se dejara.
-        $query = $this->inbox->filteredQuery($request)->reorder();
-
-        if ($request->filled('ids')) {
-            $query->whereIn('id', (array) $request->input('ids'));
-        }
-
-        // cursor() no aplicaba el with() de filteredQuery() (hidrataba fila a
-        // fila sin eager load real): cada email disparaba sus propias
-        // queries de ticket/ticket.customer/user/category. lazyById() sí
-        // respeta el eager loading, paginando por id en bloques de 500. Al
-        // paginar por id no es compatible con el limit(5000) previo — se
-        // sustituye el tope fijo por la exportación completa del filtro.
-        $rows = $query->lazyById(500);
-        $filename = 'emails-enviados-'.now()->format('Ymd-His').'.csv';
-
-        return response()->streamDownload(function () use ($rows) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Ticket', 'Asunto', 'Para', 'Estado', 'Agente', 'Categoría', 'Enviado', 'Programado']);
-
-            foreach ($rows as $mail) {
-                fputcsv($out, [
-                    $mail->ticket?->ticket_number,
-                    $mail->subject,
-                    $mail->to,
-                    $mail->status_label,
-                    $mail->user ? trim("{$mail->user->firstname} {$mail->user->lastname}") : '',
-                    $mail->category?->name,
-                    $mail->sent_at?->format('Y-m-d H:i:s'),
-                    $mail->scheduled_at?->format('Y-m-d H:i:s'),
-                ]);
-            }
-
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     public function destroy(TicketMail $mail): JsonResponse
