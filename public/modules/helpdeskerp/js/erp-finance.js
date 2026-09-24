@@ -5,8 +5,12 @@
  * payments|debts|delivery-notes|returns"] desde cualquier sitio (delegación
  * en document). Pestañas:
  *   - Balance: facturado / cobrado / pendiente + barra de riesgo.
- *   - Facturas: lista paginada con filtro por año → hoja con la factura y
- *     "Insertar datos de la factura en el chat".
+ *   - Balance: además, mini-gráfico facturado vs cobrado por mes (barras
+ *     CSS) desde …/erp/invoices/monthly, si hay datos.
+ *   - Facturas: lista paginada con filtro por año y búsqueda por número →
+ *     hoja con la factura, "Descargar copia (PDF)" (…/invoices/{id}/pdf; 409
+ *     si falta el GRANT: botón deshabilitado con explicación) e "Insertar
+ *     datos de la factura en el chat".
  *   - Albaranes: lista paginada → hoja con el albarán (y su pedido si llega).
  *   - Cobros, Deudas (con su albarán), Devoluciones y abonos.
  *
@@ -176,7 +180,7 @@
             var o = opts || {};
             var cid = st.cid;
             var prev = st.panes[pane];
-            var ps = (!o.reset && prev) ? prev : { resp: null, items: [], offset: 0, hasMore: false, year: prev ? prev.year : '', loadingMore: false };
+            var ps = (!o.reset && prev) ? prev : { resp: null, items: [], offset: 0, hasMore: false, year: prev ? prev.year : '', q: prev ? (prev.q || '') : '', loadingMore: false };
             var token = ++st.seq;
             ps.token = token;
             st.panes[pane] = ps;
@@ -249,8 +253,8 @@
             }
 
             switch (pane) {
-                case 'balance': html = renderBalance(resp.data); break;
-                case 'invoices': html = yearChips(ps.year) + renderInvoices(ps.items) + moreBtn(ps); break;
+                case 'balance': html = renderBalance(resp.data) + chartHost(); break;
+                case 'invoices': html = yearChips(ps.year) + invoiceSearch(ps.q) + '<div id="ercFinInvList">' + renderInvoiceList(ps) + '</div>'; break;
                 case 'delivery-notes': html = renderDeliveryNotes(ps.items) + moreBtn(ps); break;
                 case 'payments': html = renderPayments(ps.items) + moreBtn(ps); break;
                 case 'debts': html = renderDebts(resp.data); break;
@@ -258,6 +262,7 @@
                 default: html = '';
             }
             $body().html('<div class="erc-stack">' + html + fetchedAt(resp) + '</div>');
+            if (pane === 'balance') { loadChart(false); }
         }
 
         function fetchedAt(resp) {
@@ -325,6 +330,75 @@
             return html;
         }
 
+        /* Mini-gráfico facturado vs cobrado por mes (barras CSS). La serie
+           la arma el servidor (ErpInvoiceMonthlyService); si facturas y
+           cobros están bloqueados, no se pinta nada. */
+
+        function chartHost() { return '<div id="ercFinChart" class="erc-fin-chart-host"></div>'; }
+
+        function loadChart(force) {
+            var cid = st.cid;
+            var url = C.base() ? C.base() + '/invoices/monthly' : null;
+            if (!url) { return; }
+            if (st.chart && st.chart.cid === cid && st.chart.resp && !force) { paintChart(st.chart.resp); return; }
+            var token = ++st.seq;
+            st.chart = { cid: cid, token: token, resp: null };
+            $('#ercFinChart').html(C.skeleton(1, 'card'));
+            C.request(url, force ? { force: 1 } : {}).then(function (resp) {
+                if (!st.chart || st.chart.token !== token || st.cid !== cid) { return; }
+                st.chart.resp = resp;
+                paintChart(resp);
+            });
+        }
+
+        function paintChart(resp) {
+            var $host = $('#ercFinChart');
+            if (!$host.length) { return; }
+            $host.html(renderChart(resp));
+        }
+
+        function renderChart(resp) {
+            var d = resp && resp.state === 'ok' ? resp.data : null;
+            var months = d && Array.isArray(d.months) ? d.months : [];
+            var hasInv = months.some(function (m) { return num(m.invoiced) !== null; });
+            var hasCol = months.some(function (m) { return num(m.collected) !== null; });
+            var max = months.reduce(function (acc, m) { return Math.max(acc, num(m.invoiced) || 0, num(m.collected) || 0); }, 0);
+            if (!months.length || (!hasInv && !hasCol) || max <= 0) { return ''; }
+
+            var h = function (v) {
+                var n = num(v);
+                if (n === null || n <= 0) { return 'erc-h-0'; }
+                return 'erc-h-' + Math.max(5, Math.round((n / max) * 20) * 5);
+            };
+            var bars = months.map(function (m) {
+                var title = m.label + ' ' + m.year + ' · Facturado ' + money(m.invoiced) + ' · Cobrado ' + money(m.collected);
+                return '<div class="erc-fin-bar-col" title="' + escAttr(title) + '">' +
+                    '<div class="erc-fin-bars">' +
+                        (hasInv ? '<span class="erc-fin-bar erc-fin-bar--inv ' + h(m.invoiced) + '"></span>' : '') +
+                        (hasCol ? '<span class="erc-fin-bar erc-fin-bar--col ' + h(m.collected) + '"></span>' : '') +
+                    '</div>' +
+                    '<span class="erc-fin-bar-lbl">' + esc(m.label) + '</span>' +
+                '</div>';
+            }).join('');
+
+            var notes = [];
+            if (!hasInv && d.invoices && d.invoices.state === 'blocked') { notes.push('Facturado: pendiente de permiso en Oracle.'); }
+            if (!hasCol && d.payments && d.payments.state === 'blocked') { notes.push('Cobrado: pendiente de permiso en Oracle.'); }
+            if (d.partial) { notes.push('Serie aproximada: solo se suman las facturas y cobros más recientes.'); }
+
+            return '<div class="erc-card erc-fin-chart">' +
+                '<div class="erc-card-head">Facturado y cobrado por mes<span class="erc-meta">Últimos ' + months.length + ' meses</span></div>' +
+                '<div class="erc-card-body">' +
+                    '<div class="erc-fin-legend">' +
+                        (hasInv ? '<span class="erc-fin-key erc-fin-key--inv">Facturado</span>' : '') +
+                        (hasCol ? '<span class="erc-fin-key erc-fin-key--col">Cobrado</span>' : '') +
+                    '</div>' +
+                    '<div class="erc-fin-bars-row" role="img" aria-label="Facturado y cobrado por mes">' + bars + '</div>' +
+                    (notes.length ? '<div class="erc-fin-chart-note">' + esc(notes.join(' ')) + '</div>' : '') +
+                '</div>' +
+            '</div>';
+        }
+
         function balanceText(data) {
             var b = (data || {}).balance || {};
             return 'Estado de tu cuenta:\n' +
@@ -355,10 +429,42 @@
             return ref || String(i.id || '');
         }
 
-        function renderInvoices(items) {
+        function invoiceSearch(q) {
+            return '<div class="erc-search erc-fin-search">' +
+                '<i class="fas fa-magnifying-glass"></i>' +
+                '<input type="search" id="ercFinInvQ" value="' + escAttr(q || '') + '" placeholder="Buscar por número de factura" aria-label="Buscar por número de factura" autocomplete="off">' +
+            '</div>';
+        }
+
+        function normRef(v) { return String(v == null ? '' : v).toLowerCase().replace(/[\s\-\/.]/g, ''); }
+
+        // Filtra sobre lo ya cargado (el manager no busca por número): con
+        // "Cargar más" se amplía el conjunto sobre el que se busca.
+        function matchInvoice(inv, q) {
+            var n = normRef(q);
+            if (!n) { return true; }
+            return [inv.number, invoiceRef(inv), String(inv.series || '') + String(inv.number || ''), inv.id]
+                .some(function (v) { return normRef(v).indexOf(n) !== -1; });
+        }
+
+        function renderInvoiceList(ps) {
+            var q = String(ps.q || '').trim();
+            var idx = [];
+            ps.items.forEach(function (inv, i) { if (matchInvoice(inv, q)) { idx.push(i); } });
+            if (q && !idx.length) {
+                return empty('Sin coincidencias', 'Ninguna factura cargada contiene «' + q + '».' + (ps.hasMore ? ' Carga más para buscar en las anteriores.' : ''), 'fas fa-magnifying-glass') + moreBtn(ps);
+            }
+            return renderInvoices(ps.items, idx) +
+                (q ? '<div class="erc-loading">' + idx.length + ' de ' + ps.items.length + ' facturas cargadas</div>' : '') +
+                moreBtn(ps);
+        }
+
+        function renderInvoices(items, only) {
             if (!items.length) { return empty('Sin facturas', 'No hay facturas para este filtro.', 'fas fa-file-invoice'); }
-            return '<div class="erc-list">' + items.map(function (inv, idx) {
-                var meta = [inv.payment_method, inv.warehouse ? 'Almacén ' + inv.warehouse : ''].filter(Boolean).join(' · ');
+            var list = Array.isArray(only) ? only : items.map(function (x, i) { return i; });
+            return '<div class="erc-list">' + list.map(function (idx) {
+                var inv = items[idx];
+                var meta = [inv.payment_method, C.codeLabel(inv.warehouse_description, inv.warehouse, 'Almacén')].filter(Boolean).join(' · ');
                 return '<button type="button" class="erc-item is-link" data-erc-fin-invoice="' + idx + '">' +
                     '<span class="ic"><i class="fas fa-file-invoice"></i></span>' +
                     '<span class="info">' +
@@ -376,17 +482,101 @@
 
         function invoiceText(inv, detail) {
             var d = detail || {};
-            var ref = invoiceRef($.extend({}, inv || {}, d));
-            var total = d.totals ? num(d.totals.lines_total_with_taxes != null ? d.totals.lines_total_with_taxes : d.totals.total) : null;
+            var i = $.extend({}, inv || {}, d);
+            var ref = invoiceRef(i);
+            var t = d.totals || {};
+            var total = num(t.lines_total_with_taxes != null ? t.lines_total_with_taxes : t.total);
+            var base = num(t.lines_total_bi);
             var dt = d.date || (inv || {}).date;
-            return ['Factura: ' + ref,
+            return [(i.simplified ? 'Factura simplificada: ' : 'Factura: ') + ref,
                 dt ? 'Fecha: ' + C.date(dt, true) : '',
-                total !== null ? 'Total: ' + money(total) : ''].filter(Boolean).join('\n');
+                base !== null && total !== null ? 'Base imponible: ' + money(base) + ' · IVA: ' + money(total - base) : '',
+                total !== null ? 'Total: ' + money(total) : '',
+                !blank(i.payment_method) ? 'Forma de pago: ' + i.payment_method : '',
+                voidFlag(i.status) ? 'Estado: anulada' : ''].filter(Boolean).join('\n');
         }
 
-        function invoiceFoot() {
+        var PDF_WHY = {
+            loading: '',
+            blocked: 'La copia en PDF estará disponible cuando Oracle conceda el permiso de lectura de facturas.',
+            unavailable: 'Gestión no tiene el detalle de esta factura, así que no se puede generar la copia.',
+            down: 'Gestión no responde ahora mismo. Inténtalo de nuevo en un momento.',
+        };
+
+        // pdf: 'ok' | 'loading' | 'blocked' | 'unavailable' | 'down'
+        function invoiceFoot(pdf, why) {
+            var ok = pdf === 'ok';
+            var msg = ok ? '' : (why || PDF_WHY[pdf] || '');
             return '<button type="button" class="erc-btn erc-btn--primary" data-erc-fin-insert-doc>Insertar datos de la factura en el chat</button>' +
+                '<button type="button" class="erc-btn erc-btn--outline" data-erc-fin-pdf' + (ok ? '' : ' disabled aria-disabled="true"') + '>Descargar copia (PDF)</button>' +
+                (msg ? '<span class="erc-fin-pdf-why' + (pdf === 'blocked' || pdf === 'down' ? ' is-warn' : '') + '">' + esc(msg) + '</span>' : '') +
                 '<button type="button" class="erc-btn erc-btn--outline" data-erc-sheet-close>Volver</button>';
+        }
+
+        function pdfUrl(id) {
+            return C.base() ? C.base() + '/invoices/' + encodeURIComponent(id) + '/pdf' : null;
+        }
+
+        // Descarga por XHR (no un enlace): si el servidor responde JSON (409
+        // sin GRANT, 404, 503…) se explica en la hoja en vez de abrir una
+        // pestaña con el error.
+        function downloadPdf($btn) {
+            var $sheet = $btn.closest('.erc-sheet');
+            var id = $sheet.data('ercInvoiceId');
+            var url = pdfUrl(id);
+            if (!url || $btn.prop('disabled')) { return; }
+
+            $btn.prop('disabled', true).text('Generando PDF…');
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.setRequestHeader('Accept', 'application/pdf, application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.timeout = 60000;
+
+            var fail = function (state, message) {
+                if (!$.contains(document, $sheet[0])) { return; }
+                var keep = state === 'down';
+                C.sheet.update($sheet, { foot: invoiceFoot(keep ? 'ok' : state, message) });
+                if (keep) { C.toast('warning', message || PDF_WHY.down); }
+            };
+
+            xhr.onload = function () {
+                var type = String(xhr.getResponseHeader('Content-Type') || '');
+                if (xhr.status === 200 && type.indexOf('application/pdf') !== -1) {
+                    var name = 'copia-factura.pdf';
+                    var cd = String(xhr.getResponseHeader('Content-Disposition') || '');
+                    var m = /filename="?([^";]+)"?/i.exec(cd);
+                    if (m) { name = m[1]; }
+                    var href = URL.createObjectURL(xhr.response);
+                    var a = document.createElement('a');
+                    a.href = href;
+                    a.download = name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(function () { URL.revokeObjectURL(href); }, 30000);
+                    $btn.prop('disabled', false).text('Descargar copia (PDF)');
+                    C.toast('success', 'Copia de la factura descargada');
+                    return;
+                }
+                // Respuesta JSON de error: se lee el blob como texto.
+                var reader = new FileReader();
+                reader.onload = function () {
+                    var j = {};
+                    try { j = JSON.parse(String(reader.result || '{}')); } catch (e) { j = {}; }
+                    var st2 = xhr.status === 409 ? (j.state === 'blocked' ? 'blocked' : 'unavailable')
+                        : (xhr.status === 404 ? 'unavailable'
+                        : (xhr.status === 403 ? 'unavailable' : 'down'));
+                    var msg = j.message || (xhr.status === 403 ? 'Sin permiso para descargar facturas de Gestión.' : (xhr.status === 429 ? 'Demasiadas descargas seguidas, espera un momento.' : ''));
+                    fail(st2, msg);
+                };
+                reader.onerror = function () { fail('down', ''); };
+                reader.readAsText(xhr.response || new Blob());
+            };
+            xhr.onerror = function () { fail('down', ''); };
+            xhr.ontimeout = function () { fail('down', 'Gestión tardó demasiado en generar la copia.'); };
+            xhr.send();
         }
 
         function openInvoiceSheet($host, inv) {
@@ -397,29 +587,38 @@
                 title: 'Factura ' + invoiceRef(i),
                 icon: 'fas fa-file-invoice',
                 html: C.skeleton(3, 'card'),
-                foot: invoiceFoot(),
+                foot: invoiceFoot('loading'),
             });
             $sheet.data('ercInsert', invoiceText(i, null));
+            $sheet.data('ercInvoiceId', i.id);
 
             C.invoice(i.id).then(function (resp) {
                 if (!$.contains(document, $sheet[0])) { return; }
                 if (resp && resp.state === 'ok' && resp.data) {
                     $sheet.data('ercInsert', invoiceText(i, resp.data));
-                    C.sheet.update($sheet, { title: 'Factura ' + invoiceRef($.extend({}, i, resp.data)), html: C.render.invoice(resp.data) });
+                    C.sheet.update($sheet, {
+                        title: 'Factura ' + invoiceRef($.extend({}, i, resp.data)),
+                        html: C.render.invoice(resp.data) +
+                            '<div class="erc-note erc-note--info"><span class="txt">La copia en PDF es informativa y no vale como factura: la factura fiscal la emite Gestión.</span></div>',
+                        foot: invoiceFoot('ok'),
+                    });
                     return;
                 }
+                var pdfState = resp && resp.state === 'blocked' ? 'blocked'
+                    : (resp && (resp.state === 'down' || resp.state === 'loading') ? 'down' : 'unavailable');
                 // Sin detalle (bloqueado, no disponible…): se muestran los datos de la lista.
                 var r = $.extend({}, resp || {});
                 delete r.retry;
                 if (r.state === 'down') { r.state = 'unavailable'; r.message = r.message || 'Gestión no responde ahora mismo.'; }
                 C.sheet.update($sheet, {
+                    foot: invoiceFoot(pdfState),
                     html: C.stateHtml(r, 'Detalle de la factura') +
                         '<div class="erc-card"><div class="erc-card-body"><div class="erc-kv">' +
                             C.render.kv('Factura', invoiceRef(i), true) +
                             C.render.kv('Fecha', i.date ? C.date(i.date, true) : null) +
                             C.render.kv('Tipo', i.simplified ? 'Simplificada' : 'Completa') +
                             C.render.kv('Forma de pago', i.payment_method) +
-                            C.render.kv('Almacén', i.warehouse) +
+                            C.render.kv('Almacén', C.codeLabel(i.warehouse_description, i.warehouse)) +
                         '</div></div></div>' +
                         C.render.obs(i.observations),
                 });
@@ -436,7 +635,7 @@
             return '<div class="erc-list">' + items.map(function (dn, idx) {
                 var tags = dnIsVoid(dn) ? '<span class="erc-tag erc-tag--blocked">Anulado</span>'
                     : (dn.invoice_id ? '<span class="erc-tag erc-tag--done">Facturado</span>' : '<span class="erc-tag erc-tag--closed">Sin facturar</span>');
-                var meta = [dn.warehouse ? 'Almacén ' + dn.warehouse : '', num(dn.loyalty_points) ? dn.loyalty_points + ' puntos' : ''].filter(Boolean).join(' · ');
+                var meta = [C.codeLabel(dn.warehouse_description, dn.warehouse, 'Almacén'), num(dn.loyalty_points) ? dn.loyalty_points + ' puntos' : ''].filter(Boolean).join(' · ');
                 return '<button type="button" class="erc-item is-link' + (dnIsVoid(dn) ? ' erc-item--muted' : '') + '" data-erc-fin-dn="' + idx + '">' +
                     '<span class="ic"><i class="fas fa-truck"></i></span>' +
                     '<span class="info">' +
@@ -461,12 +660,8 @@
 
         function fetchDeliveryNote(id) {
             var first = centralDnId(id);
-            return C.deliveryNote(first).then(function (resp) {
-                if (resp && resp.state === 'unavailable' && /^\d{9}$/.test(first)) {
-                    return C.deliveryNote('10' + first);
-                }
-                return resp;
-            });
+            // El backend ya resuelve el id corto (resolve/{ref}): nada de adivinar el prefijo.
+            return C.deliveryNote(first);
         }
 
         function dnText(d) {
@@ -634,6 +829,7 @@
 
         $(document).on('click', '#ercFinRefresh', function () {
             C.sheet.close($body());
+            if (st.pane === 'balance') { st.chart = null; }
             load(st.pane, { reset: true, force: true }).then(function () { renderTabs(); });
             renderTabs();
         });
@@ -650,6 +846,21 @@
             if (String(ps.year || '') === y && ps.resp) { return; }
             st.panes.invoices = $.extend(ps, { year: y });
             load('invoices', { reset: true });
+        });
+
+        $(document).on('input', '#ercFinInvQ', function () {
+            var ps = st.panes.invoices;
+            if (!ps) { return; }
+            ps.q = String($(this).val() || '');
+            $('#ercFinInvList').html(renderInvoiceList(ps));
+        });
+
+        $(document).on('keydown', '#ercFinInvQ', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+        });
+
+        $(document).on('click', '#ercFinBody [data-erc-fin-pdf]', function () {
+            downloadPdf($(this));
         });
 
         $(document).on('click', '#ercFinBody [data-erc-fin-invoice]', function () {
@@ -719,6 +930,7 @@
             open: open,
             deliveryNoteSheet: deliveryNoteSheet,
             invoiceSheet: openInvoiceSheet,
+            pdfUrl: pdfUrl,
             render: {
                 balance: renderBalance,
                 invoices: renderInvoices,
@@ -727,6 +939,8 @@
                 debts: renderDebts,
                 returns: renderReturns,
                 risk: riskHtml,
+                chart: renderChart,
+                invoiceList: renderInvoiceList,
             },
             text: { balance: balanceText, invoice: invoiceText, deliveryNote: dnText },
         };

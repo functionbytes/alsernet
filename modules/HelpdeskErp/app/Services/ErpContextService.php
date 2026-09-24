@@ -40,6 +40,14 @@ class ErpContextService
         $key = $this->cacheKey($this->identity($email, $phone));
         $cached = Cache::get($key);
 
+        // Con un IDCLIENTE ya conocido (vínculo manual), una caché por email
+        // que dice "no encontrado" o apunta a otro cliente no vale: se
+        // vuelve a consultar por id.
+        if ($cached !== null && $erpId !== null
+            && (! ($cached['customer']['found'] ?? false) || (int) ($cached['customer']['id'] ?? 0) !== $erpId)) {
+            $cached = null;
+        }
+
         if ($cached !== null) {
             $this->maybeScheduleRefresh($email, $phone, $cached);
             $result = $this->stripMeta($cached);
@@ -63,6 +71,25 @@ class ErpContextService
     public function forgetCache(string $email, ?string $phone = null): void
     {
         Cache::forget($this->cacheKey($this->identity($email, $phone)));
+    }
+
+    /**
+     * Lectura pura de la caché del contexto por email: nunca hace HTTP ni
+     * programa un refresco (a diferencia de getCustomerContext(), que ante un
+     * fallo de caché puede colgarse hasta http_timeout con el manager caído).
+     * Para llamadores por lote (listado de Contactos). Null si no está cacheado.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function peekCachedContext(string $email): ?array
+    {
+        if (trim($email) === '') {
+            return null;
+        }
+
+        $cached = Cache::get($this->cacheKey($this->identity($email, null)));
+
+        return is_array($cached) ? $this->stripMeta($cached) : null;
     }
 
     /**
@@ -174,7 +201,10 @@ class ErpContextService
 
     private function fetchOrderDetail(int $customerId, int $orderId): ?array
     {
-        if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')) {
+        // Mismo criterio que fetchFromErp(): sin credenciales de Oracle el
+        // atajo directo acaba en ORA-24415 y se veía «Pedido no encontrado».
+        if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')
+            && filled(config('database.connections.oracle.username'))) {
             try {
                 return app(ErpCustomerDataService::class)->getOrderDetail($orderId, $customerId);
             } catch (\Throwable $e) {
@@ -308,7 +338,10 @@ class ErpContextService
         }
 
         try {
-            $customer = $this->searchCustomer($email);
+            // IDCLIENTE conocido: resolver por id antes que por email (un
+            // contacto vinculado a mano puede tener otro email en Gestión).
+            $customer = $erpId !== null ? $this->findCustomerById($erpId) : null;
+            $customer ??= $this->searchCustomer($email);
 
             // Fallback: si el email no tiene match en el ERP, buscar por teléfono
             if (! $customer && $phone !== null) {
@@ -639,6 +672,21 @@ class ErpContextService
         // No fallback a results[0]: si no hay coincidencia exacta de email, el cliente no existe.
         // El manager hace búsqueda fuzzy — devolver results[0] atribuiría pedidos de otro cliente.
         return null;
+    }
+
+    /**
+     * Cliente del ERP por IDCLIENTE (GET erp/customer/{id}). Null si el
+     * manager no lo devuelve o devuelve otro id.
+     */
+    private function findCustomerById(int $erpId): ?array
+    {
+        $resp = $this->http()->get($this->url("erp/customer/{$erpId}"));
+        if (! $resp->successful() || ! $resp->json('success')) {
+            return null;
+        }
+        $data = $resp->json('data');
+
+        return is_array($data) && (int) ($data['id'] ?? 0) === $erpId ? $data : null;
     }
 
     /**

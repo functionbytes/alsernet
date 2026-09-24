@@ -154,4 +154,99 @@ return [
      | Días de antelación con los que se avisa de que un vale o bono caduca.
      */
     'chat_expiry_warning_days' => (int) env('HELPDESK_ERP_CHAT_EXPIRY_DAYS', 7),
+
+    /*
+     | Descripciones de respaldo de los códigos del ERP. El manager ya las
+     | resuelve contra Oracle (campos *_description); estas solo se usan si una
+     | versión anterior del manager no las trae o la tabla no es legible.
+     | Valores copiados de las tablas de Oracle el 24-sep-2026.
+     */
+    'chat_codes' => [
+        'warehouse' => [
+            '1' => 'POCOMACO', '2' => 'MONTERROSO', '3' => 'TIENDA CAPITAN HAYA', '4' => 'TIENDA DIEGO DE LEON',
+            '5' => 'TIENDA POCOMACO', '6' => 'ONLINE', '100000003' => 'POCOMACO-C.H.', '100000004' => 'POCOMACO-D.L',
+            '100000020' => 'GOLF CAMPOMAR',
+        ],
+        'origin' => [
+            '1' => 'TELEFONO', '2' => 'FAX', '3' => 'CUPON', '4' => 'INTERNET', '5' => 'EMAIL', '6' => 'DEVOLUCIONES',
+            '100000000' => 'MADRID', '100000020' => 'MONTERROSO', '100000040' => 'RECLAMACIÓN', '100000041' => 'REPOSICIÓN',
+            '100000060' => 'RECUPERADOS', '100000080' => 'EMPLEADO', '100000100' => 'LICENCIAS', '100000120' => 'CLICK TO CALL',
+            '100000140' => 'TELEVISION', '100000160' => 'AMAZON', '100000180' => 'BAJADA', '100000200' => 'CONCURSO',
+            '100000201' => 'TIENDA POCOMACO', '100000220' => 'REPARACIONES', '100000240' => 'REMARKETING',
+            '100000260' => 'FINANCIADO', '100000280' => 'FINSI',
+        ],
+        'catalog' => [
+            '1' => 'Caza', '3' => 'Golf', '5' => 'Pesca', '7' => 'Nautica', '10' => 'Hipica', '14' => 'Esqui',
+            '15' => 'Submarinismo', '20' => 'Arqueria', '24' => 'Taller caza Madrid', '28' => 'Curso Buceo',
+            '30' => 'Licencias', '31' => 'Padel', '100000000' => 'Varios', '100000020' => 'Lotería', '100000040' => 'Generico',
+        ],
+        // PEDIDOCLIESTADO (estado del pedido en la lista).
+        'order_status' => [
+            '0' => 'Anulado', '1' => 'Creación', '2' => 'Revisión transportista', '3' => 'Aceptación financiera',
+            '4' => 'Pendiente de mercancía', '5' => 'Listo para servir', '6' => 'Sirviéndose', '7' => 'Servido',
+            '8' => 'Incidencia', '9' => 'Aceptación financiera reservando', '10' => 'Servido parcialmente',
+            '11' => 'Pendiente transferencia',
+        ],
+        // ALBARANCLI_CENTRAL.TIPO: TIPOALBARANCLI no tiene los tipos 1/3/4 (venta,
+        // devolución, abono), que son los que usa la tienda.
+        'delivery_type' => [
+            '1' => 'Venta', '3' => 'Devolución', '4' => 'Abono', '5' => 'Genérico', '7' => 'Ventas TPV antiguo',
+            '9' => 'Devolución agencia', '10' => 'Anticipo pedido TPV',
+        ],
+    ],
+
+    /*
+     | Seguimiento de envíos: plantillas de URL por transportista ({tracking}
+     | se sustituye por el número de envío, codificado). El normalizador de
+     | /orders/{id}/shipping rellena tracking_url si el manager trae
+     | transportista y número pero no la URL. Hoy carrier sale null (la tabla
+     | de envíos de IDENVIO no tiene GRANT): queda listo para cuando lo tenga.
+     |
+     | - carrier_ids: IDTRANSPORTISTA de Oracle (tabla TRANSPORTISTA) => plantilla.
+     | - aliases: texto dentro del nombre del transportista => plantilla (gana
+     |   el alias más largo: "correos express" antes que "correos").
+     */
+    'tracking' => [
+        'templates' => [
+            'seur' => 'https://www.seur.com/livetracking/?segOnlineIdentificador={tracking}&segOnlineIdioma=es',
+            'mrw' => 'https://www.mrw.es/seguimiento_envios/MRW_resultados_consultas.asp?modo=nacional&envio={tracking}',
+            'correos' => 'https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number={tracking}',
+            'correosexpress' => 'https://s.correosexpress.com/c?n={tracking}',
+            'gls' => 'https://gls-group.com/ES/es/seguimiento-envio/?match={tracking}',
+            'ctt' => 'https://www.cttexpress.com/localizador-de-envios/?sc={tracking}',
+            'dhl' => 'https://www.dhl.com/es-es/home/tracking/tracking-express.html?tracking-id={tracking}',
+            'ups' => 'https://www.ups.com/track?loc=es_ES&tracknum={tracking}',
+            'nacex' => 'https://www.nacex.es/seguimientoDetalle.do?agencia_origen=&numero_albaran={tracking}',
+            'inpost' => 'https://inpost.es/seguimiento-del-envio/?number={tracking}',
+            'schenker' => 'https://www.dbschenker.com/app/tracking-public/?refNumber={tracking}',
+        ],
+        'carrier_ids' => [
+            '4' => 'seur',
+            '9' => 'ups',
+            '21' => 'correosexpress',
+            '100000001' => 'nacex',
+            '100000045' => 'mrw',
+            '100000164' => 'correosexpress',
+            '100000165' => 'correosexpress',
+            '100000223' => 'schenker',
+            '100000283' => 'inpost',
+        ],
+        'aliases' => [
+            'seur' => 'seur',
+            'mrw' => 'mrw',
+            'correos' => 'correos',
+            'correos express' => 'correosexpress',
+            'correosexpress' => 'correosexpress',
+            'chronoexpres' => 'correosexpress',
+            'gls' => 'gls',
+            'ctt' => 'ctt',
+            'ctt express' => 'ctt',
+            'tourline' => 'ctt',
+            'dhl' => 'dhl',
+            'ups' => 'ups',
+            'nacex' => 'nacex',
+            'inpost' => 'inpost',
+            'schenker' => 'schenker',
+        ],
+    ],
 ];

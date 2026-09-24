@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\CustomerExternalId;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskErp\Services\CustomerTimelineService;
 use Modules\HelpdeskErp\Services\ErpContextService;
@@ -125,8 +126,50 @@ class WebhookController extends Controller
         $this->service->forgetAllFor($email, [$localCustomer?->phone, $localCustomer?->whatsapp_phone]);
         $this->timelineService->forgetCache($email);
 
-        broadcast(new ErpOrdersReady($email, $customerId !== null ? (int) $customerId : null));
+        $erpCustomerId = is_numeric($customerId) && (int) $customerId > 0 ? (int) $customerId : null;
+
+        broadcast(new ErpOrdersReady(
+            $email,
+            $erpCustomerId,
+            $this->helpdeskCustomerIdsFor($erpCustomerId, $email),
+        ));
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Contactos del helpdesk a los que avisar: los vinculados a ese cliente de
+     * Gestión (el customer_id del cuerpo es el IDCLIENTE de Oracle) y, por
+     * compatibilidad, el que tenga ese mismo email. El email de Gestión y el
+     * del helpdesk no siempre coinciden, por eso el vínculo va primero.
+     *
+     * @return list<int>
+     */
+    private function helpdeskCustomerIdsFor(?int $erpCustomerId, string $email): array
+    {
+        $ids = [];
+
+        try {
+            if ($erpCustomerId !== null) {
+                $ids = CustomerExternalId::query()
+                    ->where('platform', 'erp')
+                    ->where('external_id', (string) $erpCustomerId)
+                    ->limit(20)
+                    ->pluck('customer_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->all();
+            }
+
+            $byEmail = Customer::where('email', $email)->value('id');
+            if ($byEmail !== null) {
+                $ids[] = (int) $byEmail;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskErp webhook: no se pudieron resolver los contactos del helpdesk.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return array_values(array_unique(array_filter($ids, fn (int $id): bool => $id > 0)));
     }
 }

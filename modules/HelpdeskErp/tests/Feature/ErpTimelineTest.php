@@ -5,6 +5,7 @@ namespace Modules\HelpdeskErp\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Laravel\Pulse\Pulse;
 use Modules\HelpdeskErp\Database\Seeders\HelpdeskErpPermissionsSeeder;
 use Spatie\Permission\PermissionRegistrar;
@@ -40,7 +41,12 @@ class ErpTimelineTest extends TestCase
             }
         });
 
-        config(['helpdeskerp.manager_url' => 'http://manager.test']);
+        // La clave real es 'helpdeskErp.*'; 'helpdeskerp.manager_url' no la leía nadie.
+        // Sin credenciales de Oracle, el contexto va por HTTP (al Http::fake).
+        config([
+            'helpdeskErp.manager_url' => 'http://manager.test',
+            'database.connections.oracle.username' => null,
+        ]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->seed(HelpdeskErpPermissionsSeeder::class);
@@ -77,9 +83,11 @@ class ErpTimelineTest extends TestCase
 
     public function test_timeline_returns_erp_events_sorted_by_date_desc(): void
     {
+        $email = $this->uniqueEmail();
+
         Http::fake([
             '*/erp/customer/search*' => Http::response([
-                'data' => [['id' => 1, 'label' => 'Test', 'surnames' => 'User', 'email' => 'test@example.com', 'cif' => null]],
+                'data' => [['id' => 1, 'label' => 'Test', 'surnames' => 'User', 'email' => $email, 'cif' => null]],
             ]),
             '*/erp/customer/1' => Http::response(['data' => []]),
             '*/erp/customer/1/balance' => Http::response(['data' => []]),
@@ -98,7 +106,7 @@ class ErpTimelineTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/helpdeskErp/customers/test@example.com/timeline')
+            ->getJson("/api/helpdeskErp/customers/{$email}/timeline")
             ->assertOk()
             ->assertJsonStructure(['data']);
 
@@ -149,9 +157,11 @@ class ErpTimelineTest extends TestCase
             'payment_method' => 'Transfer',
         ], range(1, 5));
 
+        $email = $this->uniqueEmail();
+
         Http::fake([
             '*/erp/customer/search*' => Http::response([
-                'data' => [['id' => 1, 'label' => 'Test', 'surnames' => 'User', 'email' => 'limit@example.com', 'cif' => null]],
+                'data' => [['id' => 1, 'label' => 'Test', 'surnames' => 'User', 'email' => $email, 'cif' => null]],
             ]),
             '*/erp/customer/1' => Http::response(['data' => []]),
             '*/erp/customer/1/balance' => Http::response(['data' => []]),
@@ -160,7 +170,7 @@ class ErpTimelineTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/helpdeskErp/customers/limit@example.com/timeline?limit=4')
+            ->getJson("/api/helpdeskErp/customers/{$email}/timeline?limit=4")
             ->assertOk();
 
         // limit=4 is below minimum (10) so it will be clamped to 10 by the controller
@@ -175,7 +185,7 @@ class ErpTimelineTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/helpdeskErp/customers/unknown@example.com/timeline')
+            ->getJson('/api/helpdeskErp/customers/'.$this->uniqueEmail().'/timeline')
             ->assertOk();
 
         $this->assertEmpty($response->json('data'));
@@ -185,9 +195,11 @@ class ErpTimelineTest extends TestCase
     {
         // This test asserts the endpoint does not fail whether HelpdeskPrestashop
         // module is installed or not — the service handles it defensively.
+        $email = $this->uniqueEmail();
+
         Http::fake([
             '*/erp/customer/search*' => Http::response([
-                'data' => [['id' => 1, 'label' => 'PS', 'surnames' => 'Test', 'email' => 'ps@example.com', 'cif' => null]],
+                'data' => [['id' => 1, 'label' => 'PS', 'surnames' => 'Test', 'email' => $email, 'cif' => null]],
             ]),
             '*/erp/customer/1' => Http::response(['data' => []]),
             '*/erp/customer/1/balance' => Http::response(['data' => []]),
@@ -196,8 +208,21 @@ class ErpTimelineTest extends TestCase
         ]);
 
         $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/helpdeskErp/customers/ps@example.com/timeline')
+            ->getJson("/api/helpdeskErp/customers/{$email}/timeline")
             ->assertOk()
             ->assertJsonStructure(['data']);
+    }
+
+    /**
+     * Email que no existe como contacto del helpdesk. La conexión 'helpdesk'
+     * apunta a la BD real, donde test@example.com SÍ existe (contacto 15685):
+     * el controlador aplicaba entonces el aislamiento por bandeja
+     * (CustomerPolicy::sharesInboxWith) y el agente del test, sin bandejas,
+     * recibía 403. Con un email único se prueba lo que el test quiere: un
+     * no-cliente consultado con helpdeskerp.prospect.view.
+     */
+    private function uniqueEmail(): string
+    {
+        return 'erp-tl-'.Str::lower(Str::random(12)).'@example.test';
     }
 }

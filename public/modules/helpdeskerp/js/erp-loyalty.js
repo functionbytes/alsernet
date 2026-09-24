@@ -287,7 +287,7 @@
             var canDn = C.can('orders') || C.can('finance');
             html += '<div class="erc-list">' + filtered.slice(0, shown).map(function (m) {
                 var p = num(m.points) || 0;
-                var meta = [m.warehouse ? 'Almacén ' + m.warehouse : '', m.delivery_id ? 'Albarán ' + m.delivery_id : '',
+                var meta = [C.codeLabel(m.warehouse_description, m.warehouse, 'Almacén'), m.delivery_id ? 'Albarán ' + m.delivery_id : '',
                     m.liquidation ? 'Liquidación ' + m.liquidation : ''].filter(Boolean).join(' · ');
                 return '<div class="erc-item' + (isOff(m.available) ? ' erc-item--muted' : '') + '">' +
                     '<span class="ic"><i class="fas ' + (p >= 0 ? 'fa-plus' : 'fa-minus') + '"></i></span>' +
@@ -348,7 +348,7 @@
                     ? 'Anulado el ' + C.date(v.cancelled_at, true)
                     : (v.valid_until ? (s.key === 'expired' ? 'Caducó el ' : 'Válido hasta el ') + C.date(v.valid_until, true) +
                         (s.key === 'active' ? ' (' + C.relative(v.valid_until) + ')' : '') : 'Sin fecha de caducidad');
-                var extra = [v.warehouse ? 'Almacén ' + v.warehouse : '', v.has_check_code ? 'Con código de control' : '',
+                var extra = [C.codeLabel(v.warehouse_description, v.warehouse, 'Almacén'), v.has_check_code ? 'Con código de control' : '',
                     v.original_voucher_id ? 'Viene del vale ' + v.original_voucher_id : ''].filter(Boolean).join(' · ');
                 return '<div class="erc-vch ' + (s.key === 'active' ? 'erc-vch--available' : 'erc-vch--spent') + '">' +
                     '<div class="erc-vch-hd"><span class="erc-vch-code">Vale ' + esc(v.voucher_id || v.id || '') + '</span>' +
@@ -453,9 +453,6 @@
             });
             var s = String(id || '');
             C.deliveryNote(s).then(function (resp) {
-                if (resp && resp.state === 'unavailable' && /^\d{9}$/.test(s)) { return C.deliveryNote('10' + s); }
-                return resp;
-            }).then(function (resp) {
                 if (!$.contains(document, $sheet[0])) { return; }
                 if (resp && resp.state === 'ok' && resp.data) {
                     C.sheet.update($sheet, { title: 'Albarán ' + (resp.data.number || resp.data.id), html: C.render.deliveryNote(resp.data) });

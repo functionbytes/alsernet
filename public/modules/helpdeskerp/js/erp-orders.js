@@ -2,7 +2,8 @@
  * HelpdeskErp · modal "Pedidos ERP" (bv-modal erp-orders).
  *
  * Lista completa de pedidos del cliente en Gestión:
- *   - chips por estado con contador y búsqueda por nº/observaciones, sobre
+ *   - chips por estado con contador y búsqueda por nº/observaciones/origen/
+ *     almacén/catálogo (descripciones del manager, código como respaldo), sobre
  *     los pedidos ya cargados (la lista del manager solo trae cabeceras);
  *   - filtro de fechas en servidor: ErpChat.section('orders', {from, to});
  *   - "Cargar más" por offset;
@@ -217,12 +218,19 @@
 
     /* ── Pintado ─────────────────────────────────────────────────── */
 
+    // Origen, almacén y catálogo: descripción del manager (*_description) y,
+    // sin ella, el código como respaldo ("Almacén 6").
     function orderOrigin(o) {
         if (o.origin == null || o.origin === '') { return ''; }
-        if (typeof o.origin === 'object') { return o.origin.description || ''; }
+        var C = E();
+        if (typeof o.origin === 'object') { return C.codeLabel(o.origin.description, o.origin.id, 'Origen'); }
         var code = String(o.origin).trim();
-        return ORIGINS[code] || ('Origen ' + code);
+        return C.codeLabel(o.origin_description || ORIGINS[code], code, 'Origen');
     }
+
+    function orderWarehouse(o) { return E().codeLabel(o.warehouse_description, o.warehouse, 'Almacén'); }
+
+    function orderCatalog(o) { return E().codeLabel(o.catalog_description, o.catalog, 'Catálogo'); }
 
     function orderAmount(o) {
         var C = E();
@@ -234,12 +242,13 @@
         return null;
     }
 
-    function statusLabel(o) { return E().statusInfo(o.status).label; }
+    function statusLabel(o) { return E().statusInfo(o.status, o.status_description).label; }
 
     function matches(o) {
         if (st.filter !== 'all' && statusLabel(o) !== st.filter) { return false; }
         if (!st.term) { return true; }
-        var hay = [o.number, o.order_id, o.id, o.observations].filter(function (v) { return v != null; }).join(' ').toLowerCase();
+        var hay = [o.number, o.order_id, o.id, o.observations, orderOrigin(o), orderWarehouse(o), orderCatalog(o)]
+            .filter(function (v) { return v != null && v !== ''; }).join(' ').toLowerCase();
         return hay.indexOf(st.term) !== -1;
     }
 
@@ -255,7 +264,7 @@
     function rowHtml(o) {
         var C = E();
         var ref = o.number || o.order_id || o.id || '—';
-        var meta = [C.date(o.date, true), orderOrigin(o)];
+        var meta = [C.date(o.date, true), orderOrigin(o), orderWarehouse(o), orderCatalog(o)];
         if (o.served_date) {
             meta.push('servido ' + C.date(o.served_date, true));
         } else if (o.expected_date) {
@@ -268,7 +277,7 @@
         return '<div class="erc-item erc-item--row" role="button" tabindex="0" data-erp-order-open="' + C.escAttr(o.id) + '">' +
             '<span class="ic"><i class="fas fa-clipboard-list"></i></span>' +
             '<span class="info">' +
-                '<span class="top"><span class="ref">#' + C.esc(ref) + '</span>' + C.render.statusPill(o.status) + '</span>' +
+                '<span class="top"><span class="ref">#' + C.esc(ref) + '</span>' + C.render.statusPill(o.status, o.status_description) + '</span>' +
                 (obs ? '<span class="t erc-item-obs">' + C.esc(obs) + '</span>' : '') +
                 '<span class="m">' + C.esc(meta.filter(Boolean).join(' · ')) + '</span>' +
             '</span>' +

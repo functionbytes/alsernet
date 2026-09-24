@@ -77,6 +77,46 @@
 /* Botonera dentro de hojas y tarjetas */
 .erc-fin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* ─── Facturas: búsqueda por número ──────────────────────────── */
+.erc-fin-search { margin-top: -2px; }
+.erc-fin-search input::-webkit-search-cancel-button { cursor: pointer; }
+
+/* ─── Hoja de factura: por qué no se puede descargar la copia ── */
+.erc-fin-pdf-why {
+    display: block; font-size: .66rem; line-height: 1.35; color: var(--erc-muted);
+    padding: 0 2px; overflow-wrap: anywhere;
+}
+.erc-fin-pdf-why.is-warn { color: var(--erc-warn-ink); }
+.erc-sheet-foot [data-erc-fin-pdf][disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ─── Balance: mini-gráfico facturado vs cobrado por mes ─────── */
+.erc-fin-chart .erc-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.erc-fin-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: .66rem; color: var(--erc-muted); }
+.erc-fin-key { display: inline-flex; align-items: center; gap: 5px; }
+.erc-fin-key::before { content: ""; width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+.erc-fin-key--inv::before { background: var(--erc-primary-strong); }
+.erc-fin-key--col::before { background: var(--erc-primary-accent); }
+
+.erc-fin-bars-row {
+    display: flex; align-items: flex-end; gap: 6px;
+    height: 110px; padding-bottom: 2px; border-bottom: 1px solid var(--erc-line);
+}
+.erc-fin-bar-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: stretch; }
+.erc-fin-bars { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; min-height: 0; }
+.erc-fin-bar { display: block; width: 42%; max-width: 16px; min-height: 0; border-radius: 3px 3px 0 0; }
+.erc-fin-bar--inv { background: var(--erc-primary-strong); }
+.erc-fin-bar--col { background: var(--erc-primary-accent); }
+.erc-fin-bar-lbl { margin-top: 4px; text-align: center; font-size: .6rem; color: var(--erc-faint); text-transform: lowercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erc-fin-chart-note { margin-top: 8px; font-size: .64rem; color: var(--erc-muted); }
+
+/* Alturas de barra en pasos de 5 % (sin style="" inline). */
+.erc-h-0 { height: 0; }
+.erc-h-5 { height: 5%; } .erc-h-10 { height: 10%; } .erc-h-15 { height: 15%; } .erc-h-20 { height: 20%; }
+.erc-h-25 { height: 25%; } .erc-h-30 { height: 30%; } .erc-h-35 { height: 35%; } .erc-h-40 { height: 40%; }
+.erc-h-45 { height: 45%; } .erc-h-50 { height: 50%; } .erc-h-55 { height: 55%; } .erc-h-60 { height: 60%; }
+.erc-h-65 { height: 65%; } .erc-h-70 { height: 70%; } .erc-h-75 { height: 75%; } .erc-h-80 { height: 80%; }
+.erc-h-85 { height: 85%; } .erc-h-90 { height: 90%; } .erc-h-95 { height: 95%; } .erc-h-100 { height: 100%; }
+
 /* ─── Pantallas estrechas (~380px) ───────────────────────────── */
 @media (max-width: 575.98px) {
     .erc-fin-tabs { padding: 8px 10px; }
@@ -84,4 +124,6 @@
     .erc-fin-body { min-height: 320px; }
     .erc-fin-links { justify-content: flex-start; }
     .erc-fin-more { width: 100%; }
+    .erc-fin-bars-row { gap: 3px; height: 96px; }
+    .erc-fin-bar { width: 45%; }
 }

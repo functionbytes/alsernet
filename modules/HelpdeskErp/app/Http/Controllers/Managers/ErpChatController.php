@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Helpdesk\Models\Customer;
-use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
+use Modules\HelpdeskErp\Http\Controllers\Concerns\ScopesErpCustomerAccess;
 use Modules\HelpdeskErp\Http\Requests\ErpChatSectionRequest;
 use Modules\HelpdeskErp\Services\ErpChat\ErpChatCustomerResolver;
 use Modules\HelpdeskErp\Services\ErpChat\ErpChatOverview;
@@ -19,15 +19,15 @@ use Modules\HelpdeskErp\Services\ErpChat\ErpChatService;
  * Todas las rutas reciben el id del CLIENTE DEL HELPDESK; el IDCLIENTE de
  * Gestión se resuelve aquí (ErpChatCustomerResolver) y nunca viaja desde el
  * navegador. Cada petición exige helpdeskerp.view + el permiso de la sección
- * y que el cliente esté en alguna bandeja del agente (ScopesCustomerByInbox,
- * el mismo aislamiento que ErpContextWebController).
+ * y que el cliente esté en alguna bandeja del agente o en un ticket que el
+ * agente pueda ver (ScopesErpCustomerAccess).
  *
  * Respuesta: {success: true, state, data, message, ...}. Un cliente sin
  * vínculo con Gestión responde 200 con state 'unlinked'.
  */
 class ErpChatController extends Controller
 {
-    use ScopesCustomerByInbox;
+    use ScopesErpCustomerAccess;
 
     public function __construct(
         private readonly ErpChatService $service,
@@ -53,6 +53,36 @@ class ErpChatController extends Controller
             'data' => $data,
             'message' => $data['sections']['summary']['message'] ?? null,
             'fetched_at' => $data['fetched_at'],
+        ]);
+    }
+
+    /**
+     * Resumen tras terminar el escaneo de pedidos: SOLO la sección orders se
+     * pide de nuevo al manager (saltando la caché); el resto sale de la caché
+     * del servidor. Mismo formato que overview(), así las alertas y
+     * estadísticas que dependen de los pedidos se recalculan igual.
+     *
+     * GET /panel/helpdesk/customers/{customer}/erp/overview/orders
+     */
+    public function overviewOrders(Request $request, int $customer): JsonResponse
+    {
+        $resolved = $this->resolve($request, $customer, []);
+        if ($resolved instanceof JsonResponse) {
+            return $resolved;
+        }
+
+        [$model, $erpId] = $resolved;
+        $user = $request->user();
+
+        $data = $this->overview->build($model, $erpId, fn (string $perm): bool => (bool) $user?->can($perm), false, ['orders']);
+
+        return response()->json([
+            'success' => true,
+            'state' => $data['state'],
+            'data' => $data,
+            'message' => $data['sections']['summary']['message'] ?? null,
+            'fetched_at' => $data['fetched_at'],
+            'partial' => 'orders',
         ]);
     }
 
@@ -176,7 +206,7 @@ class ErpChatController extends Controller
 
         // Mismo aislamiento por bandeja que el resto de controladores ERP
         // (aborta con 403 si el cliente no está en ninguna bandeja del agente).
-        $this->assertScopedToResolvedCustomer($customer, null);
+        $this->assertErpCustomerAccess($customer);
 
         if (function_exists('helpdesk_erp_enabled') && ! helpdesk_erp_enabled()) {
             return response()->json([

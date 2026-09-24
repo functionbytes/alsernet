@@ -5,7 +5,8 @@
     "keywords": ["helpdesk", "erp", "oracle", "manager-bridge"],
     "priority": 0,
     "providers": [
-        "Modules\\HelpdeskErp\\Providers\\HelpdeskErpServiceProvider"
+        "Modules\\HelpdeskErp\\Providers\\HelpdeskErpServiceProvider",
+        "Modules\\HelpdeskErp\\Providers\\ErpChatExtServiceProvider"
     ],
     "aliases": {},
     "files": [],

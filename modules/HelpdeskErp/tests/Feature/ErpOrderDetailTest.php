@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Pulse\Pulse;
+use Modules\Erp\Services\ErpCustomerDataService;
 use Modules\HelpdeskErp\Database\Seeders\HelpdeskErpPermissionsSeeder;
 use Modules\HelpdeskErp\Services\ErpContextService;
 use Spatie\Permission\PermissionRegistrar;
@@ -41,7 +42,11 @@ class ErpOrderDetailTest extends TestCase
             }
         });
 
-        config(['helpdeskerp.manager_url' => 'http://manager.test']);
+        // La clave real es 'helpdeskErp.*' (el provider fusiona el config con
+        // ese nombre); 'helpdeskerp.manager_url' no la leía nadie.
+        config(['helpdeskErp.manager_url' => 'http://manager.test']);
+
+        $this->routeOrderDetailThroughHttpFake();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->seed(HelpdeskErpPermissionsSeeder::class);
@@ -50,6 +55,33 @@ class ErpOrderDetailTest extends TestCase
         $this->user->givePermissionTo('helpdeskerp.view');
         $this->user->givePermissionTo('helpdeskerp.orders.detail.view');
         $this->user->givePermissionTo('helpdeskerp.prospect.view');
+    }
+
+    /**
+     * ErpContextService::fetchOrderDetail() va directo a Oracle (sin HTTP)
+     * cuando existen Modules\Erp\Services\ErpCustomerDataService y la
+     * extensión oci8, que es justo lo que tiene el contenedor. Así el
+     * Http::fake() de cada test no se usaba y el pedido llegaba de Oracle (o
+     * null). Se sustituye el servicio del contenedor por uno que pregunta al
+     * manager por HTTP, con lo que las dos vías acaban en el Http::fake().
+     */
+    private function routeOrderDetailThroughHttpFake(): void
+    {
+        if (! class_exists(ErpCustomerDataService::class)) {
+            return;
+        }
+
+        $this->app->instance(ErpCustomerDataService::class, new class
+        {
+            public function getOrderDetail(int $orderId, int $idcliente): ?array
+            {
+                $resp = Http::acceptJson()->get(
+                    rtrim((string) config('helpdeskErp.manager_url'), '/')."/api/erp/customer/{$idcliente}/orders/{$orderId}"
+                );
+
+                return $resp->successful() ? ($resp->json('data') ?? null) : null;
+            }
+        });
     }
 
     // ── Authorization ──────────────────────────────────────────────────────

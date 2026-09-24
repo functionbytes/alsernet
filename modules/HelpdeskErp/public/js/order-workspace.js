@@ -19,6 +19,13 @@
  * [data-erp-order-open] lo resuelve erp-chat.js (ErpChat.openOrder), que acaba
  * llamando a esta función: aquí no se duplica ese handler.
  *
+ * Cruce con la tienda (extensión "cross"): al pintar un pedido se pregunta a
+ * …/erp/orders/{id}/shop si tiene pedido de PrestaShop fiable (identificador
+ * de origen confirmado por el bridge, o mismo día + importe único). Solo si
+ * hay coincidencia, y el workspace de pedido de la tienda está cargado
+ * (window.openPsOrderWorkspace), sale "Ver pedido en la tienda": cierra este
+ * modal y abre el de PrestaShop (nunca un modal sobre otro).
+ *
  * Se carga ANTES que erp-chat.js (orden de los @push): window.ErpChat se lee
  * siempre en tiempo de ejecución, nunca al cargar el fichero.
  *
@@ -35,6 +42,7 @@
     var cur = null;        // {erpId, orderId, cid, token, bundle}
     var token = 0;
     var addrLoaded = false;
+    var shopCache = {};    // "cid:orderId" -> {ps_order_id, reference, matched_by} | null (sin coincidencia)
 
     function E() { return window.ErpChat || null; }
     function $modal() { return $('[data-bv-modal-name="' + MODAL + '"]'); }
@@ -185,17 +193,8 @@
 
     /* ── Cálculos ──────────────────────────────────────────────────── */
 
-    function lineAmount(l) {
-        var withTax = num(l.total_with_taxes);
-        if (withTax !== null) { return withTax; }
-        var units = num(l.units);
-        var price = num(l.price != null ? l.price : l.price_bi);
-        var disc = num(l.discount_percent) || 0;
-        var tax = num(l.tax_percent) || 0;
-        var sub = num(l.subtotal != null ? l.subtotal : l.total_bi);
-        if (sub === null) { sub = (units === null ? 1 : units) * (price || 0) * (1 - disc / 100); }
-        return sub * (1 + tax / 100);
-    }
+    // Una sola fórmula de importe por línea: la de ErpChat.render.
+    function lineAmount(l) { var ec = E(); return ec && ec.render.lineAmount ? ec.render.lineAmount(l) : 0; }
 
     function lineBase(l) {
         var sub = num(l.subtotal != null ? l.subtotal : l.total_bi);
@@ -282,6 +281,7 @@
         $('#erpowState').addClass('erc-hidden').empty();
         $('#erpowGrid').removeClass('erc-hidden');
         $('#erpowInsert, #erpowCopy').prop('disabled', false);
+        loadShop();
 
         // Si la pestaña Cliente está a la vista (reapertura), carga su dirección.
         if (!$('#erpowPanelCliente').hasClass('erc-hidden')) { renderCliente(true); }
@@ -305,7 +305,8 @@
                 chip('Catálogo', desc(o.catalog)) +
                 chip('Prioridad', desc(o.priority)) +
                 (o.invoiced === true ? chip('', 'Facturado', 'good') : '') +
-            '</div>';
+            '</div>' +
+            '<div class="erc-ow-shop erc-hidden" id="erpowShop"></div>';
         $('#erpowMeta').html(html);
     }
 
@@ -590,6 +591,65 @@
             paintAddress(resp);
         });
     }
+
+    /* ── Cruce con la tienda (PrestaShop) ──────────────────────────── */
+
+    function shopAvailable() { return typeof window.openPsOrderWorkspace === 'function'; }
+
+    function paintShop(m) {
+        var $s = $('#erpowShop');
+        if (!$s.length) { return; }
+        if (!m || !m.ps_order_id) { $s.addClass('erc-hidden').empty(); return; }
+        var how = m.matched_by === 'date_amount'
+            ? 'Mismo día e importe en la tienda'
+            : 'Enlazado por el identificador de origen';
+        $s.html(
+            '<span class="erc-ow-shop-info">' +
+                '<span class="t">En la tienda: <b>' + esc(m.reference || ('#' + m.ps_order_id)) + '</b></span>' +
+                '<span class="m">' + esc(how) + '</span>' +
+            '</span>' +
+            '<button type="button" class="erc-btn erc-btn--outline erc-btn--sm" data-erow-shop="' + escAttr(m.ps_order_id) + '">Ver pedido en la tienda</button>'
+        ).removeClass('erc-hidden');
+    }
+
+    function loadShop() {
+        var ec = E();
+        if (!cur || !cur.cid || !ec || !shopAvailable() || !ec.can('orders')) { paintShop(null); return; }
+        var key = cur.cid + ':' + cur.orderId;
+        if (Object.prototype.hasOwnProperty.call(shopCache, key)) { paintShop(shopCache[key]); return; }
+        var base = ec.base(cur.cid);
+        if (!base) { paintShop(null); return; }
+        var my = cur.token;
+        var orderId = cur.orderId;
+        paintShop(null);
+        ec.request(base + '/orders/' + encodeURIComponent(orderId) + '/shop', {}, 30000).then(function (resp) {
+            var m = resp && resp.success !== false && resp.state === 'ok' && resp.data && resp.data.ps_order_id ? resp.data : null;
+            // Solo se recuerda una respuesta firme (con o sin coincidencia);
+            // una caída se vuelve a intentar en la próxima apertura.
+            if (resp && resp.state === 'ok') { shopCache[key] = m; }
+            if (!cur || cur.token !== my || cur.orderId !== orderId) { return; }
+            paintShop(m);
+        });
+    }
+
+    function closeSelf() {
+        var ec = E();
+        if (ec) { ec.sheet.close($body()); }
+        if (window.HDCommerce && typeof window.HDCommerce.close === 'function') { window.HDCommerce.close(MODAL); }
+        else {
+            $modal().removeClass('on');
+            if (!$('.bv-modal.on').length) { $('body').css('overflow', ''); }
+        }
+    }
+
+    $(document).on('click', '[data-bv-modal-name="' + MODAL + '"] [data-erow-shop]', function (e) {
+        e.preventDefault();
+        var psId = String($(this).attr('data-erow-shop') || '');
+        if (!psId || !shopAvailable()) { return; }
+        // Nunca un modal sobre otro: primero se cierra el de Gestión.
+        closeSelf();
+        window.openPsOrderWorkspace(psId);
+    });
 
     /* ── Hojas internas: albarán y factura ─────────────────────────── */
 

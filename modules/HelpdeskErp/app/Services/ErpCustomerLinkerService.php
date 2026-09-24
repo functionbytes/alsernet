@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskErp\Services;
 
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
@@ -32,8 +34,8 @@ class ErpCustomerLinkerService
 
     /**
      * Busca el cliente en el ERP intentando todos los identificadores disponibles
-     * (email → teléfono → email de PrestaShop) y guarda el vínculo en
-     * helpdesk_customer_external_ids con platform='erp'.
+     * (id de PrestaShop → email → teléfono → email de PrestaShop) y guarda el
+     * vínculo en helpdesk_customer_external_ids con platform='erp'.
      *
      * Retorna el IDCLIENTE de Oracle, o null si no se encontró coincidencia.
      */
@@ -48,12 +50,28 @@ class ErpCustomerLinkerService
         $this->searchFailed = false;
         $this->matchedRecord = null;
 
+        // 0. Por el id de cliente de PrestaShop. En Gestión, CODIGO_INTERNET es
+        //    exactamente el id_customer de PrestaShop, así que es la única
+        //    estrategia exacta: no depende de que el email o el teléfono
+        //    coincidan entre los dos sistemas. Por eso va la primera.
+        foreach ($customer->externalIds->where('platform', 'prestashop') as $psLink) {
+            $psId = trim((string) $psLink->external_id);
+            if ($psId === '' || ! ctype_digit($psId) || (int) $psId <= 0) {
+                continue;
+            }
+
+            $erpId = $this->searchByPrestashopId((int) $psId);
+            if ($erpId !== null && ($linked = $this->persistLink($customer, $erpId, 'prestashop_id')) !== null) {
+                return $linked;
+            }
+        }
+
         // 1. Buscar por email (descartamos correos anónimos del chat web)
         $email = $customer->email;
         if ($email && ! str_ends_with($email, '@anonymous.local')) {
             $erpId = $this->searchByEmail($email);
-            if ($erpId !== null) {
-                return $this->persistLink($customer, $erpId, 'email');
+            if ($erpId !== null && ($linked = $this->persistLink($customer, $erpId, 'email')) !== null) {
+                return $linked;
             }
         }
 
@@ -69,8 +87,8 @@ class ErpCustomerLinkerService
             }
 
             $erpId = $this->searchByPhone($digits);
-            if ($erpId !== null) {
-                return $this->persistLink($customer, $erpId, 'phone');
+            if ($erpId !== null && ($linked = $this->persistLink($customer, $erpId, 'phone')) !== null) {
+                return $linked;
             }
         }
 
@@ -80,8 +98,8 @@ class ErpCustomerLinkerService
         $psEmail = $psLink?->metadata['email'] ?? null;
         if ($psEmail && $psEmail !== $email) {
             $erpId = $this->searchByEmail($psEmail);
-            if ($erpId !== null) {
-                return $this->persistLink($customer, $erpId, 'prestashop_email');
+            if ($erpId !== null && ($linked = $this->persistLink($customer, $erpId, 'prestashop_email')) !== null) {
+                return $linked;
             }
         }
 
@@ -112,14 +130,38 @@ class ErpCustomerLinkerService
      * HelpdeskIntegration es opcional (HelpdeskErp no depende de él; la
      * dependencia va en el otro sentido, su ErpIntegrationDriver usa
      * ErpContextService), así que sin él se escribe igual, solo sin auditar.
+     *
+     * Devuelve null si ese id de Gestión ya está vinculado a OTRO contacto
+     * (el par platform+external_id es único): antes se marcaba el cliente
+     * como 'linked' sin haber escrito nada. Así linkCustomer() sigue con la
+     * siguiente estrategia y, si ninguna vincula, queda como no encontrado.
      */
-    private function persistLink(Customer $customer, int $erpId, string $via): int
+    private function persistLink(Customer $customer, int $erpId, string $via): ?int
     {
         if (class_exists(CustomerIntegrationService::class)) {
-            app(CustomerIntegrationService::class)
+            $written = app(CustomerIntegrationService::class)
                 ->linkAutomatically($customer, 'erp', (string) $erpId, $via);
         } else {
-            $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => $via]);
+            try {
+                $customer->linkExternalId('erp', (string) $erpId, ['linked_via' => $via]);
+                $written = true;
+            } catch (QueryException $e) {
+                if ((string) $e->getCode() !== '23000') {
+                    throw $e;
+                }
+                $written = false;
+            }
+        }
+
+        if (! $written) {
+            Log::warning('HelpdeskErp: el id de Gestión ya pertenece a otro contacto, no se vincula.', [
+                'customer_id' => $customer->id,
+                'erp_id' => $erpId,
+                'via' => $via,
+            ]);
+            $this->matchedRecord = null;
+
+            return null;
         }
 
         $customer->recordErpLookup('linked');
@@ -215,6 +257,104 @@ class ErpCustomerLinkerService
         if ($updates !== []) {
             $customer->update($updates);
         }
+    }
+
+    /**
+     * GET {manager}/api/erp/customer/search/web/{psId}: busca en CLIENTE_CENT
+     * por CODIGO_INTERNET (= id_customer de PrestaShop). Responde
+     * {success, exists, matched_by, data:{id, label, surnames, email,
+     * code_internet, available, deleted_at, ...}}.
+     *
+     * Solo se acepta una coincidencia por 'idweb' cuyo code_internet sea el
+     * id pedido, y nunca un cliente dado de baja (deleted_at): vincular una
+     * ficha de baja mostraría en el chat datos de un cliente que ya no existe.
+     */
+    private function searchByPrestashopId(int $psId): ?int
+    {
+        $base = rtrim((string) config('helpdeskErp.manager_url', ''), '/');
+        if ($base === '') {
+            return null;
+        }
+
+        $json = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                $request = Http::timeout((int) config('helpdeskErp.http_timeout', 15))
+                    ->connectTimeout(4)
+                    ->acceptJson();
+
+                $token = (string) config('helpdeskErp.bridge_token', '');
+                if ($token !== '') {
+                    $request = $request->withToken($token);
+                }
+
+                $resp = $request->get($base.'/api/erp/customer/search/web/'.$psId);
+            } catch (\Throwable $e) {
+                $this->searchFailed = true;
+                Log::warning('HelpdeskErp: linkCustomer no pudo buscar por id de PrestaShop.', ['error' => $e->getMessage()]);
+
+                return null;
+            }
+
+            $json = $resp->json();
+            $json = is_array($json) ? $json : [];
+
+            // El manager pierde a ratos la conexión con Oracle en un worker de
+            // PHP-FPM ("Lost connection and no reconnector available") y la
+            // siguiente petición funciona: un solo reintento.
+            $error = (string) ($json['error'] ?? $json['message'] ?? '');
+            if ($attempt === 1 && ! ($resp->successful() && ($json['success'] ?? false) === true)
+                && str_contains($error, 'Lost connection')) {
+                continue;
+            }
+
+            if ($resp->status() === 404) {
+                return null;
+            }
+
+            if (! $resp->successful() || ($json['success'] ?? null) === false) {
+                $this->searchFailed = true;
+                Log::warning('HelpdeskErp: la búsqueda por id de PrestaShop falló en el manager.', [
+                    'status' => $resp->status(),
+                ]);
+
+                return null;
+            }
+
+            break;
+        }
+
+        if (($json['exists'] ?? false) !== true) {
+            return null;
+        }
+
+        $data = $json['data'] ?? null;
+        if (! is_array($data) || array_is_list($data)) {
+            return null;
+        }
+
+        $matchedBy = $json['matched_by'] ?? 'idweb';
+        $code = trim((string) ($data['code_internet'] ?? ''));
+        if ($matchedBy !== 'idweb' || ($code !== '' && $code !== (string) $psId)) {
+            return null;
+        }
+
+        $id = $data['id'] ?? null;
+        if (! is_numeric($id) || (int) $id <= 0) {
+            return null;
+        }
+
+        if (filled($data['deleted_at'] ?? null)) {
+            Log::info('HelpdeskErp: el cliente de Gestión con ese id de PrestaShop está dado de baja, no se vincula.', [
+                'erp_id' => (int) $id,
+            ]);
+
+            return null;
+        }
+
+        $this->matchedRecord = $data;
+
+        return (int) $id;
     }
 
     private function searchByEmail(string $email): ?int

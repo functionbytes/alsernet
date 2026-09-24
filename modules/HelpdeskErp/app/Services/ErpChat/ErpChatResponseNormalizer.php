@@ -153,6 +153,117 @@ class ErpChatResponseNormalizer
         ];
     }
 
+    /**
+     * Envío de un pedido: si el manager trae transportista y número de
+     * seguimiento pero no la URL, la construye con la plantilla del
+     * transportista (config helpdeskErp.tracking.templates). Hoy carrier y
+     * tracking_number salen null (la tabla de envíos no tiene GRANT): queda
+     * listo para el día que el DBA la abra.
+     *
+     * @param  array<string, mixed>  $result  resultado normalizado de /orders/{id}/shipping
+     * @return array<string, mixed>
+     */
+    public function shipping(array $result): array
+    {
+        if (($result['state'] ?? null) !== 'ok' || ! is_array($result['data'] ?? null)) {
+            return $result;
+        }
+
+        $data = $result['data'];
+        $data['tracking_url'] = is_string($data['tracking_url'] ?? null) && trim($data['tracking_url']) !== ''
+            ? trim($data['tracking_url'])
+            : $this->trackingUrl($data['carrier'] ?? null, $data['tracking_number'] ?? null, $data['carrier_id'] ?? null);
+
+        $result['data'] = $data;
+
+        return $result;
+    }
+
+    /**
+     * URL de seguimiento para un transportista (nombre, código del ERP o
+     * {id, name|description}) y un número de envío; null si no hay plantilla.
+     */
+    public function trackingUrl(mixed $carrier, mixed $trackingNumber, mixed $carrierId = null): ?string
+    {
+        if (! is_scalar($trackingNumber) || is_bool($trackingNumber) || trim((string) $trackingNumber) === '') {
+            return null;
+        }
+
+        $key = $this->carrierKey($carrier, $carrierId);
+        if ($key === null) {
+            return null;
+        }
+
+        $template = config('helpdeskErp.tracking.templates.'.$key);
+        if (! is_string($template) || ! str_contains($template, '{tracking}')) {
+            return null;
+        }
+
+        return str_replace('{tracking}', rawurlencode(trim((string) $trackingNumber)), $template);
+    }
+
+    /**
+     * Clave de plantilla del transportista: primero por código del ERP
+     * (IDTRANSPORTISTA), después por alias dentro del nombre ("SEUR EUROPA"
+     * → seur, "CORREOSEXPRESS I. STANDARD" → correosexpress). Los alias más
+     * largos ganan, así "correos express" no cae en "correos".
+     */
+    public function carrierKey(mixed $carrier, mixed $carrierId = null): ?string
+    {
+        $names = [];
+        $ids = [];
+
+        if (is_array($carrier)) {
+            $ids[] = $carrier['id'] ?? null;
+            $ids[] = $carrier['code'] ?? null;
+            $names[] = $carrier['name'] ?? null;
+            $names[] = $carrier['description'] ?? null;
+        } else {
+            $names[] = $carrier;
+            $ids[] = $carrier;
+        }
+        $ids[] = $carrierId;
+
+        $byId = (array) config('helpdeskErp.tracking.carrier_ids', []);
+        foreach ($ids as $id) {
+            if (is_scalar($id) && ! is_bool($id) && isset($byId[trim((string) $id)])) {
+                return (string) $byId[trim((string) $id)];
+            }
+        }
+
+        $aliases = (array) config('helpdeskErp.tracking.aliases', []);
+        uksort($aliases, fn ($a, $b) => strlen((string) $b) <=> strlen((string) $a));
+
+        foreach ($names as $name) {
+            if (! is_string($name) || trim($name) === '') {
+                continue;
+            }
+
+            $spaced = ' '.trim((string) preg_replace('/[^a-z0-9]+/', ' ', $this->ascii($name))).' ';
+            $compact = str_replace(' ', '', $spaced);
+
+            foreach ($aliases as $alias => $key) {
+                $aliasSpaced = trim((string) preg_replace('/[^a-z0-9]+/', ' ', $this->ascii((string) $alias)));
+                if ($aliasSpaced === '') {
+                    continue;
+                }
+
+                if (str_contains($spaced, ' '.$aliasSpaced.' ') || str_starts_with($compact, str_replace(' ', '', $aliasSpaced))) {
+                    return (string) $key;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function ascii(string $value): string
+    {
+        $value = mb_strtolower($value);
+
+        return strtr($value, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n', 'ç' => 'c']);
+    }
+
     public function isBlocked(string $error): bool
     {
         return $error !== '' && (bool) preg_match('/GRANT|Acceso denegado|ORA-00942|ORA-01031|insufficient privileges|table or view does not exist/i', $error);

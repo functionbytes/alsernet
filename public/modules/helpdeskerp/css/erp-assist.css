@@ -1,0 +1,49 @@
+/* ============================================================
+   Gestión (ERP) en el chat · ayudas (erp-assist.js)
+   - Pista de pedido detectado sobre el composer (.erc-assist-strip),
+     solo cuando no está PscChat.pushHint.
+   - Bloque "Respuestas rápidas" al final de la pestaña Gestión.
+   Paleta: verdes y grises (tokens --erc-* de erp-chat.css).
+   Botones con texto sin icono. Sin scroll horizontal a 380px.
+   ============================================================ */
+
+.erc-assist-strip { display: flex; flex-direction: column; gap: 6px; padding: 0 16px 8px; min-width: 0; }
+.erc-assist-strip:empty { display: none; }
+
+.erc-assist-hint {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+    padding: 8px 11px; border-radius: 9px;
+    background: var(--erc-surface, #fff); border: 1px solid var(--erc-primary-line, rgba(144, 187, 19, .35));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+.erc-assist-hint .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--erc-primary, #90bb13); flex-shrink: 0; }
+.erc-assist-hint .txt { flex: 1; min-width: 0; font-size: .72rem; line-height: 1.4; color: var(--erc-ink-soft, #565656); overflow-wrap: anywhere; }
+.erc-assist-hint .txt b { color: var(--erc-primary-strong, #5e7a0d); font-family: var(--erc-mono); }
+.erc-assist-hint .act,
+.erc-assist-hint .x {
+    background: none; border: 0; padding: 0; cursor: pointer; flex-shrink: 0;
+    font-size: .69rem; font-weight: 700; white-space: nowrap;
+}
+.erc-assist-hint .act { color: var(--erc-primary-strong, #5e7a0d); }
+.erc-assist-hint .act:hover { color: var(--erc-primary, #90bb13); }
+.erc-assist-hint .x { color: var(--erc-muted, #8a8a8a); font-weight: 600; }
+.erc-assist-hint .x:hover { color: var(--erc-ink-soft, #565656); }
+
+.erc-assist-replies { margin-top: 12px; min-width: 0; }
+.erc-assist-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.erc-assist-reply {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+    padding: 9px 11px; border: 1px solid var(--erc-line, #f0f0f0); border-radius: 9px; background: var(--erc-surface-alt, #f6f7f5);
+}
+.erc-assist-reply-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.erc-assist-reply-body .t { font-size: .72rem; font-weight: 700; color: var(--erc-ink, #2d2d2d); }
+.erc-assist-reply-body .m { font-size: .69rem; line-height: 1.4; color: var(--erc-ink-soft, #565656); overflow-wrap: anywhere; }
+.erc-assist-reply .erc-btn { flex-shrink: 0; }
+
+@media (max-width: 480px) {
+    .erc-assist-strip { padding: 0 10px 8px; }
+    .erc-assist-hint { flex-wrap: wrap; row-gap: 6px; }
+    .erc-assist-hint .txt { flex-basis: calc(100% - 18px); }
+    .erc-assist-reply { flex-direction: column; align-items: stretch; }
+    .erc-assist-reply .erc-btn { width: 100%; }
+}

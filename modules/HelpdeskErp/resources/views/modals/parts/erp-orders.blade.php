@@ -26,7 +26,7 @@
         <div class="erc-ord-tools">
             <label class="erc-search">
                 <i class="fas fa-magnifying-glass"></i>
-                <input type="search" id="ercOrdSearch" placeholder="Buscar por nº de pedido u observaciones…" autocomplete="off" aria-label="Buscar pedidos">
+                <input type="search" id="ercOrdSearch" placeholder="Buscar por nº, observaciones, origen o catálogo…" autocomplete="off" aria-label="Buscar pedidos">
             </label>
             <div class="erc-range">
                 <label class="erc-field">

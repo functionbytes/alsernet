@@ -10,11 +10,14 @@
  *
  * - El panel derecho se sustituye entero al cambiar de conversación: todo va
  *   delegado en document y se relee ErpChat.customerId() en cada acción.
- * - Este fichero se carga ANTES que erp-chat.js (orden de los @push), así que
- *   window.ErpChat se lee siempre en tiempo de ejecución, nunca al cargar.
+ * - window.ErpChat (erp-chat.js) se lee siempre en tiempo de ejecución, nunca
+ *   al cargar, así que el orden de los <script defer> no importa.
  * - Pedidos en carga (escaneo de Oracle, ~35 s): ErpChat escucha el evento en
- *   vivo y sondea hasta 3 veces; aquí se repinta con erp:overview-loaded y
- *   erp:orders-ready.
+ *   vivo y sondea hasta 3 veces; al terminar recarga SOLO los pedidos (el
+ *   resto sale de la caché del servidor) y aquí se repinta con
+ *   erp:overview-loaded y erp:orders-ready.
+ * - Origen, almacén, catálogo y estado se pintan con la descripción que manda
+ *   el manager (*_description); el código queda como respaldo.
  * - El ERP es SOLO LECTURA: no hay ninguna escritura salvo el reintento de
  *   búsqueda del cliente ([data-bv-erp-relink]), que no toca el ERP.
  *
@@ -169,11 +172,18 @@
 
     function orderRef(o) { return o.number || o.order_id || o.id || '—'; }
 
+    // Origen, almacén y catálogo: la descripción del manager
+    // (origin_description…) y, sin ella, el código como respaldo.
     function orderOrigin(o) {
         if (o.origin == null || o.origin === '') { return ''; }
-        if (typeof o.origin === 'object') { return o.origin.description || ''; }
+        var C = E();
+        if (typeof o.origin === 'object') { return C.codeLabel(o.origin.description, o.origin.id, 'Origen'); }
         var code = String(o.origin).trim();
-        return ORIGINS[code] || ('Origen ' + code);
+        return C.codeLabel(o.origin_description || ORIGINS[code], code, 'Origen');
+    }
+
+    function orderCatalog(o) {
+        return E().codeLabel(o.catalog_description, o.catalog, 'Catálogo');
     }
 
     function sortByDateDesc(list, field) {
@@ -187,14 +197,14 @@
 
     function orderRowHtml(o) {
         var C = E();
-        var meta = [C.date(o.date, true), orderOrigin(o)];
+        var meta = [C.date(o.date, true), orderOrigin(o), orderCatalog(o)];
         if (o.served_date) { meta.push('servido ' + C.date(o.served_date, false)); }
         var obs = o.observations ? String(o.observations).replace(/\s+/g, ' ').trim() : '';
         if (obs.length > 70) { obs = obs.substring(0, 70) + '…'; }
         return '<div class="erc-item erc-item--row" role="button" tabindex="0" data-erp-order-open="' + C.escAttr(o.id) + '">' +
             '<span class="ic"><i class="fas fa-clipboard-list"></i></span>' +
             '<span class="info">' +
-                '<span class="top"><span class="ref">#' + C.esc(orderRef(o)) + '</span>' + C.render.statusPill(o.status) + '</span>' +
+                '<span class="top"><span class="ref">#' + C.esc(orderRef(o)) + '</span>' + C.render.statusPill(o.status, o.status_description) + '</span>' +
                 '<span class="m">' + C.esc(meta.filter(Boolean).join(' · ')) + '</span>' +
                 (obs ? '<span class="m erc-item-obs">' + C.esc(obs) + '</span>' : '') +
             '</span>' +
@@ -248,7 +258,7 @@
             tags += '<span class="erc-tag erc-tag--blocked">De baja</span>';
         }
         if (sm.category != null && sm.category !== '') {
-            tags += '<span class="erc-tag erc-tag--closed">Categoría ' + C.esc(sm.category) + '</span>';
+            tags += '<span class="erc-tag erc-tag--closed">Categoría ' + C.esc(C.codeLabel(sm.category_description, sm.category)) + '</span>';
         }
         if (sm.lopd && sm.lopd.no_commercial_info) {
             tags += '<span class="erc-tag erc-tag--closed">Sin publicidad</span>';
@@ -506,11 +516,12 @@
                     var pts = C.num(m.points) || 0;
                     var label = pts >= 0 ? 'Puntos ganados' : 'Puntos canjeados';
                     var ref = m.delivery_id ? 'Albarán ' + m.delivery_id : '';
+                    var shop = m.warehouse_description ? C.codeLabel(m.warehouse_description, m.warehouse) : '';
                     return '<div class="erc-tl-row' + (i === 0 ? ' is-current' : '') + '">' +
                         '<span class="dot"></span>' +
                         '<span class="body">' +
                             '<span class="t">' + C.esc(label) + '</span>' +
-                            '<span class="m">' + C.esc([C.date(m.date, true), ref].filter(Boolean).join(' · ')) + '</span>' +
+                            '<span class="m">' + C.esc([C.date(m.date, true), shop, ref].filter(Boolean).join(' · ')) + '</span>' +
                         '</span>' +
                         '<span class="v ' + (pts >= 0 ? 'is-good' : 'is-muted') + '">' + (pts >= 0 ? '+' : '−') + C.esc(Math.abs(pts)) + '</span>' +
                     '</div>';

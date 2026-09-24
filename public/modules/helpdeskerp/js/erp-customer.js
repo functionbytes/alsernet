@@ -174,7 +174,7 @@
 
         $t.html(esc(fullName(d) || 'Cliente de Gestión') + (erpId || d.id ? ' <span class="erc-cw-id">· ' + esc(erpId || d.id) + '</span>' : ''));
         $m.html(
-            chip('NIF', d.cif) + chip('Tarjeta', d.card) + chip('Categoría', d.category) +
+            chip('NIF', d.cif) + chip('Tarjeta', d.card) + chip('Categoría', dsc(d.category_description, d.category)) +
             (isOff(d.available) ? '<span class="erc-cw-chip erc-cw-chip--off"><span class="v">Dado de baja</span></span>' : '')
         );
     }
@@ -256,7 +256,7 @@
         var when = o.served_date || o.date;
         return '<button type="button" class="erc-item" data-erp-order-open="' + escAttr(o.id) + '">' +
             '<span class="ic"><i class="fas fa-box"></i></span>' +
-            '<span class="info"><span class="top"><span class="ref">Nº ' + esc(o.number || o.order_id || o.id) + '</span>' + E.render.statusPill(o.status) + '</span>' +
+            '<span class="info"><span class="top"><span class="ref">Nº ' + esc(o.number || o.order_id || o.id) + '</span>' + E.render.statusPill(o.status, o.status_description) + '</span>' +
                 '<span class="m">' + esc(E.date(o.date, true)) + (o.served_date ? ' · servido ' + esc(E.relative(when)) : '') + '</span></span>' +
             '<span class="end"><span class="act">Ver</span></span>' +
         '</button>';
@@ -380,16 +380,16 @@
                 kvAlways('Tarjeta', d.card, true) +
                 kvAlways('Sexo', d.gender) +
                 kvAlways('Fecha de nacimiento', d.birth_date ? E.date(d.birth_date, true) : null) +
-                kvAlways('Idioma', d.language, true) +
-                kvAlways('Nacionalidad', d.nationality, true) +
-                kvAlways('Categoría', d.category, true) +
+                kvAlways('Idioma', dsc(d.language_description, d.language), true) +
+                kvAlways('Nacionalidad', dsc(d.nationality_description, d.nationality), true) +
+                kvAlways('Categoría', dsc(d.category_description, d.category), true) +
                 kvAlways('Estado', isOff(d.available) ? 'Dado de baja' : 'Activo') +
             '</div>';
 
             var fiscal = '<div class="erc-kv">' +
-                kvAlways('Tipo de cliente', d.customer_type, true) +
-                kvAlways('Régimen fiscal', d.fiscal_regime, true) +
-                kvAlways('Régimen de país', d.country_regime, true) +
+                kvAlways('Tipo de cliente', dsc(d.customer_type_description, d.customer_type), true) +
+                kvAlways('Régimen fiscal', dsc(d.fiscal_regime_description, d.fiscal_regime), true) +
+                kvAlways('Régimen de país', dsc(d.country_regime_description, d.country_regime), true) +
                 kvAlways('Cliente web (PrestaShop)', d.code_internet, true) +
                 kvAlways('Alta', d.created ? E.date(d.created, true) : null) +
                 kvAlways('Última modificación', d.updated ? E.date(d.updated, true) : null) +
@@ -483,8 +483,15 @@
 
     /* ── Pane: Consentimientos (LOPD + catálogos) ─────────────────── */
 
-    function catalogName(id) {
-        var n = CATALOG_NAMES[String(id)];
+    // Descripción del manager (*_description) con el código como respaldo.
+    function dsc(description, code) {
+        var d = description == null ? '' : String(description).trim();
+        if (d === '') { return code; }
+        return (code == null || String(code).trim() === '' || String(code) === d) ? d : d + ' (' + code + ')';
+    }
+
+    function catalogName(id, description) {
+        var n = (description != null && String(description).trim() !== '') ? String(description).trim() : CATALOG_NAMES[String(id)];
         return n ? n + ' (' + id + ')' : 'Catálogo ' + id;
     }
 
@@ -523,7 +530,7 @@
                     var off = !!c.unsubscribed_at || isOff(c.available);
                     return '<div class="erc-item' + (off ? ' erc-item--muted' : '') + '">' +
                         '<span class="ic"><i class="fas fa-book-open"></i></span>' +
-                        '<span class="info"><span class="top"><span class="t">' + esc(catalogName(c.catalog_id)) + '</span></span>' +
+                        '<span class="info"><span class="top"><span class="t">' + esc(catalogName(c.catalog_id, c.catalog_description)) + '</span></span>' +
                             '<span class="m">Alta ' + esc(c.subscribed_at ? E.date(c.subscribed_at, true) : '—') +
                             (c.unsubscribed_at ? ' · Baja ' + esc(E.date(c.unsubscribed_at, true)) : '') + '</span></span>' +
                         '<span class="end">' + (off ? '<span class="erc-tag erc-tag--blocked">Baja</span>' : '<span class="erc-tag erc-tag--done">Suscrito</span>') + '</span>' +

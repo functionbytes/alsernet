@@ -10,9 +10,15 @@
  *
  * Eventos en document:
  *   erp:overview-loaded  [resp, customerId]   cada vez que llega el resumen
- *   erp:orders-ready     [resp, customerId]   el escaneo Oracle de pedidos terminó
+ *   erp:orders-ready     [resp, customerId]   el escaneo Oracle de pedidos terminó (resp es el
+ *                                             resumen con SOLO los pedidos pedidos de nuevo)
  *   erp:retry            [target, $btn]       pulsaron un "Reintentar" de stateHtml()
  *   erp:open             [name, pane, extra]  ErpChat.open() (además del click sintético)
+ *
+ * Pedidos en carga (escaneo Oracle ~35 s): se escucha '.erp.orders.ready' en el
+ * canal privado del contacto (helpdesk.erp.customer.{id}) y en el histórico por
+ * email (erp-orders-ready.{md5}), con hasta 3 sondeos de respaldo. Al llegar se
+ * recarga SOLO la sección de pedidos (GET …/overview/orders), no las 8.
  *
  * El ERP es SOLO LECTURA: aquí no hay ninguna escritura.
  *
@@ -25,14 +31,32 @@
 
     var CLIENT_TTL_MS = 5 * 60 * 1000;
     var MAX_POLLS = 3;
+    // Canal privado por contacto del helpdesk (ErpOrdersReady::CUSTOMER_CHANNEL_PREFIX)
+    // y nombre del evento (broadcastAs 'erp.orders.ready', con punto delante en Echo).
+    var CUSTOMER_CHANNEL = 'helpdesk.erp.customer.';
+    var ORDERS_EVENT = '.erp.orders.ready';
+    var READY_DEDUPE_MS = 5000;
 
-    var ERP_STATUS = { 0: 'Pendiente', 1: 'Confirmado', 2: 'En preparación', 3: 'Enviado', 5: 'Entregado', 7: 'Servido', 9: 'Cancelado' };
-    var ERP_STATUS_KIND = { 0: 'pending', 1: 'progress', 2: 'progress', 3: 'done', 5: 'closed', 7: 'done', 9: 'blocked' };
+    // Estados reales de PEDIDOCLIESTADO (Oracle, 24-sep-2026). El manager ya
+    // manda status_description; este mapa es el respaldo para el código solo.
+    var ERP_STATUS = {
+        0: 'Anulado', 1: 'Creación', 2: 'Revisión transportista', 3: 'Aceptación financiera',
+        4: 'Pendiente de mercancía', 5: 'Listo para servir', 6: 'Sirviéndose', 7: 'Servido',
+        8: 'Incidencia', 9: 'Aceptación financiera reservando', 10: 'Servido parcialmente', 11: 'Pendiente transferencia'
+    };
+    var ERP_STATUS_KIND = {
+        0: 'blocked', 1: 'pending', 2: 'progress', 3: 'progress', 4: 'pending', 5: 'progress',
+        6: 'progress', 7: 'done', 8: 'blocked', 9: 'progress', 10: 'progress', 11: 'pending'
+    };
     var MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    var SMALL_WORDS = { de: 1, del: 1, la: 1, las: 1, el: 1, los: 1, y: 1, e: 1, en: 1, a: 1, por: 1 };
 
     var overviews = {};      // customerId -> {promise, resp, at}
     var subscribed = {};     // canal -> true
     var polls = {};          // customerId -> nº de sondeos hechos
+    var customerChannels = {}; // customerId -> canal helpdesk.erp.customer.{id} suscrito
+    var readyInflight = {};  // customerId -> promesa de recarga de pedidos en curso
+    var readyAt = {};        // customerId -> ms de la última recarga por pedidos listos
 
     /* ── Utilidades ────────────────────────────────────────────────── */
 
@@ -129,6 +153,27 @@
         return (parts[0].charAt(0) + (parts.length > 1 ? parts[1].charAt(0) : '')).toUpperCase();
     }
 
+    // "POCOMACO" → "Pocomaco", "TIENDA DIEGO DE LEON" → "Tienda Diego de Leon".
+    // Solo cambia textos en mayúsculas; "Caza" o "Aceptación financiera" quedan igual.
+    function niceText(s) {
+        var str = String(s == null ? '' : s).trim();
+        if (!str || str !== str.toUpperCase() || !/[A-ZÁÉÍÓÚÑ]/.test(str)) { return str; }
+        return str.toLowerCase().split(/(\s+)/).map(function (w, i) {
+            if (!w.trim() || (i > 0 && SMALL_WORDS[w])) { return w; }
+            return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join('');
+    }
+
+    // Texto de un código del ERP: la descripción del manager si la hay, si no
+    // "<prefijo> <código>" como respaldo ("Almacén 6"); '' sin ninguno.
+    function codeLabel(description, code, prefix) {
+        if (description && typeof description === 'object') { return codeLabel(description.description, description.id, prefix); }
+        if (!isBlank(description)) { return niceText(description); }
+        if (code && typeof code === 'object') { return codeLabel(code.description, code.id, prefix); }
+        if (isBlank(code) || typeof code === 'boolean') { return ''; }
+        return (prefix ? prefix + ' ' : '') + String(code).trim();
+    }
+
     function toast(kind, msg) {
         if (window.toastr && typeof window.toastr[kind] === 'function') { window.toastr[kind](msg); }
     }
@@ -223,12 +268,18 @@
                 if (!resp.success) { delete overviews[id]; }
             }
             watchOrders(id, resp);
+            subscribeCustomer(id, resp);
             $(document).trigger('erp:overview-loaded', [resp, id]);
             return resp;
         });
 
         overviews[id] = { promise: promise, pending: true, resp: null, at: 0 };
         return promise;
+    }
+
+    function ordersState(resp) {
+        var o = resp && resp.data && resp.data.sections ? resp.data.sections.orders : null;
+        return o ? o.state : null;
     }
 
     function cachedOverview(id) {
@@ -258,16 +309,73 @@
 
     /* ── Pedidos en carga: Reverb + sondeo de respaldo ─────────────── */
 
+    // Recarga SOLO los pedidos (GET …/overview/orders): el servidor vuelve a
+    // pedir la sección orders al manager y saca el resto de su caché, y
+    // responde con el resumen completo (mismo formato), así las alertas y
+    // estadísticas que dependen de los pedidos salen recalculadas. Si la ruta
+    // ligera no existe o falla, cae a un overview() normal (sin force: tampoco
+    // reenvía al manager lo que el servidor tiene en caché).
+    function refreshOrders(id) {
+        var url = base(id) ? base(id) + '/overview/orders' : null;
+        return request(url, {}, 60000).then(function (resp) {
+            if (!resp || !resp.success || !resp.data || !resp.data.sections) {
+                delete overviews[id];
+                return overview(false);
+            }
+            overviews[id] = { promise: Promise.resolve(resp), pending: false, resp: resp, at: Date.now() };
+            watchOrders(id, resp);
+            subscribeCustomer(id, resp);
+            $(document).trigger('erp:overview-loaded', [resp, id]);
+            return resp;
+        });
+    }
+
     function ordersReady(id) {
-        delete overviews[id];
-        return overview(true).then(function (resp) {
-            var orders = resp && resp.data && resp.data.sections ? resp.data.sections.orders : null;
-            if (orders && orders.state !== 'loading') {
+        if (readyInflight[id]) { return readyInflight[id]; }
+        // El evento llega por dos canales (email y contacto): una sola recarga.
+        if (readyAt[id] && (Date.now() - readyAt[id]) < READY_DEDUPE_MS && ordersState(cachedOverview(id)) !== 'loading') {
+            return Promise.resolve(cachedOverview(id));
+        }
+        var p = refreshOrders(id).then(function (resp) {
+            delete readyInflight[id];
+            readyAt[id] = Date.now();
+            var st = ordersState(resp);
+            if (st && st !== 'loading') {
                 delete polls[id];
                 $(document).trigger('erp:orders-ready', [resp, id]);
             }
             return resp;
         });
+        readyInflight[id] = p;
+        return p;
+    }
+
+    // Canal privado del contacto (helpdesk.erp.customer.{id}): no depende de
+    // que el email de Gestión coincida con el del helpdesk. Uno solo a la vez:
+    // al cambiar de conversación se deja el anterior (y si sus pedidos seguían
+    // cargando, se olvida su resumen para pedirlo de nuevo al volver).
+    function subscribeCustomer(id, resp) {
+        if (!id || !window.Echo || typeof window.Echo.private !== 'function') { return; }
+        if (!resp || !resp.success || !resp.data || !resp.data.erp_id) { return; }
+        var key = String(id);
+
+        Object.keys(customerChannels).forEach(function (other) {
+            if (other === key) { return; }
+            try { window.Echo.leave(customerChannels[other]); } catch (e) { /* noop */ }
+            delete customerChannels[other];
+            if (ordersState(cachedOverview(other)) === 'loading') { delete overviews[other]; }
+        });
+
+        if (customerChannels[key]) { return; }
+        var name = CUSTOMER_CHANNEL + key;
+        customerChannels[key] = name;
+        try {
+            window.Echo.private(name).listen(ORDERS_EVENT, function () {
+                if (customerId() === key) { ordersReady(key); } else { delete overviews[key]; }
+            });
+        } catch (e) {
+            delete customerChannels[key];
+        }
     }
 
     function watchOrders(id, resp) {
@@ -277,7 +385,7 @@
         if (rt.channel && !subscribed[rt.channel] && window.Echo && typeof window.Echo.private === 'function') {
             subscribed[rt.channel] = true;
             try {
-                window.Echo.private(rt.channel).listen(rt.event || '.erp.orders.ready', function () {
+                window.Echo.private(rt.channel).listen(rt.event || ORDERS_EVENT, function () {
                     try { window.Echo.leave(rt.channel); } catch (e) { /* noop */ }
                     delete subscribed[rt.channel];
                     if (customerId() === id) { ordersReady(id); } else { delete overviews[id]; }
@@ -441,25 +549,33 @@
 
     /* ── Renderizadores puros ─────────────────────────────────────── */
 
-    function statusInfo(codeOrDesc) {
-        if (codeOrDesc == null || codeOrDesc === '') { return { label: 'Sin estado', kind: 'closed' }; }
+    // Estado del pedido: código de PEDIDOCLIESTADO ("7"), descripción
+    // ("Servido") o booleano (detalle: activo/anulado). Con `description`
+    // (status_description del manager) se usa esa etiqueta si el código no
+    // está en el mapa.
+    function statusInfo(codeOrDesc, description) {
+        if (codeOrDesc == null || codeOrDesc === '') {
+            return isBlank(description) ? { label: 'Sin estado', kind: 'closed' } : statusInfo(description);
+        }
         if (typeof codeOrDesc === 'boolean') { return { label: codeOrDesc ? 'Activo' : 'Anulado', kind: codeOrDesc ? 'progress' : 'blocked' }; }
         var s = String(codeOrDesc).trim();
         if (/^\d+$/.test(s)) {
             var code = parseInt(s, 10);
-            return { label: ERP_STATUS[code] || ('Estado ' + code), kind: ERP_STATUS_KIND[code] || 'closed' };
+            if (ERP_STATUS[code]) { return { label: ERP_STATUS[code], kind: ERP_STATUS_KIND[code] || 'closed' }; }
+            return isBlank(description) ? { label: 'Estado ' + code, kind: 'closed' } : statusInfo(description);
         }
         var l = s.toLowerCase();
         var kind = 'progress';
-        if (/cancel|anul|baja|rechaz/.test(l)) { kind = 'blocked'; }
+        if (/cancel|anul|baja|rechaz|incidencia/.test(l)) { kind = 'blocked'; }
+        else if (/parcial/.test(l)) { kind = 'progress'; }
         else if (/entreg|cerrad|finaliz|factur/.test(l)) { kind = 'closed'; }
         else if (/servid|enviad|expedid/.test(l)) { kind = 'done'; }
         else if (/pendient|creaci|nuevo/.test(l)) { kind = 'pending'; }
         return { label: s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(), kind: kind };
     }
 
-    function statusPill(codeOrDesc) {
-        var info = statusInfo(codeOrDesc);
+    function statusPill(codeOrDesc, description) {
+        var info = statusInfo(codeOrDesc, description);
         return '<span class="erc-tag erc-tag--' + info.kind + '">' + esc(info.label) + '</span>';
     }
 
@@ -600,7 +716,9 @@
                     kv('Nº albarán', d.number, true) +
                     kv('Fecha', d.date ? date(d.date, true) : null) +
                     kv('Estado', d.status === false || d.status === 0 ? 'Anulado' : 'Activo') +
-                    kv('Almacén', d.warehouse) +
+                    kv('Tipo', codeLabel(d.type_description, null)) +
+                    kv('Almacén', codeLabel(d.warehouse_description, d.warehouse)) +
+                    kv('Catálogo', codeLabel(d.catalog_description, d.catalog)) +
                     kv('Factura', d.invoice_id ? String(d.invoice_id) : 'Sin facturar', !!d.invoice_id) +
                     kv('Puntos', d.loyalty_points ? String(d.loyalty_points) : null, true) +
                 '</div>' +
@@ -624,7 +742,7 @@
                     kv('Tipo', d.simplified ? 'Simplificada' : 'Completa') +
                     kv('Forma de pago', d.payment_method) +
                     kv('Estado', d.status != null ? statusInfo(d.status).label : null) +
-                    kv('Almacén', d.warehouse) +
+                    kv('Almacén', codeLabel(d.warehouse_description, d.warehouse)) +
                 '</div>' +
             '</div></div>' +
             (custLines || cust.address ? '<div class="erc-card"><div class="erc-card-head">Facturado a</div><div class="erc-card-body">' +
@@ -734,7 +852,7 @@
     /* ── API pública ──────────────────────────────────────────────── */
 
     window.ErpChat = {
-        version: 1,
+        version: 2,
         // contexto
         customerId: customerId,
         base: base,
@@ -743,6 +861,7 @@
         // datos
         overview: overview,
         cachedOverview: cachedOverview,
+        refreshOrders: ordersReady,
         invalidate: invalidate,
         section: section,
         orderDetail: orderDetail,
@@ -760,6 +879,8 @@
         escAttr: escAttr,
         initials: initials,
         widthClass: widthClass,
+        niceText: niceText,
+        codeLabel: codeLabel,
         // estados
         stateHtml: stateHtml,
         skeleton: skeleton,
@@ -775,6 +896,7 @@
             deliveryNote: deliveryNoteHtml,
             invoice: invoiceHtml,
             lines: lines,
+            lineAmount: lineAmount,
             totals: totals,
             address: address,
             addressText: addressText,

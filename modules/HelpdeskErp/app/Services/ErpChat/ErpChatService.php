@@ -204,7 +204,65 @@ class ErpChatService
         return $this->run($this->orderSpecs($erpId, $orderId), $fresh);
     }
 
+    /**
+     * Detalle de albarán por id central (10101961890) o por id corto
+     * (101961890, el que traen deudas y movimientos de puntos). Primero se pide
+     * tal cual; si Gestión no lo encuentra para este cliente, se resuelve con
+     * GET delivery-notes/resolve/{ref} del manager (busca por IDALBARANCLI e
+     * IDALBARANCLI_CENTRAL acotando por IDCLIENTE) y, si hay UNA coincidencia,
+     * se pide el detalle de su id central. No se adivinan prefijos.
+     */
     public function deliveryNoteDetail(int $erpId, int $deliveryId, bool $fresh = false): array
+    {
+        $detail = $this->deliveryNoteByCentralId($erpId, $deliveryId, $fresh);
+
+        // Solo un "no existe para este cliente" puede ser un id corto; un
+        // 'foreign' (el manager devolvió OTRO albarán) no se reintenta.
+        if ($detail['state'] !== 'unavailable' || ($detail['reason'] ?? null) !== 'not_found') {
+            return $detail;
+        }
+
+        $centralId = $this->resolveDeliveryNoteId($erpId, $deliveryId, $fresh);
+
+        if ($centralId === null || $centralId === $deliveryId) {
+            return $detail;
+        }
+
+        $resolved = $this->deliveryNoteByCentralId($erpId, $centralId, $fresh);
+        $resolved['resolved_from'] = (string) $deliveryId;
+
+        return $resolved;
+    }
+
+    /**
+     * Id central de un albarán del cliente a partir de su id corto o central;
+     * null si no existe, es ambiguo o el manager no expone la resolución.
+     */
+    public function resolveDeliveryNoteId(int $erpId, int $ref, bool $fresh = false): ?int
+    {
+        $result = $this->run(['resolve' => [
+            'cache' => "delivery-ref:{$ref}",
+            'erp' => $erpId,
+            'path' => "delivery-notes/resolve/{$ref}",
+            'query' => [],
+            'ttl' => 'detail',
+            'expect' => null,
+            'soft' => true,
+        ]], $fresh)['resolve'];
+
+        if ($result['state'] !== 'ok' || ! is_array($result['data'] ?? null) || ! array_is_list($result['data'])) {
+            return null;
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map(
+            fn ($row): ?int => is_array($row) && is_numeric($row['id'] ?? null) ? (int) $row['id'] : null,
+            $result['data']
+        ))));
+
+        return count($ids) === 1 ? $ids[0] : null;
+    }
+
+    private function deliveryNoteByCentralId(int $erpId, int $deliveryId, bool $fresh): array
     {
         return $this->run(['detail' => [
             'cache' => "delivery-note:{$deliveryId}",
@@ -213,6 +271,7 @@ class ErpChatService
             'query' => [],
             'ttl' => 'detail',
             'expect' => $deliveryId,
+            'decorate' => 'delivery-note',
         ]], $fresh)['detail'];
     }
 
@@ -236,6 +295,24 @@ class ErpChatService
     {
         $key = self::CACHE_PREFIX.'ver:'.$erpId;
         Cache::forever($key, (int) Cache::get($key, 0) + 1);
+    }
+
+    /**
+     * Lo cacheado de una sección SIN llamar al manager (null si no hay).
+     * Para ayudas que no pueden esperar a Gestión (contexto de la IA).
+     *
+     * @param  array<string, mixed>  $params
+     * @return array<string, mixed>|null
+     */
+    public function peek(int $erpId, string $section, array $params = []): ?array
+    {
+        if (! ErpChatSections::exists($section)) {
+            return null;
+        }
+
+        $cached = Cache::get($this->cacheKey($this->sectionSpec($erpId, $section, $params)));
+
+        return is_array($cached) ? $cached : null;
     }
 
     /* ── Motor ────────────────────────────────────────────────────────── */
@@ -411,11 +488,31 @@ class ErpChatService
     private function ordered(array $specs, array $results): array
     {
         $out = [];
-        foreach (array_keys($specs) as $key) {
-            $out[$key] = $results[$key];
+        foreach ($specs as $key => $spec) {
+            $out[$key] = $this->decorate($spec, $results[$key]);
         }
 
         return $out;
+    }
+
+    /**
+     * Retoques sobre el resultado ya normalizado (también sobre lo cacheado,
+     * así una entrada anterior al despliegue sale igual que una nueva):
+     * descripciones de códigos y URL de seguimiento del envío.
+     *
+     * @param  array<string, mixed>  $spec
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function decorate(array $spec, array $result): array
+    {
+        $kind = $spec['decorate'] ?? $spec['section'] ?? null;
+
+        if ($kind === 'shipping') {
+            return $this->normalizer->shipping($result);
+        }
+
+        return is_string($kind) ? ErpChatDescriptions::apply($kind, $result) : $result;
     }
 
     /**
@@ -446,7 +543,7 @@ class ErpChatService
         return [
             'detail' => ['cache' => "order:{$orderId}", 'erp' => $erpId, 'path' => "orders/{$orderId}", 'query' => [], 'ttl' => 'detail', 'expect' => $orderId],
             'history' => ['cache' => "order-history:{$orderId}", 'erp' => $erpId, 'path' => "orders/{$orderId}/history", 'query' => [], 'ttl' => 'ok', 'expect' => null, 'soft' => true],
-            'shipping' => ['cache' => "order-shipping:{$orderId}", 'erp' => $erpId, 'path' => "orders/{$orderId}/shipping", 'query' => [], 'ttl' => 'ok', 'expect' => null, 'soft' => true],
+            'shipping' => ['cache' => "order-shipping:{$orderId}", 'erp' => $erpId, 'path' => "orders/{$orderId}/shipping", 'query' => [], 'ttl' => 'ok', 'expect' => null, 'soft' => true, 'decorate' => 'shipping'],
         ];
     }
 

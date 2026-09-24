@@ -8,6 +8,11 @@
      Hoy casi todas las pestañas llegan "blocked" (falta GRANT en Oracle):
      se pintan en ámbar y funcionarán solas el día que el DBA dé el permiso.
 
+     Extensión "invoice" (routes/managers.d/invoice.php): la hoja de factura
+     descarga la copia informativa en PDF (…/erp/invoices/{id}/pdf, 409 si
+     falta el GRANT) y el Balance pinta facturado vs cobrado por mes
+     (…/erp/invoices/monthly). Todo desde erp-finance.js.
+
      Lo incluye modals/erp-index.blade.php (glob de modals/parts). --}}
 @once('erc-finance-css')
 <link rel="stylesheet" href="{{ asset('modules/helpdeskerp/css/erp-finance.css') }}?v={{ @filemtime(public_path('modules/helpdeskerp/css/erp-finance.css')) }}"/>

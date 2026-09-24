@@ -81,6 +81,14 @@ class LinkCustomerToErpJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        // «Ajustes de Gestión» → vinculación automática desactivada: solo el
+        // reintento manual (force) consulta el ERP.
+        if (! $this->force && ! config('helpdeskErp.auto_link', true)) {
+            $this->announce(null, $customer->erp_lookup_status ?? 'not_found');
+
+            return;
+        }
+
         if (! $this->force && $this->withinCooldown($customer)) {
             Log::info('LinkCustomerToErpJob: dentro del enfriamiento, no se consulta el ERP', [
                 'customer_id' => $customer->id,

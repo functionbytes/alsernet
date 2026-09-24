@@ -2,10 +2,22 @@
 
 namespace Modules\Helpdesk\Services\AI;
 
+use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Conversation;
 
 class SuggestReplyService
 {
+    /**
+     * Punto de extensión: los módulos satélite (p. ej. HelpdeskErp) escuchan
+     * este evento de cadena y devuelven un fragmento de texto con contexto
+     * del cliente para el prompt. Payload: [Conversation, ?User agente].
+     * Cada listener decide sus permisos y NO debe bloquear (solo caché).
+     */
+    public const CONTEXT_EVENT = 'helpdesk.ai.reply-context';
+
+    /** Tope por fragmento de contexto aportado por una extensión. */
+    private const EXTRA_CONTEXT_MAX = 1500;
+
     // Mismos 6 idiomas que helpdesk_customers.language / el panel "Traducir"
     // de HelpdeskTranslate — instrucción en lenguaje natural para el prompt.
     private const LANGUAGE_NAMES = [
@@ -91,14 +103,40 @@ PROMPT;
             return "[{$role}]: ".$body;
         })->implode("\n");
 
+        $extra = $this->extraContext($conversation);
+
         return <<<TEXT
 Canal: {$channel}
 Asunto: {$subject}
 Cliente: {$customerName}
-
+{$extra}
 Últimos mensajes:
 {$thread}
 TEXT;
+    }
+
+    /**
+     * Fragmentos de contexto aportados por extensiones (CONTEXT_EVENT). Un
+     * fallo de una extensión nunca impide la sugerencia.
+     */
+    private function extraContext(Conversation $conversation): string
+    {
+        try {
+            $responses = Event::dispatch(self::CONTEXT_EVENT, [$conversation, auth()->user()]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return '';
+        }
+
+        $parts = [];
+        foreach ((array) $responses as $fragment) {
+            if (is_string($fragment) && trim($fragment) !== '') {
+                $parts[] = $this->sanitizer->sanitize(mb_substr(trim($fragment), 0, self::EXTRA_CONTEXT_MAX));
+            }
+        }
+
+        return $parts === [] ? '' : "\n".implode("\n\n", $parts)."\n";
     }
 
     /**

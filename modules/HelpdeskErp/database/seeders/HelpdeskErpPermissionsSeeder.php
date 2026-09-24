@@ -71,6 +71,57 @@ class HelpdeskErpPermissionsSeeder extends Seeder
             Role::where('name', $roleName)->where('guard_name', 'web')->first()?->givePermissionTo($rolePermissions);
         }
 
+        $this->seedExtensionPermissions($adminRoles->all());
+
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
+    }
+
+    /**
+     * Permisos de las extensiones (config/ext/*.php, fusionadas en
+     * config('helpdeskErp.ext.*') por ErpChatExtServiceProvider): se crean, se
+     * dan a los roles admin y a los roles que cada extensión declare. Si el
+     * provider no hubiera corrido (seeder lanzado sin el módulo cargado), se
+     * leen los ficheros directamente.
+     *
+     * @param  list<Role>  $adminRoles
+     */
+    private function seedExtensionPermissions(array $adminRoles): void
+    {
+        $extensions = (array) config('helpdeskErp.ext', []);
+
+        if ($extensions === []) {
+            foreach (glob(dirname(__DIR__, 2).'/config/ext/*.php') ?: [] as $file) {
+                $ext = require $file;
+                if (is_array($ext)) {
+                    $extensions[basename($file, '.php')] = $ext;
+                }
+            }
+        }
+
+        foreach ($extensions as $ext) {
+            if (! is_array($ext)) {
+                continue;
+            }
+
+            foreach ((array) ($ext['permissions'] ?? []) as $name => $description) {
+                Permission::updateOrCreate(
+                    ['name' => (string) $name, 'guard_name' => 'web'],
+                    ['description' => (string) $description],
+                );
+                foreach ($adminRoles as $role) {
+                    $role->givePermissionTo((string) $name);
+                }
+            }
+
+            foreach ((array) ($ext['role_permissions'] ?? []) as $roleName => $rolePermissions) {
+                $rolePermissions = array_values(array_filter(
+                    (array) $rolePermissions,
+                    fn ($p) => Permission::where('name', $p)->where('guard_name', 'web')->exists(),
+                ));
+                if ($rolePermissions !== []) {
+                    Role::where('name', $roleName)->where('guard_name', 'web')->first()?->givePermissionTo($rolePermissions);
+                }
+            }
+        }
     }
 }

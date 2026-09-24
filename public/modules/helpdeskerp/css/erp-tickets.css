@@ -1,0 +1,157 @@
+/*!
+ * HelpdeskErp · Tienda y Gestión en la vista de ticket (erp-tickets.js).
+ *
+ * Pestaña "Tienda y Gestión" del panel lateral del ticket + piezas ocultas
+ * que necesitan los JS del inbox (.bv-right y composer puente).
+ * Paleta: verdes y grises; ámbar solo para "sin conexión" (lo pone .erc-state--down).
+ *
+ * Fuente: modules/HelpdeskErp/public/css/ — copiar a public/modules/helpdeskerp/css/ tras editar.
+ */
+
+/* ── Piezas ocultas (fuera de pantalla, no display:none) ─────────── */
+
+/* Panel derecho "virtual" del inbox: data-customer-* + tab oculto de la
+   tienda. Fuera de pantalla para que los modales Bootstrap que lleva dentro
+   (position: fixed) se sigan viendo. */
+.erc-tkt-host {
+    position: absolute !important;
+    left: -10000px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Composer puente: ErpChat.insert() exige un composer visible. */
+.erc-tkt-composer {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* En el ticket no hay conversación: lo que solo existe para el chat se oculta
+   (mismo criterio que la ficha de Contactos 360). */
+.erc-tkt-has-bridge #psAddressClaimNote,
+.erc-tkt-has-bridge #powHistoryNote {
+    display: none;
+}
+
+/* ── Pestaña del panel lateral ───────────────────────────────────── */
+
+.erc-tkt {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.erc-tkt .tkt-side-card-head .erc-tkt-sub {
+    margin-left: auto;
+    font-size: .66rem;
+    font-weight: 600;
+    color: #565656;
+    white-space: nowrap;
+}
+
+.erc-tkt-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.erc-tkt-body .erc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.erc-tkt-body .erc-item {
+    min-width: 0;
+}
+
+.erc-tkt-body .erc-item .info {
+    min-width: 0;
+}
+
+.erc-tkt-body .erc-item .m {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Filas de pedido de la tienda (PscChat.orderRowHtml). */
+.erc-tkt-ps-orders {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.erc-tkt-ps-orders .psc-ord-row {
+    padding: 9px 10px;
+    gap: 8px;
+    min-width: 0;
+}
+
+.erc-tkt-ps-orders .psc-ord-row .info {
+    min-width: 0;
+    flex: 1;
+}
+
+.erc-tkt-ps-orders .psc-ord-row .t,
+.erc-tkt-ps-orders .psc-ord-row .m {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Pedido que el cliente escribió en el formulario del ticket. */
+.erc-tkt-ref {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 11px;
+    border: 1px solid #dfeab8;
+    border-radius: 9px;
+    background: #f6faeb;
+    color: #5e7a0d;
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.erc-tkt-ref .erc-mono {
+    font-weight: 700;
+}
+
+.erc-tkt-ref .erc-foot {
+    grid-template-columns: 1fr;
+}
+
+.erc-tkt-muted {
+    font-size: .7rem;
+    color: #565656;
+    line-height: 1.45;
+}
+
+/* Tarjeta de acceso en la pestaña Cliente. */
+.erc-tkt-teaser .erc-tkt-muted {
+    margin: 0;
+}
+
+/* Tarjeta con pocos datos: esqueleto de carga. */
+.erc-tkt-skel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+@media (max-width: 420px) {
+    .erc-tkt .tkt-side-card-head .erc-tkt-sub {
+        display: none;
+    }
+}

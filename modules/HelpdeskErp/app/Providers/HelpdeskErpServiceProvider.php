@@ -3,14 +3,19 @@
 namespace Modules\HelpdeskErp\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Models\CustomerExternalId;
+use Modules\HelpdeskErp\Broadcasting\LinkErpCustomerChannel;
 use Modules\HelpdeskErp\Console\Commands\BackfillErpLinksCommand;
 use Modules\HelpdeskErp\Console\Commands\WarmErpCacheCommand;
+use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskErp\Http\Controllers\Api\WebhookController;
 use Modules\HelpdeskErp\Listeners\DispatchErpLinkJob;
+use Modules\HelpdeskErp\Listeners\DispatchErpLinkOnPrestashopLink;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskErpServiceProvider extends ServiceProvider
@@ -97,5 +102,24 @@ class HelpdeskErpServiceProvider extends ServiceProvider
     protected function registerEventListeners(): void
     {
         Event::listen(ConversationCreated::class, DispatchErpLinkJob::class);
+
+        // Al vincular un contacto con PrestaShop se intenta vincular también
+        // con Gestión (CODIGO_INTERNET = id de PrestaShop). No hay evento de
+        // dominio para eso: se observa el 'created' del external id.
+        CustomerExternalId::observe(DispatchErpLinkOnPrestashopLink::class);
+
+        $this->registerBroadcastChannels();
+    }
+
+    /**
+     * Canal privado por contacto del helpdesk para "pedidos listos"
+     * (ErpOrdersReady). El canal por hash de email depende de que el email de
+     * Gestión y el del helpdesk coincidan; este no. Se autoriza igual que las
+     * rutas de Gestión del chat (ErpChatController::resolve): permiso
+     * helpdeskerp.view y el contacto en alguna bandeja del agente.
+     */
+    protected function registerBroadcastChannels(): void
+    {
+        Broadcast::channel(ErpOrdersReady::CUSTOMER_CHANNEL_PREFIX.'{customerId}', LinkErpCustomerChannel::class);
     }
 }

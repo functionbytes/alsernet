@@ -4,6 +4,8 @@ namespace Modules\HelpdeskErp\Services\ErpChat;
 
 use Carbon\CarbonImmutable;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskErp\Events\ErpOrdersReady;
+use Modules\HelpdeskErp\Services\ErpAdmin\ErpAdminSettingsOverrides;
 
 /**
  * Resumen de Gestión para el panel derecho en UNA ida al manager (pool):
@@ -32,9 +34,13 @@ class ErpChatOverview
 
     /**
      * @param  callable(string): bool  $can
+     * @param  list<string>|null  $freshOnly  claves del resumen que se piden al manager saltando la
+     *                                        caché (p. ej. ['orders'] al terminar el escaneo de
+     *                                        pedidos); las demás salen de la caché si la hay.
+     *                                        Con null manda $fresh para todas.
      * @return array<string, mixed>
      */
-    public function build(Customer $customer, int $erpId, callable $can, bool $fresh = false): array
+    public function build(Customer $customer, int $erpId, callable $can, bool $fresh = false, ?array $freshOnly = null): array
     {
         $requests = [];
         $sections = [];
@@ -53,7 +59,17 @@ class ErpChatOverview
             $requests[$key] = [$section, $params];
         }
 
-        $sections = array_merge($sections, $this->service->many($erpId, $requests, $fresh));
+        if ($freshOnly === null) {
+            $sections = array_merge($sections, $this->service->many($erpId, $requests, $fresh));
+        } else {
+            $hot = array_intersect_key($requests, array_flip($freshOnly));
+            $cold = array_diff_key($requests, $hot);
+            $sections = array_merge(
+                $sections,
+                $cold !== [] ? $this->service->many($erpId, $cold, false) : [],
+                $hot !== [] ? $this->service->many($erpId, $hot, true) : [],
+            );
+        }
 
         // La caché es compartida: lo que este agente no puede ver se recorta aquí.
         foreach ($requests as $key => [$section]) {
@@ -71,6 +87,9 @@ class ErpChatOverview
             $email = strtolower(trim((string) $customer->email));
             $realtime = [
                 'channel' => $email !== '' ? 'erp-orders-ready.'.md5($email) : null,
+                // Canal por contacto del helpdesk: no depende de que el email de
+                // Gestión coincida con el del helpdesk (lo autoriza LinkErpCustomerChannel).
+                'customer_channel' => ErpOrdersReady::customerChannelName((int) $customer->id),
                 'event' => '.erp.orders.ready',
                 'retry_after' => (int) ($orders['retry_after'] ?? 35),
             ];
@@ -197,7 +216,13 @@ class ErpChatOverview
             }
         }
 
-        return $alerts;
+        // «Ajustes de Gestión» → avisos desactivados (config('helpdeskErp.chat_alerts.*')).
+        // Se filtra aquí para que valga en todas las vías (resumen, recarga de
+        // pedidos, contexto de IA), no solo en la ruta que ve el middleware.
+        return array_values(array_filter(
+            $alerts,
+            fn (array $a): bool => ErpAdminSettingsOverrides::alertEnabled((string) ($a['code'] ?? '')),
+        ));
     }
 
     /**

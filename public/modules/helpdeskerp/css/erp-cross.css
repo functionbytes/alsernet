@@ -1,0 +1,60 @@
+/* ============================================================
+   HelpdeskErp · extensión "cross": pane "Actividad" de la ficha de
+   cliente de Gestión (línea de tiempo) — prefijo .erx-*.
+   Complementa erp-chat.css (.erc-*). Paleta: verdes y grises; ámbar
+   solo para "Pendiente de permiso en Oracle" y "sin conexión".
+   Fuente: modules/HelpdeskErp/public/css/ — copiar a public/modules/helpdeskerp/css/.
+   ============================================================ */
+
+.erx-wrap { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* Estado de cada fuente (bloqueada, buscando, sin conexión…) */
+.erx-srcs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.erx-src {
+    display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+    padding: 4px 9px; border-radius: 7px; font-size: .66rem; line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.erx-src b { font-weight: 700; }
+.erx-src--lock { background: var(--erc-warn-bg, #fdf3e0); color: var(--erc-warn-ink, #7a5b00); }
+.erx-src--wait { background: rgba(144, 187, 19, .1); color: #5e7a0d; }
+.erx-src--mute { background: #f4f4f5; color: #565656; }
+
+/* Filtros por tipo: se reparten en varias filas, sin scroll horizontal */
+.erx-chips { flex-wrap: wrap; }
+
+/* Grupos por día */
+.erx-list { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.erx-day { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.erx-day.erc-hidden { display: none; }
+.erx-day-h {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a8a8a;
+}
+.erx-day-h::after { content: ""; flex: 1; height: 1px; background: #ececec; }
+
+/* Elementos: <button>/<a> con el aspecto de .erc-item */
+.erx-item { font-family: inherit; text-decoration: none; color: inherit; }
+.erx-item:hover, .erx-item:focus { text-decoration: none; color: inherit; }
+.erx-item.erc-hidden { display: none; }
+.erx-item .info .t { margin-top: 0; }
+.erx-item .end .erc-tag { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Icono por origen: Gestión (verde oscuro), tienda (verde), helpdesk (gris) */
+.erx-ic { font-size: .78rem; }
+.erx-ic--erp { background: #2d3324; color: #b6d34a; }
+.erx-ic--ps { background: rgba(144, 187, 19, .14); color: #5e7a0d; }
+.erx-ic--hd { background: #f0f0ef; color: #565656; }
+
+/* Hoja de detalle genérica */
+.erx-sheet-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.erx-sheet-top .t { font-size: .85rem; font-weight: 700; color: #2d2d2d; overflow-wrap: anywhere; }
+.erx-sheet-top .m { font-size: .7rem; color: #8a8a8a; }
+
+.erx-filter-empty.erc-hidden { display: none; }
+
+@media (max-width: 575.98px) {
+    .erx-item { gap: 9px; padding: 10px; }
+    .erx-item .end .erc-tag { max-width: 96px; }
+    .erx-src { font-size: .63rem; }
+}

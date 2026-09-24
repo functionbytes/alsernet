@@ -47,7 +47,12 @@ class ErpWhatsAppIntegrationTest extends TestCase
             }
         });
 
-        config(['helpdeskerp.manager_url' => 'http://manager.test']);
+        // La clave real es 'helpdeskErp.*'; 'helpdeskerp.manager_url' no la leía nadie.
+        // Sin credenciales de Oracle, el contexto va por HTTP (al Http::fake).
+        config([
+            'helpdeskErp.manager_url' => 'http://manager.test',
+            'database.connections.oracle.username' => null,
+        ]);
     }
 
     /* ── Grupo 1: Normalización de teléfono ──────────────────────────────── */
@@ -176,7 +181,10 @@ class ErpWhatsAppIntegrationTest extends TestCase
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->seed(HelpdeskErpPermissionsSeeder::class);
         $user = User::factory()->create();
-        $user->givePermissionTo('helpdeskerp.view');
+        // El email es de un chat anónimo que no existe como contacto: para el
+        // controlador es un prospecto y exige helpdeskerp.prospect.view
+        // (ScopesCustomerByInbox). Sin él, 403.
+        $user->givePermissionTo(['helpdeskerp.view', 'helpdeskerp.prospect.view']);
 
         Http::fake([
             '*/erp/customer/search*' => Http::response([
@@ -226,7 +234,10 @@ class ErpWhatsAppIntegrationTest extends TestCase
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->seed(HelpdeskErpPermissionsSeeder::class);
         $user = User::factory()->create();
-        $user->givePermissionTo('helpdeskerp.view');
+        // El email es de un chat anónimo que no existe como contacto: para el
+        // controlador es un prospecto y exige helpdeskerp.prospect.view
+        // (ScopesCustomerByInbox). Sin él, 403.
+        $user->givePermissionTo(['helpdeskerp.view', 'helpdeskerp.prospect.view']);
 
         $email = $this->anonymousEmail('wa');
 
