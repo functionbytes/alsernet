@@ -29,6 +29,7 @@ use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledRepliesCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledTicketMailsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SendSlaDigestCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SimulateIncomingTicketEmailsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SuggestHelpArticlesCommand;
@@ -361,6 +362,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $commands = array_values(array_filter([
             class_exists(AutoCloseTicketsCommand::class) ? AutoCloseTicketsCommand::class : null,
             class_exists(RunTimeBasedAutomationsCommand::class) ? RunTimeBasedAutomationsCommand::class : null,
+            class_exists(SendSlaDigestCommand::class) ? SendSlaDigestCommand::class : null,
             class_exists(RepairTicketSlaDataCommand::class) ? RepairTicketSlaDataCommand::class : null,
             class_exists(MarkOverdueTicketsCommand::class) ? MarkOverdueTicketsCommand::class : null,
             class_exists(AutoResponseTicketCommand::class) ? AutoResponseTicketCommand::class : null,
@@ -441,6 +443,9 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $this->scheduleMailboxFetch($schedule, $enabled);
             $schedule->command('ticket:autoclose')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:run-time-automations')->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            // Cada hora; el propio comando decide si toca (digest_hours) y si
+            // la lista de vencidos cambió desde el último resumen.
+            $schedule->command('ticket:sla-digest')->hourly()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autooverdue')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);

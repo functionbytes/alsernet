@@ -9247,6 +9247,70 @@
         });
     }
 
+    // ═══════════ Boletines y spam (24-sep-2026) ═══════════
+    // "Detectar boletines" selecciona en la lista los tickets abiertos cuyo
+    // correo original trae cabeceras de envío masivo (List-*, Precedence,
+    // Auto-Submitted); "Marcar como spam" los cierra sin encuesta y, con
+    // permiso de ajustes, bloquea al remitente. Solo se ofrece a quien puede
+    // cerrar en bloque (el botón Cerrar de la barra lo pinta Blade con @can).
+    function bindSpamTools() {
+        if (!$('[data-bulk-action="close"]').length || !TKA.urls.bulk) return;
+
+        $('#tkt-bulk-more-menu').prepend('<button type="button" class="tkt-drop-item" role="menuitem" id="tkt-bulk-spam">Marcar como spam</button>');
+        $('#tkt-bulk-spam').on('click', openBulkSpamModal);
+
+        $('.tkt-list-head-icons').prepend('<button type="button" id="tkt-detect-bulk-mail" title="Detectar boletines y envíos automáticos" aria-label="Detectar boletines y envíos automáticos"><i class="fa-regular fa-newspaper"></i></button>');
+        $('#tkt-detect-bulk-mail').on('click', detectBulkMailTickets);
+    }
+
+    function detectBulkMailTickets() {
+        var $btn = $('#tkt-detect-bulk-mail').prop('disabled', true);
+        $.getJSON(TKA.urls.bulk + '/mail-candidates')
+            .done(function (res) {
+                var ids = (res && res.ids) || [];
+                TKA.state.bulkMailReasons = (res && res.reasons) || {};
+                TKA.state.canBlockSenders = !!(res && res.can_block_senders);
+                var onPage = (TKA.state.tickets || []).filter(function (t) { return ids.indexOf(t.id) !== -1; });
+                if (!ids.length) {
+                    tktNotify('info', 'No hay tickets abiertos que parezcan boletines.');
+                    return;
+                }
+                TKA.state.bulk = {};
+                onPage.forEach(function (t) { TKA.state.bulk[t.id] = true; });
+                renderList();
+                renderBulkBar();
+                var rest = ids.length - onPage.length;
+                tktNotify('info', onPage.length + (onPage.length === 1 ? ' boletín seleccionado' : ' boletines seleccionados') +
+                    (rest > 0 ? ' en esta página (' + rest + ' más en otras páginas o pestañas)' : '') +
+                    '. Revísalos y usa Más acciones → Marcar como spam.');
+            })
+            .fail(function () { tktNotify('error', 'No se pudieron buscar los boletines.'); })
+            .always(function () { $btn.prop('disabled', false); });
+    }
+
+    function openBulkSpamModal() {
+        var ids = Object.keys(TKA.state.bulk).map(Number);
+        if (!ids.length) return;
+        var canBlock = TKA.state.canBlockSenders !== false;
+        var $modal = openModal(modalShell({
+            icon: 'fa-solid fa-ban',
+            kicker: 'Tickets · selección',
+            titleChip: ids.length + (ids.length === 1 ? ' ticket' : ' tickets'),
+            title: 'Marcar como spam',
+            body: '<p class="tkt-hint">Se cierran con el motivo «Spam / no procede» y sin encuesta de satisfacción.</p>' +
+                (canBlock
+                    ? '<label class="tkt-check"><input type="checkbox" id="tkt-bulk-spam-block" checked> Bloquear también a sus remitentes (lista negra de correo)</label>'
+                    : ''),
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-spam-confirm">Marcar como spam</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+        }));
+        $modal.on('click', '#tkt-bulk-spam-confirm', function () {
+            var block = $('#tkt-bulk-spam-block').is(':checked') ? 1 : 0;
+            closeModal();
+            runBulkAction('mark_spam', { block_senders: block });
+        });
+    }
+
     // "Mover a equipo" es la única acción en bloque con un modal real en
     // vez de prompt() — el equipo (TKA.state.groups) ya se usa como
     // <select> en el panel Gestión, así que aquí también se elige de una
@@ -10000,6 +10064,7 @@
             if (ev.key === 'Escape') closeBulkMore();
         });
         $('#tkt-bulk-more-menu').on('click', '.tkt-drop-item', closeBulkMore);
+        bindSpamTools();
 
         $('[data-bulk-action]').on('click', function () {
             var action = $(this).data('bulk-action');

@@ -87,6 +87,38 @@ class HelpdeskReportsController extends Controller
     }
 
     /**
+     * Métricas por agente del periodo en CSV (24-sep-2026), las mismas de la
+     * tabla "Rendimiento de agentes".
+     */
+    public function exportAgents(Request $request): StreamedResponse
+    {
+        $this->authorize('helpdesk.metrics.export');
+
+        [$from, $to] = $this->resolveDateRange($request);
+        $metrics = app(TicketReportsService::class)->agentMetrics($from, $to);
+
+        $rows = (function () use ($metrics) {
+            foreach ($metrics as $m) {
+                yield [
+                    $m['name'],
+                    $m['solved'],
+                    $m['open_now'],
+                    $m['breached_now'],
+                    $m['avg_first_response_minutes'] ?? '',
+                    $m['avg_resolution_minutes'] ?? '',
+                    $m['avg_rating'] ?? '',
+                ];
+            }
+        })();
+
+        return app(CsvStreamExporter::class)->stream(
+            'agentes-'.$from->format('Y-m-d').'-a-'.$to->format('Y-m-d').'.csv',
+            ['Agente', 'Resueltos/cerrados', 'Abiertos ahora', 'Con SLA vencido', 'Primera respuesta media (min)', 'Resolución media (min)', 'Valoración media'],
+            $rows,
+        );
+    }
+
+    /**
      * Resolve from/to dates from request, defaulting to last 30 days.
      * Malformed or inverted input falls back to the default range instead of
      * bubbling a Carbon parse exception (500).

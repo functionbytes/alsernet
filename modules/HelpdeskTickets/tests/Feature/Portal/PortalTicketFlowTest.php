@@ -150,6 +150,28 @@ class PortalTicketFlowTest extends TestCase
             ->assertDontSee('Agent private note');
     }
 
+    public function test_ticket_detail_shows_the_status_timeline(): void
+    {
+        $ticket = $this->createTicket($this->customer, ['first_response_at' => now()->subHour()]);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->get(route('portal.tickets.show', $ticket->ticket_number))
+            ->assertOk()
+            ->assertSeeInOrder(['Recibido', 'Primera respuesta del equipo', 'Resuelto', 'Cerrado'])
+            ->assertSee('Pendiente');
+    }
+
+    public function test_customer_can_rate_a_resolved_ticket_before_it_is_closed(): void
+    {
+        $ticket = $this->createTicket($this->customer, ['resolved_at' => now()]);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.rate', $ticket->ticket_number), ['rating' => 5])
+            ->assertRedirect();
+
+        $this->assertSame(5, (int) $ticket->fresh()->rating);
+    }
+
     public function test_customer_cannot_view_another_customers_ticket_detail(): void
     {
         $other = Customer::factory()->create();

@@ -42,7 +42,7 @@ class SendSlaWarningNotification implements ShouldQueue
     {
         $ticket = $event->ticket;
 
-        if (! $ticket->assignedAgent) {
+        if (! $ticket->assignee) {
             Log::warning('Cannot send SLA warning - no agent assigned', [
                 'ticket_id' => $ticket->id,
             ]);
@@ -50,13 +50,13 @@ class SendSlaWarningNotification implements ShouldQueue
             return;
         }
 
-        $agent = $ticket->assignedAgent;
-        $timeRemaining = now()->diff($ticket->due_at);
+        $agent = $ticket->assignee;
+        $timeRemaining = now()->diff($ticket->sla_resolution_due_at ?? now());
 
         Log::info('Sending SLA warning notification', [
             'ticket_id' => $ticket->id,
             'agent_id' => $agent->id,
-            'due_at' => $ticket->due_at,
+            'due_at' => $ticket->sla_resolution_due_at,
             'time_remaining' => $timeRemaining->format('%h horas %i minutos'),
         ]);
 
@@ -73,7 +73,7 @@ class SendSlaWarningNotification implements ShouldQueue
                 'SLA Warning — Ticket #'.$ticket->ticket_number.' ('.round($event->percentUsed ?? 0).'% used)',
             );
 
-            Mail::to($agent->email, $agent->name)->queue(new SlaWarningMail($ticket, $subject, $content));
+            Mail::to($agent->email, $agent->full_name)->queue(new SlaWarningMail($ticket, $subject, $content));
         } catch (\Throwable $e) {
             Log::error('Helpdesk notification failed', [
                 'listener' => static::class,

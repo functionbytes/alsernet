@@ -6,10 +6,14 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\BulkTicketsController;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Models\Permission;
@@ -502,6 +506,81 @@ class BulkTicketOperationsTest extends TestCase
             ]);
 
         $this->assertNull($closed->fresh()->resolved_at);
+    }
+
+    public function test_mark_spam_closes_without_survey_and_blocks_the_sender_only_with_settings_permission(): void
+    {
+        Event::fake([TicketClosed::class]);
+        $customer = Customer::create(['name' => 'Boletín', 'email' => 'news-bulk-9431@example.com']);
+        $ticket = $this->createTestTicket(['customer_id' => $customer->id]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'mark_spam',
+                'block_senders' => 1,
+            ])->assertOk()->assertJson(['updated_count' => 1]);
+
+        $ticket->refresh();
+        $this->assertNotNull($ticket->closed_at);
+        $this->assertSame('spam', $ticket->close_reason);
+        $this->assertTrue((bool) $ticket->close_skip_survey);
+        $this->assertFalse(
+            TicketEmailBlacklist::where('value', 'news-bulk-9431@example.com')->exists(),
+            'Sin permiso de ajustes no se toca la lista negra.'
+        );
+
+        Permission::firstOrCreate(['name' => 'helpdesk.tickets.settings', 'guard_name' => 'web']);
+        $this->manager->givePermissionTo('helpdesk.tickets.settings');
+        $second = $this->createTestTicket(['customer_id' => $customer->id]);
+
+        $this->actingAs($this->manager->fresh())
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$second->id],
+                'action' => 'mark_spam',
+                'block_senders' => 1,
+            ])->assertOk();
+
+        $this->assertTrue(TicketEmailBlacklist::where('type', 'email')->where('value', 'news-bulk-9431@example.com')->exists());
+    }
+
+    public function test_mail_candidates_finds_open_tickets_whose_original_mail_is_a_newsletter(): void
+    {
+        $newsletter = $this->createTestTicket(['subject' => 'Newsletter', 'source' => 'email']);
+        $customerMail = $this->createTestTicket(['subject' => 'Consulta', 'source' => 'email']);
+
+        TicketMail::create([
+            'ticket_id' => $newsletter->id,
+            'direction' => 'inbound',
+            'from' => 'news@example.com',
+            'to' => 'soporte@example.com',
+            'subject' => 'Newsletter',
+            'raw_email' => "From: news@example.com\r\nList-Unsubscribe:\r\n <mailto:bye@example.com>\r\nSubject: Newsletter\r\n\r\nList-Id: esto es el cuerpo\r\n",
+        ]);
+        TicketMail::create([
+            'ticket_id' => $customerMail->id,
+            'direction' => 'inbound',
+            'from' => 'cliente@example.com',
+            'to' => 'soporte@example.com',
+            'subject' => 'Consulta',
+            'raw_email' => "From: cliente@example.com\r\nSubject: Consulta\r\n\r\nList-Id: solo en el cuerpo, no cuenta\r\n",
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.bulk.mail-candidates'))
+            ->assertOk();
+
+        $this->assertContains($newsletter->id, $response->json('ids'));
+        $this->assertNotContains($customerMail->id, $response->json('ids'));
+    }
+
+    public function test_parse_headers_unfolds_continuation_lines_and_stops_at_the_body(): void
+    {
+        $headers = BulkTicketsController::parseHeaders("list-unsubscribe: <a>,\r\n\t<b>\r\nPRECEDENCE: bulk\r\n\r\nAuto-Submitted: auto-replied");
+
+        $this->assertSame('<a>, <b>', $headers['List-Unsubscribe']);
+        $this->assertSame('bulk', $headers['Precedence']);
+        $this->assertArrayNotHasKey('Auto-Submitted', $headers);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────

@@ -158,8 +158,12 @@ class SpamClassifierService
      */
     private function isKnownSender(string $email): bool
     {
+        // Los tickets cerrados como spam no cuentan: si no, un boletín que
+        // coló un ticket antes de existir la cuarentena quedaba "conocido"
+        // para siempre y todos sus envíos siguientes entraban.
         return Ticket::query()
             ->whereHas('customer', fn ($q) => $q->where('email', $email))
+            ->where(fn ($q) => $q->whereNull('close_reason')->orWhere('close_reason', '!=', 'spam'))
             ->exists();
     }
 

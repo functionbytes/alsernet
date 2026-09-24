@@ -143,6 +143,8 @@ class TicketReportsService
             'byChannel' => $byChannel,
             'trend' => $this->dailyTrend($from, $to),
             'topAgents' => $topAgents,
+            'backlogAging' => $this->backlogAging(),
+            'agentMetrics' => $this->agentMetrics($from, $to),
             'avgRating' => round($ratedRow->avg_rating ?? 0, 1),
             'ratedCount' => (int) $ratedRow->rated_count,
             'ratingDistribution' => $ratingDistribution,
@@ -163,6 +165,104 @@ class TicketReportsService
                 'slaComplianceRate' => $this->pctChange($currentSlaRate, $previousSlaRate),
             ],
         ];
+    }
+
+    /**
+     * Antigüedad del backlog AHORA (no depende del rango): tickets sin
+     * resolver ni cerrar por tramos de edad, para ver si la cola envejece
+     * aunque el volumen diario parezca bajo (24-sep-2026).
+     *
+     * @return array{buckets: array<string, array{label: string, count: int}>, total: int, unassigned: int, oldest_days: ?int}
+     */
+    public function backlogAging(): array
+    {
+        $now = now();
+        $open = Ticket::query()->whereNull('closed_at')->whereNull('resolved_at');
+
+        $counts = (clone $open)
+            ->selectRaw(
+                "CASE WHEN created_at >= ? THEN 'lt1' WHEN created_at >= ? THEN 'd1_3' WHEN created_at >= ? THEN 'd3_7' WHEN created_at >= ? THEN 'd7_30' ELSE 'gt30' END as bucket, COUNT(*) as c",
+                [$now->copy()->subDay(), $now->copy()->subDays(3), $now->copy()->subDays(7), $now->copy()->subDays(30)]
+            )
+            ->groupBy('bucket')
+            ->pluck('c', 'bucket');
+
+        $labels = ['lt1' => 'Menos de 1 día', 'd1_3' => '1–3 días', 'd3_7' => '3–7 días', 'd7_30' => '7–30 días', 'gt30' => 'Más de 30 días'];
+        $buckets = [];
+        foreach ($labels as $key => $label) {
+            $buckets[$key] = ['label' => $label, 'count' => (int) ($counts[$key] ?? 0)];
+        }
+
+        $oldest = (clone $open)->min('created_at');
+
+        return [
+            'buckets' => $buckets,
+            'total' => array_sum(array_column($buckets, 'count')),
+            'unassigned' => (clone $open)->whereNull('assignee_id')->count(),
+            'oldest_days' => $oldest ? (int) Carbon::parse($oldest)->diffInDays($now) : null,
+        ];
+    }
+
+    /**
+     * Métricas por agente: todos los que tuvieron actividad en el periodo o
+     * tienen tickets abiertos, no solo el top 5 de cerrados.
+     *
+     * @return Collection<int, array{agent_id: int, name: string, solved: int, open_now: int, breached_now: int, avg_first_response_minutes: ?int, avg_resolution_minutes: ?int, avg_rating: ?float}>
+     */
+    public function agentMetrics(Carbon $from, Carbon $to): Collection
+    {
+        $solved = Ticket::query()
+            ->whereNotNull('assignee_id')
+            ->whereRaw('COALESCE(resolved_at, closed_at) BETWEEN ? AND ?', [$from, $to])
+            ->selectRaw('assignee_id, COUNT(*) as solved, AVG(GREATEST(TIMESTAMPDIFF(MINUTE, created_at, COALESCE(resolved_at, closed_at)), 0)) as avg_resolution')
+            ->groupBy('assignee_id')
+            ->get()
+            ->keyBy('assignee_id');
+
+        $openNow = Ticket::query()
+            ->whereNotNull('assignee_id')
+            ->whereNull('closed_at')
+            ->whereNull('resolved_at')
+            ->selectRaw('assignee_id, COUNT(*) as open_now, SUM(CASE WHEN sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached_now')
+            ->groupBy('assignee_id')
+            ->get()
+            ->keyBy('assignee_id');
+
+        $created = Ticket::query()
+            ->whereNotNull('assignee_id')
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw('assignee_id, AVG(CASE WHEN first_response_at IS NOT NULL THEN GREATEST(TIMESTAMPDIFF(MINUTE, created_at, first_response_at), 0) END) as avg_first_response, AVG(CASE WHEN rated_at IS NOT NULL THEN rating END) as avg_rating')
+            ->groupBy('assignee_id')
+            ->get()
+            ->keyBy('assignee_id');
+
+        $ids = $solved->keys()->merge($openNow->keys())->merge($created->keys())->unique()->values();
+        $users = User::whereIn('id', $ids)->get(['id', 'firstname', 'lastname'])->keyBy('id');
+
+        return $ids
+            ->map(function ($id) use ($solved, $openNow, $created, $users) {
+                $user = $users->get($id);
+                if (! $user) {
+                    return null;
+                }
+                $avgFirst = $created->get($id)?->avg_first_response;
+                $avgRes = $solved->get($id)?->avg_resolution;
+                $rating = $created->get($id)?->avg_rating;
+
+                return [
+                    'agent_id' => (int) $id,
+                    'name' => $user->fullName(),
+                    'solved' => (int) ($solved->get($id)?->solved ?? 0),
+                    'open_now' => (int) ($openNow->get($id)?->open_now ?? 0),
+                    'breached_now' => (int) ($openNow->get($id)?->breached_now ?? 0),
+                    'avg_first_response_minutes' => $avgFirst !== null ? (int) round($avgFirst) : null,
+                    'avg_resolution_minutes' => $avgRes !== null ? (int) round($avgRes) : null,
+                    'avg_rating' => $rating !== null ? round((float) $rating, 1) : null,
+                ];
+            })
+            ->filter()
+            ->sortByDesc('solved')
+            ->values();
     }
 
     /**

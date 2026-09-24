@@ -15,7 +15,9 @@ use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
+use Modules\HelpdeskTickets\Services\SpamClassifierService;
 use Modules\HelpdeskTickets\Services\TicketMergeService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Throwable;
@@ -39,6 +41,8 @@ class BulkTicketsController extends Controller
     private const ABILITY_BY_ACTION = [
         'assign' => 'assign',
         'close' => 'close',
+        // Cerrar como spam (24-sep-2026): mismo permiso que cerrar.
+        'mark_spam' => 'close',
         'resolve' => 'resolve',
         'reopen' => 'reopen',
         'change_status' => 'update',
@@ -132,6 +136,25 @@ class BulkTicketsController extends Controller
                             $ticket->close();
                             $this->dispatchStatusChange($ticket, $previous);
                             TicketClosed::dispatch($ticket);
+                        })
+                        ->count(),
+                    // Boletines y spam que ya entraron como ticket: se cierran
+                    // con motivo 'spam' y sin encuesta, y (con permiso de
+                    // ajustes) el remitente pasa a la lista negra para que el
+                    // siguiente ni llegue. SpamClassifierService deja además de
+                    // tratar como "cliente conocido" a quien solo tiene tickets
+                    // cerrados como spam.
+                    'mark_spam' => $authorized
+                        ->whereNull('closed_at')
+                        ->each(function (Ticket $ticket) use ($validated, $actor): void {
+                            $previous = $ticket->status;
+                            $ticket->close('spam', ['skip_survey' => true]);
+                            $this->dispatchStatusChange($ticket, $previous);
+                            TicketClosed::dispatch($ticket);
+
+                            if (! empty($validated['block_senders']) && $actor->can('helpdesk.tickets.settings')) {
+                                $this->blockSender($ticket, $actor);
+                            }
                         })
                         ->count(),
                     // Solo los que siguen abiertos: antes pasaba a "Resuelto"
@@ -261,6 +284,95 @@ class BulkTicketsController extends Controller
             'updated_count' => $count,
             'skipped_ticket_ids' => $skipped->pluck('id')->values(),
         ]);
+    }
+
+    /**
+     * Tickets abiertos que parecen boletines o envíos automáticos, para
+     * seleccionarlos y cerrarlos como spam de una vez. Mismo criterio que la
+     * cuarentena de la ingesta (SpamClassifierService::bulkReason), aplicado
+     * a las cabeceras del correo original guardado (raw_email): los tickets
+     * que entraron antes de que existiera la cuarentena, o de remitentes que
+     * ya tenían tickets.
+     */
+    public function bulkMailCandidates(Request $request, SpamClassifierService $classifier): JsonResponse
+    {
+        $this->authorize('viewAny', Ticket::class);
+
+        $ticketIds = Ticket::query()
+            ->visibleToAgent($request->user())
+            ->whereNull('closed_at')
+            ->whereNull('resolved_at')
+            ->latest('id')
+            ->limit(500)
+            ->pluck('id');
+
+        // Solo la cabecera: raw_email puede pesar cientos de KB por correo.
+        $firstInbound = TicketMail::query()
+            ->whereIn('ticket_id', $ticketIds)
+            ->where('direction', 'inbound')
+            ->whereNotNull('raw_email')
+            ->orderBy('id')
+            ->selectRaw('ticket_id, SUBSTRING(raw_email, 1, 16384) as head')
+            ->get()
+            ->unique('ticket_id');
+
+        $reasons = [];
+        foreach ($firstInbound as $mail) {
+            $reason = $classifier->bulkReason(self::parseHeaders((string) $mail->head));
+            if ($reason !== null) {
+                $reasons[$mail->ticket_id] = $reason;
+            }
+        }
+
+        return response()->json([
+            'ids' => array_keys($reasons),
+            'reasons' => $reasons,
+            'can_block_senders' => $request->user()->can('helpdesk.tickets.settings'),
+        ]);
+    }
+
+    /**
+     * Cabeceras de un correo en crudo (RFC 5322): hasta la primera línea en
+     * blanco, desplegando las líneas de continuación. Gana la primera
+     * aparición de cada nombre, como en bulkReason().
+     *
+     * @return array<string, string>
+     */
+    public static function parseHeaders(string $raw): array
+    {
+        $raw = str_replace("\r\n", "\n", $raw);
+        $end = strpos($raw, "\n\n");
+        $block = $end === false ? $raw : substr($raw, 0, $end);
+        $block = preg_replace("/\n[ \t]+/", ' ', $block) ?? $block;
+
+        $headers = [];
+        foreach (explode("\n", $block) as $line) {
+            if (! str_contains($line, ':')) {
+                continue;
+            }
+            [$name, $value] = explode(':', $line, 2);
+            $name = implode('-', array_map('ucfirst', explode('-', strtolower(trim($name)))));
+            $headers[$name] ??= trim($value);
+        }
+
+        return $headers;
+    }
+
+    private function blockSender(Ticket $ticket, User $actor): void
+    {
+        $email = strtolower(trim((string) $ticket->customer?->email));
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        TicketEmailBlacklist::query()->firstOrCreate(
+            ['type' => 'email', 'value' => $email],
+            [
+                'reason' => 'Marcado como spam desde '.$ticket->ticket_number,
+                'is_active' => true,
+                'added_by' => $actor->id,
+            ],
+        );
     }
 
     /**

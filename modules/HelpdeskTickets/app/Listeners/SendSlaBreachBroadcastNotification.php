@@ -43,6 +43,12 @@ class SendSlaBreachBroadcastNotification implements ShouldQueue
         // webhook configurado. Se manda haya o no assignee al que avisar en
         // el panel — un SLA roto sin nadie asignado es justo el caso que más
         // le interesa al canal del equipo.
+        // Con el resumen activo, el canal recibe la lista agrupada de
+        // ticket:sla-digest en vez de un mensaje por ticket.
+        if (config('helpdesktickets.sla_alerts.managers_digest', true)) {
+            return;
+        }
+
         $this->teamChannels->notify(
             "⚠️ SLA incumplido — Ticket #{$ticket->ticket_number}: {$event->breach->breach_type_label}"
         );

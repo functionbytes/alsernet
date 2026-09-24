@@ -52,3 +52,21 @@ a:hover { color: #4f6b0a; }
     border-color: #c8d69a;
     color: #4f6b0a;
 }
+
+/* Línea de tiempo del ticket (24-sep-2026): hitos alcanzados en verde de
+   marca, pendientes en gris. En móvil se apila en vertical. */
+.hdt-timeline { display: flex; gap: 0; }
+.hdt-timeline-step { flex: 1; position: relative; padding-top: 18px; display: flex; flex-direction: column; gap: 2px; font-size: .875rem; }
+.hdt-timeline-step::before { content: ""; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background: #e4e4e7; }
+.hdt-timeline-step::after { content: ""; position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #d4d4d8; }
+.hdt-timeline-step.is-done::before { background: #90bb13; }
+.hdt-timeline-step.is-done::after { background: #90bb13; border-color: #90bb13; }
+.hdt-timeline-label { font-weight: 600; color: #18181b; }
+.hdt-timeline-step:not(.is-done) .hdt-timeline-label { color: #71717a; }
+.hdt-timeline-date { font-size: .8rem; }
+@media (max-width: 576px) {
+    .hdt-timeline { flex-direction: column; gap: 12px; }
+    .hdt-timeline-step { padding: 0 0 0 22px; }
+    .hdt-timeline-step::before { top: 14px; bottom: -14px; left: 5px; right: auto; width: 2px; height: auto; }
+    .hdt-timeline-step:last-child::before { display: none; }
+}

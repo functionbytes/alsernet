@@ -78,6 +78,21 @@ return [
     | config('helpdesk.escalation.*') (módulo Helpdesk). Aquí van los ajustes
     | propios del motor de este módulo.
     */
+    /*
+    | Volumen de avisos de SLA (24-sep-2026). Cada incumplimiento mandaba un
+    | correo al agente Y a todos los managers, más un mensaje a Slack/Teams:
+    | con decenas de tickets vencidos, eran decenas de correos por hora que
+    | nadie leía. En modo resumen, el agente asignado sigue recibiendo su
+    | aviso al momento (es quien puede actuar), y los managers y el canal
+    | del equipo reciben un único resumen cada `digest_hours` horas, solo si
+    | la lista de vencidos cambió. Los tickets vencidos SIN agente siguen
+    | avisando a los managers al momento: nadie más lo haría.
+    */
+    'sla_alerts' => [
+        'managers_digest' => env('HELPDESK_SLA_MANAGERS_DIGEST', true),
+        'digest_hours' => (int) env('HELPDESK_SLA_DIGEST_HOURS', 4),
+    ],
+
     'escalation' => [
         // Qué hace un escalado (24-sep-2026):
         // - 'flag' (por defecto): marca el ticket como escalado (chip en la

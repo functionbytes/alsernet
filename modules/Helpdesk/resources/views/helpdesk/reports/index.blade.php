@@ -538,16 +538,51 @@
             </div>
         </div>
 
-        {{-- Agent Performance --}}
+        {{-- Antigüedad del backlog (24-sep-2026): foto de AHORA, no del rango. --}}
+        @php
+            $aging = $backlogAging ?? ['buckets' => [], 'total' => 0, 'unassigned' => 0, 'oldest_days' => null];
+            $agingMax = max(1, collect($aging['buckets'])->max('count') ?? 1);
+            $fmtMinutes = function (?int $m): string {
+                if ($m === null) return '—';
+                if ($m < 60) return $m.' min';
+                if ($m < 1440) return round($m / 60, 1).' h';
+                return round($m / 1440, 1).' d';
+            };
+        @endphp
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-transparent border-0 pb-0">
-                <h6 class="fw-semibold mb-0">
-                    <i class="fas fa-users me-1 text-primary"></i>
-                    Rendimiento de agentes (top 5 por tickets cerrados)
-                </h6>
+                <h6 class="fw-semibold mb-0">Antigüedad del backlog (ahora)</h6>
+                <p class="text-muted small mb-0">
+                    {{ number_format($aging['total']) }} tickets sin resolver
+                    · {{ number_format($aging['unassigned']) }} sin asignar
+                    @if($aging['oldest_days'] !== null) · el más antiguo lleva {{ $aging['oldest_days'] }} días @endif
+                </p>
             </div>
             <div class="card-body pt-3">
-                @if($topAgents->isEmpty())
+                @foreach($aging['buckets'] as $bucket)
+                    @php $pct = round($bucket['count'] * 100 / $agingMax); @endphp
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="text-muted bv-w-150 flex-shrink-0">{{ $bucket['label'] }}</span>
+                        <div class="progress flex-grow-1 bv-h-10">
+                            <div class="progress-bar bg-success bv-progress-fill--dynamic" style="--bv-progress-pct:{{ $pct }}%"></div>
+                        </div>
+                        <span class="text-muted bv-w-32 text-end">{{ $bucket['count'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Rendimiento por agente: todos los agentes con actividad, no solo el top 5. --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pb-0 d-flex align-items-center justify-content-between">
+                <h6 class="fw-semibold mb-0">Rendimiento de agentes</h6>
+                @can('helpdesk.metrics.export')
+                    <a href="{{ route('manager.helpdesk.reports.export-agents', ['from' => $from->toDateString(), 'to' => $to->toDateString()]) }}"
+                       class="btn btn-sm btn-outline-secondary">Exportar agentes</a>
+                @endcan
+            </div>
+            <div class="card-body pt-3">
+                @if(($agentMetrics ?? collect())->isEmpty())
                     <p class="text-muted mb-0">Sin datos de agentes para el periodo seleccionado.</p>
                 @else
                     <div class="table-responsive">
@@ -555,25 +590,24 @@
                             <thead class="table-light">
                                 <tr>
                                     <th scope="col">Agente</th>
-                                    <th scope="col" class="text-center">Tickets cerrados</th>
+                                    <th scope="col" class="text-center">Resueltos</th>
+                                    <th scope="col" class="text-center">Abiertos ahora</th>
+                                    <th scope="col" class="text-center">SLA vencido</th>
+                                    <th scope="col" class="text-center">1.ª respuesta media</th>
+                                    <th scope="col" class="text-center">Resolución media</th>
+                                    <th scope="col" class="text-center">Valoración</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($topAgents as $row)
+                                @foreach($agentMetrics as $row)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-semibold bv-icon-circle-32">
-                                                    {{ mb_strtoupper(mb_substr($row['agent']->fullName(), 0, 1)) }}
-                                                </div>
-                                                <span>{{ $row['agent']->fullName() }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-success-subtle text-success px-3">
-                                                {{ number_format($row['closed_count']) }}
-                                            </span>
-                                        </td>
+                                        <td>{{ $row['name'] }}</td>
+                                        <td class="text-center fw-semibold">{{ number_format($row['solved']) }}</td>
+                                        <td class="text-center">{{ number_format($row['open_now']) }}</td>
+                                        <td class="text-center {{ $row['breached_now'] > 0 ? 'fw-semibold' : 'text-muted' }}">{{ number_format($row['breached_now']) }}</td>
+                                        <td class="text-center">{{ $fmtMinutes($row['avg_first_response_minutes']) }}</td>
+                                        <td class="text-center">{{ $fmtMinutes($row['avg_resolution_minutes']) }}</td>
+                                        <td class="text-center">{{ $row['avg_rating'] !== null ? number_format($row['avg_rating'], 1).' / 5' : '—' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

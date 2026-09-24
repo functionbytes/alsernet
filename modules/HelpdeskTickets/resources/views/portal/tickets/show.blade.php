@@ -36,6 +36,33 @@
         </div>
     </div>
 
+    {{-- Línea de tiempo (24-sep-2026): en qué punto está el caso sin tener
+         que leer el hilo entero. Solo hitos que el ticket tiene de verdad. --}}
+    @php
+        $milestones = collect([
+            ['label' => 'Recibido', 'at' => $ticket->created_at],
+            ['label' => 'Primera respuesta del equipo', 'at' => $ticket->first_response_at],
+            ['label' => 'Resuelto', 'at' => $ticket->resolved_at],
+            ['label' => 'Cerrado', 'at' => $ticket->closed_at],
+        ]);
+        $waitingOnCustomer = $ticket->closed_at === null && $ticket->status?->slug === 'waiting-customer';
+    @endphp
+    <div class="card mb-4">
+        <div class="card-body">
+            <ol class="hdt-timeline list-unstyled mb-0">
+                @foreach ($milestones as $step)
+                    <li class="hdt-timeline-step {{ $step['at'] ? 'is-done' : '' }}">
+                        <span class="hdt-timeline-label">{{ $step['label'] }}</span>
+                        <span class="hdt-timeline-date text-muted">{{ $step['at'] ? $step['at']->format('d M Y H:i') : 'Pendiente' }}</span>
+                    </li>
+                @endforeach
+            </ol>
+            @if ($waitingOnCustomer)
+                <p class="mt-3 mb-0 fw-semibold">Estamos esperando tu respuesta para continuar.</p>
+            @endif
+        </div>
+    </div>
+
     @if (session('status'))
         <div class="alert alert-success">
             <i class="fas fa-check-circle me-1"></i>{{ session('status') }}
@@ -158,7 +185,7 @@
         </div>
     @endif
 
-    @if ($ticket->closed_at && !$ticket->rated_at)
+    @if (($ticket->closed_at || $ticket->resolved_at) && ! $ticket->rated_at)
         <div class="card mt-3">
             <div class="card-body">
                 <h6>Valora esta experiencia de soporte</h6>

@@ -42,21 +42,25 @@ class SendSlaBreachNotification implements ShouldQueue
     public function handle(SlaBreached $event): void
     {
         $ticket = $event->ticket;
-        $timeExceeded = now()->diff($ticket->due_at);
+        $timeExceeded = now()->diff($ticket->sla_resolution_due_at ?? now());
 
         Log::info('Sending SLA breach notifications', [
             'ticket_id' => $ticket->id,
-            'due_at' => $ticket->due_at,
+            'due_at' => $ticket->sla_resolution_due_at,
             'time_exceeded' => $timeExceeded->format('%h horas %i minutos'),
         ]);
 
         $recipients = [];
 
-        if ($ticket->assignedAgent) {
-            $recipients[] = $ticket->assignedAgent;
+        if ($ticket->assignee) {
+            $recipients[] = $ticket->assignee;
         }
 
-        $managers = User::permission('manage_helpdesk')->get();
+        // Con el resumen activo (sla_alerts.managers_digest) los managers lo
+        // ven en ticket:sla-digest, salvo que no haya agente al que avisar.
+        $managers = config('helpdesktickets.sla_alerts.managers_digest', true) && $recipients !== []
+            ? collect()
+            : User::permission('manage_helpdesk')->get();
         foreach ($managers as $manager) {
             if (! in_array($manager->id, array_column($recipients, 'id'))) {
                 $recipients[] = $manager;
@@ -76,7 +80,7 @@ class SendSlaBreachNotification implements ShouldQueue
 
         foreach ($recipients as $recipient) {
             try {
-                Mail::to($recipient->email, $recipient->name)->queue(new SlaBreachMail($ticket, $subject, $content));
+                Mail::to($recipient->email, $recipient->full_name)->queue(new SlaBreachMail($ticket, $subject, $content));
 
                 Log::info('SLA breach notification sent', [
                     'ticket_id' => $ticket->id,

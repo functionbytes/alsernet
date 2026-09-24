@@ -166,6 +166,7 @@ Route::group(['prefix' => ''], function () {
 
     // Tickets bulk action
     Route::post('/tickets/bulk', [BulkTicketsController::class, 'handle'])->name('manager.helpdesk.tickets.bulk');
+    Route::get('/tickets/bulk/mail-candidates', [BulkTicketsController::class, 'bulkMailCandidates'])->name('manager.helpdesk.tickets.bulk.mail-candidates');
 
     // Tickets export
     Route::get('/tickets/export/{format}', [TicketExportController::class, 'export'])->name('manager.helpdesk.tickets.export');
@@ -594,4 +595,5 @@ Route::group(['prefix' => ''], function () {
 Route::prefix('reports')->name('manager.helpdesk.reports.')->group(function () {
     Route::get('/', [HelpdeskReportsController::class, 'index'])->name('index');
     Route::get('/export', [HelpdeskReportsController::class, 'export'])->name('export')->middleware('throttle:helpdesk-export');
+    Route::get('/export-agents', [HelpdeskReportsController::class, 'exportAgents'])->name('export-agents')->middleware('throttle:helpdesk-export');
 });

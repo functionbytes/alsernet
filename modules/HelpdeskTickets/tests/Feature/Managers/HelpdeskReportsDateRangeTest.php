@@ -70,6 +70,20 @@ class HelpdeskReportsDateRangeTest extends TestCase
             ->assertOk();
     }
 
+    public function test_reports_show_backlog_aging_and_agent_metrics_and_export_them(): void
+    {
+        $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.reports.index', ['from' => '2026-01-01', 'to' => '2026-01-31']))
+            ->assertOk()
+            ->assertSee('Antigüedad del backlog')
+            ->assertSee('Rendimiento de agentes');
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.reports.export-agents', ['from' => '2026-01-01', 'to' => '2026-01-31']))
+            ->assertOk();
+        $this->assertStringContainsString('Resueltos/cerrados', $response->streamedContent());
+    }
+
     private function helpdeskConnectionAvailable(): bool
     {
         try {

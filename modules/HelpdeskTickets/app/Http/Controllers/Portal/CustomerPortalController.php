@@ -572,9 +572,12 @@ class CustomerPortalController extends Controller
 
         $customer = $customerOrRedirect;
 
+        // Resuelto también cuenta (24-sep-2026): el ticket puede quedarse
+        // días en "Resuelto" antes del cierre automático, y es justo cuando
+        // el cliente acaba de leer la solución.
         $ticket = Ticket::where('ticket_number', $ticketNumber)
             ->where('customer_id', $customer->id)
-            ->whereNotNull('closed_at')
+            ->where(fn ($q) => $q->whereNotNull('closed_at')->orWhereNotNull('resolved_at'))
             ->whereNull('rated_at')
             ->firstOrFail();
 

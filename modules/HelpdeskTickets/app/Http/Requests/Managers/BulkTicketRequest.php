@@ -19,7 +19,7 @@ class BulkTicketRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
-            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,change_priority,delete,add_tag,remove_tag,snooze,assign_group,link_to_ticket,retry_failed_mail'],
+            'action' => ['required', 'string', 'in:assign,close,mark_spam,resolve,reopen,change_status,change_priority,delete,add_tag,remove_tag,snooze,assign_group,link_to_ticket,retry_failed_mail'],
             'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
             'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
             'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
@@ -31,6 +31,8 @@ class BulkTicketRequest extends FormRequest
             // "Vincular a un ticket" del mockup (modal 13, ve-mail-bulk):
             // mueve el hilo completo de cada ticket seleccionado a este.
             'merge_into_id' => ['required_if:action,link_to_ticket', 'nullable', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
+            // "Marcar como spam": añadir también los remitentes a la lista negra.
+            'block_senders' => ['nullable', 'boolean'],
         ];
     }
 
