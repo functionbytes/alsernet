@@ -121,6 +121,16 @@
         split.style.setProperty('--tkt-side-width', layout.sideWidth + 'px');
         split.classList.toggle('side-collapsed', layout.sideCollapsed);
         if (side) side.classList.toggle('is-collapsed', layout.sideCollapsed);
+        // Nombre de cada pestaña del riel con el tooltip del tema
+        // (Tooltip.js, data-tooltip) en vez del title nativo, que tarda ~1 s:
+        // debajo con el panel abierto y a la izquierda con él plegado.
+        document.querySelectorAll('#tkt-side-rail .tkt-icon-tab[aria-label]').forEach(function (b) {
+            if (!b.hasAttribute('data-tooltip')) {
+                b.setAttribute('data-tooltip', b.getAttribute('aria-label'));
+                b.removeAttribute('title');
+            }
+            b.setAttribute('data-tooltip-position', layout.sideCollapsed ? 'left' : 'bottom');
+        });
         if (toggle) {
             toggle.setAttribute('aria-pressed', layout.sideCollapsed ? 'true' : 'false');
             toggle.setAttribute('aria-label', layout.sideCollapsed ? 'Mostrar panel de gestión' : 'Ocultar panel de gestión');
@@ -159,8 +169,36 @@
         applySplitLayout();
 
         $('#tkt-side-toggle').off('click.tktSplit').on('click.tktSplit', function () {
+            // Tocarlo a mano manda sobre el plegado automático.
+            TKA.state.sideManual = true;
+            TKA.state.sideAutoCollapsed = false;
             setSideCollapsed(!TKA.state.splitLayout.sideCollapsed);
         });
+
+        // Plegado automático en anchos medianos (24-sep-2026): entre 941 y
+        // 1180 px de panel, tres columnas no caben con holgura y el hilo queda
+        // en ~340 px. El lateral se reduce a su barra de iconos (un clic lo
+        // abre) sin guardarlo como preferencia, y vuelve a desplegarse solo
+        // al ensanchar la ventana.
+        var tktRoot = document.querySelector('.tkt');
+        var autoCollapseSide = function () {
+            if (!tktRoot || !TKA.state.splitLayout || TKA.state.sideManual) return;
+            var w = tktRoot.getBoundingClientRect().width;
+            var medium = w > 940 && w <= 1180;
+            if (medium && !TKA.state.splitLayout.sideCollapsed) {
+                TKA.state.splitLayout.sideCollapsed = true;
+                TKA.state.sideAutoCollapsed = true;
+                applySplitLayout();
+            } else if (!medium && TKA.state.sideAutoCollapsed) {
+                TKA.state.splitLayout.sideCollapsed = false;
+                TKA.state.sideAutoCollapsed = false;
+                applySplitLayout();
+            }
+        };
+        if (tktRoot && window.ResizeObserver) {
+            new ResizeObserver(autoCollapseSide).observe(tktRoot);
+        }
+        autoCollapseSide();
 
         var $handles = $('.tkt-split-resizer');
         $handles.off('.tktSplit').on('pointerdown.tktSplit', function (ev) {
@@ -688,7 +726,7 @@
         return '<div class="tkt-erp-missing"' +
                 (info.relink_url ? ' data-relink-url="' + escapeHtml(info.relink_url) + '"' : '') + '>' +
                 '<span class="tkt-erp-missing-label"><i class="fa-regular fa-circle-question"></i> ' + escapeHtml(info.label) + '</span>' +
-                (info.relink_url ? '<button type="button" class="tkt-btn tkt-btn-xs" data-tkt-erp-relink>Reintentar</button>' : '') +
+                (info.relink_url ? '<button type="button" class="tkt-btn tkt-btn-mini" data-tkt-erp-relink>Reintentar</button>' : '') +
             '</div>';
     }
 
@@ -1182,6 +1220,24 @@
     // respuestas locales y eventos Echo que llegan juntos, conserva el ticket
     // seleccionado y no modifica el historial del navegador durante una
     // actualización automática.
+    // Repinta el ticket abierto tras un refresco del listado SIN dejarlo en
+    // blanco (24-sep-2026). renderDetail()/renderSidePanel() empiezan de cero
+    // (currentDetail = null) y el hilo se quedaba vacío hasta que volvía
+    // /data — con el servidor cargado, 10-15 s en los que el agente veía
+    // desaparecer lo que estaba leyendo. Se vuelve a pintar al instante con
+    // los datos que ya había y /data los actualiza en segundo plano.
+    function rerenderOpenTicketKeepingDetail(t) {
+        var previous = TKA.state.currentDetail;
+        renderDetail(t);
+        renderSidePanel(t);
+        if (!previous) return;
+        TKA.state.currentDetail = previous;
+        try {
+            renderThreadPane(previous.thread || []);
+            renderWorkCards(t);
+        } catch (e) { /* si falla, /data lo repinta al volver */ }
+    }
+
     function queueTicketListRefresh(reason, ticket, opts) {
         opts = opts || {};
         var state = TKA.state;
@@ -1238,8 +1294,7 @@
                     }
 
                     if (forceDetail || beforeCurrentSignature !== afterCurrentSignature || (meta && meta.changed && refreshTicket)) {
-                        renderDetail(state.currentTicket);
-                        renderSidePanel(state.currentTicket);
+                        rerenderOpenTicketKeepingDetail(state.currentTicket);
                     }
                 },
                 onAlways: function () {
@@ -1727,6 +1782,60 @@
         if ($footCount.length) {
             $footCount.text((rows.length ? '1–' + rows.length : '0–0') + ' de ' + rows.length + ' tickets');
         }
+
+        if (!TKA.state.currentTicket) renderQueueSummary();
+    }
+
+    // Panel lateral sin ticket abierto (24-sep-2026): en vez de un texto que
+    // solo dice "elige un ticket", un resumen de la cola con lo que pide
+    // atención primero. Los totales son los de las pestañas (del servidor);
+    // la lista de "vencen antes" sale de la página cargada.
+    function renderQueueSummary() {
+        var $c = $('#tkt-side-content');
+        if (!$c.length || TKA.state.currentTicket) return;
+        var c = TKA.state.tabCounts || {};
+        var stat = function (filter, label, value) {
+            if (value === undefined || value === null) return '';
+            return '<button type="button" class="tkt-qsum-stat" data-qsum-filter="' + filter + '">' +
+                '<span class="n">' + escapeHtml(String(value)) + '</span><span class="l">' + escapeHtml(label) + '</span></button>';
+        };
+        var rank = { breach: 0, warn: 1 };
+        var risky = (TKA.state.tickets || []).filter(function (t) {
+            return t.sla_kind === 'breach' || t.sla_kind === 'warn';
+        }).sort(function (a, b) { return rank[a.sla_kind] - rank[b.sla_kind]; }).slice(0, 5);
+        var list = risky.length
+            ? risky.map(function (t) {
+                return '<button type="button" class="tkt-qsum-row" data-qsum-ticket="' + escapeHtml(String(t.id)) + '">' +
+                    '<span class="tkt-qsum-dot ' + (t.sla_kind === 'breach' ? 'breach' : 'warn') + '"></span>' +
+                    '<span class="tkt-qsum-subject">' + escapeHtml(t.subject || '(sin asunto)') + '</span>' +
+                    '<span class="tkt-qsum-sla">' + escapeHtml(t.sla_text || '') + '</span></button>';
+            }).join('')
+            : '<div class="tkt-empty-box">Ningún ticket de esta página tiene el SLA en riesgo.</div>';
+
+        $c.html(
+            '<div class="tkt-qsum">' +
+                '<div class="tkt-cap tkt-qsum-cap">Resumen de la cola</div>' +
+                '<div class="tkt-qsum-grid">' +
+                    stat('mine', 'Míos', c.mine) +
+                    stat('unassigned', 'Sin asignar', c.unassigned) +
+                    stat('sla_risk', 'SLA en riesgo', c.sla_risk) +
+                    stat('urgent', 'Urgentes', c.urgent) +
+                '</div>' +
+                '<div class="tkt-cap tkt-qsum-cap">Vencen antes</div>' +
+                '<div class="tkt-qsum-list">' + list + '</div>' +
+                '<p class="tkt-qsum-hint">Elige un ticket de la lista para ver aquí su gestión.</p>' +
+            '</div>'
+        );
+        $c.find('[data-qsum-filter]').on('click', function () {
+            var f = $(this).attr('data-qsum-filter');
+            var $tab = $('.tkt-state-tab[data-filter="' + f + '"], .tkt-view-pill[data-filter="' + f + '"]').first();
+            if ($tab.length) $tab.trigger('click');
+        });
+        $c.find('[data-qsum-ticket]').on('click', function () {
+            var id = $(this).attr('data-qsum-ticket');
+            var t = (TKA.state.tickets || []).find(function (x) { return String(x.id) === id; });
+            if (t) selectTicket(t);
+        });
     }
 
     // ═══════════ Kanban (Fase D) ═══════════
@@ -1785,7 +1894,31 @@
         return $card;
     }
 
+    // El tablero agrupa la página cargada, y la página ya viene filtrada por
+    // la pestaña activa (24-sep-2026): con «Sin asignar» todas las columnas
+    // de estado salían vacías aunque hubiera decenas de abiertos. Se avisa
+    // encima del tablero y se ofrece pasar a «Todos».
+    function renderKanbanNote() {
+        var $board = $('#tkt-kanban');
+        var $note = $('#tkt-kanban-note');
+        if (!$note.length) {
+            $note = $('<div class="tkt-kanban-note" id="tkt-kanban-note" role="status" hidden>' +
+                '<span class="tkt-flex1" id="tkt-kanban-note-text"></span>' +
+                '<button type="button" class="tkt-btn tkt-btn-mini" id="tkt-kanban-note-all">Ver todos</button></div>');
+            $board.before($note);
+            $note.on('click', '#tkt-kanban-note-all', function () {
+                $('.tkt-state-tab[data-filter="all"], .tkt-view-pill[data-filter="all"]').first().trigger('click');
+            });
+        }
+        var filter = TKA.state.filter || 'all';
+        var $tab = $('.tkt-state-tab[data-filter="' + filter + '"]').first();
+        var name = $tab.length ? $.trim($tab.clone().children('.c').remove().end().text()) : filter;
+        $note.find('#tkt-kanban-note-text').text('El tablero muestra solo la pestaña «' + name + '». Para ver el flujo completo entre estados, pasa a «Todos».');
+        $note.prop('hidden', filter === 'all');
+    }
+
     function renderKanban() {
+        renderKanbanNote();
         var $board = $('#tkt-kanban').empty();
         var buckets = {};
         KANBAN_COLS.forEach(function (c) { buckets[c.key] = []; });
@@ -1795,6 +1928,7 @@
             var items = buckets[col.key];
             var $drop = $('<div class="tkt-kcol-drop" data-bucket="' + col.key + '"></div>');
             items.forEach(function (t) { $drop.append(renderKanbanCard(t)); });
+            if (!items.length) $drop.append('<div class="tkt-kcol-empty">Sin tickets</div>');
 
             $drop.on('dragover', function (ev) { ev.preventDefault(); $drop.addClass('over'); });
             $drop.on('dragleave', function () { $drop.removeClass('over'); });
@@ -2403,6 +2537,26 @@
             '<div class="tkt-pane" id="tkt-dpane-activity" hidden></div>' +
             '<div class="tkt-pane" id="tkt-dpane-files" hidden></div>'
         );
+
+        // Cabecera compacta al leer (24-sep-2026): con el hilo desplazado, la
+        // barra de posición y la línea de cliente se esconden y el asunto
+        // baja de tamaño; así el hilo gana ~70 px. Vuelve al subir arriba.
+        // El scroll no burbujea: se escucha en captura, una sola vez, para
+        // cubrir el hilo (#tkt-thread-scroll, que se crea después) y el resto
+        // de paneles.
+        if (!$d[0].dataset.compactHeadBound) {
+            $d[0].dataset.compactHeadBound = '1';
+            $d[0].addEventListener('scroll', function (e) {
+                var el = e.target;
+                if (!el || el.nodeType !== 1 || el.closest('.tkt-comp-body, .tkt-drop, .tkt-detail-head')) return;
+                // El hilo se abre pegado al final (lo último que llegó): ahí
+                // cuenta lo que el agente sube a leer historia, no el scrollTop.
+                var away = el.id === 'tkt-thread-scroll'
+                    ? el.scrollHeight - el.clientHeight - el.scrollTop
+                    : el.scrollTop;
+                $d.find('.tkt-detail-head').toggleClass('is-scrolled', away > 48);
+            }, true);
+        }
 
         joinTicketPresence(t.id);
         startTicketPulse(t);
@@ -3905,8 +4059,7 @@
                 // completo de la lista.
                 var me = (TKA.state.agentsFull || []).find(function (a) { return a.id === TKA.state.currentUserId; });
                 t.assignee = me ? { id: me.id, name: me.name } : { id: TKA.state.currentUserId, name: 'Tú' };
-                renderDetail(t);
-                renderSidePanel(t);
+                rerenderOpenTicketKeepingDetail(t);
             });
         });
         $box.find('#tkt-selfassign-close').on('click', function () {
@@ -4746,7 +4899,7 @@
                     ? '<div class="tkt-mail-blocked" id="tkt-mail-blocked">' +
                         '<span>' + blockedImages + (blockedImages === 1 ? ' imagen remota bloqueada' : ' imágenes remotas bloqueadas') +
                         '<span class="tkt-mail-blocked-why">cargarlas le confirma al remitente que has abierto el correo</span></span>' +
-                        '<button type="button" class="tkt-btn tkt-btn-xs" id="tkt-mail-show-images">Mostrar imágenes</button>' +
+                        '<button type="button" class="tkt-btn tkt-btn-mini" id="tkt-mail-show-images">Mostrar imágenes</button>' +
                       '</div>'
                     : '') +
                 '<div class="tkt-mail-body" id="tkt-mail-body-html">' + (mail.body_html || '<em>Sin contenido</em>') + '</div>' +
@@ -8688,8 +8841,7 @@
         if ($row.length) $row.replaceWith(renderRow(t));
         if (TKA.state.currentTicket && String(TKA.state.currentTicket.id) === String(t.id)) {
             TKA.state.currentTicket = t;
-            renderDetail(t);
-            renderSidePanel(t);
+            rerenderOpenTicketKeepingDetail(t);
         }
     }
 
@@ -9125,6 +9277,7 @@
         $('#tkt-split-wrap').toggle(mode === 'list');
         $('#tkt-kanban').toggleClass('on', mode === 'kanban');
         if (mode === 'kanban') renderKanban();
+        else $('#tkt-kanban-note').prop('hidden', true);
     }
 
     // ═══════════ Tareas y subtickets ═══════════
@@ -9472,7 +9625,9 @@
 
             TKA.state.filter = filter;
             renderTabs();
-            refetchList(currentListParams({ quick_filter: filter === 'all' ? null : filter }));
+            // 'all' va explícito: sin quick_filter el servidor aplica su valor por
+            // defecto ('unassigned') y la pestaña «Todos» devolvía los sin asignar.
+            refetchList(currentListParams({ quick_filter: filter }));
         });
 
         bindKeyboardShortcuts();

@@ -1031,7 +1031,9 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 /* El segmentado dentro del panel derecho es más estrecho que en un modal. */
 .tkt-side-card-body .tkt-seg-tabs > button { padding: 4px 8px; font-size: var(--tkt-t-sm); }
 /* Botón diminuto para acciones dentro de un banner. */
-.tkt-btn-mini { padding: 3px 9px; font-size: var(--tkt-t-sm); border-radius: 5px; }
+/* Dos tamaños pequeños y no tres (24-sep-2026): -sm en tarjetas y pies de
+   modal, -mini en avisos y filas. El antiguo -xs era -mini con 1 px menos. */
+.tkt-btn-mini { padding: 3px 9px; font-size: var(--tkt-t-sm); border-radius: var(--tkt-r-sm); }
 /* Vista previa del portal del cliente: el hilo tal y como lo ve él, sin las
    notas internas. */
 .tkt-portal { border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); background: var(--tkt-subtle); padding: 12px; display: flex; flex-direction: column; gap: 9px; max-height: 320px; overflow-y: auto; }
@@ -2959,11 +2961,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
     overflow-wrap: anywhere;
 }
 
-.tkt-erp-missing .tkt-btn-xs {
-    flex: 0 0 auto;
-    padding: 2px 8px;
-    font-size: 11px;
-}
+.tkt-erp-missing .tkt-btn-mini { flex: 0 0 auto; }
 
 /* Aviso de imágenes remotas bloqueadas, encima del cuerpo del correo. En la
    escala zinc y no en ámbar: no es un error del que avisar, es una decisión
@@ -2982,7 +2980,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 }
 .tkt-mail-blocked > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .tkt-mail-blocked-why { font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
-.tkt-mail-blocked .tkt-btn-xs { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; }
+.tkt-mail-blocked .tkt-btn-mini { flex: 0 0 auto; }
 /* Hueco de la imagen desactivada: sin esto el correo se ve descuadrado, con
    los textos pegados donde debería haber una foto. */
 .tkt-mail-body img[data-blocked] {
@@ -3346,6 +3344,10 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
   .tkt-comp-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .tkt-comp-tabs::-webkit-scrollbar { display: none; }
   .tkt-comp-tabs > * { flex-shrink: 0; }
+  /* Enviar/Programar siempre a la vista: con la fila en scroll horizontal
+     quedaban al final, fuera de pantalla y sin barra que lo delatara. */
+  .tkt-comp-tabs > .tkt-comp-send-group { position: sticky; right: -8px; z-index: 2; padding: 0 8px 0 10px; margin-right: -8px; background: var(--tkt-panel); box-shadow: -10px 0 10px -6px var(--tkt-panel); }
+  .tkt-composer.is-note .tkt-comp-tabs > .tkt-comp-send-group { background: var(--tkt-subtle); box-shadow: -10px 0 10px -6px var(--tkt-subtle); }
   .tkt-composer:focus-within textarea.tkt-comp-body,
   .tkt-composer.is-expanded textarea.tkt-comp-body { min-height: 88px; }
 }
@@ -3389,3 +3391,34 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 
 /* Aviso de tktNotify() en la barra de estado cuando no hay toastr. */
 .tkt-status-notice { font-weight: 600; color: var(--tkt-text); }
+
+/* Cabecera del detalle compacta mientras el hilo está desplazado (24-sep-2026). */
+.tkt-detail-head.is-scrolled .tkt-detail-navbar,
+.tkt-detail-head.is-scrolled .tkt-detail-context { display: none; }
+.tkt-detail-head.is-scrolled .tkt-detail-head-row { padding-top: 8px; padding-bottom: 8px; }
+.tkt-detail-head.is-scrolled .tkt-detail-title { font-size: var(--tkt-t-lg); }
+.tkt-detail-head.is-scrolled .tkt-detail-title-col { gap: 4px; }
+
+/* Resumen de la cola en el panel lateral sin ticket (24-sep-2026). */
+.tkt-qsum { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+.tkt-qsum-cap { margin-top: 4px; }
+.tkt-qsum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tkt-qsum-stat { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-panel); text-align: left; }
+.tkt-qsum-stat:hover { border-color: var(--tkt-accent-line); background: var(--tkt-accent-soft); }
+.tkt-qsum-stat .n { font-size: var(--tkt-t-xl); font-weight: 700; color: var(--tkt-text); font-variant-numeric: tabular-nums; }
+.tkt-qsum-stat .l { font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
+.tkt-qsum-list { display: flex; flex-direction: column; gap: 4px; }
+.tkt-qsum-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border: none; border-radius: var(--tkt-r); background: transparent; text-align: left; font-size: var(--tkt-t-md); color: var(--tkt-text-mid); }
+.tkt-qsum-row:hover { background: var(--tkt-hover); }
+.tkt-qsum-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tkt-qsum-dot.breach { background: var(--tkt-danger); }
+.tkt-qsum-dot.warn { background: var(--tkt-accent); }
+.tkt-qsum-subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tkt-qsum-sla { font-family: var(--tkt-mono); font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); white-space: nowrap; }
+.tkt-qsum-hint { margin: 4px 0 0; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+
+
+/* Aviso del Kanban filtrado por pestaña y columna vacía (24-sep-2026). */
+.tkt-kanban-note { display: flex; align-items: center; gap: 10px; margin: 12px 16px 0; padding: 8px 12px; border: 1px solid var(--tkt-accent-line); border-radius: var(--tkt-r-md); background: var(--tkt-accent-soft); font-size: var(--tkt-t-md); color: var(--tkt-text-mid); }
+.tkt-kanban-note[hidden] { display: none; }
+.tkt-kcol-empty { padding: 18px 0; text-align: center; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
