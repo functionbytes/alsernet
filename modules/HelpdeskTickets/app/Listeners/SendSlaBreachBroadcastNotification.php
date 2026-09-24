@@ -44,8 +44,9 @@ class SendSlaBreachBroadcastNotification implements ShouldQueue
         // el panel — un SLA roto sin nadie asignado es justo el caso que más
         // le interesa al canal del equipo.
         // Con el resumen activo, el canal recibe la lista agrupada de
-        // ticket:sla-digest en vez de un mensaje por ticket.
-        if (config('helpdesktickets.sla_alerts.managers_digest', true)) {
+        // ticket:sla-digest en vez de un mensaje por ticket; salvo si nadie
+        // tiene el ticket asignado, que es cuando más falta hace el aviso.
+        if ($assignee && config('helpdesktickets.sla_alerts.managers_digest', true)) {
             return;
         }
 

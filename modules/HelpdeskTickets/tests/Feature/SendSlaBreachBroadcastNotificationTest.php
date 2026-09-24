@@ -52,6 +52,8 @@ class SendSlaBreachBroadcastNotificationTest extends TestCase
 
     public function test_avisa_al_canal_de_equipo_cuando_hay_un_webhook_configurado(): void
     {
+        // Aviso por ticket: solo sin el resumen periódico (ticket:sla-digest).
+        config(['helpdesktickets.sla_alerts.managers_digest' => false]);
         Notification::fake();
         Http::fake(['*' => Http::response('', 200)]);
         Setting::setEncrypted('tickets.slack_webhook_url', 'https://1.1.1.1/hook');
@@ -64,6 +66,21 @@ class SendSlaBreachBroadcastNotificationTest extends TestCase
 
         Http::assertSent(fn ($request) => $request->url() === 'https://1.1.1.1/hook'
             && str_contains($request['text'], $ticket->ticket_number));
+    }
+
+    public function test_con_el_resumen_activo_no_avisa_al_canal_por_cada_ticket_asignado(): void
+    {
+        config(['helpdesktickets.sla_alerts.managers_digest' => true]);
+        Notification::fake();
+        Http::fake(['*' => Http::response('', 200)]);
+        Setting::setEncrypted('tickets.slack_webhook_url', 'https://1.1.1.1/hook');
+
+        $agent = User::factory()->create();
+        $ticket = $this->makeTicket(['assignee_id' => $agent->id]);
+
+        app(SendSlaBreachBroadcastNotification::class)->handle(new TicketSlaBreachedEvent($ticket, $this->makeBreach($ticket)));
+
+        Http::assertNothingSent();
     }
 
     public function test_no_hace_ninguna_peticion_sin_webhook_configurado(): void

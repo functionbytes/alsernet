@@ -46,7 +46,7 @@ class TicketGroupMembersViewTest extends TestCase
     {
         $html = $this->render([]);
 
-        foreach (['Usuario', 'Prioridad', 'Accion'] as $header) {
+        foreach (['Usuario', 'Prioridad', 'Acción'] as $header) {
             $this->assertStringContainsString('>'.$header.'</th>', $html);
         }
     }

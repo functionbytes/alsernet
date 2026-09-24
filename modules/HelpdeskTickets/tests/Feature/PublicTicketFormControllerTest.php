@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +26,11 @@ class PublicTicketFormControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // El envío tiene throttle:10,1 por IP y su contador vive en Redis,
+        // fuera de la transacción: a partir del undécimo test de esta clase
+        // (todos desde 127.0.0.1 en el mismo minuto) todo devolvía 429.
+        $this->withoutMiddleware(ThrottleRequests::class);
 
         // delete(), NUNCA truncate(): truncate() es DDL con commit implícito,
         // no lo revierte el rollback de DatabaseTransactions — un truncate()
@@ -347,7 +353,7 @@ class PublicTicketFormControllerTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $file = UploadedFile::fake()->create('test.pdf', 100, 'application/pdf');
+        $file = UploadedFile::fake()->createWithContent('test.pdf', "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
 
         $this->postJson("/hd/api/ticket-forms/{$category->slug}/submit", [
             'subject' => 'Ticket con archivo',
@@ -381,7 +387,7 @@ class PublicTicketFormControllerTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $file = UploadedFile::fake()->create('doc.pdf', 50, 'application/pdf');
+        $file = UploadedFile::fake()->createWithContent('doc.pdf', "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
 
         $this->postJson("/hd/api/ticket-forms/{$category->slug}/submit", [
             'subject' => 'Ticket con documento',
